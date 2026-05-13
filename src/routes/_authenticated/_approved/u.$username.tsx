@@ -337,6 +337,7 @@ function CredentialsReveal({ targetUserId, isOwner }: { targetUserId: string; is
         <RevealGate
           hasPin={hasPin}
           onUnlocked={() => setUnlocked(true)}
+          onPinSet={() => setHasPin(true)}
         />
       ) : loading ? (
         <div className="grid place-items-center py-8 text-muted-foreground"><Loader2 className="size-5 animate-spin" /></div>
