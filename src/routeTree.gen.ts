@@ -9,38 +9,220 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SignupRouteImport } from './routes/signup'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedGateRouteImport } from './routes/_authenticated/gate'
+import { Route as AuthenticatedApprovedRouteImport } from './routes/_authenticated/_approved'
+import { Route as AuthenticatedApprovedTicketsRouteImport } from './routes/_authenticated/_approved/tickets'
+import { Route as AuthenticatedApprovedSportsGuidesRouteImport } from './routes/_authenticated/_approved/sports-guides'
+import { Route as AuthenticatedApprovedShopRouteImport } from './routes/_authenticated/_approved/shop'
+import { Route as AuthenticatedApprovedShiftsRouteImport } from './routes/_authenticated/_approved/shifts'
+import { Route as AuthenticatedApprovedModerationRouteImport } from './routes/_authenticated/_approved/moderation'
+import { Route as AuthenticatedApprovedInstallGuidesRouteImport } from './routes/_authenticated/_approved/install-guides'
+import { Route as AuthenticatedApprovedHomeRouteImport } from './routes/_authenticated/_approved/home'
+import { Route as AuthenticatedApprovedClockRouteImport } from './routes/_authenticated/_approved/clock'
 
+const SignupRoute = SignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedRoute = AuthenticatedRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedGateRoute = AuthenticatedGateRouteImport.update({
+  id: '/gate',
+  path: '/gate',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedApprovedRoute = AuthenticatedApprovedRouteImport.update({
+  id: '/_approved',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedApprovedTicketsRoute =
+  AuthenticatedApprovedTicketsRouteImport.update({
+    id: '/tickets',
+    path: '/tickets',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
+const AuthenticatedApprovedSportsGuidesRoute =
+  AuthenticatedApprovedSportsGuidesRouteImport.update({
+    id: '/sports-guides',
+    path: '/sports-guides',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
+const AuthenticatedApprovedShopRoute =
+  AuthenticatedApprovedShopRouteImport.update({
+    id: '/shop',
+    path: '/shop',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
+const AuthenticatedApprovedShiftsRoute =
+  AuthenticatedApprovedShiftsRouteImport.update({
+    id: '/shifts',
+    path: '/shifts',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
+const AuthenticatedApprovedModerationRoute =
+  AuthenticatedApprovedModerationRouteImport.update({
+    id: '/moderation',
+    path: '/moderation',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
+const AuthenticatedApprovedInstallGuidesRoute =
+  AuthenticatedApprovedInstallGuidesRouteImport.update({
+    id: '/install-guides',
+    path: '/install-guides',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
+const AuthenticatedApprovedHomeRoute =
+  AuthenticatedApprovedHomeRouteImport.update({
+    id: '/home',
+    path: '/home',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
+const AuthenticatedApprovedClockRoute =
+  AuthenticatedApprovedClockRouteImport.update({
+    id: '/clock',
+    path: '/clock',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/signup': typeof SignupRoute
+  '/gate': typeof AuthenticatedGateRoute
+  '/clock': typeof AuthenticatedApprovedClockRoute
+  '/home': typeof AuthenticatedApprovedHomeRoute
+  '/install-guides': typeof AuthenticatedApprovedInstallGuidesRoute
+  '/moderation': typeof AuthenticatedApprovedModerationRoute
+  '/shifts': typeof AuthenticatedApprovedShiftsRoute
+  '/shop': typeof AuthenticatedApprovedShopRoute
+  '/sports-guides': typeof AuthenticatedApprovedSportsGuidesRoute
+  '/tickets': typeof AuthenticatedApprovedTicketsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/signup': typeof SignupRoute
+  '/gate': typeof AuthenticatedGateRoute
+  '/clock': typeof AuthenticatedApprovedClockRoute
+  '/home': typeof AuthenticatedApprovedHomeRoute
+  '/install-guides': typeof AuthenticatedApprovedInstallGuidesRoute
+  '/moderation': typeof AuthenticatedApprovedModerationRoute
+  '/shifts': typeof AuthenticatedApprovedShiftsRoute
+  '/shop': typeof AuthenticatedApprovedShopRoute
+  '/sports-guides': typeof AuthenticatedApprovedSportsGuidesRoute
+  '/tickets': typeof AuthenticatedApprovedTicketsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteWithChildren
+  '/login': typeof LoginRoute
+  '/signup': typeof SignupRoute
+  '/_authenticated/_approved': typeof AuthenticatedApprovedRouteWithChildren
+  '/_authenticated/gate': typeof AuthenticatedGateRoute
+  '/_authenticated/_approved/clock': typeof AuthenticatedApprovedClockRoute
+  '/_authenticated/_approved/home': typeof AuthenticatedApprovedHomeRoute
+  '/_authenticated/_approved/install-guides': typeof AuthenticatedApprovedInstallGuidesRoute
+  '/_authenticated/_approved/moderation': typeof AuthenticatedApprovedModerationRoute
+  '/_authenticated/_approved/shifts': typeof AuthenticatedApprovedShiftsRoute
+  '/_authenticated/_approved/shop': typeof AuthenticatedApprovedShopRoute
+  '/_authenticated/_approved/sports-guides': typeof AuthenticatedApprovedSportsGuidesRoute
+  '/_authenticated/_approved/tickets': typeof AuthenticatedApprovedTicketsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/login'
+    | '/signup'
+    | '/gate'
+    | '/clock'
+    | '/home'
+    | '/install-guides'
+    | '/moderation'
+    | '/shifts'
+    | '/shop'
+    | '/sports-guides'
+    | '/tickets'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/login'
+    | '/signup'
+    | '/gate'
+    | '/clock'
+    | '/home'
+    | '/install-guides'
+    | '/moderation'
+    | '/shifts'
+    | '/shop'
+    | '/sports-guides'
+    | '/tickets'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/login'
+    | '/signup'
+    | '/_authenticated/_approved'
+    | '/_authenticated/gate'
+    | '/_authenticated/_approved/clock'
+    | '/_authenticated/_approved/home'
+    | '/_authenticated/_approved/install-guides'
+    | '/_authenticated/_approved/moderation'
+    | '/_authenticated/_approved/shifts'
+    | '/_authenticated/_approved/shop'
+    | '/_authenticated/_approved/sports-guides'
+    | '/_authenticated/_approved/tickets'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
+  LoginRoute: typeof LoginRoute
+  SignupRoute: typeof SignupRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,11 +230,127 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/gate': {
+      id: '/_authenticated/gate'
+      path: '/gate'
+      fullPath: '/gate'
+      preLoaderRoute: typeof AuthenticatedGateRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/_approved': {
+      id: '/_authenticated/_approved'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedApprovedRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/_approved/tickets': {
+      id: '/_authenticated/_approved/tickets'
+      path: '/tickets'
+      fullPath: '/tickets'
+      preLoaderRoute: typeof AuthenticatedApprovedTicketsRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
+    '/_authenticated/_approved/sports-guides': {
+      id: '/_authenticated/_approved/sports-guides'
+      path: '/sports-guides'
+      fullPath: '/sports-guides'
+      preLoaderRoute: typeof AuthenticatedApprovedSportsGuidesRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
+    '/_authenticated/_approved/shop': {
+      id: '/_authenticated/_approved/shop'
+      path: '/shop'
+      fullPath: '/shop'
+      preLoaderRoute: typeof AuthenticatedApprovedShopRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
+    '/_authenticated/_approved/shifts': {
+      id: '/_authenticated/_approved/shifts'
+      path: '/shifts'
+      fullPath: '/shifts'
+      preLoaderRoute: typeof AuthenticatedApprovedShiftsRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
+    '/_authenticated/_approved/moderation': {
+      id: '/_authenticated/_approved/moderation'
+      path: '/moderation'
+      fullPath: '/moderation'
+      preLoaderRoute: typeof AuthenticatedApprovedModerationRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
+    '/_authenticated/_approved/install-guides': {
+      id: '/_authenticated/_approved/install-guides'
+      path: '/install-guides'
+      fullPath: '/install-guides'
+      preLoaderRoute: typeof AuthenticatedApprovedInstallGuidesRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
+    '/_authenticated/_approved/home': {
+      id: '/_authenticated/_approved/home'
+      path: '/home'
+      fullPath: '/home'
+      preLoaderRoute: typeof AuthenticatedApprovedHomeRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
+    '/_authenticated/_approved/clock': {
+      id: '/_authenticated/_approved/clock'
+      path: '/clock'
+      fullPath: '/clock'
+      preLoaderRoute: typeof AuthenticatedApprovedClockRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
   }
 }
 
+interface AuthenticatedApprovedRouteChildren {
+  AuthenticatedApprovedClockRoute: typeof AuthenticatedApprovedClockRoute
+  AuthenticatedApprovedHomeRoute: typeof AuthenticatedApprovedHomeRoute
+  AuthenticatedApprovedInstallGuidesRoute: typeof AuthenticatedApprovedInstallGuidesRoute
+  AuthenticatedApprovedModerationRoute: typeof AuthenticatedApprovedModerationRoute
+  AuthenticatedApprovedShiftsRoute: typeof AuthenticatedApprovedShiftsRoute
+  AuthenticatedApprovedShopRoute: typeof AuthenticatedApprovedShopRoute
+  AuthenticatedApprovedSportsGuidesRoute: typeof AuthenticatedApprovedSportsGuidesRoute
+  AuthenticatedApprovedTicketsRoute: typeof AuthenticatedApprovedTicketsRoute
+}
+
+const AuthenticatedApprovedRouteChildren: AuthenticatedApprovedRouteChildren = {
+  AuthenticatedApprovedClockRoute: AuthenticatedApprovedClockRoute,
+  AuthenticatedApprovedHomeRoute: AuthenticatedApprovedHomeRoute,
+  AuthenticatedApprovedInstallGuidesRoute:
+    AuthenticatedApprovedInstallGuidesRoute,
+  AuthenticatedApprovedModerationRoute: AuthenticatedApprovedModerationRoute,
+  AuthenticatedApprovedShiftsRoute: AuthenticatedApprovedShiftsRoute,
+  AuthenticatedApprovedShopRoute: AuthenticatedApprovedShopRoute,
+  AuthenticatedApprovedSportsGuidesRoute:
+    AuthenticatedApprovedSportsGuidesRoute,
+  AuthenticatedApprovedTicketsRoute: AuthenticatedApprovedTicketsRoute,
+}
+
+const AuthenticatedApprovedRouteWithChildren =
+  AuthenticatedApprovedRoute._addFileChildren(
+    AuthenticatedApprovedRouteChildren,
+  )
+
+interface AuthenticatedRouteChildren {
+  AuthenticatedApprovedRoute: typeof AuthenticatedApprovedRouteWithChildren
+  AuthenticatedGateRoute: typeof AuthenticatedGateRoute
+}
+
+const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
+  AuthenticatedApprovedRoute: AuthenticatedApprovedRouteWithChildren,
+  AuthenticatedGateRoute: AuthenticatedGateRoute,
+}
+
+const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
+  AuthenticatedRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRoute: AuthenticatedRouteWithChildren,
+  LoginRoute: LoginRoute,
+  SignupRoute: SignupRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
