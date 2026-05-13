@@ -2,6 +2,7 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { Home, Ticket, ShoppingBag, BookOpen, FileText, Clock, Calendar, Shield, LogOut, MessageSquare } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
+import { NotificationBell } from "@/components/app/NotificationBell";
 
 interface RailItem {
   to: string;
@@ -47,6 +48,7 @@ export function IconRail() {
         <RailIcon key={i.to} to={i.to} label={i.label} Icon={i.icon} active={path.startsWith(i.to)} />
       ))}
       <div className="mt-auto" />
+      <NotificationBell />
       <button onClick={signOut} className="text-muted-foreground hover:text-destructive p-3 rounded-xl hover:bg-surface-2 transition-colors" title="Sign out">
         <LogOut className="size-5" />
       </button>

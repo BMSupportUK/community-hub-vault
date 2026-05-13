@@ -258,6 +258,62 @@ export type Database = {
         }
         Relationships: []
       }
+      staff_notification_reads: {
+        Row: {
+          notification_id: string
+          read_at: string
+          user_id: string
+        }
+        Insert: {
+          notification_id: string
+          read_at?: string
+          user_id: string
+        }
+        Update: {
+          notification_id?: string
+          read_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staff_notification_reads_notification_id_fkey"
+            columns: ["notification_id"]
+            isOneToOne: false
+            referencedRelation: "staff_notifications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      staff_notifications: {
+        Row: {
+          body: string | null
+          created_at: string
+          entity_id: string | null
+          id: string
+          kind: string
+          link_path: string | null
+          title: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          entity_id?: string | null
+          id?: string
+          kind: string
+          link_path?: string | null
+          title: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          entity_id?: string | null
+          id?: string
+          kind?: string
+          link_path?: string | null
+          title?: string
+        }
+        Relationships: []
+      }
       ticket_categories: {
         Row: {
           color: string
