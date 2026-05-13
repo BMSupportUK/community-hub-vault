@@ -27,6 +27,7 @@ import { Route as AuthenticatedApprovedClockRouteImport } from './routes/_authen
 import { Route as AuthenticatedApprovedAdminRolesRouteImport } from './routes/_authenticated/_approved/admin-roles'
 import { Route as AuthenticatedApprovedAdminCredentialsRouteImport } from './routes/_authenticated/_approved/admin-credentials'
 import { Route as AuthenticatedApprovedAdminRouteImport } from './routes/_authenticated/_approved/admin'
+import { Route as AuthenticatedApprovedUUsernameRouteImport } from './routes/_authenticated/_approved/u.$username'
 
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
@@ -128,6 +129,12 @@ const AuthenticatedApprovedAdminRoute =
     path: '/admin',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
+const AuthenticatedApprovedUUsernameRoute =
+  AuthenticatedApprovedUUsernameRouteImport.update({
+    id: '/u/$username',
+    path: '/u/$username',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -146,6 +153,7 @@ export interface FileRoutesByFullPath {
   '/sports-guides': typeof AuthenticatedApprovedSportsGuidesRoute
   '/tickets': typeof AuthenticatedApprovedTicketsRoute
   '/vault': typeof AuthenticatedApprovedVaultRoute
+  '/u/$username': typeof AuthenticatedApprovedUUsernameRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -164,6 +172,7 @@ export interface FileRoutesByTo {
   '/sports-guides': typeof AuthenticatedApprovedSportsGuidesRoute
   '/tickets': typeof AuthenticatedApprovedTicketsRoute
   '/vault': typeof AuthenticatedApprovedVaultRoute
+  '/u/$username': typeof AuthenticatedApprovedUUsernameRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -185,6 +194,7 @@ export interface FileRoutesById {
   '/_authenticated/_approved/sports-guides': typeof AuthenticatedApprovedSportsGuidesRoute
   '/_authenticated/_approved/tickets': typeof AuthenticatedApprovedTicketsRoute
   '/_authenticated/_approved/vault': typeof AuthenticatedApprovedVaultRoute
+  '/_authenticated/_approved/u/$username': typeof AuthenticatedApprovedUUsernameRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -205,6 +215,7 @@ export interface FileRouteTypes {
     | '/sports-guides'
     | '/tickets'
     | '/vault'
+    | '/u/$username'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -223,6 +234,7 @@ export interface FileRouteTypes {
     | '/sports-guides'
     | '/tickets'
     | '/vault'
+    | '/u/$username'
   id:
     | '__root__'
     | '/'
@@ -243,6 +255,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/sports-guides'
     | '/_authenticated/_approved/tickets'
     | '/_authenticated/_approved/vault'
+    | '/_authenticated/_approved/u/$username'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -380,6 +393,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedApprovedAdminRouteImport
       parentRoute: typeof AuthenticatedApprovedRoute
     }
+    '/_authenticated/_approved/u/$username': {
+      id: '/_authenticated/_approved/u/$username'
+      path: '/u/$username'
+      fullPath: '/u/$username'
+      preLoaderRoute: typeof AuthenticatedApprovedUUsernameRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
   }
 }
 
@@ -396,6 +416,7 @@ interface AuthenticatedApprovedRouteChildren {
   AuthenticatedApprovedSportsGuidesRoute: typeof AuthenticatedApprovedSportsGuidesRoute
   AuthenticatedApprovedTicketsRoute: typeof AuthenticatedApprovedTicketsRoute
   AuthenticatedApprovedVaultRoute: typeof AuthenticatedApprovedVaultRoute
+  AuthenticatedApprovedUUsernameRoute: typeof AuthenticatedApprovedUUsernameRoute
 }
 
 const AuthenticatedApprovedRouteChildren: AuthenticatedApprovedRouteChildren = {
@@ -414,6 +435,7 @@ const AuthenticatedApprovedRouteChildren: AuthenticatedApprovedRouteChildren = {
     AuthenticatedApprovedSportsGuidesRoute,
   AuthenticatedApprovedTicketsRoute: AuthenticatedApprovedTicketsRoute,
   AuthenticatedApprovedVaultRoute: AuthenticatedApprovedVaultRoute,
+  AuthenticatedApprovedUUsernameRoute: AuthenticatedApprovedUUsernameRoute,
 }
 
 const AuthenticatedApprovedRouteWithChildren =
@@ -444,3 +466,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
