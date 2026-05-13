@@ -264,6 +264,18 @@ function NewTicketForm({
     });
     setSubmitting(false);
     if (e2) return toast.error(e2.message);
+
+    const cat = categories.find((c) => c.id === parsed.data.category_id);
+    if (cat?.slug === "account") {
+      await supabase.from("ticket_messages").insert({
+        ticket_id: t.id,
+        sender_id: user!.id,
+        content:
+          "👋 Welcome to BM Support!\n\nFor account-related questions, your app login details and DNS codes are available on your profile page. Open your avatar menu and go to **Profile → Credentials & DNS**, then enter your account password and vault PIN to reveal them.\n\nIf you still need help after checking, reply here and a staff member will get back to you.",
+        is_internal: false,
+      });
+    }
+
     toast.success("Ticket opened");
     onCreated(t.id);
   };
