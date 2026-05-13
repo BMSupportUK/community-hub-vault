@@ -112,8 +112,7 @@ function GatePage() {
   };
 
   const openChatOrForm = () => {
-    if (!reason && status === "pending") setFormOpen(true);
-    else setChatOpen(true);
+    setChatOpen(true);
   };
 
   return (
@@ -157,7 +156,16 @@ function GatePage() {
             onClick={openChatOrForm}
             className="mt-6 w-full max-w-md py-3 rounded-lg font-semibold text-white bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 shadow-[0_8px_30px_rgba(220,38,38,0.45)] transition-all"
           >
-            {!reason && status === "pending" ? "Submit access request" : "Chat with Admin"}
+            Open ticket & chat with staff
+          </button>
+        )}
+
+        {status === "pending" && !reason && (
+          <button
+            onClick={() => setFormOpen(true)}
+            className="mt-2 text-xs text-red-200/80 hover:text-white underline underline-offset-4"
+          >
+            Or write a formal access request
           </button>
         )}
 
