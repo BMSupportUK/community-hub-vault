@@ -85,6 +85,74 @@ export type Database = {
           },
         ]
       }
+      chat_channels: {
+        Row: {
+          created_at: string
+          group_label: string
+          icon: string
+          id: string
+          name: string
+          slug: string
+          sort_order: number
+          staff_only: boolean
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          group_label?: string
+          icon?: string
+          id?: string
+          name: string
+          slug: string
+          sort_order?: number
+          staff_only?: boolean
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          group_label?: string
+          icon?: string
+          id?: string
+          name?: string
+          slug?: string
+          sort_order?: number
+          staff_only?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      chat_messages: {
+        Row: {
+          channel_id: string
+          content: string
+          created_at: string
+          id: string
+          sender_id: string
+        }
+        Insert: {
+          channel_id: string
+          content: string
+          created_at?: string
+          id?: string
+          sender_id: string
+        }
+        Update: {
+          channel_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "chat_channels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gate_applications: {
         Row: {
           created_at: string
