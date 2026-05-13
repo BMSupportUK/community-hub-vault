@@ -474,27 +474,27 @@ function TicketDetail({
 
   return (
     <>
-      <header className="border-b border-border px-5 py-3 space-y-3">
+      <header className="border-b border-white/20 px-5 py-3 space-y-3 bg-white/5 backdrop-blur">
         <div className="flex items-center gap-3">
-          <div className="size-9 rounded-lg bg-surface-2 grid place-items-center"><CatIcon className="size-4 text-primary" /></div>
+          <div className="size-9 rounded-lg bg-white/25 grid place-items-center"><CatIcon className="size-4 text-white" /></div>
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <div className="flex items-center gap-2 text-xs text-white/80">
               <span>{cat?.name ?? "—"}</span>
               <span>·</span>
               <span>Opened by {senderName(ticket.user_id)}</span>
               <span>·</span>
               <span>{new Date(ticket.created_at).toLocaleDateString()}</span>
             </div>
-            <h1 className="font-display font-semibold text-lg truncate">{ticket.subject}</h1>
+            <h1 className="font-display font-semibold text-lg truncate text-white drop-shadow">{ticket.subject}</h1>
           </div>
-          <span className={cn("inline-flex items-center gap-1 px-2 py-1 rounded-md bg-surface-2 text-xs", STATUS_META[ticket.status].cls)}>
+          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-white/25 text-xs text-white">
             <StatusIcon className="size-3" /> {STATUS_META[ticket.status].label}
           </span>
           {isAdmin && (
             <button
               onClick={deleteTicket}
               title="Delete ticket"
-              className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-red-500/15 text-red-400 hover:bg-red-500/25 text-xs"
+              className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-white text-rose-600 hover:bg-white/90 text-xs font-semibold shadow"
             >
               <Trash2 className="size-3" /> Delete
             </button>
@@ -527,12 +527,12 @@ function TicketDetail({
           const mine = m.sender_id === currentUserId;
           return (
             <div key={m.id} className={cn("flex gap-3", mine && "flex-row-reverse")}>
-              <div className="size-8 rounded-full bg-gradient-primary grid place-items-center text-xs font-semibold text-primary-foreground shrink-0">
+              <div className="size-8 rounded-full bg-white text-rose-600 grid place-items-center text-xs font-bold shrink-0 shadow">
                 {senderName(m.sender_id).slice(0, 1).toUpperCase()}
               </div>
-              <div className={cn("max-w-[70%] rounded-2xl px-4 py-2 text-sm",
-                m.is_internal ? "bg-warning/10 border border-warning/30" :
-                mine ? "bg-primary text-primary-foreground" : "bg-surface-2",
+              <div className={cn("max-w-[70%] rounded-2xl px-4 py-2 text-sm shadow",
+                m.is_internal ? "bg-amber-200/90 text-amber-950 border border-amber-300" :
+                mine ? "bg-white text-rose-700" : "bg-white/20 backdrop-blur text-white border border-white/25",
               )}>
                 <div className="text-[10px] uppercase tracking-wider opacity-70 mb-0.5 flex items-center gap-1">
                   {m.is_internal && <Lock className="size-3" />}
@@ -545,9 +545,9 @@ function TicketDetail({
         })}
       </div>
 
-      <div className="border-t border-border p-3">
+      <div className="border-t border-white/20 p-3 bg-white/5 backdrop-blur">
         {ticket.status === "closed" ? (
-          <div className="text-center text-xs text-muted-foreground py-2">This ticket is closed.</div>
+          <div className="text-center text-xs text-white/80 py-2">This ticket is closed.</div>
         ) : (
           <div className="space-y-2">
             <div className="flex gap-2">
@@ -556,18 +556,18 @@ function TicketDetail({
                 placeholder={internal ? "Internal note (staff only)…" : "Reply to ticket…"}
                 onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) send(); }}
                 className={cn(
-                  "flex-1 px-3 py-2 rounded-lg bg-surface border outline-none resize-none text-sm",
-                  internal ? "border-warning/50" : "border-border focus:border-primary",
+                  "flex-1 px-3 py-2 rounded-lg bg-white/15 backdrop-blur border outline-none resize-none text-sm text-white placeholder:text-white/60",
+                  internal ? "border-amber-300/70" : "border-white/30 focus:border-white",
                 )}
               />
               <button
                 onClick={send} disabled={sending || !draft.trim()}
-                className="self-end px-3 py-2 rounded-lg bg-primary text-primary-foreground disabled:opacity-50"
+                className="self-end px-3 py-2 rounded-lg bg-white text-rose-600 hover:bg-white/90 disabled:opacity-50 shadow"
               ><Send className="size-4" /></button>
             </div>
             {isStaff && (
-              <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
-                <input type="checkbox" checked={internal} onChange={(e) => setInternal(e.target.checked)} className="accent-warning" />
+              <label className="flex items-center gap-2 text-xs text-white/85 cursor-pointer">
+                <input type="checkbox" checked={internal} onChange={(e) => setInternal(e.target.checked)} className="accent-amber-300" />
                 <Lock className="size-3" /> Internal note (visible to staff only)
               </label>
             )}
