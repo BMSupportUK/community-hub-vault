@@ -35,24 +35,21 @@ export function NotificationBell() {
     let active = true;
 
     const load = async () => {
-      const promises: Promise<unknown>[] = [
-        supabase
+      const userRes = await supabase
           .from("user_notifications")
           .select("id, kind, title, body, link_path, source_id, created_at, read_at")
           .eq("user_id", user.id)
           .order("created_at", { ascending: false })
-          .limit(50),
-      ];
-      if (isStaff) {
-        promises.push(
-          supabase.from("staff_notifications").select("*").order("created_at", { ascending: false }).limit(50),
-          supabase.from("staff_notification_reads").select("notification_id").eq("user_id", user.id),
-        );
-      }
-      const res = (await Promise.all(promises)) as Array<{ data: unknown }>;
+        .limit(50);
+      const staffRes = isStaff
+        ? await supabase.from("staff_notifications").select("*").order("created_at", { ascending: false }).limit(50)
+        : null;
+      const readsRes = isStaff
+        ? await supabase.from("staff_notification_reads").select("notification_id").eq("user_id", user.id)
+        : null;
       if (!active) return;
       const userRows =
-        ((res[0].data as Array<{
+        ((userRes.data as Array<{
           id: string; kind: string; title: string; body: string | null;
           link_path: string | null; source_id: string | null; created_at: string; read_at: string | null;
         }>) ?? []).map((x) => ({
@@ -60,11 +57,11 @@ export function NotificationBell() {
           link_path: x.link_path, entity_id: x.source_id, created_at: x.created_at,
           read_at: x.read_at, source: "user" as const,
         }));
-      const staffRows = isStaff
-        ? (((res[1]?.data as Notif[]) ?? []).map((s) => ({ ...s, source: "staff" as const })))
+      const staffRows = staffRes
+        ? (((staffRes.data as Notif[]) ?? []).map((s) => ({ ...s, source: "staff" as const })))
         : [];
-      const reads = isStaff
-        ? new Set(((res[2]?.data as Array<{ notification_id: string }>) ?? []).map((x) => x.notification_id))
+      const reads = readsRes
+        ? new Set(((readsRes.data as Array<{ notification_id: string }>) ?? []).map((x) => x.notification_id))
         : new Set<string>();
       // user notification "read" state lives on the row itself
       userRows.forEach((u) => { if (u.read_at) reads.add(u.id); });
