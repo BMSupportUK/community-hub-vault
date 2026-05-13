@@ -380,7 +380,7 @@ function NewTicketForm({
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">{label}</div>
+      <div className="text-xs font-semibold uppercase tracking-wider text-white/80 mb-2">{label}</div>
       {children}
     </div>
   );
