@@ -25,6 +25,7 @@ import { Route as AuthenticatedApprovedInstallGuidesRouteImport } from './routes
 import { Route as AuthenticatedApprovedHomeRouteImport } from './routes/_authenticated/_approved/home'
 import { Route as AuthenticatedApprovedClockRouteImport } from './routes/_authenticated/_approved/clock'
 import { Route as AuthenticatedApprovedAdminRolesRouteImport } from './routes/_authenticated/_approved/admin-roles'
+import { Route as AuthenticatedApprovedAdminDnsRouteImport } from './routes/_authenticated/_approved/admin-dns'
 import { Route as AuthenticatedApprovedAdminCredentialsRouteImport } from './routes/_authenticated/_approved/admin-credentials'
 import { Route as AuthenticatedApprovedAdminRouteImport } from './routes/_authenticated/_approved/admin'
 import { Route as AuthenticatedApprovedUUsernameRouteImport } from './routes/_authenticated/_approved/u.$username'
@@ -117,6 +118,12 @@ const AuthenticatedApprovedAdminRolesRoute =
     path: '/admin-roles',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
+const AuthenticatedApprovedAdminDnsRoute =
+  AuthenticatedApprovedAdminDnsRouteImport.update({
+    id: '/admin-dns',
+    path: '/admin-dns',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
 const AuthenticatedApprovedAdminCredentialsRoute =
   AuthenticatedApprovedAdminCredentialsRouteImport.update({
     id: '/admin-credentials',
@@ -143,6 +150,7 @@ export interface FileRoutesByFullPath {
   '/gate': typeof AuthenticatedGateRoute
   '/admin': typeof AuthenticatedApprovedAdminRoute
   '/admin-credentials': typeof AuthenticatedApprovedAdminCredentialsRoute
+  '/admin-dns': typeof AuthenticatedApprovedAdminDnsRoute
   '/admin-roles': typeof AuthenticatedApprovedAdminRolesRoute
   '/clock': typeof AuthenticatedApprovedClockRoute
   '/home': typeof AuthenticatedApprovedHomeRoute
@@ -162,6 +170,7 @@ export interface FileRoutesByTo {
   '/gate': typeof AuthenticatedGateRoute
   '/admin': typeof AuthenticatedApprovedAdminRoute
   '/admin-credentials': typeof AuthenticatedApprovedAdminCredentialsRoute
+  '/admin-dns': typeof AuthenticatedApprovedAdminDnsRoute
   '/admin-roles': typeof AuthenticatedApprovedAdminRolesRoute
   '/clock': typeof AuthenticatedApprovedClockRoute
   '/home': typeof AuthenticatedApprovedHomeRoute
@@ -184,6 +193,7 @@ export interface FileRoutesById {
   '/_authenticated/gate': typeof AuthenticatedGateRoute
   '/_authenticated/_approved/admin': typeof AuthenticatedApprovedAdminRoute
   '/_authenticated/_approved/admin-credentials': typeof AuthenticatedApprovedAdminCredentialsRoute
+  '/_authenticated/_approved/admin-dns': typeof AuthenticatedApprovedAdminDnsRoute
   '/_authenticated/_approved/admin-roles': typeof AuthenticatedApprovedAdminRolesRoute
   '/_authenticated/_approved/clock': typeof AuthenticatedApprovedClockRoute
   '/_authenticated/_approved/home': typeof AuthenticatedApprovedHomeRoute
@@ -205,6 +215,7 @@ export interface FileRouteTypes {
     | '/gate'
     | '/admin'
     | '/admin-credentials'
+    | '/admin-dns'
     | '/admin-roles'
     | '/clock'
     | '/home'
@@ -224,6 +235,7 @@ export interface FileRouteTypes {
     | '/gate'
     | '/admin'
     | '/admin-credentials'
+    | '/admin-dns'
     | '/admin-roles'
     | '/clock'
     | '/home'
@@ -245,6 +257,7 @@ export interface FileRouteTypes {
     | '/_authenticated/gate'
     | '/_authenticated/_approved/admin'
     | '/_authenticated/_approved/admin-credentials'
+    | '/_authenticated/_approved/admin-dns'
     | '/_authenticated/_approved/admin-roles'
     | '/_authenticated/_approved/clock'
     | '/_authenticated/_approved/home'
@@ -379,6 +392,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedApprovedAdminRolesRouteImport
       parentRoute: typeof AuthenticatedApprovedRoute
     }
+    '/_authenticated/_approved/admin-dns': {
+      id: '/_authenticated/_approved/admin-dns'
+      path: '/admin-dns'
+      fullPath: '/admin-dns'
+      preLoaderRoute: typeof AuthenticatedApprovedAdminDnsRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
     '/_authenticated/_approved/admin-credentials': {
       id: '/_authenticated/_approved/admin-credentials'
       path: '/admin-credentials'
@@ -406,6 +426,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedApprovedRouteChildren {
   AuthenticatedApprovedAdminRoute: typeof AuthenticatedApprovedAdminRoute
   AuthenticatedApprovedAdminCredentialsRoute: typeof AuthenticatedApprovedAdminCredentialsRoute
+  AuthenticatedApprovedAdminDnsRoute: typeof AuthenticatedApprovedAdminDnsRoute
   AuthenticatedApprovedAdminRolesRoute: typeof AuthenticatedApprovedAdminRolesRoute
   AuthenticatedApprovedClockRoute: typeof AuthenticatedApprovedClockRoute
   AuthenticatedApprovedHomeRoute: typeof AuthenticatedApprovedHomeRoute
@@ -423,6 +444,7 @@ const AuthenticatedApprovedRouteChildren: AuthenticatedApprovedRouteChildren = {
   AuthenticatedApprovedAdminRoute: AuthenticatedApprovedAdminRoute,
   AuthenticatedApprovedAdminCredentialsRoute:
     AuthenticatedApprovedAdminCredentialsRoute,
+  AuthenticatedApprovedAdminDnsRoute: AuthenticatedApprovedAdminDnsRoute,
   AuthenticatedApprovedAdminRolesRoute: AuthenticatedApprovedAdminRolesRoute,
   AuthenticatedApprovedClockRoute: AuthenticatedApprovedClockRoute,
   AuthenticatedApprovedHomeRoute: AuthenticatedApprovedHomeRoute,
