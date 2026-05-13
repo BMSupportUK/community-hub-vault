@@ -2,6 +2,7 @@ import { createFileRoute, Outlet, redirect, useRouterState } from "@tanstack/rea
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { IconRail } from "@/components/app/IconRail";
+import { Clocks } from "@/components/app/Clocks";
 
 export const Route = createFileRoute("/_authenticated")({
   beforeLoad: async ({ location }) => {
@@ -41,7 +42,14 @@ function AuthLayout() {
   return (
     <div className="min-h-screen flex bg-background">
       <IconRail />
-      <Outlet />
+      <div className="flex-1 flex flex-col min-w-0">
+        <header className="h-12 shrink-0 border-b border-border bg-rail/40 backdrop-blur flex items-center justify-end px-4">
+          <Clocks />
+        </header>
+        <div className="flex-1 flex min-h-0">
+          <Outlet />
+        </div>
+      </div>
     </div>
   );
 }
