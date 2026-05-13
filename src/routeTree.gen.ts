@@ -26,6 +26,7 @@ import { Route as AuthenticatedApprovedHomeRouteImport } from './routes/_authent
 import { Route as AuthenticatedApprovedClockRouteImport } from './routes/_authenticated/_approved/clock'
 import { Route as AuthenticatedApprovedAdminRolesRouteImport } from './routes/_authenticated/_approved/admin-roles'
 import { Route as AuthenticatedApprovedAdminCredentialsRouteImport } from './routes/_authenticated/_approved/admin-credentials'
+import { Route as AuthenticatedApprovedAdminRouteImport } from './routes/_authenticated/_approved/admin'
 
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
@@ -121,12 +122,19 @@ const AuthenticatedApprovedAdminCredentialsRoute =
     path: '/admin-credentials',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
+const AuthenticatedApprovedAdminRoute =
+  AuthenticatedApprovedAdminRouteImport.update({
+    id: '/admin',
+    path: '/admin',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
   '/gate': typeof AuthenticatedGateRoute
+  '/admin': typeof AuthenticatedApprovedAdminRoute
   '/admin-credentials': typeof AuthenticatedApprovedAdminCredentialsRoute
   '/admin-roles': typeof AuthenticatedApprovedAdminRolesRoute
   '/clock': typeof AuthenticatedApprovedClockRoute
@@ -144,6 +152,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
   '/gate': typeof AuthenticatedGateRoute
+  '/admin': typeof AuthenticatedApprovedAdminRoute
   '/admin-credentials': typeof AuthenticatedApprovedAdminCredentialsRoute
   '/admin-roles': typeof AuthenticatedApprovedAdminRolesRoute
   '/clock': typeof AuthenticatedApprovedClockRoute
@@ -164,6 +173,7 @@ export interface FileRoutesById {
   '/signup': typeof SignupRoute
   '/_authenticated/_approved': typeof AuthenticatedApprovedRouteWithChildren
   '/_authenticated/gate': typeof AuthenticatedGateRoute
+  '/_authenticated/_approved/admin': typeof AuthenticatedApprovedAdminRoute
   '/_authenticated/_approved/admin-credentials': typeof AuthenticatedApprovedAdminCredentialsRoute
   '/_authenticated/_approved/admin-roles': typeof AuthenticatedApprovedAdminRolesRoute
   '/_authenticated/_approved/clock': typeof AuthenticatedApprovedClockRoute
@@ -183,6 +193,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/signup'
     | '/gate'
+    | '/admin'
     | '/admin-credentials'
     | '/admin-roles'
     | '/clock'
@@ -200,6 +211,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/signup'
     | '/gate'
+    | '/admin'
     | '/admin-credentials'
     | '/admin-roles'
     | '/clock'
@@ -219,6 +231,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/_authenticated/_approved'
     | '/_authenticated/gate'
+    | '/_authenticated/_approved/admin'
     | '/_authenticated/_approved/admin-credentials'
     | '/_authenticated/_approved/admin-roles'
     | '/_authenticated/_approved/clock'
@@ -360,10 +373,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedApprovedAdminCredentialsRouteImport
       parentRoute: typeof AuthenticatedApprovedRoute
     }
+    '/_authenticated/_approved/admin': {
+      id: '/_authenticated/_approved/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AuthenticatedApprovedAdminRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
   }
 }
 
 interface AuthenticatedApprovedRouteChildren {
+  AuthenticatedApprovedAdminRoute: typeof AuthenticatedApprovedAdminRoute
   AuthenticatedApprovedAdminCredentialsRoute: typeof AuthenticatedApprovedAdminCredentialsRoute
   AuthenticatedApprovedAdminRolesRoute: typeof AuthenticatedApprovedAdminRolesRoute
   AuthenticatedApprovedClockRoute: typeof AuthenticatedApprovedClockRoute
@@ -378,6 +399,7 @@ interface AuthenticatedApprovedRouteChildren {
 }
 
 const AuthenticatedApprovedRouteChildren: AuthenticatedApprovedRouteChildren = {
+  AuthenticatedApprovedAdminRoute: AuthenticatedApprovedAdminRoute,
   AuthenticatedApprovedAdminCredentialsRoute:
     AuthenticatedApprovedAdminCredentialsRoute,
   AuthenticatedApprovedAdminRolesRoute: AuthenticatedApprovedAdminRolesRoute,
@@ -422,3 +444,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
