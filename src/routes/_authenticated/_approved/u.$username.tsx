@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import {
   Pencil, Camera, Loader2, ShieldCheck, Clock as ClockIcon,
-  Coffee, UtensilsCrossed, Ticket, ShoppingBag, FileText, Eye, EyeOff,
+  Coffee, UtensilsCrossed, Ticket, ShoppingBag, Eye, EyeOff,
   Lock, KeyRound, Copy, Check, Globe, Calendar, StickyNote, AtSign,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -65,9 +65,11 @@ function ProfilePage() {
   const [breakRow, setBreakRow] = useState<BreakRow | null>(null);
   const [tickets, setTickets] = useState<TicketRow[]>([]);
   const [orders, setOrders] = useState<OrderRow[]>([]);
-  const [blogs, setBlogs] = useState<BlogRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
+  const [mainTab, setMainTab] = useState<"creds" | "tickets" | "orders">(
+    "creds",
+  );
 
   const isOwner = !!profile && !!viewer && profile.id === viewer.id;
   const canSeeCreds = isOwner || isAdmin;
@@ -84,20 +86,18 @@ function ProfilePage() {
     if (!p) { setProfile(null); setLoading(false); return; }
     setProfile(p as ProfileRow);
 
-    const [{ data: r }, { data: s }, { data: b }, { data: tk }, { data: od }, { data: bl }] = await Promise.all([
+    const [{ data: r }, { data: s }, { data: b }, { data: tk }, { data: od }] = await Promise.all([
       supabase.from("user_roles").select("role").eq("user_id", p.id),
       supabase.from("shifts").select("*").eq("user_id", p.id).is("clock_out", null).maybeSingle(),
       supabase.from("breaks").select("*").eq("user_id", p.id).is("ended_at", null).maybeSingle(),
       supabase.from("tickets").select("id, subject, status, created_at").eq("user_id", p.id).order("created_at", { ascending: false }).limit(5),
       supabase.from("orders").select("id, total_cents, status, created_at").eq("user_id", p.id).order("created_at", { ascending: false }).limit(5),
-      supabase.from("sports_blogs").select("id, title, created_at").eq("created_by", p.id).order("created_at", { ascending: false }).limit(5),
     ]);
     setRoles((r ?? []).map((x: any) => x.role as AppRole));
     setShift((s as ShiftRow) ?? null);
     setBreakRow((b as BreakRow) ?? null);
     setTickets((tk ?? []) as TicketRow[]);
     setOrders((od ?? []) as OrderRow[]);
-    setBlogs((bl ?? []) as BlogRow[]);
     setLoading(false);
   };
 
