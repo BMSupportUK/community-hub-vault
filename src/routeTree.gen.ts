@@ -30,6 +30,7 @@ import { Route as AuthenticatedApprovedAdminCredentialsRouteImport } from './rou
 import { Route as AuthenticatedApprovedAdminRouteImport } from './routes/_authenticated/_approved/admin'
 import { Route as AuthenticatedApprovedHomeIndexRouteImport } from './routes/_authenticated/_approved/home.index'
 import { Route as AuthenticatedApprovedUUsernameRouteImport } from './routes/_authenticated/_approved/u.$username'
+import { Route as AuthenticatedApprovedHomeChannelRouteImport } from './routes/_authenticated/_approved/home.$channel'
 
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
@@ -149,6 +150,12 @@ const AuthenticatedApprovedUUsernameRoute =
     path: '/u/$username',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
+const AuthenticatedApprovedHomeChannelRoute =
+  AuthenticatedApprovedHomeChannelRouteImport.update({
+    id: '/$channel',
+    path: '/$channel',
+    getParentRoute: () => AuthenticatedApprovedHomeRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -168,6 +175,7 @@ export interface FileRoutesByFullPath {
   '/shop': typeof AuthenticatedApprovedShopRoute
   '/sports-guides': typeof AuthenticatedApprovedSportsGuidesRoute
   '/tickets': typeof AuthenticatedApprovedTicketsRoute
+  '/home/$channel': typeof AuthenticatedApprovedHomeChannelRoute
   '/u/$username': typeof AuthenticatedApprovedUUsernameRoute
   '/home/': typeof AuthenticatedApprovedHomeIndexRoute
 }
@@ -188,6 +196,7 @@ export interface FileRoutesByTo {
   '/shop': typeof AuthenticatedApprovedShopRoute
   '/sports-guides': typeof AuthenticatedApprovedSportsGuidesRoute
   '/tickets': typeof AuthenticatedApprovedTicketsRoute
+  '/home/$channel': typeof AuthenticatedApprovedHomeChannelRoute
   '/u/$username': typeof AuthenticatedApprovedUUsernameRoute
   '/home': typeof AuthenticatedApprovedHomeIndexRoute
 }
@@ -212,6 +221,7 @@ export interface FileRoutesById {
   '/_authenticated/_approved/shop': typeof AuthenticatedApprovedShopRoute
   '/_authenticated/_approved/sports-guides': typeof AuthenticatedApprovedSportsGuidesRoute
   '/_authenticated/_approved/tickets': typeof AuthenticatedApprovedTicketsRoute
+  '/_authenticated/_approved/home/$channel': typeof AuthenticatedApprovedHomeChannelRoute
   '/_authenticated/_approved/u/$username': typeof AuthenticatedApprovedUUsernameRoute
   '/_authenticated/_approved/home/': typeof AuthenticatedApprovedHomeIndexRoute
 }
@@ -235,6 +245,7 @@ export interface FileRouteTypes {
     | '/shop'
     | '/sports-guides'
     | '/tickets'
+    | '/home/$channel'
     | '/u/$username'
     | '/home/'
   fileRoutesByTo: FileRoutesByTo
@@ -255,6 +266,7 @@ export interface FileRouteTypes {
     | '/shop'
     | '/sports-guides'
     | '/tickets'
+    | '/home/$channel'
     | '/u/$username'
     | '/home'
   id:
@@ -278,6 +290,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/shop'
     | '/_authenticated/_approved/sports-guides'
     | '/_authenticated/_approved/tickets'
+    | '/_authenticated/_approved/home/$channel'
     | '/_authenticated/_approved/u/$username'
     | '/_authenticated/_approved/home/'
   fileRoutesById: FileRoutesById
@@ -438,15 +451,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedApprovedUUsernameRouteImport
       parentRoute: typeof AuthenticatedApprovedRoute
     }
+    '/_authenticated/_approved/home/$channel': {
+      id: '/_authenticated/_approved/home/$channel'
+      path: '/$channel'
+      fullPath: '/home/$channel'
+      preLoaderRoute: typeof AuthenticatedApprovedHomeChannelRouteImport
+      parentRoute: typeof AuthenticatedApprovedHomeRoute
+    }
   }
 }
 
 interface AuthenticatedApprovedHomeRouteChildren {
+  AuthenticatedApprovedHomeChannelRoute: typeof AuthenticatedApprovedHomeChannelRoute
   AuthenticatedApprovedHomeIndexRoute: typeof AuthenticatedApprovedHomeIndexRoute
 }
 
 const AuthenticatedApprovedHomeRouteChildren: AuthenticatedApprovedHomeRouteChildren =
   {
+    AuthenticatedApprovedHomeChannelRoute:
+      AuthenticatedApprovedHomeChannelRoute,
     AuthenticatedApprovedHomeIndexRoute: AuthenticatedApprovedHomeIndexRoute,
   }
 
