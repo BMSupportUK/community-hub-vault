@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { ShoppingBag, BookOpen, FileText, Clock, Calendar } from "lucide-react";
-import { Coming } from "./tickets";
+import { Coming } from "@/components/app/Coming";
 
 const meta: Record<string, { title: string; icon: any; desc: string }> = {
   "shop": { title: "Shop", icon: ShoppingBag, desc: "Server storefront. Coming next." },
