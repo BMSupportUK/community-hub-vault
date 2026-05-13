@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import {
   Pencil, Camera, Loader2, ShieldCheck, Clock as ClockIcon,
-  Coffee, UtensilsCrossed, Ticket, ShoppingBag, FileText, Eye, EyeOff,
+  Coffee, UtensilsCrossed, Ticket, ShoppingBag, Eye, EyeOff,
   Lock, KeyRound, Copy, Check, Globe, Calendar, StickyNote, AtSign,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -30,7 +30,6 @@ interface CredRow { id: string; app_login_name: string; password: string; expiry
 interface DnsRow { id: string; label: string; code: string; notes: string | null; }
 interface TicketRow { id: string; subject: string; status: string; created_at: string; }
 interface OrderRow { id: string; total_cents: number; status: string; created_at: string; }
-interface BlogRow { id: string; title: string; created_at: string; }
 
 const ROLE_STYLES: Record<AppRole, string> = {
   admin: "bg-destructive/15 text-destructive border-destructive/30",
@@ -66,9 +65,11 @@ function ProfilePage() {
   const [breakRow, setBreakRow] = useState<BreakRow | null>(null);
   const [tickets, setTickets] = useState<TicketRow[]>([]);
   const [orders, setOrders] = useState<OrderRow[]>([]);
-  const [blogs, setBlogs] = useState<BlogRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
+  const [mainTab, setMainTab] = useState<"creds" | "tickets" | "orders">(
+    "creds",
+  );
 
   const isOwner = !!profile && !!viewer && profile.id === viewer.id;
   const canSeeCreds = isOwner || isAdmin;
@@ -85,20 +86,18 @@ function ProfilePage() {
     if (!p) { setProfile(null); setLoading(false); return; }
     setProfile(p as ProfileRow);
 
-    const [{ data: r }, { data: s }, { data: b }, { data: tk }, { data: od }, { data: bl }] = await Promise.all([
+    const [{ data: r }, { data: s }, { data: b }, { data: tk }, { data: od }] = await Promise.all([
       supabase.from("user_roles").select("role").eq("user_id", p.id),
       supabase.from("shifts").select("*").eq("user_id", p.id).is("clock_out", null).maybeSingle(),
       supabase.from("breaks").select("*").eq("user_id", p.id).is("ended_at", null).maybeSingle(),
       supabase.from("tickets").select("id, subject, status, created_at").eq("user_id", p.id).order("created_at", { ascending: false }).limit(5),
       supabase.from("orders").select("id, total_cents, status, created_at").eq("user_id", p.id).order("created_at", { ascending: false }).limit(5),
-      supabase.from("sports_blogs").select("id, title, created_at").eq("created_by", p.id).order("created_at", { ascending: false }).limit(5),
     ]);
     setRoles((r ?? []).map((x: any) => x.role as AppRole));
     setShift((s as ShiftRow) ?? null);
     setBreakRow((b as BreakRow) ?? null);
     setTickets((tk ?? []) as TicketRow[]);
     setOrders((od ?? []) as OrderRow[]);
-    setBlogs((bl ?? []) as BlogRow[]);
     setLoading(false);
   };
 
@@ -159,7 +158,6 @@ function ProfilePage() {
                 ))}
               </div>
               <p className="text-sm text-muted-foreground">@{profile.username ?? "unknown"}</p>
-              {profile.bio && <p className="text-sm mt-2 max-w-prose">{profile.bio}</p>}
 
               <div className="mt-3 flex flex-wrap gap-2">
                 {breakRow ? (
@@ -188,37 +186,67 @@ function ProfilePage() {
         </section>
 
         <div className="grid lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 space-y-6">
-            {canSeeCreds && (
+          <div className="lg:col-span-2 space-y-4">
+            <div className="flex flex-wrap gap-1 p-1 rounded-xl bg-white/10 border border-white/25 backdrop-blur-xl w-fit">
+              {([
+                ...(canSeeCreds ? [{ id: "creds" as const, label: "Credentials & DNS", icon: KeyRound }] : []),
+                { id: "tickets" as const, label: `Recent tickets (${tickets.length})`, icon: Ticket },
+                { id: "orders" as const, label: `Recent orders (${orders.length})`, icon: ShoppingBag },
+              ]).map((t) => {
+                const Icon = t.icon;
+                const active = mainTab === t.id;
+                return (
+                  <button
+                    key={t.id}
+                    onClick={() => setMainTab(t.id)}
+                    className={cn(
+                      "flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors",
+                      active
+                        ? "bg-white text-rose-600 shadow"
+                        : "text-white/80 hover:text-white hover:bg-white/10",
+                    )}
+                  >
+                    <Icon className="size-3.5" />
+                    {t.label}
+                  </button>
+                );
+              })}
+            </div>
+
+            {mainTab === "creds" && canSeeCreds && (
               <CredentialsReveal targetUserId={profile.id} isOwner={isOwner} />
             )}
 
-            <ActivityCard title="Recent tickets" icon={Ticket} empty="No tickets yet">
-              {tickets.map((t) => (
-                <li key={t.id} className="flex items-center justify-between gap-3 py-2 text-sm">
-                  <span className="truncate">{t.subject}</span>
-                  <span className="text-xs text-muted-foreground capitalize">{t.status}</span>
-                </li>
-              ))}
-            </ActivityCard>
+            {mainTab === "tickets" && (
+              <ActivityCard title="Recent tickets" icon={Ticket} empty="No tickets yet">
+                {tickets.map((t) => (
+                  <li key={t.id} className="flex items-center justify-between gap-3 py-2 text-sm">
+                    <span className="truncate">{t.subject}</span>
+                    <span className="text-xs text-white/70 capitalize">{t.status}</span>
+                  </li>
+                ))}
+              </ActivityCard>
+            )}
 
-            <ActivityCard title="Recent orders" icon={ShoppingBag} empty="No orders yet">
-              {orders.map((o) => (
-                <li key={o.id} className="flex items-center justify-between gap-3 py-2 text-sm">
-                  <span>${(o.total_cents / 100).toFixed(2)}</span>
-                  <span className="text-xs text-muted-foreground capitalize">{o.status}</span>
-                </li>
-              ))}
-            </ActivityCard>
-
-            <ActivityCard title="Sports blog posts" icon={FileText} empty="No posts yet">
-              {blogs.map((b) => (
-                <li key={b.id} className="py-2 text-sm truncate">{b.title}</li>
-              ))}
-            </ActivityCard>
+            {mainTab === "orders" && (
+              <ActivityCard title="Recent orders" icon={ShoppingBag} empty="No orders yet">
+                {orders.map((o) => (
+                  <li key={o.id} className="flex items-center justify-between gap-3 py-2 text-sm">
+                    <span>${(o.total_cents / 100).toFixed(2)}</span>
+                    <span className="text-xs text-white/70 capitalize">{o.status}</span>
+                  </li>
+                ))}
+              </ActivityCard>
+            )}
           </div>
 
           <aside className="space-y-6">
+            <div className="rounded-2xl border border-white/25 bg-white/10 backdrop-blur-xl p-5 shadow-[0_10px_40px_-15px_rgba(0,0,0,0.4)] text-white">
+              <p className="text-xs uppercase tracking-wider text-amber-100/80 mb-2">Bio</p>
+              <p className="text-sm whitespace-pre-wrap">
+                {profile.bio || <span className="text-white/60 italic">No bio yet.</span>}
+              </p>
+            </div>
             <InfoCard label="Member since" value={new Date(profile.created_at).toLocaleDateString()} />
             <InfoCard label="Roles" value={sortedRoles.join(", ") || "—"} />
           </aside>
