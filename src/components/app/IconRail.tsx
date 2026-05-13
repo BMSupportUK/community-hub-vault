@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Home, Ticket, ShoppingBag, BookOpen, FileText, Clock, Calendar, Shield, LogOut, MessageSquare, ShieldCheck, KeyRound, KeySquare, LayoutDashboard, UserCircle2 } from "lucide-react";
+import { Home, Ticket, ShoppingBag, BookOpen, FileText, Clock, Calendar, Shield, LogOut, MessageSquare, ShieldCheck, KeySquare, LayoutDashboard, UserCircle2 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 import { NotificationBell } from "@/components/app/NotificationBell";
@@ -38,7 +38,6 @@ export function IconRail() {
     { to: "/clock", label: "Clock", icon: Clock, show: isStaff },
     { to: "/shifts", label: "Shifts", icon: Calendar, show: isStaff },
     { to: "/moderation", label: "Moderation", icon: Shield, show: isMod },
-    { to: "/vault", label: "Credentials vault", icon: KeyRound, show: true },
     { to: "/admin", label: "Admin dashboard", icon: LayoutDashboard, show: isAdmin },
     { to: "/admin-credentials", label: "User credentials admin", icon: KeySquare, show: isAdmin },
     { to: "/admin-roles", label: "User roles", icon: ShieldCheck, show: isAdmin },
