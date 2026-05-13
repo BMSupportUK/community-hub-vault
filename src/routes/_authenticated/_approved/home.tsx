@@ -1,65 +1,64 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { ChannelColumn } from "@/components/app/ChannelColumn";
-import { Megaphone, Hash } from "lucide-react";
-import { useAuth } from "@/hooks/use-auth";
+import { createFileRoute, Outlet } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { Hash, Megaphone } from "lucide-react";
+import { ChannelColumn, type ChannelGroup } from "@/components/app/ChannelColumn";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/_approved/home")({
-  component: HomePage,
+  component: HomeLayout,
 });
 
-function HomePage() {
-  const { isStaff } = useAuth();
-  return (
-    <>
-      <ChannelColumn
-        title="Hub"
-        groups={[
-          {
-            label: "Information",
-            items: [
-              { to: "/home", label: "welcome", icon: Megaphone },
-              { to: "/home", label: "rules", icon: Hash },
-            ],
-          },
-          {
-            label: "Community",
-            items: [
-              { to: "/home", label: "general", icon: Hash },
-              { to: "/home", label: "off-topic", icon: Hash },
-            ],
-          },
-          ...(isStaff ? [{ label: "Staff", items: [{ to: "/home", label: "staff-room", icon: Hash }] }] : []),
-        ]}
-      />
-      <main className="flex-1 flex flex-col">
-        <header className="h-14 border-b border-border px-5 flex items-center gap-2">
-          <Megaphone className="size-4 text-muted-foreground" />
-          <h1 className="font-display font-semibold">welcome</h1>
-        </header>
-        <div className="flex-1 overflow-y-auto p-8">
-          <div className="max-w-3xl mx-auto space-y-6">
-            <div className="rounded-2xl bg-surface border border-border p-8">
-              <h2 className="font-display text-3xl font-bold">You're in.</h2>
-              <p className="text-muted-foreground mt-2">Pick a section from the icon rail on the left to get started.</p>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <Tile title="Open a ticket" desc="Get help from staff." href="/tickets" />
-              <Tile title="Browse the shop" desc="Pick up server perks." href="/shop" />
-              <Tile title="Install guides" desc="Step-by-step setup with read tracking." href="/install-guides" />
-              <Tile title="Sports guides" desc="Reference PDFs by sport." href="/sports-guides" />
-            </div>
-          </div>
-        </div>
-      </main>
-    </>
-  );
+interface ChannelRow {
+  id: string;
+  slug: string;
+  name: string;
+  group_label: string;
+  icon: string;
+  staff_only: boolean;
+  sort_order: number;
 }
 
-function Tile({ title, desc, href }: { title: string; desc: string; href: string }) {
+const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
+  Megaphone,
+  Hash,
+};
+
+function HomeLayout() {
+  const [channels, setChannels] = useState<ChannelRow[] | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from("chat_channels")
+        .select("id, slug, name, group_label, icon, staff_only, sort_order")
+        .order("sort_order");
+      setChannels((data as ChannelRow[] | null) ?? []);
+    })();
+  }, []);
+
+  const groups: ChannelGroup[] = [];
+  if (channels) {
+    const byGroup = new Map<string, ChannelRow[]>();
+    for (const c of channels) {
+      if (!byGroup.has(c.group_label)) byGroup.set(c.group_label, []);
+      byGroup.get(c.group_label)!.push(c);
+    }
+    for (const [label, items] of byGroup) {
+      groups.push({
+        label,
+        items: items.map((c) => ({
+          to: `/home/${c.slug}`,
+          label: c.name,
+          icon: ICONS[c.icon] ?? Hash,
+        })),
+      });
+    }
+  }
+
   return (
-    <a href={href} className="rounded-xl bg-surface border border-border p-5 hover:bg-surface-2 transition-colors block">
-      <div className="font-display font-semibold">{title}</div>
-      <div className="text-sm text-muted-foreground mt-1">{desc}</div>
-    </a>
+    <>
+      <ChannelColumn title="Hub" groups={groups} />
+      <Outlet />
+    </>
   );
 }
