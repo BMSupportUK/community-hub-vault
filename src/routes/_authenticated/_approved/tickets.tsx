@@ -221,22 +221,23 @@ function TicketsPage() {
         ) : (
           <div className="flex-1 grid place-items-center">
             <div className="text-center max-w-sm">
-              <div className="size-14 rounded-2xl bg-surface-2 grid place-items-center mx-auto mb-4">
-                <TicketIcon className="size-6 text-primary" />
+              <div className="size-14 rounded-2xl bg-white/20 backdrop-blur grid place-items-center mx-auto mb-4 shadow-lg">
+                <TicketIcon className="size-6 text-white" />
               </div>
-              <h1 className="font-display text-xl font-bold">Support tickets</h1>
-              <p className="text-muted-foreground text-sm mt-2">
+              <h1 className="font-display text-xl font-bold text-white drop-shadow">Support tickets</h1>
+              <p className="text-white/85 text-sm mt-2">
                 {tickets.length === 0 ? "Open your first ticket to get help from the team." : "Select a ticket from the list."}
               </p>
               <button
                 onClick={() => setCreating(true)}
-                className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90"
+                className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white text-rose-600 text-sm font-semibold hover:bg-white/90 shadow-lg"
               >
                 <Plus className="size-4" /> New ticket
               </button>
             </div>
           </div>
         )}
+        </div>
       </main>
     </>
   );
