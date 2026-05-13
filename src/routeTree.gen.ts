@@ -25,6 +25,7 @@ import { Route as AuthenticatedApprovedInstallGuidesRouteImport } from './routes
 import { Route as AuthenticatedApprovedHomeRouteImport } from './routes/_authenticated/_approved/home'
 import { Route as AuthenticatedApprovedClockRouteImport } from './routes/_authenticated/_approved/clock'
 import { Route as AuthenticatedApprovedAdminRolesRouteImport } from './routes/_authenticated/_approved/admin-roles'
+import { Route as AuthenticatedApprovedAdminCredentialsRouteImport } from './routes/_authenticated/_approved/admin-credentials'
 
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
@@ -114,12 +115,19 @@ const AuthenticatedApprovedAdminRolesRoute =
     path: '/admin-roles',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
+const AuthenticatedApprovedAdminCredentialsRoute =
+  AuthenticatedApprovedAdminCredentialsRouteImport.update({
+    id: '/admin-credentials',
+    path: '/admin-credentials',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
   '/gate': typeof AuthenticatedGateRoute
+  '/admin-credentials': typeof AuthenticatedApprovedAdminCredentialsRoute
   '/admin-roles': typeof AuthenticatedApprovedAdminRolesRoute
   '/clock': typeof AuthenticatedApprovedClockRoute
   '/home': typeof AuthenticatedApprovedHomeRoute
@@ -136,6 +144,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
   '/gate': typeof AuthenticatedGateRoute
+  '/admin-credentials': typeof AuthenticatedApprovedAdminCredentialsRoute
   '/admin-roles': typeof AuthenticatedApprovedAdminRolesRoute
   '/clock': typeof AuthenticatedApprovedClockRoute
   '/home': typeof AuthenticatedApprovedHomeRoute
@@ -155,6 +164,7 @@ export interface FileRoutesById {
   '/signup': typeof SignupRoute
   '/_authenticated/_approved': typeof AuthenticatedApprovedRouteWithChildren
   '/_authenticated/gate': typeof AuthenticatedGateRoute
+  '/_authenticated/_approved/admin-credentials': typeof AuthenticatedApprovedAdminCredentialsRoute
   '/_authenticated/_approved/admin-roles': typeof AuthenticatedApprovedAdminRolesRoute
   '/_authenticated/_approved/clock': typeof AuthenticatedApprovedClockRoute
   '/_authenticated/_approved/home': typeof AuthenticatedApprovedHomeRoute
@@ -173,6 +183,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/signup'
     | '/gate'
+    | '/admin-credentials'
     | '/admin-roles'
     | '/clock'
     | '/home'
@@ -189,6 +200,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/signup'
     | '/gate'
+    | '/admin-credentials'
     | '/admin-roles'
     | '/clock'
     | '/home'
@@ -207,6 +219,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/_authenticated/_approved'
     | '/_authenticated/gate'
+    | '/_authenticated/_approved/admin-credentials'
     | '/_authenticated/_approved/admin-roles'
     | '/_authenticated/_approved/clock'
     | '/_authenticated/_approved/home'
@@ -340,10 +353,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedApprovedAdminRolesRouteImport
       parentRoute: typeof AuthenticatedApprovedRoute
     }
+    '/_authenticated/_approved/admin-credentials': {
+      id: '/_authenticated/_approved/admin-credentials'
+      path: '/admin-credentials'
+      fullPath: '/admin-credentials'
+      preLoaderRoute: typeof AuthenticatedApprovedAdminCredentialsRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
   }
 }
 
 interface AuthenticatedApprovedRouteChildren {
+  AuthenticatedApprovedAdminCredentialsRoute: typeof AuthenticatedApprovedAdminCredentialsRoute
   AuthenticatedApprovedAdminRolesRoute: typeof AuthenticatedApprovedAdminRolesRoute
   AuthenticatedApprovedClockRoute: typeof AuthenticatedApprovedClockRoute
   AuthenticatedApprovedHomeRoute: typeof AuthenticatedApprovedHomeRoute
@@ -357,6 +378,8 @@ interface AuthenticatedApprovedRouteChildren {
 }
 
 const AuthenticatedApprovedRouteChildren: AuthenticatedApprovedRouteChildren = {
+  AuthenticatedApprovedAdminCredentialsRoute:
+    AuthenticatedApprovedAdminCredentialsRoute,
   AuthenticatedApprovedAdminRolesRoute: AuthenticatedApprovedAdminRolesRoute,
   AuthenticatedApprovedClockRoute: AuthenticatedApprovedClockRoute,
   AuthenticatedApprovedHomeRoute: AuthenticatedApprovedHomeRoute,
