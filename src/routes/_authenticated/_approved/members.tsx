@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { Users, Search, Globe, Clock, ExternalLink, Shield } from "lucide-react";
+import { Users, Search, Clock } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/_approved/members")({
   component: MembersPage,
@@ -22,14 +22,6 @@ interface RoleRow {
   role: string;
 }
 
-interface IpLog {
-  id: string;
-  user_id: string;
-  ip: string;
-  user_agent: string | null;
-  created_at: string;
-}
-
 const ROLE_COLOR: Record<string, string> = {
   admin: "bg-rose-500/20 text-rose-300 ring-rose-400/40",
   management: "bg-fuchsia-500/20 text-fuchsia-300 ring-fuchsia-400/40",
@@ -46,7 +38,6 @@ function MembersPage() {
 
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [rolesByUser, setRolesByUser] = useState<Record<string, string[]>>({});
-  const [latestIp, setLatestIp] = useState<Record<string, IpLog>>({});
   const [q, setQ] = useState("");
 
   useEffect(() => {
@@ -61,18 +52,6 @@ function MembersPage() {
         (map[r.user_id] ||= []).push(r.role);
       }
       setRolesByUser(map);
-
-      if (isAdmin) {
-        const { data: logs } = await supabase
-          .from("user_ip_logs")
-          .select("*")
-          .order("created_at", { ascending: false });
-        const latest: Record<string, IpLog> = {};
-        for (const l of (logs as IpLog[] | null) ?? []) {
-          if (!latest[l.user_id]) latest[l.user_id] = l;
-        }
-        setLatestIp(latest);
-      }
     })();
   }, [isAdmin]);
 
@@ -84,8 +63,7 @@ function MembersPage() {
     const s = q.toLowerCase();
     return (
       (p.display_name ?? "").toLowerCase().includes(s) ||
-      (p.username ?? "").toLowerCase().includes(s) ||
-      (latestIp[p.id]?.ip ?? "").toLowerCase().includes(s)
+      (p.username ?? "").toLowerCase().includes(s)
     );
   });
 
@@ -105,7 +83,7 @@ function MembersPage() {
               Members Directory
             </h1>
             <p className="mt-3 text-white/80 max-w-xl">
-              Meet the community. {isAdmin && "Click an IP address to look it up."}
+              Meet the community.
             </p>
           </div>
           <div className="flex items-center gap-3 text-sm">
@@ -124,7 +102,7 @@ function MembersPage() {
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder={isAdmin ? "Search name, username, or IP…" : "Search members…"}
+            placeholder="Search members…"
             className="w-full pl-9 pr-3 py-2 rounded-lg bg-surface-2 text-sm border border-border focus:border-fuchsia-400 outline-none"
           />
         </div>
@@ -139,7 +117,6 @@ function MembersPage() {
         )}
         {filtered.map((p) => {
           const userRoles = rolesByUser[p.id] ?? ["member"];
-          const ip = latestIp[p.id];
           const name = p.display_name ?? p.username ?? "Unknown";
           const initial = name.slice(0, 1).toUpperCase();
           return (
@@ -192,29 +169,6 @@ function MembersPage() {
                   <Clock className="size-3" />
                   Joined {new Date(p.created_at).toLocaleDateString()}
                 </div>
-
-                {isAdmin && (
-                  <div className="mt-2 rounded-lg bg-gradient-to-r from-rose-500/10 to-fuchsia-500/10 ring-1 ring-fuchsia-400/20 p-2 flex items-center gap-2">
-                    <Shield className="size-3.5 text-fuchsia-300 shrink-0" />
-                    {ip ? (
-                      <a
-                        href={`https://ipinfo.io/${ip.ip}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="flex-1 min-w-0 font-mono text-[11px] text-fuchsia-200 hover:text-fuchsia-100 truncate inline-flex items-center gap-1"
-                        title={`Lookup ${ip.ip} • ${new Date(ip.created_at).toLocaleString()}`}
-                      >
-                        <Globe className="size-3 shrink-0" />
-                        <span className="truncate">{ip.ip}</span>
-                        <ExternalLink className="size-3 opacity-60 shrink-0" />
-                      </a>
-                    ) : (
-                      <span className="flex-1 text-[11px] text-muted-foreground italic">
-                        No IP logged yet
-                      </span>
-                    )}
-                  </div>
-                )}
               </div>
             </div>
           );
