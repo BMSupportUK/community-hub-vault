@@ -15,6 +15,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
+import statusHero from "@/assets/status-hero.png";
 
 export const Route = createFileRoute("/_authenticated/_approved/status")({
   component: StatusPage,
@@ -41,10 +42,10 @@ interface IncidentUpdate {
 }
 
 const STATUS_META: Record<IncidentStatus, { label: string; classes: string; icon: React.ComponentType<{ className?: string }> }> = {
-  investigating: { label: "Investigating", classes: "bg-amber-500/15 text-amber-400 border-amber-500/30", icon: Search },
-  identified: { label: "Identified", classes: "bg-orange-500/15 text-orange-400 border-orange-500/30", icon: AlertTriangle },
-  monitoring: { label: "Monitoring", classes: "bg-sky-500/15 text-sky-400 border-sky-500/30", icon: Eye },
-  completed: { label: "Completed", classes: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30", icon: CheckCircle2 },
+  investigating: { label: "Investigating", classes: "bg-blue-500/15 text-blue-300 border-blue-500/30", icon: Search },
+  identified: { label: "Identified", classes: "bg-indigo-500/15 text-indigo-300 border-indigo-500/30", icon: AlertTriangle },
+  monitoring: { label: "Monitoring", classes: "bg-sky-500/15 text-sky-300 border-sky-500/30", icon: Eye },
+  completed: { label: "Completed", classes: "bg-cyan-500/15 text-cyan-300 border-cyan-500/30", icon: CheckCircle2 },
 };
 
 function StatusPage() {
@@ -81,20 +82,34 @@ function StatusPage() {
   return (
     <main className="flex-1 overflow-y-auto">
       <div className="max-w-5xl mx-auto px-6 py-8 space-y-6">
+        {/* Hero illustration */}
+        <div className="relative rounded-3xl overflow-hidden border border-blue-500/30 shadow-glow bg-gradient-to-br from-blue-950 via-blue-900 to-sky-800">
+          <img
+            src={statusHero}
+            alt="BM Support engineer monitoring systems"
+            className="w-full h-44 sm:h-56 object-cover object-center"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-blue-950/80 via-blue-950/10 to-transparent pointer-events-none" />
+          <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-6">
+            <div className="font-display text-2xl sm:text-3xl font-bold text-white drop-shadow">BM Support · System Status</div>
+            <div className="text-sm text-blue-100/90">Real-time infrastructure monitoring</div>
+          </div>
+        </div>
+
         <header className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="size-11 rounded-2xl bg-gradient-primary grid place-items-center shadow-glow">
-              <Activity className="size-5 text-primary-foreground" />
+            <div className="size-11 rounded-2xl bg-gradient-to-br from-blue-500 to-sky-400 grid place-items-center shadow-glow">
+              <Activity className="size-5 text-white" />
             </div>
             <div>
-              <h1 className="font-display text-2xl font-bold">System Status</h1>
-              <p className="text-sm text-muted-foreground">Real-time infrastructure monitoring</p>
+              <h1 className="font-display text-2xl font-bold">Incidents</h1>
+              <p className="text-sm text-muted-foreground">Track active and resolved issues across our services.</p>
             </div>
           </div>
           {canManage && (
             <button
               onClick={() => setEditor({ open: true })}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground font-medium shadow-glow hover:opacity-90"
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-sky-400 text-white font-medium shadow-glow hover:opacity-90"
             >
               <Plus className="size-4" /> Add Issue
             </button>
@@ -105,14 +120,14 @@ function StatusPage() {
         <div
           className={`rounded-2xl border p-6 flex items-center gap-4 ${
             active.length === 0
-              ? "border-emerald-500/30 bg-emerald-500/10"
-              : "border-amber-500/30 bg-amber-500/10"
+              ? "border-cyan-500/30 bg-gradient-to-r from-cyan-500/10 to-blue-500/10"
+              : "border-blue-500/40 bg-gradient-to-r from-blue-500/15 to-indigo-500/10"
           }`}
         >
           {active.length === 0 ? (
-            <CheckCircle2 className="size-10 text-emerald-400 shrink-0" />
+            <CheckCircle2 className="size-10 text-cyan-300 shrink-0" />
           ) : (
-            <ShieldAlert className="size-10 text-amber-400 shrink-0" />
+            <ShieldAlert className="size-10 text-blue-300 shrink-0" />
           )}
           <div>
             <div className="font-display text-lg font-bold">
@@ -136,7 +151,7 @@ function StatusPage() {
               onClick={() => setTab(t)}
               className={`px-4 py-2 text-sm font-medium -mb-px border-b-2 transition-colors ${
                 tab === t
-                  ? "border-primary text-foreground"
+                  ? "border-blue-400 text-blue-200"
                   : "border-transparent text-muted-foreground hover:text-foreground"
               }`}
             >
