@@ -20,6 +20,7 @@ import { Route as AuthenticatedApprovedTicketsRouteImport } from './routes/_auth
 import { Route as AuthenticatedApprovedSportsGuidesRouteImport } from './routes/_authenticated/_approved/sports-guides'
 import { Route as AuthenticatedApprovedShopRouteImport } from './routes/_authenticated/_approved/shop'
 import { Route as AuthenticatedApprovedShiftsRouteImport } from './routes/_authenticated/_approved/shifts'
+import { Route as AuthenticatedApprovedProfileRouteImport } from './routes/_authenticated/_approved/profile'
 import { Route as AuthenticatedApprovedModerationRouteImport } from './routes/_authenticated/_approved/moderation'
 import { Route as AuthenticatedApprovedInstallGuidesRouteImport } from './routes/_authenticated/_approved/install-guides'
 import { Route as AuthenticatedApprovedHomeRouteImport } from './routes/_authenticated/_approved/home'
@@ -27,6 +28,7 @@ import { Route as AuthenticatedApprovedClockRouteImport } from './routes/_authen
 import { Route as AuthenticatedApprovedAdminRolesRouteImport } from './routes/_authenticated/_approved/admin-roles'
 import { Route as AuthenticatedApprovedAdminCredentialsRouteImport } from './routes/_authenticated/_approved/admin-credentials'
 import { Route as AuthenticatedApprovedAdminRouteImport } from './routes/_authenticated/_approved/admin'
+import { Route as AuthenticatedApprovedUUsernameRouteImport } from './routes/_authenticated/_approved/u.$username'
 
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
@@ -86,6 +88,12 @@ const AuthenticatedApprovedShiftsRoute =
     path: '/shifts',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
+const AuthenticatedApprovedProfileRoute =
+  AuthenticatedApprovedProfileRouteImport.update({
+    id: '/profile',
+    path: '/profile',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
 const AuthenticatedApprovedModerationRoute =
   AuthenticatedApprovedModerationRouteImport.update({
     id: '/moderation',
@@ -128,6 +136,12 @@ const AuthenticatedApprovedAdminRoute =
     path: '/admin',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
+const AuthenticatedApprovedUUsernameRoute =
+  AuthenticatedApprovedUUsernameRouteImport.update({
+    id: '/u/$username',
+    path: '/u/$username',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -141,11 +155,13 @@ export interface FileRoutesByFullPath {
   '/home': typeof AuthenticatedApprovedHomeRoute
   '/install-guides': typeof AuthenticatedApprovedInstallGuidesRoute
   '/moderation': typeof AuthenticatedApprovedModerationRoute
+  '/profile': typeof AuthenticatedApprovedProfileRoute
   '/shifts': typeof AuthenticatedApprovedShiftsRoute
   '/shop': typeof AuthenticatedApprovedShopRoute
   '/sports-guides': typeof AuthenticatedApprovedSportsGuidesRoute
   '/tickets': typeof AuthenticatedApprovedTicketsRoute
   '/vault': typeof AuthenticatedApprovedVaultRoute
+  '/u/$username': typeof AuthenticatedApprovedUUsernameRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -159,11 +175,13 @@ export interface FileRoutesByTo {
   '/home': typeof AuthenticatedApprovedHomeRoute
   '/install-guides': typeof AuthenticatedApprovedInstallGuidesRoute
   '/moderation': typeof AuthenticatedApprovedModerationRoute
+  '/profile': typeof AuthenticatedApprovedProfileRoute
   '/shifts': typeof AuthenticatedApprovedShiftsRoute
   '/shop': typeof AuthenticatedApprovedShopRoute
   '/sports-guides': typeof AuthenticatedApprovedSportsGuidesRoute
   '/tickets': typeof AuthenticatedApprovedTicketsRoute
   '/vault': typeof AuthenticatedApprovedVaultRoute
+  '/u/$username': typeof AuthenticatedApprovedUUsernameRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -180,11 +198,13 @@ export interface FileRoutesById {
   '/_authenticated/_approved/home': typeof AuthenticatedApprovedHomeRoute
   '/_authenticated/_approved/install-guides': typeof AuthenticatedApprovedInstallGuidesRoute
   '/_authenticated/_approved/moderation': typeof AuthenticatedApprovedModerationRoute
+  '/_authenticated/_approved/profile': typeof AuthenticatedApprovedProfileRoute
   '/_authenticated/_approved/shifts': typeof AuthenticatedApprovedShiftsRoute
   '/_authenticated/_approved/shop': typeof AuthenticatedApprovedShopRoute
   '/_authenticated/_approved/sports-guides': typeof AuthenticatedApprovedSportsGuidesRoute
   '/_authenticated/_approved/tickets': typeof AuthenticatedApprovedTicketsRoute
   '/_authenticated/_approved/vault': typeof AuthenticatedApprovedVaultRoute
+  '/_authenticated/_approved/u/$username': typeof AuthenticatedApprovedUUsernameRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -200,11 +220,13 @@ export interface FileRouteTypes {
     | '/home'
     | '/install-guides'
     | '/moderation'
+    | '/profile'
     | '/shifts'
     | '/shop'
     | '/sports-guides'
     | '/tickets'
     | '/vault'
+    | '/u/$username'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -218,11 +240,13 @@ export interface FileRouteTypes {
     | '/home'
     | '/install-guides'
     | '/moderation'
+    | '/profile'
     | '/shifts'
     | '/shop'
     | '/sports-guides'
     | '/tickets'
     | '/vault'
+    | '/u/$username'
   id:
     | '__root__'
     | '/'
@@ -238,11 +262,13 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/home'
     | '/_authenticated/_approved/install-guides'
     | '/_authenticated/_approved/moderation'
+    | '/_authenticated/_approved/profile'
     | '/_authenticated/_approved/shifts'
     | '/_authenticated/_approved/shop'
     | '/_authenticated/_approved/sports-guides'
     | '/_authenticated/_approved/tickets'
     | '/_authenticated/_approved/vault'
+    | '/_authenticated/_approved/u/$username'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -331,6 +357,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedApprovedShiftsRouteImport
       parentRoute: typeof AuthenticatedApprovedRoute
     }
+    '/_authenticated/_approved/profile': {
+      id: '/_authenticated/_approved/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof AuthenticatedApprovedProfileRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
     '/_authenticated/_approved/moderation': {
       id: '/_authenticated/_approved/moderation'
       path: '/moderation'
@@ -380,6 +413,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedApprovedAdminRouteImport
       parentRoute: typeof AuthenticatedApprovedRoute
     }
+    '/_authenticated/_approved/u/$username': {
+      id: '/_authenticated/_approved/u/$username'
+      path: '/u/$username'
+      fullPath: '/u/$username'
+      preLoaderRoute: typeof AuthenticatedApprovedUUsernameRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
   }
 }
 
@@ -391,11 +431,13 @@ interface AuthenticatedApprovedRouteChildren {
   AuthenticatedApprovedHomeRoute: typeof AuthenticatedApprovedHomeRoute
   AuthenticatedApprovedInstallGuidesRoute: typeof AuthenticatedApprovedInstallGuidesRoute
   AuthenticatedApprovedModerationRoute: typeof AuthenticatedApprovedModerationRoute
+  AuthenticatedApprovedProfileRoute: typeof AuthenticatedApprovedProfileRoute
   AuthenticatedApprovedShiftsRoute: typeof AuthenticatedApprovedShiftsRoute
   AuthenticatedApprovedShopRoute: typeof AuthenticatedApprovedShopRoute
   AuthenticatedApprovedSportsGuidesRoute: typeof AuthenticatedApprovedSportsGuidesRoute
   AuthenticatedApprovedTicketsRoute: typeof AuthenticatedApprovedTicketsRoute
   AuthenticatedApprovedVaultRoute: typeof AuthenticatedApprovedVaultRoute
+  AuthenticatedApprovedUUsernameRoute: typeof AuthenticatedApprovedUUsernameRoute
 }
 
 const AuthenticatedApprovedRouteChildren: AuthenticatedApprovedRouteChildren = {
@@ -408,12 +450,14 @@ const AuthenticatedApprovedRouteChildren: AuthenticatedApprovedRouteChildren = {
   AuthenticatedApprovedInstallGuidesRoute:
     AuthenticatedApprovedInstallGuidesRoute,
   AuthenticatedApprovedModerationRoute: AuthenticatedApprovedModerationRoute,
+  AuthenticatedApprovedProfileRoute: AuthenticatedApprovedProfileRoute,
   AuthenticatedApprovedShiftsRoute: AuthenticatedApprovedShiftsRoute,
   AuthenticatedApprovedShopRoute: AuthenticatedApprovedShopRoute,
   AuthenticatedApprovedSportsGuidesRoute:
     AuthenticatedApprovedSportsGuidesRoute,
   AuthenticatedApprovedTicketsRoute: AuthenticatedApprovedTicketsRoute,
   AuthenticatedApprovedVaultRoute: AuthenticatedApprovedVaultRoute,
+  AuthenticatedApprovedUUsernameRoute: AuthenticatedApprovedUUsernameRoute,
 }
 
 const AuthenticatedApprovedRouteWithChildren =
