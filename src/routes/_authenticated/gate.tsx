@@ -284,7 +284,9 @@ function GatePage() {
                 </div>
                 <div>
                   <div className="font-display font-semibold text-white text-sm">Support chat</div>
-                  <div className="text-[10px] uppercase tracking-wider text-red-300/80">{status}</div>
+                  <div className="text-[10px] uppercase tracking-wider text-red-300/80">
+                    {ticketNumber !== null ? `#GATE-${String(ticketNumber).padStart(6, "0")} · ${status}` : status}
+                  </div>
                 </div>
               </div>
               <button onClick={() => setChatOpen(false)} className="text-white/60 hover:text-white"><X className="size-5" /></button>
