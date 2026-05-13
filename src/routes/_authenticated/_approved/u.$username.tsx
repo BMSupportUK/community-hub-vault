@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import {
-  User as UserIcon, Pencil, Camera, Loader2, ShieldCheck, Clock as ClockIcon,
+  Pencil, Camera, Loader2, ShieldCheck, Clock as ClockIcon,
   Coffee, UtensilsCrossed, Ticket, ShoppingBag, FileText, Eye, EyeOff,
   Lock, KeyRound, Copy, Check,
 } from "lucide-react";
@@ -262,10 +262,8 @@ function StatusPill({ icon: Icon, label, tone }: { icon: any; label: string; ton
 }
 
 function ActivityCard({ title, icon: Icon, children, empty }: { title: string; icon: any; children: React.ReactNode; empty: string }) {
-  const items = Array.isArray(children) ? children : [children];
-  const hasItems = items.some((c: any) => c);
-  const flat = (children as any[]) ?? [];
-  const isEmpty = !flat.length;
+  const arr = Array.isArray(children) ? children : [children];
+  const isEmpty = arr.filter(Boolean).length === 0;
   return (
     <section className="rounded-2xl border border-border bg-surface-1 p-5">
       <h2 className="flex items-center gap-2 font-display text-lg font-bold mb-2">
