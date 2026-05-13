@@ -6,7 +6,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { ChannelColumn, type ChannelGroup } from "@/components/app/ChannelColumn";
 import {
   Ticket as TicketIcon, Plus, Send, Lock, X, LifeBuoy, CreditCard, Bug, Sparkles, UserCog,
-  Circle, CircleDot, Clock4, CheckCircle2, XCircle, ChevronDown,
+  Tv, Film, Circle, CircleDot, Clock4, CheckCircle2, XCircle, ChevronDown,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -20,7 +20,7 @@ export const Route = createFileRoute("/_authenticated/_approved/tickets")({
 });
 
 const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
-  LifeBuoy, CreditCard, Bug, Sparkles, UserCog,
+  LifeBuoy, CreditCard, Bug, Sparkles, UserCog, Tv, Film,
 };
 
 const STATUS_META = {
