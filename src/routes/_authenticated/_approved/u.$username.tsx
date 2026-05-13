@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   Pencil, Camera, Loader2, ShieldCheck, Clock as ClockIcon,
   Coffee, UtensilsCrossed, Ticket, ShoppingBag, FileText, Eye, EyeOff,
-  Lock, KeyRound, Copy, Check,
+  Lock, KeyRound, Copy, Check, Globe, Calendar, StickyNote, AtSign,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, type AppRole } from "@/hooks/use-auth";
@@ -26,6 +26,7 @@ interface ProfileRow {
 interface ShiftRow { id: string; user_id: string; clock_in: string; clock_out: string | null; }
 interface BreakRow { id: string; user_id: string; kind: "break" | "lunch"; started_at: string; ended_at: string | null; }
 interface CredRow { id: string; app_login_name: string; password: string; expiry_at: string | null; notes: string | null; }
+interface DnsRow { id: string; label: string; code: string; notes: string | null; }
 interface TicketRow { id: string; subject: string; status: string; created_at: string; }
 interface OrderRow { id: string; total_cents: number; status: string; created_at: string; }
 interface BlogRow { id: string; title: string; created_at: string; }
@@ -294,6 +295,8 @@ function CredentialsReveal({ targetUserId, isOwner }: { targetUserId: string; is
   const [hasPin, setHasPin] = useState<boolean | null>(null);
   const [unlocked, setUnlocked] = useState(false);
   const [creds, setCreds] = useState<CredRow[]>([]);
+  const [dns, setDns] = useState<DnsRow[]>([]);
+  const [tab, setTab] = useState<"creds" | "dns">("creds");
   const [loading, setLoading] = useState(false);
   const [reveal, setReveal] = useState<Record<string, boolean>>({});
   const [copied, setCopied] = useState<string | null>(null);
@@ -307,8 +310,14 @@ function CredentialsReveal({ targetUserId, isOwner }: { targetUserId: string; is
   useEffect(() => {
     if (!unlocked) return;
     setLoading(true);
-    supabase.from("app_credentials").select("*").eq("owner_id", targetUserId).order("created_at", { ascending: false })
-      .then(({ data }) => { setCreds((data ?? []) as CredRow[]); setLoading(false); });
+    Promise.all([
+      supabase.from("app_credentials").select("*").eq("owner_id", targetUserId).order("created_at", { ascending: false }),
+      supabase.from("qd_dns_codes").select("*").order("label", { ascending: true }),
+    ]).then(([{ data: c }, { data: d }]) => {
+      setCreds((c ?? []) as CredRow[]);
+      setDns((d ?? []) as DnsRow[]);
+      setLoading(false);
+    });
     const t = setTimeout(() => setUnlocked(false), 5 * 60 * 1000);
     return () => clearTimeout(t);
   }, [unlocked, targetUserId]);
@@ -324,7 +333,7 @@ function CredentialsReveal({ targetUserId, isOwner }: { targetUserId: string; is
     <section className="rounded-2xl border border-border bg-surface-1 p-5">
       <div className="flex items-center justify-between gap-3 mb-3">
         <h2 className="flex items-center gap-2 font-display text-lg font-bold">
-          <KeyRound className="size-4 text-primary" /> App credentials
+          <KeyRound className="size-4 text-primary" /> Credentials & DNS
         </h2>
         {unlocked && (
           <button onClick={() => setUnlocked(false)} className="flex items-center gap-2 text-xs px-2.5 py-1 rounded-lg bg-surface-2 border border-border hover:border-primary">
@@ -341,51 +350,133 @@ function CredentialsReveal({ targetUserId, isOwner }: { targetUserId: string; is
         />
       ) : loading ? (
         <div className="grid place-items-center py-8 text-muted-foreground"><Loader2 className="size-5 animate-spin" /></div>
-      ) : creds.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
-          {isOwner ? "No credentials assigned to you yet. An admin will set them up." : "This member has no credentials assigned."}
-        </p>
       ) : (
-        <ul className="space-y-3">
-          {creds.map((c) => {
-            const expired = c.expiry_at ? new Date(c.expiry_at).getTime() < Date.now() : false;
-            const expSoon = c.expiry_at && !expired && new Date(c.expiry_at).getTime() - Date.now() < 7 * 86400_000;
-            return (
-              <li key={c.id} className="rounded-xl border border-border bg-surface-2 p-3">
-                <div className="flex items-center justify-between gap-3 mb-2">
-                  <div className="font-medium text-sm truncate">{c.app_login_name}</div>
-                  {c.expiry_at && (
-                    <span className={cn("text-xs px-2 py-0.5 rounded-full border",
-                      expired ? "text-destructive border-destructive/30 bg-destructive/10"
-                      : expSoon ? "text-amber-500 border-amber-500/30 bg-amber-500/10"
-                      : "text-muted-foreground border-border")}>
-                      {expired ? "Expired" : `Expires ${new Date(c.expiry_at).toLocaleDateString()}`}
-                    </span>
-                  )}
-                </div>
-                <div className="flex items-center gap-2">
-                  <input
-                    readOnly
-                    type={reveal[c.id] ? "text" : "password"}
-                    value={c.password}
-                    className="flex-1 px-2.5 py-1.5 rounded-md bg-background border border-border text-sm font-mono"
-                  />
-                  <button onClick={() => setReveal((r) => ({ ...r, [c.id]: !r[c.id] }))}
-                    className="p-2 rounded-md bg-background border border-border hover:border-primary" title={reveal[c.id] ? "Hide" : "Reveal"}>
-                    {reveal[c.id] ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-                  </button>
-                  <button onClick={() => copy(c.id, c.password)}
-                    className="p-2 rounded-md bg-background border border-border hover:border-primary" title="Copy">
-                    {copied === c.id ? <Check className="size-4 text-emerald-500" /> : <Copy className="size-4" />}
-                  </button>
-                </div>
-                {c.notes && <p className="text-xs text-muted-foreground mt-2">{c.notes}</p>}
-              </li>
-            );
-          })}
-        </ul>
+        <>
+          <div className="flex gap-1 p-1 rounded-xl bg-surface-2 border border-border w-fit mb-4">
+            {([
+              { id: "creds", label: `App Credentials (${creds.length})` },
+              { id: "dns", label: `QD DNS Codes (${dns.length})` },
+            ] as const).map((t) => (
+              <button key={t.id} onClick={() => setTab(t.id)}
+                className={cn("px-3 py-1.5 rounded-lg text-xs font-medium transition-colors",
+                  tab === t.id ? "bg-primary text-primary-foreground shadow-glow" : "text-muted-foreground hover:text-foreground")}>
+                {t.label}
+              </button>
+            ))}
+          </div>
+
+          {tab === "creds" ? (
+            creds.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                {isOwner ? "No credentials assigned to you yet. An admin will set them up." : "This member has no credentials assigned."}
+              </p>
+            ) : (
+              <ul className="space-y-3">
+                {creds.map((c) => {
+                  const expired = c.expiry_at ? new Date(c.expiry_at).getTime() < Date.now() : false;
+                  const expSoon = c.expiry_at && !expired && new Date(c.expiry_at).getTime() - Date.now() < 7 * 86400_000;
+                  return (
+                    <li key={c.id} className="rounded-xl border border-border bg-surface-2 p-4 space-y-3">
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <AtSign className="size-4 text-primary shrink-0" />
+                          <div className="font-display font-semibold truncate">{c.app_login_name}</div>
+                        </div>
+                        {c.expiry_at && (
+                          <span className={cn("text-xs px-2 py-0.5 rounded-full border whitespace-nowrap",
+                            expired ? "text-destructive border-destructive/30 bg-destructive/10"
+                            : expSoon ? "text-amber-500 border-amber-500/30 bg-amber-500/10"
+                            : "text-muted-foreground border-border")}>
+                            {expired ? "Expired" : "Active"}
+                          </span>
+                        )}
+                      </div>
+
+                      <FieldRow icon={KeyRound} label="App login name" value={c.app_login_name} onCopy={() => copy(`name-${c.id}`, c.app_login_name)} copied={copied === `name-${c.id}`} />
+
+                      <div>
+                        <p className="text-[11px] uppercase tracking-wider text-muted-foreground mb-1 flex items-center gap-1.5"><Lock className="size-3" /> Password</p>
+                        <div className="flex items-center gap-2">
+                          <input readOnly type={reveal[c.id] ? "text" : "password"} value={c.password}
+                            className="flex-1 px-2.5 py-1.5 rounded-md bg-background border border-border text-sm font-mono" />
+                          <button onClick={() => setReveal((r) => ({ ...r, [c.id]: !r[c.id] }))}
+                            className="p-2 rounded-md bg-background border border-border hover:border-primary" title={reveal[c.id] ? "Hide" : "Reveal"}>
+                            {reveal[c.id] ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                          </button>
+                          <button onClick={() => copy(c.id, c.password)}
+                            className="p-2 rounded-md bg-background border border-border hover:border-primary" title="Copy">
+                            {copied === c.id ? <Check className="size-4 text-emerald-500" /> : <Copy className="size-4" />}
+                          </button>
+                        </div>
+                      </div>
+
+                      <div>
+                        <p className="text-[11px] uppercase tracking-wider text-muted-foreground mb-1 flex items-center gap-1.5"><Calendar className="size-3" /> Expiry</p>
+                        <p className={cn("text-sm",
+                          expired ? "text-destructive" : expSoon ? "text-amber-500" : "text-foreground")}>
+                          {c.expiry_at ? new Date(c.expiry_at).toLocaleString() : "No expiry set"}
+                        </p>
+                      </div>
+
+                      <div>
+                        <p className="text-[11px] uppercase tracking-wider text-muted-foreground mb-1 flex items-center gap-1.5"><StickyNote className="size-3" /> Notes</p>
+                        <p className="text-sm whitespace-pre-wrap">{c.notes || <span className="text-muted-foreground">—</span>}</p>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            )
+          ) : (
+            dns.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No QD DNS codes have been added yet.</p>
+            ) : (
+              <ul className="space-y-3">
+                {dns.map((d) => (
+                  <li key={d.id} className="rounded-xl border border-border bg-surface-2 p-4 space-y-3">
+                    <div className="flex items-center gap-2">
+                      <Globe className="size-4 text-primary shrink-0" />
+                      <div className="font-display font-semibold truncate">{d.label}</div>
+                    </div>
+                    <div>
+                      <p className="text-[11px] uppercase tracking-wider text-muted-foreground mb-1">DNS code</p>
+                      <div className="flex items-center gap-2">
+                        <input readOnly value={d.code}
+                          className="flex-1 px-2.5 py-1.5 rounded-md bg-background border border-border text-sm font-mono" />
+                        <button onClick={() => copy(`dns-${d.id}`, d.code)}
+                          className="p-2 rounded-md bg-background border border-border hover:border-primary" title="Copy">
+                          {copied === `dns-${d.id}` ? <Check className="size-4 text-emerald-500" /> : <Copy className="size-4" />}
+                        </button>
+                      </div>
+                    </div>
+                    {d.notes && (
+                      <div>
+                        <p className="text-[11px] uppercase tracking-wider text-muted-foreground mb-1 flex items-center gap-1.5"><StickyNote className="size-3" /> Notes</p>
+                        <p className="text-sm whitespace-pre-wrap">{d.notes}</p>
+                      </div>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )
+          )}
+        </>
       )}
     </section>
+  );
+}
+
+function FieldRow({ icon: Icon, label, value, onCopy, copied }: { icon: any; label: string; value: string; onCopy: () => void; copied: boolean }) {
+  return (
+    <div>
+      <p className="text-[11px] uppercase tracking-wider text-muted-foreground mb-1 flex items-center gap-1.5"><Icon className="size-3" /> {label}</p>
+      <div className="flex items-center gap-2">
+        <input readOnly value={value} className="flex-1 px-2.5 py-1.5 rounded-md bg-background border border-border text-sm" />
+        <button onClick={onCopy} className="p-2 rounded-md bg-background border border-border hover:border-primary" title="Copy">
+          {copied ? <Check className="size-4 text-emerald-500" /> : <Copy className="size-4" />}
+        </button>
+      </div>
+    </div>
   );
 }
 
