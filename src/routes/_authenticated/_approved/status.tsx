@@ -15,6 +15,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
+import statusHero from "@/assets/status-hero.png";
 
 export const Route = createFileRoute("/_authenticated/_approved/status")({
   component: StatusPage,
@@ -41,10 +42,10 @@ interface IncidentUpdate {
 }
 
 const STATUS_META: Record<IncidentStatus, { label: string; classes: string; icon: React.ComponentType<{ className?: string }> }> = {
-  investigating: { label: "Investigating", classes: "bg-amber-500/15 text-amber-400 border-amber-500/30", icon: Search },
-  identified: { label: "Identified", classes: "bg-orange-500/15 text-orange-400 border-orange-500/30", icon: AlertTriangle },
-  monitoring: { label: "Monitoring", classes: "bg-sky-500/15 text-sky-400 border-sky-500/30", icon: Eye },
-  completed: { label: "Completed", classes: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30", icon: CheckCircle2 },
+  investigating: { label: "Investigating", classes: "bg-blue-500/15 text-blue-300 border-blue-500/30", icon: Search },
+  identified: { label: "Identified", classes: "bg-indigo-500/15 text-indigo-300 border-indigo-500/30", icon: AlertTriangle },
+  monitoring: { label: "Monitoring", classes: "bg-sky-500/15 text-sky-300 border-sky-500/30", icon: Eye },
+  completed: { label: "Completed", classes: "bg-cyan-500/15 text-cyan-300 border-cyan-500/30", icon: CheckCircle2 },
 };
 
 function StatusPage() {
