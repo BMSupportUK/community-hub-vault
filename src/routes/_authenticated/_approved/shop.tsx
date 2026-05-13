@@ -32,7 +32,7 @@ interface Order {
 interface OrderItem { id: string; order_id: string; product_name: string; unit_price_cents: number; quantity: number; }
 interface OrderMessage { id: string; order_id: string; sender_id: string; content: string; created_at: string; }
 
-const fmt = (c: number) => `$${(c / 100).toFixed(2)}`;
+const fmt = (c: number) => new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP" }).format(c / 100);
 
 function ShopPage() {
   const { view, id } = Route.useSearch();
