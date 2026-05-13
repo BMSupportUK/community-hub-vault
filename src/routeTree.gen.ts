@@ -14,6 +14,9 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedGateRouteImport } from './routes/_authenticated/gate'
+import { Route as AuthenticatedApprovedRouteImport } from './routes/_authenticated/_approved'
+import { Route as AuthenticatedApprovedTicketsRouteImport } from './routes/_authenticated/_approved/tickets'
+import { Route as AuthenticatedApprovedHomeRouteImport } from './routes/_authenticated/_approved/home'
 
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
@@ -39,18 +42,38 @@ const AuthenticatedGateRoute = AuthenticatedGateRouteImport.update({
   path: '/gate',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedApprovedRoute = AuthenticatedApprovedRouteImport.update({
+  id: '/_approved',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedApprovedTicketsRoute =
+  AuthenticatedApprovedTicketsRouteImport.update({
+    id: '/tickets',
+    path: '/tickets',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
+const AuthenticatedApprovedHomeRoute =
+  AuthenticatedApprovedHomeRouteImport.update({
+    id: '/home',
+    path: '/home',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
   '/gate': typeof AuthenticatedGateRoute
+  '/home': typeof AuthenticatedApprovedHomeRoute
+  '/tickets': typeof AuthenticatedApprovedTicketsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
   '/gate': typeof AuthenticatedGateRoute
+  '/home': typeof AuthenticatedApprovedHomeRoute
+  '/tickets': typeof AuthenticatedApprovedTicketsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -58,20 +81,26 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
+  '/_authenticated/_approved': typeof AuthenticatedApprovedRouteWithChildren
   '/_authenticated/gate': typeof AuthenticatedGateRoute
+  '/_authenticated/_approved/home': typeof AuthenticatedApprovedHomeRoute
+  '/_authenticated/_approved/tickets': typeof AuthenticatedApprovedTicketsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/signup' | '/gate'
+  fullPaths: '/' | '/login' | '/signup' | '/gate' | '/home' | '/tickets'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/signup' | '/gate'
+  to: '/' | '/login' | '/signup' | '/gate' | '/home' | '/tickets'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/login'
     | '/signup'
+    | '/_authenticated/_approved'
     | '/_authenticated/gate'
+    | '/_authenticated/_approved/home'
+    | '/_authenticated/_approved/tickets'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -118,14 +147,52 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedGateRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/_approved': {
+      id: '/_authenticated/_approved'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedApprovedRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/_approved/tickets': {
+      id: '/_authenticated/_approved/tickets'
+      path: '/tickets'
+      fullPath: '/tickets'
+      preLoaderRoute: typeof AuthenticatedApprovedTicketsRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
+    '/_authenticated/_approved/home': {
+      id: '/_authenticated/_approved/home'
+      path: '/home'
+      fullPath: '/home'
+      preLoaderRoute: typeof AuthenticatedApprovedHomeRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
   }
 }
 
+interface AuthenticatedApprovedRouteChildren {
+  AuthenticatedApprovedHomeRoute: typeof AuthenticatedApprovedHomeRoute
+  AuthenticatedApprovedTicketsRoute: typeof AuthenticatedApprovedTicketsRoute
+}
+
+const AuthenticatedApprovedRouteChildren: AuthenticatedApprovedRouteChildren = {
+  AuthenticatedApprovedHomeRoute: AuthenticatedApprovedHomeRoute,
+  AuthenticatedApprovedTicketsRoute: AuthenticatedApprovedTicketsRoute,
+}
+
+const AuthenticatedApprovedRouteWithChildren =
+  AuthenticatedApprovedRoute._addFileChildren(
+    AuthenticatedApprovedRouteChildren,
+  )
+
 interface AuthenticatedRouteChildren {
+  AuthenticatedApprovedRoute: typeof AuthenticatedApprovedRouteWithChildren
   AuthenticatedGateRoute: typeof AuthenticatedGateRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
+  AuthenticatedApprovedRoute: AuthenticatedApprovedRouteWithChildren,
   AuthenticatedGateRoute: AuthenticatedGateRoute,
 }
 
