@@ -73,6 +73,161 @@ export type Database = {
           },
         ]
       }
+      order_items: {
+        Row: {
+          created_at: string
+          id: string
+          order_id: string
+          product_id: string | null
+          product_name: string
+          quantity: number
+          unit_price_cents: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          order_id: string
+          product_id?: string | null
+          product_name: string
+          quantity: number
+          unit_price_cents: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          order_id?: string
+          product_id?: string | null
+          product_name?: string
+          quantity?: number
+          unit_price_cents?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      order_messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          order_id: string
+          sender_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          order_id: string
+          sender_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          order_id?: string
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_messages_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          created_at: string
+          id: string
+          notes: string | null
+          shipping_address: string | null
+          shipping_name: string | null
+          status: Database["public"]["Enums"]["order_status"]
+          total_cents: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          shipping_address?: string | null
+          shipping_name?: string | null
+          status?: Database["public"]["Enums"]["order_status"]
+          total_cents?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          shipping_address?: string | null
+          shipping_name?: string | null
+          status?: Database["public"]["Enums"]["order_status"]
+          total_cents?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      products: {
+        Row: {
+          category: string | null
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean
+          name: string
+          price_cents: number
+          sort_order: number
+          stock: number | null
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          name: string
+          price_cents?: number
+          sort_order?: number
+          stock?: number | null
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          name?: string
+          price_cents?: number
+          sort_order?: number
+          stock?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -268,6 +423,12 @@ export type Database = {
         | "member"
         | "pending"
       gate_status: "pending" | "approved" | "denied"
+      order_status:
+        | "pending"
+        | "processing"
+        | "shipped"
+        | "completed"
+        | "cancelled"
       ticket_priority: "low" | "normal" | "high" | "urgent"
       ticket_status: "open" | "in_progress" | "waiting" | "resolved" | "closed"
     }
@@ -406,6 +567,13 @@ export const Constants = {
         "pending",
       ],
       gate_status: ["pending", "approved", "denied"],
+      order_status: [
+        "pending",
+        "processing",
+        "shipped",
+        "completed",
+        "cancelled",
+      ],
       ticket_priority: ["low", "normal", "high", "urgent"],
       ticket_status: ["open", "in_progress", "waiting", "resolved", "closed"],
     },
