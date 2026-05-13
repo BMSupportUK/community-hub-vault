@@ -3,18 +3,41 @@ import { Home, Ticket, ShoppingBag, BookOpen, FileText, Clock, Calendar, Shield,
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 import { NotificationBell } from "@/components/app/NotificationBell";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface RailItem {
   to: string;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
   show: boolean;
+  badge?: number;
 }
 
 export function IconRail() {
   const { isStaff, isMod, isPending, signOut, hasAny } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
   const path = useRouterState({ select: (r) => r.location.pathname });
+  const [activeIncidents, setActiveIncidents] = useState(0);
+
+  useEffect(() => {
+    if (isPending) return;
+    const load = async () => {
+      const { count } = await supabase
+        .from("status_incidents")
+        .select("id", { count: "exact", head: true })
+        .neq("status", "completed");
+      setActiveIncidents(count ?? 0);
+    };
+    load();
+    const ch = supabase
+      .channel("rail-status-incidents")
+      .on("postgres_changes", { event: "*", schema: "public", table: "status_incidents" }, () => load())
+      .subscribe();
+    return () => {
+      supabase.removeChannel(ch);
+    };
+  }, [isPending]);
 
   if (isPending) {
     return (
@@ -35,7 +58,7 @@ export function IconRail() {
     { to: "/shop", label: "Shop", icon: ShoppingBag, show: true },
     { to: "/install-guides", label: "Install guides", icon: BookOpen, show: true },
     { to: "/sports-guides", label: "Sports guides", icon: FileText, show: true },
-    { to: "/status", label: "System status", icon: Activity, show: true },
+    { to: "/status", label: "System status", icon: Activity, show: true, badge: activeIncidents },
     { to: "/clock", label: "Clock", icon: Clock, show: isStaff },
     { to: "/shifts", label: "Shifts", icon: Calendar, show: isStaff },
     { to: "/moderation", label: "Moderation", icon: Shield, show: isMod },
@@ -51,7 +74,7 @@ export function IconRail() {
       </Link>
       <div className="h-px w-8 bg-border my-1" />
       {items.filter((i) => i.show).map((i) => (
-        <RailIcon key={i.to} to={i.to} label={i.label} Icon={i.icon} active={path.startsWith(i.to)} />
+        <RailIcon key={i.to} to={i.to} label={i.label} Icon={i.icon} active={path.startsWith(i.to)} badge={i.badge} />
       ))}
       <div className="mt-auto" />
       <NotificationBell />
@@ -68,12 +91,14 @@ function RailIcon({
   Icon,
   active,
   accent,
+  badge,
 }: {
   to: string;
   label: string;
   Icon: React.ComponentType<{ className?: string }>;
   active?: boolean;
   accent?: boolean;
+  badge?: number;
 }) {
   return (
     <Link
@@ -88,6 +113,11 @@ function RailIcon({
       )}
     >
       <Icon className="size-5" />
+      {badge && badge > 0 ? (
+        <span className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1 rounded-full bg-red-500 text-white text-[11px] font-bold flex items-center justify-center shadow-lg ring-2 ring-rail animate-pulse">
+          {badge > 99 ? "99+" : badge}
+        </span>
+      ) : null}
       <span className="absolute left-full ml-3 px-2 py-1 rounded bg-popover text-popover-foreground text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 shadow-soft">
         {label}
       </span>
