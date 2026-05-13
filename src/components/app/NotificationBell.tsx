@@ -178,7 +178,7 @@ export function NotificationBell() {
                             onClick={() => {
                               markRead(n.id);
                               setOpen(false);
-                              navigate({ to: n.link_path! as string });
+                              navigate({ to: n.link_path! } as never);
                             }}
                           >
                             Open
