@@ -22,8 +22,9 @@ interface Product {
   image_url: string | null; category: string | null; stock: number | null;
   is_active: boolean; sort_order: number;
 }
+type OrderStatus = "pending" | "processing" | "shipped" | "completed" | "cancelled";
 interface Order {
-  id: string; user_id: string; status: string; total_cents: number;
+  id: string; user_id: string; status: OrderStatus; total_cents: number;
   shipping_name: string | null; shipping_address: string | null; notes: string | null;
   created_at: string;
 }
