@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import {
   Pencil, Camera, Loader2, ShieldCheck, Clock as ClockIcon,
@@ -388,21 +388,43 @@ function CredentialsReveal({ targetUserId, isOwner }: { targetUserId: string; is
   );
 }
 
-function RevealGate({ hasPin, onUnlocked }: { hasPin: boolean | null; onUnlocked: () => void }) {
+function RevealGate({ hasPin, onUnlocked, onPinSet }: { hasPin: boolean | null; onUnlocked: () => void; onPinSet: () => void }) {
   const { user } = useAuth();
-  const navigate = useNavigate();
   const [password, setPassword] = useState("");
   const [pin, setPin] = useState("");
+  const [confirmPin, setConfirmPin] = useState("");
   const [busy, setBusy] = useState(false);
 
   if (hasPin === null) return <div className="grid place-items-center py-6 text-muted-foreground"><Loader2 className="size-5 animate-spin" /></div>;
 
   if (!hasPin) {
+    const setupPin = async () => {
+      if (!user) return;
+      if (pin.length < 4) return toast.error("PIN must be at least 4 characters");
+      if (pin !== confirmPin) return toast.error("PINs do not match");
+      setBusy(true);
+      try {
+        const hash = await sha256Hex(`${user.id}:${pin}`);
+        const { error } = await supabase.from("vault_pins").upsert({ user_id: user.id, pin_hash: hash });
+        if (error) throw error;
+        toast.success("PIN set. Now enter your password and PIN to reveal.");
+        setPin(""); setConfirmPin("");
+        onPinSet();
+      } catch (e: any) {
+        toast.error(e.message ?? "Failed to set PIN");
+      } finally { setBusy(false); }
+    };
     return (
       <div className="rounded-xl bg-surface-2 border border-border p-4 text-sm">
-        <p className="mb-3">You haven't set a vault PIN yet. Set one up to view credentials.</p>
-        <button onClick={() => navigate({ to: "/vault" })} className="px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium">
-          Open vault to set PIN
+        <p className="text-muted-foreground mb-3">Set a personal PIN (min 4 chars). You'll need it plus your account password to reveal credentials.</p>
+        <div className="grid sm:grid-cols-2 gap-2 mb-3">
+          <input value={pin} onChange={(e) => setPin(e.target.value)} type="password" placeholder="New PIN"
+            className="px-3 py-2 rounded-lg bg-background border border-border text-sm" />
+          <input value={confirmPin} onChange={(e) => setConfirmPin(e.target.value)} type="password" placeholder="Confirm PIN"
+            className="px-3 py-2 rounded-lg bg-background border border-border text-sm" />
+        </div>
+        <button onClick={setupPin} disabled={busy} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium disabled:opacity-60">
+          {busy ? <Loader2 className="size-4 animate-spin" /> : <Lock className="size-4" />} Save PIN
         </button>
       </div>
     );
