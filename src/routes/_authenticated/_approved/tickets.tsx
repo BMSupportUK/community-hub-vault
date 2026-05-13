@@ -582,14 +582,14 @@ function Select({
   label, value, options, onChange,
 }: { label: string; value: string; options: { value: string; label: string }[]; onChange: (v: string) => void }) {
   return (
-    <label className="inline-flex items-center gap-1.5 bg-surface-2 rounded-md px-2 py-1">
-      <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</span>
+    <label className="inline-flex items-center gap-1.5 bg-white/20 backdrop-blur rounded-md px-2 py-1 border border-white/25">
+      <span className="text-[10px] uppercase tracking-wider text-white/85">{label}</span>
       <select
         value={value} onChange={(e) => onChange(e.target.value)}
-        className="bg-transparent text-xs outline-none capitalize"
+        className="bg-transparent text-xs outline-none capitalize text-white"
       >
         {options.map((o) => (
-          <option key={o.value} value={o.value} className="bg-surface text-foreground">{o.label}</option>
+          <option key={o.value} value={o.value} className="bg-rose-700 text-white">{o.label}</option>
         ))}
       </select>
     </label>
