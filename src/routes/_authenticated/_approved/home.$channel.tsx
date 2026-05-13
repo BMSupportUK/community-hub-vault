@@ -4,6 +4,7 @@ import { Hash, Megaphone, Loader2, Send, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
+import { MentionText, useMentionAutocomplete } from "@/components/app/mentions";
 
 export const Route = createFileRoute("/_authenticated/_approved/home/$channel")({
   component: ChannelPage,
@@ -36,6 +37,16 @@ function ChannelPage() {
   const { channel: slug } = Route.useParams();
   const { user, hasAny } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
+  const [myUsername, setMyUsername] = useState<string | null>(null);
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("profiles")
+      .select("username")
+      .eq("id", user.id)
+      .maybeSingle()
+      .then(({ data }) => setMyUsername(data?.username ?? null));
+  }, [user?.id]);
 
   const [channel, setChannel] = useState<Channel | null>(null);
   const [missing, setMissing] = useState(false);
@@ -44,6 +55,13 @@ function ChannelPage() {
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const taRef = useRef<HTMLTextAreaElement>(null);
+  const mention = useMentionAutocomplete({
+    value: draft,
+    onChange: setDraft,
+    textareaRef: taRef,
+    canBroadcast: isAdmin,
+  });
 
   // Load channel
   useEffect(() => {
@@ -134,7 +152,9 @@ function ChannelPage() {
       .from("chat_messages")
       .insert({ channel_id: channel.id, sender_id: user.id, content });
     if (error) {
-      toast.error(error.message);
+      toast.error(error.message.includes("@all") || error.message.includes("@here")
+        ? "Only admin and management can use @all or @here."
+        : error.message);
       setDraft(content);
     }
     setSending(false);
@@ -199,7 +219,7 @@ function ChannelPage() {
                       {new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                     </span>
                   </div>
-                  <div className="text-sm whitespace-pre-wrap break-words">{m.content}</div>
+                  <MentionText content={m.content} currentUsername={myUsername} className="text-sm" />
                 </div>
                 {canDelete && (
                   <button
@@ -217,18 +237,21 @@ function ChannelPage() {
       </div>
 
       <div className="p-4 border-t border-border shrink-0">
-        <div className="flex items-end gap-2 rounded-xl bg-surface-2 border border-border focus-within:border-primary px-3 py-2">
+        <div className="relative flex items-end gap-2 rounded-xl bg-surface-2 border border-border focus-within:border-primary px-3 py-2">
+          {mention.dropdown}
           <textarea
+            ref={taRef}
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             onKeyDown={(e) => {
+              if (mention.onKeyDown(e)) return;
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
                 send();
               }
             }}
             rows={1}
-            placeholder={`Message #${channel.name}`}
+            placeholder={`Message #${channel.name} — type @ to mention`}
             className="flex-1 bg-transparent resize-none outline-none text-sm py-1 max-h-32"
           />
           <button

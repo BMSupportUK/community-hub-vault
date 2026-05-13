@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { MentionText, useMentionAutocomplete } from "@/components/app/mentions";
 
 export const Route = createFileRoute("/_authenticated/_approved/tickets")({
   validateSearch: (s: Record<string, unknown>) => ({
@@ -404,6 +405,22 @@ function TicketDetail({
   const [internal, setInternal] = useState(false);
   const [sending, setSending] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const taRef = useRef<HTMLTextAreaElement>(null);
+  const mention = useMentionAutocomplete({
+    value: draft,
+    onChange: setDraft,
+    textareaRef: taRef,
+    canBroadcast: isAdmin,
+  });
+  const [myUsername, setMyUsername] = useState<string | null>(null);
+  useEffect(() => {
+    supabase
+      .from("profiles")
+      .select("username")
+      .eq("id", currentUserId)
+      .maybeSingle()
+      .then(({ data }) => setMyUsername(data?.username ?? null));
+  }, [currentUserId]);
 
   const load = async () => {
     const { data } = await supabase
@@ -441,7 +458,14 @@ function TicketDetail({
       ticket_id: ticket.id, sender_id: currentUserId, content, is_internal: internal && isStaff,
     });
     setSending(false);
-    if (error) return toast.error(error.message);
+    if (error) {
+      const msg = error.message;
+      return toast.error(
+        msg.includes("@all") || msg.includes("@here")
+          ? "Only admin and management can use @all or @here."
+          : msg,
+      );
+    }
     setDraft("");
     // Bump updated_at via status touch (only staff allowed) — skip for users
     if (isStaff && ticket.status === "open") {
@@ -538,7 +562,7 @@ function TicketDetail({
                   {m.is_internal && <Lock className="size-3" />}
                   {senderName(m.sender_id)} · {new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                 </div>
-                <div className="whitespace-pre-wrap break-words">{m.content}</div>
+                <MentionText content={m.content} currentUsername={myUsername} />
               </div>
             </div>
           );
@@ -550,11 +574,16 @@ function TicketDetail({
           <div className="text-center text-xs text-white/80 py-2">This ticket is closed.</div>
         ) : (
           <div className="space-y-2">
-            <div className="flex gap-2">
+            <div className="relative flex gap-2">
+              {mention.dropdown}
               <textarea
+                ref={taRef}
                 value={draft} onChange={(e) => setDraft(e.target.value)} rows={2} maxLength={2000}
-                placeholder={internal ? "Internal note (staff only)…" : "Reply to ticket…"}
-                onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) send(); }}
+                placeholder={internal ? "Internal note (staff only)… type @ to mention" : "Reply to ticket… type @ to mention"}
+                onKeyDown={(e) => {
+                  if (mention.onKeyDown(e)) return;
+                  if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) send();
+                }}
                 className={cn(
                   "flex-1 px-3 py-2 rounded-lg bg-white/15 backdrop-blur border outline-none resize-none text-sm text-white placeholder:text-white/60",
                   internal ? "border-amber-300/70" : "border-white/30 focus:border-white",

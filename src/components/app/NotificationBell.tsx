@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Bell, Check, ShieldCheck, ShoppingBag, UserPlus, X } from "lucide-react";
+import { AtSign, Bell, Check, ShieldCheck, ShoppingBag, UserPlus, X } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -17,10 +17,13 @@ type Notif = {
   link_path: string | null;
   entity_id: string | null;
   created_at: string;
+  // for user_notifications, we mark unread via read_at; staff_notifications use a separate table
+  read_at?: string | null;
+  source: "staff" | "user";
 };
 
 export function NotificationBell() {
-  const { user, isStaff, isMod, hasAny } = useAuth();
+  const { user, isStaff, isMod, isPending, hasAny } = useAuth();
   const navigate = useNavigate();
   const [items, setItems] = useState<Notif[]>([]);
   const [readIds, setReadIds] = useState<Set<string>>(new Set());
@@ -28,43 +31,99 @@ export function NotificationBell() {
   const canManageOrders = hasAny(["admin", "management"]);
 
   useEffect(() => {
-    if (!user || !isStaff) return;
+    if (!user || isPending) return;
     let active = true;
 
     const load = async () => {
-      const [{ data: n }, { data: r }] = await Promise.all([
-        supabase.from("staff_notifications").select("*").order("created_at", { ascending: false }).limit(50),
-        supabase.from("staff_notification_reads").select("notification_id").eq("user_id", user.id),
-      ]);
+      const userRes = await supabase
+          .from("user_notifications")
+          .select("id, kind, title, body, link_path, source_id, created_at, read_at")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false })
+        .limit(50);
+      const staffRes = isStaff
+        ? await supabase.from("staff_notifications").select("*").order("created_at", { ascending: false }).limit(50)
+        : null;
+      const readsRes = isStaff
+        ? await supabase.from("staff_notification_reads").select("notification_id").eq("user_id", user.id)
+        : null;
       if (!active) return;
-      setItems((n ?? []) as Notif[]);
-      setReadIds(new Set((r ?? []).map((x) => x.notification_id as string)));
+      const userRows =
+        ((userRes.data as Array<{
+          id: string; kind: string; title: string; body: string | null;
+          link_path: string | null; source_id: string | null; created_at: string; read_at: string | null;
+        }>) ?? []).map((x) => ({
+          id: x.id, kind: x.kind, title: x.title, body: x.body,
+          link_path: x.link_path, entity_id: x.source_id, created_at: x.created_at,
+          read_at: x.read_at, source: "user" as const,
+        }));
+      const staffRows = staffRes
+        ? (((staffRes.data as Notif[]) ?? []).map((s) => ({ ...s, source: "staff" as const })))
+        : [];
+      const reads = readsRes
+        ? new Set(((readsRes.data as Array<{ notification_id: string }>) ?? []).map((x) => x.notification_id))
+        : new Set<string>();
+      // user notification "read" state lives on the row itself
+      userRows.forEach((u) => { if (u.read_at) reads.add(u.id); });
+      const merged = [...userRows, ...staffRows].sort((a, b) => b.created_at.localeCompare(a.created_at));
+      setItems(merged);
+      setReadIds(reads);
     };
     load();
 
     const ch = supabase
-      .channel("staff-notifications")
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "staff_notifications" }, (payload) => {
-        const n = payload.new as Notif;
-        setItems((prev) => [n, ...prev].slice(0, 50));
-        toast(n.title, { description: n.body ?? undefined });
-      })
+      .channel(`notifs-${user.id}`)
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "user_notifications", filter: `user_id=eq.${user.id}` },
+        (payload) => {
+          const r = payload.new as {
+            id: string; kind: string; title: string; body: string | null;
+            link_path: string | null; source_id: string | null; created_at: string; read_at: string | null;
+          };
+          const n: Notif = {
+            id: r.id, kind: r.kind, title: r.title, body: r.body,
+            link_path: r.link_path, entity_id: r.source_id, created_at: r.created_at,
+            read_at: r.read_at, source: "user",
+          };
+          setItems((prev) => [n, ...prev].slice(0, 80));
+          toast(n.title, { description: n.body ?? undefined });
+        },
+      )
       .subscribe();
+
+    let staffCh: ReturnType<typeof supabase.channel> | null = null;
+    if (isStaff) {
+      staffCh = supabase
+        .channel("staff-notifications")
+        .on("postgres_changes", { event: "INSERT", schema: "public", table: "staff_notifications" }, (payload) => {
+          const n = { ...(payload.new as Notif), source: "staff" as const };
+          setItems((prev) => [n, ...prev].slice(0, 80));
+          toast(n.title, { description: n.body ?? undefined });
+        })
+        .subscribe();
+    }
 
     return () => {
       active = false;
       supabase.removeChannel(ch);
+      if (staffCh) supabase.removeChannel(staffCh);
     };
-  }, [user, isStaff]);
+  }, [user, isStaff, isPending]);
 
-  if (!isStaff || !user) return null;
+  if (!user || isPending) return null;
 
   const unread = items.filter((i) => !readIds.has(i.id));
 
   const markRead = async (id: string) => {
     if (readIds.has(id)) return;
     setReadIds((prev) => new Set(prev).add(id));
-    await supabase.from("staff_notification_reads").insert({ notification_id: id, user_id: user.id });
+    const it = items.find((x) => x.id === id);
+    if (it?.source === "user") {
+      await supabase.from("user_notifications").update({ read_at: new Date().toISOString() }).eq("id", id);
+    } else {
+      await supabase.from("staff_notification_reads").insert({ notification_id: id, user_id: user.id });
+    }
   };
 
   const markAll = async () => {
@@ -75,9 +134,19 @@ export function NotificationBell() {
       toMark.forEach((id) => next.add(id));
       return next;
     });
-    await supabase.from("staff_notification_reads").insert(
-      toMark.map((id) => ({ notification_id: id, user_id: user.id })),
-    );
+    const userIds = unread.filter((u) => u.source === "user").map((u) => u.id);
+    const staffIds = unread.filter((u) => u.source === "staff").map((u) => u.id);
+    if (userIds.length) {
+      await supabase
+        .from("user_notifications")
+        .update({ read_at: new Date().toISOString() })
+        .in("id", userIds);
+    }
+    if (staffIds.length) {
+      await supabase.from("staff_notification_reads").insert(
+        staffIds.map((id) => ({ notification_id: id, user_id: user.id })),
+      );
+    }
   };
 
   const approveApplication = async (appId: string, approve: boolean) => {
@@ -105,7 +174,10 @@ export function NotificationBell() {
   };
 
   const iconFor = (kind: string) =>
-    kind === "gate_application" ? UserPlus : kind === "order_placed" ? ShoppingBag : Bell;
+    kind === "gate_application" ? UserPlus
+      : kind === "order_placed" ? ShoppingBag
+      : kind === "mention" ? AtSign
+      : Bell;
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -145,7 +217,9 @@ export function NotificationBell() {
                     <div
                       className={cn(
                         "size-9 rounded-lg grid place-items-center shrink-0",
-                        n.kind === "order_placed" ? "bg-emerald-500/10 text-emerald-500" : "bg-primary/10 text-primary",
+                        n.kind === "order_placed" ? "bg-emerald-500/10 text-emerald-500"
+                          : n.kind === "mention" ? "bg-indigo-500/15 text-indigo-400"
+                          : "bg-primary/10 text-primary",
                       )}
                     >
                       <Icon className="size-4" />
