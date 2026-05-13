@@ -28,6 +28,7 @@ import { Route as AuthenticatedApprovedAdminRolesRouteImport } from './routes/_a
 import { Route as AuthenticatedApprovedAdminDnsRouteImport } from './routes/_authenticated/_approved/admin-dns'
 import { Route as AuthenticatedApprovedAdminCredentialsRouteImport } from './routes/_authenticated/_approved/admin-credentials'
 import { Route as AuthenticatedApprovedAdminRouteImport } from './routes/_authenticated/_approved/admin'
+import { Route as AuthenticatedApprovedHomeIndexRouteImport } from './routes/_authenticated/_approved/home.index'
 import { Route as AuthenticatedApprovedUUsernameRouteImport } from './routes/_authenticated/_approved/u.$username'
 
 const SignupRoute = SignupRouteImport.update({
@@ -136,6 +137,12 @@ const AuthenticatedApprovedAdminRoute =
     path: '/admin',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
+const AuthenticatedApprovedHomeIndexRoute =
+  AuthenticatedApprovedHomeIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedApprovedHomeRoute,
+  } as any)
 const AuthenticatedApprovedUUsernameRoute =
   AuthenticatedApprovedUUsernameRouteImport.update({
     id: '/u/$username',
@@ -153,7 +160,7 @@ export interface FileRoutesByFullPath {
   '/admin-dns': typeof AuthenticatedApprovedAdminDnsRoute
   '/admin-roles': typeof AuthenticatedApprovedAdminRolesRoute
   '/clock': typeof AuthenticatedApprovedClockRoute
-  '/home': typeof AuthenticatedApprovedHomeRoute
+  '/home': typeof AuthenticatedApprovedHomeRouteWithChildren
   '/install-guides': typeof AuthenticatedApprovedInstallGuidesRoute
   '/moderation': typeof AuthenticatedApprovedModerationRoute
   '/profile': typeof AuthenticatedApprovedProfileRoute
@@ -162,6 +169,7 @@ export interface FileRoutesByFullPath {
   '/sports-guides': typeof AuthenticatedApprovedSportsGuidesRoute
   '/tickets': typeof AuthenticatedApprovedTicketsRoute
   '/u/$username': typeof AuthenticatedApprovedUUsernameRoute
+  '/home/': typeof AuthenticatedApprovedHomeIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -173,7 +181,6 @@ export interface FileRoutesByTo {
   '/admin-dns': typeof AuthenticatedApprovedAdminDnsRoute
   '/admin-roles': typeof AuthenticatedApprovedAdminRolesRoute
   '/clock': typeof AuthenticatedApprovedClockRoute
-  '/home': typeof AuthenticatedApprovedHomeRoute
   '/install-guides': typeof AuthenticatedApprovedInstallGuidesRoute
   '/moderation': typeof AuthenticatedApprovedModerationRoute
   '/profile': typeof AuthenticatedApprovedProfileRoute
@@ -182,6 +189,7 @@ export interface FileRoutesByTo {
   '/sports-guides': typeof AuthenticatedApprovedSportsGuidesRoute
   '/tickets': typeof AuthenticatedApprovedTicketsRoute
   '/u/$username': typeof AuthenticatedApprovedUUsernameRoute
+  '/home': typeof AuthenticatedApprovedHomeIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -196,7 +204,7 @@ export interface FileRoutesById {
   '/_authenticated/_approved/admin-dns': typeof AuthenticatedApprovedAdminDnsRoute
   '/_authenticated/_approved/admin-roles': typeof AuthenticatedApprovedAdminRolesRoute
   '/_authenticated/_approved/clock': typeof AuthenticatedApprovedClockRoute
-  '/_authenticated/_approved/home': typeof AuthenticatedApprovedHomeRoute
+  '/_authenticated/_approved/home': typeof AuthenticatedApprovedHomeRouteWithChildren
   '/_authenticated/_approved/install-guides': typeof AuthenticatedApprovedInstallGuidesRoute
   '/_authenticated/_approved/moderation': typeof AuthenticatedApprovedModerationRoute
   '/_authenticated/_approved/profile': typeof AuthenticatedApprovedProfileRoute
@@ -205,6 +213,7 @@ export interface FileRoutesById {
   '/_authenticated/_approved/sports-guides': typeof AuthenticatedApprovedSportsGuidesRoute
   '/_authenticated/_approved/tickets': typeof AuthenticatedApprovedTicketsRoute
   '/_authenticated/_approved/u/$username': typeof AuthenticatedApprovedUUsernameRoute
+  '/_authenticated/_approved/home/': typeof AuthenticatedApprovedHomeIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -227,6 +236,7 @@ export interface FileRouteTypes {
     | '/sports-guides'
     | '/tickets'
     | '/u/$username'
+    | '/home/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -238,7 +248,6 @@ export interface FileRouteTypes {
     | '/admin-dns'
     | '/admin-roles'
     | '/clock'
-    | '/home'
     | '/install-guides'
     | '/moderation'
     | '/profile'
@@ -247,6 +256,7 @@ export interface FileRouteTypes {
     | '/sports-guides'
     | '/tickets'
     | '/u/$username'
+    | '/home'
   id:
     | '__root__'
     | '/'
@@ -269,6 +279,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/sports-guides'
     | '/_authenticated/_approved/tickets'
     | '/_authenticated/_approved/u/$username'
+    | '/_authenticated/_approved/home/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -413,6 +424,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedApprovedAdminRouteImport
       parentRoute: typeof AuthenticatedApprovedRoute
     }
+    '/_authenticated/_approved/home/': {
+      id: '/_authenticated/_approved/home/'
+      path: '/'
+      fullPath: '/home/'
+      preLoaderRoute: typeof AuthenticatedApprovedHomeIndexRouteImport
+      parentRoute: typeof AuthenticatedApprovedHomeRoute
+    }
     '/_authenticated/_approved/u/$username': {
       id: '/_authenticated/_approved/u/$username'
       path: '/u/$username'
@@ -423,13 +441,27 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthenticatedApprovedHomeRouteChildren {
+  AuthenticatedApprovedHomeIndexRoute: typeof AuthenticatedApprovedHomeIndexRoute
+}
+
+const AuthenticatedApprovedHomeRouteChildren: AuthenticatedApprovedHomeRouteChildren =
+  {
+    AuthenticatedApprovedHomeIndexRoute: AuthenticatedApprovedHomeIndexRoute,
+  }
+
+const AuthenticatedApprovedHomeRouteWithChildren =
+  AuthenticatedApprovedHomeRoute._addFileChildren(
+    AuthenticatedApprovedHomeRouteChildren,
+  )
+
 interface AuthenticatedApprovedRouteChildren {
   AuthenticatedApprovedAdminRoute: typeof AuthenticatedApprovedAdminRoute
   AuthenticatedApprovedAdminCredentialsRoute: typeof AuthenticatedApprovedAdminCredentialsRoute
   AuthenticatedApprovedAdminDnsRoute: typeof AuthenticatedApprovedAdminDnsRoute
   AuthenticatedApprovedAdminRolesRoute: typeof AuthenticatedApprovedAdminRolesRoute
   AuthenticatedApprovedClockRoute: typeof AuthenticatedApprovedClockRoute
-  AuthenticatedApprovedHomeRoute: typeof AuthenticatedApprovedHomeRoute
+  AuthenticatedApprovedHomeRoute: typeof AuthenticatedApprovedHomeRouteWithChildren
   AuthenticatedApprovedInstallGuidesRoute: typeof AuthenticatedApprovedInstallGuidesRoute
   AuthenticatedApprovedModerationRoute: typeof AuthenticatedApprovedModerationRoute
   AuthenticatedApprovedProfileRoute: typeof AuthenticatedApprovedProfileRoute
@@ -447,7 +479,7 @@ const AuthenticatedApprovedRouteChildren: AuthenticatedApprovedRouteChildren = {
   AuthenticatedApprovedAdminDnsRoute: AuthenticatedApprovedAdminDnsRoute,
   AuthenticatedApprovedAdminRolesRoute: AuthenticatedApprovedAdminRolesRoute,
   AuthenticatedApprovedClockRoute: AuthenticatedApprovedClockRoute,
-  AuthenticatedApprovedHomeRoute: AuthenticatedApprovedHomeRoute,
+  AuthenticatedApprovedHomeRoute: AuthenticatedApprovedHomeRouteWithChildren,
   AuthenticatedApprovedInstallGuidesRoute:
     AuthenticatedApprovedInstallGuidesRoute,
   AuthenticatedApprovedModerationRoute: AuthenticatedApprovedModerationRoute,
