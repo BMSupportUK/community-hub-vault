@@ -1,8 +1,13 @@
 import { createFileRoute, Outlet, redirect, useRouterState } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
+import { Users } from "lucide-react";
+import { useEffect, useRef } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { IconRail } from "@/components/app/IconRail";
 import { Clocks } from "@/components/app/Clocks";
+import { logMyIp } from "@/lib/ip-log.functions";
 
 export const Route = createFileRoute("/_authenticated")({
   beforeLoad: async ({ location }) => {
@@ -15,6 +20,16 @@ export const Route = createFileRoute("/_authenticated")({
 function AuthLayout() {
   const { loading, isPending } = useAuth();
   const path = useRouterState({ select: (r) => r.location.pathname });
+  const logIp = useServerFn(logMyIp);
+  const loggedRef = useRef(false);
+
+  useEffect(() => {
+    if (loading || isPending || loggedRef.current) return;
+    loggedRef.current = true;
+    logIp().catch(() => {
+      loggedRef.current = false;
+    });
+  }, [loading, isPending, logIp]);
 
   if (loading) {
     return (
@@ -43,7 +58,15 @@ function AuthLayout() {
     <div className="min-h-screen flex bg-background">
       <IconRail />
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="h-12 shrink-0 border-b border-border bg-rail/40 backdrop-blur flex items-center justify-end px-4">
+        <header className="h-12 shrink-0 border-b border-border bg-rail/40 backdrop-blur flex items-center justify-end px-4 gap-3">
+          <Link
+            to="/members"
+            title="Members directory"
+            className="group flex items-center gap-2 rounded-full px-3 py-1.5 bg-gradient-to-r from-fuchsia-600 via-violet-600 to-blue-600 text-white text-xs font-medium shadow-lg shadow-fuchsia-500/20 hover:shadow-fuchsia-500/40 transition-shadow"
+          >
+            <Users className="size-4" />
+            <span className="hidden sm:inline">Members</span>
+          </Link>
           <Clocks />
         </header>
         <div className="flex-1 flex min-h-0">
