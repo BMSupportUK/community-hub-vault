@@ -30,7 +30,6 @@ interface CredRow { id: string; app_login_name: string; password: string; expiry
 interface DnsRow { id: string; label: string; code: string; notes: string | null; }
 interface TicketRow { id: string; subject: string; status: string; created_at: string; }
 interface OrderRow { id: string; total_cents: number; status: string; created_at: string; }
-interface BlogRow { id: string; title: string; created_at: string; }
 
 const ROLE_STYLES: Record<AppRole, string> = {
   admin: "bg-destructive/15 text-destructive border-destructive/30",
