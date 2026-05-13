@@ -136,12 +136,12 @@ function ProfilePage() {
   const breakRemaining = breakLimit - onBreakSeconds;
 
   return (
-    <main className="flex-1 overflow-y-auto relative">
-      <div className="absolute inset-0 -z-10 bg-gradient-to-b from-rose-600/30 via-orange-500/15 to-amber-400/10" aria-hidden />
-      <div className="absolute inset-x-0 top-0 -z-10 h-96 bg-[radial-gradient(ellipse_at_top,_rgba(255,80,80,0.45),_transparent_70%)]" aria-hidden />
+    <main className="flex-1 overflow-y-auto relative bg-gradient-to-br from-rose-600 via-orange-500 to-amber-400 text-white">
+      <div className="absolute inset-0 -z-0 bg-[radial-gradient(ellipse_at_top_left,_rgba(244,63,94,0.55),_transparent_55%),radial-gradient(ellipse_at_top_right,_rgba(168,85,247,0.45),_transparent_55%),radial-gradient(ellipse_at_bottom,_rgba(251,191,36,0.45),_transparent_60%)]" aria-hidden />
+      <div className="relative">
       <div className="max-w-5xl mx-auto px-6 py-8 space-y-6">
         {/* Header card */}
-        <section className="rounded-2xl border border-rose-500/30 bg-gradient-to-br from-rose-900/40 via-orange-900/30 to-amber-800/20 backdrop-blur overflow-hidden shadow-[0_20px_60px_-20px_rgba(244,63,94,0.5)]">
+        <section className="rounded-2xl border border-white/30 bg-white/10 backdrop-blur-xl overflow-hidden shadow-[0_25px_60px_-20px_rgba(0,0,0,0.45)]">
           <div
             className="h-36 sm:h-44 bg-cover bg-center"
             style={{ backgroundImage: `url(${profileHeader})` }}
@@ -232,6 +232,7 @@ function ProfilePage() {
           onSaved={() => { setEditing(false); load(); }}
         />
       )}
+      </div>
     </main>
   );
 }
@@ -273,14 +274,14 @@ function ActivityCard({ title, icon: Icon, children, empty }: { title: string; i
   const arr = Array.isArray(children) ? children : [children];
   const isEmpty = arr.filter(Boolean).length === 0;
   return (
-    <section className="rounded-2xl border border-rose-500/20 bg-gradient-to-br from-rose-950/40 via-orange-950/30 to-amber-900/20 backdrop-blur p-5 shadow-[0_8px_30px_-12px_rgba(244,63,94,0.4)]">
+    <section className="rounded-2xl border border-white/25 bg-white/10 backdrop-blur-xl p-5 shadow-[0_10px_40px_-15px_rgba(0,0,0,0.4)] text-white">
       <h2 className="flex items-center gap-2 font-display text-lg font-bold mb-2">
-        <Icon className="size-4 text-rose-400" /> {title}
+        <Icon className="size-4 text-amber-200" /> {title}
       </h2>
       {isEmpty ? (
-        <p className="text-sm text-muted-foreground">{empty}</p>
+        <p className="text-sm text-white/70">{empty}</p>
       ) : (
-        <ul className="divide-y divide-border">{children}</ul>
+        <ul className="divide-y divide-white/15">{children}</ul>
       )}
     </section>
   );
@@ -288,8 +289,8 @@ function ActivityCard({ title, icon: Icon, children, empty }: { title: string; i
 
 function InfoCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl border border-orange-500/20 bg-gradient-to-br from-orange-950/40 via-rose-950/30 to-amber-900/20 backdrop-blur p-4 shadow-[0_8px_30px_-12px_rgba(251,146,60,0.35)]">
-      <p className="text-xs uppercase tracking-wider text-amber-200/70">{label}</p>
+    <div className="rounded-2xl border border-white/25 bg-white/10 backdrop-blur-xl p-4 shadow-[0_10px_40px_-15px_rgba(0,0,0,0.4)] text-white">
+      <p className="text-xs uppercase tracking-wider text-amber-100/80">{label}</p>
       <p className="mt-1 text-sm font-medium">{value}</p>
     </div>
   );
@@ -337,7 +338,7 @@ function CredentialsReveal({ targetUserId, isOwner }: { targetUserId: string; is
   };
 
   return (
-    <section className="rounded-2xl border border-border bg-surface-1 p-5">
+    <section className="rounded-2xl border border-white/25 bg-white/10 backdrop-blur-xl p-5 text-white shadow-[0_10px_40px_-15px_rgba(0,0,0,0.4)]">
       <div className="flex items-center justify-between gap-3 mb-3">
         <h2 className="flex items-center gap-2 font-display text-lg font-bold">
           <KeyRound className="size-4 text-primary" /> Credentials & DNS
