@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_credentials: {
+        Row: {
+          app_login_name: string
+          created_at: string
+          created_by: string | null
+          expiry_at: string | null
+          id: string
+          notes: string | null
+          owner_id: string
+          password: string
+          updated_at: string
+        }
+        Insert: {
+          app_login_name: string
+          created_at?: string
+          created_by?: string | null
+          expiry_at?: string | null
+          id?: string
+          notes?: string | null
+          owner_id: string
+          password: string
+          updated_at?: string
+        }
+        Update: {
+          app_login_name?: string
+          created_at?: string
+          created_by?: string | null
+          expiry_at?: string | null
+          id?: string
+          notes?: string | null
+          owner_id?: string
+          password?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       breaks: {
         Row: {
           ended_at: string | null
@@ -296,6 +332,36 @@ export type Database = {
           id?: string
           updated_at?: string
           username?: string | null
+        }
+        Relationships: []
+      }
+      qd_dns_codes: {
+        Row: {
+          code: string
+          created_at: string
+          created_by: string | null
+          id: string
+          label: string
+          notes: string | null
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          label: string
+          notes?: string | null
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          label?: string
+          notes?: string | null
+          updated_at?: string
         }
         Relationships: []
       }
@@ -585,6 +651,27 @@ export type Database = {
           created_at?: string
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      vault_pins: {
+        Row: {
+          created_at: string
+          pin_hash: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          pin_hash: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          pin_hash?: string
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
