@@ -197,7 +197,12 @@ function TicketsPage() {
           </div>
         }
       />
-      <main className="flex-1 flex flex-col min-w-0">
+      <main className="flex-1 flex flex-col min-w-0 bg-gradient-to-br from-rose-500 via-orange-500 to-amber-400 text-white relative overflow-hidden">
+        <div className="pointer-events-none absolute inset-0 opacity-60" style={{
+          background:
+            "radial-gradient(800px 400px at 0% 0%, rgba(244,63,94,0.55), transparent 60%), radial-gradient(700px 400px at 100% 0%, rgba(168,85,247,0.45), transparent 60%), radial-gradient(900px 500px at 50% 100%, rgba(250,204,21,0.45), transparent 60%)",
+        }} />
+        <div className="relative flex-1 flex flex-col min-h-0">
         {creating ? (
           <NewTicketForm
             categories={categories}
@@ -216,22 +221,23 @@ function TicketsPage() {
         ) : (
           <div className="flex-1 grid place-items-center">
             <div className="text-center max-w-sm">
-              <div className="size-14 rounded-2xl bg-surface-2 grid place-items-center mx-auto mb-4">
-                <TicketIcon className="size-6 text-primary" />
+              <div className="size-14 rounded-2xl bg-white/20 backdrop-blur grid place-items-center mx-auto mb-4 shadow-lg">
+                <TicketIcon className="size-6 text-white" />
               </div>
-              <h1 className="font-display text-xl font-bold">Support tickets</h1>
-              <p className="text-muted-foreground text-sm mt-2">
+              <h1 className="font-display text-xl font-bold text-white drop-shadow">Support tickets</h1>
+              <p className="text-white/85 text-sm mt-2">
                 {tickets.length === 0 ? "Open your first ticket to get help from the team." : "Select a ticket from the list."}
               </p>
               <button
                 onClick={() => setCreating(true)}
-                className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90"
+                className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white text-rose-600 text-sm font-semibold hover:bg-white/90 shadow-lg"
               >
                 <Plus className="size-4" /> New ticket
               </button>
             </div>
           </div>
         )}
+        </div>
       </main>
     </>
   );
@@ -303,9 +309,9 @@ function NewTicketForm({
   return (
     <>
       <header className="h-14 border-b border-border px-5 flex items-center gap-2">
-        <Plus className="size-4 text-primary" />
-        <h1 className="font-display font-semibold">New ticket</h1>
-        <button onClick={onCancel} className="ml-auto text-muted-foreground hover:text-foreground"><X className="size-4" /></button>
+        <Plus className="size-4 text-white" />
+        <h1 className="font-display font-semibold text-white">New ticket</h1>
+        <button onClick={onCancel} className="ml-auto text-white/70 hover:text-white"><X className="size-4" /></button>
       </header>
       <form onSubmit={submit} className="flex-1 overflow-y-auto p-6">
         <div className="max-w-2xl mx-auto space-y-5">
@@ -313,7 +319,7 @@ function NewTicketForm({
             <input
               value={subject} onChange={(e) => setSubject(e.target.value)} maxLength={120}
               placeholder="Briefly describe the issue"
-              className="w-full px-3 py-2 rounded-lg bg-surface border border-border focus:border-primary outline-none"
+              className="w-full px-3 py-2 rounded-lg bg-white/15 backdrop-blur border border-white/30 focus:border-white text-white placeholder:text-white/60 outline-none"
             />
           </Field>
           <Field label="Category">
@@ -326,13 +332,13 @@ function NewTicketForm({
                     type="button" key={c.id} onClick={() => setCategoryId(c.id)}
                     className={cn(
                       "flex items-start gap-3 p-3 rounded-lg border text-left transition-colors",
-                      active ? "border-primary bg-primary/5" : "border-border bg-surface hover:border-primary/40",
+                      active ? "border-white bg-white/25" : "border-white/30 bg-white/10 hover:bg-white/20",
                     )}
                   >
-                    <div className="size-9 rounded-lg bg-surface-2 grid place-items-center"><Icon className="size-4 text-primary" /></div>
+                    <div className="size-9 rounded-lg bg-white/25 grid place-items-center"><Icon className="size-4 text-white" /></div>
                     <div className="min-w-0">
-                      <div className="font-medium text-sm">{c.name}</div>
-                      <div className="text-xs text-muted-foreground line-clamp-2">{c.description}</div>
+                      <div className="font-medium text-sm text-white">{c.name}</div>
+                      <div className="text-xs text-white/75 line-clamp-2">{c.description}</div>
                     </div>
                   </button>
                 );
@@ -346,7 +352,7 @@ function NewTicketForm({
                   type="button" key={p} onClick={() => setPriority(p)}
                   className={cn(
                     "px-3 py-1.5 rounded-lg text-xs capitalize border",
-                    priority === p ? "border-primary bg-primary/10 text-foreground" : "border-border text-muted-foreground hover:text-foreground",
+                    priority === p ? "border-white bg-white/25 text-white" : "border-white/30 text-white/75 hover:text-white",
                   )}
                 >{p}</button>
               ))}
@@ -356,12 +362,12 @@ function NewTicketForm({
             <textarea
               value={message} onChange={(e) => setMessage(e.target.value)} maxLength={2000} rows={6}
               placeholder="Provide as much detail as you can…"
-              className="w-full px-3 py-2 rounded-lg bg-surface border border-border focus:border-primary outline-none resize-none"
+              className="w-full px-3 py-2 rounded-lg bg-white/15 backdrop-blur border border-white/30 focus:border-white text-white placeholder:text-white/60 outline-none resize-none"
             />
           </Field>
           <div className="flex gap-2 justify-end">
-            <button type="button" onClick={onCancel} className="px-4 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground">Cancel</button>
-            <button type="submit" disabled={submitting} className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium disabled:opacity-50">
+            <button type="button" onClick={onCancel} className="px-4 py-2 rounded-lg text-sm text-white/80 hover:text-white">Cancel</button>
+            <button type="submit" disabled={submitting} className="px-4 py-2 rounded-lg bg-white text-rose-600 text-sm font-semibold hover:bg-white/90 disabled:opacity-50 shadow-lg">
               {submitting ? "Opening…" : "Open ticket"}
             </button>
           </div>
@@ -374,7 +380,7 @@ function NewTicketForm({
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">{label}</div>
+      <div className="text-xs font-semibold uppercase tracking-wider text-white/80 mb-2">{label}</div>
       {children}
     </div>
   );
@@ -468,27 +474,27 @@ function TicketDetail({
 
   return (
     <>
-      <header className="border-b border-border px-5 py-3 space-y-3">
+      <header className="border-b border-white/20 px-5 py-3 space-y-3 bg-white/5 backdrop-blur">
         <div className="flex items-center gap-3">
-          <div className="size-9 rounded-lg bg-surface-2 grid place-items-center"><CatIcon className="size-4 text-primary" /></div>
+          <div className="size-9 rounded-lg bg-white/25 grid place-items-center"><CatIcon className="size-4 text-white" /></div>
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <div className="flex items-center gap-2 text-xs text-white/80">
               <span>{cat?.name ?? "—"}</span>
               <span>·</span>
               <span>Opened by {senderName(ticket.user_id)}</span>
               <span>·</span>
               <span>{new Date(ticket.created_at).toLocaleDateString()}</span>
             </div>
-            <h1 className="font-display font-semibold text-lg truncate">{ticket.subject}</h1>
+            <h1 className="font-display font-semibold text-lg truncate text-white drop-shadow">{ticket.subject}</h1>
           </div>
-          <span className={cn("inline-flex items-center gap-1 px-2 py-1 rounded-md bg-surface-2 text-xs", STATUS_META[ticket.status].cls)}>
+          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-white/25 text-xs text-white">
             <StatusIcon className="size-3" /> {STATUS_META[ticket.status].label}
           </span>
           {isAdmin && (
             <button
               onClick={deleteTicket}
               title="Delete ticket"
-              className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-red-500/15 text-red-400 hover:bg-red-500/25 text-xs"
+              className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-white text-rose-600 hover:bg-white/90 text-xs font-semibold shadow"
             >
               <Trash2 className="size-3" /> Delete
             </button>
@@ -521,12 +527,12 @@ function TicketDetail({
           const mine = m.sender_id === currentUserId;
           return (
             <div key={m.id} className={cn("flex gap-3", mine && "flex-row-reverse")}>
-              <div className="size-8 rounded-full bg-gradient-primary grid place-items-center text-xs font-semibold text-primary-foreground shrink-0">
+              <div className="size-8 rounded-full bg-white text-rose-600 grid place-items-center text-xs font-bold shrink-0 shadow">
                 {senderName(m.sender_id).slice(0, 1).toUpperCase()}
               </div>
-              <div className={cn("max-w-[70%] rounded-2xl px-4 py-2 text-sm",
-                m.is_internal ? "bg-warning/10 border border-warning/30" :
-                mine ? "bg-primary text-primary-foreground" : "bg-surface-2",
+              <div className={cn("max-w-[70%] rounded-2xl px-4 py-2 text-sm shadow",
+                m.is_internal ? "bg-amber-200/90 text-amber-950 border border-amber-300" :
+                mine ? "bg-white text-rose-700" : "bg-white/20 backdrop-blur text-white border border-white/25",
               )}>
                 <div className="text-[10px] uppercase tracking-wider opacity-70 mb-0.5 flex items-center gap-1">
                   {m.is_internal && <Lock className="size-3" />}
@@ -539,9 +545,9 @@ function TicketDetail({
         })}
       </div>
 
-      <div className="border-t border-border p-3">
+      <div className="border-t border-white/20 p-3 bg-white/5 backdrop-blur">
         {ticket.status === "closed" ? (
-          <div className="text-center text-xs text-muted-foreground py-2">This ticket is closed.</div>
+          <div className="text-center text-xs text-white/80 py-2">This ticket is closed.</div>
         ) : (
           <div className="space-y-2">
             <div className="flex gap-2">
@@ -550,18 +556,18 @@ function TicketDetail({
                 placeholder={internal ? "Internal note (staff only)…" : "Reply to ticket…"}
                 onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) send(); }}
                 className={cn(
-                  "flex-1 px-3 py-2 rounded-lg bg-surface border outline-none resize-none text-sm",
-                  internal ? "border-warning/50" : "border-border focus:border-primary",
+                  "flex-1 px-3 py-2 rounded-lg bg-white/15 backdrop-blur border outline-none resize-none text-sm text-white placeholder:text-white/60",
+                  internal ? "border-amber-300/70" : "border-white/30 focus:border-white",
                 )}
               />
               <button
                 onClick={send} disabled={sending || !draft.trim()}
-                className="self-end px-3 py-2 rounded-lg bg-primary text-primary-foreground disabled:opacity-50"
+                className="self-end px-3 py-2 rounded-lg bg-white text-rose-600 hover:bg-white/90 disabled:opacity-50 shadow"
               ><Send className="size-4" /></button>
             </div>
             {isStaff && (
-              <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
-                <input type="checkbox" checked={internal} onChange={(e) => setInternal(e.target.checked)} className="accent-warning" />
+              <label className="flex items-center gap-2 text-xs text-white/85 cursor-pointer">
+                <input type="checkbox" checked={internal} onChange={(e) => setInternal(e.target.checked)} className="accent-amber-300" />
                 <Lock className="size-3" /> Internal note (visible to staff only)
               </label>
             )}
@@ -576,14 +582,14 @@ function Select({
   label, value, options, onChange,
 }: { label: string; value: string; options: { value: string; label: string }[]; onChange: (v: string) => void }) {
   return (
-    <label className="inline-flex items-center gap-1.5 bg-surface-2 rounded-md px-2 py-1">
-      <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</span>
+    <label className="inline-flex items-center gap-1.5 bg-white/20 backdrop-blur rounded-md px-2 py-1 border border-white/25">
+      <span className="text-[10px] uppercase tracking-wider text-white/85">{label}</span>
       <select
         value={value} onChange={(e) => onChange(e.target.value)}
-        className="bg-transparent text-xs outline-none capitalize"
+        className="bg-transparent text-xs outline-none capitalize text-white"
       >
         {options.map((o) => (
-          <option key={o.value} value={o.value} className="bg-surface text-foreground">{o.label}</option>
+          <option key={o.value} value={o.value} className="bg-rose-700 text-white">{o.label}</option>
         ))}
       </select>
     </label>
