@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { IconRail } from "@/components/app/IconRail";
 import { Clocks } from "@/components/app/Clocks";
+import { UserAvatarMenu } from "@/components/app/UserAvatarMenu";
 import { logMyIp } from "@/lib/ip-log.functions";
 
 export const Route = createFileRoute("/_authenticated")({
@@ -68,6 +69,7 @@ function AuthLayout() {
             <span className="hidden sm:inline">Members</span>
           </Link>
           <Clocks />
+          <UserAvatarMenu />
         </header>
         <div className="flex-1 flex min-h-0">
           <Outlet />
