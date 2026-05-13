@@ -1,22 +1,538 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { ChannelColumn } from "@/components/app/ChannelColumn";
-import { Ticket } from "lucide-react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { z } from "zod";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
+import { ChannelColumn, type ChannelGroup } from "@/components/app/ChannelColumn";
+import {
+  Ticket as TicketIcon, Plus, Send, Lock, X, LifeBuoy, CreditCard, Bug, Sparkles, UserCog,
+  Circle, CircleDot, Clock4, CheckCircle2, XCircle, ChevronDown,
+} from "lucide-react";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/_approved/tickets")({
-  component: () => <Coming title="Tickets" Icon={Ticket} desc="Private support threads with staff. Coming next." />,
+  validateSearch: (s: Record<string, unknown>) => ({
+    id: typeof s.id === "string" ? s.id : undefined,
+    view: (s.view === "mine" || s.view === "all" || s.view === "assigned") ? s.view : undefined,
+  }),
+  component: TicketsPage,
 });
 
-export function Coming({ title, Icon, desc }: { title: string; Icon: React.ComponentType<{ className?: string }>; desc: string }) {
+const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
+  LifeBuoy, CreditCard, Bug, Sparkles, UserCog,
+};
+
+const STATUS_META = {
+  open:        { label: "Open",        Icon: CircleDot,    cls: "text-primary" },
+  in_progress: { label: "In progress", Icon: Clock4,       cls: "text-warning" },
+  waiting:     { label: "Waiting",     Icon: Circle,       cls: "text-muted-foreground" },
+  resolved:    { label: "Resolved",    Icon: CheckCircle2, cls: "text-success" },
+  closed:      { label: "Closed",      Icon: XCircle,      cls: "text-muted-foreground" },
+} as const;
+type Status = keyof typeof STATUS_META;
+
+const PRIORITIES = ["low", "normal", "high", "urgent"] as const;
+type Priority = typeof PRIORITIES[number];
+const PRI_CLS: Record<Priority, string> = {
+  low: "bg-muted text-muted-foreground",
+  normal: "bg-surface-2 text-foreground",
+  high: "bg-warning/15 text-warning",
+  urgent: "bg-destructive/15 text-destructive",
+};
+
+interface Category { id: string; name: string; slug: string; description: string | null; icon: string; color: string; sort_order: number; }
+interface Ticket {
+  id: string; user_id: string; category_id: string; subject: string;
+  status: Status; priority: Priority; assigned_to: string | null;
+  created_at: string; updated_at: string;
+}
+interface Message { id: string; ticket_id: string; sender_id: string; content: string; is_internal: boolean; created_at: string; }
+interface Profile { id: string; display_name: string | null; username: string | null; }
+
+const newTicketSchema = z.object({
+  subject: z.string().trim().min(3, "Subject must be at least 3 characters").max(120),
+  category_id: z.string().uuid("Pick a category"),
+  priority: z.enum(PRIORITIES),
+  message: z.string().trim().min(5, "Message must be at least 5 characters").max(2000),
+});
+
+function TicketsPage() {
+  const { user, isStaff } = useAuth();
+  const search = Route.useSearch();
+  const navigate = useNavigate();
+  const view = search.view ?? (isStaff ? "all" : "mine");
+
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [profiles, setProfiles] = useState<Map<string, Profile>>(new Map());
+  const [staff, setStaff] = useState<Profile[]>([]);
+  const [creating, setCreating] = useState(false);
+
+  // Load categories once
+  useEffect(() => {
+    supabase.from("ticket_categories").select("*").order("sort_order").then(({ data }) => setCategories(data ?? []));
+  }, []);
+
+  // Load tickets according to view
+  const loadTickets = async () => {
+    let q = supabase.from("tickets").select("*").order("updated_at", { ascending: false });
+    if (view === "mine") q = q.eq("user_id", user!.id);
+    else if (view === "assigned") q = q.eq("assigned_to", user!.id);
+    const { data } = await q;
+    setTickets((data ?? []) as Ticket[]);
+    const ids = new Set<string>();
+    (data ?? []).forEach((t) => { ids.add(t.user_id); if (t.assigned_to) ids.add(t.assigned_to); });
+    if (ids.size) {
+      const { data: profs } = await supabase.from("profiles").select("id, display_name, username").in("id", [...ids]);
+      const m = new Map(profiles);
+      (profs ?? []).forEach((p) => m.set(p.id, p));
+      setProfiles(m);
+    }
+  };
+
+  useEffect(() => {
+    if (!user) return;
+    loadTickets();
+    const ch = supabase
+      .channel("tickets-list")
+      .on("postgres_changes", { event: "*", schema: "public", table: "tickets" }, () => loadTickets())
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, view]);
+
+  // Load assignable staff list (once, for staff users)
+  useEffect(() => {
+    if (!isStaff) return;
+    (async () => {
+      const { data: roles } = await supabase
+        .from("user_roles")
+        .select("user_id")
+        .in("role", ["admin", "management", "staff", "moderator"]);
+      const ids = [...new Set((roles ?? []).map((r) => r.user_id))];
+      if (!ids.length) return;
+      const { data: profs } = await supabase.from("profiles").select("id, display_name, username").in("id", ids);
+      setStaff(profs ?? []);
+    })();
+  }, [isStaff]);
+
+  const selected = useMemo(() => tickets.find((t) => t.id === search.id) ?? null, [tickets, search.id]);
+
+  const groups: ChannelGroup[] = useMemo(() => {
+    const buckets: Record<Status, Ticket[]> = { open: [], in_progress: [], waiting: [], resolved: [], closed: [] };
+    tickets.forEach((t) => buckets[t.status].push(t));
+    return (Object.keys(STATUS_META) as Status[])
+      .filter((s) => buckets[s].length)
+      .map((s) => ({
+        label: STATUS_META[s].label,
+        items: buckets[s].map((t) => ({ to: `/tickets`, label: t.subject })),
+      }));
+  }, [tickets]);
+
+  const setView = (v: "mine" | "all" | "assigned") =>
+    navigate({ to: "/tickets", search: { view: v, id: undefined } });
+
   return (
     <>
-      <ChannelColumn title={title} groups={[{ label: title, items: [{ to: "#", label: title.toLowerCase() }] }]} />
-      <main className="flex-1 grid place-items-center">
-        <div className="text-center max-w-md">
-          <div className="size-14 rounded-2xl bg-surface-2 grid place-items-center mx-auto mb-4"><Icon className="size-6 text-primary" /></div>
-          <h1 className="font-display text-2xl font-bold">{title}</h1>
-          <p className="text-muted-foreground mt-2">{desc}</p>
-        </div>
+      <ChannelColumn
+        title="Tickets"
+        groups={[]}
+        footer={
+          <div className="space-y-3 mt-2">
+            <button
+              onClick={() => setCreating(true)}
+              className="w-full flex items-center gap-2 px-3 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
+            >
+              <Plus className="size-4" /> New ticket
+            </button>
+            {isStaff && (
+              <div className="flex gap-1 bg-surface-2 p-1 rounded-lg text-xs">
+                {(["mine", "assigned", "all"] as const).map((v) => (
+                  <button
+                    key={v}
+                    onClick={() => setView(v)}
+                    className={cn(
+                      "flex-1 px-2 py-1 rounded-md capitalize transition-colors",
+                      view === v ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground",
+                    )}
+                  >{v}</button>
+                ))}
+              </div>
+            )}
+            <div className="space-y-3">
+              {groups.length === 0 && (
+                <div className="text-xs text-muted-foreground px-2 py-3 text-center">No tickets yet.</div>
+              )}
+              {groups.map((g) => (
+                <div key={g.label}>
+                  <div className="px-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                    <ChevronDown className="size-3" />{g.label}
+                  </div>
+                  <div className="space-y-px">
+                    {tickets.filter((t) => STATUS_META[t.status].label === g.label).map((t) => {
+                      const cat = categories.find((c) => c.id === t.category_id);
+                      const Icon = ICONS[cat?.icon ?? "LifeBuoy"] ?? LifeBuoy;
+                      const active = selected?.id === t.id;
+                      return (
+                        <button
+                          key={t.id}
+                          onClick={() => navigate({ to: "/tickets", search: { id: t.id, view } })}
+                          className={cn(
+                            "w-full text-left flex items-center gap-2 px-2 py-1.5 rounded-md text-sm transition-colors",
+                            active ? "bg-surface-2 text-foreground" : "text-muted-foreground hover:bg-surface-2/60 hover:text-foreground",
+                          )}
+                        >
+                          <Icon className="size-4 shrink-0" />
+                          <span className="truncate flex-1">{t.subject}</span>
+                          {t.priority === "urgent" && <span className="size-1.5 rounded-full bg-destructive" />}
+                          {t.priority === "high" && <span className="size-1.5 rounded-full bg-warning" />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        }
+      />
+      <main className="flex-1 flex flex-col min-w-0">
+        {creating ? (
+          <NewTicketForm
+            categories={categories}
+            onCancel={() => setCreating(false)}
+            onCreated={(id) => { setCreating(false); navigate({ to: "/tickets", search: { id, view } }); }}
+          />
+        ) : selected ? (
+          <TicketDetail
+            ticket={selected}
+            categories={categories}
+            profiles={profiles}
+            staff={staff}
+            isStaff={isStaff}
+            currentUserId={user!.id}
+          />
+        ) : (
+          <div className="flex-1 grid place-items-center">
+            <div className="text-center max-w-sm">
+              <div className="size-14 rounded-2xl bg-surface-2 grid place-items-center mx-auto mb-4">
+                <TicketIcon className="size-6 text-primary" />
+              </div>
+              <h1 className="font-display text-xl font-bold">Support tickets</h1>
+              <p className="text-muted-foreground text-sm mt-2">
+                {tickets.length === 0 ? "Open your first ticket to get help from the team." : "Select a ticket from the list."}
+              </p>
+              <button
+                onClick={() => setCreating(true)}
+                className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90"
+              >
+                <Plus className="size-4" /> New ticket
+              </button>
+            </div>
+          </div>
+        )}
       </main>
     </>
+  );
+}
+
+function NewTicketForm({
+  categories, onCancel, onCreated,
+}: { categories: Category[]; onCancel: () => void; onCreated: (id: string) => void }) {
+  const { user } = useAuth();
+  const [subject, setSubject] = useState("");
+  const [categoryId, setCategoryId] = useState(categories[0]?.id ?? "");
+  const [priority, setPriority] = useState<Priority>("normal");
+  const [message, setMessage] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => { if (!categoryId && categories[0]) setCategoryId(categories[0].id); }, [categories, categoryId]);
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const parsed = newTicketSchema.safeParse({ subject, category_id: categoryId, priority, message });
+    if (!parsed.success) return toast.error(parsed.error.issues[0].message);
+    setSubmitting(true);
+    const { data: t, error } = await supabase
+      .from("tickets")
+      .insert({ user_id: user!.id, subject: parsed.data.subject, category_id: parsed.data.category_id, priority: parsed.data.priority })
+      .select("id").single();
+    if (error || !t) { setSubmitting(false); return toast.error(error?.message ?? "Failed"); }
+    const { error: e2 } = await supabase.from("ticket_messages").insert({
+      ticket_id: t.id, sender_id: user!.id, content: parsed.data.message, is_internal: false,
+    });
+    setSubmitting(false);
+    if (e2) return toast.error(e2.message);
+    toast.success("Ticket opened");
+    onCreated(t.id);
+  };
+
+  return (
+    <>
+      <header className="h-14 border-b border-border px-5 flex items-center gap-2">
+        <Plus className="size-4 text-primary" />
+        <h1 className="font-display font-semibold">New ticket</h1>
+        <button onClick={onCancel} className="ml-auto text-muted-foreground hover:text-foreground"><X className="size-4" /></button>
+      </header>
+      <form onSubmit={submit} className="flex-1 overflow-y-auto p-6">
+        <div className="max-w-2xl mx-auto space-y-5">
+          <Field label="Subject">
+            <input
+              value={subject} onChange={(e) => setSubject(e.target.value)} maxLength={120}
+              placeholder="Briefly describe the issue"
+              className="w-full px-3 py-2 rounded-lg bg-surface border border-border focus:border-primary outline-none"
+            />
+          </Field>
+          <Field label="Category">
+            <div className="grid sm:grid-cols-2 gap-2">
+              {categories.map((c) => {
+                const Icon = ICONS[c.icon] ?? LifeBuoy;
+                const active = c.id === categoryId;
+                return (
+                  <button
+                    type="button" key={c.id} onClick={() => setCategoryId(c.id)}
+                    className={cn(
+                      "flex items-start gap-3 p-3 rounded-lg border text-left transition-colors",
+                      active ? "border-primary bg-primary/5" : "border-border bg-surface hover:border-primary/40",
+                    )}
+                  >
+                    <div className="size-9 rounded-lg bg-surface-2 grid place-items-center"><Icon className="size-4 text-primary" /></div>
+                    <div className="min-w-0">
+                      <div className="font-medium text-sm">{c.name}</div>
+                      <div className="text-xs text-muted-foreground line-clamp-2">{c.description}</div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </Field>
+          <Field label="Priority">
+            <div className="flex gap-2">
+              {PRIORITIES.map((p) => (
+                <button
+                  type="button" key={p} onClick={() => setPriority(p)}
+                  className={cn(
+                    "px-3 py-1.5 rounded-lg text-xs capitalize border",
+                    priority === p ? "border-primary bg-primary/10 text-foreground" : "border-border text-muted-foreground hover:text-foreground",
+                  )}
+                >{p}</button>
+              ))}
+            </div>
+          </Field>
+          <Field label="Message">
+            <textarea
+              value={message} onChange={(e) => setMessage(e.target.value)} maxLength={2000} rows={6}
+              placeholder="Provide as much detail as you can…"
+              className="w-full px-3 py-2 rounded-lg bg-surface border border-border focus:border-primary outline-none resize-none"
+            />
+          </Field>
+          <div className="flex gap-2 justify-end">
+            <button type="button" onClick={onCancel} className="px-4 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground">Cancel</button>
+            <button type="submit" disabled={submitting} className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium disabled:opacity-50">
+              {submitting ? "Opening…" : "Open ticket"}
+            </button>
+          </div>
+        </div>
+      </form>
+    </>
+  );
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">{label}</div>
+      {children}
+    </div>
+  );
+}
+
+function TicketDetail({
+  ticket, categories, profiles, staff, isStaff, currentUserId,
+}: {
+  ticket: Ticket; categories: Category[]; profiles: Map<string, Profile>;
+  staff: Profile[]; isStaff: boolean; currentUserId: string;
+}) {
+  const cat = categories.find((c) => c.id === ticket.category_id);
+  const CatIcon = ICONS[cat?.icon ?? "LifeBuoy"] ?? LifeBuoy;
+  const StatusIcon = STATUS_META[ticket.status].Icon;
+
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [draft, setDraft] = useState("");
+  const [internal, setInternal] = useState(false);
+  const [sending, setSending] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  const load = async () => {
+    const { data } = await supabase
+      .from("ticket_messages").select("*")
+      .eq("ticket_id", ticket.id).order("created_at", { ascending: true });
+    setMessages((data ?? []) as Message[]);
+    // Pull missing sender profiles
+    const missing = [...new Set((data ?? []).map((m) => m.sender_id))].filter((id) => !profiles.has(id));
+    if (missing.length) {
+      await supabase.from("profiles").select("id, display_name, username").in("id", missing);
+    }
+  };
+
+  useEffect(() => {
+    load();
+    const ch = supabase
+      .channel(`ticket-${ticket.id}`)
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "ticket_messages", filter: `ticket_id=eq.${ticket.id}` },
+        (p) => setMessages((m) => [...m, p.new as Message]))
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ticket.id]);
+
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
+  }, [messages.length]);
+
+  const send = async () => {
+    const content = draft.trim();
+    if (content.length < 1 || content.length > 2000) return;
+    if (ticket.status === "closed") return toast.error("Ticket is closed");
+    setSending(true);
+    const { error } = await supabase.from("ticket_messages").insert({
+      ticket_id: ticket.id, sender_id: currentUserId, content, is_internal: internal && isStaff,
+    });
+    setSending(false);
+    if (error) return toast.error(error.message);
+    setDraft("");
+    // Bump updated_at via status touch (only staff allowed) — skip for users
+    if (isStaff && ticket.status === "open") {
+      await supabase.from("tickets").update({ status: "in_progress" }).eq("id", ticket.id);
+    }
+  };
+
+  const updateField = async (patch: Partial<Pick<Ticket, "status" | "priority" | "assigned_to">>) => {
+    const closing = patch.status === "closed" || patch.status === "resolved";
+    const { error } = await supabase
+      .from("tickets")
+      .update({ ...patch, ...(closing ? { closed_at: new Date().toISOString() } : {}) })
+      .eq("id", ticket.id);
+    if (error) toast.error(error.message);
+  };
+
+  const senderName = (id: string) => {
+    const p = profiles.get(id);
+    return p?.display_name || p?.username || (id === currentUserId ? "You" : "User");
+  };
+
+  return (
+    <>
+      <header className="border-b border-border px-5 py-3 space-y-3">
+        <div className="flex items-center gap-3">
+          <div className="size-9 rounded-lg bg-surface-2 grid place-items-center"><CatIcon className="size-4 text-primary" /></div>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <span>{cat?.name ?? "—"}</span>
+              <span>·</span>
+              <span>Opened by {senderName(ticket.user_id)}</span>
+              <span>·</span>
+              <span>{new Date(ticket.created_at).toLocaleDateString()}</span>
+            </div>
+            <h1 className="font-display font-semibold text-lg truncate">{ticket.subject}</h1>
+          </div>
+          <span className={cn("inline-flex items-center gap-1 px-2 py-1 rounded-md bg-surface-2 text-xs", STATUS_META[ticket.status].cls)}>
+            <StatusIcon className="size-3" /> {STATUS_META[ticket.status].label}
+          </span>
+        </div>
+        {isStaff && (
+          <div className="flex flex-wrap items-center gap-2 text-xs">
+            <Select
+              label="Status" value={ticket.status}
+              options={(Object.keys(STATUS_META) as Status[]).map((s) => ({ value: s, label: STATUS_META[s].label }))}
+              onChange={(v) => updateField({ status: v as Status })}
+            />
+            <Select
+              label="Priority" value={ticket.priority}
+              options={PRIORITIES.map((p) => ({ value: p, label: p }))}
+              onChange={(v) => updateField({ priority: v as Priority })}
+            />
+            <Select
+              label="Assignee" value={ticket.assigned_to ?? ""}
+              options={[{ value: "", label: "Unassigned" }, ...staff.map((s) => ({ value: s.id, label: s.display_name || s.username || "Staff" }))]}
+              onChange={(v) => updateField({ assigned_to: v || null })}
+            />
+            <span className={cn("ml-auto px-2 py-1 rounded text-xs capitalize", PRI_CLS[ticket.priority])}>{ticket.priority}</span>
+          </div>
+        )}
+      </header>
+
+      <div ref={scrollRef} className="flex-1 overflow-y-auto px-5 py-4 space-y-3">
+        {messages.map((m) => {
+          const mine = m.sender_id === currentUserId;
+          return (
+            <div key={m.id} className={cn("flex gap-3", mine && "flex-row-reverse")}>
+              <div className="size-8 rounded-full bg-gradient-primary grid place-items-center text-xs font-semibold text-primary-foreground shrink-0">
+                {senderName(m.sender_id).slice(0, 1).toUpperCase()}
+              </div>
+              <div className={cn("max-w-[70%] rounded-2xl px-4 py-2 text-sm",
+                m.is_internal ? "bg-warning/10 border border-warning/30" :
+                mine ? "bg-primary text-primary-foreground" : "bg-surface-2",
+              )}>
+                <div className="text-[10px] uppercase tracking-wider opacity-70 mb-0.5 flex items-center gap-1">
+                  {m.is_internal && <Lock className="size-3" />}
+                  {senderName(m.sender_id)} · {new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                </div>
+                <div className="whitespace-pre-wrap break-words">{m.content}</div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="border-t border-border p-3">
+        {ticket.status === "closed" ? (
+          <div className="text-center text-xs text-muted-foreground py-2">This ticket is closed.</div>
+        ) : (
+          <div className="space-y-2">
+            <div className="flex gap-2">
+              <textarea
+                value={draft} onChange={(e) => setDraft(e.target.value)} rows={2} maxLength={2000}
+                placeholder={internal ? "Internal note (staff only)…" : "Reply to ticket…"}
+                onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) send(); }}
+                className={cn(
+                  "flex-1 px-3 py-2 rounded-lg bg-surface border outline-none resize-none text-sm",
+                  internal ? "border-warning/50" : "border-border focus:border-primary",
+                )}
+              />
+              <button
+                onClick={send} disabled={sending || !draft.trim()}
+                className="self-end px-3 py-2 rounded-lg bg-primary text-primary-foreground disabled:opacity-50"
+              ><Send className="size-4" /></button>
+            </div>
+            {isStaff && (
+              <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
+                <input type="checkbox" checked={internal} onChange={(e) => setInternal(e.target.checked)} className="accent-warning" />
+                <Lock className="size-3" /> Internal note (visible to staff only)
+              </label>
+            )}
+          </div>
+        )}
+      </div>
+    </>
+  );
+}
+
+function Select({
+  label, value, options, onChange,
+}: { label: string; value: string; options: { value: string; label: string }[]; onChange: (v: string) => void }) {
+  return (
+    <label className="inline-flex items-center gap-1.5 bg-surface-2 rounded-md px-2 py-1">
+      <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</span>
+      <select
+        value={value} onChange={(e) => onChange(e.target.value)}
+        className="bg-transparent text-xs outline-none capitalize"
+      >
+        {options.map((o) => (
+          <option key={o.value} value={o.value} className="bg-surface text-foreground">{o.label}</option>
+        ))}
+      </select>
+    </label>
   );
 }
