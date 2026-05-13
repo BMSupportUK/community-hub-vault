@@ -309,9 +309,9 @@ function NewTicketForm({
   return (
     <>
       <header className="h-14 border-b border-border px-5 flex items-center gap-2">
-        <Plus className="size-4 text-primary" />
-        <h1 className="font-display font-semibold">New ticket</h1>
-        <button onClick={onCancel} className="ml-auto text-muted-foreground hover:text-foreground"><X className="size-4" /></button>
+        <Plus className="size-4 text-white" />
+        <h1 className="font-display font-semibold text-white">New ticket</h1>
+        <button onClick={onCancel} className="ml-auto text-white/70 hover:text-white"><X className="size-4" /></button>
       </header>
       <form onSubmit={submit} className="flex-1 overflow-y-auto p-6">
         <div className="max-w-2xl mx-auto space-y-5">
@@ -319,7 +319,7 @@ function NewTicketForm({
             <input
               value={subject} onChange={(e) => setSubject(e.target.value)} maxLength={120}
               placeholder="Briefly describe the issue"
-              className="w-full px-3 py-2 rounded-lg bg-surface border border-border focus:border-primary outline-none"
+              className="w-full px-3 py-2 rounded-lg bg-white/15 backdrop-blur border border-white/30 focus:border-white text-white placeholder:text-white/60 outline-none"
             />
           </Field>
           <Field label="Category">
@@ -332,13 +332,13 @@ function NewTicketForm({
                     type="button" key={c.id} onClick={() => setCategoryId(c.id)}
                     className={cn(
                       "flex items-start gap-3 p-3 rounded-lg border text-left transition-colors",
-                      active ? "border-primary bg-primary/5" : "border-border bg-surface hover:border-primary/40",
+                      active ? "border-white bg-white/25" : "border-white/30 bg-white/10 hover:bg-white/20",
                     )}
                   >
-                    <div className="size-9 rounded-lg bg-surface-2 grid place-items-center"><Icon className="size-4 text-primary" /></div>
+                    <div className="size-9 rounded-lg bg-white/25 grid place-items-center"><Icon className="size-4 text-white" /></div>
                     <div className="min-w-0">
-                      <div className="font-medium text-sm">{c.name}</div>
-                      <div className="text-xs text-muted-foreground line-clamp-2">{c.description}</div>
+                      <div className="font-medium text-sm text-white">{c.name}</div>
+                      <div className="text-xs text-white/75 line-clamp-2">{c.description}</div>
                     </div>
                   </button>
                 );
@@ -352,7 +352,7 @@ function NewTicketForm({
                   type="button" key={p} onClick={() => setPriority(p)}
                   className={cn(
                     "px-3 py-1.5 rounded-lg text-xs capitalize border",
-                    priority === p ? "border-primary bg-primary/10 text-foreground" : "border-border text-muted-foreground hover:text-foreground",
+                    priority === p ? "border-white bg-white/25 text-white" : "border-white/30 text-white/75 hover:text-white",
                   )}
                 >{p}</button>
               ))}
@@ -362,12 +362,12 @@ function NewTicketForm({
             <textarea
               value={message} onChange={(e) => setMessage(e.target.value)} maxLength={2000} rows={6}
               placeholder="Provide as much detail as you can…"
-              className="w-full px-3 py-2 rounded-lg bg-surface border border-border focus:border-primary outline-none resize-none"
+              className="w-full px-3 py-2 rounded-lg bg-white/15 backdrop-blur border border-white/30 focus:border-white text-white placeholder:text-white/60 outline-none resize-none"
             />
           </Field>
           <div className="flex gap-2 justify-end">
-            <button type="button" onClick={onCancel} className="px-4 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground">Cancel</button>
-            <button type="submit" disabled={submitting} className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium disabled:opacity-50">
+            <button type="button" onClick={onCancel} className="px-4 py-2 rounded-lg text-sm text-white/80 hover:text-white">Cancel</button>
+            <button type="submit" disabled={submitting} className="px-4 py-2 rounded-lg bg-white text-rose-600 text-sm font-semibold hover:bg-white/90 disabled:opacity-50 shadow-lg">
               {submitting ? "Opening…" : "Open ticket"}
             </button>
           </div>
