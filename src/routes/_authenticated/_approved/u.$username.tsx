@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth, type AppRole } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import profileHeader from "@/assets/profile-header.jpg";
 
 export const Route = createFileRoute("/_authenticated/_approved/u/$username")({
   component: ProfilePage,
@@ -139,7 +140,11 @@ function ProfilePage() {
       <div className="max-w-5xl mx-auto px-6 py-8 space-y-6">
         {/* Header card */}
         <section className="rounded-2xl border border-border bg-surface-1 overflow-hidden">
-          <div className="h-28 bg-gradient-primary" />
+          <div
+            className="h-36 sm:h-44 bg-cover bg-center"
+            style={{ backgroundImage: `url(${profileHeader})` }}
+            aria-hidden
+          />
           <div className="px-6 pb-6 -mt-12 flex flex-col sm:flex-row sm:items-end gap-4">
             <Avatar url={profile.avatar_url} name={display} size={96} ring />
             <div className="flex-1 min-w-0">
