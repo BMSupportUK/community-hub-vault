@@ -212,7 +212,7 @@ function IncidentCard({ incident, canManage, onEdit }: { incident: Incident; can
         .from("status_incident_updates")
         .insert({ incident_id: incident.id, status, message: msg.trim(), created_by: user.id });
       if (uErr) throw uErr;
-      const patch: Record<string, any> = { status };
+      const patch: { status: IncidentStatus; resolved_at?: string | null } = { status };
       if (status === "completed" && !incident.resolved_at) patch.resolved_at = new Date().toISOString();
       if (status !== "completed" && incident.resolved_at) patch.resolved_at = null;
       const { error: iErr } = await supabase.from("status_incidents").update(patch).eq("id", incident.id);
