@@ -14,6 +14,41 @@ export type Database = {
   }
   public: {
     Tables: {
+      breaks: {
+        Row: {
+          ended_at: string | null
+          id: string
+          kind: Database["public"]["Enums"]["break_kind"]
+          shift_id: string
+          started_at: string
+          user_id: string
+        }
+        Insert: {
+          ended_at?: string | null
+          id?: string
+          kind: Database["public"]["Enums"]["break_kind"]
+          shift_id: string
+          started_at?: string
+          user_id: string
+        }
+        Update: {
+          ended_at?: string | null
+          id?: string
+          kind?: Database["public"]["Enums"]["break_kind"]
+          shift_id?: string
+          started_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "breaks_shift_id_fkey"
+            columns: ["shift_id"]
+            isOneToOne: false
+            referencedRelation: "shifts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gate_applications: {
         Row: {
           created_at: string
@@ -261,6 +296,30 @@ export type Database = {
           id?: string
           updated_at?: string
           username?: string | null
+        }
+        Relationships: []
+      }
+      shifts: {
+        Row: {
+          clock_in: string
+          clock_out: string | null
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          clock_in?: string
+          clock_out?: string | null
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          clock_in?: string
+          clock_out?: string | null
+          created_at?: string
+          id?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -558,6 +617,7 @@ export type Database = {
         | "moderator"
         | "member"
         | "pending"
+      break_kind: "break" | "lunch"
       gate_status: "pending" | "approved" | "denied"
       order_status:
         | "pending"
@@ -702,6 +762,7 @@ export const Constants = {
         "member",
         "pending",
       ],
+      break_kind: ["break", "lunch"],
       gate_status: ["pending", "approved", "denied"],
       order_status: [
         "pending",
