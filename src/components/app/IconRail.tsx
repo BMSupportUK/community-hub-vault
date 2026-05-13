@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Home, Ticket, ShoppingBag, BookOpen, FileText, Clock, Calendar, Shield, LogOut, MessageSquare } from "lucide-react";
+import { Home, Ticket, ShoppingBag, BookOpen, FileText, Clock, Calendar, Shield, LogOut, MessageSquare, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 import { NotificationBell } from "@/components/app/NotificationBell";
@@ -12,7 +12,8 @@ interface RailItem {
 }
 
 export function IconRail() {
-  const { isStaff, isMod, isPending, signOut } = useAuth();
+  const { isStaff, isMod, isPending, signOut, hasAny } = useAuth();
+  const isAdmin = hasAny(["admin", "management"]);
   const path = useRouterState({ select: (r) => r.location.pathname });
 
   if (isPending) {
@@ -36,6 +37,7 @@ export function IconRail() {
     { to: "/clock", label: "Clock", icon: Clock, show: isStaff },
     { to: "/shifts", label: "Shifts", icon: Calendar, show: isStaff },
     { to: "/moderation", label: "Moderation", icon: Shield, show: isMod },
+    { to: "/admin-roles", label: "User roles", icon: ShieldCheck, show: isAdmin },
   ];
 
   return (

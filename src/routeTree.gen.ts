@@ -23,6 +23,7 @@ import { Route as AuthenticatedApprovedModerationRouteImport } from './routes/_a
 import { Route as AuthenticatedApprovedInstallGuidesRouteImport } from './routes/_authenticated/_approved/install-guides'
 import { Route as AuthenticatedApprovedHomeRouteImport } from './routes/_authenticated/_approved/home'
 import { Route as AuthenticatedApprovedClockRouteImport } from './routes/_authenticated/_approved/clock'
+import { Route as AuthenticatedApprovedAdminRolesRouteImport } from './routes/_authenticated/_approved/admin-roles'
 
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
@@ -100,12 +101,19 @@ const AuthenticatedApprovedClockRoute =
     path: '/clock',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
+const AuthenticatedApprovedAdminRolesRoute =
+  AuthenticatedApprovedAdminRolesRouteImport.update({
+    id: '/admin-roles',
+    path: '/admin-roles',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
   '/gate': typeof AuthenticatedGateRoute
+  '/admin-roles': typeof AuthenticatedApprovedAdminRolesRoute
   '/clock': typeof AuthenticatedApprovedClockRoute
   '/home': typeof AuthenticatedApprovedHomeRoute
   '/install-guides': typeof AuthenticatedApprovedInstallGuidesRoute
@@ -120,6 +128,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
   '/gate': typeof AuthenticatedGateRoute
+  '/admin-roles': typeof AuthenticatedApprovedAdminRolesRoute
   '/clock': typeof AuthenticatedApprovedClockRoute
   '/home': typeof AuthenticatedApprovedHomeRoute
   '/install-guides': typeof AuthenticatedApprovedInstallGuidesRoute
@@ -137,6 +146,7 @@ export interface FileRoutesById {
   '/signup': typeof SignupRoute
   '/_authenticated/_approved': typeof AuthenticatedApprovedRouteWithChildren
   '/_authenticated/gate': typeof AuthenticatedGateRoute
+  '/_authenticated/_approved/admin-roles': typeof AuthenticatedApprovedAdminRolesRoute
   '/_authenticated/_approved/clock': typeof AuthenticatedApprovedClockRoute
   '/_authenticated/_approved/home': typeof AuthenticatedApprovedHomeRoute
   '/_authenticated/_approved/install-guides': typeof AuthenticatedApprovedInstallGuidesRoute
@@ -153,6 +163,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/signup'
     | '/gate'
+    | '/admin-roles'
     | '/clock'
     | '/home'
     | '/install-guides'
@@ -167,6 +178,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/signup'
     | '/gate'
+    | '/admin-roles'
     | '/clock'
     | '/home'
     | '/install-guides'
@@ -183,6 +195,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/_authenticated/_approved'
     | '/_authenticated/gate'
+    | '/_authenticated/_approved/admin-roles'
     | '/_authenticated/_approved/clock'
     | '/_authenticated/_approved/home'
     | '/_authenticated/_approved/install-guides'
@@ -300,10 +313,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedApprovedClockRouteImport
       parentRoute: typeof AuthenticatedApprovedRoute
     }
+    '/_authenticated/_approved/admin-roles': {
+      id: '/_authenticated/_approved/admin-roles'
+      path: '/admin-roles'
+      fullPath: '/admin-roles'
+      preLoaderRoute: typeof AuthenticatedApprovedAdminRolesRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
   }
 }
 
 interface AuthenticatedApprovedRouteChildren {
+  AuthenticatedApprovedAdminRolesRoute: typeof AuthenticatedApprovedAdminRolesRoute
   AuthenticatedApprovedClockRoute: typeof AuthenticatedApprovedClockRoute
   AuthenticatedApprovedHomeRoute: typeof AuthenticatedApprovedHomeRoute
   AuthenticatedApprovedInstallGuidesRoute: typeof AuthenticatedApprovedInstallGuidesRoute
@@ -315,6 +336,7 @@ interface AuthenticatedApprovedRouteChildren {
 }
 
 const AuthenticatedApprovedRouteChildren: AuthenticatedApprovedRouteChildren = {
+  AuthenticatedApprovedAdminRolesRoute: AuthenticatedApprovedAdminRolesRoute,
   AuthenticatedApprovedClockRoute: AuthenticatedApprovedClockRoute,
   AuthenticatedApprovedHomeRoute: AuthenticatedApprovedHomeRoute,
   AuthenticatedApprovedInstallGuidesRoute:
