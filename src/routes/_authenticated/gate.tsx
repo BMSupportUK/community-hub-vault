@@ -155,20 +155,26 @@ function GatePage() {
         {status !== "approved" && (
           <button
             onClick={openChatOrForm}
-            disabled={!isPending && status !== "denied"}
             className="mt-6 w-full max-w-md py-3 rounded-lg font-semibold text-white bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 shadow-[0_8px_30px_rgba(220,38,38,0.45)] transition-all"
           >
             {!reason && status === "pending" ? "Submit access request" : "Chat with Admin"}
           </button>
         )}
 
-        <button
-          onClick={signOut}
-          className="mt-4 text-sm text-white/60 hover:text-white/90 transition-colors inline-flex items-center gap-1.5"
-        >
-          {status === "approved" ? <><ShieldCheck className="size-4" /> Continue</> : <><LogOut className="size-3.5" /> Sign out instead</>}
-        </button>
+        {status === "approved" && (
+          <div className="mt-4 inline-flex items-center gap-1.5 text-sm text-emerald-300">
+            <ShieldCheck className="size-4" /> Continue
+          </div>
+        )}
       </div>
+
+      {/* Subtle sign-out in the corner so it's not confused with the primary action */}
+      <button
+        onClick={signOut}
+        className="absolute top-4 right-4 z-20 text-xs text-white/40 hover:text-white/80 transition-colors inline-flex items-center gap-1.5 px-2 py-1 rounded-md hover:bg-white/5"
+      >
+        <LogOut className="size-3" /> Sign out
+      </button>
 
       {/* Reason form dialog */}
       {formOpen && (
