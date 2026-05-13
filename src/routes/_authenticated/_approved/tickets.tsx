@@ -386,6 +386,9 @@ function TicketDetail({
   ticket: Ticket; categories: Category[]; profiles: Map<string, Profile>;
   staff: Profile[]; isStaff: boolean; currentUserId: string;
 }) {
+  const { hasAny } = useAuth();
+  const isAdmin = hasAny(["admin", "management"]);
+  const navigate = useNavigate();
   const cat = categories.find((c) => c.id === ticket.category_id);
   const CatIcon = ICONS[cat?.icon ?? "LifeBuoy"] ?? LifeBuoy;
   const StatusIcon = STATUS_META[ticket.status].Icon;
@@ -449,6 +452,15 @@ function TicketDetail({
     if (error) toast.error(error.message);
   };
 
+  const deleteTicket = async () => {
+    if (!confirm("Delete this ticket and all its messages? This cannot be undone.")) return;
+    await supabase.from("ticket_messages").delete().eq("ticket_id", ticket.id);
+    const { error } = await supabase.from("tickets").delete().eq("id", ticket.id);
+    if (error) return toast.error(error.message);
+    toast.success("Ticket deleted");
+    navigate({ to: "/tickets", search: { id: undefined, view: undefined } });
+  };
+
   const senderName = (id: string) => {
     const p = profiles.get(id);
     return p?.display_name || p?.username || (id === currentUserId ? "You" : "User");
@@ -472,6 +484,15 @@ function TicketDetail({
           <span className={cn("inline-flex items-center gap-1 px-2 py-1 rounded-md bg-surface-2 text-xs", STATUS_META[ticket.status].cls)}>
             <StatusIcon className="size-3" /> {STATUS_META[ticket.status].label}
           </span>
+          {isAdmin && (
+            <button
+              onClick={deleteTicket}
+              title="Delete ticket"
+              className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-red-500/15 text-red-400 hover:bg-red-500/25 text-xs"
+            >
+              <Trash2 className="size-3" /> Delete
+            </button>
+          )}
         </div>
         {isStaff && (
           <div className="flex flex-wrap items-center gap-2 text-xs">
