@@ -264,6 +264,80 @@ export type Database = {
         }
         Relationships: []
       }
+      sports_blogs: {
+        Row: {
+          badge: string | null
+          body: string | null
+          category_id: string
+          created_at: string
+          created_by: string | null
+          excerpt: string | null
+          id: string
+          image_url: string | null
+          published: boolean
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          badge?: string | null
+          body?: string | null
+          category_id: string
+          created_at?: string
+          created_by?: string | null
+          excerpt?: string | null
+          id?: string
+          image_url?: string | null
+          published?: boolean
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          badge?: string | null
+          body?: string | null
+          category_id?: string
+          created_at?: string
+          created_by?: string | null
+          excerpt?: string | null
+          id?: string
+          image_url?: string | null
+          published?: boolean
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sports_blogs_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "sports_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sports_categories: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          slug: string
+          sort_order: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          slug: string
+          sort_order?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          slug?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
       staff_notification_reads: {
         Row: {
           notification_id: string
