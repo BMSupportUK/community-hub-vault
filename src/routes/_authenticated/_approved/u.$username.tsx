@@ -158,7 +158,6 @@ function ProfilePage() {
                 ))}
               </div>
               <p className="text-sm text-muted-foreground">@{profile.username ?? "unknown"}</p>
-              {profile.bio && <p className="text-sm mt-2 max-w-prose">{profile.bio}</p>}
 
               <div className="mt-3 flex flex-wrap gap-2">
                 {breakRow ? (
@@ -187,37 +186,67 @@ function ProfilePage() {
         </section>
 
         <div className="grid lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 space-y-6">
-            {canSeeCreds && (
+          <div className="lg:col-span-2 space-y-4">
+            <div className="flex flex-wrap gap-1 p-1 rounded-xl bg-white/10 border border-white/25 backdrop-blur-xl w-fit">
+              {([
+                ...(canSeeCreds ? [{ id: "creds" as const, label: "Credentials & DNS", icon: KeyRound }] : []),
+                { id: "tickets" as const, label: `Recent tickets (${tickets.length})`, icon: Ticket },
+                { id: "orders" as const, label: `Recent orders (${orders.length})`, icon: ShoppingBag },
+              ]).map((t) => {
+                const Icon = t.icon;
+                const active = mainTab === t.id;
+                return (
+                  <button
+                    key={t.id}
+                    onClick={() => setMainTab(t.id)}
+                    className={cn(
+                      "flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors",
+                      active
+                        ? "bg-white text-rose-600 shadow"
+                        : "text-white/80 hover:text-white hover:bg-white/10",
+                    )}
+                  >
+                    <Icon className="size-3.5" />
+                    {t.label}
+                  </button>
+                );
+              })}
+            </div>
+
+            {mainTab === "creds" && canSeeCreds && (
               <CredentialsReveal targetUserId={profile.id} isOwner={isOwner} />
             )}
 
-            <ActivityCard title="Recent tickets" icon={Ticket} empty="No tickets yet">
-              {tickets.map((t) => (
-                <li key={t.id} className="flex items-center justify-between gap-3 py-2 text-sm">
-                  <span className="truncate">{t.subject}</span>
-                  <span className="text-xs text-muted-foreground capitalize">{t.status}</span>
-                </li>
-              ))}
-            </ActivityCard>
+            {mainTab === "tickets" && (
+              <ActivityCard title="Recent tickets" icon={Ticket} empty="No tickets yet">
+                {tickets.map((t) => (
+                  <li key={t.id} className="flex items-center justify-between gap-3 py-2 text-sm">
+                    <span className="truncate">{t.subject}</span>
+                    <span className="text-xs text-white/70 capitalize">{t.status}</span>
+                  </li>
+                ))}
+              </ActivityCard>
+            )}
 
-            <ActivityCard title="Recent orders" icon={ShoppingBag} empty="No orders yet">
-              {orders.map((o) => (
-                <li key={o.id} className="flex items-center justify-between gap-3 py-2 text-sm">
-                  <span>${(o.total_cents / 100).toFixed(2)}</span>
-                  <span className="text-xs text-muted-foreground capitalize">{o.status}</span>
-                </li>
-              ))}
-            </ActivityCard>
-
-            <ActivityCard title="Sports blog posts" icon={FileText} empty="No posts yet">
-              {blogs.map((b) => (
-                <li key={b.id} className="py-2 text-sm truncate">{b.title}</li>
-              ))}
-            </ActivityCard>
+            {mainTab === "orders" && (
+              <ActivityCard title="Recent orders" icon={ShoppingBag} empty="No orders yet">
+                {orders.map((o) => (
+                  <li key={o.id} className="flex items-center justify-between gap-3 py-2 text-sm">
+                    <span>${(o.total_cents / 100).toFixed(2)}</span>
+                    <span className="text-xs text-white/70 capitalize">{o.status}</span>
+                  </li>
+                ))}
+              </ActivityCard>
+            )}
           </div>
 
           <aside className="space-y-6">
+            <div className="rounded-2xl border border-white/25 bg-white/10 backdrop-blur-xl p-5 shadow-[0_10px_40px_-15px_rgba(0,0,0,0.4)] text-white">
+              <p className="text-xs uppercase tracking-wider text-amber-100/80 mb-2">Bio</p>
+              <p className="text-sm whitespace-pre-wrap">
+                {profile.bio || <span className="text-white/60 italic">No bio yet.</span>}
+              </p>
+            </div>
             <InfoCard label="Member since" value={new Date(profile.created_at).toLocaleDateString()} />
             <InfoCard label="Roles" value={sortedRoles.join(", ") || "—"} />
           </aside>
