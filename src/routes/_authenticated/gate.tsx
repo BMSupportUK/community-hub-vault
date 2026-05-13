@@ -24,6 +24,7 @@ function GatePage() {
   const [formOpen, setFormOpen] = useState(false);
   const [reasonDraft, setReasonDraft] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [confirmNew, setConfirmNew] = useState(false);
   const [senderNames, setSenderNames] = useState<Record<string, string>>({});
   const scrollerRef = useRef<HTMLDivElement>(null);
 
@@ -102,6 +103,11 @@ function GatePage() {
       return;
     }
     if (!user) return;
+    // Safeguard: if a pending ticket already exists, require explicit confirmation
+    if (appId && status === "pending" && !confirmNew) {
+      setConfirmNew(true);
+      return;
+    }
     setSubmitting(true);
     // Always create a brand-new access ticket
     const { data: created, error } = await supabase
@@ -134,6 +140,7 @@ function GatePage() {
     setFormOpen(false);
     setChatOpen(true);
     setSubmitting(false);
+    setConfirmNew(false);
     toast.success(`Ticket #GATE-${String(created.ticket_number).padStart(6, "0")} created.`);
   };
 
@@ -224,11 +231,38 @@ function GatePage() {
                 </div>
                 <div className="font-display font-semibold text-white text-sm">Access request</div>
               </div>
-              <button type="button" onClick={() => setFormOpen(false)} className="text-white/60 hover:text-white">
+              <button
+                type="button"
+                onClick={() => { setFormOpen(false); setConfirmNew(false); }}
+                className="text-white/60 hover:text-white"
+              >
                 <X className="size-5" />
               </button>
             </header>
             <div className="p-5 space-y-4">
+              {appId && status === "pending" && ticketNumber !== null && (
+                <div className={`rounded-lg border p-3 text-xs ${
+                  confirmNew
+                    ? "bg-amber-500/10 border-amber-500/40 text-amber-100"
+                    : "bg-white/5 border-white/10 text-white/80"
+                }`}>
+                  {confirmNew ? (
+                    <>
+                      <div className="font-semibold text-amber-200 mb-1">Open a second ticket?</div>
+                      You already have pending ticket{" "}
+                      <span className="font-mono">#GATE-{String(ticketNumber).padStart(6, "0")}</span>.
+                      Submitting again will create a new one. Click "Submit new ticket" to confirm,
+                      or cancel to keep using the existing one.
+                    </>
+                  ) : (
+                    <>
+                      You already have a pending ticket{" "}
+                      <span className="font-mono">#GATE-{String(ticketNumber).padStart(6, "0")}</span>.
+                      You can keep chatting on it instead — submitting will ask before opening a new one.
+                    </>
+                  )}
+                </div>
+              )}
               <div>
                 <label className="block text-xs uppercase tracking-wider text-red-300/80 mb-2">
                   Why do you need access?
@@ -256,17 +290,32 @@ function GatePage() {
             <footer className="px-5 py-3 border-t border-white/10 flex items-center justify-end gap-2">
               <button
                 type="button"
-                onClick={() => setFormOpen(false)}
+                onClick={() => { setFormOpen(false); setConfirmNew(false); }}
                 className="text-sm px-3 py-2 rounded-lg text-white/70 hover:text-white"
               >
                 Cancel
               </button>
+              {appId && status === "pending" && (
+                <button
+                  type="button"
+                  onClick={() => { setFormOpen(false); setConfirmNew(false); setChatOpen(true); }}
+                  className="text-sm px-3 py-2 rounded-lg text-white/80 hover:text-white border border-white/15"
+                >
+                  Use existing ticket
+                </button>
+              )}
               <button
                 type="submit"
                 disabled={submitting || reasonDraft.trim().length < 10}
                 className="text-sm px-4 py-2 rounded-lg font-semibold text-white bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 disabled:opacity-50 shadow-[0_4px_20px_rgba(220,38,38,0.4)]"
               >
-                {submitting ? "Submitting…" : "Submit request"}
+                {submitting
+                  ? "Submitting…"
+                  : confirmNew
+                  ? "Submit new ticket"
+                  : appId && status === "pending"
+                  ? "Submit another"
+                  : "Submit request"}
               </button>
             </footer>
           </form>
