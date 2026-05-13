@@ -24,6 +24,7 @@ function GatePage() {
   const [formOpen, setFormOpen] = useState(false);
   const [reasonDraft, setReasonDraft] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [confirmNew, setConfirmNew] = useState(false);
   const [senderNames, setSenderNames] = useState<Record<string, string>>({});
   const scrollerRef = useRef<HTMLDivElement>(null);
 
@@ -102,6 +103,11 @@ function GatePage() {
       return;
     }
     if (!user) return;
+    // Safeguard: if a pending ticket already exists, require explicit confirmation
+    if (appId && status === "pending" && !confirmNew) {
+      setConfirmNew(true);
+      return;
+    }
     setSubmitting(true);
     // Always create a brand-new access ticket
     const { data: created, error } = await supabase
@@ -134,6 +140,7 @@ function GatePage() {
     setFormOpen(false);
     setChatOpen(true);
     setSubmitting(false);
+    setConfirmNew(false);
     toast.success(`Ticket #GATE-${String(created.ticket_number).padStart(6, "0")} created.`);
   };
 
