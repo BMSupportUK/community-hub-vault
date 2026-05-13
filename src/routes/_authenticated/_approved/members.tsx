@@ -76,7 +76,10 @@ function MembersPage() {
     })();
   }, [isAdmin]);
 
+  const STAFF_ROLES = new Set(["admin", "management", "moderator", "staff"]);
   const filtered = profiles.filter((p) => {
+    const roles = rolesByUser[p.id] ?? [];
+    if (roles.some((r) => STAFF_ROLES.has(r))) return false;
     if (!q.trim()) return true;
     const s = q.toLowerCase();
     return (
@@ -108,7 +111,7 @@ function MembersPage() {
           <div className="flex items-center gap-3 text-sm">
             <div className="rounded-xl bg-white/10 backdrop-blur ring-1 ring-white/15 px-4 py-2">
               <div className="text-[11px] uppercase tracking-wider text-white/60">Members</div>
-              <div className="font-display font-bold text-2xl">{profiles.length}</div>
+              <div className="font-display font-bold text-2xl">{filtered.length}</div>
             </div>
           </div>
         </div>
