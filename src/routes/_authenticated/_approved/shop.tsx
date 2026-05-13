@@ -6,6 +6,7 @@ import { ChannelColumn, type ChannelGroup } from "@/components/app/ChannelColumn
 import { ShoppingBag, Package, Settings, Plus, Minus, X, Send, Trash2, Pencil, Image as ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import shopHero from "@/assets/shop-hero.jpg";
 
 type View = "store" | "orders" | "admin";
 
@@ -134,44 +135,95 @@ function Storefront() {
 
   return (
     <main className="flex-1 flex flex-col overflow-hidden">
-      <header className="h-14 px-6 border-b border-border flex items-center justify-between shrink-0">
-        <div>
-          <h1 className="font-display font-bold text-lg">Storefront</h1>
-          <div className="flex gap-1 mt-0.5">
-            {categories.map((c) => (
-              <button key={c} onClick={() => setCat(c)} className={cn("text-[11px] px-2 py-0.5 rounded-full transition",
-                cat === c ? "bg-primary text-primary-foreground" : "bg-surface-2 text-muted-foreground hover:text-foreground")}>{c}</button>
-            ))}
+      <div className="flex-1 overflow-y-auto">
+        {/* Welcome Hero */}
+        <section className="relative overflow-hidden border-b border-border">
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-950 via-blue-900 to-sky-700" />
+          <div className="relative grid md:grid-cols-2 gap-6 p-6 md:p-10 items-center">
+            <div className="text-white">
+              <div className="text-xs uppercase tracking-[0.2em] text-sky-200/80 mb-3">BM Support · Shop</div>
+              <h1 className="font-display text-3xl md:text-5xl font-bold leading-tight">
+                Welcome to the Store
+              </h1>
+              <p className="mt-4 text-sky-100/90 max-w-lg">
+                Browse plans, gear and add-ons hand-picked for BM Support members.
+                Place an order in seconds — we'll keep you posted every step of the way.
+              </p>
+              <div className="mt-6 flex flex-wrap items-center gap-3">
+                <button
+                  onClick={() => setShowCheckout(true)}
+                  disabled={count === 0}
+                  className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-sky-400 to-blue-500 text-white font-medium px-4 py-2.5 shadow-lg shadow-blue-500/30 disabled:opacity-50"
+                >
+                  <ShoppingBag className="size-4" />
+                  View Cart
+                  {count > 0 && (
+                    <span className="ml-1 bg-white/20 px-1.5 rounded-full text-xs">{count}</span>
+                  )}
+                </button>
+                <a
+                  href="#products"
+                  className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/10 backdrop-blur px-4 py-2.5 text-sm text-white hover:bg-white/15 transition"
+                >
+                  Shop now
+                </a>
+              </div>
+            </div>
+            <div className="relative rounded-2xl overflow-hidden ring-1 ring-white/10 shadow-2xl">
+              <img
+                src={shopHero}
+                alt="BM Support Store"
+                width={1280}
+                height={640}
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-tr from-blue-950/40 via-transparent to-transparent" />
+            </div>
           </div>
+        </section>
+
+        {/* Category bar */}
+        <div id="products" className="sticky top-0 z-10 bg-background/80 backdrop-blur border-b border-border px-6 py-3 flex items-center gap-2 flex-wrap">
+          {categories.map((c) => (
+            <button
+              key={c}
+              onClick={() => setCat(c)}
+              className={cn(
+                "text-xs px-3 py-1.5 rounded-full transition font-medium",
+                cat === c
+                  ? "bg-gradient-to-r from-blue-500 to-sky-400 text-white shadow shadow-blue-500/30"
+                  : "bg-surface-2 text-muted-foreground hover:text-foreground",
+              )}
+            >
+              {c}
+            </button>
+          ))}
         </div>
-        <button onClick={() => setShowCheckout(true)} disabled={count === 0} className="relative px-4 py-2 rounded-lg bg-primary text-primary-foreground font-medium disabled:opacity-50 flex items-center gap-2">
-          <ShoppingBag className="size-4" /> Cart {count > 0 && <span className="bg-primary-foreground/20 px-1.5 rounded-full text-xs">{count}</span>}
-        </button>
-      </header>
-      <div className="flex-1 overflow-y-auto p-6">
+
+        <div className="p-6">
         {filtered.length === 0 ? (
           <div className="text-center text-muted-foreground py-20">No products yet.</div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
             {filtered.map((p) => (
-              <div key={p.id} className="bg-surface rounded-xl overflow-hidden border border-border hover:border-primary/40 transition-colors flex flex-col">
+              <div key={p.id} className="group bg-surface rounded-xl overflow-hidden border border-border hover:border-sky-400/50 hover:shadow-lg hover:shadow-blue-500/10 transition-all flex flex-col">
                 <div className="aspect-square bg-surface-2 grid place-items-center overflow-hidden">
-                  {p.image_url ? <img src={p.image_url} alt={p.name} className="w-full h-full object-cover" /> : <ImageIcon className="size-10 text-muted-foreground/40" />}
+                  {p.image_url ? <img src={p.image_url} alt={p.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" /> : <ImageIcon className="size-10 text-muted-foreground/40" />}
                 </div>
                 <div className="p-4 flex flex-col flex-1">
-                  {p.category && <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">{p.category}</div>}
+                  {p.category && <div className="text-[10px] uppercase tracking-wider text-sky-300 mb-1">{p.category}</div>}
                   <h3 className="font-semibold text-sm">{p.name}</h3>
                   {p.description && <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{p.description}</p>}
                   <div className="mt-auto pt-3 flex items-center justify-between">
-                    <span className="font-display font-bold text-lg">{fmt(p.price_cents)}</span>
+                    <span className="font-display font-bold text-lg bg-gradient-to-r from-sky-300 to-blue-400 bg-clip-text text-transparent">{fmt(p.price_cents)}</span>
                     {cart[p.id] ? (
                       <div className="flex items-center gap-1 bg-surface-2 rounded-lg">
-                        <button onClick={() => sub(p.id)} className="size-7 grid place-items-center hover:text-primary"><Minus className="size-3.5" /></button>
+                        <button onClick={() => sub(p.id)} className="size-7 grid place-items-center hover:text-sky-400"><Minus className="size-3.5" /></button>
                         <span className="text-sm font-medium w-5 text-center">{cart[p.id]}</span>
-                        <button onClick={() => add(p.id)} className="size-7 grid place-items-center hover:text-primary"><Plus className="size-3.5" /></button>
+                        <button onClick={() => add(p.id)} className="size-7 grid place-items-center hover:text-sky-400"><Plus className="size-3.5" /></button>
                       </div>
                     ) : (
-                      <button onClick={() => add(p.id)} className="px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-medium hover:opacity-90">Add</button>
+                      <button onClick={() => add(p.id)} className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-blue-500 to-sky-400 text-white text-xs font-medium hover:opacity-90 shadow shadow-blue-500/20">Add</button>
                     )}
                   </div>
                 </div>
@@ -179,6 +231,7 @@ function Storefront() {
             ))}
           </div>
         )}
+        </div>
       </div>
       {showCheckout && <Checkout items={cartItems.map((p) => ({ ...p, qty: cart[p.id] }))} total={total} onClose={() => setShowCheckout(false)} onPlace={placeOrder} />}
     </main>
