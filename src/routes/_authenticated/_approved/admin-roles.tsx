@@ -10,7 +10,7 @@ export const Route = createFileRoute("/_authenticated/_approved/admin-roles")({
   component: AdminRolesPage,
 });
 
-const ALL_ROLES: AppRole[] = ["admin", "management", "moderator", "staff", "member", "pending"];
+const ALL_ROLES: AppRole[] = ["admin", "management", "moderator", "staff", "member", "pending", "banned"];
 
 const ROLE_STYLES: Record<AppRole, string> = {
   admin: "bg-primary text-primary-foreground border-primary shadow-glow",
@@ -19,6 +19,7 @@ const ROLE_STYLES: Record<AppRole, string> = {
   staff: "bg-surface-2 text-foreground border-border",
   member: "bg-surface-2 text-foreground border-border",
   pending: "bg-muted text-muted-foreground border-border",
+  banned: "bg-destructive text-destructive-foreground border-destructive",
 };
 
 interface Row {
