@@ -1,0 +1,3 @@
+INSERT INTO public.user_roles (user_id, role) VALUES ('73c113ce-ce1b-43f0-af24-c2a36cf0d8e7', 'admin') ON CONFLICT (user_id, role) DO NOTHING;
+DELETE FROM public.user_roles WHERE user_id = '73c113ce-ce1b-43f0-af24-c2a36cf0d8e7' AND role = 'pending';
+UPDATE public.gate_applications SET status = 'approved', reviewed_at = now(), reviewed_by = '73c113ce-ce1b-43f0-af24-c2a36cf0d8e7' WHERE user_id = '73c113ce-ce1b-43f0-af24-c2a36cf0d8e7' AND status = 'pending';
