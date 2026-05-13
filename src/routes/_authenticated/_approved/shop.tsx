@@ -22,8 +22,9 @@ interface Product {
   image_url: string | null; category: string | null; stock: number | null;
   is_active: boolean; sort_order: number;
 }
+type OrderStatus = "pending" | "processing" | "shipped" | "completed" | "cancelled";
 interface Order {
-  id: string; user_id: string; status: string; total_cents: number;
+  id: string; user_id: string; status: OrderStatus; total_cents: number;
   shipping_name: string | null; shipping_address: string | null; notes: string | null;
   created_at: string;
 }
@@ -319,7 +320,7 @@ function OrderDetail({ orderId, isAdmin }: { orderId: string; isAdmin: boolean }
     if (error) { toast.error(error.message); setText(c); }
   };
 
-  const updateStatus = async (status: string) => {
+  const updateStatus = async (status: Order["status"]) => {
     const { error } = await supabase.from("orders").update({ status }).eq("id", orderId);
     if (error) toast.error(error.message);
   };
@@ -335,7 +336,7 @@ function OrderDetail({ orderId, isAdmin }: { orderId: string; isAdmin: boolean }
         </div>
         <div className="flex items-center gap-2">
           {isAdmin ? (
-            <select value={order.status} onChange={(e) => updateStatus(e.target.value)}
+            <select value={order.status} onChange={(e) => updateStatus(e.target.value as Order["status"])}
               className={cn("text-xs px-2 py-1 rounded font-medium border-0 outline-none", STATUS_COLOR[order.status])}>
               {["pending","processing","shipped","completed","cancelled"].map((s) => <option key={s} value={s}>{s}</option>)}
             </select>

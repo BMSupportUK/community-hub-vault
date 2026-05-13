@@ -1,10 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { Send, ShieldCheck } from "lucide-react";
+import { Send, Ban, X, LogOut, ShieldCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { ChannelColumn } from "@/components/app/ChannelColumn";
 import { toast } from "sonner";
+import bg from "@/assets/gate-bg.jpg";
 
 export const Route = createFileRoute("/_authenticated/gate")({
   component: GatePage,
@@ -13,11 +13,12 @@ export const Route = createFileRoute("/_authenticated/gate")({
 interface Msg { id: string; sender_id: string; content: string; created_at: string; }
 
 function GatePage() {
-  const { user, refreshRoles, isPending } = useAuth();
+  const { user, refreshRoles, isPending, signOut } = useAuth();
   const [appId, setAppId] = useState<string | null>(null);
   const [status, setStatus] = useState<string>("pending");
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [text, setText] = useState("");
+  const [chatOpen, setChatOpen] = useState(false);
   const [senderNames, setSenderNames] = useState<Record<string, string>>({});
   const scrollerRef = useRef<HTMLDivElement>(null);
 
@@ -25,18 +26,11 @@ function GatePage() {
     if (!user) return;
     (async () => {
       const { data } = await supabase
-        .from("gate_applications")
-        .select("id, status")
-        .eq("user_id", user.id)
-        .maybeSingle();
+        .from("gate_applications").select("id, status").eq("user_id", user.id).maybeSingle();
       if (data) {
-        setAppId(data.id);
-        setStatus(data.status);
-        const { data: m } = await supabase
-          .from("gate_messages")
-          .select("id, sender_id, content, created_at")
-          .eq("application_id", data.id)
-          .order("created_at");
+        setAppId(data.id); setStatus(data.status);
+        const { data: m } = await supabase.from("gate_messages")
+          .select("id, sender_id, content, created_at").eq("application_id", data.id).order("created_at");
         setMsgs(m ?? []);
       }
     })();
@@ -44,27 +38,20 @@ function GatePage() {
 
   useEffect(() => {
     if (!appId) return;
-    const ch = supabase
-      .channel(`gate-${appId}`)
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "gate_messages", filter: `application_id=eq.${appId}` }, (p) => {
-        setMsgs((m) => [...m, p.new as Msg]);
-      })
+    const ch = supabase.channel(`gate-${appId}`)
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "gate_messages", filter: `application_id=eq.${appId}` },
+        (p) => setMsgs((m) => [...m, p.new as Msg]))
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "gate_applications", filter: `id=eq.${appId}` }, async (p) => {
         const next = (p.new as { status: string }).status;
         setStatus(next);
-        if (next === "approved") {
-          toast.success("You're in! Welcome.");
-          await refreshRoles();
-        } else if (next === "denied") {
-          toast.error("Your request was denied.");
-        }
+        if (next === "approved") { toast.success("You're in! Welcome."); await refreshRoles(); }
+        else if (next === "denied") toast.error("Your request was denied.");
       })
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, [appId, refreshRoles]);
 
   useEffect(() => {
-    // load display names for senders
     const ids = Array.from(new Set(msgs.map((m) => m.sender_id))).filter((id) => !senderNames[id]);
     if (ids.length === 0) return;
     supabase.from("profiles").select("id, display_name, username").in("id", ids).then(({ data }) => {
@@ -76,14 +63,13 @@ function GatePage() {
   }, [msgs]);
 
   useEffect(() => {
-    scrollerRef.current?.scrollTo({ top: scrollerRef.current.scrollHeight, behavior: "smooth" });
-  }, [msgs.length]);
+    if (chatOpen) scrollerRef.current?.scrollTo({ top: scrollerRef.current.scrollHeight, behavior: "smooth" });
+  }, [msgs.length, chatOpen]);
 
   const send = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!text.trim() || !appId || !user) return;
-    const content = text.trim();
-    setText("");
+    const content = text.trim(); setText("");
     const { error } = await supabase.from("gate_messages").insert({
       application_id: appId, sender_id: user.id, content,
     });
@@ -91,73 +77,121 @@ function GatePage() {
   };
 
   return (
-    <>
-      <ChannelColumn
-        title="Security gate"
-        groups={[{ label: "Access", items: [{ to: "/gate", label: "verification" }] }]}
-      />
-      <main className="flex-1 flex flex-col">
-        <header className="h-14 border-b border-border px-5 flex items-center gap-2">
-          <ShieldCheck className="size-4 text-primary" />
-          <h1 className="font-display font-semibold">verification</h1>
-          <StatusBadge status={status} />
-        </header>
+    <div className="fixed inset-0 overflow-hidden bg-black">
+      {/* Cinematic background */}
+      <img src={bg} alt="" className="absolute inset-0 w-full h-full object-cover opacity-70" />
+      <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/30 to-black/80" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(220,38,38,0.18),transparent_60%)]" />
 
-        <div ref={scrollerRef} className="flex-1 overflow-y-auto scrollbar-thin px-6 py-4 space-y-4">
-          <div className="rounded-xl bg-surface border border-border p-4">
-            <div className="font-display font-semibold text-sm">Welcome to the gate.</div>
-            <p className="text-sm text-muted-foreground mt-1">
-              A moderator will review your request shortly. Please introduce yourself, explain why you'd like to join,
-              and confirm you'll respect the rules. You'll be granted access from this conversation.
-            </p>
-          </div>
-          {msgs.map((m) => (
-            <div key={m.id} className="flex gap-3">
-              <div className="size-9 rounded-full bg-surface-2 grid place-items-center text-xs font-semibold shrink-0">
-                {(senderNames[m.sender_id] ?? "?").slice(0, 1).toUpperCase()}
-              </div>
-              <div className="min-w-0">
-                <div className="flex items-baseline gap-2">
-                  <span className="font-medium text-sm">{senderNames[m.sender_id] ?? "User"}</span>
-                  <span className="text-[10px] text-muted-foreground">{new Date(m.created_at).toLocaleString()}</span>
-                </div>
-                <div className="text-sm text-foreground/90 whitespace-pre-wrap">{m.content}</div>
-              </div>
-            </div>
-          ))}
+      {/* Center card */}
+      <div className="relative z-10 min-h-screen flex flex-col items-center justify-center px-6 text-center">
+        <div className="size-20 rounded-full bg-gradient-to-br from-red-500 to-red-700 grid place-items-center shadow-[0_0_60px_rgba(239,68,68,0.6)] ring-2 ring-red-500/40 mb-6">
+          <Ban className="size-10 text-white" strokeWidth={2.5} />
         </div>
 
-        {isPending && status === "pending" && (
-          <form onSubmit={send} className="border-t border-border p-4">
-            <div className="flex items-center gap-2 bg-input rounded-lg px-3">
-              <input
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-                placeholder="Message #verification"
-                className="flex-1 h-11 bg-transparent outline-none text-sm"
-              />
-              <button className="text-primary hover:opacity-80 disabled:opacity-30" disabled={!text.trim()}>
-                <Send className="size-4" />
-              </button>
-            </div>
-          </form>
-        )}
-        {status === "approved" && (
-          <div className="border-t border-border p-4 text-center text-sm text-success">You've been approved. Refreshing access…</div>
-        )}
-        {status === "denied" && (
-          <div className="border-t border-border p-4 text-center text-sm text-destructive">Your request was denied.</div>
-        )}
-      </main>
-    </>
-  );
-}
+        <h1 className="font-display text-4xl md:text-5xl font-extrabold text-white tracking-tight">
+          {status === "denied" ? "Access Denied" : status === "approved" ? "Access Granted" : "Access Required"}
+        </h1>
+        <p className="mt-3 text-red-200/90 text-base max-w-md">
+          {status === "approved"
+            ? "Welcome aboard. Refreshing your access…"
+            : status === "denied"
+            ? "Your request was denied. Contact an administrator if you believe this is a mistake."
+            : "Your account does not have access to this service yet."}
+        </p>
 
-function StatusBadge({ status }: { status: string }) {
-  const map: Record<string, string> = {
-    pending: "bg-warning/15 text-warning",
-    approved: "bg-success/15 text-success",
-    denied: "bg-destructive/15 text-destructive",
-  };
-  return <span className={`ml-auto text-[10px] font-semibold uppercase tracking-wider px-2 py-1 rounded ${map[status] ?? ""}`}>{status}</span>;
+        {status !== "approved" && (
+          <div className="mt-8 w-full max-w-md rounded-xl border border-red-500/40 bg-red-950/30 backdrop-blur-sm p-5 text-left">
+            <div className="text-center font-semibold text-white text-sm">What should I do?</div>
+            <p className="text-center text-red-100/80 text-sm mt-2">
+              You can chat with an admin to request access to the platform.
+            </p>
+            <p className="text-center text-red-100/80 text-sm mt-2">
+              Click the button below to start a conversation with our support team.
+            </p>
+          </div>
+        )}
+
+        {status !== "approved" && (
+          <button
+            onClick={() => setChatOpen(true)}
+            disabled={!isPending && status !== "denied"}
+            className="mt-6 w-full max-w-md py-3 rounded-lg font-semibold text-white bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 shadow-[0_8px_30px_rgba(220,38,38,0.45)] transition-all"
+          >
+            Chat with Admin
+          </button>
+        )}
+
+        <button
+          onClick={signOut}
+          className="mt-4 text-sm text-white/60 hover:text-white/90 transition-colors inline-flex items-center gap-1.5"
+        >
+          {status === "approved" ? <><ShieldCheck className="size-4" /> Continue</> : <><LogOut className="size-3.5" /> Sign out instead</>}
+        </button>
+      </div>
+
+      {/* Chat dialog */}
+      {chatOpen && (
+        <div className="fixed inset-0 z-50 grid place-items-center p-4 bg-black/70 backdrop-blur-sm">
+          <div className="w-full max-w-lg h-[640px] max-h-[90vh] rounded-2xl border border-red-500/30 bg-zinc-950/95 shadow-2xl flex flex-col overflow-hidden">
+            <header className="h-14 px-5 flex items-center justify-between border-b border-white/10">
+              <div className="flex items-center gap-2">
+                <div className="size-8 rounded-full bg-gradient-to-br from-red-500 to-red-700 grid place-items-center">
+                  <Ban className="size-4 text-white" />
+                </div>
+                <div>
+                  <div className="font-display font-semibold text-white text-sm">Support chat</div>
+                  <div className="text-[10px] uppercase tracking-wider text-red-300/80">{status}</div>
+                </div>
+              </div>
+              <button onClick={() => setChatOpen(false)} className="text-white/60 hover:text-white"><X className="size-5" /></button>
+            </header>
+
+            <div ref={scrollerRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
+              <div className="rounded-xl bg-red-500/10 border border-red-500/20 p-3 text-xs text-red-100/90">
+                Introduce yourself and explain why you'd like to join. A moderator will review and grant access from this conversation.
+              </div>
+              {msgs.map((m) => {
+                const mine = m.sender_id === user?.id;
+                return (
+                  <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
+                    <div className={`max-w-[80%] px-3 py-2 rounded-2xl text-sm ${
+                      mine ? "bg-red-600 text-white rounded-br-sm" : "bg-white/5 text-white/90 rounded-bl-sm border border-white/10"
+                    }`}>
+                      {!mine && <div className="text-[10px] text-red-300 font-medium mb-0.5">{senderNames[m.sender_id] ?? "Admin"}</div>}
+                      <div className="whitespace-pre-wrap">{m.content}</div>
+                      <div className={`text-[10px] mt-0.5 ${mine ? "text-white/60" : "text-white/40"}`}>
+                        {new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {status === "pending" ? (
+              <form onSubmit={send} className="p-3 border-t border-white/10">
+                <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3">
+                  <input
+                    value={text}
+                    onChange={(e) => setText(e.target.value)}
+                    placeholder="Message support…"
+                    className="flex-1 h-11 bg-transparent outline-none text-sm text-white placeholder:text-white/40"
+                    autoFocus
+                  />
+                  <button className="text-red-400 hover:text-red-300 disabled:opacity-30" disabled={!text.trim()}>
+                    <Send className="size-4" />
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <div className="p-4 text-center text-sm text-white/60 border-t border-white/10">
+                {status === "approved" ? "Approved — refreshing access." : "This conversation is closed."}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
