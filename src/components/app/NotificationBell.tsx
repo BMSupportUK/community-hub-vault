@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Bell, Check, ShieldCheck, ShoppingBag, UserPlus, X } from "lucide-react";
-import { Link } from "@tanstack/react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -21,6 +21,7 @@ type Notif = {
 
 export function NotificationBell() {
   const { user, isStaff, isMod, hasAny } = useAuth();
+  const navigate = useNavigate();
   const [items, setItems] = useState<Notif[]>([]);
   const [readIds, setReadIds] = useState<Set<string>>(new Set());
   const [open, setOpen] = useState(false);
@@ -170,17 +171,18 @@ export function NotificationBell() {
                       </div>
                       <div className="mt-2 flex flex-wrap gap-1.5">
                         {n.link_path && (
-                          <Link
-                            to={n.link_path}
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            className="h-7 text-xs"
                             onClick={() => {
                               markRead(n.id);
                               setOpen(false);
+                              navigate({ to: n.link_path! as string });
                             }}
                           >
-                            <Button size="sm" variant="secondary" className="h-7 text-xs">
-                              Open
-                            </Button>
-                          </Link>
+                            Open
+                          </Button>
                         )}
                         {n.kind === "gate_application" && n.entity_id && isMod && (
                           <>
