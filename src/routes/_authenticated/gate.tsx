@@ -15,6 +15,7 @@ interface Msg { id: string; sender_id: string; content: string; created_at: stri
 function GatePage() {
   const { user, refreshRoles, isPending, signOut } = useAuth();
   const [appId, setAppId] = useState<string | null>(null);
+  const [ticketNumber, setTicketNumber] = useState<number | null>(null);
   const [status, setStatus] = useState<string>("pending");
   const [reason, setReason] = useState<string | null>(null);
   const [msgs, setMsgs] = useState<Msg[]>([]);
@@ -29,10 +30,19 @@ function GatePage() {
   useEffect(() => {
     if (!user) return;
     (async () => {
+      // Pick the most recent ticket for this user
       const { data } = await supabase
-        .from("gate_applications").select("id, status, reason").eq("user_id", user.id).maybeSingle();
+        .from("gate_applications")
+        .select("id, status, reason, ticket_number")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
       if (data) {
-        setAppId(data.id); setStatus(data.status); setReason(data.reason);
+        setAppId(data.id);
+        setStatus(data.status);
+        setReason(data.reason);
+        setTicketNumber(data.ticket_number ?? null);
         const { data: m } = await supabase.from("gate_messages")
           .select("id, sender_id, content, created_at").eq("application_id", data.id).order("created_at");
         setMsgs(m ?? []);
@@ -91,24 +101,40 @@ function GatePage() {
       toast.error("Please keep it under 1000 characters.");
       return;
     }
-    if (!appId || !user) return;
+    if (!user) return;
     setSubmitting(true);
-    const { error } = await supabase.from("gate_applications").update({ reason: trimmed }).eq("id", appId);
-    if (error) {
+    // Always create a brand-new access ticket
+    const { data: created, error } = await supabase
+      .from("gate_applications")
+      .insert({ user_id: user.id, reason: trimmed })
+      .select("id, ticket_number, status, reason")
+      .single();
+    if (error || !created) {
       setSubmitting(false);
-      toast.error(error.message);
+      toast.error(error?.message ?? "Could not create ticket.");
       return;
     }
     await supabase.from("gate_messages").insert({
-      application_id: appId,
+      application_id: created.id,
       sender_id: user.id,
-      content: `Access request reason:\n\n${trimmed}`,
+      content: `Access ticket #GATE-${String(created.ticket_number).padStart(6, "0")}\n\n${trimmed}`,
     });
+    setAppId(created.id);
+    setTicketNumber(created.ticket_number);
+    setStatus(created.status);
     setReason(trimmed);
+    setReasonDraft("");
+    // Load messages for the new ticket
+    const { data: m } = await supabase
+      .from("gate_messages")
+      .select("id, sender_id, content, created_at")
+      .eq("application_id", created.id)
+      .order("created_at");
+    setMsgs(m ?? []);
     setFormOpen(false);
     setChatOpen(true);
     setSubmitting(false);
-    toast.success("Request submitted. Chat with an admin.");
+    toast.success(`Ticket #GATE-${String(created.ticket_number).padStart(6, "0")} created.`);
   };
 
   const openChatOrForm = () => {
