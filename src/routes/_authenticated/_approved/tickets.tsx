@@ -276,6 +276,16 @@ function NewTicketForm({
       });
     }
 
+    if (cat?.slug === "live-tv") {
+      await supabase.from("ticket_messages").insert({
+        ticket_id: t.id,
+        sender_id: user!.id,
+        content:
+          "👋 Welcome to BM Support!\n\nThanks for reporting a Live TV issue. To help our staff look into this as quickly as possible, please reply with the following details:\n\n1. **Channel name:**\n2. **Category name:**\n3. **Issue:**\n\nThese details are needed so staff can investigate and get the issue resolved for you.",
+        is_internal: false,
+      });
+    }
+
     toast.success("Ticket opened");
     onCreated(t.id);
   };
