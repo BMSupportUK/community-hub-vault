@@ -1,0 +1,1 @@
+ALTER TABLE public.gate_applications ADD COLUMN reason TEXT;
