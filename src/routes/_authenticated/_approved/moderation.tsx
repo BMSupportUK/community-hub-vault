@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { Shield, Check, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Shield, Check, X, Send, ChevronDown, ChevronRight, MessageSquare, FileText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { ChannelColumn } from "@/components/app/ChannelColumn";
@@ -15,19 +15,26 @@ interface AppRow {
   user_id: string;
   status: string;
   created_at: string;
+  reason: string | null;
   profile?: { display_name: string | null; username: string | null };
-  last_message?: string;
 }
+
+interface ThreadMsg { id: string; sender_id: string; content: string; created_at: string }
 
 function ModerationPage() {
   const { isMod, user } = useAuth();
   const [apps, setApps] = useState<AppRow[]>([]);
   const [filter, setFilter] = useState<"pending" | "approved" | "denied">("pending");
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [thread, setThread] = useState<ThreadMsg[]>([]);
+  const [reply, setReply] = useState("");
+  const [senderNames, setSenderNames] = useState<Record<string, string>>({});
+  const scrollerRef = useRef<HTMLDivElement>(null);
 
   const load = async () => {
     const { data: rows } = await supabase
       .from("gate_applications")
-      .select("id, user_id, status, created_at")
+      .select("id, user_id, status, created_at, reason")
       .eq("status", filter)
       .order("created_at", { ascending: false });
     if (!rows) return;
@@ -47,6 +54,45 @@ function ModerationPage() {
     return () => { supabase.removeChannel(ch); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isMod, filter]);
+
+  // Load thread when expanding an application
+  useEffect(() => {
+    if (!expandedId) { setThread([]); return; }
+    let active = true;
+    supabase
+      .from("gate_messages")
+      .select("id, sender_id, content, created_at")
+      .eq("application_id", expandedId)
+      .order("created_at")
+      .then(({ data }) => { if (active) setThread((data ?? []) as ThreadMsg[]); });
+    const ch = supabase
+      .channel(`mod-thread-${expandedId}`)
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "gate_messages", filter: `application_id=eq.${expandedId}` },
+        (p) => setThread((m) => [...m, p.new as ThreadMsg]),
+      )
+      .subscribe();
+    return () => { active = false; supabase.removeChannel(ch); };
+  }, [expandedId]);
+
+  // Resolve sender display names
+  useEffect(() => {
+    const ids = Array.from(new Set(thread.map((m) => m.sender_id))).filter((id) => !senderNames[id]);
+    if (!ids.length) return;
+    supabase.from("profiles").select("id, display_name, username").in("id", ids).then(({ data }) => {
+      setSenderNames((prev) => {
+        const next = { ...prev };
+        data?.forEach((p) => { next[p.id] = p.display_name ?? p.username ?? "User"; });
+        return next;
+      });
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [thread]);
+
+  useEffect(() => {
+    scrollerRef.current?.scrollTo({ top: scrollerRef.current.scrollHeight, behavior: "smooth" });
+  }, [thread.length]);
 
   if (!isMod) {
     return (
@@ -73,6 +119,17 @@ function ModerationPage() {
     load();
   };
 
+  const sendReply = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!reply.trim() || !expandedId || !user) return;
+    const content = reply.trim();
+    setReply("");
+    const { error } = await supabase.from("gate_messages").insert({
+      application_id: expandedId, sender_id: user.id, content,
+    });
+    if (error) toast.error(error.message);
+  };
+
   return (
     <>
       <ChannelColumn
@@ -87,12 +144,12 @@ function ModerationPage() {
       <main className="flex-1 flex flex-col">
         <header className="h-14 border-b border-border px-5 flex items-center gap-2">
           <Shield className="size-4 text-primary" />
-          <h1 className="font-display font-semibold">applications</h1>
+          <h1 className="font-display font-semibold">access requests</h1>
           <div className="ml-auto flex gap-1 bg-surface-2 p-1 rounded-lg">
             {(["pending", "approved", "denied"] as const).map((s) => (
               <button
                 key={s}
-                onClick={() => setFilter(s)}
+                onClick={() => { setFilter(s); setExpandedId(null); }}
                 className={`px-3 py-1 text-xs rounded-md capitalize ${filter === s ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
               >{s}</button>
             ))}
@@ -100,29 +157,120 @@ function ModerationPage() {
         </header>
         <div className="flex-1 overflow-y-auto p-6">
           <div className="max-w-3xl mx-auto space-y-3">
-            {apps.length === 0 && <div className="text-center text-sm text-muted-foreground py-12">No {filter} applications.</div>}
-            {apps.map((a) => (
-              <div key={a.id} className="rounded-xl bg-surface border border-border p-4 flex items-center gap-4">
-                <div className="size-10 rounded-full bg-gradient-primary grid place-items-center font-semibold text-primary-foreground">
-                  {(a.profile?.display_name ?? "?").slice(0, 1).toUpperCase()}
+            {apps.length === 0 && (
+              <div className="text-center text-sm text-muted-foreground py-12">No {filter} requests.</div>
+            )}
+            {apps.map((a) => {
+              const expanded = expandedId === a.id;
+              const name = a.profile?.display_name ?? a.profile?.username ?? "User";
+              return (
+                <div key={a.id} className="rounded-xl bg-surface border border-border overflow-hidden">
+                  <button
+                    type="button"
+                    onClick={() => setExpandedId(expanded ? null : a.id)}
+                    className="w-full p-4 flex items-center gap-4 text-left hover:bg-surface-2/50 transition-colors"
+                  >
+                    {expanded ? <ChevronDown className="size-4 text-muted-foreground shrink-0" /> : <ChevronRight className="size-4 text-muted-foreground shrink-0" />}
+                    <div className="size-10 rounded-full bg-gradient-primary grid place-items-center font-semibold text-primary-foreground shrink-0">
+                      {name.slice(0, 1).toUpperCase()}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium truncate">{name}</div>
+                      <div className="text-xs text-muted-foreground">Applied {new Date(a.created_at).toLocaleString()}</div>
+                      {a.reason && !expanded && (
+                        <div className="text-xs text-muted-foreground/80 mt-1 line-clamp-1 italic">"{a.reason}"</div>
+                      )}
+                    </div>
+                    <span className={`text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full font-semibold ${
+                      a.status === "pending" ? "bg-amber-500/15 text-amber-500"
+                      : a.status === "approved" ? "bg-emerald-500/15 text-emerald-500"
+                      : "bg-destructive/15 text-destructive"
+                    }`}>{a.status}</span>
+                  </button>
+
+                  {expanded && (
+                    <div className="border-t border-border bg-background/50">
+                      {a.reason && (
+                        <div className="p-4 border-b border-border">
+                          <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground mb-2">
+                            <FileText className="size-3.5" /> Reason
+                          </div>
+                          <p className="text-sm whitespace-pre-wrap">{a.reason}</p>
+                        </div>
+                      )}
+                      <div className="p-4">
+                        <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground mb-2">
+                          <MessageSquare className="size-3.5" /> Conversation
+                        </div>
+                        <div ref={scrollerRef} className="max-h-72 overflow-y-auto space-y-2 pr-1">
+                          {thread.length === 0 && (
+                            <div className="text-xs text-muted-foreground italic py-4 text-center">No messages yet.</div>
+                          )}
+                          {thread.map((m) => {
+                            const mine = m.sender_id === user?.id;
+                            const fromApplicant = m.sender_id === a.user_id;
+                            return (
+                              <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
+                                <div className={`max-w-[80%] px-3 py-2 rounded-2xl text-sm ${
+                                  mine ? "bg-primary text-primary-foreground rounded-br-sm"
+                                  : fromApplicant ? "bg-surface-2 rounded-bl-sm"
+                                  : "bg-muted rounded-bl-sm"
+                                }`}>
+                                  {!mine && (
+                                    <div className="text-[10px] font-semibold opacity-70 mb-0.5">
+                                      {senderNames[m.sender_id] ?? (fromApplicant ? "Applicant" : "Staff")}
+                                    </div>
+                                  )}
+                                  <div className="whitespace-pre-wrap">{m.content}</div>
+                                  <div className={`text-[10px] mt-0.5 ${mine ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
+                                    {new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+
+                        {a.status === "pending" ? (
+                          <>
+                            <form onSubmit={sendReply} className="mt-3 flex items-center gap-2 bg-surface-2 border border-border rounded-lg px-3">
+                              <input
+                                value={reply}
+                                onChange={(e) => setReply(e.target.value)}
+                                placeholder="Reply to applicant…"
+                                maxLength={1000}
+                                className="flex-1 h-10 bg-transparent outline-none text-sm"
+                              />
+                              <button type="submit" disabled={!reply.trim()} className="text-primary hover:text-primary-glow disabled:opacity-30">
+                                <Send className="size-4" />
+                              </button>
+                            </form>
+                            <div className="mt-3 flex items-center justify-end gap-2">
+                              <button
+                                onClick={() => decide(a, "denied")}
+                                className="px-4 py-2 rounded-lg bg-destructive/15 text-destructive hover:bg-destructive/25 text-sm font-medium inline-flex items-center gap-1.5"
+                              >
+                                <X className="size-4" /> Deny
+                              </button>
+                              <button
+                                onClick={() => decide(a, "approved")}
+                                className="px-4 py-2 rounded-lg bg-emerald-500 text-white hover:bg-emerald-600 text-sm font-semibold inline-flex items-center gap-1.5 shadow-sm"
+                              >
+                                <Check className="size-4" /> Approve access
+                              </button>
+                            </div>
+                          </>
+                        ) : (
+                          <div className="mt-3 text-xs text-muted-foreground text-center py-2 border-t border-border">
+                            Decision: <span className="capitalize font-medium">{a.status}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
-                <div className="flex-1 min-w-0">
-                  <div className="font-medium">{a.profile?.display_name ?? a.profile?.username ?? "User"}</div>
-                  <div className="text-xs text-muted-foreground">Applied {new Date(a.created_at).toLocaleString()}</div>
-                </div>
-                <a href={`/gate?app=${a.id}`} className="text-xs text-primary hover:underline">View chat</a>
-                {filter === "pending" && (
-                  <div className="flex gap-2">
-                    <button onClick={() => decide(a, "denied")} className="size-9 rounded-lg bg-destructive/15 text-destructive hover:bg-destructive/25 grid place-items-center" title="Deny">
-                      <X className="size-4" />
-                    </button>
-                    <button onClick={() => decide(a, "approved")} className="size-9 rounded-lg bg-success/15 text-success hover:bg-success/25 grid place-items-center" title="Approve">
-                      <Check className="size-4" />
-                    </button>
-                  </div>
-                )}
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </main>
