@@ -273,9 +273,9 @@ function ActivityCard({ title, icon: Icon, children, empty }: { title: string; i
   const arr = Array.isArray(children) ? children : [children];
   const isEmpty = arr.filter(Boolean).length === 0;
   return (
-    <section className="rounded-2xl border border-border bg-surface-1 p-5">
+    <section className="rounded-2xl border border-rose-500/20 bg-gradient-to-br from-rose-950/40 via-orange-950/30 to-amber-900/20 backdrop-blur p-5 shadow-[0_8px_30px_-12px_rgba(244,63,94,0.4)]">
       <h2 className="flex items-center gap-2 font-display text-lg font-bold mb-2">
-        <Icon className="size-4 text-primary" /> {title}
+        <Icon className="size-4 text-rose-400" /> {title}
       </h2>
       {isEmpty ? (
         <p className="text-sm text-muted-foreground">{empty}</p>
@@ -288,8 +288,8 @@ function ActivityCard({ title, icon: Icon, children, empty }: { title: string; i
 
 function InfoCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl border border-border bg-surface-1 p-4">
-      <p className="text-xs uppercase tracking-wider text-muted-foreground">{label}</p>
+    <div className="rounded-2xl border border-orange-500/20 bg-gradient-to-br from-orange-950/40 via-rose-950/30 to-amber-900/20 backdrop-blur p-4 shadow-[0_8px_30px_-12px_rgba(251,146,60,0.35)]">
+      <p className="text-xs uppercase tracking-wider text-amber-200/70">{label}</p>
       <p className="mt-1 text-sm font-medium">{value}</p>
     </div>
   );
