@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { Send, Ban, X, LogOut, ShieldCheck } from "lucide-react";
+import { Send, Ban, X, LogOut, ShieldCheck, FileText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
@@ -16,9 +16,13 @@ function GatePage() {
   const { user, refreshRoles, isPending, signOut } = useAuth();
   const [appId, setAppId] = useState<string | null>(null);
   const [status, setStatus] = useState<string>("pending");
+  const [reason, setReason] = useState<string | null>(null);
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [text, setText] = useState("");
   const [chatOpen, setChatOpen] = useState(false);
+  const [formOpen, setFormOpen] = useState(false);
+  const [reasonDraft, setReasonDraft] = useState("");
+  const [submitting, setSubmitting] = useState(false);
   const [senderNames, setSenderNames] = useState<Record<string, string>>({});
   const scrollerRef = useRef<HTMLDivElement>(null);
 
@@ -26,9 +30,9 @@ function GatePage() {
     if (!user) return;
     (async () => {
       const { data } = await supabase
-        .from("gate_applications").select("id, status").eq("user_id", user.id).maybeSingle();
+        .from("gate_applications").select("id, status, reason").eq("user_id", user.id).maybeSingle();
       if (data) {
-        setAppId(data.id); setStatus(data.status);
+        setAppId(data.id); setStatus(data.status); setReason(data.reason);
         const { data: m } = await supabase.from("gate_messages")
           .select("id, sender_id, content, created_at").eq("application_id", data.id).order("created_at");
         setMsgs(m ?? []);
@@ -76,6 +80,42 @@ function GatePage() {
     if (error) toast.error(error.message);
   };
 
+  const submitReason = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = reasonDraft.trim();
+    if (trimmed.length < 10) {
+      toast.error("Please provide at least 10 characters.");
+      return;
+    }
+    if (trimmed.length > 1000) {
+      toast.error("Please keep it under 1000 characters.");
+      return;
+    }
+    if (!appId || !user) return;
+    setSubmitting(true);
+    const { error } = await supabase.from("gate_applications").update({ reason: trimmed }).eq("id", appId);
+    if (error) {
+      setSubmitting(false);
+      toast.error(error.message);
+      return;
+    }
+    await supabase.from("gate_messages").insert({
+      application_id: appId,
+      sender_id: user.id,
+      content: `Access request reason:\n\n${trimmed}`,
+    });
+    setReason(trimmed);
+    setFormOpen(false);
+    setChatOpen(true);
+    setSubmitting(false);
+    toast.success("Request submitted. Chat with an admin.");
+  };
+
+  const openChatOrForm = () => {
+    if (!reason && status === "pending") setFormOpen(true);
+    else setChatOpen(true);
+  };
+
   return (
     <div className="fixed inset-0 overflow-hidden bg-black">
       {/* Cinematic background */}
@@ -114,11 +154,11 @@ function GatePage() {
 
         {status !== "approved" && (
           <button
-            onClick={() => setChatOpen(true)}
+            onClick={openChatOrForm}
             disabled={!isPending && status !== "denied"}
             className="mt-6 w-full max-w-md py-3 rounded-lg font-semibold text-white bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 shadow-[0_8px_30px_rgba(220,38,38,0.45)] transition-all"
           >
-            Chat with Admin
+            {!reason && status === "pending" ? "Submit access request" : "Chat with Admin"}
           </button>
         )}
 
@@ -129,6 +169,69 @@ function GatePage() {
           {status === "approved" ? <><ShieldCheck className="size-4" /> Continue</> : <><LogOut className="size-3.5" /> Sign out instead</>}
         </button>
       </div>
+
+      {/* Reason form dialog */}
+      {formOpen && (
+        <div className="fixed inset-0 z-50 grid place-items-center p-4 bg-black/70 backdrop-blur-sm">
+          <form
+            onSubmit={submitReason}
+            className="w-full max-w-lg rounded-2xl border border-red-500/30 bg-zinc-950/95 shadow-2xl overflow-hidden"
+          >
+            <header className="h-14 px-5 flex items-center justify-between border-b border-white/10">
+              <div className="flex items-center gap-2">
+                <div className="size-8 rounded-full bg-gradient-to-br from-red-500 to-red-700 grid place-items-center">
+                  <FileText className="size-4 text-white" />
+                </div>
+                <div className="font-display font-semibold text-white text-sm">Access request</div>
+              </div>
+              <button type="button" onClick={() => setFormOpen(false)} className="text-white/60 hover:text-white">
+                <X className="size-5" />
+              </button>
+            </header>
+            <div className="p-5 space-y-4">
+              <div>
+                <label className="block text-xs uppercase tracking-wider text-red-300/80 mb-2">
+                  Why do you need access?
+                </label>
+                <textarea
+                  value={reasonDraft}
+                  onChange={(e) => setReasonDraft(e.target.value.slice(0, 1000))}
+                  rows={6}
+                  required
+                  minLength={10}
+                  maxLength={1000}
+                  placeholder="Tell us who you are, where you found us, and what you'd like to do here…"
+                  className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-sm text-white placeholder:text-white/40 outline-none focus:border-red-500/50 resize-none"
+                  autoFocus
+                />
+                <div className="flex justify-between mt-1.5 text-[11px]">
+                  <span className="text-white/40">Minimum 10 characters</span>
+                  <span className="text-white/40">{reasonDraft.length}/1000</span>
+                </div>
+              </div>
+              <div className="rounded-lg bg-red-500/10 border border-red-500/20 p-3 text-xs text-red-100/90">
+                A moderator will review your request and respond in the chat.
+              </div>
+            </div>
+            <footer className="px-5 py-3 border-t border-white/10 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setFormOpen(false)}
+                className="text-sm px-3 py-2 rounded-lg text-white/70 hover:text-white"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={submitting || reasonDraft.trim().length < 10}
+                className="text-sm px-4 py-2 rounded-lg font-semibold text-white bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 disabled:opacity-50 shadow-[0_4px_20px_rgba(220,38,38,0.4)]"
+              >
+                {submitting ? "Submitting…" : "Submit request"}
+              </button>
+            </footer>
+          </form>
+        </div>
+      )}
 
       {/* Chat dialog */}
       {chatOpen && (
