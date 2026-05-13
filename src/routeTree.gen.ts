@@ -15,7 +15,6 @@ import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedGateRouteImport } from './routes/_authenticated/gate'
 import { Route as AuthenticatedApprovedRouteImport } from './routes/_authenticated/_approved'
-import { Route as AuthenticatedApprovedTicketsRouteImport } from './routes/_authenticated/_approved/tickets'
 import { Route as AuthenticatedApprovedSportsGuidesRouteImport } from './routes/_authenticated/_approved/sports-guides'
 import { Route as AuthenticatedApprovedShopRouteImport } from './routes/_authenticated/_approved/shop'
 import { Route as AuthenticatedApprovedShiftsRouteImport } from './routes/_authenticated/_approved/shifts'
@@ -52,12 +51,6 @@ const AuthenticatedApprovedRoute = AuthenticatedApprovedRouteImport.update({
   id: '/_approved',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
-const AuthenticatedApprovedTicketsRoute =
-  AuthenticatedApprovedTicketsRouteImport.update({
-    id: '/tickets',
-    path: '/tickets',
-    getParentRoute: () => AuthenticatedApprovedRoute,
-  } as any)
 const AuthenticatedApprovedSportsGuidesRoute =
   AuthenticatedApprovedSportsGuidesRouteImport.update({
     id: '/sports-guides',
@@ -113,7 +106,6 @@ export interface FileRoutesByFullPath {
   '/shifts': typeof AuthenticatedApprovedShiftsRoute
   '/shop': typeof AuthenticatedApprovedShopRoute
   '/sports-guides': typeof AuthenticatedApprovedSportsGuidesRoute
-  '/tickets': typeof AuthenticatedApprovedTicketsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -127,7 +119,6 @@ export interface FileRoutesByTo {
   '/shifts': typeof AuthenticatedApprovedShiftsRoute
   '/shop': typeof AuthenticatedApprovedShopRoute
   '/sports-guides': typeof AuthenticatedApprovedSportsGuidesRoute
-  '/tickets': typeof AuthenticatedApprovedTicketsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -144,7 +135,6 @@ export interface FileRoutesById {
   '/_authenticated/_approved/shifts': typeof AuthenticatedApprovedShiftsRoute
   '/_authenticated/_approved/shop': typeof AuthenticatedApprovedShopRoute
   '/_authenticated/_approved/sports-guides': typeof AuthenticatedApprovedSportsGuidesRoute
-  '/_authenticated/_approved/tickets': typeof AuthenticatedApprovedTicketsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -160,7 +150,6 @@ export interface FileRouteTypes {
     | '/shifts'
     | '/shop'
     | '/sports-guides'
-    | '/tickets'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -174,7 +163,6 @@ export interface FileRouteTypes {
     | '/shifts'
     | '/shop'
     | '/sports-guides'
-    | '/tickets'
   id:
     | '__root__'
     | '/'
@@ -190,7 +178,6 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/shifts'
     | '/_authenticated/_approved/shop'
     | '/_authenticated/_approved/sports-guides'
-    | '/_authenticated/_approved/tickets'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -243,13 +230,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof AuthenticatedApprovedRouteImport
       parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/_approved/tickets': {
-      id: '/_authenticated/_approved/tickets'
-      path: '/tickets'
-      fullPath: '/tickets'
-      preLoaderRoute: typeof AuthenticatedApprovedTicketsRouteImport
-      parentRoute: typeof AuthenticatedApprovedRoute
     }
     '/_authenticated/_approved/sports-guides': {
       id: '/_authenticated/_approved/sports-guides'
@@ -311,7 +291,6 @@ interface AuthenticatedApprovedRouteChildren {
   AuthenticatedApprovedShiftsRoute: typeof AuthenticatedApprovedShiftsRoute
   AuthenticatedApprovedShopRoute: typeof AuthenticatedApprovedShopRoute
   AuthenticatedApprovedSportsGuidesRoute: typeof AuthenticatedApprovedSportsGuidesRoute
-  AuthenticatedApprovedTicketsRoute: typeof AuthenticatedApprovedTicketsRoute
 }
 
 const AuthenticatedApprovedRouteChildren: AuthenticatedApprovedRouteChildren = {
@@ -324,7 +303,6 @@ const AuthenticatedApprovedRouteChildren: AuthenticatedApprovedRouteChildren = {
   AuthenticatedApprovedShopRoute: AuthenticatedApprovedShopRoute,
   AuthenticatedApprovedSportsGuidesRoute:
     AuthenticatedApprovedSportsGuidesRoute,
-  AuthenticatedApprovedTicketsRoute: AuthenticatedApprovedTicketsRoute,
 }
 
 const AuthenticatedApprovedRouteWithChildren =
