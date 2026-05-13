@@ -587,6 +587,74 @@ export type Database = {
         }
         Relationships: []
       }
+      status_incident_updates: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          incident_id: string
+          message: string
+          status: Database["public"]["Enums"]["incident_status"]
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          incident_id: string
+          message: string
+          status: Database["public"]["Enums"]["incident_status"]
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          incident_id?: string
+          message?: string
+          status?: Database["public"]["Enums"]["incident_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "status_incident_updates_incident_id_fkey"
+            columns: ["incident_id"]
+            isOneToOne: false
+            referencedRelation: "status_incidents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      status_incidents: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          resolved_at: string | null
+          status: Database["public"]["Enums"]["incident_status"]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          resolved_at?: string | null
+          status?: Database["public"]["Enums"]["incident_status"]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          resolved_at?: string | null
+          status?: Database["public"]["Enums"]["incident_status"]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ticket_categories: {
         Row: {
           color: string
@@ -775,6 +843,11 @@ export type Database = {
         | "banned"
       break_kind: "break" | "lunch"
       gate_status: "pending" | "approved" | "denied"
+      incident_status:
+        | "investigating"
+        | "identified"
+        | "monitoring"
+        | "completed"
       order_status:
         | "pending"
         | "processing"
@@ -921,6 +994,12 @@ export const Constants = {
       ],
       break_kind: ["break", "lunch"],
       gate_status: ["pending", "approved", "denied"],
+      incident_status: [
+        "investigating",
+        "identified",
+        "monitoring",
+        "completed",
+      ],
       order_status: [
         "pending",
         "processing",
