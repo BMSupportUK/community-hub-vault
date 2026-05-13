@@ -20,6 +20,7 @@ import { Route as AuthenticatedApprovedTicketsRouteImport } from './routes/_auth
 import { Route as AuthenticatedApprovedSportsGuidesRouteImport } from './routes/_authenticated/_approved/sports-guides'
 import { Route as AuthenticatedApprovedShopRouteImport } from './routes/_authenticated/_approved/shop'
 import { Route as AuthenticatedApprovedShiftsRouteImport } from './routes/_authenticated/_approved/shifts'
+import { Route as AuthenticatedApprovedProfileRouteImport } from './routes/_authenticated/_approved/profile'
 import { Route as AuthenticatedApprovedModerationRouteImport } from './routes/_authenticated/_approved/moderation'
 import { Route as AuthenticatedApprovedInstallGuidesRouteImport } from './routes/_authenticated/_approved/install-guides'
 import { Route as AuthenticatedApprovedHomeRouteImport } from './routes/_authenticated/_approved/home'
@@ -87,6 +88,12 @@ const AuthenticatedApprovedShiftsRoute =
     path: '/shifts',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
+const AuthenticatedApprovedProfileRoute =
+  AuthenticatedApprovedProfileRouteImport.update({
+    id: '/profile',
+    path: '/profile',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
 const AuthenticatedApprovedModerationRoute =
   AuthenticatedApprovedModerationRouteImport.update({
     id: '/moderation',
@@ -148,6 +155,7 @@ export interface FileRoutesByFullPath {
   '/home': typeof AuthenticatedApprovedHomeRoute
   '/install-guides': typeof AuthenticatedApprovedInstallGuidesRoute
   '/moderation': typeof AuthenticatedApprovedModerationRoute
+  '/profile': typeof AuthenticatedApprovedProfileRoute
   '/shifts': typeof AuthenticatedApprovedShiftsRoute
   '/shop': typeof AuthenticatedApprovedShopRoute
   '/sports-guides': typeof AuthenticatedApprovedSportsGuidesRoute
@@ -167,6 +175,7 @@ export interface FileRoutesByTo {
   '/home': typeof AuthenticatedApprovedHomeRoute
   '/install-guides': typeof AuthenticatedApprovedInstallGuidesRoute
   '/moderation': typeof AuthenticatedApprovedModerationRoute
+  '/profile': typeof AuthenticatedApprovedProfileRoute
   '/shifts': typeof AuthenticatedApprovedShiftsRoute
   '/shop': typeof AuthenticatedApprovedShopRoute
   '/sports-guides': typeof AuthenticatedApprovedSportsGuidesRoute
@@ -189,6 +198,7 @@ export interface FileRoutesById {
   '/_authenticated/_approved/home': typeof AuthenticatedApprovedHomeRoute
   '/_authenticated/_approved/install-guides': typeof AuthenticatedApprovedInstallGuidesRoute
   '/_authenticated/_approved/moderation': typeof AuthenticatedApprovedModerationRoute
+  '/_authenticated/_approved/profile': typeof AuthenticatedApprovedProfileRoute
   '/_authenticated/_approved/shifts': typeof AuthenticatedApprovedShiftsRoute
   '/_authenticated/_approved/shop': typeof AuthenticatedApprovedShopRoute
   '/_authenticated/_approved/sports-guides': typeof AuthenticatedApprovedSportsGuidesRoute
@@ -210,6 +220,7 @@ export interface FileRouteTypes {
     | '/home'
     | '/install-guides'
     | '/moderation'
+    | '/profile'
     | '/shifts'
     | '/shop'
     | '/sports-guides'
@@ -229,6 +240,7 @@ export interface FileRouteTypes {
     | '/home'
     | '/install-guides'
     | '/moderation'
+    | '/profile'
     | '/shifts'
     | '/shop'
     | '/sports-guides'
@@ -250,6 +262,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/home'
     | '/_authenticated/_approved/install-guides'
     | '/_authenticated/_approved/moderation'
+    | '/_authenticated/_approved/profile'
     | '/_authenticated/_approved/shifts'
     | '/_authenticated/_approved/shop'
     | '/_authenticated/_approved/sports-guides'
@@ -344,6 +357,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedApprovedShiftsRouteImport
       parentRoute: typeof AuthenticatedApprovedRoute
     }
+    '/_authenticated/_approved/profile': {
+      id: '/_authenticated/_approved/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof AuthenticatedApprovedProfileRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
     '/_authenticated/_approved/moderation': {
       id: '/_authenticated/_approved/moderation'
       path: '/moderation'
@@ -411,6 +431,7 @@ interface AuthenticatedApprovedRouteChildren {
   AuthenticatedApprovedHomeRoute: typeof AuthenticatedApprovedHomeRoute
   AuthenticatedApprovedInstallGuidesRoute: typeof AuthenticatedApprovedInstallGuidesRoute
   AuthenticatedApprovedModerationRoute: typeof AuthenticatedApprovedModerationRoute
+  AuthenticatedApprovedProfileRoute: typeof AuthenticatedApprovedProfileRoute
   AuthenticatedApprovedShiftsRoute: typeof AuthenticatedApprovedShiftsRoute
   AuthenticatedApprovedShopRoute: typeof AuthenticatedApprovedShopRoute
   AuthenticatedApprovedSportsGuidesRoute: typeof AuthenticatedApprovedSportsGuidesRoute
@@ -429,6 +450,7 @@ const AuthenticatedApprovedRouteChildren: AuthenticatedApprovedRouteChildren = {
   AuthenticatedApprovedInstallGuidesRoute:
     AuthenticatedApprovedInstallGuidesRoute,
   AuthenticatedApprovedModerationRoute: AuthenticatedApprovedModerationRoute,
+  AuthenticatedApprovedProfileRoute: AuthenticatedApprovedProfileRoute,
   AuthenticatedApprovedShiftsRoute: AuthenticatedApprovedShiftsRoute,
   AuthenticatedApprovedShopRoute: AuthenticatedApprovedShopRoute,
   AuthenticatedApprovedSportsGuidesRoute:
