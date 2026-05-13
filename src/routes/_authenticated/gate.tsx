@@ -119,9 +119,9 @@ function GatePage() {
   return (
     <div className="fixed inset-0 overflow-hidden bg-black">
       {/* Cinematic background */}
-      <img src={bg} alt="" className="absolute inset-0 w-full h-full object-cover opacity-70" />
-      <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/30 to-black/80" />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(220,38,38,0.18),transparent_60%)]" />
+      <img src={bg} alt="" className="absolute inset-0 w-full h-full object-cover" />
+      <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/70" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(220,38,38,0.25),transparent_65%)]" />
 
       {/* Center card */}
       <div className="relative z-10 min-h-screen flex flex-col items-center justify-center px-6 text-center">
