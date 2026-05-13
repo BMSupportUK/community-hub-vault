@@ -188,6 +188,7 @@ function DashboardBody() {
   const tools: { to: string; label: string; desc: string; icon: any }[] = [
     { to: "/admin-roles", label: "User roles", desc: "Grant or revoke admin, staff, mod, member, banned.", icon: ShieldCheck },
     { to: "/admin-credentials", label: "User credentials", desc: "Set up app logins assigned to each user.", icon: KeySquare },
+    { to: "/admin-dns", label: "QD DNS codes", desc: "Add and edit shared DNS codes for all members.", icon: Globe },
     { to: "/moderation", label: "Moderation queue", desc: "Approve gate requests and manage members.", icon: ShieldAlert },
     { to: "/shifts", label: "Shifts overview", desc: "Review staff shifts and break history.", icon: Clock },
     { to: "/sports-guides", label: "Sports content", desc: "Publish blogs and manage categories.", icon: FileText },
