@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { Send, Ban, X, LogOut, ShieldCheck, FileText } from "lucide-react";
+import { Send, Ban, X, LogOut, ShieldCheck, FileText, MessageSquarePlus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
@@ -197,6 +197,19 @@ function GatePage() {
             className="mt-6 w-full max-w-md py-3 rounded-lg font-semibold text-white bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 shadow-[0_8px_30px_rgba(220,38,38,0.45)] transition-all"
           >
             Open ticket & chat with staff
+          </button>
+        )}
+
+        {status === "denied" && (
+          <button
+            onClick={() => {
+              setReasonDraft("[APPEAL] ");
+              setConfirmNew(false);
+              setFormOpen(true);
+            }}
+            className="mt-3 w-full max-w-md py-3 rounded-lg font-semibold text-red-100 bg-white/5 hover:bg-white/10 border border-red-500/40 inline-flex items-center justify-center gap-2 transition-colors"
+          >
+            <MessageSquarePlus className="size-4" /> Open an appeal
           </button>
         )}
 
