@@ -3,6 +3,7 @@ import { Home, Ticket, ShoppingBag, BookOpen, FileText, Clock, Calendar, Shield,
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 import { NotificationBell } from "@/components/app/NotificationBell";
+import { MentionsBadge } from "@/components/app/MentionsBadge";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -77,6 +78,7 @@ export function IconRail() {
         <RailIcon key={i.to} to={i.to} label={i.label} Icon={i.icon} active={path.startsWith(i.to)} badge={i.badge} />
       ))}
       <div className="mt-auto" />
+      <MentionsBadge />
       <NotificationBell />
       <button onClick={signOut} className="text-muted-foreground hover:text-destructive p-3 rounded-xl hover:bg-surface-2 transition-colors" title="Sign out">
         <LogOut className="size-5" />
