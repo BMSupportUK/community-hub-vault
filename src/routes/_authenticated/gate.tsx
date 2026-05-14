@@ -246,9 +246,15 @@ function GatePage() {
         )}
 
         {status === "approved" && (
-          <div className="mt-4 inline-flex items-center gap-1.5 text-sm text-emerald-300">
-            <ShieldCheck className="size-4" /> Continue
-          </div>
+          <button
+            onClick={async () => {
+              await refreshRoles();
+              navigate({ to: "/home" });
+            }}
+            className="mt-6 w-full max-w-md py-3 rounded-lg font-semibold text-white bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500 shadow-[0_8px_30px_rgba(16,185,129,0.45)] transition-all inline-flex items-center justify-center gap-2"
+          >
+            <ShieldCheck className="size-4" /> Continue to dashboard
+          </button>
         )}
       </div>
 
