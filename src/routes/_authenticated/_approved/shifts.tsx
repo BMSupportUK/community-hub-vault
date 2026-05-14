@@ -81,7 +81,12 @@ function startOfWeek(d: Date) {
   x.setHours(0, 0, 0, 0);
   return x;
 }
-function fmtDate(d: Date) { return d.toISOString().slice(0, 10); }
+function fmtDate(d: Date) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
 function dayLabel(d: Date) { return d.toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" }); }
 function isDayPastOrStarted(d: Date) {
   const today = new Date(); today.setHours(0, 0, 0, 0);
