@@ -200,15 +200,6 @@ function GatePage() {
           </button>
         )}
 
-        {status === "pending" && !reason && (
-          <button
-            onClick={() => setFormOpen(true)}
-            className="mt-2 text-xs text-red-200/80 hover:text-white underline underline-offset-4"
-          >
-            Or write a formal access request
-          </button>
-        )}
-
         {status === "approved" && (
           <div className="mt-4 inline-flex items-center gap-1.5 text-sm text-emerald-300">
             <ShieldCheck className="size-4" /> Continue
