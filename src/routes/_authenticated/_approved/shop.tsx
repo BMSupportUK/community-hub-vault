@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { ChannelColumn, type ChannelGroup } from "@/components/app/ChannelColumn";
-import { ShoppingBag, Package, Settings, Plus, Minus, X, Send, Trash2, Pencil, Image as ImageIcon, Tag, CheckCircle2, BadgeCheck } from "lucide-react";
+import { ShoppingBag, Package, Settings, Plus, Minus, X, Send, Trash2, Pencil, Image as ImageIcon, Tag, CheckCircle2, BadgeCheck, Check, Wrench } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import shopHero from "@/assets/shop-hero.jpg";
@@ -451,14 +451,17 @@ function OrderDetail({ orderId, isAdmin }: { orderId: string; isAdmin: boolean }
     if (error) { toast.error(error.message); setText(c); }
   };
 
-  const updateStatus = async (status: Order["status"]) => {
-    const { error } = await supabase.from("orders").update({ status }).eq("id", orderId);
-    if (error) toast.error(error.message);
-  };
-
   const sendSystem = async (content: string) => {
     if (!user) return;
     await supabase.from("order_messages").insert({ order_id: orderId, sender_id: user.id, content });
+  };
+
+  const acceptOrder = async () => {
+    if (!order || order.status !== "pending") return;
+    const { error } = await supabase.from("orders").update({ status: "processing" } as never).eq("id", orderId);
+    if (error) { toast.error(error.message); return; }
+    await sendSystem(`✅ Order accepted — thank you for your order!`);
+    toast.success("Order accepted");
   };
 
   const markPaid = async () => {
@@ -467,8 +470,14 @@ function OrderDetail({ orderId, isAdmin }: { orderId: string; isAdmin: boolean }
       paid_at: new Date().toISOString(), paid_by: user?.id ?? null, status: "processing",
     } as never).eq("id", orderId);
     if (error) { toast.error(error.message); return; }
-    await sendSystem(`✅ Payment received — thank you for your payment! Your order is now being processed.`);
+    await sendSystem(`💳 Payment received — thank you for your payment!`);
     toast.success("Marked as paid");
+  };
+
+  const settingUpAccount = async () => {
+    if (!order) return;
+    await sendSystem(`🛠️ We are currently setting up your account details and will share these next.`);
+    toast.success("Customer notified");
   };
 
   const completeSale = async () => {
@@ -477,7 +486,7 @@ function OrderDetail({ orderId, isAdmin }: { orderId: string; isAdmin: boolean }
       completed_at: new Date().toISOString(), completed_by: user?.id ?? null, status: "completed",
     } as never).eq("id", orderId);
     if (error) { toast.error(error.message); return; }
-    await sendSystem(`🛠️ We are currently setting up your account details and will share these next.`);
+    await sendSystem(`🎉 Order complete — thank you for your business!`);
     toast.success("Sale completed");
   };
 
@@ -490,24 +499,26 @@ function OrderDetail({ orderId, isAdmin }: { orderId: string; isAdmin: boolean }
           <div className="font-display font-bold text-sm">Order #{order.id.slice(0, 8)}</div>
           <div className="text-[11px] text-muted-foreground">{new Date(order.created_at).toLocaleString()}</div>
         </div>
-        <div className="flex items-center gap-2">
-          {isAdmin && (
+        <div className="flex items-center gap-2 flex-wrap justify-end">
+          {isAdmin ? (
             <>
+              <button onClick={acceptOrder} disabled={order.status !== "pending"}
+                className="px-2.5 py-1 rounded-md bg-amber-500/15 text-amber-500 text-xs font-medium flex items-center gap-1 hover:bg-amber-500/25 disabled:opacity-50">
+                <Check className="size-3.5" /> {order.status === "pending" ? "Accept Order" : "Accepted"}
+              </button>
               <button onClick={markPaid} disabled={!!order.paid_at}
                 className="px-2.5 py-1 rounded-md bg-success/15 text-success text-xs font-medium flex items-center gap-1 hover:bg-success/25 disabled:opacity-50">
-                <BadgeCheck className="size-3.5" /> {order.paid_at ? "Paid" : "Mark Paid"}
+                <BadgeCheck className="size-3.5" /> {order.paid_at ? "Paid" : "Mark As Paid"}
+              </button>
+              <button onClick={settingUpAccount}
+                className="px-2.5 py-1 rounded-md bg-blue-500/15 text-blue-500 text-xs font-medium flex items-center gap-1 hover:bg-blue-500/25">
+                <Wrench className="size-3.5" /> Setting Up Account
               </button>
               <button onClick={completeSale} disabled={!!order.completed_at}
                 className="px-2.5 py-1 rounded-md bg-primary/15 text-primary text-xs font-medium flex items-center gap-1 hover:bg-primary/25 disabled:opacity-50">
-                <CheckCircle2 className="size-3.5" /> {order.completed_at ? "Completed" : "Complete Sale"}
+                <CheckCircle2 className="size-3.5" /> {order.completed_at ? "Completed" : "Sale Complete"}
               </button>
             </>
-          )}
-          {isAdmin ? (
-            <select value={order.status} onChange={(e) => updateStatus(e.target.value as Order["status"])}
-              className={cn("text-xs px-2 py-1 rounded font-medium border-0 outline-none", STATUS_COLOR[order.status])}>
-              {["pending","processing","shipped","completed","cancelled"].map((s) => <option key={s} value={s}>{s}</option>)}
-            </select>
           ) : (
             <span className={cn("text-xs px-2 py-1 rounded font-medium", STATUS_COLOR[order.status])}>{order.status}</span>
           )}
