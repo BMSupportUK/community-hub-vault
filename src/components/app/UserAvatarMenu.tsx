@@ -146,7 +146,10 @@ export function UserAvatarMenu() {
           ) : null}
           <DropdownMenuSeparator />
           <DropdownMenuItem
-            onSelect={() => signOut()}
+            onSelect={async () => {
+              await signOut();
+              navigate({ to: "/login" });
+            }}
             className="cursor-pointer text-destructive focus:text-destructive"
           >
             <LogOut className="size-4 mr-2" />
