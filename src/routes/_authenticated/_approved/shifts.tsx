@@ -434,7 +434,7 @@ function ShiftsPage() {
                                 )}
                                 {mine && (
                                   <>
-                                    <button onClick={() => { setSwapFor(s); setSwapMsg(""); }} className="px-2 py-0.5 rounded bg-violet-500/30 text-violet-100 hover:bg-violet-500/50">Swap</button>
+                                    <button onClick={() => openSwap(s)} className="px-2 py-0.5 rounded bg-violet-500/30 text-violet-100 hover:bg-violet-500/50">Swap</button>
                                     <button onClick={() => release(s)} className="px-2 py-0.5 rounded bg-rose-500/30 text-rose-100 hover:bg-rose-500/50">Release</button>
                                   </>
                                 )}
@@ -466,7 +466,7 @@ function ShiftsPage() {
                     <div className="text-xs text-sky-200/70 mt-1 uppercase">{s.slot_type}</div>
                     {s.notes && <div className="text-sm text-sky-200/80 mt-2">{s.notes}</div>}
                     <div className="mt-3 flex gap-2">
-                      <Button size="sm" variant="outline" className="bg-violet-500/20 border-violet-400/40 text-violet-100 hover:bg-violet-500/30" onClick={() => { setSwapFor(s); setSwapMsg(""); }}><Repeat className="size-3.5 mr-1" /> Request swap</Button>
+                      <Button size="sm" variant="outline" className="bg-violet-500/20 border-violet-400/40 text-violet-100 hover:bg-violet-500/30" onClick={() => openSwap(s)}><Repeat className="size-3.5 mr-1" /> Request swap</Button>
                       <Button size="sm" variant="outline" className="bg-rose-500/20 border-rose-400/40 text-rose-100 hover:bg-rose-500/30" onClick={() => release(s)}>Release</Button>
                     </div>
                   </div>
@@ -684,6 +684,17 @@ function ShiftsPage() {
           {swapFor && (
             <div className="space-y-3">
               <div className="text-sm text-muted-foreground">{swapFor.shift_date} · {swapFor.start_time.slice(0,5)}–{swapFor.end_time.slice(0,5)}</div>
+              <div>
+                <Label>Swap with (same role only)</Label>
+                <Select value={swapTarget} onValueChange={setSwapTarget}>
+                  <SelectTrigger><SelectValue placeholder={swapCandidates.length ? "Pick a teammate" : "No eligible teammates"} /></SelectTrigger>
+                  <SelectContent>
+                    {swapCandidates.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>{p.display_name || p.username || "User"}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <div>
                 <Label>Message to admin</Label>
                 <Textarea value={swapMsg} onChange={(e) => setSwapMsg(e.target.value)} placeholder="Why do you need to swap?" />
