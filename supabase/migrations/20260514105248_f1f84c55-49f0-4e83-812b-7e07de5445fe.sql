@@ -1,0 +1,2 @@
+ALTER TABLE public.sports_blogs ADD COLUMN IF NOT EXISTS sort_order integer NOT NULL DEFAULT 0;
+CREATE INDEX IF NOT EXISTS sports_blogs_category_sort_idx ON public.sports_blogs (category_id, sort_order);
