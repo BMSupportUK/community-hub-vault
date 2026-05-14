@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Calendar, Plus, Trash2, Check, X, Clock, Users, Plane, Repeat, ShieldCheck, Loader2, Zap } from "lucide-react";
+import { Calendar as CalendarIcon, Plus, Trash2, Check, X, Clock, Users, Plane, Repeat, ShieldCheck, Loader2, Zap } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -10,6 +10,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { format } from "date-fns";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -320,7 +323,7 @@ function ShiftsPage() {
         <Tabs value={tab} onValueChange={setTab} className="w-full">
           <TabsList className="flex flex-wrap gap-1 bg-blue-950/60 border border-sky-500/30 h-auto p-1">
             {[
-              { v: "welcome", label: "Welcome", Icon: Calendar },
+              { v: "welcome", label: "Welcome", Icon: CalendarIcon },
               { v: "rota", label: "Rota", Icon: Users },
               { v: "mine", label: "My Shifts", Icon: Clock },
               { v: "holidays", label: "Holidays", Icon: Plane },
