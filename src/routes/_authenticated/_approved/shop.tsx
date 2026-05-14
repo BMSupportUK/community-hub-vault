@@ -828,6 +828,18 @@ function AdminDiscounts() {
   const [codes, setCodes] = useState<DiscountCode[]>([]);
   const [users, setUsers] = useState<{ id: string; username: string | null; display_name: string | null }[]>([]);
   const [editing, setEditing] = useState<Partial<DiscountCode> | null>(null);
+  const [percentInput, setPercentInput] = useState("");
+  const [amountInput, setAmountInput] = useState("");
+
+  useEffect(() => {
+    if (editing) {
+      setPercentInput(editing.percent != null ? String(editing.percent) : "");
+      setAmountInput(editing.amount_cents != null ? (editing.amount_cents / 100).toFixed(2) : "");
+    } else {
+      setPercentInput("");
+      setAmountInput("");
+    }
+  }, [editing?.id, editing]);
 
   const load = async () => {
     const { data } = await supabase.from("discount_codes").select("*").order("created_at", { ascending: false });
@@ -840,11 +852,15 @@ function AdminDiscounts() {
 
   const save = async () => {
     if (!editing?.code) { toast.error("Code required"); return; }
+    const percentNum = percentInput.trim() === "" ? null : Math.max(0, Math.min(100, Math.floor(Number(percentInput))));
+    const amountNum = amountInput.trim() === "" ? null : Math.max(0, Math.round(parseFloat(amountInput) * 100));
+    if (percentNum != null && amountNum != null) { toast.error("Use either a percent or amount, not both"); return; }
+    if (percentNum == null && amountNum == null) { toast.error("Enter a percent or amount off"); return; }
     const payload = {
       code: editing.code.trim().toUpperCase(),
       description: editing.description ?? null,
-      percent: editing.percent ?? null,
-      amount_cents: editing.amount_cents ?? null,
+      percent: percentNum,
+      amount_cents: amountNum,
       user_id: editing.user_id ?? null,
       is_active: editing.is_active ?? true,
     };
@@ -918,21 +934,25 @@ function AdminDiscounts() {
               <Field label="Description"><input value={editing.description ?? ""} onChange={(e) => setEditing({ ...editing, description: e.target.value })} className="w-full px-3 py-2 rounded-lg bg-surface-2 text-sm border border-border outline-none" /></Field>
               <div className="grid grid-cols-2 gap-3">
                 <Field label="Percent off">
-                  <input type="text" inputMode="numeric" placeholder="e.g. 10" value={editing.percent ?? ""}
+                  <input type="text" inputMode="numeric" placeholder="e.g. 10" value={percentInput}
                     onChange={(e) => {
                       const v = e.target.value;
-                      if (v === "") setEditing({ ...editing, percent: null });
-                      else if (/^\d{1,3}$/.test(v)) setEditing({ ...editing, percent: Number(v), amount_cents: null });
+                      if (v === "" || /^\d{1,3}$/.test(v)) {
+                        setPercentInput(v);
+                        if (v !== "") setAmountInput("");
+                      }
                     }}
                     className="w-full px-3 py-2 rounded-lg bg-surface-2 text-sm border border-border outline-none" />
                 </Field>
                 <Field label="Amount off (£)">
                   <input type="text" inputMode="decimal" placeholder="e.g. 5.00"
-                    value={editing.amount_cents != null ? (editing.amount_cents / 100).toFixed(2) : ""}
+                    value={amountInput}
                     onChange={(e) => {
                       const v = e.target.value;
-                      if (v === "") setEditing({ ...editing, amount_cents: null });
-                      else if (/^\d*\.?\d{0,2}$/.test(v)) setEditing({ ...editing, amount_cents: Math.round(parseFloat(v || "0") * 100), percent: null });
+                      if (v === "" || /^\d*\.?\d{0,2}$/.test(v)) {
+                        setAmountInput(v);
+                        if (v !== "") setPercentInput("");
+                      }
                     }}
                     className="w-full px-3 py-2 rounded-lg bg-surface-2 text-sm border border-border outline-none" />
                 </Field>
