@@ -327,9 +327,22 @@ function InstallGuidesPage() {
                           <h3 className="font-display font-semibold text-lg leading-snug text-red-50">{b.title}</h3>
                           {b.excerpt && <p className="text-sm text-red-200/70 line-clamp-2">{b.excerpt}</p>}
                           <div className="mt-auto pt-3 flex items-center gap-2">
-                            <Button size="sm" className="flex-1 bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white" onClick={() => setReading(b)}>
-                              {b.pdf_url ? "Open PDF" : "Click to Read"}
-                            </Button>
+                            {b.pdf_url ? (
+                              <Button asChild size="sm" className="flex-1 bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white">
+                                <a
+                                  href={b.pdf_url}
+                                  download={`${b.title}.pdf`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                >
+                                  Download PDF
+                                </a>
+                              </Button>
+                            ) : (
+                              <Button size="sm" className="flex-1 bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white" onClick={() => setReading(b)}>
+                                Click to Read
+                              </Button>
+                            )}
                             {isMod && (
                               <>
                                 <Button size="icon" variant="ghost" className="text-red-200 hover:bg-red-900/60 hover:text-white" onClick={() => { setEditing(b); setShowEditor(true); }}>
