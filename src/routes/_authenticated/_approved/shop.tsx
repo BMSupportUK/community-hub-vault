@@ -3,16 +3,24 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { ChannelColumn, type ChannelGroup } from "@/components/app/ChannelColumn";
-import { ShoppingBag, Package, Settings, Plus, Minus, X, Send, Trash2, Pencil, Image as ImageIcon, Tag, CheckCircle2, BadgeCheck, Check, Wrench } from "lucide-react";
+import { ShoppingBag, Package, Settings, Plus, Minus, X, Send, Trash2, Pencil, Image as ImageIcon, Tag, CheckCircle2, BadgeCheck, Check, Wrench, FileText, BedDouble, Users, Loader2, Save } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import shopHero from "@/assets/shop-hero.jpg";
 
-type View = "store" | "orders" | "admin";
+type View = "store" | "orders" | "admin" | "refund" | "multi_room" | "triple_room";
+
+const POLICY_KEYS = ["refund", "multi_room", "triple_room"] as const;
+type PolicyKey = typeof POLICY_KEYS[number];
 
 export const Route = createFileRoute("/_authenticated/_approved/shop")({
   validateSearch: (s: Record<string, unknown>) => ({
-    view: (s.view === "orders" || s.view === "admin" || s.view === "discounts" ? s.view : "store") as View | "discounts",
+    view: (
+      s.view === "orders" || s.view === "admin" || s.view === "discounts" ||
+      s.view === "refund" || s.view === "multi_room" || s.view === "triple_room"
+        ? s.view
+        : "store"
+    ) as View | "discounts",
     id: typeof s.id === "string" ? s.id : undefined,
   }),
   component: ShopPage,
@@ -66,6 +74,10 @@ function ShopPage() {
         <div className="flex-1 overflow-y-auto px-2 py-3 space-y-1">
           <SideBtn active={view === "store"} onClick={() => navigate({ to: "/shop", search: { view: "store" } })} Icon={ShoppingBag} label="Storefront" />
           <SideBtn active={view === "orders"} onClick={() => navigate({ to: "/shop", search: { view: "orders" } })} Icon={Package} label="My Orders" />
+          <div className="pt-3 px-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Policies</div>
+          <SideBtn active={view === "refund"} onClick={() => navigate({ to: "/shop", search: { view: "refund" } })} Icon={FileText} label="Refund Policy" />
+          <SideBtn active={view === "multi_room"} onClick={() => navigate({ to: "/shop", search: { view: "multi_room" } })} Icon={Users} label="Multi-room Rules" />
+          <SideBtn active={view === "triple_room"} onClick={() => navigate({ to: "/shop", search: { view: "triple_room" } })} Icon={BedDouble} label="Triple-room Rules" />
           {isAdmin && (
             <>
               <div className="pt-3 px-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Admin</div>
@@ -87,6 +99,9 @@ function ShopPage() {
       {view === "orders" && <OrdersView selectedId={id} isAdmin={isAdmin} />}
       {view === "admin" && isAdmin && <AdminProducts />}
       {(view as string) === "discounts" && isAdmin && <AdminDiscounts />}
+      {(view === "refund" || view === "multi_room" || view === "triple_room") && (
+        <PolicyView policyKey={view as PolicyKey} isAdmin={isAdmin} />
+      )}
     </>
   );
 }
