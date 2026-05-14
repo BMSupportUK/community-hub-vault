@@ -1,6 +1,6 @@
-import { createFileRoute, Navigate } from "@tanstack/react-router";
+import { createFileRoute, Navigate, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { ShieldCheck, Search, Loader2, Plus, Trash2, Users, Tags } from "lucide-react";
+import { ShieldCheck, Search, Loader2, Plus, Trash2, Users, Tags, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
@@ -111,6 +111,9 @@ function AdminRolesPage() {
   return (
     <main className="flex-1 overflow-y-auto">
       <div className="max-w-6xl mx-auto px-6 py-8">
+        <Link to="/admin" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-4">
+          <ArrowLeft className="size-4" /> Back to admin dashboard
+        </Link>
         <header className="flex items-center gap-3 mb-6">
           <div className="size-11 rounded-2xl bg-gradient-primary grid place-items-center shadow-glow">
             <ShieldCheck className="size-5 text-primary-foreground" />
