@@ -1,4 +1,4 @@
-import { Link, useRouterState } from "@tanstack/react-router";
+import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import { Home, Ticket, ShoppingBag, BookOpen, FileText, Clock, Calendar, Shield, LogOut, MessageSquare, ShieldCheck, LayoutDashboard, UserCircle2, Globe, Activity } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
@@ -20,6 +20,11 @@ export function IconRail() {
   const isAdmin = hasAny(["admin", "management"]);
   const path = useRouterState({ select: (r) => r.location.pathname });
   const [activeIncidents, setActiveIncidents] = useState(0);
+  const navigate = useNavigate();
+  const handleSignOut = async () => {
+    await signOut();
+    navigate({ to: "/login" });
+  };
 
   useEffect(() => {
     if (isPending) return;
@@ -45,7 +50,7 @@ export function IconRail() {
       <aside className="bg-rail w-[72px] shrink-0 flex flex-col items-center py-4 gap-2 border-r border-border">
         <RailIcon to="/gate" label="Gate" Icon={MessageSquare} active={path.startsWith("/gate")} accent />
         <div className="mt-auto" />
-        <button onClick={signOut} className="text-muted-foreground hover:text-destructive p-3" title="Sign out">
+        <button onClick={handleSignOut} className="text-muted-foreground hover:text-destructive p-3" title="Sign out">
           <LogOut className="size-5" />
         </button>
       </aside>
@@ -80,7 +85,7 @@ export function IconRail() {
       <div className="mt-auto" />
       <MentionsBadge />
       <NotificationBell />
-      <button onClick={signOut} className="text-muted-foreground hover:text-destructive p-3 rounded-xl hover:bg-surface-2 transition-colors" title="Sign out">
+      <button onClick={handleSignOut} className="text-muted-foreground hover:text-destructive p-3 rounded-xl hover:bg-surface-2 transition-colors" title="Sign out">
         <LogOut className="size-5" />
       </button>
     </aside>
