@@ -257,6 +257,24 @@ export type Database = {
           },
         ]
       }
+      nav_order: {
+        Row: {
+          key: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          key: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          key?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       order_items: {
         Row: {
           created_at: string
