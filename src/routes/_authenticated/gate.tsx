@@ -17,7 +17,7 @@ function GatePage() {
   const navigate = useNavigate();
   const [appId, setAppId] = useState<string | null>(null);
   const [ticketNumber, setTicketNumber] = useState<number | null>(null);
-  const [status, setStatus] = useState<string>("pending");
+  const [status, setStatus] = useState<string>("approved");
   const [reason, setReason] = useState<string | null>(null);
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [text, setText] = useState("");
