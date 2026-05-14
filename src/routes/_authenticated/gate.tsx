@@ -110,6 +110,38 @@ function GatePage() {
       return;
     }
     if (!user) return;
+    // Appeal path: use SECURITY DEFINER RPC so it works for banned/denied users too
+    if (trimmed.toUpperCase().startsWith("[APPEAL]")) {
+      setSubmitting(true);
+      const appealText = trimmed.replace(/^\[APPEAL\]\s*/i, "").trim() || trimmed;
+      const { data, error } = await supabase.rpc("submit_appeal", { p_reason: appealText });
+      if (error) {
+        setSubmitting(false);
+        toast.error(error.message);
+        return;
+      }
+      const result = data as { application_id: string; ticket_number: number; reference: string } | null;
+      if (result) {
+        setAppId(result.application_id);
+        setTicketNumber(result.ticket_number);
+        setStatus("pending");
+        setReason(`[APPEAL] ${appealText}`);
+        const { data: m } = await supabase
+          .from("gate_messages")
+          .select("id, sender_id, content, created_at")
+          .eq("application_id", result.application_id)
+          .order("created_at");
+        setMsgs(m ?? []);
+        await refreshRoles();
+        toast.success(`Appeal submitted — reference ${result.reference}`);
+      }
+      setReasonDraft("");
+      setFormOpen(false);
+      setChatOpen(true);
+      setSubmitting(false);
+      setConfirmNew(false);
+      return;
+    }
     // Safeguard: if a pending ticket already exists, require explicit confirmation
     if (appId && status === "pending" && !confirmNew) {
       setConfirmNew(true);
