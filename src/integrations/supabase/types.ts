@@ -153,6 +153,45 @@ export type Database = {
           },
         ]
       }
+      discount_codes: {
+        Row: {
+          amount_cents: number | null
+          code: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          is_active: boolean
+          percent: number | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          amount_cents?: number | null
+          code: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          percent?: number | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          amount_cents?: number | null
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          percent?: number | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       gate_applications: {
         Row: {
           created_at: string
@@ -297,9 +336,18 @@ export type Database = {
       }
       orders: {
         Row: {
+          completed_at: string | null
+          completed_by: string | null
           created_at: string
+          customer_type: string | null
+          discount_cents: number
+          discount_code: string | null
+          email: string | null
+          existing_username: string | null
           id: string
           notes: string | null
+          paid_at: string | null
+          paid_by: string | null
           shipping_address: string | null
           shipping_name: string | null
           status: Database["public"]["Enums"]["order_status"]
@@ -308,9 +356,18 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          completed_at?: string | null
+          completed_by?: string | null
           created_at?: string
+          customer_type?: string | null
+          discount_cents?: number
+          discount_code?: string | null
+          email?: string | null
+          existing_username?: string | null
           id?: string
           notes?: string | null
+          paid_at?: string | null
+          paid_by?: string | null
           shipping_address?: string | null
           shipping_name?: string | null
           status?: Database["public"]["Enums"]["order_status"]
@@ -319,9 +376,18 @@ export type Database = {
           user_id: string
         }
         Update: {
+          completed_at?: string | null
+          completed_by?: string | null
           created_at?: string
+          customer_type?: string | null
+          discount_cents?: number
+          discount_code?: string | null
+          email?: string | null
+          existing_username?: string | null
           id?: string
           notes?: string | null
+          paid_at?: string | null
+          paid_by?: string | null
           shipping_address?: string | null
           shipping_name?: string | null
           status?: Database["public"]["Enums"]["order_status"]

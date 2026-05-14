@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { ChannelColumn, type ChannelGroup } from "@/components/app/ChannelColumn";
-import { ShoppingBag, Package, Settings, Plus, Minus, X, Send, Trash2, Pencil, Image as ImageIcon } from "lucide-react";
+import { ShoppingBag, Package, Settings, Plus, Minus, X, Send, Trash2, Pencil, Image as ImageIcon, Tag, CheckCircle2, BadgeCheck } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import shopHero from "@/assets/shop-hero.jpg";
@@ -12,7 +12,7 @@ type View = "store" | "orders" | "admin";
 
 export const Route = createFileRoute("/_authenticated/_approved/shop")({
   validateSearch: (s: Record<string, unknown>) => ({
-    view: (s.view === "orders" || s.view === "admin" ? s.view : "store") as View,
+    view: (s.view === "orders" || s.view === "admin" || s.view === "discounts" ? s.view : "store") as View | "discounts",
     id: typeof s.id === "string" ? s.id : undefined,
   }),
   component: ShopPage,
@@ -28,10 +28,18 @@ interface Order {
   id: string; user_id: string; status: OrderStatus; total_cents: number;
   shipping_name: string | null; shipping_address: string | null; notes: string | null;
   created_at: string;
+  email?: string | null;
+  customer_type?: string | null;
+  existing_username?: string | null;
+  discount_code?: string | null;
+  discount_cents?: number | null;
+  paid_at?: string | null;
+  completed_at?: string | null;
 }
 interface OrderItem { id: string; order_id: string; product_name: string; unit_price_cents: number; quantity: number; }
 interface OrderMessage { id: string; order_id: string; sender_id: string; content: string; created_at: string; }
 interface ProductCategory { id: string; name: string; slug: string; sort_order: number; }
+interface DiscountCode { id: string; code: string; description: string | null; percent: number | null; amount_cents: number | null; user_id: string | null; is_active: boolean; }
 
 const fmt = (c: number) => new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP" }).format(c / 100);
 
@@ -62,6 +70,7 @@ function ShopPage() {
             <>
               <div className="pt-3 px-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Admin</div>
               <SideBtn active={view === "admin"} onClick={() => navigate({ to: "/shop", search: { view: "admin" } })} Icon={Settings} label="Manage Products" />
+              <SideBtn active={view === ("discounts" as View)} onClick={() => navigate({ to: "/shop", search: { view: "discounts" as never } })} Icon={Tag} label="Discount Codes" />
             </>
           )}
         </div>
@@ -77,6 +86,7 @@ function ShopPage() {
       {view === "store" && <Storefront />}
       {view === "orders" && <OrdersView selectedId={id} isAdmin={isAdmin} />}
       {view === "admin" && isAdmin && <AdminProducts />}
+      {(view as string) === "discounts" && isAdmin && <AdminDiscounts />}
     </>
   );
 }
@@ -116,12 +126,18 @@ function Storefront() {
   const add = (id: string) => setCart((c) => ({ ...c, [id]: (c[id] ?? 0) + 1 }));
   const sub = (id: string) => setCart((c) => ({ ...c, [id]: Math.max(0, (c[id] ?? 0) - 1) }));
 
-  const placeOrder = async (shipping: { name: string; address: string; notes: string }) => {
+  const placeOrder = async (info: { name: string; email: string; customer_type: "new" | "existing"; existing_username: string; discount_code: string; discount_cents: number }) => {
     if (!user || cartItems.length === 0) return;
+    const finalTotal = Math.max(0, total - (info.discount_cents || 0));
     const { data: order, error } = await supabase.from("orders").insert({
-      user_id: user.id, total_cents: total, status: "pending",
-      shipping_name: shipping.name, shipping_address: shipping.address, notes: shipping.notes,
-    }).select().single();
+      user_id: user.id, total_cents: finalTotal, status: "pending",
+      shipping_name: info.name,
+      email: info.email,
+      customer_type: info.customer_type,
+      existing_username: info.customer_type === "existing" ? info.existing_username : null,
+      discount_code: info.discount_code || null,
+      discount_cents: info.discount_cents || 0,
+    } as never).select().single();
     if (error || !order) { toast.error(error?.message ?? "Failed"); return; }
     const items = cartItems.map((p) => ({
       order_id: order.id, product_id: p.id, product_name: p.name,
@@ -224,7 +240,7 @@ function Storefront() {
                         <button onClick={() => add(p.id)} className="size-7 grid place-items-center hover:text-sky-400"><Plus className="size-3.5" /></button>
                       </div>
                     ) : (
-                      <button onClick={() => add(p.id)} className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-blue-500 to-sky-400 text-white text-xs font-medium hover:opacity-90 shadow shadow-blue-500/20">Add</button>
+                      <button onClick={() => add(p.id)} className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-blue-500 to-sky-400 text-white text-xs font-medium hover:opacity-90 shadow shadow-blue-500/20">Place Order</button>
                     )}
                   </div>
                 </div>
@@ -241,9 +257,39 @@ function Storefront() {
 
 function Checkout({ items, total, onClose, onPlace }: {
   items: (Product & { qty: number })[]; total: number; onClose: () => void;
-  onPlace: (s: { name: string; address: string; notes: string }) => void;
+  onPlace: (s: { name: string; email: string; customer_type: "new" | "existing"; existing_username: string; discount_code: string; discount_cents: number }) => void;
 }) {
-  const [name, setName] = useState(""); const [address, setAddress] = useState(""); const [notes, setNotes] = useState("");
+  const { user } = useAuth();
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState(user?.email ?? "");
+  const [customerType, setCustomerType] = useState<"new" | "existing">("new");
+  const [existingUsername, setExistingUsername] = useState("");
+  const [discountInput, setDiscountInput] = useState("");
+  const [appliedCode, setAppliedCode] = useState<DiscountCode | null>(null);
+  const [applying, setApplying] = useState(false);
+
+  const discountCents = useMemo(() => {
+    if (!appliedCode) return 0;
+    if (appliedCode.amount_cents) return Math.min(total, appliedCode.amount_cents);
+    if (appliedCode.percent) return Math.round(total * (appliedCode.percent / 100));
+    return 0;
+  }, [appliedCode, total]);
+  const finalTotal = Math.max(0, total - discountCents);
+
+  const applyCode = async () => {
+    const code = discountInput.trim();
+    if (!code) return;
+    setApplying(true);
+    const { data, error } = await supabase.from("discount_codes").select("*")
+      .ilike("code", code).eq("is_active", true).maybeSingle();
+    setApplying(false);
+    if (error || !data) { toast.error("Invalid code"); return; }
+    setAppliedCode(data as DiscountCode);
+    toast.success(`Code "${(data as DiscountCode).code}" applied`);
+  };
+
+  const canSubmit = !!name && !!email && (customerType === "new" || !!existingUsername.trim());
+
   return (
     <div className="fixed inset-0 bg-background/80 backdrop-blur-sm grid place-items-center z-50 p-4">
       <div className="bg-surface rounded-2xl border border-border w-full max-w-lg shadow-soft">
@@ -259,19 +305,50 @@ function Checkout({ items, total, onClose, onPlace }: {
                 <span className="font-medium">{fmt(i.price_cents * i.qty)}</span>
               </div>
             ))}
-            <div className="flex justify-between pt-2 border-t border-border font-display font-bold">
-              <span>Total</span><span>{fmt(total)}</span>
+            <div className="flex justify-between pt-2 border-t border-border text-sm">
+              <span className="text-muted-foreground">Subtotal</span><span>{fmt(total)}</span>
+            </div>
+            {discountCents > 0 && (
+              <div className="flex justify-between text-sm text-success">
+                <span>Discount {appliedCode?.code ? `(${appliedCode.code})` : ""}</span><span>-{fmt(discountCents)}</span>
+              </div>
+            )}
+            <div className="flex justify-between font-display font-bold">
+              <span>Total</span><span>{fmt(finalTotal)}</span>
             </div>
           </div>
           <div className="space-y-2">
             <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Full name" className="w-full px-3 py-2 rounded-lg bg-surface-2 text-sm border border-border focus:border-primary outline-none" />
-            <textarea value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Shipping address" rows={2} className="w-full px-3 py-2 rounded-lg bg-surface-2 text-sm border border-border focus:border-primary outline-none resize-none" />
-            <textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Order notes (optional)" rows={2} className="w-full px-3 py-2 rounded-lg bg-surface-2 text-sm border border-border focus:border-primary outline-none resize-none" />
+            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" className="w-full px-3 py-2 rounded-lg bg-surface-2 text-sm border border-border focus:border-primary outline-none" />
+            <div>
+              <div className="text-[11px] uppercase tracking-wider text-muted-foreground mb-1">Customer</div>
+              <div className="flex gap-2">
+                <button type="button" onClick={() => setCustomerType("new")}
+                  className={cn("flex-1 px-3 py-2 rounded-lg text-sm border", customerType === "new" ? "bg-primary text-primary-foreground border-primary" : "bg-surface-2 border-border")}>
+                  New customer
+                </button>
+                <button type="button" onClick={() => setCustomerType("existing")}
+                  className={cn("flex-1 px-3 py-2 rounded-lg text-sm border", customerType === "existing" ? "bg-primary text-primary-foreground border-primary" : "bg-surface-2 border-border")}>
+                  Existing customer
+                </button>
+              </div>
+            </div>
+            {customerType === "existing" && (
+              <input value={existingUsername} onChange={(e) => setExistingUsername(e.target.value)} placeholder="Username you're extending" className="w-full px-3 py-2 rounded-lg bg-surface-2 text-sm border border-border focus:border-primary outline-none" />
+            )}
+            <div className="flex gap-2">
+              <input value={discountInput} onChange={(e) => setDiscountInput(e.target.value)} placeholder="Discount code (optional)" className="flex-1 px-3 py-2 rounded-lg bg-surface-2 text-sm border border-border focus:border-primary outline-none" />
+              <button type="button" onClick={applyCode} disabled={applying || !discountInput.trim()}
+                className="px-3 py-2 rounded-lg bg-surface-2 text-sm font-medium border border-border disabled:opacity-50">
+                {appliedCode ? "Re-apply" : "Apply"}
+              </button>
+            </div>
           </div>
         </div>
         <div className="p-5 border-t border-border flex gap-2 justify-end">
           <button onClick={onClose} className="px-4 py-2 rounded-lg bg-surface-2 text-sm">Cancel</button>
-          <button onClick={() => onPlace({ name, address, notes })} disabled={!name || !address} className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium disabled:opacity-50">Place Order</button>
+          <button onClick={() => onPlace({ name, email, customer_type: customerType, existing_username: existingUsername, discount_code: appliedCode?.code ?? "", discount_cents: discountCents })}
+            disabled={!canSubmit} className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium disabled:opacity-50">Place Order</button>
         </div>
       </div>
     </div>
@@ -379,6 +456,31 @@ function OrderDetail({ orderId, isAdmin }: { orderId: string; isAdmin: boolean }
     if (error) toast.error(error.message);
   };
 
+  const sendSystem = async (content: string) => {
+    if (!user) return;
+    await supabase.from("order_messages").insert({ order_id: orderId, sender_id: user.id, content });
+  };
+
+  const markPaid = async () => {
+    if (!order || order.paid_at) return;
+    const { error } = await supabase.from("orders").update({
+      paid_at: new Date().toISOString(), paid_by: user?.id ?? null, status: "processing",
+    } as never).eq("id", orderId);
+    if (error) { toast.error(error.message); return; }
+    await sendSystem(`✅ Payment received — thank you for your payment! Your order is now being processed.`);
+    toast.success("Marked as paid");
+  };
+
+  const completeSale = async () => {
+    if (!order) return;
+    const { error } = await supabase.from("orders").update({
+      completed_at: new Date().toISOString(), completed_by: user?.id ?? null, status: "completed",
+    } as never).eq("id", orderId);
+    if (error) { toast.error(error.message); return; }
+    await sendSystem(`🛠️ We are currently setting up your account details and will share these next.`);
+    toast.success("Sale completed");
+  };
+
   if (!order) return <main className="flex-1 grid place-items-center text-muted-foreground text-sm">Loading…</main>;
 
   return (
@@ -389,6 +491,18 @@ function OrderDetail({ orderId, isAdmin }: { orderId: string; isAdmin: boolean }
           <div className="text-[11px] text-muted-foreground">{new Date(order.created_at).toLocaleString()}</div>
         </div>
         <div className="flex items-center gap-2">
+          {isAdmin && (
+            <>
+              <button onClick={markPaid} disabled={!!order.paid_at}
+                className="px-2.5 py-1 rounded-md bg-success/15 text-success text-xs font-medium flex items-center gap-1 hover:bg-success/25 disabled:opacity-50">
+                <BadgeCheck className="size-3.5" /> {order.paid_at ? "Paid" : "Mark Paid"}
+              </button>
+              <button onClick={completeSale} disabled={!!order.completed_at}
+                className="px-2.5 py-1 rounded-md bg-primary/15 text-primary text-xs font-medium flex items-center gap-1 hover:bg-primary/25 disabled:opacity-50">
+                <CheckCircle2 className="size-3.5" /> {order.completed_at ? "Completed" : "Complete Sale"}
+              </button>
+            </>
+          )}
           {isAdmin ? (
             <select value={order.status} onChange={(e) => updateStatus(e.target.value as Order["status"])}
               className={cn("text-xs px-2 py-1 rounded font-medium border-0 outline-none", STATUS_COLOR[order.status])}>
@@ -414,6 +528,25 @@ function OrderDetail({ orderId, isAdmin }: { orderId: string; isAdmin: boolean }
                 <span>Total</span><span>{fmt(order.total_cents)}</span>
               </div>
             </div>
+          </div>
+          <div>
+            <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Customer</div>
+            {order.shipping_name && <div>{order.shipping_name}</div>}
+            {order.email && <div className="text-muted-foreground text-xs">{order.email}</div>}
+            {order.customer_type && (
+              <div className="text-xs mt-1">
+                <span className="text-muted-foreground">Type: </span>
+                <span className="capitalize">{order.customer_type}</span>
+                {order.customer_type === "existing" && order.existing_username && (
+                  <span className="text-muted-foreground"> · extending @{order.existing_username}</span>
+                )}
+              </div>
+            )}
+            {order.discount_code && (
+              <div className="text-xs mt-1 text-muted-foreground">Discount: {order.discount_code} (-{fmt(order.discount_cents ?? 0)})</div>
+            )}
+            {order.paid_at && <div className="text-xs mt-1 text-success">Paid · {new Date(order.paid_at).toLocaleString()}</div>}
+            {order.completed_at && <div className="text-xs text-primary">Completed · {new Date(order.completed_at).toLocaleString()}</div>}
           </div>
           {order.shipping_name && (
             <div>
@@ -677,4 +810,142 @@ function AdminProducts() {
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return <div><div className="text-[11px] uppercase tracking-wider text-muted-foreground mb-1">{label}</div>{children}</div>;
+}
+
+// ============ ADMIN: DISCOUNT CODES ============
+function AdminDiscounts() {
+  const [codes, setCodes] = useState<DiscountCode[]>([]);
+  const [users, setUsers] = useState<{ id: string; username: string | null; display_name: string | null }[]>([]);
+  const [editing, setEditing] = useState<Partial<DiscountCode> | null>(null);
+
+  const load = async () => {
+    const { data } = await supabase.from("discount_codes").select("*").order("created_at", { ascending: false });
+    setCodes((data ?? []) as DiscountCode[]);
+  };
+  useEffect(() => {
+    load();
+    supabase.from("profiles").select("id,username,display_name").order("username").then(({ data }) => setUsers(data ?? []));
+  }, []);
+
+  const save = async () => {
+    if (!editing?.code) { toast.error("Code required"); return; }
+    const payload = {
+      code: editing.code.trim().toUpperCase(),
+      description: editing.description ?? null,
+      percent: editing.percent ?? null,
+      amount_cents: editing.amount_cents ?? null,
+      user_id: editing.user_id ?? null,
+      is_active: editing.is_active ?? true,
+    };
+    const { error } = editing.id
+      ? await supabase.from("discount_codes").update(payload).eq("id", editing.id)
+      : await supabase.from("discount_codes").insert(payload);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Saved"); setEditing(null); load();
+  };
+  const remove = async (id: string) => {
+    if (!confirm("Delete this code?")) return;
+    const { error } = await supabase.from("discount_codes").delete().eq("id", id);
+    if (error) toast.error(error.message); else load();
+  };
+
+  return (
+    <main className="flex-1 flex flex-col overflow-hidden">
+      <header className="h-14 px-6 border-b border-border flex items-center justify-between shrink-0">
+        <h1 className="font-display font-bold text-lg">Discount Codes</h1>
+        <button onClick={() => setEditing({ is_active: true })}
+          className="px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium flex items-center gap-1">
+          <Plus className="size-4" /> New Code
+        </button>
+      </header>
+      <div className="flex-1 overflow-y-auto p-6">
+        <div className="bg-surface rounded-xl border border-border overflow-hidden">
+          <table className="w-full text-sm">
+            <thead className="bg-surface-2 text-muted-foreground text-xs">
+              <tr>
+                <th className="text-left p-3">Code</th>
+                <th className="text-left p-3">Discount</th>
+                <th className="text-left p-3">Scope</th>
+                <th className="text-left p-3">Description</th>
+                <th className="text-center p-3">Active</th>
+                <th className="p-3"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {codes.length === 0 && <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">No discount codes yet.</td></tr>}
+              {codes.map((c) => {
+                const u = c.user_id ? users.find((x) => x.id === c.user_id) : null;
+                return (
+                  <tr key={c.id} className="border-t border-border">
+                    <td className="p-3 font-mono font-semibold">{c.code}</td>
+                    <td className="p-3">{c.percent ? `${c.percent}%` : c.amount_cents ? fmt(c.amount_cents) : "—"}</td>
+                    <td className="p-3 text-muted-foreground">{u ? `@${u.username ?? u.display_name ?? "user"}` : "Everyone"}</td>
+                    <td className="p-3 text-muted-foreground">{c.description ?? "—"}</td>
+                    <td className="p-3 text-center">{c.is_active ? "✓" : "—"}</td>
+                    <td className="p-3 text-right">
+                      <button onClick={() => setEditing(c)} className="p-1.5 rounded hover:bg-surface-2"><Pencil className="size-3.5" /></button>
+                      <button onClick={() => remove(c.id)} className="p-1.5 rounded hover:bg-surface-2 text-destructive"><Trash2 className="size-3.5" /></button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      {editing && (
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm grid place-items-center z-50 p-4">
+          <div className="bg-surface rounded-2xl border border-border w-full max-w-lg shadow-soft">
+            <div className="p-5 border-b border-border flex items-center justify-between">
+              <h2 className="font-display font-bold">{editing.id ? "Edit" : "New"} Discount Code</h2>
+              <button onClick={() => setEditing(null)}><X className="size-5" /></button>
+            </div>
+            <div className="p-5 space-y-3 max-h-[70vh] overflow-y-auto">
+              <Field label="Code">
+                <input value={editing.code ?? ""} onChange={(e) => setEditing({ ...editing, code: e.target.value.toUpperCase() })} placeholder="SUMMER10" className="w-full px-3 py-2 rounded-lg bg-surface-2 text-sm border border-border outline-none uppercase" />
+              </Field>
+              <Field label="Description"><input value={editing.description ?? ""} onChange={(e) => setEditing({ ...editing, description: e.target.value })} className="w-full px-3 py-2 rounded-lg bg-surface-2 text-sm border border-border outline-none" /></Field>
+              <div className="grid grid-cols-2 gap-3">
+                <Field label="Percent off">
+                  <input type="text" inputMode="numeric" placeholder="e.g. 10" value={editing.percent ?? ""}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      if (v === "") setEditing({ ...editing, percent: null });
+                      else if (/^\d{1,3}$/.test(v)) setEditing({ ...editing, percent: Number(v), amount_cents: null });
+                    }}
+                    className="w-full px-3 py-2 rounded-lg bg-surface-2 text-sm border border-border outline-none" />
+                </Field>
+                <Field label="Amount off (£)">
+                  <input type="text" inputMode="decimal" placeholder="e.g. 5.00"
+                    value={editing.amount_cents != null ? (editing.amount_cents / 100).toFixed(2) : ""}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      if (v === "") setEditing({ ...editing, amount_cents: null });
+                      else if (/^\d*\.?\d{0,2}$/.test(v)) setEditing({ ...editing, amount_cents: Math.round(parseFloat(v || "0") * 100), percent: null });
+                    }}
+                    className="w-full px-3 py-2 rounded-lg bg-surface-2 text-sm border border-border outline-none" />
+                </Field>
+              </div>
+              <Field label="Customer (leave blank for everyone)">
+                <select value={editing.user_id ?? ""} onChange={(e) => setEditing({ ...editing, user_id: e.target.value || null })}
+                  className="w-full px-3 py-2 rounded-lg bg-surface-2 text-sm border border-border outline-none">
+                  <option value="">Everyone (global)</option>
+                  {users.map((u) => (
+                    <option key={u.id} value={u.id}>{u.username ?? u.display_name ?? u.id.slice(0, 8)}</option>
+                  ))}
+                </select>
+              </Field>
+              <label className="flex items-center gap-2 text-sm">
+                <input type="checkbox" checked={editing.is_active ?? true} onChange={(e) => setEditing({ ...editing, is_active: e.target.checked })} /> Active
+              </label>
+            </div>
+            <div className="p-5 border-t border-border flex justify-end gap-2">
+              <button onClick={() => setEditing(null)} className="px-4 py-2 rounded-lg bg-surface-2 text-sm">Cancel</button>
+              <button onClick={save} className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium">Save</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </main>
+  );
 }
