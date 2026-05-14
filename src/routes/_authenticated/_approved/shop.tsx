@@ -456,6 +456,31 @@ function OrderDetail({ orderId, isAdmin }: { orderId: string; isAdmin: boolean }
     if (error) toast.error(error.message);
   };
 
+  const sendSystem = async (content: string) => {
+    if (!user) return;
+    await supabase.from("order_messages").insert({ order_id: orderId, sender_id: user.id, content });
+  };
+
+  const markPaid = async () => {
+    if (!order || order.paid_at) return;
+    const { error } = await supabase.from("orders").update({
+      paid_at: new Date().toISOString(), paid_by: user?.id ?? null, status: "processing",
+    } as never).eq("id", orderId);
+    if (error) { toast.error(error.message); return; }
+    await sendSystem(`✅ Payment received — thank you for your payment! Your order is now being processed.`);
+    toast.success("Marked as paid");
+  };
+
+  const completeSale = async () => {
+    if (!order) return;
+    const { error } = await supabase.from("orders").update({
+      completed_at: new Date().toISOString(), completed_by: user?.id ?? null, status: "completed",
+    } as never).eq("id", orderId);
+    if (error) { toast.error(error.message); return; }
+    await sendSystem(`🛠️ We are currently setting up your account details and will share these next.`);
+    toast.success("Sale completed");
+  };
+
   if (!order) return <main className="flex-1 grid place-items-center text-muted-foreground text-sm">Loading…</main>;
 
   return (
@@ -466,6 +491,18 @@ function OrderDetail({ orderId, isAdmin }: { orderId: string; isAdmin: boolean }
           <div className="text-[11px] text-muted-foreground">{new Date(order.created_at).toLocaleString()}</div>
         </div>
         <div className="flex items-center gap-2">
+          {isAdmin && (
+            <>
+              <button onClick={markPaid} disabled={!!order.paid_at}
+                className="px-2.5 py-1 rounded-md bg-success/15 text-success text-xs font-medium flex items-center gap-1 hover:bg-success/25 disabled:opacity-50">
+                <BadgeCheck className="size-3.5" /> {order.paid_at ? "Paid" : "Mark Paid"}
+              </button>
+              <button onClick={completeSale} disabled={!!order.completed_at}
+                className="px-2.5 py-1 rounded-md bg-primary/15 text-primary text-xs font-medium flex items-center gap-1 hover:bg-primary/25 disabled:opacity-50">
+                <CheckCircle2 className="size-3.5" /> {order.completed_at ? "Completed" : "Complete Sale"}
+              </button>
+            </>
+          )}
           {isAdmin ? (
             <select value={order.status} onChange={(e) => updateStatus(e.target.value as Order["status"])}
               className={cn("text-xs px-2 py-1 rounded font-medium border-0 outline-none", STATUS_COLOR[order.status])}>
@@ -491,6 +528,25 @@ function OrderDetail({ orderId, isAdmin }: { orderId: string; isAdmin: boolean }
                 <span>Total</span><span>{fmt(order.total_cents)}</span>
               </div>
             </div>
+          </div>
+          <div>
+            <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Customer</div>
+            {order.shipping_name && <div>{order.shipping_name}</div>}
+            {order.email && <div className="text-muted-foreground text-xs">{order.email}</div>}
+            {order.customer_type && (
+              <div className="text-xs mt-1">
+                <span className="text-muted-foreground">Type: </span>
+                <span className="capitalize">{order.customer_type}</span>
+                {order.customer_type === "existing" && order.existing_username && (
+                  <span className="text-muted-foreground"> · extending @{order.existing_username}</span>
+                )}
+              </div>
+            )}
+            {order.discount_code && (
+              <div className="text-xs mt-1 text-muted-foreground">Discount: {order.discount_code} (-{fmt(order.discount_cents ?? 0)})</div>
+            )}
+            {order.paid_at && <div className="text-xs mt-1 text-success">Paid · {new Date(order.paid_at).toLocaleString()}</div>}
+            {order.completed_at && <div className="text-xs text-primary">Completed · {new Date(order.completed_at).toLocaleString()}</div>}
           </div>
           {order.shipping_name && (
             <div>
