@@ -114,6 +114,11 @@ function ModerationPage() {
       await supabase.from("user_roles").delete().eq("user_id", app.user_id).eq("role", "pending");
       const { error: e2 } = await supabase.from("user_roles").insert({ user_id: app.user_id, role: "member" });
       if (e2 && !e2.message.includes("duplicate")) toast.error(e2.message);
+    } else if (decision === "denied") {
+      // Remove pending role, add banned role so user is sent to /rejected
+      await supabase.from("user_roles").delete().eq("user_id", app.user_id).eq("role", "pending");
+      const { error: e2 } = await supabase.from("user_roles").insert({ user_id: app.user_id, role: "banned" });
+      if (e2 && !e2.message.includes("duplicate")) toast.error(e2.message);
     }
     toast.success(`Application ${decision}`);
     load();
