@@ -115,6 +115,13 @@ function ModerationPage() {
       const { error: e2 } = await supabase.from("user_roles").insert({ user_id: app.user_id, role: "member" });
       if (e2 && !e2.message.includes("duplicate")) toast.error(e2.message);
     } else if (decision === "denied") {
+      // Send automated rejection message + close the conversation
+      await supabase.from("gate_messages").insert({
+        application_id: app.id,
+        sender_id: user!.id,
+        content:
+          "❌ Your application has been rejected.\n\nThis conversation is now closed. If you believe this is a mistake, you can submit an appeal from your rejected screen using the reference: APPEAL",
+      });
       // Remove pending role, add banned role so user is sent to /rejected
       await supabase.from("user_roles").delete().eq("user_id", app.user_id).eq("role", "pending");
       const { error: e2 } = await supabase.from("user_roles").insert({ user_id: app.user_id, role: "banned" });
