@@ -30,9 +30,10 @@ const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
 };
 
 function HomeLayout() {
-  const { hasAny } = useAuth();
+  const { hasAny, user } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
   const [channels, setChannels] = useState<ChannelRow[] | null>(null);
+  const [mentionCounts, setMentionCounts] = useState<Record<string, number>>({});
   const [addChannelGroup, setAddChannelGroup] = useState<string | null>(null);
   const [showAddGroup, setShowAddGroup] = useState(false);
   const [chName, setChName] = useState("");
@@ -48,6 +49,34 @@ function HomeLayout() {
   };
 
   useEffect(() => { load(); }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    const loadCounts = async () => {
+      const { data } = await supabase
+        .from("user_notifications")
+        .select("link_path")
+        .eq("user_id", user.id)
+        .eq("kind", "mention")
+        .is("read_at", null);
+      const map: Record<string, number> = {};
+      (data ?? []).forEach((r: { link_path: string | null }) => {
+        if (!r.link_path) return;
+        map[r.link_path] = (map[r.link_path] ?? 0) + 1;
+      });
+      setMentionCounts(map);
+    };
+    loadCounts();
+    const ch = supabase
+      .channel(`home-mentions-${user.id}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "user_notifications", filter: `user_id=eq.${user.id}` },
+        () => loadCounts(),
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [user]);
 
   const slugify = (s: string) =>
     s.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || `ch-${Date.now()}`;
@@ -126,6 +155,7 @@ function HomeLayout() {
           to: `/home/${c.slug}`,
           label: c.name,
           icon: ICONS[c.icon] ?? Hash,
+          badge: mentionCounts[`/home/${c.slug}`] ?? 0,
         })),
         onAddItem: isAdmin ? () => setAddChannelGroup(label) : undefined,
         onDeleteItem: isAdmin ? (to) => deleteChannel(to.replace("/home/", "")) : undefined,
