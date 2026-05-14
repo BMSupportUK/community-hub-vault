@@ -584,13 +584,9 @@ function ShiftsPage() {
                       <Select value={newSlot.presetId} onValueChange={(v) => setNewSlot({ ...newSlot, presetId: v })}>
                         <SelectTrigger className="bg-blue-950/60 border-sky-500/30 text-sky-50"><SelectValue placeholder="Pick a block" /></SelectTrigger>
                         <SelectContent>
-                          {(() => {
-                            const dow = newSlot.date ? new Date(newSlot.date + "T00:00:00").getDay() : null;
-                            const filtered = dow === null ? presets : presets.filter((p) => p.days.includes(dow));
-                            return (filtered.length ? filtered : presets).map((p) => (
-                              <SelectItem key={p.id} value={p.id}>{p.label}</SelectItem>
-                            ));
-                          })()}
+                          {presets.map((p) => (
+                            <SelectItem key={p.id} value={p.id}>{p.label}</SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                       <p className="text-[11px] text-sky-300/60 mt-1">Times come from the preset. Add or edit presets below.</p>
