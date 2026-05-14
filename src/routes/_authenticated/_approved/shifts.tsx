@@ -104,6 +104,10 @@ function ShiftsPage() {
   // Manage rota state
   const [newSlot, setNewSlot] = useState({ date: fmtDate(new Date()), start: "09:00", end: "17:00", type: "shift" as SlotType, notes: "" });
 
+  // Block-shift presets (admin)
+  const [presets, setPresets] = useState<BlockPreset[]>(() => loadPresets());
+  const [presetForm, setPresetForm] = useState({ label: "", start: "09:00", end: "17:00", days: [1,2,3,4,5] as number[] });
+
   // Holiday request state
   const [holForm, setHolForm] = useState({ start: "", end: "", reason: "" });
 
@@ -202,6 +206,48 @@ function ShiftsPage() {
     toast.success("Slot added");
     setNewSlot({ ...newSlot, notes: "" });
     load();
+  };
+
+  const addBlockShift = async (preset: BlockPreset, date: string) => {
+    if (!date) return toast.error("Pick a date");
+    const { error } = await supabase.from("shift_slots").insert({
+      shift_date: date, start_time: preset.start, end_time: preset.end,
+      slot_type: "shift", notes: preset.label, created_by: user?.id ?? null,
+    });
+    if (error) return toast.error(error.message);
+    toast.success(`Shift added successfully — ${preset.label}`);
+    load();
+  };
+
+  const fillWeekFromPresets = async () => {
+    const rows = days
+      .map((d) => {
+        const dow = d.getDay();
+        const p = presets.find((pp) => pp.days.includes(dow));
+        if (!p) return null;
+        return {
+          shift_date: fmtDate(d), start_time: p.start, end_time: p.end,
+          slot_type: "shift" as SlotType, notes: p.label, created_by: user?.id ?? null,
+        };
+      })
+      .filter(Boolean) as any[];
+    if (rows.length === 0) return toast.error("No presets match this week");
+    const { error } = await supabase.from("shift_slots").insert(rows);
+    if (error) return toast.error(error.message);
+    toast.success(`Shift added successfully — ${rows.length} block shifts created for the week`);
+    load();
+  };
+
+  const savePreset = () => {
+    const label = presetForm.label.trim() || `${presetForm.start}–${presetForm.end}`;
+    const next = [...presets, { id: crypto.randomUUID(), label, start: presetForm.start, end: presetForm.end, days: [...presetForm.days] }];
+    setPresets(next); savePresets(next);
+    setPresetForm({ label: "", start: "09:00", end: "17:00", days: [1,2,3,4,5] });
+    toast.success("Preset saved");
+  };
+  const removePreset = (id: string) => {
+    const next = presets.filter((p) => p.id !== id);
+    setPresets(next); savePresets(next);
   };
 
   const submitHoliday = async () => {
