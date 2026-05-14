@@ -1,6 +1,6 @@
 import { createFileRoute, Outlet, redirect, useRouterState, Navigate } from "@tanstack/react-router";
 import { Link } from "@tanstack/react-router";
-import { Users } from "lucide-react";
+import { Users, Briefcase } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
@@ -73,6 +73,14 @@ function AuthLayout() {
           >
             <Users className="size-4" />
             <span className="hidden sm:inline">Members</span>
+          </Link>
+          <Link
+            to="/staff"
+            title="Staff directory"
+            className="group flex items-center gap-2 rounded-full px-3 py-1.5 bg-gradient-to-r from-blue-600 via-sky-600 to-cyan-600 text-white text-xs font-medium shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 transition-shadow"
+          >
+            <Briefcase className="size-4" />
+            <span className="hidden sm:inline">Staff</span>
           </Link>
           <Clocks />
           <UserAvatarMenu />
