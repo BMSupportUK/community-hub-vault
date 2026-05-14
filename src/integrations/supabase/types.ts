@@ -1022,6 +1022,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      submit_appeal: { Args: { p_reason: string }; Returns: Json }
     }
     Enums: {
       app_role:
