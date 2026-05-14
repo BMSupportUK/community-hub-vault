@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 import { NotificationBell } from "@/components/app/NotificationBell";
 import { MentionsBadge } from "@/components/app/MentionsBadge";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface RailItem {
@@ -20,6 +20,8 @@ export function IconRail() {
   const isAdmin = hasAny(["admin", "management"]);
   const path = useRouterState({ select: (r) => r.location.pathname });
   const [activeIncidents, setActiveIncidents] = useState(0);
+  const [order, setOrder] = useState<Record<string, number>>({});
+  const dragKey = useRef<string | null>(null);
   const navigate = useNavigate();
   const handleSignOut = async () => {
     await signOut();
@@ -44,6 +46,25 @@ export function IconRail() {
       supabase.removeChannel(ch);
     };
   }, [isPending]);
+
+  useEffect(() => {
+    const loadOrder = async () => {
+      const { data } = await supabase.from("nav_order").select("key,sort_order");
+      const map: Record<string, number> = {};
+      (data ?? []).forEach((r: { key: string; sort_order: number }) => {
+        map[r.key] = r.sort_order;
+      });
+      setOrder(map);
+    };
+    loadOrder();
+    const ch = supabase
+      .channel("rail-nav-order")
+      .on("postgres_changes", { event: "*", schema: "public", table: "nav_order" }, () => loadOrder())
+      .subscribe();
+    return () => {
+      supabase.removeChannel(ch);
+    };
+  }, []);
 
   if (isPending) {
     return (
@@ -73,14 +94,44 @@ export function IconRail() {
     { to: "/admin-roles", label: "User roles", icon: ShieldCheck, show: isAdmin },
   ];
 
+  const visible = items.filter((i) => i.show);
+  const sorted = [...visible].sort((a, b) => {
+    const ai = order[a.to] ?? items.findIndex((x) => x.to === a.to) * 10 + 1000;
+    const bi = order[b.to] ?? items.findIndex((x) => x.to === b.to) * 10 + 1000;
+    return ai - bi;
+  });
+
+  const reorder = async (targetKey: string) => {
+    const src = dragKey.current;
+    dragKey.current = null;
+    if (!src || src === targetKey) return;
+    const keys = sorted.map((i) => i.to);
+    const from = keys.indexOf(src);
+    const to = keys.indexOf(targetKey);
+    if (from < 0 || to < 0) return;
+    keys.splice(to, 0, keys.splice(from, 1)[0]);
+    const rows = keys.map((key, i) => ({ key, sort_order: (i + 1) * 10 }));
+    setOrder(Object.fromEntries(rows.map((r) => [r.key, r.sort_order])));
+    await supabase.from("nav_order").upsert(rows, { onConflict: "key" });
+  };
+
   return (
     <aside className="bg-rail w-[72px] shrink-0 flex flex-col items-center py-4 gap-1 border-r border-border">
       <Link to="/home" className="size-12 rounded-2xl bg-gradient-primary flex items-center justify-center font-display font-bold text-primary-foreground shadow-glow mb-2">
         H
       </Link>
       <div className="h-px w-8 bg-border my-1" />
-      {items.filter((i) => i.show).map((i) => (
-        <RailIcon key={i.to} to={i.to} label={i.label} Icon={i.icon} active={path.startsWith(i.to)} badge={i.badge} />
+      {sorted.map((i) => (
+        <div
+          key={i.to}
+          draggable={isAdmin}
+          onDragStart={() => { dragKey.current = i.to; }}
+          onDragOver={(e) => { if (isAdmin) e.preventDefault(); }}
+          onDrop={() => reorder(i.to)}
+          className={isAdmin ? "cursor-grab active:cursor-grabbing" : undefined}
+        >
+          <RailIcon to={i.to} label={i.label} Icon={i.icon} active={path.startsWith(i.to)} badge={i.badge} />
+        </div>
       ))}
       <div className="mt-auto" />
       <MentionsBadge />
