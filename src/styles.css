@@ -62,7 +62,7 @@
   --foreground: oklch(0.96 0.005 240);
   --surface: oklch(0.22 0.014 240);
   --surface-2: oklch(0.26 0.016 240);
-  --rail: oklch(0.14 0.012 240);
+  --rail: oklch(0.45 0.22 255);
 
   --card: oklch(0.22 0.014 240);
   --card-foreground: oklch(0.96 0.005 240);
@@ -91,7 +91,7 @@
   --ring: oklch(0.78 0.16 195);
 
   --gradient-primary: linear-gradient(135deg, var(--primary), var(--primary-glow));
-  --gradient-rail: linear-gradient(180deg, oklch(0.16 0.012 240), oklch(0.12 0.012 240));
+  --gradient-rail: linear-gradient(180deg, oklch(0.55 0.24 250), oklch(0.38 0.22 265));
   --shadow-glow: 0 0 0 1px color-mix(in oklab, var(--primary) 40%, transparent), 0 8px 28px -8px color-mix(in oklab, var(--primary) 35%, transparent);
   --shadow-soft: 0 8px 24px -8px oklch(0 0 0 / 0.5);
 }
