@@ -23,6 +23,7 @@ import { Route as AuthenticatedApprovedStaffRouteImport } from './routes/_authen
 import { Route as AuthenticatedApprovedSportsGuidesRouteImport } from './routes/_authenticated/_approved/sports-guides'
 import { Route as AuthenticatedApprovedShopRouteImport } from './routes/_authenticated/_approved/shop'
 import { Route as AuthenticatedApprovedShiftsRouteImport } from './routes/_authenticated/_approved/shifts'
+import { Route as AuthenticatedApprovedReviewsRouteImport } from './routes/_authenticated/_approved/reviews'
 import { Route as AuthenticatedApprovedProfileRouteImport } from './routes/_authenticated/_approved/profile'
 import { Route as AuthenticatedApprovedModerationRouteImport } from './routes/_authenticated/_approved/moderation'
 import { Route as AuthenticatedApprovedMembersRouteImport } from './routes/_authenticated/_approved/members'
@@ -30,6 +31,7 @@ import { Route as AuthenticatedApprovedInstallGuidesRouteImport } from './routes
 import { Route as AuthenticatedApprovedHomeRouteImport } from './routes/_authenticated/_approved/home'
 import { Route as AuthenticatedApprovedClockRouteImport } from './routes/_authenticated/_approved/clock'
 import { Route as AuthenticatedApprovedAdminRolesRouteImport } from './routes/_authenticated/_approved/admin-roles'
+import { Route as AuthenticatedApprovedAdminReviewsRouteImport } from './routes/_authenticated/_approved/admin-reviews'
 import { Route as AuthenticatedApprovedAdminPermissionsRouteImport } from './routes/_authenticated/_approved/admin-permissions'
 import { Route as AuthenticatedApprovedAdminDnsRouteImport } from './routes/_authenticated/_approved/admin-dns'
 import { Route as AuthenticatedApprovedAdminCredentialsRouteImport } from './routes/_authenticated/_approved/admin-credentials'
@@ -112,6 +114,12 @@ const AuthenticatedApprovedShiftsRoute =
     path: '/shifts',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
+const AuthenticatedApprovedReviewsRoute =
+  AuthenticatedApprovedReviewsRouteImport.update({
+    id: '/reviews',
+    path: '/reviews',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
 const AuthenticatedApprovedProfileRoute =
   AuthenticatedApprovedProfileRouteImport.update({
     id: '/profile',
@@ -152,6 +160,12 @@ const AuthenticatedApprovedAdminRolesRoute =
   AuthenticatedApprovedAdminRolesRouteImport.update({
     id: '/admin-roles',
     path: '/admin-roles',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
+const AuthenticatedApprovedAdminReviewsRoute =
+  AuthenticatedApprovedAdminReviewsRouteImport.update({
+    id: '/admin-reviews',
+    path: '/admin-reviews',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
 const AuthenticatedApprovedAdminPermissionsRoute =
@@ -208,6 +222,7 @@ export interface FileRoutesByFullPath {
   '/admin-credentials': typeof AuthenticatedApprovedAdminCredentialsRoute
   '/admin-dns': typeof AuthenticatedApprovedAdminDnsRoute
   '/admin-permissions': typeof AuthenticatedApprovedAdminPermissionsRoute
+  '/admin-reviews': typeof AuthenticatedApprovedAdminReviewsRoute
   '/admin-roles': typeof AuthenticatedApprovedAdminRolesRoute
   '/clock': typeof AuthenticatedApprovedClockRoute
   '/home': typeof AuthenticatedApprovedHomeRouteWithChildren
@@ -215,6 +230,7 @@ export interface FileRoutesByFullPath {
   '/members': typeof AuthenticatedApprovedMembersRoute
   '/moderation': typeof AuthenticatedApprovedModerationRoute
   '/profile': typeof AuthenticatedApprovedProfileRoute
+  '/reviews': typeof AuthenticatedApprovedReviewsRoute
   '/shifts': typeof AuthenticatedApprovedShiftsRoute
   '/shop': typeof AuthenticatedApprovedShopRoute
   '/sports-guides': typeof AuthenticatedApprovedSportsGuidesRoute
@@ -236,12 +252,14 @@ export interface FileRoutesByTo {
   '/admin-credentials': typeof AuthenticatedApprovedAdminCredentialsRoute
   '/admin-dns': typeof AuthenticatedApprovedAdminDnsRoute
   '/admin-permissions': typeof AuthenticatedApprovedAdminPermissionsRoute
+  '/admin-reviews': typeof AuthenticatedApprovedAdminReviewsRoute
   '/admin-roles': typeof AuthenticatedApprovedAdminRolesRoute
   '/clock': typeof AuthenticatedApprovedClockRoute
   '/install-guides': typeof AuthenticatedApprovedInstallGuidesRoute
   '/members': typeof AuthenticatedApprovedMembersRoute
   '/moderation': typeof AuthenticatedApprovedModerationRoute
   '/profile': typeof AuthenticatedApprovedProfileRoute
+  '/reviews': typeof AuthenticatedApprovedReviewsRoute
   '/shifts': typeof AuthenticatedApprovedShiftsRoute
   '/shop': typeof AuthenticatedApprovedShopRoute
   '/sports-guides': typeof AuthenticatedApprovedSportsGuidesRoute
@@ -266,6 +284,7 @@ export interface FileRoutesById {
   '/_authenticated/_approved/admin-credentials': typeof AuthenticatedApprovedAdminCredentialsRoute
   '/_authenticated/_approved/admin-dns': typeof AuthenticatedApprovedAdminDnsRoute
   '/_authenticated/_approved/admin-permissions': typeof AuthenticatedApprovedAdminPermissionsRoute
+  '/_authenticated/_approved/admin-reviews': typeof AuthenticatedApprovedAdminReviewsRoute
   '/_authenticated/_approved/admin-roles': typeof AuthenticatedApprovedAdminRolesRoute
   '/_authenticated/_approved/clock': typeof AuthenticatedApprovedClockRoute
   '/_authenticated/_approved/home': typeof AuthenticatedApprovedHomeRouteWithChildren
@@ -273,6 +292,7 @@ export interface FileRoutesById {
   '/_authenticated/_approved/members': typeof AuthenticatedApprovedMembersRoute
   '/_authenticated/_approved/moderation': typeof AuthenticatedApprovedModerationRoute
   '/_authenticated/_approved/profile': typeof AuthenticatedApprovedProfileRoute
+  '/_authenticated/_approved/reviews': typeof AuthenticatedApprovedReviewsRoute
   '/_authenticated/_approved/shifts': typeof AuthenticatedApprovedShiftsRoute
   '/_authenticated/_approved/shop': typeof AuthenticatedApprovedShopRoute
   '/_authenticated/_approved/sports-guides': typeof AuthenticatedApprovedSportsGuidesRoute
@@ -296,6 +316,7 @@ export interface FileRouteTypes {
     | '/admin-credentials'
     | '/admin-dns'
     | '/admin-permissions'
+    | '/admin-reviews'
     | '/admin-roles'
     | '/clock'
     | '/home'
@@ -303,6 +324,7 @@ export interface FileRouteTypes {
     | '/members'
     | '/moderation'
     | '/profile'
+    | '/reviews'
     | '/shifts'
     | '/shop'
     | '/sports-guides'
@@ -324,12 +346,14 @@ export interface FileRouteTypes {
     | '/admin-credentials'
     | '/admin-dns'
     | '/admin-permissions'
+    | '/admin-reviews'
     | '/admin-roles'
     | '/clock'
     | '/install-guides'
     | '/members'
     | '/moderation'
     | '/profile'
+    | '/reviews'
     | '/shifts'
     | '/shop'
     | '/sports-guides'
@@ -353,6 +377,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/admin-credentials'
     | '/_authenticated/_approved/admin-dns'
     | '/_authenticated/_approved/admin-permissions'
+    | '/_authenticated/_approved/admin-reviews'
     | '/_authenticated/_approved/admin-roles'
     | '/_authenticated/_approved/clock'
     | '/_authenticated/_approved/home'
@@ -360,6 +385,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/members'
     | '/_authenticated/_approved/moderation'
     | '/_authenticated/_approved/profile'
+    | '/_authenticated/_approved/reviews'
     | '/_authenticated/_approved/shifts'
     | '/_authenticated/_approved/shop'
     | '/_authenticated/_approved/sports-guides'
@@ -479,6 +505,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedApprovedShiftsRouteImport
       parentRoute: typeof AuthenticatedApprovedRoute
     }
+    '/_authenticated/_approved/reviews': {
+      id: '/_authenticated/_approved/reviews'
+      path: '/reviews'
+      fullPath: '/reviews'
+      preLoaderRoute: typeof AuthenticatedApprovedReviewsRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
     '/_authenticated/_approved/profile': {
       id: '/_authenticated/_approved/profile'
       path: '/profile'
@@ -526,6 +559,13 @@ declare module '@tanstack/react-router' {
       path: '/admin-roles'
       fullPath: '/admin-roles'
       preLoaderRoute: typeof AuthenticatedApprovedAdminRolesRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
+    '/_authenticated/_approved/admin-reviews': {
+      id: '/_authenticated/_approved/admin-reviews'
+      path: '/admin-reviews'
+      fullPath: '/admin-reviews'
+      preLoaderRoute: typeof AuthenticatedApprovedAdminReviewsRouteImport
       parentRoute: typeof AuthenticatedApprovedRoute
     }
     '/_authenticated/_approved/admin-permissions': {
@@ -602,6 +642,7 @@ interface AuthenticatedApprovedRouteChildren {
   AuthenticatedApprovedAdminCredentialsRoute: typeof AuthenticatedApprovedAdminCredentialsRoute
   AuthenticatedApprovedAdminDnsRoute: typeof AuthenticatedApprovedAdminDnsRoute
   AuthenticatedApprovedAdminPermissionsRoute: typeof AuthenticatedApprovedAdminPermissionsRoute
+  AuthenticatedApprovedAdminReviewsRoute: typeof AuthenticatedApprovedAdminReviewsRoute
   AuthenticatedApprovedAdminRolesRoute: typeof AuthenticatedApprovedAdminRolesRoute
   AuthenticatedApprovedClockRoute: typeof AuthenticatedApprovedClockRoute
   AuthenticatedApprovedHomeRoute: typeof AuthenticatedApprovedHomeRouteWithChildren
@@ -609,6 +650,7 @@ interface AuthenticatedApprovedRouteChildren {
   AuthenticatedApprovedMembersRoute: typeof AuthenticatedApprovedMembersRoute
   AuthenticatedApprovedModerationRoute: typeof AuthenticatedApprovedModerationRoute
   AuthenticatedApprovedProfileRoute: typeof AuthenticatedApprovedProfileRoute
+  AuthenticatedApprovedReviewsRoute: typeof AuthenticatedApprovedReviewsRoute
   AuthenticatedApprovedShiftsRoute: typeof AuthenticatedApprovedShiftsRoute
   AuthenticatedApprovedShopRoute: typeof AuthenticatedApprovedShopRoute
   AuthenticatedApprovedSportsGuidesRoute: typeof AuthenticatedApprovedSportsGuidesRoute
@@ -625,6 +667,8 @@ const AuthenticatedApprovedRouteChildren: AuthenticatedApprovedRouteChildren = {
   AuthenticatedApprovedAdminDnsRoute: AuthenticatedApprovedAdminDnsRoute,
   AuthenticatedApprovedAdminPermissionsRoute:
     AuthenticatedApprovedAdminPermissionsRoute,
+  AuthenticatedApprovedAdminReviewsRoute:
+    AuthenticatedApprovedAdminReviewsRoute,
   AuthenticatedApprovedAdminRolesRoute: AuthenticatedApprovedAdminRolesRoute,
   AuthenticatedApprovedClockRoute: AuthenticatedApprovedClockRoute,
   AuthenticatedApprovedHomeRoute: AuthenticatedApprovedHomeRouteWithChildren,
@@ -633,6 +677,7 @@ const AuthenticatedApprovedRouteChildren: AuthenticatedApprovedRouteChildren = {
   AuthenticatedApprovedMembersRoute: AuthenticatedApprovedMembersRoute,
   AuthenticatedApprovedModerationRoute: AuthenticatedApprovedModerationRoute,
   AuthenticatedApprovedProfileRoute: AuthenticatedApprovedProfileRoute,
+  AuthenticatedApprovedReviewsRoute: AuthenticatedApprovedReviewsRoute,
   AuthenticatedApprovedShiftsRoute: AuthenticatedApprovedShiftsRoute,
   AuthenticatedApprovedShopRoute: AuthenticatedApprovedShopRoute,
   AuthenticatedApprovedSportsGuidesRoute:
@@ -674,3 +719,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
