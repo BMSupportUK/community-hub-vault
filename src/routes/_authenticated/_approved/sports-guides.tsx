@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
-import { Plus, Search, X, Pencil, Trash2, ImageIcon } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Plus, Search, X, Pencil, Trash2, ImageIcon, GripVertical } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -26,6 +26,7 @@ type Blog = {
   badge: string | null;
   published: boolean;
   created_at: string;
+  sort_order: number;
 };
 
 function SportsGuidesPage() {
@@ -38,11 +39,15 @@ function SportsGuidesPage() {
   const [reading, setReading] = useState<Blog | null>(null);
   const [editing, setEditing] = useState<Blog | null>(null);
   const [showEditor, setShowEditor] = useState(false);
+  const [newCatName, setNewCatName] = useState("");
+  const [addingCat, setAddingCat] = useState(false);
+  const dragCatId = useRef<string | null>(null);
+  const dragBlogId = useRef<string | null>(null);
 
   const load = async () => {
     const [{ data: cats }, { data: bs }] = await Promise.all([
       supabase.from("sports_categories").select("*").order("sort_order"),
-      supabase.from("sports_blogs").select("*").order("created_at", { ascending: false }),
+      supabase.from("sports_blogs").select("*").order("sort_order").order("created_at", { ascending: false }),
     ]);
     setCategories((cats ?? []) as Category[]);
     setBlogs((bs ?? []) as Blog[]);
@@ -121,6 +126,61 @@ function SportsGuidesPage() {
     if (error) return toast.error(error.message);
     toast.success("Deleted");
     load();
+  };
+
+  const addCategory = async () => {
+    const name = newCatName.trim();
+    if (!name) return;
+    const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || `cat-${Date.now()}`;
+    const nextOrder = (categories[categories.length - 1]?.sort_order ?? 0) + 10;
+    const { error } = await supabase.from("sports_categories").insert({ name, slug, sort_order: nextOrder });
+    if (error) return toast.error(error.message);
+    setNewCatName("");
+    setAddingCat(false);
+    toast.success("Category added");
+    load();
+  };
+
+  const deleteCategory = async (id: string) => {
+    if ((counts[id] ?? 0) > 0) return toast.error("Move or delete blogs in this category first");
+    if (!confirm("Delete this category?")) return;
+    const { error } = await supabase.from("sports_categories").delete().eq("id", id);
+    if (error) return toast.error(error.message);
+    if (activeCat === id) setActiveCat(null);
+    toast.success("Category deleted");
+    load();
+  };
+
+  const reorderCategories = async (fromId: string, toId: string) => {
+    if (fromId === toId) return;
+    const list = [...categories];
+    const fromIdx = list.findIndex((c) => c.id === fromId);
+    const toIdx = list.findIndex((c) => c.id === toId);
+    if (fromIdx < 0 || toIdx < 0) return;
+    const [moved] = list.splice(fromIdx, 1);
+    list.splice(toIdx, 0, moved);
+    const updated = list.map((c, i) => ({ ...c, sort_order: (i + 1) * 10 }));
+    setCategories(updated);
+    await Promise.all(
+      updated.map((c) => supabase.from("sports_categories").update({ sort_order: c.sort_order }).eq("id", c.id))
+    );
+  };
+
+  const reorderBlogs = async (fromId: string, toId: string) => {
+    if (fromId === toId || !activeCat) return;
+    // Reorder only within the active category
+    const inCat = blogs.filter((b) => b.category_id === activeCat);
+    const others = blogs.filter((b) => b.category_id !== activeCat);
+    const fromIdx = inCat.findIndex((b) => b.id === fromId);
+    const toIdx = inCat.findIndex((b) => b.id === toId);
+    if (fromIdx < 0 || toIdx < 0) return;
+    const [moved] = inCat.splice(fromIdx, 1);
+    inCat.splice(toIdx, 0, moved);
+    const updated = inCat.map((b, i) => ({ ...b, sort_order: (i + 1) * 10 }));
+    setBlogs([...others, ...updated]);
+    await Promise.all(
+      updated.map((b) => supabase.from("sports_blogs").update({ sort_order: b.sort_order }).eq("id", b.id))
+    );
   };
 
   return (
