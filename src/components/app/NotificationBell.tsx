@@ -293,31 +293,6 @@ export function NotificationBell() {
                             </Button>
                           </>
                         )}
-                        {n.kind === "order_placed" && n.entity_id && canManageOrders && (
-                          <>
-                            <Button
-                              size="sm"
-                              className="h-7 text-xs"
-                              onClick={() => {
-                                updateOrderStatus(n.entity_id!, "processing");
-                                markRead(n.id);
-                              }}
-                            >
-                              Accept
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="h-7 text-xs"
-                              onClick={() => {
-                                updateOrderStatus(n.entity_id!, "cancelled");
-                                markRead(n.id);
-                              }}
-                            >
-                              Cancel
-                            </Button>
-                          </>
-                        )}
                       </div>
                     </div>
                   </div>
