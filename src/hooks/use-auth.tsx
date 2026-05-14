@@ -14,6 +14,7 @@ interface AuthCtx {
   isPending: boolean;
   isStaff: boolean;
   isMod: boolean;
+  isBanned: boolean;
   signOut: () => Promise<void>;
   refreshRoles: () => Promise<void>;
 }
@@ -53,6 +54,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const hasRole = (r: AppRole) => roles.includes(r);
   const hasAny = (rs: AppRole[]) => rs.some((r) => roles.includes(r));
   const isPending = roles.length === 0 || (roles.length === 1 && roles[0] === "pending");
+  const isBanned = roles.includes("banned");
   const isStaff = hasAny(["admin", "management", "staff", "moderator"]);
   const isMod = hasAny(["admin", "management", "moderator"]);
 
@@ -68,6 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isPending,
         isStaff,
         isMod,
+        isBanned,
         signOut: async () => {
           await supabase.auth.signOut();
         },
