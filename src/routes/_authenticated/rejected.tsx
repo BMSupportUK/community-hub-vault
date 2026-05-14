@@ -1,18 +1,57 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Ban, LogOut } from "lucide-react";
+import { Ban, LogOut, MessageSquarePlus, X } from "lucide-react";
+import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/rejected")({
   component: RejectedPage,
 });
 
 function RejectedPage() {
-  const { signOut } = useAuth();
+  const { user, signOut, refreshRoles } = useAuth();
   const navigate = useNavigate();
+  const [open, setOpen] = useState(false);
+  const [text, setText] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   const handleSignOut = async () => {
     await signOut();
     navigate({ to: "/login" });
+  };
+
+  const submitAppeal = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = text.trim();
+    if (trimmed.length < 10) return toast.error("Please provide at least 10 characters.");
+    if (!user) return;
+    setSubmitting(true);
+    const { data: created, error } = await supabase
+      .from("gate_applications")
+      .insert({ user_id: user.id, reason: `[APPEAL] ${trimmed}` })
+      .select("id, ticket_number")
+      .single();
+    if (error || !created) {
+      setSubmitting(false);
+      return toast.error(error?.message ?? "Could not submit appeal.");
+    }
+    const ref = `APPEAL-${String(created.ticket_number).padStart(6, "0")}`;
+    await supabase.from("gate_messages").insert({
+      application_id: created.id,
+      sender_id: user.id,
+      content: `Appeal Reference: ${ref}\n\n${trimmed}`,
+    });
+    // Move user out of banned, back to pending so they can chat on /gate
+    await supabase.from("user_roles").delete().eq("user_id", user.id).eq("role", "banned");
+    const { error: e2 } = await supabase.from("user_roles").insert({ user_id: user.id, role: "pending" });
+    if (e2 && !e2.message.includes("duplicate")) {
+      setSubmitting(false);
+      return toast.error(e2.message);
+    }
+    toast.success(`Appeal submitted — reference ${ref}`);
+    await refreshRoles();
+    navigate({ to: "/gate", search: { chat: 1 } as never });
   };
 
   return (
@@ -30,16 +69,86 @@ function RejectedPage() {
         </h1>
         <p className="mt-3 text-red-200/90 text-base max-w-md">
           Your membership request has been rejected. If you believe this is a mistake,
-          please contact an administrator.
+          you can open an appeal and a moderator will review it.
         </p>
 
-        <button
-          onClick={handleSignOut}
-          className="mt-8 inline-flex items-center gap-2 px-6 py-3 rounded-lg font-semibold text-white bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 shadow-[0_8px_30px_rgba(220,38,38,0.45)] transition-all"
-        >
-          <LogOut className="size-4" /> Sign out
-        </button>
+        <div className="mt-8 flex flex-col sm:flex-row items-center gap-3">
+          <button
+            onClick={() => setOpen(true)}
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-lg font-semibold text-white bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 shadow-[0_8px_30px_rgba(220,38,38,0.45)] transition-all"
+          >
+            <MessageSquarePlus className="size-4" /> Open an appeal
+          </button>
+          <button
+            onClick={handleSignOut}
+            className="inline-flex items-center gap-2 px-5 py-3 rounded-lg font-medium text-white/80 hover:text-white border border-white/15 hover:bg-white/5 transition-all"
+          >
+            <LogOut className="size-4" /> Sign out
+          </button>
+        </div>
       </div>
+
+      {open && (
+        <div className="fixed inset-0 z-50 grid place-items-center p-4 bg-black/70 backdrop-blur-sm">
+          <form
+            onSubmit={submitAppeal}
+            className="w-full max-w-lg rounded-2xl border border-red-500/30 bg-zinc-950/95 shadow-2xl overflow-hidden"
+          >
+            <header className="h-14 px-5 flex items-center justify-between border-b border-white/10">
+              <div className="flex items-center gap-2">
+                <div className="size-8 rounded-full bg-gradient-to-br from-red-500 to-red-700 grid place-items-center">
+                  <MessageSquarePlus className="size-4 text-white" />
+                </div>
+                <div className="font-display font-semibold text-white text-sm">Submit an appeal</div>
+              </div>
+              <button type="button" onClick={() => setOpen(false)} className="text-white/60 hover:text-white">
+                <X className="size-5" />
+              </button>
+            </header>
+            <div className="p-5 space-y-4">
+              <div className="rounded-lg bg-red-500/10 border border-red-500/20 p-3 text-xs text-red-100/90">
+                Your appeal will be tagged with reference <span className="font-mono font-semibold">APPEAL</span> and reviewed by a moderator.
+              </div>
+              <div>
+                <label className="block text-xs uppercase tracking-wider text-red-300/80 mb-2">
+                  Explain your appeal
+                </label>
+                <textarea
+                  value={text}
+                  onChange={(e) => setText(e.target.value.slice(0, 1000))}
+                  rows={6}
+                  required
+                  minLength={10}
+                  maxLength={1000}
+                  placeholder="Why should we reconsider your membership?"
+                  className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-sm text-white placeholder:text-white/40 outline-none focus:border-red-500/50 resize-none"
+                  autoFocus
+                />
+                <div className="flex justify-between mt-1.5 text-[11px]">
+                  <span className="text-white/40">Minimum 10 characters</span>
+                  <span className="text-white/40">{text.length}/1000</span>
+                </div>
+              </div>
+            </div>
+            <footer className="px-5 py-3 border-t border-white/10 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                className="text-sm px-3 py-2 rounded-lg text-white/70 hover:text-white"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={submitting || text.trim().length < 10}
+                className="text-sm px-4 py-2 rounded-lg font-semibold text-white bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 disabled:opacity-50 shadow-[0_4px_20px_rgba(220,38,38,0.4)]"
+              >
+                {submitting ? "Submitting…" : "Submit appeal"}
+              </button>
+            </footer>
+          </form>
+        </div>
+      )}
     </div>
   );
 }
