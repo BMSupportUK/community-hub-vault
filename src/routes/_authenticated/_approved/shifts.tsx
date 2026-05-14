@@ -122,6 +122,8 @@ function ShiftsPage() {
   // Swap dialog
   const [swapFor, setSwapFor] = useState<Slot | null>(null);
   const [swapMsg, setSwapMsg] = useState("");
+  const [swapTarget, setSwapTarget] = useState<string>("");
+  const [swapCandidates, setSwapCandidates] = useState<Profile[]>([]);
 
   const days = useMemo(() => Array.from({ length: 7 }, (_, i) => {
     const d = new Date(weekStart); d.setDate(d.getDate() + i); return d;
@@ -289,21 +291,41 @@ function ShiftsPage() {
     load();
   };
 
+  const openSwap = async (s: Slot) => {
+    if (!user) return;
+    setSwapFor(s); setSwapMsg(""); setSwapTarget("");
+    setSwapCandidates([]);
+    // Find roles of the requester (only staff-style ones), then peers with at least one matching role.
+    const { data: myRoles } = await supabase.from("user_roles").select("role").eq("user_id", user.id);
+    const staffish = ["admin", "management", "staff", "moderator"];
+    const mine = (myRoles ?? []).map((r: any) => r.role).filter((r: string) => staffish.includes(r));
+    if (mine.length === 0) return;
+    const { data: peers } = await supabase.from("user_roles").select("user_id, role").in("role", mine);
+    const peerIds = Array.from(new Set((peers ?? []).map((r: any) => r.user_id).filter((id: string) => id !== user.id)));
+    if (peerIds.length === 0) return;
+    const { data: profs } = await supabase.from("profiles").select("id, username, display_name").in("id", peerIds);
+    setSwapCandidates((profs ?? []) as Profile[]);
+  };
+
   const submitSwap = async () => {
     if (!user || !swapFor) return;
+    if (!swapTarget) return toast.error("Pick someone with the same role to swap with");
     const { error } = await supabase.from("shift_swap_requests").insert({
-      slot_id: swapFor.id, requester_id: user.id, message: swapMsg || null,
+      slot_id: swapFor.id, requester_id: user.id, target_user_id: swapTarget, message: swapMsg || null,
     });
     if (error) return toast.error(error.message);
     toast.success("Swap request submitted");
-    setSwapFor(null); setSwapMsg("");
+    setSwapFor(null); setSwapMsg(""); setSwapTarget("");
     load();
   };
 
   const reviewSwap = async (s: Swap, status: ReqStatus) => {
     if (status === "approved") {
-      // For now, approval just unassigns the slot so anyone can re-claim; a target swap is logged in message.
-      await supabase.from("shift_slots").update({ assigned_to: null }).eq("id", s.slot_id);
+      if (s.target_user_id) {
+        await supabase.from("shift_slots").update({ assigned_to: s.target_user_id }).eq("id", s.slot_id);
+      } else {
+        await supabase.from("shift_slots").update({ assigned_to: null }).eq("id", s.slot_id);
+      }
     }
     const { error } = await supabase.from("shift_swap_requests").update({ status, reviewed_by: user?.id ?? null, reviewed_at: new Date().toISOString() }).eq("id", s.id);
     if (error) return toast.error(error.message);
@@ -412,7 +434,7 @@ function ShiftsPage() {
                                 )}
                                 {mine && (
                                   <>
-                                    <button onClick={() => { setSwapFor(s); setSwapMsg(""); }} className="px-2 py-0.5 rounded bg-violet-500/30 text-violet-100 hover:bg-violet-500/50">Swap</button>
+                                    <button onClick={() => openSwap(s)} className="px-2 py-0.5 rounded bg-violet-500/30 text-violet-100 hover:bg-violet-500/50">Swap</button>
                                     <button onClick={() => release(s)} className="px-2 py-0.5 rounded bg-rose-500/30 text-rose-100 hover:bg-rose-500/50">Release</button>
                                   </>
                                 )}
@@ -444,7 +466,7 @@ function ShiftsPage() {
                     <div className="text-xs text-sky-200/70 mt-1 uppercase">{s.slot_type}</div>
                     {s.notes && <div className="text-sm text-sky-200/80 mt-2">{s.notes}</div>}
                     <div className="mt-3 flex gap-2">
-                      <Button size="sm" variant="outline" className="bg-violet-500/20 border-violet-400/40 text-violet-100 hover:bg-violet-500/30" onClick={() => { setSwapFor(s); setSwapMsg(""); }}><Repeat className="size-3.5 mr-1" /> Request swap</Button>
+                      <Button size="sm" variant="outline" className="bg-violet-500/20 border-violet-400/40 text-violet-100 hover:bg-violet-500/30" onClick={() => openSwap(s)}><Repeat className="size-3.5 mr-1" /> Request swap</Button>
                       <Button size="sm" variant="outline" className="bg-rose-500/20 border-rose-400/40 text-rose-100 hover:bg-rose-500/30" onClick={() => release(s)}>Release</Button>
                     </div>
                   </div>
@@ -662,6 +684,17 @@ function ShiftsPage() {
           {swapFor && (
             <div className="space-y-3">
               <div className="text-sm text-muted-foreground">{swapFor.shift_date} · {swapFor.start_time.slice(0,5)}–{swapFor.end_time.slice(0,5)}</div>
+              <div>
+                <Label>Swap with (same role only)</Label>
+                <Select value={swapTarget} onValueChange={setSwapTarget}>
+                  <SelectTrigger><SelectValue placeholder={swapCandidates.length ? "Pick a teammate" : "No eligible teammates"} /></SelectTrigger>
+                  <SelectContent>
+                    {swapCandidates.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>{p.display_name || p.username || "User"}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <div>
                 <Label>Message to admin</Label>
                 <Textarea value={swapMsg} onChange={(e) => setSwapMsg(e.target.value)} placeholder="Why do you need to swap?" />
