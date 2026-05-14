@@ -268,31 +268,6 @@ export function NotificationBell() {
                             Open
                           </Button>
                         )}
-                        {n.kind === "gate_application" && n.entity_id && isMod && (
-                          <>
-                            <Button
-                              size="sm"
-                              className="h-7 text-xs"
-                              onClick={() => {
-                                approveApplication(n.entity_id!, true);
-                                markRead(n.id);
-                              }}
-                            >
-                              <ShieldCheck className="size-3.5 mr-1" /> Approve
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              className="h-7 text-xs"
-                              onClick={() => {
-                                approveApplication(n.entity_id!, false);
-                                markRead(n.id);
-                              }}
-                            >
-                              Deny
-                            </Button>
-                          </>
-                        )}
                       </div>
                     </div>
                   </div>
