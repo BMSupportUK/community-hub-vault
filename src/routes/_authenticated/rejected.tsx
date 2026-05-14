@@ -27,28 +27,12 @@ function RejectedPage() {
     if (trimmed.length < 10) return toast.error("Please provide at least 10 characters.");
     if (!user) return;
     setSubmitting(true);
-    const { data: created, error } = await supabase
-      .from("gate_applications")
-      .insert({ user_id: user.id, reason: `[APPEAL] ${trimmed}` })
-      .select("id, ticket_number")
-      .single();
-    if (error || !created) {
+    const { data, error } = await supabase.rpc("submit_appeal", { p_reason: trimmed });
+    if (error) {
       setSubmitting(false);
-      return toast.error(error?.message ?? "Could not submit appeal.");
+      return toast.error(error.message);
     }
-    const ref = `APPEAL-${String(created.ticket_number).padStart(6, "0")}`;
-    await supabase.from("gate_messages").insert({
-      application_id: created.id,
-      sender_id: user.id,
-      content: `Appeal Reference: ${ref}\n\n${trimmed}`,
-    });
-    // Move user out of banned, back to pending so they can chat on /gate
-    await supabase.from("user_roles").delete().eq("user_id", user.id).eq("role", "banned");
-    const { error: e2 } = await supabase.from("user_roles").insert({ user_id: user.id, role: "pending" });
-    if (e2 && !e2.message.includes("duplicate")) {
-      setSubmitting(false);
-      return toast.error(e2.message);
-    }
+    const ref = (data as { reference?: string } | null)?.reference ?? "APPEAL";
     toast.success(`Appeal submitted — reference ${ref}`);
     await refreshRoles();
     navigate({ to: "/gate", search: { chat: 1 } as never });
