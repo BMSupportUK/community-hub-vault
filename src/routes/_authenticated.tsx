@@ -20,7 +20,7 @@ export const Route = createFileRoute("/_authenticated")({
 });
 
 function AuthLayout() {
-  const { loading, isPending } = useAuth();
+  const { loading, isPending, isBanned } = useAuth();
   const path = useRouterState({ select: (r) => r.location.pathname });
   const logIp = useServerFn(logMyIp);
   const loggedRef = useRef(false);
@@ -36,6 +36,23 @@ function AuthLayout() {
   if (loading) {
     return (
       <div className="min-h-screen grid place-items-center text-muted-foreground">Loading…</div>
+    );
+  }
+
+  // Rejected/banned users are locked to /rejected
+  if (isBanned && !path.startsWith("/rejected")) {
+    return (
+      <div className="min-h-screen flex">
+        <IconRail />
+        <div className="flex-1 grid place-items-center text-center px-8">
+          <div className="max-w-md">
+            <div className="size-12 rounded-2xl bg-surface-2 grid place-items-center mx-auto mb-4">🚫</div>
+            <h1 className="font-display text-2xl font-bold">Membership rejected</h1>
+            <p className="text-muted-foreground mt-2">Your membership has been rejected.</p>
+            <Link to="/rejected" className="mt-6 inline-flex px-5 py-2.5 rounded-lg bg-primary text-primary-foreground font-medium">View details</Link>
+          </div>
+        </div>
+      </div>
     );
   }
 

@@ -14,6 +14,7 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedRejectedRouteImport } from './routes/_authenticated/rejected'
 import { Route as AuthenticatedGateRouteImport } from './routes/_authenticated/gate'
 import { Route as AuthenticatedApprovedRouteImport } from './routes/_authenticated/_approved'
 import { Route as AuthenticatedApprovedTicketsRouteImport } from './routes/_authenticated/_approved/tickets'
@@ -58,6 +59,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedRejectedRoute = AuthenticatedRejectedRouteImport.update({
+  id: '/rejected',
+  path: '/rejected',
+  getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedGateRoute = AuthenticatedGateRouteImport.update({
   id: '/gate',
@@ -183,6 +189,7 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/gate': typeof AuthenticatedGateRoute
+  '/rejected': typeof AuthenticatedRejectedRoute
   '/admin': typeof AuthenticatedApprovedAdminRoute
   '/admin-credentials': typeof AuthenticatedApprovedAdminCredentialsRoute
   '/admin-dns': typeof AuthenticatedApprovedAdminDnsRoute
@@ -208,6 +215,7 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/gate': typeof AuthenticatedGateRoute
+  '/rejected': typeof AuthenticatedRejectedRoute
   '/admin': typeof AuthenticatedApprovedAdminRoute
   '/admin-credentials': typeof AuthenticatedApprovedAdminCredentialsRoute
   '/admin-dns': typeof AuthenticatedApprovedAdminDnsRoute
@@ -235,6 +243,7 @@ export interface FileRoutesById {
   '/signup': typeof SignupRoute
   '/_authenticated/_approved': typeof AuthenticatedApprovedRouteWithChildren
   '/_authenticated/gate': typeof AuthenticatedGateRoute
+  '/_authenticated/rejected': typeof AuthenticatedRejectedRoute
   '/_authenticated/_approved/admin': typeof AuthenticatedApprovedAdminRoute
   '/_authenticated/_approved/admin-credentials': typeof AuthenticatedApprovedAdminCredentialsRoute
   '/_authenticated/_approved/admin-dns': typeof AuthenticatedApprovedAdminDnsRoute
@@ -262,6 +271,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/signup'
     | '/gate'
+    | '/rejected'
     | '/admin'
     | '/admin-credentials'
     | '/admin-dns'
@@ -287,6 +297,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/signup'
     | '/gate'
+    | '/rejected'
     | '/admin'
     | '/admin-credentials'
     | '/admin-dns'
@@ -313,6 +324,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/_authenticated/_approved'
     | '/_authenticated/gate'
+    | '/_authenticated/rejected'
     | '/_authenticated/_approved/admin'
     | '/_authenticated/_approved/admin-credentials'
     | '/_authenticated/_approved/admin-dns'
@@ -377,6 +389,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/rejected': {
+      id: '/_authenticated/rejected'
+      path: '/rejected'
+      fullPath: '/rejected'
+      preLoaderRoute: typeof AuthenticatedRejectedRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/gate': {
       id: '/_authenticated/gate'
@@ -587,11 +606,13 @@ const AuthenticatedApprovedRouteWithChildren =
 interface AuthenticatedRouteChildren {
   AuthenticatedApprovedRoute: typeof AuthenticatedApprovedRouteWithChildren
   AuthenticatedGateRoute: typeof AuthenticatedGateRoute
+  AuthenticatedRejectedRoute: typeof AuthenticatedRejectedRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedApprovedRoute: AuthenticatedApprovedRouteWithChildren,
   AuthenticatedGateRoute: AuthenticatedGateRoute,
+  AuthenticatedRejectedRoute: AuthenticatedRejectedRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
