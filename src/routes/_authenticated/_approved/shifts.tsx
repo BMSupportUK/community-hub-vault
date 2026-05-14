@@ -647,6 +647,7 @@ function ShiftsPage() {
               </div>
 
               <div className="rounded-2xl bg-blue-950/50 border border-sky-500/30 overflow-hidden">
+              <div className="rounded-2xl bg-blue-950/50 border border-sky-500/30 overflow-hidden">
                 <div className="px-5 py-3 border-b border-sky-500/30 text-sky-100 font-semibold">All slots this week</div>
                 {slots.length === 0 ? (
                   <div className="px-5 py-6 text-sm text-sky-200/60">No slots configured for this week.</div>
