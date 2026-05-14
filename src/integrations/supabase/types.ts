@@ -188,6 +188,45 @@ export type Database = {
           },
         ]
       }
+      customer_reviews: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          rating: number
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: Database["public"]["Enums"]["review_status"]
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          rating: number
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["review_status"]
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          rating?: number
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["review_status"]
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       discount_codes: {
         Row: {
           amount_cents: number | null
@@ -1353,6 +1392,7 @@ export type Database = {
         | "completed"
         | "cancelled"
       request_status: "pending" | "approved" | "denied"
+      review_status: "pending" | "approved" | "rejected"
       slot_type: "shift" | "hourly"
       ticket_priority: "low" | "normal" | "high" | "urgent"
       ticket_status: "open" | "in_progress" | "waiting" | "resolved" | "closed"
@@ -1509,6 +1549,7 @@ export const Constants = {
         "cancelled",
       ],
       request_status: ["pending", "approved", "denied"],
+      review_status: ["pending", "approved", "rejected"],
       slot_type: ["shift", "hourly"],
       ticket_priority: ["low", "normal", "high", "urgent"],
       ticket_status: ["open", "in_progress", "waiting", "resolved", "closed"],
