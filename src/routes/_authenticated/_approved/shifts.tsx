@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Calendar, Plus, Trash2, Check, X, Clock, Users, Plane, Repeat, ShieldCheck, Loader2 } from "lucide-react";
+import { Calendar, Plus, Trash2, Check, X, Clock, Users, Plane, Repeat, ShieldCheck, Loader2, Zap } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -51,6 +51,25 @@ interface Profile { id: string; username: string | null; display_name: string | 
 
 const DAY_TARGET = 3;
 
+type BlockPreset = { id: string; label: string; start: string; end: string; days: number[] /* 0=Sun..6=Sat */ };
+const DEFAULT_PRESETS: BlockPreset[] = [
+  { id: "midweek", label: "Midweek 09:00–19:00", start: "09:00", end: "19:00", days: [1, 2, 3, 4, 5] },
+  { id: "weekend", label: "Weekend 10:00–18:00", start: "10:00", end: "18:00", days: [0, 6] },
+];
+const PRESETS_KEY = "shift_block_presets_v1";
+
+function loadPresets(): BlockPreset[] {
+  if (typeof window === "undefined") return DEFAULT_PRESETS;
+  try {
+    const raw = localStorage.getItem(PRESETS_KEY);
+    if (!raw) return DEFAULT_PRESETS;
+    const arr = JSON.parse(raw);
+    if (!Array.isArray(arr) || arr.length === 0) return DEFAULT_PRESETS;
+    return arr as BlockPreset[];
+  } catch { return DEFAULT_PRESETS; }
+}
+function savePresets(p: BlockPreset[]) { try { localStorage.setItem(PRESETS_KEY, JSON.stringify(p)); } catch {} }
+
 function startOfWeek(d: Date) {
   const x = new Date(d);
   const day = x.getDay(); // 0=Sun
@@ -61,6 +80,11 @@ function startOfWeek(d: Date) {
 }
 function fmtDate(d: Date) { return d.toISOString().slice(0, 10); }
 function dayLabel(d: Date) { return d.toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" }); }
+function isDayPastOrStarted(d: Date) {
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const x = new Date(d); x.setHours(0, 0, 0, 0);
+  return x.getTime() <= today.getTime();
+}
 
 function ShiftsPage() {
   const { user, hasAny, hasRole } = useAuth();
@@ -79,6 +103,10 @@ function ShiftsPage() {
 
   // Manage rota state
   const [newSlot, setNewSlot] = useState({ date: fmtDate(new Date()), start: "09:00", end: "17:00", type: "shift" as SlotType, notes: "" });
+
+  // Block-shift presets (admin)
+  const [presets, setPresets] = useState<BlockPreset[]>(() => loadPresets());
+  const [presetForm, setPresetForm] = useState({ label: "", start: "09:00", end: "17:00", days: [1,2,3,4,5] as number[] });
 
   // Holiday request state
   const [holForm, setHolForm] = useState({ start: "", end: "", reason: "" });
@@ -175,9 +203,51 @@ function ShiftsPage() {
       created_by: user?.id ?? null,
     });
     if (error) return toast.error(error.message);
-    toast.success("Slot added");
+    toast.success("Shift added successfully");
     setNewSlot({ ...newSlot, notes: "" });
     load();
+  };
+
+  const addBlockShift = async (preset: BlockPreset, date: string) => {
+    if (!date) return toast.error("Pick a date");
+    const { error } = await supabase.from("shift_slots").insert({
+      shift_date: date, start_time: preset.start, end_time: preset.end,
+      slot_type: "shift", notes: preset.label, created_by: user?.id ?? null,
+    });
+    if (error) return toast.error(error.message);
+    toast.success(`Shift added successfully — ${preset.label}`);
+    load();
+  };
+
+  const fillWeekFromPresets = async () => {
+    const rows = days
+      .map((d) => {
+        const dow = d.getDay();
+        const p = presets.find((pp) => pp.days.includes(dow));
+        if (!p) return null;
+        return {
+          shift_date: fmtDate(d), start_time: p.start, end_time: p.end,
+          slot_type: "shift" as SlotType, notes: p.label, created_by: user?.id ?? null,
+        };
+      })
+      .filter(Boolean) as any[];
+    if (rows.length === 0) return toast.error("No presets match this week");
+    const { error } = await supabase.from("shift_slots").insert(rows);
+    if (error) return toast.error(error.message);
+    toast.success(`Shift added successfully — ${rows.length} block shifts created for the week`);
+    load();
+  };
+
+  const savePreset = () => {
+    const label = presetForm.label.trim() || `${presetForm.start}–${presetForm.end}`;
+    const next = [...presets, { id: crypto.randomUUID(), label, start: presetForm.start, end: presetForm.end, days: [...presetForm.days] }];
+    setPresets(next); savePresets(next);
+    setPresetForm({ label: "", start: "09:00", end: "17:00", days: [1,2,3,4,5] });
+    toast.success("Preset saved");
+  };
+  const removePreset = (id: string) => {
+    const next = presets.filter((p) => p.id !== id);
+    setPresets(next); savePresets(next);
   };
 
   const submitHoliday = async () => {
@@ -286,11 +356,20 @@ function ShiftsPage() {
                 const daySlots = slotsByDay[dateStr] ?? [];
                 const filled = filledShiftsForDay(dateStr);
                 const ok = filled >= DAY_TARGET;
+                const past = isDayPastOrStarted(d);
                 return (
-                  <div key={dateStr} className="rounded-2xl bg-blue-950/50 border border-sky-500/30 p-3 backdrop-blur min-h-[180px] flex flex-col">
+                  <div key={dateStr} className={cn("relative rounded-2xl bg-blue-950/50 border border-sky-500/30 p-3 backdrop-blur min-h-[180px] flex flex-col", past && "opacity-80")}>
+                    {past && (
+                      <div className="pointer-events-none absolute inset-0 z-10" aria-hidden>
+                        <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="w-full h-full">
+                          <line x1="2" y1="2" x2="98" y2="98" stroke="rgb(244 63 94 / 0.85)" strokeWidth="2" strokeLinecap="round" />
+                          <line x1="98" y1="2" x2="2" y2="98" stroke="rgb(244 63 94 / 0.85)" strokeWidth="2" strokeLinecap="round" />
+                        </svg>
+                      </div>
+                    )}
                     <div className="flex items-center justify-between mb-2">
                       <div className="text-sm font-semibold text-sky-100">{dayLabel(d)}</div>
-                      <span className={cn("text-[11px] px-2 py-0.5 rounded-full font-semibold", ok ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40" : "bg-rose-500/20 text-rose-300 border border-rose-500/40")}>{filled}/{DAY_TARGET}</span>
+                      <span className={cn("text-[11px] px-2 py-0.5 rounded-full font-semibold", past ? "bg-rose-500/20 text-rose-200 border border-rose-500/40" : ok ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40" : "bg-rose-500/20 text-rose-300 border border-rose-500/40")}>{past ? "Closed" : `${filled}/${DAY_TARGET}`}</span>
                     </div>
                     <div className="space-y-2 flex-1">
                       {daySlots.length === 0 && <div className="text-xs text-sky-300/50 italic">No slots</div>}
@@ -307,7 +386,7 @@ function ShiftsPage() {
                             <div className="mt-1.5 flex items-center justify-between gap-1">
                               <div className="text-sky-200/80 truncate">{taken ? profName(s.assigned_to) : "Open"}</div>
                               <div className="flex items-center gap-1">
-                                {!taken && canPick && (
+                                {!taken && canPick && !past && (
                                   ((s.slot_type === "hourly" && (isMod || isAdmin)) || (s.slot_type === "shift" && isStaffOrAdmin)) && (
                                     <button onClick={() => claim(s)} className="px-2 py-0.5 rounded bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-semibold">Claim</button>
                                   )
@@ -488,6 +567,57 @@ function ShiftsPage() {
                   </div>
                 </div>
                 <Button className="mt-4 bg-gradient-to-r from-blue-600 via-sky-500 to-cyan-500 text-white" onClick={addSlot}><Plus className="size-4 mr-1" /> Add slot</Button>
+              </div>
+
+              <div className="rounded-2xl bg-blue-950/50 border border-sky-500/30 p-5">
+                <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+                  <h3 className="font-display text-lg font-semibold text-sky-100 flex items-center gap-2"><Zap className="size-4 text-cyan-300" /> Block shifts (admin / management / staff)</h3>
+                  <Button size="sm" className="bg-gradient-to-r from-blue-600 via-sky-500 to-cyan-500 text-white" onClick={fillWeekFromPresets}>Fill this week from presets</Button>
+                </div>
+                <p className="text-xs text-sky-200/70 mb-3">Quick-add a full-day block shift. Pick a date, then click a preset.</p>
+                <div className="flex items-center gap-2 mb-4 flex-wrap">
+                  <Label className="text-sky-200/80">Date</Label>
+                  <Input type="date" value={newSlot.date} onChange={(e) => setNewSlot({ ...newSlot, date: e.target.value })} className="bg-blue-950/60 border-sky-500/30 text-sky-50 w-44" />
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {presets.map((p) => (
+                    <div key={p.id} className="flex items-center gap-1 rounded-lg bg-blue-900/50 border border-sky-500/30 pl-1">
+                      <button onClick={() => addBlockShift(p, newSlot.date)} className="px-3 py-1.5 text-xs font-semibold text-sky-100 hover:text-cyan-200">{p.label}</button>
+                      {!DEFAULT_PRESETS.find((d) => d.id === p.id) && (
+                        <button onClick={() => removePreset(p.id)} className="px-2 py-1.5 text-rose-300/70 hover:text-rose-300" title="Remove preset"><Trash2 className="size-3" /></button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-5 pt-4 border-t border-sky-500/20">
+                  <div className="text-sm font-semibold text-sky-100 mb-2">Add a custom preset</div>
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                    <div>
+                      <Label className="text-sky-200/80">Label</Label>
+                      <Input value={presetForm.label} onChange={(e) => setPresetForm({ ...presetForm, label: e.target.value })} placeholder="e.g. Friday late" className="bg-blue-950/60 border-sky-500/30 text-sky-50" />
+                    </div>
+                    <div>
+                      <Label className="text-sky-200/80">Start</Label>
+                      <Input type="time" value={presetForm.start} onChange={(e) => setPresetForm({ ...presetForm, start: e.target.value })} className="bg-blue-950/60 border-sky-500/30 text-sky-50" />
+                    </div>
+                    <div>
+                      <Label className="text-sky-200/80">End</Label>
+                      <Input type="time" value={presetForm.end} onChange={(e) => setPresetForm({ ...presetForm, end: e.target.value })} className="bg-blue-950/60 border-sky-500/30 text-sky-50" />
+                    </div>
+                    <div>
+                      <Label className="text-sky-200/80 block mb-1">Days</Label>
+                      <div className="flex gap-1">
+                        {["S","M","T","W","T","F","S"].map((lbl, idx) => {
+                          const on = presetForm.days.includes(idx);
+                          return (
+                            <button key={idx} type="button" onClick={() => setPresetForm({ ...presetForm, days: on ? presetForm.days.filter((d) => d !== idx) : [...presetForm.days, idx] })} className={cn("size-8 rounded-md text-xs font-bold border", on ? "bg-cyan-500/30 border-cyan-400/60 text-cyan-100" : "bg-blue-950/60 border-sky-500/30 text-sky-300")}>{lbl}</button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                  <Button className="mt-3 bg-gradient-to-r from-blue-600 via-sky-500 to-cyan-500 text-white" onClick={savePreset}><Plus className="size-4 mr-1" /> Save preset</Button>
+                </div>
               </div>
 
               <div className="rounded-2xl bg-blue-950/50 border border-sky-500/30 overflow-hidden">
