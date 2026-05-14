@@ -102,7 +102,7 @@ function ShiftsPage() {
   const [loading, setLoading] = useState(true);
 
   // Manage rota state
-  const [newSlot, setNewSlot] = useState({ date: fmtDate(new Date()), start: "09:00", end: "17:00", type: "shift" as SlotType, notes: "" });
+  const [newSlot, setNewSlot] = useState({ date: fmtDate(new Date()), start: "09:00", end: "17:00", type: "shift" as SlotType, notes: "", presetId: "midweek" });
 
   // Block-shift presets (admin)
   const [presets, setPresets] = useState<BlockPreset[]>(() => loadPresets());
@@ -193,13 +193,22 @@ function ShiftsPage() {
   };
 
   const addSlot = async () => {
-    if (!newSlot.date || !newSlot.start || !newSlot.end) return toast.error("Date, start and end required");
+    if (!newSlot.date) return toast.error("Date required");
+    let start = newSlot.start, end = newSlot.end, notes = newSlot.notes;
+    if (newSlot.type === "shift") {
+      const p = presets.find((pp) => pp.id === newSlot.presetId);
+      if (!p) return toast.error("Pick a block preset");
+      start = p.start; end = p.end;
+      notes = notes || p.label;
+    } else if (!start || !end) {
+      return toast.error("Start and end required");
+    }
     const { error } = await supabase.from("shift_slots").insert({
       shift_date: newSlot.date,
-      start_time: newSlot.start,
-      end_time: newSlot.end,
+      start_time: start,
+      end_time: end,
       slot_type: newSlot.type,
-      notes: newSlot.notes || null,
+      notes: notes || null,
       created_by: user?.id ?? null,
     });
     if (error) return toast.error(error.message);
