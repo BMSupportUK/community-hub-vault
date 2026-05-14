@@ -203,7 +203,7 @@ function ShiftsPage() {
       created_by: user?.id ?? null,
     });
     if (error) return toast.error(error.message);
-    toast.success("Slot added");
+    toast.success("Shift added successfully");
     setNewSlot({ ...newSlot, notes: "" });
     load();
   };
