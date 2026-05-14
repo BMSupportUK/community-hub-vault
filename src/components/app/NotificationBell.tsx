@@ -87,7 +87,17 @@ export function NotificationBell() {
             read_at: r.read_at, source: "user",
           };
           setItems((prev) => [n, ...prev].slice(0, 80));
-          toast(n.title, { description: n.body ?? undefined });
+          if (n.kind === "mention") {
+            toast(`📣 ${n.title}`, {
+              description: n.body ?? undefined,
+              duration: 6000,
+              action: n.link_path
+                ? { label: "Open", onClick: () => navigate({ to: n.link_path! } as never) }
+                : undefined,
+            });
+          } else {
+            toast(n.title, { description: n.body ?? undefined });
+          }
         },
       )
       .subscribe();
