@@ -811,3 +811,141 @@ function AdminProducts() {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return <div><div className="text-[11px] uppercase tracking-wider text-muted-foreground mb-1">{label}</div>{children}</div>;
 }
+
+// ============ ADMIN: DISCOUNT CODES ============
+function AdminDiscounts() {
+  const [codes, setCodes] = useState<DiscountCode[]>([]);
+  const [users, setUsers] = useState<{ id: string; username: string | null; display_name: string | null }[]>([]);
+  const [editing, setEditing] = useState<Partial<DiscountCode> | null>(null);
+
+  const load = async () => {
+    const { data } = await supabase.from("discount_codes").select("*").order("created_at", { ascending: false });
+    setCodes((data ?? []) as DiscountCode[]);
+  };
+  useEffect(() => {
+    load();
+    supabase.from("profiles").select("id,username,display_name").order("username").then(({ data }) => setUsers(data ?? []));
+  }, []);
+
+  const save = async () => {
+    if (!editing?.code) { toast.error("Code required"); return; }
+    const payload = {
+      code: editing.code.trim().toUpperCase(),
+      description: editing.description ?? null,
+      percent: editing.percent ?? null,
+      amount_cents: editing.amount_cents ?? null,
+      user_id: editing.user_id ?? null,
+      is_active: editing.is_active ?? true,
+    };
+    const { error } = editing.id
+      ? await supabase.from("discount_codes").update(payload).eq("id", editing.id)
+      : await supabase.from("discount_codes").insert(payload);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Saved"); setEditing(null); load();
+  };
+  const remove = async (id: string) => {
+    if (!confirm("Delete this code?")) return;
+    const { error } = await supabase.from("discount_codes").delete().eq("id", id);
+    if (error) toast.error(error.message); else load();
+  };
+
+  return (
+    <main className="flex-1 flex flex-col overflow-hidden">
+      <header className="h-14 px-6 border-b border-border flex items-center justify-between shrink-0">
+        <h1 className="font-display font-bold text-lg">Discount Codes</h1>
+        <button onClick={() => setEditing({ is_active: true })}
+          className="px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium flex items-center gap-1">
+          <Plus className="size-4" /> New Code
+        </button>
+      </header>
+      <div className="flex-1 overflow-y-auto p-6">
+        <div className="bg-surface rounded-xl border border-border overflow-hidden">
+          <table className="w-full text-sm">
+            <thead className="bg-surface-2 text-muted-foreground text-xs">
+              <tr>
+                <th className="text-left p-3">Code</th>
+                <th className="text-left p-3">Discount</th>
+                <th className="text-left p-3">Scope</th>
+                <th className="text-left p-3">Description</th>
+                <th className="text-center p-3">Active</th>
+                <th className="p-3"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {codes.length === 0 && <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">No discount codes yet.</td></tr>}
+              {codes.map((c) => {
+                const u = c.user_id ? users.find((x) => x.id === c.user_id) : null;
+                return (
+                  <tr key={c.id} className="border-t border-border">
+                    <td className="p-3 font-mono font-semibold">{c.code}</td>
+                    <td className="p-3">{c.percent ? `${c.percent}%` : c.amount_cents ? fmt(c.amount_cents) : "—"}</td>
+                    <td className="p-3 text-muted-foreground">{u ? `@${u.username ?? u.display_name ?? "user"}` : "Everyone"}</td>
+                    <td className="p-3 text-muted-foreground">{c.description ?? "—"}</td>
+                    <td className="p-3 text-center">{c.is_active ? "✓" : "—"}</td>
+                    <td className="p-3 text-right">
+                      <button onClick={() => setEditing(c)} className="p-1.5 rounded hover:bg-surface-2"><Pencil className="size-3.5" /></button>
+                      <button onClick={() => remove(c.id)} className="p-1.5 rounded hover:bg-surface-2 text-destructive"><Trash2 className="size-3.5" /></button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      {editing && (
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm grid place-items-center z-50 p-4">
+          <div className="bg-surface rounded-2xl border border-border w-full max-w-lg shadow-soft">
+            <div className="p-5 border-b border-border flex items-center justify-between">
+              <h2 className="font-display font-bold">{editing.id ? "Edit" : "New"} Discount Code</h2>
+              <button onClick={() => setEditing(null)}><X className="size-5" /></button>
+            </div>
+            <div className="p-5 space-y-3 max-h-[70vh] overflow-y-auto">
+              <Field label="Code">
+                <input value={editing.code ?? ""} onChange={(e) => setEditing({ ...editing, code: e.target.value.toUpperCase() })} placeholder="SUMMER10" className="w-full px-3 py-2 rounded-lg bg-surface-2 text-sm border border-border outline-none uppercase" />
+              </Field>
+              <Field label="Description"><input value={editing.description ?? ""} onChange={(e) => setEditing({ ...editing, description: e.target.value })} className="w-full px-3 py-2 rounded-lg bg-surface-2 text-sm border border-border outline-none" /></Field>
+              <div className="grid grid-cols-2 gap-3">
+                <Field label="Percent off">
+                  <input type="text" inputMode="numeric" placeholder="e.g. 10" value={editing.percent ?? ""}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      if (v === "") setEditing({ ...editing, percent: null });
+                      else if (/^\d{1,3}$/.test(v)) setEditing({ ...editing, percent: Number(v), amount_cents: null });
+                    }}
+                    className="w-full px-3 py-2 rounded-lg bg-surface-2 text-sm border border-border outline-none" />
+                </Field>
+                <Field label="Amount off (£)">
+                  <input type="text" inputMode="decimal" placeholder="e.g. 5.00"
+                    value={editing.amount_cents != null ? (editing.amount_cents / 100).toFixed(2) : ""}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      if (v === "") setEditing({ ...editing, amount_cents: null });
+                      else if (/^\d*\.?\d{0,2}$/.test(v)) setEditing({ ...editing, amount_cents: Math.round(parseFloat(v || "0") * 100), percent: null });
+                    }}
+                    className="w-full px-3 py-2 rounded-lg bg-surface-2 text-sm border border-border outline-none" />
+                </Field>
+              </div>
+              <Field label="Customer (leave blank for everyone)">
+                <select value={editing.user_id ?? ""} onChange={(e) => setEditing({ ...editing, user_id: e.target.value || null })}
+                  className="w-full px-3 py-2 rounded-lg bg-surface-2 text-sm border border-border outline-none">
+                  <option value="">Everyone (global)</option>
+                  {users.map((u) => (
+                    <option key={u.id} value={u.id}>{u.username ?? u.display_name ?? u.id.slice(0, 8)}</option>
+                  ))}
+                </select>
+              </Field>
+              <label className="flex items-center gap-2 text-sm">
+                <input type="checkbox" checked={editing.is_active ?? true} onChange={(e) => setEditing({ ...editing, is_active: e.target.checked })} /> Active
+              </label>
+            </div>
+            <div className="p-5 border-t border-border flex justify-end gap-2">
+              <button onClick={() => setEditing(null)} className="px-4 py-2 rounded-lg bg-surface-2 text-sm">Cancel</button>
+              <button onClick={save} className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium">Save</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </main>
+  );
+}
