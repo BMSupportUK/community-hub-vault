@@ -552,20 +552,37 @@ function ShiftsPage() {
                     <Label className="text-sky-200/80">Date</Label>
                     <Input type="date" value={newSlot.date} onChange={(e) => setNewSlot({ ...newSlot, date: e.target.value })} className="bg-blue-950/60 border-sky-500/30 text-sky-50" />
                   </div>
-                  <div>
-                    <Label className="text-sky-200/80">Start</Label>
-                    <Input type="time" value={newSlot.start} onChange={(e) => setNewSlot({ ...newSlot, start: e.target.value })} className="bg-blue-950/60 border-sky-500/30 text-sky-50" />
-                  </div>
-                  <div>
-                    <Label className="text-sky-200/80">End</Label>
-                    <Input type="time" value={newSlot.end} onChange={(e) => setNewSlot({ ...newSlot, end: e.target.value })} className="bg-blue-950/60 border-sky-500/30 text-sky-50" />
-                  </div>
-                  <div>
+                  {newSlot.type === "shift" ? (
+                    <div className="md:col-span-2">
+                      <Label className="text-sky-200/80">Block shift (admin / management / staff)</Label>
+                      <Select value={newSlot.presetId} onValueChange={(v) => setNewSlot({ ...newSlot, presetId: v })}>
+                        <SelectTrigger className="bg-blue-950/60 border-sky-500/30 text-sky-50"><SelectValue placeholder="Pick a block" /></SelectTrigger>
+                        <SelectContent>
+                          {presets.map((p) => (
+                            <SelectItem key={p.id} value={p.id}>{p.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <p className="text-[11px] text-sky-300/60 mt-1">Times come from the preset. Add or edit presets below.</p>
+                    </div>
+                  ) : (
+                    <>
+                      <div>
+                        <Label className="text-sky-200/80">Start</Label>
+                        <Input type="time" value={newSlot.start} onChange={(e) => setNewSlot({ ...newSlot, start: e.target.value })} className="bg-blue-950/60 border-sky-500/30 text-sky-50" />
+                      </div>
+                      <div>
+                        <Label className="text-sky-200/80">End</Label>
+                        <Input type="time" value={newSlot.end} onChange={(e) => setNewSlot({ ...newSlot, end: e.target.value })} className="bg-blue-950/60 border-sky-500/30 text-sky-50" />
+                      </div>
+                    </>
+                  )}
+                  <div className={newSlot.type === "shift" ? "md:col-span-2" : ""}>
                     <Label className="text-sky-200/80">Type</Label>
                     <Select value={newSlot.type} onValueChange={(v) => setNewSlot({ ...newSlot, type: v as SlotType })}>
                       <SelectTrigger className="bg-blue-950/60 border-sky-500/30 text-sky-50"><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="shift">Full shift (staff)</SelectItem>
+                        <SelectItem value="shift">Block shift (admin / management / staff)</SelectItem>
                         <SelectItem value="hourly">Hourly (moderator)</SelectItem>
                       </SelectContent>
                     </Select>
