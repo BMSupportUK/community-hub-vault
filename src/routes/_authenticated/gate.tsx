@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { Send, Ban, X, LogOut, ShieldCheck, FileText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,6 +14,7 @@ interface Msg { id: string; sender_id: string; content: string; created_at: stri
 
 function GatePage() {
   const { user, refreshRoles, isPending, signOut } = useAuth();
+  const navigate = useNavigate();
   const [appId, setAppId] = useState<string | null>(null);
   const [ticketNumber, setTicketNumber] = useState<number | null>(null);
   const [status, setStatus] = useState<string>("pending");
@@ -27,6 +28,12 @@ function GatePage() {
   const [confirmNew, setConfirmNew] = useState(false);
   const [senderNames, setSenderNames] = useState<Record<string, string>>({});
   const scrollerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("chat") === "1") setChatOpen(true);
+  }, []);
 
   useEffect(() => {
     if (!user) return;
@@ -193,15 +200,6 @@ function GatePage() {
           </button>
         )}
 
-        {status === "pending" && !reason && (
-          <button
-            onClick={() => setFormOpen(true)}
-            className="mt-2 text-xs text-red-200/80 hover:text-white underline underline-offset-4"
-          >
-            Or write a formal access request
-          </button>
-        )}
-
         {status === "approved" && (
           <div className="mt-4 inline-flex items-center gap-1.5 text-sm text-emerald-300">
             <ShieldCheck className="size-4" /> Continue
@@ -211,7 +209,10 @@ function GatePage() {
 
       {/* Subtle sign-out in the corner so it's not confused with the primary action */}
       <button
-        onClick={signOut}
+        onClick={async () => {
+          await signOut();
+          navigate({ to: "/login" });
+        }}
         className="absolute top-4 right-4 z-20 text-xs text-white/40 hover:text-white/80 transition-colors inline-flex items-center gap-1.5 px-2 py-1 rounded-md hover:bg-white/5"
       >
         <LogOut className="size-3" /> Sign out
