@@ -51,6 +51,25 @@ interface Profile { id: string; username: string | null; display_name: string | 
 
 const DAY_TARGET = 3;
 
+type BlockPreset = { id: string; label: string; start: string; end: string; days: number[] /* 0=Sun..6=Sat */ };
+const DEFAULT_PRESETS: BlockPreset[] = [
+  { id: "midweek", label: "Midweek 09:00–19:00", start: "09:00", end: "19:00", days: [1, 2, 3, 4, 5] },
+  { id: "weekend", label: "Weekend 10:00–18:00", start: "10:00", end: "18:00", days: [0, 6] },
+];
+const PRESETS_KEY = "shift_block_presets_v1";
+
+function loadPresets(): BlockPreset[] {
+  if (typeof window === "undefined") return DEFAULT_PRESETS;
+  try {
+    const raw = localStorage.getItem(PRESETS_KEY);
+    if (!raw) return DEFAULT_PRESETS;
+    const arr = JSON.parse(raw);
+    if (!Array.isArray(arr) || arr.length === 0) return DEFAULT_PRESETS;
+    return arr as BlockPreset[];
+  } catch { return DEFAULT_PRESETS; }
+}
+function savePresets(p: BlockPreset[]) { try { localStorage.setItem(PRESETS_KEY, JSON.stringify(p)); } catch {} }
+
 function startOfWeek(d: Date) {
   const x = new Date(d);
   const day = x.getDay(); // 0=Sun
@@ -61,6 +80,11 @@ function startOfWeek(d: Date) {
 }
 function fmtDate(d: Date) { return d.toISOString().slice(0, 10); }
 function dayLabel(d: Date) { return d.toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" }); }
+function isDayPastOrStarted(d: Date) {
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const x = new Date(d); x.setHours(0, 0, 0, 0);
+  return x.getTime() <= today.getTime();
+}
 
 function ShiftsPage() {
   const { user, hasAny, hasRole } = useAuth();
