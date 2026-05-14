@@ -185,37 +185,37 @@ function SportsGuidesPage() {
   };
 
   return (
-    <div className="flex-1 overflow-y-auto">
-      <header className="px-8 pt-8 pb-6 border-b border-border">
-        <h1 className="font-display text-3xl font-bold">Sports Guide</h1>
-        <p className="text-muted-foreground mt-1">Explore guides and news from all major sports</p>
+    <div className="flex-1 overflow-y-auto bg-gradient-to-br from-[#1a0b2e] via-[#2d1b4e] to-[#1a0b2e]">
+      <header className="px-8 pt-8 pb-6 border-b border-purple-500/30 bg-purple-950/40 backdrop-blur">
+        <h1 className="font-display text-3xl font-bold bg-gradient-to-r from-fuchsia-400 via-purple-400 to-violet-400 bg-clip-text text-transparent">Sports Guide</h1>
+        <p className="text-purple-200/80 mt-1">Explore guides and news from all major sports</p>
       </header>
 
       <div className="px-8 py-6">
         <Tabs value={tab} onValueChange={setTab} className="w-full">
-          <TabsList className="grid grid-cols-3 max-w-2xl bg-surface-2">
-            <TabsTrigger value="welcome">Welcome</TabsTrigger>
-            <TabsTrigger value="guides">Guides</TabsTrigger>
-            <TabsTrigger value="categories">Categories</TabsTrigger>
+          <TabsList className="grid grid-cols-3 max-w-2xl bg-purple-950/60 border border-purple-500/30">
+            <TabsTrigger value="welcome" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white">Welcome</TabsTrigger>
+            <TabsTrigger value="guides" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white">Guides</TabsTrigger>
+            <TabsTrigger value="categories" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white">Categories</TabsTrigger>
           </TabsList>
 
           <TabsContent value="welcome" className="mt-6">
-            <div className="rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20 border border-border p-10">
-              <h2 className="font-display text-3xl font-bold">Welcome to Sports Guide</h2>
-              <p className="mt-3 text-lg text-muted-foreground max-w-2xl">
+            <div className="rounded-2xl bg-gradient-to-br from-fuchsia-600/30 via-purple-600/30 to-violet-700/30 border border-purple-500/40 p-10 shadow-[0_0_60px_-15px_rgba(168,85,247,0.5)]">
+              <h2 className="font-display text-3xl font-bold bg-gradient-to-r from-fuchsia-300 to-violet-300 bg-clip-text text-transparent">Welcome to Sports Guide</h2>
+              <p className="mt-3 text-lg text-purple-100/90 max-w-2xl">
                 Dive into the world of sports with comprehensive guides, insights, and news from your favorite games.
               </p>
-              <p className="mt-4 text-muted-foreground max-w-2xl">
+              <p className="mt-4 text-purple-200/70 max-w-2xl">
                 Whether you're a fan of football, basketball, soccer, tennis, baseball, hockey, or golf — we've got you covered with expert analysis and up-to-date information.
               </p>
-              <Button className="mt-6" onClick={() => setTab("guides")}>Browse guides</Button>
+              <Button className="mt-6 bg-gradient-to-r from-fuchsia-600 to-purple-600 hover:from-fuchsia-500 hover:to-purple-500 text-white border-0 shadow-lg shadow-purple-900/50" onClick={() => setTab("guides")}>Browse guides</Button>
             </div>
           </TabsContent>
 
           <TabsContent value="guides" className="mt-6">
             <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6">
-              <aside className="rounded-2xl bg-surface border border-border p-4 h-fit">
-                <h3 className="font-display font-semibold mb-3 px-2">Categories</h3>
+              <aside className="rounded-2xl bg-purple-950/50 border border-purple-500/30 p-4 h-fit backdrop-blur">
+                <h3 className="font-display font-semibold mb-3 px-2 text-purple-100">Categories</h3>
                 <div className="space-y-1">
                   {categories.map((c) => {
                     const active = c.id === activeCat;
@@ -232,7 +232,7 @@ function SportsGuidesPage() {
                           if (dragCatId.current) reorderCategories(dragCatId.current, c.id);
                           dragCatId.current = null;
                         }}
-                        className={`group flex items-center gap-1 px-1 rounded-lg ${active ? "bg-primary text-primary-foreground" : "hover:bg-surface-2"}`}
+                        className={`group flex items-center gap-1 px-1 rounded-lg ${active ? "bg-gradient-to-r from-fuchsia-600 to-purple-600 text-white shadow-md shadow-purple-900/40" : "text-purple-100/80 hover:bg-purple-800/40"}`}
                       >
                         {isMod && (
                           <GripVertical className="size-3.5 opacity-40 group-hover:opacity-80 cursor-grab shrink-0" />
@@ -243,7 +243,7 @@ function SportsGuidesPage() {
                         >
                           <span>{c.name}</span>
                           {n > 0 && (
-                            <span className={`text-xs px-2 py-0.5 rounded-full ${active ? "bg-primary-foreground/20" : "bg-surface-2"}`}>{n}</span>
+                            <span className={`text-xs px-2 py-0.5 rounded-full ${active ? "bg-white/20" : "bg-purple-800/60 text-purple-100"}`}>{n}</span>
                           )}
                         </button>
                       </div>
@@ -255,27 +255,27 @@ function SportsGuidesPage() {
               <section>
                 <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-6">
                   <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-purple-300" />
                     <Input
                       value={search}
                       onChange={(e) => setSearch(e.target.value)}
                       placeholder="Search sports guides..."
-                      className="pl-9"
+                      className="pl-9 bg-purple-950/50 border-purple-500/30 text-purple-50 placeholder:text-purple-300/50 focus-visible:ring-fuchsia-500"
                     />
                   </div>
                   {isMod && (
-                    <Button onClick={openNew}>
+                    <Button onClick={openNew} className="bg-gradient-to-r from-fuchsia-600 to-purple-600 hover:from-fuchsia-500 hover:to-purple-500 text-white border-0">
                       <Plus className="size-4 mr-1" /> Add Blog
                     </Button>
                   )}
                 </div>
 
                 {activeCategory && (
-                  <h2 className="font-display text-2xl font-bold mb-4">{activeCategory.name} Guides</h2>
+                  <h2 className="font-display text-2xl font-bold mb-4 bg-gradient-to-r from-fuchsia-300 to-violet-300 bg-clip-text text-transparent">{activeCategory.name} Guides</h2>
                 )}
 
                 {filtered.length === 0 ? (
-                  <div className="rounded-2xl border border-dashed border-border p-12 text-center text-muted-foreground">
+                  <div className="rounded-2xl border border-dashed border-purple-500/40 p-12 text-center text-purple-200/70 bg-purple-950/30">
                     No blogs in this category yet.
                   </div>
                 ) : (
@@ -292,13 +292,13 @@ function SportsGuidesPage() {
                           if (dragBlogId.current) reorderBlogs(dragBlogId.current, b.id);
                           dragBlogId.current = null;
                         }}
-                        className="rounded-2xl bg-surface border border-border overflow-hidden flex flex-col group"
+                        className="rounded-2xl bg-purple-950/50 border border-purple-500/30 overflow-hidden flex flex-col group hover:border-fuchsia-500/60 hover:shadow-[0_0_30px_-10px_rgba(217,70,239,0.6)] transition-all"
                       >
-                        <div className="aspect-[16/10] bg-surface-2 relative overflow-hidden">
+                        <div className="aspect-[16/10] bg-purple-900/50 relative overflow-hidden">
                           {b.image_url ? (
                             <img src={b.image_url} alt={b.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
                           ) : (
-                            <div className="w-full h-full grid place-items-center text-muted-foreground">
+                            <div className="w-full h-full grid place-items-center text-purple-300/60">
                               <ImageIcon className="size-10" />
                             </div>
                           )}
@@ -310,23 +310,23 @@ function SportsGuidesPage() {
                         </div>
                         <div className="p-4 flex-1 flex flex-col gap-2">
                           <div className="flex flex-wrap gap-2">
-                            <span className="text-xs px-2 py-1 rounded-md bg-primary/15 text-primary font-medium">
+                            <span className="text-xs px-2 py-1 rounded-md bg-fuchsia-500/20 text-fuchsia-200 font-medium border border-fuchsia-500/30">
                               {categories.find((c) => c.id === b.category_id)?.name}
                             </span>
                             {b.badge && (
-                              <span className="text-xs px-2 py-1 rounded-md bg-accent/20 text-accent-foreground font-medium">{b.badge}</span>
+                              <span className="text-xs px-2 py-1 rounded-md bg-violet-500/20 text-violet-200 font-medium border border-violet-500/30">{b.badge}</span>
                             )}
                           </div>
-                          <h3 className="font-display font-semibold text-lg leading-snug">{b.title}</h3>
-                          {b.excerpt && <p className="text-sm text-muted-foreground line-clamp-2">{b.excerpt}</p>}
+                          <h3 className="font-display font-semibold text-lg leading-snug text-purple-50">{b.title}</h3>
+                          {b.excerpt && <p className="text-sm text-purple-200/70 line-clamp-2">{b.excerpt}</p>}
                           <div className="mt-auto pt-3 flex items-center gap-2">
-                            <Button size="sm" className="flex-1" onClick={() => setReading(b)}>Click to Read</Button>
+                            <Button size="sm" className="flex-1 bg-gradient-to-r from-fuchsia-600 to-purple-600 hover:from-fuchsia-500 hover:to-purple-500 text-white border-0" onClick={() => setReading(b)}>Click to Read</Button>
                             {isMod && (
                               <>
-                                <Button size="icon" variant="ghost" onClick={() => { setEditing(b); setShowEditor(true); }}>
+                                <Button size="icon" variant="ghost" className="text-purple-200 hover:text-white hover:bg-purple-800/60" onClick={() => { setEditing(b); setShowEditor(true); }}>
                                   <Pencil className="size-4" />
                                 </Button>
-                                <Button size="icon" variant="ghost" onClick={() => deleteBlog(b.id)}>
+                                <Button size="icon" variant="ghost" className="text-purple-200 hover:text-white hover:bg-purple-800/60" onClick={() => deleteBlog(b.id)}>
                                   <Trash2 className="size-4" />
                                 </Button>
                               </>
@@ -352,17 +352,17 @@ function SportsGuidesPage() {
                       onChange={(e) => setNewCatName(e.target.value)}
                       placeholder="New category name"
                       onKeyDown={(e) => { if (e.key === "Enter") addCategory(); if (e.key === "Escape") { setAddingCat(false); setNewCatName(""); } }}
-                      className="max-w-xs"
+                      className="max-w-xs bg-purple-950/50 border-purple-500/30 text-purple-50 placeholder:text-purple-300/50 focus-visible:ring-fuchsia-500"
                     />
-                    <Button onClick={addCategory}>Add</Button>
-                    <Button variant="ghost" onClick={() => { setAddingCat(false); setNewCatName(""); }}>Cancel</Button>
+                    <Button onClick={addCategory} className="bg-gradient-to-r from-fuchsia-600 to-purple-600 hover:from-fuchsia-500 hover:to-purple-500 text-white border-0">Add</Button>
+                    <Button variant="ghost" className="text-purple-200 hover:text-white hover:bg-purple-800/60" onClick={() => { setAddingCat(false); setNewCatName(""); }}>Cancel</Button>
                   </>
                 ) : (
-                  <Button onClick={() => setAddingCat(true)}>
+                  <Button onClick={() => setAddingCat(true)} className="bg-gradient-to-r from-fuchsia-600 to-purple-600 hover:from-fuchsia-500 hover:to-purple-500 text-white border-0">
                     <Plus className="size-4 mr-1" /> Add Category
                   </Button>
                 )}
-                <span className="text-xs text-muted-foreground ml-2">Drag cards to reorder — order is saved for everyone.</span>
+                <span className="text-xs text-purple-200/60 ml-2">Drag cards to reorder — order is saved for everyone.</span>
               </div>
             )}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -378,14 +378,14 @@ function SportsGuidesPage() {
                     if (dragCatId.current) reorderCategories(dragCatId.current, c.id);
                     dragCatId.current = null;
                   }}
-                  className="rounded-2xl bg-surface border border-border p-5 hover:border-primary transition relative"
+                  className="rounded-2xl bg-purple-950/50 border border-purple-500/30 p-5 hover:border-fuchsia-500/70 hover:shadow-[0_0_30px_-10px_rgba(217,70,239,0.6)] transition relative backdrop-blur"
                 >
                   {isMod && (
                     <div className="absolute top-2 right-2 flex items-center gap-1">
-                      <GripVertical className="size-4 text-muted-foreground cursor-grab" />
+                      <GripVertical className="size-4 text-purple-300/70 cursor-grab" />
                       <button
                         onClick={(e) => { e.stopPropagation(); deleteCategory(c.id); }}
-                        className="text-muted-foreground hover:text-destructive p-1 rounded-md"
+                        className="text-purple-300/70 hover:text-destructive p-1 rounded-md"
                         title="Delete category"
                       >
                         <Trash2 className="size-4" />
@@ -393,8 +393,8 @@ function SportsGuidesPage() {
                     </div>
                   )}
                   <button onClick={() => { setActiveCat(c.id); setTab("guides"); }} className="text-left w-full">
-                    <div className="font-display font-semibold text-lg">{c.name}</div>
-                    <div className="text-sm text-muted-foreground mt-1">{counts[c.id] ?? 0} guide{(counts[c.id] ?? 0) === 1 ? "" : "s"}</div>
+                    <div className="font-display font-semibold text-lg text-purple-50">{c.name}</div>
+                    <div className="text-sm text-purple-200/70 mt-1">{counts[c.id] ?? 0} guide{(counts[c.id] ?? 0) === 1 ? "" : "s"}</div>
                   </button>
                 </div>
               ))}
