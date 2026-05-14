@@ -3,6 +3,7 @@ import { AtSign } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { toast } from "sonner";
 
 /**
  * Live counter of unread @mentions for the current user.
@@ -33,11 +34,17 @@ export function MentionsBadge() {
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "user_notifications", filter: `user_id=eq.${user.id}` },
         (payload) => {
-          const r = payload.new as { kind: string };
+          const r = payload.new as { kind: string; title: string; body?: string | null; link_path?: string | null };
           if (r.kind !== "mention") return;
           setCount((n) => n + 1);
           setPulse(true);
           setTimeout(() => setPulse(false), 1500);
+          toast(r.title, {
+            description: r.body ?? undefined,
+            action: r.link_path
+              ? { label: "Open", onClick: () => navigate({ to: r.link_path! } as never) }
+              : undefined,
+          });
         },
       )
       .on(
@@ -61,7 +68,23 @@ export function MentionsBadge() {
 
   return (
     <button
-      onClick={() => navigate({ to: "/home" })}
+      onClick={async () => {
+        const { data } = await supabase
+          .from("user_notifications")
+          .select("id, link_path")
+          .eq("user_id", user.id)
+          .eq("kind", "mention")
+          .is("read_at", null)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (data?.link_path) {
+          await supabase.from("user_notifications").update({ read_at: new Date().toISOString() }).eq("id", data.id);
+          navigate({ to: data.link_path } as never);
+        } else {
+          toast("No new mentions");
+        }
+      }}
       title={count > 0 ? `${count} unread mention${count === 1 ? "" : "s"}` : "Mentions"}
       className={`relative size-12 rounded-2xl flex items-center justify-center transition-all ${
         count > 0
