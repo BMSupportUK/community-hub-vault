@@ -553,7 +553,30 @@ function ShiftsPage() {
                 <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
                   <div>
                     <Label className="text-sky-200/80">Date</Label>
-                    <Input type="date" value={newSlot.date} onChange={(e) => setNewSlot({ ...newSlot, date: e.target.value })} className="bg-blue-950/60 border-sky-500/30 text-sky-50" />
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" className={cn("w-full justify-start text-left font-normal bg-blue-950/60 border-sky-500/30 text-sky-50 hover:bg-blue-900/60 hover:text-sky-50", !newSlot.date && "text-sky-300/60")}>
+                          <CalendarIcon className="mr-2 size-4" />
+                          {newSlot.date ? format(new Date(newSlot.date + "T00:00:00"), "PPP") : <span>Pick a date</span>}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={newSlot.date ? new Date(newSlot.date + "T00:00:00") : undefined}
+                          onSelect={(d) => {
+                            if (!d) return;
+                            const dateStr = fmtDate(d);
+                            const isWeekend = d.getDay() === 0 || d.getDay() === 6;
+                            const matching = presets.find((p) => p.days.includes(d.getDay()));
+                            setNewSlot({ ...newSlot, date: dateStr, presetId: matching?.id ?? (isWeekend ? "weekend" : "midweek") });
+                          }}
+                          disabled={(date) => { const t = new Date(); t.setHours(0,0,0,0); return date < t; }}
+                          initialFocus
+                          className={cn("p-3 pointer-events-auto")}
+                        />
+                      </PopoverContent>
+                    </Popover>
                   </div>
                   {newSlot.type === "shift" ? (
                     <div className="md:col-span-2">
@@ -561,9 +584,13 @@ function ShiftsPage() {
                       <Select value={newSlot.presetId} onValueChange={(v) => setNewSlot({ ...newSlot, presetId: v })}>
                         <SelectTrigger className="bg-blue-950/60 border-sky-500/30 text-sky-50"><SelectValue placeholder="Pick a block" /></SelectTrigger>
                         <SelectContent>
-                          {presets.map((p) => (
-                            <SelectItem key={p.id} value={p.id}>{p.label}</SelectItem>
-                          ))}
+                          {(() => {
+                            const dow = newSlot.date ? new Date(newSlot.date + "T00:00:00").getDay() : null;
+                            const filtered = dow === null ? presets : presets.filter((p) => p.days.includes(dow));
+                            return (filtered.length ? filtered : presets).map((p) => (
+                              <SelectItem key={p.id} value={p.id}>{p.label}</SelectItem>
+                            ));
+                          })()}
                         </SelectContent>
                       </Select>
                       <p className="text-[11px] text-sky-300/60 mt-1">Times come from the preset. Add or edit presets below.</p>
