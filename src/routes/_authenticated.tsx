@@ -62,7 +62,7 @@ function AuthLayout() {
             <div className="size-12 rounded-2xl bg-surface-2 grid place-items-center mx-auto mb-4">🔒</div>
             <h1 className="font-display text-2xl font-bold">Awaiting approval</h1>
             <p className="text-muted-foreground mt-2">Head to the security gate to chat with a moderator.</p>
-            <a href="/gate?chat=1" className="mt-6 inline-flex px-5 py-2.5 rounded-lg bg-primary text-primary-foreground font-medium">{hasOpenTicket ? "View Chat" : "Open gate"}</a>
+            <Link to="/gate" search={{ chat: 1 } as never} className="mt-6 inline-flex px-5 py-2.5 rounded-lg bg-primary text-primary-foreground font-medium">Request access</Link>
           </div>
         </div>
       </div>
