@@ -854,6 +854,30 @@ export type Database = {
         }
         Relationships: []
       }
+      shop_policies: {
+        Row: {
+          body: string
+          key: string
+          title: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          body?: string
+          key: string
+          title: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          body?: string
+          key?: string
+          title?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       sports_blogs: {
         Row: {
           badge: string | null
