@@ -356,11 +356,20 @@ function ShiftsPage() {
                 const daySlots = slotsByDay[dateStr] ?? [];
                 const filled = filledShiftsForDay(dateStr);
                 const ok = filled >= DAY_TARGET;
+                const past = isDayPastOrStarted(d);
                 return (
-                  <div key={dateStr} className="rounded-2xl bg-blue-950/50 border border-sky-500/30 p-3 backdrop-blur min-h-[180px] flex flex-col">
+                  <div key={dateStr} className={cn("relative rounded-2xl bg-blue-950/50 border border-sky-500/30 p-3 backdrop-blur min-h-[180px] flex flex-col", past && "opacity-80")}>
+                    {past && (
+                      <div className="pointer-events-none absolute inset-0 z-10" aria-hidden>
+                        <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="w-full h-full">
+                          <line x1="2" y1="2" x2="98" y2="98" stroke="rgb(244 63 94 / 0.85)" strokeWidth="2" strokeLinecap="round" />
+                          <line x1="98" y1="2" x2="2" y2="98" stroke="rgb(244 63 94 / 0.85)" strokeWidth="2" strokeLinecap="round" />
+                        </svg>
+                      </div>
+                    )}
                     <div className="flex items-center justify-between mb-2">
                       <div className="text-sm font-semibold text-sky-100">{dayLabel(d)}</div>
-                      <span className={cn("text-[11px] px-2 py-0.5 rounded-full font-semibold", ok ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40" : "bg-rose-500/20 text-rose-300 border border-rose-500/40")}>{filled}/{DAY_TARGET}</span>
+                      <span className={cn("text-[11px] px-2 py-0.5 rounded-full font-semibold", past ? "bg-rose-500/20 text-rose-200 border border-rose-500/40" : ok ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40" : "bg-rose-500/20 text-rose-300 border border-rose-500/40")}>{past ? "Closed" : `${filled}/${DAY_TARGET}`}</span>
                     </div>
                     <div className="space-y-2 flex-1">
                       {daySlots.length === 0 && <div className="text-xs text-sky-300/50 italic">No slots</div>}
@@ -377,7 +386,7 @@ function ShiftsPage() {
                             <div className="mt-1.5 flex items-center justify-between gap-1">
                               <div className="text-sky-200/80 truncate">{taken ? profName(s.assigned_to) : "Open"}</div>
                               <div className="flex items-center gap-1">
-                                {!taken && canPick && (
+                                {!taken && canPick && !past && (
                                   ((s.slot_type === "hourly" && (isMod || isAdmin)) || (s.slot_type === "shift" && isStaffOrAdmin)) && (
                                     <button onClick={() => claim(s)} className="px-2 py-0.5 rounded bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-semibold">Claim</button>
                                   )
