@@ -3,16 +3,24 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { ChannelColumn, type ChannelGroup } from "@/components/app/ChannelColumn";
-import { ShoppingBag, Package, Settings, Plus, Minus, X, Send, Trash2, Pencil, Image as ImageIcon, Tag, CheckCircle2, BadgeCheck, Check, Wrench } from "lucide-react";
+import { ShoppingBag, Package, Settings, Plus, Minus, X, Send, Trash2, Pencil, Image as ImageIcon, Tag, CheckCircle2, BadgeCheck, Check, Wrench, FileText, BedDouble, Users, Loader2, Save } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import shopHero from "@/assets/shop-hero.jpg";
 
-type View = "store" | "orders" | "admin";
+type View = "store" | "orders" | "admin" | "refund" | "multi_room" | "triple_room";
+
+const POLICY_KEYS = ["refund", "multi_room", "triple_room"] as const;
+type PolicyKey = typeof POLICY_KEYS[number];
 
 export const Route = createFileRoute("/_authenticated/_approved/shop")({
   validateSearch: (s: Record<string, unknown>) => ({
-    view: (s.view === "orders" || s.view === "admin" || s.view === "discounts" ? s.view : "store") as View | "discounts",
+    view: (
+      s.view === "orders" || s.view === "admin" || s.view === "discounts" ||
+      s.view === "refund" || s.view === "multi_room" || s.view === "triple_room"
+        ? s.view
+        : "store"
+    ) as View | "discounts",
     id: typeof s.id === "string" ? s.id : undefined,
   }),
   component: ShopPage,
@@ -66,6 +74,10 @@ function ShopPage() {
         <div className="flex-1 overflow-y-auto px-2 py-3 space-y-1">
           <SideBtn active={view === "store"} onClick={() => navigate({ to: "/shop", search: { view: "store" } })} Icon={ShoppingBag} label="Storefront" />
           <SideBtn active={view === "orders"} onClick={() => navigate({ to: "/shop", search: { view: "orders" } })} Icon={Package} label="My Orders" />
+          <div className="pt-3 px-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Policies</div>
+          <SideBtn active={view === "refund"} onClick={() => navigate({ to: "/shop", search: { view: "refund" } })} Icon={FileText} label="Refund Policy" />
+          <SideBtn active={view === "multi_room"} onClick={() => navigate({ to: "/shop", search: { view: "multi_room" } })} Icon={Users} label="Multi-room Rules" />
+          <SideBtn active={view === "triple_room"} onClick={() => navigate({ to: "/shop", search: { view: "triple_room" } })} Icon={BedDouble} label="Triple-room Rules" />
           {isAdmin && (
             <>
               <div className="pt-3 px-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Admin</div>
@@ -87,6 +99,9 @@ function ShopPage() {
       {view === "orders" && <OrdersView selectedId={id} isAdmin={isAdmin} />}
       {view === "admin" && isAdmin && <AdminProducts />}
       {(view as string) === "discounts" && isAdmin && <AdminDiscounts />}
+      {(view === "refund" || view === "multi_room" || view === "triple_room") && (
+        <PolicyView policyKey={view as PolicyKey} isAdmin={isAdmin} />
+      )}
     </>
   );
 }
@@ -98,6 +113,110 @@ function SideBtn({ active, onClick, Icon, label }: { active: boolean; onClick: (
       <Icon className="size-4" /><span>{label}</span>
     </button>
   );
+}
+
+// ============ POLICY VIEW ============
+interface PolicyRow { key: string; title: string; body: string; updated_at: string; }
+
+function PolicyView({ policyKey, isAdmin }: { policyKey: PolicyKey; isAdmin: boolean }) {
+  const [row, setRow] = useState<PolicyRow | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    let cancel = false;
+    setLoading(true);
+    setEditing(false);
+    supabase.from("shop_policies").select("*").eq("key", policyKey).maybeSingle().then(({ data }) => {
+      if (cancel) return;
+      const r = (data as PolicyRow | null) ?? { key: policyKey, title: defaultTitle(policyKey), body: "", updated_at: new Date().toISOString() };
+      setRow(r);
+      setDraft(r.body);
+      setLoading(false);
+    });
+    return () => { cancel = true; };
+  }, [policyKey]);
+
+  const save = async () => {
+    setSaving(true);
+    const { data: { user } } = await supabase.auth.getUser();
+    const { error } = await supabase.from("shop_policies").upsert({
+      key: policyKey,
+      title: row?.title ?? defaultTitle(policyKey),
+      body: draft,
+      updated_by: user?.id ?? null,
+      updated_at: new Date().toISOString(),
+    });
+    setSaving(false);
+    if (error) { toast.error(error.message); return; }
+    setRow((r) => r ? { ...r, body: draft, updated_at: new Date().toISOString() } : r);
+    setEditing(false);
+    toast.success("Document saved");
+  };
+
+  return (
+    <main className="flex-1 overflow-y-auto">
+      <div className="max-w-4xl mx-auto px-6 py-8">
+        <header className="flex items-center gap-3 mb-6">
+          <div className="size-11 rounded-2xl bg-gradient-primary grid place-items-center shadow-glow">
+            <FileText className="size-5 text-primary-foreground" />
+          </div>
+          <div className="flex-1">
+            <h1 className="font-display text-2xl font-bold">{row?.title ?? defaultTitle(policyKey)}</h1>
+            {row?.updated_at && (
+              <p className="text-xs text-muted-foreground">Last updated {new Date(row.updated_at).toLocaleString()}</p>
+            )}
+          </div>
+          {isAdmin && !editing && (
+            <button onClick={() => { setDraft(row?.body ?? ""); setEditing(true); }}
+              className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-surface-2 border border-border text-sm hover:border-primary">
+              <Pencil className="size-4" /> Edit
+            </button>
+          )}
+        </header>
+
+        {loading ? (
+          <div className="grid place-items-center py-16 text-muted-foreground"><Loader2 className="size-5 animate-spin" /></div>
+        ) : editing ? (
+          <div className="space-y-3">
+            <textarea
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              rows={20}
+              placeholder="Write the document content here. Plain text or Markdown."
+              className="w-full px-4 py-3 rounded-xl bg-surface-1 border border-border text-sm font-mono leading-relaxed outline-none focus:border-primary"
+            />
+            <div className="flex gap-2">
+              <button onClick={save} disabled={saving}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium disabled:opacity-60">
+                {saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />} Save
+              </button>
+              <button onClick={() => { setEditing(false); setDraft(row?.body ?? ""); }}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-surface-2 border border-border text-sm">
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : row && row.body.trim() ? (
+          <article className="prose prose-invert max-w-none whitespace-pre-wrap text-sm leading-relaxed bg-surface-1 border border-border rounded-2xl p-6">
+            {row.body}
+          </article>
+        ) : (
+          <div className="rounded-2xl border border-dashed border-border p-10 text-center text-sm text-muted-foreground">
+            No document yet.{isAdmin ? " Click Edit to add one." : " Please check back later."}
+          </div>
+        )}
+      </div>
+    </main>
+  );
+}
+
+function defaultTitle(k: PolicyKey) {
+  if (k === "refund") return "Refund Policy";
+  if (k === "multi_room") return "Multi-room Usage Rules";
+  return "Triple-room Usage Rules";
 }
 
 // ============ STOREFRONT ============
