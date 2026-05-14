@@ -526,6 +526,36 @@ export type Database = {
         }
         Relationships: []
       }
+      role_definitions: {
+        Row: {
+          created_at: string
+          is_active: boolean
+          is_system: boolean
+          label: string
+          name: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          is_active?: boolean
+          is_system?: boolean
+          label: string
+          name: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          is_active?: boolean
+          is_system?: boolean
+          label?: string
+          name?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       shifts: {
         Row: {
           clock_in: string
@@ -973,6 +1003,11 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_app_role: {
+        Args: { _label: string; _name: string }
+        Returns: undefined
+      }
+      delete_app_role: { Args: { _name: string }; Returns: undefined }
       has_any_role: {
         Args: {
           _roles: Database["public"]["Enums"]["app_role"][]
