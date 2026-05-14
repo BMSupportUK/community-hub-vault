@@ -16,6 +16,7 @@ async function sha256Hex(input: string) {
 }
 
 const UNLOCK_TTL_MS = 60 * 60 * 1000;
+const UNLOCK_KEY = (uid: string) => `admin_unlock_until:${uid}`;
 
 interface Stats {
   users: number;
@@ -40,6 +41,17 @@ function AdminDashboard() {
     (async () => {
       const { data } = await supabase.from("vault_pins").select("user_id").eq("user_id", user.id).maybeSingle();
       setHasPin(!!data);
+      // Restore an unexpired unlock from this browser session
+      try {
+        const raw = sessionStorage.getItem(UNLOCK_KEY(user.id));
+        const until = raw ? parseInt(raw, 10) : 0;
+        if (until > Date.now()) {
+          setUnlocked(true);
+          setUnlockedUntil(until);
+        } else if (raw) {
+          sessionStorage.removeItem(UNLOCK_KEY(user.id));
+        }
+      } catch {}
     })();
   }, [user]);
 
@@ -48,6 +60,11 @@ function AdminDashboard() {
     const t = setTimeout(() => setUnlocked(false), Math.max(0, unlockedUntil - Date.now()));
     return () => clearTimeout(t);
   }, [unlocked, unlockedUntil]);
+
+  const lockNow = () => {
+    setUnlocked(false);
+    if (user) { try { sessionStorage.removeItem(UNLOCK_KEY(user.id)); } catch {} }
+  };
 
   if (!isAdmin) return <Navigate to="/home" />;
 
@@ -63,7 +80,7 @@ function AdminDashboard() {
             <p className="text-sm text-muted-foreground">Server-wide controls — restricted to admin & management.</p>
           </div>
           {unlocked && (
-            <button onClick={() => setUnlocked(false)} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-surface-2 border border-border text-sm hover:border-primary">
+            <button onClick={lockNow} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-surface-2 border border-border text-sm hover:border-primary">
               <Lock className="size-4" /> Lock
             </button>
           )}
@@ -74,7 +91,13 @@ function AdminDashboard() {
         ) : !unlocked ? (
           <SecurityGate
             hasPin={hasPin}
-            onUnlocked={() => { setUnlocked(true); setUnlockedUntil(Date.now() + UNLOCK_TTL_MS); setHasPin(true); }}
+            onUnlocked={() => {
+              const until = Date.now() + UNLOCK_TTL_MS;
+              setUnlocked(true);
+              setUnlockedUntil(until);
+              setHasPin(true);
+              if (user) { try { sessionStorage.setItem(UNLOCK_KEY(user.id), String(until)); } catch {} }
+            }}
           />
         ) : (
           <DashboardBody />
