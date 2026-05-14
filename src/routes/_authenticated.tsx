@@ -1,7 +1,7 @@
 import { createFileRoute, Outlet, redirect, useRouterState } from "@tanstack/react-router";
 import { Link } from "@tanstack/react-router";
 import { Users } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -20,23 +20,10 @@ export const Route = createFileRoute("/_authenticated")({
 });
 
 function AuthLayout() {
-  const { loading, isPending, user } = useAuth();
+  const { loading, isPending } = useAuth();
   const path = useRouterState({ select: (r) => r.location.pathname });
   const logIp = useServerFn(logMyIp);
   const loggedRef = useRef(false);
-  const [hasOpenTicket, setHasOpenTicket] = useState(false);
-
-  useEffect(() => {
-    if (!isPending || !user) return;
-    supabase
-      .from("gate_applications")
-      .select("id")
-      .eq("user_id", user.id)
-      .eq("status", "pending")
-      .limit(1)
-      .maybeSingle()
-      .then(({ data }) => setHasOpenTicket(!!data));
-  }, [isPending, user]);
 
   useEffect(() => {
     if (loading || isPending || loggedRef.current) return;
