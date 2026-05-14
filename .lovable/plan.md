@@ -1,83 +1,46 @@
+# Shifts workspace overhaul
 
-# Discord-Inspired Community App — Build Plan
+Replace the placeholder `Shifts` page with a full scheduling workspace styled in a vibrant blue scheme (mirrors the Sports Guide layout pattern).
 
-A full Discord-style app with its own visual identity, Lovable Cloud backend, role-based access, and the requested staff/community systems.
+## Tabs
 
-## Design direction
-- Dark theme, deep slate background, single bold accent (teal/cyan, not Discord blurple) so it reads as "inspired by, not a clone".
-- Layout language stays familiar: left **icon rail** (servers/sections), channel list, main content, optional right panel (members/details).
-- Display font: Space Grotesk. Body: Inter. Rounded squares for icon rail (12px radius). Subtle glow on active item.
-- All colors via semantic tokens in `src/styles.css` (oklch).
+1. **Welcome** — hero card explaining the workflow.
+2. **Rota** — week view of the published rota. Staff/mod pick open slots; shows how many of the 3 required staff are filled per day.
+3. **My shifts** — what the current user has booked, with "Request swap" action.
+4. **Holidays** — request a holiday range; see status.
+5. **Requests** *(admin/management only)* — approve/deny holiday requests and swap requests.
+6. **Manage rota** *(admin only)* — create/edit shift slots for any day; choose role required (staff or moderator-by-the-hour).
 
-## Roles
-Stored in a separate `user_roles` table with a `has_role()` security-definer function (avoids RLS recursion).
-Roles: `admin`, `management`, `staff`, `moderator`, `member`, `pending` (default for new signups awaiting gate approval).
+## Roles & rules
 
-## Milestones
+- **admin / management** — full access, approve requests, manage rota.
+- **staff** — pick whole shifts, request holidays/swaps.
+- **moderator** — pick hourly slots (slot type = "hourly"); admin defines hourly slot blocks.
+- Each day target = 3 filled staff slots; rota header shows `2/3 filled` per day with color (red <3, green =3).
 
-### M1 — Foundation
-- Enable Lovable Cloud
-- Auth: email/password + Google
-- DB: `profiles`, `user_roles`, `app_role` enum, `has_role()` function, RLS policies
-- Sign up creates profile with `pending` role via trigger
-- Shell layout: icon sidebar, channel column, main area, route guards
+## Database
 
-### M2 — Security gate (chat with moderator)
-- New `pending` users land on a private "gate" channel
-- Realtime chat (one room per pending user, only that user + moderators/admins can see)
-- Moderator review queue with **Approve** (promotes to `member`) / **Deny** buttons
-- Approved users gain access to the rest of the server
+New tables (RLS enabled, all reads gated to non-pending/banned):
 
-### M3 — Discord-style channels & chat
-- Text channels with realtime messages, member presence, basic markdown
-- Channel categories: General, Staff Only, Announcements
-- Channel visibility gated by role
+- `shift_slots` — `id, shift_date date, start_time time, end_time time, slot_type ('shift'|'hourly'), assigned_to uuid null, notes`. Admin/management write; staff/mod can `UPDATE` only the `assigned_to` column to claim/release their own slot (enforced via RLS using `assigned_to = auth.uid()` for claim and old row null check via trigger).
+- `holiday_requests` — `id, user_id, start_date, end_date, reason, status ('pending'|'approved'|'denied'), reviewed_by, reviewed_at`. Owner inserts/reads own; admin/management read all and update status.
+- `shift_swap_requests` — `id, slot_id, requester_id, target_user_id null, message, status, reviewed_by, reviewed_at`. Requester inserts/reads own; admin/management approve and on approval the trigger swaps `assigned_to`.
+- Notify admin/management via `staff_notifications` triggers on new holiday/swap request.
 
-### M4 — Tickets system
-- Users open support tickets (subject, category, message)
-- Ticket = private channel between user + assigned staff/moderator
-- Statuses: open, in-progress, closed
-- Staff/admin queue view with filters
+## Frontend
 
-### M5 — Shop
-- Product catalog (name, description, price, image, stock)
-- Cart + checkout (orders table, status tracked)
-- Admin-only product management UI
-- Payment provider hookup is a follow-up (will recommend Stripe when you're ready)
+- New file `src/routes/_authenticated/_approved/shifts.tsx` (replace the `Coming` stub).
+- Visual style: vibrant blue (`from-blue-600 via-sky-500 to-cyan-500` accents on a deep `[#06122e]` → `[#0b1e4a]` gradient background); reuse Tabs, Dialog, Button, Input from shadcn.
+- Rota grid: 7-day strip with slot chips. Empty slot = "Claim" button (disabled if full or wrong role). Filled slot shows assignee.
+- "Request swap" opens dialog selecting another claimed slot.
+- Holiday tab: date range picker + list of past requests with status pill.
+- Admin Requests tab: tables of pending holiday + swap requests with approve/deny.
+- Manage rota tab: per-day form to add slots (date, start, end, type), list with delete.
 
-### M6 — Install guides (block-based with read tracking)
-- Guides composed of **blocks** (steps): text, code, image, callout
-- Each block has a "Mark as read" toggle per user
-- Progress bar + completion status per guide
-- Admin/management can author guides via a block editor
+## Out of scope (not included)
 
-### M7 — Sports guides (PDF)
-- Upload PDFs to Cloud Storage (private bucket)
-- List view with title, sport, thumbnail
-- In-app PDF viewer
-- Admin/management upload, all members read
+- Recurring rota templates (admin manually adds days for now).
+- Calendar export, email reminders.
+- Editing already-claimed slots beyond swap workflow.
 
-### M8 — Staff time clock
-- Clock In / Clock Out with timestamps
-- Break Start / Break End (multiple breaks per shift)
-- Live "on shift" indicator, total hours today/week
-- Personal timesheet history; admin/management can view all staff
-
-### M9 — Shift system
-- Management posts shift slots (date, time, role needed, count)
-- Staff browse open shifts and **apply**
-- Management approves/denies applications
-- Approved shifts appear on staff schedule and feed into the clock
-
-## Technical notes (for reference)
-- TanStack Start + file routes under `src/routes/`
-- All server logic via `createServerFn` with `requireSupabaseAuth`; storage uploads via signed URLs
-- `_authenticated/` layout for logged-in routes; `_authenticated/_approved/` sub-layout for non-pending users; `_authenticated/_staff/` for staff areas
-- Realtime via Supabase channels for chat, tickets, presence
-- RLS on every table; admin actions go through `has_role()` checks
-- PDF rendering via `react-pdf`
-
-## What I'll do now
-If you approve this plan, I'll start with **M1 (foundation + auth + roles + shell)** and **M2 (security gate)** in this turn so you have a working approval flow end-to-end. Then I'll continue through the remaining milestones in subsequent turns, checking in after each major milestone so you can steer.
-
-Tell me if you want to reorder, drop, or expand any milestone before I start.
+Confirm and I'll create the migration + page.
