@@ -71,6 +71,7 @@ function AdminReviewsPage() {
     setBusy(null);
     if (error) return toast.error(error.message);
     toast.success(status === "approved" ? "Review approved" : "Review rejected");
+    load();
   };
 
   const remove = async (id: string) => {
@@ -80,6 +81,7 @@ function AdminReviewsPage() {
     setBusy(null);
     if (error) return toast.error(error.message);
     toast.success("Deleted");
+    load();
   };
 
   const filtered = rows.filter((r) => r.status === tab);
