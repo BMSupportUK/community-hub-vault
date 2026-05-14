@@ -1,5 +1,5 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
-import { Home, Ticket, ShoppingBag, BookOpen, FileText, Clock, Calendar, Shield, LogOut, MessageSquare, ShieldCheck, LayoutDashboard, UserCircle2, Globe, Activity, Briefcase } from "lucide-react";
+import { Home, Ticket, ShoppingBag, BookOpen, FileText, Clock, Calendar, Shield, LogOut, MessageSquare, ShieldCheck, LayoutDashboard, UserCircle2, Globe, Activity, Briefcase, Star } from "lucide-react";
 import { useAuth, type AppRole } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 import { NotificationBell } from "@/components/app/NotificationBell";
@@ -103,6 +103,7 @@ export function IconRail() {
     { to: "/shop", label: "Shop", icon: ShoppingBag, show: true },
     { to: "/install-guides", label: "Install guides", icon: BookOpen, show: true },
     { to: "/sports-guides", label: "Sports guides", icon: FileText, show: true },
+    { to: "/reviews", label: "Customer reviews", icon: Star, show: true },
     { to: "/staff", label: "Staff directory", icon: Briefcase, show: true },
     { to: "/status", label: "System status", icon: Activity, show: true, badge: activeIncidents },
     { to: "/clock", label: "Clock", icon: Clock, show: isStaff },
