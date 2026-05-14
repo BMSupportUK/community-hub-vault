@@ -89,7 +89,7 @@ function PagesTab({ pages, roles, onChanged }: { pages: PagePerm[]; roles: RoleD
     if (LOCKED.has(role)) return;
     const has = page.allowed_roles.includes(role);
     const next = has ? page.allowed_roles.filter((r) => r !== role) : [...page.allowed_roles, role];
-    const { error } = await supabase.from("page_permissions").update({ allowed_roles: next }).eq("page_key", page.page_key);
+    const { error } = await supabase.from("page_permissions").update({ allowed_roles: next as any }).eq("page_key", page.page_key);
     if (error) toast.error(error.message); else onChanged();
   };
   return (
@@ -136,7 +136,7 @@ function ChannelsTab({ channels, roles, chanPerms, onChanged }: { channels: Chan
     if (LOCKED.has(role)) return;
     const cur = permFor(role);
     const next = { ...cur, [key]: !cur[key] };
-    const { error } = await supabase.from("channel_permissions").upsert(next, { onConflict: "channel_id,role" });
+    const { error } = await supabase.from("channel_permissions").upsert(next as any, { onConflict: "channel_id,role" });
     if (error) toast.error(error.message); else onChanged();
   };
 
