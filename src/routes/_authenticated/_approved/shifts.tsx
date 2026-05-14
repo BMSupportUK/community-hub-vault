@@ -201,6 +201,8 @@ function ShiftsPage() {
     if (newSlot.type === "shift") {
       const p = presets.find((pp) => pp.id === newSlot.presetId);
       if (!p) return toast.error("Pick a block preset");
+      const dow = new Date(newSlot.date + "T00:00:00").getDay();
+      if (!p.days.includes(dow)) return toast.error(`${p.label} can't be used on this day`);
       start = p.start; end = p.end;
       notes = notes || p.label;
     } else if (!start || !end) {
