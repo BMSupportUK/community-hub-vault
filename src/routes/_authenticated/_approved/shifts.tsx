@@ -595,58 +595,6 @@ function ShiftsPage() {
                 <Button className="mt-4 bg-gradient-to-r from-blue-600 via-sky-500 to-cyan-500 text-white" onClick={addSlot}><Plus className="size-4 mr-1" /> Add slot</Button>
               </div>
 
-              <div className="rounded-2xl bg-blue-950/50 border border-sky-500/30 p-5">
-                <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
-                  <h3 className="font-display text-lg font-semibold text-sky-100 flex items-center gap-2"><Zap className="size-4 text-cyan-300" /> Block shifts (admin / management / staff)</h3>
-                  <Button size="sm" className="bg-gradient-to-r from-blue-600 via-sky-500 to-cyan-500 text-white" onClick={fillWeekFromPresets}>Fill this week from presets</Button>
-                </div>
-                <p className="text-xs text-sky-200/70 mb-3">Quick-add a full-day block shift. Pick a date, then click a preset.</p>
-                <div className="flex items-center gap-2 mb-4 flex-wrap">
-                  <Label className="text-sky-200/80">Date</Label>
-                  <Input type="date" value={newSlot.date} onChange={(e) => setNewSlot({ ...newSlot, date: e.target.value })} className="bg-blue-950/60 border-sky-500/30 text-sky-50 w-44" />
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {presets.map((p) => (
-                    <div key={p.id} className="flex items-center gap-1 rounded-lg bg-blue-900/50 border border-sky-500/30 pl-1">
-                      <button onClick={() => addBlockShift(p, newSlot.date)} className="px-3 py-1.5 text-xs font-semibold text-sky-100 hover:text-cyan-200">{p.label}</button>
-                      {!DEFAULT_PRESETS.find((d) => d.id === p.id) && (
-                        <button onClick={() => removePreset(p.id)} className="px-2 py-1.5 text-rose-300/70 hover:text-rose-300" title="Remove preset"><Trash2 className="size-3" /></button>
-                      )}
-                    </div>
-                  ))}
-                </div>
-                <div className="mt-5 pt-4 border-t border-sky-500/20">
-                  <div className="text-sm font-semibold text-sky-100 mb-2">Add a custom preset</div>
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-                    <div>
-                      <Label className="text-sky-200/80">Label</Label>
-                      <Input value={presetForm.label} onChange={(e) => setPresetForm({ ...presetForm, label: e.target.value })} placeholder="e.g. Friday late" className="bg-blue-950/60 border-sky-500/30 text-sky-50" />
-                    </div>
-                    <div>
-                      <Label className="text-sky-200/80">Start</Label>
-                      <Input type="time" value={presetForm.start} onChange={(e) => setPresetForm({ ...presetForm, start: e.target.value })} className="bg-blue-950/60 border-sky-500/30 text-sky-50" />
-                    </div>
-                    <div>
-                      <Label className="text-sky-200/80">End</Label>
-                      <Input type="time" value={presetForm.end} onChange={(e) => setPresetForm({ ...presetForm, end: e.target.value })} className="bg-blue-950/60 border-sky-500/30 text-sky-50" />
-                    </div>
-                    <div>
-                      <Label className="text-sky-200/80 block mb-1">Days</Label>
-                      <div className="flex gap-1">
-                        {["S","M","T","W","T","F","S"].map((lbl, idx) => {
-                          const on = presetForm.days.includes(idx);
-                          return (
-                            <button key={idx} type="button" onClick={() => setPresetForm({ ...presetForm, days: on ? presetForm.days.filter((d) => d !== idx) : [...presetForm.days, idx] })} className={cn("size-8 rounded-md text-xs font-bold border", on ? "bg-cyan-500/30 border-cyan-400/60 text-cyan-100" : "bg-blue-950/60 border-sky-500/30 text-sky-300")}>{lbl}</button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </div>
-                  <Button className="mt-3 bg-gradient-to-r from-blue-600 via-sky-500 to-cyan-500 text-white" onClick={savePreset}><Plus className="size-4 mr-1" /> Save preset</Button>
-                </div>
-              </div>
-
-              <div className="rounded-2xl bg-blue-950/50 border border-sky-500/30 overflow-hidden">
               <div className="rounded-2xl bg-blue-950/50 border border-sky-500/30 overflow-hidden">
                 <div className="px-5 py-3 border-b border-sky-500/30 text-sky-100 font-semibold">All slots this week</div>
                 {slots.length === 0 ? (
