@@ -267,6 +267,43 @@ function Checkout({ items, total, onClose, onPlace }: {
   const [discountInput, setDiscountInput] = useState("");
   const [appliedCode, setAppliedCode] = useState<DiscountCode | null>(null);
   const [applying, setApplying] = useState(false);
+  const [browseOpen, setBrowseOpen] = useState(false);
+  const [browseQuery, setBrowseQuery] = useState("");
+  const [available, setAvailable] = useState<DiscountCode[]>([]);
+  const [loadingAvailable, setLoadingAvailable] = useState(false);
+
+  const openBrowse = async () => {
+    setBrowseOpen(true);
+    setLoadingAvailable(true);
+    const { data } = await supabase
+      .from("discount_codes")
+      .select("*")
+      .eq("is_active", true)
+      .order("code", { ascending: true });
+    setAvailable((data ?? []) as DiscountCode[]);
+    setLoadingAvailable(false);
+  };
+
+  const filteredAvailable = useMemo(() => {
+    const q = browseQuery.trim().toLowerCase();
+    if (!q) return available;
+    return available.filter((c) =>
+      c.code.toLowerCase().includes(q) || (c.description ?? "").toLowerCase().includes(q)
+    );
+  }, [available, browseQuery]);
+
+  const previewValue = (c: DiscountCode) => {
+    if (c.amount_cents) return `-${fmt(Math.min(total, c.amount_cents))}`;
+    if (c.percent) return `-${c.percent}%`;
+    return "";
+  };
+
+  const selectCode = (c: DiscountCode) => {
+    setAppliedCode(c);
+    setDiscountInput(c.code);
+    setBrowseOpen(false);
+    toast.success(`Code "${c.code}" applied`);
+  };
 
   const discountCents = useMemo(() => {
     if (!appliedCode) return 0;
@@ -336,12 +373,60 @@ function Checkout({ items, total, onClose, onPlace }: {
             {customerType === "existing" && (
               <input value={existingUsername} onChange={(e) => setExistingUsername(e.target.value)} placeholder="Username you're extending" className="w-full px-3 py-2 rounded-lg bg-surface-2 text-sm border border-border focus:border-primary outline-none" />
             )}
-            <div className="flex gap-2">
-              <input value={discountInput} onChange={(e) => setDiscountInput(e.target.value)} placeholder="Discount code (optional)" className="flex-1 px-3 py-2 rounded-lg bg-surface-2 text-sm border border-border focus:border-primary outline-none" />
-              <button type="button" onClick={applyCode} disabled={applying || !discountInput.trim()}
-                className="px-3 py-2 rounded-lg bg-surface-2 text-sm font-medium border border-border disabled:opacity-50">
-                {appliedCode ? "Re-apply" : "Apply"}
-              </button>
+            <div className="space-y-2">
+              <div className="flex gap-2">
+                <input value={discountInput} onChange={(e) => setDiscountInput(e.target.value)} placeholder="Discount code (optional)" className="flex-1 px-3 py-2 rounded-lg bg-surface-2 text-sm border border-border focus:border-primary outline-none" />
+                <button type="button" onClick={applyCode} disabled={applying || !discountInput.trim()}
+                  className="px-3 py-2 rounded-lg bg-surface-2 text-sm font-medium border border-border disabled:opacity-50">
+                  {appliedCode ? "Re-apply" : "Apply"}
+                </button>
+                <button type="button" onClick={openBrowse}
+                  className="px-3 py-2 rounded-lg bg-surface-2 text-sm font-medium border border-border inline-flex items-center gap-1">
+                  <Tag className="size-4" /> Browse
+                </button>
+              </div>
+              {appliedCode && (
+                <div className="flex items-center justify-between text-xs px-2 py-1.5 rounded-md bg-success/10 text-success">
+                  <span>Applied: <span className="font-mono font-semibold">{appliedCode.code}</span> — only 1 code per order</span>
+                  <button type="button" onClick={() => { setAppliedCode(null); setDiscountInput(""); }} className="underline hover:no-underline">Remove</button>
+                </div>
+              )}
+              {browseOpen && (
+                <div className="rounded-lg border border-border bg-surface-2 p-2 space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <input
+                      autoFocus
+                      value={browseQuery}
+                      onChange={(e) => setBrowseQuery(e.target.value)}
+                      placeholder="Search valid codes..."
+                      className="flex-1 px-3 py-1.5 rounded-md bg-surface text-sm border border-border focus:border-primary outline-none"
+                    />
+                    <button type="button" onClick={() => setBrowseOpen(false)} className="text-xs text-muted-foreground hover:text-foreground">Close</button>
+                  </div>
+                  <div className="max-h-48 overflow-y-auto divide-y divide-border rounded-md">
+                    {loadingAvailable ? (
+                      <div className="p-3 text-xs text-muted-foreground text-center">Loading…</div>
+                    ) : filteredAvailable.length === 0 ? (
+                      <div className="p-3 text-xs text-muted-foreground text-center">No matching codes</div>
+                    ) : (
+                      filteredAvailable.map((c) => (
+                        <button
+                          key={c.id}
+                          type="button"
+                          onClick={() => selectCode(c)}
+                          className="w-full text-left p-2 hover:bg-surface flex items-center justify-between gap-2"
+                        >
+                          <div className="min-w-0">
+                            <div className="font-mono text-sm font-semibold">{c.code}</div>
+                            {c.description && <div className="text-xs text-muted-foreground truncate">{c.description}</div>}
+                          </div>
+                          <div className="text-xs font-semibold text-success shrink-0">{previewValue(c)}</div>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
