@@ -91,6 +91,7 @@ function SportsGuidesPage() {
       badge: "",
       published: true,
       created_at: "",
+      sort_order: 0,
     });
     setShowEditor(true);
   };
@@ -220,18 +221,32 @@ function SportsGuidesPage() {
                     const active = c.id === activeCat;
                     const n = counts[c.id] ?? 0;
                     return (
-                      <button
+                      <div
                         key={c.id}
-                        onClick={() => setActiveCat(c.id)}
-                        className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm transition ${
-                          active ? "bg-primary text-primary-foreground" : "hover:bg-surface-2"
-                        }`}
+                        draggable={isMod}
+                        onDragStart={() => { dragCatId.current = c.id; }}
+                        onDragOver={(e) => { if (isMod) e.preventDefault(); }}
+                        onDrop={(e) => {
+                          if (!isMod) return;
+                          e.preventDefault();
+                          if (dragCatId.current) reorderCategories(dragCatId.current, c.id);
+                          dragCatId.current = null;
+                        }}
+                        className={`group flex items-center gap-1 px-1 rounded-lg ${active ? "bg-primary text-primary-foreground" : "hover:bg-surface-2"}`}
                       >
-                        <span className="text-left">{c.name}</span>
-                        {n > 0 && (
-                          <span className={`text-xs px-2 py-0.5 rounded-full ${active ? "bg-primary-foreground/20" : "bg-surface-2"}`}>{n}</span>
+                        {isMod && (
+                          <GripVertical className="size-3.5 opacity-40 group-hover:opacity-80 cursor-grab shrink-0" />
                         )}
-                      </button>
+                        <button
+                          onClick={() => setActiveCat(c.id)}
+                          className="flex-1 flex items-center justify-between px-2 py-2 text-sm text-left"
+                        >
+                          <span>{c.name}</span>
+                          {n > 0 && (
+                            <span className={`text-xs px-2 py-0.5 rounded-full ${active ? "bg-primary-foreground/20" : "bg-surface-2"}`}>{n}</span>
+                          )}
+                        </button>
+                      </div>
                     );
                   })}
                 </div>
@@ -268,6 +283,15 @@ function SportsGuidesPage() {
                     {filtered.map((b) => (
                       <article
                         key={b.id}
+                        draggable={isMod}
+                        onDragStart={() => { dragBlogId.current = b.id; }}
+                        onDragOver={(e) => { if (isMod) e.preventDefault(); }}
+                        onDrop={(e) => {
+                          if (!isMod) return;
+                          e.preventDefault();
+                          if (dragBlogId.current) reorderBlogs(dragBlogId.current, b.id);
+                          dragBlogId.current = null;
+                        }}
                         className="rounded-2xl bg-surface border border-border overflow-hidden flex flex-col group"
                       >
                         <div className="aspect-[16/10] bg-surface-2 relative overflow-hidden">
@@ -276,6 +300,11 @@ function SportsGuidesPage() {
                           ) : (
                             <div className="w-full h-full grid place-items-center text-muted-foreground">
                               <ImageIcon className="size-10" />
+                            </div>
+                          )}
+                          {isMod && (
+                            <div className="absolute top-2 left-2 size-8 rounded-md bg-black/60 backdrop-blur grid place-items-center text-white cursor-grab">
+                              <GripVertical className="size-4" />
                             </div>
                           )}
                         </div>
@@ -313,16 +342,61 @@ function SportsGuidesPage() {
           </TabsContent>
 
           <TabsContent value="categories" className="mt-6">
+            {isMod && (
+              <div className="mb-4 flex items-center gap-2">
+                {addingCat ? (
+                  <>
+                    <Input
+                      autoFocus
+                      value={newCatName}
+                      onChange={(e) => setNewCatName(e.target.value)}
+                      placeholder="New category name"
+                      onKeyDown={(e) => { if (e.key === "Enter") addCategory(); if (e.key === "Escape") { setAddingCat(false); setNewCatName(""); } }}
+                      className="max-w-xs"
+                    />
+                    <Button onClick={addCategory}>Add</Button>
+                    <Button variant="ghost" onClick={() => { setAddingCat(false); setNewCatName(""); }}>Cancel</Button>
+                  </>
+                ) : (
+                  <Button onClick={() => setAddingCat(true)}>
+                    <Plus className="size-4 mr-1" /> Add Category
+                  </Button>
+                )}
+                <span className="text-xs text-muted-foreground ml-2">Drag cards to reorder — order is saved for everyone.</span>
+              </div>
+            )}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {categories.map((c) => (
-                <button
+                <div
                   key={c.id}
-                  onClick={() => { setActiveCat(c.id); setTab("guides"); }}
-                  className="rounded-2xl bg-surface border border-border p-5 text-left hover:border-primary transition"
+                  draggable={isMod}
+                  onDragStart={() => { dragCatId.current = c.id; }}
+                  onDragOver={(e) => { if (isMod) e.preventDefault(); }}
+                  onDrop={(e) => {
+                    if (!isMod) return;
+                    e.preventDefault();
+                    if (dragCatId.current) reorderCategories(dragCatId.current, c.id);
+                    dragCatId.current = null;
+                  }}
+                  className="rounded-2xl bg-surface border border-border p-5 hover:border-primary transition relative"
                 >
-                  <div className="font-display font-semibold text-lg">{c.name}</div>
-                  <div className="text-sm text-muted-foreground mt-1">{counts[c.id] ?? 0} guide{(counts[c.id] ?? 0) === 1 ? "" : "s"}</div>
-                </button>
+                  {isMod && (
+                    <div className="absolute top-2 right-2 flex items-center gap-1">
+                      <GripVertical className="size-4 text-muted-foreground cursor-grab" />
+                      <button
+                        onClick={(e) => { e.stopPropagation(); deleteCategory(c.id); }}
+                        className="text-muted-foreground hover:text-destructive p-1 rounded-md"
+                        title="Delete category"
+                      >
+                        <Trash2 className="size-4" />
+                      </button>
+                    </div>
+                  )}
+                  <button onClick={() => { setActiveCat(c.id); setTab("guides"); }} className="text-left w-full">
+                    <div className="font-display font-semibold text-lg">{c.name}</div>
+                    <div className="text-sm text-muted-foreground mt-1">{counts[c.id] ?? 0} guide{(counts[c.id] ?? 0) === 1 ? "" : "s"}</div>
+                  </button>
+                </div>
               ))}
             </div>
           </TabsContent>
