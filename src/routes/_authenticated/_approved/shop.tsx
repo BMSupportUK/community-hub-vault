@@ -12,7 +12,7 @@ type View = "store" | "orders" | "admin";
 
 export const Route = createFileRoute("/_authenticated/_approved/shop")({
   validateSearch: (s: Record<string, unknown>) => ({
-    view: (s.view === "orders" || s.view === "admin" ? s.view : "store") as View,
+    view: (s.view === "orders" || s.view === "admin" || s.view === "discounts" ? s.view : "store") as View | "discounts",
     id: typeof s.id === "string" ? s.id : undefined,
   }),
   component: ShopPage,
@@ -70,6 +70,7 @@ function ShopPage() {
             <>
               <div className="pt-3 px-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Admin</div>
               <SideBtn active={view === "admin"} onClick={() => navigate({ to: "/shop", search: { view: "admin" } })} Icon={Settings} label="Manage Products" />
+              <SideBtn active={view === ("discounts" as View)} onClick={() => navigate({ to: "/shop", search: { view: "discounts" as never } })} Icon={Tag} label="Discount Codes" />
             </>
           )}
         </div>
@@ -85,6 +86,7 @@ function ShopPage() {
       {view === "store" && <Storefront />}
       {view === "orders" && <OrdersView selectedId={id} isAdmin={isAdmin} />}
       {view === "admin" && isAdmin && <AdminProducts />}
+      {(view as string) === "discounts" && isAdmin && <AdminDiscounts />}
     </>
   );
 }
