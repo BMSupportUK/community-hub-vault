@@ -27,6 +27,7 @@ interface Stats {
   credentials: number;
   dnsCodes: number;
   blogs: number;
+  pendingReviews: number;
 }
 
 function AdminDashboard() {
