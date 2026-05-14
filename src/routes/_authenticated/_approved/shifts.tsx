@@ -122,6 +122,8 @@ function ShiftsPage() {
   // Swap dialog
   const [swapFor, setSwapFor] = useState<Slot | null>(null);
   const [swapMsg, setSwapMsg] = useState("");
+  const [swapTarget, setSwapTarget] = useState<string>("");
+  const [swapCandidates, setSwapCandidates] = useState<Profile[]>([]);
 
   const days = useMemo(() => Array.from({ length: 7 }, (_, i) => {
     const d = new Date(weekStart); d.setDate(d.getDate() + i); return d;
@@ -289,21 +291,41 @@ function ShiftsPage() {
     load();
   };
 
+  const openSwap = async (s: Slot) => {
+    if (!user) return;
+    setSwapFor(s); setSwapMsg(""); setSwapTarget("");
+    setSwapCandidates([]);
+    // Find roles of the requester (only staff-style ones), then peers with at least one matching role.
+    const { data: myRoles } = await supabase.from("user_roles").select("role").eq("user_id", user.id);
+    const staffish = ["admin", "management", "staff", "moderator"];
+    const mine = (myRoles ?? []).map((r: any) => r.role).filter((r: string) => staffish.includes(r));
+    if (mine.length === 0) return;
+    const { data: peers } = await supabase.from("user_roles").select("user_id, role").in("role", mine);
+    const peerIds = Array.from(new Set((peers ?? []).map((r: any) => r.user_id).filter((id: string) => id !== user.id)));
+    if (peerIds.length === 0) return;
+    const { data: profs } = await supabase.from("profiles").select("id, username, display_name").in("id", peerIds);
+    setSwapCandidates((profs ?? []) as Profile[]);
+  };
+
   const submitSwap = async () => {
     if (!user || !swapFor) return;
+    if (!swapTarget) return toast.error("Pick someone with the same role to swap with");
     const { error } = await supabase.from("shift_swap_requests").insert({
-      slot_id: swapFor.id, requester_id: user.id, message: swapMsg || null,
+      slot_id: swapFor.id, requester_id: user.id, target_user_id: swapTarget, message: swapMsg || null,
     });
     if (error) return toast.error(error.message);
     toast.success("Swap request submitted");
-    setSwapFor(null); setSwapMsg("");
+    setSwapFor(null); setSwapMsg(""); setSwapTarget("");
     load();
   };
 
   const reviewSwap = async (s: Swap, status: ReqStatus) => {
     if (status === "approved") {
-      // For now, approval just unassigns the slot so anyone can re-claim; a target swap is logged in message.
-      await supabase.from("shift_slots").update({ assigned_to: null }).eq("id", s.slot_id);
+      if (s.target_user_id) {
+        await supabase.from("shift_slots").update({ assigned_to: s.target_user_id }).eq("id", s.slot_id);
+      } else {
+        await supabase.from("shift_slots").update({ assigned_to: null }).eq("id", s.slot_id);
+      }
     }
     const { error } = await supabase.from("shift_swap_requests").update({ status, reviewed_by: user?.id ?? null, reviewed_at: new Date().toISOString() }).eq("id", s.id);
     if (error) return toast.error(error.message);
