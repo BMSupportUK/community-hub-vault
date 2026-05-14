@@ -292,6 +292,45 @@ export type Database = {
           },
         ]
       }
+      holiday_requests: {
+        Row: {
+          created_at: string
+          end_date: string
+          id: string
+          reason: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          start_date: string
+          status: Database["public"]["Enums"]["request_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          end_date: string
+          id?: string
+          reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          start_date: string
+          status?: Database["public"]["Enums"]["request_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          end_date?: string
+          id?: string
+          reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          start_date?: string
+          status?: Database["public"]["Enums"]["request_status"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       install_blogs: {
         Row: {
           badge: string | null
@@ -709,6 +748,84 @@ export type Database = {
           label?: string
           name?: string
           sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      shift_slots: {
+        Row: {
+          assigned_to: string | null
+          created_at: string
+          created_by: string | null
+          end_time: string
+          id: string
+          notes: string | null
+          shift_date: string
+          slot_type: Database["public"]["Enums"]["slot_type"]
+          start_time: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          created_at?: string
+          created_by?: string | null
+          end_time: string
+          id?: string
+          notes?: string | null
+          shift_date: string
+          slot_type?: Database["public"]["Enums"]["slot_type"]
+          start_time: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          created_at?: string
+          created_by?: string | null
+          end_time?: string
+          id?: string
+          notes?: string | null
+          shift_date?: string
+          slot_type?: Database["public"]["Enums"]["slot_type"]
+          start_time?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      shift_swap_requests: {
+        Row: {
+          created_at: string
+          id: string
+          message: string | null
+          requester_id: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          slot_id: string
+          status: Database["public"]["Enums"]["request_status"]
+          target_user_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message?: string | null
+          requester_id: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          slot_id: string
+          status?: Database["public"]["Enums"]["request_status"]
+          target_user_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string | null
+          requester_id?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          slot_id?: string
+          status?: Database["public"]["Enums"]["request_status"]
+          target_user_id?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -1211,6 +1328,8 @@ export type Database = {
         | "shipped"
         | "completed"
         | "cancelled"
+      request_status: "pending" | "approved" | "denied"
+      slot_type: "shift" | "hourly"
       ticket_priority: "low" | "normal" | "high" | "urgent"
       ticket_status: "open" | "in_progress" | "waiting" | "resolved" | "closed"
     }
@@ -1365,6 +1484,8 @@ export const Constants = {
         "completed",
         "cancelled",
       ],
+      request_status: ["pending", "approved", "denied"],
+      slot_type: ["shift", "hourly"],
       ticket_priority: ["low", "normal", "high", "urgent"],
       ticket_status: ["open", "in_progress", "waiting", "resolved", "closed"],
     },
