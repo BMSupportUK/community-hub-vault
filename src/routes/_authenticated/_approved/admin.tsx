@@ -90,6 +90,7 @@ function SecurityGate({ hasPin, onUnlocked }: { hasPin: boolean; onUnlocked: () 
   const [pin, setPin] = useState("");
   const [confirmPin, setConfirmPin] = useState("");
   const [busy, setBusy] = useState(false);
+  const [mode, setMode] = useState<"unlock" | "reset">("unlock");
 
   const setupPin = async () => {
     if (!user) return;
@@ -124,6 +125,26 @@ function SecurityGate({ hasPin, onUnlocked }: { hasPin: boolean; onUnlocked: () 
     } finally { setBusy(false); }
   };
 
+  const resetPin = async () => {
+    if (!user?.email) return;
+    if (!password) return toast.error("Enter your account password");
+    if (pin.length < 4) return toast.error("PIN must be at least 4 characters");
+    if (pin !== confirmPin) return toast.error("PINs do not match");
+    setBusy(true);
+    try {
+      const { error: signErr } = await supabase.auth.signInWithPassword({ email: user.email, password });
+      if (signErr) throw new Error("Incorrect password");
+      const hash = await sha256Hex(`${user.id}:${pin}`);
+      const { error } = await supabase.from("vault_pins").upsert({ user_id: user.id, pin_hash: hash });
+      if (error) throw error;
+      toast.success("PIN reset. Please unlock with your new PIN.");
+      setPassword(""); setPin(""); setConfirmPin("");
+      setMode("unlock");
+    } catch (e: any) {
+      toast.error(e.message ?? "Reset failed");
+    } finally { setBusy(false); }
+  };
+
   return (
     <div className="max-w-md mx-auto rounded-2xl border border-border bg-surface-1 p-6">
       <div className="size-12 rounded-2xl bg-surface-2 grid place-items-center mb-4">
@@ -139,7 +160,7 @@ function SecurityGate({ hasPin, onUnlocked }: { hasPin: boolean; onUnlocked: () 
             {busy ? "Saving…" : "Save PIN"}
           </button>
         </>
-      ) : (
+      ) : mode === "unlock" ? (
         <>
           <h2 className="font-display text-lg font-bold">Admin security check</h2>
           <p className="text-sm text-muted-foreground mb-4">Enter your account password and admin PIN to continue.</p>
@@ -147,6 +168,31 @@ function SecurityGate({ hasPin, onUnlocked }: { hasPin: boolean; onUnlocked: () 
           <input value={pin} onChange={(e) => setPin(e.target.value)} type="password" placeholder="Admin PIN" className="w-full mb-4 px-3 py-2.5 rounded-lg bg-surface-2 border border-border text-sm" onKeyDown={(e) => e.key === "Enter" && unlock()} />
           <button onClick={unlock} disabled={busy} className="w-full py-2.5 rounded-lg bg-primary text-primary-foreground font-medium disabled:opacity-60 flex items-center justify-center gap-2">
             {busy ? <Loader2 className="size-4 animate-spin" /> : <KeyRound className="size-4" />} Unlock dashboard
+          </button>
+          <button
+            type="button"
+            onClick={() => { setMode("reset"); setPin(""); setConfirmPin(""); }}
+            className="w-full mt-3 text-xs text-muted-foreground hover:text-foreground underline underline-offset-2"
+          >
+            Forgot your PIN? Reset it
+          </button>
+        </>
+      ) : (
+        <>
+          <h2 className="font-display text-lg font-bold">Reset admin PIN</h2>
+          <p className="text-sm text-muted-foreground mb-4">Confirm your account password, then choose a new PIN.</p>
+          <input value={password} onChange={(e) => setPassword(e.target.value)} type="password" placeholder="Account password" className="w-full mb-2 px-3 py-2.5 rounded-lg bg-surface-2 border border-border text-sm" autoFocus />
+          <input value={pin} onChange={(e) => setPin(e.target.value)} type="password" placeholder="New PIN (min 4)" className="w-full mb-2 px-3 py-2.5 rounded-lg bg-surface-2 border border-border text-sm" />
+          <input value={confirmPin} onChange={(e) => setConfirmPin(e.target.value)} type="password" placeholder="Confirm new PIN" className="w-full mb-4 px-3 py-2.5 rounded-lg bg-surface-2 border border-border text-sm" onKeyDown={(e) => e.key === "Enter" && resetPin()} />
+          <button onClick={resetPin} disabled={busy} className="w-full py-2.5 rounded-lg bg-primary text-primary-foreground font-medium disabled:opacity-60 flex items-center justify-center gap-2">
+            {busy ? <Loader2 className="size-4 animate-spin" /> : <KeyRound className="size-4" />} Save new PIN
+          </button>
+          <button
+            type="button"
+            onClick={() => { setMode("unlock"); setPin(""); setConfirmPin(""); }}
+            className="w-full mt-3 text-xs text-muted-foreground hover:text-foreground underline underline-offset-2"
+          >
+            Back to unlock
           </button>
         </>
       )}
