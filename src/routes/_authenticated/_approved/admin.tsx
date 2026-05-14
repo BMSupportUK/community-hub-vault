@@ -1,6 +1,6 @@
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ShieldCheck, Lock, KeyRound, Users, Ticket, ShoppingBag, ShieldAlert, KeySquare, Globe, Clock, FileText, Loader2, Shield } from "lucide-react";
+import { ShieldCheck, Lock, KeyRound, Users, Ticket, ShoppingBag, ShieldAlert, KeySquare, Globe, Clock, FileText, Loader2, Shield, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
@@ -27,6 +27,7 @@ interface Stats {
   credentials: number;
   dnsCodes: number;
   blogs: number;
+  pendingReviews: number;
 }
 
 function AdminDashboard() {
@@ -229,7 +230,7 @@ function DashboardBody() {
   useEffect(() => {
     (async () => {
       const cnt = (q: any) => q.then((r: any) => r.count ?? 0);
-      const [users, pending, tickets, orders, shifts, creds, dns, blogs] = await Promise.all([
+      const [users, pending, tickets, orders, shifts, creds, dns, blogs, reviews] = await Promise.all([
         cnt(supabase.from("profiles").select("id", { count: "exact", head: true })),
         cnt(supabase.from("user_roles").select("user_id", { count: "exact", head: true }).eq("role", "pending")),
         cnt(supabase.from("tickets").select("id", { count: "exact", head: true }).neq("status", "closed")),
@@ -238,8 +239,9 @@ function DashboardBody() {
         cnt(supabase.from("app_credentials").select("id", { count: "exact", head: true })),
         cnt(supabase.from("qd_dns_codes").select("id", { count: "exact", head: true })),
         cnt(supabase.from("sports_blogs").select("id", { count: "exact", head: true })),
+        cnt(supabase.from("customer_reviews").select("id", { count: "exact", head: true }).eq("status", "pending")),
       ]);
-      setStats({ users, pending, openTickets: tickets, pendingOrders: orders, activeShifts: shifts, credentials: creds, dnsCodes: dns, blogs });
+      setStats({ users, pending, openTickets: tickets, pendingOrders: orders, activeShifts: shifts, credentials: creds, dnsCodes: dns, blogs, pendingReviews: reviews });
     })();
   }, []);
 
@@ -252,6 +254,7 @@ function DashboardBody() {
     { label: "Credentials stored", value: stats?.credentials, icon: KeySquare, accent: "primary" },
     { label: "QD DNS codes", value: stats?.dnsCodes, icon: Globe, accent: "primary" },
     { label: "Sports blogs", value: stats?.blogs, icon: FileText, accent: "primary" },
+    { label: "Reviews to approve", value: stats?.pendingReviews, icon: Star, accent: "amber" },
   ];
 
   const tools: { to: string; label: string; desc: string; icon: any }[] = [
@@ -262,6 +265,7 @@ function DashboardBody() {
     { to: "/moderation", label: "Moderation queue", desc: "Approve gate requests and manage members.", icon: ShieldAlert },
     { to: "/shifts", label: "Shifts overview", desc: "Review staff shifts and break history.", icon: Clock },
     { to: "/sports-guides", label: "Sports content", desc: "Publish blogs and manage categories.", icon: FileText },
+    { to: "/admin-reviews", label: "Customer reviews", desc: "Approve, reject or delete customer feedback.", icon: Star },
   ];
 
   return (
