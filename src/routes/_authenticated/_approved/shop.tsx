@@ -299,6 +299,10 @@ function Checkout({ items, total, onClose, onPlace }: {
   };
 
   const selectCode = (c: DiscountCode) => {
+    if (appliedCode) {
+      toast.error("Only 1 discount code per order. Remove the current code first.");
+      return;
+    }
     setAppliedCode(c);
     setDiscountInput(c.code);
     setBrowseOpen(false);
@@ -316,6 +320,14 @@ function Checkout({ items, total, onClose, onPlace }: {
   const applyCode = async () => {
     const code = discountInput.trim();
     if (!code) return;
+    if (appliedCode && appliedCode.code.toLowerCase() !== code.toLowerCase()) {
+      toast.error("Only 1 discount code per order. Remove the current code first.");
+      return;
+    }
+    if (appliedCode && appliedCode.code.toLowerCase() === code.toLowerCase()) {
+      toast.info("This code is already applied");
+      return;
+    }
     setApplying(true);
     const { data, error } = await supabase.from("discount_codes").select("*")
       .ilike("code", code).eq("is_active", true).maybeSingle();
