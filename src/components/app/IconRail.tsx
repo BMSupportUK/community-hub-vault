@@ -1,6 +1,6 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import { Home, Ticket, ShoppingBag, BookOpen, FileText, Clock, Calendar, Shield, LogOut, MessageSquare, ShieldCheck, LayoutDashboard, UserCircle2, Globe, Activity } from "lucide-react";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth, type AppRole } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 import { NotificationBell } from "@/components/app/NotificationBell";
 import { MentionsBadge } from "@/components/app/MentionsBadge";
@@ -16,11 +16,12 @@ interface RailItem {
 }
 
 export function IconRail() {
-  const { isStaff, isMod, isPending, signOut, hasAny } = useAuth();
+  const { isStaff, isMod, isPending, signOut, hasAny, roles } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
   const path = useRouterState({ select: (r) => r.location.pathname });
   const [activeIncidents, setActiveIncidents] = useState(0);
   const [order, setOrder] = useState<Record<string, number>>({});
+  const [pagePerms, setPagePerms] = useState<Record<string, string[]>>({});
   const dragKey = useRef<string | null>(null);
   const navigate = useNavigate();
   const handleSignOut = async () => {
@@ -66,6 +67,23 @@ export function IconRail() {
     };
   }, []);
 
+  useEffect(() => {
+    const loadPerms = async () => {
+      const { data } = await supabase.from("page_permissions").select("page_key,allowed_roles");
+      const map: Record<string, string[]> = {};
+      (data ?? []).forEach((r: { page_key: string; allowed_roles: string[] }) => {
+        map[r.page_key] = r.allowed_roles ?? [];
+      });
+      setPagePerms(map);
+    };
+    loadPerms();
+    const ch = supabase
+      .channel("rail-page-perms")
+      .on("postgres_changes", { event: "*", schema: "public", table: "page_permissions" }, () => loadPerms())
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, []);
+
   if (isPending) {
     return (
       <aside className="bg-rail w-[72px] shrink-0 flex flex-col items-center py-4 gap-2 border-r border-border">
@@ -94,7 +112,14 @@ export function IconRail() {
     { to: "/admin-roles", label: "User roles", icon: ShieldCheck, show: isAdmin },
   ];
 
-  const visible = items.filter((i) => i.show);
+  const allowedByPerms = (to: string) => {
+    if (isAdmin) return true;
+    const key = to.replace(/^\//, "");
+    const allowed = pagePerms[key];
+    if (!allowed) return true; // unknown page: don't hide
+    return roles.some((r: AppRole) => allowed.includes(r));
+  };
+  const visible = items.filter((i) => i.show && allowedByPerms(i.to));
   const sorted = [...visible].sort((a, b) => {
     const ai = order[a.to] ?? items.findIndex((x) => x.to === a.to) * 10 + 1000;
     const bi = order[b.to] ?? items.findIndex((x) => x.to === b.to) * 10 + 1000;

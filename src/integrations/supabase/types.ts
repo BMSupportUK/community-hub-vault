@@ -85,6 +85,41 @@ export type Database = {
           },
         ]
       }
+      channel_permissions: {
+        Row: {
+          can_delete: boolean
+          can_mention: boolean
+          can_send: boolean
+          can_view: boolean
+          channel_id: string
+          role: Database["public"]["Enums"]["app_role"]
+        }
+        Insert: {
+          can_delete?: boolean
+          can_mention?: boolean
+          can_send?: boolean
+          can_view?: boolean
+          channel_id: string
+          role: Database["public"]["Enums"]["app_role"]
+        }
+        Update: {
+          can_delete?: boolean
+          can_mention?: boolean
+          can_send?: boolean
+          can_view?: boolean
+          channel_id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "channel_permissions_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "chat_channels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chat_channels: {
         Row: {
           created_at: string
@@ -412,6 +447,30 @@ export type Database = {
           total_cents?: number
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      page_permissions: {
+        Row: {
+          allowed_roles: Database["public"]["Enums"]["app_role"][]
+          label: string
+          page_key: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          allowed_roles?: Database["public"]["Enums"]["app_role"][]
+          label: string
+          page_key: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          allowed_roles?: Database["public"]["Enums"]["app_role"][]
+          label?: string
+          page_key?: string
+          sort_order?: number
+          updated_at?: string
         }
         Relationships: []
       }
@@ -1024,6 +1083,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_in_channel: {
+        Args: { _action: string; _channel: string; _user: string }
+        Returns: boolean
+      }
       create_app_role: {
         Args: { _label: string; _name: string }
         Returns: undefined
