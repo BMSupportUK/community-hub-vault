@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { isAdminUnlocked } from "@/lib/admin-unlock";
 
 export const Route = createFileRoute("/_authenticated/_approved/admin-roles")({
   component: AdminRolesPage,
@@ -107,6 +108,9 @@ function AdminRolesPage() {
   const styleFor = (role: string) => SYSTEM_STYLE[role] ?? CUSTOM_STYLE;
 
   if (!isAdmin) return <Navigate to="/home" />;
+  if (!isAdminUnlocked(user?.id)) {
+    return <Navigate to="/admin" search={{ next: "/admin-roles" } as never} />;
+  }
 
   return (
     <main className="flex-1 overflow-y-auto">

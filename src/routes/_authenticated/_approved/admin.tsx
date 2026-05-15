@@ -1,4 +1,4 @@
-import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
+import { createFileRoute, Link, Navigate, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { ShieldCheck, Lock, KeyRound, Users, Ticket, ShoppingBag, ShieldAlert, KeySquare, Globe, Clock, FileText, Loader2, Shield, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -6,6 +6,9 @@ import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/_approved/admin")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    next: typeof search.next === "string" ? (search.next as string) : undefined,
+  }),
   component: AdminDashboard,
 });
 
@@ -36,6 +39,8 @@ function AdminDashboard() {
   const [hasPin, setHasPin] = useState<boolean | null>(null);
   const [unlocked, setUnlocked] = useState(false);
   const [unlockedUntil, setUnlockedUntil] = useState(0);
+  const { next } = Route.useSearch();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!user) return;
@@ -101,6 +106,9 @@ function AdminDashboard() {
               setUnlockedUntil(until);
               setHasPin(true);
               if (user) { try { sessionStorage.setItem(UNLOCK_KEY(user.id), String(until)); } catch {} }
+              if (next && next.startsWith("/")) {
+                navigate({ to: next });
+              }
             }}
           />
         ) : (
