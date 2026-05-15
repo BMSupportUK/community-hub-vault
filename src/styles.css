@@ -58,10 +58,10 @@
 
 :root {
   /* Vibrant purple / red / blue — professional dark theme */
-  --background: oklch(0.17 0.035 275);
+  --background: oklch(0.28 0.12 295);
   --foreground: oklch(0.97 0.005 280);
-  --surface: oklch(0.22 0.045 280);
-  --surface-2: oklch(0.27 0.055 285);
+  --surface: oklch(0.32 0.13 290);
+  --surface-2: oklch(0.38 0.15 300);
   --rail: oklch(0.48 0.28 295);
 
   --card: oklch(0.22 0.045 280);
@@ -100,7 +100,16 @@
 
 @layer base {
   * { border-color: var(--color-border); }
-  html, body { background: var(--color-background); color: var(--color-foreground); font-family: var(--font-sans); }
+  html, body {
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    background:
+      radial-gradient(ellipse at top left, oklch(0.45 0.26 295 / 0.55), transparent 55%),
+      radial-gradient(ellipse at top right, oklch(0.50 0.28 18 / 0.40), transparent 55%),
+      radial-gradient(ellipse at bottom, oklch(0.48 0.26 255 / 0.55), transparent 60%),
+      var(--color-background);
+    background-attachment: fixed;
+  }
   body { font-feature-settings: "ss01", "cv11"; }
   h1,h2,h3,h4 { font-family: var(--font-display); letter-spacing: -0.01em; }
   ::selection { background: color-mix(in oklab, var(--primary) 35%, transparent); }
