@@ -78,7 +78,16 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
       return;
     }
     setSaving(true);
-    const payload = {
+    const payload: {
+      category_id: string;
+      title: string;
+      excerpt: string | null;
+      body: string | null;
+      image_url: string | null;
+      badge: string | null;
+      published: boolean;
+      sort_order?: number;
+    } = {
       category_id: editing.category_id,
       title: editing.title.trim(),
       excerpt: editing.excerpt?.trim() || null,
@@ -87,6 +96,17 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
       badge: editing.badge?.trim() || null,
       published: editing.published,
     };
+    if (!editing.id) {
+      // Append to the end of the chosen category so the admin-defined order is preserved.
+      const { data: maxRow } = await supabase
+        .from("sports_blogs")
+        .select("sort_order")
+        .eq("category_id", editing.category_id)
+        .order("sort_order", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      payload.sort_order = ((maxRow?.sort_order ?? 0) as number) + 10;
+    }
     const { error } = editing.id
       ? await supabase.from("sports_blogs").update(payload).eq("id", editing.id)
       : await supabase.from("sports_blogs").insert({ ...payload, created_by: user?.id ?? null });
