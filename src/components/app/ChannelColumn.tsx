@@ -83,7 +83,7 @@ export function ChannelColumn({
                       <Icon className="size-4 shrink-0" />
                       <span className="truncate">{it.label}</span>
                       {it.badge && it.badge > 0 ? (
-                        <span className="ml-auto min-w-5 h-5 px-1.5 rounded-full bg-indigo-500 text-white text-[10px] font-bold grid place-items-center shadow-sm">
+                        <span className="ml-auto min-w-5 h-5 px-1.5 rounded-full bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 text-white text-[10px] font-bold grid place-items-center shadow-glow">
                           {it.badge > 99 ? "99+" : it.badge}
                         </span>
                       ) : null}
