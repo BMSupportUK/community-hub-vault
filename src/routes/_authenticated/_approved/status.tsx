@@ -347,7 +347,7 @@ function IncidentCard({ incident, canManage, onEdit }: { incident: Incident; can
           status,
           message: msg.trim(),
           created_by: user.id,
-          attachments: uploaded,
+          attachments: uploaded as unknown as never,
         });
       if (uErr) throw uErr;
       const patch: { status: IncidentStatus; resolved_at?: string | null } = { status };
