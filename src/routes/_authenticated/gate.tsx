@@ -254,12 +254,7 @@ function GatePage() {
           </button>
         )}
 
-        {status === "denied" && (
-          <div className="w-full max-w-md mt-6">
-            <InviteRedeem />
-          </div>
-        )}
-        {status !== "approved" && status !== "denied" && (
+        {status !== "approved" && (
           <div className="mt-6 w-full max-w-md">
             <div className="flex items-center gap-3 mb-3">
               <div className="flex-1 h-px bg-white/10" />
@@ -290,7 +285,7 @@ function GatePage() {
           </div>
         )}
 
-        {false && (
+        {status === "denied" && (
           <button
             onClick={() => {
               setReasonDraft("[APPEAL] ");
