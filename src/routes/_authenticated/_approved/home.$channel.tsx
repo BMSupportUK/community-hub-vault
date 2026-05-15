@@ -886,6 +886,7 @@ function ChannelPage() {
                   )}
                 </div>
               </div>
+              </div>
             );
           })
         )}
