@@ -1045,15 +1045,25 @@ function ChannelPage() {
               }
             }}
             rows={1}
-            placeholder={canSend
-              ? `Message #${channel.name} — type @ to mention`
-              : `You don't have permission to send messages in this channel`}
-            disabled={!canSend}
+            placeholder={!canSend
+              ? `You don't have permission to send messages in this channel`
+              : slowRemaining > 0
+                ? `Slow mode: wait ${slowRemaining}s before sending another message`
+                : channel.slow_mode_seconds > 0
+                  ? `Message #${channel.name} — slow mode ${formatSlow(channel.slow_mode_seconds)}`
+                  : `Message #${channel.name} — type @ to mention`}
+            disabled={!canSend || slowRemaining > 0}
             className="flex-1 bg-transparent resize-none outline-none text-sm py-1 max-h-32"
           />
+          {slowRemaining > 0 && (
+            <div className="flex items-center gap-1 text-xs text-primary tabular-nums px-2 py-1 rounded-md bg-primary/10 border border-primary/30">
+              <Timer className="size-3.5" />
+              <span>{slowRemaining}s</span>
+            </div>
+          )}
           <button
             onClick={send}
-            disabled={sending || !draft.trim() || !canSend}
+            disabled={sending || !draft.trim() || !canSend || slowRemaining > 0}
             className="size-8 rounded-lg bg-primary text-primary-foreground grid place-items-center disabled:opacity-50"
           >
             {sending ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
