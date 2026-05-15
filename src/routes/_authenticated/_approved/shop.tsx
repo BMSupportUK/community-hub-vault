@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import shopHero from "@/assets/shop-hero.jpg";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { useCurrency } from "@/hooks/use-currency";
 
 type View = "store" | "orders" | "admin" | "refund" | "multi_room" | "triple_room";
 
@@ -50,13 +51,19 @@ interface OrderMessage { id: string; order_id: string; sender_id: string; conten
 interface ProductCategory { id: string; name: string; slug: string; sort_order: number; }
 interface DiscountCode { id: string; code: string; description: string | null; percent: number | null; amount_cents: number | null; user_id: string | null; is_active: boolean; }
 
-const fmt = (c: number) => new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP" }).format(c / 100);
+let _currentFmt: (c: number) => string = (c: number) =>
+  new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP" }).format((c || 0) / 100);
+const fmt = (c: number) => _currentFmt(c);
+let _currentSymbol = "£";
 
 function ShopPage() {
   const { view, id } = Route.useSearch();
   const navigate = useNavigate();
   const { user, hasAny } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
+  const { format, symbol } = useCurrency();
+  _currentFmt = format;
+  _currentSymbol = symbol;
 
   const groups: ChannelGroup[] = [
     { label: "Shop", items: [
@@ -850,6 +857,7 @@ function AdminProducts() {
   const [categories, setCategories] = useState<ProductCategory[]>([]);
   const [showCats, setShowCats] = useState(false);
   const [newCat, setNewCat] = useState("");
+  const sym = _currentSymbol;
 
   const load = async () => {
     const { data } = await supabase.from("products").select("*").order("sort_order");
@@ -953,9 +961,9 @@ function AdminProducts() {
               <Field label="Name"><input value={editing.name ?? ""} onChange={(e) => setEditing({ ...editing, name: e.target.value })} className="w-full px-3 py-2 rounded-lg bg-surface-2 text-sm border border-border outline-none" /></Field>
               <Field label="Description"><textarea value={editing.description ?? ""} onChange={(e) => setEditing({ ...editing, description: e.target.value })} rows={3} className="w-full px-3 py-2 rounded-lg bg-surface-2 text-sm border border-border outline-none resize-none" /></Field>
               <div className="grid grid-cols-2 gap-3">
-                <Field label="Price (£)">
+                <Field label={`Price (${sym})`}>
                   <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">£</span>
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">{sym}</span>
                     <input
                       type="text"
                       inputMode="decimal"
