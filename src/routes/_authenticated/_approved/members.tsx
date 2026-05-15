@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Users, Search, Clock, UserPlus, Eye, Check, Lock } from "lucide-react";
 import { toast } from "sonner";
+import profileHeader from "@/assets/profile-header.jpg";
 
 export const Route = createFileRoute("/_authenticated/_approved/members")({
   component: MembersPage,
@@ -176,7 +177,11 @@ function MembersPage() {
               key={p.id}
               className="group rounded-2xl bg-surface border border-border hover:border-fuchsia-400/50 hover:shadow-lg hover:shadow-fuchsia-500/10 transition-all overflow-hidden flex flex-col"
             >
-              <div className="h-16 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600" />
+              <div
+                className="h-16 bg-cover bg-center"
+                style={{ backgroundImage: `url(${profileHeader})` }}
+                aria-hidden
+              />
               <div className="px-4 -mt-8 pb-4 flex flex-col flex-1">
                 <img
                   src={p.avatar_url || "/default-avatar.png"}
