@@ -95,18 +95,17 @@ export function MentionsBadge() {
   const markAllRead = async () => {
     await supabase
       .from("user_notifications")
-      .update({ read_at: new Date().toISOString() })
+      .delete()
       .eq("user_id", user.id)
-      .eq("kind", "mention")
-      .is("read_at", null);
+      .eq("kind", "mention");
     loadList(user.id);
     setCount(0);
   };
 
   const openItem = async (m: MentionRow) => {
-    if (!m.read_at) {
-      await supabase.from("user_notifications").update({ read_at: new Date().toISOString() }).eq("id", m.id);
-    }
+    await supabase.from("user_notifications").delete().eq("id", m.id);
+    setItems((prev) => prev.filter((x) => x.id !== m.id));
+    if (!m.read_at) setCount((n) => Math.max(0, n - 1));
     setOpen(false);
     if (m.link_path) navigate({ to: m.link_path } as never);
   };
