@@ -536,7 +536,7 @@ function TicketDetail({
     const { data } = await supabase
       .from("ticket_messages").select("*")
       .eq("ticket_id", ticket.id).order("created_at", { ascending: true });
-    setMessages((data ?? []) as Message[]);
+    setMessages((data ?? []) as unknown as Message[]);
     // Pull missing sender profiles
     const missing = [...new Set((data ?? []).map((m) => m.sender_id))].filter((id) => !profiles.has(id));
     if (missing.length) {
