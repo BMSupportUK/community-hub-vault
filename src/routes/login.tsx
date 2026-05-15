@@ -102,7 +102,7 @@ export function AuthFrame({ title, subtitle, children }: { title: string; subtit
     <div className="min-h-screen grid place-items-center px-4 bg-background">
       <div className="w-full max-w-md">
         <Link to="/" className="flex items-center gap-2 justify-center mb-8">
-          <div className="h-10 px-3 rounded-xl bg-gradient-primary shadow-glow grid place-items-center font-display font-bold text-[10px] leading-tight text-primary-foreground text-center break-words">Support Community</div>
+          <div className="size-9 rounded-xl bg-gradient-primary shadow-glow grid place-items-center font-display font-bold text-[13px] text-primary-foreground">BM</div>
           <span className="font-display font-bold text-lg">Hub</span>
         </Link>
         <div className="bg-surface border border-border rounded-2xl p-8 shadow-soft">
