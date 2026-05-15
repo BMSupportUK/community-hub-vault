@@ -503,18 +503,28 @@ function SportsGuidesPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Editor */}
-      <Dialog open={showEditor} onOpenChange={(o) => { if (!o) { setShowEditor(false); setEditing(null); } }}>
-        <DialogContent className="max-w-xl">
-          <DialogHeader>
-            <DialogTitle>{editing?.id ? "Edit blog" : "Add blog"}</DialogTitle>
-          </DialogHeader>
-          {editing && (
-            <div className="space-y-3">
+      {/* Full-page Editor */}
+      {showEditor && editing && (
+        <div className="fixed inset-0 z-50 flex flex-col bg-gradient-to-br from-[#1a0b2e] via-[#2d1b4e] to-[#1a0b2e]">
+          <header className="flex items-center justify-between gap-4 px-8 py-5 border-b border-purple-500/30 bg-purple-950/60 backdrop-blur shrink-0">
+            <h2 className="font-display text-2xl font-bold bg-gradient-to-r from-violet-400 via-fuchsia-400 to-blue-400 bg-clip-text text-transparent">
+              {editing.id ? "Edit blog" : "Add blog"}
+            </h2>
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" className="text-purple-200 hover:text-white hover:bg-purple-800/60" onClick={() => { setShowEditor(false); setEditing(null); }}>
+                <X className="size-4 mr-1" /> Cancel
+              </Button>
+              <Button onClick={saveBlog} className="bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white border-0">
+                Save
+              </Button>
+            </div>
+          </header>
+          <div className="flex-1 overflow-y-auto">
+            <div className="max-w-3xl mx-auto px-6 py-8 space-y-4">
               <div>
-                <Label>Category</Label>
+                <Label className="text-purple-100">Category</Label>
                 <select
-                  className="mt-1 w-full bg-surface-2 border border-border rounded-md px-3 py-2 text-sm"
+                  className="mt-1 w-full bg-purple-950/50 border border-purple-500/30 text-purple-50 rounded-md px-3 py-2 text-sm"
                   value={editing.category_id}
                   onChange={(e) => setEditing({ ...editing, category_id: e.target.value })}
                 >
@@ -524,30 +534,30 @@ function SportsGuidesPage() {
                 </select>
               </div>
               <div>
-                <Label>Title</Label>
-                <Input value={editing.title} onChange={(e) => setEditing({ ...editing, title: e.target.value })} />
+                <Label className="text-purple-100">Title</Label>
+                <Input value={editing.title} onChange={(e) => setEditing({ ...editing, title: e.target.value })} className="bg-purple-950/50 border-purple-500/30 text-purple-50" />
               </div>
               <div>
-                <Label>Image URL</Label>
-                <Input value={editing.image_url ?? ""} onChange={(e) => setEditing({ ...editing, image_url: e.target.value })} placeholder="https://…" />
+                <Label className="text-purple-100">Image URL</Label>
+                <Input value={editing.image_url ?? ""} onChange={(e) => setEditing({ ...editing, image_url: e.target.value })} placeholder="https://…" className="bg-purple-950/50 border-purple-500/30 text-purple-50 placeholder:text-purple-300/50" />
               </div>
               <div>
-                <Label>Badge (optional)</Label>
-                <Input value={editing.badge ?? ""} onChange={(e) => setEditing({ ...editing, badge: e.target.value })} placeholder="e.g. Updated with New Listings" />
+                <Label className="text-purple-100">Badge (optional)</Label>
+                <Input value={editing.badge ?? ""} onChange={(e) => setEditing({ ...editing, badge: e.target.value })} placeholder="e.g. Updated with New Listings" className="bg-purple-950/50 border-purple-500/30 text-purple-50 placeholder:text-purple-300/50" />
               </div>
               <div>
-                <Label>Excerpt</Label>
-                <Textarea rows={2} value={editing.excerpt ?? ""} onChange={(e) => setEditing({ ...editing, excerpt: e.target.value })} />
+                <Label className="text-purple-100">Excerpt</Label>
+                <Textarea rows={3} value={editing.excerpt ?? ""} onChange={(e) => setEditing({ ...editing, excerpt: e.target.value })} className="bg-purple-950/50 border-purple-500/30 text-purple-50" />
               </div>
               <div>
-                <Label>Body</Label>
+                <Label className="text-purple-100">Body</Label>
                 <HtmlEditor
                   value={editing.body ?? ""}
                   onChange={(html) => setEditing({ ...editing, body: html })}
                   placeholder="Write the guide content..."
                 />
               </div>
-              <label className="flex items-center gap-2 text-sm">
+              <label className="flex items-center gap-2 text-sm text-purple-100">
                 <input
                   type="checkbox"
                   checked={editing.published}
@@ -556,15 +566,9 @@ function SportsGuidesPage() {
                 Published
               </label>
             </div>
-          )}
-          <DialogFooter>
-            <Button variant="ghost" onClick={() => { setShowEditor(false); setEditing(null); }}>
-              <X className="size-4 mr-1" /> Cancel
-            </Button>
-            <Button onClick={saveBlog}>Save</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
