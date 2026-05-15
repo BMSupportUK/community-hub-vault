@@ -1539,6 +1539,7 @@ export type Database = {
         | "pending"
         | "banned"
         | "subscriber"
+        | "nonsubscriber"
       break_kind: "break" | "lunch"
       friendship_status: "pending" | "accepted"
       gate_status: "pending" | "approved" | "denied"
@@ -1694,6 +1695,7 @@ export const Constants = {
         "pending",
         "banned",
         "subscriber",
+        "nonsubscriber",
       ],
       break_kind: ["break", "lunch"],
       friendship_status: ["pending", "accepted"],
