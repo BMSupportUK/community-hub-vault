@@ -1,0 +1,1 @@
+CREATE POLICY "roles read approved" ON public.user_roles FOR SELECT TO authenticated USING (NOT has_role(auth.uid(), 'pending'::app_role) AND NOT has_role(auth.uid(), 'banned'::app_role));
