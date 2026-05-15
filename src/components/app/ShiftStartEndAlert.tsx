@@ -44,7 +44,7 @@ function fmtCountdown(ms: number) {
 
 export function ShiftStartEndAlert() {
   const { user, isStaff } = useAuth();
-  const { toUtcMs } = useTimezone();
+  const { dateInTimeZone, shiftWindowToUtcMs } = useTimezone();
   const navigate = useNavigate();
   const [slots, setSlots] = useState<Slot[]>([]);
   const [openShift, setOpenShift] = useState<OpenShift | null>(null);
@@ -63,18 +63,15 @@ export function ShiftStartEndAlert() {
   useEffect(() => {
     if (!user || !isStaff) return;
     const load = async () => {
-      const today = new Date();
-      const yyyy = today.getFullYear();
-      const mm = String(today.getMonth() + 1).padStart(2, "0");
-      const dd = String(today.getDate()).padStart(2, "0");
-      const dateStr = `${yyyy}-${mm}-${dd}`;
+      const today = dateInTimeZone(Date.now());
 
       const [{ data: s }, { data: sh }] = await Promise.all([
         supabase
           .from("shift_slots")
           .select("*")
           .eq("assigned_to", user.id)
-          .eq("shift_date", dateStr)
+          .gte("shift_date", today)
+          .lte("shift_date", today)
           .eq("slot_type", "shift"),
         supabase
           .from("shifts")
@@ -95,13 +92,12 @@ export function ShiftStartEndAlert() {
       .on("postgres_changes", { event: "*", schema: "public", table: "shifts", filter: `user_id=eq.${user.id}` }, () => load())
       .subscribe();
     return () => { supabase.removeChannel(ch); };
-  }, [user, isStaff]);
+  }, [user, isStaff, dateInTimeZone]);
 
   // Determine which alert (if any) should currently be visible
   const candidate = useMemo(() => {
     for (const slot of slots) {
-      const startsAt = toUtcMs(slot.shift_date, slot.start_time);
-      const endsAt = toUtcMs(slot.shift_date, slot.end_time);
+      const { startsAt, endsAt } = shiftWindowToUtcMs(slot.shift_date, slot.start_time, slot.end_time);
 
       // End: warn before end OR keep showing overdue while still clocked in
       const toEnd = endsAt - now;
@@ -129,7 +125,7 @@ export function ShiftStartEndAlert() {
       }
     }
     return null;
-  }, [slots, openShift, now, toUtcMs]);
+  }, [slots, openShift, now, shiftWindowToUtcMs]);
 
   useEffect(() => {
     if (candidate && (!active || active.slot.id !== candidate.slot.id || active.stage !== candidate.stage)) {
@@ -141,8 +137,7 @@ export function ShiftStartEndAlert() {
 
   if (!active) return null;
 
-  const startsAt = toUtcMs(active.slot.shift_date, active.slot.start_time);
-  const endsAt = toUtcMs(active.slot.shift_date, active.slot.end_time);
+  const { startsAt, endsAt } = shiftWindowToUtcMs(active.slot.shift_date, active.slot.start_time, active.slot.end_time);
   const isStart = active.stage === "start";
   const target = isStart ? startsAt : endsAt;
   const remaining = target - now;
