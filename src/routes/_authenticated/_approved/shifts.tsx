@@ -99,6 +99,7 @@ function ShiftsPage() {
   const { user, hasAny, hasRole } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
   const isStaffOrAdmin = hasAny(["admin", "management", "staff"]);
+  const { toUtcMs, tz } = useTimezone();
   const isMod = hasRole("moderator");
   const canPick = isStaffOrAdmin || isMod;
 
