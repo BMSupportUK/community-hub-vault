@@ -297,9 +297,6 @@ function SportsGuidesPage() {
                             {(unreadCounts[c.id] ?? 0) > 0 && (
                               <span className="text-xs px-2 py-0.5 rounded-full bg-fuchsia-500 text-white font-semibold">{unreadCounts[c.id]}</span>
                             )}
-                            {n > 0 && (
-                              <span className={`text-xs px-2 py-0.5 rounded-full ${active ? "bg-white/20" : "bg-purple-800/60 text-purple-100"}`}>{n}</span>
-                            )}
                           </span>
                         </button>
                       </div>
