@@ -258,6 +258,10 @@ function ChannelPage() {
       if (cancelled) return;
       const rows = (data as Message[] | null) ?? [];
       setMessages(rows);
+      if (user) {
+        const mine = [...rows].reverse().find((r) => r.sender_id === user.id);
+        setLastSentAt(mine ? new Date(mine.created_at).getTime() : null);
+      }
       await loadProfiles(rows.map((r) => r.sender_id));
       if (rows.length > 0) {
         const { data: reactRows } = await supabase
