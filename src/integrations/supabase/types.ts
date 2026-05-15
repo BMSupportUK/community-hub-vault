@@ -162,6 +162,8 @@ export type Database = {
           content: string
           created_at: string
           id: string
+          pinned_at: string | null
+          pinned_by: string | null
           sender_id: string
         }
         Insert: {
@@ -169,6 +171,8 @@ export type Database = {
           content: string
           created_at?: string
           id?: string
+          pinned_at?: string | null
+          pinned_by?: string | null
           sender_id: string
         }
         Update: {
@@ -176,6 +180,8 @@ export type Database = {
           content?: string
           created_at?: string
           id?: string
+          pinned_at?: string | null
+          pinned_by?: string | null
           sender_id?: string
         }
         Relationships: [
