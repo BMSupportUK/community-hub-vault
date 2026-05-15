@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { Hash, Megaphone, Loader2, Send, Trash2, EyeOff, Eye, Pin, PinOff, X, ShieldOff, MoreHorizontal, SmilePlus, Pencil, Check } from "lucide-react";
+import { Hash, Megaphone, Loader2, Send, Trash2, EyeOff, Eye, Pin, PinOff, X, ShieldOff, MoreHorizontal, SmilePlus, Pencil, Check, Timer } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
@@ -20,6 +20,7 @@ interface Channel {
   name: string;
   icon: string;
   staff_only: boolean;
+  slow_mode_seconds: number;
 }
 
 interface Message {
@@ -54,8 +55,13 @@ function ChannelPage() {
   const { user, hasAny } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
   const canPin = hasAny(["admin", "management", "moderator", "staff"]);
+  const canManageSlow = hasAny(["admin", "management", "moderator", "staff"]);
+  const isModOrAdmin = hasAny(["admin", "management", "moderator"]);
   const [pinnedOpen, setPinnedOpen] = useState(false);
   const [ignoredOpen, setIgnoredOpen] = useState(false);
+  const [slowOpen, setSlowOpen] = useState(false);
+  const [lastSentAt, setLastSentAt] = useState<number | null>(null);
+  const [now, setNow] = useState(() => Date.now());
   const [myUsername, setMyUsername] = useState<string | null>(null);
   const [ignoredIds, setIgnoredIds] = useState<Set<string>>(new Set());
   const [staffIds, setStaffIds] = useState<Set<string>>(new Set());
@@ -174,7 +180,7 @@ function ChannelPage() {
     (async () => {
       const { data } = await supabase
         .from("chat_channels")
-        .select("id, slug, name, icon, staff_only")
+        .select("id, slug, name, icon, staff_only, slow_mode_seconds")
         .eq("slug", slug)
         .maybeSingle();
       if (!data) setMissing(true);
@@ -249,6 +255,14 @@ function ChannelPage() {
           const m = payload.new as Message;
           setMessages((prev) => (prev.some((p) => p.id === m.id) ? prev : [...prev, m]));
           await loadProfiles([m.sender_id]);
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "chat_channels", filter: `id=eq.${channel.id}` },
+        (payload) => {
+          const updated = payload.new as Channel;
+          setChannel((prev) => (prev ? { ...prev, ...updated } : prev));
         },
       )
       .on(
@@ -346,6 +360,13 @@ function ChannelPage() {
 
   const send = async () => {
     if (!user || !channel || !draft.trim()) return;
+    if (channel.slow_mode_seconds > 0 && !isModOrAdmin && lastSentAt) {
+      const remain = channel.slow_mode_seconds * 1000 - (Date.now() - lastSentAt);
+      if (remain > 0) {
+        toast.error(`Slow mode: wait ${Math.ceil(remain / 1000)}s.`);
+        return;
+      }
+    }
     setSending(true);
     const content = draft.trim();
     setDraft("");
@@ -364,6 +385,8 @@ function ChannelPage() {
             : msg,
       );
       setDraft(content);
+    } else {
+      setLastSentAt(Date.now());
     }
     setSending(false);
   };
@@ -487,6 +510,12 @@ function ChannelPage() {
   const pinnedMessages = messages
     .filter((m) => m.pinned_at)
     .sort((a, b) => (b.pinned_at ?? "").localeCompare(a.pinned_at ?? ""));
+
+  const slowRemaining = (() => {
+    if (!channel || channel.slow_mode_seconds <= 0 || isModOrAdmin || !lastSentAt) return 0;
+    const r = channel.slow_mode_seconds * 1000 - (now - lastSentAt);
+    return r > 0 ? Math.ceil(r / 1000) : 0;
+  })();
 
   return (
     <main className="flex-1 flex flex-col min-w-0 min-h-0 h-full">
