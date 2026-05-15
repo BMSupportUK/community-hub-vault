@@ -456,6 +456,9 @@ export type Database = {
           created_at: string
           created_by: string
           id: string
+          referral_bonus_paid: boolean
+          referral_bonus_paid_at: string | null
+          referral_bonus_paid_by: string | null
           used_at: string | null
           used_by: string | null
         }
@@ -464,6 +467,9 @@ export type Database = {
           created_at?: string
           created_by: string
           id?: string
+          referral_bonus_paid?: boolean
+          referral_bonus_paid_at?: string | null
+          referral_bonus_paid_by?: string | null
           used_at?: string | null
           used_by?: string | null
         }
@@ -472,6 +478,9 @@ export type Database = {
           created_at?: string
           created_by?: string
           id?: string
+          referral_bonus_paid?: boolean
+          referral_bonus_paid_at?: string | null
+          referral_bonus_paid_by?: string | null
           used_at?: string | null
           used_by?: string | null
         }
