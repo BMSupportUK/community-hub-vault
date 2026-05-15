@@ -184,7 +184,7 @@ function ChannelPage() {
   const Icon = channel.icon === "Megaphone" ? Megaphone : Hash;
 
   return (
-    <main className="flex-1 flex flex-col min-w-0">
+    <main className="flex-1 flex flex-col min-w-0 min-h-0 h-full">
       <header className="h-14 border-b border-border px-5 flex items-center gap-2 shrink-0">
         <Icon className="size-4 text-muted-foreground" />
         <h1 className="font-display font-semibold">{channel.name}</h1>
