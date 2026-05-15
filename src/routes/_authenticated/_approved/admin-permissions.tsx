@@ -5,13 +5,20 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 
+interface PermsSearch { tab?: "pages" | "channels"; channel?: string; group?: string }
+
 export const Route = createFileRoute("/_authenticated/_approved/admin-permissions")({
+  validateSearch: (search: Record<string, unknown>): PermsSearch => ({
+    tab: search.tab === "channels" ? "channels" : search.tab === "pages" ? "pages" : undefined,
+    channel: typeof search.channel === "string" ? search.channel : undefined,
+    group: typeof search.group === "string" ? search.group : undefined,
+  }),
   component: AdminPermissionsPage,
 });
 
 interface RoleDef { name: string; label: string; is_system: boolean; is_active: boolean; sort_order: number; }
 interface PagePerm { page_key: string; label: string; allowed_roles: string[]; sort_order: number; }
-interface Channel { id: string; name: string; slug: string; staff_only: boolean; sort_order: number; }
+interface Channel { id: string; name: string; slug: string; staff_only: boolean; sort_order: number; group_label: string; }
 interface ChanPerm { channel_id: string; role: string; can_view: boolean; can_send: boolean; can_delete: boolean; can_mention: boolean; }
 
 const LOCKED = new Set(["admin", "management"]);
@@ -20,7 +27,8 @@ const HIDDEN_ROLES = new Set(["pending", "banned"]);
 function AdminPermissionsPage() {
   const { hasAny } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
-  const [tab, setTab] = useState<"pages" | "channels">("pages");
+  const search = Route.useSearch();
+  const [tab, setTab] = useState<"pages" | "channels">(search.tab ?? "pages");
   const [loading, setLoading] = useState(true);
   const [roles, setRoles] = useState<RoleDef[]>([]);
   const [pages, setPages] = useState<PagePerm[]>([]);
@@ -32,7 +40,7 @@ function AdminPermissionsPage() {
     const [r, p, c, cp] = await Promise.all([
       supabase.from("role_definitions").select("name,label,is_system,is_active,sort_order").eq("is_active", true).order("sort_order"),
       supabase.from("page_permissions").select("page_key,label,allowed_roles,sort_order").order("sort_order"),
-      supabase.from("chat_channels").select("id,name,slug,staff_only,sort_order").order("sort_order"),
+      supabase.from("chat_channels").select("id,name,slug,staff_only,sort_order,group_label").order("sort_order"),
       supabase.from("channel_permissions").select("channel_id,role,can_view,can_send,can_delete,can_mention"),
     ]);
     setRoles((r.data ?? []).filter((x: RoleDef) => !HIDDEN_ROLES.has(x.name)));
@@ -43,6 +51,7 @@ function AdminPermissionsPage() {
   };
 
   useEffect(() => { load(); }, []);
+  useEffect(() => { if (search.tab) setTab(search.tab); }, [search.tab]);
 
   if (!isAdmin) return <Navigate to="/home" />;
 
@@ -72,7 +81,7 @@ function AdminPermissionsPage() {
         ) : tab === "pages" ? (
           <PagesTab pages={pages} roles={roles} onChanged={load} />
         ) : (
-          <ChannelsTab channels={channels} roles={roles} chanPerms={chanPerms} onChanged={load} />
+          <ChannelsTab channels={channels} roles={roles} chanPerms={chanPerms} onChanged={load} initialChannelId={search.channel} groupFilter={search.group} />
         )}
       </div>
     </main>
@@ -129,9 +138,11 @@ function PagesTab({ pages, roles, onChanged }: { pages: PagePerm[]; roles: RoleD
   );
 }
 
-function ChannelsTab({ channels, roles, chanPerms, onChanged }: { channels: Channel[]; roles: RoleDef[]; chanPerms: ChanPerm[]; onChanged: () => void }) {
-  const [active, setActive] = useState(channels[0]?.id ?? "");
-  useEffect(() => { if (!active && channels[0]) setActive(channels[0].id); }, [channels, active]);
+function ChannelsTab({ channels, roles, chanPerms, onChanged, initialChannelId, groupFilter }: { channels: Channel[]; roles: RoleDef[]; chanPerms: ChanPerm[]; onChanged: () => void; initialChannelId?: string; groupFilter?: string }) {
+  const visible = groupFilter ? channels.filter((c) => c.group_label === groupFilter) : channels;
+  const [active, setActive] = useState(initialChannelId ?? visible[0]?.id ?? "");
+  useEffect(() => { if (initialChannelId) setActive(initialChannelId); }, [initialChannelId]);
+  useEffect(() => { if (!active && visible[0]) setActive(visible[0].id); }, [visible, active]);
   const channel = channels.find((c) => c.id === active);
   const permFor = (role: string): ChanPerm => chanPerms.find((cp) => cp.channel_id === active && cp.role === role) ?? { channel_id: active, role, can_view: false, can_send: false, can_delete: false, can_mention: false };
 
@@ -143,12 +154,15 @@ function ChannelsTab({ channels, roles, chanPerms, onChanged }: { channels: Chan
     if (error) toast.error(error.message); else onChanged();
   };
 
-  if (channels.length === 0) return <div className="text-sm text-muted-foreground">No channels yet.</div>;
+  if (visible.length === 0) return <div className="text-sm text-muted-foreground">No channels yet.</div>;
 
   return (
     <div className="grid grid-cols-12 gap-4">
       <div className="col-span-12 md:col-span-3 rounded-2xl border border-border bg-surface-1 p-2 max-h-[60vh] overflow-y-auto">
-        {channels.map((c) => (
+        {groupFilter && (
+          <div className="px-2 pt-1 pb-2 text-[10px] uppercase tracking-wider text-muted-foreground">Category: {groupFilter}</div>
+        )}
+        {visible.map((c) => (
           <button key={c.id} onClick={() => setActive(c.id)} className={`w-full text-left px-3 py-2 rounded-lg text-sm flex items-center gap-2 ${active === c.id ? "bg-primary text-primary-foreground" : "hover:bg-surface-2"}`}>
             <Hash className="size-4 opacity-70" />
             <span className="truncate">{c.name}</span>
