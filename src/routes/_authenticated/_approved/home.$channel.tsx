@@ -132,6 +132,29 @@ function ChannelPage() {
   const [canSend, setCanSend] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
   const taRef = useRef<HTMLTextAreaElement>(null);
+  // Discord-style "jump to last read" support. Captured once per channel load
+  // so the divider stays visible until the user navigates away.
+  const [firstUnreadId, setFirstUnreadId] = useState<string | null>(null);
+  const initialScrollDoneRef = useRef(false);
+  const lastReadAtRef = useRef<string | null>(null);
+  const firstUnreadRef = useRef<HTMLDivElement | null>(null);
+
+  const lastReadKey = (chId: string, uid: string) => `chat:lastRead:${uid}:${chId}`;
+
+  const isAtBottom = () => {
+    const el = scrollRef.current;
+    if (!el) return true;
+    return el.scrollHeight - el.scrollTop - el.clientHeight < 80;
+  };
+
+  const persistLastRead = (iso: string) => {
+    if (!channel || !user) return;
+    try {
+      const prev = localStorage.getItem(lastReadKey(channel.id, user.id));
+      if (!prev || prev < iso) localStorage.setItem(lastReadKey(channel.id, user.id), iso);
+    } catch { /* ignore */ }
+  };
+
   const mention = useMentionAutocomplete({
     value: draft,
     onChange: setDraft,
@@ -173,6 +196,12 @@ function ChannelPage() {
   // Load messages + subscribe
   useEffect(() => {
     if (!channel) return;
+    // Reset scroll/unread tracking when switching channels
+    initialScrollDoneRef.current = false;
+    setFirstUnreadId(null);
+    lastReadAtRef.current = user
+      ? (() => { try { return localStorage.getItem(lastReadKey(channel.id, user.id)); } catch { return null; } })()
+      : null;
     let cancelled = false;
     (async () => {
       const { data } = await supabase
@@ -264,8 +293,41 @@ function ChannelPage() {
   };
 
   useEffect(() => {
-    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
-  }, [messages.length]);
+    if (!scrollRef.current || messages.length === 0) return;
+    const el = scrollRef.current;
+    if (!initialScrollDoneRef.current) {
+      // First render of this channel: jump to first unread, else bottom.
+      const lr = lastReadAtRef.current;
+      const firstUnread = lr
+        ? messages.find((m) => m.created_at > lr && m.sender_id !== user?.id)
+        : undefined;
+      if (firstUnread) {
+        setFirstUnreadId(firstUnread.id);
+        // Defer to next frame so the divider DOM exists before scrolling.
+        requestAnimationFrame(() => {
+          firstUnreadRef.current?.scrollIntoView({ block: "start" });
+        });
+      } else {
+        el.scrollTo({ top: el.scrollHeight });
+      }
+      initialScrollDoneRef.current = true;
+    } else if (isAtBottom()) {
+      // New message arrived while user is at the bottom -> follow it.
+      el.scrollTo({ top: el.scrollHeight });
+      const latest = messages[messages.length - 1];
+      if (latest) persistLastRead(latest.created_at);
+    }
+  }, [messages, user?.id]);
+
+  // Mark as read when leaving the channel (or on unmount).
+  useEffect(() => {
+    return () => {
+      if (!channel || !user) return;
+      const latest = messages[messages.length - 1];
+      if (latest) persistLastRead(latest.created_at);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [channel?.id, user?.id]);
 
   const send = async () => {
     if (!user || !channel || !draft.trim()) return;
