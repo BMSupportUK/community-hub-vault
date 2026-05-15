@@ -316,6 +316,56 @@ function ChannelPage() {
     }
   };
 
+  const toggleReaction = async (messageId: string, emoji: string) => {
+    if (!user) return;
+    const existing = reactions.find(
+      (r) => r.message_id === messageId && r.user_id === user.id && r.emoji === emoji,
+    );
+    if (existing) {
+      const { error } = await supabase.from("message_reactions").delete().eq("id", existing.id);
+      if (error) toast.error(error.message);
+    } else {
+      const { error } = await supabase
+        .from("message_reactions")
+        .insert({ message_id: messageId, user_id: user.id, emoji });
+      if (error) toast.error(error.message);
+    }
+    setEmojiPickerId(null);
+    setOpenMenuId(null);
+  };
+
+  const startEdit = (m: Message) => {
+    setEditingId(m.id);
+    setEditDraft(m.content);
+    setOpenMenuId(null);
+  };
+
+  const saveEdit = async (id: string) => {
+    const content = editDraft.trim();
+    if (!content) return;
+    const { error } = await supabase
+      .from("chat_messages")
+      .update({ content, edited_at: new Date().toISOString() })
+      .eq("id", id);
+    if (error) return toast.error(error.message);
+    setEditingId(null);
+    setEditDraft("");
+  };
+
+  // Close menus when clicking outside
+  useEffect(() => {
+    if (!openMenuId && !emojiPickerId) return;
+    const onDoc = (e: MouseEvent) => {
+      const t = e.target as HTMLElement;
+      if (!t.closest("[data-msg-menu]")) {
+        setOpenMenuId(null);
+        setEmojiPickerId(null);
+      }
+    };
+    document.addEventListener("mousedown", onDoc);
+    return () => document.removeEventListener("mousedown", onDoc);
+  }, [openMenuId, emojiPickerId]);
+
   if (missing) {
     return (
       <main className="flex-1 grid place-items-center text-muted-foreground">
