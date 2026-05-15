@@ -667,9 +667,23 @@ function ChannelPage() {
             const menuOpen = openMenuId === m.id;
             const pickerOpen = emojiPickerId === m.id;
             const canEdit = isSelf;
+            const showUnreadDivider = m.id === firstUnreadId;
             return (
+              <div key={m.id}>
+              {showUnreadDivider && (
+                <div
+                  ref={firstUnreadRef}
+                  className="flex items-center gap-2 my-2"
+                  aria-label="New messages"
+                >
+                  <div className="h-px flex-1 bg-destructive/60" />
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-destructive">
+                    New
+                  </span>
+                  <div className="h-px w-6 bg-destructive/60" />
+                </div>
+              )}
               <div
-                key={m.id}
                 className={cn(
                   "group relative flex items-start gap-3 transition-colors",
                 )}
