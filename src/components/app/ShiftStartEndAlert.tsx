@@ -3,7 +3,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { Play, StopCircle, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { useTimezone } from "@/hooks/use-timezone";
+import { addDaysToDateStr, useTimezone } from "@/hooks/use-timezone";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -44,13 +44,14 @@ function fmtCountdown(ms: number) {
 
 export function ShiftStartEndAlert() {
   const { user, isStaff } = useAuth();
-  const { toUtcMs } = useTimezone();
+  const { dateInTimeZone, shiftWindowToUtcMs } = useTimezone();
   const navigate = useNavigate();
   const [slots, setSlots] = useState<Slot[]>([]);
   const [openShift, setOpenShift] = useState<OpenShift | null>(null);
   const [now, setNow] = useState(() => Date.now());
   const [active, setActive] = useState<{ slot: Slot; stage: Stage } | null>(null);
   const dismissedRef = useRef<Set<string>>(new Set()); // `${slotId}:${stage}:${phase}`
+  const localDate = useMemo(() => dateInTimeZone(now), [dateInTimeZone, now]);
 
   // Tick every second
   useEffect(() => {
@@ -63,19 +64,20 @@ export function ShiftStartEndAlert() {
   useEffect(() => {
     if (!user || !isStaff) return;
     const load = async () => {
-      const today = new Date();
-      const yyyy = today.getFullYear();
-      const mm = String(today.getMonth() + 1).padStart(2, "0");
-      const dd = String(today.getDate()).padStart(2, "0");
-      const dateStr = `${yyyy}-${mm}-${dd}`;
+      const today = localDate;
+      const fromDate = addDaysToDateStr(today, -1);
+      const toDate = addDaysToDateStr(today, 1);
 
       const [{ data: s }, { data: sh }] = await Promise.all([
         supabase
           .from("shift_slots")
           .select("*")
           .eq("assigned_to", user.id)
-          .eq("shift_date", dateStr)
-          .eq("slot_type", "shift"),
+          .gte("shift_date", fromDate)
+          .lte("shift_date", toDate)
+          .eq("slot_type", "shift")
+          .order("shift_date", { ascending: true })
+          .order("start_time", { ascending: true }),
         supabase
           .from("shifts")
           .select("id, clock_in, clock_out")
@@ -95,17 +97,19 @@ export function ShiftStartEndAlert() {
       .on("postgres_changes", { event: "*", schema: "public", table: "shifts", filter: `user_id=eq.${user.id}` }, () => load())
       .subscribe();
     return () => { supabase.removeChannel(ch); };
-  }, [user, isStaff]);
+  }, [user, isStaff, localDate]);
 
   // Determine which alert (if any) should currently be visible
   const candidate = useMemo(() => {
+    const openShiftClockIn = openShift ? new Date(openShift.clock_in).getTime() : NaN;
     for (const slot of slots) {
-      const startsAt = toUtcMs(slot.shift_date, slot.start_time);
-      const endsAt = toUtcMs(slot.shift_date, slot.end_time);
+      const { startsAt, endsAt } = shiftWindowToUtcMs(slot.shift_date, slot.start_time, slot.end_time);
+      if (isNaN(startsAt) || isNaN(endsAt)) continue;
 
       // End: warn before end OR keep showing overdue while still clocked in
       const toEnd = endsAt - now;
-      if (openShift) {
+      const isOpenForThisSlot = openShift && !isNaN(openShiftClockIn) && openShiftClockIn <= endsAt && now >= startsAt - WARN_BEFORE;
+      if (isOpenForThisSlot) {
         if (toEnd <= 0) {
           const key = `${slot.id}:end:overdue`;
           if (!dismissedRef.current.has(key)) return { slot, stage: "end" as Stage };
@@ -129,7 +133,7 @@ export function ShiftStartEndAlert() {
       }
     }
     return null;
-  }, [slots, openShift, now, toUtcMs]);
+  }, [slots, openShift, now, shiftWindowToUtcMs]);
 
   useEffect(() => {
     if (candidate && (!active || active.slot.id !== candidate.slot.id || active.stage !== candidate.stage)) {
@@ -141,8 +145,7 @@ export function ShiftStartEndAlert() {
 
   if (!active) return null;
 
-  const startsAt = toUtcMs(active.slot.shift_date, active.slot.start_time);
-  const endsAt = toUtcMs(active.slot.shift_date, active.slot.end_time);
+  const { startsAt, endsAt } = shiftWindowToUtcMs(active.slot.shift_date, active.slot.start_time, active.slot.end_time);
   const isStart = active.stage === "start";
   const target = isStart ? startsAt : endsAt;
   const remaining = target - now;
@@ -164,7 +167,7 @@ export function ShiftStartEndAlert() {
           <AlertDialogTitle className="text-center text-xl">
             {isStart
               ? overdue ? "Shift has started" : "Shift starting soon"
-              : overdue ? "Shift is ending" : "Shift ending soon"}
+              : overdue ? "Shift has ended" : "Shift ending soon"}
           </AlertDialogTitle>
           <AlertDialogDescription className="text-center">
             {isStart ? (
