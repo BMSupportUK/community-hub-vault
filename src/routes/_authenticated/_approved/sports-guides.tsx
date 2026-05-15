@@ -6,8 +6,6 @@ import { useAuth } from "@/hooks/use-auth";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import DOMPurify from "dompurify";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/_approved/sports-guides")({
@@ -45,7 +43,6 @@ function SportsGuidesPage() {
   const [reads, setReads] = useState<Record<string, string>>({}); // blog_id -> read_at iso
   const [activeCat, setActiveCat] = useState<string | null>(null);
   const [search, setSearch] = useState("");
-  const [reading, setReading] = useState<Blog | null>(null);
   const [newCatName, setNewCatName] = useState("");
   const [addingCat, setAddingCat] = useState(false);
   const dragCatId = useRef<string | null>(null);
@@ -344,7 +341,7 @@ function SportsGuidesPage() {
                           <h3 className="font-display font-semibold text-lg leading-snug text-purple-50">{b.title}</h3>
                           {b.excerpt && <p className="text-sm text-purple-200/70 line-clamp-2">{b.excerpt}</p>}
                           <div className="mt-auto pt-3 flex items-center gap-2">
-                            <Button size="sm" className="flex-1 bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white border-0" onClick={() => { setReading(b); markRead(b); }}>Click to Read</Button>
+                            <Button size="sm" className="flex-1 bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white border-0" onClick={() => navigate({ to: "/sports-guides/read/$id", params: { id: b.id } })}>Click to Read</Button>
                             <Button
                               size="icon"
                               variant="ghost"
@@ -435,37 +432,6 @@ function SportsGuidesPage() {
           </TabsContent>
         </Tabs>
       </div>
-
-      {/* Reader */}
-      <Dialog open={!!reading} onOpenChange={(o) => !o && setReading(null)}>
-        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
-          {reading && (
-            <>
-              <DialogHeader>
-                <DialogTitle className="font-display text-2xl">{reading.title}</DialogTitle>
-              </DialogHeader>
-              {reading.image_url && (
-                <img src={reading.image_url} alt={reading.title} className="w-full rounded-lg" />
-              )}
-              <div className="flex flex-wrap gap-2">
-                <span className="text-xs px-2 py-1 rounded-md bg-primary/15 text-primary font-medium">
-                  {categories.find((c) => c.id === reading.category_id)?.name}
-                </span>
-                {reading.badge && (
-                  <span className="text-xs px-2 py-1 rounded-md bg-accent/20 text-accent-foreground font-medium">{reading.badge}</span>
-                )}
-              </div>
-              {reading.excerpt && <p className="text-muted-foreground">{reading.excerpt}</p>}
-              {reading.body && (
-                <div
-                  className="prose prose-sm dark:prose-invert max-w-none text-sm leading-relaxed"
-                  dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(reading.body) }}
-                />
-              )}
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
 
     </div>
   );
