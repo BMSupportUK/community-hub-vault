@@ -255,6 +255,42 @@ function GatePage() {
         )}
 
         {status === "denied" && (
+          <div className="w-full max-w-md mt-6">
+            <InviteRedeem />
+          </div>
+        )}
+        {status !== "approved" && status !== "denied" && (
+          <div className="mt-6 w-full max-w-md">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="flex-1 h-px bg-white/10" />
+              <span className="text-[11px] uppercase tracking-wider text-white/50">Have an invite?</span>
+              <div className="flex-1 h-px bg-white/10" />
+            </div>
+            <form onSubmit={redeem} className="flex items-center gap-2">
+              <div className="relative flex-1">
+                <Ticket className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-white/40" />
+                <input
+                  value={inviteCode}
+                  onChange={(e) => setInviteCode(e.target.value.toUpperCase().slice(0, 32))}
+                  placeholder="Enter invite code"
+                  className="w-full pl-9 pr-3 h-11 rounded-lg bg-white/5 border border-white/15 text-white placeholder:text-white/40 font-mono tracking-widest text-sm outline-none focus:border-fuchsia-500/60"
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={redeeming || inviteCode.trim().length === 0}
+                className="h-11 px-4 rounded-lg font-semibold text-white bg-gradient-to-r from-fuchsia-600 to-violet-600 hover:from-fuchsia-500 hover:to-violet-500 disabled:opacity-50 transition-all"
+              >
+                {redeeming ? "…" : "Redeem"}
+              </button>
+            </form>
+            <p className="mt-2 text-center text-[11px] text-white/40">
+              Skip the queue with a single-use invite from a member.
+            </p>
+          </div>
+        )}
+
+        {false && (
           <button
             onClick={() => {
               setReasonDraft("[APPEAL] ");
