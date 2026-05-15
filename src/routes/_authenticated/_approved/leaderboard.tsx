@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Trophy, Plus, Copy, Check, Trash2, Ticket, Crown, Medal, Award } from "lucide-react";
+import { Trophy, Plus, Copy, Check, Trash2, Ticket, Crown, Medal, Award, X, Gift } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -26,6 +26,8 @@ type Invite = {
   used_by: string | null;
   used_at: string | null;
   created_at: string;
+  referral_bonus_paid: boolean;
+  referral_bonus_paid_at: string | null;
 };
 
 function makeCode(len = 8) {
@@ -36,7 +38,8 @@ function makeCode(len = 8) {
 }
 
 function LeaderboardPage() {
-  const { user } = useAuth();
+  const { user, hasAny } = useAuth();
+  const isAdmin = hasAny(["admin", "management"]);
   const [tab, setTab] = useState("welcome");
   const [rows, setRows] = useState<LeaderRow[]>([]);
   const [invites, setInvites] = useState<Invite[]>([]);
@@ -56,7 +59,7 @@ function LeaderboardPage() {
     if (!user) return;
     const { data, error } = await supabase
       .from("invites")
-      .select("id, code, used_by, used_at, created_at")
+      .select("id, code, used_by, used_at, created_at, referral_bonus_paid, referral_bonus_paid_at")
       .eq("created_by", user.id)
       .order("created_at", { ascending: false });
     if (error) toast.error(error.message);
@@ -109,6 +112,21 @@ function LeaderboardPage() {
     const { error } = await supabase.from("invites").delete().eq("id", id);
     if (error) return toast.error(error.message);
     toast.success("Invite deleted");
+    loadMyInvites();
+  };
+
+  const toggleBonus = async (inv: Invite) => {
+    const next = !inv.referral_bonus_paid;
+    const { error } = await supabase
+      .from("invites")
+      .update({
+        referral_bonus_paid: next,
+        referral_bonus_paid_at: next ? new Date().toISOString() : null,
+        referral_bonus_paid_by: next ? user?.id ?? null : null,
+      })
+      .eq("id", inv.id);
+    if (error) return toast.error(error.message);
+    toast.success(next ? "Marked bonus as paid" : "Bonus mark removed");
     loadMyInvites();
   };
 
@@ -261,6 +279,33 @@ function LeaderboardPage() {
                           {used ? "Used" : "Active"}
                         </span>
                       </div>
+                      {used && (
+                        <div className="mt-3 flex items-center justify-between gap-2 rounded-lg border border-purple-500/30 bg-purple-900/30 px-3 py-2">
+                          <div className="flex items-center gap-2 text-sm">
+                            <Gift className="size-4 text-fuchsia-300" />
+                            <span className="text-purple-100">Referral bonus</span>
+                            {inv.referral_bonus_paid ? (
+                              <span className="ml-1 inline-flex items-center gap-1 text-emerald-300 font-medium">
+                                <Check className="size-4" /> Added
+                              </span>
+                            ) : (
+                              <span className="ml-1 inline-flex items-center gap-1 text-rose-300 font-medium">
+                                <X className="size-4" /> Not yet
+                              </span>
+                            )}
+                          </div>
+                          {isAdmin && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => toggleBonus(inv)}
+                              className="text-purple-100 hover:bg-purple-800/60 hover:text-white h-7"
+                            >
+                              {inv.referral_bonus_paid ? "Unmark" : "Mark added"}
+                            </Button>
+                          )}
+                        </div>
+                      )}
                       <div className="mt-4 flex items-center gap-2">
                         <Button
                           size="sm"
