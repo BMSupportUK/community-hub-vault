@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Trophy, Plus, Copy, Check, Trash2, Ticket, Crown, Medal, Award } from "lucide-react";
+import { Trophy, Plus, Copy, Check, Trash2, Ticket, Crown, Medal, Award, X, Gift } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -26,6 +26,16 @@ type Invite = {
   used_by: string | null;
   used_at: string | null;
   created_at: string;
+  referral_bonus_paid: boolean;
+  referral_bonus_paid_at: string | null;
+};
+
+type AdminInvite = Invite & {
+  created_by: string;
+  inviter_name: string | null;
+  inviter_username: string | null;
+  used_by_name: string | null;
+  used_by_username: string | null;
 };
 
 function makeCode(len = 8) {
@@ -36,10 +46,12 @@ function makeCode(len = 8) {
 }
 
 function LeaderboardPage() {
-  const { user } = useAuth();
+  const { user, hasAny } = useAuth();
+  const isAdmin = hasAny(["admin", "management"]);
   const [tab, setTab] = useState("welcome");
   const [rows, setRows] = useState<LeaderRow[]>([]);
   const [invites, setInvites] = useState<Invite[]>([]);
+  const [adminInvites, setAdminInvites] = useState<AdminInvite[]>([]);
   const [loading, setLoading] = useState(false);
   const [creating, setCreating] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -56,18 +68,45 @@ function LeaderboardPage() {
     if (!user) return;
     const { data, error } = await supabase
       .from("invites")
-      .select("id, code, used_by, used_at, created_at")
+      .select("id, code, used_by, used_at, created_at, referral_bonus_paid, referral_bonus_paid_at")
       .eq("created_by", user.id)
       .order("created_at", { ascending: false });
     if (error) toast.error(error.message);
     setInvites((data ?? []) as Invite[]);
   };
 
+  const loadAdminInvites = async () => {
+    if (!isAdmin) return;
+    const { data, error } = await supabase
+      .from("invites")
+      .select("id, code, used_by, used_at, created_at, referral_bonus_paid, referral_bonus_paid_at, created_by")
+      .not("used_by", "is", null)
+      .order("used_at", { ascending: false });
+    if (error) return toast.error(error.message);
+    const rows = (data ?? []) as (Invite & { created_by: string })[];
+    const ids = Array.from(new Set(rows.flatMap((r) => [r.created_by, r.used_by].filter(Boolean) as string[])));
+    let profileMap: Record<string, { display_name: string | null; username: string | null }> = {};
+    if (ids.length) {
+      const { data: profs } = await supabase.from("profiles").select("id, display_name, username").in("id", ids);
+      profileMap = Object.fromEntries((profs ?? []).map((p) => [p.id, { display_name: p.display_name, username: p.username }]));
+    }
+    setAdminInvites(
+      rows.map((r) => ({
+        ...r,
+        inviter_name: profileMap[r.created_by]?.display_name ?? null,
+        inviter_username: profileMap[r.created_by]?.username ?? null,
+        used_by_name: r.used_by ? profileMap[r.used_by]?.display_name ?? null : null,
+        used_by_username: r.used_by ? profileMap[r.used_by]?.username ?? null : null,
+      })),
+    );
+  };
+
   useEffect(() => {
     loadLeaderboard();
     loadMyInvites();
+    loadAdminInvites();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id]);
+  }, [user?.id, isAdmin]);
 
   const createInvite = async () => {
     if (!user) return;
@@ -112,6 +151,22 @@ function LeaderboardPage() {
     loadMyInvites();
   };
 
+  const toggleBonus = async (inv: { id: string; referral_bonus_paid: boolean }) => {
+    const next = !inv.referral_bonus_paid;
+    const { error } = await supabase
+      .from("invites")
+      .update({
+        referral_bonus_paid: next,
+        referral_bonus_paid_at: next ? new Date().toISOString() : null,
+        referral_bonus_paid_by: next ? user?.id ?? null : null,
+      })
+      .eq("id", inv.id);
+    if (error) return toast.error(error.message);
+    toast.success(next ? "Marked bonus as paid" : "Bonus mark removed");
+    loadMyInvites();
+    loadAdminInvites();
+  };
+
   const myStats = {
     total: invites.length,
     used: invites.filter((i) => i.used_by).length,
@@ -133,10 +188,13 @@ function LeaderboardPage() {
 
       <div className="px-8 py-6">
         <Tabs value={tab} onValueChange={setTab} className="w-full">
-          <TabsList className="grid grid-cols-3 max-w-2xl bg-purple-950/60 border border-purple-500/30">
+          <TabsList className={`grid ${isAdmin ? "grid-cols-4 max-w-3xl" : "grid-cols-3 max-w-2xl"} bg-purple-950/60 border border-purple-500/30`}>
             <TabsTrigger value="welcome" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white">Welcome</TabsTrigger>
             <TabsTrigger value="leaderboard" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white">Leaderboard</TabsTrigger>
             <TabsTrigger value="invites" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white">My Invites</TabsTrigger>
+            {isAdmin && (
+              <TabsTrigger value="bonuses" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white">Bonuses</TabsTrigger>
+            )}
           </TabsList>
 
           <TabsContent value="welcome" className="mt-6">
@@ -261,6 +319,33 @@ function LeaderboardPage() {
                           {used ? "Used" : "Active"}
                         </span>
                       </div>
+                      {used && (
+                        <div className="mt-3 flex items-center justify-between gap-2 rounded-lg border border-purple-500/30 bg-purple-900/30 px-3 py-2">
+                          <div className="flex items-center gap-2 text-sm">
+                            <Gift className="size-4 text-fuchsia-300" />
+                            <span className="text-purple-100">Referral bonus</span>
+                            {inv.referral_bonus_paid ? (
+                              <span className="ml-1 inline-flex items-center gap-1 text-emerald-300 font-medium">
+                                <Check className="size-4" /> Added
+                              </span>
+                            ) : (
+                              <span className="ml-1 inline-flex items-center gap-1 text-rose-300 font-medium">
+                                <X className="size-4" /> Not yet
+                              </span>
+                            )}
+                          </div>
+                          {isAdmin && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => toggleBonus(inv)}
+                              className="text-purple-100 hover:bg-purple-800/60 hover:text-white h-7"
+                            >
+                              {inv.referral_bonus_paid ? "Unmark" : "Mark added"}
+                            </Button>
+                          )}
+                        </div>
+                      )}
                       <div className="mt-4 flex items-center gap-2">
                         <Button
                           size="sm"
@@ -294,6 +379,65 @@ function LeaderboardPage() {
               </div>
             )}
           </TabsContent>
+
+          {isAdmin && (
+            <TabsContent value="bonuses" className="mt-6">
+              <div className="mb-4">
+                <h3 className="font-display text-xl font-semibold text-purple-50">Referral bonuses</h3>
+                <p className="text-sm text-purple-300/70">Mark whether the inviter has received their referral bonus. Inviters see this status on their invites.</p>
+              </div>
+              {adminInvites.length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-purple-500/40 p-12 text-center text-purple-200/70 bg-purple-950/30">
+                  <Gift className="size-10 mx-auto mb-3 text-purple-300/60" />
+                  No used invites yet.
+                </div>
+              ) : (
+                <div className="rounded-2xl bg-purple-950/50 border border-purple-500/30 overflow-hidden backdrop-blur">
+                  <ul className="divide-y divide-purple-500/20">
+                    {adminInvites.map((inv) => (
+                      <li key={inv.id} className="px-6 py-4 flex flex-wrap items-center gap-4">
+                        <div className="font-mono text-sm font-bold tracking-widest bg-gradient-to-r from-fuchsia-400 to-violet-400 bg-clip-text text-transparent shrink-0">
+                          {inv.code}
+                        </div>
+                        <div className="flex-1 min-w-[180px]">
+                          <div className="text-xs text-purple-300/70">Inviter</div>
+                          <div className="text-purple-50 font-medium truncate">
+                            {inv.inviter_name ?? inv.inviter_username ?? "Member"}
+                            {inv.inviter_username && <span className="text-purple-300/60 text-xs ml-1">@{inv.inviter_username}</span>}
+                          </div>
+                        </div>
+                        <div className="flex-1 min-w-[180px]">
+                          <div className="text-xs text-purple-300/70">Joined</div>
+                          <div className="text-purple-50 truncate">
+                            {inv.used_by_name ?? inv.used_by_username ?? "Member"}
+                            {inv.used_at && <span className="text-purple-300/60 text-xs ml-2">{new Date(inv.used_at).toLocaleDateString()}</span>}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          {inv.referral_bonus_paid ? (
+                            <span className="inline-flex items-center gap-1 text-emerald-300 text-sm font-medium px-2 py-1 rounded-md border border-emerald-500/30 bg-emerald-500/10">
+                              <Check className="size-4" /> Added
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 text-rose-300 text-sm font-medium px-2 py-1 rounded-md border border-rose-500/30 bg-rose-500/10">
+                              <X className="size-4" /> Not added
+                            </span>
+                          )}
+                          <Button
+                            size="sm"
+                            onClick={() => toggleBonus(inv)}
+                            className="bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white border-0"
+                          >
+                            {inv.referral_bonus_paid ? "Unmark" : "Mark added"}
+                          </Button>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </TabsContent>
+          )}
         </Tabs>
       </div>
     </div>
