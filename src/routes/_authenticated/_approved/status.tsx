@@ -7,6 +7,8 @@ import {
   Eye,
   Loader2,
   Plus,
+  Paperclip,
+  FileText,
   Search,
   ShieldAlert,
   Trash2,
@@ -23,6 +25,13 @@ export const Route = createFileRoute("/_authenticated/_approved/status")({
 
 type IncidentStatus = "investigating" | "identified" | "monitoring" | "completed";
 
+interface Attachment {
+  name: string;
+  url: string;
+  size: number;
+  type: string;
+}
+
 interface Incident {
   id: string;
   title: string;
@@ -31,6 +40,7 @@ interface Incident {
   created_at: string;
   updated_at: string;
   resolved_at: string | null;
+  attachments: Attachment[];
 }
 
 interface IncidentUpdate {
@@ -39,6 +49,7 @@ interface IncidentUpdate {
   status: IncidentStatus;
   message: string;
   created_at: string;
+  attachments: Attachment[];
 }
 
 const STATUS_META: Record<IncidentStatus, { label: string; classes: string; icon: React.ComponentType<{ className?: string }> }> = {
@@ -47,6 +58,110 @@ const STATUS_META: Record<IncidentStatus, { label: string; classes: string; icon
   monitoring: { label: "Monitoring", classes: "bg-blue-500/15 text-blue-300 border-blue-500/30", icon: Eye },
   completed: { label: "Completed", classes: "bg-emerald-500/15 text-emerald-300 border-emerald-500/30", icon: CheckCircle2 },
 };
+
+async function uploadFiles(files: File[]): Promise<Attachment[]> {
+  const out: Attachment[] = [];
+  for (const f of files) {
+    if (f.size > 25 * 1024 * 1024) {
+      toast.error(`${f.name} is over 25MB`);
+      continue;
+    }
+    const safe = f.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+    const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${safe}`;
+    const { error } = await supabase.storage.from("status-attachments").upload(path, f, {
+      cacheControl: "3600",
+      upsert: false,
+      contentType: f.type || undefined,
+    });
+    if (error) {
+      toast.error(`Upload failed: ${error.message}`);
+      continue;
+    }
+    const { data } = supabase.storage.from("status-attachments").getPublicUrl(path);
+    out.push({ name: f.name, url: data.publicUrl, size: f.size, type: f.type });
+  }
+  return out;
+}
+
+function AttachmentList({ items }: { items: Attachment[] }) {
+  if (!items?.length) return null;
+  return (
+    <div className="flex flex-wrap gap-2 mt-2">
+      {items.map((a, i) => {
+        const isImg = a.type?.startsWith("image/");
+        return isImg ? (
+          <a key={i} href={a.url} target="_blank" rel="noreferrer" className="block">
+            <img
+              src={a.url}
+              alt={a.name}
+              className="size-20 rounded-lg object-cover border border-border hover:opacity-80"
+            />
+          </a>
+        ) : (
+          <a
+            key={i}
+            href={a.url}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-2 px-2.5 py-1.5 rounded-lg border border-border bg-surface-2 text-xs hover:border-primary"
+          >
+            <FileText className="size-3.5" />
+            <span className="max-w-[180px] truncate">{a.name}</span>
+          </a>
+        );
+      })}
+    </div>
+  );
+}
+
+function FilePicker({
+  files,
+  setFiles,
+  disabled,
+}: {
+  files: File[];
+  setFiles: (f: File[]) => void;
+  disabled?: boolean;
+}) {
+  return (
+    <div className="space-y-1.5">
+      <label className="inline-flex items-center gap-2 px-2.5 py-1.5 rounded-lg border border-border bg-surface-2 text-xs cursor-pointer hover:border-primary">
+        <Paperclip className="size-3.5" />
+        <span>Attach files</span>
+        <input
+          type="file"
+          multiple
+          className="hidden"
+          disabled={disabled}
+          onChange={(e) => {
+            const list = Array.from(e.target.files ?? []);
+            setFiles([...files, ...list]);
+            e.target.value = "";
+          }}
+        />
+      </label>
+      {files.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {files.map((f, i) => (
+            <span
+              key={i}
+              className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded border border-border bg-surface-2 text-[11px]"
+            >
+              <span className="max-w-[160px] truncate">{f.name}</span>
+              <button
+                type="button"
+                onClick={() => setFiles(files.filter((_, j) => j !== i))}
+                className="text-muted-foreground hover:text-destructive"
+              >
+                <X className="size-3" />
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 function StatusPage() {
   const { hasAny } = useAuth();
@@ -58,7 +173,7 @@ function StatusPage() {
   const load = async () => {
     const { data } = await supabase
       .from("status_incidents")
-      .select("id, title, description, status, created_at, updated_at, resolved_at")
+      .select("id, title, description, status, created_at, updated_at, resolved_at, attachments")
       .order("created_at", { ascending: false });
     setIncidents((data as Incident[] | null) ?? []);
   };
@@ -200,6 +315,7 @@ function IncidentCard({ incident, canManage, onEdit }: { incident: Incident; can
   const [posting, setPosting] = useState(false);
   const [msg, setMsg] = useState("");
   const [status, setStatus] = useState<IncidentStatus>(incident.status);
+  const [updateFiles, setUpdateFiles] = useState<File[]>([]);
   const { user } = useAuth();
 
   const meta = STATUS_META[incident.status];
@@ -208,7 +324,7 @@ function IncidentCard({ incident, canManage, onEdit }: { incident: Incident; can
   const loadUpdates = async () => {
     const { data } = await supabase
       .from("status_incident_updates")
-      .select("id, incident_id, status, message, created_at")
+      .select("id, incident_id, status, message, created_at, attachments")
       .eq("incident_id", incident.id)
       .order("created_at", { ascending: false });
     setUpdates((data as IncidentUpdate[] | null) ?? []);
@@ -220,12 +336,19 @@ function IncidentCard({ incident, canManage, onEdit }: { incident: Incident; can
   }, [open]);
 
   const post = async () => {
-    if (!user || !msg.trim()) return;
+    if (!user || (!msg.trim() && updateFiles.length === 0)) return;
     setPosting(true);
     try {
+      const uploaded = updateFiles.length ? await uploadFiles(updateFiles) : [];
       const { error: uErr } = await supabase
         .from("status_incident_updates")
-        .insert({ incident_id: incident.id, status, message: msg.trim(), created_by: user.id });
+        .insert({
+          incident_id: incident.id,
+          status,
+          message: msg.trim(),
+          created_by: user.id,
+          attachments: uploaded as unknown as never,
+        });
       if (uErr) throw uErr;
       const patch: { status: IncidentStatus; resolved_at?: string | null } = { status };
       if (status === "completed" && !incident.resolved_at) patch.resolved_at = new Date().toISOString();
@@ -233,6 +356,7 @@ function IncidentCard({ incident, canManage, onEdit }: { incident: Incident; can
       const { error: iErr } = await supabase.from("status_incidents").update(patch).eq("id", incident.id);
       if (iErr) throw iErr;
       setMsg("");
+      setUpdateFiles([]);
       await loadUpdates();
       toast.success("Update posted");
     } catch (e: any) {
@@ -271,6 +395,7 @@ function IncidentCard({ incident, canManage, onEdit }: { incident: Incident; can
           {incident.description && (
             <p className="text-sm text-muted-foreground pt-3 whitespace-pre-wrap">{incident.description}</p>
           )}
+          <AttachmentList items={incident.attachments ?? []} />
 
           <div>
             <h3 className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Updates</h3>
@@ -290,6 +415,7 @@ function IncidentCard({ incident, canManage, onEdit }: { incident: Incident; can
                         <span className="text-[11px] text-muted-foreground">{new Date(u.created_at).toLocaleString()}</span>
                       </div>
                       <div className="text-sm mt-1 whitespace-pre-wrap">{u.message}</div>
+                      <AttachmentList items={u.attachments ?? []} />
                     </li>
                   );
                 })}
@@ -320,6 +446,7 @@ function IncidentCard({ incident, canManage, onEdit }: { incident: Incident; can
                 placeholder="What's the latest?"
                 className="w-full rounded-lg bg-surface-2 border border-border px-3 py-2 text-sm outline-none focus:border-primary resize-none"
               />
+              <FilePicker files={updateFiles} setFiles={setUpdateFiles} disabled={posting} />
               <div className="flex justify-between">
                 <button onClick={onEdit} className="text-xs text-muted-foreground hover:text-foreground">
                   Edit issue details
@@ -330,7 +457,7 @@ function IncidentCard({ incident, canManage, onEdit }: { incident: Incident; can
                   </button>
                   <button
                     onClick={post}
-                    disabled={posting || !msg.trim()}
+                    disabled={posting || (!msg.trim() && updateFiles.length === 0)}
                     className="text-xs px-3 py-1.5 rounded-lg bg-primary text-primary-foreground font-medium disabled:opacity-50"
                   >
                     {posting ? "Posting…" : "Post update"}
@@ -359,31 +486,43 @@ function IncidentEditor({
   const [description, setDescription] = useState(incident?.description ?? "");
   const [status, setStatus] = useState<IncidentStatus>(incident?.status ?? "investigating");
   const [initialUpdate, setInitialUpdate] = useState("");
+  const [issueFiles, setIssueFiles] = useState<File[]>([]);
+  const [updateFiles, setUpdateFiles] = useState<File[]>([]);
   const [busy, setBusy] = useState(false);
 
   const save = async () => {
     if (!title.trim()) return toast.error("Title required");
     setBusy(true);
     try {
+      const issueUploads = issueFiles.length ? await uploadFiles(issueFiles) : [];
       if (incident) {
+        const merged = [...(incident.attachments ?? []), ...issueUploads];
         const { error } = await supabase
           .from("status_incidents")
-          .update({ title, description, status })
+          .update({ title, description, status, attachments: merged as unknown as never })
           .eq("id", incident.id);
         if (error) throw error;
       } else {
         const { data, error } = await supabase
           .from("status_incidents")
-          .insert({ title, description, status, created_by: user?.id })
+          .insert({
+            title,
+            description,
+            status,
+            created_by: user?.id,
+            attachments: issueUploads as unknown as never,
+          })
           .select("id")
           .single();
         if (error) throw error;
-        if (initialUpdate.trim() && data) {
+        const updateUploads = updateFiles.length ? await uploadFiles(updateFiles) : [];
+        if ((initialUpdate.trim() || updateUploads.length) && data) {
           await supabase.from("status_incident_updates").insert({
             incident_id: data.id,
             status,
             message: initialUpdate.trim(),
             created_by: user?.id,
+            attachments: updateUploads as unknown as never,
           });
         }
       }
@@ -425,6 +564,18 @@ function IncidentEditor({
               placeholder="What's affected, scope, etc."
             />
           </div>
+          {incident && incident.attachments?.length ? (
+            <div>
+              <label className="text-xs text-muted-foreground">Existing attachments</label>
+              <AttachmentList items={incident.attachments} />
+            </div>
+          ) : null}
+          <div>
+            <label className="text-xs text-muted-foreground">Attachments</label>
+            <div className="mt-1">
+              <FilePicker files={issueFiles} setFiles={setIssueFiles} disabled={busy} />
+            </div>
+          </div>
           <div>
             <label className="text-xs text-muted-foreground">Status</label>
             <div className="flex gap-2 flex-wrap mt-1">
@@ -451,6 +602,9 @@ function IncidentEditor({
                 className="w-full mt-1 px-3 py-2 rounded-lg bg-surface-2 border border-border text-sm outline-none focus:border-primary resize-none"
                 placeholder="First update message"
               />
+              <div className="mt-2">
+                <FilePicker files={updateFiles} setFiles={setUpdateFiles} disabled={busy} />
+              </div>
             </div>
           )}
         </div>
