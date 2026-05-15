@@ -1,15 +1,12 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Plus, Search, X, Pencil, Trash2, ImageIcon, GripVertical, Check, Circle } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, ImageIcon, GripVertical, Check, Circle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { HtmlEditor } from "@/components/ui/html-editor";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import DOMPurify from "dompurify";
 import { toast } from "sonner";
 
@@ -34,6 +31,7 @@ type Blog = {
 
 function SportsGuidesPage() {
   const { isMod, user, hasAny } = useAuth();
+  const navigate = useNavigate();
   const canManageCategories = hasAny(["admin", "management", "staff"]);
   const [tab, setTab] = useState("welcome");
   const [categories, setCategories] = useState<Category[]>([]);
@@ -42,8 +40,6 @@ function SportsGuidesPage() {
   const [activeCat, setActiveCat] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [reading, setReading] = useState<Blog | null>(null);
-  const [editing, setEditing] = useState<Blog | null>(null);
-  const [showEditor, setShowEditor] = useState(false);
   const [newCatName, setNewCatName] = useState("");
   const [addingCat, setAddingCat] = useState(false);
   const dragCatId = useRef<string | null>(null);
@@ -126,46 +122,8 @@ function SportsGuidesPage() {
 
   const activeCategory = categories.find((c) => c.id === activeCat);
 
-  const openNew = () => {
-    setEditing({
-      id: "",
-      category_id: activeCat ?? categories[0]?.id ?? "",
-      title: "",
-      excerpt: "",
-      body: "",
-      image_url: "",
-      badge: "",
-      published: true,
-      created_at: "",
-      sort_order: 0,
-    });
-    setShowEditor(true);
-  };
-
-  const saveBlog = async () => {
-    if (!editing) return;
-    if (!editing.title.trim() || !editing.category_id) {
-      toast.error("Title and category are required");
-      return;
-    }
-    const payload = {
-      category_id: editing.category_id,
-      title: editing.title.trim(),
-      excerpt: editing.excerpt?.trim() || null,
-      body: editing.body?.trim() || null,
-      image_url: editing.image_url?.trim() || null,
-      badge: editing.badge?.trim() || null,
-      published: editing.published,
-    };
-    const { error } = editing.id
-      ? await supabase.from("sports_blogs").update(payload).eq("id", editing.id)
-      : await supabase.from("sports_blogs").insert({ ...payload, created_by: user?.id ?? null });
-    if (error) return toast.error(error.message);
-    toast.success(editing.id ? "Blog updated" : "Blog added");
-    setShowEditor(false);
-    setEditing(null);
-    load();
-  };
+  const openNew = () => navigate({ to: "/sports-guides/new" });
+  const openEdit = (id: string) => navigate({ to: "/sports-guides/$id/edit", params: { id } });
 
   const deleteBlog = async (id: string) => {
     if (!confirm("Delete this blog?")) return;
@@ -392,7 +350,7 @@ function SportsGuidesPage() {
                             </Button>
                             {isMod && (
                               <>
-                                <Button size="icon" variant="ghost" className="text-purple-200 hover:text-white hover:bg-purple-800/60" onClick={() => { setEditing(b); setShowEditor(true); }}>
+                                <Button size="icon" variant="ghost" className="text-purple-200 hover:text-white hover:bg-purple-800/60" onClick={() => openEdit(b.id)}>
                                   <Pencil className="size-4" />
                                 </Button>
                                 <Button size="icon" variant="ghost" className="text-purple-200 hover:text-white hover:bg-purple-800/60" onClick={() => deleteBlog(b.id)}>
