@@ -1257,6 +1257,7 @@ export type Database = {
       }
       status_incident_updates: {
         Row: {
+          attachments: Json
           created_at: string
           created_by: string | null
           id: string
@@ -1265,6 +1266,7 @@ export type Database = {
           status: Database["public"]["Enums"]["incident_status"]
         }
         Insert: {
+          attachments?: Json
           created_at?: string
           created_by?: string | null
           id?: string
@@ -1273,6 +1275,7 @@ export type Database = {
           status: Database["public"]["Enums"]["incident_status"]
         }
         Update: {
+          attachments?: Json
           created_at?: string
           created_by?: string | null
           id?: string
@@ -1292,6 +1295,7 @@ export type Database = {
       }
       status_incidents: {
         Row: {
+          attachments: Json
           created_at: string
           created_by: string | null
           description: string | null
@@ -1302,6 +1306,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          attachments?: Json
           created_at?: string
           created_by?: string | null
           description?: string | null
@@ -1312,6 +1317,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          attachments?: Json
           created_at?: string
           created_by?: string | null
           description?: string | null
