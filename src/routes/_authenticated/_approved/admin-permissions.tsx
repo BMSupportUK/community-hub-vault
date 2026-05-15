@@ -24,6 +24,18 @@ interface ChanPerm { channel_id: string; role: string; can_view: boolean; can_se
 const LOCKED = new Set(["admin", "management"]);
 const HIDDEN_ROLES = new Set(["pending", "banned"]);
 
+// Auto-discover all page routes under /_authenticated/_approved at build time.
+// New page files added by future code automatically show up here.
+const APPROVED_ROUTE_FILES = import.meta.glob("/src/routes/_authenticated/_approved/*.tsx");
+const DISCOVERED_PAGE_KEYS: string[] = Object.keys(APPROVED_ROUTE_FILES)
+  .map((p) => p.split("/").pop()!.replace(/\.tsx$/, ""))
+  // Skip layouts (no dot), dynamic ($), index splits (home.index), and the perms page itself.
+  .filter((n) => !n.startsWith("_") && !n.includes("$") && !n.includes("."));
+
+function humanLabel(key: string): string {
+  return key.replace(/[-_]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 function AdminPermissionsPage() {
   const { hasAny } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
@@ -46,8 +58,30 @@ function AdminPermissionsPage() {
       supabase.from("chat_channels").select("id,name,slug,staff_only,sort_order,group_label").order("sort_order"),
       supabase.from("channel_permissions").select("channel_id,role,can_view,can_send,can_delete,can_mention"),
     ]);
+    // Auto-register any page routes that exist in the app but are missing from page_permissions.
+    const existing = new Set((p.data ?? []).map((x: PagePerm) => x.page_key));
+    const missing = DISCOVERED_PAGE_KEYS.filter((k) => !existing.has(k));
+    if (missing.length > 0) {
+      const maxSort = (p.data ?? []).reduce((m: number, x: PagePerm) => Math.max(m, x.sort_order ?? 0), 0);
+      const rows = missing.map((key, i) => ({
+        page_key: key,
+        label: humanLabel(key),
+        allowed_roles: [] as string[],
+        sort_order: maxSort + 10 * (i + 1),
+      }));
+      const { error: insErr, data: ins } = await supabase
+        .from("page_permissions")
+        .insert(rows as any)
+        .select("page_key,label,allowed_roles,sort_order");
+      if (!insErr && ins) {
+        setPages([...(p.data ?? []), ...ins].sort((a, b) => a.sort_order - b.sort_order));
+      } else {
+        setPages(p.data ?? []);
+      }
+    } else {
+      setPages(p.data ?? []);
+    }
     setRoles((r.data ?? []).filter((x: RoleDef) => !HIDDEN_ROLES.has(x.name)));
-    setPages(p.data ?? []);
     setChannels(c.data ?? []);
     setChanPerms(cp.data ?? []);
     setLoading(false);
