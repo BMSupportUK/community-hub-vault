@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Hash, ChevronDown, Plus, Trash2 } from "lucide-react";
+import { Hash, ChevronDown, Plus, Trash2, Shield } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
@@ -10,6 +10,8 @@ export interface ChannelGroup {
   onAddItem?: () => void;
   onDeleteItem?: (to: string) => void;
   onDeleteGroup?: () => void;
+  onEditItemPerms?: (to: string) => void;
+  onEditGroupPerms?: () => void;
 }
 
 export function ChannelColumn({
@@ -55,6 +57,15 @@ export function ChannelColumn({
                   <Plus className="size-3.5" />
                 </button>
               )}
+              {g.onEditGroupPerms && (
+                <button
+                  onClick={g.onEditGroupPerms}
+                  title="Category permissions"
+                  className="opacity-0 group-hover/cat:opacity-100 hover:text-primary p-0.5"
+                >
+                  <Shield className="size-3.5" />
+                </button>
+              )}
               {g.onDeleteGroup && (
                 <button
                   onClick={g.onDeleteGroup}
@@ -95,6 +106,15 @@ export function ChannelColumn({
                         className="opacity-0 group-hover/ch:opacity-100 hover:text-destructive p-1"
                       >
                         <Trash2 className="size-3.5" />
+                      </button>
+                    )}
+                    {g.onEditItemPerms && (
+                      <button
+                        onClick={(e) => { e.preventDefault(); g.onEditItemPerms!(it.to); }}
+                        title="Channel permissions"
+                        className="opacity-0 group-hover/ch:opacity-100 hover:text-primary p-1"
+                      >
+                        <Shield className="size-3.5" />
                       </button>
                     )}
                   </div>
