@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 import { MentionText, mentionsCurrentUser, useMentionAutocomplete } from "@/components/app/mentions";
 import { StaffOnDutyStrip } from "@/components/app/StaffOnDutyStrip";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/_approved/home/$channel")({
   component: ChannelPage,
