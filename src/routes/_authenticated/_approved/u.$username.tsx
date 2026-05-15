@@ -11,6 +11,7 @@ import { useAuth, type AppRole } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import profileHeader from "@/assets/profile-header.jpg";
+import tvLoginIllustration from "@/assets/tv-login-illustration.jpg";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 
@@ -381,7 +382,30 @@ function ProfilePage() {
 
           {canSeeCreds && (
             <TabsContent value="creds" className="mt-6">
-              <CredentialsReveal targetUserId={profile.id} isOwner={isOwner} />
+              <div className="space-y-6">
+                <div className="rounded-2xl overflow-hidden border border-purple-500/30 bg-purple-950/50 backdrop-blur shadow-[0_0_60px_-15px_rgba(168,85,247,0.5)]">
+                  <div className="grid md:grid-cols-[1.4fr_1fr]">
+                    <img
+                      src={tvLoginIllustration}
+                      alt="Customer relaxing on a sofa logging into their TV app"
+                      width={1920}
+                      height={1080}
+                      loading="lazy"
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="p-6 flex flex-col justify-center text-white bg-gradient-to-br from-fuchsia-600/20 via-purple-600/20 to-violet-700/20">
+                      <p className="text-xs uppercase tracking-[0.2em] text-fuchsia-200/80 mb-2">Your TV Credentials</p>
+                      <h3 className="font-display text-2xl font-bold bg-gradient-to-r from-violet-200 to-blue-200 bg-clip-text text-transparent">
+                        Sign in to your TV app
+                      </h3>
+                      <p className="mt-3 text-sm text-purple-100/90">
+                        Grab your remote, head to the BM Support app on your TV, and use the credentials below to sign in. Keep them private — your password unlocks everything.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <CredentialsReveal targetUserId={profile.id} isOwner={isOwner} />
+              </div>
             </TabsContent>
           )}
 
