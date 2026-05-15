@@ -450,6 +450,33 @@ export type Database = {
         }
         Relationships: []
       }
+      invites: {
+        Row: {
+          code: string
+          created_at: string
+          created_by: string
+          id: string
+          used_at: string | null
+          used_by: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          created_by: string
+          id?: string
+          used_at?: string | null
+          used_by?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          used_at?: string | null
+          used_by?: string | null
+        }
+        Relationships: []
+      }
       nav_order: {
         Row: {
           key: string
@@ -1352,6 +1379,17 @@ export type Database = {
         Returns: undefined
       }
       delete_app_role: { Args: { _name: string }; Returns: undefined }
+      get_invite_leaderboard: {
+        Args: never
+        Returns: {
+          avatar_url: string
+          display_name: string
+          total_count: number
+          used_count: number
+          user_id: string
+          username: string
+        }[]
+      }
       has_any_role: {
         Args: {
           _roles: Database["public"]["Enums"]["app_role"][]
@@ -1366,6 +1404,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      redeem_invite: { Args: { p_code: string }; Returns: Json }
       submit_appeal: { Args: { p_reason: string }; Returns: Json }
     }
     Enums: {

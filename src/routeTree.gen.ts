@@ -28,6 +28,7 @@ import { Route as AuthenticatedApprovedReviewsRouteImport } from './routes/_auth
 import { Route as AuthenticatedApprovedProfileRouteImport } from './routes/_authenticated/_approved/profile'
 import { Route as AuthenticatedApprovedModerationRouteImport } from './routes/_authenticated/_approved/moderation'
 import { Route as AuthenticatedApprovedMembersRouteImport } from './routes/_authenticated/_approved/members'
+import { Route as AuthenticatedApprovedLeaderboardRouteImport } from './routes/_authenticated/_approved/leaderboard'
 import { Route as AuthenticatedApprovedInstallGuidesRouteImport } from './routes/_authenticated/_approved/install-guides'
 import { Route as AuthenticatedApprovedHomeRouteImport } from './routes/_authenticated/_approved/home'
 import { Route as AuthenticatedApprovedClockRouteImport } from './routes/_authenticated/_approved/clock'
@@ -144,6 +145,12 @@ const AuthenticatedApprovedMembersRoute =
     path: '/members',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
+const AuthenticatedApprovedLeaderboardRoute =
+  AuthenticatedApprovedLeaderboardRouteImport.update({
+    id: '/leaderboard',
+    path: '/leaderboard',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
 const AuthenticatedApprovedInstallGuidesRoute =
   AuthenticatedApprovedInstallGuidesRouteImport.update({
     id: '/install-guides',
@@ -234,6 +241,7 @@ export interface FileRoutesByFullPath {
   '/clock': typeof AuthenticatedApprovedClockRoute
   '/home': typeof AuthenticatedApprovedHomeRouteWithChildren
   '/install-guides': typeof AuthenticatedApprovedInstallGuidesRoute
+  '/leaderboard': typeof AuthenticatedApprovedLeaderboardRoute
   '/members': typeof AuthenticatedApprovedMembersRoute
   '/moderation': typeof AuthenticatedApprovedModerationRoute
   '/profile': typeof AuthenticatedApprovedProfileRoute
@@ -264,6 +272,7 @@ export interface FileRoutesByTo {
   '/admin-roles': typeof AuthenticatedApprovedAdminRolesRoute
   '/clock': typeof AuthenticatedApprovedClockRoute
   '/install-guides': typeof AuthenticatedApprovedInstallGuidesRoute
+  '/leaderboard': typeof AuthenticatedApprovedLeaderboardRoute
   '/members': typeof AuthenticatedApprovedMembersRoute
   '/moderation': typeof AuthenticatedApprovedModerationRoute
   '/profile': typeof AuthenticatedApprovedProfileRoute
@@ -298,6 +307,7 @@ export interface FileRoutesById {
   '/_authenticated/_approved/clock': typeof AuthenticatedApprovedClockRoute
   '/_authenticated/_approved/home': typeof AuthenticatedApprovedHomeRouteWithChildren
   '/_authenticated/_approved/install-guides': typeof AuthenticatedApprovedInstallGuidesRoute
+  '/_authenticated/_approved/leaderboard': typeof AuthenticatedApprovedLeaderboardRoute
   '/_authenticated/_approved/members': typeof AuthenticatedApprovedMembersRoute
   '/_authenticated/_approved/moderation': typeof AuthenticatedApprovedModerationRoute
   '/_authenticated/_approved/profile': typeof AuthenticatedApprovedProfileRoute
@@ -331,6 +341,7 @@ export interface FileRouteTypes {
     | '/clock'
     | '/home'
     | '/install-guides'
+    | '/leaderboard'
     | '/members'
     | '/moderation'
     | '/profile'
@@ -361,6 +372,7 @@ export interface FileRouteTypes {
     | '/admin-roles'
     | '/clock'
     | '/install-guides'
+    | '/leaderboard'
     | '/members'
     | '/moderation'
     | '/profile'
@@ -394,6 +406,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/clock'
     | '/_authenticated/_approved/home'
     | '/_authenticated/_approved/install-guides'
+    | '/_authenticated/_approved/leaderboard'
     | '/_authenticated/_approved/members'
     | '/_authenticated/_approved/moderation'
     | '/_authenticated/_approved/profile'
@@ -553,6 +566,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedApprovedMembersRouteImport
       parentRoute: typeof AuthenticatedApprovedRoute
     }
+    '/_authenticated/_approved/leaderboard': {
+      id: '/_authenticated/_approved/leaderboard'
+      path: '/leaderboard'
+      fullPath: '/leaderboard'
+      preLoaderRoute: typeof AuthenticatedApprovedLeaderboardRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
     '/_authenticated/_approved/install-guides': {
       id: '/_authenticated/_approved/install-guides'
       path: '/install-guides'
@@ -667,6 +687,7 @@ interface AuthenticatedApprovedRouteChildren {
   AuthenticatedApprovedClockRoute: typeof AuthenticatedApprovedClockRoute
   AuthenticatedApprovedHomeRoute: typeof AuthenticatedApprovedHomeRouteWithChildren
   AuthenticatedApprovedInstallGuidesRoute: typeof AuthenticatedApprovedInstallGuidesRoute
+  AuthenticatedApprovedLeaderboardRoute: typeof AuthenticatedApprovedLeaderboardRoute
   AuthenticatedApprovedMembersRoute: typeof AuthenticatedApprovedMembersRoute
   AuthenticatedApprovedModerationRoute: typeof AuthenticatedApprovedModerationRoute
   AuthenticatedApprovedProfileRoute: typeof AuthenticatedApprovedProfileRoute
@@ -694,6 +715,7 @@ const AuthenticatedApprovedRouteChildren: AuthenticatedApprovedRouteChildren = {
   AuthenticatedApprovedHomeRoute: AuthenticatedApprovedHomeRouteWithChildren,
   AuthenticatedApprovedInstallGuidesRoute:
     AuthenticatedApprovedInstallGuidesRoute,
+  AuthenticatedApprovedLeaderboardRoute: AuthenticatedApprovedLeaderboardRoute,
   AuthenticatedApprovedMembersRoute: AuthenticatedApprovedMembersRoute,
   AuthenticatedApprovedModerationRoute: AuthenticatedApprovedModerationRoute,
   AuthenticatedApprovedProfileRoute: AuthenticatedApprovedProfileRoute,

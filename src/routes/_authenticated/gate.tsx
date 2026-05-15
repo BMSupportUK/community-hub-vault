@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { Send, Ban, X, LogOut, ShieldCheck, FileText, MessageSquarePlus } from "lucide-react";
+import { Send, Ban, X, LogOut, ShieldCheck, FileText, MessageSquarePlus, Ticket } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
@@ -27,12 +27,16 @@ function GatePage() {
   const [submitting, setSubmitting] = useState(false);
   const [confirmNew, setConfirmNew] = useState(false);
   const [senderNames, setSenderNames] = useState<Record<string, string>>({});
+  const [inviteCode, setInviteCode] = useState("");
+  const [redeeming, setRedeeming] = useState(false);
   const scrollerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
     if (params.get("chat") === "1") setChatOpen(true);
+    const inv = params.get("invite");
+    if (inv) setInviteCode(inv.toUpperCase());
   }, []);
 
   useEffect(() => {
@@ -187,6 +191,24 @@ function GatePage() {
     setChatOpen(true);
   };
 
+  const redeem = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const code = inviteCode.trim().toUpperCase();
+    if (!code) return;
+    setRedeeming(true);
+    const { error } = await supabase.rpc("redeem_invite", { p_code: code });
+    if (error) {
+      setRedeeming(false);
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Invite accepted — welcome in!");
+    await refreshRoles();
+    setStatus("approved");
+    setRedeeming(false);
+    navigate({ to: "/home" });
+  };
+
   return (
     <div className="fixed inset-0 overflow-hidden bg-black">
       {/* Cinematic background */}
@@ -230,6 +252,37 @@ function GatePage() {
           >
             Open ticket & chat with staff
           </button>
+        )}
+
+        {status !== "approved" && (
+          <div className="mt-6 w-full max-w-md">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="flex-1 h-px bg-white/10" />
+              <span className="text-[11px] uppercase tracking-wider text-white/50">Have an invite?</span>
+              <div className="flex-1 h-px bg-white/10" />
+            </div>
+            <form onSubmit={redeem} className="flex items-center gap-2">
+              <div className="relative flex-1">
+                <Ticket className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-white/40" />
+                <input
+                  value={inviteCode}
+                  onChange={(e) => setInviteCode(e.target.value.toUpperCase().slice(0, 32))}
+                  placeholder="Enter invite code"
+                  className="w-full pl-9 pr-3 h-11 rounded-lg bg-white/5 border border-white/15 text-white placeholder:text-white/40 font-mono tracking-widest text-sm outline-none focus:border-fuchsia-500/60"
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={redeeming || inviteCode.trim().length === 0}
+                className="h-11 px-4 rounded-lg font-semibold text-white bg-gradient-to-r from-fuchsia-600 to-violet-600 hover:from-fuchsia-500 hover:to-violet-500 disabled:opacity-50 transition-all"
+              >
+                {redeeming ? "…" : "Redeem"}
+              </button>
+            </form>
+            <p className="mt-2 text-center text-[11px] text-white/40">
+              Skip the queue with a single-use invite from a member.
+            </p>
+          </div>
         )}
 
         {status === "denied" && (
