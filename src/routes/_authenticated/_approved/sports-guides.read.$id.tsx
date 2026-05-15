@@ -61,7 +61,7 @@ function ReadPage() {
         <Button
           variant="ghost"
           className="text-purple-200 hover:text-white hover:bg-purple-800/60"
-          onClick={() => navigate({ to: "/sports-guides" })}
+          onClick={() => navigate({ to: "/sports-guides", search: { cat: blog?.category_id || undefined } })}
         >
           <ArrowLeft className="size-4 mr-1" /> Back to guides
         </Button>
