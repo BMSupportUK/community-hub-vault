@@ -14,42 +14,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      app_credentials: {
-        Row: {
-          app_login_name: string
-          created_at: string
-          created_by: string | null
-          expiry_at: string | null
-          id: string
-          notes: string | null
-          owner_id: string
-          password: string
-          updated_at: string
-        }
-        Insert: {
-          app_login_name: string
-          created_at?: string
-          created_by?: string | null
-          expiry_at?: string | null
-          id?: string
-          notes?: string | null
-          owner_id: string
-          password: string
-          updated_at?: string
-        }
-        Update: {
-          app_login_name?: string
-          created_at?: string
-          created_by?: string | null
-          expiry_at?: string | null
-          id?: string
-          notes?: string | null
-          owner_id?: string
-          password?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
       app_settings: {
         Row: {
           key: string
@@ -415,38 +379,6 @@ export type Database = {
         }
         Relationships: []
       }
-      gate_messages: {
-        Row: {
-          application_id: string
-          content: string
-          created_at: string
-          id: string
-          sender_id: string
-        }
-        Insert: {
-          application_id: string
-          content: string
-          created_at?: string
-          id?: string
-          sender_id: string
-        }
-        Update: {
-          application_id?: string
-          content?: string
-          created_at?: string
-          id?: string
-          sender_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "gate_messages_application_id_fkey"
-            columns: ["application_id"]
-            isOneToOne: false
-            referencedRelation: "gate_applications"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       holiday_requests: {
         Row: {
           created_at: string
@@ -728,69 +660,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      orders: {
-        Row: {
-          completed_at: string | null
-          completed_by: string | null
-          created_at: string
-          customer_type: string | null
-          discount_cents: number
-          discount_code: string | null
-          email: string | null
-          existing_username: string | null
-          id: string
-          notes: string | null
-          paid_at: string | null
-          paid_by: string | null
-          shipping_address: string | null
-          shipping_name: string | null
-          status: Database["public"]["Enums"]["order_status"]
-          total_cents: number
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          completed_at?: string | null
-          completed_by?: string | null
-          created_at?: string
-          customer_type?: string | null
-          discount_cents?: number
-          discount_code?: string | null
-          email?: string | null
-          existing_username?: string | null
-          id?: string
-          notes?: string | null
-          paid_at?: string | null
-          paid_by?: string | null
-          shipping_address?: string | null
-          shipping_name?: string | null
-          status?: Database["public"]["Enums"]["order_status"]
-          total_cents?: number
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          completed_at?: string | null
-          completed_by?: string | null
-          created_at?: string
-          customer_type?: string | null
-          discount_cents?: number
-          discount_code?: string | null
-          email?: string | null
-          existing_username?: string | null
-          id?: string
-          notes?: string | null
-          paid_at?: string | null
-          paid_by?: string | null
-          shipping_address?: string | null
-          shipping_name?: string | null
-          status?: Database["public"]["Enums"]["order_status"]
-          total_cents?: number
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
       }
       page_permissions: {
         Row: {
@@ -1468,30 +1337,6 @@ export type Database = {
         }
         Relationships: []
       }
-      user_ip_logs: {
-        Row: {
-          created_at: string
-          id: string
-          ip: string
-          user_agent: string | null
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          ip: string
-          user_agent?: string | null
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          ip?: string
-          user_agent?: string | null
-          user_id?: string
-        }
-        Relationships: []
-      }
       user_notifications: {
         Row: {
           body: string | null
@@ -1575,9 +1420,156 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      app_credentials: {
+        Row: {
+          app_login_name: string | null
+          created_at: string | null
+          created_by: string | null
+          expiry_at: string | null
+          id: string | null
+          notes: string | null
+          owner_id: string | null
+          password: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          app_login_name?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          expiry_at?: string | null
+          id?: string | null
+          notes?: never
+          owner_id?: string | null
+          password?: never
+          updated_at?: string | null
+        }
+        Update: {
+          app_login_name?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          expiry_at?: string | null
+          id?: string | null
+          notes?: never
+          owner_id?: string | null
+          password?: never
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      gate_messages: {
+        Row: {
+          application_id: string | null
+          content: string | null
+          created_at: string | null
+          id: string | null
+          sender_id: string | null
+        }
+        Insert: {
+          application_id?: string | null
+          content?: never
+          created_at?: string | null
+          id?: string | null
+          sender_id?: string | null
+        }
+        Update: {
+          application_id?: string | null
+          content?: never
+          created_at?: string | null
+          id?: string | null
+          sender_id?: string | null
+        }
+        Relationships: []
+      }
+      orders: {
+        Row: {
+          completed_at: string | null
+          completed_by: string | null
+          created_at: string | null
+          customer_type: string | null
+          discount_cents: number | null
+          discount_code: string | null
+          email: string | null
+          existing_username: string | null
+          id: string | null
+          notes: string | null
+          paid_at: string | null
+          paid_by: string | null
+          shipping_address: string | null
+          shipping_name: string | null
+          status: Database["public"]["Enums"]["order_status"] | null
+          total_cents: number | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string | null
+          customer_type?: string | null
+          discount_cents?: number | null
+          discount_code?: string | null
+          email?: never
+          existing_username?: string | null
+          id?: string | null
+          notes?: string | null
+          paid_at?: string | null
+          paid_by?: string | null
+          shipping_address?: never
+          shipping_name?: string | null
+          status?: Database["public"]["Enums"]["order_status"] | null
+          total_cents?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string | null
+          customer_type?: string | null
+          discount_cents?: number | null
+          discount_code?: string | null
+          email?: never
+          existing_username?: string | null
+          id?: string | null
+          notes?: string | null
+          paid_at?: string | null
+          paid_by?: string | null
+          shipping_address?: never
+          shipping_name?: string | null
+          status?: Database["public"]["Enums"]["order_status"] | null
+          total_cents?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      user_ip_logs: {
+        Row: {
+          created_at: string | null
+          id: string | null
+          ip: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string | null
+          ip?: never
+          user_agent?: never
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string | null
+          ip?: never
+          user_agent?: never
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
+      app_encrypt: { Args: { p: string }; Returns: string }
       can_in_channel: {
         Args: { _action: string; _channel: string; _user: string }
         Returns: boolean
