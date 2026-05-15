@@ -284,10 +284,20 @@ function SportsGuidesPage() {
                           onClick={() => setActiveCat(c.id)}
                           className="flex-1 flex items-center justify-between px-2 py-2 text-sm text-left"
                         >
-                          <span>{c.name}</span>
-                          {n > 0 && (
-                            <span className={`text-xs px-2 py-0.5 rounded-full ${active ? "bg-white/20" : "bg-purple-800/60 text-purple-100"}`}>{n}</span>
-                          )}
+                          <span className="flex items-center gap-2">
+                            {(unreadCounts[c.id] ?? 0) > 0 && (
+                              <span className="size-2 rounded-full bg-fuchsia-400 shadow-[0_0_8px_rgba(232,121,249,0.9)]" />
+                            )}
+                            {c.name}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            {(unreadCounts[c.id] ?? 0) > 0 && (
+                              <span className="text-xs px-2 py-0.5 rounded-full bg-fuchsia-500 text-white font-semibold">{unreadCounts[c.id]}</span>
+                            )}
+                            {n > 0 && (
+                              <span className={`text-xs px-2 py-0.5 rounded-full ${active ? "bg-white/20" : "bg-purple-800/60 text-purple-100"}`}>{n}</span>
+                            )}
+                          </span>
                         </button>
                       </div>
                     );
@@ -335,7 +345,7 @@ function SportsGuidesPage() {
                           if (dragBlogId.current) reorderBlogs(dragBlogId.current, b.id);
                           dragBlogId.current = null;
                         }}
-                        className="rounded-2xl bg-purple-950/50 border border-purple-500/30 overflow-hidden flex flex-col group hover:border-fuchsia-500/60 hover:shadow-[0_0_30px_-10px_rgba(217,70,239,0.6)] transition-all"
+                        className={`rounded-2xl bg-purple-950/50 border overflow-hidden flex flex-col group hover:shadow-[0_0_30px_-10px_rgba(217,70,239,0.6)] transition-all ${isUnread(b) ? "border-fuchsia-500/70 shadow-[0_0_20px_-10px_rgba(232,121,249,0.8)]" : "border-purple-500/30 hover:border-fuchsia-500/60"}`}
                       >
                         <div className="aspect-[16/10] bg-purple-900/50 relative overflow-hidden">
                           {b.image_url ? (
@@ -348,6 +358,11 @@ function SportsGuidesPage() {
                           {isMod && (
                             <div className="absolute top-2 left-2 size-8 rounded-md bg-black/60 backdrop-blur grid place-items-center text-white cursor-grab">
                               <GripVertical className="size-4" />
+                            </div>
+                          )}
+                          {isUnread(b) && (
+                            <div className="absolute top-2 right-2 px-2 py-1 rounded-md bg-fuchsia-500 text-white text-[10px] font-bold uppercase tracking-wide shadow-lg">
+                              New
                             </div>
                           )}
                         </div>
@@ -363,7 +378,16 @@ function SportsGuidesPage() {
                           <h3 className="font-display font-semibold text-lg leading-snug text-purple-50">{b.title}</h3>
                           {b.excerpt && <p className="text-sm text-purple-200/70 line-clamp-2">{b.excerpt}</p>}
                           <div className="mt-auto pt-3 flex items-center gap-2">
-                            <Button size="sm" className="flex-1 bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white border-0" onClick={() => setReading(b)}>Click to Read</Button>
+                            <Button size="sm" className="flex-1 bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white border-0" onClick={() => { setReading(b); markRead(b); }}>Click to Read</Button>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="text-purple-200 hover:text-white hover:bg-purple-800/60"
+                              title={isUnread(b) ? "Mark as read" : "Mark as unread"}
+                              onClick={() => (isUnread(b) ? markRead(b) : markUnread(b))}
+                            >
+                              {isUnread(b) ? <Check className="size-4" /> : <Circle className="size-4" />}
+                            </Button>
                             {isMod && (
                               <>
                                 <Button size="icon" variant="ghost" className="text-purple-200 hover:text-white hover:bg-purple-800/60" onClick={() => { setEditing(b); setShowEditor(true); }}>
