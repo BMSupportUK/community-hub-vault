@@ -7,6 +7,7 @@ import { ChannelColumn, type ChannelGroup } from "@/components/app/ChannelColumn
 import {
   Ticket as TicketIcon, Plus, Send, Lock, X, LifeBuoy, CreditCard, Bug, Sparkles, UserCog,
   Tv, Film, Circle, CircleDot, Clock4, CheckCircle2, XCircle, ChevronDown, Trash2, Coffee, UtensilsCrossed,
+  Paperclip, FileText,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -48,15 +49,116 @@ interface Ticket {
   status: Status; priority: Priority; assigned_to: string | null;
   created_at: string; updated_at: string;
 }
-interface Message { id: string; ticket_id: string; sender_id: string; content: string; is_internal: boolean; created_at: string; }
+interface Message { id: string; ticket_id: string; sender_id: string; content: string; is_internal: boolean; created_at: string; attachments?: Attachment[]; }
+interface Attachment { name: string; path: string; size: number; type: string; }
 interface Profile { id: string; display_name: string | null; username: string | null; }
 
 const newTicketSchema = z.object({
   subject: z.string().trim().min(3, "Subject must be at least 3 characters").max(120),
   category_id: z.string().uuid("Pick a category"),
   priority: z.enum(PRIORITIES),
-  message: z.string().trim().min(5, "Message must be at least 5 characters").max(2000),
+  message: z.string().trim().max(2000),
 });
+
+async function uploadTicketFiles(files: File[]): Promise<Attachment[]> {
+  const out: Attachment[] = [];
+  for (const f of files) {
+    if (f.size > 25 * 1024 * 1024) {
+      toast.error(`${f.name} is over 25MB`);
+      continue;
+    }
+    const safe = f.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+    const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${safe}`;
+    const { error } = await supabase.storage.from("ticket-attachments").upload(path, f, {
+      cacheControl: "3600",
+      upsert: false,
+      contentType: f.type || undefined,
+    });
+    if (error) {
+      toast.error(`Upload failed: ${error.message}`);
+      continue;
+    }
+    out.push({ name: f.name, path, size: f.size, type: f.type });
+  }
+  return out;
+}
+
+function TicketAttachment({ item }: { item: Attachment }) {
+  const [url, setUrl] = useState<string | null>(null);
+  useEffect(() => {
+    let active = true;
+    supabase.storage
+      .from("ticket-attachments")
+      .createSignedUrl(item.path, 60 * 60)
+      .then(({ data }) => { if (active) setUrl(data?.signedUrl ?? null); });
+    return () => { active = false; };
+  }, [item.path]);
+  const isImg = item.type?.startsWith("image/");
+  if (isImg) {
+    return url ? (
+      <a href={url} target="_blank" rel="noreferrer" className="block">
+        <img src={url} alt={item.name} className="size-24 rounded-lg object-cover border border-white/30 hover:opacity-80" />
+      </a>
+    ) : <div className="size-24 rounded-lg bg-white/10 animate-pulse" />;
+  }
+  return (
+    <a
+      href={url ?? "#"}
+      target="_blank"
+      rel="noreferrer"
+      onClick={(e) => { if (!url) e.preventDefault(); }}
+      className="inline-flex items-center gap-2 px-2.5 py-1.5 rounded-lg border border-white/30 bg-white/10 text-xs hover:bg-white/20"
+    >
+      <FileText className="size-3.5" />
+      <span className="max-w-[180px] truncate">{item.name}</span>
+    </a>
+  );
+}
+
+function TicketAttachments({ items }: { items: Attachment[] | null | undefined }) {
+  if (!items?.length) return null;
+  return (
+    <div className="flex flex-wrap gap-2 mt-2">
+      {items.map((a, i) => <TicketAttachment key={i} item={a} />)}
+    </div>
+  );
+}
+
+function FilePicker({
+  files, setFiles, disabled, dark,
+}: { files: File[]; setFiles: (f: File[]) => void; disabled?: boolean; dark?: boolean }) {
+  const base = dark
+    ? "border-white/30 bg-white/10 hover:bg-white/20 text-white"
+    : "border-border bg-surface-2 hover:border-primary";
+  return (
+    <div className="space-y-1.5">
+      <label className={cn("inline-flex items-center gap-2 px-2.5 py-1.5 rounded-lg border text-xs cursor-pointer", base)}>
+        <Paperclip className="size-3.5" />
+        <span>Attach files</span>
+        <input
+          type="file" multiple className="hidden" disabled={disabled}
+          onChange={(e) => {
+            const list = Array.from(e.target.files ?? []);
+            setFiles([...files, ...list]);
+            e.target.value = "";
+          }}
+        />
+      </label>
+      {files.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {files.map((f, i) => (
+            <span key={i} className={cn("inline-flex items-center gap-1.5 px-2 py-0.5 rounded border text-[11px]", base)}>
+              <span className="max-w-[160px] truncate">{f.name}</span>
+              <button type="button" onClick={() => setFiles(files.filter((_, j) => j !== i))} className="opacity-70 hover:opacity-100">
+                <X className="size-3" />
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 function TicketsPage() {
   const { user, isStaff } = useAuth();
@@ -254,6 +356,7 @@ function NewTicketForm({
   const [priority, setPriority] = useState<Priority>("normal");
   const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [files, setFiles] = useState<File[]>([]);
 
   useEffect(() => { if (!categoryId && categories[0]) setCategoryId(categories[0].id); }, [categories, categoryId]);
 
@@ -261,7 +364,9 @@ function NewTicketForm({
     e.preventDefault();
     const parsed = newTicketSchema.safeParse({ subject, category_id: categoryId, priority, message });
     if (!parsed.success) return toast.error(parsed.error.issues[0].message);
+    if (!parsed.data.message && files.length === 0) return toast.error("Add a message or attach a file");
     setSubmitting(true);
+    const uploaded = files.length ? await uploadTicketFiles(files) : [];
     const { data: t, error } = await supabase
       .from("tickets")
       .insert({ user_id: user!.id, subject: parsed.data.subject, category_id: parsed.data.category_id, priority: parsed.data.priority })
@@ -269,6 +374,7 @@ function NewTicketForm({
     if (error || !t) { setSubmitting(false); return toast.error(error?.message ?? "Failed"); }
     const { error: e2 } = await supabase.from("ticket_messages").insert({
       ticket_id: t.id, sender_id: user!.id, content: parsed.data.message, is_internal: false,
+      attachments: uploaded as unknown as never,
     });
     setSubmitting(false);
     if (e2) return toast.error(e2.message);
@@ -367,6 +473,9 @@ function NewTicketForm({
               className="w-full px-3 py-2 rounded-lg bg-white/15 backdrop-blur border border-white/30 focus:border-white text-white placeholder:text-white/60 outline-none resize-none"
             />
           </Field>
+          <Field label="Attachments (optional)">
+            <FilePicker files={files} setFiles={setFiles} disabled={submitting} dark />
+          </Field>
           <div className="flex gap-2 justify-end">
             <button type="button" onClick={onCancel} className="px-4 py-2 rounded-lg text-sm text-white/80 hover:text-white">Cancel</button>
             <button type="submit" disabled={submitting} className="px-4 py-2 rounded-lg bg-white text-rose-600 text-sm font-semibold hover:bg-white/90 disabled:opacity-50 shadow-lg">
@@ -405,6 +514,7 @@ function TicketDetail({
   const [draft, setDraft] = useState("");
   const [internal, setInternal] = useState(false);
   const [sending, setSending] = useState(false);
+  const [replyFiles, setReplyFiles] = useState<File[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
   const taRef = useRef<HTMLTextAreaElement>(null);
   const mention = useMentionAutocomplete({
@@ -427,7 +537,7 @@ function TicketDetail({
     const { data } = await supabase
       .from("ticket_messages").select("*")
       .eq("ticket_id", ticket.id).order("created_at", { ascending: true });
-    setMessages((data ?? []) as Message[]);
+    setMessages((data ?? []) as unknown as Message[]);
     // Pull missing sender profiles
     const missing = [...new Set((data ?? []).map((m) => m.sender_id))].filter((id) => !profiles.has(id));
     if (missing.length) {
@@ -440,7 +550,7 @@ function TicketDetail({
     const ch = supabase
       .channel(`ticket-${ticket.id}`)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "ticket_messages", filter: `ticket_id=eq.${ticket.id}` },
-        (p) => setMessages((m) => [...m, p.new as Message]))
+        (p) => setMessages((m) => [...m, p.new as unknown as Message]))
       .subscribe();
     return () => { supabase.removeChannel(ch); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -452,11 +562,13 @@ function TicketDetail({
 
   const send = async () => {
     const content = draft.trim();
-    if (content.length < 1 || content.length > 2000) return;
+    if ((content.length < 1 && replyFiles.length === 0) || content.length > 2000) return;
     if (ticket.status === "closed") return toast.error("Ticket is closed");
     setSending(true);
+    const uploaded = replyFiles.length ? await uploadTicketFiles(replyFiles) : [];
     const { error } = await supabase.from("ticket_messages").insert({
       ticket_id: ticket.id, sender_id: currentUserId, content, is_internal: internal && isStaff,
+      attachments: uploaded as unknown as never,
     });
     setSending(false);
     if (error) {
@@ -468,6 +580,7 @@ function TicketDetail({
       );
     }
     setDraft("");
+    setReplyFiles([]);
     // Bump updated_at via status touch (only staff allowed) — skip for users
     if (isStaff && ticket.status === "open") {
       await supabase.from("tickets").update({ status: "in_progress" }).eq("id", ticket.id);
@@ -564,6 +677,7 @@ function TicketDetail({
                   {senderName(m.sender_id)} · {new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                 </div>
                 <MentionText content={m.content} currentUsername={myUsername} />
+                <TicketAttachments items={m.attachments} />
               </div>
             </div>
           );
@@ -591,10 +705,11 @@ function TicketDetail({
                 )}
               />
               <button
-                onClick={send} disabled={sending || !draft.trim()}
+                onClick={send} disabled={sending || (!draft.trim() && replyFiles.length === 0)}
                 className="self-end px-3 py-2 rounded-lg bg-white text-rose-600 hover:bg-white/90 disabled:opacity-50 shadow"
               ><Send className="size-4" /></button>
             </div>
+            <FilePicker files={replyFiles} setFiles={setReplyFiles} disabled={sending} dark />
             {isStaff && (
               <label className="flex items-center gap-2 text-xs text-white/85 cursor-pointer">
                 <input type="checkbox" checked={internal} onChange={(e) => setInternal(e.target.checked)} className="accent-amber-300" />
