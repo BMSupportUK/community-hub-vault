@@ -3,6 +3,8 @@ import { Hash, ChevronDown, Plus, Trash2, Shield } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 export interface ChannelGroup {
   label: string;
@@ -27,6 +29,17 @@ export function ChannelColumn({
 }) {
   const path = useRouterState({ select: (r) => r.location.pathname });
   const { user } = useAuth();
+  const [profile, setProfile] = useState<{ display_name: string | null; username: string | null; avatar_url: string | null } | null>(null);
+
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("profiles")
+      .select("display_name, username, avatar_url")
+      .eq("id", user.id)
+      .maybeSingle()
+      .then(({ data }) => setProfile(data ?? null));
+  }, [user?.id]);
 
   return (
     <nav className="w-60 shrink-0 bg-surface flex flex-col border-r border-border">
@@ -127,11 +140,21 @@ export function ChannelColumn({
       </div>
       {user && (
         <div className="h-14 border-t border-border px-3 flex items-center gap-2 bg-rail">
-          <div className="size-8 rounded-full bg-gradient-primary flex items-center justify-center text-xs font-semibold text-primary-foreground">
-            {(user.email ?? "?").slice(0, 1).toUpperCase()}
-          </div>
+          {profile?.avatar_url ? (
+            <img
+              src={profile.avatar_url}
+              alt=""
+              className="size-8 rounded-full object-cover shrink-0"
+            />
+          ) : (
+            <div className="size-8 rounded-full bg-gradient-primary flex items-center justify-center text-xs font-semibold text-primary-foreground shrink-0">
+              {(profile?.display_name ?? profile?.username ?? user.email ?? "?").slice(0, 1).toUpperCase()}
+            </div>
+          )}
           <div className="min-w-0 flex-1">
-            <div className="text-xs font-medium truncate">{user.email}</div>
+            <div className="text-xs font-medium truncate">
+              {profile?.display_name ?? profile?.username ?? "User"}
+            </div>
             <div className="text-[10px] text-muted-foreground">Online</div>
           </div>
         </div>
