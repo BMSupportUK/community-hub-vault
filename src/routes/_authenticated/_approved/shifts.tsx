@@ -1,9 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Calendar as CalendarIcon, Plus, Trash2, Check, X, Clock, Users, Plane, Repeat, ShieldCheck, Loader2, Zap, Save, Globe } from "lucide-react";
+import { Calendar as CalendarIcon, Plus, Trash2, Check, X, Clock, Users, Plane, Repeat, ShieldCheck, Loader2, Zap, Save, Globe, MapPin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { useTimezone } from "@/hooks/use-timezone";
+import { useTimezone, zonedWallTimeToUtcMs } from "@/hooks/use-timezone";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -95,11 +95,44 @@ function isDayPastOrStarted(d: Date) {
   return x.getTime() <= today.getTime();
 }
 
+const LOCAL_TZ_KEY = "shifts_display_local_tz_v1";
+const BROWSER_TZ =
+  typeof Intl !== "undefined" ? Intl.DateTimeFormat().resolvedOptions().timeZone : "UTC";
+
+function useLocalDisplayTz(rotaTz: string) {
+  const [localMode, setLocalMode] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem(LOCAL_TZ_KEY) === "1";
+  });
+  const toggle = () => {
+    setLocalMode((v) => {
+      const next = !v;
+      try { localStorage.setItem(LOCAL_TZ_KEY, next ? "1" : "0"); } catch {}
+      return next;
+    });
+  };
+  const fmtTime = (dateStr: string, timeStr: string) => {
+    if (!localMode || BROWSER_TZ === rotaTz) return timeStr.slice(0, 5);
+    const ms = zonedWallTimeToUtcMs(dateStr, timeStr, rotaTz);
+    if (isNaN(ms)) return timeStr.slice(0, 5);
+    return new Intl.DateTimeFormat([], {
+      timeZone: BROWSER_TZ,
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    }).format(new Date(ms));
+  };
+  const fmtRange = (dateStr: string, start: string, end: string) =>
+    `${fmtTime(dateStr, start)}–${fmtTime(dateStr, end)}`;
+  return { localMode, toggle, browserTz: BROWSER_TZ, fmtTime, fmtRange };
+}
+
 function ShiftsPage() {
   const { user, hasAny, hasRole } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
   const isStaffOrAdmin = hasAny(["admin", "management", "staff"]);
   const { toUtcMs, tz } = useTimezone();
+  const { localMode, toggle: toggleLocalTz, browserTz, fmtRange } = useLocalDisplayTz(tz);
   const isMod = hasRole("moderator");
   const canPick = isStaffOrAdmin || isMod;
 
@@ -346,8 +379,40 @@ function ShiftsPage() {
   return (
     <div className="flex-1 overflow-y-auto bg-gradient-to-br from-[#06122e] via-[#0b1e4a] to-[#06122e]">
       <header className="px-8 pt-8 pb-6 border-b border-sky-500/30 bg-blue-950/40 backdrop-blur">
-        <h1 className="font-display text-3xl font-bold bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 bg-clip-text text-transparent">Shifts</h1>
-        <p className="text-sky-200/80 mt-1">Pick your slots, request holiday, swap shifts.</p>
+        <div className="flex items-start justify-between gap-4 flex-wrap">
+          <div>
+            <h1 className="font-display text-3xl font-bold bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 bg-clip-text text-transparent">Shifts</h1>
+            <p className="text-sky-200/80 mt-1">Pick your slots, request holiday, swap shifts.</p>
+          </div>
+          <button
+            onClick={toggleLocalTz}
+            className={cn(
+              "flex items-center gap-2 rounded-xl border px-3 py-2 text-xs transition-colors",
+              localMode
+                ? "bg-cyan-500/20 border-cyan-400/50 text-cyan-100 hover:bg-cyan-500/30"
+                : "bg-blue-950/60 border-sky-500/30 text-sky-200/80 hover:bg-blue-900/60",
+            )}
+            title={
+              localMode
+                ? `Showing times in your local timezone (${browserTz}). Click to show rota timezone (${tz}).`
+                : `Showing times in rota timezone (${tz}). Click to show your local timezone (${browserTz}).`
+            }
+          >
+            <MapPin className="size-3.5" />
+            <div className="flex flex-col items-start leading-tight">
+              <span className="font-semibold uppercase tracking-wider">
+                {localMode ? "Local time" : "Rota time"}
+              </span>
+              <span className="text-[10px] opacity-80">
+                {localMode ? browserTz : tz}
+                {localMode && BROWSER_TZ !== tz && ` · rota ${tz}`}
+              </span>
+            </div>
+          </button>
+        </div>
+        <p className="text-[11px] text-sky-300/60 mt-2">
+          Display only — shift locking always uses the rota timezone ({tz}).
+        </p>
       </header>
 
       <div className="px-8 py-6">
@@ -422,7 +487,7 @@ function ShiftsPage() {
                         return (
                           <div key={s.id} className={cn("rounded-lg p-2 border text-xs", taken ? (mine ? "bg-cyan-500/20 border-cyan-400/50" : "bg-blue-800/40 border-sky-500/30") : "bg-blue-900/40 border-dashed border-sky-400/30")}>
                             <div className="flex items-center justify-between gap-1">
-                              <div className="font-mono text-sky-100">{s.start_time.slice(0,5)}–{s.end_time.slice(0,5)}</div>
+                              <div className="font-mono text-sky-100">{fmtRange(s.shift_date, s.start_time, s.end_time)}</div>
                               <span className={cn("text-[10px] px-1.5 py-0.5 rounded uppercase font-semibold", s.slot_type === "hourly" ? "bg-violet-500/30 text-violet-200" : "bg-sky-500/30 text-sky-100")}>{s.slot_type === "hourly" ? "hourly" : "shift"}</span>
                             </div>
                             {s.notes && <div className="text-sky-200/60 mt-0.5">{s.notes}</div>}
@@ -464,7 +529,7 @@ function ShiftsPage() {
                 {myShifts.map((s) => (
                   <div key={s.id} className="rounded-2xl bg-blue-950/50 border border-sky-500/30 p-4">
                     <div className="text-sky-100 font-semibold">{dayLabel(new Date(s.shift_date))}</div>
-                    <div className="font-mono text-cyan-200 mt-1">{s.start_time.slice(0,5)} – {s.end_time.slice(0,5)}</div>
+                    <div className="font-mono text-cyan-200 mt-1">{fmtRange(s.shift_date, s.start_time, s.end_time)}</div>
                     <div className="text-xs text-sky-200/70 mt-1 uppercase">{s.slot_type}</div>
                     {s.notes && <div className="text-sm text-sky-200/80 mt-2">{s.notes}</div>}
                     {(() => {
@@ -564,7 +629,7 @@ function ShiftsPage() {
                       return (
                         <li key={s.id} className="px-5 py-3 flex items-center gap-3">
                           <div className="flex-1">
-                            <div className="text-sky-100"><strong>{profName(s.requester_id)}</strong> wants to swap {slot ? `${slot.shift_date} ${slot.start_time.slice(0,5)}–${slot.end_time.slice(0,5)}` : "a shift"}</div>
+                            <div className="text-sky-100"><strong>{profName(s.requester_id)}</strong> wants to swap {slot ? `${slot.shift_date} ${fmtRange(slot.shift_date, slot.start_time, slot.end_time)}` : "a shift"}</div>
                             {s.message && <div className="text-xs text-sky-200/60">{s.message}</div>}
                           </div>
                           <StatusPill status={s.status} />
@@ -673,7 +738,7 @@ function ShiftsPage() {
                     {slots.map((s) => (
                       <li key={s.id} className="px-5 py-3 flex items-center gap-3 text-sm">
                         <div className="font-mono text-sky-200/80 w-28">{s.shift_date}</div>
-                        <div className="font-mono text-cyan-200 w-28">{s.start_time.slice(0,5)}–{s.end_time.slice(0,5)}</div>
+                        <div className="font-mono text-cyan-200 w-28">{fmtRange(s.shift_date, s.start_time, s.end_time)}</div>
                         <div className="uppercase text-xs text-sky-300/80 w-20">{s.slot_type}</div>
                         <div className="flex-1 text-sky-100">{s.assigned_to ? profName(s.assigned_to) : <span className="text-sky-300/60">Open</span>}</div>
                         <Button size="sm" variant="ghost" className="text-rose-300 hover:text-rose-200 hover:bg-rose-500/10" onClick={() => adminDeleteSlot(s.id)}><Trash2 className="size-4" /></Button>
@@ -693,7 +758,7 @@ function ShiftsPage() {
           <DialogHeader><DialogTitle>Request shift swap</DialogTitle></DialogHeader>
           {swapFor && (
             <div className="space-y-3">
-              <div className="text-sm text-muted-foreground">{swapFor.shift_date} · {swapFor.start_time.slice(0,5)}–{swapFor.end_time.slice(0,5)}</div>
+              <div className="text-sm text-muted-foreground">{swapFor.shift_date} · {fmtRange(swapFor.shift_date, swapFor.start_time, swapFor.end_time)}</div>
               <div>
                 <Label>Swap with (same role only)</Label>
                 <Select value={swapTarget} onValueChange={setSwapTarget}>
