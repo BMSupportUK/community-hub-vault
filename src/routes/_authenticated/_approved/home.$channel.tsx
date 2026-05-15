@@ -128,6 +128,7 @@ function ChannelPage() {
   const [emojiPickerId, setEmojiPickerId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState("");
+  const [canSend, setCanSend] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
   const taRef = useRef<HTMLTextAreaElement>(null);
   const mention = useMentionAutocomplete({
@@ -152,6 +153,21 @@ function ChannelPage() {
       else setChannel(data as Channel);
     })();
   }, [slug]);
+
+  // Check if current user can send in this channel
+  useEffect(() => {
+    if (!channel || !user) { setCanSend(true); return; }
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await supabase.rpc("can_in_channel", {
+        _user: user.id,
+        _channel: channel.id,
+        _action: "send",
+      });
+      if (!cancelled) setCanSend(error ? true : !!data);
+    })();
+    return () => { cancelled = true; };
+  }, [channel?.id, user?.id]);
 
   // Load messages + subscribe
   useEffect(() => {
@@ -814,12 +830,15 @@ function ChannelPage() {
               }
             }}
             rows={1}
-            placeholder={`Message #${channel.name} — type @ to mention`}
+            placeholder={canSend
+              ? `Message #${channel.name} — type @ to mention`
+              : `You don't have permission to send messages in this channel`}
+            disabled={!canSend}
             className="flex-1 bg-transparent resize-none outline-none text-sm py-1 max-h-32"
           />
           <button
             onClick={send}
-            disabled={sending || !draft.trim()}
+            disabled={sending || !draft.trim() || !canSend}
             className="size-8 rounded-lg bg-primary text-primary-foreground grid place-items-center disabled:opacity-50"
           >
             {sending ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
