@@ -5,6 +5,7 @@ import { Briefcase, Search, Clock, UserPlus, Eye, Check, Lock } from "lucide-rea
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
+import profileHeader from "@/assets/profile-header.jpg";
 
 export const Route = createFileRoute("/_authenticated/_approved/staff")({
   component: StaffPage,
@@ -209,7 +210,11 @@ function StaffPage() {
                           key={p.id}
                           className="group rounded-2xl bg-blue-950/50 border border-blue-500/30 hover:border-sky-400/70 hover:shadow-[0_0_30px_-10px_rgba(56,189,248,0.6)] transition-all overflow-hidden flex flex-col backdrop-blur"
                         >
-                          <div className="h-16 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600" />
+                          <div
+                            className="h-16 bg-cover bg-center"
+                            style={{ backgroundImage: `url(${profileHeader})` }}
+                            aria-hidden
+                          />
                           <div className="px-4 -mt-8 pb-4 flex flex-col flex-1">
                             {p.avatar_url ? (
                               <img
