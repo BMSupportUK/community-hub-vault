@@ -5,6 +5,22 @@ import { cn } from "@/lib/utils";
 const MENTION_RE = /(@[a-zA-Z0-9_.\-]+)/g;
 
 /**
+ * Returns true if the message content mentions the current user
+ * (by username, or via the @all / @here broadcasts).
+ */
+export function mentionsCurrentUser(content: string, currentUsername?: string | null): boolean {
+  const me = currentUsername?.toLowerCase() ?? null;
+  const matches = content.match(MENTION_RE);
+  if (!matches) return false;
+  for (const raw of matches) {
+    const tag = raw.slice(1).toLowerCase();
+    if (tag === "all" || tag === "here") return true;
+    if (me && tag === me) return true;
+  }
+  return false;
+}
+
+/**
  * Render message text with @username / @all / @here highlighted Discord-style.
  * `currentUsername` (lowercase) makes mentions of self glow stronger.
  */
