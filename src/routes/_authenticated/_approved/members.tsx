@@ -56,9 +56,15 @@ function MembersPage() {
   }, [isAdmin]);
 
   const STAFF_ROLES = new Set(["admin", "management", "moderator", "staff"]);
+  const EXCLUDE_ROLES = new Set(["pending", "banned"]);
   const filtered = profiles.filter((p) => {
     const roles = rolesByUser[p.id] ?? [];
+    // Exclude staff/admin/moderator (they live in /staff)
     if (roles.some((r) => STAFF_ROLES.has(r))) return false;
+    // Exclude pending and banned users
+    if (roles.some((r) => EXCLUDE_ROLES.has(r))) return false;
+    // Must have at least the 'member' role
+    if (!roles.includes("member")) return false;
     if (!q.trim()) return true;
     const s = q.toLowerCase();
     return (
