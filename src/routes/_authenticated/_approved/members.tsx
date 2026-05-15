@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Users, Search, Clock, UserPlus, Eye, Check, Lock } from "lucide-react";
 import { toast } from "sonner";
+import profileHeader from "@/assets/profile-header.jpg";
 
 export const Route = createFileRoute("/_authenticated/_approved/members")({
   component: MembersPage,
