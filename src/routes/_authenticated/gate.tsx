@@ -191,6 +191,24 @@ function GatePage() {
     setChatOpen(true);
   };
 
+  const redeem = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const code = inviteCode.trim().toUpperCase();
+    if (!code) return;
+    setRedeeming(true);
+    const { error } = await supabase.rpc("redeem_invite", { p_code: code });
+    if (error) {
+      setRedeeming(false);
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Invite accepted — welcome in!");
+    await refreshRoles();
+    setStatus("approved");
+    setRedeeming(false);
+    navigate({ to: "/home" });
+  };
+
   return (
     <div className="fixed inset-0 overflow-hidden bg-black">
       {/* Cinematic background */}
