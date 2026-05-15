@@ -490,6 +490,13 @@ function ChannelPage() {
     return () => document.removeEventListener("mousedown", onDoc);
   }, [openMenuId, emojiPickerId]);
 
+  // Tick once a second while slow mode cooldown is active.
+  useEffect(() => {
+    if (!channel || channel.slow_mode_seconds <= 0 || isModOrAdmin || !lastSentAt) return;
+    const id = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(id);
+  }, [channel?.slow_mode_seconds, isModOrAdmin, lastSentAt]);
+
   if (missing) {
     return (
       <main className="flex-1 grid place-items-center text-muted-foreground">
