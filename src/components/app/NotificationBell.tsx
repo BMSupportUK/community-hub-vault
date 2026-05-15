@@ -57,12 +57,14 @@ export function NotificationBell() {
           link_path: x.link_path, entity_id: x.source_id, created_at: x.created_at,
           read_at: x.read_at, source: "user" as const,
         }));
-      const staffRows = staffRes
-        ? (((staffRes.data as Notif[]) ?? []).map((s) => ({ ...s, source: "staff" as const })))
-        : [];
       const reads = readsRes
         ? new Set(((readsRes.data as Array<{ notification_id: string }>) ?? []).map((x) => x.notification_id))
         : new Set<string>();
+      const staffRows = staffRes
+        ? (((staffRes.data as Notif[]) ?? [])
+            .filter((s) => !reads.has(s.id))
+            .map((s) => ({ ...s, source: "staff" as const })))
+        : [];
       // user notification "read" state lives on the row itself
       userRows.forEach((u) => { if (u.read_at) reads.add(u.id); });
       const merged = [...userRows, ...staffRows].sort((a, b) => b.created_at.localeCompare(a.created_at));
@@ -127,10 +129,11 @@ export function NotificationBell() {
 
   const markRead = async (id: string) => {
     if (readIds.has(id)) return;
-    setReadIds((prev) => new Set(prev).add(id));
     const it = items.find((x) => x.id === id);
+    setReadIds((prev) => new Set(prev).add(id));
+    setItems((prev) => prev.filter((x) => x.id !== id));
     if (it?.source === "user") {
-      await supabase.from("user_notifications").update({ read_at: new Date().toISOString() }).eq("id", id);
+      await supabase.from("user_notifications").delete().eq("id", id);
     } else {
       await supabase.from("staff_notification_reads").insert({ notification_id: id, user_id: user.id });
     }
@@ -139,17 +142,18 @@ export function NotificationBell() {
   const markAll = async () => {
     const toMark = unread.map((u) => u.id);
     if (!toMark.length) return;
+    const userIds = unread.filter((u) => u.source === "user").map((u) => u.id);
+    const staffIds = unread.filter((u) => u.source === "staff").map((u) => u.id);
     setReadIds((prev) => {
       const next = new Set(prev);
       toMark.forEach((id) => next.add(id));
       return next;
     });
-    const userIds = unread.filter((u) => u.source === "user").map((u) => u.id);
-    const staffIds = unread.filter((u) => u.source === "staff").map((u) => u.id);
+    setItems((prev) => prev.filter((x) => !toMark.includes(x.id)));
     if (userIds.length) {
       await supabase
         .from("user_notifications")
-        .update({ read_at: new Date().toISOString() })
+        .delete()
         .in("id", userIds);
     }
     if (staffIds.length) {
