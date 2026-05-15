@@ -1299,6 +1299,27 @@ export type Database = {
           },
         ]
       }
+      user_ignores: {
+        Row: {
+          created_at: string
+          id: string
+          ignored_id: string
+          ignorer_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          ignored_id: string
+          ignorer_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          ignored_id?: string
+          ignorer_id?: string
+        }
+        Relationships: []
+      }
       user_ip_logs: {
         Row: {
           created_at: string

@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { Hash, Megaphone, Loader2, Send, Trash2 } from "lucide-react";
+import { Hash, Megaphone, Loader2, Send, Trash2, EyeOff, Eye } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
@@ -39,6 +39,32 @@ function ChannelPage() {
   const { user, hasAny } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
   const [myUsername, setMyUsername] = useState<string | null>(null);
+  const [ignoredIds, setIgnoredIds] = useState<Set<string>>(new Set());
+  const [staffIds, setStaffIds] = useState<Set<string>>(new Set());
+
+  // Load my ignore list
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("user_ignores")
+      .select("ignored_id")
+      .eq("ignorer_id", user.id)
+      .then(({ data }) => {
+        setIgnoredIds(new Set((data ?? []).map((r: { ignored_id: string }) => r.ignored_id)));
+      });
+  }, [user?.id]);
+
+  // Load staff role memberships (so we know who can't be ignored)
+  useEffect(() => {
+    supabase
+      .from("user_roles")
+      .select("user_id, role")
+      .in("role", ["admin", "management", "moderator", "staff"])
+      .then(({ data }) => {
+        setStaffIds(new Set((data ?? []).map((r: { user_id: string }) => r.user_id)));
+      });
+  }, []);
+
   useEffect(() => {
     if (!user) return;
     supabase
@@ -166,6 +192,35 @@ function ChannelPage() {
     if (error) toast.error(error.message);
   };
 
+  const toggleIgnore = async (targetId: string) => {
+    if (!user) return;
+    if (staffIds.has(targetId)) {
+      toast.error("Staff members cannot be ignored.");
+      return;
+    }
+    if (ignoredIds.has(targetId)) {
+      const { error } = await supabase
+        .from("user_ignores")
+        .delete()
+        .eq("ignorer_id", user.id)
+        .eq("ignored_id", targetId);
+      if (error) return toast.error(error.message);
+      setIgnoredIds((prev) => {
+        const next = new Set(prev);
+        next.delete(targetId);
+        return next;
+      });
+      toast.success("User unignored.");
+    } else {
+      const { error } = await supabase
+        .from("user_ignores")
+        .insert({ ignorer_id: user.id, ignored_id: targetId });
+      if (error) return toast.error(error.message);
+      setIgnoredIds((prev) => new Set(prev).add(targetId));
+      toast.success("User ignored. Their messages are now hidden.");
+    }
+  };
+
   if (missing) {
     return (
       <main className="flex-1 grid place-items-center text-muted-foreground">
@@ -201,11 +256,16 @@ function ChannelPage() {
             No messages yet — say hi.
           </div>
         ) : (
-          messages.map((m) => {
+          messages
+            .filter((m) => !ignoredIds.has(m.sender_id) || m.sender_id === user?.id)
+            .map((m) => {
             const p = profiles[m.sender_id];
             const name = p?.display_name ?? p?.username ?? "Unknown";
             const initial = (name || "?").slice(0, 1).toUpperCase();
             const canDelete = m.sender_id === user?.id || isAdmin;
+            const isSelf = m.sender_id === user?.id;
+            const isStaff = staffIds.has(m.sender_id);
+            const isIgnored = ignoredIds.has(m.sender_id);
             return (
               <div key={m.id} className="group flex items-start gap-3">
                 {p?.avatar_url ? (
@@ -224,6 +284,15 @@ function ChannelPage() {
                   </div>
                   <MentionText content={m.content} currentUsername={myUsername} className="text-sm" />
                 </div>
+                {!isSelf && !isStaff && (
+                  <button
+                    onClick={() => toggleIgnore(m.sender_id)}
+                    className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-foreground transition-opacity"
+                    title={isIgnored ? "Unignore user" : "Ignore user"}
+                  >
+                    {isIgnored ? <Eye className="size-4" /> : <EyeOff className="size-4" />}
+                  </button>
+                )}
                 {canDelete && (
                   <button
                     onClick={() => remove(m.id)}
