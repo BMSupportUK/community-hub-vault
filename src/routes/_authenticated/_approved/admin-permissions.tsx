@@ -30,8 +30,7 @@ const APPROVED_ROUTE_FILES = import.meta.glob("/src/routes/_authenticated/_appro
 const DISCOVERED_PAGE_KEYS: string[] = Object.keys(APPROVED_ROUTE_FILES)
   .map((p) => p.split("/").pop()!.replace(/\.tsx$/, ""))
   // Skip layouts (no dot), dynamic ($), index splits (home.index), and the perms page itself.
-  .filter((n) => !n.startsWith("_") && !n.includes("$") && !n.includes("."))
-  .filter((n) => n !== "admin-permissions");
+  .filter((n) => !n.startsWith("_") && !n.includes("$") && !n.includes("."));
 
 function humanLabel(key: string): string {
   return key.replace(/[-_]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
