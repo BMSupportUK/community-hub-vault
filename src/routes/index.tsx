@@ -2,6 +2,7 @@ import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { Headphones, Sparkles } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import welcomeHero from "@/assets/welcome-hero.jpg";
 
 export const Route = createFileRoute("/")({
   beforeLoad: async () => {
@@ -85,7 +86,14 @@ function Landing() {
 
             <div className="relative">
               <div className="absolute -inset-4 bg-gradient-to-tr from-red-500/40 via-transparent to-blue-500/30 blur-2xl rounded-3xl" aria-hidden />
-              <div className="relative flex flex-col gap-4">
+              <div className="relative rounded-3xl overflow-hidden border border-white/15 shadow-[0_20px_80px_rgba(0,0,0,0.5)]">
+                <img
+                  src={welcomeHero}
+                  alt="BM Support hero"
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-br from-red-950/70 via-red-900/40 to-black/70" aria-hidden />
+                <div className="relative flex flex-col gap-4 p-5">
                 {boxes.map((b) => (
                   <div
                     key={b.id}
@@ -104,6 +112,7 @@ function Landing() {
                     </div>
                   </div>
                 ))}
+                </div>
               </div>
             </div>
           </div>
