@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { Hash, Megaphone, Loader2, Send, Trash2, EyeOff, Eye } from "lucide-react";
+import { Hash, Megaphone, Loader2, Send, Trash2, EyeOff, Eye, Pin, PinOff, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
@@ -26,6 +26,8 @@ interface Message {
   sender_id: string;
   content: string;
   created_at: string;
+  pinned_at: string | null;
+  pinned_by: string | null;
 }
 
 interface Profile {
@@ -39,6 +41,8 @@ function ChannelPage() {
   const { channel: slug } = Route.useParams();
   const { user, hasAny } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
+  const canPin = hasAny(["admin", "management", "moderator", "staff"]);
+  const [pinnedOpen, setPinnedOpen] = useState(false);
   const [myUsername, setMyUsername] = useState<string | null>(null);
   const [ignoredIds, setIgnoredIds] = useState<Set<string>>(new Set());
   const [staffIds, setStaffIds] = useState<Set<string>>(new Set());
@@ -114,7 +118,7 @@ function ChannelPage() {
     (async () => {
       const { data } = await supabase
         .from("chat_messages")
-        .select("id, channel_id, sender_id, content, created_at")
+        .select("id, channel_id, sender_id, content, created_at, pinned_at, pinned_by")
         .eq("channel_id", channel.id)
         .order("created_at", { ascending: true })
         .limit(200);
@@ -141,6 +145,14 @@ function ChannelPage() {
         (payload) => {
           const old = payload.old as { id: string };
           setMessages((prev) => prev.filter((m) => m.id !== old.id));
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "chat_messages", filter: `channel_id=eq.${channel.id}` },
+        (payload) => {
+          const updated = payload.new as Message;
+          setMessages((prev) => prev.map((m) => (m.id === updated.id ? { ...m, ...updated } : m)));
         },
       )
       .subscribe();
