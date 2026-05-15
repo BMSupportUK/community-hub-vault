@@ -5,7 +5,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 
+interface PermsSearch { tab?: "pages" | "channels"; channel?: string; group?: string }
+
 export const Route = createFileRoute("/_authenticated/_approved/admin-permissions")({
+  validateSearch: (search: Record<string, unknown>): PermsSearch => ({
+    tab: search.tab === "channels" ? "channels" : search.tab === "pages" ? "pages" : undefined,
+    channel: typeof search.channel === "string" ? search.channel : undefined,
+    group: typeof search.group === "string" ? search.group : undefined,
+  }),
   component: AdminPermissionsPage,
 });
 
@@ -20,7 +27,8 @@ const HIDDEN_ROLES = new Set(["pending", "banned"]);
 function AdminPermissionsPage() {
   const { hasAny } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
-  const [tab, setTab] = useState<"pages" | "channels">("pages");
+  const search = Route.useSearch();
+  const [tab, setTab] = useState<"pages" | "channels">(search.tab ?? "pages");
   const [loading, setLoading] = useState(true);
   const [roles, setRoles] = useState<RoleDef[]>([]);
   const [pages, setPages] = useState<PagePerm[]>([]);
@@ -43,6 +51,7 @@ function AdminPermissionsPage() {
   };
 
   useEffect(() => { load(); }, []);
+  useEffect(() => { if (search.tab) setTab(search.tab); }, [search.tab]);
 
   if (!isAdmin) return <Navigate to="/home" />;
 
@@ -72,7 +81,7 @@ function AdminPermissionsPage() {
         ) : tab === "pages" ? (
           <PagesTab pages={pages} roles={roles} onChanged={load} />
         ) : (
-          <ChannelsTab channels={channels} roles={roles} chanPerms={chanPerms} onChanged={load} />
+          <ChannelsTab channels={channels} roles={roles} chanPerms={chanPerms} onChanged={load} initialChannelId={search.channel} groupFilter={search.group} />
         )}
       </div>
     </main>
