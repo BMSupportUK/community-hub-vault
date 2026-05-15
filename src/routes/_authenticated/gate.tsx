@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { Send, Ban, X, LogOut, ShieldCheck, FileText, MessageSquarePlus } from "lucide-react";
+import { Send, Ban, X, LogOut, ShieldCheck, FileText, MessageSquarePlus, Ticket } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
@@ -27,12 +27,16 @@ function GatePage() {
   const [submitting, setSubmitting] = useState(false);
   const [confirmNew, setConfirmNew] = useState(false);
   const [senderNames, setSenderNames] = useState<Record<string, string>>({});
+  const [inviteCode, setInviteCode] = useState("");
+  const [redeeming, setRedeeming] = useState(false);
   const scrollerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
     if (params.get("chat") === "1") setChatOpen(true);
+    const inv = params.get("invite");
+    if (inv) setInviteCode(inv.toUpperCase());
   }, []);
 
   useEffect(() => {
