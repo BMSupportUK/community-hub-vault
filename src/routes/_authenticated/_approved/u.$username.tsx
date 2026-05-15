@@ -196,15 +196,14 @@ function ProfilePage() {
       })),
     );
 
-    // Friends list for the profile owner
+    // Friends list for the profile owner — one-directional:
+    // only people they sent an accepted request to count as their friends.
     const { data: friendRows } = await supabase
       .from("friendships")
-      .select("id, requester_id, addressee_id")
+      .select("id, addressee_id")
       .eq("status", "accepted")
-      .or(`requester_id.eq.${p.id},addressee_id.eq.${p.id}`);
-    const otherIds = (friendRows ?? []).map((f: any) =>
-      f.requester_id === p.id ? f.addressee_id : f.requester_id,
-    );
+      .eq("requester_id", p.id);
+    const otherIds = (friendRows ?? []).map((f: any) => f.addressee_id);
     let friendProfiles: Record<string, { username: string | null; display_name: string | null; avatar_url: string | null }> = {};
     if (otherIds.length) {
       const { data: fp } = await supabase
@@ -213,7 +212,7 @@ function ProfilePage() {
     }
     setFriends(
       (friendRows ?? []).map((f: any) => {
-        const otherId = f.requester_id === p.id ? f.addressee_id : f.requester_id;
+        const otherId = f.addressee_id;
         const fp = friendProfiles[otherId] ?? { username: null, display_name: null, avatar_url: null };
         return {
           friendship_id: f.id,
@@ -235,7 +234,11 @@ function ProfilePage() {
         )
         .maybeSingle();
       if (!relRow) setRel({ kind: "none" });
-      else if (relRow.status === "accepted") setRel({ kind: "friends", id: relRow.id });
+      else if (relRow.status === "accepted") {
+        // Only the original requester treats this as a "friends" relationship.
+        if (relRow.requester_id === viewer.id) setRel({ kind: "friends", id: relRow.id });
+        else setRel({ kind: "none" });
+      }
       else if (relRow.requester_id === viewer.id) setRel({ kind: "outgoing", id: relRow.id });
       else setRel({ kind: "incoming", id: relRow.id });
     } else {
