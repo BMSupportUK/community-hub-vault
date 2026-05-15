@@ -1,46 +1,66 @@
-# Shifts workspace overhaul
+# Encrypt sensitive columns at rest
 
-Replace the placeholder `Shifts` page with a full scheduling workspace styled in a vibrant blue scheme (mirrors the Sports Guide layout pattern).
+Encrypt 4 column groups using AES (via `pgcrypto`'s `pgp_sym_encrypt`) with a single master key stored in **Supabase Vault**. The key never reaches the client — only the database can decrypt, and only through `SECURITY DEFINER` functions that enforce who's allowed to read.
 
-## Tabs
+## What gets encrypted
 
-1. **Welcome** — hero card explaining the workflow.
-2. **Rota** — week view of the published rota. Staff/mod pick open slots; shows how many of the 3 required staff are filled per day.
-3. **My shifts** — what the current user has booked, with "Request swap" action.
-4. **Holidays** — request a holiday range; see status.
-5. **Requests** *(admin/management only)* — approve/deny holiday requests and swap requests.
-6. **Manage rota** *(admin only)* — create/edit shift slots for any day; choose role required (staff or moderator-by-the-hour).
+| Table | Columns | Who can decrypt |
+|---|---|---|
+| `app_credentials` | `password`, `notes` | admin, management |
+| `user_ip_logs` | `ip`, `user_agent` | admin, management, moderator |
+| `orders` | `shipping_address`, `email` | order owner + admin, management |
+| `gate_messages` | `content` | message participants + admin, management, moderator |
 
-## Roles & rules
+## How it works
 
-- **admin / management** — full access, approve requests, manage rota.
-- **staff** — pick whole shifts, request holidays/swaps.
-- **moderator** — pick hourly slots (slot type = "hourly"); admin defines hourly slot blocks.
-- Each day target = 3 filled staff slots; rota header shows `2/3 filled` per day with color (red <3, green =3).
+```text
+client  ──writes plaintext──▶  server fn  ──app_encrypt(text)──▶  bytea column
+client  ◀──reads plaintext──   server fn  ◀──app_decrypt_<table>(row)──  bytea column
+                                                  ▲
+                                            checks auth.uid() + role
+```
 
-## Database
+- Master key lives in `vault.secrets` under name `app_encryption_key` (auto-generated random 32 bytes, hex-encoded).
+- `private.get_enc_key()` is the only function that touches the vault. Not exposed to PostgREST.
+- One `app_encrypt(text) → bytea` for writes (callable by anyone authenticated; encrypting is harmless).
+- One per-table `decrypt_*` SECURITY DEFINER function that re-checks authorization before returning plaintext. RLS on the underlying ciphertext columns alone is not enough — without the function, a leaked row is just opaque bytes.
 
-New tables (RLS enabled, all reads gated to non-pending/banned):
+## Migration steps (single SQL migration)
 
-- `shift_slots` — `id, shift_date date, start_time time, end_time time, slot_type ('shift'|'hourly'), assigned_to uuid null, notes`. Admin/management write; staff/mod can `UPDATE` only the `assigned_to` column to claim/release their own slot (enforced via RLS using `assigned_to = auth.uid()` for claim and old row null check via trigger).
-- `holiday_requests` — `id, user_id, start_date, end_date, reason, status ('pending'|'approved'|'denied'), reviewed_by, reviewed_at`. Owner inserts/reads own; admin/management read all and update status.
-- `shift_swap_requests` — `id, slot_id, requester_id, target_user_id null, message, status, reviewed_by, reviewed_at`. Requester inserts/reads own; admin/management approve and on approval the trigger swaps `assigned_to`.
-- Notify admin/management via `staff_notifications` triggers on new holiday/swap request.
+1. `create extension if not exists pgcrypto;`
+2. Generate + store the master key in Vault if not already present.
+3. Add `*_enc bytea` columns alongside existing plaintext columns.
+4. Backfill: `UPDATE … SET col_enc = app_encrypt(col) WHERE col IS NOT NULL`.
+5. Drop the original plaintext columns and rename `*_enc` → original name (now `bytea`).
+6. Create per-table `decrypt_*` functions and `read_*` server-side helpers.
+7. Tighten RLS: clients cannot `SELECT` the ciphertext columns directly via PostgREST — force everything through server functions / RPC. (Practically: revoke `SELECT` on those specific columns from `authenticated`, grant via security-definer RPC.)
 
-## Frontend
+## Code changes (app side)
 
-- New file `src/routes/_authenticated/_approved/shifts.tsx` (replace the `Coming` stub).
-- Visual style: vibrant blue (`from-blue-600 via-sky-500 to-cyan-500` accents on a deep `[#06122e]` → `[#0b1e4a]` gradient background); reuse Tabs, Dialog, Button, Input from shadcn.
-- Rota grid: 7-day strip with slot chips. Empty slot = "Claim" button (disabled if full or wrong role). Filled slot shows assignee.
-- "Request swap" opens dialog selecting another claimed slot.
-- Holiday tab: date range picker + list of past requests with status pill.
-- Admin Requests tab: tables of pending holiday + swap requests with approve/deny.
-- Manage rota tab: per-day form to add slots (date, start, end, type), list with delete.
+All reads/writes for these fields move to **TanStack server functions** (`createServerFn` + `requireSupabaseAuth`). Clients never touch ciphertext.
 
-## Out of scope (not included)
+- **New** `src/lib/credentials.functions.ts` — `listCredentials`, `upsertCredential`, `deleteCredential`. Backs `admin-credentials.tsx`.
+- **New** `src/lib/orders.functions.ts` — `listOrdersForAdmin`, `getOrderForUser`, helper to insert orders with encrypted PII. Update `shop.tsx` and admin order views to call these.
+- **New** `src/lib/gate.functions.ts` — `listGateMessages`, `sendGateMessage`. Update `gate.tsx` and `moderation.tsx`.
+- **Update** `src/lib/ip-log.functions.ts` — encrypt on insert; new `listIpLogs` for moderation views.
+- **Realtime caveat** for `gate_messages` and `chat`-style flows: realtime payloads will deliver ciphertext. After a realtime INSERT event, the client re-fetches via the server fn to get plaintext. (Or we just refetch the thread on event.)
 
-- Recurring rota templates (admin manually adds days for now).
-- Calendar export, email reminders.
-- Editing already-claimed slots beyond swap workflow.
+## Trade-offs you should know
 
-Confirm and I'll create the migration + page.
+- **No server-side text search** on encrypted fields (`gate_messages.content`, `notes`, etc.). LIKE/ILIKE/full-text won't work.
+- **Slightly slower reads** — every read now goes through a server fn round-trip, not a direct PostgREST query.
+- **Realtime** delivers ciphertext for `gate_messages`; UI must refetch on event.
+- **Key rotation** is possible later (re-encrypt all rows with a new key) but not in scope now.
+- **Backups** containing the database AND vault secret together are still readable — encryption-at-rest in this design protects against DB dumps leaking without the vault, and against the publishable key being abused via PostgREST. It does NOT protect against a full project compromise.
+- **Irreversible**: dropping the plaintext columns means if the migration backfill has a bug, original data is gone. I'll keep the backfill in a transaction and verify counts before drop.
+
+## Out of scope
+
+- End-to-end encryption (server can still decrypt — that's by design so admins can read).
+- Encrypting `chat_messages` (would break mentions, moderation, search — you didn't pick it).
+- Encrypting `tickets` (you didn't pick it).
+- Key rotation tooling.
+
+---
+
+Reply **"go"** and I'll run the migration + ship the code changes. If you want to drop or add a table from the list, say so first.
