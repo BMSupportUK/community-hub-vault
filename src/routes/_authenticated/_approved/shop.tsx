@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import shopHero from "@/assets/shop-hero.jpg";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { useCurrency } from "@/hooks/use-currency";
 
 type View = "store" | "orders" | "admin" | "refund" | "multi_room" | "triple_room";
 
@@ -50,13 +51,19 @@ interface OrderMessage { id: string; order_id: string; sender_id: string; conten
 interface ProductCategory { id: string; name: string; slug: string; sort_order: number; }
 interface DiscountCode { id: string; code: string; description: string | null; percent: number | null; amount_cents: number | null; user_id: string | null; is_active: boolean; }
 
-const fmt = (c: number) => new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP" }).format(c / 100);
+let _currentFmt: (c: number) => string = (c: number) =>
+  new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP" }).format((c || 0) / 100);
+const fmt = (c: number) => _currentFmt(c);
+let _currentSymbol = "£";
 
 function ShopPage() {
   const { view, id } = Route.useSearch();
   const navigate = useNavigate();
   const { user, hasAny } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
+  const { format, symbol } = useCurrency();
+  _currentFmt = format;
+  _currentSymbol = symbol;
 
   const groups: ChannelGroup[] = [
     { label: "Shop", items: [
@@ -850,6 +857,7 @@ function AdminProducts() {
   const [categories, setCategories] = useState<ProductCategory[]>([]);
   const [showCats, setShowCats] = useState(false);
   const [newCat, setNewCat] = useState("");
+  const sym = _currentSymbol;
 
   const load = async () => {
     const { data } = await supabase.from("products").select("*").order("sort_order");
@@ -918,6 +926,7 @@ function AdminProducts() {
         </div>
       </header>
       <div className="flex-1 overflow-y-auto p-6">
+        <CurrencySettingsCard />
         <div className="bg-surface rounded-xl border border-border overflow-hidden">
           <table className="w-full text-sm">
             <thead className="bg-surface-2 text-muted-foreground text-xs">
@@ -953,9 +962,9 @@ function AdminProducts() {
               <Field label="Name"><input value={editing.name ?? ""} onChange={(e) => setEditing({ ...editing, name: e.target.value })} className="w-full px-3 py-2 rounded-lg bg-surface-2 text-sm border border-border outline-none" /></Field>
               <Field label="Description"><textarea value={editing.description ?? ""} onChange={(e) => setEditing({ ...editing, description: e.target.value })} rows={3} className="w-full px-3 py-2 rounded-lg bg-surface-2 text-sm border border-border outline-none resize-none" /></Field>
               <div className="grid grid-cols-2 gap-3">
-                <Field label="Price (£)">
+                <Field label={`Price (${sym})`}>
                   <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">£</span>
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">{sym}</span>
                     <input
                       type="text"
                       inputMode="decimal"
@@ -1060,6 +1069,109 @@ function AdminProducts() {
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return <div><div className="text-[11px] uppercase tracking-wider text-muted-foreground mb-1">{label}</div>{children}</div>;
+}
+
+const CURRENCY_PRESETS: { code: string; symbol: string; locale: string; label: string }[] = [
+  { code: "GBP", symbol: "£", locale: "en-GB", label: "British Pound (£)" },
+  { code: "USD", symbol: "$", locale: "en-US", label: "US Dollar ($)" },
+  { code: "EUR", symbol: "€", locale: "en-IE", label: "Euro (€)" },
+  { code: "CAD", symbol: "$", locale: "en-CA", label: "Canadian Dollar ($)" },
+  { code: "AUD", symbol: "$", locale: "en-AU", label: "Australian Dollar ($)" },
+  { code: "JPY", symbol: "¥", locale: "ja-JP", label: "Japanese Yen (¥)" },
+  { code: "INR", symbol: "₹", locale: "en-IN", label: "Indian Rupee (₹)" },
+  { code: "CHF", symbol: "CHF", locale: "de-CH", label: "Swiss Franc (CHF)" },
+];
+
+function CurrencySettingsCard() {
+  const { currency } = useCurrency();
+  const [saving, setSaving] = useState(false);
+  const matchIdx = CURRENCY_PRESETS.findIndex((p) => p.code === currency.code);
+  const [selected, setSelected] = useState<string>(matchIdx >= 0 ? currency.code : "CUSTOM");
+  const [customSymbol, setCustomSymbol] = useState(currency.symbol);
+  const [customCode, setCustomCode] = useState(currency.code);
+
+  useEffect(() => {
+    const i = CURRENCY_PRESETS.findIndex((p) => p.code === currency.code);
+    setSelected(i >= 0 ? currency.code : "CUSTOM");
+    setCustomSymbol(currency.symbol);
+    setCustomCode(currency.code);
+  }, [currency.code, currency.symbol]);
+
+  const save = async () => {
+    let value: { code: string; symbol: string; locale: string };
+    if (selected === "CUSTOM") {
+      const code = customCode.trim().toUpperCase() || "GBP";
+      const symbol = customSymbol.trim() || code;
+      value = { code, symbol, locale: "en-GB" };
+    } else {
+      const p = CURRENCY_PRESETS.find((x) => x.code === selected)!;
+      value = { code: p.code, symbol: p.symbol, locale: p.locale };
+    }
+    setSaving(true);
+    const { error } = await supabase
+      .from("app_settings")
+      .upsert({ key: "currency", value, updated_at: new Date().toISOString() }, { onConflict: "key" });
+    setSaving(false);
+    if (error) toast.error(error.message);
+    else toast.success("Currency updated");
+  };
+
+  return (
+    <div className="mb-6 bg-surface rounded-xl border border-border p-4">
+      <div className="flex items-center justify-between mb-3">
+        <div>
+          <h3 className="font-display font-semibold text-sm">Store Currency</h3>
+          <p className="text-xs text-muted-foreground">Applied across the storefront, checkout, orders and notifications.</p>
+        </div>
+        <div className="text-xs text-muted-foreground">Current: <span className="font-semibold text-foreground">{currency.symbol} {currency.code}</span></div>
+      </div>
+      <div className="flex flex-wrap items-end gap-3">
+        <label className="block">
+          <span className="text-xs font-medium text-muted-foreground mb-1 block">Currency</span>
+          <select
+            value={selected}
+            onChange={(e) => setSelected(e.target.value)}
+            className="px-3 py-2 rounded-lg bg-surface-2 text-sm border border-border outline-none min-w-[220px]"
+          >
+            {CURRENCY_PRESETS.map((p) => (
+              <option key={p.code} value={p.code}>{p.label}</option>
+            ))}
+            <option value="CUSTOM">Custom…</option>
+          </select>
+        </label>
+        {selected === "CUSTOM" && (
+          <>
+            <label className="block">
+              <span className="text-xs font-medium text-muted-foreground mb-1 block">ISO code</span>
+              <input
+                value={customCode}
+                onChange={(e) => setCustomCode(e.target.value)}
+                maxLength={6}
+                className="w-24 px-3 py-2 rounded-lg bg-surface-2 text-sm border border-border outline-none uppercase"
+              />
+            </label>
+            <label className="block">
+              <span className="text-xs font-medium text-muted-foreground mb-1 block">Symbol</span>
+              <input
+                value={customSymbol}
+                onChange={(e) => setCustomSymbol(e.target.value)}
+                maxLength={4}
+                className="w-20 px-3 py-2 rounded-lg bg-surface-2 text-sm border border-border outline-none"
+              />
+            </label>
+          </>
+        )}
+        <button
+          onClick={save}
+          disabled={saving}
+          className="px-3 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium flex items-center gap-1 disabled:opacity-60"
+        >
+          {saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
+          Save
+        </button>
+      </div>
+    </div>
+  );
 }
 
 // ============ ADMIN: DISCOUNT CODES ============

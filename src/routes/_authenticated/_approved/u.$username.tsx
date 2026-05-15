@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, type AppRole } from "@/hooks/use-auth";
+import { useCurrency } from "@/hooks/use-currency";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import profileHeader from "@/assets/profile-header.jpg";
@@ -98,6 +99,7 @@ function ProfilePage() {
   const { username } = Route.useParams();
   const { user: viewer, hasAny } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
+  const { format: fmtCurrency } = useCurrency();
   const [now, setNow] = useState(() => Date.now());
   const [profile, setProfile] = useState<ProfileRow | null>(null);
   const [roles, setRoles] = useState<AppRole[]>([]);
@@ -562,7 +564,7 @@ function ProfilePage() {
             <ActivityCard title="Recent orders" icon={ShoppingBag} empty="No orders yet">
               {orders.map((o) => (
                 <li key={o.id} className="flex items-center justify-between gap-3 py-2 text-sm">
-                  <span>£{(o.total_cents / 100).toFixed(2)}</span>
+                  <span>{fmtCurrency(o.total_cents)}</span>
                   <span className="text-xs text-white/70 capitalize">{o.status}</span>
                 </li>
               ))}
