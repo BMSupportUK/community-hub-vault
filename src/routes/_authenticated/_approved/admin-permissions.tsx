@@ -58,8 +58,30 @@ function AdminPermissionsPage() {
       supabase.from("chat_channels").select("id,name,slug,staff_only,sort_order,group_label").order("sort_order"),
       supabase.from("channel_permissions").select("channel_id,role,can_view,can_send,can_delete,can_mention"),
     ]);
+    // Auto-register any page routes that exist in the app but are missing from page_permissions.
+    const existing = new Set((p.data ?? []).map((x: PagePerm) => x.page_key));
+    const missing = DISCOVERED_PAGE_KEYS.filter((k) => !existing.has(k));
+    if (missing.length > 0) {
+      const maxSort = (p.data ?? []).reduce((m: number, x: PagePerm) => Math.max(m, x.sort_order ?? 0), 0);
+      const rows = missing.map((key, i) => ({
+        page_key: key,
+        label: humanLabel(key),
+        allowed_roles: [] as string[],
+        sort_order: maxSort + 10 * (i + 1),
+      }));
+      const { error: insErr, data: ins } = await supabase
+        .from("page_permissions")
+        .insert(rows as any)
+        .select("page_key,label,allowed_roles,sort_order");
+      if (!insErr && ins) {
+        setPages([...(p.data ?? []), ...ins].sort((a, b) => a.sort_order - b.sort_order));
+      } else {
+        setPages(p.data ?? []);
+      }
+    } else {
+      setPages(p.data ?? []);
+    }
     setRoles((r.data ?? []).filter((x: RoleDef) => !HIDDEN_ROLES.has(x.name)));
-    setPages(p.data ?? []);
     setChannels(c.data ?? []);
     setChanPerms(cp.data ?? []);
     setLoading(false);
