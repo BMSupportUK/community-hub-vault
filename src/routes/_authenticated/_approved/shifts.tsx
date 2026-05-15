@@ -586,6 +586,7 @@ function ShiftsPage() {
           {/* MANAGE ROTA */}
           {isAdmin && (
             <TabsContent value="manage" className="mt-6 space-y-6">
+              <TimezoneSettingsCard />
               <div className="rounded-2xl bg-blue-950/50 border border-sky-500/30 p-5">
                 <h3 className="font-display text-lg font-semibold text-sky-100 mb-3">Add rota slot</h3>
                 <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
