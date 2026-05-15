@@ -1205,6 +1205,7 @@ function EditProfileModal({ profile, onClose, onSaved }: { profile: ProfileRow; 
   const [username, setUsername] = useState(profile.username ?? "");
   const [bio, setBio] = useState(profile.bio ?? "");
   const [avatarUrl, setAvatarUrl] = useState(profile.avatar_url);
+  const [isPrivate, setIsPrivate] = useState<boolean>(!!profile.is_private);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -1237,6 +1238,7 @@ function EditProfileModal({ profile, onClose, onSaved }: { profile: ProfileRow; 
       username: u,
       bio: bio.trim() || null,
       avatar_url: avatarUrl,
+      is_private: isPrivate,
     }).eq("id", user.id);
     setSaving(false);
     if (error) return toast.error(error.message);
@@ -1274,6 +1276,22 @@ function EditProfileModal({ profile, onClose, onSaved }: { profile: ProfileRow; 
           <textarea value={bio} onChange={(e) => setBio(e.target.value)} maxLength={500} rows={3}
             className="w-full px-3 py-2 rounded-lg bg-surface-2 border border-border text-sm resize-none" />
         </Field>
+        <label className="flex items-start gap-3 mb-3 p-3 rounded-lg bg-surface-2 border border-border cursor-pointer">
+          <input
+            type="checkbox"
+            checked={isPrivate}
+            onChange={(e) => setIsPrivate(e.target.checked)}
+            className="mt-0.5 size-4 accent-primary"
+          />
+          <span>
+            <span className="flex items-center gap-1.5 text-sm font-medium">
+              <Lock className="size-3.5" /> Private profile
+            </span>
+            <span className="block text-xs text-muted-foreground mt-0.5">
+              Only you, your friends, and admins can view your profile. Others will see a notice that the profile is private.
+            </span>
+          </span>
+        </label>
         <div className="flex justify-end gap-2 mt-4">
           <button onClick={onClose} className="px-4 py-2 rounded-lg bg-surface-2 border border-border text-sm">Cancel</button>
           <button onClick={save} disabled={saving} className="px-4 py-2 rounded-lg bg-primary text-primary-foreground font-medium text-sm disabled:opacity-60">
