@@ -53,8 +53,6 @@ export function StaffOnDutyStrip() {
     return m;
   }, [breaks]);
 
-  if (shifts.length === 0) return null;
-
   const fmtMinSec = (sec: number) => {
     const s = Math.max(0, Math.floor(sec));
     const m = Math.floor(s / 60).toString().padStart(2, "0");
@@ -80,6 +78,12 @@ export function StaffOnDutyStrip() {
           </div>
         </div>
         <div className="flex gap-2 overflow-x-auto pb-1 relative">
+          {shifts.length === 0 && (
+            <div className="shrink-0 min-w-[180px] rounded-lg p-2.5 border border-white/20 bg-white/10 text-white/80 text-xs flex items-center gap-2">
+              <CircleDot className="size-3.5 opacity-60" />
+              <span>No staff currently on duty</span>
+            </div>
+          )}
           {shifts.map((s) => {
             const p = profiles[s.user_id];
             const name = p?.display_name || p?.username || "Staff";
