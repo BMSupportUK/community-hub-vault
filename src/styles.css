@@ -62,7 +62,7 @@
   --foreground: oklch(0.97 0.005 280);
   --surface: oklch(0.32 0.13 290);
   --surface-2: oklch(0.38 0.15 300);
-  --rail: oklch(0.48 0.28 295);
+  --rail: oklch(0.30 0.06 290);
 
   --card: oklch(0.22 0.045 280);
   --card-foreground: oklch(0.97 0.005 280);
@@ -92,7 +92,7 @@
 
   /* Signature gradients: purple → red → blue */
   --gradient-primary: linear-gradient(135deg, oklch(0.55 0.28 295), oklch(0.62 0.28 18) 55%, oklch(0.58 0.25 255));
-  --gradient-rail: linear-gradient(180deg, oklch(0.55 0.28 295), oklch(0.50 0.28 18) 55%, oklch(0.48 0.26 255));
+  --gradient-rail: linear-gradient(180deg, oklch(0.30 0.07 295), oklch(0.28 0.06 285) 55%, oklch(0.27 0.06 270));
   --gradient-accent: linear-gradient(90deg, oklch(0.62 0.27 295), oklch(0.62 0.28 18), oklch(0.60 0.26 255));
   --shadow-glow: 0 0 0 1px color-mix(in oklab, var(--primary) 40%, transparent), 0 12px 40px -10px color-mix(in oklab, var(--primary) 55%, transparent);
   --shadow-soft: 0 10px 30px -10px oklch(0 0 0 / 0.55);
