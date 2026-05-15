@@ -266,6 +266,33 @@ export type Database = {
         }
         Relationships: []
       }
+      friendships: {
+        Row: {
+          addressee_id: string
+          created_at: string
+          id: string
+          requester_id: string
+          status: Database["public"]["Enums"]["friendship_status"]
+          updated_at: string
+        }
+        Insert: {
+          addressee_id: string
+          created_at?: string
+          id?: string
+          requester_id: string
+          status?: Database["public"]["Enums"]["friendship_status"]
+          updated_at?: string
+        }
+        Update: {
+          addressee_id?: string
+          created_at?: string
+          id?: string
+          requester_id?: string
+          status?: Database["public"]["Enums"]["friendship_status"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       gate_applications: {
         Row: {
           created_at: string
@@ -1427,6 +1454,7 @@ export type Database = {
         | "banned"
         | "subscriber"
       break_kind: "break" | "lunch"
+      friendship_status: "pending" | "accepted"
       gate_status: "pending" | "approved" | "denied"
       incident_status:
         | "investigating"
@@ -1582,6 +1610,7 @@ export const Constants = {
         "subscriber",
       ],
       break_kind: ["break", "lunch"],
+      friendship_status: ["pending", "accepted"],
       gate_status: ["pending", "approved", "denied"],
       incident_status: [
         "investigating",
