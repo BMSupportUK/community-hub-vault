@@ -294,21 +294,20 @@ function ProfilePage() {
 
   useEffect(() => { load(); }, [username]);
 
-  // Realtime: refresh when friendships involving the profile owner or viewer change
+  // Realtime: refresh when any friendship row involving the profile owner
+  // or the current viewer changes (e.g. addressee accepts an outgoing request).
   useEffect(() => {
     if (!profile?.id) return;
-    const ids = [profile.id, viewer?.id].filter(Boolean) as string[];
+    const ids = new Set([profile.id, viewer?.id].filter(Boolean) as string[]);
     const ch = supabase
       .channel(`profile-friendships:${profile.id}:${viewer?.id ?? "anon"}`)
-      .on("postgres_changes",
-        { event: "*", schema: "public", table: "friendships",
-          filter: `requester_id=in.(${ids.join(",")})` },
-        () => load(),
-      )
-      .on("postgres_changes",
-        { event: "*", schema: "public", table: "friendships",
-          filter: `addressee_id=in.(${ids.join(",")})` },
-        () => load(),
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "friendships" },
+        (payload) => {
+          const row: any = payload.new ?? payload.old ?? {};
+          if (ids.has(row.requester_id) || ids.has(row.addressee_id)) load();
+        },
       )
       .subscribe();
     return () => { supabase.removeChannel(ch); };
