@@ -117,51 +117,51 @@ function StaffPage() {
   filtered.forEach((p) => grouped[topRole(p.id)].push(p));
 
   return (
-    <div className="flex-1 overflow-y-auto bg-gradient-to-br from-[#0a1530] via-[#0f2a5a] to-[#0a1530]">
-      <header className="px-8 pt-8 pb-6 border-b border-blue-500/30 bg-blue-950/40 backdrop-blur flex items-center gap-3">
-        <div className="size-11 rounded-xl bg-gradient-to-br from-violet-600 to-blue-600 grid place-items-center text-white shadow-lg shadow-blue-900/50">
+    <div className="flex-1 overflow-y-auto bg-gradient-to-br from-violet-950 via-fuchsia-950 to-blue-950">
+      <header className="px-8 pt-8 pb-6 border-b border-purple-500/30 bg-purple-950/40 backdrop-blur flex items-center gap-3">
+        <div className="size-11 rounded-xl bg-gradient-to-br from-violet-600 to-blue-600 grid place-items-center text-white shadow-lg shadow-purple-900/50">
           <Briefcase className="size-5" />
         </div>
         <div>
           <h1 className="font-display text-3xl font-bold bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 bg-clip-text text-transparent">
             Staff Directory
           </h1>
-          <p className="text-blue-200/80 mt-1">The people running the show — grouped by role.</p>
+          <p className="text-purple-200/80 mt-1">The people running the show — grouped by role.</p>
         </div>
       </header>
 
       <div className="px-8 py-6">
         <Tabs value={tab} onValueChange={setTab} className="w-full">
-          <TabsList className="grid grid-cols-2 max-w-md bg-blue-950/60 border border-blue-500/30">
+          <TabsList className="grid grid-cols-2 max-w-md bg-purple-950/60 border border-purple-500/30">
             <TabsTrigger
               value="welcome"
-              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-sky-600 data-[state=active]:to-blue-700 data-[state=active]:text-white"
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-violet-600 data-[state=active]:to-fuchsia-600 data-[state=active]:text-white"
             >
               Welcome
             </TabsTrigger>
             <TabsTrigger
               value="staff"
-              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-sky-600 data-[state=active]:to-blue-700 data-[state=active]:text-white"
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-violet-600 data-[state=active]:to-fuchsia-600 data-[state=active]:text-white"
             >
               Staff
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="welcome" className="mt-6">
-            <div className="rounded-2xl bg-gradient-to-br from-sky-600/30 via-blue-600/30 to-cyan-700/30 border border-blue-500/40 p-10 shadow-[0_0_60px_-15px_rgba(59,130,246,0.5)]">
+            <div className="rounded-2xl bg-gradient-to-br from-violet-600/30 via-fuchsia-600/30 to-blue-600/30 border border-purple-500/40 p-10 shadow-[0_0_60px_-15px_rgba(168,85,247,0.5)]">
               <h2 className="font-display text-3xl font-bold bg-gradient-to-r from-violet-600 to-blue-600 bg-clip-text text-transparent">
                 Welcome to the Staff Directory
               </h2>
-              <p className="mt-3 text-lg text-blue-100/90 max-w-2xl">
+              <p className="mt-3 text-lg text-purple-100/90 max-w-2xl">
                 Meet the team keeping BM Support running smoothly — administrators, management,
                 moderators, and staff working together.
               </p>
-              <p className="mt-4 text-blue-200/70 max-w-2xl">
+              <p className="mt-4 text-purple-200/70 max-w-2xl">
                 Browse by role, search by name, and click any profile to learn more about the people behind the platform.
               </p>
               <button
                 onClick={() => setTab("staff")}
-                className="mt-6 inline-flex items-center gap-2 rounded-md px-4 py-2 bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white font-medium shadow-lg shadow-blue-900/50 transition"
+                className="mt-6 inline-flex items-center gap-2 rounded-md px-4 py-2 bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white font-medium shadow-lg shadow-purple-900/50 transition"
               >
                 <Briefcase className="size-4" /> Browse staff
               </button>
@@ -170,17 +170,17 @@ function StaffPage() {
 
           <TabsContent value="staff" className="mt-6 space-y-8">
             <div className="relative max-w-md">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-blue-300" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-purple-300" />
               <input
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
                 placeholder="Search staff…"
-                className="w-full pl-9 pr-3 py-2 rounded-lg bg-blue-950/50 border border-blue-500/30 text-blue-50 placeholder:text-blue-300/50 outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-500/40"
+                className="w-full pl-9 pr-3 py-2 rounded-lg bg-purple-950/50 border border-purple-500/30 text-purple-50 placeholder:text-purple-300/50 outline-none focus:border-fuchsia-400 focus:ring-2 focus:ring-fuchsia-500/40"
               />
             </div>
 
             {ROLE_ORDER.every((r) => grouped[r].length === 0) && (
-              <div className="rounded-2xl border border-dashed border-blue-500/40 p-12 text-center text-blue-200/70 bg-blue-950/30">
+              <div className="rounded-2xl border border-dashed border-purple-500/40 p-12 text-center text-purple-200/70 bg-purple-950/30">
                 No staff members found.
               </div>
             )}
@@ -194,7 +194,7 @@ function StaffPage() {
                     <h2 className="font-display text-xl font-bold bg-gradient-to-r from-violet-600 to-blue-600 bg-clip-text text-transparent">
                       {ROLE_LABEL[role]}
                     </h2>
-                    <span className="text-xs px-2 py-0.5 rounded-full bg-blue-800/60 text-blue-100 border border-blue-500/30">
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-purple-800/60 text-purple-100 border border-purple-500/30">
                       {list.length}
                     </span>
                     <div className="flex-1 h-px bg-blue-500/20" />
@@ -208,7 +208,7 @@ function StaffPage() {
                       return (
                         <div
                           key={p.id}
-                          className="group rounded-2xl bg-blue-950/50 border border-blue-500/30 hover:border-sky-400/70 hover:shadow-[0_0_30px_-10px_rgba(56,189,248,0.6)] transition-all overflow-hidden flex flex-col backdrop-blur"
+                          className="group rounded-2xl bg-purple-950/50 border border-purple-500/30 hover:border-fuchsia-400/70 hover:shadow-[0_0_30px_-10px_rgba(217,70,239,0.6)] transition-all overflow-hidden flex flex-col backdrop-blur"
                         >
                           <div
                             className="h-16 bg-cover bg-center"
@@ -220,10 +220,10 @@ function StaffPage() {
                               <img
                                 src={p.avatar_url}
                                 alt=""
-                                className="size-16 rounded-2xl object-cover ring-4 ring-blue-950"
+                                className="size-16 rounded-2xl object-cover ring-4 ring-purple-950"
                               />
                             ) : (
-                              <div className="size-16 rounded-2xl ring-4 ring-blue-950 bg-gradient-to-br from-violet-600 to-blue-600 grid place-items-center text-white text-xl font-bold">
+                              <div className="size-16 rounded-2xl ring-4 ring-purple-950 bg-gradient-to-br from-violet-600 to-blue-600 grid place-items-center text-white text-xl font-bold">
                                 {initial}
                               </div>
                             )}
@@ -231,12 +231,12 @@ function StaffPage() {
                               <Link
                                 to="/u/$username"
                                 params={{ username: p.username ?? p.id }}
-                                className="font-semibold text-sm text-blue-50 hover:text-sky-300 transition-colors"
+                                className="font-semibold text-sm text-purple-50 hover:text-fuchsia-300 transition-colors"
                               >
                                 {name}
                               </Link>
                               {p.username && (
-                                <div className="text-[11px] text-blue-300/70">@{p.username}</div>
+                                <div className="text-[11px] text-purple-300/70">@{p.username}</div>
                               )}
                             </div>
                             <div className="flex flex-wrap gap-1 mt-2">
@@ -245,20 +245,20 @@ function StaffPage() {
                                 .map((r) => (
                                   <span
                                     key={r}
-                                    className="text-[10px] uppercase tracking-wider rounded-full ring-1 ring-sky-400/40 bg-sky-500/20 text-sky-200 px-2 py-0.5"
+                                    className="text-[10px] uppercase tracking-wider rounded-full ring-1 ring-fuchsia-400/40 bg-fuchsia-500/20 text-fuchsia-200 px-2 py-0.5"
                                   >
                                     {r}
                                   </span>
                                 ))}
                             </div>
                             {p.bio && (
-                              <p className="text-xs text-blue-200/70 mt-2 line-clamp-2">{p.bio}</p>
+                              <p className="text-xs text-purple-200/70 mt-2 line-clamp-2">{p.bio}</p>
                             )}
                             <div className="mt-3 grid grid-cols-2 gap-2">
                               <Link
                                 to="/u/$username"
                                 params={{ username: p.username ?? p.id }}
-                                className="flex items-center justify-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg bg-blue-900/60 border border-blue-500/30 text-blue-100 hover:border-sky-400 hover:text-sky-200 transition"
+                                className="flex items-center justify-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg bg-purple-900/60 border border-purple-500/30 text-purple-100 hover:border-fuchsia-400 hover:text-fuchsia-200 transition"
                               >
                                 <Eye className="size-3.5" /> View profile
                               </Link>
@@ -272,11 +272,11 @@ function StaffPage() {
                               />
                             </div>
                             {p.is_private && (
-                              <p className="mt-2 text-[10px] text-blue-300/70 flex items-center gap-1">
+                              <p className="mt-2 text-[10px] text-purple-300/70 flex items-center gap-1">
                                 <Lock className="size-3" /> Private profile — friends only
                               </p>
                             )}
-                            <div className="mt-auto pt-3 border-t border-blue-500/20 text-[11px] text-blue-300/70 flex items-center gap-1.5">
+                            <div className="mt-auto pt-3 border-t border-purple-500/20 text-[11px] text-purple-300/70 flex items-center gap-1.5">
                               <Clock className="size-3" />
                               Joined {new Date(p.created_at).toLocaleDateString()}
                             </div>
@@ -306,7 +306,7 @@ function FriendActionMini({
   onAccept: (id: string) => void;
 }) {
   if (!viewerId || viewerId === targetId) {
-    return <span className="flex items-center justify-center text-[11px] text-blue-300/70">—</span>;
+    return <span className="flex items-center justify-center text-[11px] text-purple-300/70">—</span>;
   }
   if (state.kind === "friends") {
     return (
@@ -317,7 +317,7 @@ function FriendActionMini({
   }
   if (state.kind === "outgoing") {
     return (
-      <span className="flex items-center justify-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg bg-blue-900/60 text-blue-200/80 ring-1 ring-blue-500/30">
+      <span className="flex items-center justify-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg bg-purple-900/60 text-purple-200/80 ring-1 ring-blue-500/30">
         <Clock className="size-3.5" /> Pending
       </span>
     );
