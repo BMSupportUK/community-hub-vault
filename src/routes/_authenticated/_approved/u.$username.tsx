@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, type AppRole } from "@/hooks/use-auth";
+import { useCurrency } from "@/hooks/use-currency";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import profileHeader from "@/assets/profile-header.jpg";
@@ -98,6 +99,7 @@ function ProfilePage() {
   const { username } = Route.useParams();
   const { user: viewer, hasAny } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
+  const { format: fmtCurrency } = useCurrency();
   const [now, setNow] = useState(() => Date.now());
   const [profile, setProfile] = useState<ProfileRow | null>(null);
   const [roles, setRoles] = useState<AppRole[]>([]);
