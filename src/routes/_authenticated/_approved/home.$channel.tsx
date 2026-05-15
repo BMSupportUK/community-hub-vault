@@ -476,6 +476,18 @@ function ChannelPage() {
     setEditDraft("");
   };
 
+  const setSlowMode = async (seconds: number) => {
+    if (!channel || !canManageSlow) return;
+    const { error } = await supabase
+      .from("chat_channels")
+      .update({ slow_mode_seconds: seconds })
+      .eq("id", channel.id);
+    if (error) return toast.error(error.message);
+    setChannel({ ...channel, slow_mode_seconds: seconds });
+    setSlowOpen(false);
+    toast.success(seconds > 0 ? `Slow mode: ${formatSlow(seconds)}` : "Slow mode off");
+  };
+
   // Close menus when clicking outside
   useEffect(() => {
     if (!openMenuId && !emojiPickerId) return;
