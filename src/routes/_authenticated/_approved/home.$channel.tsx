@@ -139,8 +139,6 @@ function ChannelPage() {
   const lastReadAtRef = useRef<string | null>(null);
   const firstUnreadRef = useRef<HTMLDivElement | null>(null);
 
-  const lastReadKey = (chId: string, uid: string) => `chat:lastRead:${uid}:${chId}`;
-
   const isAtBottom = () => {
     const el = scrollRef.current;
     if (!el) return true;
@@ -149,10 +147,16 @@ function ChannelPage() {
 
   const persistLastRead = (iso: string) => {
     if (!channel || !user) return;
-    try {
-      const prev = localStorage.getItem(lastReadKey(channel.id, user.id));
-      if (!prev || prev < iso) localStorage.setItem(lastReadKey(channel.id, user.id), iso);
-    } catch { /* ignore */ }
+    const prev = lastReadAtRef.current;
+    if (prev && prev >= iso) return;
+    lastReadAtRef.current = iso;
+    // Fire-and-forget upsert; ignore errors so chat keeps working offline.
+    void supabase
+      .from("channel_reads")
+      .upsert(
+        { user_id: user.id, channel_id: channel.id, last_read_at: iso },
+        { onConflict: "user_id,channel_id" },
+      );
   };
 
   const mention = useMentionAutocomplete({
@@ -199,10 +203,21 @@ function ChannelPage() {
     // Reset scroll/unread tracking when switching channels
     initialScrollDoneRef.current = false;
     setFirstUnreadId(null);
-    lastReadAtRef.current = user
-      ? (() => { try { return localStorage.getItem(lastReadKey(channel.id, user.id)); } catch { return null; } })()
-      : null;
+    lastReadAtRef.current = null;
     let cancelled = false;
+    // Fetch the persisted last-read marker for this channel before messages
+    // so the initial-scroll effect uses the cross-device value.
+    if (user) {
+      void supabase
+        .from("channel_reads")
+        .select("last_read_at")
+        .eq("user_id", user.id)
+        .eq("channel_id", channel.id)
+        .maybeSingle()
+        .then(({ data }) => {
+          if (!cancelled && data?.last_read_at) lastReadAtRef.current = data.last_read_at;
+        });
+    }
     (async () => {
       const { data } = await supabase
         .from("chat_messages")
