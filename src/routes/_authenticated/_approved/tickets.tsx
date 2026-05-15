@@ -49,7 +49,7 @@ interface Ticket {
   status: Status; priority: Priority; assigned_to: string | null;
   created_at: string; updated_at: string;
 }
-interface Message { id: string; ticket_id: string; sender_id: string; content: string; is_internal: boolean; created_at: string; }
+interface Message { id: string; ticket_id: string; sender_id: string; content: string; is_internal: boolean; created_at: string; attachments?: Attachment[]; }
 interface Attachment { name: string; path: string; size: number; type: string; }
 interface Profile { id: string; display_name: string | null; username: string | null; }
 
@@ -356,6 +356,7 @@ function NewTicketForm({
   const [priority, setPriority] = useState<Priority>("normal");
   const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [files, setFiles] = useState<File[]>([]);
 
   useEffect(() => { if (!categoryId && categories[0]) setCategoryId(categories[0].id); }, [categories, categoryId]);
 
@@ -363,7 +364,9 @@ function NewTicketForm({
     e.preventDefault();
     const parsed = newTicketSchema.safeParse({ subject, category_id: categoryId, priority, message });
     if (!parsed.success) return toast.error(parsed.error.issues[0].message);
+    if (!parsed.data.message && files.length === 0) return toast.error("Add a message or attach a file");
     setSubmitting(true);
+    const uploaded = files.length ? await uploadTicketFiles(files) : [];
     const { data: t, error } = await supabase
       .from("tickets")
       .insert({ user_id: user!.id, subject: parsed.data.subject, category_id: parsed.data.category_id, priority: parsed.data.priority })
@@ -371,6 +374,7 @@ function NewTicketForm({
     if (error || !t) { setSubmitting(false); return toast.error(error?.message ?? "Failed"); }
     const { error: e2 } = await supabase.from("ticket_messages").insert({
       ticket_id: t.id, sender_id: user!.id, content: parsed.data.message, is_internal: false,
+      attachments: uploaded as unknown as never,
     });
     setSubmitting(false);
     if (e2) return toast.error(e2.message);
@@ -468,6 +472,9 @@ function NewTicketForm({
               placeholder="Provide as much detail as you can…"
               className="w-full px-3 py-2 rounded-lg bg-white/15 backdrop-blur border border-white/30 focus:border-white text-white placeholder:text-white/60 outline-none resize-none"
             />
+          </Field>
+          <Field label="Attachments (optional)">
+            <FilePicker files={files} setFiles={setFiles} disabled={submitting} dark />
           </Field>
           <div className="flex gap-2 justify-end">
             <button type="button" onClick={onCancel} className="px-4 py-2 rounded-lg text-sm text-white/80 hover:text-white">Cancel</button>
