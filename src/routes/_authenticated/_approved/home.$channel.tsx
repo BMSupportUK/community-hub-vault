@@ -874,7 +874,28 @@ function ChannelPage() {
                       </div>
                     ) : (
                       <>
-                        <MentionText content={m.content} currentUsername={myUsername} className="text-sm" />
+                        {(() => {
+                          const gif = extractStandaloneGif(m.content);
+                          if (gif) {
+                            return (
+                              <a href={gif} target="_blank" rel="noreferrer" className="block">
+                                <img
+                                  src={gif}
+                                  alt="GIF"
+                                  loading="lazy"
+                                  className="max-w-[320px] max-h-[280px] w-auto h-auto rounded-lg border border-border"
+                                />
+                              </a>
+                            );
+                          }
+                          return (
+                            <MentionText
+                              content={m.content}
+                              currentUsername={myUsername}
+                              className="text-sm"
+                            />
+                          );
+                        })()}
                         {m.edited_at && (
                           <span className="ml-1 text-[10px] text-muted-foreground">(edited)</span>
                         )}
@@ -1046,6 +1067,10 @@ function ChannelPage() {
               <span>{slowRemaining}s</span>
             </div>
           )}
+          <GifPicker
+            disabled={!canSend || slowRemaining > 0}
+            onSelect={(url) => sendGif(url)}
+          />
           <button
             onClick={send}
             disabled={sending || !draft.trim() || !canSend || slowRemaining > 0}
