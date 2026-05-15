@@ -9,6 +9,7 @@ import { IconRail } from "@/components/app/IconRail";
 import { Clocks } from "@/components/app/Clocks";
 import { UserAvatarMenu } from "@/components/app/UserAvatarMenu";
 import { BreakEndingAlert } from "@/components/app/BreakEndingAlert";
+import { ShiftStartEndAlert } from "@/components/app/ShiftStartEndAlert";
 import { logMyIp } from "@/lib/ip-log.functions";
 
 export const Route = createFileRoute("/_authenticated")({
@@ -124,6 +125,7 @@ function AuthLayout() {
           <Outlet />
         </div>
         <BreakEndingAlert />
+        <ShiftStartEndAlert />
       </div>
     </div>
   );
