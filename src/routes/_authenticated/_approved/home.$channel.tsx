@@ -494,7 +494,6 @@ function ChannelPage() {
       .eq("id", channel.id);
     if (error) return toast.error(error.message);
     setChannel({ ...channel, slow_mode_seconds: seconds });
-    setSlowOpen(false);
     toast.success(seconds > 0 ? `Slow mode: ${formatSlow(seconds)}` : "Slow mode off");
   };
 
