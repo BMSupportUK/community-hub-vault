@@ -60,9 +60,21 @@ const newTicketSchema = z.object({
   message: z.string().trim().max(2000),
 });
 
-async function uploadTicketFiles(files: File[]): Promise<Attachment[]> {
+export type UploadProgress = {
+  index: number;       // 0-based file currently uploading
+  total: number;
+  name: string;
+  done: number;        // count of completed files
+};
+
+async function uploadTicketFiles(
+  files: File[],
+  onProgress?: (p: UploadProgress) => void,
+): Promise<Attachment[]> {
   const out: Attachment[] = [];
-  for (const f of files) {
+  for (let i = 0; i < files.length; i++) {
+    const f = files[i];
+    onProgress?.({ index: i, total: files.length, name: f.name, done: i });
     if (f.size > 25 * 1024 * 1024) {
       toast.error(`${f.name} is over 25MB`);
       continue;
@@ -79,8 +91,30 @@ async function uploadTicketFiles(files: File[]): Promise<Attachment[]> {
       continue;
     }
     out.push({ name: f.name, path, size: f.size, type: f.type });
+    onProgress?.({ index: i, total: files.length, name: f.name, done: i + 1 });
   }
   return out;
+}
+
+function UploadProgressBar({ progress }: { progress: UploadProgress | null }) {
+  if (!progress) return null;
+  const pct = progress.total > 0 ? Math.round((progress.done / progress.total) * 100) : 0;
+  return (
+    <div className="space-y-1 rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-xs text-white">
+      <div className="flex items-center justify-between gap-2">
+        <span className="truncate">
+          Uploading {progress.done < progress.total ? progress.index + 1 : progress.total} of {progress.total}: {progress.name}
+        </span>
+        <span className="tabular-nums opacity-80">{pct}%</span>
+      </div>
+      <div className="h-1.5 w-full rounded-full bg-white/20 overflow-hidden">
+        <div
+          className="h-full bg-white transition-all duration-200"
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+    </div>
+  );
 }
 
 function TicketAttachment({ item }: { item: Attachment }) {
