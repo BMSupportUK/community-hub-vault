@@ -3,6 +3,7 @@ import { Pencil, Check, X, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import rulesBannerUrl from "@/assets/rules-banner.jpg";
 
 interface Embed {
   channel_id: string;
@@ -10,6 +11,12 @@ interface Embed {
   body: string;
   image_url: string | null;
 }
+
+const resolveEmbedImageUrl = (imageUrl: string | null | undefined) => {
+  if (!imageUrl) return "";
+  if (imageUrl.includes("rules-banner")) return rulesBannerUrl;
+  return imageUrl;
+};
 
 export function ChannelWelcomeEmbed({
   channelId,
@@ -95,7 +102,7 @@ export function ChannelWelcomeEmbed({
     <div className="rounded-2xl overflow-hidden border border-border bg-surface-2 shadow-sm relative group">
       {(embed?.image_url || (editing && imageDraft)) && (
         <img
-          src={editing ? imageDraft || embed?.image_url || "" : embed?.image_url || ""}
+          src={resolveEmbedImageUrl(editing ? imageDraft || embed?.image_url : embed?.image_url)}
           alt=""
           className="block w-full h-auto object-contain"
           loading="lazy"
