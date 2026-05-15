@@ -993,14 +993,30 @@ function CredentialsReveal({ targetUserId, isOwner }: { targetUserId: string; is
 
   return (
     <section className="rounded-2xl border border-white/25 bg-white/10 backdrop-blur-xl p-5 text-white shadow-[0_10px_40px_-15px_rgba(0,0,0,0.4)]">
-      <div className="flex items-center justify-between gap-3 mb-3">
-        <h2 className="flex items-center gap-2 font-display text-lg font-bold">
-          <KeyRound className="size-4 text-primary" /> Credentials & DNS
-        </h2>
-        {unlocked && (
-          <button onClick={() => setUnlocked(false)} className="flex items-center gap-2 text-xs px-2.5 py-1 rounded-lg bg-surface-2 border border-border hover:border-primary">
-            <Lock className="size-3.5" /> Lock
-          </button>
+      <div className="mb-4">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="flex items-center gap-2 font-display text-lg font-bold">
+            <KeyRound className="size-4 text-primary" /> Credentials & DNS
+          </h2>
+          {unlocked && (
+            <button onClick={() => setUnlocked(false)} className="flex items-center gap-2 text-xs px-2.5 py-1 rounded-lg bg-surface-2 border border-border hover:border-primary">
+              <Lock className="size-3.5" /> Lock
+            </button>
+          )}
+        </div>
+        {unlocked && !loading && (
+          <div className="flex gap-1 p-1 rounded-xl bg-surface-2 border border-border w-fit mt-3">
+            {([
+              { id: "creds", label: `App Credentials (${creds.length})` },
+              { id: "dns", label: `QD DNS Codes (${dns.length})` },
+            ] as const).map((t) => (
+              <button key={t.id} onClick={() => setTab(t.id)}
+                className={cn("px-3 py-1.5 rounded-lg text-xs font-medium transition-colors",
+                  tab === t.id ? "bg-primary text-primary-foreground shadow-glow" : "text-muted-foreground hover:text-foreground")}>
+                {t.label}
+              </button>
+            ))}
+          </div>
         )}
       </div>
 
@@ -1014,19 +1030,6 @@ function CredentialsReveal({ targetUserId, isOwner }: { targetUserId: string; is
         <div className="grid place-items-center py-8 text-muted-foreground"><Loader2 className="size-5 animate-spin" /></div>
       ) : (
         <>
-          <div className="flex gap-1 p-1 rounded-xl bg-surface-2 border border-border w-fit mb-4">
-            {([
-              { id: "creds", label: `App Credentials (${creds.length})` },
-              { id: "dns", label: `QD DNS Codes (${dns.length})` },
-            ] as const).map((t) => (
-              <button key={t.id} onClick={() => setTab(t.id)}
-                className={cn("px-3 py-1.5 rounded-lg text-xs font-medium transition-colors",
-                  tab === t.id ? "bg-primary text-primary-foreground shadow-glow" : "text-muted-foreground hover:text-foreground")}>
-                {t.label}
-              </button>
-            ))}
-          </div>
-
           {tab === "creds" ? (
             creds.length === 0 ? (
               <p className="text-sm text-muted-foreground">
