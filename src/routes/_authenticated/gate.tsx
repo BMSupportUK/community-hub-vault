@@ -57,7 +57,7 @@ function GatePage() {
         setTicketNumber(data.ticket_number ?? null);
         const { data: m } = await supabase.from("gate_messages")
           .select("id, sender_id, content, created_at").eq("application_id", data.id).order("created_at");
-        setMsgs(m ?? []);
+        setMsgs((m ?? []) as Msg[]);
       }
     })();
   }, [user]);
@@ -98,7 +98,7 @@ function GatePage() {
     const content = text.trim(); setText("");
     const { error } = await supabase.from("gate_messages").insert({
       application_id: appId, sender_id: user.id, content,
-    });
+    } as never);
     if (error) toast.error(error.message);
   };
 
@@ -135,7 +135,7 @@ function GatePage() {
           .select("id, sender_id, content, created_at")
           .eq("application_id", result.application_id)
           .order("created_at");
-        setMsgs(m ?? []);
+        setMsgs((m ?? []) as Msg[]);
         await refreshRoles();
         toast.success(`Appeal submitted — reference ${result.reference}`);
       }
@@ -167,7 +167,7 @@ function GatePage() {
       application_id: created.id,
       sender_id: user.id,
       content: `Access ticket #GATE-${String(created.ticket_number).padStart(6, "0")}\n\n${trimmed}`,
-    });
+    } as never);
     setAppId(created.id);
     setTicketNumber(created.ticket_number);
     setStatus(created.status);
@@ -179,7 +179,7 @@ function GatePage() {
       .select("id, sender_id, content, created_at")
       .eq("application_id", created.id)
       .order("created_at");
-    setMsgs(m ?? []);
+    setMsgs((m ?? []) as Msg[]);
     setFormOpen(false);
     setChatOpen(true);
     setSubmitting(false);
