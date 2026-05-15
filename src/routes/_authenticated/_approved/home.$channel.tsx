@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 import { MentionText, mentionsCurrentUser, useMentionAutocomplete } from "@/components/app/mentions";
+import { GifPicker, extractStandaloneGif } from "@/components/app/GifPicker";
 import { StaffOnDutyStrip } from "@/components/app/StaffOnDutyStrip";
 import { ChannelWelcomeEmbed } from "@/components/app/ChannelWelcomeEmbed";
 import { cn } from "@/lib/utils";
@@ -399,6 +400,25 @@ function ChannelPage() {
       setLastSentAt(Date.now());
     }
     setSending(false);
+  };
+
+  const sendGif = async (url: string) => {
+    if (!user || !channel) return;
+    if (channel.slow_mode_seconds > 0 && !isModOrAdmin && lastSentAt) {
+      const remain = channel.slow_mode_seconds * 1000 - (Date.now() - lastSentAt);
+      if (remain > 0) {
+        toast.error(`Slow mode: wait ${Math.ceil(remain / 1000)}s.`);
+        return;
+      }
+    }
+    const { error } = await supabase
+      .from("chat_messages")
+      .insert({ channel_id: channel.id, sender_id: user.id, content: url });
+    if (error) {
+      toast.error(error.message || "Could not send GIF");
+    } else {
+      setLastSentAt(Date.now());
+    }
   };
 
   const remove = async (id: string) => {
@@ -854,7 +874,28 @@ function ChannelPage() {
                       </div>
                     ) : (
                       <>
-                        <MentionText content={m.content} currentUsername={myUsername} className="text-sm" />
+                        {(() => {
+                          const gif = extractStandaloneGif(m.content);
+                          if (gif) {
+                            return (
+                              <a href={gif} target="_blank" rel="noreferrer" className="block">
+                                <img
+                                  src={gif}
+                                  alt="GIF"
+                                  loading="lazy"
+                                  className="max-w-[320px] max-h-[280px] w-auto h-auto rounded-lg border border-border"
+                                />
+                              </a>
+                            );
+                          }
+                          return (
+                            <MentionText
+                              content={m.content}
+                              currentUsername={myUsername}
+                              className="text-sm"
+                            />
+                          );
+                        })()}
                         {m.edited_at && (
                           <span className="ml-1 text-[10px] text-muted-foreground">(edited)</span>
                         )}
@@ -1026,6 +1067,10 @@ function ChannelPage() {
               <span>{slowRemaining}s</span>
             </div>
           )}
+          <GifPicker
+            disabled={!canSend || slowRemaining > 0}
+            onSelect={(url) => sendGif(url)}
+          />
           <button
             onClick={send}
             disabled={sending || !draft.trim() || !canSend || slowRemaining > 0}
