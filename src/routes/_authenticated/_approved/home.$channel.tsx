@@ -128,6 +128,7 @@ function ChannelPage() {
   const [emojiPickerId, setEmojiPickerId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState("");
+  const [canSend, setCanSend] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
   const taRef = useRef<HTMLTextAreaElement>(null);
   const mention = useMentionAutocomplete({
