@@ -582,9 +582,11 @@ function ChannelPage() {
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-5 py-4 space-y-3">
         <ChannelWelcomeEmbed channelId={channel.id} canEdit={isAdmin} />
         {messages.length === 0 ? (
+          canSend ? (
           <div className="text-sm text-muted-foreground text-center py-12">
             No messages yet — say hi.
           </div>
+          ) : null
         ) : (
           messages
             .filter((m) => !ignoredIds.has(m.sender_id) || m.sender_id === user?.id)
