@@ -97,7 +97,7 @@ export function ChannelWelcomeEmbed({
         <img
           src={editing ? imageDraft || embed?.image_url || "" : embed?.image_url || ""}
           alt=""
-          className="w-full h-auto object-cover max-h-72"
+          className="block w-full h-auto object-contain"
           loading="lazy"
         />
       )}
