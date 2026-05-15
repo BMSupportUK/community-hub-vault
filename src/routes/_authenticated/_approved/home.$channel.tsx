@@ -50,23 +50,6 @@ interface Reaction {
 
 const QUICK_EMOJIS = ["👍", "❤️", "😂", "😮", "😢", "🙏", "🔥", "🎉"];
 
-const SLOW_PRESETS: Array<{ label: string; seconds: number }> = [
-  { label: "Off", seconds: 0 },
-  { label: "5s", seconds: 5 },
-  { label: "10s", seconds: 10 },
-  { label: "15s", seconds: 15 },
-  { label: "30s", seconds: 30 },
-  { label: "1m", seconds: 60 },
-  { label: "2m", seconds: 120 },
-  { label: "5m", seconds: 300 },
-  { label: "10m", seconds: 600 },
-  { label: "15m", seconds: 900 },
-  { label: "30m", seconds: 1800 },
-  { label: "1h", seconds: 3600 },
-  { label: "2h", seconds: 7200 },
-  { label: "6h", seconds: 21600 },
-];
-
 function formatSlow(s: number): string {
   if (s <= 0) return "off";
   if (s < 60) return `${s}s`;
@@ -83,7 +66,6 @@ function ChannelPage() {
   const isModOrAdmin = hasAny(["admin", "management", "moderator"]);
   const [pinnedOpen, setPinnedOpen] = useState(false);
   const [ignoredOpen, setIgnoredOpen] = useState(false);
-  const [slowOpen, setSlowOpen] = useState(false);
   const [lastSentAt, setLastSentAt] = useState<number | null>(null);
   const [now, setNow] = useState(() => Date.now());
   const [myUsername, setMyUsername] = useState<string | null>(null);
