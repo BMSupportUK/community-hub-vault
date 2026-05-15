@@ -4,7 +4,7 @@ import {
   Pencil, Camera, Loader2, ShieldCheck, Clock as ClockIcon,
   Coffee, UtensilsCrossed, Ticket, ShoppingBag, Eye, EyeOff,
   Lock, KeyRound, Copy, Check, Globe, Calendar, StickyNote, AtSign,
-  Trophy, Gift, X as XIcon, UserPlus,
+  Trophy, Gift, X as XIcon, UserPlus, Plus, Trash2,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, type AppRole } from "@/hooks/use-auth";
@@ -38,6 +38,17 @@ interface InviteSummary {
   invitedBy: { username: string | null; display_name: string | null } | null;
   invitedAt: string | null;
   invitedBonusPaid: boolean;
+}
+
+interface ReferralRow {
+  id: string;
+  code: string;
+  used_by: string | null;
+  used_at: string | null;
+  created_at: string;
+  referral_bonus_paid: boolean;
+  joined_name: string | null;
+  joined_username: string | null;
 }
 
 const ROLE_STYLES: Record<AppRole, string> = {
@@ -75,14 +86,16 @@ function ProfilePage() {
   const [tickets, setTickets] = useState<TicketRow[]>([]);
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [inviteInfo, setInviteInfo] = useState<InviteSummary | null>(null);
+  const [referrals, setReferrals] = useState<ReferralRow[]>([]);
+  const [creatingInvite, setCreatingInvite] = useState(false);
+  const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
-  const [mainTab, setMainTab] = useState<"creds" | "tickets" | "orders">(
-    "creds",
-  );
+  const [mainTab, setMainTab] = useState<"creds" | "tickets" | "orders" | "referrals">("creds");
 
   const isOwner = !!profile && !!viewer && profile.id === viewer.id;
   const canSeeCreds = isOwner || isAdmin;
+  const canSeeReferrals = isOwner || isAdmin;
 
   useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 1000);
@@ -137,7 +150,72 @@ function ProfilePage() {
       invitedBonusPaid: !!invitedRow?.referral_bonus_paid,
     });
 
+    // Full referral list (visible to owner / admin via RLS)
+    const { data: refRows } = await supabase
+      .from("invites")
+      .select("id, code, used_by, used_at, created_at, referral_bonus_paid")
+      .eq("created_by", p.id)
+      .order("created_at", { ascending: false });
+    const baseRows = (refRows ?? []) as Omit<ReferralRow, "joined_name" | "joined_username">[];
+    const usedIds = Array.from(new Set(baseRows.map((r) => r.used_by).filter(Boolean) as string[]));
+    let usedMap: Record<string, { display_name: string | null; username: string | null }> = {};
+    if (usedIds.length) {
+      const { data: profs } = await supabase.from("profiles").select("id, display_name, username").in("id", usedIds);
+      usedMap = Object.fromEntries((profs ?? []).map((x) => [x.id, { display_name: x.display_name, username: x.username }]));
+    }
+    setReferrals(
+      baseRows.map((r) => ({
+        ...r,
+        joined_name: r.used_by ? usedMap[r.used_by]?.display_name ?? null : null,
+        joined_username: r.used_by ? usedMap[r.used_by]?.username ?? null : null,
+      })),
+    );
+
     setLoading(false);
+  };
+
+  const createInvite = async () => {
+    if (!viewer || !isOwner) return;
+    setCreatingInvite(true);
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    for (let i = 0; i < 5; i++) {
+      let code = "";
+      for (let j = 0; j < 8; j++) code += chars[Math.floor(Math.random() * chars.length)];
+      const { error } = await supabase.from("invites").insert({ code, created_by: viewer.id });
+      if (!error) {
+        toast.success(`Invite code ${code} created`);
+        setCreatingInvite(false);
+        load();
+        return;
+      }
+      if (!error.message.toLowerCase().includes("unique")) {
+        toast.error(error.message);
+        setCreatingInvite(false);
+        return;
+      }
+    }
+    toast.error("Could not generate a unique code, please try again");
+    setCreatingInvite(false);
+  };
+
+  const copyInviteLink = async (code: string) => {
+    const link = `${window.location.origin}/signup?invite=${code}`;
+    try {
+      await navigator.clipboard.writeText(link);
+      setCopiedCode(code);
+      toast.success("Invite link copied");
+      setTimeout(() => setCopiedCode((c) => (c === code ? null : c)), 1500);
+    } catch {
+      toast.error("Could not copy");
+    }
+  };
+
+  const deleteInvite = async (id: string) => {
+    if (!confirm("Delete this invite?")) return;
+    const { error } = await supabase.from("invites").delete().eq("id", id);
+    if (error) return toast.error(error.message);
+    toast.success("Invite deleted");
+    load();
   };
 
   useEffect(() => { load(); }, [username]);
@@ -231,6 +309,7 @@ function ProfilePage() {
                 ...(canSeeCreds ? [{ id: "creds" as const, label: "Credentials & DNS", icon: KeyRound }] : []),
                 { id: "tickets" as const, label: `Recent tickets (${tickets.length})`, icon: Ticket },
                 { id: "orders" as const, label: `Recent orders (${orders.length})`, icon: ShoppingBag },
+                ...(canSeeReferrals ? [{ id: "referrals" as const, label: `Referrals (${referrals.length})`, icon: Trophy }] : []),
               ]).map((t) => {
                 const Icon = t.icon;
                 const active = mainTab === t.id;
@@ -276,6 +355,18 @@ function ProfilePage() {
                   </li>
                 ))}
               </ActivityCard>
+            )}
+
+            {mainTab === "referrals" && canSeeReferrals && (
+              <ReferralsPanel
+                referrals={referrals}
+                isOwner={isOwner}
+                creating={creatingInvite}
+                copiedCode={copiedCode}
+                onCreate={createInvite}
+                onCopy={copyInviteLink}
+                onDelete={deleteInvite}
+              />
             )}
           </div>
 
@@ -456,6 +547,125 @@ function InviteStat({ label, value }: { label: string; value: number }) {
       <div className="font-display text-xl font-bold">{value}</div>
       <div className="text-[10px] uppercase tracking-wider text-white/70">{label}</div>
     </div>
+  );
+}
+
+function ReferralsPanel({
+  referrals,
+  isOwner,
+  creating,
+  copiedCode,
+  onCreate,
+  onCopy,
+  onDelete,
+}: {
+  referrals: ReferralRow[];
+  isOwner: boolean;
+  creating: boolean;
+  copiedCode: string | null;
+  onCreate: () => void;
+  onCopy: (code: string) => void;
+  onDelete: (id: string) => void;
+}) {
+  return (
+    <section className="rounded-2xl border border-white/25 bg-white/10 backdrop-blur-xl p-5 text-white shadow-[0_10px_40px_-15px_rgba(0,0,0,0.4)]">
+      <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
+        <h2 className="flex items-center gap-2 font-display text-lg font-bold">
+          <Trophy className="size-4 text-amber-200" /> Referrals
+        </h2>
+        {isOwner && (
+          <button
+            onClick={onCreate}
+            disabled={creating}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white text-rose-600 font-medium text-sm hover:bg-white/90 transition-colors disabled:opacity-60"
+          >
+            <Plus className="size-4" /> {creating ? "Creating…" : "New invite"}
+          </button>
+        )}
+      </div>
+
+      {referrals.length === 0 ? (
+        <p className="text-sm text-white/70">
+          {isOwner
+            ? "You haven't created any invites yet. Generate one to invite a friend."
+            : "No referrals yet."}
+        </p>
+      ) : (
+        <ul className="divide-y divide-white/15">
+          {referrals.map((r) => {
+            const used = !!r.used_by;
+            return (
+              <li key={r.id} className="py-3 flex flex-wrap items-center gap-3">
+                <div className="font-mono text-sm font-bold tracking-widest text-amber-100 shrink-0">
+                  {r.code}
+                </div>
+                <span
+                  className={cn(
+                    "text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border",
+                    used
+                      ? "bg-emerald-500/15 text-emerald-200 border-emerald-500/30"
+                      : "bg-white/10 text-white/80 border-white/30",
+                  )}
+                >
+                  {used ? "Joined" : "Active"}
+                </span>
+                <div className="flex-1 min-w-[140px] text-sm">
+                  {used ? (
+                    r.joined_username ? (
+                      <Link
+                        to="/u/$username"
+                        params={{ username: r.joined_username }}
+                        className="text-white hover:text-amber-200 hover:underline truncate"
+                      >
+                        {r.joined_name ?? r.joined_username}
+                      </Link>
+                    ) : (
+                      <span className="text-white/80">{r.joined_name ?? "Member"}</span>
+                    )
+                  ) : (
+                    <span className="text-white/60 italic">Awaiting signup</span>
+                  )}
+                </div>
+                {used && (
+                  <span
+                    className={cn(
+                      "inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-md border",
+                      r.referral_bonus_paid
+                        ? "bg-emerald-500/15 text-emerald-200 border-emerald-500/30"
+                        : "bg-rose-500/15 text-rose-200 border-rose-500/30",
+                    )}
+                    title="Referral bonus"
+                  >
+                    <Gift className="size-3" />
+                    {r.referral_bonus_paid ? <Check className="size-3" /> : <XIcon className="size-3" />}
+                  </span>
+                )}
+                {isOwner && (
+                  <div className="flex items-center gap-1 ml-auto">
+                    <button
+                      onClick={() => onCopy(r.code)}
+                      className="flex items-center gap-1 px-2 py-1 rounded-md bg-white/10 hover:bg-white/20 text-xs"
+                    >
+                      {copiedCode === r.code ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
+                      {copiedCode === r.code ? "Copied" : "Copy link"}
+                    </button>
+                    {!used && (
+                      <button
+                        onClick={() => onDelete(r.id)}
+                        className="p-1.5 rounded-md text-white/70 hover:bg-white/10 hover:text-rose-200"
+                        title="Delete invite"
+                      >
+                        <Trash2 className="size-3.5" />
+                      </button>
+                    )}
+                  </div>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </section>
   );
 }
 
