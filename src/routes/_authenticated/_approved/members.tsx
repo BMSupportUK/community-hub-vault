@@ -2,7 +2,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { Users, Search, Clock } from "lucide-react";
+import { Users, Search, Clock, UserPlus, Eye, Check, Lock } from "lucide-react";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/_approved/members")({
   component: MembersPage,
@@ -15,12 +16,19 @@ interface Profile {
   avatar_url: string | null;
   bio: string | null;
   created_at: string;
+  is_private: boolean | null;
 }
 
 interface RoleRow {
   user_id: string;
   role: string;
 }
+
+type FriendState =
+  | { kind: "none" }
+  | { kind: "outgoing" }
+  | { kind: "incoming"; id: string }
+  | { kind: "friends"; id: string };
 
 const ROLE_COLOR: Record<string, string> = {
   admin: "bg-rose-500/20 text-rose-300 ring-rose-400/40",
@@ -33,27 +41,65 @@ const ROLE_COLOR: Record<string, string> = {
 };
 
 function MembersPage() {
-  const { hasAny } = useAuth();
+  const { hasAny, user: viewer } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
 
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [rolesByUser, setRolesByUser] = useState<Record<string, string[]>>({});
+  const [friendByUser, setFriendByUser] = useState<Record<string, FriendState>>({});
+  const [busyId, setBusyId] = useState<string | null>(null);
   const [q, setQ] = useState("");
 
-  useEffect(() => {
-    (async () => {
-      const [{ data: ps }, { data: rs }] = await Promise.all([
-        supabase.from("profiles").select("*").order("created_at", { ascending: false }),
-        supabase.from("user_roles").select("user_id, role"),
-      ]);
-      setProfiles((ps as Profile[] | null) ?? []);
-      const map: Record<string, string[]> = {};
-      for (const r of (rs as RoleRow[] | null) ?? []) {
-        (map[r.user_id] ||= []).push(r.role);
+  const load = async () => {
+    const [{ data: ps }, { data: rs }] = await Promise.all([
+      supabase.from("profiles").select("*").order("created_at", { ascending: false }),
+      supabase.from("user_roles").select("user_id, role"),
+    ]);
+    setProfiles((ps as Profile[] | null) ?? []);
+    const map: Record<string, string[]> = {};
+    for (const r of (rs as RoleRow[] | null) ?? []) {
+      (map[r.user_id] ||= []).push(r.role);
+    }
+    setRolesByUser(map);
+
+    if (viewer) {
+      const { data: fs } = await supabase
+        .from("friendships")
+        .select("id, requester_id, addressee_id, status")
+        .or(`requester_id.eq.${viewer.id},addressee_id.eq.${viewer.id}`);
+      const fmap: Record<string, FriendState> = {};
+      for (const f of (fs as any[] | null) ?? []) {
+        const otherId = f.requester_id === viewer.id ? f.addressee_id : f.requester_id;
+        if (f.status === "accepted") fmap[otherId] = { kind: "friends", id: f.id };
+        else if (f.requester_id === viewer.id) fmap[otherId] = { kind: "outgoing" };
+        else fmap[otherId] = { kind: "incoming", id: f.id };
       }
-      setRolesByUser(map);
-    })();
-  }, [isAdmin]);
+      setFriendByUser(fmap);
+    }
+  };
+
+  useEffect(() => { load(); }, [viewer?.id]);
+
+  const sendRequest = async (toId: string) => {
+    if (!viewer) return;
+    setBusyId(toId);
+    const { error } = await supabase
+      .from("friendships")
+      .insert({ requester_id: viewer.id, addressee_id: toId });
+    setBusyId(null);
+    if (error) return toast.error(error.message);
+    toast.success("Friend request sent");
+    load();
+  };
+
+  const acceptRequest = async (id: string) => {
+    setBusyId(id);
+    const { error } = await supabase.from("friendships").update({ status: "accepted" }).eq("id", id);
+    setBusyId(null);
+    if (error) return toast.error(error.message);
+    toast.success("Friends");
+    load();
+  };
 
   const STAFF_ROLES = new Set(["admin", "management", "moderator", "staff"]);
   const EXCLUDE_ROLES = new Set(["pending", "banned"]);
