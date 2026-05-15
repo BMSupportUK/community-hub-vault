@@ -259,9 +259,16 @@ function ChannelPage() {
       .from("chat_messages")
       .insert({ channel_id: channel.id, sender_id: user.id, content });
     if (error) {
-      toast.error(error.message.includes("@all") || error.message.includes("@here")
-        ? "Only admin and management can use @all or @here."
-        : error.message);
+      const msg = error.message || "";
+      const isPermission =
+        /row-level security|permission denied|violates.*policy|not allowed|forbidden/i.test(msg);
+      toast.error(
+        msg.includes("@all") || msg.includes("@here")
+          ? "Only admin and management can use @all or @here."
+          : isPermission
+            ? "You don't have permission to send messages in this channel."
+            : msg,
+      );
       setDraft(content);
     }
     setSending(false);
