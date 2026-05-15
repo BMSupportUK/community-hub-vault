@@ -4,7 +4,7 @@ import {
   Pencil, Camera, Loader2, ShieldCheck, Clock as ClockIcon,
   Coffee, UtensilsCrossed, Ticket, ShoppingBag, Eye, EyeOff,
   Lock, KeyRound, Copy, Check, Globe, Calendar, StickyNote, AtSign,
-  Trophy, Gift, X as XIcon, UserPlus,
+  Trophy, Gift, X as XIcon, UserPlus, Plus, Trash2,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, type AppRole } from "@/hooks/use-auth";
@@ -38,6 +38,17 @@ interface InviteSummary {
   invitedBy: { username: string | null; display_name: string | null } | null;
   invitedAt: string | null;
   invitedBonusPaid: boolean;
+}
+
+interface ReferralRow {
+  id: string;
+  code: string;
+  used_by: string | null;
+  used_at: string | null;
+  created_at: string;
+  referral_bonus_paid: boolean;
+  joined_name: string | null;
+  joined_username: string | null;
 }
 
 const ROLE_STYLES: Record<AppRole, string> = {
@@ -80,9 +91,11 @@ function ProfilePage() {
   const [mainTab, setMainTab] = useState<"creds" | "tickets" | "orders">(
     "creds",
   );
+  const [profileTab, setProfileTab] = useState<"creds" | "tickets" | "orders" | "referrals">("creds");
 
   const isOwner = !!profile && !!viewer && profile.id === viewer.id;
   const canSeeCreds = isOwner || isAdmin;
+  const canSeeReferrals = isOwner || isAdmin;
 
   useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 1000);
