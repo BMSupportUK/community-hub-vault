@@ -154,6 +154,21 @@ function ChannelPage() {
     })();
   }, [slug]);
 
+  // Check if current user can send in this channel
+  useEffect(() => {
+    if (!channel || !user) { setCanSend(true); return; }
+    let cancelled = false;
+    (async () => {
+      const { data, error } = await supabase.rpc("can_in_channel", {
+        _user: user.id,
+        _channel: channel.id,
+        _action: "send",
+      });
+      if (!cancelled) setCanSend(error ? true : !!data);
+    })();
+    return () => { cancelled = true; };
+  }, [channel?.id, user?.id]);
+
   // Load messages + subscribe
   useEffect(() => {
     if (!channel) return;
