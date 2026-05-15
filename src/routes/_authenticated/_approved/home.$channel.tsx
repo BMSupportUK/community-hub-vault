@@ -49,6 +49,12 @@ function ChannelPage() {
   const [ignoredIds, setIgnoredIds] = useState<Set<string>>(new Set());
   const [staffIds, setStaffIds] = useState<Set<string>>(new Set());
   const [ignoredProfiles, setIgnoredProfiles] = useState<Record<string, Profile>>({});
+  const [selectedToUnblock, setSelectedToUnblock] = useState<Set<string>>(new Set());
+
+  // Reset selection when the panel closes or list changes
+  useEffect(() => {
+    if (!ignoredOpen) setSelectedToUnblock(new Set());
+  }, [ignoredOpen]);
 
   // Load my ignore list
   useEffect(() => {
@@ -372,12 +378,27 @@ function ChannelPage() {
                   You haven't ignored anyone.
                 </div>
               ) : (
+                <>
                 <ul className="divide-y divide-border">
                   {Array.from(ignoredIds).map((id) => {
                     const p = ignoredProfiles[id];
                     const name = p?.display_name ?? p?.username ?? "Unknown user";
+                    const checked = selectedToUnblock.has(id);
                     return (
                       <li key={id} className="p-3 flex items-center gap-3 hover:bg-surface-2/40">
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={(e) => {
+                            setSelectedToUnblock((prev) => {
+                              const next = new Set(prev);
+                              if (e.target.checked) next.add(id);
+                              else next.delete(id);
+                              return next;
+                            });
+                          }}
+                          className="size-4 accent-primary cursor-pointer"
+                        />
                         <img
                           src={p?.avatar_url ?? DEFAULT_AVATAR_URL}
                           alt=""
@@ -399,6 +420,43 @@ function ChannelPage() {
                     );
                   })}
                 </ul>
+                <div className="sticky bottom-0 flex items-center justify-between gap-2 px-3 py-2 border-t border-border bg-popover">
+                  <span className="text-[11px] text-muted-foreground">
+                    {selectedToUnblock.size} selected
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setSelectedToUnblock(new Set(ignoredIds))}
+                      className="text-[11px] text-muted-foreground hover:text-foreground"
+                    >
+                      Select all
+                    </button>
+                    <button
+                      disabled={selectedToUnblock.size === 0}
+                      onClick={async () => {
+                        if (!user || selectedToUnblock.size === 0) return;
+                        const ids = Array.from(selectedToUnblock);
+                        const { error } = await supabase
+                          .from("user_ignores")
+                          .delete()
+                          .eq("ignorer_id", user.id)
+                          .in("ignored_id", ids);
+                        if (error) return toast.error(error.message);
+                        setIgnoredIds((prev) => {
+                          const next = new Set(prev);
+                          for (const id of ids) next.delete(id);
+                          return next;
+                        });
+                        setSelectedToUnblock(new Set());
+                        toast.success(`Unblocked ${ids.length} user${ids.length === 1 ? "" : "s"}.`);
+                      }}
+                      className="text-xs px-2 py-1 rounded bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Unblock selected
+                    </button>
+                  </div>
+                </div>
+                </>
               )}
             </div>
           )}
