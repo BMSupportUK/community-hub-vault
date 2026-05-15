@@ -204,6 +204,7 @@ export type Database = {
           icon: string
           id: string
           name: string
+          slow_mode_seconds: number
           slug: string
           sort_order: number
           staff_only: boolean
@@ -215,6 +216,7 @@ export type Database = {
           icon?: string
           id?: string
           name: string
+          slow_mode_seconds?: number
           slug: string
           sort_order?: number
           staff_only?: boolean
@@ -226,6 +228,7 @@ export type Database = {
           icon?: string
           id?: string
           name?: string
+          slow_mode_seconds?: number
           slug?: string
           sort_order?: number
           staff_only?: boolean
