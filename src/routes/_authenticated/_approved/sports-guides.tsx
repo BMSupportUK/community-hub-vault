@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Plus, Search, X, Pencil, Trash2, ImageIcon, GripVertical } from "lucide-react";
+import { Plus, Search, X, Pencil, Trash2, ImageIcon, GripVertical, Check, Circle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -27,6 +27,7 @@ type Blog = {
   published: boolean;
   created_at: string;
   sort_order: number;
+  updated_at?: string;
 };
 
 function SportsGuidesPage() {
@@ -34,6 +35,7 @@ function SportsGuidesPage() {
   const [tab, setTab] = useState("welcome");
   const [categories, setCategories] = useState<Category[]>([]);
   const [blogs, setBlogs] = useState<Blog[]>([]);
+  const [reads, setReads] = useState<Record<string, string>>({}); // blog_id -> read_at iso
   const [activeCat, setActiveCat] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [reading, setReading] = useState<Blog | null>(null);
@@ -45,25 +47,66 @@ function SportsGuidesPage() {
   const dragBlogId = useRef<string | null>(null);
 
   const load = async () => {
-    const [{ data: cats }, { data: bs }] = await Promise.all([
+    const [{ data: cats }, { data: bs }, { data: rs }] = await Promise.all([
       supabase.from("sports_categories").select("*").order("sort_order"),
       supabase.from("sports_blogs").select("*").order("sort_order").order("created_at", { ascending: false }),
+      user?.id
+        ? supabase.from("sports_blog_reads").select("blog_id, read_at").eq("user_id", user.id)
+        : Promise.resolve({ data: [] as { blog_id: string; read_at: string }[] }),
     ]);
     setCategories((cats ?? []) as Category[]);
     setBlogs((bs ?? []) as Blog[]);
+    const map: Record<string, string> = {};
+    for (const r of (rs ?? []) as { blog_id: string; read_at: string }[]) map[r.blog_id] = r.read_at;
+    setReads(map);
     if (!activeCat && cats?.length) setActiveCat(cats[0].id);
   };
 
   useEffect(() => {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [user?.id]);
+
+  const isUnread = (b: Blog) => {
+    const r = reads[b.id];
+    if (!r) return true;
+    const upd = b.updated_at ?? b.created_at;
+    return new Date(r).getTime() < new Date(upd).getTime();
+  };
+
+  const markRead = async (b: Blog) => {
+    if (!user?.id) return;
+    const now = new Date().toISOString();
+    setReads((m) => ({ ...m, [b.id]: now }));
+    const { error } = await supabase
+      .from("sports_blog_reads")
+      .upsert({ user_id: user.id, blog_id: b.id, read_at: now }, { onConflict: "user_id,blog_id" });
+    if (error) toast.error(error.message);
+  };
+
+  const markUnread = async (b: Blog) => {
+    if (!user?.id) return;
+    setReads((m) => { const n = { ...m }; delete n[b.id]; return n; });
+    const { error } = await supabase
+      .from("sports_blog_reads")
+      .delete()
+      .eq("user_id", user.id)
+      .eq("blog_id", b.id);
+    if (error) toast.error(error.message);
+  };
 
   const counts = useMemo(() => {
     const m: Record<string, number> = {};
     for (const b of blogs) m[b.category_id] = (m[b.category_id] ?? 0) + 1;
     return m;
   }, [blogs]);
+
+  const unreadCounts = useMemo(() => {
+    const m: Record<string, number> = {};
+    for (const b of blogs) if (isUnread(b)) m[b.category_id] = (m[b.category_id] ?? 0) + 1;
+    return m;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [blogs, reads]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -241,10 +284,20 @@ function SportsGuidesPage() {
                           onClick={() => setActiveCat(c.id)}
                           className="flex-1 flex items-center justify-between px-2 py-2 text-sm text-left"
                         >
-                          <span>{c.name}</span>
-                          {n > 0 && (
-                            <span className={`text-xs px-2 py-0.5 rounded-full ${active ? "bg-white/20" : "bg-purple-800/60 text-purple-100"}`}>{n}</span>
-                          )}
+                          <span className="flex items-center gap-2">
+                            {(unreadCounts[c.id] ?? 0) > 0 && (
+                              <span className="size-2 rounded-full bg-fuchsia-400 shadow-[0_0_8px_rgba(232,121,249,0.9)]" />
+                            )}
+                            {c.name}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            {(unreadCounts[c.id] ?? 0) > 0 && (
+                              <span className="text-xs px-2 py-0.5 rounded-full bg-fuchsia-500 text-white font-semibold">{unreadCounts[c.id]}</span>
+                            )}
+                            {n > 0 && (
+                              <span className={`text-xs px-2 py-0.5 rounded-full ${active ? "bg-white/20" : "bg-purple-800/60 text-purple-100"}`}>{n}</span>
+                            )}
+                          </span>
                         </button>
                       </div>
                     );
@@ -292,7 +345,7 @@ function SportsGuidesPage() {
                           if (dragBlogId.current) reorderBlogs(dragBlogId.current, b.id);
                           dragBlogId.current = null;
                         }}
-                        className="rounded-2xl bg-purple-950/50 border border-purple-500/30 overflow-hidden flex flex-col group hover:border-fuchsia-500/60 hover:shadow-[0_0_30px_-10px_rgba(217,70,239,0.6)] transition-all"
+                        className={`rounded-2xl bg-purple-950/50 border overflow-hidden flex flex-col group hover:shadow-[0_0_30px_-10px_rgba(217,70,239,0.6)] transition-all ${isUnread(b) ? "border-fuchsia-500/70 shadow-[0_0_20px_-10px_rgba(232,121,249,0.8)]" : "border-purple-500/30 hover:border-fuchsia-500/60"}`}
                       >
                         <div className="aspect-[16/10] bg-purple-900/50 relative overflow-hidden">
                           {b.image_url ? (
@@ -305,6 +358,11 @@ function SportsGuidesPage() {
                           {isMod && (
                             <div className="absolute top-2 left-2 size-8 rounded-md bg-black/60 backdrop-blur grid place-items-center text-white cursor-grab">
                               <GripVertical className="size-4" />
+                            </div>
+                          )}
+                          {isUnread(b) && (
+                            <div className="absolute top-2 right-2 px-2 py-1 rounded-md bg-fuchsia-500 text-white text-[10px] font-bold uppercase tracking-wide shadow-lg">
+                              New
                             </div>
                           )}
                         </div>
@@ -320,7 +378,16 @@ function SportsGuidesPage() {
                           <h3 className="font-display font-semibold text-lg leading-snug text-purple-50">{b.title}</h3>
                           {b.excerpt && <p className="text-sm text-purple-200/70 line-clamp-2">{b.excerpt}</p>}
                           <div className="mt-auto pt-3 flex items-center gap-2">
-                            <Button size="sm" className="flex-1 bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white border-0" onClick={() => setReading(b)}>Click to Read</Button>
+                            <Button size="sm" className="flex-1 bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white border-0" onClick={() => { setReading(b); markRead(b); }}>Click to Read</Button>
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="text-purple-200 hover:text-white hover:bg-purple-800/60"
+                              title={isUnread(b) ? "Mark as read" : "Mark as unread"}
+                              onClick={() => (isUnread(b) ? markRead(b) : markUnread(b))}
+                            >
+                              {isUnread(b) ? <Check className="size-4" /> : <Circle className="size-4" />}
+                            </Button>
                             {isMod && (
                               <>
                                 <Button size="icon" variant="ghost" className="text-purple-200 hover:text-white hover:bg-purple-800/60" onClick={() => { setEditing(b); setShowEditor(true); }}>
