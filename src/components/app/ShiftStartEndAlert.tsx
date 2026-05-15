@@ -3,7 +3,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { Play, StopCircle, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { useTimezone } from "@/hooks/use-timezone";
+import { addDaysToDateStr, useTimezone } from "@/hooks/use-timezone";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -64,15 +64,19 @@ export function ShiftStartEndAlert() {
     if (!user || !isStaff) return;
     const load = async () => {
       const today = dateInTimeZone(Date.now());
+      const fromDate = addDaysToDateStr(today, -1);
+      const toDate = addDaysToDateStr(today, 1);
 
       const [{ data: s }, { data: sh }] = await Promise.all([
         supabase
           .from("shift_slots")
           .select("*")
           .eq("assigned_to", user.id)
-          .gte("shift_date", today)
-          .lte("shift_date", today)
-          .eq("slot_type", "shift"),
+          .gte("shift_date", fromDate)
+          .lte("shift_date", toDate)
+          .eq("slot_type", "shift")
+          .order("shift_date", { ascending: true })
+          .order("start_time", { ascending: true }),
         supabase
           .from("shifts")
           .select("id, clock_in, clock_out")
@@ -159,7 +163,7 @@ export function ShiftStartEndAlert() {
           <AlertDialogTitle className="text-center text-xl">
             {isStart
               ? overdue ? "Shift has started" : "Shift starting soon"
-              : overdue ? "Shift is ending" : "Shift ending soon"}
+              : overdue ? "Shift has ended" : "Shift ending soon"}
           </AlertDialogTitle>
           <AlertDialogDescription className="text-center">
             {isStart ? (
