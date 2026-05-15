@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 export interface TimezoneSetting {
@@ -133,10 +133,10 @@ export function useTimezone() {
     };
   }, []);
 
-  return {
+  return useMemo(() => ({
     tz: timezone.tz,
     toUtcMs: (dateStr: string, timeStr: string) => zonedWallTimeToUtcMs(dateStr, timeStr, timezone.tz),
     shiftWindowToUtcMs: (dateStr: string, startTime: string, endTime: string) => shiftWindowToUtcMs(dateStr, startTime, endTime, timezone.tz),
     dateInTimeZone: (date: Date | number) => dateInTimeZone(date, timezone.tz),
-  };
+  }), [timezone.tz]);
 }
