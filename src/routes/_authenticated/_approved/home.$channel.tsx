@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { Hash, Megaphone, Loader2, Send, Trash2, EyeOff, Eye } from "lucide-react";
+import { Hash, Megaphone, Loader2, Send, Trash2, EyeOff, Eye, Pin, PinOff, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
@@ -26,6 +26,8 @@ interface Message {
   sender_id: string;
   content: string;
   created_at: string;
+  pinned_at: string | null;
+  pinned_by: string | null;
 }
 
 interface Profile {
@@ -39,6 +41,8 @@ function ChannelPage() {
   const { channel: slug } = Route.useParams();
   const { user, hasAny } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
+  const canPin = hasAny(["admin", "management", "moderator", "staff"]);
+  const [pinnedOpen, setPinnedOpen] = useState(false);
   const [myUsername, setMyUsername] = useState<string | null>(null);
   const [ignoredIds, setIgnoredIds] = useState<Set<string>>(new Set());
   const [staffIds, setStaffIds] = useState<Set<string>>(new Set());
@@ -114,7 +118,7 @@ function ChannelPage() {
     (async () => {
       const { data } = await supabase
         .from("chat_messages")
-        .select("id, channel_id, sender_id, content, created_at")
+        .select("id, channel_id, sender_id, content, created_at, pinned_at, pinned_by")
         .eq("channel_id", channel.id)
         .order("created_at", { ascending: true })
         .limit(200);
@@ -141,6 +145,14 @@ function ChannelPage() {
         (payload) => {
           const old = payload.old as { id: string };
           setMessages((prev) => prev.filter((m) => m.id !== old.id));
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "chat_messages", filter: `channel_id=eq.${channel.id}` },
+        (payload) => {
+          const updated = payload.new as Message;
+          setMessages((prev) => prev.map((m) => (m.id === updated.id ? { ...m, ...updated } : m)));
         },
       )
       .subscribe();
@@ -193,6 +205,21 @@ function ChannelPage() {
     if (error) toast.error(error.message);
   };
 
+  const togglePin = async (m: Message) => {
+    if (!canPin || !user) return;
+    const isPinned = !!m.pinned_at;
+    const { error } = await supabase
+      .from("chat_messages")
+      .update(
+        isPinned
+          ? { pinned_at: null, pinned_by: null }
+          : { pinned_at: new Date().toISOString(), pinned_by: user.id },
+      )
+      .eq("id", m.id);
+    if (error) return toast.error(error.message);
+    toast.success(isPinned ? "Message unpinned." : "Message pinned.");
+  };
+
   const toggleIgnore = async (targetId: string) => {
     if (!user) return;
     if (staffIds.has(targetId)) {
@@ -239,14 +266,69 @@ function ChannelPage() {
 
   const Icon = channel.icon === "Megaphone" ? Megaphone : Hash;
 
+  const pinnedMessages = messages
+    .filter((m) => m.pinned_at)
+    .sort((a, b) => (b.pinned_at ?? "").localeCompare(a.pinned_at ?? ""));
+
   return (
     <main className="flex-1 flex flex-col min-w-0 min-h-0 h-full">
-      <header className="h-14 border-b border-border px-5 flex items-center gap-2 shrink-0">
+      <header className="h-14 border-b border-border px-5 flex items-center gap-2 shrink-0 relative">
         <Icon className="size-4 text-muted-foreground" />
         <h1 className="font-display font-semibold">{channel.name}</h1>
         {channel.staff_only && (
           <span className="ml-2 text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-400">staff</span>
         )}
+        <div className="ml-auto relative">
+          <button
+            onClick={() => setPinnedOpen((v) => !v)}
+            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground px-2 py-1 rounded hover:bg-surface-2 transition-colors"
+            title="Pinned messages"
+          >
+            <Pin className="size-4" />
+            <span className="tabular-nums">{pinnedMessages.length}</span>
+          </button>
+          {pinnedOpen && (
+            <div className="absolute right-0 top-full mt-2 w-80 max-h-96 overflow-y-auto rounded-lg border border-border bg-popover shadow-lg z-30">
+              <div className="flex items-center justify-between px-3 py-2 border-b border-border">
+                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Pinned messages</span>
+                <button onClick={() => setPinnedOpen(false)} className="text-muted-foreground hover:text-foreground">
+                  <X className="size-4" />
+                </button>
+              </div>
+              {pinnedMessages.length === 0 ? (
+                <div className="p-6 text-center text-xs text-muted-foreground">
+                  No pinned messages yet.
+                </div>
+              ) : (
+                <ul className="divide-y divide-border">
+                  {pinnedMessages.map((m) => {
+                    const p = profiles[m.sender_id];
+                    const name = p?.display_name ?? p?.username ?? "Unknown";
+                    return (
+                      <li key={m.id} className="p-3 hover:bg-surface-2/40">
+                        <div className="flex items-baseline justify-between gap-2 mb-1">
+                          <span className="text-xs font-medium">{name}</span>
+                          <span className="text-[10px] text-muted-foreground">
+                            {new Date(m.created_at).toLocaleDateString()}
+                          </span>
+                        </div>
+                        <MentionText content={m.content} currentUsername={myUsername} className="text-xs text-muted-foreground line-clamp-3" />
+                        {canPin && (
+                          <button
+                            onClick={() => togglePin(m)}
+                            className="mt-1 text-[10px] text-muted-foreground hover:text-destructive flex items-center gap-1"
+                          >
+                            <PinOff className="size-3" /> Unpin
+                          </button>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </div>
+          )}
+        </div>
       </header>
 
       <StaffOnDutyStrip />
@@ -268,12 +350,15 @@ function ChannelPage() {
             const isStaff = staffIds.has(m.sender_id);
             const isIgnored = ignoredIds.has(m.sender_id);
             const highlight = mentionsCurrentUser(m.content, myUsername);
+            const isPinned = !!m.pinned_at;
             return (
               <div
                 key={m.id}
                 className={cn(
                   "group flex items-start gap-3 rounded-md -mx-2 px-2 py-1 transition-colors",
-                  highlight
+                  isPinned
+                    ? "bg-primary/5 border-l-2 border-primary hover:bg-primary/10"
+                    : highlight
                     ? "bg-amber-400/10 border-l-2 border-amber-400 hover:bg-amber-400/15"
                     : "border-l-2 border-transparent hover:bg-surface-2/40",
                 )}
@@ -291,9 +376,23 @@ function ChannelPage() {
                     <span className="text-[10px] text-muted-foreground">
                       {new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                     </span>
+                    {isPinned && (
+                      <span className="inline-flex items-center gap-1 text-[10px] text-primary">
+                        <Pin className="size-3" /> Pinned
+                      </span>
+                    )}
                   </div>
                   <MentionText content={m.content} currentUsername={myUsername} className="text-sm" />
                 </div>
+                {canPin && (
+                  <button
+                    onClick={() => togglePin(m)}
+                    className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-primary transition-opacity"
+                    title={isPinned ? "Unpin message" : "Pin message"}
+                  >
+                    {isPinned ? <PinOff className="size-4" /> : <Pin className="size-4" />}
+                  </button>
+                )}
                 {!isSelf && !isStaff && (
                   <button
                     onClick={() => toggleIgnore(m.sender_id)}
