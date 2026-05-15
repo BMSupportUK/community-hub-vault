@@ -356,7 +356,12 @@ function SportsGuidesPage() {
                               <span className="text-xs px-2 py-1 rounded-md bg-violet-500/20 text-violet-200 font-medium border border-violet-500/30">{b.badge}</span>
                             )}
                           </div>
-                          <h3 className="font-display font-semibold text-lg leading-snug text-purple-50">{b.title}</h3>
+                          <h3 className="font-display font-semibold text-lg leading-snug text-purple-50 flex items-center gap-2">
+                            {isUnread(b) && (
+                              <span className="size-2 rounded-full bg-fuchsia-400 shadow-[0_0_8px_rgba(232,121,249,0.9)] shrink-0" title="Unread" />
+                            )}
+                            <span>{b.title}</span>
+                          </h3>
                           {b.excerpt && <p className="text-sm text-purple-200/70 line-clamp-2">{b.excerpt}</p>}
                           <div className="mt-auto pt-3 flex items-center gap-2">
                             <Button size="sm" className="flex-1 bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white border-0" onClick={() => navigate({ to: "/sports-guides/read/$id", params: { id: b.id }, search: { cat: b.category_id } })}>Click to Read</Button>
