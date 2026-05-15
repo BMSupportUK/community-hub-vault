@@ -1582,6 +1582,7 @@ export type Database = {
         Args: { _action: string; _channel: string; _user: string }
         Returns: boolean
       }
+      cleanup_old_chat_messages: { Args: never; Returns: number }
       create_app_role: {
         Args: { _label: string; _name: string }
         Returns: undefined
