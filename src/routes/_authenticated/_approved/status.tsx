@@ -486,31 +486,43 @@ function IncidentEditor({
   const [description, setDescription] = useState(incident?.description ?? "");
   const [status, setStatus] = useState<IncidentStatus>(incident?.status ?? "investigating");
   const [initialUpdate, setInitialUpdate] = useState("");
+  const [issueFiles, setIssueFiles] = useState<File[]>([]);
+  const [updateFiles, setUpdateFiles] = useState<File[]>([]);
   const [busy, setBusy] = useState(false);
 
   const save = async () => {
     if (!title.trim()) return toast.error("Title required");
     setBusy(true);
     try {
+      const issueUploads = issueFiles.length ? await uploadFiles(issueFiles) : [];
       if (incident) {
+        const merged = [...(incident.attachments ?? []), ...issueUploads];
         const { error } = await supabase
           .from("status_incidents")
-          .update({ title, description, status })
+          .update({ title, description, status, attachments: merged as unknown as never })
           .eq("id", incident.id);
         if (error) throw error;
       } else {
         const { data, error } = await supabase
           .from("status_incidents")
-          .insert({ title, description, status, created_by: user?.id })
+          .insert({
+            title,
+            description,
+            status,
+            created_by: user?.id,
+            attachments: issueUploads as unknown as never,
+          })
           .select("id")
           .single();
         if (error) throw error;
-        if (initialUpdate.trim() && data) {
+        const updateUploads = updateFiles.length ? await uploadFiles(updateFiles) : [];
+        if ((initialUpdate.trim() || updateUploads.length) && data) {
           await supabase.from("status_incident_updates").insert({
             incident_id: data.id,
             status,
             message: initialUpdate.trim(),
             created_by: user?.id,
+            attachments: updateUploads as unknown as never,
           });
         }
       }
@@ -552,6 +564,18 @@ function IncidentEditor({
               placeholder="What's affected, scope, etc."
             />
           </div>
+          {incident && incident.attachments?.length ? (
+            <div>
+              <label className="text-xs text-muted-foreground">Existing attachments</label>
+              <AttachmentList items={incident.attachments} />
+            </div>
+          ) : null}
+          <div>
+            <label className="text-xs text-muted-foreground">Attachments</label>
+            <div className="mt-1">
+              <FilePicker files={issueFiles} setFiles={setIssueFiles} disabled={busy} />
+            </div>
+          </div>
           <div>
             <label className="text-xs text-muted-foreground">Status</label>
             <div className="flex gap-2 flex-wrap mt-1">
@@ -578,6 +602,9 @@ function IncidentEditor({
                 className="w-full mt-1 px-3 py-2 rounded-lg bg-surface-2 border border-border text-sm outline-none focus:border-primary resize-none"
                 placeholder="First update message"
               />
+              <div className="mt-2">
+                <FilePicker files={updateFiles} setFiles={setUpdateFiles} disabled={busy} />
+              </div>
             </div>
           )}
         </div>
