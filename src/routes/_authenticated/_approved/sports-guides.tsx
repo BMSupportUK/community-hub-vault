@@ -9,6 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { HtmlEditor } from "@/components/ui/html-editor";
+import DOMPurify from "dompurify";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/_approved/sports-guides")({
@@ -490,7 +492,12 @@ function SportsGuidesPage() {
                 )}
               </div>
               {reading.excerpt && <p className="text-muted-foreground">{reading.excerpt}</p>}
-              {reading.body && <div className="whitespace-pre-wrap text-sm leading-relaxed">{reading.body}</div>}
+              {reading.body && (
+                <div
+                  className="prose prose-sm dark:prose-invert max-w-none text-sm leading-relaxed"
+                  dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(reading.body) }}
+                />
+              )}
             </>
           )}
         </DialogContent>
@@ -534,7 +541,11 @@ function SportsGuidesPage() {
               </div>
               <div>
                 <Label>Body</Label>
-                <Textarea rows={6} value={editing.body ?? ""} onChange={(e) => setEditing({ ...editing, body: e.target.value })} />
+                <HtmlEditor
+                  value={editing.body ?? ""}
+                  onChange={(html) => setEditing({ ...editing, body: html })}
+                  placeholder="Write the guide content..."
+                />
               </div>
               <label className="flex items-center gap-2 text-sm">
                 <input
