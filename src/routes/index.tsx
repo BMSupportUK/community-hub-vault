@@ -90,8 +90,8 @@ function Landing() {
           </div>
         </section>
 
-        <div className="relative max-w-7xl mx-auto -mt-16 md:-mt-20 px-4 md:px-10 z-[-1]">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-24 pb-2">
+        <div className="relative max-w-7xl mx-auto -mt-24 md:-mt-32 px-4 md:px-10 z-[-1] flex md:justify-end">
+          <div className="flex flex-col gap-4 pt-40 md:pt-48 pb-2 w-full md:w-1/2 md:pl-10">
             {boxes.map((b) => (
               <div
                 key={b.id}
