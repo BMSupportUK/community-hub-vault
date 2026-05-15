@@ -15,7 +15,7 @@ export const Route = createFileRoute("/")({
       .eq("user_id", session.user.id);
     const roleSet = new Set((roles ?? []).map((r) => r.role as string));
     // Admins/management can view landing to edit hero boxes inline
-    if (roleSet.has("admin") || roleSet.has("management")) return;
+    if (roleSet.has("admin")) return;
     throw redirect({ to: "/home" });
   },
   component: Landing,
@@ -52,7 +52,7 @@ function Landing() {
         .select("role")
         .eq("user_id", session.user.id);
       const roleSet = new Set((roles ?? []).map((r) => r.role as string));
-      setCanEdit(roleSet.has("admin") || roleSet.has("management"));
+      setCanEdit(roleSet.has("admin"));
     })();
   }, []);
 
