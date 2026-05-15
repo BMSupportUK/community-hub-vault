@@ -168,6 +168,15 @@ function ChannelPage() {
       const rows = (data as Message[] | null) ?? [];
       setMessages(rows);
       await loadProfiles(rows.map((r) => r.sender_id));
+      if (rows.length > 0) {
+        const { data: reactRows } = await supabase
+          .from("message_reactions")
+          .select("id, message_id, user_id, emoji")
+          .in("message_id", rows.map((r) => r.id));
+        if (!cancelled) setReactions((reactRows as Reaction[] | null) ?? []);
+      } else {
+        setReactions([]);
+      }
     })();
 
     const ch = supabase
@@ -195,6 +204,22 @@ function ChannelPage() {
         (payload) => {
           const updated = payload.new as Message;
           setMessages((prev) => prev.map((m) => (m.id === updated.id ? { ...m, ...updated } : m)));
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "message_reactions" },
+        (payload) => {
+          const r = payload.new as Reaction;
+          setReactions((prev) => (prev.some((x) => x.id === r.id) ? prev : [...prev, r]));
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "DELETE", schema: "public", table: "message_reactions" },
+        (payload) => {
+          const old = payload.old as { id: string };
+          setReactions((prev) => prev.filter((r) => r.id !== old.id));
         },
       )
       .subscribe();
