@@ -15,7 +15,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-const WARN_BEFORE = 2 * 60 * 1000; // 2 minutes
+const WARN_BEFORE = 10 * 60 * 1000; // 10 minutes
 
 interface Slot {
   id: string;
@@ -33,6 +33,7 @@ interface OpenShift {
 }
 
 type Stage = "start" | "end";
+type Phase = "warn" | "overdue";
 
 function fmtCountdown(ms: number) {
   const s = Math.max(0, Math.round(ms / 1000));
@@ -49,7 +50,7 @@ export function ShiftStartEndAlert() {
   const [openShift, setOpenShift] = useState<OpenShift | null>(null);
   const [now, setNow] = useState(() => Date.now());
   const [active, setActive] = useState<{ slot: Slot; stage: Stage } | null>(null);
-  const dismissedRef = useRef<Set<string>>(new Set()); // `${slotId}:${stage}`
+  const dismissedRef = useRef<Set<string>>(new Set()); // `${slotId}:${stage}:${phase}`
 
   // Tick every second
   useEffect(() => {
@@ -101,26 +102,30 @@ export function ShiftStartEndAlert() {
     for (const slot of slots) {
       const startsAt = toUtcMs(slot.shift_date, slot.start_time);
       const endsAt = toUtcMs(slot.shift_date, slot.end_time);
-      const startKey = `${slot.id}:start`;
-      const endKey = `${slot.id}:end`;
 
-      // End warning takes priority
+      // End: warn before end OR keep showing overdue while still clocked in
       const toEnd = endsAt - now;
-      if (
-        openShift &&
-        toEnd <= WARN_BEFORE && toEnd > -30 * 1000 &&
-        !dismissedRef.current.has(endKey)
-      ) {
-        return { slot, stage: "end" as Stage };
+      if (openShift) {
+        if (toEnd <= 0) {
+          const key = `${slot.id}:end:overdue`;
+          if (!dismissedRef.current.has(key)) return { slot, stage: "end" as Stage };
+        } else if (toEnd <= WARN_BEFORE) {
+          const key = `${slot.id}:end:warn`;
+          if (!dismissedRef.current.has(key)) return { slot, stage: "end" as Stage };
+        }
       }
 
+      // Start: warn before start OR keep showing overdue while not yet clocked in
       const toStart = startsAt - now;
-      if (
-        !openShift &&
-        toStart <= WARN_BEFORE && toStart > -30 * 1000 &&
-        !dismissedRef.current.has(startKey)
-      ) {
-        return { slot, stage: "start" as Stage };
+      if (!openShift) {
+        // Overdue only while still within today's shift (don't nag after end_time)
+        if (toStart <= 0 && now < endsAt) {
+          const key = `${slot.id}:start:overdue`;
+          if (!dismissedRef.current.has(key)) return { slot, stage: "start" as Stage };
+        } else if (toStart > 0 && toStart <= WARN_BEFORE) {
+          const key = `${slot.id}:start:warn`;
+          if (!dismissedRef.current.has(key)) return { slot, stage: "start" as Stage };
+        }
       }
     }
     return null;
@@ -144,7 +149,8 @@ export function ShiftStartEndAlert() {
   const overdue = remaining <= 0;
 
   const dismiss = () => {
-    dismissedRef.current.add(`${active.slot.id}:${active.stage}`);
+    const phase: Phase = remaining <= 0 ? "overdue" : "warn";
+    dismissedRef.current.add(`${active.slot.id}:${active.stage}:${phase}`);
     setActive(null);
   };
 
