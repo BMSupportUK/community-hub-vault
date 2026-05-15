@@ -1007,17 +1007,19 @@ function CredentialsReveal({ targetUserId, isOwner }: { targetUserId: string; is
           )}
         </div>
         {unlocked && !loading && (
-          <div className="flex gap-1 p-1 rounded-xl bg-surface-2 border border-border w-fit mt-3">
-            {([
-              { id: "creds", label: `App Credentials (${creds.length})` },
-              { id: "dns", label: `QD DNS Codes (${dns.length})` },
-            ] as const).map((t) => (
-              <button key={t.id} onClick={() => setTab(t.id)}
-                className={cn("px-3 py-1.5 rounded-lg text-xs font-medium transition-colors",
-                  tab === t.id ? "bg-primary text-primary-foreground shadow-glow" : "text-muted-foreground hover:text-foreground")}>
-                {t.label}
-              </button>
-            ))}
+          <div className="mt-3 -mx-1 overflow-x-auto sm:overflow-visible scrollbar-thin">
+            <div className="flex flex-wrap gap-1 p-1 rounded-xl bg-surface-2 border border-border w-max max-w-full sm:w-fit">
+              {([
+                { id: "creds", label: `App Credentials (${creds.length})` },
+                { id: "dns", label: `QD DNS Codes (${dns.length})` },
+              ] as const).map((t) => (
+                <button key={t.id} onClick={() => setTab(t.id)}
+                  className={cn("px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors",
+                    tab === t.id ? "bg-primary text-primary-foreground shadow-glow" : "text-muted-foreground hover:text-foreground")}>
+                  {t.label}
+                </button>
+              ))}
+            </div>
           </div>
         )}
       </div>
