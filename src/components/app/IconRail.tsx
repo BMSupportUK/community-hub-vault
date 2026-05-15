@@ -144,8 +144,8 @@ export function IconRail() {
 
   return (
     <aside className="bg-rail w-[72px] shrink-0 flex flex-col items-center py-4 gap-1 border-r border-border">
-      <Link to="/home" className="size-12 rounded-2xl bg-gradient-primary flex items-center justify-center font-display font-bold text-primary-foreground shadow-glow mb-2">
-        H
+      <Link to="/home" className="size-12 rounded-2xl bg-gradient-primary flex items-center justify-center font-display font-bold text-[15px] text-primary-foreground shadow-glow mb-2">
+        BM
       </Link>
       <div className="h-px w-8 bg-border my-1" />
       {sorted.map((i) => (
