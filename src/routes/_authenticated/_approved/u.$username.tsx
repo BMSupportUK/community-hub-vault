@@ -4,6 +4,7 @@ import {
   Pencil, Camera, Loader2, ShieldCheck, Clock as ClockIcon,
   Coffee, UtensilsCrossed, Ticket, ShoppingBag, Eye, EyeOff,
   Lock, KeyRound, Copy, Check, Globe, Calendar, StickyNote, AtSign,
+  Trophy, Gift, X as XIcon, UserPlus,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, type AppRole } from "@/hooks/use-auth";
@@ -30,6 +31,14 @@ interface CredRow { id: string; app_login_name: string; password: string; expiry
 interface DnsRow { id: string; label: string; code: string; notes: string | null; }
 interface TicketRow { id: string; subject: string; status: string; created_at: string; }
 interface OrderRow { id: string; total_cents: number; status: string; created_at: string; }
+interface InviteSummary {
+  sent: number;
+  used: number;
+  bonusPaid: number;
+  invitedBy: { username: string | null; display_name: string | null } | null;
+  invitedAt: string | null;
+  invitedBonusPaid: boolean;
+}
 
 const ROLE_STYLES: Record<AppRole, string> = {
   admin: "bg-destructive/15 text-destructive border-destructive/30",
@@ -65,6 +74,7 @@ function ProfilePage() {
   const [breakRow, setBreakRow] = useState<BreakRow | null>(null);
   const [tickets, setTickets] = useState<TicketRow[]>([]);
   const [orders, setOrders] = useState<OrderRow[]>([]);
+  const [inviteInfo, setInviteInfo] = useState<InviteSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
   const [mainTab, setMainTab] = useState<"creds" | "tickets" | "orders">(
@@ -98,6 +108,35 @@ function ProfilePage() {
     setBreakRow((b as BreakRow) ?? null);
     setTickets((tk ?? []) as TicketRow[]);
     setOrders((od ?? []) as OrderRow[]);
+
+    // Invite info — visible to the profile owner and admins; for others we only show invitedBy
+    const [{ data: sentInv }, { data: invitedRow }] = await Promise.all([
+      supabase
+        .from("invites")
+        .select("id, used_by, referral_bonus_paid")
+        .eq("created_by", p.id),
+      supabase
+        .from("invites")
+        .select("created_by, used_at, referral_bonus_paid")
+        .eq("used_by", p.id)
+        .maybeSingle(),
+    ]);
+    let invitedBy: InviteSummary["invitedBy"] = null;
+    if (invitedRow?.created_by) {
+      const { data: prof } = await supabase
+        .from("profiles").select("username, display_name").eq("id", invitedRow.created_by).maybeSingle();
+      invitedBy = prof ? { username: prof.username, display_name: prof.display_name } : null;
+    }
+    const sentRows = (sentInv ?? []) as { used_by: string | null; referral_bonus_paid: boolean }[];
+    setInviteInfo({
+      sent: sentRows.length,
+      used: sentRows.filter((x) => x.used_by).length,
+      bonusPaid: sentRows.filter((x) => x.referral_bonus_paid).length,
+      invitedBy,
+      invitedAt: invitedRow?.used_at ?? null,
+      invitedBonusPaid: !!invitedRow?.referral_bonus_paid,
+    });
+
     setLoading(false);
   };
 
@@ -249,6 +288,11 @@ function ProfilePage() {
             </div>
             <InfoCard label="Member since" value={new Date(profile.created_at).toLocaleDateString()} />
             <InfoCard label="Roles" value={sortedRoles.join(", ") || "—"} />
+            <InviteCard
+              info={inviteInfo}
+              showStats={isOwner || isAdmin}
+              isOwner={isOwner}
+            />
           </aside>
         </div>
       </div>
@@ -320,6 +364,97 @@ function InfoCard({ label, value }: { label: string; value: string }) {
     <div className="rounded-2xl border border-white/25 bg-white/10 backdrop-blur-xl p-4 shadow-[0_10px_40px_-15px_rgba(0,0,0,0.4)] text-white">
       <p className="text-xs uppercase tracking-wider text-amber-100/80">{label}</p>
       <p className="mt-1 text-sm font-medium">{value}</p>
+    </div>
+  );
+}
+
+function InviteCard({
+  info,
+  showStats,
+  isOwner,
+}: {
+  info: InviteSummary | null;
+  showStats: boolean;
+  isOwner: boolean;
+}) {
+  if (!info) return null;
+  const inviterLabel = info.invitedBy?.display_name ?? info.invitedBy?.username ?? null;
+  return (
+    <div className="rounded-2xl border border-white/25 bg-white/10 backdrop-blur-xl p-5 shadow-[0_10px_40px_-15px_rgba(0,0,0,0.4)] text-white space-y-4">
+      <div className="flex items-center gap-2">
+        <Trophy className="size-4 text-amber-200" />
+        <p className="text-xs uppercase tracking-wider text-amber-100/80">Invites</p>
+      </div>
+
+      {showStats && (
+        <div className="grid grid-cols-3 gap-2">
+          <InviteStat label="Sent" value={info.sent} />
+          <InviteStat label="Joined" value={info.used} />
+          <InviteStat label="Bonuses" value={info.bonusPaid} />
+        </div>
+      )}
+
+      <div className="rounded-xl border border-white/20 bg-white/5 p-3 text-sm">
+        <div className="flex items-center gap-2 text-white/80 mb-1">
+          <UserPlus className="size-3.5" />
+          <span className="text-xs uppercase tracking-wider">Invited by</span>
+        </div>
+        {inviterLabel ? (
+          <>
+            <p className="font-medium truncate">{inviterLabel}</p>
+            {info.invitedBy?.username && (
+              <Link
+                to="/u/$username"
+                params={{ username: info.invitedBy.username }}
+                className="text-xs text-amber-200 hover:underline"
+              >
+                @{info.invitedBy.username}
+              </Link>
+            )}
+            {info.invitedAt && (
+              <p className="text-[11px] text-white/60 mt-1">
+                Joined {new Date(info.invitedAt).toLocaleDateString()}
+              </p>
+            )}
+          </>
+        ) : (
+          <p className="text-white/60 italic text-sm">Joined through the gate</p>
+        )}
+
+        {(isOwner || showStats) && inviterLabel && (
+          <div className="mt-2 flex items-center gap-1.5 text-xs">
+            <Gift className="size-3.5 text-fuchsia-200" />
+            <span className="text-white/80">Referral bonus</span>
+            {info.invitedBonusPaid ? (
+              <span className="inline-flex items-center gap-1 text-emerald-300 font-medium ml-auto">
+                <Check className="size-3.5" /> Added
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1 text-rose-300 font-medium ml-auto">
+                <XIcon className="size-3.5" /> Not yet
+              </span>
+            )}
+          </div>
+        )}
+      </div>
+
+      {isOwner && (
+        <Link
+          to="/leaderboard"
+          className="flex items-center justify-center gap-1.5 text-sm font-medium px-3 py-2 rounded-lg bg-white text-rose-600 hover:bg-white/90 transition-colors"
+        >
+          <Trophy className="size-4" /> Open leaderboard
+        </Link>
+      )}
+    </div>
+  );
+}
+
+function InviteStat({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="rounded-lg bg-white/10 border border-white/15 px-2 py-2 text-center">
+      <div className="font-display text-xl font-bold">{value}</div>
+      <div className="text-[10px] uppercase tracking-wider text-white/70">{label}</div>
     </div>
   );
 }
