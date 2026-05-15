@@ -44,7 +44,7 @@ function RejectedPage() {
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(220,38,38,0.25),transparent_65%)]" />
 
       <div className="relative z-10 min-h-screen flex flex-col items-center justify-center px-6 text-center">
-        <div className="size-20 rounded-full bg-gradient-to-br from-red-500 to-red-700 grid place-items-center shadow-[0_0_60px_rgba(239,68,68,0.6)] ring-2 ring-red-500/40 mb-6">
+        <div className="size-20 rounded-full bg-gradient-to-br from-violet-600 to-blue-600 grid place-items-center shadow-[0_0_60px_rgba(239,68,68,0.6)] ring-2 ring-red-500/40 mb-6">
           <Ban className="size-10 text-white" strokeWidth={2.5} />
         </div>
 
@@ -59,7 +59,7 @@ function RejectedPage() {
         <div className="mt-8 flex flex-col sm:flex-row items-center gap-3">
           <button
             onClick={() => setOpen(true)}
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-lg font-semibold text-white bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 shadow-[0_8px_30px_rgba(220,38,38,0.45)] transition-all"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-lg font-semibold text-white bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 shadow-[0_8px_30px_rgba(220,38,38,0.45)] transition-all"
           >
             <MessageSquarePlus className="size-4" /> Open an appeal
           </button>
@@ -80,7 +80,7 @@ function RejectedPage() {
           >
             <header className="h-14 px-5 flex items-center justify-between border-b border-white/10">
               <div className="flex items-center gap-2">
-                <div className="size-8 rounded-full bg-gradient-to-br from-red-500 to-red-700 grid place-items-center">
+                <div className="size-8 rounded-full bg-gradient-to-br from-violet-600 to-blue-600 grid place-items-center">
                   <MessageSquarePlus className="size-4 text-white" />
                 </div>
                 <div className="font-display font-semibold text-white text-sm">Submit an appeal</div>
@@ -125,7 +125,7 @@ function RejectedPage() {
               <button
                 type="submit"
                 disabled={submitting || text.trim().length < 10}
-                className="text-sm px-4 py-2 rounded-lg font-semibold text-white bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 disabled:opacity-50 shadow-[0_4px_20px_rgba(220,38,38,0.4)]"
+                className="text-sm px-4 py-2 rounded-lg font-semibold text-white bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 disabled:opacity-50 shadow-[0_4px_20px_rgba(220,38,38,0.4)]"
               >
                 {submitting ? "Submitting…" : "Submit appeal"}
               </button>

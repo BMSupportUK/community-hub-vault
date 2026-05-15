@@ -210,7 +210,7 @@ function InstallGuidesPage() {
               <p className="mt-4 text-red-100/70 max-w-2xl">
                 Browse by category, search for what you need, and open PDFs directly in your browser.
               </p>
-              <Button className="mt-6 bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white" onClick={() => setTab("guides")}>Browse guides</Button>
+              <Button className="mt-6 bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white" onClick={() => setTab("guides")}>Browse guides</Button>
             </div>
           </TabsContent>
 
@@ -234,7 +234,7 @@ function InstallGuidesPage() {
                           if (dragCatId.current) reorderCategories(dragCatId.current, c.id);
                           dragCatId.current = null;
                         }}
-                        className={`group flex items-center gap-1 px-1 rounded-lg ${active ? "bg-gradient-to-r from-rose-600 to-red-600 text-white" : "text-red-100 hover:bg-red-900/50"}`}
+                        className={`group flex items-center gap-1 px-1 rounded-lg ${active ? "bg-gradient-to-r from-violet-600 to-blue-600 text-white" : "text-red-100 hover:bg-red-900/50"}`}
                       >
                         {isMod && (
                           <GripVertical className="size-3.5 opacity-40 group-hover:opacity-80 cursor-grab shrink-0" />
@@ -266,7 +266,7 @@ function InstallGuidesPage() {
                     />
                   </div>
                   {isMod && (
-                    <Button onClick={openNew} className="bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white">
+                    <Button onClick={openNew} className="bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white">
                       <Plus className="size-4 mr-1" /> Add Guide
                     </Button>
                   )}
@@ -328,7 +328,7 @@ function InstallGuidesPage() {
                           {b.excerpt && <p className="text-sm text-red-200/70 line-clamp-2">{b.excerpt}</p>}
                           <div className="mt-auto pt-3 flex items-center gap-2">
                             {b.pdf_url ? (
-                              <Button asChild size="sm" className="flex-1 bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white">
+                              <Button asChild size="sm" className="flex-1 bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white">
                                 <a
                                   href={b.pdf_url}
                                   download={`${b.title}.pdf`}
@@ -339,7 +339,7 @@ function InstallGuidesPage() {
                                 </a>
                               </Button>
                             ) : (
-                              <Button size="sm" className="flex-1 bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white" onClick={() => setReading(b)}>
+                              <Button size="sm" className="flex-1 bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white" onClick={() => setReading(b)}>
                                 Click to Read
                               </Button>
                             )}
@@ -376,11 +376,11 @@ function InstallGuidesPage() {
                       onKeyDown={(e) => { if (e.key === "Enter") addCategory(); if (e.key === "Escape") { setAddingCat(false); setNewCatName(""); } }}
                       className="max-w-xs bg-red-950/50 border-red-500/30 text-red-50 placeholder:text-red-300/50"
                     />
-                    <Button onClick={addCategory} className="bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white">Add</Button>
+                    <Button onClick={addCategory} className="bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white">Add</Button>
                     <Button variant="ghost" className="text-red-200 hover:bg-red-900/60 hover:text-white" onClick={() => { setAddingCat(false); setNewCatName(""); }}>Cancel</Button>
                   </>
                 ) : (
-                  <Button onClick={() => setAddingCat(true)} className="bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white">
+                  <Button onClick={() => setAddingCat(true)} className="bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white">
                     <Plus className="size-4 mr-1" /> Add Category
                   </Button>
                 )}

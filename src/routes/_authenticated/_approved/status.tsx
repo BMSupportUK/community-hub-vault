@@ -83,7 +83,7 @@ function StatusPage() {
     <main className="flex-1 overflow-y-auto">
       <div className="max-w-5xl mx-auto px-6 py-8 space-y-6">
         {/* Hero illustration */}
-        <div className="relative rounded-3xl overflow-hidden border border-blue-500/30 shadow-glow bg-gradient-to-br from-blue-950 via-blue-900 to-sky-800">
+        <div className="relative rounded-3xl overflow-hidden border border-blue-500/30 shadow-glow bg-gradient-to-br from-violet-600 via-fuchsia-600 to-blue-600">
           <img
             src={statusHero}
             alt="BM Support engineer monitoring systems"
@@ -98,7 +98,7 @@ function StatusPage() {
 
         <header className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="size-11 rounded-2xl bg-gradient-to-br from-blue-500 to-sky-400 grid place-items-center shadow-glow">
+            <div className="size-11 rounded-2xl bg-gradient-to-br from-violet-600 to-blue-600 grid place-items-center shadow-glow">
               <Activity className="size-5 text-white" />
             </div>
             <div>
@@ -109,7 +109,7 @@ function StatusPage() {
           {canManage && (
             <button
               onClick={() => setEditor({ open: true })}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-sky-400 text-white font-medium shadow-glow hover:opacity-90"
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-violet-600 to-blue-600 text-white font-medium shadow-glow hover:opacity-90"
             >
               <Plus className="size-4" /> Add Issue
             </button>

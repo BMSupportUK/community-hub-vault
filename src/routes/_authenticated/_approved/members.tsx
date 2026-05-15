@@ -71,7 +71,7 @@ function MembersPage() {
     <main className="flex-1 overflow-y-auto">
       {/* Hero */}
       <section className="relative overflow-hidden border-b border-border">
-        <div className="absolute inset-0 bg-gradient-to-br from-fuchsia-700 via-violet-700 to-blue-700" />
+        <div className="absolute inset-0 bg-gradient-to-br from-violet-600 via-fuchsia-600 to-blue-600" />
         <div className="absolute -top-20 -right-20 size-80 rounded-full bg-cyan-400/20 blur-3xl" />
         <div className="absolute -bottom-20 -left-20 size-80 rounded-full bg-pink-400/20 blur-3xl" />
         <div className="relative p-6 md:p-10 flex flex-col md:flex-row md:items-end gap-6 justify-between text-white">
@@ -124,7 +124,7 @@ function MembersPage() {
               key={p.id}
               className="group rounded-2xl bg-surface border border-border hover:border-fuchsia-400/50 hover:shadow-lg hover:shadow-fuchsia-500/10 transition-all overflow-hidden flex flex-col"
             >
-              <div className="h-16 bg-gradient-to-r from-fuchsia-600 via-violet-600 to-blue-600" />
+              <div className="h-16 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600" />
               <div className="px-4 -mt-8 pb-4 flex flex-col flex-1">
                 {p.avatar_url ? (
                   <img
@@ -133,7 +133,7 @@ function MembersPage() {
                     className="size-16 rounded-2xl object-cover ring-4 ring-surface"
                   />
                 ) : (
-                  <div className="size-16 rounded-2xl ring-4 ring-surface bg-gradient-to-br from-fuchsia-500 to-violet-600 grid place-items-center text-white text-xl font-bold">
+                  <div className="size-16 rounded-2xl ring-4 ring-surface bg-gradient-to-br from-violet-600 to-blue-600 grid place-items-center text-white text-xl font-bold">
                     {initial}
                   </div>
                 )}

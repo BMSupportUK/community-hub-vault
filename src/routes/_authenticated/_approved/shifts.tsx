@@ -344,7 +344,7 @@ function ShiftsPage() {
   return (
     <div className="flex-1 overflow-y-auto bg-gradient-to-br from-[#06122e] via-[#0b1e4a] to-[#06122e]">
       <header className="px-8 pt-8 pb-6 border-b border-sky-500/30 bg-blue-950/40 backdrop-blur">
-        <h1 className="font-display text-3xl font-bold bg-gradient-to-r from-cyan-300 via-sky-300 to-blue-300 bg-clip-text text-transparent">Shifts</h1>
+        <h1 className="font-display text-3xl font-bold bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 bg-clip-text text-transparent">Shifts</h1>
         <p className="text-sky-200/80 mt-1">Pick your slots, request holiday, swap shifts.</p>
       </header>
 
@@ -367,7 +367,7 @@ function ShiftsPage() {
           {/* WELCOME */}
           <TabsContent value="welcome" className="mt-6">
             <div className="rounded-2xl bg-gradient-to-br from-blue-600/30 via-sky-500/20 to-cyan-500/20 border border-sky-500/40 p-10 shadow-[0_0_60px_-15px_rgba(56,189,248,0.5)]">
-              <h2 className="font-display text-3xl font-bold bg-gradient-to-r from-cyan-200 to-blue-200 bg-clip-text text-transparent">Welcome to Shifts</h2>
+              <h2 className="font-display text-3xl font-bold bg-gradient-to-r from-violet-600 to-blue-600 bg-clip-text text-transparent">Welcome to Shifts</h2>
               <p className="mt-3 text-lg text-sky-100/90 max-w-2xl">
                 Browse the upcoming rota, claim open shifts that fit your role, and manage time off — all in one place.
               </p>
@@ -378,7 +378,7 @@ function ShiftsPage() {
                 <li>Need time off? Submit a holiday request. Admin will review.</li>
                 <li>Need to swap a shift? Open the slot and tap <em>Request swap</em>.</li>
               </ul>
-              <Button className="mt-6 bg-gradient-to-r from-blue-600 via-sky-500 to-cyan-500 hover:opacity-90 text-white border-0 shadow-lg shadow-sky-900/50" onClick={() => setTab("rota")}>Open the rota</Button>
+              <Button className="mt-6 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 hover:opacity-90 text-white border-0 shadow-lg shadow-sky-900/50" onClick={() => setTab("rota")}>Open the rota</Button>
             </div>
           </TabsContent>
 
@@ -429,7 +429,7 @@ function ShiftsPage() {
                               <div className="flex items-center gap-1">
                                 {!taken && canPick && !past && (
                                   ((s.slot_type === "hourly" && (isMod || isAdmin)) || (s.slot_type === "shift" && isStaffOrAdmin)) && (
-                                    <button onClick={() => claim(s)} className="px-2 py-0.5 rounded bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-semibold">Claim</button>
+                                    <button onClick={() => claim(s)} className="px-2 py-0.5 rounded bg-gradient-to-r from-violet-600 to-blue-600 text-white font-semibold">Claim</button>
                                   )
                                 )}
                                 {mine && (
@@ -493,7 +493,7 @@ function ShiftsPage() {
                   <Textarea value={holForm.reason} onChange={(e) => setHolForm({ ...holForm, reason: e.target.value })} className="bg-blue-950/60 border-sky-500/30 text-sky-50" />
                 </div>
               </div>
-              <Button className="mt-4 bg-gradient-to-r from-blue-600 via-sky-500 to-cyan-500 text-white" onClick={submitHoliday}><Plane className="size-4 mr-1" /> Submit request</Button>
+              <Button className="mt-4 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 text-white" onClick={submitHoliday}><Plane className="size-4 mr-1" /> Submit request</Button>
             </div>
 
             <div className="rounded-2xl bg-blue-950/50 border border-sky-500/30 overflow-hidden">
@@ -651,7 +651,7 @@ function ShiftsPage() {
                     <Input value={newSlot.notes} onChange={(e) => setNewSlot({ ...newSlot, notes: e.target.value })} className="bg-blue-950/60 border-sky-500/30 text-sky-50" />
                   </div>
                 </div>
-                <Button className="mt-4 bg-gradient-to-r from-blue-600 via-sky-500 to-cyan-500 text-white" onClick={addSlot}><Plus className="size-4 mr-1" /> Add slot</Button>
+                <Button className="mt-4 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 text-white" onClick={addSlot}><Plus className="size-4 mr-1" /> Add slot</Button>
               </div>
 
               <div className="rounded-2xl bg-blue-950/50 border border-sky-500/30 overflow-hidden">

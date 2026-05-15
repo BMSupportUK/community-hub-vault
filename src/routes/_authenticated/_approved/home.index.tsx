@@ -15,7 +15,7 @@ function WelcomePage() {
     <main className="flex-1 overflow-y-auto">
       {/* Hero */}
       <section className="relative overflow-hidden border-b border-border">
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-950 via-blue-900 to-sky-800" />
+        <div className="absolute inset-0 bg-gradient-to-br from-violet-600 via-fuchsia-600 to-blue-600" />
         <div className="relative grid md:grid-cols-2 gap-6 p-6 md:p-10">
           <div className="flex flex-col justify-center text-white">
             <div className="text-xs uppercase tracking-[0.2em] text-sky-200/80 mb-3">BM Support · Member Hub</div>
@@ -35,7 +35,7 @@ function WelcomePage() {
               to="/tickets"
               className="mt-6 inline-flex items-center gap-3 self-start rounded-xl border border-white/15 bg-white/10 backdrop-blur px-4 py-3 text-sm font-medium hover:bg-white/15 transition"
             >
-              <span className="grid place-items-center size-9 rounded-lg bg-gradient-to-br from-sky-400 to-blue-500">
+              <span className="grid place-items-center size-9 rounded-lg bg-gradient-to-br from-violet-600 to-blue-600">
                 <Headphones className="size-4 text-white" />
               </span>
               <span>
@@ -99,7 +99,7 @@ function QuickCard({
       params={params as never}
       className="group rounded-xl border border-border bg-surface hover:bg-surface-2 transition-colors p-4 flex items-start gap-3"
     >
-      <span className="grid place-items-center size-10 rounded-lg bg-gradient-to-br from-blue-500 to-sky-400 text-white shrink-0">
+      <span className="grid place-items-center size-10 rounded-lg bg-gradient-to-br from-violet-600 to-blue-600 text-white shrink-0">
         <Icon className="size-5" />
       </span>
       <span className="min-w-0">

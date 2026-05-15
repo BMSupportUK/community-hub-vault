@@ -113,7 +113,7 @@ function ReviewsPage() {
   return (
     <div className="flex-1 overflow-y-auto bg-gradient-to-br from-[#1a0b2e] via-[#2d1b4e] to-[#1a0b2e]">
       <header className="px-8 pt-8 pb-6 border-b border-purple-500/30 bg-purple-950/40 backdrop-blur">
-        <h1 className="font-display text-3xl font-bold bg-gradient-to-r from-fuchsia-400 via-purple-400 to-violet-400 bg-clip-text text-transparent">Customer Reviews</h1>
+        <h1 className="font-display text-3xl font-bold bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 bg-clip-text text-transparent">Customer Reviews</h1>
         <p className="text-purple-200/80 mt-1">Tell us what you think — your feedback helps us grow.</p>
       </header>
 
@@ -130,7 +130,7 @@ function ReviewsPage() {
               <div className="size-14 rounded-2xl bg-purple-900/60 grid place-items-center mb-4">
                 <MessageSquareHeart className="size-7 text-fuchsia-300" />
               </div>
-              <h2 className="font-display text-3xl font-bold bg-gradient-to-r from-fuchsia-300 to-violet-300 bg-clip-text text-transparent">Welcome to our review wall</h2>
+              <h2 className="font-display text-3xl font-bold bg-gradient-to-r from-violet-600 to-blue-600 bg-clip-text text-transparent">Welcome to our review wall</h2>
               <p className="mt-3 text-lg text-purple-100/90 max-w-2xl">
                 Share your experience and read what fellow members are saying. Every review is approved by our team before it goes live.
               </p>
@@ -138,7 +138,7 @@ function ReviewsPage() {
                 You can leave one review per account — make it count!
               </p>
               <div className="mt-6 flex flex-wrap gap-3">
-                <Button onClick={() => setTab("wall")} className="bg-gradient-to-r from-fuchsia-600 to-purple-600 hover:from-fuchsia-500 hover:to-purple-500 text-white border-0 shadow-lg shadow-purple-900/50">Read reviews</Button>
+                <Button onClick={() => setTab("wall")} className="bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white border-0 shadow-lg shadow-purple-900/50">Read reviews</Button>
                 <Button onClick={() => setTab("leave")} variant="outline" className="border-purple-400/60 bg-purple-900/30 text-purple-100 hover:bg-purple-800/60 hover:text-white">Leave yours</Button>
               </div>
               {approved.length > 0 && (
@@ -170,7 +170,7 @@ function ReviewsPage() {
                         {p?.avatar_url ? (
                           <img src={p.avatar_url} alt={name} className="size-9 rounded-full object-cover ring-2 ring-fuchsia-500/40" />
                         ) : (
-                          <div className="size-9 rounded-full bg-gradient-to-br from-fuchsia-500 to-purple-700 grid place-items-center text-white text-xs font-bold">
+                          <div className="size-9 rounded-full bg-gradient-to-br from-violet-600 to-blue-600 grid place-items-center text-white text-xs font-bold">
                             {name.slice(0, 1).toUpperCase()}
                           </div>
                         )}
@@ -260,7 +260,7 @@ function ReviewsPage() {
                     <Button
                       disabled={busy}
                       onClick={submit}
-                      className="bg-gradient-to-r from-fuchsia-600 to-purple-600 hover:from-fuchsia-500 hover:to-purple-500 text-white border-0 shadow-lg shadow-purple-900/50"
+                      className="bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white border-0 shadow-lg shadow-purple-900/50"
                     >
                       {busy ? <Loader2 className="size-4 mr-2 animate-spin" /> : <Send className="size-4 mr-2" />}
                       Submit review
