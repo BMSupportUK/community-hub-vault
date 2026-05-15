@@ -1,6 +1,6 @@
 import { createFileRoute, Outlet, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Hash, Megaphone } from "lucide-react";
+import { Hash } from "lucide-react";
 import { ChannelColumn, type ChannelGroup } from "@/components/app/ChannelColumn";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { IconPicker, getIcon } from "@/components/app/IconPicker";
 
 export const Route = createFileRoute("/_authenticated/_approved/home")({
   component: HomeLayout,
@@ -24,11 +25,6 @@ interface ChannelRow {
   sort_order: number;
 }
 
-const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
-  Megaphone,
-  Hash,
-};
-
 function HomeLayout() {
   const { hasAny, user } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
@@ -40,6 +36,9 @@ function HomeLayout() {
   const [chName, setChName] = useState("");
   const [chStaffOnly, setChStaffOnly] = useState(false);
   const [groupName, setGroupName] = useState("");
+  const [categoryIcons, setCategoryIcons] = useState<Record<string, string>>({});
+  const [editChannelIcon, setEditChannelIcon] = useState<ChannelRow | null>(null);
+  const [editCategoryIcon, setEditCategoryIcon] = useState<string | null>(null);
 
   const load = async () => {
     const { data } = await supabase
@@ -49,7 +48,42 @@ function HomeLayout() {
     setChannels((data as ChannelRow[] | null) ?? []);
   };
 
-  useEffect(() => { load(); }, []);
+  const loadCategoryIcons = async () => {
+    const { data } = await supabase
+      .from("app_settings")
+      .select("value")
+      .eq("key", "category_icons")
+      .maybeSingle();
+    const v = (data?.value ?? {}) as Record<string, string>;
+    setCategoryIcons(v);
+  };
+
+  useEffect(() => { load(); loadCategoryIcons(); }, []);
+
+  const saveChannelIcon = async (iconName: string) => {
+    if (!editChannelIcon) return;
+    const { error } = await supabase
+      .from("chat_channels")
+      .update({ icon: iconName })
+      .eq("id", editChannelIcon.id);
+    if (error) return toast.error(error.message);
+    toast.success("Icon updated");
+    load();
+  };
+
+  const saveCategoryIcon = async (iconName: string) => {
+    if (!editCategoryIcon) return;
+    const next = { ...categoryIcons, [editCategoryIcon]: iconName };
+    const { error } = await supabase
+      .from("app_settings")
+      .upsert(
+        { key: "category_icons", value: next, updated_at: new Date().toISOString() },
+        { onConflict: "key" },
+      );
+    if (error) return toast.error(error.message);
+    setCategoryIcons(next);
+    toast.success("Icon updated");
+  };
 
   useEffect(() => {
     if (!user) return;
@@ -152,10 +186,11 @@ function HomeLayout() {
     for (const [label, items] of byGroup) {
       groups.push({
         label,
+        icon: categoryIcons[label] ? getIcon(categoryIcons[label]) : undefined,
         items: items.map((c) => ({
           to: `/home/${c.slug}`,
           label: c.name,
-          icon: ICONS[c.icon] ?? Hash,
+          icon: getIcon(c.icon),
           badge: mentionCounts[`/home/${c.slug}`] ?? 0,
         })),
         onAddItem: isAdmin ? () => setAddChannelGroup(label) : undefined,
@@ -171,6 +206,14 @@ function HomeLayout() {
         onEditGroupPerms: isAdmin
           ? () => navigate({ to: "/admin-permissions", search: { tab: "channels", group: label } as never })
           : undefined,
+        onEditItemIcon: isAdmin
+          ? (to) => {
+              const slug = to.replace("/home/", "");
+              const ch = channels?.find((x) => x.slug === slug);
+              if (ch) setEditChannelIcon(ch);
+            }
+          : undefined,
+        onEditGroupIcon: isAdmin ? () => setEditCategoryIcon(label) : undefined,
       });
     }
   }
@@ -224,6 +267,22 @@ function HomeLayout() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <IconPicker
+        open={!!editChannelIcon}
+        onOpenChange={(o) => !o && setEditChannelIcon(null)}
+        title={editChannelIcon ? `Icon for #${editChannelIcon.name}` : "Channel icon"}
+        current={editChannelIcon?.icon}
+        onSave={saveChannelIcon}
+      />
+
+      <IconPicker
+        open={!!editCategoryIcon}
+        onOpenChange={(o) => !o && setEditCategoryIcon(null)}
+        title={editCategoryIcon ? `Icon for ${editCategoryIcon}` : "Category icon"}
+        current={editCategoryIcon ? categoryIcons[editCategoryIcon] : undefined}
+        onSave={saveCategoryIcon}
+      />
     </>
   );
 }
