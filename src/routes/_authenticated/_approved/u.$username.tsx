@@ -93,7 +93,7 @@ function ProfilePage() {
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
-  const [mainTab, setMainTab] = useState<"creds" | "tickets" | "orders" | "referrals">("creds");
+  const [mainTab, setMainTab] = useState<"welcome" | "profile" | "creds" | "tickets" | "orders" | "referrals">("welcome");
 
   const isOwner = !!profile && !!viewer && profile.id === viewer.id;
   const canSeeCreds = isOwner || isAdmin;
@@ -253,32 +253,65 @@ function ProfilePage() {
   const breakLimit = breakRow?.kind === "lunch" ? 30 * 60 : 15 * 60;
   const breakRemaining = breakLimit - onBreakSeconds;
 
+  const tabDefs = [
+    { id: "welcome", label: "Welcome" },
+    { id: "profile", label: "Profile" },
+    ...(canSeeCreds ? [{ id: "creds", label: "Credentials" }] : []),
+    { id: "tickets", label: `Tickets (${tickets.length})` },
+    { id: "orders", label: `Orders (${orders.length})` },
+    ...(canSeeReferrals ? [{ id: "referrals", label: `Referrals (${referrals.length})` }] : []),
+  ];
+
   return (
-    <main className="flex-1 overflow-y-auto relative bg-gradient-to-br from-violet-600 via-fuchsia-600 to-blue-600 text-white">
-      <div className="absolute inset-0 -z-0 bg-[radial-gradient(ellipse_at_top_left,_rgba(244,63,94,0.55),_transparent_55%),radial-gradient(ellipse_at_top_right,_rgba(168,85,247,0.45),_transparent_55%),radial-gradient(ellipse_at_bottom,_rgba(251,191,36,0.45),_transparent_60%)]" aria-hidden />
-      <div className="relative">
-      <div className="max-w-5xl mx-auto px-6 py-8 space-y-6">
-        {/* Header card */}
-        <section className="rounded-2xl border border-white/30 bg-white/10 backdrop-blur-xl overflow-hidden shadow-[0_25px_60px_-20px_rgba(0,0,0,0.45)]">
-          <div
-            className="h-36 sm:h-44 bg-cover bg-center"
-            style={{ backgroundImage: `url(${profileHeader})` }}
-            aria-hidden
-          />
-          <div className="px-6 pb-6 -mt-12 flex flex-col sm:flex-row sm:items-end gap-4">
-            <Avatar url={profile.avatar_url} name={display} size={96} ring />
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="font-display text-2xl font-bold truncate">{display}</h1>
+    <div className="flex-1 overflow-y-auto bg-gradient-to-br from-[#1a0b2e] via-[#2d1b4e] to-[#1a0b2e]">
+      <header className="px-8 pt-8 pb-6 border-b border-purple-500/30 bg-purple-950/40 backdrop-blur">
+        <h1 className="font-display text-3xl font-bold bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 bg-clip-text text-transparent">
+          {isOwner ? "Your Profile" : `${display}'s Profile`}
+        </h1>
+        <p className="text-purple-200/80 mt-1">
+          {isOwner
+            ? "Manage your details, credentials, activity, and referrals — all in one place."
+            : `View ${display}'s public information and activity.`}
+        </p>
+      </header>
+
+      <div className="px-8 py-6">
+        <Tabs value={mainTab} onValueChange={(v) => setMainTab(v as typeof mainTab)} className="w-full">
+          <TabsList className="flex flex-wrap h-auto bg-purple-950/60 border border-purple-500/30">
+            {tabDefs.map((t) => (
+              <TabsTrigger
+                key={t.id}
+                value={t.id}
+                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white"
+              >
+                {t.label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+
+          {/* Welcome */}
+          <TabsContent value="welcome" className="mt-6">
+            <div className="rounded-2xl bg-gradient-to-br from-fuchsia-600/30 via-purple-600/30 to-violet-700/30 border border-purple-500/40 p-10 shadow-[0_0_60px_-15px_rgba(168,85,247,0.5)] text-white">
+              <div className="flex items-center gap-4 mb-4">
+                <Avatar url={profile.avatar_url} name={display} size={72} ring />
+                <div>
+                  <h2 className="font-display text-3xl font-bold bg-gradient-to-r from-violet-200 to-blue-200 bg-clip-text text-transparent">
+                    {isOwner ? `Welcome back, ${display}` : `Welcome to ${display}'s profile`}
+                  </h2>
+                  <p className="text-purple-200/80">@{profile.username ?? "unknown"}</p>
+                </div>
+              </div>
+              <p className="mt-3 text-lg text-purple-100/90 max-w-2xl">
+                {isOwner
+                  ? "Use the tabs to update your profile, view your credentials, track tickets and orders, and manage your invites."
+                  : "Browse the tabs to see this member's profile, recent activity, and shared information."}
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
                 {sortedRoles.map((r) => (
                   <span key={r} className={cn("text-xs px-2 py-0.5 rounded-full border font-medium", ROLE_STYLES[r])}>
                     {r}
                   </span>
                 ))}
-              </div>
-              <p className="text-sm text-muted-foreground">@{profile.username ?? "unknown"}</p>
-
-              <div className="mt-3 flex flex-wrap gap-2">
                 {breakRow ? (
                   <StatusPill
                     icon={breakRow.kind === "lunch" ? UtensilsCrossed : Coffee}
@@ -291,75 +324,91 @@ function ProfilePage() {
                   <StatusPill icon={ClockIcon} tone="muted" label="Off shift" />
                 )}
               </div>
-            </div>
-
-            {isOwner && (
-              <button
-                onClick={() => setEditing(true)}
-                className="self-start sm:self-end flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground font-medium text-sm shadow-glow"
+              <Button
+                className="mt-6 bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white border-0 shadow-lg shadow-purple-900/50"
+                onClick={() => setMainTab("profile")}
               >
-                <Pencil className="size-4" /> Edit profile
-              </button>
-            )}
-          </div>
-        </section>
-
-        <div className="grid lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 space-y-4">
-            <div className="flex flex-wrap gap-1 p-1 rounded-xl bg-white/10 border border-white/25 backdrop-blur-xl w-fit">
-              {([
-                ...(canSeeCreds ? [{ id: "creds" as const, label: "Credentials & DNS", icon: KeyRound }] : []),
-                { id: "tickets" as const, label: `Recent tickets (${tickets.length})`, icon: Ticket },
-                { id: "orders" as const, label: `Recent orders (${orders.length})`, icon: ShoppingBag },
-                ...(canSeeReferrals ? [{ id: "referrals" as const, label: `Referrals (${referrals.length})`, icon: Trophy }] : []),
-              ]).map((t) => {
-                const Icon = t.icon;
-                const active = mainTab === t.id;
-                return (
-                  <button
-                    key={t.id}
-                    onClick={() => setMainTab(t.id)}
-                    className={cn(
-                      "flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors",
-                      active
-                        ? "bg-white text-rose-600 shadow"
-                        : "text-white/80 hover:text-white hover:bg-white/10",
-                    )}
-                  >
-                    <Icon className="size-3.5" />
-                    {t.label}
-                  </button>
-                );
-              })}
+                Open profile
+              </Button>
             </div>
+          </TabsContent>
 
-            {mainTab === "creds" && canSeeCreds && (
+          {/* Profile */}
+          <TabsContent value="profile" className="mt-6">
+            <div className="grid lg:grid-cols-3 gap-6">
+              <section className="lg:col-span-2 rounded-2xl border border-purple-500/30 bg-purple-950/50 backdrop-blur overflow-hidden text-white">
+                <div
+                  className="h-36 sm:h-44 bg-cover bg-center"
+                  style={{ backgroundImage: `url(${profileHeader})` }}
+                  aria-hidden
+                />
+                <div className="px-6 pb-6 -mt-12 flex flex-col sm:flex-row sm:items-end gap-4">
+                  <Avatar url={profile.avatar_url} name={display} size={96} ring />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h2 className="font-display text-2xl font-bold truncate">{display}</h2>
+                      {sortedRoles.map((r) => (
+                        <span key={r} className={cn("text-xs px-2 py-0.5 rounded-full border font-medium", ROLE_STYLES[r])}>
+                          {r}
+                        </span>
+                      ))}
+                    </div>
+                    <p className="text-sm text-purple-200/80">@{profile.username ?? "unknown"}</p>
+                  </div>
+                  {isOwner && (
+                    <button
+                      onClick={() => setEditing(true)}
+                      className="self-start sm:self-end flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-violet-600 to-blue-600 text-white font-medium text-sm shadow-lg shadow-purple-900/50"
+                    >
+                      <Pencil className="size-4" /> Edit profile
+                    </button>
+                  )}
+                </div>
+                <div className="px-6 pb-6">
+                  <p className="text-xs uppercase tracking-wider text-amber-100/80 mb-2">Bio</p>
+                  <p className="text-sm whitespace-pre-wrap text-purple-50">
+                    {profile.bio || <span className="text-purple-200/60 italic">No bio yet.</span>}
+                  </p>
+                </div>
+              </section>
+              <aside className="space-y-4">
+                <InfoCard label="Member since" value={new Date(profile.created_at).toLocaleDateString()} />
+                <InfoCard label="Roles" value={sortedRoles.join(", ") || "—"} />
+                <InviteCard info={inviteInfo} showStats={isOwner || isAdmin} isOwner={isOwner} />
+              </aside>
+            </div>
+          </TabsContent>
+
+          {canSeeCreds && (
+            <TabsContent value="creds" className="mt-6">
               <CredentialsReveal targetUserId={profile.id} isOwner={isOwner} />
-            )}
+            </TabsContent>
+          )}
 
-            {mainTab === "tickets" && (
-              <ActivityCard title="Recent tickets" icon={Ticket} empty="No tickets yet">
-                {tickets.map((t) => (
-                  <li key={t.id} className="flex items-center justify-between gap-3 py-2 text-sm">
-                    <span className="truncate">{t.subject}</span>
-                    <span className="text-xs text-white/70 capitalize">{t.status}</span>
-                  </li>
-                ))}
-              </ActivityCard>
-            )}
+          <TabsContent value="tickets" className="mt-6">
+            <ActivityCard title="Recent tickets" icon={Ticket} empty="No tickets yet">
+              {tickets.map((t) => (
+                <li key={t.id} className="flex items-center justify-between gap-3 py-2 text-sm">
+                  <span className="truncate">{t.subject}</span>
+                  <span className="text-xs text-white/70 capitalize">{t.status}</span>
+                </li>
+              ))}
+            </ActivityCard>
+          </TabsContent>
 
-            {mainTab === "orders" && (
-              <ActivityCard title="Recent orders" icon={ShoppingBag} empty="No orders yet">
-                {orders.map((o) => (
-                  <li key={o.id} className="flex items-center justify-between gap-3 py-2 text-sm">
-                    <span>${(o.total_cents / 100).toFixed(2)}</span>
-                    <span className="text-xs text-white/70 capitalize">{o.status}</span>
-                  </li>
-                ))}
-              </ActivityCard>
-            )}
+          <TabsContent value="orders" className="mt-6">
+            <ActivityCard title="Recent orders" icon={ShoppingBag} empty="No orders yet">
+              {orders.map((o) => (
+                <li key={o.id} className="flex items-center justify-between gap-3 py-2 text-sm">
+                  <span>${(o.total_cents / 100).toFixed(2)}</span>
+                  <span className="text-xs text-white/70 capitalize">{o.status}</span>
+                </li>
+              ))}
+            </ActivityCard>
+          </TabsContent>
 
-            {mainTab === "referrals" && canSeeReferrals && (
+          {canSeeReferrals && (
+            <TabsContent value="referrals" className="mt-6">
               <ReferralsPanel
                 referrals={referrals}
                 isOwner={isOwner}
@@ -369,25 +418,9 @@ function ProfilePage() {
                 onCopy={copyInviteLink}
                 onDelete={deleteInvite}
               />
-            )}
-          </div>
-
-          <aside className="space-y-6">
-            <div className="rounded-2xl border border-white/25 bg-white/10 backdrop-blur-xl p-5 shadow-[0_10px_40px_-15px_rgba(0,0,0,0.4)] text-white">
-              <p className="text-xs uppercase tracking-wider text-amber-100/80 mb-2">Bio</p>
-              <p className="text-sm whitespace-pre-wrap">
-                {profile.bio || <span className="text-white/60 italic">No bio yet.</span>}
-              </p>
-            </div>
-            <InfoCard label="Member since" value={new Date(profile.created_at).toLocaleDateString()} />
-            <InfoCard label="Roles" value={sortedRoles.join(", ") || "—"} />
-            <InviteCard
-              info={inviteInfo}
-              showStats={isOwner || isAdmin}
-              isOwner={isOwner}
-            />
-          </aside>
-        </div>
+            </TabsContent>
+          )}
+        </Tabs>
       </div>
 
       {editing && isOwner && (
@@ -397,8 +430,7 @@ function ProfilePage() {
           onSaved={() => { setEditing(false); load(); }}
         />
       )}
-      </div>
-    </main>
+    </div>
   );
 }
 
