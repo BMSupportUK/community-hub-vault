@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Outlet, useChildMatches } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Plus, Search, Pencil, Trash2, ImageIcon, GripVertical, Check, Circle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,8 +11,14 @@ import DOMPurify from "dompurify";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/_approved/sports-guides")({
-  component: SportsGuidesPage,
+  component: SportsGuidesRoute,
 });
+
+function SportsGuidesRoute() {
+  const childMatches = useChildMatches();
+  if (childMatches.length > 0) return <Outlet />;
+  return <SportsGuidesPage />;
+}
 
 type Category = { id: string; name: string; slug: string; sort_order: number };
 type Blog = {
