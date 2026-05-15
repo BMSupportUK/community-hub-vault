@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { Hash, Megaphone, Loader2, Send, Trash2, EyeOff, Eye, Pin, PinOff, X, ShieldOff } from "lucide-react";
+import { Hash, Megaphone, Loader2, Send, Trash2, EyeOff, Eye, Pin, PinOff, X, ShieldOff, MoreHorizontal, SmilePlus, Pencil, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
@@ -29,6 +29,7 @@ interface Message {
   created_at: string;
   pinned_at: string | null;
   pinned_by: string | null;
+  edited_at?: string | null;
 }
 
 interface Profile {
@@ -37,6 +38,15 @@ interface Profile {
   username: string | null;
   avatar_url: string | null;
 }
+
+interface Reaction {
+  id: string;
+  message_id: string;
+  user_id: string;
+  emoji: string;
+}
+
+const QUICK_EMOJIS = ["👍", "❤️", "😂", "😮", "😢", "🙏", "🔥", "🎉"];
 
 function ChannelPage() {
   const { channel: slug } = Route.useParams();
