@@ -514,6 +514,7 @@ function TicketDetail({
   const [draft, setDraft] = useState("");
   const [internal, setInternal] = useState(false);
   const [sending, setSending] = useState(false);
+  const [replyFiles, setReplyFiles] = useState<File[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
   const taRef = useRef<HTMLTextAreaElement>(null);
   const mention = useMentionAutocomplete({
@@ -549,7 +550,7 @@ function TicketDetail({
     const ch = supabase
       .channel(`ticket-${ticket.id}`)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "ticket_messages", filter: `ticket_id=eq.${ticket.id}` },
-        (p) => setMessages((m) => [...m, p.new as Message]))
+        (p) => setMessages((m) => [...m, p.new as unknown as Message]))
       .subscribe();
     return () => { supabase.removeChannel(ch); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -561,11 +562,13 @@ function TicketDetail({
 
   const send = async () => {
     const content = draft.trim();
-    if (content.length < 1 || content.length > 2000) return;
+    if ((content.length < 1 && replyFiles.length === 0) || content.length > 2000) return;
     if (ticket.status === "closed") return toast.error("Ticket is closed");
     setSending(true);
+    const uploaded = replyFiles.length ? await uploadTicketFiles(replyFiles) : [];
     const { error } = await supabase.from("ticket_messages").insert({
       ticket_id: ticket.id, sender_id: currentUserId, content, is_internal: internal && isStaff,
+      attachments: uploaded as unknown as never,
     });
     setSending(false);
     if (error) {
@@ -577,6 +580,7 @@ function TicketDetail({
       );
     }
     setDraft("");
+    setReplyFiles([]);
     // Bump updated_at via status touch (only staff allowed) — skip for users
     if (isStaff && ticket.status === "open") {
       await supabase.from("tickets").update({ status: "in_progress" }).eq("id", ticket.id);
@@ -673,6 +677,7 @@ function TicketDetail({
                   {senderName(m.sender_id)} · {new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                 </div>
                 <MentionText content={m.content} currentUsername={myUsername} />
+                <TicketAttachments items={m.attachments} />
               </div>
             </div>
           );
@@ -704,6 +709,7 @@ function TicketDetail({
                 className="self-end px-3 py-2 rounded-lg bg-white text-rose-600 hover:bg-white/90 disabled:opacity-50 shadow"
               ><Send className="size-4" /></button>
             </div>
+            <FilePicker files={replyFiles} setFiles={setReplyFiles} disabled={sending} dark />
             {isStaff && (
               <label className="flex items-center gap-2 text-xs text-white/85 cursor-pointer">
                 <input type="checkbox" checked={internal} onChange={(e) => setInternal(e.target.checked)} className="accent-amber-300" />
