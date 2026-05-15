@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { Hash, Megaphone, Loader2, Send, Trash2, EyeOff, Eye, Pin, PinOff, X, ShieldOff, MoreHorizontal, SmilePlus, Pencil, Check } from "lucide-react";
+import { Hash, Megaphone, Loader2, Send, Trash2, EyeOff, Eye, Pin, PinOff, X, ShieldOff, MoreHorizontal, SmilePlus, Pencil, Check, Timer } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
@@ -20,6 +20,7 @@ interface Channel {
   name: string;
   icon: string;
   staff_only: boolean;
+  slow_mode_seconds: number;
 }
 
 interface Message {
@@ -49,13 +50,42 @@ interface Reaction {
 
 const QUICK_EMOJIS = ["👍", "❤️", "😂", "😮", "😢", "🙏", "🔥", "🎉"];
 
+const SLOW_PRESETS: Array<{ label: string; seconds: number }> = [
+  { label: "Off", seconds: 0 },
+  { label: "5s", seconds: 5 },
+  { label: "10s", seconds: 10 },
+  { label: "15s", seconds: 15 },
+  { label: "30s", seconds: 30 },
+  { label: "1m", seconds: 60 },
+  { label: "2m", seconds: 120 },
+  { label: "5m", seconds: 300 },
+  { label: "10m", seconds: 600 },
+  { label: "15m", seconds: 900 },
+  { label: "30m", seconds: 1800 },
+  { label: "1h", seconds: 3600 },
+  { label: "2h", seconds: 7200 },
+  { label: "6h", seconds: 21600 },
+];
+
+function formatSlow(s: number): string {
+  if (s <= 0) return "off";
+  if (s < 60) return `${s}s`;
+  if (s < 3600) return `${Math.round(s / 60)}m`;
+  return `${Math.round(s / 3600)}h`;
+}
+
 function ChannelPage() {
   const { channel: slug } = Route.useParams();
   const { user, hasAny } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
   const canPin = hasAny(["admin", "management", "moderator", "staff"]);
+  const canManageSlow = hasAny(["admin", "management", "moderator", "staff"]);
+  const isModOrAdmin = hasAny(["admin", "management", "moderator"]);
   const [pinnedOpen, setPinnedOpen] = useState(false);
   const [ignoredOpen, setIgnoredOpen] = useState(false);
+  const [slowOpen, setSlowOpen] = useState(false);
+  const [lastSentAt, setLastSentAt] = useState<number | null>(null);
+  const [now, setNow] = useState(() => Date.now());
   const [myUsername, setMyUsername] = useState<string | null>(null);
   const [ignoredIds, setIgnoredIds] = useState<Set<string>>(new Set());
   const [staffIds, setStaffIds] = useState<Set<string>>(new Set());
@@ -174,7 +204,7 @@ function ChannelPage() {
     (async () => {
       const { data } = await supabase
         .from("chat_channels")
-        .select("id, slug, name, icon, staff_only")
+        .select("id, slug, name, icon, staff_only, slow_mode_seconds")
         .eq("slug", slug)
         .maybeSingle();
       if (!data) setMissing(true);
@@ -228,6 +258,10 @@ function ChannelPage() {
       if (cancelled) return;
       const rows = (data as Message[] | null) ?? [];
       setMessages(rows);
+      if (user) {
+        const mine = [...rows].reverse().find((r) => r.sender_id === user.id);
+        setLastSentAt(mine ? new Date(mine.created_at).getTime() : null);
+      }
       await loadProfiles(rows.map((r) => r.sender_id));
       if (rows.length > 0) {
         const { data: reactRows } = await supabase
@@ -249,6 +283,14 @@ function ChannelPage() {
           const m = payload.new as Message;
           setMessages((prev) => (prev.some((p) => p.id === m.id) ? prev : [...prev, m]));
           await loadProfiles([m.sender_id]);
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "chat_channels", filter: `id=eq.${channel.id}` },
+        (payload) => {
+          const updated = payload.new as Channel;
+          setChannel((prev) => (prev ? { ...prev, ...updated } : prev));
         },
       )
       .on(
@@ -346,6 +388,13 @@ function ChannelPage() {
 
   const send = async () => {
     if (!user || !channel || !draft.trim()) return;
+    if (channel.slow_mode_seconds > 0 && !isModOrAdmin && lastSentAt) {
+      const remain = channel.slow_mode_seconds * 1000 - (Date.now() - lastSentAt);
+      if (remain > 0) {
+        toast.error(`Slow mode: wait ${Math.ceil(remain / 1000)}s.`);
+        return;
+      }
+    }
     setSending(true);
     const content = draft.trim();
     setDraft("");
@@ -364,6 +413,8 @@ function ChannelPage() {
             : msg,
       );
       setDraft(content);
+    } else {
+      setLastSentAt(Date.now());
     }
     setSending(false);
   };
@@ -453,6 +504,18 @@ function ChannelPage() {
     setEditDraft("");
   };
 
+  const setSlowMode = async (seconds: number) => {
+    if (!channel || !canManageSlow) return;
+    const { error } = await supabase
+      .from("chat_channels")
+      .update({ slow_mode_seconds: seconds })
+      .eq("id", channel.id);
+    if (error) return toast.error(error.message);
+    setChannel({ ...channel, slow_mode_seconds: seconds });
+    setSlowOpen(false);
+    toast.success(seconds > 0 ? `Slow mode: ${formatSlow(seconds)}` : "Slow mode off");
+  };
+
   // Close menus when clicking outside
   useEffect(() => {
     if (!openMenuId && !emojiPickerId) return;
@@ -466,6 +529,13 @@ function ChannelPage() {
     document.addEventListener("mousedown", onDoc);
     return () => document.removeEventListener("mousedown", onDoc);
   }, [openMenuId, emojiPickerId]);
+
+  // Tick once a second while slow mode cooldown is active.
+  useEffect(() => {
+    if (!channel || channel.slow_mode_seconds <= 0 || isModOrAdmin || !lastSentAt) return;
+    const id = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(id);
+  }, [channel?.slow_mode_seconds, isModOrAdmin, lastSentAt]);
 
   if (missing) {
     return (
@@ -488,6 +558,12 @@ function ChannelPage() {
     .filter((m) => m.pinned_at)
     .sort((a, b) => (b.pinned_at ?? "").localeCompare(a.pinned_at ?? ""));
 
+  const slowRemaining = (() => {
+    if (!channel || channel.slow_mode_seconds <= 0 || isModOrAdmin || !lastSentAt) return 0;
+    const r = channel.slow_mode_seconds * 1000 - (now - lastSentAt);
+    return r > 0 ? Math.ceil(r / 1000) : 0;
+  })();
+
   return (
     <main className="flex-1 flex flex-col min-w-0 min-h-0 h-full">
       <header className="h-14 border-b border-border px-5 flex items-center gap-2 shrink-0 relative">
@@ -496,7 +572,58 @@ function ChannelPage() {
         {channel.staff_only && (
           <span className="ml-2 text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-400">staff</span>
         )}
-        <div className="ml-auto relative">
+        {channel.slow_mode_seconds > 0 && (
+          <span
+            className="ml-2 inline-flex items-center gap-1 text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-primary/15 text-primary"
+            title="Slow mode active"
+          >
+            <Timer className="size-3" /> {formatSlow(channel.slow_mode_seconds)}
+          </span>
+        )}
+        {canManageSlow && (
+          <div className="ml-auto relative">
+            <button
+              onClick={() => setSlowOpen((v) => !v)}
+              className={cn(
+                "flex items-center gap-1.5 text-xs px-2 py-1 rounded transition-colors",
+                channel.slow_mode_seconds > 0
+                  ? "bg-primary/15 text-primary hover:bg-primary/25"
+                  : "text-muted-foreground hover:text-foreground hover:bg-surface-2",
+              )}
+              title="Slow mode"
+            >
+              <Timer className="size-4" />
+              <span>Slow mode</span>
+            </button>
+            {slowOpen && (
+              <div className="absolute right-0 top-full mt-2 w-56 rounded-lg border border-border bg-popover shadow-lg z-30 p-2">
+                <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  Slow mode delay
+                </div>
+                <div className="grid grid-cols-3 gap-1">
+                  {SLOW_PRESETS.map((p) => (
+                    <button
+                      key={p.seconds}
+                      onClick={() => setSlowMode(p.seconds)}
+                      className={cn(
+                        "text-xs px-2 py-1.5 rounded border transition-colors",
+                        channel.slow_mode_seconds === p.seconds
+                          ? "bg-primary text-primary-foreground border-primary"
+                          : "bg-surface-2 border-border hover:bg-surface-2/70",
+                      )}
+                    >
+                      {p.label}
+                    </button>
+                  ))}
+                </div>
+                <p className="px-2 pt-2 text-[10px] text-muted-foreground">
+                  Admins, management & moderators bypass the cooldown.
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+        <div className={cn("relative", canManageSlow ? "" : "ml-auto")}>
           <button
             onClick={() => setPinnedOpen((v) => !v)}
             className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground px-2 py-1 rounded hover:bg-surface-2 transition-colors"
@@ -922,15 +1049,25 @@ function ChannelPage() {
               }
             }}
             rows={1}
-            placeholder={canSend
-              ? `Message #${channel.name} — type @ to mention`
-              : `You don't have permission to send messages in this channel`}
-            disabled={!canSend}
+            placeholder={!canSend
+              ? `You don't have permission to send messages in this channel`
+              : slowRemaining > 0
+                ? `Slow mode: wait ${slowRemaining}s before sending another message`
+                : channel.slow_mode_seconds > 0
+                  ? `Message #${channel.name} — slow mode ${formatSlow(channel.slow_mode_seconds)}`
+                  : `Message #${channel.name} — type @ to mention`}
+            disabled={!canSend || slowRemaining > 0}
             className="flex-1 bg-transparent resize-none outline-none text-sm py-1 max-h-32"
           />
+          {slowRemaining > 0 && (
+            <div className="flex items-center gap-1 text-xs text-primary tabular-nums px-2 py-1 rounded-md bg-primary/10 border border-primary/30">
+              <Timer className="size-3.5" />
+              <span>{slowRemaining}s</span>
+            </div>
+          )}
           <button
             onClick={send}
-            disabled={sending || !draft.trim() || !canSend}
+            disabled={sending || !draft.trim() || !canSend || slowRemaining > 0}
             className="size-8 rounded-lg bg-primary text-primary-foreground grid place-items-center disabled:opacity-50"
           >
             {sending ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
