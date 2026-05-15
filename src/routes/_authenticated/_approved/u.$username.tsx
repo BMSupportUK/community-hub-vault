@@ -4,6 +4,7 @@ import {
   Pencil, Camera, Loader2, ShieldCheck, Clock as ClockIcon,
   Coffee, UtensilsCrossed, Ticket, ShoppingBag, Eye, EyeOff,
   Lock, KeyRound, Copy, Check, Globe, Calendar, StickyNote, AtSign,
+  Trophy, Gift, X as XIcon, UserPlus,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, type AppRole } from "@/hooks/use-auth";
@@ -30,6 +31,14 @@ interface CredRow { id: string; app_login_name: string; password: string; expiry
 interface DnsRow { id: string; label: string; code: string; notes: string | null; }
 interface TicketRow { id: string; subject: string; status: string; created_at: string; }
 interface OrderRow { id: string; total_cents: number; status: string; created_at: string; }
+interface InviteSummary {
+  sent: number;
+  used: number;
+  bonusPaid: number;
+  invitedBy: { username: string | null; display_name: string | null } | null;
+  invitedAt: string | null;
+  invitedBonusPaid: boolean;
+}
 
 const ROLE_STYLES: Record<AppRole, string> = {
   admin: "bg-destructive/15 text-destructive border-destructive/30",
@@ -65,6 +74,7 @@ function ProfilePage() {
   const [breakRow, setBreakRow] = useState<BreakRow | null>(null);
   const [tickets, setTickets] = useState<TicketRow[]>([]);
   const [orders, setOrders] = useState<OrderRow[]>([]);
+  const [inviteInfo, setInviteInfo] = useState<InviteSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
   const [mainTab, setMainTab] = useState<"creds" | "tickets" | "orders">(
@@ -98,6 +108,35 @@ function ProfilePage() {
     setBreakRow((b as BreakRow) ?? null);
     setTickets((tk ?? []) as TicketRow[]);
     setOrders((od ?? []) as OrderRow[]);
+
+    // Invite info — visible to the profile owner and admins; for others we only show invitedBy
+    const [{ data: sentInv }, { data: invitedRow }] = await Promise.all([
+      supabase
+        .from("invites")
+        .select("id, used_by, referral_bonus_paid")
+        .eq("created_by", p.id),
+      supabase
+        .from("invites")
+        .select("created_by, used_at, referral_bonus_paid")
+        .eq("used_by", p.id)
+        .maybeSingle(),
+    ]);
+    let invitedBy: InviteSummary["invitedBy"] = null;
+    if (invitedRow?.created_by) {
+      const { data: prof } = await supabase
+        .from("profiles").select("username, display_name").eq("id", invitedRow.created_by).maybeSingle();
+      invitedBy = prof ? { username: prof.username, display_name: prof.display_name } : null;
+    }
+    const sentRows = (sentInv ?? []) as { used_by: string | null; referral_bonus_paid: boolean }[];
+    setInviteInfo({
+      sent: sentRows.length,
+      used: sentRows.filter((x) => x.used_by).length,
+      bonusPaid: sentRows.filter((x) => x.referral_bonus_paid).length,
+      invitedBy,
+      invitedAt: invitedRow?.used_at ?? null,
+      invitedBonusPaid: !!invitedRow?.referral_bonus_paid,
+    });
+
     setLoading(false);
   };
 
@@ -249,6 +288,11 @@ function ProfilePage() {
             </div>
             <InfoCard label="Member since" value={new Date(profile.created_at).toLocaleDateString()} />
             <InfoCard label="Roles" value={sortedRoles.join(", ") || "—"} />
+            <InviteCard
+              info={inviteInfo}
+              showStats={isOwner || isAdmin}
+              isOwner={isOwner}
+            />
           </aside>
         </div>
       </div>
