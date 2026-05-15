@@ -1,0 +1,1 @@
+UPDATE public.channel_welcome_embeds SET image_url = '/rules-banner.jpg', updated_at = now() WHERE channel_id = '03528c96-c5b8-4f8c-90a2-e717bc76769a';
