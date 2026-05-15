@@ -109,10 +109,7 @@ export function IconRail() {
     { to: "/status", label: "System status", icon: Activity, show: true, badge: activeIncidents },
     { to: "/clock", label: "Clock", icon: Clock, show: isStaff },
     { to: "/shifts", label: "Shifts", icon: Calendar, show: isStaff },
-    { to: "/moderation", label: "Moderation", icon: Shield, show: isMod },
-    { to: "/admin", label: "Admin dashboard", icon: LayoutDashboard, show: isAdmin },
     { to: "/admin-dns", label: "QD DNS codes", icon: Globe, show: isAdmin },
-    { to: "/admin-roles", label: "User roles", icon: ShieldCheck, show: isAdmin },
   ];
 
   const allowedByPerms = (to: string) => {
