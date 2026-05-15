@@ -294,6 +294,26 @@ function ProfilePage() {
 
   useEffect(() => { load(); }, [username]);
 
+  // Realtime: refresh when friendships involving the profile owner or viewer change
+  useEffect(() => {
+    if (!profile?.id) return;
+    const ids = [profile.id, viewer?.id].filter(Boolean) as string[];
+    const ch = supabase
+      .channel(`profile-friendships:${profile.id}:${viewer?.id ?? "anon"}`)
+      .on("postgres_changes",
+        { event: "*", schema: "public", table: "friendships",
+          filter: `requester_id=in.(${ids.join(",")})` },
+        () => load(),
+      )
+      .on("postgres_changes",
+        { event: "*", schema: "public", table: "friendships",
+          filter: `addressee_id=in.(${ids.join(",")})` },
+        () => load(),
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [profile?.id, viewer?.id]);
+
   const sendFriendRequest = async () => {
     if (!viewer || !profile || rel.kind !== "none") return;
     setRelBusy(true);
