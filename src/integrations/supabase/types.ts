@@ -379,6 +379,36 @@ export type Database = {
         }
         Relationships: []
       }
+      hero_boxes: {
+        Row: {
+          description: string
+          icon_url: string | null
+          id: string
+          position: number
+          title: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          description?: string
+          icon_url?: string | null
+          id?: string
+          position: number
+          title?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          description?: string
+          icon_url?: string | null
+          id?: string
+          position?: number
+          title?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       holiday_requests: {
         Row: {
           created_at: string
