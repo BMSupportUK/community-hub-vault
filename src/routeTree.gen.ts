@@ -40,7 +40,9 @@ import { Route as AuthenticatedApprovedAdminCredentialsRouteImport } from './rou
 import { Route as AuthenticatedApprovedAdminRouteImport } from './routes/_authenticated/_approved/admin'
 import { Route as AuthenticatedApprovedHomeIndexRouteImport } from './routes/_authenticated/_approved/home.index'
 import { Route as AuthenticatedApprovedUUsernameRouteImport } from './routes/_authenticated/_approved/u.$username'
+import { Route as AuthenticatedApprovedSportsGuidesNewRouteImport } from './routes/_authenticated/_approved/sports-guides.new'
 import { Route as AuthenticatedApprovedHomeChannelRouteImport } from './routes/_authenticated/_approved/home.$channel'
+import { Route as AuthenticatedApprovedSportsGuidesIdEditRouteImport } from './routes/_authenticated/_approved/sports-guides.$id.edit'
 
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
@@ -217,11 +219,23 @@ const AuthenticatedApprovedUUsernameRoute =
     path: '/u/$username',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
+const AuthenticatedApprovedSportsGuidesNewRoute =
+  AuthenticatedApprovedSportsGuidesNewRouteImport.update({
+    id: '/new',
+    path: '/new',
+    getParentRoute: () => AuthenticatedApprovedSportsGuidesRoute,
+  } as any)
 const AuthenticatedApprovedHomeChannelRoute =
   AuthenticatedApprovedHomeChannelRouteImport.update({
     id: '/$channel',
     path: '/$channel',
     getParentRoute: () => AuthenticatedApprovedHomeRoute,
+  } as any)
+const AuthenticatedApprovedSportsGuidesIdEditRoute =
+  AuthenticatedApprovedSportsGuidesIdEditRouteImport.update({
+    id: '/$id/edit',
+    path: '/$id/edit',
+    getParentRoute: () => AuthenticatedApprovedSportsGuidesRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -248,13 +262,15 @@ export interface FileRoutesByFullPath {
   '/reviews': typeof AuthenticatedApprovedReviewsRoute
   '/shifts': typeof AuthenticatedApprovedShiftsRoute
   '/shop': typeof AuthenticatedApprovedShopRoute
-  '/sports-guides': typeof AuthenticatedApprovedSportsGuidesRoute
+  '/sports-guides': typeof AuthenticatedApprovedSportsGuidesRouteWithChildren
   '/staff': typeof AuthenticatedApprovedStaffRoute
   '/status': typeof AuthenticatedApprovedStatusRoute
   '/tickets': typeof AuthenticatedApprovedTicketsRoute
   '/home/$channel': typeof AuthenticatedApprovedHomeChannelRoute
+  '/sports-guides/new': typeof AuthenticatedApprovedSportsGuidesNewRoute
   '/u/$username': typeof AuthenticatedApprovedUUsernameRoute
   '/home/': typeof AuthenticatedApprovedHomeIndexRoute
+  '/sports-guides/$id/edit': typeof AuthenticatedApprovedSportsGuidesIdEditRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -279,13 +295,15 @@ export interface FileRoutesByTo {
   '/reviews': typeof AuthenticatedApprovedReviewsRoute
   '/shifts': typeof AuthenticatedApprovedShiftsRoute
   '/shop': typeof AuthenticatedApprovedShopRoute
-  '/sports-guides': typeof AuthenticatedApprovedSportsGuidesRoute
+  '/sports-guides': typeof AuthenticatedApprovedSportsGuidesRouteWithChildren
   '/staff': typeof AuthenticatedApprovedStaffRoute
   '/status': typeof AuthenticatedApprovedStatusRoute
   '/tickets': typeof AuthenticatedApprovedTicketsRoute
   '/home/$channel': typeof AuthenticatedApprovedHomeChannelRoute
+  '/sports-guides/new': typeof AuthenticatedApprovedSportsGuidesNewRoute
   '/u/$username': typeof AuthenticatedApprovedUUsernameRoute
   '/home': typeof AuthenticatedApprovedHomeIndexRoute
+  '/sports-guides/$id/edit': typeof AuthenticatedApprovedSportsGuidesIdEditRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -314,13 +332,15 @@ export interface FileRoutesById {
   '/_authenticated/_approved/reviews': typeof AuthenticatedApprovedReviewsRoute
   '/_authenticated/_approved/shifts': typeof AuthenticatedApprovedShiftsRoute
   '/_authenticated/_approved/shop': typeof AuthenticatedApprovedShopRoute
-  '/_authenticated/_approved/sports-guides': typeof AuthenticatedApprovedSportsGuidesRoute
+  '/_authenticated/_approved/sports-guides': typeof AuthenticatedApprovedSportsGuidesRouteWithChildren
   '/_authenticated/_approved/staff': typeof AuthenticatedApprovedStaffRoute
   '/_authenticated/_approved/status': typeof AuthenticatedApprovedStatusRoute
   '/_authenticated/_approved/tickets': typeof AuthenticatedApprovedTicketsRoute
   '/_authenticated/_approved/home/$channel': typeof AuthenticatedApprovedHomeChannelRoute
+  '/_authenticated/_approved/sports-guides/new': typeof AuthenticatedApprovedSportsGuidesNewRoute
   '/_authenticated/_approved/u/$username': typeof AuthenticatedApprovedUUsernameRoute
   '/_authenticated/_approved/home/': typeof AuthenticatedApprovedHomeIndexRoute
+  '/_authenticated/_approved/sports-guides/$id/edit': typeof AuthenticatedApprovedSportsGuidesIdEditRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -353,8 +373,10 @@ export interface FileRouteTypes {
     | '/status'
     | '/tickets'
     | '/home/$channel'
+    | '/sports-guides/new'
     | '/u/$username'
     | '/home/'
+    | '/sports-guides/$id/edit'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -384,8 +406,10 @@ export interface FileRouteTypes {
     | '/status'
     | '/tickets'
     | '/home/$channel'
+    | '/sports-guides/new'
     | '/u/$username'
     | '/home'
+    | '/sports-guides/$id/edit'
   id:
     | '__root__'
     | '/'
@@ -418,8 +442,10 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/status'
     | '/_authenticated/_approved/tickets'
     | '/_authenticated/_approved/home/$channel'
+    | '/_authenticated/_approved/sports-guides/new'
     | '/_authenticated/_approved/u/$username'
     | '/_authenticated/_approved/home/'
+    | '/_authenticated/_approved/sports-guides/$id/edit'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -650,12 +676,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedApprovedUUsernameRouteImport
       parentRoute: typeof AuthenticatedApprovedRoute
     }
+    '/_authenticated/_approved/sports-guides/new': {
+      id: '/_authenticated/_approved/sports-guides/new'
+      path: '/new'
+      fullPath: '/sports-guides/new'
+      preLoaderRoute: typeof AuthenticatedApprovedSportsGuidesNewRouteImport
+      parentRoute: typeof AuthenticatedApprovedSportsGuidesRoute
+    }
     '/_authenticated/_approved/home/$channel': {
       id: '/_authenticated/_approved/home/$channel'
       path: '/$channel'
       fullPath: '/home/$channel'
       preLoaderRoute: typeof AuthenticatedApprovedHomeChannelRouteImport
       parentRoute: typeof AuthenticatedApprovedHomeRoute
+    }
+    '/_authenticated/_approved/sports-guides/$id/edit': {
+      id: '/_authenticated/_approved/sports-guides/$id/edit'
+      path: '/$id/edit'
+      fullPath: '/sports-guides/$id/edit'
+      preLoaderRoute: typeof AuthenticatedApprovedSportsGuidesIdEditRouteImport
+      parentRoute: typeof AuthenticatedApprovedSportsGuidesRoute
     }
   }
 }
@@ -677,6 +717,24 @@ const AuthenticatedApprovedHomeRouteWithChildren =
     AuthenticatedApprovedHomeRouteChildren,
   )
 
+interface AuthenticatedApprovedSportsGuidesRouteChildren {
+  AuthenticatedApprovedSportsGuidesNewRoute: typeof AuthenticatedApprovedSportsGuidesNewRoute
+  AuthenticatedApprovedSportsGuidesIdEditRoute: typeof AuthenticatedApprovedSportsGuidesIdEditRoute
+}
+
+const AuthenticatedApprovedSportsGuidesRouteChildren: AuthenticatedApprovedSportsGuidesRouteChildren =
+  {
+    AuthenticatedApprovedSportsGuidesNewRoute:
+      AuthenticatedApprovedSportsGuidesNewRoute,
+    AuthenticatedApprovedSportsGuidesIdEditRoute:
+      AuthenticatedApprovedSportsGuidesIdEditRoute,
+  }
+
+const AuthenticatedApprovedSportsGuidesRouteWithChildren =
+  AuthenticatedApprovedSportsGuidesRoute._addFileChildren(
+    AuthenticatedApprovedSportsGuidesRouteChildren,
+  )
+
 interface AuthenticatedApprovedRouteChildren {
   AuthenticatedApprovedAdminRoute: typeof AuthenticatedApprovedAdminRoute
   AuthenticatedApprovedAdminCredentialsRoute: typeof AuthenticatedApprovedAdminCredentialsRoute
@@ -694,7 +752,7 @@ interface AuthenticatedApprovedRouteChildren {
   AuthenticatedApprovedReviewsRoute: typeof AuthenticatedApprovedReviewsRoute
   AuthenticatedApprovedShiftsRoute: typeof AuthenticatedApprovedShiftsRoute
   AuthenticatedApprovedShopRoute: typeof AuthenticatedApprovedShopRoute
-  AuthenticatedApprovedSportsGuidesRoute: typeof AuthenticatedApprovedSportsGuidesRoute
+  AuthenticatedApprovedSportsGuidesRoute: typeof AuthenticatedApprovedSportsGuidesRouteWithChildren
   AuthenticatedApprovedStaffRoute: typeof AuthenticatedApprovedStaffRoute
   AuthenticatedApprovedStatusRoute: typeof AuthenticatedApprovedStatusRoute
   AuthenticatedApprovedTicketsRoute: typeof AuthenticatedApprovedTicketsRoute
@@ -723,7 +781,7 @@ const AuthenticatedApprovedRouteChildren: AuthenticatedApprovedRouteChildren = {
   AuthenticatedApprovedShiftsRoute: AuthenticatedApprovedShiftsRoute,
   AuthenticatedApprovedShopRoute: AuthenticatedApprovedShopRoute,
   AuthenticatedApprovedSportsGuidesRoute:
-    AuthenticatedApprovedSportsGuidesRoute,
+    AuthenticatedApprovedSportsGuidesRouteWithChildren,
   AuthenticatedApprovedStaffRoute: AuthenticatedApprovedStaffRoute,
   AuthenticatedApprovedStatusRoute: AuthenticatedApprovedStatusRoute,
   AuthenticatedApprovedTicketsRoute: AuthenticatedApprovedTicketsRoute,
@@ -762,3 +820,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
