@@ -1,8 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Calendar as CalendarIcon, Plus, Trash2, Check, X, Clock, Users, Plane, Repeat, ShieldCheck, Loader2, Zap } from "lucide-react";
+import { Calendar as CalendarIcon, Plus, Trash2, Check, X, Clock, Users, Plane, Repeat, ShieldCheck, Loader2, Zap, Save, Globe } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { useTimezone } from "@/hooks/use-timezone";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -98,6 +99,7 @@ function ShiftsPage() {
   const { user, hasAny, hasRole } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
   const isStaffOrAdmin = hasAny(["admin", "management", "staff"]);
+  const { toUtcMs, tz } = useTimezone();
   const isMod = hasRole("moderator");
   const canPick = isStaffOrAdmin || isMod;
 
@@ -466,7 +468,7 @@ function ShiftsPage() {
                     <div className="text-xs text-sky-200/70 mt-1 uppercase">{s.slot_type}</div>
                     {s.notes && <div className="text-sm text-sky-200/80 mt-2">{s.notes}</div>}
                     {(() => {
-                      const startsAt = new Date(`${s.shift_date}T${s.start_time}`).getTime();
+                      const startsAt = toUtcMs(s.shift_date, s.start_time);
                       const locked = isNaN(startsAt) ? false : startsAt <= Date.now();
                       return (
                         <div className="mt-3 flex gap-2 items-center">
@@ -584,6 +586,7 @@ function ShiftsPage() {
           {/* MANAGE ROTA */}
           {isAdmin && (
             <TabsContent value="manage" className="mt-6 space-y-6">
+              <TimezoneSettingsCard />
               <div className="rounded-2xl bg-blue-950/50 border border-sky-500/30 p-5">
                 <h3 className="font-display text-lg font-semibold text-sky-100 mb-3">Add rota slot</h3>
                 <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
@@ -725,4 +728,99 @@ function StatusPill({ status }: { status: ReqStatus }) {
     denied: "bg-rose-500/20 text-rose-300 border-rose-500/40",
   };
   return <span className={cn("text-[11px] px-2 py-0.5 rounded-full border font-semibold uppercase", map[status])}>{status}</span>;
+}
+
+const TIMEZONE_PRESETS: { tz: string; label: string }[] = [
+  { tz: "Europe/London", label: "London (GMT/BST)" },
+  { tz: "Europe/Dublin", label: "Dublin" },
+  { tz: "Europe/Paris", label: "Paris (CET/CEST)" },
+  { tz: "Europe/Berlin", label: "Berlin" },
+  { tz: "Europe/Madrid", label: "Madrid" },
+  { tz: "Europe/Lisbon", label: "Lisbon" },
+  { tz: "Europe/Amsterdam", label: "Amsterdam" },
+  { tz: "Europe/Athens", label: "Athens" },
+  { tz: "America/New_York", label: "New York (ET)" },
+  { tz: "America/Chicago", label: "Chicago (CT)" },
+  { tz: "America/Denver", label: "Denver (MT)" },
+  { tz: "America/Los_Angeles", label: "Los Angeles (PT)" },
+  { tz: "America/Toronto", label: "Toronto" },
+  { tz: "America/Sao_Paulo", label: "São Paulo" },
+  { tz: "Asia/Dubai", label: "Dubai" },
+  { tz: "Asia/Kolkata", label: "Kolkata (IST)" },
+  { tz: "Asia/Singapore", label: "Singapore" },
+  { tz: "Asia/Tokyo", label: "Tokyo" },
+  { tz: "Australia/Sydney", label: "Sydney" },
+  { tz: "UTC", label: "UTC" },
+];
+
+function TimezoneSettingsCard() {
+  const { tz } = useTimezone();
+  const presetMatch = TIMEZONE_PRESETS.some((p) => p.tz === tz);
+  const [selected, setSelected] = useState<string>(presetMatch ? tz : "CUSTOM");
+  const [customTz, setCustomTz] = useState(tz);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    const match = TIMEZONE_PRESETS.some((p) => p.tz === tz);
+    setSelected(match ? tz : "CUSTOM");
+    setCustomTz(tz);
+  }, [tz]);
+
+  const save = async () => {
+    const next = selected === "CUSTOM" ? customTz.trim() : selected;
+    if (!next) { toast.error("Pick a timezone"); return; }
+    try { new Intl.DateTimeFormat("en-US", { timeZone: next }); }
+    catch { toast.error("Invalid timezone identifier"); return; }
+    setSaving(true);
+    const { error } = await supabase
+      .from("app_settings")
+      .upsert({ key: "timezone", value: { tz: next }, updated_at: new Date().toISOString() }, { onConflict: "key" });
+    setSaving(false);
+    if (error) toast.error(error.message);
+    else toast.success("Timezone updated");
+  };
+
+  return (
+    <div className="rounded-2xl bg-blue-950/50 border border-sky-500/30 p-5">
+      <div className="flex items-center justify-between mb-3 gap-3 flex-wrap">
+        <div className="flex items-center gap-2">
+          <Globe className="size-4 text-sky-300" />
+          <div>
+            <h3 className="font-display text-lg font-semibold text-sky-100">Rota timezone</h3>
+            <p className="text-xs text-sky-200/70">Used to lock swap/release buttons once a shift has started, regardless of where the user is.</p>
+          </div>
+        </div>
+        <div className="text-xs text-sky-200/70">Current: <span className="font-semibold text-sky-100">{tz}</span></div>
+      </div>
+      <div className="flex flex-wrap items-end gap-3">
+        <label className="block">
+          <span className="text-xs font-medium text-sky-200/80 mb-1 block">Timezone</span>
+          <select
+            value={selected}
+            onChange={(e) => setSelected(e.target.value)}
+            className="px-3 py-2 rounded-lg bg-blue-950/60 text-sm border border-sky-500/30 text-sky-50 outline-none min-w-[260px]"
+          >
+            {TIMEZONE_PRESETS.map((p) => (
+              <option key={p.tz} value={p.tz}>{p.label} — {p.tz}</option>
+            ))}
+            <option value="CUSTOM">Custom IANA…</option>
+          </select>
+        </label>
+        {selected === "CUSTOM" && (
+          <label className="block">
+            <span className="text-xs font-medium text-sky-200/80 mb-1 block">IANA identifier</span>
+            <Input
+              value={customTz}
+              onChange={(e) => setCustomTz(e.target.value)}
+              placeholder="Continent/City"
+              className="bg-blue-950/60 border-sky-500/30 text-sky-50 w-64"
+            />
+          </label>
+        )}
+        <Button onClick={save} disabled={saving} className="bg-sky-500 hover:bg-sky-400 text-blue-950">
+          {saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4 mr-1" />} Save
+        </Button>
+      </div>
+    </div>
+  );
 }
