@@ -4,7 +4,7 @@ import {
   Pencil, Camera, Loader2, ShieldCheck, Clock as ClockIcon,
   Coffee, UtensilsCrossed, Ticket, ShoppingBag, Eye, EyeOff,
   Lock, KeyRound, Copy, Check, Globe, Calendar, StickyNote, AtSign,
-  Trophy, Gift, X as XIcon, UserPlus, Plus, Trash2,
+  Trophy, Gift, X as XIcon, UserPlus, Plus, Trash2, Lock as LockIcon,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, type AppRole } from "@/hooks/use-auth";
@@ -26,6 +26,7 @@ interface ProfileRow {
   avatar_url: string | null;
   bio: string | null;
   created_at: string;
+  is_private: boolean | null;
 }
 
 interface ShiftRow { id: string; user_id: string; clock_in: string; clock_out: string | null; }
