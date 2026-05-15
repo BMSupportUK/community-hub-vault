@@ -395,6 +395,7 @@ function IncidentCard({ incident, canManage, onEdit }: { incident: Incident; can
           {incident.description && (
             <p className="text-sm text-muted-foreground pt-3 whitespace-pre-wrap">{incident.description}</p>
           )}
+          <AttachmentList items={incident.attachments ?? []} />
 
           <div>
             <h3 className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Updates</h3>
@@ -414,6 +415,7 @@ function IncidentCard({ incident, canManage, onEdit }: { incident: Incident; can
                         <span className="text-[11px] text-muted-foreground">{new Date(u.created_at).toLocaleString()}</span>
                       </div>
                       <div className="text-sm mt-1 whitespace-pre-wrap">{u.message}</div>
+                      <AttachmentList items={u.attachments ?? []} />
                     </li>
                   );
                 })}
@@ -444,6 +446,7 @@ function IncidentCard({ incident, canManage, onEdit }: { incident: Incident; can
                 placeholder="What's the latest?"
                 className="w-full rounded-lg bg-surface-2 border border-border px-3 py-2 text-sm outline-none focus:border-primary resize-none"
               />
+              <FilePicker files={updateFiles} setFiles={setUpdateFiles} disabled={posting} />
               <div className="flex justify-between">
                 <button onClick={onEdit} className="text-xs text-muted-foreground hover:text-foreground">
                   Edit issue details
@@ -454,7 +457,7 @@ function IncidentCard({ incident, canManage, onEdit }: { incident: Incident; can
                   </button>
                   <button
                     onClick={post}
-                    disabled={posting || !msg.trim()}
+                    disabled={posting || (!msg.trim() && updateFiles.length === 0)}
                     className="text-xs px-3 py-1.5 rounded-lg bg-primary text-primary-foreground font-medium disabled:opacity-50"
                   >
                     {posting ? "Posting…" : "Post update"}
