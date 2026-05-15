@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Hash, ChevronDown, Plus, Trash2, Shield } from "lucide-react";
+import { Hash, ChevronDown, Plus, Trash2, Shield, Smile } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
@@ -8,12 +8,15 @@ import { supabase } from "@/integrations/supabase/client";
 
 export interface ChannelGroup {
   label: string;
+  icon?: React.ComponentType<{ className?: string }>;
   items: { to: string; label: string; icon?: React.ComponentType<{ className?: string }>; badge?: number }[];
   onAddItem?: () => void;
   onDeleteItem?: (to: string) => void;
   onDeleteGroup?: () => void;
   onEditItemPerms?: (to: string) => void;
   onEditGroupPerms?: () => void;
+  onEditItemIcon?: (to: string) => void;
+  onEditGroupIcon?: () => void;
 }
 
 export function ChannelColumn({
@@ -60,6 +63,7 @@ export function ChannelColumn({
           <div key={g.label}>
             <div className="group/cat px-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
               <ChevronDown className="size-3" />
+              {g.icon ? <g.icon className="size-3" /> : null}
               <span className="flex-1 truncate">{g.label}</span>
               {g.onAddItem && (
                 <button
@@ -68,6 +72,15 @@ export function ChannelColumn({
                   className="opacity-0 group-hover/cat:opacity-100 hover:text-foreground p-0.5"
                 >
                   <Plus className="size-3.5" />
+                </button>
+              )}
+              {g.onEditGroupIcon && (
+                <button
+                  onClick={g.onEditGroupIcon}
+                  title="Change category icon"
+                  className="opacity-0 group-hover/cat:opacity-100 hover:text-foreground p-0.5"
+                >
+                  <Smile className="size-3.5" />
                 </button>
               )}
               {g.onEditGroupPerms && (
@@ -128,6 +141,15 @@ export function ChannelColumn({
                         className="opacity-0 group-hover/ch:opacity-100 hover:text-primary p-1"
                       >
                         <Shield className="size-3.5" />
+                      </button>
+                    )}
+                    {g.onEditItemIcon && (
+                      <button
+                        onClick={(e) => { e.preventDefault(); g.onEditItemIcon!(it.to); }}
+                        title="Change channel icon"
+                        className="opacity-0 group-hover/ch:opacity-100 hover:text-foreground p-1"
+                      >
+                        <Smile className="size-3.5" />
                       </button>
                     )}
                   </div>
