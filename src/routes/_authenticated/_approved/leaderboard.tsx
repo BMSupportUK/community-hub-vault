@@ -30,6 +30,14 @@ type Invite = {
   referral_bonus_paid_at: string | null;
 };
 
+type AdminInvite = Invite & {
+  created_by: string;
+  inviter_name: string | null;
+  inviter_username: string | null;
+  used_by_name: string | null;
+  used_by_username: string | null;
+};
+
 function makeCode(len = 8) {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   let s = "";
@@ -43,6 +51,7 @@ function LeaderboardPage() {
   const [tab, setTab] = useState("welcome");
   const [rows, setRows] = useState<LeaderRow[]>([]);
   const [invites, setInvites] = useState<Invite[]>([]);
+  const [adminInvites, setAdminInvites] = useState<AdminInvite[]>([]);
   const [loading, setLoading] = useState(false);
   const [creating, setCreating] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -66,11 +75,38 @@ function LeaderboardPage() {
     setInvites((data ?? []) as Invite[]);
   };
 
+  const loadAdminInvites = async () => {
+    if (!isAdmin) return;
+    const { data, error } = await supabase
+      .from("invites")
+      .select("id, code, used_by, used_at, created_at, referral_bonus_paid, referral_bonus_paid_at, created_by")
+      .not("used_by", "is", null)
+      .order("used_at", { ascending: false });
+    if (error) return toast.error(error.message);
+    const rows = (data ?? []) as (Invite & { created_by: string })[];
+    const ids = Array.from(new Set(rows.flatMap((r) => [r.created_by, r.used_by].filter(Boolean) as string[])));
+    let profileMap: Record<string, { display_name: string | null; username: string | null }> = {};
+    if (ids.length) {
+      const { data: profs } = await supabase.from("profiles").select("id, display_name, username").in("id", ids);
+      profileMap = Object.fromEntries((profs ?? []).map((p) => [p.id, { display_name: p.display_name, username: p.username }]));
+    }
+    setAdminInvites(
+      rows.map((r) => ({
+        ...r,
+        inviter_name: profileMap[r.created_by]?.display_name ?? null,
+        inviter_username: profileMap[r.created_by]?.username ?? null,
+        used_by_name: r.used_by ? profileMap[r.used_by]?.display_name ?? null : null,
+        used_by_username: r.used_by ? profileMap[r.used_by]?.username ?? null : null,
+      })),
+    );
+  };
+
   useEffect(() => {
     loadLeaderboard();
     loadMyInvites();
+    loadAdminInvites();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id]);
+  }, [user?.id, isAdmin]);
 
   const createInvite = async () => {
     if (!user) return;
@@ -115,7 +151,7 @@ function LeaderboardPage() {
     loadMyInvites();
   };
 
-  const toggleBonus = async (inv: Invite) => {
+  const toggleBonus = async (inv: { id: string; referral_bonus_paid: boolean }) => {
     const next = !inv.referral_bonus_paid;
     const { error } = await supabase
       .from("invites")
@@ -128,6 +164,7 @@ function LeaderboardPage() {
     if (error) return toast.error(error.message);
     toast.success(next ? "Marked bonus as paid" : "Bonus mark removed");
     loadMyInvites();
+    loadAdminInvites();
   };
 
   const myStats = {
@@ -151,10 +188,13 @@ function LeaderboardPage() {
 
       <div className="px-8 py-6">
         <Tabs value={tab} onValueChange={setTab} className="w-full">
-          <TabsList className="grid grid-cols-3 max-w-2xl bg-purple-950/60 border border-purple-500/30">
+          <TabsList className={`grid ${isAdmin ? "grid-cols-4 max-w-3xl" : "grid-cols-3 max-w-2xl"} bg-purple-950/60 border border-purple-500/30`}>
             <TabsTrigger value="welcome" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white">Welcome</TabsTrigger>
             <TabsTrigger value="leaderboard" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white">Leaderboard</TabsTrigger>
             <TabsTrigger value="invites" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white">My Invites</TabsTrigger>
+            {isAdmin && (
+              <TabsTrigger value="bonuses" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white">Bonuses</TabsTrigger>
+            )}
           </TabsList>
 
           <TabsContent value="welcome" className="mt-6">
