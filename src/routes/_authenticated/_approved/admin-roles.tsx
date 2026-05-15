@@ -108,6 +108,9 @@ function AdminRolesPage() {
   const styleFor = (role: string) => SYSTEM_STYLE[role] ?? CUSTOM_STYLE;
 
   if (!isAdmin) return <Navigate to="/home" />;
+  if (!isAdminUnlocked(user?.id)) {
+    return <Navigate to="/admin" search={{ next: "/admin-roles" } as never} />;
+  }
 
   return (
     <main className="flex-1 overflow-y-auto">
