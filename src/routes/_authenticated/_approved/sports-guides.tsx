@@ -10,6 +10,9 @@ import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/_approved/sports-guides")({
   component: SportsGuidesRoute,
+  validateSearch: (search: Record<string, unknown>): { cat?: string } => ({
+    cat: typeof search.cat === "string" ? search.cat : undefined,
+  }),
 });
 
 function SportsGuidesRoute() {
@@ -36,6 +39,7 @@ type Blog = {
 function SportsGuidesPage() {
   const { isMod, user, hasAny } = useAuth();
   const navigate = useNavigate();
+  const { cat: catFromUrl } = Route.useSearch();
   const canManageCategories = hasAny(["admin", "management", "staff"]);
   const [tab, setTab] = useState("welcome");
   const [categories, setCategories] = useState<Category[]>([]);
@@ -68,6 +72,14 @@ function SportsGuidesPage() {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
+
+  // If we arrived back here from new/edit/read, jump straight to the category.
+  useEffect(() => {
+    if (catFromUrl) {
+      setActiveCat(catFromUrl);
+      setTab("guides");
+    }
+  }, [catFromUrl]);
 
   const isUnread = (b: Blog) => {
     const r = reads[b.id];
@@ -125,8 +137,14 @@ function SportsGuidesPage() {
 
   const activeCategory = categories.find((c) => c.id === activeCat);
 
-  const openNew = () => navigate({ to: "/sports-guides/new" });
-  const openEdit = (id: string) => navigate({ to: "/sports-guides/$id/edit", params: { id } });
+  const openNew = () =>
+    navigate({ to: "/sports-guides/new", search: { cat: activeCat ?? undefined } });
+  const openEdit = (id: string) =>
+    navigate({
+      to: "/sports-guides/$id/edit",
+      params: { id },
+      search: { cat: activeCat ?? undefined },
+    });
 
   const deleteBlog = async (id: string) => {
     if (!confirm("Delete this blog?")) return;
@@ -341,7 +359,7 @@ function SportsGuidesPage() {
                           <h3 className="font-display font-semibold text-lg leading-snug text-purple-50">{b.title}</h3>
                           {b.excerpt && <p className="text-sm text-purple-200/70 line-clamp-2">{b.excerpt}</p>}
                           <div className="mt-auto pt-3 flex items-center gap-2">
-                            <Button size="sm" className="flex-1 bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white border-0" onClick={() => navigate({ to: "/sports-guides/read/$id", params: { id: b.id } })}>Click to Read</Button>
+                            <Button size="sm" className="flex-1 bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white border-0" onClick={() => navigate({ to: "/sports-guides/read/$id", params: { id: b.id }, search: { cat: b.category_id } })}>Click to Read</Button>
                             <Button
                               size="icon"
                               variant="ghost"
