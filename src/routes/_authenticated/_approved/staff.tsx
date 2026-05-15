@@ -197,7 +197,7 @@ function StaffPage() {
                     <span className="text-xs px-2 py-0.5 rounded-full bg-purple-800/60 text-purple-100 border border-purple-500/30">
                       {list.length}
                     </span>
-                    <div className="flex-1 h-px bg-blue-500/20" />
+                    <div className="flex-1 h-px bg-purple-500/20" />
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -317,7 +317,7 @@ function FriendActionMini({
   }
   if (state.kind === "outgoing") {
     return (
-      <span className="flex items-center justify-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg bg-purple-900/60 text-purple-200/80 ring-1 ring-blue-500/30">
+      <span className="flex items-center justify-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg bg-purple-900/60 text-purple-200/80 ring-1 ring-purple-500/30">
         <Clock className="size-3.5" /> Pending
       </span>
     );
