@@ -51,6 +51,7 @@ export function ShiftStartEndAlert() {
   const [now, setNow] = useState(() => Date.now());
   const [active, setActive] = useState<{ slot: Slot; stage: Stage } | null>(null);
   const dismissedRef = useRef<Set<string>>(new Set()); // `${slotId}:${stage}:${phase}`
+  const localDate = useMemo(() => dateInTimeZone(now), [dateInTimeZone, now]);
 
   // Tick every second
   useEffect(() => {
@@ -63,7 +64,7 @@ export function ShiftStartEndAlert() {
   useEffect(() => {
     if (!user || !isStaff) return;
     const load = async () => {
-      const today = dateInTimeZone(Date.now());
+      const today = localDate;
       const fromDate = addDaysToDateStr(today, -1);
       const toDate = addDaysToDateStr(today, 1);
 
@@ -96,16 +97,19 @@ export function ShiftStartEndAlert() {
       .on("postgres_changes", { event: "*", schema: "public", table: "shifts", filter: `user_id=eq.${user.id}` }, () => load())
       .subscribe();
     return () => { supabase.removeChannel(ch); };
-  }, [user, isStaff, dateInTimeZone]);
+  }, [user, isStaff, localDate]);
 
   // Determine which alert (if any) should currently be visible
   const candidate = useMemo(() => {
+    const openShiftClockIn = openShift ? new Date(openShift.clock_in).getTime() : NaN;
     for (const slot of slots) {
       const { startsAt, endsAt } = shiftWindowToUtcMs(slot.shift_date, slot.start_time, slot.end_time);
+      if (isNaN(startsAt) || isNaN(endsAt)) continue;
 
       // End: warn before end OR keep showing overdue while still clocked in
       const toEnd = endsAt - now;
-      if (openShift) {
+      const isOpenForThisSlot = openShift && !isNaN(openShiftClockIn) && openShiftClockIn <= endsAt && now >= startsAt - WARN_BEFORE;
+      if (isOpenForThisSlot) {
         if (toEnd <= 0) {
           const key = `${slot.id}:end:overdue`;
           if (!dismissedRef.current.has(key)) return { slot, stage: "end" as Stage };
