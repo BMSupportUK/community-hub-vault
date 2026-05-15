@@ -562,7 +562,7 @@ function ProfilePage() {
             <ActivityCard title="Recent orders" icon={ShoppingBag} empty="No orders yet">
               {orders.map((o) => (
                 <li key={o.id} className="flex items-center justify-between gap-3 py-2 text-sm">
-                  <span>${(o.total_cents / 100).toFixed(2)}</span>
+                  <span>£{(o.total_cents / 100).toFixed(2)}</span>
                   <span className="text-xs text-white/70 capitalize">{o.status}</span>
                 </li>
               ))}
