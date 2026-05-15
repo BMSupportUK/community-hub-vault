@@ -34,6 +34,7 @@ import { Route as AuthenticatedApprovedHomeRouteImport } from './routes/_authent
 import { Route as AuthenticatedApprovedClockRouteImport } from './routes/_authenticated/_approved/clock'
 import { Route as AuthenticatedApprovedAdminRolesRouteImport } from './routes/_authenticated/_approved/admin-roles'
 import { Route as AuthenticatedApprovedAdminReviewsRouteImport } from './routes/_authenticated/_approved/admin-reviews'
+import { Route as AuthenticatedApprovedAdminProfanityRouteImport } from './routes/_authenticated/_approved/admin-profanity'
 import { Route as AuthenticatedApprovedAdminPermissionsRouteImport } from './routes/_authenticated/_approved/admin-permissions'
 import { Route as AuthenticatedApprovedAdminDnsRouteImport } from './routes/_authenticated/_approved/admin-dns'
 import { Route as AuthenticatedApprovedAdminCredentialsRouteImport } from './routes/_authenticated/_approved/admin-credentials'
@@ -184,6 +185,12 @@ const AuthenticatedApprovedAdminReviewsRoute =
     path: '/admin-reviews',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
+const AuthenticatedApprovedAdminProfanityRoute =
+  AuthenticatedApprovedAdminProfanityRouteImport.update({
+    id: '/admin-profanity',
+    path: '/admin-profanity',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
 const AuthenticatedApprovedAdminPermissionsRoute =
   AuthenticatedApprovedAdminPermissionsRouteImport.update({
     id: '/admin-permissions',
@@ -257,6 +264,7 @@ export interface FileRoutesByFullPath {
   '/admin-credentials': typeof AuthenticatedApprovedAdminCredentialsRoute
   '/admin-dns': typeof AuthenticatedApprovedAdminDnsRoute
   '/admin-permissions': typeof AuthenticatedApprovedAdminPermissionsRoute
+  '/admin-profanity': typeof AuthenticatedApprovedAdminProfanityRoute
   '/admin-reviews': typeof AuthenticatedApprovedAdminReviewsRoute
   '/admin-roles': typeof AuthenticatedApprovedAdminRolesRoute
   '/clock': typeof AuthenticatedApprovedClockRoute
@@ -292,6 +300,7 @@ export interface FileRoutesByTo {
   '/admin-credentials': typeof AuthenticatedApprovedAdminCredentialsRoute
   '/admin-dns': typeof AuthenticatedApprovedAdminDnsRoute
   '/admin-permissions': typeof AuthenticatedApprovedAdminPermissionsRoute
+  '/admin-profanity': typeof AuthenticatedApprovedAdminProfanityRoute
   '/admin-reviews': typeof AuthenticatedApprovedAdminReviewsRoute
   '/admin-roles': typeof AuthenticatedApprovedAdminRolesRoute
   '/clock': typeof AuthenticatedApprovedClockRoute
@@ -329,6 +338,7 @@ export interface FileRoutesById {
   '/_authenticated/_approved/admin-credentials': typeof AuthenticatedApprovedAdminCredentialsRoute
   '/_authenticated/_approved/admin-dns': typeof AuthenticatedApprovedAdminDnsRoute
   '/_authenticated/_approved/admin-permissions': typeof AuthenticatedApprovedAdminPermissionsRoute
+  '/_authenticated/_approved/admin-profanity': typeof AuthenticatedApprovedAdminProfanityRoute
   '/_authenticated/_approved/admin-reviews': typeof AuthenticatedApprovedAdminReviewsRoute
   '/_authenticated/_approved/admin-roles': typeof AuthenticatedApprovedAdminRolesRoute
   '/_authenticated/_approved/clock': typeof AuthenticatedApprovedClockRoute
@@ -366,6 +376,7 @@ export interface FileRouteTypes {
     | '/admin-credentials'
     | '/admin-dns'
     | '/admin-permissions'
+    | '/admin-profanity'
     | '/admin-reviews'
     | '/admin-roles'
     | '/clock'
@@ -401,6 +412,7 @@ export interface FileRouteTypes {
     | '/admin-credentials'
     | '/admin-dns'
     | '/admin-permissions'
+    | '/admin-profanity'
     | '/admin-reviews'
     | '/admin-roles'
     | '/clock'
@@ -437,6 +449,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/admin-credentials'
     | '/_authenticated/_approved/admin-dns'
     | '/_authenticated/_approved/admin-permissions'
+    | '/_authenticated/_approved/admin-profanity'
     | '/_authenticated/_approved/admin-reviews'
     | '/_authenticated/_approved/admin-roles'
     | '/_authenticated/_approved/clock'
@@ -647,6 +660,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedApprovedAdminReviewsRouteImport
       parentRoute: typeof AuthenticatedApprovedRoute
     }
+    '/_authenticated/_approved/admin-profanity': {
+      id: '/_authenticated/_approved/admin-profanity'
+      path: '/admin-profanity'
+      fullPath: '/admin-profanity'
+      preLoaderRoute: typeof AuthenticatedApprovedAdminProfanityRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
     '/_authenticated/_approved/admin-permissions': {
       id: '/_authenticated/_approved/admin-permissions'
       path: '/admin-permissions'
@@ -763,6 +783,7 @@ interface AuthenticatedApprovedRouteChildren {
   AuthenticatedApprovedAdminCredentialsRoute: typeof AuthenticatedApprovedAdminCredentialsRoute
   AuthenticatedApprovedAdminDnsRoute: typeof AuthenticatedApprovedAdminDnsRoute
   AuthenticatedApprovedAdminPermissionsRoute: typeof AuthenticatedApprovedAdminPermissionsRoute
+  AuthenticatedApprovedAdminProfanityRoute: typeof AuthenticatedApprovedAdminProfanityRoute
   AuthenticatedApprovedAdminReviewsRoute: typeof AuthenticatedApprovedAdminReviewsRoute
   AuthenticatedApprovedAdminRolesRoute: typeof AuthenticatedApprovedAdminRolesRoute
   AuthenticatedApprovedClockRoute: typeof AuthenticatedApprovedClockRoute
@@ -789,6 +810,8 @@ const AuthenticatedApprovedRouteChildren: AuthenticatedApprovedRouteChildren = {
   AuthenticatedApprovedAdminDnsRoute: AuthenticatedApprovedAdminDnsRoute,
   AuthenticatedApprovedAdminPermissionsRoute:
     AuthenticatedApprovedAdminPermissionsRoute,
+  AuthenticatedApprovedAdminProfanityRoute:
+    AuthenticatedApprovedAdminProfanityRoute,
   AuthenticatedApprovedAdminReviewsRoute:
     AuthenticatedApprovedAdminReviewsRoute,
   AuthenticatedApprovedAdminRolesRoute: AuthenticatedApprovedAdminRolesRoute,
