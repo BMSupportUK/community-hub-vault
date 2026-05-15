@@ -7,6 +7,7 @@ import { ShoppingBag, Package, Settings, Plus, Minus, X, Send, Trash2, Pencil, I
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import shopHero from "@/assets/shop-hero.jpg";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 type View = "store" | "orders" | "admin" | "refund" | "multi_room" | "triple_room";
 
@@ -224,6 +225,7 @@ function Storefront() {
   const [products, setProducts] = useState<Product[]>([]);
   const [cart, setCart] = useState<Record<string, number>>({});
   const [showCheckout, setShowCheckout] = useState(false);
+  const [tab, setTab] = useState<string>("welcome");
   const navigate = useNavigate();
   const { user } = useAuth();
 
@@ -272,8 +274,18 @@ function Storefront() {
   return (
     <main className="flex-1 flex flex-col overflow-hidden">
       <div className="flex-1 overflow-y-auto">
-        {/* Welcome Hero */}
-        <section className="relative overflow-hidden border-b border-border">
+        <div className="px-6 pt-6">
+          <Tabs value={tab} onValueChange={setTab} className="w-full">
+            <TabsList className="bg-surface-2 border border-border flex flex-wrap h-auto">
+              <TabsTrigger value="welcome" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-sky-400 data-[state=active]:text-white">Welcome</TabsTrigger>
+              <TabsTrigger value="shop" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-sky-400 data-[state=active]:text-white">Shop</TabsTrigger>
+              <TabsTrigger value="refund" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-sky-400 data-[state=active]:text-white">Refund Policy</TabsTrigger>
+              <TabsTrigger value="multi_room" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-sky-400 data-[state=active]:text-white">Multi-room Rules</TabsTrigger>
+              <TabsTrigger value="triple_room" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-sky-400 data-[state=active]:text-white">Triple-room Rules</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="welcome" className="mt-4">
+              <section className="relative overflow-hidden border border-border rounded-2xl">
           <div className="absolute inset-0 bg-gradient-to-br from-blue-950 via-blue-900 to-sky-700" />
           <div className="relative grid md:grid-cols-2 gap-6 p-6 md:p-10 items-center">
             <div className="text-white">
@@ -297,12 +309,12 @@ function Storefront() {
                     <span className="ml-1 bg-white/20 px-1.5 rounded-full text-xs">{count}</span>
                   )}
                 </button>
-                <a
-                  href="#products"
-                  className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/10 backdrop-blur px-4 py-2.5 text-sm text-white hover:bg-white/15 transition"
-                >
-                  Shop now
-                </a>
+                        <button
+                          onClick={() => setTab("shop")}
+                          className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/10 backdrop-blur px-4 py-2.5 text-sm text-white hover:bg-white/15 transition"
+                        >
+                          Shop now
+                        </button>
               </div>
             </div>
             <div className="relative rounded-2xl overflow-hidden ring-1 ring-white/10 shadow-2xl">
@@ -317,9 +329,10 @@ function Storefront() {
             </div>
           </div>
         </section>
+            </TabsContent>
 
-        {/* Category bar */}
-        <div id="products" className="sticky top-0 z-10 bg-background/80 backdrop-blur border-b border-border px-6 py-3 flex items-center gap-2 flex-wrap">
+            <TabsContent value="shop" className="mt-4">
+              <div id="products" className="bg-background/80 backdrop-blur border border-border rounded-xl px-4 py-3 flex items-center gap-2 flex-wrap mb-4">
           {categories.map((c) => (
             <button
               key={c}
@@ -334,9 +347,7 @@ function Storefront() {
               {c}
             </button>
           ))}
-        </div>
-
-        <div className="p-6">
+              </div>
         {filtered.length === 0 ? (
           <div className="text-center text-muted-foreground py-20">No products yet.</div>
         ) : (
@@ -367,11 +378,23 @@ function Storefront() {
             ))}
           </div>
         )}
+            </TabsContent>
+
+            <TabsContent value="refund" className="mt-4"><InlinePolicy policyKey="refund" /></TabsContent>
+            <TabsContent value="multi_room" className="mt-4"><InlinePolicy policyKey="multi_room" /></TabsContent>
+            <TabsContent value="triple_room" className="mt-4"><InlinePolicy policyKey="triple_room" /></TabsContent>
+          </Tabs>
         </div>
       </div>
       {showCheckout && <Checkout items={cartItems.map((p) => ({ ...p, qty: cart[p.id] }))} total={total} onClose={() => setShowCheckout(false)} onPlace={placeOrder} />}
     </main>
   );
+}
+
+function InlinePolicy({ policyKey }: { policyKey: PolicyKey }) {
+  const { hasAny } = useAuth();
+  const isAdmin = hasAny(["admin", "management"]);
+  return <PolicyView policyKey={policyKey} isAdmin={isAdmin} />;
 }
 
 function Checkout({ items, total, onClose, onPlace }: {
