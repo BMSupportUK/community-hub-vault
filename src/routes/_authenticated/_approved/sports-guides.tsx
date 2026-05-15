@@ -27,8 +27,8 @@ type Blog = {
   published: boolean;
   created_at: string;
   sort_order: number;
+  updated_at?: string;
 };
-type Blog2 = Blog & { updated_at?: string };
 
 function SportsGuidesPage() {
   const { isMod, user } = useAuth();
