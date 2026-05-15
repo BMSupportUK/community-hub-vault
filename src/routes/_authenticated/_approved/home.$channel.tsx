@@ -830,12 +830,15 @@ function ChannelPage() {
               }
             }}
             rows={1}
-            placeholder={`Message #${channel.name} — type @ to mention`}
+            placeholder={canSend
+              ? `Message #${channel.name} — type @ to mention`
+              : `You don't have permission to send messages in this channel`}
+            disabled={!canSend}
             className="flex-1 bg-transparent resize-none outline-none text-sm py-1 max-h-32"
           />
           <button
             onClick={send}
-            disabled={sending || !draft.trim()}
+            disabled={sending || !draft.trim() || !canSend}
             className="size-8 rounded-lg bg-primary text-primary-foreground grid place-items-center disabled:opacity-50"
           >
             {sending ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
