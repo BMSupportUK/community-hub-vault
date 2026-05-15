@@ -42,10 +42,10 @@ interface IncidentUpdate {
 }
 
 const STATUS_META: Record<IncidentStatus, { label: string; classes: string; icon: React.ComponentType<{ className?: string }> }> = {
-  investigating: { label: "Investigating", classes: "bg-blue-500/15 text-blue-300 border-blue-500/30", icon: Search },
-  identified: { label: "Identified", classes: "bg-indigo-500/15 text-indigo-300 border-indigo-500/30", icon: AlertTriangle },
-  monitoring: { label: "Monitoring", classes: "bg-sky-500/15 text-sky-300 border-sky-500/30", icon: Eye },
-  completed: { label: "Completed", classes: "bg-cyan-500/15 text-cyan-300 border-cyan-500/30", icon: CheckCircle2 },
+  investigating: { label: "Investigating", classes: "bg-violet-500/15 text-violet-300 border-violet-500/30", icon: Search },
+  identified: { label: "Identified", classes: "bg-fuchsia-500/15 text-fuchsia-300 border-fuchsia-500/30", icon: AlertTriangle },
+  monitoring: { label: "Monitoring", classes: "bg-blue-500/15 text-blue-300 border-blue-500/30", icon: Eye },
+  completed: { label: "Completed", classes: "bg-emerald-500/15 text-emerald-300 border-emerald-500/30", icon: CheckCircle2 },
 };
 
 function StatusPage() {
@@ -83,22 +83,22 @@ function StatusPage() {
     <main className="flex-1 overflow-y-auto">
       <div className="max-w-5xl mx-auto px-6 py-8 space-y-6">
         {/* Hero illustration */}
-        <div className="relative rounded-3xl overflow-hidden border border-blue-500/30 shadow-glow bg-gradient-to-br from-violet-600 via-fuchsia-600 to-blue-600">
+        <div className="relative rounded-3xl overflow-hidden border border-primary/30 shadow-glow bg-gradient-primary">
           <img
             src={statusHero}
             alt="BM Support engineer monitoring systems"
             className="w-full h-44 sm:h-56 object-cover object-center"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-blue-950/80 via-blue-950/10 to-transparent pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-t from-background/85 via-background/20 to-transparent pointer-events-none" />
           <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-6">
             <div className="font-display text-2xl sm:text-3xl font-bold text-white drop-shadow">BM Support · System Status</div>
-            <div className="text-sm text-blue-100/90">Real-time infrastructure monitoring</div>
+            <div className="text-sm text-white/85">Real-time infrastructure monitoring</div>
           </div>
         </div>
 
         <header className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="size-11 rounded-2xl bg-gradient-to-br from-violet-600 to-blue-600 grid place-items-center shadow-glow">
+            <div className="size-11 rounded-2xl bg-gradient-primary grid place-items-center shadow-glow">
               <Activity className="size-5 text-white" />
             </div>
             <div>
@@ -109,7 +109,7 @@ function StatusPage() {
           {canManage && (
             <button
               onClick={() => setEditor({ open: true })}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-violet-600 to-blue-600 text-white font-medium shadow-glow hover:opacity-90"
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-accent text-white font-medium shadow-glow hover:opacity-90"
             >
               <Plus className="size-4" /> Add Issue
             </button>
@@ -120,14 +120,14 @@ function StatusPage() {
         <div
           className={`rounded-2xl border p-6 flex items-center gap-4 ${
             active.length === 0
-              ? "border-cyan-500/30 bg-gradient-to-r from-cyan-500/10 to-blue-500/10"
-              : "border-blue-500/40 bg-gradient-to-r from-blue-500/15 to-indigo-500/10"
+              ? "border-success/40 bg-gradient-to-r from-success/10 via-primary/5 to-accent/10"
+              : "border-primary/40 bg-gradient-to-r from-primary/15 via-fuchsia-500/10 to-accent/15"
           }`}
         >
           {active.length === 0 ? (
-            <CheckCircle2 className="size-10 text-cyan-300 shrink-0" />
+            <CheckCircle2 className="size-10 text-success shrink-0" />
           ) : (
-            <ShieldAlert className="size-10 text-blue-300 shrink-0" />
+            <ShieldAlert className="size-10 text-primary shrink-0" />
           )}
           <div>
             <div className="font-display text-lg font-bold">
@@ -151,7 +151,7 @@ function StatusPage() {
               onClick={() => setTab(t)}
               className={`px-4 py-2 text-sm font-medium -mb-px border-b-2 transition-colors ${
                 tab === t
-                  ? "border-blue-400 text-blue-200"
+                  ? "border-primary text-primary"
                   : "border-transparent text-muted-foreground hover:text-foreground"
               }`}
             >

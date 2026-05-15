@@ -72,20 +72,23 @@ function AdminDashboard() {
   return (
     <main className="flex-1 overflow-y-auto">
       <div className="max-w-6xl mx-auto px-6 py-8">
-        <header className="flex items-center gap-3 mb-6">
-          <div className="size-11 rounded-2xl bg-gradient-primary grid place-items-center shadow-glow">
-            <ShieldCheck className="size-5 text-primary-foreground" />
-          </div>
-          <div className="flex-1">
-            <h1 className="font-display text-2xl font-bold">Admin Dashboard</h1>
-            <p className="text-sm text-muted-foreground">Server-wide controls — restricted to admin & management.</p>
-          </div>
+        <div className="relative rounded-3xl overflow-hidden border border-primary/30 shadow-glow bg-gradient-primary p-6 sm:p-8 mb-6">
+          <div className="absolute inset-0 bg-gradient-to-tr from-background/40 via-transparent to-transparent pointer-events-none" />
+          <header className="relative flex items-center gap-3">
+            <div className="size-12 rounded-2xl bg-white/15 backdrop-blur grid place-items-center shadow-glow ring-1 ring-white/20">
+              <ShieldCheck className="size-6 text-white" />
+            </div>
+            <div className="flex-1">
+              <h1 className="font-display text-2xl sm:text-3xl font-bold text-white drop-shadow">Admin Dashboard</h1>
+              <p className="text-sm text-white/85">Server-wide controls — restricted to admin &amp; management.</p>
+            </div>
           {unlocked && (
-            <button onClick={lockNow} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-surface-2 border border-border text-sm hover:border-primary">
+            <button onClick={lockNow} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/15 backdrop-blur border border-white/25 text-sm text-white hover:bg-white/25">
               <Lock className="size-4" /> Lock
             </button>
           )}
-        </header>
+          </header>
+        </div>
 
         {hasPin === null ? (
           <div className="grid place-items-center py-16 text-muted-foreground"><Loader2 className="size-5 animate-spin" /></div>
@@ -274,7 +277,7 @@ function DashboardBody() {
         <h2 className="font-display text-sm uppercase tracking-wide text-muted-foreground mb-3">Live snapshot</h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
           {tiles.map((t) => (
-            <div key={t.label} className="rounded-2xl border border-border bg-surface-1 p-4">
+            <div key={t.label} className="rounded-2xl border border-border bg-surface-1 p-4 hover:border-primary/50 hover:shadow-glow transition-all">
               <div className="flex items-center justify-between mb-3">
                 <div className={`size-9 rounded-xl grid place-items-center ${t.accent === "amber" ? "bg-amber-500/15 text-amber-400" : "bg-primary/15 text-primary"}`}>
                   <t.icon className="size-4" />
@@ -294,10 +297,11 @@ function DashboardBody() {
             <Link
               key={t.to}
               to={t.to}
-              className="group rounded-2xl border border-border bg-surface-1 p-4 hover:border-primary hover:shadow-glow transition-all"
+              className="group relative rounded-2xl border border-border bg-surface-1 p-4 hover:border-primary hover:shadow-glow transition-all overflow-hidden"
             >
+              <div className="absolute inset-x-0 top-0 h-1 bg-gradient-accent opacity-0 group-hover:opacity-100 transition-opacity" />
               <div className="flex items-center gap-3 mb-2">
-                <div className="size-10 rounded-xl bg-primary/15 grid place-items-center text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+                <div className="size-10 rounded-xl bg-gradient-primary grid place-items-center text-primary-foreground shadow-glow">
                   <t.icon className="size-5" />
                 </div>
                 <div className="font-display font-bold">{t.label}</div>

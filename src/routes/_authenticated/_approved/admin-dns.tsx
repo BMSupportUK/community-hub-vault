@@ -71,18 +71,21 @@ function AdminDnsPage() {
         <Link to="/admin" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-4">
           <ArrowLeft className="size-4" /> Back to admin dashboard
         </Link>
-        <header className="flex items-center gap-3 mb-6">
-          <div className="size-11 rounded-2xl bg-gradient-primary grid place-items-center shadow-glow">
-            <Globe className="size-5 text-primary-foreground" />
-          </div>
-          <div className="flex-1">
-            <h1 className="font-display text-2xl font-bold">QD DNS Codes</h1>
-            <p className="text-sm text-muted-foreground">Shared DNS codes available to all approved members.</p>
-          </div>
-          <button onClick={() => setCreating(true)} className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-primary text-primary-foreground font-medium text-sm shadow-glow">
-            <Plus className="size-4" /> New DNS code
-          </button>
-        </header>
+        <div className="relative rounded-3xl overflow-hidden border border-primary/30 shadow-glow bg-gradient-primary p-5 sm:p-6 mb-6">
+          <div className="absolute inset-0 bg-gradient-to-tr from-background/40 via-transparent to-transparent pointer-events-none" />
+          <header className="relative flex items-center gap-3">
+            <div className="size-11 rounded-2xl bg-white/15 backdrop-blur grid place-items-center shadow-glow ring-1 ring-white/20">
+              <Globe className="size-5 text-white" />
+            </div>
+            <div className="flex-1">
+              <h1 className="font-display text-2xl font-bold text-white drop-shadow">QD DNS Codes</h1>
+              <p className="text-sm text-white/85">Shared DNS codes available to all approved members.</p>
+            </div>
+            <button onClick={() => setCreating(true)} className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-white/15 backdrop-blur border border-white/25 text-white font-medium text-sm hover:bg-white/25">
+              <Plus className="size-4" /> New DNS code
+            </button>
+          </header>
+        </div>
 
         <div className="relative mb-4">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
@@ -100,7 +103,8 @@ function AdminDnsPage() {
         ) : (
           <ul className="grid sm:grid-cols-2 gap-3">
             {filtered.map((r) => (
-              <li key={r.id} className="rounded-2xl border border-border bg-surface-1 p-4 space-y-3">
+              <li key={r.id} className="group relative rounded-2xl border border-border bg-surface-1 p-4 space-y-3 hover:border-primary/50 hover:shadow-glow transition-all overflow-hidden">
+                <div className="absolute inset-x-0 top-0 h-1 bg-gradient-accent opacity-0 group-hover:opacity-100 transition-opacity" />
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-2 min-w-0">
                     <Globe className="size-4 text-primary shrink-0" />
