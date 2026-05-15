@@ -82,7 +82,7 @@ export function UserAvatarMenu() {
           className="group relative flex items-center gap-2 rounded-full bg-rail/80 ring-1 ring-border hover:ring-primary/60 hover:bg-surface-2 transition-all px-1.5 py-1 shadow-soft"
         >
           <Avatar className="h-7 w-7 ring-2 ring-primary/40 group-hover:ring-primary transition">
-            {profile?.avatar_url ? <AvatarImage src={profile.avatar_url} alt={name} /> : null}
+            <AvatarImage src={profile?.avatar_url || "/default-avatar.png"} alt={name} />
             <AvatarFallback className="text-[10px] font-bold bg-gradient-primary text-primary-foreground">
               {initial}
             </AvatarFallback>
@@ -98,7 +98,7 @@ export function UserAvatarMenu() {
         <div className="bg-gradient-to-br from-primary/30 via-fuchsia-500/20 to-blue-500/20 p-4 pb-3">
           <div className="flex items-center gap-3">
             <Avatar className="h-14 w-14 ring-2 ring-background shadow-lg">
-              {profile?.avatar_url ? <AvatarImage src={profile.avatar_url} alt={name} /> : null}
+              <AvatarImage src={profile?.avatar_url || "/default-avatar.png"} alt={name} />
               <AvatarFallback className="text-base font-bold bg-gradient-primary text-primary-foreground">
                 {initial}
               </AvatarFallback>
