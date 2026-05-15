@@ -39,6 +39,10 @@ function HomeLayout() {
   const [categoryIcons, setCategoryIcons] = useState<Record<string, string>>({});
   const [editChannelIcon, setEditChannelIcon] = useState<ChannelRow | null>(null);
   const [editCategoryIcon, setEditCategoryIcon] = useState<string | null>(null);
+  const [renameChannel, setRenameChannel] = useState<ChannelRow | null>(null);
+  const [renameChannelName, setRenameChannelName] = useState("");
+  const [renameCategory, setRenameCategory] = useState<string | null>(null);
+  const [renameCategoryName, setRenameCategoryName] = useState("");
 
   const load = async () => {
     const { data } = await supabase
@@ -176,6 +180,50 @@ function HomeLayout() {
     load();
   };
 
+  const saveChannelRename = async () => {
+    if (!renameChannel) return;
+    const name = renameChannelName.trim();
+    if (!name) return toast.error("Name cannot be empty");
+    const { error } = await supabase
+      .from("chat_channels")
+      .update({ name })
+      .eq("id", renameChannel.id);
+    if (error) return toast.error(error.message);
+    toast.success("Channel renamed");
+    setRenameChannel(null);
+    setRenameChannelName("");
+    load();
+  };
+
+  const saveCategoryRename = async () => {
+    if (!renameCategory) return;
+    const next = renameCategoryName.trim();
+    if (!next) return toast.error("Name cannot be empty");
+    if (next === renameCategory) { setRenameCategory(null); return; }
+    const ids = (channels ?? []).filter((c) => c.group_label === renameCategory).map((c) => c.id);
+    if (ids.length === 0) { setRenameCategory(null); return; }
+    const { error } = await supabase
+      .from("chat_channels")
+      .update({ group_label: next })
+      .in("id", ids);
+    if (error) return toast.error(error.message);
+    if (categoryIcons[renameCategory]) {
+      const merged = { ...categoryIcons, [next]: categoryIcons[renameCategory] };
+      delete merged[renameCategory];
+      await supabase
+        .from("app_settings")
+        .upsert(
+          { key: "category_icons", value: merged, updated_at: new Date().toISOString() },
+          { onConflict: "key" },
+        );
+      setCategoryIcons(merged);
+    }
+    toast.success("Category renamed");
+    setRenameCategory(null);
+    setRenameCategoryName("");
+    load();
+  };
+
   const groups: ChannelGroup[] = [];
   if (channels) {
     const byGroup = new Map<string, ChannelRow[]>();
@@ -214,6 +262,16 @@ function HomeLayout() {
             }
           : undefined,
         onEditGroupIcon: isAdmin ? () => setEditCategoryIcon(label) : undefined,
+        onRenameItem: isAdmin
+          ? (to) => {
+              const slug = to.replace("/home/", "");
+              const ch = channels?.find((x) => x.slug === slug);
+              if (ch) { setRenameChannel(ch); setRenameChannelName(ch.name); }
+            }
+          : undefined,
+        onRenameGroup: isAdmin
+          ? () => { setRenameCategory(label); setRenameCategoryName(label); }
+          : undefined,
       });
     }
   }
@@ -283,6 +341,52 @@ function HomeLayout() {
         current={editCategoryIcon ? categoryIcons[editCategoryIcon] : undefined}
         onSave={saveCategoryIcon}
       />
+
+      <Dialog open={!!renameChannel} onOpenChange={(o) => !o && setRenameChannel(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Rename channel</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label>Channel name</Label>
+              <Input
+                autoFocus
+                value={renameChannelName}
+                onChange={(e) => setRenameChannelName(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") saveChannelRename(); }}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setRenameChannel(null)}>Cancel</Button>
+            <Button onClick={saveChannelRename}>Save</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!renameCategory} onOpenChange={(o) => !o && setRenameCategory(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Rename category</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label>Category name</Label>
+              <Input
+                autoFocus
+                value={renameCategoryName}
+                onChange={(e) => setRenameCategoryName(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") saveCategoryRename(); }}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setRenameCategory(null)}>Cancel</Button>
+            <Button onClick={saveCategoryRename}>Save</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
