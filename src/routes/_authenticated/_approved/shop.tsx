@@ -9,6 +9,8 @@ import { cn } from "@/lib/utils";
 import shopHero from "@/assets/shop-hero.jpg";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useCurrency } from "@/hooks/use-currency";
+import { downloadReceipt } from "@/lib/receipt";
+import { Download } from "lucide-react";
 
 type View = "store" | "orders" | "admin" | "refund" | "multi_room" | "triple_room";
 
@@ -736,6 +738,15 @@ function OrderDetail({ orderId, isAdmin }: { orderId: string; isAdmin: boolean }
     toast.success("Sale completed");
   };
 
+  const handleDownload = async () => {
+    if (!order) return;
+    try {
+      await downloadReceipt(order, items);
+    } catch (e) {
+      toast.error((e as Error).message || "Could not generate PDF");
+    }
+  };
+
   if (!order) return <main className="flex-1 grid place-items-center text-muted-foreground text-sm">Loading…</main>;
 
   return (
@@ -746,6 +757,10 @@ function OrderDetail({ orderId, isAdmin }: { orderId: string; isAdmin: boolean }
           <div className="text-[11px] text-muted-foreground">{new Date(order.created_at).toLocaleString()}</div>
         </div>
         <div className="flex items-center gap-2 flex-wrap justify-end">
+          <button onClick={handleDownload}
+            className="px-2.5 py-1 rounded-md bg-surface-2 text-xs font-medium flex items-center gap-1 hover:bg-surface-2/80">
+            <Download className="size-3.5" /> {order.paid_at ? "Receipt" : "Invoice"} PDF
+          </button>
           {isAdmin ? (
             <>
               <button onClick={acceptOrder} disabled={order.status !== "pending"}
