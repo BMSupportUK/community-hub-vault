@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Hash, ChevronDown, Plus, Trash2, Shield, Smile } from "lucide-react";
+import { Hash, ChevronDown, Plus, Trash2, Shield, Smile, Pencil } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
@@ -17,6 +17,8 @@ export interface ChannelGroup {
   onEditGroupPerms?: () => void;
   onEditItemIcon?: (to: string) => void;
   onEditGroupIcon?: () => void;
+  onRenameItem?: (to: string) => void;
+  onRenameGroup?: () => void;
 }
 
 export function ChannelColumn({
@@ -81,6 +83,15 @@ export function ChannelColumn({
                   className="opacity-0 group-hover/cat:opacity-100 hover:text-foreground p-0.5"
                 >
                   <Smile className="size-3.5" />
+                </button>
+              )}
+              {g.onRenameGroup && (
+                <button
+                  onClick={g.onRenameGroup}
+                  title="Rename category"
+                  className="opacity-0 group-hover/cat:opacity-100 hover:text-foreground p-0.5"
+                >
+                  <Pencil className="size-3.5" />
                 </button>
               )}
               {g.onEditGroupPerms && (
@@ -150,6 +161,15 @@ export function ChannelColumn({
                         className="opacity-0 group-hover/ch:opacity-100 hover:text-foreground p-1"
                       >
                         <Smile className="size-3.5" />
+                      </button>
+                    )}
+                    {g.onRenameItem && (
+                      <button
+                        onClick={(e) => { e.preventDefault(); g.onRenameItem!(it.to); }}
+                        title="Rename channel"
+                        className="opacity-0 group-hover/ch:opacity-100 hover:text-foreground p-1"
+                      >
+                        <Pencil className="size-3.5" />
                       </button>
                     )}
                   </div>
