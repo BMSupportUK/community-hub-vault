@@ -60,18 +60,18 @@ function HomeLayout() {
 
   useEffect(() => { load(); loadCategoryIcons(); }, []);
 
-  const saveChannelIcon = async (iconName: string) => {
+  const saveChannelIcon = async (iconName: string): Promise<void> => {
     if (!editChannelIcon) return;
     const { error } = await supabase
       .from("chat_channels")
       .update({ icon: iconName })
       .eq("id", editChannelIcon.id);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     toast.success("Icon updated");
     load();
   };
 
-  const saveCategoryIcon = async (iconName: string) => {
+  const saveCategoryIcon = async (iconName: string): Promise<void> => {
     if (!editCategoryIcon) return;
     const next = { ...categoryIcons, [editCategoryIcon]: iconName };
     const { error } = await supabase
@@ -80,7 +80,7 @@ function HomeLayout() {
         { key: "category_icons", value: next, updated_at: new Date().toISOString() },
         { onConflict: "key" },
       );
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     setCategoryIcons(next);
     toast.success("Icon updated");
   };
