@@ -1,12 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { Hash, Megaphone, Loader2, Send, Trash2, EyeOff, Eye, Pin, PinOff, X } from "lucide-react";
+import { Hash, Megaphone, Loader2, Send, Trash2, EyeOff, Eye, Pin, PinOff, X, ShieldOff } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 import { MentionText, mentionsCurrentUser, useMentionAutocomplete } from "@/components/app/mentions";
 import { StaffOnDutyStrip } from "@/components/app/StaffOnDutyStrip";
 import { cn } from "@/lib/utils";
+import { DEFAULT_AVATAR_URL } from "@/lib/default-avatar";
 
 export const Route = createFileRoute("/_authenticated/_approved/home/$channel")({
   component: ChannelPage,
@@ -43,9 +44,11 @@ function ChannelPage() {
   const isAdmin = hasAny(["admin", "management"]);
   const canPin = hasAny(["admin", "management", "moderator", "staff"]);
   const [pinnedOpen, setPinnedOpen] = useState(false);
+  const [ignoredOpen, setIgnoredOpen] = useState(false);
   const [myUsername, setMyUsername] = useState<string | null>(null);
   const [ignoredIds, setIgnoredIds] = useState<Set<string>>(new Set());
   const [staffIds, setStaffIds] = useState<Set<string>>(new Set());
+  const [ignoredProfiles, setIgnoredProfiles] = useState<Record<string, Profile>>({});
 
   // Load my ignore list
   useEffect(() => {
@@ -58,6 +61,24 @@ function ChannelPage() {
         setIgnoredIds(new Set((data ?? []).map((r: { ignored_id: string }) => r.ignored_id)));
       });
   }, [user?.id]);
+
+  // Load profiles for ignored users (so we can show them in the manage panel)
+  useEffect(() => {
+    const ids = Array.from(ignoredIds);
+    if (ids.length === 0) {
+      setIgnoredProfiles({});
+      return;
+    }
+    supabase
+      .from("profiles")
+      .select("id, display_name, username, avatar_url")
+      .in("id", ids)
+      .then(({ data }) => {
+        const next: Record<string, Profile> = {};
+        for (const p of (data as Profile[] | null) ?? []) next[p.id] = p;
+        setIgnoredProfiles(next);
+      });
+  }, [ignoredIds]);
 
   // Load staff role memberships (so we know who can't be ignored)
   useEffect(() => {
@@ -321,6 +342,59 @@ function ChannelPage() {
                             <PinOff className="size-3" /> Unpin
                           </button>
                         )}
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </div>
+          )}
+        </div>
+        <div className="relative">
+          <button
+            onClick={() => setIgnoredOpen((v) => !v)}
+            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground px-2 py-1 rounded hover:bg-surface-2 transition-colors"
+            title="Ignored users"
+          >
+            <ShieldOff className="size-4" />
+            <span className="tabular-nums">{ignoredIds.size}</span>
+          </button>
+          {ignoredOpen && (
+            <div className="absolute right-0 top-full mt-2 w-80 max-h-96 overflow-y-auto rounded-lg border border-border bg-popover shadow-lg z-30">
+              <div className="flex items-center justify-between px-3 py-2 border-b border-border">
+                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Ignored users</span>
+                <button onClick={() => setIgnoredOpen(false)} className="text-muted-foreground hover:text-foreground">
+                  <X className="size-4" />
+                </button>
+              </div>
+              {ignoredIds.size === 0 ? (
+                <div className="p-6 text-center text-xs text-muted-foreground">
+                  You haven't ignored anyone.
+                </div>
+              ) : (
+                <ul className="divide-y divide-border">
+                  {Array.from(ignoredIds).map((id) => {
+                    const p = ignoredProfiles[id];
+                    const name = p?.display_name ?? p?.username ?? "Unknown user";
+                    return (
+                      <li key={id} className="p-3 flex items-center gap-3 hover:bg-surface-2/40">
+                        <img
+                          src={p?.avatar_url ?? DEFAULT_AVATAR_URL}
+                          alt=""
+                          className="size-8 rounded-full object-cover shrink-0"
+                        />
+                        <div className="min-w-0 flex-1">
+                          <div className="text-sm font-medium truncate">{name}</div>
+                          {p?.username && (
+                            <div className="text-[11px] text-muted-foreground truncate">@{p.username}</div>
+                          )}
+                        </div>
+                        <button
+                          onClick={() => toggleIgnore(id)}
+                          className="text-xs px-2 py-1 rounded bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                        >
+                          Unblock
+                        </button>
                       </li>
                     );
                   })}
