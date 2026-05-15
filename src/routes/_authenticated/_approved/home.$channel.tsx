@@ -123,6 +123,11 @@ function ChannelPage() {
   const [profiles, setProfiles] = useState<Record<string, Profile>>({});
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
+  const [reactions, setReactions] = useState<Reaction[]>([]);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [emojiPickerId, setEmojiPickerId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editDraft, setEditDraft] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
   const taRef = useRef<HTMLTextAreaElement>(null);
   const mention = useMentionAutocomplete({
