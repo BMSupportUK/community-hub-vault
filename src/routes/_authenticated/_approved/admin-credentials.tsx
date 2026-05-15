@@ -247,10 +247,10 @@ function CredentialEditor({
         notes: notes || null,
       };
       if (row) {
-        const { error } = await supabase.from("app_credentials").update(payload).eq("id", row.id);
+        const { error } = await supabase.from("app_credentials").update(payload as never).eq("id", row.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("app_credentials").insert({ ...payload, created_by: currentUserId });
+        const { error } = await supabase.from("app_credentials").insert({ ...payload, created_by: currentUserId } as never);
         if (error) throw error;
       }
       toast.success("Saved");
