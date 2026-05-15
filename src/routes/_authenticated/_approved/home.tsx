@@ -1,4 +1,4 @@
-import { createFileRoute, Outlet } from "@tanstack/react-router";
+import { createFileRoute, Outlet, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Hash, Megaphone } from "lucide-react";
 import { ChannelColumn, type ChannelGroup } from "@/components/app/ChannelColumn";
@@ -32,6 +32,7 @@ const ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
 function HomeLayout() {
   const { hasAny, user } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
+  const navigate = useNavigate();
   const [channels, setChannels] = useState<ChannelRow[] | null>(null);
   const [mentionCounts, setMentionCounts] = useState<Record<string, number>>({});
   const [addChannelGroup, setAddChannelGroup] = useState<string | null>(null);
@@ -160,6 +161,16 @@ function HomeLayout() {
         onAddItem: isAdmin ? () => setAddChannelGroup(label) : undefined,
         onDeleteItem: isAdmin ? (to) => deleteChannel(to.replace("/home/", "")) : undefined,
         onDeleteGroup: isAdmin ? () => deleteGroup(label) : undefined,
+        onEditItemPerms: isAdmin
+          ? (to) => {
+              const slug = to.replace("/home/", "");
+              const ch = channels?.find((x) => x.slug === slug);
+              if (ch) navigate({ to: "/admin-permissions", search: { tab: "channels", channel: ch.id } as never });
+            }
+          : undefined,
+        onEditGroupPerms: isAdmin
+          ? () => navigate({ to: "/admin-permissions", search: { tab: "channels", group: label } as never })
+          : undefined,
       });
     }
   }
