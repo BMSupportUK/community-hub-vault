@@ -1,8 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Calendar as CalendarIcon, Plus, Trash2, Check, X, Clock, Users, Plane, Repeat, ShieldCheck, Loader2, Zap } from "lucide-react";
+import { Calendar as CalendarIcon, Plus, Trash2, Check, X, Clock, Users, Plane, Repeat, ShieldCheck, Loader2, Zap, Save, Globe } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { useTimezone } from "@/hooks/use-timezone";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -466,7 +467,7 @@ function ShiftsPage() {
                     <div className="text-xs text-sky-200/70 mt-1 uppercase">{s.slot_type}</div>
                     {s.notes && <div className="text-sm text-sky-200/80 mt-2">{s.notes}</div>}
                     {(() => {
-                      const startsAt = new Date(`${s.shift_date}T${s.start_time}`).getTime();
+                      const startsAt = toUtcMs(s.shift_date, s.start_time);
                       const locked = isNaN(startsAt) ? false : startsAt <= Date.now();
                       return (
                         <div className="mt-3 flex gap-2 items-center">
