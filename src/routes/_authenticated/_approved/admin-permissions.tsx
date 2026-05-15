@@ -1,6 +1,6 @@
 import { createFileRoute, Navigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Loader2, Shield, Layers, Hash, ArrowLeft } from "lucide-react";
+import { Loader2, Shield, Layers, Hash, ArrowLeft, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
@@ -34,9 +34,12 @@ function AdminPermissionsPage() {
   const [pages, setPages] = useState<PagePerm[]>([]);
   const [channels, setChannels] = useState<Channel[]>([]);
   const [chanPerms, setChanPerms] = useState<ChanPerm[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
+  const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
 
-  const load = async () => {
-    setLoading(true);
+  const load = async (opts?: { silent?: boolean }) => {
+    if (opts?.silent) setRefreshing(true);
+    else setLoading(true);
     const [r, p, c, cp] = await Promise.all([
       supabase.from("role_definitions").select("name,label,is_system,is_active,sort_order").eq("is_active", true).order("sort_order"),
       supabase.from("page_permissions").select("page_key,label,allowed_roles,sort_order").order("sort_order"),
@@ -48,6 +51,8 @@ function AdminPermissionsPage() {
     setChannels(c.data ?? []);
     setChanPerms(cp.data ?? []);
     setLoading(false);
+    setRefreshing(false);
+    setLastRefresh(new Date());
   };
 
   useEffect(() => { load(); }, []);
@@ -56,10 +61,10 @@ function AdminPermissionsPage() {
   useEffect(() => {
     const ch = supabase
       .channel("admin-perms-realtime")
-      .on("postgres_changes", { event: "*", schema: "public", table: "page_permissions" }, () => load())
-      .on("postgres_changes", { event: "*", schema: "public", table: "channel_permissions" }, () => load())
-      .on("postgres_changes", { event: "*", schema: "public", table: "chat_channels" }, () => load())
-      .on("postgres_changes", { event: "*", schema: "public", table: "role_definitions" }, () => load())
+      .on("postgres_changes", { event: "*", schema: "public", table: "page_permissions" }, () => load({ silent: true }))
+      .on("postgres_changes", { event: "*", schema: "public", table: "channel_permissions" }, () => load({ silent: true }))
+      .on("postgres_changes", { event: "*", schema: "public", table: "chat_channels" }, () => load({ silent: true }))
+      .on("postgres_changes", { event: "*", schema: "public", table: "role_definitions" }, () => load({ silent: true }))
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, []);
@@ -76,10 +81,26 @@ function AdminPermissionsPage() {
           <div className="size-11 rounded-2xl bg-gradient-primary grid place-items-center shadow-glow">
             <Shield className="size-5 text-primary-foreground" />
           </div>
-          <div>
+          <div className="flex-1">
             <h1 className="font-display text-2xl font-bold">Role permissions</h1>
             <p className="text-sm text-muted-foreground">Control which roles can access pages and what they can do in channels. Admin and management always bypass these checks.</p>
           </div>
+          <button
+            onClick={() => load({ silent: true })}
+            disabled={refreshing || loading}
+            className="inline-flex items-center gap-2 rounded-xl border border-border bg-surface-2 px-3 py-2 text-sm font-medium hover:bg-surface-2/70 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+            title="Reload pages, channels and permissions"
+          >
+            <RefreshCw className={`size-4 ${refreshing ? "animate-spin" : ""}`} />
+            <span className="flex flex-col items-start leading-tight">
+              <span>{refreshing ? "Refreshing…" : "Refresh"}</span>
+              {lastRefresh && (
+                <span className="text-[10px] text-muted-foreground font-normal">
+                  {lastRefresh.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+                </span>
+              )}
+            </span>
+          </button>
         </header>
 
         <div className="flex gap-2 mb-4">
