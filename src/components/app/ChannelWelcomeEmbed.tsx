@@ -99,16 +99,9 @@ export function ChannelWelcomeEmbed({
   if (!embed && !canEdit) return null;
 
   return (
-    <div className="rounded-2xl overflow-hidden border border-border bg-surface-2 shadow-sm relative group">
-      {(embed?.image_url || (editing && imageDraft)) && (
-        <img
-          src={resolveEmbedImageUrl(editing ? imageDraft || embed?.image_url : embed?.image_url)}
-          alt=""
-          className="block w-full h-auto object-contain"
-          loading="lazy"
-        />
-      )}
-      <div className="p-4 sm:p-5 space-y-2">
+    <div className="relative group flex max-w-2xl">
+      <div className="w-1 rounded-l bg-primary shrink-0" aria-hidden />
+      <div className="flex-1 rounded-r-md bg-surface-2 border border-l-0 border-border/60 px-4 py-3 space-y-2">
         {editing ? (
           <>
             <input
@@ -151,10 +144,20 @@ export function ChannelWelcomeEmbed({
           </>
         ) : embed ? (
           <>
-            <h3 className="font-display font-bold text-base">{embed.title}</h3>
-            <p className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">
+            <h3 className="font-display font-semibold text-[15px] text-foreground leading-snug">{embed.title}</h3>
+            <p className="text-[14px] text-foreground/85 whitespace-pre-wrap leading-relaxed">
               {embed.body}
             </p>
+            {embed.image_url && (
+              <div className="pt-2">
+                <img
+                  src={resolveEmbedImageUrl(embed.image_url)}
+                  alt=""
+                  className="block rounded-md max-w-full max-h-80 object-cover border border-border/40"
+                  loading="lazy"
+                />
+              </div>
+            )}
           </>
         ) : (
           <p className="text-sm text-muted-foreground italic">No welcome message — click edit to add one.</p>
