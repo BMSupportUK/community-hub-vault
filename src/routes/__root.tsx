@@ -8,9 +8,10 @@ import {
   Link,
 } from "@tanstack/react-router";
 import { Toaster } from "sonner";
+import { useEffect } from "react";
 
 import appCss from "../styles.css?url";
-import { AuthProvider } from "@/hooks/use-auth";
+import { AuthProvider, useAuth } from "@/hooks/use-auth";
 
 function NotFoundComponent() {
   return (
@@ -86,9 +87,22 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
+        <RightClickGuard />
         <Outlet />
         <Toaster theme="dark" position="bottom-right" />
       </AuthProvider>
     </QueryClientProvider>
   );
+}
+
+function RightClickGuard() {
+  const { hasRole } = useAuth();
+  const isAdmin = hasRole("admin");
+  useEffect(() => {
+    if (isAdmin) return;
+    const block = (e: MouseEvent) => e.preventDefault();
+    document.addEventListener("contextmenu", block);
+    return () => document.removeEventListener("contextmenu", block);
+  }, [isAdmin]);
+  return null;
 }
