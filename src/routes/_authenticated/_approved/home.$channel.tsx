@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { Hash, Megaphone, Loader2, Send, Trash2, EyeOff, Eye, Pin, PinOff, X, ShieldOff } from "lucide-react";
+import { Hash, Megaphone, Loader2, Send, Trash2, EyeOff, Eye, Pin, PinOff, X, ShieldOff, MoreHorizontal, SmilePlus, Pencil, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
@@ -29,6 +29,7 @@ interface Message {
   created_at: string;
   pinned_at: string | null;
   pinned_by: string | null;
+  edited_at?: string | null;
 }
 
 interface Profile {
@@ -37,6 +38,15 @@ interface Profile {
   username: string | null;
   avatar_url: string | null;
 }
+
+interface Reaction {
+  id: string;
+  message_id: string;
+  user_id: string;
+  emoji: string;
+}
+
+const QUICK_EMOJIS = ["👍", "❤️", "😂", "😮", "😢", "🙏", "🔥", "🎉"];
 
 function ChannelPage() {
   const { channel: slug } = Route.useParams();
@@ -113,6 +123,11 @@ function ChannelPage() {
   const [profiles, setProfiles] = useState<Record<string, Profile>>({});
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
+  const [reactions, setReactions] = useState<Reaction[]>([]);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [emojiPickerId, setEmojiPickerId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editDraft, setEditDraft] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
   const taRef = useRef<HTMLTextAreaElement>(null);
   const mention = useMentionAutocomplete({
@@ -153,6 +168,15 @@ function ChannelPage() {
       const rows = (data as Message[] | null) ?? [];
       setMessages(rows);
       await loadProfiles(rows.map((r) => r.sender_id));
+      if (rows.length > 0) {
+        const { data: reactRows } = await supabase
+          .from("message_reactions")
+          .select("id, message_id, user_id, emoji")
+          .in("message_id", rows.map((r) => r.id));
+        if (!cancelled) setReactions((reactRows as Reaction[] | null) ?? []);
+      } else {
+        setReactions([]);
+      }
     })();
 
     const ch = supabase
@@ -180,6 +204,22 @@ function ChannelPage() {
         (payload) => {
           const updated = payload.new as Message;
           setMessages((prev) => prev.map((m) => (m.id === updated.id ? { ...m, ...updated } : m)));
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "message_reactions" },
+        (payload) => {
+          const r = payload.new as Reaction;
+          setReactions((prev) => (prev.some((x) => x.id === r.id) ? prev : [...prev, r]));
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "DELETE", schema: "public", table: "message_reactions" },
+        (payload) => {
+          const old = payload.old as { id: string };
+          setReactions((prev) => prev.filter((r) => r.id !== old.id));
         },
       )
       .subscribe();
@@ -275,6 +315,56 @@ function ChannelPage() {
       toast.success("User ignored. Their messages are now hidden.");
     }
   };
+
+  const toggleReaction = async (messageId: string, emoji: string) => {
+    if (!user) return;
+    const existing = reactions.find(
+      (r) => r.message_id === messageId && r.user_id === user.id && r.emoji === emoji,
+    );
+    if (existing) {
+      const { error } = await supabase.from("message_reactions").delete().eq("id", existing.id);
+      if (error) toast.error(error.message);
+    } else {
+      const { error } = await supabase
+        .from("message_reactions")
+        .insert({ message_id: messageId, user_id: user.id, emoji });
+      if (error) toast.error(error.message);
+    }
+    setEmojiPickerId(null);
+    setOpenMenuId(null);
+  };
+
+  const startEdit = (m: Message) => {
+    setEditingId(m.id);
+    setEditDraft(m.content);
+    setOpenMenuId(null);
+  };
+
+  const saveEdit = async (id: string) => {
+    const content = editDraft.trim();
+    if (!content) return;
+    const { error } = await supabase
+      .from("chat_messages")
+      .update({ content, edited_at: new Date().toISOString() })
+      .eq("id", id);
+    if (error) return toast.error(error.message);
+    setEditingId(null);
+    setEditDraft("");
+  };
+
+  // Close menus when clicking outside
+  useEffect(() => {
+    if (!openMenuId && !emojiPickerId) return;
+    const onDoc = (e: MouseEvent) => {
+      const t = e.target as HTMLElement;
+      if (!t.closest("[data-msg-menu]")) {
+        setOpenMenuId(null);
+        setEmojiPickerId(null);
+      }
+    };
+    document.addEventListener("mousedown", onDoc);
+    return () => document.removeEventListener("mousedown", onDoc);
+  }, [openMenuId, emojiPickerId]);
 
   if (missing) {
     return (
@@ -483,27 +573,31 @@ function ChannelPage() {
             const isIgnored = ignoredIds.has(m.sender_id);
             const highlight = mentionsCurrentUser(m.content, myUsername);
             const isPinned = !!m.pinned_at;
+            const msgReactions = reactions.filter((r) => r.message_id === m.id);
+            const grouped = msgReactions.reduce<Record<string, Reaction[]>>((acc, r) => {
+              (acc[r.emoji] ||= []).push(r);
+              return acc;
+            }, {});
+            const isEditing = editingId === m.id;
+            const menuOpen = openMenuId === m.id;
+            const pickerOpen = emojiPickerId === m.id;
+            const canEdit = isSelf;
             return (
               <div
                 key={m.id}
                 className={cn(
-                  "group flex items-start gap-3 rounded-md -mx-2 px-2 py-1 transition-colors",
-                  isPinned
-                    ? "bg-primary/5 border-l-2 border-primary hover:bg-primary/10"
-                    : highlight
-                    ? "bg-amber-400/10 border-l-2 border-amber-400 hover:bg-amber-400/15"
-                    : "border-l-2 border-transparent hover:bg-surface-2/40",
+                  "group relative flex items-start gap-3 transition-colors",
                 )}
               >
                 {p?.avatar_url ? (
-                  <img src={p.avatar_url} alt="" className="size-9 rounded-full object-cover shrink-0" />
+                  <img src={p.avatar_url} alt="" className="size-9 rounded-full object-cover shrink-0 mt-1" />
                 ) : (
-                  <div className="size-9 rounded-full bg-gradient-primary grid place-items-center text-xs font-semibold text-primary-foreground shrink-0">
+                  <div className="size-9 rounded-full bg-gradient-primary grid place-items-center text-xs font-semibold text-primary-foreground shrink-0 mt-1">
                     {initial}
                   </div>
                 )}
                 <div className="min-w-0 flex-1">
-                  <div className="flex items-baseline gap-2">
+                  <div className="flex items-baseline gap-2 mb-1">
                     <span className="font-medium text-sm">{name}</span>
                     <span className="text-[10px] text-muted-foreground">
                       {new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
@@ -514,35 +608,184 @@ function ChannelPage() {
                       </span>
                     )}
                   </div>
-                  <MentionText content={m.content} currentUsername={myUsername} className="text-sm" />
+                  <div
+                    className={cn(
+                      "inline-block max-w-full rounded-2xl px-3.5 py-2 border shadow-sm",
+                      isPinned
+                        ? "bg-primary/10 border-primary/30 rounded-tl-sm"
+                        : highlight
+                        ? "bg-amber-400/10 border-amber-400/30 rounded-tl-sm"
+                        : isSelf
+                        ? "bg-primary/15 border-primary/20 rounded-tl-sm"
+                        : "bg-surface-2 border-border rounded-tl-sm",
+                    )}
+                  >
+                    {isEditing ? (
+                      <div className="flex flex-col gap-2 min-w-[220px]">
+                        <textarea
+                          value={editDraft}
+                          onChange={(e) => setEditDraft(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" && !e.shiftKey) {
+                              e.preventDefault();
+                              saveEdit(m.id);
+                            } else if (e.key === "Escape") {
+                              setEditingId(null);
+                            }
+                          }}
+                          rows={2}
+                          className="bg-transparent resize-none outline-none text-sm"
+                          autoFocus
+                        />
+                        <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                          <button
+                            onClick={() => saveEdit(m.id)}
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-primary text-primary-foreground hover:bg-primary/90"
+                          >
+                            <Check className="size-3" /> Save
+                          </button>
+                          <button onClick={() => setEditingId(null)} className="hover:text-foreground">
+                            Cancel
+                          </button>
+                          <span>Enter to save · Esc to cancel</span>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <MentionText content={m.content} currentUsername={myUsername} className="text-sm" />
+                        {m.edited_at && (
+                          <span className="ml-1 text-[10px] text-muted-foreground">(edited)</span>
+                        )}
+                      </>
+                    )}
+                  </div>
+                  {Object.keys(grouped).length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-1.5">
+                      {Object.entries(grouped).map(([emoji, list]) => {
+                        const mine = list.some((r) => r.user_id === user?.id);
+                        return (
+                          <button
+                            key={emoji}
+                            onClick={() => toggleReaction(m.id, emoji)}
+                            className={cn(
+                              "inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full border transition-colors",
+                              mine
+                                ? "bg-primary/20 border-primary/40 text-foreground"
+                                : "bg-surface-2 border-border hover:bg-surface-2/70 text-muted-foreground",
+                            )}
+                          >
+                            <span>{emoji}</span>
+                            <span className="tabular-nums">{list.length}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
-                {canPin && (
+
+                {/* Discord-style hover toolbar */}
+                <div
+                  data-msg-menu
+                  className={cn(
+                    "absolute -top-3 right-2 flex items-center rounded-lg border border-border bg-popover shadow-md transition-opacity",
+                    menuOpen || pickerOpen ? "opacity-100" : "opacity-0 group-hover:opacity-100",
+                  )}
+                >
                   <button
-                    onClick={() => togglePin(m)}
-                    className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-primary transition-opacity"
-                    title={isPinned ? "Unpin message" : "Pin message"}
+                    onClick={() => {
+                      setEmojiPickerId(pickerOpen ? null : m.id);
+                      setOpenMenuId(null);
+                    }}
+                    className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-surface-2 rounded-l-lg"
+                    title="Add reaction"
                   >
-                    {isPinned ? <PinOff className="size-4" /> : <Pin className="size-4" />}
+                    <SmilePlus className="size-4" />
                   </button>
-                )}
-                {!isSelf && !isStaff && (
                   <button
-                    onClick={() => toggleIgnore(m.sender_id)}
-                    className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-foreground transition-opacity"
-                    title={isIgnored ? "Unignore user" : "Ignore user"}
+                    onClick={() => {
+                      setOpenMenuId(menuOpen ? null : m.id);
+                      setEmojiPickerId(null);
+                    }}
+                    className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-surface-2 rounded-r-lg border-l border-border"
+                    title="More"
                   >
-                    {isIgnored ? <Eye className="size-4" /> : <EyeOff className="size-4" />}
+                    <MoreHorizontal className="size-4" />
                   </button>
-                )}
-                {canDelete && (
-                  <button
-                    onClick={() => remove(m.id)}
-                    className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity"
-                    title="Delete"
-                  >
-                    <Trash2 className="size-4" />
-                  </button>
-                )}
+
+                  {pickerOpen && (
+                    <div className="absolute right-0 top-full mt-1 flex gap-1 rounded-lg border border-border bg-popover p-1.5 shadow-lg z-20">
+                      {QUICK_EMOJIS.map((e) => (
+                        <button
+                          key={e}
+                          onClick={() => toggleReaction(m.id, e)}
+                          className="text-base hover:bg-surface-2 rounded p-1 leading-none"
+                        >
+                          {e}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {menuOpen && (
+                    <div className="absolute right-0 top-full mt-1 w-48 rounded-lg border border-border bg-popover shadow-lg z-20 py-1 text-sm">
+                      <button
+                        onClick={() => {
+                          setEmojiPickerId(m.id);
+                          setOpenMenuId(null);
+                        }}
+                        className="w-full flex items-center gap-2 px-3 py-1.5 hover:bg-surface-2 text-left"
+                      >
+                        <SmilePlus className="size-4" /> Add reaction
+                      </button>
+                      {canEdit && (
+                        <button
+                          onClick={() => startEdit(m)}
+                          className="w-full flex items-center gap-2 px-3 py-1.5 hover:bg-surface-2 text-left"
+                        >
+                          <Pencil className="size-4" /> Edit message
+                        </button>
+                      )}
+                      {canPin && (
+                        <button
+                          onClick={() => {
+                            togglePin(m);
+                            setOpenMenuId(null);
+                          }}
+                          className="w-full flex items-center gap-2 px-3 py-1.5 hover:bg-surface-2 text-left"
+                        >
+                          {isPinned ? <PinOff className="size-4" /> : <Pin className="size-4" />}
+                          {isPinned ? "Unpin" : "Pin message"}
+                        </button>
+                      )}
+                      {!isSelf && !isStaff && (
+                        <button
+                          onClick={() => {
+                            toggleIgnore(m.sender_id);
+                            setOpenMenuId(null);
+                          }}
+                          className="w-full flex items-center gap-2 px-3 py-1.5 hover:bg-surface-2 text-left"
+                        >
+                          {isIgnored ? <Eye className="size-4" /> : <EyeOff className="size-4" />}
+                          {isIgnored ? "Unignore user" : "Ignore user"}
+                        </button>
+                      )}
+                      {canDelete && (
+                        <>
+                          <div className="my-1 border-t border-border" />
+                          <button
+                            onClick={() => {
+                              remove(m.id);
+                              setOpenMenuId(null);
+                            }}
+                            className="w-full flex items-center gap-2 px-3 py-1.5 hover:bg-destructive/10 text-destructive text-left"
+                          >
+                            <Trash2 className="size-4" /> Delete message
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
             );
           })
