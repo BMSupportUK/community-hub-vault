@@ -135,7 +135,7 @@ function ProfilePage() {
   const breakRemaining = breakLimit - onBreakSeconds;
 
   return (
-    <main className="flex-1 overflow-y-auto relative bg-gradient-to-br from-rose-600 via-orange-500 to-amber-400 text-white">
+    <main className="flex-1 overflow-y-auto relative bg-gradient-to-br from-violet-600 via-fuchsia-600 to-blue-600 text-white">
       <div className="absolute inset-0 -z-0 bg-[radial-gradient(ellipse_at_top_left,_rgba(244,63,94,0.55),_transparent_55%),radial-gradient(ellipse_at_top_right,_rgba(168,85,247,0.45),_transparent_55%),radial-gradient(ellipse_at_bottom,_rgba(251,191,36,0.45),_transparent_60%)]" aria-hidden />
       <div className="relative">
       <div className="max-w-5xl mx-auto px-6 py-8 space-y-6">

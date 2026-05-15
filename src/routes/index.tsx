@@ -16,7 +16,7 @@ function Landing() {
     <div className="min-h-screen bg-background flex flex-col">
       <header className="px-8 py-5 flex items-center justify-between border-b border-border">
         <div className="flex items-center gap-2">
-          <div className="size-9 rounded-xl bg-gradient-to-br from-red-500 to-red-700 shadow-[0_0_30px_rgba(220,38,38,0.6)] grid place-items-center font-display font-bold text-white">B</div>
+          <div className="size-9 rounded-xl bg-gradient-to-br from-violet-600 to-blue-600 shadow-[0_0_30px_rgba(220,38,38,0.6)] grid place-items-center font-display font-bold text-white">B</div>
           <span className="font-display font-bold text-lg">BM Support</span>
         </div>
         <div className="flex items-center gap-2">

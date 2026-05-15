@@ -100,7 +100,7 @@ function AdminReviewsPage() {
           </Link>
         </div>
         <header className="mb-6">
-          <h1 className="font-display text-3xl font-bold bg-gradient-to-r from-fuchsia-400 via-purple-400 to-violet-400 bg-clip-text text-transparent">Customer Reviews</h1>
+          <h1 className="font-display text-3xl font-bold bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 bg-clip-text text-transparent">Customer Reviews</h1>
           <p className="text-purple-200/80 mt-1">Approve, reject, or remove member feedback before it appears on the wall.</p>
         </header>
 
@@ -129,7 +129,7 @@ function AdminReviewsPage() {
                         {p?.avatar_url ? (
                           <img src={p.avatar_url} alt={name} className="size-10 rounded-full object-cover ring-2 ring-fuchsia-500/40" />
                         ) : (
-                          <div className="size-10 rounded-full bg-gradient-to-br from-fuchsia-500 to-purple-700 grid place-items-center text-white text-xs font-bold">
+                          <div className="size-10 rounded-full bg-gradient-to-br from-violet-600 to-blue-600 grid place-items-center text-white text-xs font-bold">
                             {name.slice(0, 1).toUpperCase()}
                           </div>
                         )}

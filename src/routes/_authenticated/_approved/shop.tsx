@@ -286,7 +286,7 @@ function Storefront() {
 
             <TabsContent value="welcome" className="mt-4">
               <section className="relative overflow-hidden border border-border rounded-2xl">
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-950 via-blue-900 to-sky-700" />
+          <div className="absolute inset-0 bg-gradient-to-br from-violet-600 via-fuchsia-600 to-blue-600" />
           <div className="relative grid md:grid-cols-2 gap-6 p-6 md:p-10 items-center">
             <div className="text-white">
               <div className="text-xs uppercase tracking-[0.2em] text-sky-200/80 mb-3">BM Support · Shop</div>
@@ -301,7 +301,7 @@ function Storefront() {
                 <button
                   onClick={() => setShowCheckout(true)}
                   disabled={count === 0}
-                  className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-sky-400 to-blue-500 text-white font-medium px-4 py-2.5 shadow-lg shadow-blue-500/30 disabled:opacity-50"
+                  className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-blue-600 text-white font-medium px-4 py-2.5 shadow-lg shadow-blue-500/30 disabled:opacity-50"
                 >
                   <ShoppingBag className="size-4" />
                   View Cart
@@ -340,7 +340,7 @@ function Storefront() {
               className={cn(
                 "text-xs px-3 py-1.5 rounded-full transition font-medium",
                 cat === c
-                  ? "bg-gradient-to-r from-blue-500 to-sky-400 text-white shadow shadow-blue-500/30"
+                  ? "bg-gradient-to-r from-violet-600 to-blue-600 text-white shadow shadow-blue-500/30"
                   : "bg-surface-2 text-muted-foreground hover:text-foreground",
               )}
             >
@@ -362,7 +362,7 @@ function Storefront() {
                   <h3 className="font-semibold text-sm">{p.name}</h3>
                   {p.description && <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{p.description}</p>}
                   <div className="mt-auto pt-3 flex items-center justify-between">
-                    <span className="font-display font-bold text-lg bg-gradient-to-r from-sky-300 to-blue-400 bg-clip-text text-transparent">{fmt(p.price_cents)}</span>
+                    <span className="font-display font-bold text-lg bg-gradient-to-r from-violet-600 to-blue-600 bg-clip-text text-transparent">{fmt(p.price_cents)}</span>
                     {cart[p.id] ? (
                       <div className="flex items-center gap-1 bg-surface-2 rounded-lg">
                         <button onClick={() => sub(p.id)} className="size-7 grid place-items-center hover:text-sky-400"><Minus className="size-3.5" /></button>
@@ -370,7 +370,7 @@ function Storefront() {
                         <button onClick={() => add(p.id)} className="size-7 grid place-items-center hover:text-sky-400"><Plus className="size-3.5" /></button>
                       </div>
                     ) : (
-                      <button onClick={() => add(p.id)} className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-blue-500 to-sky-400 text-white text-xs font-medium hover:opacity-90 shadow shadow-blue-500/20">Place Order</button>
+                      <button onClick={() => add(p.id)} className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-blue-600 text-white text-xs font-medium hover:opacity-90 shadow shadow-blue-500/20">Place Order</button>
                     )}
                   </div>
                 </div>

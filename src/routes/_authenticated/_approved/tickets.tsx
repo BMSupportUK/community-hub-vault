@@ -198,7 +198,7 @@ function TicketsPage() {
           </div>
         }
       />
-      <main className="flex-1 flex flex-col min-w-0 bg-gradient-to-br from-rose-500 via-orange-500 to-amber-400 text-white relative overflow-hidden">
+      <main className="flex-1 flex flex-col min-w-0 bg-gradient-to-br from-violet-600 via-fuchsia-600 to-blue-600 text-white relative overflow-hidden">
         <div className="pointer-events-none absolute inset-0 opacity-60" style={{
           background:
             "radial-gradient(800px 400px at 0% 0%, rgba(244,63,94,0.55), transparent 60%), radial-gradient(700px 400px at 100% 0%, rgba(168,85,247,0.45), transparent 60%), radial-gradient(900px 500px at 50% 100%, rgba(250,204,21,0.45), transparent 60%)",

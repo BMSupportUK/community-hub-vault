@@ -69,7 +69,7 @@ function AuthLayout() {
           <Link
             to="/members"
             title="Members directory"
-            className="group flex items-center gap-2 rounded-full px-3 py-1.5 bg-gradient-to-r from-fuchsia-600 via-violet-600 to-blue-600 text-white text-xs font-medium shadow-lg shadow-fuchsia-500/20 hover:shadow-fuchsia-500/40 transition-shadow"
+            className="group flex items-center gap-2 rounded-full px-3 py-1.5 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 text-white text-xs font-medium shadow-lg shadow-fuchsia-500/20 hover:shadow-fuchsia-500/40 transition-shadow"
           >
             <Users className="size-4" />
             <span className="hidden sm:inline">Members</span>
@@ -77,7 +77,7 @@ function AuthLayout() {
           <Link
             to="/staff"
             title="Staff directory"
-            className="group flex items-center gap-2 rounded-full px-3 py-1.5 bg-gradient-to-r from-blue-600 via-sky-600 to-cyan-600 text-white text-xs font-medium shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 transition-shadow"
+            className="group flex items-center gap-2 rounded-full px-3 py-1.5 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 text-white text-xs font-medium shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 transition-shadow"
           >
             <Briefcase className="size-4" />
             <span className="hidden sm:inline">Staff</span>

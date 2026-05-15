@@ -74,11 +74,11 @@ function StaffPage() {
   return (
     <div className="flex-1 overflow-y-auto bg-gradient-to-br from-[#0a1530] via-[#0f2a5a] to-[#0a1530]">
       <header className="px-8 pt-8 pb-6 border-b border-blue-500/30 bg-blue-950/40 backdrop-blur flex items-center gap-3">
-        <div className="size-11 rounded-xl bg-gradient-to-br from-sky-500 to-blue-700 grid place-items-center text-white shadow-lg shadow-blue-900/50">
+        <div className="size-11 rounded-xl bg-gradient-to-br from-violet-600 to-blue-600 grid place-items-center text-white shadow-lg shadow-blue-900/50">
           <Briefcase className="size-5" />
         </div>
         <div>
-          <h1 className="font-display text-3xl font-bold bg-gradient-to-r from-sky-300 via-blue-300 to-cyan-300 bg-clip-text text-transparent">
+          <h1 className="font-display text-3xl font-bold bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 bg-clip-text text-transparent">
             Staff Directory
           </h1>
           <p className="text-blue-200/80 mt-1">The people running the show — grouped by role.</p>
@@ -104,7 +104,7 @@ function StaffPage() {
 
           <TabsContent value="welcome" className="mt-6">
             <div className="rounded-2xl bg-gradient-to-br from-sky-600/30 via-blue-600/30 to-cyan-700/30 border border-blue-500/40 p-10 shadow-[0_0_60px_-15px_rgba(59,130,246,0.5)]">
-              <h2 className="font-display text-3xl font-bold bg-gradient-to-r from-sky-200 to-cyan-200 bg-clip-text text-transparent">
+              <h2 className="font-display text-3xl font-bold bg-gradient-to-r from-violet-600 to-blue-600 bg-clip-text text-transparent">
                 Welcome to the Staff Directory
               </h2>
               <p className="mt-3 text-lg text-blue-100/90 max-w-2xl">
@@ -116,7 +116,7 @@ function StaffPage() {
               </p>
               <button
                 onClick={() => setTab("staff")}
-                className="mt-6 inline-flex items-center gap-2 rounded-md px-4 py-2 bg-gradient-to-r from-sky-600 to-blue-700 hover:from-sky-500 hover:to-blue-600 text-white font-medium shadow-lg shadow-blue-900/50 transition"
+                className="mt-6 inline-flex items-center gap-2 rounded-md px-4 py-2 bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white font-medium shadow-lg shadow-blue-900/50 transition"
               >
                 <Briefcase className="size-4" /> Browse staff
               </button>
@@ -146,7 +146,7 @@ function StaffPage() {
               return (
                 <section key={role}>
                   <div className="flex items-center gap-3 mb-4">
-                    <h2 className="font-display text-xl font-bold bg-gradient-to-r from-sky-300 to-cyan-300 bg-clip-text text-transparent">
+                    <h2 className="font-display text-xl font-bold bg-gradient-to-r from-violet-600 to-blue-600 bg-clip-text text-transparent">
                       {ROLE_LABEL[role]}
                     </h2>
                     <span className="text-xs px-2 py-0.5 rounded-full bg-blue-800/60 text-blue-100 border border-blue-500/30">
@@ -165,7 +165,7 @@ function StaffPage() {
                           key={p.id}
                           className="group rounded-2xl bg-blue-950/50 border border-blue-500/30 hover:border-sky-400/70 hover:shadow-[0_0_30px_-10px_rgba(56,189,248,0.6)] transition-all overflow-hidden flex flex-col backdrop-blur"
                         >
-                          <div className="h-16 bg-gradient-to-r from-sky-600 via-blue-600 to-cyan-600" />
+                          <div className="h-16 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600" />
                           <div className="px-4 -mt-8 pb-4 flex flex-col flex-1">
                             {p.avatar_url ? (
                               <img
@@ -174,7 +174,7 @@ function StaffPage() {
                                 className="size-16 rounded-2xl object-cover ring-4 ring-blue-950"
                               />
                             ) : (
-                              <div className="size-16 rounded-2xl ring-4 ring-blue-950 bg-gradient-to-br from-sky-500 to-blue-700 grid place-items-center text-white text-xl font-bold">
+                              <div className="size-16 rounded-2xl ring-4 ring-blue-950 bg-gradient-to-br from-violet-600 to-blue-600 grid place-items-center text-white text-xl font-bold">
                                 {initial}
                               </div>
                             )}
