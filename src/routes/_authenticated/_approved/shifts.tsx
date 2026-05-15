@@ -379,8 +379,40 @@ function ShiftsPage() {
   return (
     <div className="flex-1 overflow-y-auto bg-gradient-to-br from-[#06122e] via-[#0b1e4a] to-[#06122e]">
       <header className="px-8 pt-8 pb-6 border-b border-sky-500/30 bg-blue-950/40 backdrop-blur">
-        <h1 className="font-display text-3xl font-bold bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 bg-clip-text text-transparent">Shifts</h1>
-        <p className="text-sky-200/80 mt-1">Pick your slots, request holiday, swap shifts.</p>
+        <div className="flex items-start justify-between gap-4 flex-wrap">
+          <div>
+            <h1 className="font-display text-3xl font-bold bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 bg-clip-text text-transparent">Shifts</h1>
+            <p className="text-sky-200/80 mt-1">Pick your slots, request holiday, swap shifts.</p>
+          </div>
+          <button
+            onClick={toggleLocalTz}
+            className={cn(
+              "flex items-center gap-2 rounded-xl border px-3 py-2 text-xs transition-colors",
+              localMode
+                ? "bg-cyan-500/20 border-cyan-400/50 text-cyan-100 hover:bg-cyan-500/30"
+                : "bg-blue-950/60 border-sky-500/30 text-sky-200/80 hover:bg-blue-900/60",
+            )}
+            title={
+              localMode
+                ? `Showing times in your local timezone (${browserTz}). Click to show rota timezone (${tz}).`
+                : `Showing times in rota timezone (${tz}). Click to show your local timezone (${browserTz}).`
+            }
+          >
+            <MapPin className="size-3.5" />
+            <div className="flex flex-col items-start leading-tight">
+              <span className="font-semibold uppercase tracking-wider">
+                {localMode ? "Local time" : "Rota time"}
+              </span>
+              <span className="text-[10px] opacity-80">
+                {localMode ? browserTz : tz}
+                {localMode && BROWSER_TZ !== tz && ` · rota ${tz}`}
+              </span>
+            </div>
+          </button>
+        </div>
+        <p className="text-[11px] text-sky-300/60 mt-2">
+          Display only — shift locking always uses the rota timezone ({tz}).
+        </p>
       </header>
 
       <div className="px-8 py-6">
