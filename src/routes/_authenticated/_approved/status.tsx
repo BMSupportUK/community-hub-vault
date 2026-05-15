@@ -315,6 +315,7 @@ function IncidentCard({ incident, canManage, onEdit }: { incident: Incident; can
   const [posting, setPosting] = useState(false);
   const [msg, setMsg] = useState("");
   const [status, setStatus] = useState<IncidentStatus>(incident.status);
+  const [updateFiles, setUpdateFiles] = useState<File[]>([]);
   const { user } = useAuth();
 
   const meta = STATUS_META[incident.status];
@@ -323,7 +324,7 @@ function IncidentCard({ incident, canManage, onEdit }: { incident: Incident; can
   const loadUpdates = async () => {
     const { data } = await supabase
       .from("status_incident_updates")
-      .select("id, incident_id, status, message, created_at")
+      .select("id, incident_id, status, message, created_at, attachments")
       .eq("incident_id", incident.id)
       .order("created_at", { ascending: false });
     setUpdates((data as IncidentUpdate[] | null) ?? []);
@@ -335,12 +336,19 @@ function IncidentCard({ incident, canManage, onEdit }: { incident: Incident; can
   }, [open]);
 
   const post = async () => {
-    if (!user || !msg.trim()) return;
+    if (!user || (!msg.trim() && updateFiles.length === 0)) return;
     setPosting(true);
     try {
+      const uploaded = updateFiles.length ? await uploadFiles(updateFiles) : [];
       const { error: uErr } = await supabase
         .from("status_incident_updates")
-        .insert({ incident_id: incident.id, status, message: msg.trim(), created_by: user.id });
+        .insert({
+          incident_id: incident.id,
+          status,
+          message: msg.trim(),
+          created_by: user.id,
+          attachments: uploaded,
+        });
       if (uErr) throw uErr;
       const patch: { status: IncidentStatus; resolved_at?: string | null } = { status };
       if (status === "completed" && !incident.resolved_at) patch.resolved_at = new Date().toISOString();
@@ -348,6 +356,7 @@ function IncidentCard({ incident, canManage, onEdit }: { incident: Incident; can
       const { error: iErr } = await supabase.from("status_incidents").update(patch).eq("id", incident.id);
       if (iErr) throw iErr;
       setMsg("");
+      setUpdateFiles([]);
       await loadUpdates();
       toast.success("Update posted");
     } catch (e: any) {
