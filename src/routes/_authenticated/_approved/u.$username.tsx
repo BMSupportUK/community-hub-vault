@@ -309,6 +309,7 @@ function ProfilePage() {
                 ...(canSeeCreds ? [{ id: "creds" as const, label: "Credentials & DNS", icon: KeyRound }] : []),
                 { id: "tickets" as const, label: `Recent tickets (${tickets.length})`, icon: Ticket },
                 { id: "orders" as const, label: `Recent orders (${orders.length})`, icon: ShoppingBag },
+                ...(canSeeReferrals ? [{ id: "referrals" as const, label: `Referrals (${referrals.length})`, icon: Trophy }] : []),
               ]).map((t) => {
                 const Icon = t.icon;
                 const active = mainTab === t.id;
@@ -354,6 +355,18 @@ function ProfilePage() {
                   </li>
                 ))}
               </ActivityCard>
+            )}
+
+            {mainTab === "referrals" && canSeeReferrals && (
+              <ReferralsPanel
+                referrals={referrals}
+                isOwner={isOwner}
+                creating={creatingInvite}
+                copiedCode={copiedCode}
+                onCreate={createInvite}
+                onCopy={copyInviteLink}
+                onDelete={deleteInvite}
+              />
             )}
           </div>
 
