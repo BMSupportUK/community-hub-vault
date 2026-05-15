@@ -70,7 +70,7 @@ function SportsGuidesPage() {
   const isUnread = (b: Blog) => {
     const r = reads[b.id];
     if (!r) return true;
-    const upd = (b as Blog2).updated_at ?? b.created_at;
+    const upd = b.updated_at ?? b.created_at;
     return new Date(r).getTime() < new Date(upd).getTime();
   };
 
