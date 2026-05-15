@@ -705,7 +705,7 @@ function TicketDetail({
                 )}
               />
               <button
-                onClick={send} disabled={sending || !draft.trim()}
+                onClick={send} disabled={sending || (!draft.trim() && replyFiles.length === 0)}
                 className="self-end px-3 py-2 rounded-lg bg-white text-rose-600 hover:bg-white/90 disabled:opacity-50 shadow"
               ><Send className="size-4" /></button>
             </div>
