@@ -204,7 +204,7 @@ function TicketsPage() {
             "radial-gradient(800px 400px at 0% 0%, rgba(244,63,94,0.55), transparent 60%), radial-gradient(700px 400px at 100% 0%, rgba(168,85,247,0.45), transparent 60%), radial-gradient(900px 500px at 50% 100%, rgba(250,204,21,0.45), transparent 60%)",
         }} />
         <div className="relative flex-1 flex flex-col min-h-0">
-        {isStaff && <StaffOnDutyStrip />}
+        <StaffOnDutyStrip />
         {creating ? (
           <NewTicketForm
             categories={categories}
