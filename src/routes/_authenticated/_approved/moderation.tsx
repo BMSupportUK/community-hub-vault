@@ -154,8 +154,10 @@ function ModerationPage() {
         }]}
       />
       <main className="flex-1 flex flex-col">
-        <header className="h-14 border-b border-border px-5 flex items-center gap-2">
-          <Shield className="size-4 text-primary" />
+        <header className="h-14 border-b border-border px-5 flex items-center gap-2 bg-gradient-to-r from-primary/10 via-fuchsia-500/5 to-accent/10">
+          <div className="size-7 rounded-lg bg-gradient-primary grid place-items-center shadow-glow">
+            <Shield className="size-4 text-primary-foreground" />
+          </div>
           <h1 className="font-display font-semibold">access requests</h1>
           <div className="ml-auto flex gap-1 bg-surface-2 p-1 rounded-lg">
             {(["pending", "approved", "denied"] as const).map((s) => (
@@ -266,7 +268,7 @@ function ModerationPage() {
                               </button>
                               <button
                                 onClick={() => decide(a, "approved")}
-                                className="px-4 py-2 rounded-lg bg-emerald-500 text-white hover:bg-emerald-600 text-sm font-semibold inline-flex items-center gap-1.5 shadow-sm"
+                                className="px-4 py-2 rounded-lg bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 hover:from-violet-500 hover:via-fuchsia-500 hover:to-blue-500 text-white text-sm font-semibold inline-flex items-center gap-1.5 shadow-glow"
                               >
                                 <Check className="size-4" /> Approve access
                               </button>
