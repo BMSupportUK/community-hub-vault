@@ -42,10 +42,10 @@ interface IncidentUpdate {
 }
 
 const STATUS_META: Record<IncidentStatus, { label: string; classes: string; icon: React.ComponentType<{ className?: string }> }> = {
-  investigating: { label: "Investigating", classes: "bg-blue-500/15 text-blue-300 border-blue-500/30", icon: Search },
-  identified: { label: "Identified", classes: "bg-indigo-500/15 text-indigo-300 border-indigo-500/30", icon: AlertTriangle },
-  monitoring: { label: "Monitoring", classes: "bg-sky-500/15 text-sky-300 border-sky-500/30", icon: Eye },
-  completed: { label: "Completed", classes: "bg-cyan-500/15 text-cyan-300 border-cyan-500/30", icon: CheckCircle2 },
+  investigating: { label: "Investigating", classes: "bg-violet-500/15 text-violet-300 border-violet-500/30", icon: Search },
+  identified: { label: "Identified", classes: "bg-fuchsia-500/15 text-fuchsia-300 border-fuchsia-500/30", icon: AlertTriangle },
+  monitoring: { label: "Monitoring", classes: "bg-blue-500/15 text-blue-300 border-blue-500/30", icon: Eye },
+  completed: { label: "Completed", classes: "bg-emerald-500/15 text-emerald-300 border-emerald-500/30", icon: CheckCircle2 },
 };
 
 function StatusPage() {
