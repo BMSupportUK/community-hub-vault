@@ -487,7 +487,7 @@ function ShiftsPage() {
                         return (
                           <div key={s.id} className={cn("rounded-lg p-2 border text-xs", taken ? (mine ? "bg-cyan-500/20 border-cyan-400/50" : "bg-blue-800/40 border-sky-500/30") : "bg-blue-900/40 border-dashed border-sky-400/30")}>
                             <div className="flex items-center justify-between gap-1">
-                              <div className="font-mono text-sky-100">{s.start_time.slice(0,5)}–{s.end_time.slice(0,5)}</div>
+                              <div className="font-mono text-sky-100">{fmtRange(s.shift_date, s.start_time, s.end_time)}</div>
                               <span className={cn("text-[10px] px-1.5 py-0.5 rounded uppercase font-semibold", s.slot_type === "hourly" ? "bg-violet-500/30 text-violet-200" : "bg-sky-500/30 text-sky-100")}>{s.slot_type === "hourly" ? "hourly" : "shift"}</span>
                             </div>
                             {s.notes && <div className="text-sky-200/60 mt-0.5">{s.notes}</div>}
@@ -529,7 +529,7 @@ function ShiftsPage() {
                 {myShifts.map((s) => (
                   <div key={s.id} className="rounded-2xl bg-blue-950/50 border border-sky-500/30 p-4">
                     <div className="text-sky-100 font-semibold">{dayLabel(new Date(s.shift_date))}</div>
-                    <div className="font-mono text-cyan-200 mt-1">{s.start_time.slice(0,5)} – {s.end_time.slice(0,5)}</div>
+                    <div className="font-mono text-cyan-200 mt-1">{fmtRange(s.shift_date, s.start_time, s.end_time)}</div>
                     <div className="text-xs text-sky-200/70 mt-1 uppercase">{s.slot_type}</div>
                     {s.notes && <div className="text-sm text-sky-200/80 mt-2">{s.notes}</div>}
                     {(() => {
@@ -629,7 +629,7 @@ function ShiftsPage() {
                       return (
                         <li key={s.id} className="px-5 py-3 flex items-center gap-3">
                           <div className="flex-1">
-                            <div className="text-sky-100"><strong>{profName(s.requester_id)}</strong> wants to swap {slot ? `${slot.shift_date} ${slot.start_time.slice(0,5)}–${slot.end_time.slice(0,5)}` : "a shift"}</div>
+                            <div className="text-sky-100"><strong>{profName(s.requester_id)}</strong> wants to swap {slot ? `${slot.shift_date} ${fmtRange(slot.shift_date, slot.start_time, slot.end_time)}` : "a shift"}</div>
                             {s.message && <div className="text-xs text-sky-200/60">{s.message}</div>}
                           </div>
                           <StatusPill status={s.status} />
@@ -738,7 +738,7 @@ function ShiftsPage() {
                     {slots.map((s) => (
                       <li key={s.id} className="px-5 py-3 flex items-center gap-3 text-sm">
                         <div className="font-mono text-sky-200/80 w-28">{s.shift_date}</div>
-                        <div className="font-mono text-cyan-200 w-28">{s.start_time.slice(0,5)}–{s.end_time.slice(0,5)}</div>
+                        <div className="font-mono text-cyan-200 w-28">{fmtRange(s.shift_date, s.start_time, s.end_time)}</div>
                         <div className="uppercase text-xs text-sky-300/80 w-20">{s.slot_type}</div>
                         <div className="flex-1 text-sky-100">{s.assigned_to ? profName(s.assigned_to) : <span className="text-sky-300/60">Open</span>}</div>
                         <Button size="sm" variant="ghost" className="text-rose-300 hover:text-rose-200 hover:bg-rose-500/10" onClick={() => adminDeleteSlot(s.id)}><Trash2 className="size-4" /></Button>
@@ -758,7 +758,7 @@ function ShiftsPage() {
           <DialogHeader><DialogTitle>Request shift swap</DialogTitle></DialogHeader>
           {swapFor && (
             <div className="space-y-3">
-              <div className="text-sm text-muted-foreground">{swapFor.shift_date} · {swapFor.start_time.slice(0,5)}–{swapFor.end_time.slice(0,5)}</div>
+              <div className="text-sm text-muted-foreground">{swapFor.shift_date} · {fmtRange(swapFor.shift_date, swapFor.start_time, swapFor.end_time)}</div>
               <div>
                 <Label>Swap with (same role only)</Label>
                 <Select value={swapTarget} onValueChange={setSwapTarget}>
