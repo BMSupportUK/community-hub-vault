@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Plus, Search, X, Pencil, Trash2, ImageIcon, GripVertical } from "lucide-react";
+import { Plus, Search, X, Pencil, Trash2, ImageIcon, GripVertical, Check, Circle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -28,12 +28,14 @@ type Blog = {
   created_at: string;
   sort_order: number;
 };
+type Blog2 = Blog & { updated_at?: string };
 
 function SportsGuidesPage() {
   const { isMod, user } = useAuth();
   const [tab, setTab] = useState("welcome");
   const [categories, setCategories] = useState<Category[]>([]);
   const [blogs, setBlogs] = useState<Blog[]>([]);
+  const [reads, setReads] = useState<Record<string, string>>({}); // blog_id -> read_at iso
   const [activeCat, setActiveCat] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [reading, setReading] = useState<Blog | null>(null);
@@ -45,25 +47,66 @@ function SportsGuidesPage() {
   const dragBlogId = useRef<string | null>(null);
 
   const load = async () => {
-    const [{ data: cats }, { data: bs }] = await Promise.all([
+    const [{ data: cats }, { data: bs }, { data: rs }] = await Promise.all([
       supabase.from("sports_categories").select("*").order("sort_order"),
       supabase.from("sports_blogs").select("*").order("sort_order").order("created_at", { ascending: false }),
+      user?.id
+        ? supabase.from("sports_blog_reads").select("blog_id, read_at").eq("user_id", user.id)
+        : Promise.resolve({ data: [] as { blog_id: string; read_at: string }[] }),
     ]);
     setCategories((cats ?? []) as Category[]);
     setBlogs((bs ?? []) as Blog[]);
+    const map: Record<string, string> = {};
+    for (const r of (rs ?? []) as { blog_id: string; read_at: string }[]) map[r.blog_id] = r.read_at;
+    setReads(map);
     if (!activeCat && cats?.length) setActiveCat(cats[0].id);
   };
 
   useEffect(() => {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [user?.id]);
+
+  const isUnread = (b: Blog) => {
+    const r = reads[b.id];
+    if (!r) return true;
+    const upd = (b as Blog2).updated_at ?? b.created_at;
+    return new Date(r).getTime() < new Date(upd).getTime();
+  };
+
+  const markRead = async (b: Blog) => {
+    if (!user?.id) return;
+    const now = new Date().toISOString();
+    setReads((m) => ({ ...m, [b.id]: now }));
+    const { error } = await supabase
+      .from("sports_blog_reads")
+      .upsert({ user_id: user.id, blog_id: b.id, read_at: now }, { onConflict: "user_id,blog_id" });
+    if (error) toast.error(error.message);
+  };
+
+  const markUnread = async (b: Blog) => {
+    if (!user?.id) return;
+    setReads((m) => { const n = { ...m }; delete n[b.id]; return n; });
+    const { error } = await supabase
+      .from("sports_blog_reads")
+      .delete()
+      .eq("user_id", user.id)
+      .eq("blog_id", b.id);
+    if (error) toast.error(error.message);
+  };
 
   const counts = useMemo(() => {
     const m: Record<string, number> = {};
     for (const b of blogs) m[b.category_id] = (m[b.category_id] ?? 0) + 1;
     return m;
   }, [blogs]);
+
+  const unreadCounts = useMemo(() => {
+    const m: Record<string, number> = {};
+    for (const b of blogs) if (isUnread(b)) m[b.category_id] = (m[b.category_id] ?? 0) + 1;
+    return m;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [blogs, reads]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
