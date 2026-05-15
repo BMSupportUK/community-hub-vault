@@ -54,6 +54,21 @@ interface ReferralRow {
   joined_username: string | null;
 }
 
+interface FriendRow {
+  friendship_id: string;
+  user_id: string;
+  username: string | null;
+  display_name: string | null;
+  avatar_url: string | null;
+}
+
+type FriendRel =
+  | { kind: "none" }
+  | { kind: "self" }
+  | { kind: "outgoing"; id: string }
+  | { kind: "incoming"; id: string }
+  | { kind: "friends"; id: string };
+
 const ROLE_STYLES: Record<AppRole, string> = {
   admin: "bg-destructive/15 text-destructive border-destructive/30",
   management: "bg-primary/15 text-primary border-primary/30",
@@ -94,7 +109,10 @@ function ProfilePage() {
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
-  const [mainTab, setMainTab] = useState<"welcome" | "profile" | "creds" | "tickets" | "orders" | "referrals">("welcome");
+  const [friends, setFriends] = useState<FriendRow[]>([]);
+  const [rel, setRel] = useState<FriendRel>({ kind: "none" });
+  const [relBusy, setRelBusy] = useState(false);
+  const [mainTab, setMainTab] = useState<"welcome" | "profile" | "creds" | "tickets" | "orders" | "referrals" | "friends">("welcome");
 
   const isOwner = !!profile && !!viewer && profile.id === viewer.id;
   const canSeeCreds = isOwner || isAdmin;
@@ -174,6 +192,52 @@ function ProfilePage() {
       })),
     );
 
+    // Friends list for the profile owner
+    const { data: friendRows } = await supabase
+      .from("friendships")
+      .select("id, requester_id, addressee_id")
+      .eq("status", "accepted")
+      .or(`requester_id.eq.${p.id},addressee_id.eq.${p.id}`);
+    const otherIds = (friendRows ?? []).map((f: any) =>
+      f.requester_id === p.id ? f.addressee_id : f.requester_id,
+    );
+    let friendProfiles: Record<string, { username: string | null; display_name: string | null; avatar_url: string | null }> = {};
+    if (otherIds.length) {
+      const { data: fp } = await supabase
+        .from("profiles").select("id, username, display_name, avatar_url").in("id", otherIds);
+      friendProfiles = Object.fromEntries((fp ?? []).map((x: any) => [x.id, x]));
+    }
+    setFriends(
+      (friendRows ?? []).map((f: any) => {
+        const otherId = f.requester_id === p.id ? f.addressee_id : f.requester_id;
+        const fp = friendProfiles[otherId] ?? { username: null, display_name: null, avatar_url: null };
+        return {
+          friendship_id: f.id,
+          user_id: otherId,
+          username: fp.username,
+          display_name: fp.display_name,
+          avatar_url: fp.avatar_url,
+        };
+      }),
+    );
+
+    // Viewer ↔ profile relationship
+    if (viewer && viewer.id !== p.id) {
+      const { data: relRow } = await supabase
+        .from("friendships")
+        .select("id, requester_id, addressee_id, status")
+        .or(
+          `and(requester_id.eq.${viewer.id},addressee_id.eq.${p.id}),and(requester_id.eq.${p.id},addressee_id.eq.${viewer.id})`,
+        )
+        .maybeSingle();
+      if (!relRow) setRel({ kind: "none" });
+      else if (relRow.status === "accepted") setRel({ kind: "friends", id: relRow.id });
+      else if (relRow.requester_id === viewer.id) setRel({ kind: "outgoing", id: relRow.id });
+      else setRel({ kind: "incoming", id: relRow.id });
+    } else {
+      setRel({ kind: "self" });
+    }
+
     setLoading(false);
   };
 
@@ -223,6 +287,36 @@ function ProfilePage() {
 
   useEffect(() => { load(); }, [username]);
 
+  const sendFriendRequest = async () => {
+    if (!viewer || !profile || rel.kind !== "none") return;
+    setRelBusy(true);
+    const { error } = await supabase
+      .from("friendships")
+      .insert({ requester_id: viewer.id, addressee_id: profile.id });
+    setRelBusy(false);
+    if (error) return toast.error(error.message);
+    toast.success("Friend request sent");
+    load();
+  };
+
+  const acceptFriendRequest = async () => {
+    if (rel.kind !== "incoming") return;
+    setRelBusy(true);
+    const { error } = await supabase.from("friendships").update({ status: "accepted" }).eq("id", rel.id);
+    setRelBusy(false);
+    if (error) return toast.error(error.message);
+    toast.success("Friend request accepted");
+    load();
+  };
+
+  const removeFriend = async (friendshipId: string) => {
+    if (!confirm("Remove this friend?")) return;
+    const { error } = await supabase.from("friendships").delete().eq("id", friendshipId);
+    if (error) return toast.error(error.message);
+    toast.success("Removed");
+    load();
+  };
+
   const sortedRoles = useMemo(() => {
     const order: AppRole[] = ["admin", "management", "moderator", "staff", "member", "pending", "banned"];
     return [...roles].sort((a, b) => order.indexOf(a) - order.indexOf(b));
@@ -260,6 +354,7 @@ function ProfilePage() {
     ...(canSeeCreds ? [{ id: "creds", label: "Credentials" }] : []),
     { id: "tickets", label: `Tickets (${tickets.length})` },
     { id: "orders", label: `Orders (${orders.length})` },
+    { id: "friends", label: `Friends (${friends.length})` },
     ...(canSeeReferrals ? [{ id: "referrals", label: `Referrals (${referrals.length})` }] : []),
   ];
 
@@ -364,6 +459,9 @@ function ProfilePage() {
                       <Pencil className="size-4" /> Edit profile
                     </button>
                   )}
+                  {!isOwner && viewer && (
+                    <FriendActionButton rel={rel} busy={relBusy} onSend={sendFriendRequest} onAccept={acceptFriendRequest} onRemove={() => rel.kind === "friends" && removeFriend(rel.id)} />
+                  )}
                 </div>
                 <div className="px-6 pb-6">
                   <p className="text-xs uppercase tracking-wider text-amber-100/80 mb-2">Bio</p>
@@ -431,6 +529,32 @@ function ProfilePage() {
             </ActivityCard>
           </TabsContent>
 
+          <TabsContent value="friends" className="mt-6">
+            <ActivityCard title={isOwner ? "Your friends" : `${display}'s friends`} icon={UserPlus} empty={isOwner ? "No friends yet. Visit a member's profile and send a friend request." : "No friends yet."}>
+              {friends.map((f) => (
+                <li key={f.friendship_id} className="flex items-center justify-between gap-3 py-2 text-sm">
+                  <Link
+                    to="/u/$username"
+                    params={{ username: f.username ?? "" }}
+                    className="flex items-center gap-3 min-w-0 hover:underline"
+                  >
+                    <Avatar url={f.avatar_url} name={f.display_name || f.username || "Member"} size={32} />
+                    <span className="truncate">{f.display_name || f.username || "Member"}</span>
+                    {f.username && <span className="text-xs text-white/60">@{f.username}</span>}
+                  </Link>
+                  {isOwner && (
+                    <button
+                      onClick={() => removeFriend(f.friendship_id)}
+                      className="flex items-center gap-1 px-2 py-1 rounded-md text-xs bg-white/10 hover:bg-rose-500/20 text-white/80 hover:text-rose-200"
+                    >
+                      <Trash2 className="size-3.5" /> Remove
+                    </button>
+                  )}
+                </li>
+              ))}
+            </ActivityCard>
+          </TabsContent>
+
           {canSeeReferrals && (
             <TabsContent value="referrals" className="mt-6">
               <ReferralsPanel
@@ -459,6 +583,46 @@ function ProfilePage() {
 }
 
 function Avatar({ url, name, size = 40, ring }: { url: string | null; name: string; size?: number; ring?: boolean }) {
+  return AvatarImpl({ url, name, size, ring });
+}
+
+function FriendActionButton({
+  rel, busy, onSend, onAccept, onRemove,
+}: {
+  rel: FriendRel;
+  busy: boolean;
+  onSend: () => void;
+  onAccept: () => void;
+  onRemove: () => void;
+}) {
+  if (rel.kind === "self") return null;
+  const base = "self-start sm:self-end flex items-center gap-2 px-4 py-2 rounded-lg text-white font-medium text-sm shadow-lg shadow-purple-900/50 disabled:opacity-60";
+  if (rel.kind === "none")
+    return (
+      <button disabled={busy} onClick={onSend} className={cn(base, "bg-gradient-to-r from-violet-600 to-blue-600")}>
+        <UserPlus className="size-4" /> Add friend
+      </button>
+    );
+  if (rel.kind === "outgoing")
+    return (
+      <button disabled className={cn(base, "bg-white/10 cursor-default")}>
+        <ClockIcon className="size-4" /> Request pending
+      </button>
+    );
+  if (rel.kind === "incoming")
+    return (
+      <button disabled={busy} onClick={onAccept} className={cn(base, "bg-gradient-to-r from-emerald-600 to-teal-600")}>
+        <Check className="size-4" /> Accept request
+      </button>
+    );
+  return (
+    <button disabled={busy} onClick={onRemove} className={cn(base, "bg-white/10 hover:bg-rose-500/20 text-rose-100")}>
+      <Trash2 className="size-4" /> Remove friend
+    </button>
+  );
+}
+
+function AvatarImpl({ url, name, size = 40, ring }: { url: string | null; name: string; size?: number; ring?: boolean }) {
   const initials = name.split(/\s+/).map((s) => s[0]).filter(Boolean).slice(0, 2).join("").toUpperCase();
   return (
     <div
