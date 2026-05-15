@@ -633,7 +633,7 @@ function ChannelPage() {
                   </div>
                   <div
                     className={cn(
-                      "inline-block max-w-full rounded-2xl px-3.5 py-2 border shadow-sm",
+                      "block w-full rounded-2xl px-3.5 py-2 border shadow-sm",
                       isPinned
                         ? "bg-primary/10 border-primary/30 rounded-tl-sm"
                         : highlight
