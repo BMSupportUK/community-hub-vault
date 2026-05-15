@@ -1055,9 +1055,7 @@ function ChannelPage() {
               ? `You don't have permission to send messages in this channel`
               : slowRemaining > 0
                 ? `Slow mode: wait ${slowRemaining}s before sending another message`
-                : channel.slow_mode_seconds > 0
-                  ? `Message #${channel.name} — slow mode ${formatSlow(channel.slow_mode_seconds)}`
-                  : `Message #${channel.name} — type @ to mention`}
+                : `Message #${channel.name} — type @ to mention`}
             disabled={!canSend || slowRemaining > 0}
             className="flex-1 bg-transparent resize-none outline-none text-sm py-1 max-h-32"
           />
