@@ -89,27 +89,32 @@ function Landing() {
             </div>
           </div>
 
-          <div className="mt-10 flex flex-col gap-4 max-w-2xl mx-auto">
-            {boxes.map((b) => (
-              <div
-                key={b.id}
-                className="group flex items-start gap-4 p-5 rounded-2xl border border-white/15 bg-white/5 backdrop-blur-md shadow-[0_8px_40px_rgba(0,0,0,0.35)] hover:border-red-300/50 hover:bg-white/10 transition-all"
-              >
-                <div className="shrink-0 size-12 rounded-xl bg-black/50 border border-white/10 grid place-items-center overflow-hidden ring-1 ring-red-500/30 group-hover:ring-red-300/60 transition">
-                  {b.icon_url ? (
-                    <img src={b.icon_url} alt="" className="size-full object-contain p-2" />
-                  ) : (
-                    <Sparkles className="size-6 text-red-200" />
-                  )}
-                </div>
-                <div className="min-w-0">
-                  <div className="font-display font-bold text-white text-base leading-tight">{b.title}</div>
-                  <p className="text-sm text-red-50/80 mt-1 leading-snug">{b.description}</p>
-                </div>
-              </div>
-            ))}
-          </div>
         </section>
+
+        <div className="relative max-w-2xl mx-auto -mt-12 md:-mt-16 px-6 flex flex-col gap-4 z-10">
+          {boxes.map((b) => (
+            <div
+              key={b.id}
+              className="group flex items-start gap-4 p-5 rounded-2xl border border-red-400/30 backdrop-blur-md shadow-[0_12px_50px_rgba(127,29,29,0.5)] hover:border-red-300/60 transition-all"
+              style={{
+                background:
+                  "linear-gradient(135deg, rgba(127,29,29,0.9) 0%, rgba(69,10,10,0.9) 100%)",
+              }}
+            >
+              <div className="shrink-0 size-12 rounded-xl bg-black/40 border border-white/10 grid place-items-center overflow-hidden ring-1 ring-red-500/30 group-hover:ring-red-300/60 transition">
+                {b.icon_url ? (
+                  <img src={b.icon_url} alt="" className="size-full object-contain p-2" />
+                ) : (
+                  <Sparkles className="size-6 text-red-200" />
+                )}
+              </div>
+              <div className="min-w-0">
+                <div className="font-display font-bold text-white text-base leading-tight">{b.title}</div>
+                <p className="text-sm text-red-50/85 mt-1 leading-snug">{b.description}</p>
+              </div>
+            </div>
+          ))}
+        </div>
 
       </main>
     </div>
