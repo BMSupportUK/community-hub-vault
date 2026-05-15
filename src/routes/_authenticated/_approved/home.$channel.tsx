@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 import { MentionText, useMentionAutocomplete } from "@/components/app/mentions";
+import { StaffOnDutyStrip } from "@/components/app/StaffOnDutyStrip";
 
 export const Route = createFileRoute("/_authenticated/_approved/home/$channel")({
   component: ChannelPage,
@@ -191,6 +192,8 @@ function ChannelPage() {
           <span className="ml-2 text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-400">staff</span>
         )}
       </header>
+
+      <StaffOnDutyStrip />
 
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-5 py-4 space-y-3">
         {messages.length === 0 ? (
