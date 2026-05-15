@@ -46,7 +46,7 @@ function Landing() {
 
       <main className="flex-1 px-6 py-10 md:py-16">
         <section
-          className="relative max-w-7xl mx-auto rounded-3xl border border-red-900/60 p-8 md:p-14"
+          className="relative max-w-7xl mx-auto rounded-3xl border border-red-900/60 p-8 md:p-14 pb-24 md:pb-32"
           style={{
             background:
               "radial-gradient(1200px 600px at 10% 10%, rgba(248,113,113,0.25), transparent 60%), radial-gradient(900px 500px at 90% 90%, rgba(127,29,29,0.6), transparent 60%), linear-gradient(135deg, #7f1d1d 0%, #991b1b 50%, #450a0a 100%)",
