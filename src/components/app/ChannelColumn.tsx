@@ -140,17 +140,11 @@ export function ChannelColumn({
       </div>
       {user && (
         <div className="h-14 border-t border-border px-3 flex items-center gap-2 bg-rail">
-          {profile?.avatar_url ? (
-            <img
-              src={profile.avatar_url}
-              alt=""
-              className="size-8 rounded-full object-cover shrink-0"
-            />
-          ) : (
-            <div className="size-8 rounded-full bg-gradient-primary flex items-center justify-center text-xs font-semibold text-primary-foreground shrink-0">
-              {(profile?.display_name ?? profile?.username ?? user.email ?? "?").slice(0, 1).toUpperCase()}
-            </div>
-          )}
+          <img
+            src={profile?.avatar_url || "/default-avatar.png"}
+            alt=""
+            className="size-8 rounded-full object-cover shrink-0"
+          />
           <div className="min-w-0 flex-1">
             <div className="text-xs font-medium truncate">
               {profile?.display_name ?? profile?.username ?? "User"}
