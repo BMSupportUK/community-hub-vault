@@ -7,6 +7,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
+import { useNavigate } from "@tanstack/react-router";
 
 interface PendingRequest {
   id: string;
@@ -17,6 +18,7 @@ interface PendingRequest {
 
 export function FriendRequestsListener() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [queue, setQueue] = useState<PendingRequest[]>([]);
   const current = queue[0] ?? null;
   const handlingRef = useRef(false);
@@ -58,6 +60,28 @@ export function FriendRequestsListener() {
         (p) => {
           const row = p.new as { id: string; requester_id: string; status: string };
           if (row.status === "pending") enqueue(row.id, row.requester_id);
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "friendships", filter: `requester_id=eq.${user.id}` },
+        async (p) => {
+          const row = p.new as { addressee_id: string; status: string };
+          const old = p.old as { status?: string };
+          if (row.status !== "accepted" || old?.status === "accepted") return;
+          const { data: prof } = await supabase
+            .from("profiles")
+            .select("display_name, username")
+            .eq("id", row.addressee_id)
+            .maybeSingle();
+          const name = prof?.display_name || prof?.username || "Someone";
+          const slug = prof?.username ?? row.addressee_id;
+          toast.success(`${name} accepted your friend request`, {
+            action: {
+              label: "View profile",
+              onClick: () => navigate({ to: "/u/$username", params: { username: slug } }),
+            },
+          });
         },
       )
       .subscribe();
