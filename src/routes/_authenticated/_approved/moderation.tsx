@@ -1,10 +1,11 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { Shield, Check, X, Send, ChevronDown, ChevronRight, MessageSquare, FileText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { ChannelColumn } from "@/components/app/ChannelColumn";
 import { toast } from "sonner";
+import { isAdminUnlocked } from "@/lib/admin-unlock";
 
 export const Route = createFileRoute("/_authenticated/_approved/moderation")({
   component: ModerationPage,
@@ -23,6 +24,9 @@ interface ThreadMsg { id: string; sender_id: string; content: string; created_at
 
 function ModerationPage() {
   const { isMod, user } = useAuth();
+  if (!isAdminUnlocked(user?.id)) {
+    return <Navigate to="/admin" search={{ next: "/moderation" } as never} />;
+  }
   const [apps, setApps] = useState<AppRow[]>([]);
   const [filter, setFilter] = useState<"pending" | "approved" | "denied">("pending");
   const [expandedId, setExpandedId] = useState<string | null>(null);
