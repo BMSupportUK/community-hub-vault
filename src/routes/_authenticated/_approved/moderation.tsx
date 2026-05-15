@@ -125,7 +125,7 @@ function ModerationPage() {
         sender_id: user!.id,
         content:
           "❌ Your application has been rejected.\n\nThis conversation is now closed. If you believe this is a mistake, you can submit an appeal from your rejected screen using the reference: APPEAL",
-      });
+      } as never);
       // Remove pending role, add banned role so user is sent to /rejected
       await supabase.from("user_roles").delete().eq("user_id", app.user_id).eq("role", "pending");
       const { error: e2 } = await supabase.from("user_roles").insert({ user_id: app.user_id, role: "banned" });
@@ -142,7 +142,7 @@ function ModerationPage() {
     setReply("");
     const { error } = await supabase.from("gate_messages").insert({
       application_id: expandedId, sender_id: user.id, content,
-    });
+    } as never);
     if (error) toast.error(error.message);
   };
 
