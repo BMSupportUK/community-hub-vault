@@ -60,9 +60,21 @@ const newTicketSchema = z.object({
   message: z.string().trim().max(2000),
 });
 
-async function uploadTicketFiles(files: File[]): Promise<Attachment[]> {
+export type UploadProgress = {
+  index: number;       // 0-based file currently uploading
+  total: number;
+  name: string;
+  done: number;        // count of completed files
+};
+
+async function uploadTicketFiles(
+  files: File[],
+  onProgress?: (p: UploadProgress) => void,
+): Promise<Attachment[]> {
   const out: Attachment[] = [];
-  for (const f of files) {
+  for (let i = 0; i < files.length; i++) {
+    const f = files[i];
+    onProgress?.({ index: i, total: files.length, name: f.name, done: i });
     if (f.size > 25 * 1024 * 1024) {
       toast.error(`${f.name} is over 25MB`);
       continue;
@@ -79,8 +91,30 @@ async function uploadTicketFiles(files: File[]): Promise<Attachment[]> {
       continue;
     }
     out.push({ name: f.name, path, size: f.size, type: f.type });
+    onProgress?.({ index: i, total: files.length, name: f.name, done: i + 1 });
   }
   return out;
+}
+
+function UploadProgressBar({ progress }: { progress: UploadProgress | null }) {
+  if (!progress) return null;
+  const pct = progress.total > 0 ? Math.round((progress.done / progress.total) * 100) : 0;
+  return (
+    <div className="space-y-1 rounded-lg border border-white/30 bg-white/10 px-3 py-2 text-xs text-white">
+      <div className="flex items-center justify-between gap-2">
+        <span className="truncate">
+          Uploading {progress.done < progress.total ? progress.index + 1 : progress.total} of {progress.total}: {progress.name}
+        </span>
+        <span className="tabular-nums opacity-80">{pct}%</span>
+      </div>
+      <div className="h-1.5 w-full rounded-full bg-white/20 overflow-hidden">
+        <div
+          className="h-full bg-white transition-all duration-200"
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+    </div>
+  );
 }
 
 function TicketAttachment({ item }: { item: Attachment }) {
@@ -357,6 +391,7 @@ function NewTicketForm({
   const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [files, setFiles] = useState<File[]>([]);
+  const [uploadProgress, setUploadProgress] = useState<UploadProgress | null>(null);
 
   useEffect(() => { if (!categoryId && categories[0]) setCategoryId(categories[0].id); }, [categories, categoryId]);
 
@@ -366,7 +401,8 @@ function NewTicketForm({
     if (!parsed.success) return toast.error(parsed.error.issues[0].message);
     if (!parsed.data.message && files.length === 0) return toast.error("Add a message or attach a file");
     setSubmitting(true);
-    const uploaded = files.length ? await uploadTicketFiles(files) : [];
+    const uploaded = files.length ? await uploadTicketFiles(files, setUploadProgress) : [];
+    setUploadProgress(null);
     const { data: t, error } = await supabase
       .from("tickets")
       .insert({ user_id: user!.id, subject: parsed.data.subject, category_id: parsed.data.category_id, priority: parsed.data.priority })
@@ -476,6 +512,9 @@ function NewTicketForm({
           <Field label="Attachments (optional)">
             <FilePicker files={files} setFiles={setFiles} disabled={submitting} dark />
           </Field>
+          {uploadProgress && (
+            <UploadProgressBar progress={uploadProgress} />
+          )}
           <div className="flex gap-2 justify-end">
             <button type="button" onClick={onCancel} className="px-4 py-2 rounded-lg text-sm text-white/80 hover:text-white">Cancel</button>
             <button type="submit" disabled={submitting} className="px-4 py-2 rounded-lg bg-white text-rose-600 text-sm font-semibold hover:bg-white/90 disabled:opacity-50 shadow-lg">
@@ -515,6 +554,7 @@ function TicketDetail({
   const [internal, setInternal] = useState(false);
   const [sending, setSending] = useState(false);
   const [replyFiles, setReplyFiles] = useState<File[]>([]);
+  const [replyProgress, setReplyProgress] = useState<UploadProgress | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const taRef = useRef<HTMLTextAreaElement>(null);
   const mention = useMentionAutocomplete({
@@ -565,7 +605,8 @@ function TicketDetail({
     if ((content.length < 1 && replyFiles.length === 0) || content.length > 2000) return;
     if (ticket.status === "closed") return toast.error("Ticket is closed");
     setSending(true);
-    const uploaded = replyFiles.length ? await uploadTicketFiles(replyFiles) : [];
+    const uploaded = replyFiles.length ? await uploadTicketFiles(replyFiles, setReplyProgress) : [];
+    setReplyProgress(null);
     const { error } = await supabase.from("ticket_messages").insert({
       ticket_id: ticket.id, sender_id: currentUserId, content, is_internal: internal && isStaff,
       attachments: uploaded as unknown as never,
@@ -710,6 +751,7 @@ function TicketDetail({
               ><Send className="size-4" /></button>
             </div>
             <FilePicker files={replyFiles} setFiles={setReplyFiles} disabled={sending} dark />
+            {replyProgress && <UploadProgressBar progress={replyProgress} />}
             {isStaff && (
               <label className="flex items-center gap-2 text-xs text-white/85 cursor-pointer">
                 <input type="checkbox" checked={internal} onChange={(e) => setInternal(e.target.checked)} className="accent-amber-300" />
