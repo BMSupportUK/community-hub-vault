@@ -5,6 +5,7 @@ import { Briefcase, Search, Clock, UserPlus, Eye, Check, Lock } from "lucide-rea
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
+import profileHeader from "@/assets/profile-header.jpg";
 
 export const Route = createFileRoute("/_authenticated/_approved/staff")({
   component: StaffPage,
