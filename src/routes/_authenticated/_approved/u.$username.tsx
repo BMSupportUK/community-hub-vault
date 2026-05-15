@@ -583,6 +583,46 @@ function ProfilePage() {
 }
 
 function Avatar({ url, name, size = 40, ring }: { url: string | null; name: string; size?: number; ring?: boolean }) {
+  return AvatarImpl({ url, name, size, ring });
+}
+
+function FriendActionButton({
+  rel, busy, onSend, onAccept, onRemove,
+}: {
+  rel: FriendRel;
+  busy: boolean;
+  onSend: () => void;
+  onAccept: () => void;
+  onRemove: () => void;
+}) {
+  if (rel.kind === "self") return null;
+  const base = "self-start sm:self-end flex items-center gap-2 px-4 py-2 rounded-lg text-white font-medium text-sm shadow-lg shadow-purple-900/50 disabled:opacity-60";
+  if (rel.kind === "none")
+    return (
+      <button disabled={busy} onClick={onSend} className={cn(base, "bg-gradient-to-r from-violet-600 to-blue-600")}>
+        <UserPlus className="size-4" /> Add friend
+      </button>
+    );
+  if (rel.kind === "outgoing")
+    return (
+      <button disabled className={cn(base, "bg-white/10 cursor-default")}>
+        <ClockIcon className="size-4" /> Request pending
+      </button>
+    );
+  if (rel.kind === "incoming")
+    return (
+      <button disabled={busy} onClick={onAccept} className={cn(base, "bg-gradient-to-r from-emerald-600 to-teal-600")}>
+        <Check className="size-4" /> Accept request
+      </button>
+    );
+  return (
+    <button disabled={busy} onClick={onRemove} className={cn(base, "bg-white/10 hover:bg-rose-500/20 text-rose-100")}>
+      <Trash2 className="size-4" /> Remove friend
+    </button>
+  );
+}
+
+function AvatarImpl({ url, name, size = 40, ring }: { url: string | null; name: string; size?: number; ring?: boolean }) {
   const initials = name.split(/\s+/).map((s) => s[0]).filter(Boolean).slice(0, 2).join("").toUpperCase();
   return (
     <div
