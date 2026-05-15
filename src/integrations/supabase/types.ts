@@ -1101,6 +1101,24 @@ export type Database = {
         }
         Relationships: []
       }
+      sports_blog_reads: {
+        Row: {
+          blog_id: string
+          read_at: string
+          user_id: string
+        }
+        Insert: {
+          blog_id: string
+          read_at?: string
+          user_id: string
+        }
+        Update: {
+          blog_id?: string
+          read_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       sports_blogs: {
         Row: {
           badge: string | null
