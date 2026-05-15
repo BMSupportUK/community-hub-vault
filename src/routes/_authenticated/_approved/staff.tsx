@@ -249,6 +249,28 @@ function StaffPage() {
                             {p.bio && (
                               <p className="text-xs text-blue-200/70 mt-2 line-clamp-2">{p.bio}</p>
                             )}
+                            <div className="mt-3 grid grid-cols-2 gap-2">
+                              <Link
+                                to="/u/$username"
+                                params={{ username: p.username ?? p.id }}
+                                className="flex items-center justify-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg bg-blue-900/60 border border-blue-500/30 text-blue-100 hover:border-sky-400 hover:text-sky-200 transition"
+                              >
+                                <Eye className="size-3.5" /> View profile
+                              </Link>
+                              <FriendActionMini
+                                viewerId={viewer?.id ?? null}
+                                targetId={p.id}
+                                state={friendByUser[p.id] ?? { kind: "none" }}
+                                busy={busyId === p.id || ((friendByUser[p.id]?.kind === "incoming") && busyId === (friendByUser[p.id] as any).id)}
+                                onSend={() => sendRequest(p.id)}
+                                onAccept={(id) => acceptRequest(id)}
+                              />
+                            </div>
+                            {p.is_private && (
+                              <p className="mt-2 text-[10px] text-blue-300/70 flex items-center gap-1">
+                                <Lock className="size-3" /> Private profile — friends only
+                              </p>
+                            )}
                             <div className="mt-auto pt-3 border-t border-blue-500/20 text-[11px] text-blue-300/70 flex items-center gap-1.5">
                               <Clock className="size-3" />
                               Joined {new Date(p.created_at).toLocaleDateString()}
@@ -265,5 +287,54 @@ function StaffPage() {
         </Tabs>
       </div>
     </div>
+  );
+}
+
+function FriendActionMini({
+  viewerId, targetId, state, busy, onSend, onAccept,
+}: {
+  viewerId: string | null;
+  targetId: string;
+  state: FriendState;
+  busy: boolean;
+  onSend: () => void;
+  onAccept: (id: string) => void;
+}) {
+  if (!viewerId || viewerId === targetId) {
+    return <span className="flex items-center justify-center text-[11px] text-blue-300/70">—</span>;
+  }
+  if (state.kind === "friends") {
+    return (
+      <span className="flex items-center justify-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg bg-emerald-500/15 text-emerald-300 ring-1 ring-emerald-400/30">
+        <Check className="size-3.5" /> Friends
+      </span>
+    );
+  }
+  if (state.kind === "outgoing") {
+    return (
+      <span className="flex items-center justify-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg bg-blue-900/60 text-blue-200/80 ring-1 ring-blue-500/30">
+        <Clock className="size-3.5" /> Pending
+      </span>
+    );
+  }
+  if (state.kind === "incoming") {
+    return (
+      <button
+        disabled={busy}
+        onClick={() => onAccept(state.id)}
+        className="flex items-center justify-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 text-white disabled:opacity-60"
+      >
+        <Check className="size-3.5" /> Accept
+      </button>
+    );
+  }
+  return (
+    <button
+      disabled={busy}
+      onClick={onSend}
+      className="flex items-center justify-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-blue-600 text-white disabled:opacity-60"
+    >
+      <UserPlus className="size-3.5" /> Add friend
+    </button>
   );
 }
