@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { censorText, useProfanityWords } from "@/lib/profanity";
 
 const MENTION_RE = /(@[a-zA-Z0-9_.\-]+)/g;
 
@@ -33,12 +34,14 @@ export function MentionText({
   currentUsername?: string | null;
   className?: string;
 }) {
+  // Subscribe so updates to the custom word list re-render messages.
+  useProfanityWords();
   const me = currentUsername?.toLowerCase() ?? null;
   const parts = content.split(MENTION_RE);
   return (
     <span className={cn("whitespace-pre-wrap break-words", className)}>
       {parts.map((part, i) => {
-        if (!part.startsWith("@")) return <span key={i}>{part}</span>;
+        if (!part.startsWith("@")) return <span key={i}>{censorText(part)}</span>;
         const tag = part.slice(1).toLowerCase();
         const isBroadcast = tag === "all" || tag === "here";
         const isMe = !!me && tag === me;
