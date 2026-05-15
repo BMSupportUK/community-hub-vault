@@ -1,8 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Briefcase, Search, Clock } from "lucide-react";
+import { Briefcase, Search, Clock, UserPlus, Eye, Check, Lock } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { useAuth } from "@/hooks/use-auth";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/_approved/staff")({
   component: StaffPage,
@@ -15,8 +17,15 @@ interface Profile {
   avatar_url: string | null;
   bio: string | null;
   created_at: string;
+  is_private: boolean | null;
 }
 interface RoleRow { user_id: string; role: string }
+
+type FriendState =
+  | { kind: "none" }
+  | { kind: "outgoing" }
+  | { kind: "incoming"; id: string }
+  | { kind: "friends"; id: string };
 
 const ROLE_ORDER = ["admin", "management", "moderator", "staff"] as const;
 const ROLE_LABEL: Record<string, string> = {
@@ -27,25 +36,60 @@ const ROLE_LABEL: Record<string, string> = {
 };
 
 function StaffPage() {
+  const { user: viewer } = useAuth();
   const [tab, setTab] = useState("welcome");
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [rolesByUser, setRolesByUser] = useState<Record<string, string[]>>({});
+  const [friendByUser, setFriendByUser] = useState<Record<string, FriendState>>({});
+  const [busyId, setBusyId] = useState<string | null>(null);
   const [q, setQ] = useState("");
 
-  useEffect(() => {
-    (async () => {
-      const [{ data: ps }, { data: rs }] = await Promise.all([
-        supabase.from("profiles").select("*").order("display_name"),
-        supabase.from("user_roles").select("user_id, role"),
-      ]);
-      setProfiles((ps as Profile[] | null) ?? []);
-      const map: Record<string, string[]> = {};
-      for (const r of (rs as RoleRow[] | null) ?? []) {
-        (map[r.user_id] ||= []).push(r.role);
+  const load = async () => {
+    const [{ data: ps }, { data: rs }] = await Promise.all([
+      supabase.from("profiles").select("*").order("display_name"),
+      supabase.from("user_roles").select("user_id, role"),
+    ]);
+    setProfiles((ps as Profile[] | null) ?? []);
+    const map: Record<string, string[]> = {};
+    for (const r of (rs as RoleRow[] | null) ?? []) {
+      (map[r.user_id] ||= []).push(r.role);
+    }
+    setRolesByUser(map);
+
+    if (viewer) {
+      const { data: fs } = await supabase
+        .from("friendships")
+        .select("id, requester_id, addressee_id, status")
+        .or(`requester_id.eq.${viewer.id},addressee_id.eq.${viewer.id}`);
+      const fmap: Record<string, FriendState> = {};
+      for (const f of (fs as any[] | null) ?? []) {
+        const otherId = f.requester_id === viewer.id ? f.addressee_id : f.requester_id;
+        if (f.status === "accepted") fmap[otherId] = { kind: "friends", id: f.id };
+        else if (f.requester_id === viewer.id) fmap[otherId] = { kind: "outgoing" };
+        else fmap[otherId] = { kind: "incoming", id: f.id };
       }
-      setRolesByUser(map);
-    })();
-  }, []);
+      setFriendByUser(fmap);
+    }
+  };
+  useEffect(() => { load(); }, [viewer?.id]);
+
+  const sendRequest = async (toId: string) => {
+    if (!viewer) return;
+    setBusyId(toId);
+    const { error } = await supabase.from("friendships").insert({ requester_id: viewer.id, addressee_id: toId });
+    setBusyId(null);
+    if (error) return toast.error(error.message);
+    toast.success("Friend request sent");
+    load();
+  };
+  const acceptRequest = async (id: string) => {
+    setBusyId(id);
+    const { error } = await supabase.from("friendships").update({ status: "accepted" }).eq("id", id);
+    setBusyId(null);
+    if (error) return toast.error(error.message);
+    toast.success("Friends");
+    load();
+  };
 
   const STAFF_SET = new Set<string>(ROLE_ORDER);
   const staffProfiles = profiles.filter((p) =>
@@ -205,6 +249,28 @@ function StaffPage() {
                             {p.bio && (
                               <p className="text-xs text-blue-200/70 mt-2 line-clamp-2">{p.bio}</p>
                             )}
+                            <div className="mt-3 grid grid-cols-2 gap-2">
+                              <Link
+                                to="/u/$username"
+                                params={{ username: p.username ?? p.id }}
+                                className="flex items-center justify-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg bg-blue-900/60 border border-blue-500/30 text-blue-100 hover:border-sky-400 hover:text-sky-200 transition"
+                              >
+                                <Eye className="size-3.5" /> View profile
+                              </Link>
+                              <FriendActionMini
+                                viewerId={viewer?.id ?? null}
+                                targetId={p.id}
+                                state={friendByUser[p.id] ?? { kind: "none" }}
+                                busy={busyId === p.id || ((friendByUser[p.id]?.kind === "incoming") && busyId === (friendByUser[p.id] as any).id)}
+                                onSend={() => sendRequest(p.id)}
+                                onAccept={(id) => acceptRequest(id)}
+                              />
+                            </div>
+                            {p.is_private && (
+                              <p className="mt-2 text-[10px] text-blue-300/70 flex items-center gap-1">
+                                <Lock className="size-3" /> Private profile — friends only
+                              </p>
+                            )}
                             <div className="mt-auto pt-3 border-t border-blue-500/20 text-[11px] text-blue-300/70 flex items-center gap-1.5">
                               <Clock className="size-3" />
                               Joined {new Date(p.created_at).toLocaleDateString()}
@@ -221,5 +287,54 @@ function StaffPage() {
         </Tabs>
       </div>
     </div>
+  );
+}
+
+function FriendActionMini({
+  viewerId, targetId, state, busy, onSend, onAccept,
+}: {
+  viewerId: string | null;
+  targetId: string;
+  state: FriendState;
+  busy: boolean;
+  onSend: () => void;
+  onAccept: (id: string) => void;
+}) {
+  if (!viewerId || viewerId === targetId) {
+    return <span className="flex items-center justify-center text-[11px] text-blue-300/70">—</span>;
+  }
+  if (state.kind === "friends") {
+    return (
+      <span className="flex items-center justify-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg bg-emerald-500/15 text-emerald-300 ring-1 ring-emerald-400/30">
+        <Check className="size-3.5" /> Friends
+      </span>
+    );
+  }
+  if (state.kind === "outgoing") {
+    return (
+      <span className="flex items-center justify-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg bg-blue-900/60 text-blue-200/80 ring-1 ring-blue-500/30">
+        <Clock className="size-3.5" /> Pending
+      </span>
+    );
+  }
+  if (state.kind === "incoming") {
+    return (
+      <button
+        disabled={busy}
+        onClick={() => onAccept(state.id)}
+        className="flex items-center justify-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 text-white disabled:opacity-60"
+      >
+        <Check className="size-3.5" /> Accept
+      </button>
+    );
+  }
+  return (
+    <button
+      disabled={busy}
+      onClick={onSend}
+      className="flex items-center justify-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-blue-600 text-white disabled:opacity-60"
+    >
+      <UserPlus className="size-3.5" /> Add friend
+    </button>
   );
 }

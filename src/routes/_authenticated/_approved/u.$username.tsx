@@ -26,6 +26,7 @@ interface ProfileRow {
   avatar_url: string | null;
   bio: string | null;
   created_at: string;
+  is_private: boolean | null;
 }
 
 interface ShiftRow { id: string; user_id: string; clock_in: string; clock_out: string | null; }
@@ -347,6 +348,44 @@ function ProfilePage() {
   const onBreakSeconds = breakRow ? Math.floor((now - new Date(breakRow.started_at).getTime()) / 1000) : 0;
   const breakLimit = breakRow?.kind === "lunch" ? 30 * 60 : 15 * 60;
   const breakRemaining = breakLimit - onBreakSeconds;
+
+  const isFriend = rel.kind === "friends";
+  const profileLocked = !!profile.is_private && !isOwner && !isAdmin && !isFriend;
+
+  if (profileLocked) {
+    return (
+      <div className="flex-1 overflow-y-auto bg-gradient-to-br from-[#1a0b2e] via-[#2d1b4e] to-[#1a0b2e]">
+        <header className="px-8 pt-8 pb-6 border-b border-purple-500/30 bg-purple-950/40 backdrop-blur">
+          <h1 className="font-display text-3xl font-bold bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 bg-clip-text text-transparent">
+            {display}'s Profile
+          </h1>
+          <p className="text-purple-200/80 mt-1">@{profile.username ?? "unknown"}</p>
+        </header>
+        <div className="px-8 py-10 grid place-items-center">
+          <div className="max-w-md w-full rounded-2xl border border-purple-500/40 bg-purple-950/50 backdrop-blur p-8 text-center text-white shadow-[0_0_60px_-15px_rgba(168,85,247,0.5)]">
+            <div className="size-14 mx-auto rounded-2xl bg-gradient-to-br from-violet-600 to-blue-600 grid place-items-center mb-4">
+              <Lock className="size-6" />
+            </div>
+            <h2 className="font-display text-xl font-bold mb-2">This profile is private</h2>
+            <p className="text-sm text-purple-200/80 mb-5">
+              {display} has chosen to keep their profile private. Send a friend request — once accepted, you'll be able to view their full profile.
+            </p>
+            {viewer && rel.kind !== "self" && (
+              <div className="flex justify-center">
+                <FriendActionButton
+                  rel={rel}
+                  busy={relBusy}
+                  onSend={sendFriendRequest}
+                  onAccept={acceptFriendRequest}
+                  onRemove={() => {}}
+                />
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const tabDefs = [
     { id: "welcome", label: "Welcome" },
@@ -1166,6 +1205,7 @@ function EditProfileModal({ profile, onClose, onSaved }: { profile: ProfileRow; 
   const [username, setUsername] = useState(profile.username ?? "");
   const [bio, setBio] = useState(profile.bio ?? "");
   const [avatarUrl, setAvatarUrl] = useState(profile.avatar_url);
+  const [isPrivate, setIsPrivate] = useState<boolean>(!!profile.is_private);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -1198,6 +1238,7 @@ function EditProfileModal({ profile, onClose, onSaved }: { profile: ProfileRow; 
       username: u,
       bio: bio.trim() || null,
       avatar_url: avatarUrl,
+      is_private: isPrivate,
     }).eq("id", user.id);
     setSaving(false);
     if (error) return toast.error(error.message);
@@ -1235,6 +1276,22 @@ function EditProfileModal({ profile, onClose, onSaved }: { profile: ProfileRow; 
           <textarea value={bio} onChange={(e) => setBio(e.target.value)} maxLength={500} rows={3}
             className="w-full px-3 py-2 rounded-lg bg-surface-2 border border-border text-sm resize-none" />
         </Field>
+        <label className="flex items-start gap-3 mb-3 p-3 rounded-lg bg-surface-2 border border-border cursor-pointer">
+          <input
+            type="checkbox"
+            checked={isPrivate}
+            onChange={(e) => setIsPrivate(e.target.checked)}
+            className="mt-0.5 size-4 accent-primary"
+          />
+          <span>
+            <span className="flex items-center gap-1.5 text-sm font-medium">
+              <Lock className="size-3.5" /> Private profile
+            </span>
+            <span className="block text-xs text-muted-foreground mt-0.5">
+              Only you, your friends, and admins can view your profile. Others will see a notice that the profile is private.
+            </span>
+          </span>
+        </label>
         <div className="flex justify-end gap-2 mt-4">
           <button onClick={onClose} className="px-4 py-2 rounded-lg bg-surface-2 border border-border text-sm">Cancel</button>
           <button onClick={save} disabled={saving} className="px-4 py-2 rounded-lg bg-primary text-primary-foreground font-medium text-sm disabled:opacity-60">
