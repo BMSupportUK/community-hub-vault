@@ -17,7 +17,7 @@ export const logMyIp = createServerFn({ method: "POST" })
       user_id: userId,
       ip,
       user_agent: userAgent,
-    });
+    } as never);
     if (error) throw error;
     return { ok: true, ip };
   });

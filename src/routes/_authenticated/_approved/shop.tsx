@@ -273,7 +273,7 @@ function Storefront() {
       order_id: order.id, product_id: p.id, product_name: p.name,
       unit_price_cents: p.price_cents, quantity: cart[p.id],
     }));
-    const { error: ie } = await supabase.from("order_items").insert(items);
+    const { error: ie } = await supabase.from("order_items").insert(items as never);
     if (ie) { toast.error(ie.message); return; }
     setCart({}); setShowCheckout(false);
     toast.success("Order placed!");
@@ -622,7 +622,7 @@ function OrdersView({ selectedId, isAdmin }: { selectedId?: string; isAdmin: boo
     let q = supabase.from("orders").select("*").order("created_at", { ascending: false });
     if (scope === "mine" && user) q = q.eq("user_id", user.id);
     const { data } = await q;
-    setOrders(data ?? []);
+    setOrders((data ?? []) as Order[]);
   };
   useEffect(() => { load(); }, [scope, user?.id]);
   useEffect(() => {
