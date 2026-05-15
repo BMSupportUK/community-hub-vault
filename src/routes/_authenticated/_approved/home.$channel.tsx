@@ -63,7 +63,7 @@ function ChannelPage() {
   const isAdmin = hasAny(["admin", "management"]);
   const canPin = hasAny(["admin", "management", "moderator", "staff"]);
   const canManageSlow = hasAny(["admin", "management", "moderator", "staff"]);
-  const isModOrAdmin = hasAny(["admin", "management", "moderator"]);
+  const isModOrAdmin = hasAny(["admin", "management", "moderator", "staff"]);
   const [pinnedOpen, setPinnedOpen] = useState(false);
   const [ignoredOpen, setIgnoredOpen] = useState(false);
   const [lastSentAt, setLastSentAt] = useState<number | null>(null);
