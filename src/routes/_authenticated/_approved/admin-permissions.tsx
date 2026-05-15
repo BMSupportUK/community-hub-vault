@@ -53,6 +53,17 @@ function AdminPermissionsPage() {
   useEffect(() => { load(); }, []);
   useEffect(() => { if (search.tab) setTab(search.tab); }, [search.tab]);
 
+  useEffect(() => {
+    const ch = supabase
+      .channel("admin-perms-realtime")
+      .on("postgres_changes", { event: "*", schema: "public", table: "page_permissions" }, () => load())
+      .on("postgres_changes", { event: "*", schema: "public", table: "channel_permissions" }, () => load())
+      .on("postgres_changes", { event: "*", schema: "public", table: "chat_channels" }, () => load())
+      .on("postgres_changes", { event: "*", schema: "public", table: "role_definitions" }, () => load())
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, []);
+
   if (!isAdmin) return <Navigate to="/home" />;
 
   return (
