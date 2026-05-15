@@ -1,5 +1,5 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
-import { Home, Ticket, ShoppingBag, BookOpen, FileText, Clock, Calendar, LogOut, MessageSquare, UserCircle2, Globe, Activity, Briefcase, Star, Trophy } from "lucide-react";
+import { Home, Ticket, ShoppingBag, BookOpen, FileText, Clock, Calendar, LogOut, MessageSquare, UserCircle2, Activity, Star, Trophy } from "lucide-react";
 import { useAuth, type AppRole } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 import { NotificationBell } from "@/components/app/NotificationBell";
@@ -105,11 +105,9 @@ export function IconRail() {
     { to: "/sports-guides", label: "Sports guides", icon: FileText, show: true },
     { to: "/reviews", label: "Customer reviews", icon: Star, show: true },
     { to: "/leaderboard", label: "Leaderboard", icon: Trophy, show: true },
-    { to: "/staff", label: "Staff directory", icon: Briefcase, show: true },
     { to: "/status", label: "System status", icon: Activity, show: true, badge: activeIncidents },
     { to: "/clock", label: "Clock", icon: Clock, show: isStaff },
     { to: "/shifts", label: "Shifts", icon: Calendar, show: isStaff },
-    { to: "/admin-dns", label: "QD DNS codes", icon: Globe, show: isAdmin },
   ];
 
   const allowedByPerms = (to: string) => {
