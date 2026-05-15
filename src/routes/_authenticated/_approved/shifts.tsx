@@ -465,10 +465,17 @@ function ShiftsPage() {
                     <div className="font-mono text-cyan-200 mt-1">{s.start_time.slice(0,5)} – {s.end_time.slice(0,5)}</div>
                     <div className="text-xs text-sky-200/70 mt-1 uppercase">{s.slot_type}</div>
                     {s.notes && <div className="text-sm text-sky-200/80 mt-2">{s.notes}</div>}
-                    <div className="mt-3 flex gap-2">
-                      <Button size="sm" variant="outline" className="bg-violet-500/20 border-violet-400/40 text-violet-100 hover:bg-violet-500/30" onClick={() => openSwap(s)}><Repeat className="size-3.5 mr-1" /> Request swap</Button>
-                      <Button size="sm" variant="outline" className="bg-rose-500/20 border-rose-400/40 text-rose-100 hover:bg-rose-500/30" onClick={() => release(s)}>Release</Button>
-                    </div>
+                    {(() => {
+                      const startsAt = new Date(`${s.shift_date}T${s.start_time}`).getTime();
+                      const locked = isNaN(startsAt) ? false : startsAt <= Date.now();
+                      return (
+                        <div className="mt-3 flex gap-2 items-center">
+                          <Button size="sm" variant="outline" disabled={locked} className="bg-violet-500/20 border-violet-400/40 text-violet-100 hover:bg-violet-500/30 disabled:opacity-50 disabled:cursor-not-allowed" onClick={() => openSwap(s)}><Repeat className="size-3.5 mr-1" /> Request swap</Button>
+                          <Button size="sm" variant="outline" disabled={locked} className="bg-rose-500/20 border-rose-400/40 text-rose-100 hover:bg-rose-500/30 disabled:opacity-50 disabled:cursor-not-allowed" onClick={() => release(s)}>Release</Button>
+                          {locked && <span className="text-[10px] uppercase tracking-wider text-sky-300/60">Locked</span>}
+                        </div>
+                      );
+                    })()}
                   </div>
                 ))}
               </div>
