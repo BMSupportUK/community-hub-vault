@@ -141,6 +141,27 @@ export type Database = {
           },
         ]
       }
+      channel_reads: {
+        Row: {
+          channel_id: string
+          last_read_at: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          channel_id: string
+          last_read_at?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          channel_id?: string
+          last_read_at?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       channel_welcome_embeds: {
         Row: {
           body: string
