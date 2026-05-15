@@ -132,6 +132,7 @@ function ShiftsPage() {
   const isAdmin = hasAny(["admin", "management"]);
   const isStaffOrAdmin = hasAny(["admin", "management", "staff"]);
   const { toUtcMs, tz } = useTimezone();
+  const { localMode, toggle: toggleLocalTz, browserTz, fmtRange } = useLocalDisplayTz(tz);
   const isMod = hasRole("moderator");
   const canPick = isStaffOrAdmin || isMod;
 
