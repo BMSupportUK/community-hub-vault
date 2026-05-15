@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { UserPlus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -19,6 +19,7 @@ export function FriendRequestsListener() {
   const { user } = useAuth();
   const [queue, setQueue] = useState<PendingRequest[]>([]);
   const current = queue[0] ?? null;
+  const handlingRef = useRef(false);
 
   const enqueue = async (rowId: string, requesterId: string) => {
     const { data: prof } = await supabase
@@ -69,6 +70,8 @@ export function FriendRequestsListener() {
 
   const respond = async (accept: boolean) => {
     if (!current) return;
+    if (handlingRef.current) return;
+    handlingRef.current = true;
     const id = current.id;
     setQueue((q) => q.filter((x) => x.id !== id));
     if (accept) {
@@ -80,12 +83,13 @@ export function FriendRequestsListener() {
       if (error) toast.error(error.message);
       else toast.message("Friend request declined");
     }
+    handlingRef.current = false;
   };
 
   if (!current) return null;
 
   return (
-    <AlertDialog open onOpenChange={(o) => { if (!o) respond(false); }}>
+    <AlertDialog open={!!current}>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle className="flex items-center gap-2">
