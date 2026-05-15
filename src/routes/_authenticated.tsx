@@ -1,6 +1,6 @@
 import { createFileRoute, Outlet, redirect, useRouterState, Navigate } from "@tanstack/react-router";
 import { Link } from "@tanstack/react-router";
-import { Users, Briefcase } from "lucide-react";
+import { Users, Briefcase, LayoutDashboard, Shield, ShieldCheck } from "lucide-react";
 import { useEffect, useRef } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,7 +20,8 @@ export const Route = createFileRoute("/_authenticated")({
 });
 
 function AuthLayout() {
-  const { loading, isPending, isBanned } = useAuth();
+  const { loading, isPending, isBanned, isMod, hasAny } = useAuth();
+  const isAdmin = hasAny(["admin", "management"]);
   const path = useRouterState({ select: (r) => r.location.pathname });
   const logIp = useServerFn(logMyIp);
   const loggedRef = useRef(false);
@@ -65,7 +66,40 @@ function AuthLayout() {
     <div className="min-h-screen flex bg-background">
       <IconRail />
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="h-12 shrink-0 border-b border-border bg-rail/40 backdrop-blur flex items-center justify-end px-4 gap-3">
+        <header className="h-12 shrink-0 border-b border-border bg-rail/40 backdrop-blur flex items-center justify-between px-4 gap-3">
+          <div className="flex items-center gap-2">
+            {isAdmin && (
+              <Link
+                to="/admin"
+                title="Admin dashboard"
+                className="flex items-center gap-2 rounded-full px-3 py-1.5 bg-surface-2 hover:bg-primary hover:text-primary-foreground text-xs font-medium transition-colors"
+              >
+                <LayoutDashboard className="size-4" />
+                <span className="hidden sm:inline">Admin dashboard</span>
+              </Link>
+            )}
+            {isMod && (
+              <Link
+                to="/moderation"
+                title="Moderation"
+                className="flex items-center gap-2 rounded-full px-3 py-1.5 bg-surface-2 hover:bg-primary hover:text-primary-foreground text-xs font-medium transition-colors"
+              >
+                <Shield className="size-4" />
+                <span className="hidden sm:inline">Moderation</span>
+              </Link>
+            )}
+            {isAdmin && (
+              <Link
+                to="/admin-roles"
+                title="User roles"
+                className="flex items-center gap-2 rounded-full px-3 py-1.5 bg-surface-2 hover:bg-primary hover:text-primary-foreground text-xs font-medium transition-colors"
+              >
+                <ShieldCheck className="size-4" />
+                <span className="hidden sm:inline">User roles</span>
+              </Link>
+            )}
+          </div>
+          <div className="flex items-center gap-3">
           <Link
             to="/members"
             title="Members directory"
@@ -84,6 +118,7 @@ function AuthLayout() {
           </Link>
           <Clocks />
           <UserAvatarMenu />
+          </div>
         </header>
         <div className="flex-1 flex min-h-0">
           <Outlet />
