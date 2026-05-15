@@ -926,6 +926,7 @@ function AdminProducts() {
         </div>
       </header>
       <div className="flex-1 overflow-y-auto p-6">
+        <CurrencySettingsCard />
         <div className="bg-surface rounded-xl border border-border overflow-hidden">
           <table className="w-full text-sm">
             <thead className="bg-surface-2 text-muted-foreground text-xs">
