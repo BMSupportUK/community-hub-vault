@@ -554,6 +554,7 @@ function TicketDetail({
   const [internal, setInternal] = useState(false);
   const [sending, setSending] = useState(false);
   const [replyFiles, setReplyFiles] = useState<File[]>([]);
+  const [replyProgress, setReplyProgress] = useState<UploadProgress | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const taRef = useRef<HTMLTextAreaElement>(null);
   const mention = useMentionAutocomplete({
@@ -604,7 +605,8 @@ function TicketDetail({
     if ((content.length < 1 && replyFiles.length === 0) || content.length > 2000) return;
     if (ticket.status === "closed") return toast.error("Ticket is closed");
     setSending(true);
-    const uploaded = replyFiles.length ? await uploadTicketFiles(replyFiles) : [];
+    const uploaded = replyFiles.length ? await uploadTicketFiles(replyFiles, setReplyProgress) : [];
+    setReplyProgress(null);
     const { error } = await supabase.from("ticket_messages").insert({
       ticket_id: ticket.id, sender_id: currentUserId, content, is_internal: internal && isStaff,
       attachments: uploaded as unknown as never,
@@ -749,6 +751,7 @@ function TicketDetail({
               ><Send className="size-4" /></button>
             </div>
             <FilePicker files={replyFiles} setFiles={setReplyFiles} disabled={sending} dark />
+            {replyProgress && <UploadProgressBar progress={replyProgress} />}
             {isStaff && (
               <label className="flex items-center gap-2 text-xs text-white/85 cursor-pointer">
                 <input type="checkbox" checked={internal} onChange={(e) => setInternal(e.target.checked)} className="accent-amber-300" />
