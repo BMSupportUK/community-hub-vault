@@ -178,17 +178,11 @@ function MembersPage() {
             >
               <div className="h-16 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600" />
               <div className="px-4 -mt-8 pb-4 flex flex-col flex-1">
-                {p.avatar_url ? (
-                  <img
-                    src={p.avatar_url}
-                    alt=""
-                    className="size-16 rounded-2xl object-cover ring-4 ring-surface"
-                  />
-                ) : (
-                  <div className="size-16 rounded-2xl ring-4 ring-surface bg-gradient-to-br from-violet-600 to-blue-600 grid place-items-center text-white text-xl font-bold">
-                    {initial}
-                  </div>
-                )}
+                <img
+                  src={p.avatar_url || "/default-avatar.png"}
+                  alt=""
+                  className="size-16 rounded-2xl object-cover ring-4 ring-surface"
+                />
                 <div className="mt-3">
                   <Link
                     to="/u/$username"
