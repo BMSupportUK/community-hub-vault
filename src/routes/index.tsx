@@ -1,5 +1,5 @@
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
-import { Shield, MessageSquare, Ticket, ShoppingBag, BookOpen, Clock, Headphones } from "lucide-react";
+import { Headphones } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import heroImg from "@/assets/bm-hero.jpg";
 
@@ -76,26 +76,6 @@ function Landing() {
               />
             </div>
           </div>
-        </section>
-
-        <section className="max-w-7xl mx-auto mt-10 grid grid-cols-2 md:grid-cols-3 gap-3">
-          {[
-            { i: Shield, t: "Security gate", d: "Chat with a mod to gain access." },
-            { i: MessageSquare, t: "Channels", d: "Realtime, role-based." },
-            { i: Ticket, t: "Tickets", d: "Private support threads." },
-            { i: ShoppingBag, t: "Shop", d: "In-server storefront." },
-            { i: BookOpen, t: "Guides", d: "Block-based with read tracking." },
-            { i: Clock, t: "Staff clock", d: "Shifts, breaks, applications." },
-          ].map(({ i: Icon, t, d }) => (
-            <div
-              key={t}
-              className="p-4 rounded-xl bg-surface border border-red-900/40 hover:border-red-500/60 hover:shadow-[0_0_24px_rgba(220,38,38,0.25)] transition-all"
-            >
-              <Icon className="size-5 text-red-400 mb-2" />
-              <div className="font-medium text-sm">{t}</div>
-              <div className="text-xs text-muted-foreground mt-0.5">{d}</div>
-            </div>
-          ))}
         </section>
       </main>
     </div>
