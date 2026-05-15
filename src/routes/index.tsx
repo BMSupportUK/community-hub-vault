@@ -54,7 +54,7 @@ function Landing() {
               "0 0 80px rgba(220,38,38,0.35), inset 0 1px 0 rgba(255,255,255,0.06)",
           }}
         >
-          <div className="grid md:grid-cols-2 gap-10 items-center">
+          <div className="grid md:grid-cols-[1fr_1fr_280px] lg:grid-cols-[1fr_1fr_320px] gap-8 items-center">
             <div className="space-y-6 text-white">
               <h1 className="font-display text-4xl md:text-6xl font-bold tracking-tight leading-[1.05] drop-shadow-[0_2px_20px_rgba(0,0,0,0.5)]">
                 Welcome to <span className="bg-gradient-to-r from-red-200 via-white to-red-300 bg-clip-text text-transparent">BM Support</span>
@@ -85,28 +85,28 @@ function Landing() {
                   className="absolute inset-0 w-full h-full object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-tr from-red-950/40 via-transparent to-transparent" aria-hidden />
-                <div className="absolute inset-y-0 right-0 w-1/2 bg-gradient-to-l from-red-950/85 via-red-950/55 to-transparent" aria-hidden />
-                <div className="absolute inset-y-0 right-0 w-[55%] flex flex-col justify-center gap-3 p-4 md:p-5">
-                  {boxes.map((b) => (
-                    <div
-                      key={b.id}
-                      className="group flex items-start gap-3 p-3 rounded-xl border border-white/15 bg-white/5 backdrop-blur-md shadow-[0_8px_30px_rgba(0,0,0,0.4)] hover:border-red-300/50 hover:bg-white/10 transition-all"
-                    >
-                      <div className="shrink-0 size-10 rounded-lg bg-black/50 border border-white/10 grid place-items-center overflow-hidden ring-1 ring-red-500/30 group-hover:ring-red-300/60 transition">
-                        {b.icon_url ? (
-                          <img src={b.icon_url} alt="" className="size-full object-contain p-1.5" />
-                        ) : (
-                          <Sparkles className="size-5 text-red-200" />
-                        )}
-                      </div>
-                      <div className="min-w-0">
-                        <div className="font-display font-bold text-white text-sm leading-tight">{b.title}</div>
-                        <p className="text-xs text-red-50/80 mt-0.5 leading-snug line-clamp-2">{b.description}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
               </div>
+            </div>
+
+            <div className="relative md:-ml-6 flex flex-col gap-3">
+              {boxes.map((b) => (
+                <div
+                  key={b.id}
+                  className="group flex items-start gap-3 p-3 rounded-xl border border-white/15 bg-white/5 backdrop-blur-md shadow-[0_8px_30px_rgba(0,0,0,0.4)] hover:border-red-300/50 hover:bg-white/10 transition-all"
+                >
+                  <div className="shrink-0 size-10 rounded-lg bg-black/50 border border-white/10 grid place-items-center overflow-hidden ring-1 ring-red-500/30 group-hover:ring-red-300/60 transition">
+                    {b.icon_url ? (
+                      <img src={b.icon_url} alt="" className="size-full object-contain p-1.5" />
+                    ) : (
+                      <Sparkles className="size-5 text-red-200" />
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="font-display font-bold text-white text-sm leading-tight">{b.title}</div>
+                    <p className="text-xs text-red-50/80 mt-0.5 leading-snug">{b.description}</p>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </section>
