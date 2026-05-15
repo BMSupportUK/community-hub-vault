@@ -85,33 +85,32 @@ function Landing() {
                   className="absolute inset-0 w-full h-full object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-tr from-red-950/40 via-transparent to-transparent" aria-hidden />
+                <div className="absolute inset-y-0 right-0 w-1/2 bg-gradient-to-l from-red-950/85 via-red-950/55 to-transparent" aria-hidden />
+                <div className="absolute inset-y-0 right-0 w-[55%] flex flex-col justify-center gap-3 p-4 md:p-5">
+                  {boxes.map((b) => (
+                    <div
+                      key={b.id}
+                      className="group flex items-start gap-3 p-3 rounded-xl border border-white/15 bg-white/5 backdrop-blur-md shadow-[0_8px_30px_rgba(0,0,0,0.4)] hover:border-red-300/50 hover:bg-white/10 transition-all"
+                    >
+                      <div className="shrink-0 size-10 rounded-lg bg-black/50 border border-white/10 grid place-items-center overflow-hidden ring-1 ring-red-500/30 group-hover:ring-red-300/60 transition">
+                        {b.icon_url ? (
+                          <img src={b.icon_url} alt="" className="size-full object-contain p-1.5" />
+                        ) : (
+                          <Sparkles className="size-5 text-red-200" />
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="font-display font-bold text-white text-sm leading-tight">{b.title}</div>
+                        <p className="text-xs text-red-50/80 mt-0.5 leading-snug line-clamp-2">{b.description}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
         </section>
 
-        <div className="relative max-w-7xl mx-auto -mt-10 md:-mt-16 px-4 md:px-10 flex md:justify-end">
-          <div className="flex flex-col gap-4 pb-2 w-full md:w-1/2 md:pl-10">
-            {boxes.map((b) => (
-              <div
-                key={b.id}
-                className="group flex items-start gap-4 p-5 rounded-2xl border border-red-900/50 bg-gradient-to-br from-red-950/80 via-black/70 to-red-950/60 backdrop-blur-md shadow-[0_12px_40px_rgba(0,0,0,0.5)] hover:border-red-400/60 hover:shadow-[0_12px_50px_rgba(248,113,113,0.35)] transition-all"
-              >
-                <div className="shrink-0 size-12 rounded-xl bg-black/50 border border-white/10 grid place-items-center overflow-hidden ring-1 ring-red-500/30 group-hover:ring-red-300/60 transition">
-                  {b.icon_url ? (
-                    <img src={b.icon_url} alt="" className="size-full object-contain p-2" />
-                  ) : (
-                    <Sparkles className="size-5 text-red-200" />
-                  )}
-                </div>
-                <div className="min-w-0">
-                  <div className="font-display font-bold text-white text-base leading-tight">{b.title}</div>
-                  <p className="text-sm text-red-50/80 mt-1 leading-snug">{b.description}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
       </main>
     </div>
   );
