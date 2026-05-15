@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
-export type AppRole = "admin" | "management" | "staff" | "moderator" | "member" | "pending" | "banned";
+export type AppRole = "admin" | "management" | "staff" | "moderator" | "subscriber" | "member" | "pending" | "banned";
 
 interface AuthCtx {
   user: User | null;
@@ -50,6 +50,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
     return () => sub.subscription.unsubscribe();
   }, []);
+
+  // Realtime: refresh roles when this user's user_roles rows change
+  useEffect(() => {
+    if (!user?.id) return;
+    const channel = supabase
+      .channel(`user-roles-${user.id}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "user_roles", filter: `user_id=eq.${user.id}` },
+        () => { loadRoles(user.id); },
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [user?.id]);
 
   const hasRole = (r: AppRole) => roles.includes(r);
   const hasAny = (rs: AppRole[]) => rs.some((r) => roles.includes(r));
