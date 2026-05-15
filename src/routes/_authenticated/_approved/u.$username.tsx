@@ -662,7 +662,6 @@ function FriendActionButton({
 }
 
 function AvatarImpl({ url, name, size = 40, ring }: { url: string | null; name: string; size?: number; ring?: boolean }) {
-  const initials = name.split(/\s+/).map((s) => s[0]).filter(Boolean).slice(0, 2).join("").toUpperCase();
   return (
     <div
       className={cn(
@@ -671,11 +670,7 @@ function AvatarImpl({ url, name, size = 40, ring }: { url: string | null; name: 
       )}
       style={{ width: size, height: size, fontSize: size * 0.36 }}
     >
-      {url ? (
-        <img src={url} alt={name} className="w-full h-full object-cover" />
-      ) : (
-        <span>{initials || "?"}</span>
-      )}
+      <img src={url || "/default-avatar.png"} alt={name} className="w-full h-full object-cover" />
     </div>
   );
 }

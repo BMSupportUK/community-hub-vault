@@ -725,13 +725,7 @@ function StaffOnDutyStrip() {
               >
                 <div className="flex items-center gap-2">
                   <div className="relative">
-                    {p?.avatar_url ? (
-                      <img src={p.avatar_url} alt={name} className="size-8 rounded-full object-cover ring-2 ring-white/40" />
-                    ) : (
-                      <div className="size-8 rounded-full bg-white/30 grid place-items-center text-[11px] font-bold text-white ring-2 ring-white/40">
-                        {initials}
-                      </div>
-                    )}
+                    <img src={p?.avatar_url || "/default-avatar.png"} alt={name} className="size-8 rounded-full object-cover ring-2 ring-white/40" />
                     <span className={cn(
                       "absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full ring-2 ring-white",
                       onBreak ? (over ? "bg-red-500" : "bg-amber-400") : "bg-emerald-500",
