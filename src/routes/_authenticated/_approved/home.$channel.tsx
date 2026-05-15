@@ -50,23 +50,6 @@ interface Reaction {
 
 const QUICK_EMOJIS = ["👍", "❤️", "😂", "😮", "😢", "🙏", "🔥", "🎉"];
 
-const SLOW_PRESETS: Array<{ label: string; seconds: number }> = [
-  { label: "Off", seconds: 0 },
-  { label: "5s", seconds: 5 },
-  { label: "10s", seconds: 10 },
-  { label: "15s", seconds: 15 },
-  { label: "30s", seconds: 30 },
-  { label: "1m", seconds: 60 },
-  { label: "2m", seconds: 120 },
-  { label: "5m", seconds: 300 },
-  { label: "10m", seconds: 600 },
-  { label: "15m", seconds: 900 },
-  { label: "30m", seconds: 1800 },
-  { label: "1h", seconds: 3600 },
-  { label: "2h", seconds: 7200 },
-  { label: "6h", seconds: 21600 },
-];
-
 function formatSlow(s: number): string {
   if (s <= 0) return "off";
   if (s < 60) return `${s}s`;
@@ -83,7 +66,6 @@ function ChannelPage() {
   const isModOrAdmin = hasAny(["admin", "management", "moderator"]);
   const [pinnedOpen, setPinnedOpen] = useState(false);
   const [ignoredOpen, setIgnoredOpen] = useState(false);
-  const [slowOpen, setSlowOpen] = useState(false);
   const [lastSentAt, setLastSentAt] = useState<number | null>(null);
   const [now, setNow] = useState(() => Date.now());
   const [myUsername, setMyUsername] = useState<string | null>(null);
@@ -512,7 +494,6 @@ function ChannelPage() {
       .eq("id", channel.id);
     if (error) return toast.error(error.message);
     setChannel({ ...channel, slow_mode_seconds: seconds });
-    setSlowOpen(false);
     toast.success(seconds > 0 ? `Slow mode: ${formatSlow(seconds)}` : "Slow mode off");
   };
 
@@ -581,47 +562,19 @@ function ChannelPage() {
           </span>
         )}
         {canManageSlow && (
-          <div className="ml-auto relative">
-            <button
-              onClick={() => setSlowOpen((v) => !v)}
-              className={cn(
-                "flex items-center gap-1.5 text-xs px-2 py-1 rounded transition-colors",
-                channel.slow_mode_seconds > 0
-                  ? "bg-primary/15 text-primary hover:bg-primary/25"
-                  : "text-muted-foreground hover:text-foreground hover:bg-surface-2",
-              )}
-              title="Slow mode"
-            >
-              <Timer className="size-4" />
-              <span>Slow mode</span>
-            </button>
-            {slowOpen && (
-              <div className="absolute right-0 top-full mt-2 w-56 rounded-lg border border-border bg-popover shadow-lg z-30 p-2">
-                <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  Slow mode delay
-                </div>
-                <div className="grid grid-cols-3 gap-1">
-                  {SLOW_PRESETS.map((p) => (
-                    <button
-                      key={p.seconds}
-                      onClick={() => setSlowMode(p.seconds)}
-                      className={cn(
-                        "text-xs px-2 py-1.5 rounded border transition-colors",
-                        channel.slow_mode_seconds === p.seconds
-                          ? "bg-primary text-primary-foreground border-primary"
-                          : "bg-surface-2 border-border hover:bg-surface-2/70",
-                      )}
-                    >
-                      {p.label}
-                    </button>
-                  ))}
-                </div>
-                <p className="px-2 pt-2 text-[10px] text-muted-foreground">
-                  Admins, management & moderators bypass the cooldown.
-                </p>
-              </div>
+          <button
+            onClick={() => setSlowMode(channel.slow_mode_seconds > 0 ? 0 : 30)}
+            className={cn(
+              "ml-auto flex items-center gap-1.5 text-xs px-2 py-1 rounded transition-colors",
+              channel.slow_mode_seconds > 0
+                ? "bg-primary/15 text-primary hover:bg-primary/25"
+                : "text-muted-foreground hover:text-foreground hover:bg-surface-2",
             )}
-          </div>
+            title={channel.slow_mode_seconds > 0 ? "Disable slow mode" : "Enable 30s slow mode"}
+          >
+            <Timer className="size-4" />
+            <span>Slow mode {channel.slow_mode_seconds > 0 ? "on" : "off"}</span>
+          </button>
         )}
         <div className={cn("relative", canManageSlow ? "" : "ml-auto")}>
           <button
