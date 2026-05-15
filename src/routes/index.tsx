@@ -1,7 +1,7 @@
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
-import { Headphones } from "lucide-react";
+import { Headphones, Sparkles } from "lucide-react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import heroImg from "@/assets/bm-hero.jpg";
 
 export const Route = createFileRoute("/")({
   beforeLoad: async () => {
@@ -11,7 +11,25 @@ export const Route = createFileRoute("/")({
   component: Landing,
 });
 
+interface HeroBox {
+  id: string;
+  position: number;
+  icon_url: string | null;
+  title: string;
+  description: string;
+}
+
 function Landing() {
+  const [boxes, setBoxes] = useState<HeroBox[]>([]);
+
+  useEffect(() => {
+    supabase
+      .from("hero_boxes")
+      .select("id, position, icon_url, title, description")
+      .order("position")
+      .then(({ data }) => setBoxes((data ?? []) as HeroBox[]));
+  }, []);
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <header className="px-8 py-5 flex items-center justify-between border-b border-border">
@@ -67,13 +85,26 @@ function Landing() {
 
             <div className="relative">
               <div className="absolute -inset-4 bg-gradient-to-tr from-red-500/40 via-transparent to-blue-500/30 blur-2xl rounded-3xl" aria-hidden />
-              <img
-                src={heroImg}
-                alt="BM Support — family at home and a dedicated agent in our operations center"
-                width={1024}
-                height={1024}
-                className="relative rounded-2xl border border-white/10 shadow-2xl w-full h-auto object-cover"
-              />
+              <div className="relative flex flex-col gap-4">
+                {boxes.map((b) => (
+                  <div
+                    key={b.id}
+                    className="group flex items-start gap-4 p-5 rounded-2xl border border-white/15 bg-gradient-to-br from-white/10 via-white/5 to-transparent backdrop-blur-md shadow-[0_8px_40px_rgba(0,0,0,0.35)] hover:border-red-300/40 hover:shadow-[0_8px_50px_rgba(248,113,113,0.35)] transition-all"
+                  >
+                    <div className="shrink-0 size-14 rounded-xl bg-black/40 border border-white/10 grid place-items-center overflow-hidden ring-1 ring-red-500/20 group-hover:ring-red-300/50 transition">
+                      {b.icon_url ? (
+                        <img src={b.icon_url} alt="" className="size-full object-contain p-2" />
+                      ) : (
+                        <Sparkles className="size-6 text-red-200" />
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <div className="font-display font-bold text-white text-lg leading-tight">{b.title}</div>
+                      <p className="text-sm text-red-50/85 mt-1 leading-snug">{b.description}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </section>
