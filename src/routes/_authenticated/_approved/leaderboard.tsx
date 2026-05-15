@@ -379,6 +379,65 @@ function LeaderboardPage() {
               </div>
             )}
           </TabsContent>
+
+          {isAdmin && (
+            <TabsContent value="bonuses" className="mt-6">
+              <div className="mb-4">
+                <h3 className="font-display text-xl font-semibold text-purple-50">Referral bonuses</h3>
+                <p className="text-sm text-purple-300/70">Mark whether the inviter has received their referral bonus. Inviters see this status on their invites.</p>
+              </div>
+              {adminInvites.length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-purple-500/40 p-12 text-center text-purple-200/70 bg-purple-950/30">
+                  <Gift className="size-10 mx-auto mb-3 text-purple-300/60" />
+                  No used invites yet.
+                </div>
+              ) : (
+                <div className="rounded-2xl bg-purple-950/50 border border-purple-500/30 overflow-hidden backdrop-blur">
+                  <ul className="divide-y divide-purple-500/20">
+                    {adminInvites.map((inv) => (
+                      <li key={inv.id} className="px-6 py-4 flex flex-wrap items-center gap-4">
+                        <div className="font-mono text-sm font-bold tracking-widest bg-gradient-to-r from-fuchsia-400 to-violet-400 bg-clip-text text-transparent shrink-0">
+                          {inv.code}
+                        </div>
+                        <div className="flex-1 min-w-[180px]">
+                          <div className="text-xs text-purple-300/70">Inviter</div>
+                          <div className="text-purple-50 font-medium truncate">
+                            {inv.inviter_name ?? inv.inviter_username ?? "Member"}
+                            {inv.inviter_username && <span className="text-purple-300/60 text-xs ml-1">@{inv.inviter_username}</span>}
+                          </div>
+                        </div>
+                        <div className="flex-1 min-w-[180px]">
+                          <div className="text-xs text-purple-300/70">Joined</div>
+                          <div className="text-purple-50 truncate">
+                            {inv.used_by_name ?? inv.used_by_username ?? "Member"}
+                            {inv.used_at && <span className="text-purple-300/60 text-xs ml-2">{new Date(inv.used_at).toLocaleDateString()}</span>}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          {inv.referral_bonus_paid ? (
+                            <span className="inline-flex items-center gap-1 text-emerald-300 text-sm font-medium px-2 py-1 rounded-md border border-emerald-500/30 bg-emerald-500/10">
+                              <Check className="size-4" /> Added
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 text-rose-300 text-sm font-medium px-2 py-1 rounded-md border border-rose-500/30 bg-rose-500/10">
+                              <X className="size-4" /> Not added
+                            </span>
+                          )}
+                          <Button
+                            size="sm"
+                            onClick={() => toggleBonus(inv)}
+                            className="bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white border-0"
+                          >
+                            {inv.referral_bonus_paid ? "Unmark" : "Mark added"}
+                          </Button>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </TabsContent>
+          )}
         </Tabs>
       </div>
     </div>
