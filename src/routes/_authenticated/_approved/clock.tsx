@@ -148,16 +148,19 @@ function ClockPage() {
   return (
     <main className="flex-1 overflow-y-auto">
       <div className="max-w-5xl mx-auto px-6 py-8 space-y-6">
-        <header className="flex items-center gap-3">
-          <div className="size-11 rounded-2xl bg-gradient-primary grid place-items-center shadow-glow">
-            <Clock className="size-5 text-primary-foreground" />
-          </div>
-          <div className="flex-1">
-            <h1 className="font-display text-2xl font-bold">Time Tracking</h1>
-            <p className="text-sm text-muted-foreground">{new Date(now).toLocaleString()}</p>
-          </div>
-          <div className="font-mono text-3xl tabular-nums">{new Date(now).toLocaleTimeString()}</div>
-        </header>
+        <div className="relative rounded-3xl overflow-hidden border border-primary/30 shadow-glow bg-gradient-primary p-5 sm:p-6">
+          <div className="absolute inset-0 bg-gradient-to-tr from-background/40 via-transparent to-transparent pointer-events-none" />
+          <header className="relative flex items-center gap-3">
+            <div className="size-12 rounded-2xl bg-white/15 backdrop-blur grid place-items-center shadow-glow ring-1 ring-white/20">
+              <Clock className="size-6 text-white" />
+            </div>
+            <div className="flex-1">
+              <h1 className="font-display text-2xl sm:text-3xl font-bold text-white drop-shadow">Time Tracking</h1>
+              <p className="text-sm text-white/85">{new Date(now).toLocaleString()}</p>
+            </div>
+            <div className="font-mono text-3xl tabular-nums text-white drop-shadow">{new Date(now).toLocaleTimeString()}</div>
+          </header>
+        </div>
 
         {/* Status banner */}
         <div className={cn(
