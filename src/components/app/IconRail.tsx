@@ -144,7 +144,7 @@ export function IconRail() {
 
   return (
     <aside className="bg-rail w-[72px] shrink-0 flex flex-col items-center py-4 gap-1 border-r border-border">
-      <Link to="/home" className="h-12 px-4 rounded-2xl bg-gradient-primary flex items-center justify-center font-display font-bold text-xs text-primary-foreground shadow-glow mb-2 whitespace-nowrap">
+      <Link to="/home" className="h-12 w-[60px] rounded-2xl bg-gradient-primary flex items-center justify-center font-display font-bold text-[9px] leading-tight text-primary-foreground shadow-glow mb-2 text-center break-words px-1">
         Support Community
       </Link>
       <div className="h-px w-8 bg-border my-1" />
