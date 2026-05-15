@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 import { MentionText, mentionsCurrentUser, useMentionAutocomplete } from "@/components/app/mentions";
+import { GifPicker, extractStandaloneGif } from "@/components/app/GifPicker";
 import { StaffOnDutyStrip } from "@/components/app/StaffOnDutyStrip";
 import { ChannelWelcomeEmbed } from "@/components/app/ChannelWelcomeEmbed";
 import { cn } from "@/lib/utils";
@@ -399,6 +400,25 @@ function ChannelPage() {
       setLastSentAt(Date.now());
     }
     setSending(false);
+  };
+
+  const sendGif = async (url: string) => {
+    if (!user || !channel) return;
+    if (channel.slow_mode_seconds > 0 && !isModOrAdmin && lastSentAt) {
+      const remain = channel.slow_mode_seconds * 1000 - (Date.now() - lastSentAt);
+      if (remain > 0) {
+        toast.error(`Slow mode: wait ${Math.ceil(remain / 1000)}s.`);
+        return;
+      }
+    }
+    const { error } = await supabase
+      .from("chat_messages")
+      .insert({ channel_id: channel.id, sender_id: user.id, content: url });
+    if (error) {
+      toast.error(error.message || "Could not send GIF");
+    } else {
+      setLastSentAt(Date.now());
+    }
   };
 
   const remove = async (id: string) => {
