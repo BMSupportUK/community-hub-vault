@@ -391,6 +391,7 @@ function NewTicketForm({
   const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [files, setFiles] = useState<File[]>([]);
+  const [uploadProgress, setUploadProgress] = useState<UploadProgress | null>(null);
 
   useEffect(() => { if (!categoryId && categories[0]) setCategoryId(categories[0].id); }, [categories, categoryId]);
 
@@ -400,7 +401,8 @@ function NewTicketForm({
     if (!parsed.success) return toast.error(parsed.error.issues[0].message);
     if (!parsed.data.message && files.length === 0) return toast.error("Add a message or attach a file");
     setSubmitting(true);
-    const uploaded = files.length ? await uploadTicketFiles(files) : [];
+    const uploaded = files.length ? await uploadTicketFiles(files, setUploadProgress) : [];
+    setUploadProgress(null);
     const { data: t, error } = await supabase
       .from("tickets")
       .insert({ user_id: user!.id, subject: parsed.data.subject, category_id: parsed.data.category_id, priority: parsed.data.priority })
@@ -510,6 +512,9 @@ function NewTicketForm({
           <Field label="Attachments (optional)">
             <FilePicker files={files} setFiles={setFiles} disabled={submitting} dark />
           </Field>
+          {uploadProgress && (
+            <UploadProgressBar progress={uploadProgress} />
+          )}
           <div className="flex gap-2 justify-end">
             <button type="button" onClick={onCancel} className="px-4 py-2 rounded-lg text-sm text-white/80 hover:text-white">Cancel</button>
             <button type="submit" disabled={submitting} className="px-4 py-2 rounded-lg bg-white text-rose-600 text-sm font-semibold hover:bg-white/90 disabled:opacity-50 shadow-lg">
