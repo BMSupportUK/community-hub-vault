@@ -563,10 +563,12 @@ function ProfilePage() {
                       <p className="mt-3 text-sm text-purple-100/90">
                         Grab your remote, head to the BM Support app on your TV, and use the credentials below to sign in. Keep them private — your password unlocks everything.
                       </p>
+                      <div className="mt-5">
+                        <CredentialsReveal targetUserId={profile.id} isOwner={isOwner} />
+                      </div>
                     </div>
                   </div>
                 </div>
-                <CredentialsReveal targetUserId={profile.id} isOwner={isOwner} />
               </div>
             </TabsContent>
           )}
