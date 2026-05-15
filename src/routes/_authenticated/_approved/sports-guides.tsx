@@ -1,15 +1,12 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Plus, Search, X, Pencil, Trash2, ImageIcon, GripVertical, Check, Circle } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, ImageIcon, GripVertical, Check, Circle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { HtmlEditor } from "@/components/ui/html-editor";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import DOMPurify from "dompurify";
 import { toast } from "sonner";
 
@@ -34,6 +31,7 @@ type Blog = {
 
 function SportsGuidesPage() {
   const { isMod, user, hasAny } = useAuth();
+  const navigate = useNavigate();
   const canManageCategories = hasAny(["admin", "management", "staff"]);
   const [tab, setTab] = useState("welcome");
   const [categories, setCategories] = useState<Category[]>([]);
@@ -42,8 +40,6 @@ function SportsGuidesPage() {
   const [activeCat, setActiveCat] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [reading, setReading] = useState<Blog | null>(null);
-  const [editing, setEditing] = useState<Blog | null>(null);
-  const [showEditor, setShowEditor] = useState(false);
   const [newCatName, setNewCatName] = useState("");
   const [addingCat, setAddingCat] = useState(false);
   const dragCatId = useRef<string | null>(null);
@@ -126,46 +122,8 @@ function SportsGuidesPage() {
 
   const activeCategory = categories.find((c) => c.id === activeCat);
 
-  const openNew = () => {
-    setEditing({
-      id: "",
-      category_id: activeCat ?? categories[0]?.id ?? "",
-      title: "",
-      excerpt: "",
-      body: "",
-      image_url: "",
-      badge: "",
-      published: true,
-      created_at: "",
-      sort_order: 0,
-    });
-    setShowEditor(true);
-  };
-
-  const saveBlog = async () => {
-    if (!editing) return;
-    if (!editing.title.trim() || !editing.category_id) {
-      toast.error("Title and category are required");
-      return;
-    }
-    const payload = {
-      category_id: editing.category_id,
-      title: editing.title.trim(),
-      excerpt: editing.excerpt?.trim() || null,
-      body: editing.body?.trim() || null,
-      image_url: editing.image_url?.trim() || null,
-      badge: editing.badge?.trim() || null,
-      published: editing.published,
-    };
-    const { error } = editing.id
-      ? await supabase.from("sports_blogs").update(payload).eq("id", editing.id)
-      : await supabase.from("sports_blogs").insert({ ...payload, created_by: user?.id ?? null });
-    if (error) return toast.error(error.message);
-    toast.success(editing.id ? "Blog updated" : "Blog added");
-    setShowEditor(false);
-    setEditing(null);
-    load();
-  };
+  const openNew = () => navigate({ to: "/sports-guides/new" });
+  const openEdit = (id: string) => navigate({ to: "/sports-guides/$id/edit", params: { id } });
 
   const deleteBlog = async (id: string) => {
     if (!confirm("Delete this blog?")) return;
@@ -392,7 +350,7 @@ function SportsGuidesPage() {
                             </Button>
                             {isMod && (
                               <>
-                                <Button size="icon" variant="ghost" className="text-purple-200 hover:text-white hover:bg-purple-800/60" onClick={() => { setEditing(b); setShowEditor(true); }}>
+                                <Button size="icon" variant="ghost" className="text-purple-200 hover:text-white hover:bg-purple-800/60" onClick={() => openEdit(b.id)}>
                                   <Pencil className="size-4" />
                                 </Button>
                                 <Button size="icon" variant="ghost" className="text-purple-200 hover:text-white hover:bg-purple-800/60" onClick={() => deleteBlog(b.id)}>
@@ -503,72 +461,6 @@ function SportsGuidesPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Full-page Editor */}
-      {showEditor && editing && (
-        <div className="fixed inset-0 z-50 flex flex-col bg-gradient-to-br from-[#1a0b2e] via-[#2d1b4e] to-[#1a0b2e]">
-          <header className="flex items-center justify-between gap-4 px-8 py-5 border-b border-purple-500/30 bg-purple-950/60 backdrop-blur shrink-0">
-            <h2 className="font-display text-2xl font-bold bg-gradient-to-r from-violet-400 via-fuchsia-400 to-blue-400 bg-clip-text text-transparent">
-              {editing.id ? "Edit blog" : "Add blog"}
-            </h2>
-            <div className="flex items-center gap-2">
-              <Button variant="ghost" className="text-purple-200 hover:text-white hover:bg-purple-800/60" onClick={() => { setShowEditor(false); setEditing(null); }}>
-                <X className="size-4 mr-1" /> Cancel
-              </Button>
-              <Button onClick={saveBlog} className="bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white border-0">
-                Save
-              </Button>
-            </div>
-          </header>
-          <div className="flex-1 overflow-y-auto">
-            <div className="max-w-3xl mx-auto px-6 py-8 space-y-4">
-              <div>
-                <Label className="text-purple-100">Category</Label>
-                <select
-                  className="mt-1 w-full bg-purple-950/50 border border-purple-500/30 text-purple-50 rounded-md px-3 py-2 text-sm"
-                  value={editing.category_id}
-                  onChange={(e) => setEditing({ ...editing, category_id: e.target.value })}
-                >
-                  {categories.map((c) => (
-                    <option key={c.id} value={c.id}>{c.name}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <Label className="text-purple-100">Title</Label>
-                <Input value={editing.title} onChange={(e) => setEditing({ ...editing, title: e.target.value })} className="bg-purple-950/50 border-purple-500/30 text-purple-50" />
-              </div>
-              <div>
-                <Label className="text-purple-100">Image URL</Label>
-                <Input value={editing.image_url ?? ""} onChange={(e) => setEditing({ ...editing, image_url: e.target.value })} placeholder="https://…" className="bg-purple-950/50 border-purple-500/30 text-purple-50 placeholder:text-purple-300/50" />
-              </div>
-              <div>
-                <Label className="text-purple-100">Badge (optional)</Label>
-                <Input value={editing.badge ?? ""} onChange={(e) => setEditing({ ...editing, badge: e.target.value })} placeholder="e.g. Updated with New Listings" className="bg-purple-950/50 border-purple-500/30 text-purple-50 placeholder:text-purple-300/50" />
-              </div>
-              <div>
-                <Label className="text-purple-100">Excerpt</Label>
-                <Textarea rows={3} value={editing.excerpt ?? ""} onChange={(e) => setEditing({ ...editing, excerpt: e.target.value })} className="bg-purple-950/50 border-purple-500/30 text-purple-50" />
-              </div>
-              <div>
-                <Label className="text-purple-100">Body</Label>
-                <HtmlEditor
-                  value={editing.body ?? ""}
-                  onChange={(html) => setEditing({ ...editing, body: html })}
-                  placeholder="Write the guide content..."
-                />
-              </div>
-              <label className="flex items-center gap-2 text-sm text-purple-100">
-                <input
-                  type="checkbox"
-                  checked={editing.published}
-                  onChange={(e) => setEditing({ ...editing, published: e.target.checked })}
-                />
-                Published
-              </label>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
