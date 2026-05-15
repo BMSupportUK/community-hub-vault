@@ -74,49 +74,44 @@ function Landing() {
                 <span className="size-2 rounded-full bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.9)] animate-pulse" />
               </div>
 
-              <div className="flex flex-wrap items-center gap-3 pt-2">
-                <Link to="/signup" className="px-6 py-3 rounded-lg bg-white text-red-700 font-semibold hover:bg-red-50 shadow-[0_0_30px_rgba(255,255,255,0.35)] transition-all">
-                  Request access
-                </Link>
-                <Link to="/login" className="px-6 py-3 rounded-lg bg-red-950/60 border border-red-400/40 text-white font-medium hover:bg-red-900/60 backdrop-blur-sm">
-                  I have an account
-                </Link>
-              </div>
             </div>
 
-            <div className="relative md:-mr-16 md:-my-10 lg:-mr-24">
+            <div className="relative">
               <div className="absolute -inset-4 bg-gradient-to-tr from-red-500/40 via-transparent to-blue-500/30 blur-2xl rounded-3xl" aria-hidden />
-              <div className="relative rounded-3xl overflow-hidden border border-white/20 shadow-[0_20px_80px_rgba(0,0,0,0.6)]">
+              <div className="relative rounded-3xl overflow-hidden border border-white/20 shadow-[0_20px_80px_rgba(0,0,0,0.6)] aspect-[4/3]">
                 <img
                   src={welcomeHero}
                   alt="BM Support hero"
                   className="absolute inset-0 w-full h-full object-cover"
                 />
-                <div className="absolute inset-0 bg-gradient-to-br from-red-950/70 via-red-900/40 to-black/70" aria-hidden />
-                <div className="relative flex flex-col gap-4 p-5">
-                {boxes.map((b) => (
-                  <div
-                    key={b.id}
-                    className="group flex items-start gap-4 p-5 rounded-2xl border border-white/15 bg-gradient-to-br from-white/10 via-white/5 to-transparent backdrop-blur-md shadow-[0_8px_40px_rgba(0,0,0,0.35)] hover:border-red-300/40 hover:shadow-[0_8px_50px_rgba(248,113,113,0.35)] transition-all"
-                  >
-                    <div className="shrink-0 size-14 rounded-xl bg-black/40 border border-white/10 grid place-items-center overflow-hidden ring-1 ring-red-500/20 group-hover:ring-red-300/50 transition">
-                      {b.icon_url ? (
-                        <img src={b.icon_url} alt="" className="size-full object-contain p-2" />
-                      ) : (
-                        <Sparkles className="size-6 text-red-200" />
-                      )}
-                    </div>
-                    <div className="min-w-0">
-                      <div className="font-display font-bold text-white text-lg leading-tight">{b.title}</div>
-                      <p className="text-sm text-red-50/85 mt-1 leading-snug">{b.description}</p>
-                    </div>
-                  </div>
-                ))}
-                </div>
+                <div className="absolute inset-0 bg-gradient-to-tr from-red-950/40 via-transparent to-transparent" aria-hidden />
               </div>
             </div>
           </div>
         </section>
+
+        <div className="relative max-w-7xl mx-auto -mt-16 md:-mt-20 px-4 md:px-10 z-[-1]">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-24 pb-2">
+            {boxes.map((b) => (
+              <div
+                key={b.id}
+                className="group flex items-start gap-4 p-5 rounded-2xl border border-red-900/50 bg-gradient-to-br from-red-950/80 via-black/70 to-red-950/60 backdrop-blur-md shadow-[0_12px_40px_rgba(0,0,0,0.5)] hover:border-red-400/60 hover:shadow-[0_12px_50px_rgba(248,113,113,0.35)] transition-all"
+              >
+                <div className="shrink-0 size-12 rounded-xl bg-black/50 border border-white/10 grid place-items-center overflow-hidden ring-1 ring-red-500/30 group-hover:ring-red-300/60 transition">
+                  {b.icon_url ? (
+                    <img src={b.icon_url} alt="" className="size-full object-contain p-2" />
+                  ) : (
+                    <Sparkles className="size-5 text-red-200" />
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <div className="font-display font-bold text-white text-base leading-tight">{b.title}</div>
+                  <p className="text-sm text-red-50/80 mt-1 leading-snug">{b.description}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </main>
     </div>
   );
