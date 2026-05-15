@@ -550,6 +550,125 @@ function InviteStat({ label, value }: { label: string; value: number }) {
   );
 }
 
+function ReferralsPanel({
+  referrals,
+  isOwner,
+  creating,
+  copiedCode,
+  onCreate,
+  onCopy,
+  onDelete,
+}: {
+  referrals: ReferralRow[];
+  isOwner: boolean;
+  creating: boolean;
+  copiedCode: string | null;
+  onCreate: () => void;
+  onCopy: (code: string) => void;
+  onDelete: (id: string) => void;
+}) {
+  return (
+    <section className="rounded-2xl border border-white/25 bg-white/10 backdrop-blur-xl p-5 text-white shadow-[0_10px_40px_-15px_rgba(0,0,0,0.4)]">
+      <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
+        <h2 className="flex items-center gap-2 font-display text-lg font-bold">
+          <Trophy className="size-4 text-amber-200" /> Referrals
+        </h2>
+        {isOwner && (
+          <button
+            onClick={onCreate}
+            disabled={creating}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white text-rose-600 font-medium text-sm hover:bg-white/90 transition-colors disabled:opacity-60"
+          >
+            <Plus className="size-4" /> {creating ? "Creating…" : "New invite"}
+          </button>
+        )}
+      </div>
+
+      {referrals.length === 0 ? (
+        <p className="text-sm text-white/70">
+          {isOwner
+            ? "You haven't created any invites yet. Generate one to invite a friend."
+            : "No referrals yet."}
+        </p>
+      ) : (
+        <ul className="divide-y divide-white/15">
+          {referrals.map((r) => {
+            const used = !!r.used_by;
+            return (
+              <li key={r.id} className="py-3 flex flex-wrap items-center gap-3">
+                <div className="font-mono text-sm font-bold tracking-widest text-amber-100 shrink-0">
+                  {r.code}
+                </div>
+                <span
+                  className={cn(
+                    "text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border",
+                    used
+                      ? "bg-emerald-500/15 text-emerald-200 border-emerald-500/30"
+                      : "bg-white/10 text-white/80 border-white/30",
+                  )}
+                >
+                  {used ? "Joined" : "Active"}
+                </span>
+                <div className="flex-1 min-w-[140px] text-sm">
+                  {used ? (
+                    r.joined_username ? (
+                      <Link
+                        to="/u/$username"
+                        params={{ username: r.joined_username }}
+                        className="text-white hover:text-amber-200 hover:underline truncate"
+                      >
+                        {r.joined_name ?? r.joined_username}
+                      </Link>
+                    ) : (
+                      <span className="text-white/80">{r.joined_name ?? "Member"}</span>
+                    )
+                  ) : (
+                    <span className="text-white/60 italic">Awaiting signup</span>
+                  )}
+                </div>
+                {used && (
+                  <span
+                    className={cn(
+                      "inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-md border",
+                      r.referral_bonus_paid
+                        ? "bg-emerald-500/15 text-emerald-200 border-emerald-500/30"
+                        : "bg-rose-500/15 text-rose-200 border-rose-500/30",
+                    )}
+                    title="Referral bonus"
+                  >
+                    <Gift className="size-3" />
+                    {r.referral_bonus_paid ? <Check className="size-3" /> : <XIcon className="size-3" />}
+                  </span>
+                )}
+                {isOwner && (
+                  <div className="flex items-center gap-1 ml-auto">
+                    <button
+                      onClick={() => onCopy(r.code)}
+                      className="flex items-center gap-1 px-2 py-1 rounded-md bg-white/10 hover:bg-white/20 text-xs"
+                    >
+                      {copiedCode === r.code ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
+                      {copiedCode === r.code ? "Copied" : "Copy link"}
+                    </button>
+                    {!used && (
+                      <button
+                        onClick={() => onDelete(r.id)}
+                        className="p-1.5 rounded-md text-white/70 hover:bg-white/10 hover:text-rose-200"
+                        title="Delete invite"
+                      >
+                        <Trash2 className="size-3.5" />
+                      </button>
+                    )}
+                  </div>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </section>
+  );
+}
+
 /* ---------------- Credentials reveal (PIN+password gate) ---------------- */
 
 function CredentialsReveal({ targetUserId, isOwner }: { targetUserId: string; isOwner: boolean }) {
