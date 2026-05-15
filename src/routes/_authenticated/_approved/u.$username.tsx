@@ -88,10 +88,7 @@ function ProfilePage() {
   const [inviteInfo, setInviteInfo] = useState<InviteSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
-  const [mainTab, setMainTab] = useState<"creds" | "tickets" | "orders">(
-    "creds",
-  );
-  const [profileTab, setProfileTab] = useState<"creds" | "tickets" | "orders" | "referrals">("creds");
+  const [mainTab, setMainTab] = useState<"creds" | "tickets" | "orders" | "referrals">("creds");
 
   const isOwner = !!profile && !!viewer && profile.id === viewer.id;
   const canSeeCreds = isOwner || isAdmin;
