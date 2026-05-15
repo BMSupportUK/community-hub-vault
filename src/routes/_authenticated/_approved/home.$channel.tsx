@@ -205,6 +205,21 @@ function ChannelPage() {
     if (error) toast.error(error.message);
   };
 
+  const togglePin = async (m: Message) => {
+    if (!canPin || !user) return;
+    const isPinned = !!m.pinned_at;
+    const { error } = await supabase
+      .from("chat_messages")
+      .update(
+        isPinned
+          ? { pinned_at: null, pinned_by: null }
+          : { pinned_at: new Date().toISOString(), pinned_by: user.id },
+      )
+      .eq("id", m.id);
+    if (error) return toast.error(error.message);
+    toast.success(isPinned ? "Message unpinned." : "Message pinned.");
+  };
+
   const toggleIgnore = async (targetId: string) => {
     if (!user) return;
     if (staffIds.has(targetId)) {
