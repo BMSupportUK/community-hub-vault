@@ -24,6 +24,19 @@ interface ChanPerm { channel_id: string; role: string; can_view: boolean; can_se
 const LOCKED = new Set(["admin", "management"]);
 const HIDDEN_ROLES = new Set(["pending", "banned"]);
 
+// Auto-discover all page routes under /_authenticated/_approved at build time.
+// New page files added by future code automatically show up here.
+const APPROVED_ROUTE_FILES = import.meta.glob("/src/routes/_authenticated/_approved/*.tsx");
+const DISCOVERED_PAGE_KEYS: string[] = Object.keys(APPROVED_ROUTE_FILES)
+  .map((p) => p.split("/").pop()!.replace(/\.tsx$/, ""))
+  // Skip layouts (no dot), dynamic ($), index splits (home.index), and the perms page itself.
+  .filter((n) => !n.startsWith("_") && !n.includes("$") && !n.includes("."))
+  .filter((n) => n !== "admin-permissions");
+
+function humanLabel(key: string): string {
+  return key.replace(/[-_]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 function AdminPermissionsPage() {
   const { hasAny } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
