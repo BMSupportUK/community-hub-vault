@@ -4,7 +4,7 @@ import { Hash, Megaphone, Loader2, Send, Trash2, EyeOff, Eye } from "lucide-reac
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
-import { MentionText, useMentionAutocomplete } from "@/components/app/mentions";
+import { MentionText, mentionsCurrentUser, useMentionAutocomplete } from "@/components/app/mentions";
 import { StaffOnDutyStrip } from "@/components/app/StaffOnDutyStrip";
 
 export const Route = createFileRoute("/_authenticated/_approved/home/$channel")({
@@ -266,8 +266,17 @@ function ChannelPage() {
             const isSelf = m.sender_id === user?.id;
             const isStaff = staffIds.has(m.sender_id);
             const isIgnored = ignoredIds.has(m.sender_id);
+            const highlight = mentionsCurrentUser(m.content, myUsername);
             return (
-              <div key={m.id} className="group flex items-start gap-3">
+              <div
+                key={m.id}
+                className={cn(
+                  "group flex items-start gap-3 rounded-md -mx-2 px-2 py-1 transition-colors",
+                  highlight
+                    ? "bg-amber-400/10 border-l-2 border-amber-400 hover:bg-amber-400/15"
+                    : "border-l-2 border-transparent hover:bg-surface-2/40",
+                )}
+              >
                 {p?.avatar_url ? (
                   <img src={p.avatar_url} alt="" className="size-9 rounded-full object-cover shrink-0" />
                 ) : (
