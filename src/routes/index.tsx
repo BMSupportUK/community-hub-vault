@@ -46,7 +46,7 @@ function Landing() {
 
       <main className="flex-1 px-6 py-10 md:py-16">
         <section
-          className="relative max-w-7xl mx-auto rounded-3xl overflow-hidden border border-red-900/60 p-8 md:p-14"
+          className="relative max-w-7xl mx-auto rounded-3xl border border-red-900/60 p-8 md:p-14"
           style={{
             background:
               "radial-gradient(1200px 600px at 10% 10%, rgba(248,113,113,0.25), transparent 60%), radial-gradient(900px 500px at 90% 90%, rgba(127,29,29,0.6), transparent 60%), linear-gradient(135deg, #7f1d1d 0%, #991b1b 50%, #450a0a 100%)",
@@ -84,9 +84,9 @@ function Landing() {
               </div>
             </div>
 
-            <div className="relative">
+            <div className="relative md:-mr-16 md:-my-10 lg:-mr-24">
               <div className="absolute -inset-4 bg-gradient-to-tr from-red-500/40 via-transparent to-blue-500/30 blur-2xl rounded-3xl" aria-hidden />
-              <div className="relative rounded-3xl overflow-hidden border border-white/15 shadow-[0_20px_80px_rgba(0,0,0,0.5)]">
+              <div className="relative rounded-3xl overflow-hidden border border-white/20 shadow-[0_20px_80px_rgba(0,0,0,0.6)]">
                 <img
                   src={welcomeHero}
                   alt="BM Support hero"
