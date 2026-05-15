@@ -377,7 +377,7 @@ function ProfilePage() {
                   busy={relBusy}
                   onSend={sendFriendRequest}
                   onAccept={acceptFriendRequest}
-                  onRemove={() => rel.kind === "friends" && removeFriend(rel.id)}
+                  onRemove={() => {}}
                 />
               </div>
             )}
