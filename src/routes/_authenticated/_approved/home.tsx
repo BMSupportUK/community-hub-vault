@@ -167,7 +167,7 @@ function HomeLayout() {
   return (
     <>
       <ChannelColumn
-        title="Hub"
+        title="Support Community"
         groups={groups}
         onAddGroup={isAdmin ? () => setShowAddGroup(true) : undefined}
       />
