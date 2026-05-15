@@ -86,6 +86,9 @@ function ProfilePage() {
   const [tickets, setTickets] = useState<TicketRow[]>([]);
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [inviteInfo, setInviteInfo] = useState<InviteSummary | null>(null);
+  const [referrals, setReferrals] = useState<ReferralRow[]>([]);
+  const [creatingInvite, setCreatingInvite] = useState(false);
+  const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
   const [mainTab, setMainTab] = useState<"creds" | "tickets" | "orders" | "referrals">("creds");
@@ -147,7 +150,72 @@ function ProfilePage() {
       invitedBonusPaid: !!invitedRow?.referral_bonus_paid,
     });
 
+    // Full referral list (visible to owner / admin via RLS)
+    const { data: refRows } = await supabase
+      .from("invites")
+      .select("id, code, used_by, used_at, created_at, referral_bonus_paid")
+      .eq("created_by", p.id)
+      .order("created_at", { ascending: false });
+    const baseRows = (refRows ?? []) as Omit<ReferralRow, "joined_name" | "joined_username">[];
+    const usedIds = Array.from(new Set(baseRows.map((r) => r.used_by).filter(Boolean) as string[]));
+    let usedMap: Record<string, { display_name: string | null; username: string | null }> = {};
+    if (usedIds.length) {
+      const { data: profs } = await supabase.from("profiles").select("id, display_name, username").in("id", usedIds);
+      usedMap = Object.fromEntries((profs ?? []).map((x) => [x.id, { display_name: x.display_name, username: x.username }]));
+    }
+    setReferrals(
+      baseRows.map((r) => ({
+        ...r,
+        joined_name: r.used_by ? usedMap[r.used_by]?.display_name ?? null : null,
+        joined_username: r.used_by ? usedMap[r.used_by]?.username ?? null : null,
+      })),
+    );
+
     setLoading(false);
+  };
+
+  const createInvite = async () => {
+    if (!viewer || !isOwner) return;
+    setCreatingInvite(true);
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    for (let i = 0; i < 5; i++) {
+      let code = "";
+      for (let j = 0; j < 8; j++) code += chars[Math.floor(Math.random() * chars.length)];
+      const { error } = await supabase.from("invites").insert({ code, created_by: viewer.id });
+      if (!error) {
+        toast.success(`Invite code ${code} created`);
+        setCreatingInvite(false);
+        load();
+        return;
+      }
+      if (!error.message.toLowerCase().includes("unique")) {
+        toast.error(error.message);
+        setCreatingInvite(false);
+        return;
+      }
+    }
+    toast.error("Could not generate a unique code, please try again");
+    setCreatingInvite(false);
+  };
+
+  const copyInviteLink = async (code: string) => {
+    const link = `${window.location.origin}/signup?invite=${code}`;
+    try {
+      await navigator.clipboard.writeText(link);
+      setCopiedCode(code);
+      toast.success("Invite link copied");
+      setTimeout(() => setCopiedCode((c) => (c === code ? null : c)), 1500);
+    } catch {
+      toast.error("Could not copy");
+    }
+  };
+
+  const deleteInvite = async (id: string) => {
+    if (!confirm("Delete this invite?")) return;
+    const { error } = await supabase.from("invites").delete().eq("id", id);
+    if (error) return toast.error(error.message);
+    toast.success("Invite deleted");
+    load();
   };
 
   useEffect(() => { load(); }, [username]);
