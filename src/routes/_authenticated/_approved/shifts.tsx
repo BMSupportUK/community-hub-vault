@@ -95,6 +95,38 @@ function isDayPastOrStarted(d: Date) {
   return x.getTime() <= today.getTime();
 }
 
+const LOCAL_TZ_KEY = "shifts_display_local_tz_v1";
+const BROWSER_TZ =
+  typeof Intl !== "undefined" ? Intl.DateTimeFormat().resolvedOptions().timeZone : "UTC";
+
+function useLocalDisplayTz(rotaTz: string) {
+  const [localMode, setLocalMode] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem(LOCAL_TZ_KEY) === "1";
+  });
+  const toggle = () => {
+    setLocalMode((v) => {
+      const next = !v;
+      try { localStorage.setItem(LOCAL_TZ_KEY, next ? "1" : "0"); } catch {}
+      return next;
+    });
+  };
+  const fmtTime = (dateStr: string, timeStr: string) => {
+    if (!localMode || BROWSER_TZ === rotaTz) return timeStr.slice(0, 5);
+    const ms = zonedWallTimeToUtcMs(dateStr, timeStr, rotaTz);
+    if (isNaN(ms)) return timeStr.slice(0, 5);
+    return new Intl.DateTimeFormat([], {
+      timeZone: BROWSER_TZ,
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    }).format(new Date(ms));
+  };
+  const fmtRange = (dateStr: string, start: string, end: string) =>
+    `${fmtTime(dateStr, start)}–${fmtTime(dateStr, end)}`;
+  return { localMode, toggle, browserTz: BROWSER_TZ, fmtTime, fmtRange };
+}
+
 function ShiftsPage() {
   const { user, hasAny, hasRole } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
