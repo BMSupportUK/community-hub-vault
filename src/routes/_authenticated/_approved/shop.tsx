@@ -55,6 +55,7 @@ interface OrderItem { id: string; order_id: string; product_name: string; unit_p
 interface OrderMessage { id: string; order_id: string; sender_id: string; content: string; created_at: string; }
 interface ProductCategory { id: string; name: string; slug: string; sort_order: number; }
 interface DiscountCode { id: string; code: string; description: string | null; percent: number | null; amount_cents: number | null; user_id: string | null; is_active: boolean; }
+interface DiscountCodeWithProducts extends DiscountCode { product_ids?: string[] }
 
 let _currentFmt: (c: number) => string = (c: number) =>
   new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP" }).format((c || 0) / 100);
@@ -1094,19 +1095,50 @@ function Checkout({ items, total, onClose, onPlace }: {
       toast.error("Only 1 discount code per order. Remove the current code first.");
       return;
     }
-    setAppliedCode(c);
-    setDiscountInput(c.code);
-    setBrowseOpen(false);
-    toast.success(`Code "${c.code}" applied`);
+    void acceptCode(c, () => setBrowseOpen(false));
   };
+
+  const [eligibleProductIds, setEligibleProductIds] = useState<string[] | null>(null);
+  // null = applies to all products; array = restricted list
+
+  const eligibleSubtotal = useMemo(() => {
+    if (!eligibleProductIds) return total;
+    return items
+      .filter((i) => eligibleProductIds.includes(i.id))
+      .reduce((s, i) => s + i.price_cents * i.qty, 0);
+  }, [items, total, eligibleProductIds]);
 
   const discountCents = useMemo(() => {
     if (!appliedCode) return 0;
-    if (appliedCode.amount_cents) return Math.min(total, appliedCode.amount_cents);
-    if (appliedCode.percent) return Math.round(total * (appliedCode.percent / 100));
+    const base = eligibleSubtotal;
+    if (base <= 0) return 0;
+    if (appliedCode.amount_cents) return Math.min(base, appliedCode.amount_cents);
+    if (appliedCode.percent) return Math.round(base * (appliedCode.percent / 100));
     return 0;
-  }, [appliedCode, total]);
+  }, [appliedCode, eligibleSubtotal]);
   const finalTotal = Math.max(0, total - discountCents);
+
+  const acceptCode = async (c: DiscountCode, onDone?: () => void) => {
+    const { data: links } = await supabase
+      .from("discount_code_products")
+      .select("product_id")
+      .eq("discount_code_id", c.id);
+    const ids = (links ?? []).map((r: { product_id: string }) => r.product_id);
+    if (ids.length > 0) {
+      const hasMatch = items.some((i) => ids.includes(i.id));
+      if (!hasMatch) {
+        toast.error("This code does not apply to any items in your cart");
+        return;
+      }
+      setEligibleProductIds(ids);
+    } else {
+      setEligibleProductIds(null);
+    }
+    setAppliedCode(c);
+    setDiscountInput(c.code);
+    toast.success(`Code "${c.code}" applied`);
+    onDone?.();
+  };
 
   const applyCode = async () => {
     const code = discountInput.trim();
@@ -1124,8 +1156,7 @@ function Checkout({ items, total, onClose, onPlace }: {
       .ilike("code", code).eq("is_active", true).maybeSingle();
     setApplying(false);
     if (error || !data) { toast.error("Invalid code"); return; }
-    setAppliedCode(data as DiscountCode);
-    toast.success(`Code "${(data as DiscountCode).code}" applied`);
+    await acceptCode(data as DiscountCode);
   };
 
   const canSubmit =
@@ -1211,7 +1242,7 @@ function Checkout({ items, total, onClose, onPlace }: {
               {appliedCode && (
                 <div className="flex items-center justify-between text-xs px-2 py-1.5 rounded-md bg-success/10 text-success">
                   <span>Applied: <span className="font-mono font-semibold">{appliedCode.code}</span> — only 1 code per order</span>
-                  <button type="button" onClick={() => { setAppliedCode(null); setDiscountInput(""); }} className="underline hover:no-underline">Remove</button>
+                  <button type="button" onClick={() => { setAppliedCode(null); setDiscountInput(""); setEligibleProductIds(null); }} className="underline hover:no-underline">Remove</button>
                 </div>
               )}
               {browseOpen && (
@@ -1948,7 +1979,10 @@ function CurrencySettingsCard() {
 function AdminDiscounts() {
   const [codes, setCodes] = useState<DiscountCode[]>([]);
   const [users, setUsers] = useState<{ id: string; username: string | null; display_name: string | null }[]>([]);
-  const [editing, setEditing] = useState<Partial<DiscountCode> | null>(null);
+  const [products, setProducts] = useState<{ id: string; name: string; is_active: boolean }[]>([]);
+  const [editing, setEditing] = useState<Partial<DiscountCodeWithProducts> | null>(null);
+  const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
+  const [productQuery, setProductQuery] = useState("");
   const [percentInput, setPercentInput] = useState("");
   const [amountInput, setAmountInput] = useState("");
 
@@ -1956,9 +1990,20 @@ function AdminDiscounts() {
     if (editing) {
       setPercentInput(editing.percent != null ? String(editing.percent) : "");
       setAmountInput(editing.amount_cents != null ? (editing.amount_cents / 100).toFixed(2) : "");
+      if (editing.id) {
+        supabase
+          .from("discount_code_products")
+          .select("product_id")
+          .eq("discount_code_id", editing.id)
+          .then(({ data }) => setSelectedProductIds((data ?? []).map((r: { product_id: string }) => r.product_id)));
+      } else {
+        setSelectedProductIds([]);
+      }
+      setProductQuery("");
     } else {
       setPercentInput("");
       setAmountInput("");
+      setSelectedProductIds([]);
     }
   }, [editing?.id, editing]);
 
@@ -1969,6 +2014,7 @@ function AdminDiscounts() {
   useEffect(() => {
     load();
     supabase.from("profiles").select("id,username,display_name").order("username").then(({ data }) => setUsers(data ?? []));
+    supabase.from("products").select("id,name,is_active").order("name").then(({ data }) => setProducts((data ?? []) as { id: string; name: string; is_active: boolean }[]));
   }, []);
 
   const save = async () => {
@@ -1985,10 +2031,22 @@ function AdminDiscounts() {
       user_id: editing.user_id ?? null,
       is_active: editing.is_active ?? true,
     };
-    const { error } = editing.id
-      ? await supabase.from("discount_codes").update(payload).eq("id", editing.id)
-      : await supabase.from("discount_codes").insert(payload);
-    if (error) { toast.error(error.message); return; }
+    let codeId = editing.id;
+    if (codeId) {
+      const { error } = await supabase.from("discount_codes").update(payload).eq("id", codeId);
+      if (error) { toast.error(error.message); return; }
+    } else {
+      const { data, error } = await supabase.from("discount_codes").insert(payload).select("id").single();
+      if (error || !data) { toast.error(error?.message ?? "Failed to save"); return; }
+      codeId = data.id;
+    }
+    // Sync product restrictions
+    await supabase.from("discount_code_products").delete().eq("discount_code_id", codeId);
+    if (selectedProductIds.length > 0) {
+      const rows = selectedProductIds.map((pid) => ({ discount_code_id: codeId!, product_id: pid }));
+      const { error: linkErr } = await supabase.from("discount_code_products").insert(rows);
+      if (linkErr) { toast.error(linkErr.message); return; }
+    }
     toast.success("Saved"); setEditing(null); load();
   };
   const remove = async (id: string) => {
@@ -2086,6 +2144,46 @@ function AdminDiscounts() {
                     <option key={u.id} value={u.id}>{u.username ?? u.display_name ?? u.id.slice(0, 8)}</option>
                   ))}
                 </select>
+              </Field>
+              <Field label={`Applies to products (${selectedProductIds.length === 0 ? "all products" : `${selectedProductIds.length} selected`})`}>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <input
+                      value={productQuery}
+                      onChange={(e) => setProductQuery(e.target.value)}
+                      placeholder="Search products…"
+                      className="flex-1 px-3 py-2 rounded-lg bg-surface-2 text-sm border border-border outline-none"
+                    />
+                    {selectedProductIds.length > 0 && (
+                      <button type="button" onClick={() => setSelectedProductIds([])} className="text-xs text-muted-foreground underline">Clear</button>
+                    )}
+                  </div>
+                  <div className="max-h-48 overflow-y-auto rounded-lg border border-border bg-surface-2 divide-y divide-border">
+                    {products
+                      .filter((p) => !productQuery.trim() || p.name.toLowerCase().includes(productQuery.toLowerCase()))
+                      .map((p) => {
+                        const checked = selectedProductIds.includes(p.id);
+                        return (
+                          <label key={p.id} className="flex items-center gap-2 px-3 py-1.5 text-sm cursor-pointer hover:bg-surface">
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              onChange={(e) => {
+                                setSelectedProductIds((prev) =>
+                                  e.target.checked ? [...prev, p.id] : prev.filter((x) => x !== p.id),
+                                );
+                              }}
+                            />
+                            <span className={cn("flex-1", !p.is_active && "text-muted-foreground")}>{p.name}{!p.is_active && " (inactive)"}</span>
+                          </label>
+                        );
+                      })}
+                    {products.length === 0 && (
+                      <div className="p-3 text-xs text-muted-foreground text-center">No products yet.</div>
+                    )}
+                  </div>
+                  <p className="text-[11px] text-muted-foreground">Leave empty to allow this code on all products.</p>
+                </div>
               </Field>
               <label className="flex items-center gap-2 text-sm">
                 <input type="checkbox" checked={editing.is_active ?? true} onChange={(e) => setEditing({ ...editing, is_active: e.target.checked })} /> Active
