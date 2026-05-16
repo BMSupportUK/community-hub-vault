@@ -200,7 +200,7 @@ export function NotificationBell() {
       if (staffCh) supabase.removeChannel(staffCh);
       supabase.removeChannel(incidentCh);
     };
-  }, [user, isStaff, isPending]);
+  }, [user, isStaff, isPending, canManageOrders]);
 
   if (!user || isPending) return null;
 
