@@ -69,6 +69,15 @@ function ShopPage() {
   const { format, symbol } = useCurrency();
   _currentFmt = format;
   _currentSymbol = symbol;
+  const [username, setUsername] = useState<string | null>(null);
+  useEffect(() => {
+    if (!user) { setUsername(null); return; }
+    let active = true;
+    supabase.from("profiles").select("username").eq("id", user.id).maybeSingle().then(({ data }) => {
+      if (active) setUsername((data as { username?: string | null } | null)?.username ?? null);
+    });
+    return () => { active = false; };
+  }, [user]);
 
   const groups: ChannelGroup[] = [
     { label: "Shop", items: [
