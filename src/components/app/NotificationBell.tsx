@@ -14,6 +14,7 @@ import outageResolvedAudio from "@/assets/outage-resolved.mp3";
 import broadcastAudio from "@/assets/broadcast-notify.mp3";
 import staffMentionAudio from "@/assets/staff-mention.mp3";
 import orderAudio from "@/assets/order-notify.mp3";
+import ticketAudio from "@/assets/ticket-notify.mp3";
 
 type Notif = {
   id: string;
@@ -136,6 +137,19 @@ export function NotificationBell() {
               audio.volume = 0.9;
               void audio.play().catch(() => { /* autoplay may be blocked */ });
             } catch { /* ignore */ }
+          }
+          if (n.kind === "ticket_raised" && canManageOrders) {
+            try {
+              const audio = new Audio(ticketAudio);
+              audio.volume = 0.9;
+              void audio.play().catch(() => { /* autoplay may be blocked */ });
+            } catch { /* ignore */ }
+            toast(`🎫 ${n.title}`, {
+              description: n.body ?? "A ticket is needing assistance.",
+              duration: 8000,
+              action: { label: "Open", onClick: () => navigate({ to: "/tickets" } as never) },
+            });
+            return;
           }
           toast(n.title, {
             description: n.body ?? undefined,
