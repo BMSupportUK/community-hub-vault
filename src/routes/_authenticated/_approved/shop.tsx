@@ -589,15 +589,37 @@ function Storefront() {
 
   const placeOrder = async (info: { name: string; email: string; customer_type: "new" | "existing"; existing_username: string; discount_code: string; discount_cents: number; wants_adult_content: boolean }) => {
     if (!user || cartItems.length === 0) return;
-    const finalTotal = Math.max(0, total - (info.discount_cents || 0));
+    let verifiedDiscountCents = 0;
+    const submittedCode = info.discount_code.trim();
+    if (submittedCode) {
+      const { data: code } = await supabase
+        .from("discount_codes")
+        .select("*")
+        .ilike("code", submittedCode)
+        .eq("is_active", true)
+        .maybeSingle();
+      if (!code) { toast.error("Invalid discount code"); return; }
+      const { data: links } = await supabase
+        .from("discount_code_products")
+        .select("product_id")
+        .eq("discount_code_id", code.id);
+      const allowedIds = (links ?? []).map((r: { product_id: string }) => r.product_id);
+      if (allowedIds.length > 0 && cartItems.some((p) => !allowedIds.includes(p.id))) {
+        toast.error("This discount code is not allowed for one or more products in your cart");
+        return;
+      }
+      if (code.amount_cents) verifiedDiscountCents = Math.min(total, code.amount_cents);
+      if (code.percent) verifiedDiscountCents = Math.round(total * (code.percent / 100));
+    }
+    const finalTotal = Math.max(0, total - verifiedDiscountCents);
     const { data: order, error } = await supabase.from("orders").insert({
       user_id: user.id, total_cents: finalTotal, status: "pending",
       shipping_name: info.name,
       email: info.email,
       customer_type: info.customer_type,
       existing_username: info.customer_type === "existing" ? info.existing_username : null,
-      discount_code: info.discount_code || null,
-      discount_cents: info.discount_cents || 0,
+      discount_code: submittedCode || null,
+      discount_cents: verifiedDiscountCents,
       wants_adult_content: info.wants_adult_content,
     } as never).select().single();
     if (error || !order) { toast.error(error?.message ?? "Failed"); return; }
