@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import mentionAudio from "@/assets/mention-notify.mp3";
 
 type Notif = {
   id: string;
@@ -90,6 +91,11 @@ export function NotificationBell() {
           };
           setItems((prev) => [n, ...prev].slice(0, 80));
           if (n.kind === "mention") {
+            try {
+              const audio = new Audio(mentionAudio);
+              audio.volume = 0.9;
+              void audio.play().catch(() => { /* autoplay may be blocked; ignore */ });
+            } catch { /* ignore */ }
             toast(`📣 ${n.title}`, {
               description: n.body ?? undefined,
               duration: 6000,
