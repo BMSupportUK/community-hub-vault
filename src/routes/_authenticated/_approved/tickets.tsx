@@ -349,13 +349,13 @@ function TicketsPage() {
             </div>
           </div>
         </div>
-        <div className="relative px-6 md:px-10 pb-6 -mt-2">
+        <div className="relative px-6 md:px-10 pb-6 -mt-8">
           <StaffOnDutyStrip />
         </div>
       </section>
 
       {/* Tabs */}
-      <div className="px-6 md:px-10 pb-10 -mt-6 relative">
+      <div className="px-6 md:px-10 pb-10 mt-6 relative">
         <Tabs value={tab} onValueChange={(v) => setTab(v as "welcome" | "tickets")}>
           <TabsList className="bg-rose-950/60 border border-rose-500/30">
             <TabsTrigger
