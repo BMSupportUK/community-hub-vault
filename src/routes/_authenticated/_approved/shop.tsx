@@ -351,6 +351,21 @@ function Storefront() {
   const isAdmin = hasAny(["admin", "management"]);
   const [addingCat, setAddingCat] = useState(false);
   const [newCatName, setNewCatName] = useState("");
+  const [ratings, setRatings] = useState<Record<string, { sum: number; count: number }>>({});
+  const [myRatings, setMyRatings] = useState<Record<string, number>>({});
+
+  const reloadRatings = async () => {
+    const { data } = await supabase.from("product_ratings").select("product_id,user_id,rating");
+    const agg: Record<string, { sum: number; count: number }> = {};
+    const mine: Record<string, number> = {};
+    for (const r of (data ?? []) as { product_id: string; user_id: string; rating: number }[]) {
+      const a = agg[r.product_id] ?? { sum: 0, count: 0 };
+      a.sum += r.rating; a.count += 1;
+      agg[r.product_id] = a;
+      if (user && r.user_id === user.id) mine[r.product_id] = r.rating;
+    }
+    setRatings(agg); setMyRatings(mine);
+  };
 
   const reloadCategories = () =>
     supabase.from("product_categories").select("*").order("sort_order").order("name")
@@ -359,7 +374,24 @@ function Storefront() {
   useEffect(() => {
     supabase.from("products").select("*").eq("is_active", true).order("sort_order").then(({ data }) => setProducts(data ?? []));
     reloadCategories();
-  }, []);
+    reloadRatings();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
+
+  const rateProduct = async (productId: string, value: number) => {
+    if (!user) { toast.error("Please sign in"); return; }
+    const prevAgg = ratings[productId];
+    const prevMine = myRatings[productId] ?? 0;
+    // Optimistic update
+    const nextAgg = { sum: (prevAgg?.sum ?? 0) - prevMine + value, count: (prevAgg?.count ?? 0) + (prevMine ? 0 : 1) };
+    setRatings({ ...ratings, [productId]: nextAgg });
+    setMyRatings({ ...myRatings, [productId]: value });
+    const { error } = await supabase
+      .from("product_ratings")
+      .upsert({ product_id: productId, user_id: user.id, rating: value } as never, { onConflict: "product_id,user_id" });
+    if (error) { toast.error(error.message); reloadRatings(); return; }
+    toast.success("Thanks for rating!");
+  };
 
   // Merge DB-managed categories with any category strings present on products
   const categories = useMemo(() => {
