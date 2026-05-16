@@ -66,7 +66,7 @@ export function SubscriptionExpiry() {
       className={cn(
         "hidden md:flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium border max-w-[640px]",
         anyExpired
-          ? "bg-destructive/10 border-destructive/40 text-destructive"
+          ? "bg-destructive/10 border-destructive/40 text-red-100"
           : anySoon
             ? "bg-amber-500/10 border-amber-500/40 text-amber-300"
             : "bg-surface-2 border-border text-foreground",
