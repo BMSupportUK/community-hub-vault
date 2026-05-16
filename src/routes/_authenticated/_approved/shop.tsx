@@ -55,6 +55,7 @@ interface OrderItem { id: string; order_id: string; product_name: string; unit_p
 interface OrderMessage { id: string; order_id: string; sender_id: string; content: string; created_at: string; }
 interface ProductCategory { id: string; name: string; slug: string; sort_order: number; }
 interface DiscountCode { id: string; code: string; description: string | null; percent: number | null; amount_cents: number | null; user_id: string | null; is_active: boolean; }
+interface DiscountCodeWithProducts extends DiscountCode { product_ids?: string[] }
 
 let _currentFmt: (c: number) => string = (c: number) =>
   new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP" }).format((c || 0) / 100);
