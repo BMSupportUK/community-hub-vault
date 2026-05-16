@@ -15,6 +15,7 @@ import profileHeader from "@/assets/profile-header.jpg";
 import tvLoginIllustration from "@/assets/tv-login-illustration.jpg";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
+import { listTimeZones } from "@/hooks/use-user-timezone";
 
 export const Route = createFileRoute("/_authenticated/_approved/u/$username")({
   component: ProfilePage,
@@ -1317,7 +1318,7 @@ function EditProfileModal({ profile, onClose, onSaved }: { profile: ProfileRow; 
             onChange={(e) => setTimezone(e.target.value)}
             className="w-full px-3 py-2 rounded-lg bg-surface-2 border border-border text-sm"
           >
-            {tzOptions.map((z) => (
+            {tzOptions.map((z: string) => (
               <option key={z} value={z}>{z.replace(/_/g, " ")}</option>
             ))}
           </select>
