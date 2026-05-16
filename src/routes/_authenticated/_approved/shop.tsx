@@ -876,7 +876,7 @@ function CartWidget({ items, total, onAdd, onSub, onRemove, onCheckout }: {
                 onClick={onCheckout}
                 className="w-full px-3 py-2 rounded-lg bg-gradient-to-r from-violet-600 to-blue-600 text-white text-sm font-semibold hover:opacity-90"
               >
-                Checkout
+                Place Order
               </button>
             </div>
           </>
