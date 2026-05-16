@@ -36,6 +36,9 @@ function ModerationPage() {
   const [senderNames, setSenderNames] = useState<Record<string, string>>({});
   const scrollerRef = useRef<HTMLDivElement>(null);
   const threadChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const [peerTyping, setPeerTyping] = useState<{ id: string } | null>(null);
+  const peerTypingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastTypingSent = useRef<number>(0);
 
   const load = async () => {
     const { data: rows } = await supabase
@@ -77,9 +80,22 @@ function ModerationPage() {
         const msg = payload as ThreadMsg;
         setThread((m) => (m.some((x) => x.id === msg.id) ? m : [...m, msg]));
       })
+      .on("broadcast", { event: "typing" }, ({ payload }) => {
+        const p = payload as { sender_id: string };
+        if (!user || p.sender_id === user.id) return;
+        setPeerTyping({ id: p.sender_id });
+        if (peerTypingTimer.current) clearTimeout(peerTypingTimer.current);
+        peerTypingTimer.current = setTimeout(() => setPeerTyping(null), 3000);
+      })
       .subscribe();
     threadChannelRef.current = ch;
-    return () => { active = false; threadChannelRef.current = null; supabase.removeChannel(ch); };
+    return () => {
+      active = false;
+      threadChannelRef.current = null;
+      supabase.removeChannel(ch);
+      if (peerTypingTimer.current) clearTimeout(peerTypingTimer.current);
+      setPeerTyping(null);
+    };
   }, [expandedId]);
 
   // Resolve sender display names
@@ -198,6 +214,18 @@ function ModerationPage() {
       return withoutTemp.some((x) => x.id === msg.id) ? withoutTemp : [...withoutTemp, msg];
     });
     await threadChannelRef.current?.send({ type: "broadcast", event: "message", payload: msg });
+  };
+
+  const notifyTyping = () => {
+    if (!user || !threadChannelRef.current) return;
+    const now = Date.now();
+    if (now - lastTypingSent.current < 1500) return;
+    lastTypingSent.current = now;
+    threadChannelRef.current.send({
+      type: "broadcast",
+      event: "typing",
+      payload: { sender_id: user.id },
+    });
   };
 
   return (
