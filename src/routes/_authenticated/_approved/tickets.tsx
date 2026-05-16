@@ -3,11 +3,12 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { ChannelColumn, type ChannelGroup } from "@/components/app/ChannelColumn";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import ticketsHero from "@/assets/tickets-hero.jpg";
 import {
   Ticket as TicketIcon, Plus, Send, Lock, X, LifeBuoy, CreditCard, Bug, Sparkles, UserCog,
   Tv, Film, Circle, CircleDot, Clock4, CheckCircle2, XCircle, ChevronDown, Trash2, Coffee, UtensilsCrossed,
-  Paperclip, FileText,
+  Paperclip, FileText, Star,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -205,11 +206,43 @@ function TicketsPage() {
   const [profiles, setProfiles] = useState<Map<string, Profile>>(new Map());
   const [staff, setStaff] = useState<Profile[]>([]);
   const [creating, setCreating] = useState(false);
+  const [tab, setTab] = useState<"welcome" | "tickets">("tickets");
+  const [allRatings, setAllRatings] = useState<{ rating: number }[]>([]);
+  const [myRatings, setMyRatings] = useState<Record<string, number>>({});
 
   // Load categories once
   useEffect(() => {
     supabase.from("ticket_categories").select("*").order("sort_order").then(({ data }) => setCategories(data ?? []));
   }, []);
+
+  // Load ratings for hero average + per-ticket "my rating"
+  const loadRatings = async () => {
+    const { data } = await supabase.from("ticket_ratings").select("ticket_id,user_id,rating");
+    const rows = (data ?? []) as { ticket_id: string; user_id: string; rating: number }[];
+    setAllRatings(rows.map((r) => ({ rating: r.rating })));
+    if (user) {
+      const mine: Record<string, number> = {};
+      for (const r of rows) if (r.user_id === user.id) mine[r.ticket_id] = r.rating;
+      setMyRatings(mine);
+    }
+  };
+  useEffect(() => { loadRatings(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [user?.id]);
+
+  const avgRating = allRatings.length
+    ? allRatings.reduce((s, r) => s + r.rating, 0) / allRatings.length
+    : 0;
+  const ratingCount = allRatings.length;
+
+  const rateTicket = async (ticketId: string, v: number) => {
+    if (!user) return;
+    setMyRatings({ ...myRatings, [ticketId]: v });
+    const { error } = await supabase
+      .from("ticket_ratings")
+      .upsert({ ticket_id: ticketId, user_id: user.id, rating: v } as never, { onConflict: "ticket_id,user_id" });
+    if (error) { toast.error(error.message); return; }
+    toast.success("Thanks for your feedback!");
+    loadRatings();
+  };
 
   // Load tickets according to view
   const loadTickets = async () => {
@@ -256,128 +289,217 @@ function TicketsPage() {
 
   const selected = useMemo(() => tickets.find((t) => t.id === search.id) ?? null, [tickets, search.id]);
 
-  const groups: ChannelGroup[] = useMemo(() => {
+  const groups = useMemo(() => {
     const buckets: Record<Status, Ticket[]> = { open: [], in_progress: [], waiting: [], resolved: [], closed: [] };
     tickets.forEach((t) => buckets[t.status].push(t));
     return (Object.keys(STATUS_META) as Status[])
       .filter((s) => buckets[s].length)
-      .map((s) => ({
-        label: STATUS_META[s].label,
-        items: buckets[s].map((t) => ({ to: `/tickets`, label: t.subject })),
-      }));
+      .map((s) => ({ label: STATUS_META[s].label }));
   }, [tickets]);
 
   const setView = (v: "mine" | "all" | "assigned") =>
     navigate({ to: "/tickets", search: { view: v, id: undefined } });
 
+  useEffect(() => {
+    if (search.id || creating) setTab("tickets");
+  }, [search.id, creating]);
+
   return (
-    <>
-      <ChannelColumn
-        title="Tickets"
-        groups={[]}
-        footer={
-          <div className="space-y-3 mt-2">
-            <button
-              onClick={() => setCreating(true)}
-              className="w-full flex items-center gap-2 px-3 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
-            >
-              <Plus className="size-4" /> New ticket
-            </button>
-            {isStaff && (
-              <div className="flex gap-1 bg-surface-2 p-1 rounded-lg text-xs">
-                {(["mine", "assigned", "all"] as const).map((v) => (
-                  <button
-                    key={v}
-                    onClick={() => setView(v)}
-                    className={cn(
-                      "flex-1 px-2 py-1 rounded-md capitalize transition-colors",
-                      view === v ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground",
-                    )}
-                  >{v}</button>
-                ))}
-              </div>
-            )}
-            <div className="space-y-3">
-              {groups.length === 0 && (
-                <div className="text-xs text-muted-foreground px-2 py-3 text-center">No tickets yet.</div>
-              )}
-              {groups.map((g) => (
-                <div key={g.label}>
-                  <div className="px-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
-                    <ChevronDown className="size-3" />{g.label}
-                  </div>
-                  <div className="space-y-px">
-                    {tickets.filter((t) => STATUS_META[t.status].label === g.label).map((t) => {
-                      const cat = categories.find((c) => c.id === t.category_id);
-                      const Icon = ICONS[cat?.icon ?? "LifeBuoy"] ?? LifeBuoy;
-                      const active = selected?.id === t.id;
-                      return (
-                        <button
-                          key={t.id}
-                          onClick={() => navigate({ to: "/tickets", search: { id: t.id, view } })}
-                          className={cn(
-                            "w-full text-left flex items-center gap-2 px-2 py-1.5 rounded-md text-sm transition-colors",
-                            active ? "bg-surface-2 text-foreground" : "text-muted-foreground hover:bg-surface-2/60 hover:text-foreground",
-                          )}
-                        >
-                          <Icon className="size-4 shrink-0" />
-                          <span className="truncate flex-1">{t.subject}</span>
-                          {t.priority === "urgent" && <span className="size-1.5 rounded-full bg-destructive" />}
-                          {t.priority === "high" && <span className="size-1.5 rounded-full bg-warning" />}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
+    <main className="flex-1 overflow-y-auto bg-gradient-to-br from-rose-950 via-fuchsia-950/60 to-slate-950 text-white">
+      {/* Hero — image + gradient + welcome text, with rating blended in */}
+      <section className="relative overflow-hidden">
+        <div className="absolute inset-0">
+          <img src={ticketsHero} alt="" aria-hidden className="w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-br from-rose-700/85 via-fuchsia-700/75 to-violet-800/85" />
+          <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-b from-transparent to-rose-950" />
+        </div>
+        <div className="relative px-6 md:px-10 pt-10 md:pt-14 pb-20 md:pb-24 max-w-3xl">
+          <div className="text-xs uppercase tracking-[0.2em] text-rose-100/90 mb-3">BM Support · Help Desk</div>
+          <h1 className="font-display text-4xl md:text-5xl font-bold leading-tight drop-shadow">
+            Support Tickets
+          </h1>
+          <p className="mt-4 text-rose-100/90 max-w-xl text-base md:text-lg">
+            Open a ticket and our team will get back to you fast. Rate every conversation
+            to help us keep our support world-class.
+          </p>
+          <div className="mt-6 inline-flex items-center gap-3 rounded-2xl bg-white/10 backdrop-blur border border-white/25 px-4 py-2.5 shadow-lg">
+            <div className="flex">
+              {[1, 2, 3, 4, 5].map((n) => (
+                <Star
+                  key={n}
+                  className={cn(
+                    "size-4",
+                    n <= Math.round(avgRating)
+                      ? "text-amber-300 fill-amber-300"
+                      : "text-white/40",
+                  )}
+                />
               ))}
             </div>
-          </div>
-        }
-      />
-      <main className="flex-1 flex flex-col min-w-0 bg-gradient-to-br from-violet-600 via-fuchsia-600 to-blue-600 text-white relative overflow-hidden">
-        <div className="pointer-events-none absolute inset-0 opacity-60" style={{
-          background:
-            "radial-gradient(800px 400px at 0% 0%, rgba(244,63,94,0.55), transparent 60%), radial-gradient(700px 400px at 100% 0%, rgba(168,85,247,0.45), transparent 60%), radial-gradient(900px 500px at 50% 100%, rgba(250,204,21,0.45), transparent 60%)",
-        }} />
-        <div className="relative flex-1 flex flex-col min-h-0">
-        <StaffOnDutyStrip />
-        {creating ? (
-          <NewTicketForm
-            categories={categories}
-            onCancel={() => setCreating(false)}
-            onCreated={(id) => { setCreating(false); navigate({ to: "/tickets", search: { id, view } }); }}
-          />
-        ) : selected ? (
-          <TicketDetail
-            ticket={selected}
-            categories={categories}
-            profiles={profiles}
-            staff={staff}
-            isStaff={isStaff}
-            currentUserId={user!.id}
-          />
-        ) : (
-          <div className="flex-1 grid place-items-center">
-            <div className="text-center max-w-sm">
-              <div className="size-14 rounded-2xl bg-white/20 backdrop-blur grid place-items-center mx-auto mb-4 shadow-lg">
-                <TicketIcon className="size-6 text-white" />
-              </div>
-              <h1 className="font-display text-xl font-bold text-white drop-shadow">Support tickets</h1>
-              <p className="text-white/85 text-sm mt-2">
-                {tickets.length === 0 ? "Open your first ticket to get help from the team." : "Select a ticket from the list."}
-              </p>
-              <button
-                onClick={() => setCreating(true)}
-                className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white text-rose-600 text-sm font-semibold hover:bg-white/90 shadow-lg"
-              >
-                <Plus className="size-4" /> New ticket
-              </button>
+            <div className="text-sm">
+              <span className="font-bold tabular-nums">
+                {ratingCount > 0 ? avgRating.toFixed(1) : "—"}
+              </span>
+              <span className="text-rose-100/85 ml-1.5">
+                {ratingCount > 0
+                  ? `from ${ratingCount} customer rating${ratingCount === 1 ? "" : "s"}`
+                  : "No ratings yet"}
+              </span>
             </div>
           </div>
-        )}
         </div>
-      </main>
-    </>
+      </section>
+
+      {/* Tabs */}
+      <div className="px-6 md:px-10 pb-10 -mt-6 relative">
+        <Tabs value={tab} onValueChange={(v) => setTab(v as "welcome" | "tickets")}>
+          <TabsList className="bg-rose-950/60 border border-rose-500/30">
+            <TabsTrigger
+              value="welcome"
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-rose-500 data-[state=active]:to-fuchsia-500 data-[state=active]:text-white"
+            >
+              Welcome
+            </TabsTrigger>
+            <TabsTrigger
+              value="tickets"
+              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-rose-500 data-[state=active]:to-fuchsia-500 data-[state=active]:text-white"
+            >
+              Tickets
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="welcome" className="mt-6">
+            <div className="rounded-2xl bg-gradient-to-br from-rose-600/30 via-fuchsia-600/20 to-violet-700/30 border border-rose-500/30 p-8 md:p-10 shadow-[0_0_60px_-15px_rgba(244,63,94,0.4)]">
+              <h2 className="font-display text-2xl md:text-3xl font-bold">Welcome to the Help Desk</h2>
+              <p className="mt-3 text-rose-100/90 max-w-2xl">
+                Account questions, billing, Live TV or Movies & Series issues — we've got you
+                covered. Open a ticket and we'll respond as soon as a staff member is on duty.
+              </p>
+              <p className="mt-3 text-rose-200/80 max-w-2xl text-sm">
+                Once your ticket is resolved, leave a rating so we know how we did.
+              </p>
+              <div className="mt-6 flex flex-wrap gap-3">
+                <button
+                  onClick={() => { setCreating(true); setTab("tickets"); }}
+                  className="inline-flex items-center gap-2 rounded-xl bg-white text-rose-600 font-semibold px-4 py-2.5 shadow-lg shadow-rose-900/40 hover:bg-white/90"
+                >
+                  <Plus className="size-4" /> New ticket
+                </button>
+                <button
+                  onClick={() => setTab("tickets")}
+                  className="inline-flex items-center gap-2 rounded-xl border border-white/25 bg-white/10 backdrop-blur px-4 py-2.5 text-sm hover:bg-white/20"
+                >
+                  <TicketIcon className="size-4" /> View my tickets
+                </button>
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="tickets" className="mt-6">
+            <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-4">
+              {/* Left list */}
+              <aside className="rounded-2xl bg-rose-950/50 border border-rose-500/30 p-4 h-fit backdrop-blur space-y-3">
+                <button
+                  onClick={() => { setCreating(true); navigate({ to: "/tickets", search: { id: undefined, view } }); }}
+                  className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-white text-rose-600 text-sm font-semibold hover:bg-white/90 shadow"
+                >
+                  <Plus className="size-4" /> New ticket
+                </button>
+                {isStaff && (
+                  <div className="flex gap-1 bg-white/10 p-1 rounded-lg text-xs">
+                    {(["mine", "assigned", "all"] as const).map((v) => (
+                      <button
+                        key={v}
+                        onClick={() => setView(v)}
+                        className={cn(
+                          "flex-1 px-2 py-1 rounded-md capitalize transition-colors",
+                          view === v ? "bg-white text-rose-600" : "text-white/70 hover:text-white",
+                        )}
+                      >{v}</button>
+                    ))}
+                  </div>
+                )}
+                <div className="space-y-3">
+                  {tickets.length === 0 && (
+                    <div className="text-xs text-white/70 px-2 py-3 text-center">No tickets yet.</div>
+                  )}
+                  {groups.map((g) => (
+                    <div key={g.label}>
+                      <div className="px-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-white/70 flex items-center gap-1">
+                        <ChevronDown className="size-3" />{g.label}
+                      </div>
+                      <div className="space-y-px">
+                        {tickets.filter((t) => STATUS_META[t.status].label === g.label).map((t) => {
+                          const cat = categories.find((c) => c.id === t.category_id);
+                          const Icon = ICONS[cat?.icon ?? "LifeBuoy"] ?? LifeBuoy;
+                          const active = selected?.id === t.id;
+                          return (
+                            <button
+                              key={t.id}
+                              onClick={() => { setCreating(false); navigate({ to: "/tickets", search: { id: t.id, view } }); }}
+                              className={cn(
+                                "w-full text-left flex items-center gap-2 px-2 py-1.5 rounded-md text-sm transition-colors",
+                                active ? "bg-white/20 text-white" : "text-white/80 hover:bg-white/10 hover:text-white",
+                              )}
+                            >
+                              <Icon className="size-4 shrink-0" />
+                              <span className="truncate flex-1">{t.subject}</span>
+                              {t.priority === "urgent" && <span className="size-1.5 rounded-full bg-rose-300" />}
+                              {t.priority === "high" && <span className="size-1.5 rounded-full bg-amber-300" />}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </aside>
+
+              {/* Right panel */}
+              <div className="rounded-2xl bg-gradient-to-br from-violet-600 via-fuchsia-600 to-rose-600 text-white relative overflow-hidden min-h-[600px] flex flex-col">
+                <div className="pointer-events-none absolute inset-0 opacity-60" style={{
+                  background:
+                    "radial-gradient(800px 400px at 0% 0%, rgba(244,63,94,0.45), transparent 60%), radial-gradient(700px 400px at 100% 0%, rgba(168,85,247,0.4), transparent 60%)",
+                }} />
+                <div className="relative flex-1 flex flex-col min-h-0">
+                  <StaffOnDutyStrip />
+                  {creating ? (
+                    <NewTicketForm
+                      categories={categories}
+                      onCancel={() => setCreating(false)}
+                      onCreated={(id) => { setCreating(false); navigate({ to: "/tickets", search: { id, view } }); }}
+                    />
+                  ) : selected ? (
+                    <TicketDetail
+                      ticket={selected}
+                      categories={categories}
+                      profiles={profiles}
+                      staff={staff}
+                      isStaff={isStaff}
+                      currentUserId={user!.id}
+                      myRating={myRatings[selected.id] ?? 0}
+                      onRate={(v) => rateTicket(selected.id, v)}
+                    />
+                  ) : (
+                    <div className="flex-1 grid place-items-center p-8">
+                      <div className="text-center max-w-sm">
+                        <div className="size-14 rounded-2xl bg-white/20 backdrop-blur grid place-items-center mx-auto mb-4 shadow-lg">
+                          <TicketIcon className="size-6 text-white" />
+                        </div>
+                        <h2 className="font-display text-xl font-bold drop-shadow">Support tickets</h2>
+                        <p className="text-white/85 text-sm mt-2">
+                          {tickets.length === 0 ? "Open your first ticket to get help from the team." : "Select a ticket from the list."}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
+      </div>
+    </main>
   );
 }
 
@@ -537,10 +659,11 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 }
 
 function TicketDetail({
-  ticket, categories, profiles, staff, isStaff, currentUserId,
+  ticket, categories, profiles, staff, isStaff, currentUserId, myRating, onRate,
 }: {
   ticket: Ticket; categories: Category[]; profiles: Map<string, Profile>;
   staff: Profile[]; isStaff: boolean; currentUserId: string;
+  myRating: number; onRate: (v: number) => void;
 }) {
   const { hasAny } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
@@ -700,6 +823,30 @@ function TicketDetail({
           </div>
         )}
       </header>
+
+      {ticket.user_id === currentUserId && (ticket.status === "resolved" || ticket.status === "closed") && (
+        <div className="mx-5 mt-3 rounded-xl bg-white/15 backdrop-blur border border-white/30 px-4 py-3 flex items-center gap-3 flex-wrap">
+          <div className="text-sm text-white">
+            <div className="font-semibold">How did we do?</div>
+            <div className="text-xs text-white/80">
+              {myRating > 0 ? "Thanks! Tap a star to update your rating." : "Rate your support experience."}
+            </div>
+          </div>
+          <div className="flex ml-auto" onMouseLeave={() => undefined}>
+            {[1, 2, 3, 4, 5].map((n) => (
+              <button
+                key={n}
+                type="button"
+                onClick={() => onRate(n)}
+                className="p-1 hover:scale-110 transition"
+                aria-label={`${n} star${n === 1 ? "" : "s"}`}
+              >
+                <Star className={cn("size-5", n <= myRating ? "text-amber-300 fill-amber-300" : "text-white/50")} />
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-5 py-4 space-y-3">
         {messages.map((m) => {
