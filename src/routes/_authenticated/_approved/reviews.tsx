@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { z } from "zod";
+import reviewsHero from "@/assets/reviews-hero.png";
 
 export const Route = createFileRoute("/_authenticated/_approved/reviews")({
   component: ReviewsPage,
@@ -126,27 +127,39 @@ function ReviewsPage() {
           </TabsList>
 
           <TabsContent value="welcome" className="mt-6">
-            <div className="rounded-2xl bg-gradient-to-br from-fuchsia-600/30 via-purple-600/30 to-violet-700/30 border border-purple-500/40 p-10 shadow-[0_0_60px_-15px_rgba(168,85,247,0.5)]">
-              <div className="size-14 rounded-2xl bg-purple-900/60 grid place-items-center mb-4">
-                <MessageSquareHeart className="size-7 text-fuchsia-300" />
-              </div>
-              <h2 className="font-display text-3xl font-bold bg-gradient-to-r from-violet-600 to-blue-600 bg-clip-text text-transparent">Welcome to our review wall</h2>
-              <p className="mt-3 text-lg text-purple-100/90 max-w-2xl">
-                Share your experience and read what fellow members are saying. Every review is approved by our team before it goes live.
-              </p>
-              <p className="mt-4 text-purple-200/70 max-w-2xl">
-                You can leave one review per account — make it count!
-              </p>
-              <div className="mt-6 flex flex-wrap gap-3">
-                <Button onClick={() => setTab("wall")} className="bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white border-0 shadow-lg shadow-purple-900/50">Read reviews</Button>
-                <Button onClick={() => setTab("leave")} variant="outline" className="border-purple-400/60 bg-purple-900/30 text-purple-100 hover:bg-purple-800/60 hover:text-white">Leave yours</Button>
-              </div>
-              {approved.length > 0 && (
-                <div className="mt-8 inline-flex items-center gap-3 rounded-xl bg-purple-950/60 border border-purple-500/40 px-4 py-3">
-                  <RatingStars value={Math.round(avg)} />
-                  <div className="text-purple-100"><span className="font-bold">{avg.toFixed(1)}</span> from {approved.length} review{approved.length === 1 ? "" : "s"}</div>
+            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-fuchsia-600/30 via-purple-600/30 to-violet-700/30 border border-purple-500/40 shadow-[0_0_60px_-15px_rgba(168,85,247,0.5)]">
+              <img
+                src={reviewsHero}
+                alt="Customer reviews"
+                className="absolute inset-y-0 right-0 h-full w-1/2 object-cover object-left hidden md:block opacity-90 [mask-image:linear-gradient(to_right,transparent,black_30%)]"
+              />
+              <div className="relative z-10 p-10 md:max-w-[60%]">
+                <div className="size-14 rounded-2xl bg-purple-900/60 grid place-items-center mb-4">
+                  <MessageSquareHeart className="size-7 text-fuchsia-300" />
                 </div>
-              )}
+                <h2 className="font-display text-3xl font-bold bg-gradient-to-r from-violet-600 to-blue-600 bg-clip-text text-transparent">Welcome to our review wall</h2>
+                <p className="mt-3 text-lg text-purple-100/90">
+                  Share your experience and read what fellow members are saying. Every review is approved by our team before it goes live.
+                </p>
+                <p className="mt-4 text-purple-200/70">
+                  You can leave one review per account — make it count!
+                </p>
+                <div className="mt-6 flex flex-wrap gap-3">
+                  <Button onClick={() => setTab("wall")} className="bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white border-0 shadow-lg shadow-purple-900/50">Read reviews</Button>
+                  <Button onClick={() => setTab("leave")} variant="outline" className="border-purple-400/60 bg-purple-900/30 text-purple-100 hover:bg-purple-800/60 hover:text-white">Leave yours</Button>
+                </div>
+                {approved.length > 0 && (
+                  <div className="mt-8 inline-flex items-center gap-3 rounded-xl bg-purple-950/60 border border-purple-500/40 px-4 py-3">
+                    <RatingStars value={Math.round(avg)} />
+                    <div className="text-purple-100"><span className="font-bold">{avg.toFixed(1)}</span> from {approved.length} review{approved.length === 1 ? "" : "s"}</div>
+                  </div>
+                )}
+              </div>
+              <img
+                src={reviewsHero}
+                alt=""
+                className="md:hidden w-full h-40 object-cover object-right"
+              />
             </div>
           </TabsContent>
 
