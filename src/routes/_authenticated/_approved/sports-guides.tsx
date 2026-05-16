@@ -64,14 +64,27 @@ function SportsGuidesPage() {
   const navigate = useNavigate();
   const { cat: catFromUrl } = Route.useSearch();
   const canManageCategories = hasAny(["admin", "management", "staff"]);
-  const [tab, setTab] = useState("welcome");
-  const [activeCat, setActiveCat] = useState<string | null>(null);
+  const [tab, setTab] = useState<string>(() => {
+    try { return sessionStorage.getItem("sports-guides-active-tab") || "welcome"; } catch { return "welcome"; }
+  });
+  const [activeCat, setActiveCat] = useState<string | null>(() => {
+    try { return sessionStorage.getItem("sports-guides-active-cat"); } catch { return null; }
+  });
   const [search, setSearch] = useState("");
   const [resultsOpen, setResultsOpen] = useState(true);
   const [newCatName, setNewCatName] = useState("");
   const [addingCat, setAddingCat] = useState(false);
   const dragCatId = useRef<string | null>(null);
   const dragBlogId = useRef<string | null>(null);
+
+  // Persist UI state across screen swaps (route remounts).
+  useEffect(() => { try { sessionStorage.setItem("sports-guides-active-tab", tab); } catch { /* ignore */ } }, [tab]);
+  useEffect(() => {
+    try {
+      if (activeCat) sessionStorage.setItem("sports-guides-active-cat", activeCat);
+      else sessionStorage.removeItem("sports-guides-active-cat");
+    } catch { /* ignore */ }
+  }, [activeCat]);
 
   const queryKey = ["sports-guides-data", user?.id ?? "anon"] as const;
   const dataQuery = useQuery({
