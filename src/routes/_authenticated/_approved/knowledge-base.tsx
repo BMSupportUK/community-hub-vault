@@ -43,6 +43,8 @@ function slugify(s: string) {
   return s.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || `item-${Date.now()}`;
 }
 
+const KB_DRAFT_KEY = "kb-new-article-draft";
+
 function StarRating({
   value, onChange, size = 16, readOnly = false,
 }: { value: number; onChange?: (n: number) => void; size?: number; readOnly?: boolean }) {
@@ -170,12 +172,34 @@ function KnowledgeBasePage() {
 
   // ---------- Article CRUD ----------
   const openNewArticle = () => {
+    let draft: Article | null = null;
+    try {
+      const raw = localStorage.getItem(KB_DRAFT_KEY);
+      if (raw) draft = JSON.parse(raw) as Article;
+    } catch { draft = null; }
     setEditing({
-      id: "", category_id: activeCat ?? categories[0]?.id ?? "",
-      title: "", slug: "", excerpt: "", body: "", image_url: "", badge: "",
-      published: false, sort_order: 0, created_at: "",
+      id: "",
+      category_id: draft?.category_id || activeCat || categories[0]?.id || "",
+      title: draft?.title ?? "",
+      slug: draft?.slug ?? "",
+      excerpt: draft?.excerpt ?? "",
+      body: draft?.body ?? "",
+      image_url: draft?.image_url ?? "",
+      badge: draft?.badge ?? "",
+      published: draft?.published ?? false,
+      sort_order: 0,
+      created_at: "",
     });
+    if (draft && (draft.title || draft.body || draft.excerpt || draft.image_url)) {
+      toast.message("Draft restored");
+    }
   };
+
+  // Persist new-article draft so it survives navigation / accidental close.
+  useEffect(() => {
+    if (!editing || editing.id) return;
+    try { localStorage.setItem(KB_DRAFT_KEY, JSON.stringify(editing)); } catch { /* ignore */ }
+  }, [editing]);
 
   const saveArticle = async () => {
     if (!editing) return;
@@ -196,6 +220,7 @@ function KnowledgeBasePage() {
       : await supabase.from("kb_articles").insert({ ...payload, created_by: user?.id ?? null });
     if (error) return toast.error(error.message);
     toast.success(editing.id ? "Article updated" : "Article added");
+    if (!editing.id) { try { localStorage.removeItem(KB_DRAFT_KEY); } catch { /* ignore */ } }
     setEditing(null);
     load();
   };
