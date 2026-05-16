@@ -742,6 +742,38 @@ export type Database = {
         }
         Relationships: []
       }
+      product_ratings: {
+        Row: {
+          created_at: string
+          product_id: string
+          rating: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          product_id: string
+          rating: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          product_id?: string
+          rating?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_ratings_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           category: string | null
@@ -750,6 +782,7 @@ export type Database = {
           id: string
           image_url: string | null
           is_active: boolean
+          is_recommended: boolean
           name: string
           price_cents: number
           sort_order: number
@@ -763,6 +796,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           is_active?: boolean
+          is_recommended?: boolean
           name: string
           price_cents?: number
           sort_order?: number
@@ -776,6 +810,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           is_active?: boolean
+          is_recommended?: boolean
           name?: string
           price_cents?: number
           sort_order?: number

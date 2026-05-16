@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { ChannelColumn, type ChannelGroup } from "@/components/app/ChannelColumn";
-import { ShoppingBag, Package, Settings, Plus, Minus, X, Send, Trash2, Pencil, Image as ImageIcon, Tag, CheckCircle2, BadgeCheck, Check, Wrench, FileText, BedDouble, Users, Loader2, Save } from "lucide-react";
+import { ShoppingBag, Package, Settings, Plus, Minus, X, Send, Trash2, Pencil, Image as ImageIcon, Tag, CheckCircle2, BadgeCheck, Check, Wrench, FileText, BedDouble, Users, Loader2, Save, Star, Sparkles, GripVertical } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import shopHero from "@/assets/shop-hero.jpg";
@@ -36,7 +36,7 @@ export const Route = createFileRoute("/_authenticated/_approved/shop")({
 interface Product {
   id: string; name: string; description: string | null; price_cents: number;
   image_url: string | null; category: string | null; stock: number | null;
-  is_active: boolean; sort_order: number;
+  is_active: boolean; sort_order: number; is_recommended?: boolean;
 }
 type OrderStatus = "pending" | "processing" | "shipped" | "completed" | "cancelled";
 interface Order {
@@ -253,7 +253,54 @@ function defaultTitle(k: PolicyKey) {
   return "Triple-room Usage Rules";
 }
 
-function ProductCard({ p, qty, onAdd, onSub }: { p: Product; qty: number; onAdd: () => void; onSub: () => void }) {
+function StarRating({
+  value, average, count, onRate, readOnly = false, size = "sm",
+}: {
+  value: number; average: number; count: number;
+  onRate?: (v: number) => void; readOnly?: boolean; size?: "sm" | "md";
+}) {
+  const [hover, setHover] = useState(0);
+  const display = hover || value || Math.round(average);
+  const px = size === "sm" ? "size-3.5" : "size-4";
+  return (
+    <div className="flex items-center gap-1.5">
+      <div className="flex items-center" onMouseLeave={() => setHover(0)}>
+        {[1, 2, 3, 4, 5].map((n) => (
+          <button
+            key={n}
+            type="button"
+            disabled={readOnly}
+            onMouseEnter={() => !readOnly && setHover(n)}
+            onClick={(e) => { e.stopPropagation(); if (!readOnly) onRate?.(n); }}
+            className={cn(
+              "p-0.5 transition",
+              readOnly ? "cursor-default" : "cursor-pointer hover:scale-110",
+            )}
+            aria-label={`${n} star${n === 1 ? "" : "s"}`}
+          >
+            <Star
+              className={cn(
+                px,
+                n <= display ? "text-amber-400 fill-amber-400" : "text-muted-foreground/40",
+              )}
+            />
+          </button>
+        ))}
+      </div>
+      <span className="text-[11px] text-muted-foreground">
+        {count > 0 ? `${average.toFixed(1)} (${count})` : "No ratings"}
+      </span>
+    </div>
+  );
+}
+
+function ProductCard({
+  p, qty, onAdd, onSub, rating, average, ratingCount, onRate,
+}: {
+  p: Product; qty: number; onAdd: () => void; onSub: () => void;
+  rating: number; average: number; ratingCount: number;
+  onRate: (v: number) => void;
+}) {
   const fmt = _currentFmt;
   return (
     <div className="group bg-surface rounded-xl overflow-hidden border border-border hover:border-sky-400/50 hover:shadow-lg hover:shadow-blue-500/10 transition-all flex flex-col">
@@ -262,11 +309,19 @@ function ProductCard({ p, qty, onAdd, onSub }: { p: Product; qty: number; onAdd:
         {p.stock !== null && p.stock <= 0 && (
           <div className="absolute top-2 left-2 text-[10px] uppercase tracking-wider bg-red-500/90 text-white px-2 py-0.5 rounded">Out of stock</div>
         )}
+        {p.is_recommended && (
+          <div className="absolute top-2 right-2 inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider bg-gradient-to-r from-amber-400 to-orange-500 text-white px-2 py-1 rounded-full shadow-lg shadow-orange-500/40 ring-1 ring-white/30">
+            <Sparkles className="size-3" /> Recommended
+          </div>
+        )}
       </div>
       <div className="p-4 flex flex-col flex-1">
         {p.category && <div className="text-[10px] uppercase tracking-wider text-sky-300 mb-1">{p.category}</div>}
         <h3 className="font-semibold text-sm">{p.name}</h3>
         {p.description && <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{p.description}</p>}
+        <div className="mt-2">
+          <StarRating value={rating} average={average} count={ratingCount} onRate={onRate} />
+        </div>
         <div className="mt-auto pt-3 flex items-center justify-between">
           <span className="font-display font-bold text-lg bg-gradient-to-r from-violet-600 to-blue-600 bg-clip-text text-transparent">{fmt(p.price_cents)}</span>
           {qty ? (
@@ -296,6 +351,21 @@ function Storefront() {
   const isAdmin = hasAny(["admin", "management"]);
   const [addingCat, setAddingCat] = useState(false);
   const [newCatName, setNewCatName] = useState("");
+  const [ratings, setRatings] = useState<Record<string, { sum: number; count: number }>>({});
+  const [myRatings, setMyRatings] = useState<Record<string, number>>({});
+
+  const reloadRatings = async () => {
+    const { data } = await supabase.from("product_ratings").select("product_id,user_id,rating");
+    const agg: Record<string, { sum: number; count: number }> = {};
+    const mine: Record<string, number> = {};
+    for (const r of (data ?? []) as { product_id: string; user_id: string; rating: number }[]) {
+      const a = agg[r.product_id] ?? { sum: 0, count: 0 };
+      a.sum += r.rating; a.count += 1;
+      agg[r.product_id] = a;
+      if (user && r.user_id === user.id) mine[r.product_id] = r.rating;
+    }
+    setRatings(agg); setMyRatings(mine);
+  };
 
   const reloadCategories = () =>
     supabase.from("product_categories").select("*").order("sort_order").order("name")
@@ -304,7 +374,24 @@ function Storefront() {
   useEffect(() => {
     supabase.from("products").select("*").eq("is_active", true).order("sort_order").then(({ data }) => setProducts(data ?? []));
     reloadCategories();
-  }, []);
+    reloadRatings();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
+
+  const rateProduct = async (productId: string, value: number) => {
+    if (!user) { toast.error("Please sign in"); return; }
+    const prevAgg = ratings[productId];
+    const prevMine = myRatings[productId] ?? 0;
+    // Optimistic update
+    const nextAgg = { sum: (prevAgg?.sum ?? 0) - prevMine + value, count: (prevAgg?.count ?? 0) + (prevMine ? 0 : 1) };
+    setRatings({ ...ratings, [productId]: nextAgg });
+    setMyRatings({ ...myRatings, [productId]: value });
+    const { error } = await supabase
+      .from("product_ratings")
+      .upsert({ product_id: productId, user_id: user.id, rating: value } as never, { onConflict: "product_id,user_id" });
+    if (error) { toast.error(error.message); reloadRatings(); return; }
+    toast.success("Thanks for rating!");
+  };
 
   // Merge DB-managed categories with any category strings present on products
   const categories = useMemo(() => {
@@ -499,7 +586,7 @@ function Storefront() {
                       </div>
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
                         {g.items.map((p) => (
-                          <ProductCard key={p.id} p={p} qty={cart[p.id] ?? 0} onAdd={() => add(p.id)} onSub={() => sub(p.id)} />
+                          <ProductCard key={p.id} p={p} qty={cart[p.id] ?? 0} onAdd={() => add(p.id)} onSub={() => sub(p.id)} rating={myRatings[p.id] ?? 0} average={ratings[p.id] ? ratings[p.id].sum / ratings[p.id].count : 0} ratingCount={ratings[p.id]?.count ?? 0} onRate={(v) => rateProduct(p.id, v)} />
                         ))}
                       </div>
                     </section>
@@ -518,7 +605,7 @@ function Storefront() {
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
                     {filtered.map((p) => (
-                      <ProductCard key={p.id} p={p} qty={cart[p.id] ?? 0} onAdd={() => add(p.id)} onSub={() => sub(p.id)} />
+                      <ProductCard key={p.id} p={p} qty={cart[p.id] ?? 0} onAdd={() => add(p.id)} onSub={() => sub(p.id)} rating={myRatings[p.id] ?? 0} average={ratings[p.id] ? ratings[p.id].sum / ratings[p.id].count : 0} ratingCount={ratings[p.id]?.count ?? 0} onRate={(v) => rateProduct(p.id, v)} />
                     ))}
                   </div>
                 </section>
@@ -1264,6 +1351,8 @@ function AdminProducts() {
   const [categories, setCategories] = useState<ProductCategory[]>([]);
   const [showCats, setShowCats] = useState(false);
   const [newCat, setNewCat] = useState("");
+  const [dragId, setDragId] = useState<string | null>(null);
+  const [overId, setOverId] = useState<string | null>(null);
   const sym = _currentSymbol;
 
   const load = async () => {
@@ -1303,6 +1392,7 @@ function AdminProducts() {
       price_cents, image_url: editing.image_url ?? null,
       category: editing.category ?? null, stock: editing.stock ?? null,
       is_active: editing.is_active ?? true, sort_order: editing.sort_order ?? 0,
+      is_recommended: editing.is_recommended ?? false,
     };
     const { error } = editing.id
       ? await supabase.from("products").update(payload).eq("id", editing.id)
@@ -1315,6 +1405,34 @@ function AdminProducts() {
     if (!confirm("Delete this product?")) return;
     const { error } = await supabase.from("products").delete().eq("id", id);
     if (error) toast.error(error.message); else load();
+  };
+
+  const toggleRecommended = async (p: Product) => {
+    const next = !p.is_recommended;
+    setProducts((arr) => arr.map((x) => x.id === p.id ? { ...x, is_recommended: next } : x));
+    const { error } = await supabase.from("products").update({ is_recommended: next }).eq("id", p.id);
+    if (error) { toast.error(error.message); load(); }
+  };
+
+  const handleDrop = async (targetId: string) => {
+    if (!dragId || dragId === targetId) { setDragId(null); setOverId(null); return; }
+    const from = products.findIndex((p) => p.id === dragId);
+    const to = products.findIndex((p) => p.id === targetId);
+    if (from < 0 || to < 0) { setDragId(null); setOverId(null); return; }
+    const next = [...products];
+    const [moved] = next.splice(from, 1);
+    next.splice(to, 0, moved);
+    const reordered = next.map((p, i) => ({ ...p, sort_order: i }));
+    setProducts(reordered);
+    setDragId(null); setOverId(null);
+    // Persist new sort_order for every product
+    const updates = reordered.map((p) =>
+      supabase.from("products").update({ sort_order: p.sort_order }).eq("id", p.id),
+    );
+    const results = await Promise.all(updates);
+    const failed = results.find((r) => r.error);
+    if (failed?.error) { toast.error(failed.error.message); load(); }
+    else toast.success("Order updated");
   };
 
   return (
@@ -1337,17 +1455,55 @@ function AdminProducts() {
         <div className="bg-surface rounded-xl border border-border overflow-hidden">
           <table className="w-full text-sm">
             <thead className="bg-surface-2 text-muted-foreground text-xs">
-              <tr><th className="text-left p-3">Name</th><th className="text-left p-3">Category</th><th className="text-right p-3">Price</th><th className="text-right p-3">Stock</th><th className="text-center p-3">Active</th><th className="p-3"></th></tr>
+              <tr>
+                <th className="w-8 p-3"></th>
+                <th className="text-left p-3">Name</th>
+                <th className="text-left p-3">Category</th>
+                <th className="text-right p-3">Price</th>
+                <th className="text-right p-3">Stock</th>
+                <th className="text-center p-3">Active</th>
+                <th className="text-center p-3">Recommended</th>
+                <th className="p-3"></th>
+              </tr>
             </thead>
             <tbody>
-              {products.length === 0 && <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">No products. Click "New Product" to add one.</td></tr>}
+              {products.length === 0 && <tr><td colSpan={8} className="p-8 text-center text-muted-foreground">No products. Click "New Product" to add one.</td></tr>}
               {products.map((p) => (
-                <tr key={p.id} className="border-t border-border">
+                <tr
+                  key={p.id}
+                  draggable
+                  onDragStart={() => setDragId(p.id)}
+                  onDragOver={(e) => { e.preventDefault(); setOverId(p.id); }}
+                  onDragLeave={() => setOverId((o) => (o === p.id ? null : o))}
+                  onDrop={(e) => { e.preventDefault(); handleDrop(p.id); }}
+                  onDragEnd={() => { setDragId(null); setOverId(null); }}
+                  className={cn(
+                    "border-t border-border transition",
+                    dragId === p.id && "opacity-50",
+                    overId === p.id && dragId && dragId !== p.id && "bg-primary/10",
+                  )}
+                >
+                  <td className="p-3 text-muted-foreground cursor-grab active:cursor-grabbing"><GripVertical className="size-4" /></td>
                   <td className="p-3 font-medium">{p.name}</td>
                   <td className="p-3 text-muted-foreground">{p.category ?? "—"}</td>
                   <td className="p-3 text-right">{fmt(p.price_cents)}</td>
                   <td className="p-3 text-right">{p.stock ?? "—"}</td>
                   <td className="p-3 text-center">{p.is_active ? "✓" : "—"}</td>
+                  <td className="p-3 text-center">
+                    <button
+                      onClick={() => toggleRecommended(p)}
+                      className={cn(
+                        "inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium transition",
+                        p.is_recommended
+                          ? "bg-gradient-to-r from-amber-400 to-orange-500 text-white shadow shadow-orange-500/30"
+                          : "bg-surface-2 text-muted-foreground hover:text-foreground",
+                      )}
+                      title={p.is_recommended ? "Recommended — click to remove" : "Mark as recommended"}
+                    >
+                      <Sparkles className="size-3" />
+                      {p.is_recommended ? "Recommended" : "Mark"}
+                    </button>
+                  </td>
                   <td className="p-3 text-right">
                     <button onClick={() => setEditing(p)} className="p-1.5 rounded hover:bg-surface-2"><Pencil className="size-3.5" /></button>
                     <button onClick={() => remove(p.id)} className="p-1.5 rounded hover:bg-surface-2 text-destructive"><Trash2 className="size-3.5" /></button>
@@ -1419,6 +1575,10 @@ function AdminProducts() {
               </Field>
               <Field label="Image URL"><input value={editing.image_url ?? ""} onChange={(e) => setEditing({ ...editing, image_url: e.target.value })} className="w-full px-3 py-2 rounded-lg bg-surface-2 text-sm border border-border outline-none" /></Field>
               <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={editing.is_active ?? true} onChange={(e) => setEditing({ ...editing, is_active: e.target.checked })} /> Active</label>
+              <label className="flex items-center gap-2 text-sm">
+                <input type="checkbox" checked={editing.is_recommended ?? false} onChange={(e) => setEditing({ ...editing, is_recommended: e.target.checked })} />
+                <Sparkles className="size-3.5 text-amber-400" /> Recommended (shows sticker on storefront)
+              </label>
             </div>
             <div className="p-5 border-t border-border flex justify-end gap-2">
               <button onClick={() => setEditing(null)} className="px-4 py-2 rounded-lg bg-surface-2 text-sm">Cancel</button>
