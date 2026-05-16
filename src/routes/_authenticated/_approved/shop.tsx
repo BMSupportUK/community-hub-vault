@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { ChannelColumn, type ChannelGroup } from "@/components/app/ChannelColumn";
-import { ShoppingBag, Package, Settings, Plus, Minus, X, Send, Trash2, Pencil, Image as ImageIcon, Tag, CheckCircle2, BadgeCheck, Check, Wrench, FileText, BedDouble, Users, Loader2, Save, Star, Sparkles, GripVertical } from "lucide-react";
+import { ShoppingBag, Package, Settings, Plus, Minus, X, Send, Trash2, Pencil, Image as ImageIcon, Tag, CheckCircle2, BadgeCheck, Check, Wrench, FileText, BedDouble, Users, Loader2, Save, Star, Sparkles, GripVertical, Receipt, UserCog, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import shopHero from "@/assets/shop-hero.jpg";
