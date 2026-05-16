@@ -2,7 +2,6 @@ import { createFileRoute, Link, useNavigate, redirect } from "@tanstack/react-ro
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/use-auth";
 import { Field } from "./login";
 import signupIllustration from "@/assets/signup-illustration.png";
 
@@ -16,7 +15,6 @@ export const Route = createFileRoute("/signup")({
 
 function SignupPage() {
   const navigate = useNavigate();
-  const { refreshRoles } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
