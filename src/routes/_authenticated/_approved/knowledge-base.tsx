@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Plus, Search, X, Pencil, Trash2, GripVertical, BookOpen, ChevronRight,
   ArrowLeft, Save, Loader2, FolderPlus, Eye, EyeOff, Star,
@@ -77,9 +78,8 @@ function StarRating({
 
 function KnowledgeBasePage() {
   const { isMod, user } = useAuth();
+  const queryClient = useQueryClient();
   const [tab, setTab] = useState("welcome");
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [articles, setArticles] = useState<Article[]>([]);
   const [welcome, setWelcome] = useState<Welcome>({ title: "", body: "" });
   const [welcomeDraft, setWelcomeDraft] = useState<Welcome | null>(null);
   const [savingWelcome, setSavingWelcome] = useState(false);
@@ -89,32 +89,49 @@ function KnowledgeBasePage() {
   const [editing, setEditing] = useState<Article | null>(null);
   const [editingCat, setEditingCat] = useState<Category | null>(null);
   const [showCatEditor, setShowCatEditor] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [ratings, setRatings] = useState<RatingRow[]>([]);
   const dragCatId = useRef<string | null>(null);
   const dragArtId = useRef<string | null>(null);
 
-  const load = async () => {
-    setLoading(true);
-    const [{ data: cats }, { data: arts }, { data: setting }, { data: rs }] = await Promise.all([
-      supabase.from("kb_categories").select("*").order("sort_order"),
-      supabase.from("kb_articles").select("*").order("sort_order").order("created_at", { ascending: false }),
-      supabase.from("app_settings").select("value").eq("key", "kb_welcome").maybeSingle(),
-      supabase.from("kb_article_ratings").select("article_id, user_id, rating"),
-    ]);
-    setCategories((cats ?? []) as Category[]);
-    setArticles((arts ?? []) as Article[]);
-    setRatings((rs ?? []) as RatingRow[]);
-    const w = (setting?.value as Welcome | null) ?? null;
+  const kbQuery = useQuery({
+    queryKey: ["kb-data"],
+    queryFn: async () => {
+      const [{ data: cats }, { data: arts }, { data: setting }, { data: rs }] = await Promise.all([
+        supabase.from("kb_categories").select("*").order("sort_order"),
+        supabase.from("kb_articles").select("*").order("sort_order").order("created_at", { ascending: false }),
+        supabase.from("app_settings").select("value").eq("key", "kb_welcome").maybeSingle(),
+        supabase.from("kb_article_ratings").select("article_id, user_id, rating"),
+      ]);
+      return {
+        categories: (cats ?? []) as Category[],
+        articles: (arts ?? []) as Article[],
+        ratings: (rs ?? []) as RatingRow[],
+        welcome: (setting?.value as Welcome | null) ?? null,
+      };
+    },
+    staleTime: 5 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+  });
+
+  const categories = kbQuery.data?.categories ?? [];
+  const articles = kbQuery.data?.articles ?? [];
+  const ratings = kbQuery.data?.ratings ?? [];
+  const loading = kbQuery.isLoading;
+  const load = () => queryClient.invalidateQueries({ queryKey: ["kb-data"] });
+
+  // Sync welcome from query data; auto-select first category once data arrives.
+  useEffect(() => {
+    const w = kbQuery.data?.welcome ?? null;
     setWelcome({
       title: w?.title ?? "Welcome to the Knowledge Base",
       body: w?.body ?? "Search our guides or browse by category to find answers fast.",
     });
-    if (cats?.length) setActiveCat((cur) => cur ?? cats[0].id);
-    setLoading(false);
-  };
-
-  useEffect(() => { load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [user?.id]);
+  }, [kbQuery.data?.welcome]);
+  useEffect(() => {
+    if (categories.length && !activeCat) setActiveCat(categories[0].id);
+  }, [categories, activeCat]);
 
   const counts = useMemo(() => {
     const m: Record<string, number> = {};
@@ -141,9 +158,10 @@ function KnowledgeBasePage() {
   const rateArticle = async (articleId: string, rating: number) => {
     if (!user?.id) return toast.error("Sign in to rate");
     // optimistic
-    setRatings((prev) => {
-      const others = prev.filter((r) => !(r.article_id === articleId && r.user_id === user.id));
-      return [...others, { article_id: articleId, user_id: user.id, rating }];
+    queryClient.setQueryData<typeof kbQuery.data>(["kb-data"], (prev) => {
+      if (!prev) return prev;
+      const others = prev.ratings.filter((r) => !(r.article_id === articleId && r.user_id === user.id));
+      return { ...prev, ratings: [...others, { article_id: articleId, user_id: user.id, rating }] };
     });
     const { error } = await supabase
       .from("kb_article_ratings")
@@ -275,7 +293,7 @@ function KnowledgeBasePage() {
     const [moved] = list.splice(fi, 1);
     list.splice(ti, 0, moved);
     const updated = list.map((c, i) => ({ ...c, sort_order: (i + 1) * 10 }));
-    setCategories(updated);
+    queryClient.setQueryData<typeof kbQuery.data>(["kb-data"], (prev) => prev ? { ...prev, categories: updated } : prev);
     await Promise.all(updated.map((c) =>
       supabase.from("kb_categories").update({ sort_order: c.sort_order }).eq("id", c.id)
     ));
@@ -291,7 +309,7 @@ function KnowledgeBasePage() {
     const [moved] = inCat.splice(fi, 1);
     inCat.splice(ti, 0, moved);
     const updated = inCat.map((a, i) => ({ ...a, sort_order: (i + 1) * 10 }));
-    setArticles([...others, ...updated]);
+    queryClient.setQueryData<typeof kbQuery.data>(["kb-data"], (prev) => prev ? { ...prev, articles: [...others, ...updated] } : prev);
     await Promise.all(updated.map((a) =>
       supabase.from("kb_articles").update({ sort_order: a.sort_order }).eq("id", a.id)
     ));
