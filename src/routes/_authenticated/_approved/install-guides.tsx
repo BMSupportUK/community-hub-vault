@@ -16,6 +16,8 @@ export const Route = createFileRoute("/_authenticated/_approved/install-guides")
   component: InstallGuidesPage,
 });
 
+const DRAFT_KEY = "install-guide-new-draft";
+
 type Category = { id: string; name: string; slug: string; sort_order: number };
 type Blog = {
   id: string;
@@ -83,20 +85,40 @@ function InstallGuidesPage() {
 
   const activeCategory = categories.find((c) => c.id === activeCat);
 
+  // Persist new-guide draft so it survives closing the dialog or leaving the page.
+  useEffect(() => {
+    if (!editing || editing.id) return;
+    try {
+      localStorage.setItem(DRAFT_KEY, JSON.stringify(editing));
+    } catch {
+      /* ignore quota errors */
+    }
+  }, [editing]);
+
   const openNew = () => {
+    let draft: Partial<Blog> | null = null;
+    try {
+      const raw = localStorage.getItem(DRAFT_KEY);
+      if (raw) draft = JSON.parse(raw) as Partial<Blog>;
+    } catch {
+      draft = null;
+    }
     setEditing({
       id: "",
-      category_id: activeCat ?? categories[0]?.id ?? "",
-      title: "",
-      excerpt: "",
-      body: "",
-      image_url: "",
-      pdf_url: "",
-      badge: "",
-      published: true,
+      category_id: draft?.category_id || activeCat || categories[0]?.id || "",
+      title: draft?.title ?? "",
+      excerpt: draft?.excerpt ?? "",
+      body: draft?.body ?? "",
+      image_url: draft?.image_url ?? "",
+      pdf_url: draft?.pdf_url ?? "",
+      badge: draft?.badge ?? "",
+      published: draft?.published ?? true,
       created_at: "",
       sort_order: 0,
     });
+    if (draft && (draft.title || draft.body || draft.excerpt || draft.image_url || draft.pdf_url)) {
+      toast.message("Draft restored");
+    }
     setShowEditor(true);
   };
 
@@ -120,6 +142,9 @@ function InstallGuidesPage() {
       ? await supabase.from("install_blogs").update(payload).eq("id", editing.id)
       : await supabase.from("install_blogs").insert({ ...payload, created_by: user?.id ?? null });
     if (error) return toast.error(error.message);
+    if (!editing.id) {
+      try { localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
+    }
     toast.success(editing.id ? "Guide updated" : "Guide added");
     setShowEditor(false);
     setEditing(null);
