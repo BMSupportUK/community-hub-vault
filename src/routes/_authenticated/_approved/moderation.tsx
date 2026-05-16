@@ -133,7 +133,7 @@ function ModerationPage() {
       if (approvedMsg) {
         const msg = approvedMsg as ThreadMsg;
         setThread((m) => (m.some((x) => x.id === msg.id) ? m : [...m, msg]));
-        const ch = supabase.channel(`gate-${app.id}`);
+        const ch = supabase.channel(`gate-msgs-${app.id}`, { config: { broadcast: { self: false } } });
         await new Promise<void>((resolve) => {
           ch.subscribe((s) => { if (s === "SUBSCRIBED") resolve(); });
         });
@@ -151,7 +151,7 @@ function ModerationPage() {
       if (deniedMsg) {
         const msg = deniedMsg as ThreadMsg;
         setThread((m) => (m.some((x) => x.id === msg.id) ? m : [...m, msg]));
-        const ch = supabase.channel(`gate-${app.id}`);
+        const ch = supabase.channel(`gate-msgs-${app.id}`, { config: { broadcast: { self: false } } });
         await new Promise<void>((resolve) => {
           ch.subscribe((s) => { if (s === "SUBSCRIBED") resolve(); });
         });
