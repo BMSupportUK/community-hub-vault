@@ -1242,7 +1242,7 @@ function Checkout({ items, total, onClose, onPlace }: {
               {appliedCode && (
                 <div className="flex items-center justify-between text-xs px-2 py-1.5 rounded-md bg-success/10 text-success">
                   <span>Applied: <span className="font-mono font-semibold">{appliedCode.code}</span> — only 1 code per order</span>
-                  <button type="button" onClick={() => { setAppliedCode(null); setDiscountInput(""); }} className="underline hover:no-underline">Remove</button>
+                  <button type="button" onClick={() => { setAppliedCode(null); setDiscountInput(""); setEligibleProductIds(null); }} className="underline hover:no-underline">Remove</button>
                 </div>
               )}
               {browseOpen && (
