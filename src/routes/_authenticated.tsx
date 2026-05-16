@@ -10,6 +10,7 @@ import { Clocks } from "@/components/app/Clocks";
 import { UserAvatarMenu } from "@/components/app/UserAvatarMenu";
 import { BreakEndingAlert } from "@/components/app/BreakEndingAlert";
 import { ShiftStartEndAlert } from "@/components/app/ShiftStartEndAlert";
+import { SubscriptionExpiry } from "@/components/app/SubscriptionExpiry";
 import { logMyIp } from "@/lib/ip-log.functions";
 
 export const Route = createFileRoute("/_authenticated")({
@@ -99,6 +100,9 @@ function AuthLayout() {
                 <span className="hidden sm:inline">User roles</span>
               </Link>
             )}
+          </div>
+          <div className="flex-1 flex justify-center min-w-0 px-3">
+            <SubscriptionExpiry />
           </div>
           <div className="flex items-center gap-3">
           <Link
