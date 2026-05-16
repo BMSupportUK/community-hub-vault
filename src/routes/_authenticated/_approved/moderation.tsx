@@ -34,6 +34,7 @@ function ModerationPage() {
   const [reply, setReply] = useState("");
   const [senderNames, setSenderNames] = useState<Record<string, string>>({});
   const scrollerRef = useRef<HTMLDivElement>(null);
+  const threadChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
   const load = async () => {
     const { data: rows } = await supabase
@@ -70,14 +71,14 @@ function ModerationPage() {
       .order("created_at")
       .then(({ data }) => { if (active) setThread((data ?? []) as ThreadMsg[]); });
     const ch = supabase
-      .channel(`mod-thread-${expandedId}`)
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "gate_messages", filter: `application_id=eq.${expandedId}` },
-        (p) => setThread((m) => [...m, p.new as ThreadMsg]),
-      )
+      .channel(`gate-${expandedId}`)
+      .on("broadcast", { event: "message" }, ({ payload }) => {
+        const msg = payload as ThreadMsg;
+        setThread((m) => (m.some((x) => x.id === msg.id) ? m : [...m, msg]));
+      })
       .subscribe();
-    return () => { active = false; supabase.removeChannel(ch); };
+    threadChannelRef.current = ch;
+    return () => { active = false; threadChannelRef.current = null; supabase.removeChannel(ch); };
   }, [expandedId]);
 
   // Resolve sender display names
@@ -118,14 +119,45 @@ function ModerationPage() {
       await supabase.from("user_roles").delete().eq("user_id", app.user_id).eq("role", "pending");
       const { error: e2 } = await supabase.from("user_roles").insert({ user_id: app.user_id, role: "member" });
       if (e2 && !e2.message.includes("duplicate")) toast.error(e2.message);
+      // Send automated approval message so the applicant knows to continue
+      const { data: approvedMsg } = await supabase
+        .from("gate_messages")
+        .insert({
+          application_id: app.id,
+          sender_id: user!.id,
+          content:
+            "✅ Your access request has been approved!\n\nYou now have member access. Click 'Continue to dashboard' to enter the app.",
+        } as never)
+        .select("id, sender_id, content, created_at")
+        .single();
+      if (approvedMsg) {
+        const msg = approvedMsg as ThreadMsg;
+        setThread((m) => (m.some((x) => x.id === msg.id) ? m : [...m, msg]));
+        const ch = supabase.channel(`gate-${app.id}`);
+        await new Promise<void>((resolve) => {
+          ch.subscribe((s) => { if (s === "SUBSCRIBED") resolve(); });
+        });
+        await ch.send({ type: "broadcast", event: "message", payload: msg });
+        supabase.removeChannel(ch);
+      }
     } else if (decision === "denied") {
       // Send automated rejection message + close the conversation
-      await supabase.from("gate_messages").insert({
+      const { data: deniedMsg } = await supabase.from("gate_messages").insert({
         application_id: app.id,
         sender_id: user!.id,
         content:
           "❌ Your application has been rejected.\n\nThis conversation is now closed. If you believe this is a mistake, you can submit an appeal from your rejected screen using the reference: APPEAL",
-      } as never);
+      } as never).select("id, sender_id, content, created_at").single();
+      if (deniedMsg) {
+        const msg = deniedMsg as ThreadMsg;
+        setThread((m) => (m.some((x) => x.id === msg.id) ? m : [...m, msg]));
+        const ch = supabase.channel(`gate-${app.id}`);
+        await new Promise<void>((resolve) => {
+          ch.subscribe((s) => { if (s === "SUBSCRIBED") resolve(); });
+        });
+        await ch.send({ type: "broadcast", event: "message", payload: msg });
+        supabase.removeChannel(ch);
+      }
       // Remove pending role, add banned role so user is sent to /rejected
       await supabase.from("user_roles").delete().eq("user_id", app.user_id).eq("role", "pending");
       const { error: e2 } = await supabase.from("user_roles").insert({ user_id: app.user_id, role: "banned" });
@@ -140,10 +172,15 @@ function ModerationPage() {
     if (!reply.trim() || !expandedId || !user) return;
     const content = reply.trim();
     setReply("");
-    const { error } = await supabase.from("gate_messages").insert({
-      application_id: expandedId, sender_id: user.id, content,
-    } as never);
-    if (error) toast.error(error.message);
+    const { data: inserted, error } = await supabase
+      .from("gate_messages")
+      .insert({ application_id: expandedId, sender_id: user.id, content } as never)
+      .select("id, sender_id, content, created_at")
+      .single();
+    if (error || !inserted) { toast.error(error?.message ?? "Send failed"); return; }
+    const msg = inserted as ThreadMsg;
+    setThread((m) => (m.some((x) => x.id === msg.id) ? m : [...m, msg]));
+    await threadChannelRef.current?.send({ type: "broadcast", event: "message", payload: msg });
   };
 
   return (

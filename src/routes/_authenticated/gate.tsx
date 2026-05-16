@@ -28,6 +28,7 @@ function GatePage() {
   const [confirmNew, setConfirmNew] = useState(false);
   const [senderNames, setSenderNames] = useState<Record<string, string>>({});
   const scrollerRef = useRef<HTMLDivElement>(null);
+  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -61,8 +62,10 @@ function GatePage() {
   useEffect(() => {
     if (!appId) return;
     const ch = supabase.channel(`gate-${appId}`)
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "gate_messages", filter: `application_id=eq.${appId}` },
-        (p) => setMsgs((m) => [...m, p.new as Msg]))
+      .on("broadcast", { event: "message" }, ({ payload }) => {
+        const msg = payload as Msg;
+        setMsgs((m) => (m.some((x) => x.id === msg.id) ? m : [...m, msg]));
+      })
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "gate_applications", filter: `id=eq.${appId}` }, async (p) => {
         const next = (p.new as { status: string }).status;
         setStatus(next);
@@ -70,7 +73,8 @@ function GatePage() {
         else if (next === "denied") toast.error("Your request was denied.");
       })
       .subscribe();
-    return () => { supabase.removeChannel(ch); };
+    channelRef.current = ch;
+    return () => { channelRef.current = null; supabase.removeChannel(ch); };
   }, [appId, refreshRoles]);
 
   useEffect(() => {
@@ -92,10 +96,15 @@ function GatePage() {
     e.preventDefault();
     if (!text.trim() || !appId || !user) return;
     const content = text.trim(); setText("");
-    const { error } = await supabase.from("gate_messages").insert({
-      application_id: appId, sender_id: user.id, content,
-    } as never);
-    if (error) toast.error(error.message);
+    const { data: inserted, error } = await supabase
+      .from("gate_messages")
+      .insert({ application_id: appId, sender_id: user.id, content } as never)
+      .select("id, sender_id, content, created_at")
+      .single();
+    if (error || !inserted) { toast.error(error?.message ?? "Send failed"); return; }
+    const msg = inserted as Msg;
+    setMsgs((m) => (m.some((x) => x.id === msg.id) ? m : [...m, msg]));
+    await channelRef.current?.send({ type: "broadcast", event: "message", payload: msg });
   };
 
   const submitReason = async (e: React.FormEvent) => {
