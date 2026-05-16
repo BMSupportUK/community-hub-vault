@@ -22,6 +22,8 @@ type Blog = {
   published: boolean;
 };
 
+const DRAFT_KEY = "sports-guide-new-draft";
+
 export function SportsGuideEditor({ blogId }: { blogId?: string }) {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -77,20 +79,43 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
         }
         setEditing(data as Blog);
       } else {
+        // Restore previously saved draft if present so users don't lose work
+        // when navigating away and coming back.
+        let draft: Blog | null = null;
+        try {
+          const raw = localStorage.getItem(DRAFT_KEY);
+          if (raw) draft = JSON.parse(raw) as Blog;
+        } catch {
+          draft = null;
+        }
         setEditing({
           id: "",
-          category_id: cats?.[0]?.id ?? "",
-          title: "",
-          excerpt: "",
-          body: "",
-          image_url: "",
-          badge: "",
-          published: true,
+          category_id: draft?.category_id || cats?.[0]?.id || "",
+          title: draft?.title ?? "",
+          excerpt: draft?.excerpt ?? "",
+          body: draft?.body ?? "",
+          image_url: draft?.image_url ?? "",
+          badge: draft?.badge ?? "",
+          published: draft?.published ?? true,
         });
+        if (draft && (draft.title || draft.body || draft.excerpt || draft.image_url)) {
+          toast.message("Draft restored");
+        }
       }
       setLoading(false);
     })();
   }, [blogId, navigate]);
+
+  // Persist new-blog draft to localStorage on every change so it survives
+  // navigation/refresh until the blog is saved or cancelled.
+  useEffect(() => {
+    if (blogId || !editing) return;
+    try {
+      localStorage.setItem(DRAFT_KEY, JSON.stringify(editing));
+    } catch {
+      /* ignore quota errors */
+    }
+  }, [editing, blogId]);
 
   const close = () =>
     navigate({
@@ -139,6 +164,9 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
       : await supabase.from("sports_blogs").insert({ ...payload, created_by: user?.id ?? null });
     setSaving(false);
     if (error) return toast.error(error.message);
+    if (!editing.id) {
+      try { localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
+    }
     toast.success(editing.id ? "Blog updated" : "Blog added");
     close();
   };
