@@ -92,31 +92,33 @@ function HomeLayout() {
 
   useEffect(() => {
     if (!user) return;
+    const uid = user.id;
     const loadCounts = async () => {
       const { data } = await supabase
         .from("user_notifications")
         .select("link_path")
-        .eq("user_id", user.id)
+        .eq("user_id", uid)
         .eq("kind", "mention")
         .is("read_at", null);
       const map: Record<string, number> = {};
       (data ?? []).forEach((r: { link_path: string | null }) => {
         if (!r.link_path) return;
+        if (r.link_path === path) return;
         map[r.link_path] = (map[r.link_path] ?? 0) + 1;
       });
       setMentionCounts(map);
     };
     loadCounts();
     const ch = supabase
-      .channel(`home-mentions-${user.id}`)
+      .channel(`home-mentions-${uid}`)
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "user_notifications", filter: `user_id=eq.${user.id}` },
+        { event: "*", schema: "public", table: "user_notifications", filter: `user_id=eq.${uid}` },
         () => loadCounts(),
       )
       .subscribe();
     return () => { supabase.removeChannel(ch); };
-  }, [user]);
+  }, [path, user?.id]);
 
   // Clear the visible per-channel mention badge as soon as that channel is opened.
   useEffect(() => {
@@ -133,7 +135,7 @@ function HomeLayout() {
       .eq("user_id", user.id)
       .eq("kind", "mention")
       .eq("link_path", path);
-  }, [path, user?.id]);
+  }, [path, user]);
 
   const slugify = (s: string) =>
     s.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || `ch-${Date.now()}`;
