@@ -253,7 +253,54 @@ function defaultTitle(k: PolicyKey) {
   return "Triple-room Usage Rules";
 }
 
-function ProductCard({ p, qty, onAdd, onSub }: { p: Product; qty: number; onAdd: () => void; onSub: () => void }) {
+function StarRating({
+  value, average, count, onRate, readOnly = false, size = "sm",
+}: {
+  value: number; average: number; count: number;
+  onRate?: (v: number) => void; readOnly?: boolean; size?: "sm" | "md";
+}) {
+  const [hover, setHover] = useState(0);
+  const display = hover || value || Math.round(average);
+  const px = size === "sm" ? "size-3.5" : "size-4";
+  return (
+    <div className="flex items-center gap-1.5">
+      <div className="flex items-center" onMouseLeave={() => setHover(0)}>
+        {[1, 2, 3, 4, 5].map((n) => (
+          <button
+            key={n}
+            type="button"
+            disabled={readOnly}
+            onMouseEnter={() => !readOnly && setHover(n)}
+            onClick={(e) => { e.stopPropagation(); if (!readOnly) onRate?.(n); }}
+            className={cn(
+              "p-0.5 transition",
+              readOnly ? "cursor-default" : "cursor-pointer hover:scale-110",
+            )}
+            aria-label={`${n} star${n === 1 ? "" : "s"}`}
+          >
+            <Star
+              className={cn(
+                px,
+                n <= display ? "text-amber-400 fill-amber-400" : "text-muted-foreground/40",
+              )}
+            />
+          </button>
+        ))}
+      </div>
+      <span className="text-[11px] text-muted-foreground">
+        {count > 0 ? `${average.toFixed(1)} (${count})` : "No ratings"}
+      </span>
+    </div>
+  );
+}
+
+function ProductCard({
+  p, qty, onAdd, onSub, rating, average, ratingCount, onRate,
+}: {
+  p: Product; qty: number; onAdd: () => void; onSub: () => void;
+  rating: number; average: number; ratingCount: number;
+  onRate: (v: number) => void;
+}) {
   const fmt = _currentFmt;
   return (
     <div className="group bg-surface rounded-xl overflow-hidden border border-border hover:border-sky-400/50 hover:shadow-lg hover:shadow-blue-500/10 transition-all flex flex-col">
@@ -262,11 +309,19 @@ function ProductCard({ p, qty, onAdd, onSub }: { p: Product; qty: number; onAdd:
         {p.stock !== null && p.stock <= 0 && (
           <div className="absolute top-2 left-2 text-[10px] uppercase tracking-wider bg-red-500/90 text-white px-2 py-0.5 rounded">Out of stock</div>
         )}
+        {p.is_recommended && (
+          <div className="absolute top-2 right-2 inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider bg-gradient-to-r from-amber-400 to-orange-500 text-white px-2 py-1 rounded-full shadow-lg shadow-orange-500/40 ring-1 ring-white/30">
+            <Sparkles className="size-3" /> Recommended
+          </div>
+        )}
       </div>
       <div className="p-4 flex flex-col flex-1">
         {p.category && <div className="text-[10px] uppercase tracking-wider text-sky-300 mb-1">{p.category}</div>}
         <h3 className="font-semibold text-sm">{p.name}</h3>
         {p.description && <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{p.description}</p>}
+        <div className="mt-2">
+          <StarRating value={rating} average={average} count={ratingCount} onRate={onRate} />
+        </div>
         <div className="mt-auto pt-3 flex items-center justify-between">
           <span className="font-display font-bold text-lg bg-gradient-to-r from-violet-600 to-blue-600 bg-clip-text text-transparent">{fmt(p.price_cents)}</span>
           {qty ? (
