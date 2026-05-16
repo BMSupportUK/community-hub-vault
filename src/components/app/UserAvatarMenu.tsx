@@ -68,7 +68,7 @@ export function UserAvatarMenu() {
 
   const goEdit = () => {
     if (profile?.username) {
-      navigate({ to: "/u/$username", params: { username: profile.username }, search: { edit: 1 } as never });
+      navigate({ to: "/u/$username", params: { username: profile.username }, search: { tab: "profile", edit: 1 } as never });
     } else {
       navigate({ to: "/profile" });
     }
