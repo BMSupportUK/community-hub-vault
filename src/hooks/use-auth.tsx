@@ -35,22 +35,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
+    let currentUid: string | null = null;
     const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
       setSession(s);
       setUser(s?.user ?? null);
-      if (s?.user) {
+      const nextUid = s?.user?.id ?? null;
+      if (nextUid && nextUid !== currentUid) {
+        currentUid = nextUid;
         setRolesLoaded(false);
-        setTimeout(() => loadRoles(s.user.id), 0);
-      } else {
+        setTimeout(() => loadRoles(nextUid), 0);
+      } else if (!nextUid) {
+        currentUid = null;
         setRoles([]);
         setRolesLoaded(true);
       }
+      // Same user (e.g. TOKEN_REFRESHED on tab refocus): do not reload roles —
+      // toggling rolesLoaded would flip the global loading state and unmount the app.
     });
     supabase.auth.getSession().then(async ({ data: { session: s } }) => {
       setSession(s);
       setUser(s?.user ?? null);
-      if (s?.user) await loadRoles(s.user.id);
-      else setRolesLoaded(true);
+      if (s?.user) {
+        currentUid = s.user.id;
+        await loadRoles(s.user.id);
+      } else {
+        setRolesLoaded(true);
+      }
       setLoading(false);
     });
     return () => sub.subscription.unsubscribe();
