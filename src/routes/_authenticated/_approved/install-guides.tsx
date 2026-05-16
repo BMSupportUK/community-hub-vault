@@ -18,6 +18,8 @@ export const Route = createFileRoute("/_authenticated/_approved/install-guides")
 });
 
 const DRAFT_KEY = "install-guide-new-draft";
+const IG_TAB_KEY = "install-guides-active-tab";
+const IG_CAT_KEY = "install-guides-active-cat";
 
 type Category = { id: string; name: string; slug: string; sort_order: number };
 type Blog = {
@@ -38,8 +40,12 @@ function InstallGuidesPage() {
   const { isMod, user, hasAny } = useAuth();
   const queryClient = useQueryClient();
   const canManageCategories = hasAny(["admin", "management", "staff"]);
-  const [tab, setTab] = useState("welcome");
-  const [activeCat, setActiveCat] = useState<string | null>(null);
+  const [tab, setTab] = useState<string>(() => {
+    try { return sessionStorage.getItem(IG_TAB_KEY) || "welcome"; } catch { return "welcome"; }
+  });
+  const [activeCat, setActiveCat] = useState<string | null>(() => {
+    try { return sessionStorage.getItem(IG_CAT_KEY); } catch { return null; }
+  });
   const [search, setSearch] = useState("");
   const [reading, setReading] = useState<Blog | null>(null);
   const [editing, setEditing] = useState<Blog | null>(null);
@@ -48,6 +54,15 @@ function InstallGuidesPage() {
   const [addingCat, setAddingCat] = useState(false);
   const dragCatId = useRef<string | null>(null);
   const dragBlogId = useRef<string | null>(null);
+
+  // Persist UI state across screen swaps (route remounts).
+  useEffect(() => { try { sessionStorage.setItem(IG_TAB_KEY, tab); } catch { /* ignore */ } }, [tab]);
+  useEffect(() => {
+    try {
+      if (activeCat) sessionStorage.setItem(IG_CAT_KEY, activeCat);
+      else sessionStorage.removeItem(IG_CAT_KEY);
+    } catch { /* ignore */ }
+  }, [activeCat]);
 
   const dataQuery = useQuery({
     queryKey: ["install-guides-data"],
