@@ -949,6 +949,7 @@ export type Database = {
           id: string
           is_private: boolean
           sports_blogs_baseline_at: string | null
+          timezone: string | null
           updated_at: string
           username: string | null
         }
@@ -960,6 +961,7 @@ export type Database = {
           id: string
           is_private?: boolean
           sports_blogs_baseline_at?: string | null
+          timezone?: string | null
           updated_at?: string
           username?: string | null
         }
@@ -971,6 +973,7 @@ export type Database = {
           id?: string
           is_private?: boolean
           sports_blogs_baseline_at?: string | null
+          timezone?: string | null
           updated_at?: string
           username?: string | null
         }
