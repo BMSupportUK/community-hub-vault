@@ -434,19 +434,29 @@ function TicketsPage() {
                           const cat = categories.find((c) => c.id === t.category_id);
                           const Icon = ICONS[cat?.icon ?? "LifeBuoy"] ?? LifeBuoy;
                           const active = selected?.id === t.id;
+                          const p = profiles.get(t.user_id);
+                          const who = p?.display_name || p?.username || "Unknown";
+                          const when = new Date(t.created_at).toLocaleString(undefined, {
+                            month: "short", day: "numeric", hour: "2-digit", minute: "2-digit",
+                          });
                           return (
                             <button
                               key={t.id}
                               onClick={() => { setCreating(false); navigate({ to: "/tickets", search: { id: t.id, view } }); }}
                               className={cn(
-                                "w-full text-left flex items-center gap-2 px-2 py-1.5 rounded-md text-sm transition-colors",
+                                "w-full text-left flex items-start gap-2 px-2 py-1.5 rounded-md text-sm transition-colors",
                                 active ? "bg-white/20 text-white" : "text-white/80 hover:bg-white/10 hover:text-white",
                               )}
                             >
-                              <Icon className="size-4 shrink-0" />
-                              <span className="truncate flex-1">{t.subject}</span>
-                              {t.priority === "urgent" && <span className="size-1.5 rounded-full bg-rose-300" />}
-                              {t.priority === "high" && <span className="size-1.5 rounded-full bg-amber-300" />}
+                              <Icon className="size-4 shrink-0 mt-0.5" />
+                              <span className="flex-1 min-w-0">
+                                <span className="flex items-center gap-1.5">
+                                  <span className="truncate flex-1">{t.subject}</span>
+                                  {t.priority === "urgent" && <span className="size-1.5 rounded-full bg-rose-300 shrink-0" />}
+                                  {t.priority === "high" && <span className="size-1.5 rounded-full bg-amber-300 shrink-0" />}
+                                </span>
+                                <span className="block text-[10px] text-white/60 truncate">{who} · {when}</span>
+                              </span>
                             </button>
                           );
                         })}
