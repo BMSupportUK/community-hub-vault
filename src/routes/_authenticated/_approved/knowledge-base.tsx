@@ -349,7 +349,7 @@ function KnowledgeBasePage() {
       <div className="px-8 py-6">
         <Tabs value={tab} onValueChange={setTab} className="w-full">
           <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
-            <TabsList className={`grid ${isMod ? "grid-cols-4" : "grid-cols-2"} max-w-2xl bg-surface-2/60 border border-border`}>
+            <TabsList className={`grid ${isMod ? "grid-cols-3" : "grid-cols-2"} max-w-2xl bg-surface-2/60 border border-border`}>
               <TabsTrigger value="welcome">Welcome</TabsTrigger>
               <TabsTrigger value="guides">Guides</TabsTrigger>
               {isMod && <TabsTrigger value="categories">Categories</TabsTrigger>}
