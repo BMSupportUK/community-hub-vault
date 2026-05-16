@@ -1074,9 +1074,11 @@ function PolicyCard({
   );
 }
 
-function Checkout({ items, total, onClose, onPlace }: {
+function Checkout({ items, total, onClose, onPlace, onRemoveItem, onContinueShopping }: {
   items: (Product & { qty: number })[]; total: number; onClose: () => void;
   onPlace: (s: { name: string; email: string; customer_type: "new" | "existing"; existing_username: string; discount_code: string; discount_cents: number; wants_adult_content: boolean }) => void;
+  onRemoveItem: (id: string) => void;
+  onContinueShopping: () => void;
 }) {
   const { user } = useAuth();
   const [name, setName] = useState("");
@@ -1221,9 +1223,20 @@ function Checkout({ items, total, onClose, onPlace }: {
         <div className="p-5 space-y-4 max-h-[70vh] overflow-y-auto">
           <div className="space-y-2">
             {items.map((i) => (
-              <div key={i.id} className="flex justify-between text-sm">
-                <span>{i.name} <span className="text-muted-foreground">× {i.qty}</span></span>
-                <span className="font-medium">{fmt(i.price_cents * i.qty)}</span>
+              <div key={i.id} className="flex items-center justify-between gap-2 text-sm group">
+                <span className="min-w-0 truncate">{i.name} <span className="text-muted-foreground">× {i.qty}</span></span>
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className="font-medium">{fmt(i.price_cents * i.qty)}</span>
+                  <button
+                    type="button"
+                    onClick={() => onRemoveItem(i.id)}
+                    aria-label={`Remove ${i.name}`}
+                    title="Remove from order"
+                    className="p-1 rounded hover:bg-surface-2 text-destructive"
+                  >
+                    <Trash2 className="size-3.5" />
+                  </button>
+                </div>
               </div>
             ))}
             <div className="flex justify-between pt-2 border-t border-border text-sm">
@@ -1352,8 +1365,9 @@ function Checkout({ items, total, onClose, onPlace }: {
             )}
           </div>
         )}
-        <div className="p-5 border-t border-border flex gap-2 justify-end">
+        <div className="p-5 border-t border-border flex flex-wrap gap-2 justify-end">
           <button onClick={onClose} className="px-4 py-2 rounded-lg bg-surface-2 text-sm">Cancel</button>
+          <button onClick={onContinueShopping} className="px-4 py-2 rounded-lg bg-surface-2 text-sm border border-border">Continue shopping</button>
           <button onClick={() => onPlace({ name, email, customer_type: customerType, existing_username: existingUsername, discount_code: appliedCode?.code ?? "", discount_cents: discountCents, wants_adult_content: adultContent === "yes" })}
             disabled={!canSubmit} className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium disabled:opacity-50">Place Order</button>
         </div>
