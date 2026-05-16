@@ -71,7 +71,7 @@ function ModerationPage() {
       .order("created_at")
       .then(({ data }) => { if (active) setThread((data ?? []) as ThreadMsg[]); });
     const ch = supabase
-      .channel(`gate-${expandedId}`)
+      .channel(`gate-msgs-${expandedId}`, { config: { broadcast: { self: false } } })
       .on("broadcast", { event: "message" }, ({ payload }) => {
         const msg = payload as ThreadMsg;
         setThread((m) => (m.some((x) => x.id === msg.id) ? m : [...m, msg]));
