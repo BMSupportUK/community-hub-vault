@@ -159,6 +159,32 @@ function SportsGuidesPage() {
     });
   }, [blogs, activeCat, search]);
 
+  // Global search results (across ALL categories) shown in the right panel,
+  // Discord-style. Includes a snippet of where the term was matched.
+  const searchResults = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return [] as { blog: Blog; snippet: string }[];
+    const out: { blog: Blog; snippet: string }[] = [];
+    for (const b of blogs) {
+      const title = b.title ?? "";
+      const excerpt = b.excerpt ?? "";
+      const bodyText = (b.body ?? "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+      const haystacks = [title, excerpt, bodyText];
+      let snippet = "";
+      for (const h of haystacks) {
+        const i = h.toLowerCase().indexOf(q);
+        if (i >= 0) {
+          const start = Math.max(0, i - 40);
+          const end = Math.min(h.length, i + q.length + 60);
+          snippet = (start > 0 ? "…" : "") + h.slice(start, end) + (end < h.length ? "…" : "");
+          break;
+        }
+      }
+      if (snippet) out.push({ blog: b, snippet });
+    }
+    return out;
+  }, [blogs, search]);
+
   const activeCategory = categories.find((c) => c.id === activeCat);
 
   const openNew = () =>
