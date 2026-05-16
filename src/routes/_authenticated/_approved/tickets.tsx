@@ -349,6 +349,9 @@ function TicketsPage() {
             </div>
           </div>
         </div>
+        <div className="relative px-6 md:px-10 pb-6 -mt-2">
+          <StaffOnDutyStrip />
+        </div>
       </section>
 
       {/* Tabs */}
