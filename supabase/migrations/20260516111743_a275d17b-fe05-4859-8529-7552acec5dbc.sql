@@ -1,0 +1,1 @@
+GRANT EXECUTE ON FUNCTION private.app_decrypt(bytea) TO authenticated;
