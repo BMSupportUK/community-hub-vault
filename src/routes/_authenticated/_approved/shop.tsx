@@ -548,33 +548,11 @@ function Storefront() {
                 </div>
               </section>
 
-              <section className="-mt-12 md:-mt-16 relative z-10 px-2 md:px-0 pb-6">
-                <div className="mb-4 text-center">
-                  <div className="text-[11px] uppercase tracking-[0.25em] text-sky-300/80">How to buy</div>
-                  <h2 className="font-display text-2xl md:text-3xl font-bold mt-1">Three simple steps</h2>
-                </div>
-                <div className="grid sm:grid-cols-3 gap-4">
-                  {[
-                    { n: 1, title: "Place Order", desc: "Pick your plan in the Shop tab and add it to your order.", icon: ShoppingBag, action: () => setTab("shop"), cta: "Browse products" },
-                    { n: 2, title: "Pay Invoice", desc: "We'll send your invoice — pay it securely and we'll confirm receipt.", icon: Receipt },
-                    { n: 3, title: "Account Setup", desc: "We set up your account and share your login details to get you started.", icon: UserCog },
-                  ].map((s) => (
-                    <div key={s.n} className="group relative rounded-2xl border border-border bg-surface p-5 hover:border-sky-400/50 hover:shadow-lg hover:shadow-blue-500/10 transition">
-                      <div className="absolute -top-3 left-5 text-[11px] font-bold tracking-wider px-2 py-0.5 rounded-full bg-gradient-to-r from-violet-600 to-blue-600 text-white">STEP {s.n}</div>
-                      <div className="size-10 rounded-xl bg-gradient-to-br from-violet-600/20 to-blue-600/20 grid place-items-center text-sky-300 mb-3">
-                        <s.icon className="size-5" />
-                      </div>
-                      <h3 className="font-display font-semibold text-lg">{s.title}</h3>
-                      <p className="text-sm text-muted-foreground mt-1">{s.desc}</p>
-                      {s.action && (
-                        <button onClick={s.action} className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-sky-400 hover:text-sky-300">
-                          {s.cta} <ArrowRight className="size-3.5" />
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </section>
+              <BuySteps
+                latestOrder={latestOrder}
+                onBrowse={() => setTab("shop")}
+                onViewOrder={(id) => navigate({ to: "/shop", search: { view: "orders", id } })}
+              />
             </TabsContent>
 
             <TabsContent value="shop" className="mt-4">
