@@ -45,6 +45,7 @@ function SportsGuidesPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [blogs, setBlogs] = useState<Blog[]>([]);
   const [reads, setReads] = useState<Record<string, string>>({}); // blog_id -> read_at iso
+  const [baselineAt, setBaselineAt] = useState<string | null>(null);
   const [activeCat, setActiveCat] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [newCatName, setNewCatName] = useState("");
@@ -53,31 +54,35 @@ function SportsGuidesPage() {
   const dragBlogId = useRef<string | null>(null);
 
   const load = async () => {
-    const [{ data: cats }, { data: bs }, { data: rs }] = await Promise.all([
+    const [{ data: cats }, { data: bs }, { data: rs }, { data: prof }] = await Promise.all([
       supabase.from("sports_categories").select("*").order("sort_order"),
       supabase.from("sports_blogs").select("*").order("sort_order").order("created_at", { ascending: false }),
       user?.id
         ? supabase.from("sports_blog_reads").select("blog_id, read_at").eq("user_id", user.id)
         : Promise.resolve({ data: [] as { blog_id: string; read_at: string }[] }),
+      user?.id
+        ? supabase.from("profiles").select("sports_blogs_baseline_at").eq("id", user.id).maybeSingle()
+        : Promise.resolve({ data: null as { sports_blogs_baseline_at: string | null } | null }),
     ]);
     setCategories((cats ?? []) as Category[]);
     setBlogs((bs ?? []) as Blog[]);
     const map: Record<string, string> = {};
     for (const r of (rs ?? []) as { blog_id: string; read_at: string }[]) map[r.blog_id] = r.read_at;
 
-    // First visit baseline: if the signed-in user has no read history yet,
-    // mark every currently-existing blog as already-read so they don't see
-    // a wall of "New" badges. Only blogs added/edited AFTER this moment
-    // will count as unread for them.
-    if (user?.id && (rs ?? []).length === 0 && (bs ?? []).length > 0) {
-      const now = new Date().toISOString();
-      const rows = (bs as Blog[]).map((b) => ({ user_id: user.id, blog_id: b.id, read_at: now }));
+    // Per-user baseline: set once on first visit. A blog only counts as "New"
+    // if it was created or content-edited AFTER this timestamp (and the user
+    // hasn't read it since). This is independent of read records, so marking
+    // things unread later won't retrigger a wall of New badges.
+    let baseline = (prof as { sports_blogs_baseline_at: string | null } | null)?.sports_blogs_baseline_at ?? null;
+    if (user?.id && !baseline) {
+      baseline = new Date().toISOString();
       const { error } = await supabase
-        .from("sports_blog_reads")
-        .upsert(rows, { onConflict: "user_id,blog_id" });
-      if (!error) for (const r of rows) map[r.blog_id] = now;
+        .from("profiles")
+        .update({ sports_blogs_baseline_at: baseline })
+        .eq("id", user.id);
+      if (error) baseline = null;
     }
-
+    setBaselineAt(baseline);
     setReads(map);
     if (!activeCat && cats?.length) setActiveCat(cats[0].id);
   };
@@ -96,10 +101,12 @@ function SportsGuidesPage() {
   }, [catFromUrl]);
 
   const isUnread = (b: Blog) => {
+    const upd = new Date(b.updated_at ?? b.created_at).getTime();
+    // Anything from before the user's baseline is considered already-seen.
+    if (baselineAt && upd <= new Date(baselineAt).getTime()) return false;
     const r = reads[b.id];
     if (!r) return true;
-    const upd = b.updated_at ?? b.created_at;
-    return new Date(r).getTime() < new Date(upd).getTime();
+    return new Date(r).getTime() < upd;
   };
 
   const markRead = async (b: Blog) => {
