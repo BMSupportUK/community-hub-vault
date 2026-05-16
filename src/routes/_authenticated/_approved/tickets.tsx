@@ -13,6 +13,7 @@ import {
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { MentionText, useMentionAutocomplete } from "@/components/app/mentions";
+import { useUserTimezone } from "@/hooks/use-user-timezone";
 
 export const Route = createFileRoute("/_authenticated/_approved/tickets")({
   validateSearch: (s: Record<string, unknown>) => ({
@@ -667,6 +668,7 @@ function TicketDetail({
 }) {
   const { hasAny } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
+  const tz = useUserTimezone();
   const navigate = useNavigate();
   const cat = categories.find((c) => c.id === ticket.category_id);
   const CatIcon = ICONS[cat?.icon ?? "LifeBuoy"] ?? LifeBuoy;
@@ -785,7 +787,7 @@ function TicketDetail({
               <span>·</span>
               <span>Opened by {senderName(ticket.user_id)}</span>
               <span>·</span>
-              <span>{new Date(ticket.created_at).toLocaleDateString()}</span>
+              <span>{new Date(ticket.created_at).toLocaleDateString([], { timeZone: tz })}</span>
             </div>
             <h1 className="font-display font-semibold text-lg truncate text-white drop-shadow">{ticket.subject}</h1>
           </div>
@@ -862,7 +864,7 @@ function TicketDetail({
               )}>
                 <div className="text-[10px] uppercase tracking-wider opacity-70 mb-0.5 flex items-center gap-1">
                   {m.is_internal && <Lock className="size-3" />}
-                  {senderName(m.sender_id)} · {new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                  {senderName(m.sender_id)} · {new Date(m.created_at).toLocaleString([], { dateStyle: "short", timeStyle: "short", timeZone: tz })}
                 </div>
                 <MentionText content={m.content} currentUsername={myUsername} />
                 <TicketAttachments items={m.attachments} />
