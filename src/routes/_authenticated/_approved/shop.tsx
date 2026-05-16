@@ -917,6 +917,17 @@ function Checkout({ items, total, onClose, onPlace }: {
   const [available, setAvailable] = useState<DiscountCode[]>([]);
   const [loadingAvailable, setLoadingAvailable] = useState(false);
 
+  const requiresMulti = useMemo(
+    () => items.some((i) => (i.category ?? "").toLowerCase().includes("multi")),
+    [items],
+  );
+  const requiresTriple = useMemo(
+    () => items.some((i) => (i.category ?? "").toLowerCase().includes("triple")),
+    [items],
+  );
+  const [agreedMulti, setAgreedMulti] = useState(false);
+  const [agreedTriple, setAgreedTriple] = useState(false);
+
   const openBrowse = async () => {
     setBrowseOpen(true);
     setLoadingAvailable(true);
@@ -982,7 +993,10 @@ function Checkout({ items, total, onClose, onPlace }: {
     toast.success(`Code "${(data as DiscountCode).code}" applied`);
   };
 
-  const canSubmit = !!name && !!email && (customerType === "new" || !!existingUsername.trim());
+  const canSubmit =
+    !!name && !!email && (customerType === "new" || !!existingUsername.trim())
+    && (!requiresMulti || agreedMulti)
+    && (!requiresTriple || agreedTriple);
 
   return (
     <div className="fixed inset-0 bg-background/80 backdrop-blur-sm grid place-items-center z-50 p-4">
