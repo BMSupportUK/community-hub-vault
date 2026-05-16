@@ -36,9 +36,12 @@ export function SubscriptionExpiry() {
   const expired = ms < 0;
   const soon = !expired && ms < 7 * 86400000;
 
+  const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const formatted = expiry.toLocaleString(undefined, {
     weekday: "short", day: "numeric", month: "short", year: "numeric",
     hour: "2-digit", minute: "2-digit",
+    timeZone: tz,
+    timeZoneName: "short",
   });
 
   return (
