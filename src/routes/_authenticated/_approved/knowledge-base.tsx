@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import kbHero from "@/assets/knowledge-base-hero.jpg";
 
 export const Route = createFileRoute("/_authenticated/_approved/knowledge-base")({
   component: KnowledgeBasePage,
@@ -348,11 +349,10 @@ function KnowledgeBasePage() {
       <div className="px-8 py-6">
         <Tabs value={tab} onValueChange={setTab} className="w-full">
           <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
-            <TabsList className={`grid ${isMod ? "grid-cols-4" : "grid-cols-2"} max-w-2xl bg-surface-2/60 border border-border`}>
+            <TabsList className={`grid ${isMod ? "grid-cols-3" : "grid-cols-2"} max-w-2xl bg-surface-2/60 border border-border`}>
               <TabsTrigger value="welcome">Welcome</TabsTrigger>
               <TabsTrigger value="guides">Guides</TabsTrigger>
               {isMod && <TabsTrigger value="categories">Categories</TabsTrigger>}
-              {isMod && <TabsTrigger value="settings">Welcome msg</TabsTrigger>}
             </TabsList>
             {isMod && tab === "guides" && (
               <Button onClick={openNewArticle} className="gap-1.5">
@@ -364,14 +364,30 @@ function KnowledgeBasePage() {
           {/* WELCOME */}
           <TabsContent value="welcome" className="mt-0">
             <div
-              className="rounded-2xl border border-border p-10 shadow-lg"
+              className="relative overflow-hidden rounded-2xl border border-border p-10 shadow-lg grid md:grid-cols-[1fr_auto] gap-8 items-center"
               style={{ background: "var(--gradient-primary)" }}
             >
-              <h2 className="font-display text-3xl font-bold text-primary-foreground">{welcome.title}</h2>
-              <p className="mt-3 text-lg text-primary-foreground/90 max-w-2xl">{welcome.body}</p>
-              <Button className="mt-6" variant="secondary" onClick={() => setTab("guides")}>
-                Browse guides
-              </Button>
+              <div className="relative z-10">
+                <h2 className="font-display text-3xl md:text-4xl font-bold text-primary-foreground">{welcome.title}</h2>
+                <p className="mt-3 text-lg text-primary-foreground/90 max-w-xl">{welcome.body}</p>
+                <div className="mt-6 flex flex-wrap gap-2">
+                  <Button variant="secondary" onClick={() => setTab("guides")}>
+                    Browse guides
+                  </Button>
+                  {isMod && (
+                    <Button variant="outline" className="bg-white/10 border-white/30 text-primary-foreground hover:bg-white/20" onClick={() => setWelcomeDraft(welcome)}>
+                      <Pencil className="size-4 mr-1.5" /> Edit message
+                    </Button>
+                  )}
+                </div>
+              </div>
+              <img
+                src={kbHero}
+                alt="Knowledge base illustration"
+                width={420}
+                height={420}
+                className="relative z-10 w-56 md:w-80 h-auto rounded-2xl shadow-xl ring-1 ring-white/20 justify-self-end"
+              />
             </div>
 
             {!loading && categories.length > 0 && (
@@ -392,6 +408,25 @@ function KnowledgeBasePage() {
                     </button>
                   );
                 })}
+              </div>
+            )}
+
+            {isMod && welcomeDraft && (
+              <div className="mt-6 rounded-2xl border border-border bg-surface-2/40 p-6 max-w-2xl">
+                <h3 className="font-display text-lg font-bold mb-1">Edit welcome message</h3>
+                <p className="text-sm text-muted-foreground mb-4">Shown in the hero above.</p>
+                <div className="space-y-3">
+                  <Label>Title</Label>
+                  <Input value={welcomeDraft.title} onChange={(e) => setWelcomeDraft({ ...welcomeDraft, title: e.target.value })} />
+                  <Label>Body</Label>
+                  <Textarea rows={4} value={welcomeDraft.body} onChange={(e) => setWelcomeDraft({ ...welcomeDraft, body: e.target.value })} />
+                </div>
+                <div className="flex justify-end gap-2 mt-4">
+                  <Button variant="outline" onClick={() => setWelcomeDraft(null)}>Cancel</Button>
+                  <Button onClick={saveWelcome} disabled={savingWelcome} className="gap-1.5">
+                    {savingWelcome ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />} Save
+                  </Button>
+                </div>
               </div>
             )}
           </TabsContent>
@@ -549,27 +584,6 @@ function KnowledgeBasePage() {
             </TabsContent>
           )}
 
-          {/* WELCOME settings */}
-          {isMod && (
-            <TabsContent value="settings" className="mt-0">
-              <div className="rounded-2xl border border-border bg-surface-2/40 p-6 max-w-2xl">
-                <h2 className="font-display text-xl font-bold mb-1">Welcome message</h2>
-                <p className="text-sm text-muted-foreground mb-5">Shown on the Welcome tab.</p>
-                <div className="space-y-3">
-                  <Label>Title</Label>
-                  <Input value={(welcomeDraft ?? welcome).title} onChange={(e) => setWelcomeDraft({ ...(welcomeDraft ?? welcome), title: e.target.value })} />
-                  <Label>Body</Label>
-                  <Textarea rows={5} value={(welcomeDraft ?? welcome).body} onChange={(e) => setWelcomeDraft({ ...(welcomeDraft ?? welcome), body: e.target.value })} />
-                </div>
-                <div className="flex justify-end gap-2 mt-5">
-                  {welcomeDraft && <Button variant="outline" onClick={() => setWelcomeDraft(null)}>Cancel</Button>}
-                  <Button onClick={saveWelcome} disabled={!welcomeDraft || savingWelcome} className="gap-1.5">
-                    {savingWelcome ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />} Save
-                  </Button>
-                </div>
-              </div>
-            </TabsContent>
-          )}
         </Tabs>
       </div>
 
