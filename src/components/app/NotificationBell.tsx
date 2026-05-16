@@ -111,7 +111,19 @@ export function NotificationBell() {
         .on("postgres_changes", { event: "INSERT", schema: "public", table: "staff_notifications" }, (payload) => {
           const n = { ...(payload.new as Notif), source: "staff" as const };
           setItems((prev) => [n, ...prev].slice(0, 80));
-          toast(n.title, { description: n.body ?? undefined });
+          toast(n.title, {
+            description: n.body ?? undefined,
+            action:
+              n.kind === "order_placed" && n.entity_id
+                ? {
+                    label: "Open chat",
+                    onClick: () =>
+                      navigate({ to: "/shop", search: { view: "orders", id: n.entity_id } } as never),
+                  }
+                : n.link_path
+                  ? { label: "Open", onClick: () => navigate({ to: n.link_path! } as never) }
+                  : undefined,
+          });
         })
         .subscribe();
     }
@@ -268,6 +280,8 @@ export function NotificationBell() {
                               setOpen(false);
                               if (n.kind === "gate_application") {
                                 navigate({ to: "/admin", search: { next: "/moderation" } } as never);
+                                } else if (n.kind === "order_placed" && n.entity_id) {
+                                  navigate({ to: "/shop", search: { view: "orders", id: n.entity_id } } as never);
                               } else {
                                 navigate({ to: n.link_path! } as never);
                               }
