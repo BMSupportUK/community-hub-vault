@@ -1,6 +1,6 @@
 import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { Shield, Check, X, Send, ChevronDown, ChevronRight, MessageSquare, FileText } from "lucide-react";
+import { Shield, Check, X, Send, ChevronDown, ChevronRight, MessageSquare, FileText, CheckCheck, AlertCircle, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { ChannelColumn } from "@/components/app/ChannelColumn";
@@ -20,7 +20,8 @@ interface AppRow {
   profile?: { display_name: string | null; username: string | null };
 }
 
-interface ThreadMsg { id: string; sender_id: string; content: string; created_at: string }
+type MsgStatus = "sending" | "sent" | "failed";
+interface ThreadMsg { id: string; sender_id: string; content: string; created_at: string; status?: MsgStatus }
 
 function ModerationPage() {
   const { isMod, user } = useAuth();
@@ -172,14 +173,30 @@ function ModerationPage() {
     if (!reply.trim() || !expandedId || !user) return;
     const content = reply.trim();
     setReply("");
+    const tempId = `temp-${crypto.randomUUID()}`;
+    const optimistic: ThreadMsg = {
+      id: tempId,
+      sender_id: user.id,
+      content,
+      created_at: new Date().toISOString(),
+      status: "sending",
+    };
+    setThread((m) => [...m, optimistic]);
     const { data: inserted, error } = await supabase
       .from("gate_messages")
       .insert({ application_id: expandedId, sender_id: user.id, content } as never)
       .select("id, sender_id, content, created_at")
       .single();
-    if (error || !inserted) { toast.error(error?.message ?? "Send failed"); return; }
-    const msg = inserted as ThreadMsg;
-    setThread((m) => (m.some((x) => x.id === msg.id) ? m : [...m, msg]));
+    if (error || !inserted) {
+      setThread((m) => m.map((x) => (x.id === tempId ? { ...x, status: "failed" } : x)));
+      toast.error(error?.message ?? "Send failed");
+      return;
+    }
+    const msg: ThreadMsg = { ...(inserted as ThreadMsg), status: "sent" };
+    setThread((m) => {
+      const withoutTemp = m.filter((x) => x.id !== tempId);
+      return withoutTemp.some((x) => x.id === msg.id) ? withoutTemp : [...withoutTemp, msg];
+    });
     await threadChannelRef.current?.send({ type: "broadcast", event: "message", payload: msg });
   };
 
@@ -277,8 +294,12 @@ function ModerationPage() {
                                     </div>
                                   )}
                                   <div className="whitespace-pre-wrap">{m.content}</div>
-                                  <div className={`text-[10px] mt-0.5 ${mine ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
-                                    {new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                                  <div className={`text-[10px] mt-0.5 flex items-center gap-1 ${mine ? "justify-end text-primary-foreground/70" : "text-muted-foreground"}`}>
+                                    <span>{new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
+                                    {mine && m.status === "sending" && <Loader2 className="size-3 animate-spin" aria-label="Sending" />}
+                                    {mine && m.status === "sent" && <CheckCheck className="size-3" aria-label="Sent" />}
+                                    {mine && !m.status && <Check className="size-3" aria-label="Sent" />}
+                                    {mine && m.status === "failed" && <AlertCircle className="size-3 text-destructive" aria-label="Failed to send" />}
                                   </div>
                                 </div>
                               </div>
