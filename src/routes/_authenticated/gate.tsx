@@ -61,11 +61,15 @@ function GatePage() {
 
   useEffect(() => {
     if (!appId) return;
-    const ch = supabase.channel(`gate-${appId}`)
+    const msgCh = supabase
+      .channel(`gate-msgs-${appId}`, { config: { broadcast: { self: false } } })
       .on("broadcast", { event: "message" }, ({ payload }) => {
         const msg = payload as Msg;
         setMsgs((m) => (m.some((x) => x.id === msg.id) ? m : [...m, msg]));
       })
+      .subscribe();
+    const statusCh = supabase
+      .channel(`gate-status-${appId}`)
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "gate_applications", filter: `id=eq.${appId}` }, async (p) => {
         const next = (p.new as { status: string }).status;
         setStatus(next);
@@ -73,8 +77,12 @@ function GatePage() {
         else if (next === "denied") toast.error("Your request was denied.");
       })
       .subscribe();
-    channelRef.current = ch;
-    return () => { channelRef.current = null; supabase.removeChannel(ch); };
+    channelRef.current = msgCh;
+    return () => {
+      channelRef.current = null;
+      supabase.removeChannel(msgCh);
+      supabase.removeChannel(statusCh);
+    };
   }, [appId, refreshRoles]);
 
   useEffect(() => {
