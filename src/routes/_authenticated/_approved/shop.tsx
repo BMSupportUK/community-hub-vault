@@ -490,50 +490,70 @@ function Storefront() {
             </TabsList>
 
             <TabsContent value="welcome" className="mt-4">
-              <section className="relative overflow-hidden border border-border rounded-2xl">
-          <div className="absolute inset-0 bg-gradient-to-br from-violet-600 via-fuchsia-600 to-blue-600" />
-          <div className="relative grid md:grid-cols-2 gap-6 p-6 md:p-10 items-center">
-            <div className="text-white">
-              <div className="text-xs uppercase tracking-[0.2em] text-sky-200/80 mb-3">BM Support · Shop</div>
-              <h1 className="font-display text-3xl md:text-5xl font-bold leading-tight">
-                Welcome to the Store
-              </h1>
-              <p className="mt-4 text-sky-100/90 max-w-lg">
-                Browse plans, gear and add-ons hand-picked for BM Support members.
-                Place an order in seconds — we'll keep you posted every step of the way.
-              </p>
-              <div className="mt-6 flex flex-wrap items-center gap-3">
-                <button
-                  onClick={() => setShowCheckout(true)}
-                  disabled={count === 0}
-                  className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-blue-600 text-white font-medium px-4 py-2.5 shadow-lg shadow-blue-500/30 disabled:opacity-50"
-                >
-                  <ShoppingBag className="size-4" />
-                  View Cart
-                  {count > 0 && (
-                    <span className="ml-1 bg-white/20 px-1.5 rounded-full text-xs">{count}</span>
-                  )}
-                </button>
-                        <button
-                          onClick={() => setTab("shop")}
-                          className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/10 backdrop-blur px-4 py-2.5 text-sm text-white hover:bg-white/15 transition"
-                        >
-                          Shop now
+              <section className="relative overflow-hidden -mx-6 -mt-6">
+                <div className="absolute inset-0">
+                  <img src={shopHero} alt="" aria-hidden className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-gradient-to-br from-violet-700/80 via-fuchsia-700/70 to-blue-700/80" />
+                  <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-b from-transparent to-background" />
+                </div>
+                <div className="relative px-6 md:px-10 pt-10 md:pt-16 pb-20 md:pb-28 max-w-3xl">
+                  <div className="text-xs uppercase tracking-[0.2em] text-sky-200/90 mb-3">BM Support · Shop</div>
+                  <h1 className="font-display text-4xl md:text-6xl font-bold leading-tight text-white drop-shadow">
+                    Welcome to the Store
+                  </h1>
+                  <p className="mt-4 text-sky-100/90 max-w-xl text-base md:text-lg">
+                    Browse plans, gear and add-ons hand-picked for BM Support members.
+                    Place an order in seconds — we'll keep you posted every step of the way.
+                  </p>
+                  <div className="mt-6 flex flex-wrap items-center gap-3">
+                    <button
+                      onClick={() => setShowCheckout(true)}
+                      disabled={count === 0}
+                      className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-blue-600 text-white font-medium px-4 py-2.5 shadow-lg shadow-blue-500/30 disabled:opacity-50"
+                    >
+                      <ShoppingBag className="size-4" />
+                      View Cart
+                      {count > 0 && (
+                        <span className="ml-1 bg-white/20 px-1.5 rounded-full text-xs">{count}</span>
+                      )}
+                    </button>
+                    <button
+                      onClick={() => setTab("shop")}
+                      className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/10 backdrop-blur px-4 py-2.5 text-sm text-white hover:bg-white/15 transition"
+                    >
+                      Shop now
+                    </button>
+                  </div>
+                </div>
+              </section>
+
+              <section className="-mt-12 md:-mt-16 relative z-10 px-2 md:px-0 pb-6">
+                <div className="mb-4 text-center">
+                  <div className="text-[11px] uppercase tracking-[0.25em] text-sky-300/80">How to buy</div>
+                  <h2 className="font-display text-2xl md:text-3xl font-bold mt-1">Three simple steps</h2>
+                </div>
+                <div className="grid sm:grid-cols-3 gap-4">
+                  {[
+                    { n: 1, title: "Place Order", desc: "Pick your plan in the Shop tab and add it to your order.", icon: ShoppingBag, action: () => setTab("shop"), cta: "Browse products" },
+                    { n: 2, title: "Pay Invoice", desc: "We'll send your invoice — pay it securely and we'll confirm receipt.", icon: Receipt },
+                    { n: 3, title: "Account Setup", desc: "We set up your account and share your login details to get you started.", icon: UserCog },
+                  ].map((s) => (
+                    <div key={s.n} className="group relative rounded-2xl border border-border bg-surface p-5 hover:border-sky-400/50 hover:shadow-lg hover:shadow-blue-500/10 transition">
+                      <div className="absolute -top-3 left-5 text-[11px] font-bold tracking-wider px-2 py-0.5 rounded-full bg-gradient-to-r from-violet-600 to-blue-600 text-white">STEP {s.n}</div>
+                      <div className="size-10 rounded-xl bg-gradient-to-br from-violet-600/20 to-blue-600/20 grid place-items-center text-sky-300 mb-3">
+                        <s.icon className="size-5" />
+                      </div>
+                      <h3 className="font-display font-semibold text-lg">{s.title}</h3>
+                      <p className="text-sm text-muted-foreground mt-1">{s.desc}</p>
+                      {s.action && (
+                        <button onClick={s.action} className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-sky-400 hover:text-sky-300">
+                          {s.cta} <ArrowRight className="size-3.5" />
                         </button>
-              </div>
-            </div>
-            <div className="relative rounded-2xl overflow-hidden ring-1 ring-white/10 shadow-2xl">
-              <img
-                src={shopHero}
-                alt="BM Support Store"
-                width={1280}
-                height={640}
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-tr from-blue-950/40 via-transparent to-transparent" />
-            </div>
-          </div>
-        </section>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </section>
             </TabsContent>
 
             <TabsContent value="shop" className="mt-4">
