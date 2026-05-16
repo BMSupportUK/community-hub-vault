@@ -58,7 +58,7 @@ function SignupPage() {
     }
     setBusy(false);
     toast.success("Account created. A moderator will review your request.");
-    navigate({ to: "/gate" });
+    navigate({ to: "/gate", search: { chat: 1 } as never });
   };
 
   return (
