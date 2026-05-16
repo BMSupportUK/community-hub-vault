@@ -178,9 +178,9 @@ function ModerationPage() {
         await ch.send({ type: "broadcast", event: "message", payload: msg });
         supabase.removeChannel(ch);
       }
-      // Remove pending role, add banned role so user is sent to /rejected
+      // Remove pending role, add rejected role so user is sent to /account-rejected
       await supabase.from("user_roles").delete().eq("user_id", app.user_id).eq("role", "pending");
-      const { error: e2 } = await supabase.from("user_roles").insert({ user_id: app.user_id, role: "banned" });
+      const { error: e2 } = await supabase.from("user_roles").insert({ user_id: app.user_id, role: "rejected" });
       if (e2 && !e2.message.includes("duplicate")) toast.error(e2.message);
     }
     toast.success(`Application ${decision}`);
