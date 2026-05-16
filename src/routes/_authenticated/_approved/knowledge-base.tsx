@@ -11,6 +11,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { HtmlEditor } from "@/components/ui/html-editor";
+import { sanitizeRichHtml } from "@/lib/sanitize-html";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -318,9 +320,16 @@ function KnowledgeBasePage() {
             </div>
           </div>
 
-          <article className="prose prose-invert max-w-none whitespace-pre-wrap text-foreground/90 leading-relaxed">
-            {reading.body || <em className="text-muted-foreground">No content yet.</em>}
-          </article>
+          {reading.body ? (
+            <article
+              className="prose prose-invert max-w-none text-foreground/90 leading-relaxed"
+              dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(reading.body) }}
+            />
+          ) : (
+            <article className="prose prose-invert max-w-none text-foreground/90 leading-relaxed">
+              <em className="text-muted-foreground">No content yet.</em>
+            </article>
+          )}
           {isMod && (
             <div className="mt-8 flex gap-2 border-t border-border pt-4">
               <Button variant="secondary" onClick={() => { setEditing(reading); setReading(null); }}>
@@ -654,8 +663,12 @@ function ArticleEditor({
           <Input value={editing.slug} placeholder="auto" onChange={(e) => setEditing({ ...editing, slug: e.target.value })} />
           <Label>Excerpt</Label>
           <Textarea rows={2} value={editing.excerpt ?? ""} onChange={(e) => setEditing({ ...editing, excerpt: e.target.value })} />
-          <Label>Body (Markdown / plain text)</Label>
-          <Textarea rows={10} value={editing.body ?? ""} onChange={(e) => setEditing({ ...editing, body: e.target.value })} />
+          <Label>Body</Label>
+          <HtmlEditor
+            value={editing.body ?? ""}
+            onChange={(html) => setEditing({ ...editing, body: html })}
+            placeholder="Write the article. Use the YouTube button to embed a video."
+          />
           <Label>Cover image URL (optional)</Label>
           <Input value={editing.image_url ?? ""} onChange={(e) => setEditing({ ...editing, image_url: e.target.value })} />
           <label className="flex items-center gap-2 text-sm pt-2">
