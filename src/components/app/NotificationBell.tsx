@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import mentionAudio from "@/assets/mention-notify.mp3";
 import outageAudio from "@/assets/outage-notify.mp3";
+import outageResolvedAudio from "@/assets/outage-resolved.mp3";
 import broadcastAudio from "@/assets/broadcast-notify.mp3";
 import staffMentionAudio from "@/assets/staff-mention.mp3";
 
@@ -162,6 +163,25 @@ export function NotificationBell() {
             duration: 8000,
             action: { label: "Open", onClick: () => navigate({ to: "/status" } as never) },
           });
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "status_incidents" },
+        (payload) => {
+          const newRow = payload.new as { title?: string; status?: string };
+          const oldRow = payload.old as { status?: string };
+          if (newRow.status === "completed" && oldRow.status !== "completed") {
+            try {
+              const audio = new Audio(outageResolvedAudio);
+              audio.volume = 0.9;
+              void audio.play().catch(() => { /* autoplay may be blocked */ });
+            } catch { /* ignore */ }
+            toast(`✅ Outage resolved: ${newRow.title ?? "Incident"}`, {
+              duration: 8000,
+              action: { label: "Open", onClick: () => navigate({ to: "/status" } as never) },
+            });
+          }
         },
       )
       .subscribe();
