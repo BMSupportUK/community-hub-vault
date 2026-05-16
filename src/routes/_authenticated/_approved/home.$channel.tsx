@@ -195,6 +195,18 @@ function ChannelPage() {
     })();
   }, [slug]);
 
+  // Clear unread @mention notifications for this channel when the user views it.
+  // This makes the AtSign badge and per-channel counters reset on read.
+  useEffect(() => {
+    if (!user || !slug) return;
+    void supabase
+      .from("user_notifications")
+      .delete()
+      .eq("user_id", user.id)
+      .eq("kind", "mention")
+      .eq("link_path", `/home/${slug}`);
+  }, [slug, user?.id]);
+
   // Check if current user can send in this channel
   useEffect(() => {
     if (!channel || !user) { setCanSend(true); return; }
