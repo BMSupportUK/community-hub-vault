@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Clock, LogIn, LogOut, Coffee, UtensilsCrossed, Loader2, PlayCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { useUserTimezone } from "@/hooks/use-user-timezone";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -33,6 +34,13 @@ function fmtMin(seconds: number) {
 
 function ClockPage() {
   const { user, isStaff } = useAuth();
+  const tz = useUserTimezone();
+  const fmtTime = (iso: string) =>
+    new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", timeZone: tz });
+  const fmtDateTime = (ms: number) =>
+    new Date(ms).toLocaleString([], { timeZone: tz });
+  const fmtClock = (ms: number) =>
+    new Date(ms).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit", timeZone: tz });
   const [now, setNow] = useState(() => Date.now());
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -156,9 +164,9 @@ function ClockPage() {
             </div>
             <div className="flex-1">
               <h1 className="font-display text-2xl sm:text-3xl font-bold text-white drop-shadow">Time Tracking</h1>
-              <p className="text-sm text-white/85">{new Date(now).toLocaleString()}</p>
+              <p className="text-sm text-white/85">{fmtDateTime(now)} <span className="opacity-70">({tz})</span></p>
             </div>
-            <div className="font-mono text-3xl tabular-nums text-white drop-shadow">{new Date(now).toLocaleTimeString()}</div>
+            <div className="font-mono text-3xl tabular-nums text-white drop-shadow">{fmtClock(now)}</div>
           </header>
         </div>
 
@@ -185,7 +193,7 @@ function ClockPage() {
             <div className="flex items-center justify-between gap-4 flex-wrap">
               <div>
                 <div className="font-semibold text-emerald-400">Working — {fmt(sessionSeconds)}</div>
-                <div className="text-sm text-muted-foreground">Started {new Date(myShift.clock_in).toLocaleTimeString()}</div>
+                <div className="text-sm text-muted-foreground">Started {fmtTime(myShift.clock_in)}</div>
               </div>
               <div className="flex items-center gap-2">
                 <button onClick={() => startBreak("break")} disabled={busy} className="px-4 py-2 rounded-lg bg-surface-2 border border-border hover:border-primary inline-flex items-center gap-2 text-sm">
@@ -251,7 +259,7 @@ function ClockPage() {
                       </div>
                       <div className="text-right">
                         <div className="font-mono tabular-nums text-sm">{fmt(elapsed)}</div>
-                        <div className="text-[10px] text-muted-foreground">since {new Date(s.clock_in).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</div>
+                        <div className="text-[10px] text-muted-foreground">since {fmtTime(s.clock_in)}</div>
                       </div>
                     </li>
                   );
