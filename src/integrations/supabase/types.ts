@@ -1688,6 +1688,10 @@ export type Database = {
         Returns: boolean
       }
       redeem_invite: { Args: { p_code: string }; Returns: Json }
+      restore_app_credentials_from_backup: {
+        Args: { p_mode?: string; p_snapshot: Json }
+        Returns: Json
+      }
       submit_appeal: { Args: { p_reason: string }; Returns: Json }
     }
     Enums: {

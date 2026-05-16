@@ -1,10 +1,16 @@
 import { createFileRoute, Navigate, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { KeyRound, Search, Loader2, Plus, Pencil, Trash2, X, Check, ChevronDown, ChevronRight, Eye, EyeOff, ArrowLeft } from "lucide-react";
+import { KeyRound, Search, Loader2, Plus, Pencil, Trash2, X, Check, ChevronDown, ChevronRight, Eye, EyeOff, ArrowLeft, History, RotateCcw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
+import {
+  listCredentialBackups,
+  restoreCredentialBackup,
+  type CredentialBackupFile,
+} from "@/lib/credentials-restore.functions";
 
 export const Route = createFileRoute("/_authenticated/_approved/admin-credentials")({
   component: AdminCredentialsPage,
@@ -36,6 +42,7 @@ function AdminCredentialsPage() {
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [revealed, setRevealed] = useState<Record<string, boolean>>({});
   const [editor, setEditor] = useState<{ ownerId: string; row: CredentialRow | null } | null>(null);
+  const [restoreOpen, setRestoreOpen] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -101,6 +108,13 @@ function AdminCredentialsPage() {
             <h1 className="font-display text-2xl font-bold">User Credentials Admin</h1>
             <p className="text-sm text-muted-foreground">Manage app login credentials assigned to each user.</p>
           </div>
+          <button
+            onClick={() => setRestoreOpen(true)}
+            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border text-xs font-medium hover:border-primary"
+            title="Restore credentials from a backup snapshot"
+          >
+            <History className="size-3.5" /> Restore backup
+          </button>
           <div className="hidden sm:flex gap-2 text-xs">
             <Stat label="Users" value={profiles.length} />
             <Stat label="With creds" value={usersWithCreds} />
@@ -195,6 +209,13 @@ function AdminCredentialsPage() {
             currentUserId={user?.id ?? ""}
             onClose={() => setEditor(null)}
             onSaved={() => { setEditor(null); load(); }}
+          />
+        )}
+
+        {restoreOpen && (
+          <RestoreBackupDialog
+            onClose={() => setRestoreOpen(false)}
+            onRestored={() => { setRestoreOpen(false); load(); }}
           />
         )}
       </div>
@@ -302,5 +323,117 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       <div className="text-xs font-semibold text-muted-foreground mb-1">{label}</div>
       {children}
     </label>
+  );
+}
+
+function RestoreBackupDialog({ onClose, onRestored }: { onClose: () => void; onRestored: () => void }) {
+  const listFn = useServerFn(listCredentialBackups);
+  const restoreFn = useServerFn(restoreCredentialBackup);
+  const [files, setFiles] = useState<CredentialBackupFile[] | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [selected, setSelected] = useState<string | null>(null);
+  const [mode, setMode] = useState<"merge" | "replace">("merge");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const data = await listFn();
+        if (!cancelled) setFiles(data);
+      } catch (e: any) {
+        if (!cancelled) setError(e?.message ?? "Failed to list backups");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [listFn]);
+
+  const run = async () => {
+    if (!selected) return;
+    const verb = mode === "replace" ? "REPLACE ALL current credentials" : "merge into current credentials";
+    if (!confirm(`Restore snapshot:\n${selected}\n\nThis will ${verb}. Continue?`)) return;
+    setBusy(true);
+    try {
+      const res = await restoreFn({ data: { path: selected, mode } });
+      toast.success(`Restored ${res.processed} credentials (${res.inserted} new, ${res.updated} updated)`);
+      onRestored();
+    } catch (e: any) {
+      toast.error(e?.message ?? "Restore failed");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4" onClick={onClose}>
+      <div className="w-full max-w-xl rounded-2xl border border-border bg-surface-1 p-6" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <History className="size-4 text-primary" />
+            <h3 className="font-display text-lg font-bold">Restore credentials from backup</h3>
+          </div>
+          <button onClick={onClose} className="p-1.5 rounded hover:bg-surface-2"><X className="size-4" /></button>
+        </div>
+
+        <p className="text-xs text-muted-foreground mb-3">
+          Snapshots are written daily to the private <code className="font-mono">credentials-backups</code> bucket. Passwords and notes are re-encrypted on restore.
+        </p>
+
+        <div className="rounded-xl border border-border bg-surface-2/40 max-h-72 overflow-y-auto divide-y divide-border">
+          {loading ? (
+            <div className="p-6 grid place-items-center text-muted-foreground"><Loader2 className="size-4 animate-spin" /></div>
+          ) : error ? (
+            <div className="p-4 text-sm text-destructive">{error}</div>
+          ) : !files || files.length === 0 ? (
+            <div className="p-4 text-sm text-muted-foreground">No snapshots available yet.</div>
+          ) : (
+            files.map((f) => (
+              <label key={f.path} className={cn("flex items-center gap-3 px-4 py-2.5 cursor-pointer hover:bg-surface-2", selected === f.path && "bg-surface-2")}>
+                <input type="radio" name="snap" checked={selected === f.path} onChange={() => setSelected(f.path)} />
+                <div className="flex-1 min-w-0">
+                  <div className="font-mono text-xs truncate">{f.path}</div>
+                  <div className="text-[11px] text-muted-foreground">
+                    {f.created_at ? new Date(f.created_at).toLocaleString() : "—"}
+                    {f.size != null && ` · ${(f.size / 1024).toFixed(1)} KB`}
+                  </div>
+                </div>
+              </label>
+            ))
+          )}
+        </div>
+
+        <div className="mt-4 space-y-2">
+          <div className="text-xs font-semibold text-muted-foreground">Mode</div>
+          <div className="grid sm:grid-cols-2 gap-2">
+            <label className={cn("rounded-lg border p-3 cursor-pointer", mode === "merge" ? "border-primary bg-primary/5" : "border-border")}>
+              <div className="flex items-center gap-2 font-medium text-sm">
+                <input type="radio" checked={mode === "merge"} onChange={() => setMode("merge")} /> Merge
+              </div>
+              <div className="text-[11px] text-muted-foreground mt-1">Upsert by id. Existing rows not in the snapshot are kept.</div>
+            </label>
+            <label className={cn("rounded-lg border p-3 cursor-pointer", mode === "replace" ? "border-destructive bg-destructive/5" : "border-border")}>
+              <div className="flex items-center gap-2 font-medium text-sm">
+                <input type="radio" checked={mode === "replace"} onChange={() => setMode("replace")} /> Replace all
+              </div>
+              <div className="text-[11px] text-muted-foreground mt-1">Delete all current credentials, then load the snapshot exactly.</div>
+            </label>
+          </div>
+        </div>
+
+        <div className="flex justify-end gap-2 mt-5">
+          <button onClick={onClose} className="px-4 py-2 rounded-lg border border-border text-sm">Cancel</button>
+          <button
+            onClick={run}
+            disabled={!selected || busy}
+            className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium flex items-center gap-2 disabled:opacity-50"
+          >
+            {busy ? <Loader2 className="size-4 animate-spin" /> : <RotateCcw className="size-4" />} Restore
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
