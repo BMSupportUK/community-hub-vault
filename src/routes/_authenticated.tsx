@@ -49,19 +49,7 @@ function AuthLayout() {
 
   // Pending users are locked to /gate
   if (isPending && !path.startsWith("/gate")) {
-    return (
-      <div className="min-h-screen flex">
-        <IconRail />
-        <div className="flex-1 grid place-items-center text-center px-8">
-          <div className="max-w-md">
-            <div className="size-12 rounded-2xl bg-surface-2 grid place-items-center mx-auto mb-4">🔒</div>
-            <h1 className="font-display text-2xl font-bold">Awaiting approval</h1>
-            <p className="text-muted-foreground mt-2">Head to the security gate to chat with a moderator.</p>
-            <Link to="/gate" search={{ chat: 1 } as never} className="mt-6 inline-flex px-5 py-2.5 rounded-lg bg-primary text-primary-foreground font-medium">Request access</Link>
-          </div>
-        </div>
-      </div>
-    );
+    return <Navigate to="/gate" search={{ chat: 1 } as never} />;
   }
 
   return (
