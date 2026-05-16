@@ -85,6 +85,16 @@ function InstallGuidesPage() {
 
   const activeCategory = categories.find((c) => c.id === activeCat);
 
+  // Persist new-guide draft so it survives closing the dialog or leaving the page.
+  useEffect(() => {
+    if (!editing || editing.id) return;
+    try {
+      localStorage.setItem(DRAFT_KEY, JSON.stringify(editing));
+    } catch {
+      /* ignore quota errors */
+    }
+  }, [editing]);
+
   const openNew = () => {
     let draft: Partial<Blog> | null = null;
     try {
