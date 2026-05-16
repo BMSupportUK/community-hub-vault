@@ -15,6 +15,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import shiftStartAudio from "@/assets/shift-start.mp3";
+import shiftEndAudio from "@/assets/shift-end.mp3";
 
 const WARN_BEFORE = 10 * 60 * 1000; // 10 minutes
 
@@ -144,15 +145,16 @@ export function ShiftStartEndAlert() {
     }
   }, [candidate, active]);
 
-  // Play the shift-start voice clip when a "start" dialog first opens for a given slot.
+  // Play the matching voice clip when a "start" or "end" dialog first opens for a given slot.
   const playedRef = useRef<Set<string>>(new Set());
   useEffect(() => {
-    if (!active || active.stage !== "start") return;
-    const key = `${active.slot.id}:start`;
+    if (!active) return;
+    const key = `${active.slot.id}:${active.stage}`;
     if (playedRef.current.has(key)) return;
     playedRef.current.add(key);
     try {
-      const audio = new Audio(shiftStartAudio);
+      const src = active.stage === "start" ? shiftStartAudio : shiftEndAudio;
+      const audio = new Audio(src);
       audio.volume = 0.9;
       void audio.play().catch(() => { /* autoplay may be blocked; ignore */ });
     } catch { /* ignore */ }
