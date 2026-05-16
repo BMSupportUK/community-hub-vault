@@ -808,7 +808,81 @@ function Storefront() {
           onContinueShopping={() => setShowCheckout(false)}
         />
       )}
+      {count > 0 && !showCheckout && (
+        <CartWidget
+          items={cartItems.map((p) => ({ id: p.id, name: p.name, qty: cart[p.id], price_cents: p.price_cents }))}
+          total={total}
+          onAdd={(id) => add(id)}
+          onSub={(id) => sub(id)}
+          onRemove={(id) => setCart((c) => { const n = { ...c }; delete n[id]; return n; })}
+          onCheckout={() => setShowCheckout(true)}
+        />
+      )}
     </main>
+  );
+}
+
+function CartWidget({ items, total, onAdd, onSub, onRemove, onCheckout }: {
+  items: { id: string; name: string; qty: number; price_cents: number }[];
+  total: number;
+  onAdd: (id: string) => void;
+  onSub: (id: string) => void;
+  onRemove: (id: string) => void;
+  onCheckout: () => void;
+}) {
+  const [open, setOpen] = useState(true);
+  const count = items.reduce((s, i) => s + i.qty, 0);
+  return (
+    <div className="fixed bottom-4 right-4 z-40 w-[320px] max-w-[calc(100vw-2rem)]">
+      <div className="bg-surface border border-border rounded-2xl shadow-2xl shadow-black/30 overflow-hidden">
+        <button
+          type="button"
+          onClick={() => setOpen((o) => !o)}
+          className="w-full flex items-center justify-between gap-2 px-4 py-3 bg-gradient-to-r from-violet-600 to-blue-600 text-white"
+        >
+          <span className="inline-flex items-center gap-2 font-semibold text-sm">
+            <ShoppingBag className="size-4" />
+            Your cart
+            <span className="bg-white/20 px-1.5 rounded-full text-xs">{count}</span>
+          </span>
+          <span className="text-xs opacity-90">{open ? "Hide" : "Show"}</span>
+        </button>
+        {open && (
+          <>
+            <div className="max-h-64 overflow-y-auto divide-y divide-border">
+              {items.map((i) => (
+                <div key={i.id} className="p-3 flex items-center gap-2 text-sm">
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate font-medium">{i.name}</div>
+                    <div className="text-xs text-muted-foreground">{_currentFmt(i.price_cents)} each</div>
+                  </div>
+                  <div className="flex items-center gap-1 bg-surface-2 rounded-lg">
+                    <button onClick={() => onSub(i.id)} aria-label="Decrease" className="size-7 grid place-items-center hover:text-sky-400"><Minus className="size-3.5" /></button>
+                    <span className="text-sm font-medium w-5 text-center">{i.qty}</span>
+                    <button onClick={() => onAdd(i.id)} aria-label="Increase" className="size-7 grid place-items-center hover:text-sky-400"><Plus className="size-3.5" /></button>
+                  </div>
+                  <button onClick={() => onRemove(i.id)} aria-label={`Remove ${i.name}`} className="p-1 rounded hover:bg-surface-2 text-destructive">
+                    <Trash2 className="size-3.5" />
+                  </button>
+                </div>
+              ))}
+            </div>
+            <div className="p-3 border-t border-border space-y-2 bg-surface-2/40">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Subtotal</span>
+                <span className="font-display font-bold">{_currentFmt(total)}</span>
+              </div>
+              <button
+                onClick={onCheckout}
+                className="w-full px-3 py-2 rounded-lg bg-gradient-to-r from-violet-600 to-blue-600 text-white text-sm font-semibold hover:opacity-90"
+              >
+                Checkout
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
   );
 }
 
