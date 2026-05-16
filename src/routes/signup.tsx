@@ -47,7 +47,7 @@ function SignupPage() {
       if (rerr) {
         setBusy(false);
         toast.error(`Invite failed: ${rerr.message}. Continue to gate to request access.`);
-        navigate({ to: "/gate", search: { chat: 1 } as never });
+        navigate({ to: "/gate", search: { chat: 1, invite: code } as never });
         return;
       }
       await refreshRoles();
