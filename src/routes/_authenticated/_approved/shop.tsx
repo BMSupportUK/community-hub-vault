@@ -589,15 +589,37 @@ function Storefront() {
 
   const placeOrder = async (info: { name: string; email: string; customer_type: "new" | "existing"; existing_username: string; discount_code: string; discount_cents: number; wants_adult_content: boolean }) => {
     if (!user || cartItems.length === 0) return;
-    const finalTotal = Math.max(0, total - (info.discount_cents || 0));
+    let verifiedDiscountCents = 0;
+    const submittedCode = info.discount_code.trim();
+    if (submittedCode) {
+      const { data: code } = await supabase
+        .from("discount_codes")
+        .select("*")
+        .ilike("code", submittedCode)
+        .eq("is_active", true)
+        .maybeSingle();
+      if (!code) { toast.error("Invalid discount code"); return; }
+      const { data: links } = await supabase
+        .from("discount_code_products")
+        .select("product_id")
+        .eq("discount_code_id", code.id);
+      const allowedIds = (links ?? []).map((r: { product_id: string }) => r.product_id);
+      if (allowedIds.length > 0 && cartItems.some((p) => !allowedIds.includes(p.id))) {
+        toast.error("This discount code is not allowed for one or more products in your cart");
+        return;
+      }
+      if (code.amount_cents) verifiedDiscountCents = Math.min(total, code.amount_cents);
+      if (code.percent) verifiedDiscountCents = Math.round(total * (code.percent / 100));
+    }
+    const finalTotal = Math.max(0, total - verifiedDiscountCents);
     const { data: order, error } = await supabase.from("orders").insert({
       user_id: user.id, total_cents: finalTotal, status: "pending",
       shipping_name: info.name,
       email: info.email,
       customer_type: info.customer_type,
       existing_username: info.customer_type === "existing" ? info.existing_username : null,
-      discount_code: info.discount_code || null,
-      discount_cents: info.discount_cents || 0,
+      discount_code: submittedCode || null,
+      discount_cents: verifiedDiscountCents,
       wants_adult_content: info.wants_adult_content,
     } as never).select().single();
     if (error || !order) { toast.error(error?.message ?? "Failed"); return; }
@@ -1090,8 +1112,8 @@ function Checkout({ items, total, onClose, onPlace }: {
         const restricted = linkMap.get(c.id);
         // No restrictions => applies to all
         if (!restricted || restricted.length === 0) return true;
-        // Restricted => only show if cart contains at least one allowed product
-        return cartIds.some((id) => restricted.includes(id));
+        // Restricted => only show if every cart product is allowed for this code
+        return cartIds.length > 0 && cartIds.every((id) => restricted.includes(id));
       });
     }
     setAvailable(filtered);
@@ -1120,24 +1142,12 @@ function Checkout({ items, total, onClose, onPlace }: {
     void acceptCode(c, () => setBrowseOpen(false));
   };
 
-  const [eligibleProductIds, setEligibleProductIds] = useState<string[] | null>(null);
-  // null = applies to all products; array = restricted list
-
-  const eligibleSubtotal = useMemo(() => {
-    if (!eligibleProductIds) return total;
-    return items
-      .filter((i) => eligibleProductIds.includes(i.id))
-      .reduce((s, i) => s + i.price_cents * i.qty, 0);
-  }, [items, total, eligibleProductIds]);
-
   const discountCents = useMemo(() => {
     if (!appliedCode) return 0;
-    const base = eligibleSubtotal;
-    if (base <= 0) return 0;
-    if (appliedCode.amount_cents) return Math.min(base, appliedCode.amount_cents);
-    if (appliedCode.percent) return Math.round(base * (appliedCode.percent / 100));
+    if (appliedCode.amount_cents) return Math.min(total, appliedCode.amount_cents);
+    if (appliedCode.percent) return Math.round(total * (appliedCode.percent / 100));
     return 0;
-  }, [appliedCode, eligibleSubtotal]);
+  }, [appliedCode, total]);
   const finalTotal = Math.max(0, total - discountCents);
 
   const acceptCode = async (c: DiscountCode, onDone?: () => void) => {
@@ -1147,14 +1157,11 @@ function Checkout({ items, total, onClose, onPlace }: {
       .eq("discount_code_id", c.id);
     const ids = (links ?? []).map((r: { product_id: string }) => r.product_id);
     if (ids.length > 0) {
-      const hasMatch = items.some((i) => ids.includes(i.id));
-      if (!hasMatch) {
-        toast.error("This code does not apply to any items in your cart");
+      const hasBlockedItem = items.some((i) => !ids.includes(i.id));
+      if (hasBlockedItem) {
+        toast.error("This code is not allowed for one or more products in your cart");
         return;
       }
-      setEligibleProductIds(ids);
-    } else {
-      setEligibleProductIds(null);
     }
     setAppliedCode(c);
     setDiscountInput(c.code);
@@ -1264,7 +1271,7 @@ function Checkout({ items, total, onClose, onPlace }: {
               {appliedCode && (
                 <div className="flex items-center justify-between text-xs px-2 py-1.5 rounded-md bg-success/10 text-success">
                   <span>Applied: <span className="font-mono font-semibold">{appliedCode.code}</span> — only 1 code per order</span>
-                  <button type="button" onClick={() => { setAppliedCode(null); setDiscountInput(""); setEligibleProductIds(null); }} className="underline hover:no-underline">Remove</button>
+                  <button type="button" onClick={() => { setAppliedCode(null); setDiscountInput(""); }} className="underline hover:no-underline">Remove</button>
                 </div>
               )}
               {browseOpen && (
