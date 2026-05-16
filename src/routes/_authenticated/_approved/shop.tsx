@@ -345,7 +345,7 @@ function Storefront() {
   const [dbCategories, setDbCategories] = useState<ProductCategory[]>([]);
   const [cart, setCart] = useState<Record<string, number>>({});
   const [showCheckout, setShowCheckout] = useState(false);
-  const [tab, setTab] = useState<string>("welcome");
+  const [tab, setTab] = useState<string>("shop");
   const navigate = useNavigate();
   const { user, hasAny } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
