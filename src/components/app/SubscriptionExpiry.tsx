@@ -14,18 +14,29 @@ export function SubscriptionExpiry() {
   useEffect(() => {
     if (!user) { setCreds([]); setLoaded(true); return; }
     let active = true;
-    supabase
-      .from("app_credentials")
-      .select("app_login_name, expiry_at")
-      .eq("owner_id", user.id)
-      .not("expiry_at", "is", null)
-      .order("expiry_at", { ascending: false })
-      .then(({ data }) => {
-        if (!active) return;
-        setCreds((data as Cred[] | null) ?? []);
-        setLoaded(true);
-      });
-    return () => { active = false; };
+    const load = () => {
+      supabase
+        .from("app_credentials")
+        .select("app_login_name, expiry_at")
+        .eq("owner_id", user.id)
+        .not("expiry_at", "is", null)
+        .order("expiry_at", { ascending: false })
+        .then(({ data }) => {
+          if (!active) return;
+          setCreds((data as Cred[] | null) ?? []);
+          setLoaded(true);
+        });
+    };
+    load();
+    const channel = supabase
+      .channel(`app_credentials-${user.id}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "app_credentials", filter: `owner_id=eq.${user.id}` },
+        () => load(),
+      )
+      .subscribe();
+    return () => { active = false; supabase.removeChannel(channel); };
   }, [user]);
 
   const items = creds.filter((c) => c.expiry_at);
