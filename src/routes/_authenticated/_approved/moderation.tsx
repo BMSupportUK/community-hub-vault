@@ -333,6 +333,18 @@ function ModerationPage() {
                               </div>
                             );
                           })}
+                          {peerTyping && (
+                            <div className="flex justify-start">
+                              <div className="px-3 py-2 rounded-2xl bg-surface-2 text-[11px] text-muted-foreground inline-flex items-center gap-1.5">
+                                <span className="inline-flex gap-0.5">
+                                  <span className="size-1.5 rounded-full bg-muted-foreground/70 animate-bounce" style={{ animationDelay: "0ms" }} />
+                                  <span className="size-1.5 rounded-full bg-muted-foreground/70 animate-bounce" style={{ animationDelay: "150ms" }} />
+                                  <span className="size-1.5 rounded-full bg-muted-foreground/70 animate-bounce" style={{ animationDelay: "300ms" }} />
+                                </span>
+                                Applicant is typing…
+                              </div>
+                            </div>
+                          )}
                         </div>
 
                         {a.status === "pending" ? (
@@ -340,7 +352,7 @@ function ModerationPage() {
                             <form onSubmit={sendReply} className="mt-3 flex items-center gap-2 bg-surface-2 border border-border rounded-lg px-3">
                               <input
                                 value={reply}
-                                onChange={(e) => setReply(e.target.value)}
+                                onChange={(e) => { setReply(e.target.value); if (e.target.value) notifyTyping(); }}
                                 placeholder="Reply to applicant…"
                                 maxLength={1000}
                                 className="flex-1 h-10 bg-transparent outline-none text-sm"
