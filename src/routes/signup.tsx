@@ -2,7 +2,6 @@ import { createFileRoute, Link, useNavigate, redirect } from "@tanstack/react-ro
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/use-auth";
 import { Field } from "./login";
 import signupIllustration from "@/assets/signup-illustration.png";
 
@@ -16,14 +15,9 @@ export const Route = createFileRoute("/signup")({
 
 function SignupPage() {
   const navigate = useNavigate();
-  const { refreshRoles } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
-  const [inviteCode, setInviteCode] = useState(() => {
-    if (typeof window === "undefined") return "";
-    return (new URLSearchParams(window.location.search).get("invite") ?? "").toUpperCase();
-  });
   const [busy, setBusy] = useState(false);
 
   const submit = async (e: React.FormEvent) => {
@@ -40,21 +34,6 @@ function SignupPage() {
     if (error) {
       setBusy(false);
       return toast.error(error.message);
-    }
-    const code = inviteCode.trim().toUpperCase();
-    if (code) {
-      const { error: rerr } = await supabase.rpc("redeem_invite", { p_code: code });
-      if (rerr) {
-        setBusy(false);
-        toast.error(`Invite failed: ${rerr.message}. Continue to gate to request access.`);
-        navigate({ to: "/gate" });
-        return;
-      }
-      await refreshRoles();
-      toast.success("Invite accepted — welcome in!");
-      setBusy(false);
-      navigate({ to: "/home" });
-      return;
     }
     setBusy(false);
     toast.success("Account created. A moderator will review your request.");
@@ -100,16 +79,6 @@ function SignupPage() {
               <Field label="Display name" value={displayName} onChange={setDisplayName} />
               <Field label="Email" type="email" value={email} onChange={setEmail} />
               <Field label="Password" type="password" value={password} onChange={setPassword} />
-              <label className="block">
-                <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Invite code (optional)</span>
-                <input
-                  type="text"
-                  value={inviteCode}
-                  onChange={(e) => setInviteCode(e.target.value.toUpperCase().slice(0, 32))}
-                  placeholder="Skip the queue with an invite"
-                  className="mt-1 w-full h-11 px-3 rounded-lg bg-input border border-border text-foreground font-mono tracking-widest focus:outline-none focus:ring-2 focus:ring-ring"
-                />
-              </label>
               <button disabled={busy} className="w-full h-11 rounded-lg bg-primary text-primary-foreground font-medium shadow-glow hover:opacity-90 disabled:opacity-50">
                 {busy ? "Creating…" : "Request access"}
               </button>
