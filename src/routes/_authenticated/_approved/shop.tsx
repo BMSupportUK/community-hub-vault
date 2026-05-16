@@ -1095,19 +1095,50 @@ function Checkout({ items, total, onClose, onPlace }: {
       toast.error("Only 1 discount code per order. Remove the current code first.");
       return;
     }
-    setAppliedCode(c);
-    setDiscountInput(c.code);
-    setBrowseOpen(false);
-    toast.success(`Code "${c.code}" applied`);
+    void acceptCode(c, () => setBrowseOpen(false));
   };
+
+  const [eligibleProductIds, setEligibleProductIds] = useState<string[] | null>(null);
+  // null = applies to all products; array = restricted list
+
+  const eligibleSubtotal = useMemo(() => {
+    if (!eligibleProductIds) return total;
+    return items
+      .filter((i) => eligibleProductIds.includes(i.id))
+      .reduce((s, i) => s + i.price_cents * i.qty, 0);
+  }, [items, total, eligibleProductIds]);
 
   const discountCents = useMemo(() => {
     if (!appliedCode) return 0;
-    if (appliedCode.amount_cents) return Math.min(total, appliedCode.amount_cents);
-    if (appliedCode.percent) return Math.round(total * (appliedCode.percent / 100));
+    const base = eligibleSubtotal;
+    if (base <= 0) return 0;
+    if (appliedCode.amount_cents) return Math.min(base, appliedCode.amount_cents);
+    if (appliedCode.percent) return Math.round(base * (appliedCode.percent / 100));
     return 0;
-  }, [appliedCode, total]);
+  }, [appliedCode, eligibleSubtotal]);
   const finalTotal = Math.max(0, total - discountCents);
+
+  const acceptCode = async (c: DiscountCode, onDone?: () => void) => {
+    const { data: links } = await supabase
+      .from("discount_code_products")
+      .select("product_id")
+      .eq("discount_code_id", c.id);
+    const ids = (links ?? []).map((r: { product_id: string }) => r.product_id);
+    if (ids.length > 0) {
+      const hasMatch = items.some((i) => ids.includes(i.id));
+      if (!hasMatch) {
+        toast.error("This code does not apply to any items in your cart");
+        return;
+      }
+      setEligibleProductIds(ids);
+    } else {
+      setEligibleProductIds(null);
+    }
+    setAppliedCode(c);
+    setDiscountInput(c.code);
+    toast.success(`Code "${c.code}" applied`);
+    onDone?.();
+  };
 
   const applyCode = async () => {
     const code = discountInput.trim();
@@ -1125,8 +1156,7 @@ function Checkout({ items, total, onClose, onPlace }: {
       .ilike("code", code).eq("is_active", true).maybeSingle();
     setApplying(false);
     if (error || !data) { toast.error("Invalid code"); return; }
-    setAppliedCode(data as DiscountCode);
-    toast.success(`Code "${(data as DiscountCode).code}" applied`);
+    await acceptCode(data as DiscountCode);
   };
 
   const canSubmit =
