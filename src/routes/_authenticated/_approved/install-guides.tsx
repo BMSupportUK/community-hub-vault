@@ -20,6 +20,9 @@ export const Route = createFileRoute("/_authenticated/_approved/install-guides")
 const DRAFT_KEY = "install-guide-new-draft";
 const IG_TAB_KEY = "install-guides-active-tab";
 const IG_CAT_KEY = "install-guides-active-cat";
+const IG_EDIT_KEY = "install-guides-editing";
+const IG_READ_KEY = "install-guides-reading";
+const IG_SHOW_EDITOR_KEY = "install-guides-show-editor";
 
 type Category = { id: string; name: string; slug: string; sort_order: number };
 type Blog = {
@@ -47,9 +50,15 @@ function InstallGuidesPage() {
     try { return sessionStorage.getItem(IG_CAT_KEY); } catch { return null; }
   });
   const [search, setSearch] = useState("");
-  const [reading, setReading] = useState<Blog | null>(null);
-  const [editing, setEditing] = useState<Blog | null>(null);
-  const [showEditor, setShowEditor] = useState(false);
+  const [reading, setReading] = useState<Blog | null>(() => {
+    try { const raw = sessionStorage.getItem(IG_READ_KEY); return raw ? JSON.parse(raw) as Blog : null; } catch { return null; }
+  });
+  const [editing, setEditing] = useState<Blog | null>(() => {
+    try { const raw = sessionStorage.getItem(IG_EDIT_KEY); return raw ? JSON.parse(raw) as Blog : null; } catch { return null; }
+  });
+  const [showEditor, setShowEditor] = useState<boolean>(() => {
+    try { return sessionStorage.getItem(IG_SHOW_EDITOR_KEY) === "1"; } catch { return false; }
+  });
   const [newCatName, setNewCatName] = useState("");
   const [addingCat, setAddingCat] = useState(false);
   const dragCatId = useRef<string | null>(null);
@@ -63,6 +72,24 @@ function InstallGuidesPage() {
       else sessionStorage.removeItem(IG_CAT_KEY);
     } catch { /* ignore */ }
   }, [activeCat]);
+  useEffect(() => {
+    try {
+      if (editing) sessionStorage.setItem(IG_EDIT_KEY, JSON.stringify(editing));
+      else sessionStorage.removeItem(IG_EDIT_KEY);
+    } catch { /* ignore */ }
+  }, [editing]);
+  useEffect(() => {
+    try {
+      if (reading) sessionStorage.setItem(IG_READ_KEY, JSON.stringify(reading));
+      else sessionStorage.removeItem(IG_READ_KEY);
+    } catch { /* ignore */ }
+  }, [reading]);
+  useEffect(() => {
+    try {
+      if (showEditor) sessionStorage.setItem(IG_SHOW_EDITOR_KEY, "1");
+      else sessionStorage.removeItem(IG_SHOW_EDITOR_KEY);
+    } catch { /* ignore */ }
+  }, [showEditor]);
 
   const dataQuery = useQuery({
     queryKey: ["install-guides-data"],
