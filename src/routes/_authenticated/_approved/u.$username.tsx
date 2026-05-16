@@ -86,6 +86,7 @@ const ROLE_STYLES: Record<AppRole, string> = {
   member: "bg-surface-2 text-foreground border-border",
   pending: "bg-muted text-muted-foreground border-border",
   banned: "bg-destructive text-destructive-foreground border-destructive",
+  rejected: "bg-rose-600/20 text-rose-300 border-rose-500/40",
 };
 
 async function sha256Hex(input: string) {
