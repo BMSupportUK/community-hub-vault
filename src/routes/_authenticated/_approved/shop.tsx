@@ -69,6 +69,15 @@ function ShopPage() {
   const { format, symbol } = useCurrency();
   _currentFmt = format;
   _currentSymbol = symbol;
+  const [username, setUsername] = useState<string | null>(null);
+  useEffect(() => {
+    if (!user) { setUsername(null); return; }
+    let active = true;
+    supabase.from("profiles").select("username").eq("id", user.id).maybeSingle().then(({ data }) => {
+      if (active) setUsername((data as { username?: string | null } | null)?.username ?? null);
+    });
+    return () => { active = false; };
+  }, [user]);
 
   const groups: ChannelGroup[] = [
     { label: "Shop", items: [
@@ -102,9 +111,9 @@ function ShopPage() {
         {user && (
           <div className="h-14 border-t border-border px-3 flex items-center gap-2 bg-rail">
             <div className="size-8 rounded-full bg-gradient-primary flex items-center justify-center text-xs font-semibold text-primary-foreground">
-              {(user.email ?? "?").slice(0, 1).toUpperCase()}
+              {(username ?? "?").slice(0, 1).toUpperCase()}
             </div>
-            <div className="min-w-0 flex-1"><div className="text-xs font-medium truncate">{user.email}</div></div>
+            <div className="min-w-0 flex-1"><div className="text-xs font-medium truncate">{username ?? "…"}</div></div>
           </div>
         )}
       </nav>
