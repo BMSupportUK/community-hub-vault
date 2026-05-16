@@ -407,7 +407,263 @@ function Storefront() {
 function InlinePolicy({ policyKey }: { policyKey: PolicyKey }) {
   const { hasAny } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
-  return <PolicyView policyKey={policyKey} isAdmin={isAdmin} />;
+  if (policyKey === "refund") return <PolicyView policyKey="refund" isAdmin={isAdmin} />;
+  return <RoomPolicyView roomKey={policyKey} isAdmin={isAdmin} />;
+}
+
+// ============ ROOM POLICY VIEW (multi_room / triple_room) ============
+function RoomPolicyView({ roomKey, isAdmin }: { roomKey: "multi_room" | "triple_room"; isAdmin: boolean }) {
+  const rulesKey = roomKey;
+  const punishmentKey = `${roomKey}_punishment`;
+  const [rules, setRules] = useState<PolicyRow | null>(null);
+  const [punishment, setPunishment] = useState<PolicyRow | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [editing, setEditing] = useState<null | "rules" | "punishment">(null);
+  const [draft, setDraft] = useState("");
+  const [saving, setSaving] = useState(false);
+  const title = roomKey === "multi_room" ? "Multi-room Rules" : "Triple-room Rules";
+
+  useEffect(() => {
+    let cancel = false;
+    setLoading(true);
+    setEditing(null);
+    supabase
+      .from("shop_policies")
+      .select("*")
+      .in("key", [rulesKey, punishmentKey])
+      .then(({ data }) => {
+        if (cancel) return;
+        const rows = (data ?? []) as PolicyRow[];
+        const r = rows.find((x) => x.key === rulesKey) ?? { key: rulesKey, title: "Usage Rules", body: "", updated_at: new Date().toISOString() };
+        const p = rows.find((x) => x.key === punishmentKey) ?? { key: punishmentKey, title: "Punishment", body: "", updated_at: new Date().toISOString() };
+        setRules(r);
+        setPunishment(p);
+        setLoading(false);
+      });
+    return () => { cancel = true; };
+  }, [rulesKey, punishmentKey]);
+
+  const beginEdit = (which: "rules" | "punishment") => {
+    setDraft((which === "rules" ? rules?.body : punishment?.body) ?? "");
+    setEditing(which);
+  };
+
+  const save = async () => {
+    if (!editing) return;
+    const key = editing === "rules" ? rulesKey : punishmentKey;
+    const existing = editing === "rules" ? rules : punishment;
+    const fallbackTitle = editing === "rules" ? "Usage Rules" : "Punishment";
+    setSaving(true);
+    const { data: { user } } = await supabase.auth.getUser();
+    const { error } = await supabase.from("shop_policies").upsert({
+      key,
+      title: existing?.title ?? fallbackTitle,
+      body: draft,
+      updated_by: user?.id ?? null,
+      updated_at: new Date().toISOString(),
+    });
+    setSaving(false);
+    if (error) { toast.error(error.message); return; }
+    const updated = { ...(existing ?? { key, title: fallbackTitle }), body: draft, updated_at: new Date().toISOString() } as PolicyRow;
+    if (editing === "rules") setRules(updated); else setPunishment(updated);
+    setEditing(null);
+    toast.success("Saved");
+  };
+
+  return (
+    <main className="flex-1 overflow-y-auto">
+      <div className="max-w-6xl mx-auto px-6 py-8">
+        {/* Hero illustration */}
+        <section className="relative overflow-hidden rounded-3xl border border-border mb-8 shadow-soft">
+          <img
+            src={houseCutaway}
+            alt="Modern house cutaway"
+            width={1920}
+            height={1080}
+            className="w-full h-56 md:h-72 lg:h-80 object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-background/95 via-background/40 to-transparent" />
+          <div className="absolute inset-x-0 bottom-0 p-6 md:p-8">
+            <div className="text-xs uppercase tracking-[0.25em] text-primary-foreground/80 mb-2">House policies</div>
+            <h1 className="font-display text-3xl md:text-4xl font-bold text-white drop-shadow">{title}</h1>
+            <p className="mt-2 text-sm md:text-base text-white/80 max-w-xl">
+              How shared rooms work in our community — and what happens when the rules are broken.
+            </p>
+          </div>
+        </section>
+
+        {loading ? (
+          <div className="grid place-items-center py-16 text-muted-foreground"><Loader2 className="size-5 animate-spin" /></div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Usage rules */}
+            <PolicyCard
+              tone="rules"
+              title="Usage Rules"
+              updatedAt={rules?.updated_at}
+              body={rules?.body ?? ""}
+              isAdmin={isAdmin}
+              editing={editing === "rules"}
+              draft={draft}
+              setDraft={setDraft}
+              onEdit={() => beginEdit("rules")}
+              onCancel={() => setEditing(null)}
+              onSave={save}
+              saving={saving}
+              disabled={editing !== null && editing !== "rules"}
+            />
+
+            {/* Punishment with judge bg */}
+            <PolicyCard
+              tone="punishment"
+              title="Punishment"
+              updatedAt={punishment?.updated_at}
+              body={punishment?.body ?? ""}
+              isAdmin={isAdmin}
+              editing={editing === "punishment"}
+              draft={draft}
+              setDraft={setDraft}
+              onEdit={() => beginEdit("punishment")}
+              onCancel={() => setEditing(null)}
+              onSave={save}
+              saving={saving}
+              disabled={editing !== null && editing !== "punishment"}
+            />
+          </div>
+        )}
+      </div>
+    </main>
+  );
+}
+
+function PolicyCard({
+  tone, title, updatedAt, body, isAdmin, editing, draft, setDraft,
+  onEdit, onCancel, onSave, saving, disabled,
+}: {
+  tone: "rules" | "punishment";
+  title: string;
+  updatedAt?: string;
+  body: string;
+  isAdmin: boolean;
+  editing: boolean;
+  draft: string;
+  setDraft: (s: string) => void;
+  onEdit: () => void;
+  onCancel: () => void;
+  onSave: () => void;
+  saving: boolean;
+  disabled: boolean;
+}) {
+  const isPunishment = tone === "punishment";
+  return (
+    <article
+      className={cn(
+        "relative overflow-hidden rounded-2xl border border-border shadow-soft",
+        isPunishment ? "text-white" : "bg-surface-1",
+      )}
+    >
+      {isPunishment && (
+        <>
+          <img
+            src={judgeCourtroom}
+            alt=""
+            aria-hidden="true"
+            loading="lazy"
+            className="absolute inset-0 w-full h-full object-cover opacity-30"
+          />
+          <div className="absolute inset-0 bg-gradient-to-br from-slate-950/90 via-slate-900/80 to-amber-950/70" />
+        </>
+      )}
+      <div className="relative p-6 md:p-7">
+        <header className="flex items-start gap-3 mb-4">
+          <div className={cn(
+            "size-10 rounded-xl grid place-items-center shrink-0",
+            isPunishment ? "bg-amber-500/20 text-amber-200 ring-1 ring-amber-400/30" : "bg-gradient-primary text-primary-foreground shadow-glow",
+          )}>
+            <FileText className="size-5" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h2 className={cn("font-display text-xl font-bold", isPunishment ? "text-white" : "")}>{title}</h2>
+            {updatedAt && (
+              <p className={cn("text-xs", isPunishment ? "text-white/60" : "text-muted-foreground")}>
+                Updated {new Date(updatedAt).toLocaleDateString()}
+              </p>
+            )}
+          </div>
+          {isAdmin && !editing && (
+            <button
+              onClick={onEdit}
+              disabled={disabled}
+              className={cn(
+                "inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition disabled:opacity-40",
+                isPunishment
+                  ? "bg-white/10 border-white/20 text-white hover:bg-white/20"
+                  : "bg-surface-2 border-border hover:border-primary",
+              )}
+            >
+              <Pencil className="size-3.5" /> Edit
+            </button>
+          )}
+        </header>
+
+        {editing ? (
+          <div className="space-y-3">
+            <textarea
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              rows={16}
+              placeholder="Write the content here. Plain text or Markdown."
+              className={cn(
+                "w-full px-4 py-3 rounded-xl text-sm font-mono leading-relaxed outline-none border",
+                isPunishment
+                  ? "bg-black/40 border-white/20 text-white placeholder:text-white/40 focus:border-amber-400"
+                  : "bg-surface-1 border-border focus:border-primary",
+              )}
+            />
+            <div className="flex gap-2">
+              <button
+                onClick={onSave}
+                disabled={saving}
+                className={cn(
+                  "inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-60",
+                  isPunishment ? "bg-amber-500 text-amber-950 hover:bg-amber-400" : "bg-primary text-primary-foreground",
+                )}
+              >
+                {saving ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />} Save
+              </button>
+              <button
+                onClick={onCancel}
+                className={cn(
+                  "inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm border",
+                  isPunishment ? "bg-white/5 border-white/20 text-white" : "bg-surface-2 border-border",
+                )}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : body.trim() ? (
+          <div
+            className={cn(
+              "whitespace-pre-wrap text-sm leading-relaxed",
+              isPunishment ? "text-white/90" : "text-foreground",
+            )}
+          >
+            {body}
+          </div>
+        ) : (
+          <div
+            className={cn(
+              "rounded-xl border border-dashed p-8 text-center text-sm",
+              isPunishment ? "border-white/20 text-white/60" : "border-border text-muted-foreground",
+            )}
+          >
+            No content yet.{isAdmin ? " Click Edit to add some." : ""}
+          </div>
+        )}
+      </div>
+    </article>
+  );
 }
 
 function Checkout({ items, total, onClose, onPlace }: {
