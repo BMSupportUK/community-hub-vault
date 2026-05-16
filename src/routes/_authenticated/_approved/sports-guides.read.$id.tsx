@@ -1,8 +1,8 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { ArrowLeft } from "lucide-react";
-import DOMPurify from "dompurify";
 import { supabase } from "@/integrations/supabase/client";
+import { sanitizeRichHtml } from "@/lib/sanitize-html";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -93,7 +93,7 @@ function ReadPage() {
             {blog.body && (
               <div
                 className="prose prose-invert max-w-none text-purple-50/90 leading-relaxed"
-                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(blog.body) }}
+                dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(blog.body) }}
               />
             )}
           </article>

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Bold, Italic, Underline, Heading1, Heading2, List, ListOrdered, Link2, Quote, Code, Undo2, Redo2, Eraser } from "lucide-react";
+import { Bold, Italic, Underline, Heading1, Heading2, List, ListOrdered, Link2, Quote, Code, Undo2, Redo2, Eraser, Youtube } from "lucide-react";
 
 type Props = {
   value: string;
@@ -69,6 +69,32 @@ export function HtmlEditor({ value, onChange, className, placeholder }: Props) {
     handleInput();
   };
 
+  const extractYouTubeId = (url: string): string | null => {
+    const patterns = [
+      /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/shorts\/)([A-Za-z0-9_-]{11})/,
+      /^([A-Za-z0-9_-]{11})$/,
+    ];
+    for (const p of patterns) {
+      const m = url.match(p);
+      if (m) return m[1];
+    }
+    return null;
+  };
+
+  const promptYouTube = () => {
+    const url = window.prompt("YouTube URL or video ID");
+    if (!url) return;
+    const id = extractYouTubeId(url.trim());
+    if (!id) {
+      window.alert("Could not detect a YouTube video from that URL.");
+      return;
+    }
+    ref.current?.focus();
+    const html = `<div class="video-embed" style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;margin:1rem 0;border-radius:0.5rem;"><iframe src="https://www.youtube.com/embed/${id}" title="YouTube video" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;"></iframe></div><p><br/></p>`;
+    exec("insertHTML", html);
+    handleInput();
+  };
+
   return (
     <div className={`rounded-md border border-border bg-background ${className ?? ""}`}>
       <div className="flex flex-wrap items-center gap-0.5 border-b border-border p-1">
@@ -84,6 +110,7 @@ export function HtmlEditor({ value, onChange, className, placeholder }: Props) {
         <Btn title="Bullet list" isActive={active.ul} onClick={() => { exec("insertUnorderedList"); handleInput(); }}><List className="size-4" /></Btn>
         <Btn title="Numbered list" isActive={active.ol} onClick={() => { exec("insertOrderedList"); handleInput(); }}><ListOrdered className="size-4" /></Btn>
         <Btn title="Link" onClick={promptLink}><Link2 className="size-4" /></Btn>
+        <Btn title="Embed YouTube video" onClick={promptYouTube}><Youtube className="size-4" /></Btn>
         <span className="mx-1 h-5 w-px bg-border" />
         <Btn title="Clear formatting" onClick={() => { exec("removeFormat"); handleInput(); }}><Eraser className="size-4" /></Btn>
         <Btn title="Undo" onClick={() => { exec("undo"); handleInput(); }}><Undo2 className="size-4" /></Btn>
