@@ -111,9 +111,9 @@ function ShopPage() {
         {user && (
           <div className="h-14 border-t border-border px-3 flex items-center gap-2 bg-rail">
             <div className="size-8 rounded-full bg-gradient-primary flex items-center justify-center text-xs font-semibold text-primary-foreground">
-              {(user.email ?? "?").slice(0, 1).toUpperCase()}
+              {(username ?? "?").slice(0, 1).toUpperCase()}
             </div>
-            <div className="min-w-0 flex-1"><div className="text-xs font-medium truncate">{user.email}</div></div>
+            <div className="min-w-0 flex-1"><div className="text-xs font-medium truncate">{username ?? "…"}</div></div>
           </div>
         )}
       </nav>
