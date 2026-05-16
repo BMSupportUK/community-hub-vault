@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { X } from "lucide-react";
+import { X, Upload, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
@@ -29,6 +29,33 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
   const [editing, setEditing] = useState<Blog | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const uploadCover = async (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please choose an image file");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image must be under 5MB");
+      return;
+    }
+    setUploading(true);
+    const ext = file.name.split(".").pop()?.toLowerCase() || "png";
+    const path = `${user?.id ?? "anon"}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+    const { error } = await supabase.storage
+      .from("sports-guide-covers")
+      .upload(path, file, { cacheControl: "3600", upsert: false, contentType: file.type });
+    if (error) {
+      setUploading(false);
+      return toast.error(error.message);
+    }
+    const { data } = supabase.storage.from("sports-guide-covers").getPublicUrl(path);
+    setEditing((e) => (e ? { ...e, image_url: data.publicUrl } : e));
+    setUploading(false);
+    toast.success("Cover uploaded");
+  };
 
   useEffect(() => {
     (async () => {
@@ -153,8 +180,44 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
               <Input value={editing.title} onChange={(e) => setEditing({ ...editing, title: e.target.value })} className="bg-purple-950/50 border-purple-500/30 text-purple-50" />
             </div>
             <div>
-              <Label className="text-purple-100">Image URL</Label>
-              <Input value={editing.image_url ?? ""} onChange={(e) => setEditing({ ...editing, image_url: e.target.value })} placeholder="https://…" className="bg-purple-950/50 border-purple-500/30 text-purple-50 placeholder:text-purple-300/50" />
+              <Label className="text-purple-100">Cover image</Label>
+              <div className="mt-1 flex flex-col sm:flex-row gap-3">
+                <div className="w-full sm:w-48 aspect-[16/10] rounded-md border border-purple-500/30 bg-purple-950/50 overflow-hidden grid place-items-center text-purple-300/60 shrink-0">
+                  {editing.image_url ? (
+                    <img src={editing.image_url} alt="Cover preview" className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-xs">No cover</span>
+                  )}
+                </div>
+                <div className="flex-1 space-y-2">
+                  <input
+                    ref={fileRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) uploadCover(f);
+                      e.target.value = "";
+                    }}
+                  />
+                  <Button
+                    type="button"
+                    onClick={() => fileRef.current?.click()}
+                    disabled={uploading}
+                    className="bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white border-0"
+                  >
+                    {uploading ? <Loader2 className="size-4 mr-1 animate-spin" /> : <Upload className="size-4 mr-1" />}
+                    {uploading ? "Uploading…" : "Upload image"}
+                  </Button>
+                  <Input
+                    value={editing.image_url ?? ""}
+                    onChange={(e) => setEditing({ ...editing, image_url: e.target.value })}
+                    placeholder="…or paste an image URL"
+                    className="bg-purple-950/50 border-purple-500/30 text-purple-50 placeholder:text-purple-300/50"
+                  />
+                </div>
+              </div>
             </div>
             <div>
               <Label className="text-purple-100">Badge (optional)</Label>
