@@ -22,7 +22,7 @@ export const Route = createFileRoute("/_authenticated")({
 });
 
 function AuthLayout() {
-  const { loading, isPending, isBanned, isMod, hasAny } = useAuth();
+  const { loading, isPending, isBanned, isRejected, isMod, hasAny } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
   const path = useRouterState({ select: (r) => r.location.pathname });
   const logIp = useServerFn(logMyIp);
@@ -45,6 +45,11 @@ function AuthLayout() {
   // Rejected/banned users are locked to /rejected
   if (isBanned && !path.startsWith("/rejected")) {
     return <Navigate to="/rejected" />;
+  }
+
+  // Rejected users are locked to /account-rejected
+  if (isRejected && !path.startsWith("/account-rejected")) {
+    return <Navigate to="/account-rejected" />;
   }
 
   // Pending users are locked to /gate
