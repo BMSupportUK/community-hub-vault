@@ -2145,6 +2145,46 @@ function AdminDiscounts() {
                   ))}
                 </select>
               </Field>
+              <Field label={`Applies to products (${selectedProductIds.length === 0 ? "all products" : `${selectedProductIds.length} selected`})`}>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <input
+                      value={productQuery}
+                      onChange={(e) => setProductQuery(e.target.value)}
+                      placeholder="Search products…"
+                      className="flex-1 px-3 py-2 rounded-lg bg-surface-2 text-sm border border-border outline-none"
+                    />
+                    {selectedProductIds.length > 0 && (
+                      <button type="button" onClick={() => setSelectedProductIds([])} className="text-xs text-muted-foreground underline">Clear</button>
+                    )}
+                  </div>
+                  <div className="max-h-48 overflow-y-auto rounded-lg border border-border bg-surface-2 divide-y divide-border">
+                    {products
+                      .filter((p) => !productQuery.trim() || p.name.toLowerCase().includes(productQuery.toLowerCase()))
+                      .map((p) => {
+                        const checked = selectedProductIds.includes(p.id);
+                        return (
+                          <label key={p.id} className="flex items-center gap-2 px-3 py-1.5 text-sm cursor-pointer hover:bg-surface">
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              onChange={(e) => {
+                                setSelectedProductIds((prev) =>
+                                  e.target.checked ? [...prev, p.id] : prev.filter((x) => x !== p.id),
+                                );
+                              }}
+                            />
+                            <span className={cn("flex-1", !p.is_active && "text-muted-foreground")}>{p.name}{!p.is_active && " (inactive)"}</span>
+                          </label>
+                        );
+                      })}
+                    {products.length === 0 && (
+                      <div className="p-3 text-xs text-muted-foreground text-center">No products yet.</div>
+                    )}
+                  </div>
+                  <p className="text-[11px] text-muted-foreground">Leave empty to allow this code on all products.</p>
+                </div>
+              </Field>
               <label className="flex items-center gap-2 text-sm">
                 <input type="checkbox" checked={editing.is_active ?? true} onChange={(e) => setEditing({ ...editing, is_active: e.target.checked })} /> Active
               </label>
