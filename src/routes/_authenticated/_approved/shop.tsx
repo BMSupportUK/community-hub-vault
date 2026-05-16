@@ -2017,6 +2017,15 @@ function AdminDiscounts() {
     supabase.from("products").select("id,name,is_active").order("name").then(({ data }) => setProducts((data ?? []) as { id: string; name: string; is_active: boolean }[]));
   }, []);
 
+  useEffect(() => {
+    const channel = supabase
+      .channel("admin-discounts-realtime")
+      .on("postgres_changes", { event: "*", schema: "public", table: "discount_codes" }, () => load())
+      .on("postgres_changes", { event: "*", schema: "public", table: "discount_code_products" }, () => load())
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, []);
+
   const save = async () => {
     if (!editing?.code) { toast.error("Code required"); return; }
     const percentNum = percentInput.trim() === "" ? null : Math.max(0, Math.min(100, Math.floor(Number(percentInput))));
