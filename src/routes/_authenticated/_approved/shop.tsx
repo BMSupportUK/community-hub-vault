@@ -1357,7 +1357,7 @@ const STATUS_COLOR: Record<string, string> = {
 
 function OrdersView({ selectedId, isAdmin }: { selectedId?: string; isAdmin: boolean }) {
   const [orders, setOrders] = useState<Order[]>([]);
-  const [scope, setScope] = useState<"mine" | "all">("mine");
+  const [scope, setScope] = useState<"mine" | "all">(isAdmin ? "all" : "mine");
   const navigate = useNavigate();
   const { user } = useAuth();
 
