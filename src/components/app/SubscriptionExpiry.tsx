@@ -3,11 +3,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { CalendarClock } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useUserTimezone } from "@/hooks/use-user-timezone";
 
 type Cred = { app_login_name: string | null; expiry_at: string | null };
 
 export function SubscriptionExpiry() {
   const { user } = useAuth();
+  const tz = useUserTimezone();
   const [creds, setCreds] = useState<Cred[]>([]);
   const [loaded, setLoaded] = useState(false);
 
@@ -42,7 +44,6 @@ export function SubscriptionExpiry() {
   const items = creds.filter((c) => c.expiry_at);
   if (!loaded || items.length === 0) return null;
 
-  const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const fmt = (d: Date) =>
     d.toLocaleString(undefined, {
       weekday: "short", day: "numeric", month: "short", year: "numeric",
