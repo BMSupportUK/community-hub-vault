@@ -403,7 +403,7 @@ function Storefront() {
     }
     return ["All", ...merged];
   }, [products, dbCategories]);
-  const [cat, setCat] = useState("All");
+  const [cat, setCat] = useState("Single Account");
   const filtered = cat === "All" ? products : products.filter((p) => p.category === cat);
 
   // Group products by category for the "All" view (professional store layout)
