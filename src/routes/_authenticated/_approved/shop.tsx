@@ -1485,8 +1485,13 @@ function OrderDetail({ orderId, isAdmin }: { orderId: string; isAdmin: boolean }
   };
 
   const removeItem = async (itemId: string, productName: string) => {
-    if (!order || order.status === "completed" || !!order.completed_at) {
-      toast.error("This order is completed and cannot be changed.");
+    if (!order) return;
+    const isOwner = order.user_id === user?.id;
+    const canRemove = isAdmin
+      ? order.status !== "completed" && !order.completed_at
+      : isOwner && order.status === "pending" && !order.paid_at && !order.completed_at;
+    if (!canRemove) {
+      toast.error("This order can no longer be edited.");
       return;
     }
     if (items.length <= 1) {
@@ -1557,7 +1562,8 @@ function OrderDetail({ orderId, isAdmin }: { orderId: string; isAdmin: boolean }
                 <div key={i.id} className="flex justify-between items-center gap-2 group">
                   <span className="min-w-0 flex-1 truncate">{i.product_name} <span className="text-muted-foreground">× {i.quantity}</span></span>
                   <span className="shrink-0">{fmt(i.unit_price_cents * i.quantity)}</span>
-                  {isAdmin && !order.completed_at && (
+                  {((isAdmin && !order.completed_at) ||
+                    (order.user_id === user?.id && order.status === "pending" && !order.paid_at && !order.completed_at)) && (
                     <button
                       onClick={() => removeItem(i.id, i.product_name)}
                       className="shrink-0 p-1 rounded text-muted-foreground hover:text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition"
