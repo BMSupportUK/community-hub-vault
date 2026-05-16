@@ -84,7 +84,9 @@ function SportsGuidesPage() {
     }
     setBaselineAt(baseline);
     setReads(map);
-    if (!activeCat && cats?.length) setActiveCat(cats[0].id);
+    if (cats?.length) {
+      setActiveCat((cur) => cur ?? catFromUrl ?? cats[0].id);
+    }
   };
 
   useEffect(() => {
