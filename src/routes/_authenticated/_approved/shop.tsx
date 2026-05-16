@@ -1575,6 +1575,10 @@ function AdminProducts() {
               </Field>
               <Field label="Image URL"><input value={editing.image_url ?? ""} onChange={(e) => setEditing({ ...editing, image_url: e.target.value })} className="w-full px-3 py-2 rounded-lg bg-surface-2 text-sm border border-border outline-none" /></Field>
               <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={editing.is_active ?? true} onChange={(e) => setEditing({ ...editing, is_active: e.target.checked })} /> Active</label>
+              <label className="flex items-center gap-2 text-sm">
+                <input type="checkbox" checked={editing.is_recommended ?? false} onChange={(e) => setEditing({ ...editing, is_recommended: e.target.checked })} />
+                <Sparkles className="size-3.5 text-amber-400" /> Recommended (shows sticker on storefront)
+              </label>
             </div>
             <div className="p-5 border-t border-border flex justify-end gap-2">
               <button onClick={() => setEditing(null)} className="px-4 py-2 rounded-lg bg-surface-2 text-sm">Cancel</button>
