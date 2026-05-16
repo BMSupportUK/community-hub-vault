@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import mentionAudio from "@/assets/mention-notify.mp3";
 import outageAudio from "@/assets/outage-notify.mp3";
 import broadcastAudio from "@/assets/broadcast-notify.mp3";
+import staffMentionAudio from "@/assets/staff-mention.mp3";
 
 type Notif = {
   id: string;
@@ -93,14 +94,16 @@ export function NotificationBell() {
           };
           setItems((prev) => [n, ...prev].slice(0, 80));
           if (n.kind === "mention") {
-            // @all / @here / non-staff role mentions get the broadcast sound
             const staffRoles = ["admin", "management", "moderator", "staff"];
             const broadcastMatch = /mentioned @([a-zA-Z0-9_.-]+)/.exec(n.title);
             const token = broadcastMatch?.[1]?.toLowerCase();
+            const isStaffRole = !!token && staffRoles.includes(token);
             const isBroadcast =
-              !!token && (token === "all" || token === "here" || !staffRoles.includes(token));
+              !!token && !isStaffRole && (token === "all" || token === "here" || !staffRoles.includes(token));
             try {
-              const audio = new Audio(isBroadcast ? broadcastAudio : mentionAudio);
+              const audio = new Audio(
+                isStaffRole ? staffMentionAudio : isBroadcast ? broadcastAudio : mentionAudio,
+              );
               audio.volume = 0.9;
               void audio.play().catch(() => { /* autoplay may be blocked; ignore */ });
             } catch { /* ignore */ }
