@@ -1648,6 +1648,20 @@ export type Database = {
         Returns: undefined
       }
       delete_app_role: { Args: { _name: string }; Returns: undefined }
+      export_app_credentials_for_backup: {
+        Args: never
+        Returns: {
+          app_login_name: string
+          created_at: string
+          created_by: string
+          expiry_at: string
+          id: string
+          notes: string
+          owner_id: string
+          password: string
+          updated_at: string
+        }[]
+      }
       get_invite_leaderboard: {
         Args: never
         Returns: {

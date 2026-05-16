@@ -42,6 +42,7 @@ import { Route as AuthenticatedApprovedAdminCredentialsRouteImport } from './rou
 import { Route as AuthenticatedApprovedAdminRouteImport } from './routes/_authenticated/_approved/admin'
 import { Route as AuthenticatedApprovedHomeIndexRouteImport } from './routes/_authenticated/_approved/home.index'
 import { Route as ApiPublicHooksBackupOrdersRouteImport } from './routes/api/public/hooks/backup-orders'
+import { Route as ApiPublicHooksBackupCredentialsRouteImport } from './routes/api/public/hooks/backup-credentials'
 import { Route as AuthenticatedApprovedUUsernameRouteImport } from './routes/_authenticated/_approved/u.$username'
 import { Route as AuthenticatedApprovedSportsGuidesNewRouteImport } from './routes/_authenticated/_approved/sports-guides.new'
 import { Route as AuthenticatedApprovedHomeChannelRouteImport } from './routes/_authenticated/_approved/home.$channel'
@@ -235,6 +236,12 @@ const ApiPublicHooksBackupOrdersRoute =
     path: '/api/public/hooks/backup-orders',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksBackupCredentialsRoute =
+  ApiPublicHooksBackupCredentialsRouteImport.update({
+    id: '/api/public/hooks/backup-credentials',
+    path: '/api/public/hooks/backup-credentials',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AuthenticatedApprovedUUsernameRoute =
   AuthenticatedApprovedUUsernameRouteImport.update({
     id: '/u/$username',
@@ -299,6 +306,7 @@ export interface FileRoutesByFullPath {
   '/home/$channel': typeof AuthenticatedApprovedHomeChannelRoute
   '/sports-guides/new': typeof AuthenticatedApprovedSportsGuidesNewRoute
   '/u/$username': typeof AuthenticatedApprovedUUsernameRoute
+  '/api/public/hooks/backup-credentials': typeof ApiPublicHooksBackupCredentialsRoute
   '/api/public/hooks/backup-orders': typeof ApiPublicHooksBackupOrdersRoute
   '/home/': typeof AuthenticatedApprovedHomeIndexRoute
   '/sports-guides/$id/edit': typeof AuthenticatedApprovedSportsGuidesIdEditRoute
@@ -336,6 +344,7 @@ export interface FileRoutesByTo {
   '/home/$channel': typeof AuthenticatedApprovedHomeChannelRoute
   '/sports-guides/new': typeof AuthenticatedApprovedSportsGuidesNewRoute
   '/u/$username': typeof AuthenticatedApprovedUUsernameRoute
+  '/api/public/hooks/backup-credentials': typeof ApiPublicHooksBackupCredentialsRoute
   '/api/public/hooks/backup-orders': typeof ApiPublicHooksBackupOrdersRoute
   '/home': typeof AuthenticatedApprovedHomeIndexRoute
   '/sports-guides/$id/edit': typeof AuthenticatedApprovedSportsGuidesIdEditRoute
@@ -377,6 +386,7 @@ export interface FileRoutesById {
   '/_authenticated/_approved/home/$channel': typeof AuthenticatedApprovedHomeChannelRoute
   '/_authenticated/_approved/sports-guides/new': typeof AuthenticatedApprovedSportsGuidesNewRoute
   '/_authenticated/_approved/u/$username': typeof AuthenticatedApprovedUUsernameRoute
+  '/api/public/hooks/backup-credentials': typeof ApiPublicHooksBackupCredentialsRoute
   '/api/public/hooks/backup-orders': typeof ApiPublicHooksBackupOrdersRoute
   '/_authenticated/_approved/home/': typeof AuthenticatedApprovedHomeIndexRoute
   '/_authenticated/_approved/sports-guides/$id/edit': typeof AuthenticatedApprovedSportsGuidesIdEditRoute
@@ -417,6 +427,7 @@ export interface FileRouteTypes {
     | '/home/$channel'
     | '/sports-guides/new'
     | '/u/$username'
+    | '/api/public/hooks/backup-credentials'
     | '/api/public/hooks/backup-orders'
     | '/home/'
     | '/sports-guides/$id/edit'
@@ -454,6 +465,7 @@ export interface FileRouteTypes {
     | '/home/$channel'
     | '/sports-guides/new'
     | '/u/$username'
+    | '/api/public/hooks/backup-credentials'
     | '/api/public/hooks/backup-orders'
     | '/home'
     | '/sports-guides/$id/edit'
@@ -494,6 +506,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/home/$channel'
     | '/_authenticated/_approved/sports-guides/new'
     | '/_authenticated/_approved/u/$username'
+    | '/api/public/hooks/backup-credentials'
     | '/api/public/hooks/backup-orders'
     | '/_authenticated/_approved/home/'
     | '/_authenticated/_approved/sports-guides/$id/edit'
@@ -507,6 +520,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SignupRoute: typeof SignupRoute
+  ApiPublicHooksBackupCredentialsRoute: typeof ApiPublicHooksBackupCredentialsRoute
   ApiPublicHooksBackupOrdersRoute: typeof ApiPublicHooksBackupOrdersRoute
 }
 
@@ -743,6 +757,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksBackupOrdersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/backup-credentials': {
+      id: '/api/public/hooks/backup-credentials'
+      path: '/api/public/hooks/backup-credentials'
+      fullPath: '/api/public/hooks/backup-credentials'
+      preLoaderRoute: typeof ApiPublicHooksBackupCredentialsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/_approved/u/$username': {
       id: '/_authenticated/_approved/u/$username'
       path: '/u/$username'
@@ -906,6 +927,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SignupRoute: SignupRoute,
+  ApiPublicHooksBackupCredentialsRoute: ApiPublicHooksBackupCredentialsRoute,
   ApiPublicHooksBackupOrdersRoute: ApiPublicHooksBackupOrdersRoute,
 }
 export const routeTree = rootRouteImport
