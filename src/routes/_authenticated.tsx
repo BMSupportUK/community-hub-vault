@@ -49,7 +49,7 @@ function AuthLayout() {
 
   // Pending users are locked to /gate
   if (isPending && !path.startsWith("/gate")) {
-    return <Navigate to="/gate" search={{ chat: 1 } as never} />;
+    return <Navigate to="/gate" />;
   }
 
   return (
