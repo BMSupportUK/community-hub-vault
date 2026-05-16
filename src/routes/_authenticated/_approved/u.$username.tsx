@@ -18,6 +18,10 @@ import { Button } from "@/components/ui/button";
 import { listTimeZones } from "@/hooks/use-user-timezone";
 
 export const Route = createFileRoute("/_authenticated/_approved/u/$username")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    tab: typeof search.tab === "string" ? (search.tab as string) : undefined,
+    edit: search.edit ? 1 : undefined,
+  }),
   component: ProfilePage,
 });
 
@@ -99,6 +103,7 @@ function fmt(s: number) {
 
 function ProfilePage() {
   const { username } = Route.useParams();
+  const search = Route.useSearch();
   const { user: viewer, hasAny } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
   const { format: fmtCurrency } = useCurrency();
@@ -118,7 +123,8 @@ function ProfilePage() {
   const [friends, setFriends] = useState<FriendRow[]>([]);
   const [rel, setRel] = useState<FriendRel>({ kind: "none" });
   const [relBusy, setRelBusy] = useState(false);
-  const [mainTab, setMainTab] = useState<"welcome" | "profile" | "creds" | "tickets" | "orders" | "referrals" | "friends">("welcome");
+  const initialTab = (["welcome","profile","creds","tickets","orders","referrals","friends"].includes(search.tab ?? "") ? search.tab : "welcome") as "welcome" | "profile" | "creds" | "tickets" | "orders" | "referrals" | "friends";
+  const [mainTab, setMainTab] = useState<"welcome" | "profile" | "creds" | "tickets" | "orders" | "referrals" | "friends">(initialTab);
 
   const isOwner = !!profile && !!viewer && profile.id === viewer.id;
   const canSeeCreds = isOwner || isAdmin;
