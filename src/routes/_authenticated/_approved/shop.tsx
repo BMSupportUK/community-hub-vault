@@ -253,6 +253,37 @@ function defaultTitle(k: PolicyKey) {
   return "Triple-room Usage Rules";
 }
 
+function ProductCard({ p, qty, onAdd, onSub }: { p: Product; qty: number; onAdd: () => void; onSub: () => void }) {
+  const fmt = _currentFmt;
+  return (
+    <div className="group bg-surface rounded-xl overflow-hidden border border-border hover:border-sky-400/50 hover:shadow-lg hover:shadow-blue-500/10 transition-all flex flex-col">
+      <div className="aspect-square bg-surface-2 grid place-items-center overflow-hidden relative">
+        {p.image_url ? <img src={p.image_url} alt={p.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" /> : <ImageIcon className="size-10 text-muted-foreground/40" />}
+        {p.stock !== null && p.stock <= 0 && (
+          <div className="absolute top-2 left-2 text-[10px] uppercase tracking-wider bg-red-500/90 text-white px-2 py-0.5 rounded">Out of stock</div>
+        )}
+      </div>
+      <div className="p-4 flex flex-col flex-1">
+        {p.category && <div className="text-[10px] uppercase tracking-wider text-sky-300 mb-1">{p.category}</div>}
+        <h3 className="font-semibold text-sm">{p.name}</h3>
+        {p.description && <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{p.description}</p>}
+        <div className="mt-auto pt-3 flex items-center justify-between">
+          <span className="font-display font-bold text-lg bg-gradient-to-r from-violet-600 to-blue-600 bg-clip-text text-transparent">{fmt(p.price_cents)}</span>
+          {qty ? (
+            <div className="flex items-center gap-1 bg-surface-2 rounded-lg">
+              <button onClick={onSub} className="size-7 grid place-items-center hover:text-sky-400"><Minus className="size-3.5" /></button>
+              <span className="text-sm font-medium w-5 text-center">{qty}</span>
+              <button onClick={onAdd} className="size-7 grid place-items-center hover:text-sky-400"><Plus className="size-3.5" /></button>
+            </div>
+          ) : (
+            <button onClick={onAdd} className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-blue-600 text-white text-xs font-medium hover:opacity-90 shadow shadow-blue-500/20">Place Order</button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ============ STOREFRONT ============
 function Storefront() {
   const [products, setProducts] = useState<Product[]>([]);
