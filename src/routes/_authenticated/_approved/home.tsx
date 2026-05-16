@@ -1,10 +1,16 @@
-import { createFileRoute, Outlet, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Hash } from "lucide-react";
 import { ChannelColumn, type ChannelGroup } from "@/components/app/ChannelColumn";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -29,6 +35,7 @@ function HomeLayout() {
   const { hasAny, user } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
   const navigate = useNavigate();
+  const path = useRouterState({ select: (r) => r.location.pathname });
   const [channels, setChannels] = useState<ChannelRow[] | null>(null);
   const [mentionCounts, setMentionCounts] = useState<Record<string, number>>({});
   const [addChannelGroup, setAddChannelGroup] = useState<string | null>(null);
@@ -62,7 +69,10 @@ function HomeLayout() {
     setCategoryIcons(v);
   };
 
-  useEffect(() => { load(); loadCategoryIcons(); }, []);
+  useEffect(() => {
+    load();
+    loadCategoryIcons();
+  }, []);
 
   const saveChannelIcon = async (iconName: string): Promise<void> => {
     if (!editChannelIcon) return;
@@ -70,7 +80,10 @@ function HomeLayout() {
       .from("chat_channels")
       .update({ icon: iconName })
       .eq("id", editChannelIcon.id);
-    if (error) { toast.error(error.message); return; }
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     toast.success("Icon updated");
     load();
   };
@@ -84,41 +97,69 @@ function HomeLayout() {
         { key: "category_icons", value: next, updated_at: new Date().toISOString() },
         { onConflict: "key" },
       );
-    if (error) { toast.error(error.message); return; }
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     setCategoryIcons(next);
     toast.success("Icon updated");
   };
 
   useEffect(() => {
     if (!user) return;
+    const uid = user.id;
     const loadCounts = async () => {
       const { data } = await supabase
         .from("user_notifications")
         .select("link_path")
-        .eq("user_id", user.id)
+        .eq("user_id", uid)
         .eq("kind", "mention")
         .is("read_at", null);
       const map: Record<string, number> = {};
       (data ?? []).forEach((r: { link_path: string | null }) => {
         if (!r.link_path) return;
+        if (r.link_path === path) return;
         map[r.link_path] = (map[r.link_path] ?? 0) + 1;
       });
       setMentionCounts(map);
     };
     loadCounts();
     const ch = supabase
-      .channel(`home-mentions-${user.id}`)
+      .channel(`home-mentions-${uid}`)
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "user_notifications", filter: `user_id=eq.${user.id}` },
+        { event: "*", schema: "public", table: "user_notifications", filter: `user_id=eq.${uid}` },
         () => loadCounts(),
       )
       .subscribe();
-    return () => { supabase.removeChannel(ch); };
-  }, [user]);
+    return () => {
+      supabase.removeChannel(ch);
+    };
+  }, [path, user?.id]);
+
+  // Clear the visible per-channel mention badge as soon as that channel is opened.
+  useEffect(() => {
+    if (!user || !path.startsWith("/home/")) return;
+    setMentionCounts((prev) => {
+      if (!prev[path]) return prev;
+      const next = { ...prev };
+      delete next[path];
+      return next;
+    });
+    void supabase
+      .from("user_notifications")
+      .delete()
+      .eq("user_id", user.id)
+      .eq("kind", "mention")
+      .eq("link_path", path);
+  }, [path, user]);
 
   const slugify = (s: string) =>
-    s.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || `ch-${Date.now()}`;
+    s
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "") || `ch-${Date.now()}`;
 
   const createChannel = async () => {
     if (!addChannelGroup || !chName.trim()) return;
@@ -174,7 +215,13 @@ function HomeLayout() {
     const inGroup = (channels ?? []).filter((c) => c.group_label === label);
     if (!inGroup.length) return;
     if (!confirm(`Delete category "${label}" and its ${inGroup.length} channel(s)?`)) return;
-    const { error } = await supabase.from("chat_channels").delete().in("id", inGroup.map((c) => c.id));
+    const { error } = await supabase
+      .from("chat_channels")
+      .delete()
+      .in(
+        "id",
+        inGroup.map((c) => c.id),
+      );
     if (error) return toast.error(error.message);
     toast.success("Category deleted");
     load();
@@ -199,9 +246,15 @@ function HomeLayout() {
     if (!renameCategory) return;
     const next = renameCategoryName.trim();
     if (!next) return toast.error("Name cannot be empty");
-    if (next === renameCategory) { setRenameCategory(null); return; }
+    if (next === renameCategory) {
+      setRenameCategory(null);
+      return;
+    }
     const ids = (channels ?? []).filter((c) => c.group_label === renameCategory).map((c) => c.id);
-    if (ids.length === 0) { setRenameCategory(null); return; }
+    if (ids.length === 0) {
+      setRenameCategory(null);
+      return;
+    }
     const { error } = await supabase
       .from("chat_channels")
       .update({ group_label: next })
@@ -248,11 +301,19 @@ function HomeLayout() {
           ? (to) => {
               const slug = to.replace("/home/", "");
               const ch = channels?.find((x) => x.slug === slug);
-              if (ch) navigate({ to: "/admin-permissions", search: { tab: "channels", channel: ch.id } as never });
+              if (ch)
+                navigate({
+                  to: "/admin-permissions",
+                  search: { tab: "channels", channel: ch.id } as never,
+                });
             }
           : undefined,
         onEditGroupPerms: isAdmin
-          ? () => navigate({ to: "/admin-permissions", search: { tab: "channels", group: label } as never })
+          ? () =>
+              navigate({
+                to: "/admin-permissions",
+                search: { tab: "channels", group: label } as never,
+              })
           : undefined,
         onEditItemIcon: isAdmin
           ? (to) => {
@@ -266,11 +327,17 @@ function HomeLayout() {
           ? (to) => {
               const slug = to.replace("/home/", "");
               const ch = channels?.find((x) => x.slug === slug);
-              if (ch) { setRenameChannel(ch); setRenameChannelName(ch.name); }
+              if (ch) {
+                setRenameChannel(ch);
+                setRenameChannelName(ch.name);
+              }
             }
           : undefined,
         onRenameGroup: isAdmin
-          ? () => { setRenameCategory(label); setRenameCategoryName(label); }
+          ? () => {
+              setRenameCategory(label);
+              setRenameCategoryName(label);
+            }
           : undefined,
       });
     }
@@ -293,15 +360,26 @@ function HomeLayout() {
           <div className="space-y-3">
             <div>
               <Label>Channel name</Label>
-              <Input autoFocus value={chName} onChange={(e) => setChName(e.target.value)} placeholder="general" />
+              <Input
+                autoFocus
+                value={chName}
+                onChange={(e) => setChName(e.target.value)}
+                placeholder="general"
+              />
             </div>
             <label className="flex items-center gap-2 text-sm">
-              <input type="checkbox" checked={chStaffOnly} onChange={(e) => setChStaffOnly(e.target.checked)} />
+              <input
+                type="checkbox"
+                checked={chStaffOnly}
+                onChange={(e) => setChStaffOnly(e.target.checked)}
+              />
               Staff-only channel
             </label>
           </div>
           <DialogFooter>
-            <Button variant="ghost" onClick={() => setAddChannelGroup(null)}>Cancel</Button>
+            <Button variant="ghost" onClick={() => setAddChannelGroup(null)}>
+              Cancel
+            </Button>
             <Button onClick={createChannel}>Create</Button>
           </DialogFooter>
         </DialogContent>
@@ -315,12 +393,21 @@ function HomeLayout() {
           <div className="space-y-3">
             <div>
               <Label>Category name</Label>
-              <Input autoFocus value={groupName} onChange={(e) => setGroupName(e.target.value)} placeholder="Community" />
-              <p className="text-xs text-muted-foreground mt-1">A starter "general" channel will be created in this category.</p>
+              <Input
+                autoFocus
+                value={groupName}
+                onChange={(e) => setGroupName(e.target.value)}
+                placeholder="Community"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                A starter "general" channel will be created in this category.
+              </p>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="ghost" onClick={() => setShowAddGroup(false)}>Cancel</Button>
+            <Button variant="ghost" onClick={() => setShowAddGroup(false)}>
+              Cancel
+            </Button>
             <Button onClick={createGroup}>Create</Button>
           </DialogFooter>
         </DialogContent>
@@ -354,12 +441,16 @@ function HomeLayout() {
                 autoFocus
                 value={renameChannelName}
                 onChange={(e) => setRenameChannelName(e.target.value)}
-                onKeyDown={(e) => { if (e.key === "Enter") saveChannelRename(); }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") saveChannelRename();
+                }}
               />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="ghost" onClick={() => setRenameChannel(null)}>Cancel</Button>
+            <Button variant="ghost" onClick={() => setRenameChannel(null)}>
+              Cancel
+            </Button>
             <Button onClick={saveChannelRename}>Save</Button>
           </DialogFooter>
         </DialogContent>
@@ -377,12 +468,16 @@ function HomeLayout() {
                 autoFocus
                 value={renameCategoryName}
                 onChange={(e) => setRenameCategoryName(e.target.value)}
-                onKeyDown={(e) => { if (e.key === "Enter") saveCategoryRename(); }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") saveCategoryRename();
+                }}
               />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="ghost" onClick={() => setRenameCategory(null)}>Cancel</Button>
+            <Button variant="ghost" onClick={() => setRenameCategory(null)}>
+              Cancel
+            </Button>
             <Button onClick={saveCategoryRename}>Save</Button>
           </DialogFooter>
         </DialogContent>
