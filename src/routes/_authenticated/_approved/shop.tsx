@@ -1979,7 +1979,10 @@ function CurrencySettingsCard() {
 function AdminDiscounts() {
   const [codes, setCodes] = useState<DiscountCode[]>([]);
   const [users, setUsers] = useState<{ id: string; username: string | null; display_name: string | null }[]>([]);
-  const [editing, setEditing] = useState<Partial<DiscountCode> | null>(null);
+  const [products, setProducts] = useState<{ id: string; name: string; is_active: boolean }[]>([]);
+  const [editing, setEditing] = useState<Partial<DiscountCodeWithProducts> | null>(null);
+  const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
+  const [productQuery, setProductQuery] = useState("");
   const [percentInput, setPercentInput] = useState("");
   const [amountInput, setAmountInput] = useState("");
 
@@ -1987,9 +1990,20 @@ function AdminDiscounts() {
     if (editing) {
       setPercentInput(editing.percent != null ? String(editing.percent) : "");
       setAmountInput(editing.amount_cents != null ? (editing.amount_cents / 100).toFixed(2) : "");
+      if (editing.id) {
+        supabase
+          .from("discount_code_products")
+          .select("product_id")
+          .eq("discount_code_id", editing.id)
+          .then(({ data }) => setSelectedProductIds((data ?? []).map((r: { product_id: string }) => r.product_id)));
+      } else {
+        setSelectedProductIds([]);
+      }
+      setProductQuery("");
     } else {
       setPercentInput("");
       setAmountInput("");
+      setSelectedProductIds([]);
     }
   }, [editing?.id, editing]);
 
@@ -2000,6 +2014,7 @@ function AdminDiscounts() {
   useEffect(() => {
     load();
     supabase.from("profiles").select("id,username,display_name").order("username").then(({ data }) => setUsers(data ?? []));
+    supabase.from("products").select("id,name,is_active").order("name").then(({ data }) => setProducts((data ?? []) as { id: string; name: string; is_active: boolean }[]));
   }, []);
 
   const save = async () => {
@@ -2016,10 +2031,22 @@ function AdminDiscounts() {
       user_id: editing.user_id ?? null,
       is_active: editing.is_active ?? true,
     };
-    const { error } = editing.id
-      ? await supabase.from("discount_codes").update(payload).eq("id", editing.id)
-      : await supabase.from("discount_codes").insert(payload);
-    if (error) { toast.error(error.message); return; }
+    let codeId = editing.id;
+    if (codeId) {
+      const { error } = await supabase.from("discount_codes").update(payload).eq("id", codeId);
+      if (error) { toast.error(error.message); return; }
+    } else {
+      const { data, error } = await supabase.from("discount_codes").insert(payload).select("id").single();
+      if (error || !data) { toast.error(error?.message ?? "Failed to save"); return; }
+      codeId = data.id;
+    }
+    // Sync product restrictions
+    await supabase.from("discount_code_products").delete().eq("discount_code_id", codeId);
+    if (selectedProductIds.length > 0) {
+      const rows = selectedProductIds.map((pid) => ({ discount_code_id: codeId!, product_id: pid }));
+      const { error: linkErr } = await supabase.from("discount_code_products").insert(rows);
+      if (linkErr) { toast.error(linkErr.message); return; }
+    }
     toast.success("Saved"); setEditing(null); load();
   };
   const remove = async (id: string) => {
