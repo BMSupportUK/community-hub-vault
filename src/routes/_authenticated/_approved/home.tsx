@@ -1,4 +1,4 @@
-import { createFileRoute, Outlet, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Hash } from "lucide-react";
 import { ChannelColumn, type ChannelGroup } from "@/components/app/ChannelColumn";
@@ -29,6 +29,7 @@ function HomeLayout() {
   const { hasAny, user } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
   const navigate = useNavigate();
+  const path = useRouterState({ select: (r) => r.location.pathname });
   const [channels, setChannels] = useState<ChannelRow[] | null>(null);
   const [mentionCounts, setMentionCounts] = useState<Record<string, number>>({});
   const [addChannelGroup, setAddChannelGroup] = useState<string | null>(null);
@@ -116,6 +117,23 @@ function HomeLayout() {
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, [user]);
+
+  // Clear the visible per-channel mention badge as soon as that channel is opened.
+  useEffect(() => {
+    if (!user || !path.startsWith("/home/")) return;
+    setMentionCounts((prev) => {
+      if (!prev[path]) return prev;
+      const next = { ...prev };
+      delete next[path];
+      return next;
+    });
+    void supabase
+      .from("user_notifications")
+      .delete()
+      .eq("user_id", user.id)
+      .eq("kind", "mention")
+      .eq("link_path", path);
+  }, [path, user?.id]);
 
   const slugify = (s: string) =>
     s.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || `ch-${Date.now()}`;
