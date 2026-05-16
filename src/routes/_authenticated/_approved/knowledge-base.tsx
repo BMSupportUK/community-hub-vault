@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Plus, Search, X, Pencil, Trash2, GripVertical, BookOpen, ChevronRight,
-  ArrowLeft, Sparkles, Save, Loader2, FolderPlus, Eye, EyeOff,
+  ArrowLeft, Save, Loader2, FolderPlus, Eye, EyeOff, Star,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -34,14 +34,45 @@ type Article = {
   created_at: string;
 };
 type Welcome = { title: string; body: string };
+type RatingRow = { article_id: string; user_id: string; rating: number };
 
 function slugify(s: string) {
   return s.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || `item-${Date.now()}`;
 }
 
+function StarRating({
+  value, onChange, size = 16, readOnly = false,
+}: { value: number; onChange?: (n: number) => void; size?: number; readOnly?: boolean }) {
+  const [hover, setHover] = useState(0);
+  const display = hover || value;
+  return (
+    <div className="inline-flex items-center gap-0.5" onMouseLeave={() => setHover(0)}>
+      {[1, 2, 3, 4, 5].map((n) => {
+        const filled = n <= display;
+        return (
+          <button
+            key={n}
+            type="button"
+            disabled={readOnly}
+            onMouseEnter={() => !readOnly && setHover(n)}
+            onClick={() => !readOnly && onChange?.(n)}
+            className={cn("p-0.5 rounded transition-transform", !readOnly && "hover:scale-110 cursor-pointer", readOnly && "cursor-default")}
+            aria-label={`${n} star${n === 1 ? "" : "s"}`}
+          >
+            <Star
+              style={{ width: size, height: size }}
+              className={cn(filled ? "fill-amber-400 text-amber-400" : "text-muted-foreground/40")}
+            />
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 function KnowledgeBasePage() {
   const { isMod, user } = useAuth();
-  const [tab, setTab] = useState("home");
+  const [tab, setTab] = useState("welcome");
   const [categories, setCategories] = useState<Category[]>([]);
   const [articles, setArticles] = useState<Article[]>([]);
   const [welcome, setWelcome] = useState<Welcome>({ title: "", body: "" });
@@ -54,28 +85,31 @@ function KnowledgeBasePage() {
   const [editingCat, setEditingCat] = useState<Category | null>(null);
   const [showCatEditor, setShowCatEditor] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [ratings, setRatings] = useState<RatingRow[]>([]);
   const dragCatId = useRef<string | null>(null);
   const dragArtId = useRef<string | null>(null);
 
   const load = async () => {
     setLoading(true);
-    const [{ data: cats }, { data: arts }, { data: setting }] = await Promise.all([
+    const [{ data: cats }, { data: arts }, { data: setting }, { data: rs }] = await Promise.all([
       supabase.from("kb_categories").select("*").order("sort_order"),
       supabase.from("kb_articles").select("*").order("sort_order").order("created_at", { ascending: false }),
       supabase.from("app_settings").select("value").eq("key", "kb_welcome").maybeSingle(),
+      supabase.from("kb_article_ratings").select("article_id, user_id, rating"),
     ]);
     setCategories((cats ?? []) as Category[]);
     setArticles((arts ?? []) as Article[]);
+    setRatings((rs ?? []) as RatingRow[]);
     const w = (setting?.value as Welcome | null) ?? null;
     setWelcome({
       title: w?.title ?? "Welcome to the Knowledge Base",
       body: w?.body ?? "Search our guides or browse by category to find answers fast.",
     });
-    if (cats?.length && !activeCat) setActiveCat(cats[0].id);
+    if (cats?.length) setActiveCat((cur) => cur ?? cats[0].id);
     setLoading(false);
   };
 
-  useEffect(() => { load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, []);
+  useEffect(() => { load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [user?.id]);
 
   const counts = useMemo(() => {
     const m: Record<string, number> = {};
@@ -83,10 +117,42 @@ function KnowledgeBasePage() {
     return m;
   }, [articles]);
 
+  const ratingStats = useMemo(() => {
+    const m: Record<string, { avg: number; count: number }> = {};
+    const buckets: Record<string, number[]> = {};
+    for (const r of ratings) {
+      (buckets[r.article_id] ??= []).push(r.rating);
+    }
+    for (const [id, list] of Object.entries(buckets)) {
+      const sum = list.reduce((a, b) => a + b, 0);
+      m[id] = { avg: sum / list.length, count: list.length };
+    }
+    return m;
+  }, [ratings]);
+
+  const myRatingFor = (articleId: string) =>
+    user?.id ? ratings.find((r) => r.article_id === articleId && r.user_id === user.id)?.rating ?? 0 : 0;
+
+  const rateArticle = async (articleId: string, rating: number) => {
+    if (!user?.id) return toast.error("Sign in to rate");
+    // optimistic
+    setRatings((prev) => {
+      const others = prev.filter((r) => !(r.article_id === articleId && r.user_id === user.id));
+      return [...others, { article_id: articleId, user_id: user.id, rating }];
+    });
+    const { error } = await supabase
+      .from("kb_article_ratings")
+      .upsert({ article_id: articleId, user_id: user.id, rating }, { onConflict: "article_id,user_id" });
+    if (error) {
+      toast.error(error.message);
+      load();
+    }
+  };
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return articles.filter((a) => {
-      if (activeCat && a.category_id !== activeCat) return false;
+      if (!q && activeCat && a.category_id !== activeCat) return false;
       if (!isMod && !a.published) return false;
       if (!q) return true;
       return (
@@ -96,19 +162,6 @@ function KnowledgeBasePage() {
       );
     });
   }, [articles, activeCat, search, isMod]);
-
-  const searchAll = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (!q) return [] as Article[];
-    return articles.filter((a) => {
-      if (!isMod && !a.published) return false;
-      return (
-        a.title.toLowerCase().includes(q) ||
-        (a.excerpt ?? "").toLowerCase().includes(q) ||
-        (a.body ?? "").toLowerCase().includes(q)
-      );
-    }).slice(0, 8);
-  }, [articles, search, isMod]);
 
   const activeCategory = categories.find((c) => c.id === activeCat) ?? null;
 
@@ -232,8 +285,10 @@ function KnowledgeBasePage() {
 
   // ---------- Reading view ----------
   if (reading) {
+    const stats = ratingStats[reading.id];
+    const mine = myRatingFor(reading.id);
     return (
-      <main className="flex-1 overflow-y-auto">
+      <main className="flex-1 overflow-y-auto bg-background">
         <div className="max-w-3xl mx-auto px-6 py-8">
           <button onClick={() => setReading(null)} className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-6">
             <ArrowLeft className="size-4" /> Back to knowledge base
@@ -247,7 +302,21 @@ function KnowledgeBasePage() {
             {!reading.published && <span className="px-2 py-0.5 rounded-full bg-muted text-muted-foreground border border-border">Draft</span>}
           </div>
           <h1 className="font-display text-3xl font-bold mb-3">{reading.title}</h1>
-          {reading.excerpt && <p className="text-lg text-muted-foreground mb-6">{reading.excerpt}</p>}
+          {reading.excerpt && <p className="text-lg text-muted-foreground mb-4">{reading.excerpt}</p>}
+
+          <div className="flex flex-wrap items-center gap-3 mb-6 p-3 rounded-xl border border-border bg-surface-2/40">
+            <div className="flex items-center gap-2">
+              <StarRating value={Math.round(stats?.avg ?? 0)} readOnly size={16} />
+              <span className="text-sm text-muted-foreground">
+                {stats ? `${stats.avg.toFixed(1)} · ${stats.count} rating${stats.count === 1 ? "" : "s"}` : "No ratings yet"}
+              </span>
+            </div>
+            <div className="ml-auto flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">Your rating:</span>
+              <StarRating value={mine} onChange={(n) => rateArticle(reading.id, n)} size={20} />
+            </div>
+          </div>
+
           <article className="prose prose-invert max-w-none whitespace-pre-wrap text-foreground/90 leading-relaxed">
             {reading.body || <em className="text-muted-foreground">No content yet.</em>}
           </article>
@@ -269,85 +338,57 @@ function KnowledgeBasePage() {
 
   return (
     <main className="flex-1 overflow-y-auto bg-background">
-      {/* HERO */}
-      <section className="relative border-b border-border" style={{ background: "var(--gradient-primary)" }}>
-        <div className="max-w-5xl mx-auto px-6 py-14 text-primary-foreground">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 backdrop-blur border border-white/20 text-xs font-medium mb-4">
-            <Sparkles className="size-3.5" /> Help Center
-          </div>
-          <h1 className="font-display text-4xl md:text-5xl font-bold tracking-tight">{welcome.title}</h1>
-          <p className="mt-3 text-base md:text-lg text-primary-foreground/90 max-w-2xl">{welcome.body}</p>
+      <header className="px-8 pt-8 pb-6 border-b border-border bg-surface-2/40 backdrop-blur">
+        <h1 className="font-display text-3xl font-bold" style={{ backgroundImage: "var(--gradient-primary)", WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent" }}>
+          Knowledge Base
+        </h1>
+        <p className="text-muted-foreground mt-1">Guides, answers and how-tos — all in one place.</p>
+      </header>
 
-          <div className="relative mt-7 max-w-2xl">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-5 text-muted-foreground" />
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search articles…"
-              className="w-full pl-12 pr-4 py-3.5 rounded-xl bg-background text-foreground border border-border shadow-lg focus:outline-none focus:ring-2 focus:ring-primary"
-            />
-            {search && searchAll.length > 0 && (
-              <div className="absolute z-20 mt-2 w-full rounded-xl border border-border bg-popover shadow-xl overflow-hidden">
-                {searchAll.map((a) => (
-                  <button key={a.id} onClick={() => { setReading(a); setSearch(""); }} className="w-full text-left px-4 py-2.5 hover:bg-muted text-sm flex items-center justify-between gap-3">
-                    <div className="min-w-0">
-                      <div className="truncate font-medium">{a.title}</div>
-                      <div className="text-xs text-muted-foreground truncate">{categories.find((c) => c.id === a.category_id)?.name}</div>
-                    </div>
-                    <ChevronRight className="size-4 text-muted-foreground shrink-0" />
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      </section>
-
-      <div className="max-w-6xl mx-auto px-6 py-8">
-        <Tabs value={tab} onValueChange={setTab}>
+      <div className="px-8 py-6">
+        <Tabs value={tab} onValueChange={setTab} className="w-full">
           <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
-            <TabsList className="bg-surface-2/50 border border-border">
-              <TabsTrigger value="home">Home</TabsTrigger>
-              <TabsTrigger value="guides">All guides</TabsTrigger>
+            <TabsList className={`grid ${isMod ? "grid-cols-4" : "grid-cols-2"} max-w-2xl bg-surface-2/60 border border-border`}>
+              <TabsTrigger value="welcome">Welcome</TabsTrigger>
+              <TabsTrigger value="guides">Guides</TabsTrigger>
               {isMod && <TabsTrigger value="categories">Categories</TabsTrigger>}
-              {isMod && <TabsTrigger value="settings">Welcome message</TabsTrigger>}
+              {isMod && <TabsTrigger value="settings">Welcome msg</TabsTrigger>}
             </TabsList>
-            {isMod && tab !== "settings" && tab !== "categories" && (
+            {isMod && tab === "guides" && (
               <Button onClick={openNewArticle} className="gap-1.5">
                 <Plus className="size-4" /> New article
               </Button>
             )}
           </div>
 
-          {/* HOME — category cards */}
-          <TabsContent value="home" className="mt-0">
-            {loading ? (
-              <div className="py-16 grid place-items-center text-muted-foreground"><Loader2 className="size-5 animate-spin" /></div>
-            ) : categories.length === 0 ? (
-              <EmptyState text="No categories yet." cta={isMod ? { label: "Add category", onClick: openNewCategory } : undefined} />
-            ) : (
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {/* WELCOME */}
+          <TabsContent value="welcome" className="mt-0">
+            <div
+              className="rounded-2xl border border-border p-10 shadow-lg"
+              style={{ background: "var(--gradient-primary)" }}
+            >
+              <h2 className="font-display text-3xl font-bold text-primary-foreground">{welcome.title}</h2>
+              <p className="mt-3 text-lg text-primary-foreground/90 max-w-2xl">{welcome.body}</p>
+              <Button className="mt-6" variant="secondary" onClick={() => setTab("guides")}>
+                Browse guides
+              </Button>
+            </div>
+
+            {!loading && categories.length > 0 && (
+              <div className="mt-8 grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {categories.map((c) => {
                   const list = articles.filter((a) => a.category_id === c.id && (isMod || a.published));
                   return (
                     <button
                       key={c.id}
                       onClick={() => { setActiveCat(c.id); setTab("guides"); }}
-                      className="text-left rounded-2xl border border-border bg-surface-2/40 hover:bg-surface-2/70 hover:border-primary/50 hover:shadow-glow p-5 transition-all group"
+                      className="text-left rounded-2xl border border-border bg-surface-2/40 hover:bg-surface-2/70 hover:border-primary/50 hover:shadow-glow p-5 transition-all"
                     >
                       <div className="size-11 rounded-xl grid place-items-center mb-4" style={{ background: "var(--gradient-primary)" }}>
                         <BookOpen className="size-5 text-primary-foreground" />
                       </div>
                       <h3 className="font-display font-bold text-lg mb-1">{c.name}</h3>
-                      <p className="text-xs text-muted-foreground mb-3">{list.length} {list.length === 1 ? "article" : "articles"}</p>
-                      <div className="space-y-1.5">
-                        {list.slice(0, 3).map((a) => (
-                          <div key={a.id} className="text-sm text-foreground/80 truncate flex items-center gap-1.5">
-                            <ChevronRight className="size-3 text-primary shrink-0" /> {a.title}
-                          </div>
-                        ))}
-                        {list.length === 0 && <div className="text-xs text-muted-foreground italic">No articles yet</div>}
-                      </div>
+                      <p className="text-xs text-muted-foreground">{list.length} {list.length === 1 ? "article" : "articles"}</p>
                     </button>
                   );
                 })}
@@ -355,9 +396,9 @@ function KnowledgeBasePage() {
             )}
           </TabsContent>
 
-          {/* GUIDES — sidebar + cards */}
+          {/* GUIDES */}
           <TabsContent value="guides" className="mt-0">
-            <div className="grid lg:grid-cols-[260px_1fr] gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-6">
               <aside className="rounded-2xl border border-border bg-surface-2/40 p-3 h-fit">
                 <div className="flex items-center justify-between px-2 pb-2">
                   <h3 className="font-display font-semibold text-sm">Categories</h3>
@@ -390,8 +431,16 @@ function KnowledgeBasePage() {
               </aside>
 
               <section>
-                <div className="flex items-center justify-between gap-3 mb-4">
-                  <h2 className="font-display text-xl font-bold">{activeCategory?.name ?? "All articles"}</h2>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-6">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                    <Input
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      placeholder="Search articles…"
+                      className="pl-9"
+                    />
+                  </div>
                   {isMod && activeCategory && (
                     <div className="flex gap-1">
                       <Button variant="outline" size="sm" onClick={() => { setEditingCat(activeCategory); setShowCatEditor(true); }}>
@@ -404,42 +453,65 @@ function KnowledgeBasePage() {
                   )}
                 </div>
 
-                {filtered.length === 0 ? (
+                {activeCategory && !search && (
+                  <h2 className="font-display text-2xl font-bold mb-4">{activeCategory.name}</h2>
+                )}
+
+                {loading ? (
+                  <div className="py-16 grid place-items-center text-muted-foreground"><Loader2 className="size-5 animate-spin" /></div>
+                ) : filtered.length === 0 ? (
                   <EmptyState text={search ? "No articles match your search." : "No articles in this category yet."} cta={isMod ? { label: "Add article", onClick: openNewArticle } : undefined} />
                 ) : (
-                  <div className="grid sm:grid-cols-2 gap-4">
-                    {filtered.map((a) => (
-                      <article
-                        key={a.id}
-                        draggable={isMod}
-                        onDragStart={() => { dragArtId.current = a.id; }}
-                        onDragOver={(e) => { if (isMod) e.preventDefault(); }}
-                        onDrop={(e) => { if (!isMod) return; e.preventDefault(); if (dragArtId.current) reorderArticles(dragArtId.current, a.id); dragArtId.current = null; }}
-                        className="rounded-2xl border border-border bg-surface-2/40 overflow-hidden flex flex-col group hover:border-primary/50 hover:shadow-glow transition-all"
-                      >
-                        {a.image_url && <img src={a.image_url} alt="" className="h-32 w-full object-cover" />}
-                        <div className="p-4 flex-1 flex flex-col">
-                          <div className="flex items-center gap-2 mb-1.5 text-[11px]">
-                            {a.badge && <span className="px-1.5 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/30">{a.badge}</span>}
-                            {!a.published && <span className="px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground border border-border inline-flex items-center gap-1"><EyeOff className="size-3" /> Draft</span>}
-                          </div>
-                          <h3 className="font-display font-bold leading-tight mb-1">{a.title}</h3>
-                          {a.excerpt && <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{a.excerpt}</p>}
-                          <div className="mt-auto flex items-center justify-between pt-2">
-                            <button onClick={() => setReading(a)} className="text-sm font-medium text-primary inline-flex items-center gap-1 hover:underline">
-                              Read <ChevronRight className="size-3.5" />
-                            </button>
-                            {isMod && (
-                              <div className="flex gap-0.5">
-                                {isMod && <GripVertical className="size-3.5 text-muted-foreground cursor-grab self-center" />}
-                                <button onClick={() => setEditing(a)} className="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground"><Pencil className="size-3.5" /></button>
-                                <button onClick={() => deleteArticle(a.id)} className="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-destructive"><Trash2 className="size-3.5" /></button>
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+                    {filtered.map((a) => {
+                      const stats = ratingStats[a.id];
+                      const mine = myRatingFor(a.id);
+                      return (
+                        <article
+                          key={a.id}
+                          draggable={isMod}
+                          onDragStart={() => { dragArtId.current = a.id; }}
+                          onDragOver={(e) => { if (isMod) e.preventDefault(); }}
+                          onDrop={(e) => { if (!isMod) return; e.preventDefault(); if (dragArtId.current) reorderArticles(dragArtId.current, a.id); dragArtId.current = null; }}
+                          className="rounded-2xl border border-border bg-surface-2/40 overflow-hidden flex flex-col group hover:border-primary/50 hover:shadow-glow transition-all"
+                        >
+                          {a.image_url && <img src={a.image_url} alt="" className="h-36 w-full object-cover" />}
+                          <div className="p-4 flex-1 flex flex-col">
+                            <div className="flex items-center gap-2 mb-1.5 text-[11px]">
+                              {a.badge && <span className="px-1.5 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/30">{a.badge}</span>}
+                              {!a.published && <span className="px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground border border-border inline-flex items-center gap-1"><EyeOff className="size-3" /> Draft</span>}
+                            </div>
+                            <h3 className="font-display font-bold leading-tight mb-1">{a.title}</h3>
+                            {a.excerpt && <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{a.excerpt}</p>}
+
+                            <div className="mt-2 flex items-center justify-between gap-2 text-xs">
+                              <div className="flex items-center gap-1.5">
+                                <StarRating value={Math.round(stats?.avg ?? 0)} readOnly size={14} />
+                                <span className="text-muted-foreground">
+                                  {stats ? `${stats.avg.toFixed(1)} (${stats.count})` : "No ratings"}
+                                </span>
                               </div>
-                            )}
+                              <div className="flex items-center gap-1" title="Your rating">
+                                <StarRating value={mine} onChange={(n) => rateArticle(a.id, n)} size={14} />
+                              </div>
+                            </div>
+
+                            <div className="mt-3 flex items-center justify-between pt-2 border-t border-border">
+                              <button onClick={() => setReading(a)} className="text-sm font-medium text-primary inline-flex items-center gap-1 hover:underline">
+                                Read <ChevronRight className="size-3.5" />
+                              </button>
+                              {isMod && (
+                                <div className="flex gap-0.5 items-center">
+                                  <GripVertical className="size-3.5 text-muted-foreground cursor-grab self-center" />
+                                  <button onClick={() => setEditing(a)} className="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground"><Pencil className="size-3.5" /></button>
+                                  <button onClick={() => deleteArticle(a.id)} className="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-destructive"><Trash2 className="size-3.5" /></button>
+                                </div>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      </article>
-                    ))}
+                        </article>
+                      );
+                    })}
                   </div>
                 )}
               </section>
@@ -482,7 +554,7 @@ function KnowledgeBasePage() {
             <TabsContent value="settings" className="mt-0">
               <div className="rounded-2xl border border-border bg-surface-2/40 p-6 max-w-2xl">
                 <h2 className="font-display text-xl font-bold mb-1">Welcome message</h2>
-                <p className="text-sm text-muted-foreground mb-5">Shown in the hero at the top of the knowledge base.</p>
+                <p className="text-sm text-muted-foreground mb-5">Shown on the Welcome tab.</p>
                 <div className="space-y-3">
                   <Label>Title</Label>
                   <Input value={(welcomeDraft ?? welcome).title} onChange={(e) => setWelcomeDraft({ ...(welcomeDraft ?? welcome), title: e.target.value })} />
