@@ -1035,13 +1035,14 @@ function PolicyCard({
 
 function Checkout({ items, total, onClose, onPlace }: {
   items: (Product & { qty: number })[]; total: number; onClose: () => void;
-  onPlace: (s: { name: string; email: string; customer_type: "new" | "existing"; existing_username: string; discount_code: string; discount_cents: number }) => void;
+  onPlace: (s: { name: string; email: string; customer_type: "new" | "existing"; existing_username: string; discount_code: string; discount_cents: number; wants_adult_content: boolean }) => void;
 }) {
   const { user } = useAuth();
   const [name, setName] = useState("");
   const [email, setEmail] = useState(user?.email ?? "");
   const [customerType, setCustomerType] = useState<"new" | "existing">("new");
   const [existingUsername, setExistingUsername] = useState("");
+  const [adultContent, setAdultContent] = useState<"yes" | "no" | "">("");
   const [discountInput, setDiscountInput] = useState("");
   const [appliedCode, setAppliedCode] = useState<DiscountCode | null>(null);
   const [applying, setApplying] = useState(false);
@@ -1128,6 +1129,7 @@ function Checkout({ items, total, onClose, onPlace }: {
 
   const canSubmit =
     !!name && !!email && (customerType === "new" || !!existingUsername.trim())
+    && adultContent !== ""
     && (!requiresMulti || agreedMulti)
     && (!requiresTriple || agreedTriple);
 
@@ -1177,6 +1179,22 @@ function Checkout({ items, total, onClose, onPlace }: {
             {customerType === "existing" && (
               <input value={existingUsername} onChange={(e) => setExistingUsername(e.target.value)} placeholder="Username you're extending" className="w-full px-3 py-2 rounded-lg bg-surface-2 text-sm border border-border focus:border-primary outline-none" />
             )}
+            <div>
+              <div className="text-[11px] uppercase tracking-wider text-muted-foreground mb-1">
+                Adult content access <span className="text-destructive">*</span>
+              </div>
+              <div className="flex gap-2">
+                <button type="button" onClick={() => setAdultContent("yes")}
+                  className={cn("flex-1 px-3 py-2 rounded-lg text-sm border", adultContent === "yes" ? "bg-primary text-primary-foreground border-primary" : "bg-surface-2 border-border")}>
+                  Yes
+                </button>
+                <button type="button" onClick={() => setAdultContent("no")}
+                  className={cn("flex-1 px-3 py-2 rounded-lg text-sm border", adultContent === "no" ? "bg-primary text-primary-foreground border-primary" : "bg-surface-2 border-border")}>
+                  No
+                </button>
+              </div>
+              <p className="text-[11px] text-muted-foreground mt-1">Required — do you want access to adult content?</p>
+            </div>
             <div className="space-y-2">
               <div className="flex gap-2">
                 <input value={discountInput} onChange={(e) => setDiscountInput(e.target.value)} placeholder="Discount code (optional)" className="flex-1 px-3 py-2 rounded-lg bg-surface-2 text-sm border border-border focus:border-primary outline-none" />
@@ -1258,7 +1276,7 @@ function Checkout({ items, total, onClose, onPlace }: {
         )}
         <div className="p-5 border-t border-border flex gap-2 justify-end">
           <button onClick={onClose} className="px-4 py-2 rounded-lg bg-surface-2 text-sm">Cancel</button>
-          <button onClick={() => onPlace({ name, email, customer_type: customerType, existing_username: existingUsername, discount_code: appliedCode?.code ?? "", discount_cents: discountCents })}
+          <button onClick={() => onPlace({ name, email, customer_type: customerType, existing_username: existingUsername, discount_code: appliedCode?.code ?? "", discount_cents: discountCents, wants_adult_content: adultContent === "yes" })}
             disabled={!canSubmit} className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium disabled:opacity-50">Place Order</button>
         </div>
       </div>
