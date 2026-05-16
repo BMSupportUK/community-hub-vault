@@ -26,7 +26,7 @@ export function useUserTimezone(): string {
     supabase.from("profiles").select("timezone").eq("id", user.id).maybeSingle()
       .then(({ data }) => apply((data as { timezone?: string | null } | null)?.timezone));
     const ch = supabase
-      .channel(`profile-tz-${user.id}`)
+      .channel(`profile-tz-${user.id}-${Math.random().toString(36).slice(2)}`)
       .on("postgres_changes",
         { event: "UPDATE", schema: "public", table: "profiles", filter: `id=eq.${user.id}` },
         (p) => apply((p.new as { timezone?: string | null })?.timezone))
