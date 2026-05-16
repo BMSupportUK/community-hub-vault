@@ -493,6 +493,7 @@ function Storefront() {
     if (ie) { toast.error(ie.message); return; }
     setCart({}); setShowCheckout(false);
     toast.success("Order placed!");
+    reloadLatestOrder();
     navigate({ to: "/shop", search: { view: "orders", id: order.id } });
   };
 
