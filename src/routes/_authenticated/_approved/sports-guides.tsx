@@ -311,7 +311,7 @@ function SportsGuidesPage() {
           </TabsContent>
 
           <TabsContent value="guides" className="mt-6">
-            <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6">
+            <div className={`grid grid-cols-1 gap-6 ${search.trim() ? "lg:grid-cols-[280px_1fr_340px]" : "lg:grid-cols-[280px_1fr]"}`}>
               <aside className="rounded-2xl bg-purple-950/50 border border-purple-500/30 p-4 h-fit backdrop-blur">
                 <h3 className="font-display font-semibold mb-3 px-2 text-purple-100">Categories</h3>
                 <div className="space-y-1">
