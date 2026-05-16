@@ -1418,7 +1418,7 @@ function OrderDetail({ orderId, isAdmin }: { orderId: string; isAdmin: boolean }
   };
 
   const acceptOrder = async () => {
-    if (!order || order.status !== "pending") return;
+    if (!order || order.status !== "pending" || !!order.completed_at) return;
     const { error } = await supabase.from("orders").update({ status: "processing" } as never).eq("id", orderId);
     if (error) { toast.error(error.message); return; }
     await sendSystem(`✅ Order accepted — thank you for your order!`);
@@ -1426,7 +1426,7 @@ function OrderDetail({ orderId, isAdmin }: { orderId: string; isAdmin: boolean }
   };
 
   const markPaid = async () => {
-    if (!order || order.paid_at) return;
+    if (!order || order.paid_at || order.status === "completed" || !!order.completed_at) return;
     const { error } = await supabase.from("orders").update({
       paid_at: new Date().toISOString(), paid_by: user?.id ?? null, status: "processing",
     } as never).eq("id", orderId);
@@ -1436,13 +1436,16 @@ function OrderDetail({ orderId, isAdmin }: { orderId: string; isAdmin: boolean }
   };
 
   const settingUpAccount = async () => {
-    if (!order) return;
+    if (!order || order.status === "completed" || !!order.completed_at) {
+      toast.error("This order is completed and cannot be changed.");
+      return;
+    }
     await sendSystem(`🛠️ We are currently setting up your account details and will share these next.`);
     toast.success("Customer notified");
   };
 
   const completeSale = async () => {
-    if (!order) return;
+    if (!order || order.status === "completed" || !!order.completed_at) return;
     const { error } = await supabase.from("orders").update({
       completed_at: new Date().toISOString(), completed_by: user?.id ?? null, status: "completed",
     } as never).eq("id", orderId);
@@ -1476,16 +1479,16 @@ function OrderDetail({ orderId, isAdmin }: { orderId: string; isAdmin: boolean }
           </button>
           {isAdmin ? (
             <>
-              <button onClick={acceptOrder} disabled={order.status !== "pending"}
+              <button onClick={acceptOrder} disabled={order.status !== "pending" || !!order.completed_at}
                 className="px-2.5 py-1 rounded-md bg-amber-500/15 text-amber-500 text-xs font-medium flex items-center gap-1 hover:bg-amber-500/25 disabled:opacity-50">
                 <Check className="size-3.5" /> {order.status === "pending" ? "Accept Order" : "Accepted"}
               </button>
-              <button onClick={markPaid} disabled={!!order.paid_at}
+              <button onClick={markPaid} disabled={!!order.paid_at || !!order.completed_at}
                 className="px-2.5 py-1 rounded-md bg-success/15 text-success text-xs font-medium flex items-center gap-1 hover:bg-success/25 disabled:opacity-50">
                 <BadgeCheck className="size-3.5" /> {order.paid_at ? "Paid" : "Mark As Paid"}
               </button>
-              <button onClick={settingUpAccount}
-                className="px-2.5 py-1 rounded-md bg-blue-500/15 text-blue-500 text-xs font-medium flex items-center gap-1 hover:bg-blue-500/25">
+              <button onClick={settingUpAccount} disabled={!!order.completed_at}
+                className="px-2.5 py-1 rounded-md bg-blue-500/15 text-blue-500 text-xs font-medium flex items-center gap-1 hover:bg-blue-500/25 disabled:opacity-50">
                 <Wrench className="size-3.5" /> Setting Up Account
               </button>
               <button onClick={completeSale} disabled={!!order.completed_at}
