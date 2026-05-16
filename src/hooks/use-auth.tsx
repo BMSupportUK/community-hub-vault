@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
-export type AppRole = "admin" | "management" | "staff" | "moderator" | "subscriber" | "member" | "pending" | "banned";
+export type AppRole = "admin" | "management" | "staff" | "moderator" | "subscriber" | "member" | "pending" | "banned" | "rejected";
 
 interface AuthCtx {
   user: User | null;
@@ -15,6 +15,7 @@ interface AuthCtx {
   isStaff: boolean;
   isMod: boolean;
   isBanned: boolean;
+  isRejected: boolean;
   signOut: () => Promise<void>;
   refreshRoles: () => Promise<void>;
 }
@@ -86,6 +87,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // otherwise approved users get bounced to /gate on login/reload.
   const isPending = rolesLoaded && (roles.length === 0 || (roles.length === 1 && roles[0] === "pending"));
   const isBanned = roles.includes("banned");
+  const isRejected = roles.includes("rejected");
   const isStaff = hasAny(["admin", "management", "staff", "moderator"]);
   const isMod = hasAny(["admin", "management", "moderator"]);
 
@@ -102,6 +104,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isStaff,
         isMod,
         isBanned,
+        isRejected,
         signOut: async () => {
           await supabase.auth.signOut();
         },
