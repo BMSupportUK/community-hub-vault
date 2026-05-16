@@ -1142,24 +1142,12 @@ function Checkout({ items, total, onClose, onPlace }: {
     void acceptCode(c, () => setBrowseOpen(false));
   };
 
-  const [eligibleProductIds, setEligibleProductIds] = useState<string[] | null>(null);
-  // null = applies to all products; array = restricted list
-
-  const eligibleSubtotal = useMemo(() => {
-    if (!eligibleProductIds) return total;
-    return items
-      .filter((i) => eligibleProductIds.includes(i.id))
-      .reduce((s, i) => s + i.price_cents * i.qty, 0);
-  }, [items, total, eligibleProductIds]);
-
   const discountCents = useMemo(() => {
     if (!appliedCode) return 0;
-    const base = eligibleSubtotal;
-    if (base <= 0) return 0;
-    if (appliedCode.amount_cents) return Math.min(base, appliedCode.amount_cents);
-    if (appliedCode.percent) return Math.round(base * (appliedCode.percent / 100));
+    if (appliedCode.amount_cents) return Math.min(total, appliedCode.amount_cents);
+    if (appliedCode.percent) return Math.round(total * (appliedCode.percent / 100));
     return 0;
-  }, [appliedCode, eligibleSubtotal]);
+  }, [appliedCode, total]);
   const finalTotal = Math.max(0, total - discountCents);
 
   const acceptCode = async (c: DiscountCode, onDone?: () => void) => {
@@ -1169,14 +1157,11 @@ function Checkout({ items, total, onClose, onPlace }: {
       .eq("discount_code_id", c.id);
     const ids = (links ?? []).map((r: { product_id: string }) => r.product_id);
     if (ids.length > 0) {
-      const hasMatch = items.some((i) => ids.includes(i.id));
-      if (!hasMatch) {
-        toast.error("This code does not apply to any items in your cart");
+      const hasBlockedItem = items.some((i) => !ids.includes(i.id));
+      if (hasBlockedItem) {
+        toast.error("This code is not allowed for one or more products in your cart");
         return;
       }
-      setEligibleProductIds(ids);
-    } else {
-      setEligibleProductIds(null);
     }
     setAppliedCode(c);
     setDiscountInput(c.code);
