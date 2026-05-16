@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { HeaderImageUpload } from "@/components/ui/header-image-upload";
 import { toast } from "sonner";
 import installHero from "@/assets/install-guides-hero.jpg";
 
@@ -604,8 +605,12 @@ function InstallGuidesPage() {
                 />
               </div>
               <div>
-                <Label>Cover image URL</Label>
-                <Input value={editing.image_url ?? ""} onChange={(e) => setEditing({ ...editing, image_url: e.target.value })} placeholder="https://…" />
+                <Label>Header image</Label>
+                <HeaderImageUpload
+                  value={editing.image_url}
+                  onChange={(url) => setEditing({ ...editing, image_url: url })}
+                  folder="install-guides"
+                />
               </div>
               <div>
                 <Label>Badge (optional)</Label>

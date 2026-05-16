@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import { HtmlEditor } from "@/components/ui/html-editor";
 import { sanitizeRichHtml } from "@/lib/sanitize-html";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { HeaderImageUpload } from "@/components/ui/header-image-upload";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import kbHero from "@/assets/knowledge-base-hero.jpg";
@@ -745,8 +746,12 @@ function ArticleEditor({
             onChange={(html) => setEditing({ ...editing, body: html })}
             placeholder="Write the article. Use the YouTube button to embed a video."
           />
-          <Label>Cover image URL (optional)</Label>
-          <Input value={editing.image_url ?? ""} onChange={(e) => setEditing({ ...editing, image_url: e.target.value })} />
+          <Label>Header image (optional)</Label>
+          <HeaderImageUpload
+            value={editing.image_url}
+            onChange={(url) => setEditing({ ...editing, image_url: url })}
+            folder="knowledge-base"
+          />
           <label className="flex items-center gap-2 text-sm pt-2">
             <input type="checkbox" checked={editing.published} onChange={(e) => setEditing({ ...editing, published: e.target.checked })} />
             {editing.published ? <span className="inline-flex items-center gap-1"><Eye className="size-3.5" /> Published</span> : <span className="inline-flex items-center gap-1"><EyeOff className="size-3.5" /> Draft</span>}

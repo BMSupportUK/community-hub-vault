@@ -1,0 +1,6 @@
+insert into storage.buckets (id, name, public) values ('blog-headers', 'blog-headers', true) on conflict (id) do nothing;
+
+create policy "Public can view blog headers" on storage.objects for select using (bucket_id = 'blog-headers');
+create policy "Mods can upload blog headers" on storage.objects for insert with check (bucket_id = 'blog-headers' and (has_role(auth.uid(),'admin'::app_role) or has_role(auth.uid(),'management'::app_role) or has_role(auth.uid(),'moderator'::app_role) or has_role(auth.uid(),'staff'::app_role)));
+create policy "Mods can update blog headers" on storage.objects for update using (bucket_id = 'blog-headers' and (has_role(auth.uid(),'admin'::app_role) or has_role(auth.uid(),'management'::app_role) or has_role(auth.uid(),'moderator'::app_role) or has_role(auth.uid(),'staff'::app_role)));
+create policy "Mods can delete blog headers" on storage.objects for delete using (bucket_id = 'blog-headers' and (has_role(auth.uid(),'admin'::app_role) or has_role(auth.uid(),'management'::app_role) or has_role(auth.uid(),'moderator'::app_role) or has_role(auth.uid(),'staff'::app_role)));
