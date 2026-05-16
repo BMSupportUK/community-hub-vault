@@ -791,7 +791,23 @@ function Storefront() {
           </Tabs>
         </div>
       </div>
-      {showCheckout && <Checkout items={cartItems.map((p) => ({ ...p, qty: cart[p.id] }))} total={total} onClose={() => setShowCheckout(false)} onPlace={placeOrder} />}
+      {showCheckout && (
+        <Checkout
+          items={cartItems.map((p) => ({ ...p, qty: cart[p.id] }))}
+          total={total}
+          onClose={() => setShowCheckout(false)}
+          onPlace={placeOrder}
+          onRemoveItem={(id) => {
+            setCart((c) => {
+              const next = { ...c };
+              delete next[id];
+              if (Object.keys(next).length === 0) setShowCheckout(false);
+              return next;
+            });
+          }}
+          onContinueShopping={() => setShowCheckout(false)}
+        />
+      )}
     </main>
   );
 }
