@@ -586,7 +586,7 @@ function Storefront() {
   const add = (id: string) => setCart((c) => ({ ...c, [id]: (c[id] ?? 0) + 1 }));
   const sub = (id: string) => setCart((c) => ({ ...c, [id]: Math.max(0, (c[id] ?? 0) - 1) }));
 
-  const placeOrder = async (info: { name: string; email: string; customer_type: "new" | "existing"; existing_username: string; discount_code: string; discount_cents: number }) => {
+  const placeOrder = async (info: { name: string; email: string; customer_type: "new" | "existing"; existing_username: string; discount_code: string; discount_cents: number; wants_adult_content: boolean }) => {
     if (!user || cartItems.length === 0) return;
     const finalTotal = Math.max(0, total - (info.discount_cents || 0));
     const { data: order, error } = await supabase.from("orders").insert({
@@ -597,6 +597,7 @@ function Storefront() {
       existing_username: info.customer_type === "existing" ? info.existing_username : null,
       discount_code: info.discount_code || null,
       discount_cents: info.discount_cents || 0,
+      wants_adult_content: info.wants_adult_content,
     } as never).select().single();
     if (error || !order) { toast.error(error?.message ?? "Failed"); return; }
     const items = cartItems.map((p) => ({
