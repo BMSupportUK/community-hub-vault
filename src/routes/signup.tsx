@@ -37,7 +37,7 @@ function SignupPage() {
       return toast.error(error.message);
     }
     if (inviteCode.trim()) {
-      const { error: redeemError } = await supabase.rpc("redeem_invite", { _code: inviteCode.trim() });
+      const { error: redeemError } = await supabase.rpc("redeem_invite", { p_code: inviteCode.trim() });
       if (redeemError) {
         setBusy(false);
         toast.error(`Invite code: ${redeemError.message}`);
