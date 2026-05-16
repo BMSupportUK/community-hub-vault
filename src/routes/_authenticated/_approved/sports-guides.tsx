@@ -21,6 +21,27 @@ function SportsGuidesRoute() {
   return <SportsGuidesPage />;
 }
 
+function escapeRegExp(s: string) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function Highlight({ text, query }: { text: string; query: string }) {
+  const q = query.trim();
+  if (!q) return <>{text}</>;
+  const parts = text.split(new RegExp(`(${escapeRegExp(q)})`, "gi"));
+  return (
+    <>
+      {parts.map((p, i) =>
+        p.toLowerCase() === q.toLowerCase() ? (
+          <mark key={i} className="bg-yellow-300/90 text-black rounded-sm px-0.5">{p}</mark>
+        ) : (
+          <span key={i}>{p}</span>
+        )
+      )}
+    </>
+  );
+}
+
 type Category = { id: string; name: string; slug: string; sort_order: number };
 type Blog = {
   id: string;
