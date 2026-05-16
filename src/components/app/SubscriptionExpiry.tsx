@@ -4,63 +4,78 @@ import { useAuth } from "@/hooks/use-auth";
 import { CalendarClock } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+type Cred = { app_login_name: string | null; expiry_at: string | null };
+
 export function SubscriptionExpiry() {
   const { user } = useAuth();
-  const [expiry, setExpiry] = useState<Date | null>(null);
+  const [creds, setCreds] = useState<Cred[]>([]);
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    if (!user) { setExpiry(null); setLoaded(true); return; }
+    if (!user) { setCreds([]); setLoaded(true); return; }
     let active = true;
     supabase
       .from("app_credentials")
-      .select("expiry_at")
+      .select("app_login_name, expiry_at")
       .eq("owner_id", user.id)
       .not("expiry_at", "is", null)
       .order("expiry_at", { ascending: false })
-      .limit(1)
-      .maybeSingle()
       .then(({ data }) => {
         if (!active) return;
-        const v = (data as { expiry_at: string | null } | null)?.expiry_at ?? null;
-        setExpiry(v ? new Date(v) : null);
+        setCreds((data as Cred[] | null) ?? []);
         setLoaded(true);
       });
     return () => { active = false; };
   }, [user]);
 
-  if (!loaded || !expiry) return null;
-
-  const now = Date.now();
-  const ms = expiry.getTime() - now;
-  const expired = ms < 0;
-  const soon = !expired && ms < 7 * 86400000;
+  const items = creds.filter((c) => c.expiry_at);
+  if (!loaded || items.length === 0) return null;
 
   const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  const formatted = expiry.toLocaleString(undefined, {
-    weekday: "short", day: "numeric", month: "short", year: "numeric",
-    hour: "2-digit", minute: "2-digit",
-    timeZone: tz,
-    timeZoneName: "short",
+  const fmt = (d: Date) =>
+    d.toLocaleString(undefined, {
+      weekday: "short", day: "numeric", month: "short", year: "numeric",
+      hour: "2-digit", minute: "2-digit",
+      timeZone: tz, timeZoneName: "short",
+    });
+
+  // Worst state across creds drives pill color
+  const now = Date.now();
+  const states = items.map((c) => {
+    const ms = new Date(c.expiry_at!).getTime() - now;
+    return { expired: ms < 0, soon: ms >= 0 && ms < 7 * 86400000 };
   });
+  const anyExpired = states.some((s) => s.expired);
+  const anySoon = !anyExpired && states.some((s) => s.soon);
 
   return (
     <div
-      title={`Subscription expiry: ${formatted}`}
+      title={items.map((c) => `${c.app_login_name ?? "Account"}: ${fmt(new Date(c.expiry_at!))}`).join("\n")}
       className={cn(
-        "hidden md:flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium border",
-        expired
+        "hidden md:flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium border max-w-[640px]",
+        anyExpired
           ? "bg-destructive/10 border-destructive/40 text-destructive"
-          : soon
+          : anySoon
             ? "bg-amber-500/10 border-amber-500/40 text-amber-300"
             : "bg-surface-2 border-border text-foreground",
       )}
     >
       <CalendarClock className="size-4 shrink-0" />
-      <span>
-        {expired ? "Your subscription expired on " : "Your subscription is due to expire on "}
-        <span className="font-semibold">{formatted}</span>
-      </span>
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+        {items.map((c, i) => {
+          const d = new Date(c.expiry_at!);
+          const expired = d.getTime() < now;
+          return (
+            <span key={i} className="whitespace-nowrap">
+              {c.app_login_name && (
+                <span className="font-semibold mr-1">{c.app_login_name}:</span>
+              )}
+              {expired ? "expired on " : "expires on "}
+              <span className="font-semibold">{fmt(d)}</span>
+            </span>
+          );
+        })}
+      </div>
     </div>
   );
 }
