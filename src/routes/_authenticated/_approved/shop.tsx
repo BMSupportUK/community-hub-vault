@@ -1112,8 +1112,8 @@ function Checkout({ items, total, onClose, onPlace }: {
         const restricted = linkMap.get(c.id);
         // No restrictions => applies to all
         if (!restricted || restricted.length === 0) return true;
-        // Restricted => only show if cart contains at least one allowed product
-        return cartIds.some((id) => restricted.includes(id));
+        // Restricted => only show if every cart product is allowed for this code
+        return cartIds.length > 0 && cartIds.every((id) => restricted.includes(id));
       });
     }
     setAvailable(filtered);
