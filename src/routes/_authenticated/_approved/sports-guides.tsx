@@ -64,6 +64,20 @@ function SportsGuidesPage() {
     setBlogs((bs ?? []) as Blog[]);
     const map: Record<string, string> = {};
     for (const r of (rs ?? []) as { blog_id: string; read_at: string }[]) map[r.blog_id] = r.read_at;
+
+    // First visit baseline: if the signed-in user has no read history yet,
+    // mark every currently-existing blog as already-read so they don't see
+    // a wall of "New" badges. Only blogs added/edited AFTER this moment
+    // will count as unread for them.
+    if (user?.id && (rs ?? []).length === 0 && (bs ?? []).length > 0) {
+      const now = new Date().toISOString();
+      const rows = (bs as Blog[]).map((b) => ({ user_id: user.id, blog_id: b.id, read_at: now }));
+      const { error } = await supabase
+        .from("sports_blog_reads")
+        .upsert(rows, { onConflict: "user_id,blog_id" });
+      if (!error) for (const r of rows) map[r.blog_id] = now;
+    }
+
     setReads(map);
     if (!activeCat && cats?.length) setActiveCat(cats[0].id);
   };
