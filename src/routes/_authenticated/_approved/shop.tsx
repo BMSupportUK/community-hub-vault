@@ -355,6 +355,120 @@ function ProductCard({
 }
 
 // ============ STOREFRONT ============
+type OrderProgress = { id: string; status: string; paid_at: string | null; completed_at: string | null; created_at: string } | null;
+
+function BuySteps({ latestOrder, onBrowse, onViewOrder }: {
+  latestOrder: OrderProgress;
+  onBrowse: () => void;
+  onViewOrder: (id: string) => void;
+}) {
+  const placed = !!latestOrder;
+  const paid = !!latestOrder?.paid_at;
+  const setup = latestOrder?.status === "completed" || !!latestOrder?.completed_at;
+
+  const steps = [
+    {
+      n: 1, title: "Place Order", icon: ShoppingBag,
+      done: placed,
+      active: !placed,
+      desc: placed
+        ? `Order received on ${new Date(latestOrder!.created_at).toLocaleDateString()}.`
+        : "Pick your plan in the Shop tab and add it to your order.",
+      cta: placed ? "View order" : "Browse products",
+      action: placed ? () => onViewOrder(latestOrder!.id) : onBrowse,
+    },
+    {
+      n: 2, title: "Pay Invoice", icon: Receipt,
+      done: paid,
+      active: placed && !paid,
+      desc: paid
+        ? `Invoice paid on ${new Date(latestOrder!.paid_at!).toLocaleDateString()}.`
+        : placed ? "Awaiting your payment — open the order to view the invoice."
+                 : "We'll send your invoice — pay it securely and we'll confirm receipt.",
+      cta: placed ? "Open order" : undefined,
+      action: placed ? () => onViewOrder(latestOrder!.id) : undefined,
+    },
+    {
+      n: 3, title: "Account Setup", icon: UserCog,
+      done: setup,
+      active: paid && !setup,
+      desc: setup
+        ? `All set! Account completed on ${new Date(latestOrder!.completed_at ?? latestOrder!.created_at).toLocaleDateString()}.`
+        : paid ? "We're setting up your account and will share your login details shortly."
+               : "We set up your account and share your login details to get you started.",
+      cta: placed ? "View order" : undefined,
+      action: placed ? () => onViewOrder(latestOrder!.id) : undefined,
+    },
+  ];
+
+  const completed = steps.filter((s) => s.done).length;
+  const pct = Math.round((completed / steps.length) * 100);
+
+  return (
+    <section className="-mt-12 md:-mt-16 relative z-10 px-2 md:px-0 pb-6">
+      <div className="mb-4 text-center">
+        <div className="text-[11px] uppercase tracking-[0.25em] text-sky-300/80">How to buy</div>
+        <h2 className="font-display text-2xl md:text-3xl font-bold mt-1">Three simple steps</h2>
+        <div className="mt-3 max-w-md mx-auto">
+          <div className="flex items-center justify-between text-[11px] text-muted-foreground mb-1">
+            <span>{placed ? `${completed} of ${steps.length} complete` : "Not started yet"}</span>
+            <span>{pct}%</span>
+          </div>
+          <div className="h-1.5 rounded-full bg-surface-2 overflow-hidden">
+            <div className="h-full bg-gradient-to-r from-violet-600 via-fuchsia-500 to-blue-600 transition-all duration-500" style={{ width: `${pct}%` }} />
+          </div>
+        </div>
+      </div>
+      <div className="grid sm:grid-cols-3 gap-4">
+        {steps.map((s) => (
+          <div
+            key={s.n}
+            className={cn(
+              "group relative rounded-2xl border p-5 transition",
+              s.done
+                ? "border-emerald-500/40 bg-emerald-500/5 shadow-lg shadow-emerald-500/10"
+                : s.active
+                  ? "border-sky-400/60 bg-surface shadow-lg shadow-blue-500/10 ring-2 ring-sky-400/30"
+                  : "border-border bg-surface opacity-80",
+            )}
+          >
+            <div className={cn(
+              "absolute -top-3 left-5 inline-flex items-center gap-1 text-[11px] font-bold tracking-wider px-2 py-0.5 rounded-full text-white",
+              s.done
+                ? "bg-gradient-to-r from-emerald-500 to-green-600"
+                : s.active
+                  ? "bg-gradient-to-r from-violet-600 to-blue-600"
+                  : "bg-surface-2 text-muted-foreground",
+            )}>
+              {s.done ? <><Check className="size-3" /> DONE</> : `STEP ${s.n}`}
+            </div>
+            <div className={cn(
+              "size-10 rounded-xl grid place-items-center mb-3",
+              s.done
+                ? "bg-emerald-500/15 text-emerald-400"
+                : s.active
+                  ? "bg-gradient-to-br from-violet-600/20 to-blue-600/20 text-sky-300"
+                  : "bg-surface-2 text-muted-foreground",
+            )}>
+              <s.icon className="size-5" />
+            </div>
+            <h3 className="font-display font-semibold text-lg flex items-center gap-2">
+              {s.title}
+              {s.active && <span className="size-2 rounded-full bg-sky-400 animate-pulse" />}
+            </h3>
+            <p className="text-sm text-muted-foreground mt-1">{s.desc}</p>
+            {s.action && s.cta && (
+              <button onClick={s.action} className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-sky-400 hover:text-sky-300">
+                {s.cta} <ArrowRight className="size-3.5" />
+              </button>
+            )}
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function Storefront() {
   const [products, setProducts] = useState<Product[]>([]);
   const [dbCategories, setDbCategories] = useState<ProductCategory[]>([]);
