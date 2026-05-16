@@ -68,7 +68,7 @@ export function SubscriptionExpiry() {
           return (
             <span key={i} className="whitespace-nowrap">
               {c.app_login_name && (
-                <span className="font-semibold mr-1">{c.app_login_name}:</span>
+                <span className="font-semibold mr-1">{c.app_login_name} Your Account:</span>
               )}
               {expired ? "expired on " : "expires on "}
               <span className="font-semibold">{fmt(d)}</span>
