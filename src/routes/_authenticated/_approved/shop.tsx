@@ -1351,6 +1351,8 @@ function AdminProducts() {
   const [categories, setCategories] = useState<ProductCategory[]>([]);
   const [showCats, setShowCats] = useState(false);
   const [newCat, setNewCat] = useState("");
+  const [dragId, setDragId] = useState<string | null>(null);
+  const [overId, setOverId] = useState<string | null>(null);
   const sym = _currentSymbol;
 
   const load = async () => {
@@ -1390,6 +1392,7 @@ function AdminProducts() {
       price_cents, image_url: editing.image_url ?? null,
       category: editing.category ?? null, stock: editing.stock ?? null,
       is_active: editing.is_active ?? true, sort_order: editing.sort_order ?? 0,
+      is_recommended: editing.is_recommended ?? false,
     };
     const { error } = editing.id
       ? await supabase.from("products").update(payload).eq("id", editing.id)
@@ -1402,6 +1405,34 @@ function AdminProducts() {
     if (!confirm("Delete this product?")) return;
     const { error } = await supabase.from("products").delete().eq("id", id);
     if (error) toast.error(error.message); else load();
+  };
+
+  const toggleRecommended = async (p: Product) => {
+    const next = !p.is_recommended;
+    setProducts((arr) => arr.map((x) => x.id === p.id ? { ...x, is_recommended: next } : x));
+    const { error } = await supabase.from("products").update({ is_recommended: next }).eq("id", p.id);
+    if (error) { toast.error(error.message); load(); }
+  };
+
+  const handleDrop = async (targetId: string) => {
+    if (!dragId || dragId === targetId) { setDragId(null); setOverId(null); return; }
+    const from = products.findIndex((p) => p.id === dragId);
+    const to = products.findIndex((p) => p.id === targetId);
+    if (from < 0 || to < 0) { setDragId(null); setOverId(null); return; }
+    const next = [...products];
+    const [moved] = next.splice(from, 1);
+    next.splice(to, 0, moved);
+    const reordered = next.map((p, i) => ({ ...p, sort_order: i }));
+    setProducts(reordered);
+    setDragId(null); setOverId(null);
+    // Persist new sort_order for every product
+    const updates = reordered.map((p) =>
+      supabase.from("products").update({ sort_order: p.sort_order }).eq("id", p.id),
+    );
+    const results = await Promise.all(updates);
+    const failed = results.find((r) => r.error);
+    if (failed?.error) { toast.error(failed.error.message); load(); }
+    else toast.success("Order updated");
   };
 
   return (
@@ -1424,17 +1455,55 @@ function AdminProducts() {
         <div className="bg-surface rounded-xl border border-border overflow-hidden">
           <table className="w-full text-sm">
             <thead className="bg-surface-2 text-muted-foreground text-xs">
-              <tr><th className="text-left p-3">Name</th><th className="text-left p-3">Category</th><th className="text-right p-3">Price</th><th className="text-right p-3">Stock</th><th className="text-center p-3">Active</th><th className="p-3"></th></tr>
+              <tr>
+                <th className="w-8 p-3"></th>
+                <th className="text-left p-3">Name</th>
+                <th className="text-left p-3">Category</th>
+                <th className="text-right p-3">Price</th>
+                <th className="text-right p-3">Stock</th>
+                <th className="text-center p-3">Active</th>
+                <th className="text-center p-3">Recommended</th>
+                <th className="p-3"></th>
+              </tr>
             </thead>
             <tbody>
-              {products.length === 0 && <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">No products. Click "New Product" to add one.</td></tr>}
+              {products.length === 0 && <tr><td colSpan={8} className="p-8 text-center text-muted-foreground">No products. Click "New Product" to add one.</td></tr>}
               {products.map((p) => (
-                <tr key={p.id} className="border-t border-border">
+                <tr
+                  key={p.id}
+                  draggable
+                  onDragStart={() => setDragId(p.id)}
+                  onDragOver={(e) => { e.preventDefault(); setOverId(p.id); }}
+                  onDragLeave={() => setOverId((o) => (o === p.id ? null : o))}
+                  onDrop={(e) => { e.preventDefault(); handleDrop(p.id); }}
+                  onDragEnd={() => { setDragId(null); setOverId(null); }}
+                  className={cn(
+                    "border-t border-border transition",
+                    dragId === p.id && "opacity-50",
+                    overId === p.id && dragId && dragId !== p.id && "bg-primary/10",
+                  )}
+                >
+                  <td className="p-3 text-muted-foreground cursor-grab active:cursor-grabbing"><GripVertical className="size-4" /></td>
                   <td className="p-3 font-medium">{p.name}</td>
                   <td className="p-3 text-muted-foreground">{p.category ?? "—"}</td>
                   <td className="p-3 text-right">{fmt(p.price_cents)}</td>
                   <td className="p-3 text-right">{p.stock ?? "—"}</td>
                   <td className="p-3 text-center">{p.is_active ? "✓" : "—"}</td>
+                  <td className="p-3 text-center">
+                    <button
+                      onClick={() => toggleRecommended(p)}
+                      className={cn(
+                        "inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium transition",
+                        p.is_recommended
+                          ? "bg-gradient-to-r from-amber-400 to-orange-500 text-white shadow shadow-orange-500/30"
+                          : "bg-surface-2 text-muted-foreground hover:text-foreground",
+                      )}
+                      title={p.is_recommended ? "Recommended — click to remove" : "Mark as recommended"}
+                    >
+                      <Sparkles className="size-3" />
+                      {p.is_recommended ? "Recommended" : "Mark"}
+                    </button>
+                  </td>
                   <td className="p-3 text-right">
                     <button onClick={() => setEditing(p)} className="p-1.5 rounded hover:bg-surface-2"><Pencil className="size-3.5" /></button>
                     <button onClick={() => remove(p.id)} className="p-1.5 rounded hover:bg-surface-2 text-destructive"><Trash2 className="size-3.5" /></button>
