@@ -917,6 +917,17 @@ function Checkout({ items, total, onClose, onPlace }: {
   const [available, setAvailable] = useState<DiscountCode[]>([]);
   const [loadingAvailable, setLoadingAvailable] = useState(false);
 
+  const requiresMulti = useMemo(
+    () => items.some((i) => (i.category ?? "").toLowerCase().includes("multi")),
+    [items],
+  );
+  const requiresTriple = useMemo(
+    () => items.some((i) => (i.category ?? "").toLowerCase().includes("triple")),
+    [items],
+  );
+  const [agreedMulti, setAgreedMulti] = useState(false);
+  const [agreedTriple, setAgreedTriple] = useState(false);
+
   const openBrowse = async () => {
     setBrowseOpen(true);
     setLoadingAvailable(true);
@@ -982,7 +993,10 @@ function Checkout({ items, total, onClose, onPlace }: {
     toast.success(`Code "${(data as DiscountCode).code}" applied`);
   };
 
-  const canSubmit = !!name && !!email && (customerType === "new" || !!existingUsername.trim());
+  const canSubmit =
+    !!name && !!email && (customerType === "new" || !!existingUsername.trim())
+    && (!requiresMulti || agreedMulti)
+    && (!requiresTriple || agreedTriple);
 
   return (
     <div className="fixed inset-0 bg-background/80 backdrop-blur-sm grid place-items-center z-50 p-4">
@@ -1087,6 +1101,28 @@ function Checkout({ items, total, onClose, onPlace }: {
             </div>
           </div>
         </div>
+        {(requiresMulti || requiresTriple) && (
+          <div className="px-5 pb-2 space-y-2">
+            {requiresMulti && (
+              <label className="flex items-start gap-2 text-xs p-3 rounded-lg bg-amber-500/10 border border-amber-500/30 cursor-pointer">
+                <input type="checkbox" checked={agreedMulti} onChange={(e) => setAgreedMulti(e.target.checked)} className="mt-0.5 accent-amber-500" />
+                <span>
+                  I have read and agree to the{" "}
+                  <a href="/shop?view=multi_room" target="_blank" rel="noreferrer" className="underline font-medium">Multi-room Usage Rules</a>.
+                </span>
+              </label>
+            )}
+            {requiresTriple && (
+              <label className="flex items-start gap-2 text-xs p-3 rounded-lg bg-amber-500/10 border border-amber-500/30 cursor-pointer">
+                <input type="checkbox" checked={agreedTriple} onChange={(e) => setAgreedTriple(e.target.checked)} className="mt-0.5 accent-amber-500" />
+                <span>
+                  I have read and agree to the{" "}
+                  <a href="/shop?view=triple_room" target="_blank" rel="noreferrer" className="underline font-medium">Triple-room Usage Rules</a>.
+                </span>
+              </label>
+            )}
+          </div>
+        )}
         <div className="p-5 border-t border-border flex gap-2 justify-end">
           <button onClick={onClose} className="px-4 py-2 rounded-lg bg-surface-2 text-sm">Cancel</button>
           <button onClick={() => onPlace({ name, email, customer_type: customerType, existing_username: existingUsername, discount_code: appliedCode?.code ?? "", discount_cents: discountCents })}
