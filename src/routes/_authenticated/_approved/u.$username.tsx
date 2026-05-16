@@ -15,6 +15,7 @@ import profileHeader from "@/assets/profile-header.jpg";
 import tvLoginIllustration from "@/assets/tv-login-illustration.jpg";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
+import { listTimeZones } from "@/hooks/use-user-timezone";
 
 export const Route = createFileRoute("/_authenticated/_approved/u/$username")({
   component: ProfilePage,
@@ -28,6 +29,7 @@ interface ProfileRow {
   bio: string | null;
   created_at: string;
   is_private: boolean | null;
+  timezone: string | null;
 }
 
 interface ShiftRow { id: string; user_id: string; clock_in: string; clock_out: string | null; }
@@ -1233,6 +1235,12 @@ function EditProfileModal({ profile, onClose, onSaved }: { profile: ProfileRow; 
   const [bio, setBio] = useState(profile.bio ?? "");
   const [avatarUrl, setAvatarUrl] = useState(profile.avatar_url);
   const [isPrivate, setIsPrivate] = useState<boolean>(!!profile.is_private);
+  const [timezone, setTimezone] = useState<string>(
+    profile.timezone ?? (() => {
+      try { return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC"; } catch { return "UTC"; }
+    })(),
+  );
+  const tzOptions = useMemo(() => listTimeZones(), []);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -1266,6 +1274,7 @@ function EditProfileModal({ profile, onClose, onSaved }: { profile: ProfileRow; 
       bio: bio.trim() || null,
       avatar_url: avatarUrl,
       is_private: isPrivate,
+      timezone: timezone || null,
     }).eq("id", user.id);
     setSaving(false);
     if (error) return toast.error(error.message);
@@ -1302,6 +1311,20 @@ function EditProfileModal({ profile, onClose, onSaved }: { profile: ProfileRow; 
         <Field label="Bio">
           <textarea value={bio} onChange={(e) => setBio(e.target.value)} maxLength={500} rows={3}
             className="w-full px-3 py-2 rounded-lg bg-surface-2 border border-border text-sm resize-none" />
+        </Field>
+        <Field label="Timezone">
+          <select
+            value={timezone}
+            onChange={(e) => setTimezone(e.target.value)}
+            className="w-full px-3 py-2 rounded-lg bg-surface-2 border border-border text-sm"
+          >
+            {tzOptions.map((z: string) => (
+              <option key={z} value={z}>{z.replace(/_/g, " ")}</option>
+            ))}
+          </select>
+          <span className="block text-[11px] text-muted-foreground mt-1">
+            Used to display expiry dates and times in your local zone.
+          </span>
         </Field>
         <label className="flex items-start gap-3 mb-3 p-3 rounded-lg bg-surface-2 border border-border cursor-pointer">
           <input
