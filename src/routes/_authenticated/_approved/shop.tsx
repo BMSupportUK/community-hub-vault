@@ -304,9 +304,10 @@ function StarRating({
 }
 
 function ProductCard({
-  p, qty, onAdd, onSub, rating, average, ratingCount, onRate,
+  p, qty, onAdd, onSub, onPlace, rating, average, ratingCount, onRate,
 }: {
   p: Product; qty: number; onAdd: () => void; onSub: () => void;
+  onPlace: () => void;
   rating: number; average: number; ratingCount: number;
   onRate: (v: number) => void;
 }) {
@@ -331,7 +332,7 @@ function ProductCard({
         <div className="mt-2">
           <StarRating value={rating} average={average} count={ratingCount} onRate={onRate} />
         </div>
-        <div className="mt-auto pt-3 flex items-center justify-between">
+        <div className="mt-auto pt-3 flex items-center justify-between gap-2">
           <span className="font-display font-bold text-lg bg-gradient-to-r from-violet-600 to-blue-600 bg-clip-text text-transparent">{fmt(p.price_cents)}</span>
           {qty ? (
             <div className="flex items-center gap-1 bg-surface-2 rounded-lg">
@@ -340,9 +341,14 @@ function ProductCard({
               <button onClick={onAdd} className="size-7 grid place-items-center hover:text-sky-400"><Plus className="size-3.5" /></button>
             </div>
           ) : (
-            <button onClick={onAdd} className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-blue-600 text-white text-xs font-medium hover:opacity-90 shadow shadow-blue-500/20">Place Order</button>
+            <button onClick={onAdd} className="px-3 py-1.5 rounded-lg bg-surface-2 border border-border text-xs font-medium hover:border-sky-400/60">Add to order</button>
           )}
         </div>
+        {qty > 0 && (
+          <button onClick={onPlace} className="mt-2 w-full px-3 py-2 rounded-lg bg-gradient-to-r from-violet-600 to-blue-600 text-white text-xs font-semibold hover:opacity-90 shadow shadow-blue-500/20">
+            Place Order
+          </button>
+        )}
       </div>
     </div>
   );
@@ -595,7 +601,7 @@ function Storefront() {
                       </div>
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
                         {g.items.map((p) => (
-                          <ProductCard key={p.id} p={p} qty={cart[p.id] ?? 0} onAdd={() => add(p.id)} onSub={() => sub(p.id)} rating={myRatings[p.id] ?? 0} average={ratings[p.id] ? ratings[p.id].sum / ratings[p.id].count : 0} ratingCount={ratings[p.id]?.count ?? 0} onRate={(v) => rateProduct(p.id, v)} />
+                          <ProductCard key={p.id} p={p} qty={cart[p.id] ?? 0} onAdd={() => add(p.id)} onSub={() => sub(p.id)} onPlace={() => setShowCheckout(true)} rating={myRatings[p.id] ?? 0} average={ratings[p.id] ? ratings[p.id].sum / ratings[p.id].count : 0} ratingCount={ratings[p.id]?.count ?? 0} onRate={(v) => rateProduct(p.id, v)} />
                         ))}
                       </div>
                     </section>
@@ -614,7 +620,7 @@ function Storefront() {
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
                     {filtered.map((p) => (
-                      <ProductCard key={p.id} p={p} qty={cart[p.id] ?? 0} onAdd={() => add(p.id)} onSub={() => sub(p.id)} rating={myRatings[p.id] ?? 0} average={ratings[p.id] ? ratings[p.id].sum / ratings[p.id].count : 0} ratingCount={ratings[p.id]?.count ?? 0} onRate={(v) => rateProduct(p.id, v)} />
+                      <ProductCard key={p.id} p={p} qty={cart[p.id] ?? 0} onAdd={() => add(p.id)} onSub={() => sub(p.id)} onPlace={() => setShowCheckout(true)} rating={myRatings[p.id] ?? 0} average={ratings[p.id] ? ratings[p.id].sum / ratings[p.id].count : 0} ratingCount={ratings[p.id]?.count ?? 0} onRate={(v) => rateProduct(p.id, v)} />
                     ))}
                   </div>
                 </section>
