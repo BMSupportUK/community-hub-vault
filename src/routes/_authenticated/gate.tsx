@@ -109,7 +109,11 @@ function GatePage() {
   }, [msgs]);
 
   useEffect(() => {
-    if (chatOpen) scrollerRef.current?.scrollTo({ top: scrollerRef.current.scrollHeight, behavior: "smooth" });
+    if (!chatOpen) return;
+    const el = scrollerRef.current;
+    if (!el) return;
+    // Instant scroll (no smooth) avoids scroll-chaining that "bounces" the page away from the chat.
+    el.scrollTop = el.scrollHeight;
   }, [msgs.length, chatOpen]);
 
   const send = async (e: React.FormEvent) => {
@@ -450,7 +454,7 @@ function GatePage() {
               <button onClick={() => setChatOpen(false)} className="text-white/60 hover:text-white"><X className="size-5" /></button>
             </header>
 
-            <div ref={scrollerRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
+            <div ref={scrollerRef} className="flex-1 overflow-y-auto overscroll-contain px-4 py-4 space-y-3">
               <div className="rounded-xl bg-red-500/10 border border-red-500/20 p-3 text-xs text-red-100/90">
                 Introduce yourself and explain why you'd like to join. A moderator will review and grant access from this conversation.
               </div>
