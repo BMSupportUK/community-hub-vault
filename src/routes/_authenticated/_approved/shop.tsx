@@ -368,6 +368,19 @@ function Storefront() {
   const [newCatName, setNewCatName] = useState("");
   const [ratings, setRatings] = useState<Record<string, { sum: number; count: number }>>({});
   const [myRatings, setMyRatings] = useState<Record<string, number>>({});
+  const [latestOrder, setLatestOrder] = useState<{ id: string; status: string; paid_at: string | null; completed_at: string | null; created_at: string } | null>(null);
+
+  const reloadLatestOrder = async () => {
+    if (!user) { setLatestOrder(null); return; }
+    const { data } = await supabase
+      .from("orders")
+      .select("id,status,paid_at,completed_at,created_at")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    setLatestOrder((data as typeof latestOrder) ?? null);
+  };
 
   const reloadRatings = async () => {
     const { data } = await supabase.from("product_ratings").select("product_id,user_id,rating");
@@ -390,6 +403,13 @@ function Storefront() {
     supabase.from("products").select("*").eq("is_active", true).order("sort_order").then(({ data }) => setProducts(data ?? []));
     reloadCategories();
     reloadRatings();
+    reloadLatestOrder();
+    if (!user) return;
+    const ch = supabase
+      .channel(`orders-progress-${user.id}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "orders", filter: `user_id=eq.${user.id}` }, reloadLatestOrder)
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
