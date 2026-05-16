@@ -266,7 +266,11 @@ export function NotificationBell() {
                             onClick={() => {
                               markRead(n.id);
                               setOpen(false);
-                              navigate({ to: n.link_path! } as never);
+                              if (n.kind === "gate_application") {
+                                navigate({ to: "/admin", search: { next: "/moderation" } } as never);
+                              } else {
+                                navigate({ to: n.link_path! } as never);
+                              }
                             }}
                           >
                             Open
