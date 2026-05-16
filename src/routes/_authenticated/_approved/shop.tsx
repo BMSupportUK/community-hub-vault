@@ -343,7 +343,7 @@ function ProductCard({
               <button onClick={onAdd} className="size-7 grid place-items-center hover:text-sky-400"><Plus className="size-3.5" /></button>
             </div>
           ) : (
-            <button onClick={onAdd} className="px-3 py-1.5 rounded-lg bg-surface-2 border border-border text-xs font-medium hover:border-sky-400/60">Add to order</button>
+            <button onClick={onAdd} className="px-3 py-1.5 rounded-lg bg-surface-2 border border-border text-xs font-medium hover:border-sky-400/60">Add to cart</button>
           )}
         </div>
         {qty > 0 && (
