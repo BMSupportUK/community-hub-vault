@@ -18,6 +18,7 @@ function SignupPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
+  const [inviteCode, setInviteCode] = useState("");
   const [busy, setBusy] = useState(false);
 
   const submit = async (e: React.FormEvent) => {
@@ -34,6 +35,15 @@ function SignupPage() {
     if (error) {
       setBusy(false);
       return toast.error(error.message);
+    }
+    if (inviteCode.trim()) {
+      const { error: redeemError } = await supabase.rpc("redeem_invite", { p_code: inviteCode.trim() });
+      if (redeemError) {
+        setBusy(false);
+        toast.error(`Invite code: ${redeemError.message}`);
+        navigate({ to: "/gate" });
+        return;
+      }
     }
     setBusy(false);
     toast.success("Account created. A moderator will review your request.");
@@ -79,6 +89,7 @@ function SignupPage() {
               <Field label="Display name" value={displayName} onChange={setDisplayName} />
               <Field label="Email" type="email" value={email} onChange={setEmail} />
               <Field label="Password" type="password" value={password} onChange={setPassword} />
+              <Field label="Invite code (optional)" value={inviteCode} onChange={setInviteCode} />
               <button disabled={busy} className="w-full h-11 rounded-lg bg-primary text-primary-foreground font-medium shadow-glow hover:opacity-90 disabled:opacity-50">
                 {busy ? "Creating…" : "Request access"}
               </button>
