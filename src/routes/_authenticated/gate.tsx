@@ -30,6 +30,9 @@ function GatePage() {
   const [senderNames, setSenderNames] = useState<Record<string, string>>({});
   const scrollerRef = useRef<HTMLDivElement>(null);
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const [peerTyping, setPeerTyping] = useState<{ id: string; name?: string } | null>(null);
+  const peerTypingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastTypingSent = useRef<number>(0);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -68,6 +71,13 @@ function GatePage() {
         const msg = payload as Msg;
         setMsgs((m) => (m.some((x) => x.id === msg.id) ? m : [...m, msg]));
       })
+      .on("broadcast", { event: "typing" }, ({ payload }) => {
+        const p = payload as { sender_id: string; name?: string };
+        if (!user || p.sender_id === user.id) return;
+        setPeerTyping({ id: p.sender_id, name: p.name });
+        if (peerTypingTimer.current) clearTimeout(peerTypingTimer.current);
+        peerTypingTimer.current = setTimeout(() => setPeerTyping(null), 3000);
+      })
       .subscribe();
     const statusCh = supabase
       .channel(`gate-status-${appId}`)
@@ -83,6 +93,7 @@ function GatePage() {
       channelRef.current = null;
       supabase.removeChannel(msgCh);
       supabase.removeChannel(statusCh);
+      if (peerTypingTimer.current) clearTimeout(peerTypingTimer.current);
     };
   }, [appId, refreshRoles]);
 
@@ -130,6 +141,18 @@ function GatePage() {
       return withoutTemp.some((x) => x.id === msg.id) ? withoutTemp : [...withoutTemp, msg];
     });
     await channelRef.current?.send({ type: "broadcast", event: "message", payload: msg });
+  };
+
+  const notifyTyping = () => {
+    if (!user || !channelRef.current) return;
+    const now = Date.now();
+    if (now - lastTypingSent.current < 1500) return;
+    lastTypingSent.current = now;
+    channelRef.current.send({
+      type: "broadcast",
+      event: "typing",
+      payload: { sender_id: user.id, name: "You" },
+    });
   };
 
   const submitReason = async (e: React.FormEvent) => {
