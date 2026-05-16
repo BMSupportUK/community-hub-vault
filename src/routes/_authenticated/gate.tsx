@@ -30,6 +30,9 @@ function GatePage() {
   const [senderNames, setSenderNames] = useState<Record<string, string>>({});
   const scrollerRef = useRef<HTMLDivElement>(null);
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const [peerTyping, setPeerTyping] = useState<{ id: string; name?: string } | null>(null);
+  const peerTypingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastTypingSent = useRef<number>(0);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -68,6 +71,13 @@ function GatePage() {
         const msg = payload as Msg;
         setMsgs((m) => (m.some((x) => x.id === msg.id) ? m : [...m, msg]));
       })
+      .on("broadcast", { event: "typing" }, ({ payload }) => {
+        const p = payload as { sender_id: string; name?: string };
+        if (!user || p.sender_id === user.id) return;
+        setPeerTyping({ id: p.sender_id, name: p.name });
+        if (peerTypingTimer.current) clearTimeout(peerTypingTimer.current);
+        peerTypingTimer.current = setTimeout(() => setPeerTyping(null), 3000);
+      })
       .subscribe();
     const statusCh = supabase
       .channel(`gate-status-${appId}`)
@@ -83,6 +93,7 @@ function GatePage() {
       channelRef.current = null;
       supabase.removeChannel(msgCh);
       supabase.removeChannel(statusCh);
+      if (peerTypingTimer.current) clearTimeout(peerTypingTimer.current);
     };
   }, [appId, refreshRoles]);
 
@@ -130,6 +141,18 @@ function GatePage() {
       return withoutTemp.some((x) => x.id === msg.id) ? withoutTemp : [...withoutTemp, msg];
     });
     await channelRef.current?.send({ type: "broadcast", event: "message", payload: msg });
+  };
+
+  const notifyTyping = () => {
+    if (!user || !channelRef.current) return;
+    const now = Date.now();
+    if (now - lastTypingSent.current < 1500) return;
+    lastTypingSent.current = now;
+    channelRef.current.send({
+      type: "broadcast",
+      event: "typing",
+      payload: { sender_id: user.id, name: "You" },
+    });
   };
 
   const submitReason = async (e: React.FormEvent) => {
@@ -451,6 +474,18 @@ function GatePage() {
                   </div>
                 );
               })}
+              {peerTyping && (
+                <div className="flex justify-start">
+                  <div className="px-3 py-2 rounded-2xl bg-white/5 border border-white/10 text-[11px] text-white/60 inline-flex items-center gap-1.5">
+                    <span className="inline-flex gap-0.5">
+                      <span className="size-1.5 rounded-full bg-white/60 animate-bounce" style={{ animationDelay: "0ms" }} />
+                      <span className="size-1.5 rounded-full bg-white/60 animate-bounce" style={{ animationDelay: "150ms" }} />
+                      <span className="size-1.5 rounded-full bg-white/60 animate-bounce" style={{ animationDelay: "300ms" }} />
+                    </span>
+                    Admin is typing…
+                  </div>
+                </div>
+              )}
             </div>
 
             {status === "pending" ? (
@@ -458,7 +493,7 @@ function GatePage() {
                 <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3">
                   <input
                     value={text}
-                    onChange={(e) => setText(e.target.value)}
+                    onChange={(e) => { setText(e.target.value); if (e.target.value) notifyTyping(); }}
                     placeholder="Message support…"
                     className="flex-1 h-11 bg-transparent outline-none text-sm text-white placeholder:text-white/40"
                     autoFocus
