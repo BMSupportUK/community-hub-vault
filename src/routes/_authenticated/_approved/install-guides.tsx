@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import installHero from "@/assets/install-guides-hero.jpg";
 
 export const Route = createFileRoute("/_authenticated/_approved/install-guides")({
   component: InstallGuidesPage,
@@ -205,15 +206,30 @@ function InstallGuidesPage() {
           </TabsList>
 
           <TabsContent value="welcome" className="mt-6">
-            <div className="rounded-2xl bg-gradient-to-br from-rose-600/30 via-red-600/30 to-orange-700/30 border border-red-500/30 p-10 shadow-[0_0_60px_-15px_rgba(239,68,68,0.5)]">
-              <h2 className="font-display text-3xl font-bold text-red-50">Welcome to Install Guides</h2>
-              <p className="mt-3 text-lg text-red-100/80 max-w-2xl">
-                Everything you need to get up and running — written walkthroughs and downloadable PDF references.
-              </p>
-              <p className="mt-4 text-red-100/70 max-w-2xl">
-                Browse by category, search for what you need, and open PDFs directly in your browser.
-              </p>
-              <Button className="mt-6 bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white" onClick={() => setTab("guides")}>Browse guides</Button>
+            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-rose-600/30 via-red-600/30 to-orange-700/30 border border-red-500/30 shadow-[0_0_60px_-15px_rgba(239,68,68,0.5)]">
+              <img
+                src={installHero}
+                alt="Couple watching an install guide on a TV"
+                width={1280}
+                height={768}
+                className="hidden md:block absolute inset-y-0 right-0 h-full w-1/2 object-cover object-left [mask-image:linear-gradient(to_right,transparent,black_30%)]"
+              />
+              <div className="relative p-10 md:max-w-[60%]">
+                <h2 className="font-display text-3xl font-bold text-red-50">Welcome to Install Guides</h2>
+                <p className="mt-3 text-lg text-red-100/80">
+                  Everything you need to get up and running — written walkthroughs and downloadable PDF references.
+                </p>
+                <p className="mt-4 text-red-100/70">
+                  Browse by category, search for what you need, and open PDFs directly in your browser.
+                </p>
+                <Button className="mt-6 bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white" onClick={() => setTab("guides")}>Browse guides</Button>
+              </div>
+              <img
+                src={installHero}
+                alt=""
+                aria-hidden
+                className="md:hidden w-full h-40 object-cover object-right"
+              />
             </div>
           </TabsContent>
 
