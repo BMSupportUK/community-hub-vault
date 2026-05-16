@@ -129,8 +129,8 @@ function MembersPage() {
     if (roles.some((r) => STAFF_ROLES.has(r))) return false;
     // Exclude pending and banned users
     if (roles.some((r) => EXCLUDE_ROLES.has(r))) return false;
-    // Must have at least the 'member' role
-    if (!roles.includes("member")) return false;
+    // Must have at least one approved (non-staff, non-pending, non-banned) role
+    if (roles.length === 0) return false;
     if (!q.trim()) return true;
     const s = q.toLowerCase();
     return (
