@@ -103,6 +103,7 @@ export function IconRail() {
     { to: "/shop", label: "Shop", icon: ShoppingBag, show: true },
     { to: "/install-guides", label: "Install guides", icon: BookOpen, show: true },
     { to: "/sports-guides", label: "Sports guides", icon: FileText, show: true },
+    { to: "/knowledge-base", label: "Knowledge base", icon: BookOpen, show: true },
     { to: "/reviews", label: "Customer reviews", icon: Star, show: true },
     { to: "/leaderboard", label: "Leaderboard", icon: Trophy, show: true },
     { to: "/status", label: "System status", icon: Activity, show: true, badge: activeIncidents },
