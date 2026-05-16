@@ -7,6 +7,8 @@ import { ShoppingBag, Package, Settings, Plus, Minus, X, Send, Trash2, Pencil, I
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import shopHero from "@/assets/shop-hero.jpg";
+import houseCutaway from "@/assets/house-cutaway.jpg";
+import judgeCourtroom from "@/assets/judge-courtroom.jpg";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useCurrency } from "@/hooks/use-currency";
 import { downloadReceipt } from "@/lib/receipt";
@@ -110,7 +112,9 @@ function ShopPage() {
       {view === "admin" && isAdmin && <AdminProducts />}
       {(view as string) === "discounts" && isAdmin && <AdminDiscounts />}
       {(view === "refund" || view === "multi_room" || view === "triple_room") && (
-        <PolicyView policyKey={view as PolicyKey} isAdmin={isAdmin} />
+        view === "refund"
+          ? <PolicyView policyKey="refund" isAdmin={isAdmin} />
+          : <RoomPolicyView roomKey={view as "multi_room" | "triple_room"} isAdmin={isAdmin} />
       )}
     </>
   );
