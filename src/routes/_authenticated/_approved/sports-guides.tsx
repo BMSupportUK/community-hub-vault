@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate, Outlet, useChildMatches } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, Search, Pencil, Trash2, ImageIcon, GripVertical, Check, Circle, X, ChevronDown, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -59,14 +60,11 @@ type Blog = {
 
 function SportsGuidesPage() {
   const { isMod, user, hasAny } = useAuth();
+  const queryClient = useQueryClient();
   const navigate = useNavigate();
   const { cat: catFromUrl } = Route.useSearch();
   const canManageCategories = hasAny(["admin", "management", "staff"]);
   const [tab, setTab] = useState("welcome");
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [blogs, setBlogs] = useState<Blog[]>([]);
-  const [reads, setReads] = useState<Record<string, string>>({}); // blog_id -> read_at iso
-  const [baselineAt, setBaselineAt] = useState<string | null>(null);
   const [activeCat, setActiveCat] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [resultsOpen, setResultsOpen] = useState(true);
@@ -75,46 +73,54 @@ function SportsGuidesPage() {
   const dragCatId = useRef<string | null>(null);
   const dragBlogId = useRef<string | null>(null);
 
-  const load = async () => {
-    const [{ data: cats }, { data: bs }, { data: rs }, { data: prof }] = await Promise.all([
-      supabase.from("sports_categories").select("*").order("sort_order"),
-      supabase.from("sports_blogs").select("*").order("sort_order").order("created_at", { ascending: false }),
-      user?.id
-        ? supabase.from("sports_blog_reads").select("blog_id, read_at").eq("user_id", user.id)
-        : Promise.resolve({ data: [] as { blog_id: string; read_at: string }[] }),
-      user?.id
-        ? supabase.from("profiles").select("sports_blogs_baseline_at").eq("id", user.id).maybeSingle()
-        : Promise.resolve({ data: null as { sports_blogs_baseline_at: string | null } | null }),
-    ]);
-    setCategories((cats ?? []) as Category[]);
-    setBlogs((bs ?? []) as Blog[]);
-    const map: Record<string, string> = {};
-    for (const r of (rs ?? []) as { blog_id: string; read_at: string }[]) map[r.blog_id] = r.read_at;
+  const queryKey = ["sports-guides-data", user?.id ?? "anon"] as const;
+  const dataQuery = useQuery({
+    queryKey,
+    queryFn: async () => {
+      const [{ data: cats }, { data: bs }, { data: rs }, { data: prof }] = await Promise.all([
+        supabase.from("sports_categories").select("*").order("sort_order"),
+        supabase.from("sports_blogs").select("*").order("sort_order").order("created_at", { ascending: false }),
+        user?.id
+          ? supabase.from("sports_blog_reads").select("blog_id, read_at").eq("user_id", user.id)
+          : Promise.resolve({ data: [] as { blog_id: string; read_at: string }[] }),
+        user?.id
+          ? supabase.from("profiles").select("sports_blogs_baseline_at").eq("id", user.id).maybeSingle()
+          : Promise.resolve({ data: null as { sports_blogs_baseline_at: string | null } | null }),
+      ]);
+      const map: Record<string, string> = {};
+      for (const r of (rs ?? []) as { blog_id: string; read_at: string }[]) map[r.blog_id] = r.read_at;
+      let baseline = (prof as { sports_blogs_baseline_at: string | null } | null)?.sports_blogs_baseline_at ?? null;
+      if (user?.id && !baseline) {
+        baseline = new Date().toISOString();
+        const { error } = await supabase
+          .from("profiles")
+          .update({ sports_blogs_baseline_at: baseline })
+          .eq("id", user.id);
+        if (error) baseline = null;
+      }
+      return {
+        categories: (cats ?? []) as Category[],
+        blogs: (bs ?? []) as Blog[],
+        reads: map,
+        baselineAt: baseline,
+      };
+    },
+    staleTime: 5 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+  });
 
-    // Per-user baseline: set once on first visit. A blog only counts as "New"
-    // if it was created or content-edited AFTER this timestamp (and the user
-    // hasn't read it since). This is independent of read records, so marking
-    // things unread later won't retrigger a wall of New badges.
-    let baseline = (prof as { sports_blogs_baseline_at: string | null } | null)?.sports_blogs_baseline_at ?? null;
-    if (user?.id && !baseline) {
-      baseline = new Date().toISOString();
-      const { error } = await supabase
-        .from("profiles")
-        .update({ sports_blogs_baseline_at: baseline })
-        .eq("id", user.id);
-      if (error) baseline = null;
-    }
-    setBaselineAt(baseline);
-    setReads(map);
-    if (cats?.length) {
-      setActiveCat((cur) => cur ?? catFromUrl ?? cats[0].id);
-    }
-  };
+  const categories = dataQuery.data?.categories ?? [];
+  const blogs = dataQuery.data?.blogs ?? [];
+  const reads = dataQuery.data?.reads ?? {};
+  const baselineAt = dataQuery.data?.baselineAt ?? null;
+  const load = () => queryClient.invalidateQueries({ queryKey });
 
   useEffect(() => {
-    load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id]);
+    if (categories.length) setActiveCat((cur) => cur ?? catFromUrl ?? categories[0].id);
+  }, [categories, catFromUrl]);
 
   // If we arrived back here from new/edit/read, jump straight to the category.
   useEffect(() => {
@@ -136,7 +142,9 @@ function SportsGuidesPage() {
   const markRead = async (b: Blog) => {
     if (!user?.id) return;
     const now = new Date().toISOString();
-    setReads((m) => ({ ...m, [b.id]: now }));
+    queryClient.setQueryData<typeof dataQuery.data>(queryKey, (prev) =>
+      prev ? { ...prev, reads: { ...prev.reads, [b.id]: now } } : prev
+    );
     const { error } = await supabase
       .from("sports_blog_reads")
       .upsert({ user_id: user.id, blog_id: b.id, read_at: now }, { onConflict: "user_id,blog_id" });
@@ -145,7 +153,12 @@ function SportsGuidesPage() {
 
   const markUnread = async (b: Blog) => {
     if (!user?.id) return;
-    setReads((m) => { const n = { ...m }; delete n[b.id]; return n; });
+    queryClient.setQueryData<typeof dataQuery.data>(queryKey, (prev) => {
+      if (!prev) return prev;
+      const n = { ...prev.reads };
+      delete n[b.id];
+      return { ...prev, reads: n };
+    });
     const { error } = await supabase
       .from("sports_blog_reads")
       .delete()
@@ -257,7 +270,7 @@ function SportsGuidesPage() {
     const [moved] = list.splice(fromIdx, 1);
     list.splice(toIdx, 0, moved);
     const updated = list.map((c, i) => ({ ...c, sort_order: (i + 1) * 10 }));
-    setCategories(updated);
+    queryClient.setQueryData<typeof dataQuery.data>(queryKey, (prev) => prev ? { ...prev, categories: updated } : prev);
     await Promise.all(
       updated.map((c) => supabase.from("sports_categories").update({ sort_order: c.sort_order }).eq("id", c.id))
     );
@@ -274,7 +287,7 @@ function SportsGuidesPage() {
     const [moved] = inCat.splice(fromIdx, 1);
     inCat.splice(toIdx, 0, moved);
     const updated = inCat.map((b, i) => ({ ...b, sort_order: (i + 1) * 10 }));
-    setBlogs([...others, ...updated]);
+    queryClient.setQueryData<typeof dataQuery.data>(queryKey, (prev) => prev ? { ...prev, blogs: [...others, ...updated] } : prev);
     await Promise.all(
       updated.map((b) => supabase.from("sports_blogs").update({ sort_order: b.sort_order }).eq("id", b.id))
     );
