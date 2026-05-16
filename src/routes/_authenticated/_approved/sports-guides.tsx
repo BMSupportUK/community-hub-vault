@@ -462,6 +462,56 @@ function SportsGuidesPage() {
                   </div>
                 )}
               </section>
+
+              {search.trim() && (
+                <aside className="rounded-2xl bg-purple-950/60 border border-purple-500/30 backdrop-blur h-fit lg:sticky lg:top-4 overflow-hidden">
+                  <button
+                    onClick={() => setResultsOpen((v) => !v)}
+                    className="w-full flex items-center justify-between gap-2 px-4 py-3 border-b border-purple-500/30 bg-purple-900/40 text-purple-100 hover:bg-purple-900/60"
+                  >
+                    <span className="flex items-center gap-2 font-semibold text-sm">
+                      {resultsOpen ? <ChevronDown className="size-4" /> : <ChevronRight className="size-4" />}
+                      {searchResults.length} Result{searchResults.length === 1 ? "" : "s"}
+                    </span>
+                    <span
+                      role="button"
+                      onClick={(e) => { e.stopPropagation(); setSearch(""); }}
+                      className="p-1 rounded hover:bg-purple-800/60 text-purple-200"
+                      title="Clear search"
+                    >
+                      <X className="size-4" />
+                    </span>
+                  </button>
+                  {resultsOpen && (
+                    <div className="max-h-[70vh] overflow-y-auto divide-y divide-purple-500/20">
+                      {searchResults.length === 0 ? (
+                        <div className="px-4 py-6 text-sm text-purple-200/70 text-center">No matches</div>
+                      ) : (
+                        searchResults.map(({ blog, snippet }) => {
+                          const cat = categories.find((c) => c.id === blog.category_id);
+                          return (
+                            <button
+                              key={blog.id}
+                              onClick={() => navigate({ to: "/sports-guides/read/$id", params: { id: blog.id }, search: { cat: blog.category_id } })}
+                              className="w-full text-left px-4 py-3 hover:bg-purple-900/50 transition-colors block"
+                            >
+                              <div className="text-[10px] uppercase tracking-wider text-fuchsia-300/80 mb-1">
+                                {cat?.name ?? "Guide"}
+                              </div>
+                              <div className="font-semibold text-sm text-purple-50 leading-snug">
+                                <Highlight text={blog.title} query={search} />
+                              </div>
+                              <div className="mt-1 text-xs text-purple-200/80 leading-relaxed">
+                                <Highlight text={snippet} query={search} />
+                              </div>
+                            </button>
+                          );
+                        })
+                      )}
+                    </div>
+                  )}
+                </aside>
+              )}
             </div>
           </TabsContent>
 
