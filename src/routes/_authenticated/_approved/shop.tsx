@@ -1072,7 +1072,29 @@ function Checkout({ items, total, onClose, onPlace }: {
       .select("*")
       .eq("is_active", true)
       .order("code", { ascending: true });
-    setAvailable((data ?? []) as DiscountCode[]);
+    const codes = (data ?? []) as DiscountCode[];
+    const cartIds = items.map((i) => i.id);
+    let filtered: DiscountCode[] = codes;
+    if (codes.length > 0) {
+      const { data: links } = await supabase
+        .from("discount_code_products")
+        .select("discount_code_id, product_id")
+        .in("discount_code_id", codes.map((c) => c.id));
+      const linkMap = new Map<string, string[]>();
+      (links ?? []).forEach((l: { discount_code_id: string; product_id: string }) => {
+        const arr = linkMap.get(l.discount_code_id) ?? [];
+        arr.push(l.product_id);
+        linkMap.set(l.discount_code_id, arr);
+      });
+      filtered = codes.filter((c) => {
+        const restricted = linkMap.get(c.id);
+        // No restrictions => applies to all
+        if (!restricted || restricted.length === 0) return true;
+        // Restricted => only show if cart contains at least one allowed product
+        return cartIds.some((id) => restricted.includes(id));
+      });
+    }
+    setAvailable(filtered);
     setLoadingAvailable(false);
   };
 
