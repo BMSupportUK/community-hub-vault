@@ -1,10 +1,16 @@
 import { createFileRoute, Navigate, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { KeyRound, Search, Loader2, Plus, Pencil, Trash2, X, Check, ChevronDown, ChevronRight, Eye, EyeOff, ArrowLeft } from "lucide-react";
+import { KeyRound, Search, Loader2, Plus, Pencil, Trash2, X, Check, ChevronDown, ChevronRight, Eye, EyeOff, ArrowLeft, History, RotateCcw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
+import {
+  listCredentialBackups,
+  restoreCredentialBackup,
+  type CredentialBackupFile,
+} from "@/lib/credentials-restore.functions";
 
 export const Route = createFileRoute("/_authenticated/_approved/admin-credentials")({
   component: AdminCredentialsPage,
@@ -36,6 +42,7 @@ function AdminCredentialsPage() {
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [revealed, setRevealed] = useState<Record<string, boolean>>({});
   const [editor, setEditor] = useState<{ ownerId: string; row: CredentialRow | null } | null>(null);
+  const [restoreOpen, setRestoreOpen] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -101,6 +108,13 @@ function AdminCredentialsPage() {
             <h1 className="font-display text-2xl font-bold">User Credentials Admin</h1>
             <p className="text-sm text-muted-foreground">Manage app login credentials assigned to each user.</p>
           </div>
+          <button
+            onClick={() => setRestoreOpen(true)}
+            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border text-xs font-medium hover:border-primary"
+            title="Restore credentials from a backup snapshot"
+          >
+            <History className="size-3.5" /> Restore backup
+          </button>
           <div className="hidden sm:flex gap-2 text-xs">
             <Stat label="Users" value={profiles.length} />
             <Stat label="With creds" value={usersWithCreds} />
@@ -195,6 +209,13 @@ function AdminCredentialsPage() {
             currentUserId={user?.id ?? ""}
             onClose={() => setEditor(null)}
             onSaved={() => { setEditor(null); load(); }}
+          />
+        )}
+
+        {restoreOpen && (
+          <RestoreBackupDialog
+            onClose={() => setRestoreOpen(false)}
+            onRestored={() => { setRestoreOpen(false); load(); }}
           />
         )}
       </div>
