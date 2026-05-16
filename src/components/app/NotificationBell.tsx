@@ -13,6 +13,7 @@ import outageAudio from "@/assets/outage-notify.mp3";
 import outageResolvedAudio from "@/assets/outage-resolved.mp3";
 import broadcastAudio from "@/assets/broadcast-notify.mp3";
 import staffMentionAudio from "@/assets/staff-mention.mp3";
+import orderAudio from "@/assets/order-notify.mp3";
 
 type Notif = {
   id: string;
@@ -129,6 +130,13 @@ export function NotificationBell() {
         .on("postgres_changes", { event: "INSERT", schema: "public", table: "staff_notifications" }, (payload) => {
           const n = { ...(payload.new as Notif), source: "staff" as const };
           setItems((prev) => [n, ...prev].slice(0, 80));
+          if (n.kind === "order_placed" && canManageOrders) {
+            try {
+              const audio = new Audio(orderAudio);
+              audio.volume = 0.9;
+              void audio.play().catch(() => { /* autoplay may be blocked */ });
+            } catch { /* ignore */ }
+          }
           toast(n.title, {
             description: n.body ?? undefined,
             action:
