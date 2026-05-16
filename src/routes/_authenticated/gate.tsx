@@ -474,6 +474,18 @@ function GatePage() {
                   </div>
                 );
               })}
+              {peerTyping && (
+                <div className="flex justify-start">
+                  <div className="px-3 py-2 rounded-2xl bg-white/5 border border-white/10 text-[11px] text-white/60 inline-flex items-center gap-1.5">
+                    <span className="inline-flex gap-0.5">
+                      <span className="size-1.5 rounded-full bg-white/60 animate-bounce" style={{ animationDelay: "0ms" }} />
+                      <span className="size-1.5 rounded-full bg-white/60 animate-bounce" style={{ animationDelay: "150ms" }} />
+                      <span className="size-1.5 rounded-full bg-white/60 animate-bounce" style={{ animationDelay: "300ms" }} />
+                    </span>
+                    Admin is typing…
+                  </div>
+                </div>
+              )}
             </div>
 
             {status === "pending" ? (
@@ -481,7 +493,7 @@ function GatePage() {
                 <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3">
                   <input
                     value={text}
-                    onChange={(e) => setText(e.target.value)}
+                    onChange={(e) => { setText(e.target.value); if (e.target.value) notifyTyping(); }}
                     placeholder="Message support…"
                     className="flex-1 h-11 bg-transparent outline-none text-sm text-white placeholder:text-white/40"
                     autoFocus
