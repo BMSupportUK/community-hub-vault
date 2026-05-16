@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, Search, X, Pencil, Trash2, ImageIcon, GripVertical, FileText, ExternalLink } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -35,10 +36,9 @@ type Blog = {
 
 function InstallGuidesPage() {
   const { isMod, user, hasAny } = useAuth();
+  const queryClient = useQueryClient();
   const canManageCategories = hasAny(["admin", "management", "staff"]);
   const [tab, setTab] = useState("welcome");
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [blogs, setBlogs] = useState<Blog[]>([]);
   const [activeCat, setActiveCat] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [reading, setReading] = useState<Blog | null>(null);
@@ -49,20 +49,32 @@ function InstallGuidesPage() {
   const dragCatId = useRef<string | null>(null);
   const dragBlogId = useRef<string | null>(null);
 
-  const load = async () => {
-    const [{ data: cats }, { data: bs }] = await Promise.all([
-      supabase.from("install_categories").select("*").order("sort_order"),
-      supabase.from("install_blogs").select("*").order("sort_order").order("created_at", { ascending: false }),
-    ]);
-    setCategories((cats ?? []) as Category[]);
-    setBlogs((bs ?? []) as Blog[]);
-    if (!activeCat && cats?.length) setActiveCat(cats[0].id);
-  };
+  const dataQuery = useQuery({
+    queryKey: ["install-guides-data"],
+    queryFn: async () => {
+      const [{ data: cats }, { data: bs }] = await Promise.all([
+        supabase.from("install_categories").select("*").order("sort_order"),
+        supabase.from("install_blogs").select("*").order("sort_order").order("created_at", { ascending: false }),
+      ]);
+      return {
+        categories: (cats ?? []) as Category[],
+        blogs: (bs ?? []) as Blog[],
+      };
+    },
+    staleTime: 5 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+  });
+
+  const categories = dataQuery.data?.categories ?? [];
+  const blogs = dataQuery.data?.blogs ?? [];
+  const load = () => queryClient.invalidateQueries({ queryKey: ["install-guides-data"] });
 
   useEffect(() => {
-    load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    if (!activeCat && categories.length) setActiveCat(categories[0].id);
+  }, [categories, activeCat]);
 
   const counts = useMemo(() => {
     const m: Record<string, number> = {};
@@ -191,7 +203,7 @@ function InstallGuidesPage() {
     const [moved] = list.splice(fromIdx, 1);
     list.splice(toIdx, 0, moved);
     const updated = list.map((c, i) => ({ ...c, sort_order: (i + 1) * 10 }));
-    setCategories(updated);
+    queryClient.setQueryData<typeof dataQuery.data>(["install-guides-data"], (prev) => prev ? { ...prev, categories: updated } : prev);
     await Promise.all(
       updated.map((c) => supabase.from("install_categories").update({ sort_order: c.sort_order }).eq("id", c.id))
     );
@@ -207,7 +219,7 @@ function InstallGuidesPage() {
     const [moved] = inCat.splice(fromIdx, 1);
     inCat.splice(toIdx, 0, moved);
     const updated = inCat.map((b, i) => ({ ...b, sort_order: (i + 1) * 10 }));
-    setBlogs([...others, ...updated]);
+    queryClient.setQueryData<typeof dataQuery.data>(["install-guides-data"], (prev) => prev ? { ...prev, blogs: [...others, ...updated] } : prev);
     await Promise.all(
       updated.map((b) => supabase.from("install_blogs").update({ sort_order: b.sort_order }).eq("id", b.id))
     );
