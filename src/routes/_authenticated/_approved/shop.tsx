@@ -256,22 +256,61 @@ function defaultTitle(k: PolicyKey) {
 // ============ STOREFRONT ============
 function Storefront() {
   const [products, setProducts] = useState<Product[]>([]);
+  const [dbCategories, setDbCategories] = useState<ProductCategory[]>([]);
   const [cart, setCart] = useState<Record<string, number>>({});
   const [showCheckout, setShowCheckout] = useState(false);
   const [tab, setTab] = useState<string>("welcome");
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, hasAny } = useAuth();
+  const isAdmin = hasAny(["admin", "management"]);
+  const [addingCat, setAddingCat] = useState(false);
+  const [newCatName, setNewCatName] = useState("");
+
+  const reloadCategories = () =>
+    supabase.from("product_categories").select("*").order("sort_order").order("name")
+      .then(({ data }) => setDbCategories((data ?? []) as ProductCategory[]));
 
   useEffect(() => {
     supabase.from("products").select("*").eq("is_active", true).order("sort_order").then(({ data }) => setProducts(data ?? []));
+    reloadCategories();
   }, []);
 
+  // Merge DB-managed categories with any category strings present on products
   const categories = useMemo(() => {
-    const set = new Set(products.map((p) => p.category).filter(Boolean) as string[]);
-    return ["All", ...Array.from(set)];
-  }, [products]);
+    const fromDb = dbCategories.map((c) => c.name);
+    const fromProducts = products.map((p) => p.category).filter(Boolean) as string[];
+    const merged: string[] = [];
+    for (const n of [...fromDb, ...fromProducts]) {
+      if (n && !merged.includes(n)) merged.push(n);
+    }
+    return ["All", ...merged];
+  }, [products, dbCategories]);
   const [cat, setCat] = useState("All");
   const filtered = cat === "All" ? products : products.filter((p) => p.category === cat);
+
+  // Group products by category for the "All" view (professional store layout)
+  const grouped = useMemo(() => {
+    const groups: { name: string; items: Product[] }[] = [];
+    const order = categories.filter((c) => c !== "All");
+    for (const name of order) {
+      const items = products.filter((p) => p.category === name);
+      if (items.length) groups.push({ name, items });
+    }
+    const uncategorized = products.filter((p) => !p.category);
+    if (uncategorized.length) groups.push({ name: "Other", items: uncategorized });
+    return groups;
+  }, [products, categories]);
+
+  const addCategory = async () => {
+    const name = newCatName.trim();
+    if (!name) return;
+    const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+    const { error } = await supabase.from("product_categories").insert({ name, slug } as never);
+    if (error) { toast.error(error.message); return; }
+    setNewCatName(""); setAddingCat(false);
+    toast.success("Category added");
+    reloadCategories();
+  };
 
   const cartItems = products.filter((p) => cart[p.id] > 0);
   const total = cartItems.reduce((s, p) => s + p.price_cents * cart[p.id], 0);
@@ -365,52 +404,94 @@ function Storefront() {
             </TabsContent>
 
             <TabsContent value="shop" className="mt-4">
-              <div id="products" className="bg-background/80 backdrop-blur border border-border rounded-xl px-4 py-3 flex items-center gap-2 flex-wrap mb-4">
-          {categories.map((c) => (
-            <button
-              key={c}
-              onClick={() => setCat(c)}
-              className={cn(
-                "text-xs px-3 py-1.5 rounded-full transition font-medium",
-                cat === c
-                  ? "bg-gradient-to-r from-violet-600 to-blue-600 text-white shadow shadow-blue-500/30"
-                  : "bg-surface-2 text-muted-foreground hover:text-foreground",
-              )}
-            >
-              {c}
-            </button>
-          ))}
-              </div>
-        {filtered.length === 0 ? (
-          <div className="text-center text-muted-foreground py-20">No products yet.</div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-            {filtered.map((p) => (
-              <div key={p.id} className="group bg-surface rounded-xl overflow-hidden border border-border hover:border-sky-400/50 hover:shadow-lg hover:shadow-blue-500/10 transition-all flex flex-col">
-                <div className="aspect-square bg-surface-2 grid place-items-center overflow-hidden">
-                  {p.image_url ? <img src={p.image_url} alt={p.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" /> : <ImageIcon className="size-10 text-muted-foreground/40" />}
-                </div>
-                <div className="p-4 flex flex-col flex-1">
-                  {p.category && <div className="text-[10px] uppercase tracking-wider text-sky-300 mb-1">{p.category}</div>}
-                  <h3 className="font-semibold text-sm">{p.name}</h3>
-                  {p.description && <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{p.description}</p>}
-                  <div className="mt-auto pt-3 flex items-center justify-between">
-                    <span className="font-display font-bold text-lg bg-gradient-to-r from-violet-600 to-blue-600 bg-clip-text text-transparent">{fmt(p.price_cents)}</span>
-                    {cart[p.id] ? (
-                      <div className="flex items-center gap-1 bg-surface-2 rounded-lg">
-                        <button onClick={() => sub(p.id)} className="size-7 grid place-items-center hover:text-sky-400"><Minus className="size-3.5" /></button>
-                        <span className="text-sm font-medium w-5 text-center">{cart[p.id]}</span>
-                        <button onClick={() => add(p.id)} className="size-7 grid place-items-center hover:text-sky-400"><Plus className="size-3.5" /></button>
-                      </div>
+              <div id="products" className="bg-background/80 backdrop-blur border border-border rounded-xl px-4 py-3 flex items-center gap-2 flex-wrap mb-4 sticky top-0 z-10">
+                {categories.map((c) => {
+                  const count = c === "All" ? products.length : products.filter((p) => p.category === c).length;
+                  return (
+                    <button
+                      key={c}
+                      onClick={() => setCat(c)}
+                      className={cn(
+                        "text-xs px-3 py-1.5 rounded-full transition font-medium inline-flex items-center gap-1.5",
+                        cat === c
+                          ? "bg-gradient-to-r from-violet-600 to-blue-600 text-white shadow shadow-blue-500/30"
+                          : "bg-surface-2 text-muted-foreground hover:text-foreground",
+                      )}
+                    >
+                      {c}
+                      <span className={cn("text-[10px] px-1.5 rounded-full", cat === c ? "bg-white/20" : "bg-background/60")}>{count}</span>
+                    </button>
+                  );
+                })}
+                {isAdmin && (
+                  <div className="ml-auto flex items-center gap-2">
+                    {addingCat ? (
+                      <>
+                        <input
+                          autoFocus
+                          value={newCatName}
+                          onChange={(e) => setNewCatName(e.target.value)}
+                          onKeyDown={(e) => { if (e.key === "Enter") addCategory(); if (e.key === "Escape") { setAddingCat(false); setNewCatName(""); } }}
+                          placeholder="Category name"
+                          className="text-xs bg-surface-2 border border-border rounded-md px-2 py-1.5 outline-none focus:border-sky-400"
+                        />
+                        <button onClick={addCategory} className="text-xs px-2.5 py-1.5 rounded-md bg-gradient-to-r from-violet-600 to-blue-600 text-white font-medium">Save</button>
+                        <button onClick={() => { setAddingCat(false); setNewCatName(""); }} className="text-xs px-2 py-1.5 rounded-md text-muted-foreground hover:text-foreground"><X className="size-3.5" /></button>
+                      </>
                     ) : (
-                      <button onClick={() => add(p.id)} className="px-3 py-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-blue-600 text-white text-xs font-medium hover:opacity-90 shadow shadow-blue-500/20">Place Order</button>
+                      <button
+                        onClick={() => setAddingCat(true)}
+                        className="text-xs px-3 py-1.5 rounded-full inline-flex items-center gap-1.5 border border-dashed border-border text-muted-foreground hover:text-foreground hover:border-sky-400/60"
+                      >
+                        <Plus className="size-3.5" /> Add category
+                      </button>
                     )}
                   </div>
-                </div>
+                )}
               </div>
-            ))}
-          </div>
-        )}
+              {products.length === 0 ? (
+                <div className="text-center text-muted-foreground py-20">No products yet.</div>
+              ) : cat === "All" ? (
+                <div className="space-y-10">
+                  {grouped.length === 0 ? (
+                    <div className="text-center text-muted-foreground py-20">No products yet.</div>
+                  ) : grouped.map((g) => (
+                    <section key={g.name}>
+                      <div className="flex items-end justify-between mb-4 pb-2 border-b border-border">
+                        <div>
+                          <h2 className="font-display text-xl md:text-2xl font-bold tracking-tight">{g.name}</h2>
+                          <p className="text-xs text-muted-foreground mt-0.5">{g.items.length} {g.items.length === 1 ? "product" : "products"}</p>
+                        </div>
+                        {g.name !== "Other" && (
+                          <button onClick={() => setCat(g.name)} className="text-xs text-sky-400 hover:text-sky-300 font-medium">View all →</button>
+                        )}
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+                        {g.items.map((p) => (
+                          <ProductCard key={p.id} p={p} qty={cart[p.id] ?? 0} onAdd={() => add(p.id)} onSub={() => sub(p.id)} />
+                        ))}
+                      </div>
+                    </section>
+                  ))}
+                </div>
+              ) : filtered.length === 0 ? (
+                <div className="text-center text-muted-foreground py-20">No products in this category yet.</div>
+              ) : (
+                <section>
+                  <div className="flex items-end justify-between mb-4 pb-2 border-b border-border">
+                    <div>
+                      <h2 className="font-display text-xl md:text-2xl font-bold tracking-tight">{cat}</h2>
+                      <p className="text-xs text-muted-foreground mt-0.5">{filtered.length} {filtered.length === 1 ? "product" : "products"}</p>
+                    </div>
+                    <button onClick={() => setCat("All")} className="text-xs text-sky-400 hover:text-sky-300 font-medium">← All categories</button>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+                    {filtered.map((p) => (
+                      <ProductCard key={p.id} p={p} qty={cart[p.id] ?? 0} onAdd={() => add(p.id)} onSub={() => sub(p.id)} />
+                    ))}
+                  </div>
+                </section>
+              )}
             </TabsContent>
 
             <TabsContent value="refund" className="mt-4"><InlinePolicy policyKey="refund" /></TabsContent>
