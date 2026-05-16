@@ -488,9 +488,9 @@ function ProfilePage() {
                   />
                 ) : shift ? (
                   <StatusPill icon={ClockIcon} tone="ok" label={`On shift — ${fmt(onShiftSeconds)}`} />
-                ) : (
+                ) : sortedRoles.some((r) => ["admin","management","staff","moderator"].includes(r)) ? (
                   <StatusPill icon={ClockIcon} tone="muted" label="Off shift" />
-                )}
+                ) : null}
               </div>
               <Button
                 className="mt-6 bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white border-0 shadow-lg shadow-purple-900/50"
