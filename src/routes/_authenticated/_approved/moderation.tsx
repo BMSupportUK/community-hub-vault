@@ -113,7 +113,10 @@ function ModerationPage() {
   }, [thread]);
 
   useEffect(() => {
-    scrollerRef.current?.scrollTo({ top: scrollerRef.current.scrollHeight, behavior: "smooth" });
+    const el = scrollerRef.current;
+    if (!el) return;
+    // Instant scroll (no smooth) prevents scroll-chaining that pushes the page away from the reply box.
+    el.scrollTop = el.scrollHeight;
   }, [thread.length]);
 
   if (!isMod) {
@@ -302,7 +305,7 @@ function ModerationPage() {
                         <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground mb-2">
                           <MessageSquare className="size-3.5" /> Conversation
                         </div>
-                        <div ref={scrollerRef} className="max-h-72 overflow-y-auto space-y-2 pr-1">
+                        <div ref={scrollerRef} className="max-h-72 overflow-y-auto overscroll-contain space-y-2 pr-1">
                           {thread.length === 0 && (
                             <div className="text-xs text-muted-foreground italic py-4 text-center">No messages yet.</div>
                           )}
