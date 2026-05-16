@@ -1484,6 +1484,23 @@ function OrderDetail({ orderId, isAdmin }: { orderId: string; isAdmin: boolean }
     toast.success("Sale completed");
   };
 
+  const removeItem = async (itemId: string, productName: string) => {
+    if (!order || order.status === "completed" || !!order.completed_at) {
+      toast.error("This order is completed and cannot be changed.");
+      return;
+    }
+    if (items.length <= 1) {
+      toast.error("Cannot remove the last item. Cancel the order instead.");
+      return;
+    }
+    if (!confirm(`Remove "${productName}" from this order?`)) return;
+    const { error } = await supabase.from("order_items").delete().eq("id", itemId);
+    if (error) { toast.error(error.message); return; }
+    await sendSystem(`🗑️ Removed "${productName}" from this order.`);
+    toast.success("Item removed");
+    load();
+  };
+
   const handleDownload = async () => {
     if (!order) return;
     try {
@@ -1537,9 +1554,18 @@ function OrderDetail({ orderId, isAdmin }: { orderId: string; isAdmin: boolean }
             <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Items</div>
             <div className="space-y-1">
               {items.map((i) => (
-                <div key={i.id} className="flex justify-between">
-                  <span>{i.product_name} <span className="text-muted-foreground">× {i.quantity}</span></span>
-                  <span>{fmt(i.unit_price_cents * i.quantity)}</span>
+                <div key={i.id} className="flex justify-between items-center gap-2 group">
+                  <span className="min-w-0 flex-1 truncate">{i.product_name} <span className="text-muted-foreground">× {i.quantity}</span></span>
+                  <span className="shrink-0">{fmt(i.unit_price_cents * i.quantity)}</span>
+                  {isAdmin && !order.completed_at && (
+                    <button
+                      onClick={() => removeItem(i.id, i.product_name)}
+                      className="shrink-0 p-1 rounded text-muted-foreground hover:text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition"
+                      title="Remove item"
+                    >
+                      <Trash2 className="size-3.5" />
+                    </button>
+                  )}
                 </div>
               ))}
               <div className="flex justify-between pt-2 border-t border-border font-display font-bold">
