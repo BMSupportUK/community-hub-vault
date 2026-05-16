@@ -36,6 +36,7 @@ export function NotificationBell() {
   const [readIds, setReadIds] = useState<Set<string>>(new Set());
   const [open, setOpen] = useState(false);
   const canManageOrders = hasAny(["admin", "management"]);
+  const canHandleTickets = hasAny(["admin", "management", "staff"]);
 
   useEffect(() => {
     if (!user || isPending) return;
@@ -138,7 +139,7 @@ export function NotificationBell() {
               void audio.play().catch(() => { /* autoplay may be blocked */ });
             } catch { /* ignore */ }
           }
-          if (n.kind === "ticket_raised" && canManageOrders) {
+          if (n.kind === "ticket_raised" && canHandleTickets) {
             try {
               const audio = new Audio(ticketAudio);
               audio.volume = 0.9;
@@ -214,7 +215,7 @@ export function NotificationBell() {
       if (staffCh) supabase.removeChannel(staffCh);
       supabase.removeChannel(incidentCh);
     };
-  }, [user, isStaff, isPending, canManageOrders]);
+  }, [user, isStaff, isPending, canManageOrders, canHandleTickets]);
 
   if (!user || isPending) return null;
 
