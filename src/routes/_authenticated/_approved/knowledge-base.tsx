@@ -171,7 +171,7 @@ function KnowledgeBasePage() {
     setEditing({
       id: "", category_id: activeCat ?? categories[0]?.id ?? "",
       title: "", slug: "", excerpt: "", body: "", image_url: "", badge: "",
-      published: true, sort_order: 0, created_at: "",
+      published: false, sort_order: 0, created_at: "",
     });
   };
 
