@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate, Outlet, useChildMatches } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Plus, Search, Pencil, Trash2, ImageIcon, GripVertical, Check, Circle } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, ImageIcon, GripVertical, Check, Circle, X, ChevronDown, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -48,6 +48,7 @@ function SportsGuidesPage() {
   const [baselineAt, setBaselineAt] = useState<string | null>(null);
   const [activeCat, setActiveCat] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [resultsOpen, setResultsOpen] = useState(true);
   const [newCatName, setNewCatName] = useState("");
   const [addingCat, setAddingCat] = useState(false);
   const dragCatId = useRef<string | null>(null);
