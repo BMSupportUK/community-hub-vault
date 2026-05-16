@@ -47,6 +47,8 @@ function slugify(s: string) {
 const KB_DRAFT_KEY = "kb-new-article-draft";
 const KB_TAB_KEY = "kb-active-tab";
 const KB_CAT_KEY = "kb-active-cat";
+const KB_EDIT_KEY = "kb-editing-article";
+const KB_READ_KEY = "kb-reading-article";
 
 function StarRating({
   value, onChange, size = 16, readOnly = false,
@@ -91,8 +93,12 @@ function KnowledgeBasePage() {
     try { return sessionStorage.getItem(KB_CAT_KEY); } catch { return null; }
   });
   const [search, setSearch] = useState("");
-  const [reading, setReading] = useState<Article | null>(null);
-  const [editing, setEditing] = useState<Article | null>(null);
+  const [reading, setReading] = useState<Article | null>(() => {
+    try { const raw = sessionStorage.getItem(KB_READ_KEY); return raw ? JSON.parse(raw) as Article : null; } catch { return null; }
+  });
+  const [editing, setEditing] = useState<Article | null>(() => {
+    try { const raw = sessionStorage.getItem(KB_EDIT_KEY); return raw ? JSON.parse(raw) as Article : null; } catch { return null; }
+  });
   const [editingCat, setEditingCat] = useState<Category | null>(null);
   const [showCatEditor, setShowCatEditor] = useState(false);
   const dragCatId = useRef<string | null>(null);
@@ -106,6 +112,18 @@ function KnowledgeBasePage() {
       else sessionStorage.removeItem(KB_CAT_KEY);
     } catch { /* ignore */ }
   }, [activeCat]);
+  useEffect(() => {
+    try {
+      if (editing) sessionStorage.setItem(KB_EDIT_KEY, JSON.stringify(editing));
+      else sessionStorage.removeItem(KB_EDIT_KEY);
+    } catch { /* ignore */ }
+  }, [editing]);
+  useEffect(() => {
+    try {
+      if (reading) sessionStorage.setItem(KB_READ_KEY, JSON.stringify(reading));
+      else sessionStorage.removeItem(KB_READ_KEY);
+    } catch { /* ignore */ }
+  }, [reading]);
 
   const kbQuery = useQuery({
     queryKey: ["kb-data"],
