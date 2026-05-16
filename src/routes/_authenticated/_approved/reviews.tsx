@@ -162,6 +162,15 @@ function ReviewsPage() {
           </TabsContent>
 
           <TabsContent value="wall" className="mt-6">
+            <div className="relative overflow-hidden rounded-2xl border border-purple-500/30 p-6">
+              <img
+                src={reviewsBanner}
+                alt=""
+                aria-hidden
+                className="absolute inset-0 w-full h-full object-cover opacity-25 mix-blend-luminosity pointer-events-none"
+              />
+              <div className="absolute inset-0 bg-gradient-to-br from-[#1a0b2e]/80 via-purple-900/60 to-fuchsia-900/40 pointer-events-none" />
+              <div className="relative z-10">
             {approved.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-purple-500/40 p-12 text-center text-purple-200/70 bg-purple-950/30">
                 No approved reviews yet. Be the first!
@@ -195,6 +204,8 @@ function ReviewsPage() {
                 })}
               </div>
             )}
+              </div>
+            </div>
           </TabsContent>
 
           <TabsContent value="leave" className="mt-6">
