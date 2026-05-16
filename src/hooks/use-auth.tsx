@@ -26,10 +26,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [roles, setRoles] = useState<AppRole[]>([]);
   const [loading, setLoading] = useState(true);
+  const [rolesLoaded, setRolesLoaded] = useState(false);
 
   const loadRoles = async (uid: string) => {
     const { data } = await supabase.from("user_roles").select("role").eq("user_id", uid);
     setRoles((data ?? []).map((r) => r.role as AppRole));
+    setRolesLoaded(true);
   };
 
   useEffect(() => {
@@ -37,15 +39,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(s);
       setUser(s?.user ?? null);
       if (s?.user) {
+        setRolesLoaded(false);
         setTimeout(() => loadRoles(s.user.id), 0);
       } else {
         setRoles([]);
+        setRolesLoaded(true);
       }
     });
     supabase.auth.getSession().then(async ({ data: { session: s } }) => {
       setSession(s);
       setUser(s?.user ?? null);
       if (s?.user) await loadRoles(s.user.id);
+      else setRolesLoaded(true);
       setLoading(false);
     });
     return () => sub.subscription.unsubscribe();
@@ -67,7 +72,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const hasRole = (r: AppRole) => roles.includes(r);
   const hasAny = (rs: AppRole[]) => rs.some((r) => roles.includes(r));
-  const isPending = roles.length === 0 || (roles.length === 1 && roles[0] === "pending");
+  // While roles are still loading we should NOT treat the user as pending —
+  // otherwise approved users get bounced to /gate on login/reload.
+  const isPending = rolesLoaded && (roles.length === 0 || (roles.length === 1 && roles[0] === "pending"));
   const isBanned = roles.includes("banned");
   const isStaff = hasAny(["admin", "management", "staff", "moderator"]);
   const isMod = hasAny(["admin", "management", "moderator"]);
@@ -78,7 +85,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user,
         session,
         roles,
-        loading,
+        loading: loading || (!!user && !rolesLoaded),
         hasRole,
         hasAny,
         isPending,
