@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Bold, Italic, Underline, Heading1, Heading2, List, ListOrdered, Link2, Quote, Code, Undo2, Redo2, Eraser, Youtube } from "lucide-react";
+import { Bold, Italic, Underline, Heading1, Heading2, List, ListOrdered, Link2, Quote, Code, Undo2, Redo2, Eraser, Youtube, Minus } from "lucide-react";
 
 type Props = {
   value: string;
@@ -111,6 +111,7 @@ export function HtmlEditor({ value, onChange, className, placeholder }: Props) {
         <Btn title="Numbered list" isActive={active.ol} onClick={() => { exec("insertOrderedList"); handleInput(); }}><ListOrdered className="size-4" /></Btn>
         <Btn title="Link" onClick={promptLink}><Link2 className="size-4" /></Btn>
         <Btn title="Embed YouTube video" onClick={promptYouTube}><Youtube className="size-4" /></Btn>
+        <Btn title="Horizontal line" onClick={() => { exec("insertHorizontalRule"); handleInput(); }}><Minus className="size-4" /></Btn>
         <span className="mx-1 h-5 w-px bg-border" />
         <Btn title="Clear formatting" onClick={() => { exec("removeFormat"); handleInput(); }}><Eraser className="size-4" /></Btn>
         <Btn title="Undo" onClick={() => { exec("undo"); handleInput(); }}><Undo2 className="size-4" /></Btn>
