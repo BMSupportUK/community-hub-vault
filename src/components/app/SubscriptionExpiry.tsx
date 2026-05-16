@@ -32,7 +32,7 @@ export function SubscriptionExpiry() {
       .channel(`app_credentials-${user.id}`)
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "app_credentials", filter: `owner_id=eq.${user.id}` },
+        { event: "*", schema: "private", table: "app_credentials", filter: `owner_id=eq.${user.id}` },
         () => load(),
       )
       .subscribe();
