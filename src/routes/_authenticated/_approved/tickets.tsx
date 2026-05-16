@@ -659,10 +659,11 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 }
 
 function TicketDetail({
-  ticket, categories, profiles, staff, isStaff, currentUserId,
+  ticket, categories, profiles, staff, isStaff, currentUserId, myRating, onRate,
 }: {
   ticket: Ticket; categories: Category[]; profiles: Map<string, Profile>;
   staff: Profile[]; isStaff: boolean; currentUserId: string;
+  myRating: number; onRate: (v: number) => void;
 }) {
   const { hasAny } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
