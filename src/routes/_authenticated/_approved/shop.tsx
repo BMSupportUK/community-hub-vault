@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import shopHero from "@/assets/shop-hero.jpg";
 import houseCutaway from "@/assets/house-cutaway.jpg";
 import judgeCourtroom from "@/assets/judge-courtroom.jpg";
+import refundPolicyHero from "@/assets/refund-policy-hero.jpg";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useCurrency } from "@/hooks/use-currency";
 import { downloadReceipt } from "@/lib/receipt";
@@ -173,6 +174,25 @@ function PolicyView({ policyKey, isAdmin }: { policyKey: PolicyKey; isAdmin: boo
   return (
     <main className="flex-1 overflow-y-auto">
       <div className="max-w-4xl mx-auto px-6 py-8">
+        {policyKey === "refund" && (
+          <section className="relative overflow-hidden rounded-3xl border border-border mb-8 shadow-soft">
+            <img
+              src={refundPolicyHero}
+              alt="Customer with refund policy document"
+              width={1920}
+              height={1080}
+              className="w-full h-56 md:h-72 lg:h-80 object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-background/95 via-background/40 to-transparent" />
+            <div className="absolute inset-x-0 bottom-0 p-6 md:p-8">
+              <div className="text-xs uppercase tracking-[0.25em] text-primary-foreground/80 mb-2">Store policies</div>
+              <h1 className="font-display text-3xl md:text-4xl font-bold text-white drop-shadow">Refund Policy</h1>
+              <p className="mt-2 text-sm md:text-base text-white/80 max-w-xl">
+                Everything you need to know about returns, exchanges and getting your money back.
+              </p>
+            </div>
+          </section>
+        )}
         <header className="flex items-center gap-3 mb-6">
           <div className="size-11 rounded-2xl bg-gradient-primary grid place-items-center shadow-glow">
             <FileText className="size-5 text-primary-foreground" />
