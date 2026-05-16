@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { z } from "zod";
 import reviewsHero from "@/assets/reviews-hero.png";
+import reviewsBanner from "@/assets/reviews-banner.png";
 
 export const Route = createFileRoute("/_authenticated/_approved/reviews")({
   component: ReviewsPage,
@@ -129,10 +130,12 @@ function ReviewsPage() {
           <TabsContent value="welcome" className="mt-6">
             <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-fuchsia-600/30 via-purple-600/30 to-violet-700/30 border border-purple-500/40 shadow-[0_0_60px_-15px_rgba(168,85,247,0.5)]">
               <img
-                src={reviewsHero}
-                alt="Customer reviews"
-                className="absolute inset-y-0 right-0 h-full w-1/2 object-cover object-left hidden md:block opacity-90 [mask-image:linear-gradient(to_right,transparent,black_30%)]"
+                src={reviewsBanner}
+                alt=""
+                aria-hidden
+                className="absolute inset-0 w-full h-full object-cover opacity-30 mix-blend-luminosity pointer-events-none"
               />
+              <div className="absolute inset-0 bg-gradient-to-br from-[#1a0b2e]/70 via-purple-900/50 to-fuchsia-900/40 pointer-events-none" />
               <div className="relative z-10 p-10 md:max-w-[60%]">
                 <div className="size-14 rounded-2xl bg-purple-900/60 grid place-items-center mb-4">
                   <MessageSquareHeart className="size-7 text-fuchsia-300" />
@@ -155,11 +158,6 @@ function ReviewsPage() {
                   </div>
                 )}
               </div>
-              <img
-                src={reviewsHero}
-                alt=""
-                className="md:hidden w-full h-40 object-cover object-right"
-              />
             </div>
           </TabsContent>
 
@@ -200,7 +198,15 @@ function ReviewsPage() {
           </TabsContent>
 
           <TabsContent value="leave" className="mt-6">
-            <div className="max-w-2xl rounded-2xl bg-purple-950/50 border border-purple-500/30 p-6 backdrop-blur">
+            <div className="relative max-w-2xl overflow-hidden rounded-2xl bg-purple-950/50 border border-purple-500/30 p-6 backdrop-blur">
+              <img
+                src={reviewsBanner}
+                alt=""
+                aria-hidden
+                className="absolute inset-0 w-full h-full object-cover opacity-25 mix-blend-luminosity pointer-events-none"
+              />
+              <div className="absolute inset-0 bg-gradient-to-br from-[#1a0b2e]/80 via-purple-900/60 to-fuchsia-900/40 pointer-events-none" />
+              <div className="relative z-10">
               {mine ? (
                 <div>
                   <h2 className="font-display text-xl font-bold text-purple-50">Your review</h2>
@@ -281,6 +287,7 @@ function ReviewsPage() {
                   </div>
                 </>
               )}
+              </div>
             </div>
           </TabsContent>
         </Tabs>
