@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { Send, Ban, X, LogOut, ShieldCheck, FileText, MessageSquarePlus } from "lucide-react";
+import { Send, Ban, X, LogOut, ShieldCheck, FileText, MessageSquarePlus, Check, CheckCheck, AlertCircle, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
@@ -10,7 +10,8 @@ export const Route = createFileRoute("/_authenticated/gate")({
   component: GatePage,
 });
 
-interface Msg { id: string; sender_id: string; content: string; created_at: string; }
+type MsgStatus = "sending" | "sent" | "failed";
+interface Msg { id: string; sender_id: string; content: string; created_at: string; status?: MsgStatus; }
 
 function GatePage() {
   const { user, refreshRoles, signOut } = useAuth();
@@ -104,14 +105,30 @@ function GatePage() {
     e.preventDefault();
     if (!text.trim() || !appId || !user) return;
     const content = text.trim(); setText("");
+    const tempId = `temp-${crypto.randomUUID()}`;
+    const optimistic: Msg = {
+      id: tempId,
+      sender_id: user.id,
+      content,
+      created_at: new Date().toISOString(),
+      status: "sending",
+    };
+    setMsgs((m) => [...m, optimistic]);
     const { data: inserted, error } = await supabase
       .from("gate_messages")
       .insert({ application_id: appId, sender_id: user.id, content } as never)
       .select("id, sender_id, content, created_at")
       .single();
-    if (error || !inserted) { toast.error(error?.message ?? "Send failed"); return; }
-    const msg = inserted as Msg;
-    setMsgs((m) => (m.some((x) => x.id === msg.id) ? m : [...m, msg]));
+    if (error || !inserted) {
+      setMsgs((m) => m.map((x) => (x.id === tempId ? { ...x, status: "failed" } : x)));
+      toast.error(error?.message ?? "Send failed");
+      return;
+    }
+    const msg: Msg = { ...(inserted as Msg), status: "sent" };
+    setMsgs((m) => {
+      const withoutTemp = m.filter((x) => x.id !== tempId);
+      return withoutTemp.some((x) => x.id === msg.id) ? withoutTemp : [...withoutTemp, msg];
+    });
     await channelRef.current?.send({ type: "broadcast", event: "message", payload: msg });
   };
 
@@ -423,8 +440,12 @@ function GatePage() {
                     }`}>
                       {!mine && <div className="text-[10px] text-red-300 font-medium mb-0.5">{senderNames[m.sender_id] ?? "Admin"}</div>}
                       <div className="whitespace-pre-wrap">{m.content}</div>
-                      <div className={`text-[10px] mt-0.5 ${mine ? "text-white/60" : "text-white/40"}`}>
-                        {new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                      <div className={`text-[10px] mt-0.5 flex items-center gap-1 ${mine ? "justify-end text-white/60" : "text-white/40"}`}>
+                        <span>{new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
+                        {mine && m.status === "sending" && <Loader2 className="size-3 animate-spin" aria-label="Sending" />}
+                        {mine && m.status === "sent" && <CheckCheck className="size-3" aria-label="Sent" />}
+                        {mine && !m.status && <Check className="size-3" aria-label="Sent" />}
+                        {mine && m.status === "failed" && <AlertCircle className="size-3 text-red-300" aria-label="Failed to send" />}
                       </div>
                     </div>
                   </div>
