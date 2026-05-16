@@ -206,7 +206,7 @@ function TicketsPage() {
   const [profiles, setProfiles] = useState<Map<string, Profile>>(new Map());
   const [staff, setStaff] = useState<Profile[]>([]);
   const [creating, setCreating] = useState(false);
-  const [tab, setTab] = useState<"welcome" | "tickets">("tickets");
+  const [tab, setTab] = useState<"welcome" | "tickets">("welcome");
   const [allRatings, setAllRatings] = useState<{ rating: number }[]>([]);
   const [myRatings, setMyRatings] = useState<Record<string, number>>({});
 
