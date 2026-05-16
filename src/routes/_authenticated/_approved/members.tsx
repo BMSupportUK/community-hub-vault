@@ -87,6 +87,19 @@ function MembersPage() {
 
   useEffect(() => { load(); }, [viewer?.id]);
 
+  // Live-refresh when profiles, roles, or friendships change
+  useEffect(() => {
+    const suffix = Math.random().toString(36).slice(2);
+    const ch = supabase
+      .channel(`members-directory-${suffix}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, () => load())
+      .on("postgres_changes", { event: "*", schema: "public", table: "user_roles" }, () => load())
+      .on("postgres_changes", { event: "*", schema: "public", table: "friendships" }, () => load())
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [viewer?.id]);
+
   const sendRequest = async (toId: string) => {
     if (!viewer) return;
     setBusyId(toId);
