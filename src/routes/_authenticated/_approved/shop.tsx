@@ -1418,7 +1418,7 @@ function OrderDetail({ orderId, isAdmin }: { orderId: string; isAdmin: boolean }
   };
 
   const acceptOrder = async () => {
-    if (!order || order.status !== "pending" || order.status === "completed" || !!order.completed_at) return;
+    if (!order || order.status !== "pending" || !!order.completed_at) return;
     const { error } = await supabase.from("orders").update({ status: "processing" } as never).eq("id", orderId);
     if (error) { toast.error(error.message); return; }
     await sendSystem(`✅ Order accepted — thank you for your order!`);
