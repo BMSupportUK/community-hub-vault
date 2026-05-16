@@ -47,7 +47,7 @@ function SignupPage() {
       if (rerr) {
         setBusy(false);
         toast.error(`Invite failed: ${rerr.message}. Continue to gate to request access.`);
-        navigate({ to: "/gate" });
+        navigate({ to: "/gate", search: { chat: 1 } as never });
         return;
       }
       await refreshRoles();
@@ -58,7 +58,7 @@ function SignupPage() {
     }
     setBusy(false);
     toast.success("Account created. A moderator will review your request.");
-    navigate({ to: "/gate" });
+    navigate({ to: "/gate", search: { chat: 1 } as never });
   };
 
   return (
