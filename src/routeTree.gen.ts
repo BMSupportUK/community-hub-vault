@@ -17,6 +17,7 @@ import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRejectedRouteImport } from './routes/_authenticated/rejected'
 import { Route as AuthenticatedGateRouteImport } from './routes/_authenticated/gate'
+import { Route as AuthenticatedAccountRejectedRouteImport } from './routes/_authenticated/account-rejected'
 import { Route as AuthenticatedApprovedRouteImport } from './routes/_authenticated/_approved'
 import { Route as AuthenticatedApprovedTicketsRouteImport } from './routes/_authenticated/_approved/tickets'
 import { Route as AuthenticatedApprovedStatusRouteImport } from './routes/_authenticated/_approved/status'
@@ -89,6 +90,12 @@ const AuthenticatedGateRoute = AuthenticatedGateRouteImport.update({
   path: '/gate',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedAccountRejectedRoute =
+  AuthenticatedAccountRejectedRouteImport.update({
+    id: '/account-rejected',
+    path: '/account-rejected',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedApprovedRoute = AuthenticatedApprovedRouteImport.update({
   id: '/_approved',
   getParentRoute: () => AuthenticatedRoute,
@@ -286,6 +293,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
+  '/account-rejected': typeof AuthenticatedAccountRejectedRoute
   '/gate': typeof AuthenticatedGateRoute
   '/rejected': typeof AuthenticatedRejectedRoute
   '/admin': typeof AuthenticatedApprovedAdminRoute
@@ -326,6 +334,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
+  '/account-rejected': typeof AuthenticatedAccountRejectedRoute
   '/gate': typeof AuthenticatedGateRoute
   '/rejected': typeof AuthenticatedRejectedRoute
   '/admin': typeof AuthenticatedApprovedAdminRoute
@@ -368,6 +377,7 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/_authenticated/_approved': typeof AuthenticatedApprovedRouteWithChildren
+  '/_authenticated/account-rejected': typeof AuthenticatedAccountRejectedRoute
   '/_authenticated/gate': typeof AuthenticatedGateRoute
   '/_authenticated/rejected': typeof AuthenticatedRejectedRoute
   '/_authenticated/_approved/admin': typeof AuthenticatedApprovedAdminRoute
@@ -410,6 +420,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/reset-password'
     | '/signup'
+    | '/account-rejected'
     | '/gate'
     | '/rejected'
     | '/admin'
@@ -450,6 +461,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/reset-password'
     | '/signup'
+    | '/account-rejected'
     | '/gate'
     | '/rejected'
     | '/admin'
@@ -491,6 +503,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/signup'
     | '/_authenticated/_approved'
+    | '/_authenticated/account-rejected'
     | '/_authenticated/gate'
     | '/_authenticated/rejected'
     | '/_authenticated/_approved/admin'
@@ -593,6 +606,13 @@ declare module '@tanstack/react-router' {
       path: '/gate'
       fullPath: '/gate'
       preLoaderRoute: typeof AuthenticatedGateRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/account-rejected': {
+      id: '/_authenticated/account-rejected'
+      path: '/account-rejected'
+      fullPath: '/account-rejected'
+      preLoaderRoute: typeof AuthenticatedAccountRejectedRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/_approved': {
@@ -929,12 +949,14 @@ const AuthenticatedApprovedRouteWithChildren =
 
 interface AuthenticatedRouteChildren {
   AuthenticatedApprovedRoute: typeof AuthenticatedApprovedRouteWithChildren
+  AuthenticatedAccountRejectedRoute: typeof AuthenticatedAccountRejectedRoute
   AuthenticatedGateRoute: typeof AuthenticatedGateRoute
   AuthenticatedRejectedRoute: typeof AuthenticatedRejectedRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedApprovedRoute: AuthenticatedApprovedRouteWithChildren,
+  AuthenticatedAccountRejectedRoute: AuthenticatedAccountRejectedRoute,
   AuthenticatedGateRoute: AuthenticatedGateRoute,
   AuthenticatedRejectedRoute: AuthenticatedRejectedRoute,
 }
@@ -956,3 +978,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
