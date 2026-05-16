@@ -9,6 +9,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import mentionAudio from "@/assets/mention-notify.mp3";
+import outageAudio from "@/assets/outage-notify.mp3";
 
 type Notif = {
   id: string;
@@ -134,10 +135,32 @@ export function NotificationBell() {
         .subscribe();
     }
 
+    const incidentCh = supabase
+      .channel("status-incidents-sound")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "status_incidents" },
+        (payload) => {
+          const row = payload.new as { title?: string; description?: string | null };
+          try {
+            const audio = new Audio(outageAudio);
+            audio.volume = 0.9;
+            void audio.play().catch(() => { /* autoplay may be blocked */ });
+          } catch { /* ignore */ }
+          toast(`🚨 New outage: ${row.title ?? "Incident reported"}`, {
+            description: row.description ?? undefined,
+            duration: 8000,
+            action: { label: "Open", onClick: () => navigate({ to: "/status" } as never) },
+          });
+        },
+      )
+      .subscribe();
+
     return () => {
       active = false;
       supabase.removeChannel(ch);
       if (staffCh) supabase.removeChannel(staffCh);
+      supabase.removeChannel(incidentCh);
     };
   }, [user, isStaff, isPending]);
 
