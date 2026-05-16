@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { ChannelColumn, type ChannelGroup } from "@/components/app/ChannelColumn";
-import { ShoppingBag, Package, Settings, Plus, Minus, X, Send, Trash2, Pencil, Image as ImageIcon, Tag, CheckCircle2, BadgeCheck, Check, Wrench, FileText, BedDouble, Users, Loader2, Save } from "lucide-react";
+import { ShoppingBag, Package, Settings, Plus, Minus, X, Send, Trash2, Pencil, Image as ImageIcon, Tag, CheckCircle2, BadgeCheck, Check, Wrench, FileText, BedDouble, Users, Loader2, Save, Star, Sparkles, GripVertical } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import shopHero from "@/assets/shop-hero.jpg";
@@ -36,7 +36,7 @@ export const Route = createFileRoute("/_authenticated/_approved/shop")({
 interface Product {
   id: string; name: string; description: string | null; price_cents: number;
   image_url: string | null; category: string | null; stock: number | null;
-  is_active: boolean; sort_order: number;
+  is_active: boolean; sort_order: number; is_recommended?: boolean;
 }
 type OrderStatus = "pending" | "processing" | "shipped" | "completed" | "cancelled";
 interface Order {
