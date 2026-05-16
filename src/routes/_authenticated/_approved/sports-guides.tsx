@@ -170,7 +170,7 @@ function SportsGuidesPage() {
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return blogs.filter((b) => {
-      if (activeCat && b.category_id !== activeCat) return false;
+      if (!q && activeCat && b.category_id !== activeCat) return false;
       if (!q) return true;
       return (
         b.title.toLowerCase().includes(q) ||
