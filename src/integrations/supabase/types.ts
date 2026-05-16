@@ -1719,6 +1719,7 @@ export type Database = {
           total_cents: number | null
           updated_at: string | null
           user_id: string | null
+          wants_adult_content: boolean | null
         }
         Insert: {
           completed_at?: string | null
@@ -1739,6 +1740,7 @@ export type Database = {
           total_cents?: number | null
           updated_at?: string | null
           user_id?: string | null
+          wants_adult_content?: boolean | null
         }
         Update: {
           completed_at?: string | null
@@ -1759,6 +1761,7 @@ export type Database = {
           total_cents?: number | null
           updated_at?: string | null
           user_id?: string | null
+          wants_adult_content?: boolean | null
         }
         Relationships: []
       }
