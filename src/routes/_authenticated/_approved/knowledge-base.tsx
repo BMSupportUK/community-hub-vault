@@ -45,6 +45,8 @@ function slugify(s: string) {
 }
 
 const KB_DRAFT_KEY = "kb-new-article-draft";
+const KB_TAB_KEY = "kb-active-tab";
+const KB_CAT_KEY = "kb-active-cat";
 
 function StarRating({
   value, onChange, size = 16, readOnly = false,
@@ -79,11 +81,15 @@ function StarRating({
 function KnowledgeBasePage() {
   const { isMod, user } = useAuth();
   const queryClient = useQueryClient();
-  const [tab, setTab] = useState("welcome");
+  const [tab, setTab] = useState<string>(() => {
+    try { return sessionStorage.getItem(KB_TAB_KEY) || "welcome"; } catch { return "welcome"; }
+  });
   const [welcome, setWelcome] = useState<Welcome>({ title: "", body: "" });
   const [welcomeDraft, setWelcomeDraft] = useState<Welcome | null>(null);
   const [savingWelcome, setSavingWelcome] = useState(false);
-  const [activeCat, setActiveCat] = useState<string | null>(null);
+  const [activeCat, setActiveCat] = useState<string | null>(() => {
+    try { return sessionStorage.getItem(KB_CAT_KEY); } catch { return null; }
+  });
   const [search, setSearch] = useState("");
   const [reading, setReading] = useState<Article | null>(null);
   const [editing, setEditing] = useState<Article | null>(null);
@@ -91,6 +97,15 @@ function KnowledgeBasePage() {
   const [showCatEditor, setShowCatEditor] = useState(false);
   const dragCatId = useRef<string | null>(null);
   const dragArtId = useRef<string | null>(null);
+
+  // Persist UI state across screen swaps (route remounts).
+  useEffect(() => { try { sessionStorage.setItem(KB_TAB_KEY, tab); } catch { /* ignore */ } }, [tab]);
+  useEffect(() => {
+    try {
+      if (activeCat) sessionStorage.setItem(KB_CAT_KEY, activeCat);
+      else sessionStorage.removeItem(KB_CAT_KEY);
+    } catch { /* ignore */ }
+  }, [activeCat]);
 
   const kbQuery = useQuery({
     queryKey: ["kb-data"],
