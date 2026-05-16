@@ -28,6 +28,7 @@ interface ProfileRow {
   bio: string | null;
   created_at: string;
   is_private: boolean | null;
+  timezone: string | null;
 }
 
 interface ShiftRow { id: string; user_id: string; clock_in: string; clock_out: string | null; }
