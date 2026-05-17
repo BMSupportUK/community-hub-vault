@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 import profileHeader from "@/assets/profile-header.jpg";
 import { useOnlineUsers } from "@/hooks/use-online-users";
+import { formatLastSeen } from "@/lib/relative-time";
 
 export const Route = createFileRoute("/_authenticated/_approved/staff")({
   component: StaffPage,
@@ -20,6 +21,7 @@ interface Profile {
   bio: string | null;
   created_at: string;
   is_private: boolean | null;
+  last_seen_at: string | null;
 }
 interface RoleRow { user_id: string; role: string }
 
@@ -250,7 +252,7 @@ function StaffPage() {
                               <div className="text-[10px] mt-0.5 flex items-center gap-1.5">
                                 <span className={`size-1.5 rounded-full ${isOnline ? "bg-emerald-500" : "bg-zinc-500"}`} />
                                 <span className={isOnline ? "text-emerald-300" : "text-purple-300/70"}>
-                                  {isOnline ? "Online" : "Offline"}
+                                  {isOnline ? "Online" : `Last seen ${formatLastSeen(p.last_seen_at)}`}
                                 </span>
                               </div>
                               {p.username && (
