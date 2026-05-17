@@ -4,6 +4,9 @@ import { Send, Ban, X, LogOut, ShieldCheck, FileText, MessageSquarePlus, Check, 
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
+import { verifyTurnstile } from "@/lib/turnstile.functions";
+import { TurnstileWidget } from "@/components/app/TurnstileWidget";
 import bg from "@/assets/gate-bg.jpg";
 import mentionAudio from "@/assets/mention-notify.mp3";
 import ticketAudio from "@/assets/ticket-notify.mp3";
@@ -35,6 +38,49 @@ function GatePage() {
   const [peerTyping, setPeerTyping] = useState<{ id: string; name?: string } | null>(null);
   const peerTypingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastTypingSent = useRef<number>(0);
+  const [captchaPassed, setCaptchaPassed] = useState(false);
+  const [captchaOpen, setCaptchaOpen] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState("");
+  const [verifyingCaptcha, setVerifyingCaptcha] = useState(false);
+  const [pendingAction, setPendingAction] = useState<"chat" | "form" | null>(null);
+  const verifyCaptcha = useServerFn(verifyTurnstile);
+
+  const requestAccess = (action: "chat" | "form") => {
+    if (captchaPassed) {
+      if (action === "chat") setChatOpen(true);
+      else setFormOpen(true);
+      return;
+    }
+    setPendingAction(action);
+    setCaptchaToken("");
+    setCaptchaOpen(true);
+  };
+
+  const submitCaptcha = async () => {
+    if (!captchaToken) {
+      toast.error("Please complete the captcha.");
+      return;
+    }
+    setVerifyingCaptcha(true);
+    try {
+      const res = await verifyCaptcha({ data: { token: captchaToken } });
+      if (!res?.success) {
+        toast.error("Captcha verification failed. Please try again.");
+        setCaptchaToken("");
+        return;
+      }
+      setCaptchaPassed(true);
+      setCaptchaOpen(false);
+      if (pendingAction === "form") setFormOpen(true);
+      else setChatOpen(true);
+      setPendingAction(null);
+    } catch {
+      toast.error("Captcha verification failed. Please try again.");
+      setCaptchaToken("");
+    } finally {
+      setVerifyingCaptcha(false);
+    }
+  };
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -272,7 +318,7 @@ function GatePage() {
   };
 
   const openChatOrForm = () => {
-    setChatOpen(true);
+    requestAccess("chat");
   };
 
   return (
@@ -325,7 +371,7 @@ function GatePage() {
             onClick={() => {
               setReasonDraft("[APPEAL] ");
               setConfirmNew(false);
-              setFormOpen(true);
+              requestAccess("form");
             }}
             className="mt-3 w-full max-w-md py-3 rounded-lg font-semibold text-red-100 bg-white/5 hover:bg-white/10 border border-red-500/40 inline-flex items-center justify-center gap-2 transition-colors"
           >
@@ -356,6 +402,56 @@ function GatePage() {
       >
         <LogOut className="size-3" /> Sign out
       </button>
+
+      {/* Captcha gate */}
+      {captchaOpen && (
+        <div className="fixed inset-0 z-[60] grid place-items-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-2xl border border-red-500/30 bg-zinc-950/95 shadow-2xl overflow-hidden">
+            <header className="h-14 px-5 flex items-center justify-between border-b border-white/10">
+              <div className="flex items-center gap-2">
+                <div className="size-8 rounded-full bg-gradient-to-br from-violet-600 to-blue-600 grid place-items-center">
+                  <ShieldCheck className="size-4 text-white" />
+                </div>
+                <div className="font-display font-semibold text-white text-sm">Verify you're human</div>
+              </div>
+              <button
+                type="button"
+                onClick={() => { setCaptchaOpen(false); setPendingAction(null); setCaptchaToken(""); }}
+                className="text-white/60 hover:text-white"
+              >
+                <X className="size-5" />
+              </button>
+            </header>
+            <div className="p-5 space-y-4">
+              <p className="text-sm text-white/70 text-center">
+                Please complete the security check before contacting staff.
+              </p>
+              <TurnstileWidget
+                onToken={setCaptchaToken}
+                onExpire={() => setCaptchaToken("")}
+              />
+            </div>
+            <footer className="px-5 py-3 border-t border-white/10 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => { setCaptchaOpen(false); setPendingAction(null); setCaptchaToken(""); }}
+                className="text-sm px-3 py-2 rounded-lg text-white/70 hover:text-white"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={submitCaptcha}
+                disabled={!captchaToken || verifyingCaptcha}
+                className="text-sm px-4 py-2 rounded-lg font-semibold text-white bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 disabled:opacity-50 inline-flex items-center gap-2"
+              >
+                {verifyingCaptcha && <Loader2 className="size-4 animate-spin" />}
+                {verifyingCaptcha ? "Verifying…" : "Continue"}
+              </button>
+            </footer>
+          </div>
+        </div>
+      )}
 
       {/* Reason form dialog */}
       {formOpen && (
