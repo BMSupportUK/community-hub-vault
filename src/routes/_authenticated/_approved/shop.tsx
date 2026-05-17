@@ -1172,7 +1172,7 @@ function PolicyCard({
 
 function Checkout({ items, total, onClose, onPlace, onRemoveItem, onContinueShopping }: {
   items: (Product & { qty: number })[]; total: number; onClose: () => void;
-  onPlace: (s: { name: string; email: string; customer_type: "new" | "existing"; existing_username: string; discount_code: string; discount_cents: number; wants_adult_content: boolean }) => void;
+  onPlace: (s: { name: string; email: string; customer_type: "new" | "existing"; existing_username: string; discount_code: string; discount_cents: number; wants_adult_content: boolean; captchaToken: string }) => void;
   onRemoveItem: (id: string) => void;
   onContinueShopping: () => void;
 }) {
@@ -1185,6 +1185,7 @@ function Checkout({ items, total, onClose, onPlace, onRemoveItem, onContinueShop
   const [discountInput, setDiscountInput] = useState("");
   const [appliedCode, setAppliedCode] = useState<DiscountCode | null>(null);
   const [applying, setApplying] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState("");
   const [browseOpen, setBrowseOpen] = useState(false);
   const [browseQuery, setBrowseQuery] = useState("");
   const [available, setAvailable] = useState<DiscountCode[]>([]);
@@ -1306,6 +1307,7 @@ function Checkout({ items, total, onClose, onPlace, onRemoveItem, onContinueShop
   const canSubmit =
     !!name && !!email && (customerType === "new" || !!existingUsername.trim())
     && adultContent !== ""
+    && !!captchaToken
     && (!requiresMulti || agreedMulti)
     && (!requiresTriple || agreedTriple);
 
