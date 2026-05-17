@@ -361,8 +361,8 @@ export function NotificationBell() {
                               markRead(n.id);
                               setOpen(false);
                               if (n.kind === "gate_application") {
-                                navigate({ to: "/admin", search: { next: "/moderation" } } as never);
-                                } else if (n.kind === "order_placed" && n.entity_id) {
+                                navigate({ to: "/moderation" } as never);
+                              } else if (n.kind === "order_placed" && n.entity_id) {
                                   navigate({ to: "/shop", search: { view: "orders", id: n.entity_id } } as never);
                               } else {
                                 navigate({ to: n.link_path! } as never);
