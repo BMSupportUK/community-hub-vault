@@ -19,6 +19,7 @@ export const Route = createFileRoute("/_authenticated/_approved/tickets")({
   validateSearch: (s: Record<string, unknown>) => ({
     id: typeof s.id === "string" ? s.id : undefined,
     view: (s.view === "mine" || s.view === "all" || s.view === "assigned") ? s.view : undefined,
+    new2fa: s.new2fa === 1 || s.new2fa === "1" ? 1 : undefined,
   }),
   component: TicketsPage,
 });
