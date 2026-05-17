@@ -65,7 +65,7 @@ export function MyWorkingStatus() {
   return (
     <div
       className={cn(
-        "hidden md:inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold ring-1 shadow-soft",
+        "inline-flex items-center gap-1 sm:gap-1.5 rounded-full px-2 sm:px-3 py-1 sm:py-1.5 text-[11px] sm:text-xs font-semibold ring-1 shadow-soft shrink-0",
         brk
           ? over
             ? "bg-destructive/15 text-destructive ring-destructive/40"
@@ -75,11 +75,11 @@ export function MyWorkingStatus() {
       title={brk ? `On ${brk.kind}` : "Working"}
     >
       {brk ? (
-        brk.kind === "lunch" ? <UtensilsCrossed className="size-3.5" /> : <Coffee className="size-3.5" />
+        brk.kind === "lunch" ? <UtensilsCrossed className="size-3 sm:size-3.5" /> : <Coffee className="size-3 sm:size-3.5" />
       ) : (
-        <CircleDot className="size-3.5" />
+        <CircleDot className="size-3 sm:size-3.5" />
       )}
-      <span className="capitalize">{brk ? brk.kind : "Working"}</span>
+      <span className="capitalize hidden sm:inline">{brk ? brk.kind : "Working"}</span>
       <span className="tabular-nums opacity-90">
         {brk ? (over ? `+${fmtMS(-brRemain)}` : fmtMS(brRemain)) : fmtHM(shiftSec)}
       </span>
