@@ -14,6 +14,9 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { MentionText, useMentionAutocomplete } from "@/components/app/mentions";
 import { useUserTimezone } from "@/hooks/use-user-timezone";
+import { useServerFn } from "@tanstack/react-start";
+import { verifyTurnstile } from "@/lib/turnstile.functions";
+import { TurnstileWidget } from "@/components/app/TurnstileWidget";
 
 export const Route = createFileRoute("/_authenticated/_approved/tickets")({
   validateSearch: (s: Record<string, unknown>) => ({
@@ -544,6 +547,8 @@ function NewTicketForm({
   const [submitting, setSubmitting] = useState(false);
   const [files, setFiles] = useState<File[]>([]);
   const [uploadProgress, setUploadProgress] = useState<UploadProgress | null>(null);
+  const [captchaToken, setCaptchaToken] = useState("");
+  const verifyCaptcha = useServerFn(verifyTurnstile);
 
   useEffect(() => { if (!categoryId && categories[0]) setCategoryId(categories[0].id); }, [categories, categoryId]);
 
@@ -552,7 +557,20 @@ function NewTicketForm({
     const parsed = newTicketSchema.safeParse({ subject, category_id: categoryId, priority, message });
     if (!parsed.success) return toast.error(parsed.error.issues[0].message);
     if (!parsed.data.message && files.length === 0) return toast.error("Add a message or attach a file");
+    if (!captchaToken) return toast.error("Please complete the captcha.");
     setSubmitting(true);
+    try {
+      const v = await verifyCaptcha({ data: { token: captchaToken } });
+      if (!v?.success) {
+        setSubmitting(false);
+        setCaptchaToken("");
+        return toast.error("Captcha verification failed. Please try again.");
+      }
+    } catch {
+      setSubmitting(false);
+      setCaptchaToken("");
+      return toast.error("Captcha verification failed. Please try again.");
+    }
     const uploaded = files.length ? await uploadTicketFiles(files, setUploadProgress) : [];
     setUploadProgress(null);
     const { data: t, error } = await supabase
@@ -667,9 +685,15 @@ function NewTicketForm({
           {uploadProgress && (
             <UploadProgressBar progress={uploadProgress} />
           )}
+          <Field label="Security check">
+            <TurnstileWidget
+              onToken={setCaptchaToken}
+              onExpire={() => setCaptchaToken("")}
+            />
+          </Field>
           <div className="flex gap-2 justify-end">
             <button type="button" onClick={onCancel} className="px-4 py-2 rounded-lg text-sm text-white/80 hover:text-white">Cancel</button>
-            <button type="submit" disabled={submitting} className="px-4 py-2 rounded-lg bg-white text-rose-600 text-sm font-semibold hover:bg-white/90 disabled:opacity-50 shadow-lg">
+            <button type="submit" disabled={submitting || !captchaToken} className="px-4 py-2 rounded-lg bg-white text-rose-600 text-sm font-semibold hover:bg-white/90 disabled:opacity-50 shadow-lg">
               {submitting ? "Opening…" : "Open ticket"}
             </button>
           </div>
