@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as MfaChallengeRouteImport } from './routes/mfa-challenge'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
@@ -60,6 +61,11 @@ const SignupRoute = SignupRouteImport.update({
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
   path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MfaChallengeRoute = MfaChallengeRouteImport.update({
+  id: '/mfa-challenge',
+  path: '/mfa-challenge',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -298,6 +304,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
+  '/mfa-challenge': typeof MfaChallengeRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/account-rejected': typeof AuthenticatedAccountRejectedRoute
@@ -340,6 +347,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
+  '/mfa-challenge': typeof MfaChallengeRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/account-rejected': typeof AuthenticatedAccountRejectedRoute
@@ -383,6 +391,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
+  '/mfa-challenge': typeof MfaChallengeRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/_authenticated/_approved': typeof AuthenticatedApprovedRouteWithChildren
@@ -428,6 +437,7 @@ export interface FileRouteTypes {
     | '/'
     | '/forgot-password'
     | '/login'
+    | '/mfa-challenge'
     | '/reset-password'
     | '/signup'
     | '/account-rejected'
@@ -470,6 +480,7 @@ export interface FileRouteTypes {
     | '/'
     | '/forgot-password'
     | '/login'
+    | '/mfa-challenge'
     | '/reset-password'
     | '/signup'
     | '/account-rejected'
@@ -512,6 +523,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/forgot-password'
     | '/login'
+    | '/mfa-challenge'
     | '/reset-password'
     | '/signup'
     | '/_authenticated/_approved'
@@ -557,6 +569,7 @@ export interface RootRouteChildren {
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   LoginRoute: typeof LoginRoute
+  MfaChallengeRoute: typeof MfaChallengeRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SignupRoute: typeof SignupRoute
   ApiPublicHooksBackupCredentialsRoute: typeof ApiPublicHooksBackupCredentialsRoute
@@ -578,6 +591,13 @@ declare module '@tanstack/react-router' {
       path: '/reset-password'
       fullPath: '/reset-password'
       preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mfa-challenge': {
+      id: '/mfa-challenge'
+      path: '/mfa-challenge'
+      fullPath: '/mfa-challenge'
+      preLoaderRoute: typeof MfaChallengeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -991,6 +1011,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   ForgotPasswordRoute: ForgotPasswordRoute,
   LoginRoute: LoginRoute,
+  MfaChallengeRoute: MfaChallengeRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SignupRoute: SignupRoute,
   ApiPublicHooksBackupCredentialsRoute: ApiPublicHooksBackupCredentialsRoute,
@@ -1000,3 +1021,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
