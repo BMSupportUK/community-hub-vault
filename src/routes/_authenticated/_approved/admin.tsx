@@ -142,6 +142,50 @@ function SecurityGate({ hasPin, onUnlocked }: { hasPin: boolean; onUnlocked: () 
   const [totpCode, setTotpCode] = useState("");
   const [hasTotp, setHasTotp] = useState(false);
   const [backupCode, setBackupCode] = useState("");
+  const [lockedUntil, setLockedUntil] = useState<number | null>(null);
+  const [failedCount, setFailedCount] = useState(0);
+  const [now, setNow] = useState(Date.now());
+
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, []);
+
+  useEffect(() => {
+    (async () => {
+      const { data, error } = await supabase.rpc("check_admin_unlock_lockout");
+      if (error) return;
+      const d = data as any;
+      setFailedCount(d?.failed_count ?? 0);
+      setLockedUntil(d?.locked_until ? new Date(d.locked_until).getTime() : null);
+    })();
+  }, []);
+
+  const isLocked = lockedUntil !== null && lockedUntil > now;
+  const secondsRemaining = isLocked ? Math.ceil((lockedUntil! - now) / 1000) : 0;
+
+  const recordFailure = async () => {
+    const { data } = await supabase.rpc("record_admin_unlock_failure");
+    const d = data as any;
+    if (d) {
+      setFailedCount(d.failed_count ?? 0);
+      setLockedUntil(d.locked_until ? new Date(d.locked_until).getTime() : null);
+    }
+  };
+
+  const clearFailures = async () => {
+    await supabase.rpc("clear_admin_unlock_failures");
+    setFailedCount(0);
+    setLockedUntil(null);
+  };
+
+  const guardLocked = () => {
+    if (isLocked) {
+      toast.error(`Too many attempts. Try again in ${secondsRemaining}s.`);
+      return true;
+    }
+    return false;
+  };
 
   useEffect(() => {
     (async () => {
@@ -152,6 +196,7 @@ function SecurityGate({ hasPin, onUnlocked }: { hasPin: boolean; onUnlocked: () 
   }, []);
 
   const unlockWithTotp = async () => {
+    if (guardLocked()) return;
     if (!/^\d{6}$/.test(totpCode)) return toast.error("Enter the 6-digit code from your authenticator");
     setBusy(true);
     try {
@@ -167,14 +212,17 @@ function SecurityGate({ hasPin, onUnlocked }: { hasPin: boolean; onUnlocked: () 
         code: totpCode,
       });
       if (vErr) throw new Error("Incorrect 2FA code");
+      await clearFailures();
       toast.success("Admin unlocked");
       onUnlocked();
     } catch (e: any) {
+      await recordFailure();
       toast.error(e.message ?? "Unlock failed");
     } finally { setBusy(false); }
   };
 
   const unlockWithBackup = async () => {
+    if (guardLocked()) return;
     if (!user) return;
     const normalized = normalizeCode(backupCode);
     if (normalized.length < 8) return toast.error("Enter a valid backup code");
@@ -195,9 +243,11 @@ function SecurityGate({ hasPin, onUnlocked }: { hasPin: boolean; onUnlocked: () 
         .update({ used_at: new Date().toISOString() })
         .eq("id", row.id);
       if (upErr) throw upErr;
+      await clearFailures();
       toast.success("Admin unlocked with backup code");
       onUnlocked();
     } catch (e: any) {
+      await recordFailure();
       toast.error(e.message ?? "Unlock failed");
     } finally { setBusy(false); }
   };
@@ -219,6 +269,7 @@ function SecurityGate({ hasPin, onUnlocked }: { hasPin: boolean; onUnlocked: () 
   };
 
   const unlock = async () => {
+    if (guardLocked()) return;
     if (!user?.email) return;
     if (!password || !pin) return toast.error("Enter password and PIN");
     setBusy(true);
@@ -228,9 +279,11 @@ function SecurityGate({ hasPin, onUnlocked }: { hasPin: boolean; onUnlocked: () 
       const hash = await sha256Hex(`${user.id}:${pin}`);
       const { data: row } = await supabase.from("vault_pins").select("pin_hash").eq("user_id", user.id).maybeSingle();
       if (!row || row.pin_hash !== hash) throw new Error("Incorrect PIN");
+      await clearFailures();
       toast.success("Admin unlocked");
       onUnlocked();
     } catch (e: any) {
+      await recordFailure();
       toast.error(e.message ?? "Unlock failed");
     } finally { setBusy(false); }
   };
