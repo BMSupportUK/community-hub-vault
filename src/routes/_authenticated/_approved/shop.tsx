@@ -630,6 +630,16 @@ function Storefront() {
     }));
     const { error: ie } = await supabase.from("order_items").insert(items as never);
     if (ie) { toast.error(ie.message); return; }
+    const summaryLines = [
+      `🧾 New order details`,
+      `• Customer: ${info.customer_type === "existing" ? `Existing — upgrading @${info.existing_username.trim()}` : "New customer"}`,
+      `• Adult content access: ${info.wants_adult_content ? "Yes" : "No"}`,
+    ];
+    await supabase.from("order_messages").insert({
+      order_id: order.id,
+      sender_id: user.id,
+      content: summaryLines.join("\n"),
+    } as never);
     setCart({}); setShowCheckout(false);
     toast.success("Order placed!");
     reloadLatestOrder();
