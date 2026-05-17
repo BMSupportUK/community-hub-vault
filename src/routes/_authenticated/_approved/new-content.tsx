@@ -11,6 +11,7 @@ import {
   Trash2,
   Hash,
   FolderPlus,
+  ImageIcon,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -99,6 +100,7 @@ function NewContentPage() {
     try { return (sessionStorage.getItem("new-content-tab") as any) || "welcome"; } catch { return "welcome"; }
   });
   const [editor, setEditor] = useState<{ open: boolean; kind: Kind; post?: Post } | null>(null);
+  const [viewing, setViewing] = useState<Post | null>(null);
 
   useEffect(() => { try { sessionStorage.setItem("new-content-tab", tab); } catch { /* noop */ } }, [tab]);
 
@@ -130,7 +132,7 @@ function NewContentPage() {
   };
 
   const renderList = (items: Post[], kind: Kind) => (
-    <div className="space-y-4">
+    <div className="space-y-5">
       {canManage && (
         <Button
           onClick={() => setEditor({ open: true, kind })}
@@ -142,50 +144,78 @@ function NewContentPage() {
       {posts === null ? (
         <div className="grid place-items-center py-16 text-purple-200/70"><Loader2 className="size-5 animate-spin" /></div>
       ) : items.length === 0 ? (
-        <div className="text-center text-purple-200/70 py-12 rounded-2xl border border-purple-500/30 bg-purple-950/40">
+        <div className="rounded-2xl border border-dashed border-purple-500/40 p-12 text-center text-purple-200/70 bg-purple-950/30">
           No {kind === "channel" ? "new channel" : "new category"} posts yet.
         </div>
       ) : (
-        items.map((p) => (
-          <article
-            key={p.id}
-            className="rounded-2xl border border-purple-500/30 bg-purple-950/40 backdrop-blur p-5 shadow-[0_0_30px_-15px_rgba(168,85,247,0.5)]"
-          >
-            <div className="flex items-start gap-3">
-              <div className="size-10 rounded-xl bg-gradient-to-br from-fuchsia-600 to-violet-700 grid place-items-center shrink-0 shadow-lg shadow-purple-900/50">
-                {kind === "channel" ? <Hash className="size-5 text-white" /> : <FolderPlus className="size-5 text-white" />}
-              </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="font-display text-lg font-bold text-white">{p.title}</h3>
-                <div className="text-[11px] text-purple-300/80 mt-0.5">
-                  Posted {new Date(p.created_at).toLocaleString()}
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+          {items.map((p) => {
+            const cover = (p.attachments ?? []).find((a) => a.type?.startsWith("image/"));
+            return (
+              <article
+                key={p.id}
+                className="rounded-2xl bg-purple-950/50 border border-purple-500/30 overflow-hidden flex flex-col group hover:border-fuchsia-500/60 hover:shadow-[0_0_30px_-10px_rgba(217,70,239,0.6)] transition-all"
+              >
+                <div className="aspect-[16/10] bg-purple-900/50 relative overflow-hidden">
+                  {cover ? (
+                    <img src={cover.url} alt={p.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                  ) : (
+                    <div className="w-full h-full grid place-items-center text-purple-300/60">
+                      <ImageIcon className="size-10" />
+                    </div>
+                  )}
+                  <div className="absolute top-2 right-2 px-2 py-1 rounded-md bg-fuchsia-500 text-white text-[10px] font-bold uppercase tracking-wide shadow-lg">
+                    New
+                  </div>
                 </div>
-              </div>
-              {canManage && (
-                <div className="flex gap-1">
-                  <button
-                    onClick={() => setEditor({ open: true, kind, post: p })}
-                    className="size-8 rounded-lg hover:bg-purple-800/50 text-purple-200 grid place-items-center"
-                    title="Edit"
-                  >
-                    <Pencil className="size-4" />
-                  </button>
-                  <button
-                    onClick={() => remove(p.id)}
-                    className="size-8 rounded-lg hover:bg-destructive/20 text-destructive grid place-items-center"
-                    title="Delete"
-                  >
-                    <Trash2 className="size-4" />
-                  </button>
+                <div className="p-4 flex-1 flex flex-col gap-2">
+                  <div className="flex flex-wrap gap-2">
+                    <span className="text-xs px-2 py-1 rounded-md bg-fuchsia-500/20 text-fuchsia-200 font-medium border border-fuchsia-500/30 inline-flex items-center gap-1">
+                      {kind === "channel" ? <Hash className="size-3" /> : <FolderPlus className="size-3" />}
+                      {kind === "channel" ? "New Channel" : "New Category"}
+                    </span>
+                  </div>
+                  <h3 className="font-display font-semibold text-lg leading-snug text-purple-50">{p.title}</h3>
+                  {p.description && (
+                    <p className="text-sm text-purple-200/70 line-clamp-2 whitespace-pre-wrap">{p.description}</p>
+                  )}
+                  <div className="text-[11px] text-purple-300/70 mt-1">
+                    Posted {new Date(p.created_at).toLocaleDateString()}
+                  </div>
+                  <div className="mt-auto pt-3 flex items-center gap-2">
+                    <Button
+                      size="sm"
+                      className="flex-1 bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white border-0"
+                      onClick={() => setViewing(p)}
+                    >
+                      Click to Read
+                    </Button>
+                    {canManage && (
+                      <>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="text-purple-200 hover:text-white hover:bg-purple-800/60"
+                          onClick={() => setEditor({ open: true, kind, post: p })}
+                        >
+                          <Pencil className="size-4" />
+                        </Button>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="text-purple-200 hover:text-white hover:bg-purple-800/60"
+                          onClick={() => remove(p.id)}
+                        >
+                          <Trash2 className="size-4" />
+                        </Button>
+                      </>
+                    )}
+                  </div>
                 </div>
-              )}
-            </div>
-            {p.description && (
-              <p className="text-sm text-purple-100/90 mt-3 whitespace-pre-wrap">{p.description}</p>
-            )}
-            <AttachmentList items={p.attachments ?? []} />
-          </article>
-        ))
+              </article>
+            );
+          })}
+        </div>
       )}
     </div>
   );
@@ -250,6 +280,36 @@ function NewContentPage() {
           onSaved={() => { setEditor(null); load(); }}
         />
       )}
+      {viewing && (
+        <PostViewer post={viewing} onClose={() => setViewing(null)} />
+      )}
+    </div>
+  );
+}
+
+function PostViewer({ post, onClose }: { post: Post; onClose: () => void }) {
+  return (
+    <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm grid place-items-center p-4" onClick={onClose}>
+      <div onClick={(e) => e.stopPropagation()} className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border border-purple-500/40 bg-[#1a0b2e] shadow-2xl">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-purple-500/30 sticky top-0 bg-[#1a0b2e]/95 backdrop-blur z-10">
+          <h2 className="font-display text-xl font-bold text-white pr-4">
+            <span className="text-xs uppercase tracking-wider text-fuchsia-300/80 block mb-1">
+              {post.kind === "channel" ? "New Channel" : "New Category"}
+            </span>
+            {post.title}
+          </h2>
+          <button onClick={onClose} className="size-8 rounded-lg hover:bg-purple-800/50 text-purple-200 grid place-items-center shrink-0">
+            <X className="size-4" />
+          </button>
+        </div>
+        <div className="p-6 space-y-4">
+          <div className="text-xs text-purple-300/80">Posted {new Date(post.created_at).toLocaleString()}</div>
+          {post.description && (
+            <p className="text-sm text-purple-100/90 whitespace-pre-wrap">{post.description}</p>
+          )}
+          <AttachmentList items={post.attachments ?? []} />
+        </div>
+      </div>
     </div>
   );
 }
