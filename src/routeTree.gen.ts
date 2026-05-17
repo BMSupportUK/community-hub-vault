@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as UnsubscribeRouteImport } from './routes/unsubscribe'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as MfaChallengeRouteImport } from './routes/mfa-challenge'
@@ -58,6 +59,11 @@ import { Route as AuthenticatedApprovedHomeChannelRouteImport } from './routes/_
 import { Route as AuthenticatedApprovedSportsGuidesReadIdRouteImport } from './routes/_authenticated/_approved/sports-guides.read.$id'
 import { Route as AuthenticatedApprovedSportsGuidesIdEditRouteImport } from './routes/_authenticated/_approved/sports-guides.$id.edit'
 
+const UnsubscribeRoute = UnsubscribeRouteImport.update({
+  id: '/unsubscribe',
+  path: '/unsubscribe',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
   path: '/signup',
@@ -340,6 +346,7 @@ export interface FileRoutesByFullPath {
   '/mfa-challenge': typeof MfaChallengeRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
+  '/unsubscribe': typeof UnsubscribeRoute
   '/account-rejected': typeof AuthenticatedAccountRejectedRoute
   '/gate': typeof AuthenticatedGateRoute
   '/rejected': typeof AuthenticatedRejectedRoute
@@ -388,6 +395,7 @@ export interface FileRoutesByTo {
   '/mfa-challenge': typeof MfaChallengeRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
+  '/unsubscribe': typeof UnsubscribeRoute
   '/account-rejected': typeof AuthenticatedAccountRejectedRoute
   '/gate': typeof AuthenticatedGateRoute
   '/rejected': typeof AuthenticatedRejectedRoute
@@ -437,6 +445,7 @@ export interface FileRoutesById {
   '/mfa-challenge': typeof MfaChallengeRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
+  '/unsubscribe': typeof UnsubscribeRoute
   '/_authenticated/_approved': typeof AuthenticatedApprovedRouteWithChildren
   '/_authenticated/account-rejected': typeof AuthenticatedAccountRejectedRoute
   '/_authenticated/gate': typeof AuthenticatedGateRoute
@@ -488,6 +497,7 @@ export interface FileRouteTypes {
     | '/mfa-challenge'
     | '/reset-password'
     | '/signup'
+    | '/unsubscribe'
     | '/account-rejected'
     | '/gate'
     | '/rejected'
@@ -536,6 +546,7 @@ export interface FileRouteTypes {
     | '/mfa-challenge'
     | '/reset-password'
     | '/signup'
+    | '/unsubscribe'
     | '/account-rejected'
     | '/gate'
     | '/rejected'
@@ -584,6 +595,7 @@ export interface FileRouteTypes {
     | '/mfa-challenge'
     | '/reset-password'
     | '/signup'
+    | '/unsubscribe'
     | '/_authenticated/_approved'
     | '/_authenticated/account-rejected'
     | '/_authenticated/gate'
@@ -635,6 +647,7 @@ export interface RootRouteChildren {
   MfaChallengeRoute: typeof MfaChallengeRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SignupRoute: typeof SignupRoute
+  UnsubscribeRoute: typeof UnsubscribeRoute
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
   ApiPublicHooksBackupCredentialsRoute: typeof ApiPublicHooksBackupCredentialsRoute
@@ -646,6 +659,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/unsubscribe': {
+      id: '/unsubscribe'
+      path: '/unsubscribe'
+      fullPath: '/unsubscribe'
+      preLoaderRoute: typeof UnsubscribeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/signup': {
       id: '/signup'
       path: '/signup'
@@ -1119,6 +1139,7 @@ const rootRouteChildren: RootRouteChildren = {
   MfaChallengeRoute: MfaChallengeRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SignupRoute: SignupRoute,
+  UnsubscribeRoute: UnsubscribeRoute,
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
   ApiPublicHooksBackupCredentialsRoute: ApiPublicHooksBackupCredentialsRoute,
