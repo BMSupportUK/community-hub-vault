@@ -1472,7 +1472,7 @@ function Checkout({ items, total, onClose, onPlace, onRemoveItem, onContinueShop
         <div className="p-5 border-t border-border flex flex-wrap gap-2 justify-end">
           <button onClick={onClose} className="px-4 py-2 rounded-lg bg-surface-2 text-sm">Cancel</button>
           <button onClick={onContinueShopping} className="px-4 py-2 rounded-lg bg-surface-2 text-sm border border-border">Continue shopping</button>
-          <button onClick={() => onPlace({ name, email, customer_type: customerType, existing_username: existingUsername, discount_code: appliedCode?.code ?? "", discount_cents: discountCents, wants_adult_content: adultContent === "yes" })}
+          <button onClick={() => onPlace({ name, email, customer_type: customerType, existing_username: existingUsername, discount_code: appliedCode?.code ?? "", discount_cents: discountCents, wants_adult_content: adultContent === "yes", captchaToken })}
             disabled={!canSubmit} className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium disabled:opacity-50">Place Order</button>
         </div>
       </div>
