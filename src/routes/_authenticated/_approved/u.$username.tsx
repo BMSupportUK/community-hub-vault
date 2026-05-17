@@ -476,50 +476,6 @@ function ProfilePage() {
             ))}
           </TabsList>
 
-          {/* Welcome */}
-          <TabsContent value="welcome" className="mt-6">
-            <div className="rounded-2xl bg-gradient-to-br from-fuchsia-600/30 via-purple-600/30 to-violet-700/30 border border-purple-500/40 p-10 shadow-[0_0_60px_-15px_rgba(168,85,247,0.5)] text-white">
-              <div className="flex items-center gap-4 mb-4">
-                <Avatar url={profile.avatar_url} name={display} size={72} ring />
-                <div>
-                  <h2 className="font-display text-3xl font-bold bg-gradient-to-r from-violet-200 to-blue-200 bg-clip-text text-transparent">
-                    {isOwner ? `Welcome back, ${display}` : `Welcome to ${display}'s profile`}
-                  </h2>
-                  <p className="text-purple-200/80">@{profile.username ?? "unknown"}</p>
-                </div>
-              </div>
-              <p className="mt-3 text-lg text-purple-100/90 max-w-2xl">
-                {isOwner
-                  ? "Use the tabs to update your profile, view your credentials, track tickets and orders, and manage your invites."
-                  : "Browse the tabs to see this member's profile, recent activity, and shared information."}
-              </p>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {sortedRoles.map((r) => (
-                  <span key={r} className={cn("text-xs px-2 py-0.5 rounded-full border font-medium", ROLE_STYLES[r])}>
-                    {r}
-                  </span>
-                ))}
-                {breakRow ? (
-                  <StatusPill
-                    icon={breakRow.kind === "lunch" ? UtensilsCrossed : Coffee}
-                    tone={breakRemaining < 0 ? "danger" : "warn"}
-                    label={`On ${breakRow.kind} — ${fmt(Math.max(0, breakRemaining))}${breakRemaining < 0 ? " over" : " left"}`}
-                  />
-                ) : shift ? (
-                  <StatusPill icon={ClockIcon} tone="ok" label={`On shift — ${fmt(onShiftSeconds)}`} />
-                ) : sortedRoles.some((r) => ["admin","management","staff","moderator"].includes(r)) ? (
-                  <StatusPill icon={ClockIcon} tone="muted" label="Off shift" />
-                ) : null}
-              </div>
-              <Button
-                className="mt-6 bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white border-0 shadow-lg shadow-purple-900/50"
-                onClick={() => setMainTab("profile")}
-              >
-                Open profile
-              </Button>
-            </div>
-          </TabsContent>
-
           {/* Profile */}
           <TabsContent value="profile" className="mt-6">
             <div className="grid lg:grid-cols-3 gap-6">
@@ -562,6 +518,40 @@ function ProfilePage() {
                 </div>
               </section>
               <aside className="space-y-4">
+                <div className="rounded-2xl bg-gradient-to-br from-fuchsia-600/30 via-purple-600/30 to-violet-700/30 border border-purple-500/40 p-5 shadow-[0_0_60px_-15px_rgba(168,85,247,0.5)] text-white">
+                  <div className="flex items-center gap-3 mb-3">
+                    <Avatar url={profile.avatar_url} name={display} size={48} ring />
+                    <div className="min-w-0">
+                      <h3 className="font-display text-lg font-bold bg-gradient-to-r from-violet-200 to-blue-200 bg-clip-text text-transparent truncate">
+                        {isOwner ? `Welcome back, ${display}` : `Welcome to ${display}'s profile`}
+                      </h3>
+                      <p className="text-xs text-purple-200/80 truncate">@{profile.username ?? "unknown"}</p>
+                    </div>
+                  </div>
+                  <p className="text-sm text-purple-100/90">
+                    {isOwner
+                      ? "Use the tabs to update your profile, view your credentials, track tickets and orders, and manage your invites."
+                      : "Browse the tabs to see this member's profile, recent activity, and shared information."}
+                  </p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {sortedRoles.map((r) => (
+                      <span key={r} className={cn("text-xs px-2 py-0.5 rounded-full border font-medium", ROLE_STYLES[r])}>
+                        {r}
+                      </span>
+                    ))}
+                    {breakRow ? (
+                      <StatusPill
+                        icon={breakRow.kind === "lunch" ? UtensilsCrossed : Coffee}
+                        tone={breakRemaining < 0 ? "danger" : "warn"}
+                        label={`On ${breakRow.kind} — ${fmt(Math.max(0, breakRemaining))}${breakRemaining < 0 ? " over" : " left"}`}
+                      />
+                    ) : shift ? (
+                      <StatusPill icon={ClockIcon} tone="ok" label={`On shift — ${fmt(onShiftSeconds)}`} />
+                    ) : sortedRoles.some((r) => ["admin","management","staff","moderator"].includes(r)) ? (
+                      <StatusPill icon={ClockIcon} tone="muted" label="Off shift" />
+                    ) : null}
+                  </div>
+                </div>
                 <InfoCard label="Member since" value={new Date(profile.created_at).toLocaleDateString()} />
                 <InfoCard label="Roles" value={sortedRoles.join(", ") || "—"} />
                 <InviteCard info={inviteInfo} showStats={isOwner || isAdmin} isOwner={isOwner} />
