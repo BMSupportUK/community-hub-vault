@@ -44,6 +44,7 @@ function HomeLayout() {
   const [chStaffOnly, setChStaffOnly] = useState(false);
   const [groupName, setGroupName] = useState("");
   const [categoryIcons, setCategoryIcons] = useState<Record<string, string>>({});
+  const [categoryOrder, setCategoryOrder] = useState<string[]>([]);
   const [editChannelIcon, setEditChannelIcon] = useState<ChannelRow | null>(null);
   const [editCategoryIcon, setEditCategoryIcon] = useState<string | null>(null);
   const [renameChannel, setRenameChannel] = useState<ChannelRow | null>(null);
@@ -69,9 +70,24 @@ function HomeLayout() {
     setCategoryIcons(v);
   };
 
+  const loadCategoryOrder = async () => {
+    const { data } = await supabase
+      .from("app_settings")
+      .select("value")
+      .eq("key", "category_order")
+      .maybeSingle();
+    const value = (data?.value ?? {}) as { labels?: unknown };
+    setCategoryOrder(
+      Array.isArray(value.labels)
+        ? value.labels.filter((v): v is string => typeof v === "string")
+        : [],
+    );
+  };
+
   useEffect(() => {
     load();
     loadCategoryIcons();
+    loadCategoryOrder();
   }, []);
 
   const saveChannelIcon = async (iconName: string): Promise<void> => {
@@ -161,6 +177,29 @@ function HomeLayout() {
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/(^-|-$)/g, "") || `ch-${Date.now()}`;
 
+  const orderedLabelsFor = (rows: ChannelRow[] = channels ?? []) => {
+    const labels = Array.from(new Set(rows.map((c) => c.group_label)));
+    const saved = categoryOrder.filter((label) => labels.includes(label));
+    return [...saved, ...labels.filter((label) => !saved.includes(label))];
+  };
+
+  const saveCategoryOrder = async (labels: string[]) => {
+    const clean = Array.from(new Set(labels.filter(Boolean)));
+    setCategoryOrder(clean);
+    const { error } = await supabase
+      .from("app_settings")
+      .upsert(
+        { key: "category_order", value: { labels: clean }, updated_at: new Date().toISOString() },
+        { onConflict: "key" },
+      );
+    if (error) {
+      toast.error(error.message);
+      loadCategoryOrder();
+      return false;
+    }
+    return true;
+  };
+
   const createChannel = async () => {
     if (!addChannelGroup || !chName.trim()) return;
     const slug = slugify(chName);
@@ -196,6 +235,7 @@ function HomeLayout() {
     });
     if (error) return toast.error(error.message);
     toast.success("Category created");
+    await saveCategoryOrder([...orderedLabelsFor(), label]);
     setShowAddGroup(false);
     setGroupName("");
     load();
@@ -223,6 +263,7 @@ function HomeLayout() {
         inGroup.map((c) => c.id),
       );
     if (error) return toast.error(error.message);
+    await saveCategoryOrder(orderedLabelsFor().filter((item) => item !== label));
     toast.success("Category deleted");
     load();
   };
@@ -260,6 +301,9 @@ function HomeLayout() {
       .update({ group_label: next })
       .in("id", ids);
     if (error) return toast.error(error.message);
+    await saveCategoryOrder(
+      orderedLabelsFor().map((label) => (label === renameCategory ? next : label)),
+    );
     if (categoryIcons[renameCategory]) {
       const merged = { ...categoryIcons, [next]: categoryIcons[renameCategory] };
       delete merged[renameCategory];
@@ -284,7 +328,8 @@ function HomeLayout() {
       if (!byGroup.has(c.group_label)) byGroup.set(c.group_label, []);
       byGroup.get(c.group_label)!.push(c);
     }
-    for (const [label, items] of byGroup) {
+    for (const label of orderedLabelsFor()) {
+      const items = byGroup.get(label) ?? [];
       groups.push({
         label,
         icon: categoryIcons[label] ? getIcon(categoryIcons[label]) : undefined,
@@ -369,24 +414,7 @@ function HomeLayout() {
 
   const reorderGroups = async (orderedLabels: string[]) => {
     if (!channels) return;
-    const byGroup = new Map<string, ChannelRow[]>();
-    for (const c of channels) {
-      if (!byGroup.has(c.group_label)) byGroup.set(c.group_label, []);
-      byGroup.get(c.group_label)!.push(c);
-    }
-    const flat = orderedLabels.flatMap((l) => byGroup.get(l) ?? []);
-    const next = flat.map((c, i) => ({ ...c, sort_order: (i + 1) * 10 }));
-    setChannels(next);
-    const results = await Promise.all(
-      next.map((c) =>
-        supabase.from("chat_channels").update({ sort_order: c.sort_order }).eq("id", c.id),
-      ),
-    );
-    const err = results.find((r) => r.error)?.error;
-    if (err) {
-      toast.error(err.message);
-      load();
-    }
+    await saveCategoryOrder(orderedLabels);
   };
 
   return (
