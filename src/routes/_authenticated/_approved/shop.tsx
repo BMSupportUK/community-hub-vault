@@ -1292,7 +1292,7 @@ function Checkout({ items, total, onClose, onPlace, onRemoveItem, onContinueShop
   };
 
   const canSubmit =
-    !!name && !!email && (customerType === "new" || !!existingUsername.trim())
+    !!name && !!email && !!existingUsername.trim()
     && adultContent !== ""
     && (!requiresMulti || agreedMulti)
     && (!requiresTriple || agreedTriple);
