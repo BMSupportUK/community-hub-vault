@@ -15,7 +15,6 @@ import profileHeader from "@/assets/profile-header.jpg";
 import tvLoginIllustration from "@/assets/tv-login-illustration.jpg";
 import referralsBg from "@/assets/referrals-bg.jpg";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
 import { listTimeZones } from "@/hooks/use-user-timezone";
 
 export const Route = createFileRoute("/_authenticated/_approved/u/$username")({
