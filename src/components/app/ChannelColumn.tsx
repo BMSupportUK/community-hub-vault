@@ -126,7 +126,7 @@ export function ChannelColumn({
               }
             }}
             onDrop={(e) => {
-              if (dragChan) { e.preventDefault(); dropChannelOnGroup(g.label); setDragChan(null); setOverGroup(null); }
+              if (dragChan) { e.preventDefault(); dropChannelOnGroup(g.label); setDragChan(null); }
             }}
           >
             <div
