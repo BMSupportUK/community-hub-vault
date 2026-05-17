@@ -78,13 +78,11 @@ function GatePage() {
             audio.volume = 0.9;
             void audio.play().catch(() => { /* autoplay may be blocked */ });
           } catch { /* ignore */ }
-          if (!chatOpen) {
-            toast(`💬 New reply from staff`, {
-              description: msg.content.slice(0, 120),
-              duration: 6000,
-              action: { label: "Open chat", onClick: () => setChatOpen(true) },
-            });
-          }
+          toast(`💬 New reply from staff`, {
+            description: msg.content.slice(0, 120),
+            duration: 6000,
+            action: { label: "Open chat", onClick: () => setChatOpen(true) },
+          });
         }
       })
       .on("broadcast", { event: "typing" }, ({ payload }) => {
