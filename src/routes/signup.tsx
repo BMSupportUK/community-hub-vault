@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Field } from "./login";
 import signupIllustration from "@/assets/signup-illustration.png";
+import { recordSignupInfo } from "@/lib/signup-info.functions";
 
 export const Route = createFileRoute("/signup")({
   beforeLoad: async () => {
@@ -35,6 +36,36 @@ function SignupPage() {
     if (error) {
       setBusy(false);
       return toast.error(error.message);
+    }
+    // Capture as much client/browser info as we can for admin review
+    try {
+      const nav = navigator as Navigator & {
+        deviceMemory?: number;
+        connection?: { effectiveType?: string; downlink?: number; rtt?: number; saveData?: boolean };
+      };
+      const conn = nav.connection;
+      const client: Record<string, unknown> = {
+        userAgent: navigator.userAgent,
+        language: navigator.language,
+        languages: (navigator.languages ?? []).join(","),
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        screen: `${window.screen.width}x${window.screen.height}@${window.devicePixelRatio}x`,
+        viewport: `${window.innerWidth}x${window.innerHeight}`,
+        platform: navigator.platform,
+        vendor: navigator.vendor,
+        referrer: document.referrer || null,
+        url: window.location.href,
+        deviceMemory: nav.deviceMemory ?? null,
+        hwConcurrency: navigator.hardwareConcurrency ?? null,
+        connection: conn
+          ? `${conn.effectiveType ?? "?"} · ${conn.downlink ?? "?"}Mbps · rtt ${conn.rtt ?? "?"}ms${conn.saveData ? " · saveData" : ""}`
+          : null,
+        cookieEnabled: navigator.cookieEnabled,
+        timestamp: new Date().toISOString(),
+      };
+      await recordSignupInfo({ data: { client } });
+    } catch (e) {
+      console.error("signup info capture failed", e);
     }
     if (inviteCode.trim()) {
       const { error: redeemError } = await supabase.rpc("redeem_invite", { p_code: inviteCode.trim() });
