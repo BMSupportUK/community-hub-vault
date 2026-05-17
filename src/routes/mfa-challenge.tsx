@@ -1,0 +1,110 @@
+import { createFileRoute, Link, useNavigate, redirect } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import { ShieldCheck, LifeBuoy } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+
+export const Route = createFileRoute("/mfa-challenge")({
+  beforeLoad: async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) throw redirect({ to: "/login" });
+  },
+  component: MfaChallengePage,
+});
+
+function MfaChallengePage() {
+  const navigate = useNavigate();
+  const [factorId, setFactorId] = useState<string | null>(null);
+  const [code, setCode] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      const aal = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+      if (aal.data?.currentLevel === "aal2") {
+        navigate({ to: "/home", replace: true });
+        return;
+      }
+      const { data, error } = await supabase.auth.mfa.listFactors();
+      if (error) { toast.error(error.message); setLoading(false); return; }
+      const totp = (data?.totp ?? []).find((f) => f.status === "verified");
+      if (!totp) {
+        // No factor — nothing to challenge. Send them home.
+        navigate({ to: "/home", replace: true });
+        return;
+      }
+      setFactorId(totp.id);
+      setLoading(false);
+    })();
+  }, [navigate]);
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!factorId) return;
+    setBusy(true);
+    const { error } = await supabase.auth.mfa.challengeAndVerify({ factorId, code: code.trim() });
+    setBusy(false);
+    if (error) return toast.error(error.message);
+    toast.success("Verified");
+    navigate({ to: "/home", replace: true });
+  };
+
+  return (
+    <div className="min-h-screen grid place-items-center px-4 bg-background">
+      <div className="w-full max-w-md">
+        <div className="bg-surface/80 backdrop-blur-sm border border-border rounded-2xl p-8 shadow-soft">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="size-10 rounded-xl bg-gradient-primary grid place-items-center shadow-glow">
+              <ShieldCheck className="size-5 text-primary-foreground" />
+            </div>
+            <h1 className="font-display text-2xl font-bold">Two-factor authentication</h1>
+          </div>
+          <p className="text-sm text-muted-foreground mb-6">
+            Enter the 6-digit code from your authenticator app to continue.
+          </p>
+          {loading ? (
+            <p className="text-sm text-muted-foreground">Loading…</p>
+          ) : (
+            <form onSubmit={submit} className="space-y-4">
+              <input
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                pattern="[0-9]*"
+                maxLength={8}
+                required
+                value={code}
+                onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
+                placeholder="123456"
+                className="w-full h-14 text-center text-2xl tracking-[0.5em] font-mono rounded-lg bg-input border border-border focus:outline-none focus:ring-2 focus:ring-ring"
+                autoFocus
+              />
+              <button
+                disabled={busy || code.length < 6}
+                className="w-full h-11 rounded-lg bg-primary text-primary-foreground font-medium shadow-glow hover:opacity-90 disabled:opacity-50"
+              >
+                {busy ? "Verifying…" : "Verify"}
+              </button>
+            </form>
+          )}
+          <div className="mt-6 pt-6 border-t border-border text-xs text-muted-foreground space-y-2">
+            <Link
+              to="/tickets"
+              search={{ id: undefined, view: undefined, new2fa: 1 } as never}
+              className="flex items-center gap-1.5 hover:text-primary"
+            >
+              <LifeBuoy className="size-3.5" /> Lost your device? Contact support to reset 2FA
+            </Link>
+            <button
+              type="button"
+              onClick={async () => { await supabase.auth.signOut(); navigate({ to: "/login" }); }}
+              className="hover:text-primary"
+            >
+              Sign out
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
