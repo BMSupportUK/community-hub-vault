@@ -20,6 +20,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import defaultCover from "@/assets/new-content-cover.jpg";
+import newContentBg from "@/assets/new-content-bg.jpg";
 
 export const Route = createFileRoute("/_authenticated/_approved/new-content")({
   component: NewContentPage,
@@ -289,8 +290,13 @@ function NewContentPage() {
   );
 
   return (
-    <div className="flex-1 overflow-y-auto bg-gradient-to-br from-[#1a0b2e] via-[#2d1b4e] to-[#1a0b2e]">
-      <header className="px-8 pt-8 pb-6 border-b border-purple-500/30 bg-purple-950/40 backdrop-blur flex items-center gap-3">
+    <div
+      className="flex-1 overflow-y-auto bg-[#1a0b2e] bg-cover bg-center bg-no-repeat bg-fixed relative"
+      style={{ backgroundImage: `url(${newContentBg})` }}
+    >
+      <div className="absolute inset-0 bg-gradient-to-b from-[#1a0b2e]/75 via-[#1a0b2e]/65 to-[#1a0b2e]/85 pointer-events-none" aria-hidden />
+      <div className="relative z-10">
+      <header className="px-8 pt-8 pb-6 border-b border-purple-500/30 bg-purple-950/50 backdrop-blur flex items-center gap-3">
         <div className="size-12 rounded-2xl bg-gradient-to-br from-fuchsia-600 to-violet-700 grid place-items-center shadow-glow">
           <Sparkles className="size-6 text-white" />
         </div>
@@ -351,6 +357,7 @@ function NewContentPage() {
       {viewing && (
         <PostViewer post={viewing} onClose={() => setViewing(null)} />
       )}
+      </div>
     </div>
   );
 }
