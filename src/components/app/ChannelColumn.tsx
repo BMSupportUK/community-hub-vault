@@ -63,7 +63,7 @@ export function ChannelColumn({
       <div className="flex-1 overflow-y-auto scrollbar-thin px-2 py-3 space-y-4">
         {groups.map((g) => (
           <div key={g.label}>
-            <div className="group/cat px-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+            <div className="group/cat px-2 pb-1 text-[11px] font-bold uppercase tracking-wider text-foreground flex items-center gap-1">
               <ChevronDown className="size-3" />
               {g.icon ? <g.icon className="size-3" /> : null}
               <span className="flex-1 truncate">{g.label}</span>
@@ -122,10 +122,10 @@ export function ChannelColumn({
                     <Link
                       to={it.to}
                       className={cn(
-                        "flex-1 flex items-center gap-2 px-2 py-1.5 rounded-md text-sm transition-colors",
+                        "flex-1 flex items-center gap-2 px-2 py-1.5 rounded-md text-sm font-medium transition-colors",
                         active
-                          ? "bg-surface-2 text-foreground"
-                          : "text-muted-foreground hover:bg-surface-2/60 hover:text-foreground",
+                          ? "bg-surface-2 text-white"
+                          : "text-foreground/90 hover:bg-surface-2/60 hover:text-white",
                       )}
                     >
                       <Icon className="size-4 shrink-0" />
