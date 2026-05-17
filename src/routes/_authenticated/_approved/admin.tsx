@@ -464,3 +464,156 @@ function DashboardBody() {
     </div>
   );
 }
+
+interface BackupCodeRow {
+  id: string;
+  used_at: string | null;
+  created_at: string;
+  batch_id: string;
+}
+
+function RecoveryCodes() {
+  const { user } = useAuth();
+  const [rows, setRows] = useState<BackupCodeRow[] | null>(null);
+  const [fresh, setFresh] = useState<string[] | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  const load = async () => {
+    if (!user) return;
+    const { data, error } = await supabase
+      .from("admin_backup_codes")
+      .select("id, used_at, created_at, batch_id")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: true });
+    if (error) { toast.error(error.message); return; }
+    setRows((data ?? []) as BackupCodeRow[]);
+  };
+
+  useEffect(() => { load(); }, [user?.id]);
+
+  const generate = async () => {
+    if (!user) return;
+    if (!confirm("Generate a new batch of 10 codes? Any existing codes will be invalidated.")) return;
+    setBusy(true);
+    try {
+      const batchId = crypto.randomUUID();
+      const codes = Array.from({ length: 10 }, generateBackupCode);
+      const hashes = await Promise.all(codes.map((c) => sha256Hex(`${user.id}:${normalizeCode(c)}`)));
+      // Wipe old codes for this user
+      const { error: delErr } = await supabase.from("admin_backup_codes").delete().eq("user_id", user.id);
+      if (delErr) throw delErr;
+      const rowsToInsert = hashes.map((h) => ({ user_id: user.id, code_hash: h, batch_id: batchId }));
+      const { error: insErr } = await supabase.from("admin_backup_codes").insert(rowsToInsert);
+      if (insErr) throw insErr;
+      setFresh(codes);
+      await load();
+      toast.success("New backup codes generated. Save them now!");
+    } catch (e: any) {
+      toast.error(e.message ?? "Failed to generate codes");
+    } finally { setBusy(false); }
+  };
+
+  const copyAll = async () => {
+    if (!fresh) return;
+    await navigator.clipboard.writeText(fresh.join("\n"));
+    toast.success("Codes copied to clipboard");
+  };
+
+  const download = () => {
+    if (!fresh) return;
+    const blob = new Blob(
+      [
+        `Admin recovery codes\nGenerated: ${new Date().toISOString()}\nUser: ${user?.email ?? user?.id}\n\nEach code can be used once.\n\n${fresh.join("\n")}\n`,
+      ],
+      { type: "text/plain" },
+    );
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = "admin-recovery-codes.txt"; a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const total = rows?.length ?? 0;
+  const remaining = rows?.filter((r) => !r.used_at).length ?? 0;
+  const low = total > 0 && remaining <= 3;
+
+  return (
+    <section className="rounded-2xl border border-border bg-surface-1 p-5">
+      <div className="flex items-start justify-between gap-3 flex-wrap mb-3">
+        <div className="flex items-center gap-3">
+          <div className="size-10 rounded-xl bg-primary/15 text-primary grid place-items-center">
+            <LifeBuoy className="size-5" />
+          </div>
+          <div>
+            <h2 className="font-display font-bold">Backup recovery codes</h2>
+            <p className="text-xs text-muted-foreground">One-time codes to unlock the admin dashboard if you lose your password, PIN, or 2FA device.</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className={`text-xs px-2 py-1 rounded-md border ${low ? "border-amber-500/40 text-amber-400 bg-amber-500/10" : "border-border text-muted-foreground bg-surface-2"}`}>
+            {remaining} / {total} unused
+          </span>
+          <button
+            onClick={generate}
+            disabled={busy}
+            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium disabled:opacity-60"
+          >
+            {busy ? <Loader2 className="size-4 animate-spin" /> : <RefreshCw className="size-4" />}
+            {total === 0 ? "Generate codes" : "Regenerate batch"}
+          </button>
+        </div>
+      </div>
+
+      {low && (
+        <div className="mb-3 text-xs px-3 py-2 rounded-lg border border-amber-500/40 bg-amber-500/10 text-amber-400">
+          You're running low on backup codes. Regenerate a new batch and store them safely.
+        </div>
+      )}
+
+      {fresh && (
+        <div className="mb-4 rounded-xl border border-primary/40 bg-primary/5 p-4">
+          <div className="flex items-center justify-between gap-2 mb-2">
+            <div className="text-sm font-medium">Save these codes now — they won't be shown again</div>
+            <div className="flex gap-2">
+              <button onClick={copyAll} className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-surface-2 border border-border text-xs hover:bg-surface-3">
+                <Copy className="size-3.5" /> Copy
+              </button>
+              <button onClick={download} className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-surface-2 border border-border text-xs hover:bg-surface-3">
+                <Download className="size-3.5" /> Download
+              </button>
+              <button onClick={() => setFresh(null)} className="px-2.5 py-1.5 rounded-md bg-surface-2 border border-border text-xs hover:bg-surface-3">
+                Done
+              </button>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 font-mono text-sm">
+            {fresh.map((c) => (
+              <div key={c} className="px-2 py-1.5 rounded-md bg-background border border-border text-center tracking-wider">{c}</div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {rows && rows.length > 0 && (
+        <div>
+          <div className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Current batch ({rows.length})</div>
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 font-mono text-sm">
+            {rows.map((r, i) => (
+              <div
+                key={r.id}
+                className={`px-2 py-1.5 rounded-md border text-center tracking-wider ${r.used_at ? "bg-surface-2 border-border text-muted-foreground line-through" : "bg-background border-border"}`}
+                title={r.used_at ? `Used ${new Date(r.used_at).toLocaleString()}` : "Unused"}
+              >
+                Code #{String(i + 1).padStart(2, "0")}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {rows && rows.length === 0 && !fresh && (
+        <div className="text-sm text-muted-foreground">No backup codes yet. Generate a batch to keep handy in case you ever lose access.</div>
+      )}
+    </section>
+  );
+}
