@@ -1,4 +1,5 @@
 import { createFileRoute, Navigate, Link } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useState } from "react";
 import { ShieldCheck, Search, Loader2, Plus, Trash2, Users, Tags, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -6,6 +7,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { isAdminUnlocked } from "@/lib/admin-unlock";
+import { deleteMember } from "@/lib/admin-users.functions";
 
 export const Route = createFileRoute("/_authenticated/_approved/admin-roles")({
   component: AdminRolesPage,
@@ -46,6 +48,8 @@ function AdminRolesPage() {
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
   const [saving, setSaving] = useState<string | null>(null);
+  const [deletingUser, setDeletingUser] = useState<string | null>(null);
+  const deleteMemberFn = useServerFn(deleteMember);
 
   const loadAll = async () => {
     setLoading(true);
@@ -107,6 +111,25 @@ function AdminRolesPage() {
 
   const styleFor = (role: string) => SYSTEM_STYLE[role] ?? CUSTOM_STYLE;
 
+  const removeMember = async (row: Row) => {
+    if (row.id === user?.id) {
+      toast.error("You can't delete your own account.");
+      return;
+    }
+    const name = row.display_name || row.username || row.id.slice(0, 8);
+    if (!confirm(`Permanently delete ${name}? This removes their account and all associated data and cannot be undone.`)) return;
+    setDeletingUser(row.id);
+    try {
+      await deleteMemberFn({ data: { userId: row.id } });
+      setRows((all) => all.filter((r) => r.id !== row.id));
+      toast.success(`${name} deleted`);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Failed to delete member");
+    } finally {
+      setDeletingUser(null);
+    }
+  };
+
   if (!isAdmin) return <Navigate to="/home" />;
   if (!isAdminUnlocked(user?.id)) {
     return <Navigate to="/admin" search={{ next: "/admin-roles" } as never} />;
@@ -149,14 +172,14 @@ function AdminRolesPage() {
                 className="w-full pl-10 pr-3 py-2.5 rounded-lg bg-surface-2 border border-border focus:outline-none focus:ring-2 focus:ring-primary text-sm" />
             </div>
             <div className="rounded-2xl border border-border bg-surface-1 overflow-hidden">
-              <div className="grid grid-cols-[1fr_2fr] gap-4 px-5 py-3 border-b border-border bg-surface-2 text-xs uppercase tracking-wide text-muted-foreground font-semibold">
-                <div>User</div><div>Roles</div>
+              <div className="grid grid-cols-[1fr_2fr_auto] gap-4 px-5 py-3 border-b border-border bg-surface-2 text-xs uppercase tracking-wide text-muted-foreground font-semibold">
+                <div>User</div><div>Roles</div><div></div>
               </div>
               {filtered.length === 0 && (
                 <div className="px-5 py-10 text-center text-muted-foreground text-sm">No users found.</div>
               )}
               {filtered.map((row) => (
-                <div key={row.id} className="grid grid-cols-[1fr_2fr] gap-4 px-5 py-4 border-b border-border last:border-0 items-center">
+                <div key={row.id} className="grid grid-cols-[1fr_2fr_auto] gap-4 px-5 py-4 border-b border-border last:border-0 items-center">
                   <div className="min-w-0">
                     <div className="font-medium truncate">{row.display_name || row.username || "Unnamed"}</div>
                     <div className="text-xs text-muted-foreground truncate">@{row.username ?? row.id.slice(0, 8)}</div>
@@ -175,6 +198,14 @@ function AdminRolesPage() {
                       );
                     })}
                   </div>
+                  <button
+                    onClick={() => removeMember(row)}
+                    disabled={deletingUser === row.id || row.id === user?.id}
+                    title={row.id === user?.id ? "You can't delete your own account" : "Delete member"}
+                    className="p-2 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-muted-foreground"
+                  >
+                    {deletingUser === row.id ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
+                  </button>
                 </div>
               ))}
             </div>
