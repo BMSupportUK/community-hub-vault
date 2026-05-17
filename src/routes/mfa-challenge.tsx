@@ -5,6 +5,7 @@ import { ShieldCheck, LifeBuoy, Mail } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { requestMfaReset } from "@/lib/mfa-reset-request.functions";
+import mfaBg from "@/assets/mfa-security-bg.jpg";
 
 export const Route = createFileRoute("/mfa-challenge")({
   beforeLoad: async () => {
@@ -57,9 +58,21 @@ function MfaChallengePage() {
   };
 
   return (
-    <div className="min-h-screen grid place-items-center px-4 bg-background">
-      <div className="w-full max-w-md">
-        <div className="bg-surface/80 backdrop-blur-sm border border-border rounded-2xl p-8 shadow-soft">
+    <div className="relative min-h-screen grid place-items-center px-4 bg-background overflow-hidden">
+      <img
+        src={mfaBg}
+        alt=""
+        aria-hidden="true"
+        width={1920}
+        height={1080}
+        className="pointer-events-none select-none absolute inset-0 w-full h-full object-cover opacity-70"
+      />
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,hsl(var(--background)/0.55)_55%,hsl(var(--background)/0.92)_100%)]"
+      />
+      <div className="relative w-full max-w-md">
+        <div className="bg-surface/70 backdrop-blur-md border border-primary/30 rounded-2xl p-8 shadow-[0_0_60px_-10px_hsl(var(--primary)/0.5)]">
           <div className="flex items-center gap-3 mb-2">
             <div className="size-10 rounded-xl bg-gradient-primary grid place-items-center shadow-glow">
               <ShieldCheck className="size-5 text-primary-foreground" />
