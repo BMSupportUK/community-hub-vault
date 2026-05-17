@@ -64,7 +64,6 @@ function AuthLayout() {
       <div className="flex-1 flex flex-col min-w-0">
         <header className="h-12 shrink-0 border-b border-border bg-rail/40 backdrop-blur flex items-center justify-between px-4 gap-3">
           <div className="flex items-center gap-2">
-            <MyWorkingStatus />
             {isAdmin && (
               <Link
                 to="/admin"
@@ -117,6 +116,7 @@ function AuthLayout() {
             <span className="hidden sm:inline">Staff</span>
           </Link>
           <Clocks />
+            <MyWorkingStatus />
           <UserAvatarMenu />
           </div>
         </header>
