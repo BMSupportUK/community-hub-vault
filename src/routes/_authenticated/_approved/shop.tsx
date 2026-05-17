@@ -50,6 +50,7 @@ interface Order {
   discount_cents?: number | null;
   paid_at?: string | null;
   completed_at?: string | null;
+  wants_adult_content?: boolean | null;
 }
 interface OrderItem { id: string; order_id: string; product_name: string; unit_price_cents: number; quantity: number; }
 interface OrderMessage { id: string; order_id: string; sender_id: string; content: string; created_at: string; }
@@ -1712,19 +1713,18 @@ function OrderDetail({ orderId, isAdmin }: { orderId: string; isAdmin: boolean }
                 )}
               </div>
             )}
+            {typeof order.wants_adult_content === "boolean" && (
+              <div className="text-xs mt-1">
+                <span className="text-muted-foreground">Adult content: </span>
+                <span>{order.wants_adult_content ? "Yes" : "No"}</span>
+              </div>
+            )}
             {order.discount_code && (
               <div className="text-xs mt-1 text-muted-foreground">Discount: {order.discount_code} (-{fmt(order.discount_cents ?? 0)})</div>
             )}
             {order.paid_at && <div className="text-xs mt-1 text-success">Paid · {new Date(order.paid_at).toLocaleString()}</div>}
             {order.completed_at && <div className="text-xs text-primary">Completed · {new Date(order.completed_at).toLocaleString()}</div>}
           </div>
-          {order.shipping_name && (
-            <div>
-              <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Shipping</div>
-              <div>{order.shipping_name}</div>
-              <div className="text-muted-foreground whitespace-pre-line text-xs">{order.shipping_address}</div>
-            </div>
-          )}
           {order.notes && (
             <div>
               <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Notes</div>
