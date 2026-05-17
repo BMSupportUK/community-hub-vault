@@ -160,7 +160,7 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
       payload.sort_order = ((maxRow?.sort_order ?? 0) as number) + 10;
     }
     const { error } = editing.id
-      ? await supabase.from("sports_blogs").update(payload).eq("id", editing.id)
+      ? await supabase.from("sports_blogs").update({ ...payload, updated_at: new Date().toISOString() }).eq("id", editing.id)
       : await supabase.from("sports_blogs").insert({ ...payload, created_by: user?.id ?? null });
     setSaving(false);
     if (error) return toast.error(error.message);
