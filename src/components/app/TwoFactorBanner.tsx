@@ -23,22 +23,21 @@ export function TwoFactorBanner() {
   if (!show) return null;
 
   return (
-    <div className="bg-gradient-to-r from-amber-500/15 via-orange-500/15 to-rose-500/15 border-b border-amber-400/30 text-amber-100 text-sm">
-      <div className="px-4 py-2 flex items-center gap-3">
-        <ShieldAlert className="size-4 shrink-0 text-amber-300" />
-        <div className="flex-1">
-          We strongly recommend turning on{" "}
-          <span className="font-semibold">two-factor authentication</span> to protect your account.{" "}
-          <Link to="/account-security" className="underline font-medium hover:text-amber-50">
-            Enable now
+    <div className="fixed bottom-4 right-4 z-50 max-w-[280px] animate-in fade-in slide-in-from-bottom-2 duration-300">
+      <div className="flex items-start gap-2 rounded-lg border border-amber-400/30 bg-background/95 backdrop-blur-sm p-2.5 pr-2 shadow-lg">
+        <ShieldAlert className="size-4 shrink-0 text-amber-500 mt-0.5" />
+        <div className="flex-1 text-xs text-foreground/80 leading-snug">
+          Secure your account with{" "}
+          <Link to="/account-security" className="font-medium text-amber-600 dark:text-amber-400 underline-offset-2 hover:underline">
+            2FA
           </Link>
         </div>
         <button
           aria-label="Dismiss"
           onClick={() => { localStorage.setItem(DISMISS_KEY, "1"); setShow(false); }}
-          className="p-1 rounded hover:bg-white/10"
+          className="p-0.5 rounded hover:bg-muted text-muted-foreground"
         >
-          <X className="size-3.5" />
+          <X className="size-3" />
         </button>
       </div>
     </div>
