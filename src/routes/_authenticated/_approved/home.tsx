@@ -231,6 +231,7 @@ function HomeLayout() {
     });
     if (error) return toast.error(error.message);
     toast.success("Category created");
+    await saveCategoryOrder([...orderedLabelsFor(), label]);
     setShowAddGroup(false);
     setGroupName("");
     load();
@@ -258,6 +259,7 @@ function HomeLayout() {
         inGroup.map((c) => c.id),
       );
     if (error) return toast.error(error.message);
+    await saveCategoryOrder(orderedLabelsFor().filter((item) => item !== label));
     toast.success("Category deleted");
     load();
   };
@@ -295,6 +297,7 @@ function HomeLayout() {
       .update({ group_label: next })
       .in("id", ids);
     if (error) return toast.error(error.message);
+    await saveCategoryOrder(orderedLabelsFor().map((label) => (label === renameCategory ? next : label)));
     if (categoryIcons[renameCategory]) {
       const merged = { ...categoryIcons, [next]: categoryIcons[renameCategory] };
       delete merged[renameCategory];
