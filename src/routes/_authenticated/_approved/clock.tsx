@@ -155,14 +155,12 @@ function ClockPage() {
   }
 
   return (
-    <main className="flex-1 overflow-y-auto relative">
-      <div
-        className="fixed inset-0 -z-10 bg-cover bg-center"
-        style={{ backgroundImage: `url(${clockBg})` }}
-        aria-hidden
-      />
-      <div className="fixed inset-0 -z-10 bg-background/70 backdrop-blur-[2px]" aria-hidden />
-      <div className="max-w-5xl mx-auto px-6 py-8 space-y-6">
+    <main
+      className="flex-1 overflow-y-auto relative bg-cover bg-center bg-fixed"
+      style={{ backgroundImage: `url(${clockBg})` }}
+    >
+      <div className="absolute inset-0 bg-background/70 backdrop-blur-[2px] pointer-events-none" aria-hidden />
+      <div className="relative max-w-5xl mx-auto px-6 py-8 space-y-6">
         <header className="flex items-center gap-3 flex-wrap">
           <div className="size-12 rounded-2xl bg-primary/20 backdrop-blur grid place-items-center ring-1 ring-primary/30">
             <Clock className="size-6 text-primary-foreground" />
