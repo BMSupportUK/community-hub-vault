@@ -9,8 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { z } from "zod";
-import reviewsHero from "@/assets/reviews-hero.png";
-import reviewsBanner from "@/assets/reviews-banner.png";
+import reviewsBg from "@/assets/reviews-bg.png";
 
 export const Route = createFileRoute("/_authenticated/_approved/reviews")({
   component: ReviewsPage,
@@ -113,7 +112,18 @@ function ReviewsPage() {
   };
 
   return (
-    <div className="flex-1 overflow-y-auto bg-gradient-to-br from-[#1a0b2e] via-[#2d1b4e] to-[#1a0b2e]">
+    <div className="relative flex-1 overflow-y-auto bg-[#1a0b2e]">
+      <div className="pointer-events-none fixed inset-0 z-0">
+        <img
+          src={reviewsBg}
+          alt=""
+          aria-hidden
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-br from-[#1a0b2e]/80 via-purple-900/65 to-fuchsia-900/55" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(167,139,250,0.18),transparent_60%)]" />
+      </div>
+      <div className="relative z-10">
       <header className="px-8 pt-8 pb-6 border-b border-purple-500/30 bg-purple-950/40 backdrop-blur">
         <h1 className="font-display text-3xl font-bold bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 bg-clip-text text-transparent">Customer Reviews</h1>
         <p className="text-purple-200/80 mt-1">Tell us what you think — your feedback helps us grow.</p>
@@ -128,14 +138,7 @@ function ReviewsPage() {
           </TabsList>
 
           <TabsContent value="welcome" className="mt-6">
-            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-fuchsia-600/30 via-purple-600/30 to-violet-700/30 border border-purple-500/40 shadow-[0_0_60px_-15px_rgba(168,85,247,0.5)]">
-              <img
-                src={reviewsBanner}
-                alt=""
-                aria-hidden
-                className="absolute inset-0 w-full h-full object-cover opacity-30 mix-blend-luminosity pointer-events-none"
-              />
-              <div className="absolute inset-0 bg-gradient-to-br from-[#1a0b2e]/70 via-purple-900/50 to-fuchsia-900/40 pointer-events-none" />
+            <div className="relative overflow-hidden rounded-2xl bg-purple-950/55 backdrop-blur-xl border border-purple-500/40 shadow-[0_0_60px_-15px_rgba(168,85,247,0.5)]">
               <div className="relative z-10 p-10 md:max-w-[60%]">
                 <div className="size-14 rounded-2xl bg-purple-900/60 grid place-items-center mb-4">
                   <MessageSquareHeart className="size-7 text-fuchsia-300" />
@@ -162,14 +165,7 @@ function ReviewsPage() {
           </TabsContent>
 
           <TabsContent value="wall" className="mt-6">
-            <div className="relative overflow-hidden rounded-2xl border border-purple-500/30 p-6">
-              <img
-                src={reviewsBanner}
-                alt=""
-                aria-hidden
-                className="absolute inset-0 w-full h-full object-cover opacity-25 mix-blend-luminosity pointer-events-none"
-              />
-              <div className="absolute inset-0 bg-gradient-to-br from-[#1a0b2e]/80 via-purple-900/60 to-fuchsia-900/40 pointer-events-none" />
+            <div className="relative overflow-hidden rounded-2xl border border-purple-500/30 bg-purple-950/40 backdrop-blur-xl p-6">
               <div className="relative z-10">
             {approved.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-purple-500/40 p-12 text-center text-purple-200/70 bg-purple-950/30">
@@ -209,14 +205,7 @@ function ReviewsPage() {
           </TabsContent>
 
           <TabsContent value="leave" className="mt-6">
-            <div className="relative max-w-2xl overflow-hidden rounded-2xl bg-purple-950/50 border border-purple-500/30 p-6 backdrop-blur">
-              <img
-                src={reviewsBanner}
-                alt=""
-                aria-hidden
-                className="absolute inset-0 w-full h-full object-cover opacity-25 mix-blend-luminosity pointer-events-none"
-              />
-              <div className="absolute inset-0 bg-gradient-to-br from-[#1a0b2e]/80 via-purple-900/60 to-fuchsia-900/40 pointer-events-none" />
+            <div className="relative max-w-2xl overflow-hidden rounded-2xl bg-purple-950/55 border border-purple-500/30 p-6 backdrop-blur-xl">
               <div className="relative z-10">
               {mine ? (
                 <div>
@@ -302,6 +291,7 @@ function ReviewsPage() {
             </div>
           </TabsContent>
         </Tabs>
+      </div>
       </div>
     </div>
   );
