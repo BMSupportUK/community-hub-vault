@@ -152,34 +152,6 @@ function SportsGuidesPage() {
     return new Date(r).getTime() < upd;
   };
 
-  const markRead = async (b: Blog) => {
-    if (!user?.id) return;
-    const now = new Date().toISOString();
-    queryClient.setQueryData<typeof dataQuery.data>(queryKey, (prev) =>
-      prev ? { ...prev, reads: { ...prev.reads, [b.id]: now } } : prev
-    );
-    const { error } = await supabase
-      .from("sports_blog_reads")
-      .upsert({ user_id: user.id, blog_id: b.id, read_at: now }, { onConflict: "user_id,blog_id" });
-    if (error) toast.error(error.message);
-  };
-
-  const markUnread = async (b: Blog) => {
-    if (!user?.id) return;
-    queryClient.setQueryData<typeof dataQuery.data>(queryKey, (prev) => {
-      if (!prev) return prev;
-      const n = { ...prev.reads };
-      delete n[b.id];
-      return { ...prev, reads: n };
-    });
-    const { error } = await supabase
-      .from("sports_blog_reads")
-      .delete()
-      .eq("user_id", user.id)
-      .eq("blog_id", b.id);
-    if (error) toast.error(error.message);
-  };
-
   const counts = useMemo(() => {
     const m: Record<string, number> = {};
     for (const b of blogs) m[b.category_id] = (m[b.category_id] ?? 0) + 1;
