@@ -322,7 +322,8 @@ function HomeLayout() {
       if (!byGroup.has(c.group_label)) byGroup.set(c.group_label, []);
       byGroup.get(c.group_label)!.push(c);
     }
-    for (const [label, items] of byGroup) {
+    for (const label of orderedLabelsFor()) {
+      const items = byGroup.get(label) ?? [];
       groups.push({
         label,
         icon: categoryIcons[label] ? getIcon(categoryIcons[label]) : undefined,
@@ -407,24 +408,7 @@ function HomeLayout() {
 
   const reorderGroups = async (orderedLabels: string[]) => {
     if (!channels) return;
-    const byGroup = new Map<string, ChannelRow[]>();
-    for (const c of channels) {
-      if (!byGroup.has(c.group_label)) byGroup.set(c.group_label, []);
-      byGroup.get(c.group_label)!.push(c);
-    }
-    const flat = orderedLabels.flatMap((l) => byGroup.get(l) ?? []);
-    const next = flat.map((c, i) => ({ ...c, sort_order: (i + 1) * 10 }));
-    setChannels(next);
-    const results = await Promise.all(
-      next.map((c) =>
-        supabase.from("chat_channels").update({ sort_order: c.sort_order }).eq("id", c.id),
-      ),
-    );
-    const err = results.find((r) => r.error)?.error;
-    if (err) {
-      toast.error(err.message);
-      load();
-    }
+    await saveCategoryOrder(orderedLabels);
   };
 
   return (
