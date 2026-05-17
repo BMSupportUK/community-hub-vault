@@ -1,11 +1,14 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { ChannelColumn, type ChannelGroup } from "@/components/app/ChannelColumn";
 import { ShoppingBag, Package, Settings, Plus, Minus, X, Send, Trash2, Pencil, Image as ImageIcon, Tag, CheckCircle2, BadgeCheck, Check, Wrench, FileText, BedDouble, Users, Loader2, Save, Star, Sparkles, GripVertical, Receipt, UserCog, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { TurnstileWidget } from "@/components/app/TurnstileWidget";
+import { verifyTurnstile } from "@/lib/turnstile.functions";
 import shopHero from "@/assets/shop-hero.jpg";
 import houseCutaway from "@/assets/house-cutaway.jpg";
 import judgeCourtroom from "@/assets/judge-courtroom.jpg";
@@ -589,8 +592,16 @@ function Storefront() {
   const add = (id: string) => setCart((c) => ({ ...c, [id]: (c[id] ?? 0) + 1 }));
   const sub = (id: string) => setCart((c) => ({ ...c, [id]: Math.max(0, (c[id] ?? 0) - 1) }));
 
-  const placeOrder = async (info: { name: string; email: string; customer_type: "new" | "existing"; existing_username: string; discount_code: string; discount_cents: number; wants_adult_content: boolean }) => {
+  const verifyCaptcha = useServerFn(verifyTurnstile);
+  const placeOrder = async (info: { name: string; email: string; customer_type: "new" | "existing"; existing_username: string; discount_code: string; discount_cents: number; wants_adult_content: boolean; captchaToken: string }) => {
     if (!user || cartItems.length === 0) return;
+    if (!info.captchaToken) { toast.error("Please complete the verification challenge"); return; }
+    try {
+      const v = await verifyCaptcha({ data: { token: info.captchaToken } });
+      if (!v.success) { toast.error("Verification failed — please try again"); return; }
+    } catch {
+      toast.error("Verification failed — please try again"); return;
+    }
     let verifiedDiscountCents = 0;
     const submittedCode = info.discount_code.trim();
     if (submittedCode) {
@@ -1161,7 +1172,7 @@ function PolicyCard({
 
 function Checkout({ items, total, onClose, onPlace, onRemoveItem, onContinueShopping }: {
   items: (Product & { qty: number })[]; total: number; onClose: () => void;
-  onPlace: (s: { name: string; email: string; customer_type: "new" | "existing"; existing_username: string; discount_code: string; discount_cents: number; wants_adult_content: boolean }) => void;
+  onPlace: (s: { name: string; email: string; customer_type: "new" | "existing"; existing_username: string; discount_code: string; discount_cents: number; wants_adult_content: boolean; captchaToken: string }) => void;
   onRemoveItem: (id: string) => void;
   onContinueShopping: () => void;
 }) {
@@ -1174,6 +1185,7 @@ function Checkout({ items, total, onClose, onPlace, onRemoveItem, onContinueShop
   const [discountInput, setDiscountInput] = useState("");
   const [appliedCode, setAppliedCode] = useState<DiscountCode | null>(null);
   const [applying, setApplying] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState("");
   const [browseOpen, setBrowseOpen] = useState(false);
   const [browseQuery, setBrowseQuery] = useState("");
   const [available, setAvailable] = useState<DiscountCode[]>([]);
@@ -1295,6 +1307,7 @@ function Checkout({ items, total, onClose, onPlace, onRemoveItem, onContinueShop
   const canSubmit =
     !!name && !!email && (customerType === "new" || !!existingUsername.trim())
     && adultContent !== ""
+    && !!captchaToken
     && (!requiresMulti || agreedMulti)
     && (!requiresTriple || agreedTriple);
 
@@ -1434,6 +1447,13 @@ function Checkout({ items, total, onClose, onPlace, onRemoveItem, onContinueShop
             </div>
           </div>
         </div>
+        <div className="px-5 pb-2">
+          <div className="text-[11px] uppercase tracking-wider text-muted-foreground mb-1">Verification</div>
+          <TurnstileWidget
+            onToken={setCaptchaToken}
+            onExpire={() => setCaptchaToken("")}
+          />
+        </div>
         {(requiresMulti || requiresTriple) && (
           <div className="px-5 pb-2 space-y-2">
             {requiresMulti && (
@@ -1459,7 +1479,7 @@ function Checkout({ items, total, onClose, onPlace, onRemoveItem, onContinueShop
         <div className="p-5 border-t border-border flex flex-wrap gap-2 justify-end">
           <button onClick={onClose} className="px-4 py-2 rounded-lg bg-surface-2 text-sm">Cancel</button>
           <button onClick={onContinueShopping} className="px-4 py-2 rounded-lg bg-surface-2 text-sm border border-border">Continue shopping</button>
-          <button onClick={() => onPlace({ name, email, customer_type: customerType, existing_username: existingUsername, discount_code: appliedCode?.code ?? "", discount_cents: discountCents, wants_adult_content: adultContent === "yes" })}
+          <button onClick={() => onPlace({ name, email, customer_type: customerType, existing_username: existingUsername, discount_code: appliedCode?.code ?? "", discount_cents: discountCents, wants_adult_content: adultContent === "yes", captchaToken })}
             disabled={!canSubmit} className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium disabled:opacity-50">Place Order</button>
         </div>
       </div>
