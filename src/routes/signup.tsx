@@ -120,7 +120,7 @@ function SignupPage() {
               <Field label="Display name" value={displayName} onChange={setDisplayName} />
               <Field label="Email" type="email" value={email} onChange={setEmail} />
               <Field label="Password" type="password" value={password} onChange={setPassword} />
-              <Field label="Invite code (optional)" value={inviteCode} onChange={setInviteCode} />
+              <Field label="Invite code (optional)" value={inviteCode} onChange={setInviteCode} required={false} />
               <button disabled={busy} className="w-full h-11 rounded-lg bg-primary text-primary-foreground font-medium shadow-glow hover:opacity-90 disabled:opacity-50">
                 {busy ? "Creating…" : "Request access"}
               </button>
