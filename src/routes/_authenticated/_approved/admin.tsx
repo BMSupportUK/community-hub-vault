@@ -125,7 +125,40 @@ function SecurityGate({ hasPin, onUnlocked }: { hasPin: boolean; onUnlocked: () 
   const [pin, setPin] = useState("");
   const [confirmPin, setConfirmPin] = useState("");
   const [busy, setBusy] = useState(false);
-  const [mode, setMode] = useState<"unlock" | "reset">("unlock");
+  const [mode, setMode] = useState<"unlock" | "reset" | "totp">("unlock");
+  const [totpCode, setTotpCode] = useState("");
+  const [hasTotp, setHasTotp] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase.auth.mfa.listFactors();
+      const verified = (data?.totp ?? []).some((f) => f.status === "verified");
+      setHasTotp(verified);
+    })();
+  }, []);
+
+  const unlockWithTotp = async () => {
+    if (!/^\d{6}$/.test(totpCode)) return toast.error("Enter the 6-digit code from your authenticator");
+    setBusy(true);
+    try {
+      const { data: factors, error: lfErr } = await supabase.auth.mfa.listFactors();
+      if (lfErr) throw lfErr;
+      const factor = (factors?.totp ?? []).find((f) => f.status === "verified");
+      if (!factor) throw new Error("No verified 2FA factor on your account");
+      const { data: ch, error: chErr } = await supabase.auth.mfa.challenge({ factorId: factor.id });
+      if (chErr || !ch) throw chErr ?? new Error("Challenge failed");
+      const { error: vErr } = await supabase.auth.mfa.verify({
+        factorId: factor.id,
+        challengeId: ch.id,
+        code: totpCode,
+      });
+      if (vErr) throw new Error("Incorrect 2FA code");
+      toast.success("Admin unlocked");
+      onUnlocked();
+    } catch (e: any) {
+      toast.error(e.message ?? "Unlock failed");
+    } finally { setBusy(false); }
+  };
 
   const setupPin = async () => {
     if (!user) return;
@@ -204,12 +237,46 @@ function SecurityGate({ hasPin, onUnlocked }: { hasPin: boolean; onUnlocked: () 
           <button onClick={unlock} disabled={busy} className="w-full py-2.5 rounded-lg bg-primary text-primary-foreground font-medium disabled:opacity-60 flex items-center justify-center gap-2">
             {busy ? <Loader2 className="size-4 animate-spin" /> : <KeyRound className="size-4" />} Unlock dashboard
           </button>
+          {hasTotp && (
+            <button
+              type="button"
+              onClick={() => { setMode("totp"); setPassword(""); setPin(""); }}
+              className="w-full mt-3 text-xs text-primary hover:underline underline-offset-2"
+            >
+              Use a 2FA code instead
+            </button>
+          )}
           <button
             type="button"
             onClick={() => { setMode("reset"); setPin(""); setConfirmPin(""); }}
             className="w-full mt-3 text-xs text-muted-foreground hover:text-foreground underline underline-offset-2"
           >
             Forgot your PIN? Reset it
+          </button>
+        </>
+      ) : mode === "totp" ? (
+        <>
+          <h2 className="font-display text-lg font-bold">Unlock with 2FA</h2>
+          <p className="text-sm text-muted-foreground mb-4">Enter the 6-digit code from your authenticator app.</p>
+          <input
+            value={totpCode}
+            onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            placeholder="123456"
+            className="w-full mb-4 px-3 py-2.5 rounded-lg bg-surface-2 border border-border text-sm font-mono tracking-[0.4em] text-center"
+            autoFocus
+            onKeyDown={(e) => e.key === "Enter" && unlockWithTotp()}
+          />
+          <button onClick={unlockWithTotp} disabled={busy} className="w-full py-2.5 rounded-lg bg-primary text-primary-foreground font-medium disabled:opacity-60 flex items-center justify-center gap-2">
+            {busy ? <Loader2 className="size-4 animate-spin" /> : <KeyRound className="size-4" />} Verify & unlock
+          </button>
+          <button
+            type="button"
+            onClick={() => { setMode("unlock"); setTotpCode(""); }}
+            className="w-full mt-3 text-xs text-muted-foreground hover:text-foreground underline underline-offset-2"
+          >
+            Back to password + PIN
           </button>
         </>
       ) : (
