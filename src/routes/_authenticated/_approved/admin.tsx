@@ -290,6 +290,13 @@ function SecurityGate({ hasPin, onUnlocked }: { hasPin: boolean; onUnlocked: () 
           )}
           <button
             type="button"
+            onClick={() => { setMode("backup"); setPassword(""); setPin(""); }}
+            className="w-full mt-3 text-xs text-primary hover:underline underline-offset-2"
+          >
+            Use a backup recovery code
+          </button>
+          <button
+            type="button"
             onClick={() => { setMode("reset"); setPin(""); setConfirmPin(""); }}
             className="w-full mt-3 text-xs text-muted-foreground hover:text-foreground underline underline-offset-2"
           >
@@ -316,6 +323,29 @@ function SecurityGate({ hasPin, onUnlocked }: { hasPin: boolean; onUnlocked: () 
           <button
             type="button"
             onClick={() => { setMode("unlock"); setTotpCode(""); }}
+            className="w-full mt-3 text-xs text-muted-foreground hover:text-foreground underline underline-offset-2"
+          >
+            Back to password + PIN
+          </button>
+        </>
+      ) : mode === "backup" ? (
+        <>
+          <h2 className="font-display text-lg font-bold">Unlock with backup code</h2>
+          <p className="text-sm text-muted-foreground mb-4">Enter one of your one-time recovery codes. It will be marked used after unlocking.</p>
+          <input
+            value={backupCode}
+            onChange={(e) => setBackupCode(e.target.value.toUpperCase())}
+            placeholder="XXXXX-XXXXX"
+            className="w-full mb-4 px-3 py-2.5 rounded-lg bg-surface-2 border border-border text-sm font-mono tracking-widest text-center uppercase"
+            autoFocus
+            onKeyDown={(e) => e.key === "Enter" && unlockWithBackup()}
+          />
+          <button onClick={unlockWithBackup} disabled={busy} className="w-full py-2.5 rounded-lg bg-primary text-primary-foreground font-medium disabled:opacity-60 flex items-center justify-center gap-2">
+            {busy ? <Loader2 className="size-4 animate-spin" /> : <LifeBuoy className="size-4" />} Verify & unlock
+          </button>
+          <button
+            type="button"
+            onClick={() => { setMode("unlock"); setBackupCode(""); }}
             className="w-full mt-3 text-xs text-muted-foreground hover:text-foreground underline underline-offset-2"
           >
             Back to password + PIN
