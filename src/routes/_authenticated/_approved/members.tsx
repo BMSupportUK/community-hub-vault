@@ -52,6 +52,24 @@ function MembersPage() {
   const [friendByUser, setFriendByUser] = useState<Record<string, FriendState>>({});
   const [busyId, setBusyId] = useState<string | null>(null);
   const [q, setQ] = useState("");
+  const [resetTarget, setResetTarget] = useState<Profile | null>(null);
+  const [resetReason, setResetReason] = useState("");
+  const [resetBusy, setResetBusy] = useState(false);
+  const resetMfa = useServerFn(resetUserMfa);
+
+  const doReset = async () => {
+    if (!resetTarget) return;
+    setResetBusy(true);
+    try {
+      const res = await resetMfa({ data: { userId: resetTarget.id, reason: resetReason.trim() || undefined } });
+      toast.success(res.removed > 0 ? `Removed ${res.removed} factor(s)` : "No 2FA factors to remove");
+      setResetTarget(null); setResetReason("");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Failed to reset 2FA");
+    } finally {
+      setResetBusy(false);
+    }
+  };
 
   const load = async () => {
     const [{ data: ps }, { data: rs }] = await Promise.all([
