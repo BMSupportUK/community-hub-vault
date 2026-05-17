@@ -990,6 +990,39 @@ export type Database = {
         }
         Relationships: []
       }
+      new_content_posts: {
+        Row: {
+          attachments: Json
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          kind: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          attachments?: Json
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          kind: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          attachments?: Json
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          kind?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       order_items: {
         Row: {
           created_at: string
