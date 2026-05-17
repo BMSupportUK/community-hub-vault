@@ -405,7 +405,7 @@ function TicketsPage() {
                   onClick={() => setTab("tickets")}
                   className="inline-flex items-center gap-2 rounded-xl border border-white/25 bg-white/10 backdrop-blur px-4 py-2.5 text-sm hover:bg-white/20"
                 >
-                  <TicketIcon className="size-4" /> View my tickets
+                  <TicketIcon className="size-4" /> View tickets
                 </button>
               </div>
             </div>
