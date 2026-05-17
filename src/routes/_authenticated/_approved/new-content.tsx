@@ -18,6 +18,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import defaultCover from "@/assets/new-content-cover.jpg";
 
 export const Route = createFileRoute("/_authenticated/_approved/new-content")({
   component: NewContentPage,
@@ -151,19 +152,20 @@ function NewContentPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
           {items.map((p) => {
             const cover = (p.attachments ?? []).find((a) => a.type?.startsWith("image/"));
+            const coverUrl = cover?.url ?? defaultCover;
             return (
               <article
                 key={p.id}
                 className="rounded-2xl bg-purple-950/50 border border-purple-500/30 overflow-hidden flex flex-col group hover:border-fuchsia-500/60 hover:shadow-[0_0_30px_-10px_rgba(217,70,239,0.6)] transition-all"
               >
                 <div className="aspect-[16/10] bg-purple-900/50 relative overflow-hidden">
-                  {cover ? (
-                    <img src={cover.url} alt={p.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
-                  ) : (
-                    <div className="w-full h-full grid place-items-center text-purple-300/60">
-                      <ImageIcon className="size-10" />
-                    </div>
-                  )}
+                  <img
+                    src={coverUrl}
+                    alt={p.title}
+                    loading="lazy"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-purple-950/80 via-purple-950/10 to-transparent pointer-events-none" />
                   <div className="absolute top-2 right-2 px-2 py-1 rounded-md bg-fuchsia-500 text-white text-[10px] font-bold uppercase tracking-wide shadow-lg">
                     New
                   </div>
