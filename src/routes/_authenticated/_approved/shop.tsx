@@ -50,6 +50,7 @@ interface Order {
   discount_cents?: number | null;
   paid_at?: string | null;
   completed_at?: string | null;
+  wants_adult_content?: boolean | null;
 }
 interface OrderItem { id: string; order_id: string; product_name: string; unit_price_cents: number; quantity: number; }
 interface OrderMessage { id: string; order_id: string; sender_id: string; content: string; created_at: string; }
