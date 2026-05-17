@@ -18,6 +18,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 import statusHero from "@/assets/status-hero.png";
+import statusBg from "@/assets/status-bg.jpg";
 
 export const Route = createFileRoute("/_authenticated/_approved/status")({
   component: StatusPage,
@@ -195,8 +196,12 @@ function StatusPage() {
   const list = tab === "active" ? active : completed;
 
   return (
-    <main className="flex-1 overflow-y-auto">
-      <div className="max-w-5xl mx-auto px-6 py-8 space-y-6">
+    <main
+      className="flex-1 overflow-y-auto bg-[#1a0b2e] bg-cover bg-center bg-no-repeat bg-fixed relative"
+      style={{ backgroundImage: `url(${statusBg})` }}
+    >
+      <div className="absolute inset-0 bg-gradient-to-b from-[#1a0b2e]/75 via-[#1a0b2e]/65 to-[#1a0b2e]/85 pointer-events-none" aria-hidden />
+      <div className="relative z-10 max-w-5xl mx-auto px-6 py-8 space-y-6">
         {/* Hero illustration */}
         <div className="relative rounded-3xl overflow-hidden border border-primary/30 shadow-glow bg-gradient-primary">
           <img
