@@ -233,6 +233,7 @@ export function ChannelColumn({
                   >
                     <Link
                       to={it.to}
+                      draggable={false}
                       className={cn(
                         "flex-1 flex items-center gap-2 px-2 py-1.5 rounded-md text-sm font-medium transition-colors",
                         active
