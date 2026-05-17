@@ -47,9 +47,9 @@ function AuthLayout() {
     );
   }
 
-  // Rejected/banned users are locked to /rejected
-  if (isBanned && !path.startsWith("/rejected")) {
-    return <Navigate to="/rejected" />;
+  // Banned users are locked to /banned
+  if (isBanned && !path.startsWith("/banned")) {
+    return <Navigate to="/banned" />;
   }
 
   // Rejected users are locked to /account-rejected

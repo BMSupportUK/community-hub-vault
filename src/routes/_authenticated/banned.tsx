@@ -5,11 +5,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/_authenticated/rejected")({
-  component: RejectedPage,
+export const Route = createFileRoute("/_authenticated/banned")({
+  component: BannedPage,
 });
 
-function RejectedPage() {
+function BannedPage() {
   const { user, signOut, refreshRoles } = useAuth();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
