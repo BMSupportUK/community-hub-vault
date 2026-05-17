@@ -41,6 +41,30 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_unlock_lockouts: {
+        Row: {
+          failed_count: number
+          last_failed_at: string | null
+          locked_until: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          failed_count?: number
+          last_failed_at?: string | null
+          locked_until?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          failed_count?: number
+          last_failed_at?: string | null
+          locked_until?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       app_settings: {
         Row: {
           key: string
@@ -2204,7 +2228,9 @@ export type Database = {
         Args: { _action: string; _channel: string; _user: string }
         Returns: boolean
       }
+      check_admin_unlock_lockout: { Args: never; Returns: Json }
       cleanup_old_chat_messages: { Args: never; Returns: number }
+      clear_admin_unlock_failures: { Args: never; Returns: undefined }
       create_app_role: {
         Args: { _label: string; _name: string }
         Returns: undefined
@@ -2274,6 +2300,7 @@ export type Database = {
           read_ct: number
         }[]
       }
+      record_admin_unlock_failure: { Args: never; Returns: Json }
       redeem_invite: { Args: { p_code: string }; Returns: Json }
       restore_app_credentials_from_backup: {
         Args: { p_mode?: string; p_snapshot: Json }

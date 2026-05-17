@@ -142,6 +142,50 @@ function SecurityGate({ hasPin, onUnlocked }: { hasPin: boolean; onUnlocked: () 
   const [totpCode, setTotpCode] = useState("");
   const [hasTotp, setHasTotp] = useState(false);
   const [backupCode, setBackupCode] = useState("");
+  const [lockedUntil, setLockedUntil] = useState<number | null>(null);
+  const [failedCount, setFailedCount] = useState(0);
+  const [now, setNow] = useState(Date.now());
+
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, []);
+
+  useEffect(() => {
+    (async () => {
+      const { data, error } = await supabase.rpc("check_admin_unlock_lockout");
+      if (error) return;
+      const d = data as any;
+      setFailedCount(d?.failed_count ?? 0);
+      setLockedUntil(d?.locked_until ? new Date(d.locked_until).getTime() : null);
+    })();
+  }, []);
+
+  const isLocked = lockedUntil !== null && lockedUntil > now;
+  const secondsRemaining = isLocked ? Math.ceil((lockedUntil! - now) / 1000) : 0;
+
+  const recordFailure = async () => {
+    const { data } = await supabase.rpc("record_admin_unlock_failure");
+    const d = data as any;
+    if (d) {
+      setFailedCount(d.failed_count ?? 0);
+      setLockedUntil(d.locked_until ? new Date(d.locked_until).getTime() : null);
+    }
+  };
+
+  const clearFailures = async () => {
+    await supabase.rpc("clear_admin_unlock_failures");
+    setFailedCount(0);
+    setLockedUntil(null);
+  };
+
+  const guardLocked = () => {
+    if (isLocked) {
+      toast.error(`Too many attempts. Try again in ${secondsRemaining}s.`);
+      return true;
+    }
+    return false;
+  };
 
   useEffect(() => {
     (async () => {
@@ -152,6 +196,7 @@ function SecurityGate({ hasPin, onUnlocked }: { hasPin: boolean; onUnlocked: () 
   }, []);
 
   const unlockWithTotp = async () => {
+    if (guardLocked()) return;
     if (!/^\d{6}$/.test(totpCode)) return toast.error("Enter the 6-digit code from your authenticator");
     setBusy(true);
     try {
@@ -167,14 +212,17 @@ function SecurityGate({ hasPin, onUnlocked }: { hasPin: boolean; onUnlocked: () 
         code: totpCode,
       });
       if (vErr) throw new Error("Incorrect 2FA code");
+      await clearFailures();
       toast.success("Admin unlocked");
       onUnlocked();
     } catch (e: any) {
+      await recordFailure();
       toast.error(e.message ?? "Unlock failed");
     } finally { setBusy(false); }
   };
 
   const unlockWithBackup = async () => {
+    if (guardLocked()) return;
     if (!user) return;
     const normalized = normalizeCode(backupCode);
     if (normalized.length < 8) return toast.error("Enter a valid backup code");
@@ -195,9 +243,11 @@ function SecurityGate({ hasPin, onUnlocked }: { hasPin: boolean; onUnlocked: () 
         .update({ used_at: new Date().toISOString() })
         .eq("id", row.id);
       if (upErr) throw upErr;
+      await clearFailures();
       toast.success("Admin unlocked with backup code");
       onUnlocked();
     } catch (e: any) {
+      await recordFailure();
       toast.error(e.message ?? "Unlock failed");
     } finally { setBusy(false); }
   };
@@ -219,6 +269,7 @@ function SecurityGate({ hasPin, onUnlocked }: { hasPin: boolean; onUnlocked: () 
   };
 
   const unlock = async () => {
+    if (guardLocked()) return;
     if (!user?.email) return;
     if (!password || !pin) return toast.error("Enter password and PIN");
     setBusy(true);
@@ -228,9 +279,11 @@ function SecurityGate({ hasPin, onUnlocked }: { hasPin: boolean; onUnlocked: () 
       const hash = await sha256Hex(`${user.id}:${pin}`);
       const { data: row } = await supabase.from("vault_pins").select("pin_hash").eq("user_id", user.id).maybeSingle();
       if (!row || row.pin_hash !== hash) throw new Error("Incorrect PIN");
+      await clearFailures();
       toast.success("Admin unlocked");
       onUnlocked();
     } catch (e: any) {
+      await recordFailure();
       toast.error(e.message ?? "Unlock failed");
     } finally { setBusy(false); }
   };
@@ -260,6 +313,16 @@ function SecurityGate({ hasPin, onUnlocked }: { hasPin: boolean; onUnlocked: () 
       <div className="size-12 rounded-2xl bg-surface-2 grid place-items-center mb-4">
         <Lock className="size-5 text-primary" />
       </div>
+      {isLocked && (
+        <div className="mb-4 px-3 py-2 rounded-lg border border-destructive/40 bg-destructive/10 text-destructive text-sm">
+          Too many failed attempts. Try again in {secondsRemaining}s.
+        </div>
+      )}
+      {!isLocked && failedCount > 0 && hasPin && (
+        <div className="mb-4 px-3 py-2 rounded-lg border border-amber-500/40 bg-amber-500/10 text-amber-400 text-xs">
+          {5 - failedCount} attempt{5 - failedCount === 1 ? "" : "s"} remaining before lockout.
+        </div>
+      )}
       {!hasPin ? (
         <>
           <h2 className="font-display text-lg font-bold">Set your admin PIN</h2>
@@ -276,7 +339,7 @@ function SecurityGate({ hasPin, onUnlocked }: { hasPin: boolean; onUnlocked: () 
           <p className="text-sm text-muted-foreground mb-4">Enter your account password and admin PIN to continue.</p>
           <input value={password} onChange={(e) => setPassword(e.target.value)} type="password" placeholder="Account password" className="w-full mb-2 px-3 py-2.5 rounded-lg bg-surface-2 border border-border text-sm" autoFocus />
           <input value={pin} onChange={(e) => setPin(e.target.value)} type="password" placeholder="Admin PIN" className="w-full mb-4 px-3 py-2.5 rounded-lg bg-surface-2 border border-border text-sm" onKeyDown={(e) => e.key === "Enter" && unlock()} />
-          <button onClick={unlock} disabled={busy} className="w-full py-2.5 rounded-lg bg-primary text-primary-foreground font-medium disabled:opacity-60 flex items-center justify-center gap-2">
+          <button onClick={unlock} disabled={busy || isLocked} className="w-full py-2.5 rounded-lg bg-primary text-primary-foreground font-medium disabled:opacity-60 flex items-center justify-center gap-2">
             {busy ? <Loader2 className="size-4 animate-spin" /> : <KeyRound className="size-4" />} Unlock dashboard
           </button>
           {hasTotp && (
@@ -317,7 +380,7 @@ function SecurityGate({ hasPin, onUnlocked }: { hasPin: boolean; onUnlocked: () 
             autoFocus
             onKeyDown={(e) => e.key === "Enter" && unlockWithTotp()}
           />
-          <button onClick={unlockWithTotp} disabled={busy} className="w-full py-2.5 rounded-lg bg-primary text-primary-foreground font-medium disabled:opacity-60 flex items-center justify-center gap-2">
+          <button onClick={unlockWithTotp} disabled={busy || isLocked} className="w-full py-2.5 rounded-lg bg-primary text-primary-foreground font-medium disabled:opacity-60 flex items-center justify-center gap-2">
             {busy ? <Loader2 className="size-4 animate-spin" /> : <KeyRound className="size-4" />} Verify & unlock
           </button>
           <button
@@ -340,7 +403,7 @@ function SecurityGate({ hasPin, onUnlocked }: { hasPin: boolean; onUnlocked: () 
             autoFocus
             onKeyDown={(e) => e.key === "Enter" && unlockWithBackup()}
           />
-          <button onClick={unlockWithBackup} disabled={busy} className="w-full py-2.5 rounded-lg bg-primary text-primary-foreground font-medium disabled:opacity-60 flex items-center justify-center gap-2">
+          <button onClick={unlockWithBackup} disabled={busy || isLocked} className="w-full py-2.5 rounded-lg bg-primary text-primary-foreground font-medium disabled:opacity-60 flex items-center justify-center gap-2">
             {busy ? <Loader2 className="size-4 animate-spin" /> : <LifeBuoy className="size-4" />} Verify & unlock
           </button>
           <button
