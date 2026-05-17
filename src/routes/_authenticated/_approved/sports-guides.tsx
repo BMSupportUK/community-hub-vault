@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate, Outlet, useChildMatches } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, Search, Pencil, Trash2, ImageIcon, GripVertical, Check, EyeOff, X, ChevronDown, ChevronRight } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, ImageIcon, GripVertical, X, ChevronDown, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -462,23 +462,26 @@ function SportsGuidesPage() {
                           {b.excerpt && <p className="text-sm text-purple-200/70 line-clamp-2">{b.excerpt}</p>}
                           <div className="mt-auto pt-3 flex items-center gap-2">
                             <Button size="sm" className="flex-1 bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white border-0" onClick={() => navigate({ to: "/sports-guides/read/$id", params: { id: b.id }, search: { cat: b.category_id } })}>Click to Read</Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
+                            <span
+                              aria-label={isUnread(b) ? "Unread" : "Read"}
+                              title={isUnread(b) ? "Unread" : "Read"}
                               className={
-                                isUnread(b)
-                                  ? "border-fuchsia-500/60 bg-fuchsia-500/15 text-fuchsia-100 hover:bg-fuchsia-500/25"
-                                  : "border-purple-500/40 bg-purple-900/40 text-purple-100 hover:bg-purple-800/60"
+                                "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold uppercase tracking-wide border " +
+                                (isUnread(b)
+                                  ? "border-fuchsia-400/60 bg-fuchsia-500/20 text-fuchsia-100 animate-pulse shadow-[0_0_12px_rgba(232,121,249,0.55)]"
+                                  : "border-purple-500/40 bg-purple-900/40 text-purple-200/80")
                               }
-                              title={isUnread(b) ? "Mark as read" : "Mark as unread"}
-                              onClick={() => (isUnread(b) ? markRead(b) : markUnread(b))}
                             >
-                              {isUnread(b) ? (
-                                <><Check className="size-4 mr-1" /> Mark read</>
-                              ) : (
-                                <><EyeOff className="size-4 mr-1" /> Mark unread</>
-                              )}
-                            </Button>
+                              <span
+                                className={
+                                  "size-2 rounded-full " +
+                                  (isUnread(b)
+                                    ? "bg-fuchsia-400 shadow-[0_0_8px_rgba(232,121,249,0.9)]"
+                                    : "bg-purple-400/60")
+                                }
+                              />
+                              {isUnread(b) ? "Unread" : "Read"}
+                            </span>
                             {isMod && (
                               <>
                                 <Button size="icon" variant="ghost" className="text-purple-200 hover:text-white hover:bg-purple-800/60" onClick={() => openEdit(b.id)}>
