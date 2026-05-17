@@ -82,5 +82,14 @@ export const recordSignupInfo = createServerFn({ method: "POST" })
       geo_permission: s(c.geoPermission),
     } as never);
     if (error) throw error;
+
+    // Auto-ban if this IP is blacklisted
+    try {
+      const { data: hit } = await supabase.rpc("is_blacklisted" as never, { _email: null, _ip: ip } as never);
+      if (hit === true) {
+        await supabase.rpc("apply_blacklist_ban" as never, { _user_id: userId } as never);
+      }
+    } catch {}
+
     return { ok: true, ip, is_vpn: vpn?.is_vpn ?? null, is_proxy: vpn?.is_proxy ?? null };
   });
