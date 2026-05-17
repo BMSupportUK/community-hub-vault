@@ -40,9 +40,7 @@ export function ChannelColumn({
   const { user } = useAuth();
   const [profile, setProfile] = useState<{ display_name: string | null; username: string | null; avatar_url: string | null } | null>(null);
   const [dragChan, setDragChan] = useState<{ id: string; group: string } | null>(null);
-  const [dragGroup, setDragGroup] = useState<string | null>(null);
   const [overChan, setOverChan] = useState<string | null>(null);
-  const [overGroup, setOverGroup] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -89,16 +87,6 @@ export function ChannelColumn({
     if (!flat.some((c) => c.group === targetGroup)) insertAt = flat.length;
     flat.splice(insertAt, 0, moved);
     onReorderChannels(flat.map((c) => ({ id: c.id, groupLabel: c.group })));
-  };
-
-  const dropGroupOnGroup = (targetLabel: string) => {
-    if (!dragGroup || !onReorderGroups || dragGroup === targetLabel) return;
-    const labels = groups.map((g) => g.label);
-    const fromIdx = labels.indexOf(dragGroup);
-    const [moved] = labels.splice(fromIdx, 1);
-    const toIdx = labels.indexOf(targetLabel);
-    labels.splice(toIdx, 0, moved);
-    onReorderGroups(labels);
   };
 
   return (
