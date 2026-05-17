@@ -15,6 +15,7 @@ import broadcastAudio from "@/assets/broadcast-notify.mp3";
 import staffMentionAudio from "@/assets/staff-mention.mp3";
 import orderAudio from "@/assets/order-notify.mp3";
 import ticketAudio from "@/assets/ticket-notify.mp3";
+import newSignupAudio from "@/assets/new-signup-notify.mp3";
 
 type Notif = {
   id: string;
@@ -37,6 +38,7 @@ export function NotificationBell() {
   const [open, setOpen] = useState(false);
   const canManageOrders = hasAny(["admin", "management"]);
   const canHandleTickets = hasAny(["admin", "management", "staff"]);
+  const canApproveSignups = hasAny(["admin", "management"]);
 
   useEffect(() => {
     if (!user || isPending) return;
@@ -152,6 +154,19 @@ export function NotificationBell() {
             });
             return;
           }
+          if (n.kind === "gate_application" && canApproveSignups) {
+            try {
+              const audio = new Audio(newSignupAudio);
+              audio.volume = 0.9;
+              void audio.play().catch(() => { /* autoplay may be blocked */ });
+            } catch { /* ignore */ }
+            toast(`👋 ${n.title}`, {
+              description: n.body ?? "A new user is requesting access.",
+              duration: 8000,
+              action: { label: "Open", onClick: () => navigate({ to: "/moderation" } as never) },
+            });
+            return;
+          }
           toast(n.title, {
             description: n.body ?? undefined,
             action:
@@ -215,7 +230,7 @@ export function NotificationBell() {
       if (staffCh) supabase.removeChannel(staffCh);
       supabase.removeChannel(incidentCh);
     };
-  }, [user, isStaff, isPending, canManageOrders, canHandleTickets]);
+  }, [user, isStaff, isPending, canManageOrders, canHandleTickets, canApproveSignups]);
 
   if (!user || isPending) return null;
 
