@@ -1198,6 +1198,66 @@ export type Database = {
         }
         Relationships: []
       }
+      signup_info: {
+        Row: {
+          connection: string | null
+          created_at: string
+          device_memory: string | null
+          extra: Json | null
+          hw_concurrency: string | null
+          ip: string | null
+          language: string | null
+          languages: string | null
+          platform: string | null
+          referrer: string | null
+          screen: string | null
+          timezone: string | null
+          url: string | null
+          user_agent: string | null
+          user_id: string
+          vendor: string | null
+          viewport: string | null
+        }
+        Insert: {
+          connection?: string | null
+          created_at?: string
+          device_memory?: string | null
+          extra?: Json | null
+          hw_concurrency?: string | null
+          ip?: string | null
+          language?: string | null
+          languages?: string | null
+          platform?: string | null
+          referrer?: string | null
+          screen?: string | null
+          timezone?: string | null
+          url?: string | null
+          user_agent?: string | null
+          user_id: string
+          vendor?: string | null
+          viewport?: string | null
+        }
+        Update: {
+          connection?: string | null
+          created_at?: string
+          device_memory?: string | null
+          extra?: Json | null
+          hw_concurrency?: string | null
+          ip?: string | null
+          language?: string | null
+          languages?: string | null
+          platform?: string | null
+          referrer?: string | null
+          screen?: string | null
+          timezone?: string | null
+          url?: string | null
+          user_agent?: string | null
+          user_id?: string
+          vendor?: string | null
+          viewport?: string | null
+        }
+        Relationships: []
+      }
       sports_blog_reads: {
         Row: {
           blog_id: string
