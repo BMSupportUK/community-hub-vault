@@ -9,7 +9,13 @@ import { supabase } from "@/integrations/supabase/client";
 export interface ChannelGroup {
   label: string;
   icon?: React.ComponentType<{ className?: string }>;
-  items: { id?: string; to: string; label: string; icon?: React.ComponentType<{ className?: string }>; badge?: number }[];
+  items: {
+    id?: string;
+    to: string;
+    label: string;
+    icon?: React.ComponentType<{ className?: string }>;
+    badge?: number;
+  }[];
   onAddItem?: () => void;
   onDeleteItem?: (to: string) => void;
   onDeleteGroup?: () => void;
@@ -38,7 +44,11 @@ export function ChannelColumn({
 }) {
   const path = useRouterState({ select: (r) => r.location.pathname });
   const { user } = useAuth();
-  const [profile, setProfile] = useState<{ display_name: string | null; username: string | null; avatar_url: string | null } | null>(null);
+  const [profile, setProfile] = useState<{
+    display_name: string | null;
+    username: string | null;
+    avatar_url: string | null;
+  } | null>(null);
   const [dragChan, setDragChan] = useState<{ id: string; group: string } | null>(null);
   const [overChan, setOverChan] = useState<string | null>(null);
 
@@ -54,7 +64,8 @@ export function ChannelColumn({
 
   const flatten = () => {
     const out: { id: string; group: string }[] = [];
-    for (const g of groups) for (const it of g.items) if (it.id) out.push({ id: it.id, group: g.label });
+    for (const g of groups)
+      for (const it of g.items) if (it.id) out.push({ id: it.id, group: g.label });
     return out;
   };
 
@@ -81,7 +92,10 @@ export function ChannelColumn({
     // append at end of target group
     let insertAt = flat.length;
     for (let i = flat.length - 1; i >= 0; i--) {
-      if (flat[i].group === targetGroup) { insertAt = i + 1; break; }
+      if (flat[i].group === targetGroup) {
+        insertAt = i + 1;
+        break;
+      }
       if (i === 0) insertAt = 0;
     }
     if (!flat.some((c) => c.group === targetGroup)) insertAt = flat.length;
@@ -104,7 +118,7 @@ export function ChannelColumn({
         )}
       </div>
       <div className="flex-1 overflow-y-auto scrollbar-thin px-2 py-3 space-y-4">
-        {groups.map((g) => (
+        {groups.map((g) =>
           (() => {
             const groupIdx = groups.findIndex((x) => x.label === g.label);
             const canMoveUp = !!onReorderGroups && groupIdx > 0;
@@ -118,176 +132,229 @@ export function ChannelColumn({
               onReorderGroups(labels);
             };
             return (
-          <div
-            key={g.label}
-            onDragOver={(e) => {
-              if (dragChan) {
-                e.preventDefault();
-              }
-            }}
-            onDrop={(e) => {
-              if (dragChan) { e.preventDefault(); dropChannelOnGroup(g.label); setDragChan(null); }
-            }}
-          >
-            <div className="group/cat px-2 pb-1">
-              <div className="text-[11px] font-bold uppercase tracking-wider text-foreground flex items-center gap-1">
-                <ChevronDown className="size-3" />
-                {g.icon ? <g.icon className="size-3" /> : null}
-                <span className="flex-1 truncate">{g.label}</span>
-              </div>
-              {(g.onAddItem || g.onEditGroupIcon || g.onRenameGroup || g.onEditGroupPerms || g.onDeleteGroup || onReorderGroups) && (
-                <div className="hidden group-hover/cat:flex items-center gap-1 pt-1 pl-5 text-muted-foreground">
-                {onReorderGroups && (
-                  <>
-                    <button
-                      onClick={() => moveGroup(-1)}
-                      disabled={!canMoveUp}
-                      title="Move category up"
-                      className="hover:text-foreground p-0.5 disabled:opacity-30 disabled:hover:text-muted-foreground"
-                    >
-                      <ChevronUp className="size-3.5" />
-                    </button>
-                    <button
-                      onClick={() => moveGroup(1)}
-                      disabled={!canMoveDown}
-                      title="Move category down"
-                      className="hover:text-foreground p-0.5 disabled:opacity-30 disabled:hover:text-muted-foreground"
-                    >
-                      <ChevronDown className="size-3.5" />
-                    </button>
-                  </>
-                )}
-                {g.onAddItem && (
-                  <button onClick={g.onAddItem} title="Add channel" className="hover:text-foreground p-0.5">
-                    <Plus className="size-3.5" />
-                  </button>
-                )}
-                {g.onRenameGroup && (
-                  <button onClick={g.onRenameGroup} title="Rename category" className="hover:text-foreground p-0.5">
-                    <Pencil className="size-3.5" />
-                  </button>
-                )}
-                {g.onEditGroupIcon && (
-                  <button onClick={g.onEditGroupIcon} title="Change category icon" className="hover:text-foreground p-0.5">
-                    <Smile className="size-3.5" />
-                  </button>
-                )}
-                {g.onEditGroupPerms && (
-                  <button onClick={g.onEditGroupPerms} title="Category permissions" className="hover:text-primary p-0.5">
-                    <Shield className="size-3.5" />
-                  </button>
-                )}
-                {g.onDeleteGroup && (
-                  <button onClick={g.onDeleteGroup} title="Delete category" className="hover:text-destructive p-0.5">
-                    <Trash2 className="size-3.5" />
-                  </button>
-                )}
-                </div>
-              )}
-            </div>
-            <div className="space-y-px">
-              {g.items.map((it) => {
-                const Icon = it.icon ?? Hash;
-                const active = path === it.to || path.startsWith(it.to + "/");
-                const canDrag = !!onReorderChannels && !!it.id;
-                return (
-                  <div
-                    key={it.to}
-                    className={cn(
-                      "group/ch relative",
-                      dragChan?.id === it.id && "opacity-40",
-                      overChan === it.to && dragChan && dragChan.id !== it.id && "border-t-2 border-primary",
-                    )}
-                    draggable={canDrag}
-                    onDragStart={(e) => {
-                      if (!canDrag) return;
-                      setDragChan({ id: it.id!, group: g.label });
-                      e.dataTransfer.effectAllowed = "move";
-                      e.dataTransfer.setData("text/plain", `chan:${it.id}`);
-                      e.stopPropagation();
-                    }}
-                    onDragEnd={() => { setDragChan(null); setOverChan(null); }}
-                    onDragOver={(e) => {
-                      if (!dragChan || dragChan.id === it.id) return;
-                      e.preventDefault();
-                      e.stopPropagation();
-                      setOverChan(it.to);
-                    }}
-                    onDragLeave={() => { if (overChan === it.to) setOverChan(null); }}
-                    onDrop={(e) => {
-                      if (!dragChan || dragChan.id === it.id || !it.id) return;
-                      e.preventDefault();
-                      e.stopPropagation();
-                      dropChannelOnItem(g.label, it.id);
-                      setDragChan(null); setOverChan(null);
-                    }}
-                  >
-                    <Link
-                      to={it.to}
-                      draggable={false}
-                      className={cn(
-                        "w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-sm font-medium transition-colors",
-                        active
-                          ? "bg-surface-2 text-white"
-                          : "text-foreground/90 hover:bg-surface-2/60 hover:text-white",
+              <div
+                key={g.label}
+                onDragOver={(e) => {
+                  if (dragChan) {
+                    e.preventDefault();
+                  }
+                }}
+                onDrop={(e) => {
+                  if (dragChan) {
+                    e.preventDefault();
+                    dropChannelOnGroup(g.label);
+                    setDragChan(null);
+                  }
+                }}
+              >
+                <div className="group/cat px-2 pb-1">
+                  <div className="text-[11px] font-bold uppercase tracking-wider text-foreground flex items-center gap-1">
+                    <ChevronDown className="size-3" />
+                    {g.icon ? <g.icon className="size-3" /> : null}
+                    <span className="flex-1 truncate">{g.label}</span>
+                  </div>
+                  {(g.onAddItem ||
+                    g.onEditGroupIcon ||
+                    g.onRenameGroup ||
+                    g.onEditGroupPerms ||
+                    g.onDeleteGroup ||
+                    onReorderGroups) && (
+                    <div className="hidden group-hover/cat:flex items-center gap-1 pt-1 pl-5 text-muted-foreground">
+                      {onReorderGroups && (
+                        <>
+                          <button
+                            onClick={() => moveGroup(-1)}
+                            disabled={!canMoveUp}
+                            title="Move category up"
+                            className="hover:text-foreground p-0.5 disabled:opacity-30 disabled:hover:text-muted-foreground"
+                          >
+                            <ChevronUp className="size-3.5" />
+                          </button>
+                          <button
+                            onClick={() => moveGroup(1)}
+                            disabled={!canMoveDown}
+                            title="Move category down"
+                            className="hover:text-foreground p-0.5 disabled:opacity-30 disabled:hover:text-muted-foreground"
+                          >
+                            <ChevronDown className="size-3.5" />
+                          </button>
+                        </>
                       )}
-                    >
-                      <Icon className="size-4 shrink-0" />
-                      <span className="truncate">{it.label}</span>
-                      {it.badge && it.badge > 0 ? (
-                        <span className="ml-auto min-w-5 h-5 px-1.5 rounded-full bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 text-white text-[10px] font-bold grid place-items-center shadow-glow">
-                          {it.badge > 99 ? "99+" : it.badge}
-                        </span>
-                      ) : null}
-                    </Link>
-                    {(g.onDeleteItem || g.onEditItemPerms || g.onEditItemIcon || g.onRenameItem) && (
-                      <div className="hidden group-hover/ch:flex items-center gap-1 pl-6 pr-2 pb-1 -mt-0.5 text-muted-foreground">
-                        {g.onRenameItem && (
-                          <button
-                            onClick={(e) => { e.preventDefault(); g.onRenameItem!(it.to); }}
-                            title="Rename channel"
-                            className="hover:text-foreground p-1"
-                          >
-                            <Pencil className="size-3.5" />
-                          </button>
+                      {g.onAddItem && (
+                        <button
+                          onClick={g.onAddItem}
+                          title="Add channel"
+                          className="hover:text-foreground p-0.5"
+                        >
+                          <Plus className="size-3.5" />
+                        </button>
+                      )}
+                      {g.onRenameGroup && (
+                        <button
+                          onClick={g.onRenameGroup}
+                          title="Rename category"
+                          className="hover:text-foreground p-0.5"
+                        >
+                          <Pencil className="size-3.5" />
+                        </button>
+                      )}
+                      {g.onEditGroupIcon && (
+                        <button
+                          onClick={g.onEditGroupIcon}
+                          title="Change category icon"
+                          className="hover:text-foreground p-0.5"
+                        >
+                          <Smile className="size-3.5" />
+                        </button>
+                      )}
+                      {g.onEditGroupPerms && (
+                        <button
+                          onClick={g.onEditGroupPerms}
+                          title="Category permissions"
+                          className="hover:text-primary p-0.5"
+                        >
+                          <Shield className="size-3.5" />
+                        </button>
+                      )}
+                      {g.onDeleteGroup && (
+                        <button
+                          onClick={g.onDeleteGroup}
+                          title="Delete category"
+                          className="hover:text-destructive p-0.5"
+                        >
+                          <Trash2 className="size-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+                <div className="space-y-px">
+                  {g.items.map((it) => {
+                    const Icon = it.icon ?? Hash;
+                    const active = path === it.to || path.startsWith(it.to + "/");
+                    const canDrag = !!onReorderChannels && !!it.id;
+                    return (
+                      <div
+                        key={it.to}
+                        className={cn(
+                          "group/ch relative",
+                          dragChan?.id === it.id && "opacity-40",
+                          overChan === it.to &&
+                            dragChan &&
+                            dragChan.id !== it.id &&
+                            "border-t-2 border-primary",
                         )}
-                        {g.onEditItemIcon && (
-                          <button
-                            onClick={(e) => { e.preventDefault(); g.onEditItemIcon!(it.to); }}
-                            title="Change channel icon"
-                            className="hover:text-foreground p-1"
-                          >
-                            <Smile className="size-3.5" />
-                          </button>
-                        )}
-                        {g.onEditItemPerms && (
-                          <button
-                            onClick={(e) => { e.preventDefault(); g.onEditItemPerms!(it.to); }}
-                            title="Channel permissions"
-                            className="hover:text-primary p-1"
-                          >
-                            <Shield className="size-3.5" />
-                          </button>
-                        )}
-                        {g.onDeleteItem && (
-                          <button
-                            onClick={(e) => { e.preventDefault(); g.onDeleteItem!(it.to); }}
-                            title="Delete channel"
-                            className="hover:text-destructive p-1"
-                          >
-                            <Trash2 className="size-3.5" />
-                          </button>
+                        draggable={canDrag}
+                        onDragStart={(e) => {
+                          if (!canDrag) return;
+                          setDragChan({ id: it.id!, group: g.label });
+                          e.dataTransfer.effectAllowed = "move";
+                          e.dataTransfer.setData("text/plain", `chan:${it.id}`);
+                          e.stopPropagation();
+                        }}
+                        onDragEnd={() => {
+                          setDragChan(null);
+                          setOverChan(null);
+                        }}
+                        onDragOver={(e) => {
+                          if (!dragChan || dragChan.id === it.id) return;
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setOverChan(it.to);
+                        }}
+                        onDragLeave={() => {
+                          if (overChan === it.to) setOverChan(null);
+                        }}
+                        onDrop={(e) => {
+                          if (!dragChan || dragChan.id === it.id || !it.id) return;
+                          e.preventDefault();
+                          e.stopPropagation();
+                          dropChannelOnItem(g.label, it.id);
+                          setDragChan(null);
+                          setOverChan(null);
+                        }}
+                      >
+                        <Link
+                          to={it.to}
+                          draggable={false}
+                          className={cn(
+                            "w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-sm font-medium transition-colors",
+                            active
+                              ? "bg-surface-2 text-white"
+                              : "text-foreground/90 hover:bg-surface-2/60 hover:text-white",
+                          )}
+                        >
+                          <Icon className="size-4 shrink-0" />
+                          <span className="truncate">{it.label}</span>
+                          {it.badge && it.badge > 0 ? (
+                            <span className="ml-auto min-w-5 h-5 px-1.5 rounded-full bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 text-white text-[10px] font-bold grid place-items-center shadow-glow">
+                              {it.badge > 99 ? "99+" : it.badge}
+                            </span>
+                          ) : null}
+                        </Link>
+                        {(g.onDeleteItem ||
+                          g.onEditItemPerms ||
+                          g.onEditItemIcon ||
+                          g.onRenameItem) && (
+                          <div className="hidden group-hover/ch:flex items-center gap-1 pl-6 pr-2 pb-1 -mt-0.5 text-muted-foreground">
+                            {g.onRenameItem && (
+                              <button
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  g.onRenameItem!(it.to);
+                                }}
+                                title="Rename channel"
+                                className="hover:text-foreground p-1"
+                              >
+                                <Pencil className="size-3.5" />
+                              </button>
+                            )}
+                            {g.onEditItemIcon && (
+                              <button
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  g.onEditItemIcon!(it.to);
+                                }}
+                                title="Change channel icon"
+                                className="hover:text-foreground p-1"
+                              >
+                                <Smile className="size-3.5" />
+                              </button>
+                            )}
+                            {g.onEditItemPerms && (
+                              <button
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  g.onEditItemPerms!(it.to);
+                                }}
+                                title="Channel permissions"
+                                className="hover:text-primary p-1"
+                              >
+                                <Shield className="size-3.5" />
+                              </button>
+                            )}
+                            {g.onDeleteItem && (
+                              <button
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  g.onDeleteItem!(it.to);
+                                }}
+                                title="Delete channel"
+                                className="hover:text-destructive p-1"
+                              >
+                                <Trash2 className="size-3.5" />
+                              </button>
+                            )}
+                          </div>
                         )}
                       </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+                    );
+                  })}
+                </div>
+              </div>
             );
-          })()
-        ))}
+          })(),
+        )}
         {footer}
       </div>
       {user && (

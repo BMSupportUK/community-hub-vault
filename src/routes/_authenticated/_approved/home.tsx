@@ -77,7 +77,11 @@ function HomeLayout() {
       .eq("key", "category_order")
       .maybeSingle();
     const value = (data?.value ?? {}) as { labels?: unknown };
-    setCategoryOrder(Array.isArray(value.labels) ? value.labels.filter((v): v is string => typeof v === "string") : []);
+    setCategoryOrder(
+      Array.isArray(value.labels)
+        ? value.labels.filter((v): v is string => typeof v === "string")
+        : [],
+    );
   };
 
   useEffect(() => {
@@ -297,7 +301,9 @@ function HomeLayout() {
       .update({ group_label: next })
       .in("id", ids);
     if (error) return toast.error(error.message);
-    await saveCategoryOrder(orderedLabelsFor().map((label) => (label === renameCategory ? next : label)));
+    await saveCategoryOrder(
+      orderedLabelsFor().map((label) => (label === renameCategory ? next : label)),
+    );
     if (categoryIcons[renameCategory]) {
       const merged = { ...categoryIcons, [next]: categoryIcons[renameCategory] };
       delete merged[renameCategory];
