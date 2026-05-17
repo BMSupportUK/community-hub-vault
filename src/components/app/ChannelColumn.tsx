@@ -289,15 +289,6 @@ export function ChannelColumn({
                         )}
                       </div>
                     )}
-                    {false && g.onDeleteItem && (
-                      <button
-                        onClick={(e) => { e.preventDefault(); g.onDeleteItem!(it.to); }}
-                        title="Delete channel"
-                        className="opacity-0 group-hover/ch:opacity-100 hover:text-destructive p-1"
-                      >
-                        <Trash2 className="size-3.5" />
-                      </button>
-                    )}
                   </div>
                 );
               })}
