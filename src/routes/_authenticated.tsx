@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { IconRail } from "@/components/app/IconRail";
 import { Clocks } from "@/components/app/Clocks";
 import { UserAvatarMenu } from "@/components/app/UserAvatarMenu";
+import { MyWorkingStatus } from "@/components/app/MyWorkingStatus";
 import { BreakEndingAlert } from "@/components/app/BreakEndingAlert";
 import { ShiftStartEndAlert } from "@/components/app/ShiftStartEndAlert";
 import { SubscriptionExpiry } from "@/components/app/SubscriptionExpiry";
@@ -115,6 +116,7 @@ function AuthLayout() {
             <span className="hidden sm:inline">Staff</span>
           </Link>
           <Clocks />
+          <MyWorkingStatus />
           <UserAvatarMenu />
           </div>
         </header>
