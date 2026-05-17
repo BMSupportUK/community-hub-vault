@@ -306,6 +306,14 @@ function TicketsPage() {
     if (search.id || creating) setTab("tickets");
   }, [search.id, creating]);
 
+  // Deep-link from /mfa-challenge: open the new-ticket form prefilled for a 2FA reset
+  useEffect(() => {
+    if (search.new2fa === 1 && !creating && !search.id) {
+      setCreating(true);
+      setTab("tickets");
+    }
+  }, [search.new2fa, creating, search.id]);
+
   return (
     <main className="flex-1 overflow-y-auto bg-gradient-to-br from-rose-950 via-fuchsia-950/60 to-slate-950 text-white">
       {/* Hero — image + gradient + welcome text, with rating blended in */}
