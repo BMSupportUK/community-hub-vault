@@ -267,6 +267,10 @@ function ModerationPage() {
             {apps.map((a) => {
               const expanded = expandedId === a.id;
               const name = a.profile?.display_name ?? a.profile?.username ?? "User";
+              const isAppeal = (a.reason ?? "").trim().toUpperCase().startsWith("[APPEAL]");
+              const displayReason = isAppeal
+                ? (a.reason ?? "").replace(/^\s*\[APPEAL\]\s*/i, "")
+                : a.reason;
               return (
                 <div key={a.id} className="rounded-xl bg-surface border border-border overflow-hidden">
                   <button
@@ -279,10 +283,17 @@ function ModerationPage() {
                       {name.slice(0, 1).toUpperCase()}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="font-medium truncate">{name}</div>
+                      <div className="font-medium truncate flex items-center gap-2">
+                        <span className="truncate">{name}</span>
+                        {isAppeal && (
+                          <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded-full font-semibold bg-fuchsia-500/15 text-fuchsia-400 shrink-0">
+                            Appeal
+                          </span>
+                        )}
+                      </div>
                       <div className="text-xs text-muted-foreground">Applied {new Date(a.created_at).toLocaleString()}</div>
-                      {a.reason && !expanded && (
-                        <div className="text-xs text-muted-foreground/80 mt-1 line-clamp-1 italic">"{a.reason}"</div>
+                      {displayReason && !expanded && (
+                        <div className="text-xs text-muted-foreground/80 mt-1 line-clamp-1 italic">"{displayReason}"</div>
                       )}
                     </div>
                     <span className={`text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full font-semibold ${
@@ -297,12 +308,17 @@ function ModerationPage() {
                       <div className="px-4 pt-3 flex justify-end">
                         <SignupInfoDialog userId={a.user_id} displayName={name} />
                       </div>
-                      {a.reason && (
+                      {isAppeal && (
+                        <div className="mx-4 mb-3 rounded-lg border border-fuchsia-500/30 bg-fuchsia-500/10 px-3 py-2 text-xs text-fuchsia-200">
+                          This user was previously rejected and has submitted an appeal. Review their reasoning below and reply in the chat.
+                        </div>
+                      )}
+                      {displayReason && (
                         <div className="p-4 border-b border-border">
                           <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground mb-2">
-                            <FileText className="size-3.5" /> Reason
+                            <FileText className="size-3.5" /> {isAppeal ? "Appeal reason" : "Reason"}
                           </div>
-                          <p className="text-sm whitespace-pre-wrap">{a.reason}</p>
+                          <p className="text-sm whitespace-pre-wrap">{displayReason}</p>
                         </div>
                       )}
                       <div className="p-4">
