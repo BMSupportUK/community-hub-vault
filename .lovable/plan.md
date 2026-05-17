@@ -1,81 +1,84 @@
-# Free Customer Verification System (revised)
-
-A no-cost verification layer on top of existing signup data (IP, VPN, geo, device). No paid services. Final approval stays manual for admin/management.
-
-## What gets checked
-
-1. **Email — disposable block** — reject/flag throwaway domains using the `disposable-email-domains` npm list (offline, free).
-2. **Email — MX record check** — DNS-over-HTTPS lookup to Cloudflare to confirm the domain can receive mail. No API key.
-3. **Cloudflare Turnstile** — free, unlimited CAPTCHA on the signup form. Uses `@marsidev/react-turnstile` + server-side siteverify.
-4. **Email code verification (NEW)** — 6-digit code sent to the customer's inbox as a branded HTML email. User enters the code to prove they own the inbox. Code expires in 15 minutes, max 5 attempts, regenerable.
-5. **Duplicate IP / device** — server-side query against `signup_info` to count other users sharing the same IP or device fingerprint. Surfaced to admins as a signal, not auto-block.
-
-(Removed: Google account linking.)
-
-## Database
-
-**`verification_checks`** (one row per user):
-- `email_mx_ok` (bool), `email_disposable` (bool)
-- `turnstile_ok` (bool)
-- `email_code_verified` (bool), `email_code_verified_at` (timestamp)
-- `duplicate_ip_count` (int), `duplicate_device_count` (int)
-- `overall_status`: `pending` | `verified` | `flagged` (default `pending`)
-- `verified_by` (uuid), `verified_at` (timestamp), `notes` (text)
-
-**`email_verification_codes`** (short-lived):
-- `user_id`, `code_hash` (sha256 of 6-digit code — never store plaintext)
-- `expires_at`, `attempts` (int, max 5), `consumed_at`
-
-**`email_templates`** (NEW — admin-editable):
-- `key` (text, unique — e.g. `verification_code`)
-- `subject` (text), `html_body` (text), `text_body` (text)
-- `updated_by`, `updated_at`
-- Seeded with a default `verification_code` template using `{{code}}`, `{{site_name}}`, `{{expires_in}}` placeholders.
-
-Add `device_fingerprint text` to `signup_info`.
-
-**RLS:**
-- User reads own `verification_checks` / `email_verification_codes`.
-- `email_templates`: admin/management read + write only.
-
-## Server functions (`src/lib/verification.functions.ts`)
-
-- `runEmailChecks({ email })` — disposable + MX checks.
-- `verifyTurnstile({ token })` — POSTs to Cloudflare siteverify.
-- `sendVerificationCode({ userId })` — generates 6-digit code, hashes it, stores it, renders the admin's `verification_code` template with placeholders substituted, enqueues via Lovable Emails (`send-transactional-email`).
-- `confirmVerificationCode({ code })` — verifies hash + expiry + attempts; sets `email_code_verified = true`.
-- `recomputeDuplicates({ userId })` — counts matching IPs/devices.
-- `getVerificationForUser({ userId })` — admin-only.
-- `setVerificationStatus({ userId, status, notes })` — admin/management only.
-- `getEmailTemplate({ key })` / `updateEmailTemplate({ key, subject, html_body, text_body })` — admin/management only.
-
-## Frontend
-
-- **`src/routes/signup.tsx`** — add Turnstile widget; on submit run `verifyTurnstile` + `runEmailChecks`, create `verification_checks` row, then trigger `sendVerificationCode`.
-- **`src/routes/_authenticated/gate.tsx`** — "Verification" card with status pills + a code input box ("Enter the 6-digit code we emailed you") + "Resend code" button.
-- **`src/components/app/SignupInfoDialog.tsx`** — admin view: checks summary, duplicate-IP/device lists, `Approve` / `Flag` / `Reject` buttons.
-- **`src/routes/_authenticated/_approved/admin-email-templates.tsx`** (NEW) — admin/management page in the Admin Dashboard:
-  - List of templates (currently just `verification_code`, room to grow).
-  - Editor with: subject input, HTML body (monospace textarea with syntax help), plain-text body, live preview pane that renders the HTML with sample values for `{{code}}`, `{{site_name}}`, `{{expires_in}}`.
-  - "Send test email to me" button.
-  - Save persists to `email_templates`.
-
-## Email delivery
-
-Uses Lovable Emails (already set up on this project) via `sendTransactionalEmail` with template name `verification-code`. The React Email template (`src/lib/email-templates/verification-code.tsx`) renders the HTML stored in `email_templates.html_body` after substituting `{{code}}`, `{{site_name}}`, `{{expires_in}}`. This way the admin's edits in the dashboard drive the actual email content while keeping Lovable Emails' queue/retry/suppression.
-
-## Secrets needed
-
-- `TURNSTILE_SECRET` (Cloudflare, free) — requested via `add_secret` before wiring code.
-- `VITE_TURNSTILE_SITE_KEY` (public, in code).
-
-## Out of scope
-
-- Phone/SMS OTP (paid)
-- ID document / selfie upload
-- Auto-approve clean signups (you chose manual review)
-- Social account linking (removed per your request)
+## Goal
+Add professional, optional **TOTP 2FA** (Google Authenticator/Authy/1Password etc.) to the platform, using Supabase Auth's native MFA. Add a recommendation banner, let users enable/remove it themselves, let admins/management reset another user's 2FA from the Members admin area, and give locked-out users a self-serve way to request a reset via the existing ticket system.
 
 ---
 
-Approve to proceed, or tell me what to change.
+## 1. Enable Supabase MFA (TOTP)
+
+Supabase Auth has native TOTP MFA — no new tables/edge functions for the core flow. We just turn it on and build the UI.
+
+- Configure auth so TOTP factors are allowed (`configure_auth` / project settings).
+- AAL (Authenticator Assurance Level) is enforced client-side: after `signInWithPassword`, check `supabase.auth.mfa.getAuthenticatorAssuranceLevel()`. If `nextLevel === 'aal2'` and `currentLevel === 'aal1'` → redirect to a `/mfa-challenge` page before allowing app access.
+
+## 2. New routes / UI
+
+**`/mfa-challenge`** (public, post-login)
+- Shown when user has a verified TOTP factor but session is only aal1.
+- 6-digit code input → `supabase.auth.mfa.challengeAndVerify({ factorId, code })`.
+- "Lost your device? Contact support" link → opens a new ticket prefilled in the "Account / 2FA reset" category (see §5).
+
+**Profile → Security tab** (new section in `profile.tsx`)
+- If no factor: "Enable two-factor authentication" button → `mfa.enroll({ factorType: 'totp' })` → show QR code (`data.totp.qr_code`) + secret + 6-digit verify input → `mfa.challengeAndVerify` to activate.
+- If active: show "2FA is on" with a **Remove 2FA** button (requires current TOTP code, then `mfa.unenroll({ factorId })`).
+- Show recovery guidance ("save your backup codes in your password manager — if you lose access, raise a ticket").
+
+**Recommendation banner**
+- Small dismissible bar at the top of `_approved.tsx` layout: *"We recommend turning on two-factor authentication to protect your account. [Enable now]"* — links to Profile → Security.
+- Hidden when user already has an active TOTP factor, or when dismissed (stored in `localStorage`).
+
+## 3. Admin reset (Members page)
+
+In `members.tsx`, for admins/management only, add a **"Reset 2FA"** action per member.
+
+- New server function `resetUserMfa({ userId })`:
+  - Middleware: `requireSupabaseAuth` + check caller has `admin` or `management` role.
+  - Uses `supabaseAdmin.auth.admin.mfa.deleteFactor` (or lists factors via `auth.admin.listFactors(userId)` and deletes each) to wipe TOTP factors for that user.
+  - Writes an audit row into a new `mfa_reset_log` table (`target_user_id`, `reset_by`, `reason`, `created_at`) with RLS so only admins/management can read.
+- UI: confirm dialog ("This will remove their 2FA. They'll be able to sign in with just their password and should re-enable it."), optional reason field, toast on success.
+
+## 4. Customer-facing self-remove
+
+Already covered by the "Remove 2FA" button in Profile → Security (§2). Requires the user to enter a valid current TOTP code, so a thief with just the password can't disable it.
+
+## 5. Self-serve reset via tickets
+
+Add a dedicated ticket category for lockouts so users without device access can request a reset.
+
+- Insert a `ticket_categories` row: `"Account & 2FA reset"` (sort_order pinned near top).
+- The `/mfa-challenge` page's "Lost your device?" link sends users to `/tickets?new=1&category=account-2fa-reset` with the category preselected and a template body ("I've lost access to my authenticator app and need 2FA reset on my account.").
+- Staff handle it in the existing tickets UI; once identity is verified, they hit "Reset 2FA" on the Members page (§3) and reply to close the ticket.
+- The `notify_ticket_raised` trigger already pings staff — no change needed.
+
+## 6. Database changes
+
+Single migration:
+
+```sql
+-- Audit log for admin 2FA resets
+create table public.mfa_reset_log (
+  id uuid primary key default gen_random_uuid(),
+  target_user_id uuid not null,
+  reset_by uuid not null,
+  reason text,
+  created_at timestamptz not null default now()
+);
+alter table public.mfa_reset_log enable row level security;
+create policy "admins read" on public.mfa_reset_log for select
+  using (public.has_any_role(auth.uid(), array['admin','management']::app_role[]));
+create policy "admins insert" on public.mfa_reset_log for insert
+  with check (public.has_any_role(auth.uid(), array['admin','management']::app_role[]));
+
+-- Seed the new ticket category (insert via data tool, not migration)
+```
+
+Plus a `supabase--insert` to add the "Account & 2FA reset" ticket category.
+
+## 7. Files touched
+
+- **New:** `src/routes/mfa-challenge.tsx`, `src/components/app/Mfa2FABanner.tsx`, `src/components/app/SecuritySection.tsx` (profile tab), `src/lib/mfa.functions.ts` (admin reset + audit insert).
+- **Edited:** `src/routes/login.tsx` (post-login AAL check + redirect), `src/routes/_authenticated/_approved.tsx` (mount banner), `src/routes/_authenticated/_approved/profile.tsx` (Security tab), `src/routes/_authenticated/_approved/members.tsx` (Reset 2FA action for admins), `src/routes/_authenticated/_approved/tickets.tsx` (read `?new=1&category=` query params to prefill).
+
+## Out of scope
+- SMS/email OTP as a factor (TOTP only — far more secure, no Twilio cost).
+- Backup recovery codes (Supabase doesn't generate them natively; users are guided to keep their TOTP secret safe, and tickets handle lockouts).
+- Forcing 2FA on staff (recommend only — can add later if you want a hard requirement for `admin`/`management`/`staff` roles).
