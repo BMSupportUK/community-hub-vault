@@ -8,6 +8,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import sportsBg from "@/assets/sports-bg.jpg";
 
 export const Route = createFileRoute("/_authenticated/_approved/sports-guides")({
   component: SportsGuidesRoute,
@@ -279,13 +280,17 @@ function SportsGuidesPage() {
   };
 
   return (
-    <div className="flex-1 overflow-y-auto bg-gradient-to-br from-[#1a0b2e] via-[#2d1b4e] to-[#1a0b2e]">
-      <header className="px-8 pt-8 pb-6 border-b border-purple-500/30 bg-purple-950/40 backdrop-blur">
+    <div
+      className="flex-1 overflow-y-auto relative bg-cover bg-center bg-fixed"
+      style={{ backgroundImage: `url(${sportsBg})` }}
+    >
+      <div className="absolute inset-0 bg-[#1a0b2e]/75 backdrop-blur-[2px] pointer-events-none" aria-hidden />
+      <header className="relative px-8 pt-8 pb-6 border-b border-purple-500/30 bg-purple-950/40 backdrop-blur">
         <h1 className="font-display text-3xl font-bold bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 bg-clip-text text-transparent">Sports Guide</h1>
         <p className="text-purple-200/80 mt-1">Explore guides and news from all major sports</p>
       </header>
 
-      <div className="px-8 py-6">
+      <div className="relative px-8 py-6">
         <Tabs value={tab} onValueChange={setTab} className="w-full">
           <TabsList className={`grid ${canManageCategories ? "grid-cols-3" : "grid-cols-2"} max-w-2xl bg-purple-950/60 border border-purple-500/30`}>
             <TabsTrigger value="welcome" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white">Welcome</TabsTrigger>
