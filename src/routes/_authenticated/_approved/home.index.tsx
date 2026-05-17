@@ -22,25 +22,25 @@ function WelcomePage() {
             <h1 className="font-display text-3xl md:text-5xl font-bold leading-tight">
               Welcome to BM Support
             </h1>
-            <p className="mt-4 text-sky-100/90 max-w-lg">
+            <p className="mt-4 text-white/95 max-w-lg">
               Hey {name} — your all-in-one server for BM Support. Stay connected with the
               community, manage your account and get help, all in one place.
             </p>
-            <p className="mt-3 text-sky-100/70 max-w-lg text-sm">
+            <p className="mt-3 text-white/85 max-w-lg text-sm">
               Access community channels, view schedules, get support and explore our
               services. Everything you need is just one click away.
             </p>
 
             <Link
               to="/tickets"
-              className="mt-6 inline-flex items-center gap-3 self-start rounded-xl border border-white/15 bg-white/10 backdrop-blur px-4 py-3 text-sm font-medium hover:bg-white/15 transition"
+              className="mt-6 inline-flex items-center gap-3 self-start rounded-xl border-2 border-white/40 bg-white/10 backdrop-blur px-4 py-3 text-sm font-medium text-white shadow-[0_0_24px_rgba(255,255,255,0.15)] hover:bg-white/20 hover:border-white/60 transition"
             >
               <span className="grid place-items-center size-9 rounded-lg bg-gradient-to-br from-violet-600 to-blue-600">
                 <Headphones className="size-4 text-white" />
               </span>
               <span>
-                <span className="block">Expert Support</span>
-                <span className="block text-[11px] text-sky-100/70">We're always here to help.</span>
+                <span className="block text-white">Expert Support</span>
+                <span className="block text-[11px] text-sky-50/90">We're always here to help.</span>
               </span>
               <span className="ml-2 size-2 rounded-full bg-emerald-400 shadow-[0_0_12px] shadow-emerald-400/60" />
             </Link>
@@ -97,14 +97,14 @@ function QuickCard({
     <Link
       to={to as never}
       params={params as never}
-      className="group rounded-xl border border-border bg-surface hover:bg-surface-2 transition-colors p-4 flex items-start gap-3"
+      className="group rounded-xl border-2 border-violet-500/40 bg-surface hover:bg-surface-2 hover:border-violet-400/70 hover:shadow-[0_0_20px_rgba(139,92,246,0.25)] transition-all p-4 flex items-start gap-3"
     >
       <span className="grid place-items-center size-10 rounded-lg bg-gradient-to-br from-violet-600 to-blue-600 text-white shrink-0">
         <Icon className="size-5" />
       </span>
       <span className="min-w-0">
-        <span className="block font-medium text-sm">{title}</span>
-        <span className="block text-xs text-muted-foreground mt-0.5">{desc}</span>
+        <span className="block font-semibold text-sm text-foreground">{title}</span>
+        <span className="block text-xs text-foreground/75 mt-0.5">{desc}</span>
       </span>
     </Link>
   );
