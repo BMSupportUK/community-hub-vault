@@ -12,6 +12,7 @@ import { MyWorkingStatus } from "@/components/app/MyWorkingStatus";
 import { BreakEndingAlert } from "@/components/app/BreakEndingAlert";
 import { ShiftStartEndAlert } from "@/components/app/ShiftStartEndAlert";
 import { SubscriptionExpiry } from "@/components/app/SubscriptionExpiry";
+import { ModerationPendingBadge } from "@/components/app/ModerationPendingBadge";
 import { logMyIp } from "@/lib/ip-log.functions";
 
 export const Route = createFileRoute("/_authenticated")({
@@ -82,6 +83,7 @@ function AuthLayout() {
               >
                 <Shield className="size-4" />
                 <span className="hidden sm:inline">Moderation</span>
+                <ModerationPendingBadge />
               </Link>
             )}
             {isAdmin && (
