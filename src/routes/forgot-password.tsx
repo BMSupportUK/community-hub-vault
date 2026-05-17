@@ -4,6 +4,8 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Field } from "./login";
 import resetIllustration from "@/assets/reset-password-illustration.png";
+import { TurnstileWidget } from "@/components/app/TurnstileWidget";
+import { verifyTurnstile } from "@/lib/turnstile.functions";
 
 export const Route = createFileRoute("/forgot-password")({
   component: ForgotPasswordPage,
@@ -13,11 +15,19 @@ function ForgotPasswordPage() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [busy, setBusy] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState("");
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) return;
+    if (!captchaToken) return toast.error("Please complete the captcha.");
     setBusy(true);
+    const verify = await verifyTurnstile({ data: { token: captchaToken } });
+    if (!verify.success) {
+      setBusy(false);
+      setCaptchaToken("");
+      return toast.error("Captcha verification failed. Please try again.");
+    }
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/reset-password`,
     });
@@ -62,6 +72,7 @@ function ForgotPasswordPage() {
             <p className="text-sm text-muted-foreground mb-6">Enter your email and we'll send you a reset link.</p>
             <form onSubmit={submit} className="space-y-3">
               <Field label="Email" type="email" value={email} onChange={setEmail} />
+              <TurnstileWidget onToken={setCaptchaToken} onExpire={() => setCaptchaToken("")} />
               <button disabled={busy} className="w-full h-11 rounded-lg bg-primary text-primary-foreground font-medium shadow-glow hover:opacity-90 disabled:opacity-50">
                 {busy ? "Sending…" : "Send reset link"}
               </button>
