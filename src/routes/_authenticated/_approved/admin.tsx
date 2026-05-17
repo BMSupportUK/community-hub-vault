@@ -422,6 +422,7 @@ function DashboardBody() {
 
   return (
     <div className="space-y-6">
+      <RecoveryCodes />
       <section>
         <h2 className="font-display text-sm uppercase tracking-wide text-muted-foreground mb-3">Live snapshot</h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
