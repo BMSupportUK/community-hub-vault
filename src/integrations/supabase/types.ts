@@ -1200,16 +1200,22 @@ export type Database = {
       }
       signup_info: {
         Row: {
+          city: string | null
           connection: string | null
+          country: string | null
           created_at: string
           device_memory: string | null
           extra: Json | null
           hw_concurrency: string | null
           ip: string | null
+          is_proxy: boolean | null
+          is_vpn: boolean | null
+          isp: string | null
           language: string | null
           languages: string | null
           platform: string | null
           referrer: string | null
+          region: string | null
           screen: string | null
           timezone: string | null
           url: string | null
@@ -1217,18 +1223,26 @@ export type Database = {
           user_id: string
           vendor: string | null
           viewport: string | null
+          vpn_provider: string | null
+          vpn_raw: Json | null
         }
         Insert: {
+          city?: string | null
           connection?: string | null
+          country?: string | null
           created_at?: string
           device_memory?: string | null
           extra?: Json | null
           hw_concurrency?: string | null
           ip?: string | null
+          is_proxy?: boolean | null
+          is_vpn?: boolean | null
+          isp?: string | null
           language?: string | null
           languages?: string | null
           platform?: string | null
           referrer?: string | null
+          region?: string | null
           screen?: string | null
           timezone?: string | null
           url?: string | null
@@ -1236,18 +1250,26 @@ export type Database = {
           user_id: string
           vendor?: string | null
           viewport?: string | null
+          vpn_provider?: string | null
+          vpn_raw?: Json | null
         }
         Update: {
+          city?: string | null
           connection?: string | null
+          country?: string | null
           created_at?: string
           device_memory?: string | null
           extra?: Json | null
           hw_concurrency?: string | null
           ip?: string | null
+          is_proxy?: boolean | null
+          is_vpn?: boolean | null
+          isp?: string | null
           language?: string | null
           languages?: string | null
           platform?: string | null
           referrer?: string | null
+          region?: string | null
           screen?: string | null
           timezone?: string | null
           url?: string | null
@@ -1255,6 +1277,8 @@ export type Database = {
           user_id?: string
           vendor?: string | null
           viewport?: string | null
+          vpn_provider?: string | null
+          vpn_raw?: Json | null
         }
         Relationships: []
       }
