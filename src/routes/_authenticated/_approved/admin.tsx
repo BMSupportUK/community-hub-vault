@@ -486,44 +486,46 @@ function DashboardBody() {
   return (
     <div className="space-y-6">
       <RecoveryCodes />
-      <section>
-        <h2 className="font-display text-sm uppercase tracking-wide text-muted-foreground mb-3">Live snapshot</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-          {tiles.map((t) => (
-            <div key={t.label} className="rounded-2xl border border-border bg-surface-1 p-4 hover:border-primary/50 hover:shadow-glow transition-all">
-              <div className="flex items-center justify-between mb-3">
-                <div className={`size-9 rounded-xl grid place-items-center ${t.accent === "amber" ? "bg-amber-500/15 text-amber-400" : "bg-primary/15 text-primary"}`}>
-                  <t.icon className="size-4" />
+      <div className="grid gap-6 lg:grid-cols-[1fr_300px]">
+        <section className="order-1">
+          <h2 className="font-display text-sm uppercase tracking-wide text-muted-foreground mb-3">Admin tools</h2>
+          <div className="grid sm:grid-cols-2 gap-3">
+            {tools.map((t) => (
+              <Link
+                key={t.to}
+                to={t.to}
+                className="group relative rounded-2xl border border-border bg-surface-1 p-4 hover:border-primary hover:shadow-glow transition-all overflow-hidden"
+              >
+                <div className="absolute inset-x-0 top-0 h-1 bg-gradient-accent opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="size-10 rounded-xl bg-gradient-primary grid place-items-center text-primary-foreground shadow-glow">
+                    <t.icon className="size-5" />
+                  </div>
+                  <div className="font-display font-bold">{t.label}</div>
                 </div>
-              </div>
-              <div className="font-display text-2xl font-bold">{t.value ?? "—"}</div>
-              <div className="text-xs text-muted-foreground mt-1">{t.label}</div>
-            </div>
-          ))}
-        </div>
-      </section>
+                <p className="text-xs text-muted-foreground">{t.desc}</p>
+              </Link>
+            ))}
+          </div>
+        </section>
 
-      <section>
-        <h2 className="font-display text-sm uppercase tracking-wide text-muted-foreground mb-3">Admin tools</h2>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {tools.map((t) => (
-            <Link
-              key={t.to}
-              to={t.to}
-              className="group relative rounded-2xl border border-border bg-surface-1 p-4 hover:border-primary hover:shadow-glow transition-all overflow-hidden"
-            >
-              <div className="absolute inset-x-0 top-0 h-1 bg-gradient-accent opacity-0 group-hover:opacity-100 transition-opacity" />
-              <div className="flex items-center gap-3 mb-2">
-                <div className="size-10 rounded-xl bg-gradient-primary grid place-items-center text-primary-foreground shadow-glow">
-                  <t.icon className="size-5" />
+        <aside className="order-2 lg:sticky lg:top-4 lg:self-start">
+          <div className="rounded-2xl border border-border bg-surface-1 p-4">
+            <h2 className="font-display text-sm uppercase tracking-wide text-muted-foreground mb-3">Live snapshot</h2>
+            <div className="grid grid-cols-2 gap-2">
+              {tiles.map((t) => (
+                <div key={t.label} className="rounded-xl border border-border bg-background p-3 hover:border-primary/50 transition-all">
+                  <div className={`size-8 rounded-lg grid place-items-center mb-2 ${t.accent === "amber" ? "bg-amber-500/15 text-amber-400" : "bg-primary/15 text-primary"}`}>
+                    <t.icon className="size-4" />
+                  </div>
+                  <div className="font-display text-xl font-bold leading-none">{t.value ?? "—"}</div>
+                  <div className="text-[11px] text-muted-foreground mt-1 leading-tight">{t.label}</div>
                 </div>
-                <div className="font-display font-bold">{t.label}</div>
-              </div>
-              <p className="text-xs text-muted-foreground">{t.desc}</p>
-            </Link>
-          ))}
-        </div>
-      </section>
+              ))}
+            </div>
+          </div>
+        </aside>
+      </div>
     </div>
   );
 }
