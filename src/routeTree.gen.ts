@@ -43,6 +43,7 @@ import { Route as AuthenticatedApprovedAdminDnsRouteImport } from './routes/_aut
 import { Route as AuthenticatedApprovedAdminCredentialsRouteImport } from './routes/_authenticated/_approved/admin-credentials'
 import { Route as AuthenticatedApprovedAdminRouteImport } from './routes/_authenticated/_approved/admin'
 import { Route as AuthenticatedApprovedHomeIndexRouteImport } from './routes/_authenticated/_approved/home.index'
+import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 import { Route as ApiPublicHooksBackupOrdersRouteImport } from './routes/api/public/hooks/backup-orders'
 import { Route as ApiPublicHooksBackupCredentialsRouteImport } from './routes/api/public/hooks/backup-credentials'
 import { Route as AuthenticatedApprovedUUsernameRouteImport } from './routes/_authenticated/_approved/u.$username'
@@ -244,6 +245,12 @@ const AuthenticatedApprovedHomeIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedApprovedHomeRoute,
   } as any)
+const LovableEmailQueueProcessRoute =
+  LovableEmailQueueProcessRouteImport.update({
+    id: '/lovable/email/queue/process',
+    path: '/lovable/email/queue/process',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksBackupOrdersRoute =
   ApiPublicHooksBackupOrdersRouteImport.update({
     id: '/api/public/hooks/backup-orders',
@@ -324,6 +331,7 @@ export interface FileRoutesByFullPath {
   '/u/$username': typeof AuthenticatedApprovedUUsernameRoute
   '/api/public/hooks/backup-credentials': typeof ApiPublicHooksBackupCredentialsRoute
   '/api/public/hooks/backup-orders': typeof ApiPublicHooksBackupOrdersRoute
+  '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/home/': typeof AuthenticatedApprovedHomeIndexRoute
   '/sports-guides/$id/edit': typeof AuthenticatedApprovedSportsGuidesIdEditRoute
   '/sports-guides/read/$id': typeof AuthenticatedApprovedSportsGuidesReadIdRoute
@@ -364,6 +372,7 @@ export interface FileRoutesByTo {
   '/u/$username': typeof AuthenticatedApprovedUUsernameRoute
   '/api/public/hooks/backup-credentials': typeof ApiPublicHooksBackupCredentialsRoute
   '/api/public/hooks/backup-orders': typeof ApiPublicHooksBackupOrdersRoute
+  '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/home': typeof AuthenticatedApprovedHomeIndexRoute
   '/sports-guides/$id/edit': typeof AuthenticatedApprovedSportsGuidesIdEditRoute
   '/sports-guides/read/$id': typeof AuthenticatedApprovedSportsGuidesReadIdRoute
@@ -408,6 +417,7 @@ export interface FileRoutesById {
   '/_authenticated/_approved/u/$username': typeof AuthenticatedApprovedUUsernameRoute
   '/api/public/hooks/backup-credentials': typeof ApiPublicHooksBackupCredentialsRoute
   '/api/public/hooks/backup-orders': typeof ApiPublicHooksBackupOrdersRoute
+  '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/_authenticated/_approved/home/': typeof AuthenticatedApprovedHomeIndexRoute
   '/_authenticated/_approved/sports-guides/$id/edit': typeof AuthenticatedApprovedSportsGuidesIdEditRoute
   '/_authenticated/_approved/sports-guides/read/$id': typeof AuthenticatedApprovedSportsGuidesReadIdRoute
@@ -451,6 +461,7 @@ export interface FileRouteTypes {
     | '/u/$username'
     | '/api/public/hooks/backup-credentials'
     | '/api/public/hooks/backup-orders'
+    | '/lovable/email/queue/process'
     | '/home/'
     | '/sports-guides/$id/edit'
     | '/sports-guides/read/$id'
@@ -491,6 +502,7 @@ export interface FileRouteTypes {
     | '/u/$username'
     | '/api/public/hooks/backup-credentials'
     | '/api/public/hooks/backup-orders'
+    | '/lovable/email/queue/process'
     | '/home'
     | '/sports-guides/$id/edit'
     | '/sports-guides/read/$id'
@@ -534,6 +546,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/u/$username'
     | '/api/public/hooks/backup-credentials'
     | '/api/public/hooks/backup-orders'
+    | '/lovable/email/queue/process'
     | '/_authenticated/_approved/home/'
     | '/_authenticated/_approved/sports-guides/$id/edit'
     | '/_authenticated/_approved/sports-guides/read/$id'
@@ -548,6 +561,7 @@ export interface RootRouteChildren {
   SignupRoute: typeof SignupRoute
   ApiPublicHooksBackupCredentialsRoute: typeof ApiPublicHooksBackupCredentialsRoute
   ApiPublicHooksBackupOrdersRoute: typeof ApiPublicHooksBackupOrdersRoute
+  LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -790,6 +804,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedApprovedHomeIndexRouteImport
       parentRoute: typeof AuthenticatedApprovedHomeRoute
     }
+    '/lovable/email/queue/process': {
+      id: '/lovable/email/queue/process'
+      path: '/lovable/email/queue/process'
+      fullPath: '/lovable/email/queue/process'
+      preLoaderRoute: typeof LovableEmailQueueProcessRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/backup-orders': {
       id: '/api/public/hooks/backup-orders'
       path: '/api/public/hooks/backup-orders'
@@ -974,6 +995,7 @@ const rootRouteChildren: RootRouteChildren = {
   SignupRoute: SignupRoute,
   ApiPublicHooksBackupCredentialsRoute: ApiPublicHooksBackupCredentialsRoute,
   ApiPublicHooksBackupOrdersRoute: ApiPublicHooksBackupOrdersRoute,
+  LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
