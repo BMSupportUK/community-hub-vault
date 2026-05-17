@@ -1447,6 +1447,13 @@ function Checkout({ items, total, onClose, onPlace, onRemoveItem, onContinueShop
             </div>
           </div>
         </div>
+        <div className="px-5 pb-2">
+          <div className="text-[11px] uppercase tracking-wider text-muted-foreground mb-1">Verification</div>
+          <TurnstileWidget
+            onToken={setCaptchaToken}
+            onExpire={() => setCaptchaToken("")}
+          />
+        </div>
         {(requiresMulti || requiresTriple) && (
           <div className="px-5 pb-2 space-y-2">
             {requiresMulti && (
