@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import profileHeader from "@/assets/profile-header.jpg";
 import tvLoginIllustration from "@/assets/tv-login-illustration.jpg";
+import referralsBg from "@/assets/referrals-bg.jpg";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { listTimeZones } from "@/hooks/use-user-timezone";
@@ -860,103 +861,150 @@ function ReferralsPanel({
   onDelete: (id: string) => void;
 }) {
   return (
-    <section className="rounded-2xl border border-white/25 bg-white/10 backdrop-blur-xl p-5 text-white shadow-[0_10px_40px_-15px_rgba(0,0,0,0.4)]">
-      <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
-        <h2 className="flex items-center gap-2 font-display text-lg font-bold">
-          <Trophy className="size-4 text-amber-200" /> Referrals
-        </h2>
-        {isOwner && (
-          <button
-            onClick={onCreate}
-            disabled={creating}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white text-rose-600 font-medium text-sm hover:bg-white/90 transition-colors disabled:opacity-60"
-          >
-            <Plus className="size-4" /> {creating ? "Creating…" : "New invite"}
-          </button>
-        )}
-      </div>
+    <section className="relative overflow-hidden rounded-3xl border border-white/20 shadow-[0_20px_70px_-20px_rgba(0,0,0,0.55)] text-white">
+      <img
+        src={referralsBg}
+        alt=""
+        aria-hidden
+        loading="lazy"
+        width={1920}
+        height={1080}
+        className="absolute inset-0 h-full w-full object-cover"
+      />
+      <div className="absolute inset-0 bg-gradient-to-br from-rose-950/70 via-fuchsia-900/55 to-amber-900/60" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(255,200,150,0.25),transparent_60%)]" />
 
-      {referrals.length === 0 ? (
-        <p className="text-sm text-white/70">
-          {isOwner
-            ? "You haven't created any invites yet. Generate one to invite a friend."
-            : "No referrals yet."}
-        </p>
-      ) : (
-        <ul className="divide-y divide-white/15">
-          {referrals.map((r) => {
-            const used = !!r.used_by;
-            return (
-              <li key={r.id} className="py-3 flex flex-wrap items-center gap-3">
-                <div className="font-mono text-sm font-bold tracking-widest text-amber-100 shrink-0">
-                  {r.code}
-                </div>
-                <span
+      <div className="relative p-6 sm:p-8">
+        <div className="flex items-end justify-between gap-4 flex-wrap mb-6">
+          <div>
+            <h2 className="flex items-center gap-2 font-display text-2xl sm:text-3xl font-bold drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)]">
+              <Trophy className="size-6 text-amber-200" /> Referrals
+            </h2>
+            <p className="text-sm text-white/80 mt-1 max-w-md drop-shadow">
+              Bring a friend into the community. Every invite is a hug waiting to happen.
+            </p>
+          </div>
+          {isOwner && (
+            <button
+              onClick={onCreate}
+              disabled={creating}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white text-rose-600 font-semibold text-sm hover:bg-amber-50 transition-colors disabled:opacity-60 shadow-lg shadow-rose-950/40"
+            >
+              <Plus className="size-4" /> {creating ? "Creating…" : "New invite"}
+            </button>
+          )}
+        </div>
+
+        {referrals.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-white/40 bg-white/10 backdrop-blur-md p-10 text-center">
+            <UserPlus className="size-10 mx-auto mb-3 text-amber-200" />
+            <p className="text-white/90">
+              {isOwner
+                ? "You haven't created any invites yet. Generate one to invite a friend."
+                : "No referrals yet."}
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+            {referrals.map((r) => {
+              const used = !!r.used_by;
+              return (
+                <div
+                  key={r.id}
                   className={cn(
-                    "text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full border",
+                    "relative rounded-2xl border backdrop-blur-xl p-5 flex flex-col gap-3 transition-all",
                     used
-                      ? "bg-emerald-500/15 text-emerald-200 border-emerald-500/30"
-                      : "bg-white/10 text-white/80 border-white/30",
+                      ? "bg-white/15 border-emerald-300/40 hover:bg-white/20"
+                      : "bg-white/10 border-white/30 hover:bg-white/15",
                   )}
                 >
-                  {used ? "Joined" : "Active"}
-                </span>
-                <div className="flex-1 min-w-[140px] text-sm">
-                  {used ? (
-                    r.joined_username ? (
-                      <Link
-                        to="/u/$username"
-                        params={{ username: r.joined_username }}
-                        className="text-white hover:text-amber-200 hover:underline truncate"
-                      >
-                        {r.joined_name ?? r.joined_username}
-                      </Link>
-                    ) : (
-                      <span className="text-white/80">{r.joined_name ?? "Member"}</span>
-                    )
-                  ) : (
-                    <span className="text-white/60 italic">Awaiting signup</span>
-                  )}
-                </div>
-                {used && (
-                  <span
-                    className={cn(
-                      "inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-md border",
-                      r.referral_bonus_paid
-                        ? "bg-emerald-500/15 text-emerald-200 border-emerald-500/30"
-                        : "bg-rose-500/15 text-rose-200 border-rose-500/30",
-                    )}
-                    title="Referral bonus"
-                  >
-                    <Gift className="size-3" />
-                    {r.referral_bonus_paid ? <Check className="size-3" /> : <XIcon className="size-3" />}
-                  </span>
-                )}
-                {isOwner && (
-                  <div className="flex items-center gap-1 ml-auto">
-                    <button
-                      onClick={() => onCopy(r.code)}
-                      className="flex items-center gap-1 px-2 py-1 rounded-md bg-white/10 hover:bg-white/20 text-xs"
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <div className="text-[10px] uppercase tracking-[0.2em] text-white/60 mb-1">Code</div>
+                      <div className="font-mono text-xl font-bold tracking-widest text-amber-100 drop-shadow">
+                        {r.code}
+                      </div>
+                    </div>
+                    <span
+                      className={cn(
+                        "text-[10px] uppercase tracking-wider px-2 py-1 rounded-full border font-medium shrink-0",
+                        used
+                          ? "bg-emerald-500/25 text-emerald-100 border-emerald-300/40"
+                          : "bg-white/15 text-white border-white/40",
+                      )}
                     >
-                      {copiedCode === r.code ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
-                      {copiedCode === r.code ? "Copied" : "Copy link"}
-                    </button>
-                    {!used && (
-                      <button
-                        onClick={() => onDelete(r.id)}
-                        className="p-1.5 rounded-md text-white/70 hover:bg-white/10 hover:text-rose-200"
-                        title="Delete invite"
-                      >
-                        <Trash2 className="size-3.5" />
-                      </button>
+                      {used ? "Joined" : "Active"}
+                    </span>
+                  </div>
+
+                  <div className="text-sm min-h-[1.5rem]">
+                    {used ? (
+                      <div className="flex items-center gap-2">
+                        <UserPlus className="size-4 text-emerald-200 shrink-0" />
+                        {r.joined_username ? (
+                          <Link
+                            to="/u/$username"
+                            params={{ username: r.joined_username }}
+                            className="text-white hover:text-amber-200 hover:underline truncate font-medium"
+                          >
+                            {r.joined_name ?? r.joined_username}
+                          </Link>
+                        ) : (
+                          <span className="text-white/90">{r.joined_name ?? "Member"}</span>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-white/60 italic">Awaiting signup…</span>
                     )}
                   </div>
-                )}
-              </li>
-            );
-          })}
-        </ul>
-      )}
+
+                  {used && (
+                    <div
+                      className={cn(
+                        "inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-md border self-start",
+                        r.referral_bonus_paid
+                          ? "bg-emerald-500/20 text-emerald-100 border-emerald-300/40"
+                          : "bg-rose-500/20 text-rose-100 border-rose-300/40",
+                      )}
+                      title="Referral bonus"
+                    >
+                      <Gift className="size-3.5" />
+                      {r.referral_bonus_paid ? "Bonus paid" : "Bonus pending"}
+                      {r.referral_bonus_paid ? <Check className="size-3" /> : <XIcon className="size-3" />}
+                    </div>
+                  )}
+
+                  {isOwner && (
+                    <div className="flex items-center gap-2 mt-auto pt-2 border-t border-white/15">
+                      <button
+                        onClick={() => onCopy(r.code)}
+                        className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/15 hover:bg-white/25 text-sm font-medium transition-colors"
+                      >
+                        {copiedCode === r.code ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
+                        {copiedCode === r.code ? "Copied" : "Copy link"}
+                      </button>
+                      {!used && (
+                        <button
+                          onClick={() => onDelete(r.id)}
+                          className="p-2 rounded-lg text-white/70 hover:bg-rose-500/30 hover:text-white transition-colors"
+                          title="Delete invite"
+                        >
+                          <Trash2 className="size-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="text-[10px] text-white/50">
+                    Created {new Date(r.created_at).toLocaleDateString()}
+                    {used && r.used_at && ` · Joined ${new Date(r.used_at).toLocaleDateString()}`}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
     </section>
   );
 }
