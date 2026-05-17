@@ -897,6 +897,30 @@ export type Database = {
           },
         ]
       }
+      mfa_reset_log: {
+        Row: {
+          created_at: string
+          id: string
+          reason: string | null
+          reset_by: string
+          target_user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          reason?: string | null
+          reset_by: string
+          target_user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          reason?: string | null
+          reset_by?: string
+          target_user_id?: string
+        }
+        Relationships: []
+      }
       nav_order: {
         Row: {
           key: string

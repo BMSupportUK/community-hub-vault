@@ -19,6 +19,7 @@ export const Route = createFileRoute("/_authenticated/_approved/tickets")({
   validateSearch: (s: Record<string, unknown>) => ({
     id: typeof s.id === "string" ? s.id : undefined,
     view: (s.view === "mine" || s.view === "all" || s.view === "assigned") ? s.view : undefined,
+    new2fa: s.new2fa === 1 || s.new2fa === "1" ? 1 : undefined,
   }),
   component: TicketsPage,
 });
@@ -305,6 +306,14 @@ function TicketsPage() {
     if (search.id || creating) setTab("tickets");
   }, [search.id, creating]);
 
+  // Deep-link from /mfa-challenge: open the new-ticket form prefilled for a 2FA reset
+  useEffect(() => {
+    if (search.new2fa === 1 && !creating && !search.id) {
+      setCreating(true);
+      setTab("tickets");
+    }
+  }, [search.new2fa, creating, search.id]);
+
   return (
     <main className="flex-1 overflow-y-auto bg-gradient-to-br from-rose-950 via-fuchsia-950/60 to-slate-950 text-white">
       {/* Hero — image + gradient + welcome text, with rating blended in */}
@@ -481,6 +490,7 @@ function TicketsPage() {
                       categories={categories}
                       onCancel={() => setCreating(false)}
                       onCreated={(id) => { setCreating(false); navigate({ to: "/tickets", search: { id, view } }); }}
+                      preset={search.new2fa === 1 ? "2fa-reset" : undefined}
                     />
                   ) : selected ? (
                     <TicketDetail
@@ -517,13 +527,20 @@ function TicketsPage() {
 }
 
 function NewTicketForm({
-  categories, onCancel, onCreated,
-}: { categories: Category[]; onCancel: () => void; onCreated: (id: string) => void }) {
+  categories, onCancel, onCreated, preset,
+}: { categories: Category[]; onCancel: () => void; onCreated: (id: string) => void; preset?: "2fa-reset" }) {
   const { user } = useAuth();
-  const [subject, setSubject] = useState("");
-  const [categoryId, setCategoryId] = useState(categories[0]?.id ?? "");
-  const [priority, setPriority] = useState<Priority>("normal");
-  const [message, setMessage] = useState("");
+  const resetCat = categories.find((c) => c.slug === "account-2fa-reset");
+  const [subject, setSubject] = useState(preset === "2fa-reset" ? "2FA reset request" : "");
+  const [categoryId, setCategoryId] = useState(
+    preset === "2fa-reset" && resetCat ? resetCat.id : categories[0]?.id ?? ""
+  );
+  const [priority, setPriority] = useState<Priority>(preset === "2fa-reset" ? "high" : "normal");
+  const [message, setMessage] = useState(
+    preset === "2fa-reset"
+      ? "I've lost access to my authenticator app and need 2FA reset on my account.\n\nPlease verify my identity and reset 2FA so I can sign in again."
+      : ""
+  );
   const [submitting, setSubmitting] = useState(false);
   const [files, setFiles] = useState<File[]>([]);
   const [uploadProgress, setUploadProgress] = useState<UploadProgress | null>(null);

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { UserCircle2, Pencil, Copy, LogOut, Settings, AtSign, Check, Shield } from "lucide-react";
+import { UserCircle2, Pencil, Copy, LogOut, Settings, AtSign, Check, Shield, ShieldCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import {
@@ -135,6 +135,12 @@ export function UserAvatarMenu() {
           <DropdownMenuItem onSelect={(e) => { e.preventDefault(); copyHandle(); }} className="cursor-pointer">
             {copied ? <Check className="size-4 mr-2 text-emerald-500" /> : <Copy className="size-4 mr-2" />}
             Copy username
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild className="cursor-pointer">
+            <Link to="/account-security">
+              <ShieldCheck className="size-4 mr-2" />
+              Security & 2FA
+            </Link>
           </DropdownMenuItem>
           {isAdmin ? (
             <DropdownMenuItem asChild className="cursor-pointer">

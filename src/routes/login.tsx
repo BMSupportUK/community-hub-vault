@@ -22,8 +22,14 @@ function LoginPage() {
     e.preventDefault();
     setBusy(true);
     const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) { setBusy(false); return toast.error(error.message); }
+    // If the account has a verified 2FA factor, require it before proceeding.
+    const aal = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
     setBusy(false);
-    if (error) return toast.error(error.message);
+    if (aal.data?.nextLevel === "aal2" && aal.data?.currentLevel !== "aal2") {
+      navigate({ to: "/mfa-challenge" });
+      return;
+    }
     toast.success("Welcome back");
     navigate({ to: "/home" });
   };
