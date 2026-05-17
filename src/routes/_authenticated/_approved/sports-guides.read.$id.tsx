@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { ArrowLeft } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { sanitizeRichHtml } from "@/lib/sanitize-html";
 import { useAuth } from "@/hooks/use-auth";
@@ -26,6 +27,7 @@ function ReadPage() {
   const { id } = Route.useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [blog, setBlog] = useState<Blog | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -51,9 +53,10 @@ function ReadPage() {
             { user_id: user.id, blog_id: id, read_at: new Date().toISOString() },
             { onConflict: "user_id,blog_id" }
           );
+        queryClient.invalidateQueries({ queryKey: ["sports-guides-data", user.id] });
       }
     })();
-  }, [id, user?.id, navigate]);
+  }, [id, user?.id, navigate, queryClient]);
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden bg-gradient-to-br from-[#1a0b2e] via-[#2d1b4e] to-[#1a0b2e]">
