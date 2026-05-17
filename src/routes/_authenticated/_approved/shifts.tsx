@@ -420,7 +420,7 @@ function ShiftsPage() {
         </p>
       </header>
 
-      <div className="px-8 py-6">
+      <div className="relative px-8 py-6">
         <Tabs value={tab} onValueChange={setTab} className="w-full">
           <TabsList className="flex flex-wrap gap-1 bg-surface-2 border border-border h-auto p-1">
             {[
