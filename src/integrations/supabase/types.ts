@@ -679,6 +679,27 @@ export type Database = {
         }
         Relationships: []
       }
+      home_quick_link_order: {
+        Row: {
+          key: string
+          sort_order: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          key: string
+          sort_order?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          key?: string
+          sort_order?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       install_blogs: {
         Row: {
           badge: string | null

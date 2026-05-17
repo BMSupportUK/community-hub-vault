@@ -1,16 +1,18 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { Headphones, MessageSquare, Activity, Ticket, ShoppingBag, BookOpen, UserPlus } from "lucide-react";
+import { Headphones, MessageSquare, Activity, Ticket, ShoppingBag, BookOpen, UserPlus, ArrowUp, ArrowDown } from "lucide-react";
 import heroImg from "@/assets/welcome-hero.jpg";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useEffect, useState } from "react";
 
 export const Route = createFileRoute("/_authenticated/_approved/home/")({
   component: WelcomePage,
 });
 
 function WelcomePage() {
-  const { user } = useAuth();
+  const { user, hasRole } = useAuth();
+  const canManage = hasRole("admin") || hasRole("management");
   const name = (user?.email ?? "there").split("@")[0];
   const navigate = useNavigate();
 
@@ -26,6 +28,69 @@ function WelcomePage() {
       return;
     }
     navigate({ to: "/u/$username", params: { username: data.username }, search: { tab: "referrals" } });
+  };
+
+  type CardDef = {
+    key: string;
+    icon: React.ComponentType<{ className?: string }>;
+    title: string;
+    desc: string;
+    to?: string;
+    params?: Record<string, string>;
+    onClick?: () => void;
+  };
+
+  const CARDS: Record<string, CardDef> = {
+    community: { key: "community", icon: MessageSquare, title: "Community channels", desc: "Chat with members and staff in real time.", to: "/home/$channel", params: { channel: "welcome" } },
+    tickets: { key: "tickets", icon: Ticket, title: "Support tickets", desc: "Open or follow your support requests.", to: "/tickets" },
+    status: { key: "status", icon: Activity, title: "System status", desc: "Live infrastructure and incident updates.", to: "/status" },
+    shop: { key: "shop", icon: ShoppingBag, title: "Shop", desc: "Browse plans, add-ons and gear.", to: "/shop" },
+    "install-guides": { key: "install-guides", icon: BookOpen, title: "Install guides", desc: "Step-by-step setup walkthroughs.", to: "/install-guides" },
+    invite: { key: "invite", icon: UserPlus, title: "Create an invite", desc: "Invite a friend and earn a referral bonus.", onClick: goToInvite },
+  };
+
+  const [order, setOrder] = useState<string[]>(Object.keys(CARDS));
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("home_quick_link_order")
+        .select("key, sort_order")
+        .order("sort_order", { ascending: true });
+      if (cancelled) return;
+      const known = Object.keys(CARDS);
+      const fromDb = (data ?? []).map((r) => r.key).filter((k) => known.includes(k));
+      const missing = known.filter((k) => !fromDb.includes(k));
+      setOrder([...fromDb, ...missing]);
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const persistOrder = async (next: string[]) => {
+    setSaving(true);
+    const rows = next.map((key, i) => ({ key, sort_order: (i + 1) * 10, updated_by: user?.id ?? null, updated_at: new Date().toISOString() }));
+    const { error } = await supabase.from("home_quick_link_order").upsert(rows, { onConflict: "key" });
+    setSaving(false);
+    if (error) {
+      toast.error("Couldn't save order");
+    } else {
+      toast.success("Order saved");
+    }
+  };
+
+  const move = (key: string, dir: -1 | 1) => {
+    setOrder((prev) => {
+      const idx = prev.indexOf(key);
+      const target = idx + dir;
+      if (idx < 0 || target < 0 || target >= prev.length) return prev;
+      const next = [...prev];
+      [next[idx], next[target]] = [next[target], next[idx]];
+      void persistOrder(next);
+      return next;
+    });
   };
 
   return (
@@ -85,12 +150,42 @@ function WelcomePage() {
           </Link>
         </div>
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          <QuickCard to="/home/$channel" params={{ channel: "welcome" }} icon={MessageSquare} title="Community channels" desc="Chat with members and staff in real time." />
-          <QuickCard to="/tickets" icon={Ticket} title="Support tickets" desc="Open or follow your support requests." />
-          <QuickCard to="/status" icon={Activity} title="System status" desc="Live infrastructure and incident updates." />
-          <QuickCard to="/shop" icon={ShoppingBag} title="Shop" desc="Browse plans, add-ons and gear." />
-          <QuickCard to="/install-guides" icon={BookOpen} title="Install guides" desc="Step-by-step setup walkthroughs." />
-          <QuickAction onClick={goToInvite} icon={UserPlus} title="Create an invite" desc="Invite a friend and earn a referral bonus." />
+          {order.map((key, idx) => {
+            const c = CARDS[key];
+            if (!c) return null;
+            const controls = canManage ? (
+              <div className="absolute top-1.5 right-1.5 flex flex-col gap-1 z-10">
+                <button
+                  type="button"
+                  aria-label="Move up"
+                  disabled={idx === 0 || saving}
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); move(key, -1); }}
+                  className="size-6 grid place-items-center rounded-md bg-background/80 border border-violet-500/40 text-foreground/80 hover:bg-violet-500/20 disabled:opacity-30"
+                >
+                  <ArrowUp className="size-3.5" />
+                </button>
+                <button
+                  type="button"
+                  aria-label="Move down"
+                  disabled={idx === order.length - 1 || saving}
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); move(key, 1); }}
+                  className="size-6 grid place-items-center rounded-md bg-background/80 border border-violet-500/40 text-foreground/80 hover:bg-violet-500/20 disabled:opacity-30"
+                >
+                  <ArrowDown className="size-3.5" />
+                </button>
+              </div>
+            ) : null;
+            return (
+              <div key={key} className="relative">
+                {controls}
+                {c.to ? (
+                  <QuickCard to={c.to} params={c.params} icon={c.icon} title={c.title} desc={c.desc} />
+                ) : (
+                  <QuickAction onClick={c.onClick!} icon={c.icon} title={c.title} desc={c.desc} />
+                )}
+              </div>
+            );
+          })}
         </div>
       </section>
     </main>
