@@ -1,84 +1,48 @@
-## Goal
-Add professional, optional **TOTP 2FA** (Google Authenticator/Authy/1Password etc.) to the platform, using Supabase Auth's native MFA. Add a recommendation banner, let users enable/remove it themselves, let admins/management reset another user's 2FA from the Members admin area, and give locked-out users a self-serve way to request a reset via the existing ticket system.
+## Problem
 
----
+When a rejected user submits an appeal, neither side can actually chat:
 
-## 1. Enable Supabase MFA (TOTP)
+1. `submit_appeal` (DB function) flips their `gate_applications` row back to `pending` and adds a `pending` role, **but it never removes the `rejected` role**.
+2. `_authenticated.tsx` checks `isRejected` **before** `isPending`, so the user is force-redirected back to `/account-rejected` — a static page with no chat UI. The "Open an appeal" button just re-submits the same RPC.
+3. On the admin side, the appeal *does* show up in the Moderation "Pending" queue (because status is `pending`), but it's visually indistinguishable from a normal first-time access request, and it's easy to miss that this is an appeal.
 
-Supabase Auth has native TOTP MFA — no new tables/edge functions for the core flow. We just turn it on and build the UI.
+The chat plumbing in `/moderation` and `/gate` already works for pending tickets — the appeal flow just never reaches it.
 
-- Configure auth so TOTP factors are allowed (`configure_auth` / project settings).
-- AAL (Authenticator Assurance Level) is enforced client-side: after `signInWithPassword`, check `supabase.auth.mfa.getAuthenticatorAssuranceLevel()`. If `nextLevel === 'aal2'` and `currentLevel === 'aal1'` → redirect to a `/mfa-challenge` page before allowing app access.
+## Fix
 
-## 2. New routes / UI
+### 1. Unblock the user side (DB)
 
-**`/mfa-challenge`** (public, post-login)
-- Shown when user has a verified TOTP factor but session is only aal1.
-- 6-digit code input → `supabase.auth.mfa.challengeAndVerify({ factorId, code })`.
-- "Lost your device? Contact support" link → opens a new ticket prefilled in the "Account / 2FA reset" category (see §5).
+New migration updating `public.submit_appeal`:
 
-**Profile → Security tab** (new section in `profile.tsx`)
-- If no factor: "Enable two-factor authentication" button → `mfa.enroll({ factorType: 'totp' })` → show QR code (`data.totp.qr_code`) + secret + 6-digit verify input → `mfa.challengeAndVerify` to activate.
-- If active: show "2FA is on" with a **Remove 2FA** button (requires current TOTP code, then `mfa.unenroll({ factorId })`).
-- Show recovery guidance ("save your backup codes in your password manager — if you lose access, raise a ticket").
+- After flipping the application back to `pending`, also `DELETE FROM user_roles WHERE user_id = v_uid AND role = 'rejected'` (mirrors how it already deletes `banned`).
+- Keep the `pending` role insert.
 
-**Recommendation banner**
-- Small dismissible bar at the top of `_approved.tsx` layout: *"We recommend turning on two-factor authentication to protect your account. [Enable now]"* — links to Profile → Security.
-- Hidden when user already has an active TOTP factor, or when dismissed (stored in `localStorage`).
+Result: once the user submits an appeal, their effective role becomes `pending`, the `_authenticated` guard routes them to `/gate`, and the existing two-way chat (already wired in `gate.tsx`) lights up.
 
-## 3. Admin reset (Members page)
+When an admin later denies again, `decide()` in `moderation.tsx` already deletes `pending` and inserts `rejected` — no change needed.
 
-In `members.tsx`, for admins/management only, add a **"Reset 2FA"** action per member.
+### 2. Make appeals obvious in Moderation (UI only)
 
-- New server function `resetUserMfa({ userId })`:
-  - Middleware: `requireSupabaseAuth` + check caller has `admin` or `management` role.
-  - Uses `supabaseAdmin.auth.admin.mfa.deleteFactor` (or lists factors via `auth.admin.listFactors(userId)` and deletes each) to wipe TOTP factors for that user.
-  - Writes an audit row into a new `mfa_reset_log` table (`target_user_id`, `reset_by`, `reason`, `created_at`) with RLS so only admins/management can read.
-- UI: confirm dialog ("This will remove their 2FA. They'll be able to sign in with just their password and should re-enable it."), optional reason field, toast on success.
+In `src/routes/_authenticated/_approved/moderation.tsx`:
 
-## 4. Customer-facing self-remove
+- Detect appeals by `reason?.startsWith("[APPEAL]")`.
+- Add an "Appeal" badge (amber/fuchsia) next to the row name in the pending list, and a small "This is an appeal of a previous rejection" banner inside the expanded panel so reviewers see the prior context at a glance.
+- Strip the `[APPEAL]` prefix when displaying the reason text (the badge already conveys it).
+- No changes to chat / approve / deny logic — they already work when status is `pending`.
 
-Already covered by the "Remove 2FA" button in Profile → Security (§2). Requires the user to enter a valid current TOTP code, so a thief with just the password can't disable it.
+### 3. Clean up the dead-end page
 
-## 5. Self-serve reset via tickets
+In `src/routes/_authenticated/account-rejected.tsx`:
 
-Add a dedicated ticket category for lockouts so users without device access can request a reset.
+- After `submit_appeal` succeeds, the user's role is now `pending` (via #1), so `refreshRoles()` + `navigate({ to: "/gate", search: { chat: 1 } })` will actually land them on the gate chat. No code change needed beyond verifying the existing navigate call still runs — which it does.
 
-- Insert a `ticket_categories` row: `"Account & 2FA reset"` (sort_order pinned near top).
-- The `/mfa-challenge` page's "Lost your device?" link sends users to `/tickets?new=1&category=account-2fa-reset` with the category preselected and a template body ("I've lost access to my authenticator app and need 2FA reset on my account.").
-- Staff handle it in the existing tickets UI; once identity is verified, they hit "Reset 2FA" on the Members page (§3) and reply to close the ticket.
-- The `notify_ticket_raised` trigger already pings staff — no change needed.
+## Technical notes
 
-## 6. Database changes
+- Migration is a `CREATE OR REPLACE FUNCTION` on `public.submit_appeal(text)` — preserves signature, grants, and the `[APPEAL] ...` reason format consumed by the moderation UI.
+- No schema changes, no new tables, no RLS changes (existing `gate_messages` / `gate_applications` policies already allow mod ↔ applicant chat on pending tickets).
+- No changes to `/gate` — the appellant simply reaches it now.
 
-Single migration:
+## Files touched
 
-```sql
--- Audit log for admin 2FA resets
-create table public.mfa_reset_log (
-  id uuid primary key default gen_random_uuid(),
-  target_user_id uuid not null,
-  reset_by uuid not null,
-  reason text,
-  created_at timestamptz not null default now()
-);
-alter table public.mfa_reset_log enable row level security;
-create policy "admins read" on public.mfa_reset_log for select
-  using (public.has_any_role(auth.uid(), array['admin','management']::app_role[]));
-create policy "admins insert" on public.mfa_reset_log for insert
-  with check (public.has_any_role(auth.uid(), array['admin','management']::app_role[]));
-
--- Seed the new ticket category (insert via data tool, not migration)
-```
-
-Plus a `supabase--insert` to add the "Account & 2FA reset" ticket category.
-
-## 7. Files touched
-
-- **New:** `src/routes/mfa-challenge.tsx`, `src/components/app/Mfa2FABanner.tsx`, `src/components/app/SecuritySection.tsx` (profile tab), `src/lib/mfa.functions.ts` (admin reset + audit insert).
-- **Edited:** `src/routes/login.tsx` (post-login AAL check + redirect), `src/routes/_authenticated/_approved.tsx` (mount banner), `src/routes/_authenticated/_approved/profile.tsx` (Security tab), `src/routes/_authenticated/_approved/members.tsx` (Reset 2FA action for admins), `src/routes/_authenticated/_approved/tickets.tsx` (read `?new=1&category=` query params to prefill).
-
-## Out of scope
-- SMS/email OTP as a factor (TOTP only — far more secure, no Twilio cost).
-- Backup recovery codes (Supabase doesn't generate them natively; users are guided to keep their TOTP secret safe, and tickets handle lockouts).
-- Forcing 2FA on staff (recommend only — can add later if you want a hard requirement for `admin`/`management`/`staff` roles).
+- `supabase/migrations/<new>.sql` — replace `submit_appeal` to also drop the `rejected` role.
+- `src/routes/_authenticated/_approved/moderation.tsx` — appeal badge + banner in expanded panel; strip `[APPEAL]` prefix when rendering reason.
