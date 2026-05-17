@@ -1,7 +1,9 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { Headphones, Hash, MessageSquare, Activity, Ticket, ShoppingBag, BookOpen } from "lucide-react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { Headphones, MessageSquare, Activity, Ticket, ShoppingBag, BookOpen, UserPlus } from "lucide-react";
 import heroImg from "@/assets/welcome-hero.jpg";
 import { useAuth } from "@/hooks/use-auth";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/_approved/home/")({
   component: WelcomePage,
@@ -10,6 +12,21 @@ export const Route = createFileRoute("/_authenticated/_approved/home/")({
 function WelcomePage() {
   const { user } = useAuth();
   const name = (user?.email ?? "there").split("@")[0];
+  const navigate = useNavigate();
+
+  const goToInvite = async () => {
+    if (!user) return;
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("username")
+      .eq("id", user.id)
+      .maybeSingle();
+    if (error || !data?.username) {
+      toast.error("Set up your profile username first");
+      return;
+    }
+    navigate({ to: "/u/$username", params: { username: data.username }, search: { tab: "referrals" } });
+  };
 
   return (
     <main className="flex-1 overflow-y-auto">
@@ -73,7 +90,7 @@ function WelcomePage() {
           <QuickCard to="/status" icon={Activity} title="System status" desc="Live infrastructure and incident updates." />
           <QuickCard to="/shop" icon={ShoppingBag} title="Shop" desc="Browse plans, add-ons and gear." />
           <QuickCard to="/install-guides" icon={BookOpen} title="Install guides" desc="Step-by-step setup walkthroughs." />
-          <QuickCard to="/home/$channel" params={{ channel: "announcements" }} icon={Hash} title="Announcements" desc="Latest news from the BM Support team." />
+          <QuickAction onClick={goToInvite} icon={UserPlus} title="Create an invite" desc="Invite a friend and earn a referral bonus." />
         </div>
       </section>
     </main>
@@ -107,5 +124,32 @@ function QuickCard({
         <span className="block text-xs text-foreground/75 mt-0.5">{desc}</span>
       </span>
     </Link>
+  );
+}
+
+function QuickAction({
+  onClick,
+  icon: Icon,
+  title,
+  desc,
+}: {
+  onClick: () => void;
+  icon: React.ComponentType<{ className?: string }>;
+  title: string;
+  desc: string;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className="group text-left rounded-xl border-2 border-violet-500/40 bg-surface hover:bg-surface-2 hover:border-violet-400/70 hover:shadow-[0_0_20px_rgba(139,92,246,0.25)] transition-all p-4 flex items-start gap-3"
+    >
+      <span className="grid place-items-center size-10 rounded-lg bg-gradient-to-br from-violet-600 to-blue-600 text-white shrink-0">
+        <Icon className="size-5" />
+      </span>
+      <span className="min-w-0">
+        <span className="block font-semibold text-sm text-foreground">{title}</span>
+        <span className="block text-xs text-foreground/75 mt-0.5">{desc}</span>
+      </span>
+    </button>
   );
 }
