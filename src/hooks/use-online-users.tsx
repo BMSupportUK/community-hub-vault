@@ -15,8 +15,19 @@ export function useOnlineUsers(): Set<string> {
       setOnline(new Set());
       return;
     }
+    const uid = user.id;
+    const ping = () => {
+      supabase.from("profiles").update({ last_seen_at: new Date().toISOString() }).eq("id", uid).then(() => {});
+    };
+    ping();
+    const pingInterval = setInterval(ping, 60_000);
+    const onUnload = () => {
+      try { ping(); } catch { /* noop */ }
+    };
+    window.addEventListener("beforeunload", onUnload);
+
     const channel = supabase.channel("presence:online", {
-      config: { presence: { key: user.id } },
+      config: { presence: { key: uid } },
     });
 
     const sync = () => {
@@ -30,11 +41,14 @@ export function useOnlineUsers(): Set<string> {
       .on("presence", { event: "leave" }, sync)
       .subscribe(async (status) => {
         if (status === "SUBSCRIBED") {
-          await channel.track({ user_id: user.id, online_at: new Date().toISOString() });
+          await channel.track({ user_id: uid, online_at: new Date().toISOString() });
         }
       });
 
     return () => {
+      clearInterval(pingInterval);
+      window.removeEventListener("beforeunload", onUnload);
+      ping();
       channel.untrack().catch(() => {});
       supabase.removeChannel(channel);
     };
