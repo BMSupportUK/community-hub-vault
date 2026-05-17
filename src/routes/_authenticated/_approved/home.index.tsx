@@ -126,3 +126,30 @@ function QuickCard({
     </Link>
   );
 }
+
+function QuickAction({
+  onClick,
+  icon: Icon,
+  title,
+  desc,
+}: {
+  onClick: () => void;
+  icon: React.ComponentType<{ className?: string }>;
+  title: string;
+  desc: string;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className="group text-left rounded-xl border-2 border-violet-500/40 bg-surface hover:bg-surface-2 hover:border-violet-400/70 hover:shadow-[0_0_20px_rgba(139,92,246,0.25)] transition-all p-4 flex items-start gap-3"
+    >
+      <span className="grid place-items-center size-10 rounded-lg bg-gradient-to-br from-violet-600 to-blue-600 text-white shrink-0">
+        <Icon className="size-5" />
+      </span>
+      <span className="min-w-0">
+        <span className="block font-semibold text-sm text-foreground">{title}</span>
+        <span className="block text-xs text-foreground/75 mt-0.5">{desc}</span>
+      </span>
+    </button>
+  );
+}
