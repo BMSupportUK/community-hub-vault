@@ -29,6 +29,13 @@ interface SignupInfo {
   connection: string | null;
   extra: Record<string, unknown> | null;
   created_at: string;
+  is_vpn: boolean | null;
+  is_proxy: boolean | null;
+  vpn_provider: string | null;
+  isp: string | null;
+  country: string | null;
+  region: string | null;
+  city: string | null;
 }
 
 interface Props {
@@ -66,6 +73,18 @@ export function SignupInfoDialog({ userId, trigger, displayName }: Props) {
   const rows: Array<[string, string | null | undefined]> = info
     ? [
         ["IP address", info.ip],
+        [
+          "VPN / Proxy",
+          info.is_vpn === null && info.is_proxy === null
+            ? "Unknown"
+            : info.is_vpn
+              ? `⚠️ VPN detected${info.vpn_provider ? ` (${info.vpn_provider})` : ""}`
+              : info.is_proxy
+                ? `⚠️ Proxy detected${info.vpn_provider ? ` (${info.vpn_provider})` : ""}`
+                : "✅ Clean (no VPN/proxy)",
+        ],
+        ["ISP", info.isp],
+        ["Location", [info.city, info.region, info.country].filter(Boolean).join(", ") || null],
         ["User agent", info.user_agent],
         ["Platform", info.platform],
         ["Vendor", info.vendor],
