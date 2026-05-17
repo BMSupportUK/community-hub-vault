@@ -592,8 +592,16 @@ function Storefront() {
   const add = (id: string) => setCart((c) => ({ ...c, [id]: (c[id] ?? 0) + 1 }));
   const sub = (id: string) => setCart((c) => ({ ...c, [id]: Math.max(0, (c[id] ?? 0) - 1) }));
 
-  const placeOrder = async (info: { name: string; email: string; customer_type: "new" | "existing"; existing_username: string; discount_code: string; discount_cents: number; wants_adult_content: boolean }) => {
+  const verifyCaptcha = useServerFn(verifyTurnstile);
+  const placeOrder = async (info: { name: string; email: string; customer_type: "new" | "existing"; existing_username: string; discount_code: string; discount_cents: number; wants_adult_content: boolean; captchaToken: string }) => {
     if (!user || cartItems.length === 0) return;
+    if (!info.captchaToken) { toast.error("Please complete the verification challenge"); return; }
+    try {
+      const v = await verifyCaptcha({ data: { token: info.captchaToken } });
+      if (!v.success) { toast.error("Verification failed — please try again"); return; }
+    } catch {
+      toast.error("Verification failed — please try again"); return;
+    }
     let verifiedDiscountCents = 0;
     const submittedCode = info.discount_code.trim();
     if (submittedCode) {
