@@ -78,5 +78,5 @@ export const recordSignupInfo = createServerFn({ method: "POST" })
       vpn_raw: vpn?.vpn_raw ?? null,
     } as never);
     if (error) throw error;
-    return { ok: true, ip, vpn };
+    return { ok: true, ip, is_vpn: vpn?.is_vpn ?? null, is_proxy: vpn?.is_proxy ?? null };
   });
