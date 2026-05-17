@@ -451,6 +451,8 @@ function TicketsPage() {
                           const active = selected?.id === t.id;
                           const p = profiles.get(t.user_id);
                           const who = p?.display_name || p?.username || "Unknown";
+                          const claimP = t.assigned_to ? profiles.get(t.assigned_to) : null;
+                          const claimedBy = claimP?.display_name || claimP?.username || (t.assigned_to ? "Staff" : null);
                           const when = new Date(t.created_at).toLocaleString(undefined, {
                             month: "short", day: "numeric", hour: "2-digit", minute: "2-digit",
                           });
@@ -471,6 +473,9 @@ function TicketsPage() {
                                   {t.priority === "high" && <span className="size-1.5 rounded-full bg-amber-300 shrink-0" />}
                                 </span>
                                 <span className="block text-[10px] text-white/60 truncate">{who} · {when}</span>
+                                {claimedBy && (
+                                  <span className="block text-[10px] text-emerald-200/90 truncate">Claimed by {claimedBy}</span>
+                                )}
                               </span>
                             </button>
                           );
