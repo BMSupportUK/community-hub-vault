@@ -31,6 +31,7 @@ import { Route as AuthenticatedApprovedShopRouteImport } from './routes/_authent
 import { Route as AuthenticatedApprovedShiftsRouteImport } from './routes/_authenticated/_approved/shifts'
 import { Route as AuthenticatedApprovedReviewsRouteImport } from './routes/_authenticated/_approved/reviews'
 import { Route as AuthenticatedApprovedProfileRouteImport } from './routes/_authenticated/_approved/profile'
+import { Route as AuthenticatedApprovedNewContentRouteImport } from './routes/_authenticated/_approved/new-content'
 import { Route as AuthenticatedApprovedModerationRouteImport } from './routes/_authenticated/_approved/moderation'
 import { Route as AuthenticatedApprovedMembersRouteImport } from './routes/_authenticated/_approved/members'
 import { Route as AuthenticatedApprovedLeaderboardRouteImport } from './routes/_authenticated/_approved/leaderboard'
@@ -174,6 +175,12 @@ const AuthenticatedApprovedProfileRoute =
   AuthenticatedApprovedProfileRouteImport.update({
     id: '/profile',
     path: '/profile',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
+const AuthenticatedApprovedNewContentRoute =
+  AuthenticatedApprovedNewContentRouteImport.update({
+    id: '/new-content',
+    path: '/new-content',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
 const AuthenticatedApprovedModerationRoute =
@@ -367,6 +374,7 @@ export interface FileRoutesByFullPath {
   '/leaderboard': typeof AuthenticatedApprovedLeaderboardRoute
   '/members': typeof AuthenticatedApprovedMembersRoute
   '/moderation': typeof AuthenticatedApprovedModerationRoute
+  '/new-content': typeof AuthenticatedApprovedNewContentRoute
   '/profile': typeof AuthenticatedApprovedProfileRoute
   '/reviews': typeof AuthenticatedApprovedReviewsRoute
   '/shifts': typeof AuthenticatedApprovedShiftsRoute
@@ -415,6 +423,7 @@ export interface FileRoutesByTo {
   '/leaderboard': typeof AuthenticatedApprovedLeaderboardRoute
   '/members': typeof AuthenticatedApprovedMembersRoute
   '/moderation': typeof AuthenticatedApprovedModerationRoute
+  '/new-content': typeof AuthenticatedApprovedNewContentRoute
   '/profile': typeof AuthenticatedApprovedProfileRoute
   '/reviews': typeof AuthenticatedApprovedReviewsRoute
   '/shifts': typeof AuthenticatedApprovedShiftsRoute
@@ -467,6 +476,7 @@ export interface FileRoutesById {
   '/_authenticated/_approved/leaderboard': typeof AuthenticatedApprovedLeaderboardRoute
   '/_authenticated/_approved/members': typeof AuthenticatedApprovedMembersRoute
   '/_authenticated/_approved/moderation': typeof AuthenticatedApprovedModerationRoute
+  '/_authenticated/_approved/new-content': typeof AuthenticatedApprovedNewContentRoute
   '/_authenticated/_approved/profile': typeof AuthenticatedApprovedProfileRoute
   '/_authenticated/_approved/reviews': typeof AuthenticatedApprovedReviewsRoute
   '/_authenticated/_approved/shifts': typeof AuthenticatedApprovedShiftsRoute
@@ -518,6 +528,7 @@ export interface FileRouteTypes {
     | '/leaderboard'
     | '/members'
     | '/moderation'
+    | '/new-content'
     | '/profile'
     | '/reviews'
     | '/shifts'
@@ -566,6 +577,7 @@ export interface FileRouteTypes {
     | '/leaderboard'
     | '/members'
     | '/moderation'
+    | '/new-content'
     | '/profile'
     | '/reviews'
     | '/shifts'
@@ -617,6 +629,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/leaderboard'
     | '/_authenticated/_approved/members'
     | '/_authenticated/_approved/moderation'
+    | '/_authenticated/_approved/new-content'
     | '/_authenticated/_approved/profile'
     | '/_authenticated/_approved/reviews'
     | '/_authenticated/_approved/shifts'
@@ -811,6 +824,13 @@ declare module '@tanstack/react-router' {
       path: '/profile'
       fullPath: '/profile'
       preLoaderRoute: typeof AuthenticatedApprovedProfileRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
+    '/_authenticated/_approved/new-content': {
+      id: '/_authenticated/_approved/new-content'
+      path: '/new-content'
+      fullPath: '/new-content'
+      preLoaderRoute: typeof AuthenticatedApprovedNewContentRouteImport
       parentRoute: typeof AuthenticatedApprovedRoute
     }
     '/_authenticated/_approved/moderation': {
@@ -1060,6 +1080,7 @@ interface AuthenticatedApprovedRouteChildren {
   AuthenticatedApprovedLeaderboardRoute: typeof AuthenticatedApprovedLeaderboardRoute
   AuthenticatedApprovedMembersRoute: typeof AuthenticatedApprovedMembersRoute
   AuthenticatedApprovedModerationRoute: typeof AuthenticatedApprovedModerationRoute
+  AuthenticatedApprovedNewContentRoute: typeof AuthenticatedApprovedNewContentRoute
   AuthenticatedApprovedProfileRoute: typeof AuthenticatedApprovedProfileRoute
   AuthenticatedApprovedReviewsRoute: typeof AuthenticatedApprovedReviewsRoute
   AuthenticatedApprovedShiftsRoute: typeof AuthenticatedApprovedShiftsRoute
@@ -1096,6 +1117,7 @@ const AuthenticatedApprovedRouteChildren: AuthenticatedApprovedRouteChildren = {
   AuthenticatedApprovedLeaderboardRoute: AuthenticatedApprovedLeaderboardRoute,
   AuthenticatedApprovedMembersRoute: AuthenticatedApprovedMembersRoute,
   AuthenticatedApprovedModerationRoute: AuthenticatedApprovedModerationRoute,
+  AuthenticatedApprovedNewContentRoute: AuthenticatedApprovedNewContentRoute,
   AuthenticatedApprovedProfileRoute: AuthenticatedApprovedProfileRoute,
   AuthenticatedApprovedReviewsRoute: AuthenticatedApprovedReviewsRoute,
   AuthenticatedApprovedShiftsRoute: AuthenticatedApprovedShiftsRoute,
