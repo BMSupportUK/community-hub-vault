@@ -290,7 +290,7 @@ function StatusPage() {
             {tab === "active" ? "No active incidents." : "No completed incidents yet."}
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 items-start">
             {list.map((i) => (
               <IncidentCard
                 key={i.id}
@@ -378,19 +378,21 @@ function IncidentCard({ incident, canManage, onEdit }: { incident: Incident; can
   };
 
   return (
-    <div className="rounded-2xl border border-border bg-surface-1 overflow-hidden">
-      <button onClick={() => setOpen((v) => !v)} className="w-full p-4 flex items-center gap-3 text-left hover:bg-surface-2/50 transition-colors">
-        <div className={`size-10 rounded-xl border grid place-items-center ${meta.classes}`}>
+    <div className={`rounded-2xl border border-purple-500/30 bg-purple-950/60 backdrop-blur-md overflow-hidden shadow-[0_8px_30px_-12px_rgba(168,85,247,0.5)] hover:border-fuchsia-500/60 hover:shadow-[0_10px_40px_-12px_rgba(217,70,239,0.55)] transition-all flex flex-col ${open ? "ring-1 ring-fuchsia-500/40" : ""}`}>
+      <button onClick={() => setOpen((v) => !v)} className="w-full p-4 flex items-start gap-3 text-left hover:bg-purple-900/40 transition-colors">
+        <div className={`size-11 rounded-xl border grid place-items-center shrink-0 ${meta.classes}`}>
           <Icon className="size-5" />
         </div>
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <span className="font-display font-semibold truncate">{incident.title}</span>
-            <span className={`text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded border ${meta.classes}`}>{meta.label}</span>
+          <div className="flex items-start justify-between gap-2">
+            <span className="font-display font-semibold text-purple-50 leading-snug line-clamp-2">{incident.title}</span>
           </div>
-          <div className="text-xs text-muted-foreground mt-0.5">
+          <span className={`mt-1.5 inline-flex text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded border ${meta.classes}`}>{meta.label}</span>
+          <div className="text-[11px] text-purple-200/70 mt-2">
             Opened {new Date(incident.created_at).toLocaleString()}
-            {incident.resolved_at && ` · Resolved ${new Date(incident.resolved_at).toLocaleString()}`}
+            {incident.resolved_at && (
+              <span className="block">Resolved {new Date(incident.resolved_at).toLocaleString()}</span>
+            )}
           </div>
         </div>
       </button>
