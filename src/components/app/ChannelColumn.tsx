@@ -140,6 +140,8 @@ export function ChannelColumn({
                 if (!onReorderGroups) return;
                 setDragGroup(g.label);
                 e.dataTransfer.effectAllowed = "move";
+                e.dataTransfer.setData("text/plain", `group:${g.label}`);
+                e.stopPropagation();
               }}
               onDragEnd={() => { setDragGroup(null); setOverGroup(null); }}
               onDragEnter={() => { if (dragGroup && dragGroup !== g.label) setOverGroup(g.label); }}
@@ -214,6 +216,8 @@ export function ChannelColumn({
                       if (!canDrag) return;
                       setDragChan({ id: it.id!, group: g.label });
                       e.dataTransfer.effectAllowed = "move";
+                      e.dataTransfer.setData("text/plain", `chan:${it.id}`);
+                      e.stopPropagation();
                     }}
                     onDragEnd={() => { setDragChan(null); setOverChan(null); }}
                     onDragOver={(e) => {
