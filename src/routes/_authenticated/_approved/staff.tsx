@@ -6,6 +6,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 import profileHeader from "@/assets/profile-header.jpg";
+import { useOnlineUsers } from "@/hooks/use-online-users";
 
 export const Route = createFileRoute("/_authenticated/_approved/staff")({
   component: StaffPage,
@@ -38,6 +39,7 @@ const ROLE_LABEL: Record<string, string> = {
 
 function StaffPage() {
   const { user: viewer } = useAuth();
+  const onlineUsers = useOnlineUsers();
   const [tab, setTab] = useState("welcome");
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [rolesByUser, setRolesByUser] = useState<Record<string, string[]>>({});
@@ -205,6 +207,7 @@ function StaffPage() {
                       const name = p.display_name ?? p.username ?? "Unknown";
                       const initial = name.slice(0, 1).toUpperCase();
                       const userRoles = rolesByUser[p.id] ?? [];
+                      const isOnline = onlineUsers.has(p.id);
                       return (
                         <div
                           key={p.id}
@@ -216,17 +219,26 @@ function StaffPage() {
                             aria-hidden
                           />
                           <div className="px-4 -mt-8 pb-4 flex flex-col flex-1">
-                            {p.avatar_url ? (
-                              <img
-                                src={p.avatar_url}
-                                alt=""
-                                className="size-16 rounded-2xl object-cover ring-4 ring-purple-950"
+                            <div className="relative w-fit">
+                              {p.avatar_url ? (
+                                <img
+                                  src={p.avatar_url}
+                                  alt=""
+                                  className="size-16 rounded-2xl object-cover ring-4 ring-purple-950"
+                                />
+                              ) : (
+                                <div className="size-16 rounded-2xl ring-4 ring-purple-950 bg-gradient-to-br from-violet-600 to-blue-600 grid place-items-center text-white text-xl font-bold">
+                                  {initial}
+                                </div>
+                              )}
+                              <span
+                                title={isOnline ? "Online" : "Offline"}
+                                aria-label={isOnline ? "Online" : "Offline"}
+                                className={`absolute -bottom-0.5 -right-0.5 size-4 rounded-full ring-2 ring-purple-950 ${
+                                  isOnline ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.9)]" : "bg-zinc-500"
+                                }`}
                               />
-                            ) : (
-                              <div className="size-16 rounded-2xl ring-4 ring-purple-950 bg-gradient-to-br from-violet-600 to-blue-600 grid place-items-center text-white text-xl font-bold">
-                                {initial}
-                              </div>
-                            )}
+                            </div>
                             <div className="mt-3">
                               <Link
                                 to="/u/$username"
@@ -235,6 +247,12 @@ function StaffPage() {
                               >
                                 {name}
                               </Link>
+                              <div className="text-[10px] mt-0.5 flex items-center gap-1.5">
+                                <span className={`size-1.5 rounded-full ${isOnline ? "bg-emerald-500" : "bg-zinc-500"}`} />
+                                <span className={isOnline ? "text-emerald-300" : "text-purple-300/70"}>
+                                  {isOnline ? "Online" : "Offline"}
+                                </span>
+                              </div>
                               {p.username && (
                                 <div className="text-[11px] text-purple-300/70">@{p.username}</div>
                               )}
