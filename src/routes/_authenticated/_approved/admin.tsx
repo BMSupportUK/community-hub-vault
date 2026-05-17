@@ -138,9 +138,10 @@ function SecurityGate({ hasPin, onUnlocked }: { hasPin: boolean; onUnlocked: () 
   const [pin, setPin] = useState("");
   const [confirmPin, setConfirmPin] = useState("");
   const [busy, setBusy] = useState(false);
-  const [mode, setMode] = useState<"unlock" | "reset" | "totp">("unlock");
+  const [mode, setMode] = useState<"unlock" | "reset" | "totp" | "backup">("unlock");
   const [totpCode, setTotpCode] = useState("");
   const [hasTotp, setHasTotp] = useState(false);
+  const [backupCode, setBackupCode] = useState("");
 
   useEffect(() => {
     (async () => {
@@ -167,6 +168,34 @@ function SecurityGate({ hasPin, onUnlocked }: { hasPin: boolean; onUnlocked: () 
       });
       if (vErr) throw new Error("Incorrect 2FA code");
       toast.success("Admin unlocked");
+      onUnlocked();
+    } catch (e: any) {
+      toast.error(e.message ?? "Unlock failed");
+    } finally { setBusy(false); }
+  };
+
+  const unlockWithBackup = async () => {
+    if (!user) return;
+    const normalized = normalizeCode(backupCode);
+    if (normalized.length < 8) return toast.error("Enter a valid backup code");
+    setBusy(true);
+    try {
+      const hash = await sha256Hex(`${user.id}:${normalized}`);
+      const { data: row, error } = await supabase
+        .from("admin_backup_codes")
+        .select("id, used_at")
+        .eq("user_id", user.id)
+        .eq("code_hash", hash)
+        .maybeSingle();
+      if (error) throw error;
+      if (!row) throw new Error("Invalid backup code");
+      if (row.used_at) throw new Error("This backup code has already been used");
+      const { error: upErr } = await supabase
+        .from("admin_backup_codes")
+        .update({ used_at: new Date().toISOString() })
+        .eq("id", row.id);
+      if (upErr) throw upErr;
+      toast.success("Admin unlocked with backup code");
       onUnlocked();
     } catch (e: any) {
       toast.error(e.message ?? "Unlock failed");
