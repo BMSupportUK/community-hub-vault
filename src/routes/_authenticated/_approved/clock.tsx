@@ -229,8 +229,8 @@ function ClockPage() {
 
         {/* Staff status panel */}
         {isStaff && (
-          <section className="rounded-2xl border border-border bg-surface-1 overflow-hidden">
-            <div className="px-5 py-3 border-b border-border bg-surface-2 flex items-center justify-between">
+          <section className="rounded-2xl border border-border bg-surface-1/70 backdrop-blur-md overflow-hidden">
+            <div className="px-5 py-3 border-b border-border bg-surface-2/70 flex items-center justify-between">
               <div className="text-sm font-semibold">On shift right now</div>
               <div className="text-xs text-muted-foreground">{activeShifts.length} working · {activeBreaks.length} on break</div>
             </div>
