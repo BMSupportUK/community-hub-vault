@@ -55,11 +55,13 @@ export function SignupInfoDialog({ userId, trigger, displayName }: Props) {
   const [info, setInfo] = useState<SignupInfo | null>(null);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [ipGeo, setIpGeo] = useState<{ lat: number; lon: number; label: string } | null>(null);
 
   useEffect(() => {
     if (!open || !canView) return;
     setLoading(true);
     setErr(null);
+    setIpGeo(null);
     supabase
       .from("signup_info")
       .select("*")
@@ -71,6 +73,34 @@ export function SignupInfoDialog({ userId, trigger, displayName }: Props) {
         setLoading(false);
       });
   }, [open, userId, canView]);
+
+  // Fall back to free IP geolocation (ipapi.co — no API key) when we don't
+  // already have precise coords stored from signup.
+  useEffect(() => {
+    if (!open || !info?.ip) return;
+    if (info.geo_latitude != null && info.geo_longitude != null) return;
+    let cancelled = false;
+    fetch(`https://ipapi.co/${encodeURIComponent(info.ip)}/json/`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => {
+        if (cancelled || !j || typeof j.latitude !== "number" || typeof j.longitude !== "number") return;
+        const label = [j.city, j.region, j.country_name].filter(Boolean).join(", ");
+        setIpGeo({ lat: j.latitude, lon: j.longitude, label });
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [open, info?.ip, info?.geo_latitude, info?.geo_longitude]);
+
+  const mapLat = info?.geo_latitude ?? ipGeo?.lat ?? null;
+  const mapLon = info?.geo_longitude ?? ipGeo?.lon ?? null;
+  const mapSource =
+    info?.geo_latitude != null && info?.geo_longitude != null
+      ? "precise (browser-shared)"
+      : ipGeo
+        ? "approximate (IP-based)"
+        : null;
 
   if (!canView) return null;
 
@@ -153,6 +183,28 @@ export function SignupInfoDialog({ userId, trigger, displayName }: Props) {
                 <div className="font-mono text-xs break-all">{v ?? "—"}</div>
               </div>
             ))}
+            {mapLat != null && mapLon != null && (
+              <div className="pt-4 space-y-2">
+                <div className="flex items-center justify-between text-xs">
+                  <div className="text-muted-foreground">
+                    Map {mapSource ? `— ${mapSource}` : ""}
+                  </div>
+                  <a
+                    href={`https://www.openstreetmap.org/?mlat=${mapLat}&mlon=${mapLon}#map=12/${mapLat}/${mapLon}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-primary hover:underline"
+                  >
+                    Open in OpenStreetMap
+                  </a>
+                </div>
+                <iframe
+                  title="Signup location map"
+                  className="w-full h-64 rounded-md border border-border"
+                  src={`https://www.openstreetmap.org/export/embed.html?bbox=${mapLon - 0.05},${mapLat - 0.05},${mapLon + 0.05},${mapLat + 0.05}&layer=mapnik&marker=${mapLat},${mapLon}`}
+                />
+              </div>
+            )}
           </div>
         )}
       </DialogContent>
