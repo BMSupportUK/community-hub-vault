@@ -278,6 +278,15 @@ function MembersPage() {
                   </p>
                 )}
 
+                {isAdmin && (
+                  <button
+                    onClick={() => setResetTarget(p)}
+                    className="mt-2 inline-flex items-center justify-center gap-1.5 text-[11px] font-medium px-2.5 py-1.5 rounded-lg bg-surface-2 border border-border hover:border-rose-400 hover:text-rose-300 transition"
+                  >
+                    <ShieldOff className="size-3.5" /> Reset 2FA
+                  </button>
+                )}
+
                 <div className="mt-auto pt-3 border-t border-border/60 text-[11px] text-muted-foreground flex items-center gap-1.5">
                   <Clock className="size-3" />
                   Joined {new Date(p.created_at).toLocaleDateString()}
