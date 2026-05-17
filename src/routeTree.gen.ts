@@ -15,6 +15,7 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as MfaChallengeRouteImport } from './routes/mfa-challenge'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
+import { Route as BannedPreviewRouteImport } from './routes/banned-preview'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
@@ -89,6 +90,11 @@ const LoginRoute = LoginRouteImport.update({
 const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
   id: '/forgot-password',
   path: '/forgot-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BannedPreviewRoute = BannedPreviewRouteImport.update({
+  id: '/banned-preview',
+  path: '/banned-preview',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
@@ -355,6 +361,7 @@ const AuthenticatedApprovedSportsGuidesIdEditRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/banned-preview': typeof BannedPreviewRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/mfa-challenge': typeof MfaChallengeRoute
@@ -406,6 +413,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/banned-preview': typeof BannedPreviewRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/mfa-challenge': typeof MfaChallengeRoute
@@ -458,6 +466,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
+  '/banned-preview': typeof BannedPreviewRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/mfa-challenge': typeof MfaChallengeRoute
@@ -512,6 +521,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/banned-preview'
     | '/forgot-password'
     | '/login'
     | '/mfa-challenge'
@@ -563,6 +573,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/banned-preview'
     | '/forgot-password'
     | '/login'
     | '/mfa-challenge'
@@ -614,6 +625,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_authenticated'
+    | '/banned-preview'
     | '/forgot-password'
     | '/login'
     | '/mfa-challenge'
@@ -668,6 +680,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
+  BannedPreviewRoute: typeof BannedPreviewRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   LoginRoute: typeof LoginRoute
   MfaChallengeRoute: typeof MfaChallengeRoute
@@ -725,6 +738,13 @@ declare module '@tanstack/react-router' {
       path: '/forgot-password'
       fullPath: '/forgot-password'
       preLoaderRoute: typeof ForgotPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/banned-preview': {
+      id: '/banned-preview'
+      path: '/banned-preview'
+      fullPath: '/banned-preview'
+      preLoaderRoute: typeof BannedPreviewRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -1179,6 +1199,7 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
+  BannedPreviewRoute: BannedPreviewRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
   LoginRoute: LoginRoute,
   MfaChallengeRoute: MfaChallengeRoute,
@@ -1196,3 +1217,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
