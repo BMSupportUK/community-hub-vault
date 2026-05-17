@@ -20,6 +20,7 @@ export function IconRail() {
   const isAdmin = hasAny(["admin", "management"]);
   const path = useRouterState({ select: (r) => r.location.pathname });
   const [activeIncidents, setActiveIncidents] = useState(0);
+  const [unreadNewContent, setUnreadNewContent] = useState(0);
   const [order, setOrder] = useState<Record<string, number>>({});
   const [pagePerms, setPagePerms] = useState<Record<string, string[]>>({});
   const dragKey = useRef<string | null>(null);
@@ -46,6 +47,39 @@ export function IconRail() {
     return () => {
       supabase.removeChannel(ch);
     };
+  }, [isPending]);
+
+  useEffect(() => {
+    if (isPending) return;
+    const load = async () => {
+      const { data: userData } = await supabase.auth.getUser();
+      const uid = userData.user?.id;
+      if (!uid) { setUnreadNewContent(0); return; }
+      const [{ data: posts }, { data: rs }, { data: prof }] = await Promise.all([
+        supabase.from("new_content_posts").select("id, created_at, updated_at"),
+        supabase.from("new_content_reads").select("post_id, read_at").eq("user_id", uid),
+        supabase.from("profiles").select("new_content_baseline_at").eq("id", uid).maybeSingle(),
+      ]);
+      const reads: Record<string, string> = {};
+      for (const r of (rs ?? []) as { post_id: string; read_at: string }[]) reads[r.post_id] = r.read_at;
+      const baseline = (prof as { new_content_baseline_at: string | null } | null)?.new_content_baseline_at ?? null;
+      const baseTs = baseline ? new Date(baseline).getTime() : 0;
+      let count = 0;
+      for (const p of (posts ?? []) as { id: string; created_at: string; updated_at: string | null }[]) {
+        const upd = new Date(p.updated_at ?? p.created_at).getTime();
+        if (baseline && upd <= baseTs) continue;
+        const r = reads[p.id];
+        if (!r || new Date(r).getTime() < upd) count++;
+      }
+      setUnreadNewContent(count);
+    };
+    load();
+    const ch = supabase
+      .channel("rail-new-content")
+      .on("postgres_changes", { event: "*", schema: "public", table: "new_content_posts" }, () => load())
+      .on("postgres_changes", { event: "*", schema: "public", table: "new_content_reads" }, () => load())
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
   }, [isPending]);
 
   useEffect(() => {
@@ -107,7 +141,7 @@ export function IconRail() {
     { to: "/reviews", label: "Customer reviews", icon: Star, show: true },
     { to: "/leaderboard", label: "Leaderboard", icon: Trophy, show: true },
     { to: "/status", label: "System status", icon: Activity, show: true, badge: activeIncidents },
-    { to: "/new-content", label: "New content", icon: Sparkles, show: true },
+    { to: "/new-content", label: "New content", icon: Sparkles, show: true, badge: unreadNewContent },
     { to: "/clock", label: "Clock", icon: Clock, show: isStaff },
     { to: "/shifts", label: "Shifts", icon: Calendar, show: isStaff },
   ];

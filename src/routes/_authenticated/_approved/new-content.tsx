@@ -11,6 +11,8 @@ import {
   Trash2,
   Hash,
   FolderPlus,
+  Check,
+  Circle,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -96,6 +98,8 @@ function NewContentPage() {
   const { user, hasAny } = useAuth();
   const canManage = hasAny(["admin", "management", "staff"]);
   const [posts, setPosts] = useState<Post[] | null>(null);
+  const [reads, setReads] = useState<Record<string, string>>({});
+  const [baselineAt, setBaselineAt] = useState<string | null>(null);
   const [tab, setTab] = useState<"welcome" | "channel" | "category">(() => {
     try { return (sessionStorage.getItem("new-content-tab") as any) || "welcome"; } catch { return "welcome"; }
   });
@@ -120,6 +124,54 @@ function NewContentPage() {
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, []);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    (async () => {
+      const [{ data: rs }, { data: prof }] = await Promise.all([
+        supabase.from("new_content_reads").select("post_id, read_at").eq("user_id", user.id),
+        supabase.from("profiles").select("new_content_baseline_at").eq("id", user.id).maybeSingle(),
+      ]);
+      const map: Record<string, string> = {};
+      for (const r of (rs ?? []) as { post_id: string; read_at: string }[]) map[r.post_id] = r.read_at;
+      setReads(map);
+      let baseline = (prof as { new_content_baseline_at: string | null } | null)?.new_content_baseline_at ?? null;
+      if (!baseline) {
+        baseline = new Date().toISOString();
+        await supabase.from("profiles").update({ new_content_baseline_at: baseline }).eq("id", user.id);
+      }
+      setBaselineAt(baseline);
+    })();
+  }, [user?.id]);
+
+  const isUnread = (p: Post) => {
+    const upd = new Date(p.updated_at ?? p.created_at).getTime();
+    if (baselineAt && upd <= new Date(baselineAt).getTime()) return false;
+    const r = reads[p.id];
+    if (!r) return true;
+    return new Date(r).getTime() < upd;
+  };
+
+  const markRead = async (p: Post) => {
+    if (!user?.id) return;
+    const now = new Date().toISOString();
+    setReads((prev) => ({ ...prev, [p.id]: now }));
+    const { error } = await supabase
+      .from("new_content_reads")
+      .upsert({ user_id: user.id, post_id: p.id, read_at: now }, { onConflict: "user_id,post_id" });
+    if (error) toast.error(error.message);
+  };
+
+  const markUnread = async (p: Post) => {
+    if (!user?.id) return;
+    setReads((prev) => { const n = { ...prev }; delete n[p.id]; return n; });
+    const { error } = await supabase
+      .from("new_content_reads")
+      .delete()
+      .eq("user_id", user.id)
+      .eq("post_id", p.id);
+    if (error) toast.error(error.message);
+  };
 
   const channels = useMemo(() => (posts ?? []).filter((p) => p.kind === "channel"), [posts]);
   const categories = useMemo(() => (posts ?? []).filter((p) => p.kind === "category"), [posts]);
@@ -152,10 +204,11 @@ function NewContentPage() {
           {items.map((p) => {
             const cover = (p.attachments ?? []).find((a) => a.type?.startsWith("image/"));
             const coverUrl = cover?.url ?? defaultCover;
+            const unread = isUnread(p);
             return (
               <article
                 key={p.id}
-                className="rounded-2xl bg-purple-950/50 border border-purple-500/30 overflow-hidden flex flex-col group hover:border-fuchsia-500/60 hover:shadow-[0_0_30px_-10px_rgba(217,70,239,0.6)] transition-all"
+                className={`rounded-2xl bg-purple-950/50 overflow-hidden flex flex-col group transition-all border ${unread ? "border-fuchsia-500/70 shadow-[0_0_20px_-10px_rgba(232,121,249,0.8)]" : "border-purple-500/30 hover:border-fuchsia-500/60 hover:shadow-[0_0_30px_-10px_rgba(217,70,239,0.6)]"}`}
               >
                 <div className="aspect-[16/10] bg-purple-900/50 relative overflow-hidden">
                   <img
@@ -165,9 +218,11 @@ function NewContentPage() {
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-purple-950/80 via-purple-950/10 to-transparent pointer-events-none" />
-                  <div className="absolute top-2 right-2 px-2 py-1 rounded-md bg-fuchsia-500 text-white text-[10px] font-bold uppercase tracking-wide shadow-lg">
-                    New
-                  </div>
+                  {unread && (
+                    <div className="absolute top-2 right-2 px-2 py-1 rounded-md bg-fuchsia-500 text-white text-[10px] font-bold uppercase tracking-wide shadow-lg">
+                      New
+                    </div>
+                  )}
                 </div>
                 <div className="p-4 flex-1 flex flex-col gap-2">
                   <div className="flex flex-wrap gap-2">
@@ -175,6 +230,9 @@ function NewContentPage() {
                       {kind === "channel" ? <Hash className="size-3" /> : <FolderPlus className="size-3" />}
                       {kind === "channel" ? "New Channel" : "New Category"}
                     </span>
+                    {unread && (
+                      <span className="size-2 rounded-full bg-fuchsia-400 shadow-[0_0_8px_rgba(232,121,249,0.9)] self-center" title="Unread" />
+                    )}
                   </div>
                   <h3 className="font-display font-semibold text-lg leading-snug text-purple-50">{p.title}</h3>
                   {p.description && (
@@ -187,9 +245,18 @@ function NewContentPage() {
                     <Button
                       size="sm"
                       className="flex-1 bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white border-0"
-                      onClick={() => setViewing(p)}
+                      onClick={() => { setViewing(p); if (unread) markRead(p); }}
                     >
                       Click to Read
+                    </Button>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="text-purple-200 hover:text-white hover:bg-purple-800/60"
+                      title={unread ? "Mark as read" : "Mark as unread"}
+                      onClick={() => (unread ? markRead(p) : markUnread(p))}
+                    >
+                      {unread ? <Check className="size-4" /> : <Circle className="size-4" />}
                     </Button>
                     {canManage && (
                       <>

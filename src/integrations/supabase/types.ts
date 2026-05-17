@@ -1023,6 +1023,24 @@ export type Database = {
         }
         Relationships: []
       }
+      new_content_reads: {
+        Row: {
+          post_id: string
+          read_at: string
+          user_id: string
+        }
+        Insert: {
+          post_id: string
+          read_at?: string
+          user_id: string
+        }
+        Update: {
+          post_id?: string
+          read_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       order_items: {
         Row: {
           created_at: string
@@ -1236,6 +1254,7 @@ export type Database = {
           display_name: string | null
           id: string
           is_private: boolean
+          new_content_baseline_at: string | null
           sports_blogs_baseline_at: string | null
           timezone: string | null
           updated_at: string
@@ -1248,6 +1267,7 @@ export type Database = {
           display_name?: string | null
           id: string
           is_private?: boolean
+          new_content_baseline_at?: string | null
           sports_blogs_baseline_at?: string | null
           timezone?: string | null
           updated_at?: string
@@ -1260,6 +1280,7 @@ export type Database = {
           display_name?: string | null
           id?: string
           is_private?: boolean
+          new_content_baseline_at?: string | null
           sports_blogs_baseline_at?: string | null
           timezone?: string | null
           updated_at?: string
