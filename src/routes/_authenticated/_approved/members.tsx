@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { resetUserMfa } from "@/lib/mfa.functions";
 import profileHeader from "@/assets/profile-header.jpg";
+import { useOnlineUsers } from "@/hooks/use-online-users";
 
 export const Route = createFileRoute("/_authenticated/_approved/members")({
   component: MembersPage,
@@ -46,6 +47,7 @@ const ROLE_COLOR: Record<string, string> = {
 function MembersPage() {
   const { hasAny, user: viewer } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
+  const onlineUsers = useOnlineUsers();
 
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [rolesByUser, setRolesByUser] = useState<Record<string, string[]>>({});
@@ -211,6 +213,7 @@ function MembersPage() {
           const userRoles = rolesByUser[p.id] ?? ["member"];
           const name = p.display_name ?? p.username ?? "Unknown";
           const initial = name.slice(0, 1).toUpperCase();
+          const isOnline = onlineUsers.has(p.id);
           return (
             <div
               key={p.id}
@@ -222,11 +225,20 @@ function MembersPage() {
                 aria-hidden
               />
               <div className="px-4 -mt-8 pb-4 flex flex-col flex-1">
-                <img
-                  src={p.avatar_url || "/default-avatar.png"}
-                  alt=""
-                  className="size-16 rounded-2xl object-cover ring-4 ring-surface"
-                />
+                <div className="relative w-fit">
+                  <img
+                    src={p.avatar_url || "/default-avatar.png"}
+                    alt=""
+                    className="size-16 rounded-2xl object-cover ring-4 ring-surface"
+                  />
+                  <span
+                    title={isOnline ? "Online" : "Offline"}
+                    aria-label={isOnline ? "Online" : "Offline"}
+                    className={`absolute -bottom-0.5 -right-0.5 size-4 rounded-full ring-2 ring-surface ${
+                      isOnline ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]" : "bg-zinc-500"
+                    }`}
+                  />
+                </div>
                 <div className="mt-3">
                   <Link
                     to="/u/$username"
@@ -235,6 +247,12 @@ function MembersPage() {
                   >
                     {name}
                   </Link>
+                  <div className="text-[10px] mt-0.5 flex items-center gap-1.5">
+                    <span className={`size-1.5 rounded-full ${isOnline ? "bg-emerald-500" : "bg-zinc-500"}`} />
+                    <span className={isOnline ? "text-emerald-400" : "text-muted-foreground"}>
+                      {isOnline ? "Online" : "Offline"}
+                    </span>
+                  </div>
                   {p.username && (
                     <div className="text-[11px] text-muted-foreground">@{p.username}</div>
                   )}
