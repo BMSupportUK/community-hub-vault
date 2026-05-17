@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate, Outlet, useChildMatches } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, Search, Pencil, Trash2, ImageIcon, GripVertical, Check, Circle, X, ChevronDown, ChevronRight } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, ImageIcon, GripVertical, Check, EyeOff, X, ChevronDown, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -463,13 +463,21 @@ function SportsGuidesPage() {
                           <div className="mt-auto pt-3 flex items-center gap-2">
                             <Button size="sm" className="flex-1 bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white border-0" onClick={() => navigate({ to: "/sports-guides/read/$id", params: { id: b.id }, search: { cat: b.category_id } })}>Click to Read</Button>
                             <Button
-                              size="icon"
-                              variant="ghost"
-                              className="text-purple-200 hover:text-white hover:bg-purple-800/60"
+                              size="sm"
+                              variant="outline"
+                              className={
+                                isUnread(b)
+                                  ? "border-fuchsia-500/60 bg-fuchsia-500/15 text-fuchsia-100 hover:bg-fuchsia-500/25"
+                                  : "border-purple-500/40 bg-purple-900/40 text-purple-100 hover:bg-purple-800/60"
+                              }
                               title={isUnread(b) ? "Mark as read" : "Mark as unread"}
                               onClick={() => (isUnread(b) ? markRead(b) : markUnread(b))}
                             >
-                              {isUnread(b) ? <Check className="size-4" /> : <Circle className="size-4" />}
+                              {isUnread(b) ? (
+                                <><Check className="size-4 mr-1" /> Mark read</>
+                              ) : (
+                                <><EyeOff className="size-4 mr-1" /> Mark unread</>
+                              )}
                             </Button>
                             {isMod && (
                               <>
