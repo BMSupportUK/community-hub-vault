@@ -880,19 +880,7 @@ function ReferralsPanel({
   onDelete: (id: string) => void;
 }) {
   return (
-    <section className="relative overflow-hidden rounded-3xl border border-white/20 shadow-[0_20px_70px_-20px_rgba(0,0,0,0.55)] text-white">
-      <img
-        src={referralsBg}
-        alt=""
-        aria-hidden
-        loading="lazy"
-        width={1920}
-        height={1080}
-        className="absolute inset-0 h-full w-full object-cover"
-      />
-      <div className="absolute inset-0 bg-gradient-to-br from-rose-950/70 via-fuchsia-900/55 to-amber-900/60" />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(255,200,150,0.25),transparent_60%)]" />
-
+    <section className="relative text-white">
       <div className="relative p-6 sm:p-8">
         <div className="flex items-end justify-between gap-4 flex-wrap mb-6">
           <div>
