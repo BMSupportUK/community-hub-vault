@@ -1,10 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { ShieldAlert, X } from "lucide-react";
+import { ShieldAlert } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-
-const DISMISS_KEY = "twofa-banner-dismissed";
 
 export function TwoFactorBanner() {
   const { user } = useAuth();
@@ -12,7 +10,6 @@ export function TwoFactorBanner() {
 
   useEffect(() => {
     if (!user) return;
-    if (typeof window !== "undefined" && localStorage.getItem(DISMISS_KEY) === "1") return;
     (async () => {
       const { data } = await supabase.auth.mfa.listFactors();
       const hasVerified = (data?.totp ?? []).some((f) => f.status === "verified");
@@ -32,13 +29,6 @@ export function TwoFactorBanner() {
             2FA
           </Link>
         </div>
-        <button
-          aria-label="Dismiss"
-          onClick={() => { localStorage.setItem(DISMISS_KEY, "1"); setShow(false); }}
-          className="p-0.5 rounded hover:bg-muted text-muted-foreground"
-        >
-          <X className="size-3" />
-        </button>
       </div>
     </div>
   );
