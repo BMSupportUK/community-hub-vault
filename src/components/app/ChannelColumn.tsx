@@ -129,17 +129,14 @@ export function ChannelColumn({
               if (dragChan) { e.preventDefault(); dropChannelOnGroup(g.label); setDragChan(null); }
             }}
           >
-            <div
-              className={cn(
-                "group/cat px-2 pb-1 text-[11px] font-bold uppercase tracking-wider text-foreground flex items-center gap-1",
-              )}
-            >
-              <ChevronDown className="size-3" />
-              {g.icon ? <g.icon className="size-3" /> : null}
-              <span className="flex-1 truncate">{g.label}</span>
-            </div>
-            {(g.onAddItem || g.onEditGroupIcon || g.onRenameGroup || g.onEditGroupPerms || g.onDeleteGroup || onReorderGroups) && (
-              <div className="hidden group-hover/cat:flex items-center gap-1 px-2 pb-1 text-muted-foreground">
+            <div className="group/cat px-2 pb-1">
+              <div className="text-[11px] font-bold uppercase tracking-wider text-foreground flex items-center gap-1">
+                <ChevronDown className="size-3" />
+                {g.icon ? <g.icon className="size-3" /> : null}
+                <span className="flex-1 truncate">{g.label}</span>
+              </div>
+              {(g.onAddItem || g.onEditGroupIcon || g.onRenameGroup || g.onEditGroupPerms || g.onDeleteGroup || onReorderGroups) && (
+                <div className="hidden group-hover/cat:flex items-center gap-1 pt-1 pl-5 text-muted-foreground">
                 {onReorderGroups && (
                   <>
                     <button
@@ -185,8 +182,9 @@ export function ChannelColumn({
                     <Trash2 className="size-3.5" />
                   </button>
                 )}
-              </div>
-            )}
+                </div>
+              )}
+            </div>
             <div className="space-y-px">
               {g.items.map((it) => {
                 const Icon = it.icon ?? Hash;
