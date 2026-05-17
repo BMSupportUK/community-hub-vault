@@ -36,6 +36,10 @@ interface SignupInfo {
   country: string | null;
   region: string | null;
   city: string | null;
+  geo_latitude: number | null;
+  geo_longitude: number | null;
+  geo_accuracy_m: number | null;
+  geo_permission: string | null;
 }
 
 interface Props {
@@ -85,6 +89,16 @@ export function SignupInfoDialog({ userId, trigger, displayName }: Props) {
         ],
         ["ISP", info.isp],
         ["Location", [info.city, info.region, info.country].filter(Boolean).join(", ") || null],
+        [
+          "Precise location",
+          info.geo_latitude != null && info.geo_longitude != null
+            ? `${info.geo_latitude.toFixed(5)}, ${info.geo_longitude.toFixed(5)}${
+                info.geo_accuracy_m ? ` (±${Math.round(info.geo_accuracy_m)}m)` : ""
+              }`
+            : info.geo_permission
+              ? `Not shared (${info.geo_permission})`
+              : "Not shared",
+        ],
         ["User agent", info.user_agent],
         ["Platform", info.platform],
         ["Vendor", info.vendor],
