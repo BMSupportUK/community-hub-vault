@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/_authenticated/rejected")({
+export const Route = createFileRoute("/_authenticated/banned")({
   component: RejectedPage,
 });
 
