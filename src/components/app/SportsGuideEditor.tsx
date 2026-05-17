@@ -159,11 +159,22 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
         .maybeSingle();
       payload.sort_order = ((maxRow?.sort_order ?? 0) as number) + 10;
     }
+    const nowIso = new Date().toISOString();
     const { error } = editing.id
-      ? await supabase.from("sports_blogs").update({ ...payload, updated_at: new Date().toISOString() }).eq("id", editing.id)
+      ? await supabase.from("sports_blogs").update({ ...payload, updated_at: nowIso }).eq("id", editing.id)
       : await supabase.from("sports_blogs").insert({ ...payload, created_by: user?.id ?? null });
     setSaving(false);
     if (error) return toast.error(error.message);
+    // The editor just saw the new version — mark it as read for them so it
+    // only appears unread to other users.
+    if (editing.id && user?.id) {
+      await supabase
+        .from("sports_blog_reads")
+        .upsert(
+          { user_id: user.id, blog_id: editing.id, read_at: nowIso },
+          { onConflict: "user_id,blog_id" }
+        );
+    }
     if (!editing.id) {
       try { localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
     }
