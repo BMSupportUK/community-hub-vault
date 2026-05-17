@@ -11,7 +11,6 @@ import {
   Trash2,
   Hash,
   FolderPlus,
-  ImageIcon,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
