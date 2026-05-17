@@ -1206,6 +1206,10 @@ export type Database = {
           created_at: string
           device_memory: string | null
           extra: Json | null
+          geo_accuracy_m: number | null
+          geo_latitude: number | null
+          geo_longitude: number | null
+          geo_permission: string | null
           hw_concurrency: string | null
           ip: string | null
           is_proxy: boolean | null
@@ -1233,6 +1237,10 @@ export type Database = {
           created_at?: string
           device_memory?: string | null
           extra?: Json | null
+          geo_accuracy_m?: number | null
+          geo_latitude?: number | null
+          geo_longitude?: number | null
+          geo_permission?: string | null
           hw_concurrency?: string | null
           ip?: string | null
           is_proxy?: boolean | null
@@ -1260,6 +1268,10 @@ export type Database = {
           created_at?: string
           device_memory?: string | null
           extra?: Json | null
+          geo_accuracy_m?: number | null
+          geo_latitude?: number | null
+          geo_longitude?: number | null
+          geo_permission?: string | null
           hw_concurrency?: string | null
           ip?: string | null
           is_proxy?: boolean | null

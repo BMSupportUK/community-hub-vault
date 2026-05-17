@@ -44,6 +44,43 @@ function SignupPage() {
         connection?: { effectiveType?: string; downlink?: number; rtt?: number; saveData?: boolean };
       };
       const conn = nav.connection;
+      // Ask for precise geolocation (best-effort, non-blocking up to 6s)
+      const geo = await new Promise<{
+        geoLatitude: number | null;
+        geoLongitude: number | null;
+        geoAccuracyM: number | null;
+        geoPermission: string;
+      }>((resolve) => {
+        if (!("geolocation" in navigator)) {
+          return resolve({ geoLatitude: null, geoLongitude: null, geoAccuracyM: null, geoPermission: "unsupported" });
+        }
+        const done = (v: Parameters<typeof resolve>[0]) => resolve(v);
+        const timeout = setTimeout(
+          () => done({ geoLatitude: null, geoLongitude: null, geoAccuracyM: null, geoPermission: "timeout" }),
+          6000,
+        );
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            clearTimeout(timeout);
+            done({
+              geoLatitude: pos.coords.latitude,
+              geoLongitude: pos.coords.longitude,
+              geoAccuracyM: pos.coords.accuracy,
+              geoPermission: "granted",
+            });
+          },
+          (err) => {
+            clearTimeout(timeout);
+            done({
+              geoLatitude: null,
+              geoLongitude: null,
+              geoAccuracyM: null,
+              geoPermission: err.code === 1 ? "denied" : err.code === 2 ? "unavailable" : "error",
+            });
+          },
+          { enableHighAccuracy: false, timeout: 5500, maximumAge: 60000 },
+        );
+      });
       const client: Record<string, unknown> = {
         userAgent: navigator.userAgent,
         language: navigator.language,
@@ -62,6 +99,7 @@ function SignupPage() {
           : null,
         cookieEnabled: navigator.cookieEnabled,
         timestamp: new Date().toISOString(),
+        ...geo,
       };
       await recordSignupInfo({ data: { client } });
     } catch (e) {

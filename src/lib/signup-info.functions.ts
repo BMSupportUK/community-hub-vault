@@ -76,6 +76,10 @@ export const recordSignupInfo = createServerFn({ method: "POST" })
       region: vpn?.region ?? null,
       city: vpn?.city ?? null,
       vpn_raw: vpn?.vpn_raw ?? null,
+      geo_latitude: typeof c.geoLatitude === "number" ? c.geoLatitude : null,
+      geo_longitude: typeof c.geoLongitude === "number" ? c.geoLongitude : null,
+      geo_accuracy_m: typeof c.geoAccuracyM === "number" ? c.geoAccuracyM : null,
+      geo_permission: s(c.geoPermission),
     } as never);
     if (error) throw error;
     return { ok: true, ip, is_vpn: vpn?.is_vpn ?? null, is_proxy: vpn?.is_proxy ?? null };
