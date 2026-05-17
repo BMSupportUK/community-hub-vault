@@ -313,6 +313,16 @@ function SecurityGate({ hasPin, onUnlocked }: { hasPin: boolean; onUnlocked: () 
       <div className="size-12 rounded-2xl bg-surface-2 grid place-items-center mb-4">
         <Lock className="size-5 text-primary" />
       </div>
+      {isLocked && (
+        <div className="mb-4 px-3 py-2 rounded-lg border border-destructive/40 bg-destructive/10 text-destructive text-sm">
+          Too many failed attempts. Try again in {secondsRemaining}s.
+        </div>
+      )}
+      {!isLocked && failedCount > 0 && hasPin && (
+        <div className="mb-4 px-3 py-2 rounded-lg border border-amber-500/40 bg-amber-500/10 text-amber-400 text-xs">
+          {5 - failedCount} attempt{5 - failedCount === 1 ? "" : "s"} remaining before lockout.
+        </div>
+      )}
       {!hasPin ? (
         <>
           <h2 className="font-display text-lg font-bold">Set your admin PIN</h2>
