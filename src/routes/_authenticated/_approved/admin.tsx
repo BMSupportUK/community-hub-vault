@@ -339,7 +339,7 @@ function SecurityGate({ hasPin, onUnlocked }: { hasPin: boolean; onUnlocked: () 
           <p className="text-sm text-muted-foreground mb-4">Enter your account password and admin PIN to continue.</p>
           <input value={password} onChange={(e) => setPassword(e.target.value)} type="password" placeholder="Account password" className="w-full mb-2 px-3 py-2.5 rounded-lg bg-surface-2 border border-border text-sm" autoFocus />
           <input value={pin} onChange={(e) => setPin(e.target.value)} type="password" placeholder="Admin PIN" className="w-full mb-4 px-3 py-2.5 rounded-lg bg-surface-2 border border-border text-sm" onKeyDown={(e) => e.key === "Enter" && unlock()} />
-          <button onClick={unlock} disabled={busy} className="w-full py-2.5 rounded-lg bg-primary text-primary-foreground font-medium disabled:opacity-60 flex items-center justify-center gap-2">
+          <button onClick={unlock} disabled={busy || isLocked} className="w-full py-2.5 rounded-lg bg-primary text-primary-foreground font-medium disabled:opacity-60 flex items-center justify-center gap-2">
             {busy ? <Loader2 className="size-4 animate-spin" /> : <KeyRound className="size-4" />} Unlock dashboard
           </button>
           {hasTotp && (
@@ -380,7 +380,7 @@ function SecurityGate({ hasPin, onUnlocked }: { hasPin: boolean; onUnlocked: () 
             autoFocus
             onKeyDown={(e) => e.key === "Enter" && unlockWithTotp()}
           />
-          <button onClick={unlockWithTotp} disabled={busy} className="w-full py-2.5 rounded-lg bg-primary text-primary-foreground font-medium disabled:opacity-60 flex items-center justify-center gap-2">
+          <button onClick={unlockWithTotp} disabled={busy || isLocked} className="w-full py-2.5 rounded-lg bg-primary text-primary-foreground font-medium disabled:opacity-60 flex items-center justify-center gap-2">
             {busy ? <Loader2 className="size-4 animate-spin" /> : <KeyRound className="size-4" />} Verify & unlock
           </button>
           <button
@@ -403,7 +403,7 @@ function SecurityGate({ hasPin, onUnlocked }: { hasPin: boolean; onUnlocked: () 
             autoFocus
             onKeyDown={(e) => e.key === "Enter" && unlockWithBackup()}
           />
-          <button onClick={unlockWithBackup} disabled={busy} className="w-full py-2.5 rounded-lg bg-primary text-primary-foreground font-medium disabled:opacity-60 flex items-center justify-center gap-2">
+          <button onClick={unlockWithBackup} disabled={busy || isLocked} className="w-full py-2.5 rounded-lg bg-primary text-primary-foreground font-medium disabled:opacity-60 flex items-center justify-center gap-2">
             {busy ? <Loader2 className="size-4 animate-spin" /> : <LifeBuoy className="size-4" />} Verify & unlock
           </button>
           <button
