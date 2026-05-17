@@ -14,6 +14,7 @@ import { ShiftStartEndAlert } from "@/components/app/ShiftStartEndAlert";
 import { SubscriptionExpiry } from "@/components/app/SubscriptionExpiry";
 import { ModerationPendingBadge } from "@/components/app/ModerationPendingBadge";
 import { logMyIp } from "@/lib/ip-log.functions";
+import { useOnlineUsers } from "@/hooks/use-online-users";
 
 export const Route = createFileRoute("/_authenticated")({
   beforeLoad: async ({ location }) => {
@@ -29,6 +30,8 @@ function AuthLayout() {
   const path = useRouterState({ select: (r) => r.location.pathname });
   const logIp = useServerFn(logMyIp);
   const loggedRef = useRef(false);
+  // Broadcast this user's presence globally while signed in.
+  useOnlineUsers();
 
   useEffect(() => {
     if (loading || isPending || loggedRef.current) return;
