@@ -70,7 +70,7 @@ export const requestMfaReset = createServerFn({ method: "POST" })
     const { data: prof } = await supabaseAdmin
       .from("profiles")
       .select("display_name, username")
-      .eq("user_id", userId)
+      .eq("id", userId)
       .maybeSingle();
     userName = (prof as any)?.display_name || (prof as any)?.username || undefined;
 
@@ -104,7 +104,9 @@ export const requestMfaReset = createServerFn({ method: "POST" })
     const userHtml = await render(userEl);
     const userText = await render(userEl, { plainText: true });
     const userSubject =
-      typeof userTpl.subject === "function" ? userTpl.subject({}) : userTpl.subject;
+      typeof userTpl.subject === "function"
+        ? (userTpl.subject as (d: Record<string, any>) => string)({})
+        : userTpl.subject;
 
     const idem = `mfa-reset-${userId}-${Date.now()}`;
 
