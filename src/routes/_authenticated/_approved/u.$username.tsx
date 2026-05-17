@@ -1164,6 +1164,7 @@ function RevealGate({ hasPin, onUnlocked, onPinSet }: { hasPin: boolean | null; 
   const [pin, setPin] = useState("");
   const [confirmPin, setConfirmPin] = useState("");
   const [busy, setBusy] = useState(false);
+  const [mode, setMode] = useState<"unlock" | "reset">("unlock");
 
   if (hasPin === null) return <div className="grid place-items-center py-6 text-muted-foreground"><Loader2 className="size-5 animate-spin" /></div>;
 
@@ -1216,6 +1217,55 @@ function RevealGate({ hasPin, onUnlocked, onPinSet }: { hasPin: boolean | null; 
     } finally { setBusy(false); }
   };
 
+  const resetPin = async () => {
+    if (!user?.email) return;
+    if (!password) return toast.error("Enter your account password");
+    if (pin.length < 4) return toast.error("PIN must be at least 4 characters");
+    if (pin !== confirmPin) return toast.error("PINs do not match");
+    setBusy(true);
+    try {
+      const { error: signErr } = await supabase.auth.signInWithPassword({ email: user.email, password });
+      if (signErr) throw new Error("Incorrect password");
+      const hash = await sha256Hex(`${user.id}:${pin}`);
+      const { error } = await supabase.from("vault_pins").upsert({ user_id: user.id, pin_hash: hash });
+      if (error) throw error;
+      toast.success("Vault PIN reset. Please unlock with your new PIN.");
+      setPassword(""); setPin(""); setConfirmPin("");
+      setMode("unlock");
+    } catch (e: any) {
+      toast.error(e.message ?? "Reset failed");
+    } finally { setBusy(false); }
+  };
+
+  if (mode === "reset") {
+    return (
+      <div className="rounded-xl bg-surface-2 border border-border p-4">
+        <p className="text-sm text-muted-foreground mb-3">Confirm your account password, then choose a new vault PIN.</p>
+        <div className="grid sm:grid-cols-3 gap-2 mb-3">
+          <input value={password} onChange={(e) => setPassword(e.target.value)} type="password" placeholder="Account password"
+            className="px-3 py-2 rounded-lg bg-background border border-border text-sm" />
+          <input value={pin} onChange={(e) => setPin(e.target.value)} type="password" placeholder="New PIN (min 4)"
+            className="px-3 py-2 rounded-lg bg-background border border-border text-sm" />
+          <input value={confirmPin} onChange={(e) => setConfirmPin(e.target.value)} type="password" placeholder="Confirm new PIN"
+            className="px-3 py-2 rounded-lg bg-background border border-border text-sm"
+            onKeyDown={(e) => e.key === "Enter" && resetPin()} />
+        </div>
+        <div className="flex items-center gap-2">
+          <button onClick={resetPin} disabled={busy} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium disabled:opacity-60">
+            {busy ? <Loader2 className="size-4 animate-spin" /> : <Lock className="size-4" />} Save new PIN
+          </button>
+          <button
+            type="button"
+            onClick={() => { setMode("unlock"); setPin(""); setConfirmPin(""); }}
+            className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2"
+          >
+            Back to unlock
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="rounded-xl bg-surface-2 border border-border p-4">
       <p className="text-sm text-muted-foreground mb-3">Enter your account password and vault PIN to reveal credentials.</p>
@@ -1226,9 +1276,18 @@ function RevealGate({ hasPin, onUnlocked, onPinSet }: { hasPin: boolean | null; 
           className="px-3 py-2 rounded-lg bg-background border border-border text-sm"
           onKeyDown={(e) => e.key === "Enter" && unlock()} />
       </div>
-      <button onClick={unlock} disabled={busy} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium disabled:opacity-60">
-        {busy ? <Loader2 className="size-4 animate-spin" /> : <ShieldCheck className="size-4" />} Reveal credentials
-      </button>
+      <div className="flex items-center gap-3 flex-wrap">
+        <button onClick={unlock} disabled={busy} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium disabled:opacity-60">
+          {busy ? <Loader2 className="size-4 animate-spin" /> : <ShieldCheck className="size-4" />} Reveal credentials
+        </button>
+        <button
+          type="button"
+          onClick={() => { setMode("reset"); setPin(""); setConfirmPin(""); }}
+          className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2"
+        >
+          Forgot your PIN? Reset it
+        </button>
+      </div>
     </div>
   );
 }
