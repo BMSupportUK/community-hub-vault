@@ -125,8 +125,8 @@ function ProfilePage() {
   const [friends, setFriends] = useState<FriendRow[]>([]);
   const [rel, setRel] = useState<FriendRel>({ kind: "none" });
   const [relBusy, setRelBusy] = useState(false);
-  const initialTab = (["welcome","profile","creds","tickets","orders","referrals","friends"].includes(search.tab ?? "") ? search.tab : "welcome") as "welcome" | "profile" | "creds" | "tickets" | "orders" | "referrals" | "friends";
-  const [mainTab, setMainTab] = useState<"welcome" | "profile" | "creds" | "tickets" | "orders" | "referrals" | "friends">(initialTab);
+  const initialTab = (["profile","creds","tickets","orders","referrals","friends"].includes(search.tab ?? "") ? search.tab : "profile") as "profile" | "creds" | "tickets" | "orders" | "referrals" | "friends";
+  const [mainTab, setMainTab] = useState<"profile" | "creds" | "tickets" | "orders" | "referrals" | "friends">(initialTab);
 
   const isOwner = !!profile && !!viewer && profile.id === viewer.id;
   const canSeeCreds = isOwner || isAdmin;
@@ -423,7 +423,6 @@ function ProfilePage() {
   }
 
   const tabDefs = [
-    { id: "welcome", label: "Welcome" },
     { id: "profile", label: "Profile" },
     ...(canSeeCreds ? [{ id: "creds", label: "Credentials" }] : []),
     { id: "tickets", label: `Tickets (${tickets.length})` },
