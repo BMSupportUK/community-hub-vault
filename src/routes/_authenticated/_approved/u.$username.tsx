@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import profileHeader from "@/assets/profile-header.jpg";
 import tvLoginIllustration from "@/assets/tv-login-illustration.jpg";
+import referralsBg from "@/assets/referrals-bg.jpg";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { listTimeZones } from "@/hooks/use-user-timezone";
