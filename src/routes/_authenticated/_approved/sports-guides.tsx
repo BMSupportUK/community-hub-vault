@@ -118,11 +118,11 @@ function SportsGuidesPage() {
         baselineAt: baseline,
       };
     },
-    staleTime: 5 * 60 * 1000,
+    staleTime: 0,
     gcTime: 30 * 60 * 1000,
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
   });
 
   const categories = dataQuery.data?.categories ?? [];
@@ -163,7 +163,7 @@ function SportsGuidesPage() {
     for (const b of blogs) if (isUnread(b)) m[b.category_id] = (m[b.category_id] ?? 0) + 1;
     return m;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [blogs, reads]);
+  }, [blogs, reads, baselineAt]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();

@@ -43,14 +43,21 @@ function ReadPage() {
         navigate({ to: "/sports-guides" });
         return;
       }
-      setBlog(b as Blog);
+      const blogData = b as Blog;
+      setBlog(blogData);
       setCategories((cats ?? []) as Category[]);
       setLoading(false);
       if (user?.id) {
+        const readAt = new Date().toISOString();
+        queryClient.setQueryData(
+          ["sports-guides-data", user.id],
+          (prev: { categories: Category[]; blogs: Blog[]; reads: Record<string, string>; baselineAt: string | null } | undefined) =>
+            prev ? { ...prev, reads: { ...prev.reads, [id]: readAt } } : prev
+        );
         await supabase
           .from("sports_blog_reads")
           .upsert(
-            { user_id: user.id, blog_id: id, read_at: new Date().toISOString() },
+            { user_id: user.id, blog_id: id, read_at: readAt },
             { onConflict: "user_id,blog_id" }
           );
         queryClient.invalidateQueries({ queryKey: ["sports-guides-data", user.id] });
