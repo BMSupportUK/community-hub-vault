@@ -49,10 +49,10 @@ function BannedPage() {
         </div>
 
         <h1 className="font-display text-4xl md:text-5xl font-extrabold text-white tracking-tight">
-          Membership Rejected
+          Account Banned
         </h1>
         <p className="mt-3 text-red-200/90 text-base max-w-md">
-          Your membership request has been rejected. If you believe this is a mistake,
+          Your account has been banned from the site. If you believe this is a mistake,
           you can open an appeal and a moderator will review it.
         </p>
 
