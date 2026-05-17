@@ -18,7 +18,6 @@ import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
-import { Route as AuthenticatedRejectedRouteImport } from './routes/_authenticated/rejected'
 import { Route as AuthenticatedGateRouteImport } from './routes/_authenticated/gate'
 import { Route as AuthenticatedBannedRouteImport } from './routes/_authenticated/banned'
 import { Route as AuthenticatedAccountRejectedRouteImport } from './routes/_authenticated/account-rejected'
@@ -105,11 +104,6 @@ const EmailUnsubscribeRoute = EmailUnsubscribeRouteImport.update({
   id: '/email/unsubscribe',
   path: '/email/unsubscribe',
   getParentRoute: () => rootRouteImport,
-} as any)
-const AuthenticatedRejectedRoute = AuthenticatedRejectedRouteImport.update({
-  id: '/rejected',
-  path: '/rejected',
-  getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedGateRoute = AuthenticatedGateRouteImport.update({
   id: '/gate',
@@ -370,7 +364,6 @@ export interface FileRoutesByFullPath {
   '/account-rejected': typeof AuthenticatedAccountRejectedRoute
   '/banned': typeof AuthenticatedBannedRoute
   '/gate': typeof AuthenticatedGateRoute
-  '/rejected': typeof AuthenticatedRejectedRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/account-security': typeof AuthenticatedApprovedAccountSecurityRoute
   '/admin': typeof AuthenticatedApprovedAdminRoute
@@ -422,7 +415,6 @@ export interface FileRoutesByTo {
   '/account-rejected': typeof AuthenticatedAccountRejectedRoute
   '/banned': typeof AuthenticatedBannedRoute
   '/gate': typeof AuthenticatedGateRoute
-  '/rejected': typeof AuthenticatedRejectedRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/account-security': typeof AuthenticatedApprovedAccountSecurityRoute
   '/admin': typeof AuthenticatedApprovedAdminRoute
@@ -476,7 +468,6 @@ export interface FileRoutesById {
   '/_authenticated/account-rejected': typeof AuthenticatedAccountRejectedRoute
   '/_authenticated/banned': typeof AuthenticatedBannedRoute
   '/_authenticated/gate': typeof AuthenticatedGateRoute
-  '/_authenticated/rejected': typeof AuthenticatedRejectedRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/_authenticated/_approved/account-security': typeof AuthenticatedApprovedAccountSecurityRoute
   '/_authenticated/_approved/admin': typeof AuthenticatedApprovedAdminRoute
@@ -530,7 +521,6 @@ export interface FileRouteTypes {
     | '/account-rejected'
     | '/banned'
     | '/gate'
-    | '/rejected'
     | '/email/unsubscribe'
     | '/account-security'
     | '/admin'
@@ -582,7 +572,6 @@ export interface FileRouteTypes {
     | '/account-rejected'
     | '/banned'
     | '/gate'
-    | '/rejected'
     | '/email/unsubscribe'
     | '/account-security'
     | '/admin'
@@ -635,7 +624,6 @@ export interface FileRouteTypes {
     | '/_authenticated/account-rejected'
     | '/_authenticated/banned'
     | '/_authenticated/gate'
-    | '/_authenticated/rejected'
     | '/email/unsubscribe'
     | '/_authenticated/_approved/account-security'
     | '/_authenticated/_approved/admin'
@@ -759,13 +747,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/email/unsubscribe'
       preLoaderRoute: typeof EmailUnsubscribeRouteImport
       parentRoute: typeof rootRouteImport
-    }
-    '/_authenticated/rejected': {
-      id: '/_authenticated/rejected'
-      path: '/rejected'
-      fullPath: '/rejected'
-      preLoaderRoute: typeof AuthenticatedRejectedRouteImport
-      parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/gate': {
       id: '/_authenticated/gate'
@@ -1182,7 +1163,6 @@ interface AuthenticatedRouteChildren {
   AuthenticatedAccountRejectedRoute: typeof AuthenticatedAccountRejectedRoute
   AuthenticatedBannedRoute: typeof AuthenticatedBannedRoute
   AuthenticatedGateRoute: typeof AuthenticatedGateRoute
-  AuthenticatedRejectedRoute: typeof AuthenticatedRejectedRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
@@ -1190,7 +1170,6 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAccountRejectedRoute: AuthenticatedAccountRejectedRoute,
   AuthenticatedBannedRoute: AuthenticatedBannedRoute,
   AuthenticatedGateRoute: AuthenticatedGateRoute,
-  AuthenticatedRejectedRoute: AuthenticatedRejectedRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
