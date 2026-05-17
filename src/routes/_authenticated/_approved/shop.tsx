@@ -618,7 +618,7 @@ function Storefront() {
       shipping_name: info.name,
       email: info.email,
       customer_type: info.customer_type,
-      existing_username: info.customer_type === "existing" ? info.existing_username : null,
+      existing_username: info.existing_username?.trim() || null,
       discount_code: submittedCode || null,
       discount_cents: verifiedDiscountCents,
       wants_adult_content: info.wants_adult_content,
@@ -630,9 +630,10 @@ function Storefront() {
     }));
     const { error: ie } = await supabase.from("order_items").insert(items as never);
     if (ie) { toast.error(ie.message); return; }
+    const uname = info.existing_username?.trim() ?? "";
     const summaryLines = [
       `🧾 New order details`,
-      `• Customer: ${info.customer_type === "existing" ? `Existing — upgrading @${info.existing_username.trim()}` : "New customer"}`,
+      `• Customer: ${info.customer_type === "existing" ? `Existing — upgrading @${uname}` : `New customer — desired username @${uname}`}`,
       `• Adult content access: ${info.wants_adult_content ? "Yes" : "No"}`,
     ];
     await supabase.from("order_messages").insert({
@@ -1292,7 +1293,7 @@ function Checkout({ items, total, onClose, onPlace, onRemoveItem, onContinueShop
   };
 
   const canSubmit =
-    !!name && !!email && (customerType === "new" || !!existingUsername.trim())
+    !!name && !!email && !!existingUsername.trim()
     && adultContent !== ""
     && (!requiresMulti || agreedMulti)
     && (!requiresTriple || agreedTriple);
@@ -1351,9 +1352,12 @@ function Checkout({ items, total, onClose, onPlace, onRemoveItem, onContinueShop
                 </button>
               </div>
             </div>
-            {customerType === "existing" && (
-              <input value={existingUsername} onChange={(e) => setExistingUsername(e.target.value)} placeholder="Username you're extending" className="w-full px-3 py-2 rounded-lg bg-surface-2 text-sm border border-border focus:border-primary outline-none" />
-            )}
+            <input
+              value={existingUsername}
+              onChange={(e) => setExistingUsername(e.target.value)}
+              placeholder={customerType === "existing" ? "Username you're extending" : "Desired new username"}
+              className="w-full px-3 py-2 rounded-lg bg-surface-2 text-sm border border-border focus:border-primary outline-none"
+            />
             <div>
               <div className="text-[11px] uppercase tracking-wider text-muted-foreground mb-1">
                 Adult content access <span className="text-destructive">*</span>
