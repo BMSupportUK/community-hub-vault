@@ -433,7 +433,25 @@ function ProfilePage() {
   ];
 
   return (
-    <div className="flex-1 overflow-y-auto bg-gradient-to-br from-[#1a0b2e] via-[#2d1b4e] to-[#1a0b2e]">
+    <div className={cn(
+      "relative flex-1 overflow-y-auto",
+      mainTab === "referrals"
+        ? "bg-[#1a0b2e]"
+        : "bg-gradient-to-br from-[#1a0b2e] via-[#2d1b4e] to-[#1a0b2e]",
+    )}>
+      {mainTab === "referrals" && (
+        <div className="pointer-events-none fixed inset-0 z-0">
+          <img
+            src={referralsBg}
+            alt=""
+            aria-hidden
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-br from-rose-950/70 via-fuchsia-900/55 to-amber-900/60" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(255,200,150,0.25),transparent_60%)]" />
+        </div>
+      )}
+      <div className="relative z-10">
       <header className="px-8 pt-8 pb-6 border-b border-purple-500/30 bg-purple-950/40 backdrop-blur">
         <h1 className="font-display text-3xl font-bold bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 bg-clip-text text-transparent">
           {isOwner ? "Your Profile" : `${display}'s Profile`}
@@ -654,6 +672,7 @@ function ProfilePage() {
           onSaved={() => { setEditing(false); load(); }}
         />
       )}
+      </div>
     </div>
   );
 }
