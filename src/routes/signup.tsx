@@ -5,6 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Field } from "./login";
 import signupIllustration from "@/assets/signup-illustration.png";
 import { recordSignupInfo } from "@/lib/signup-info.functions";
+import { TurnstileWidget } from "@/components/app/TurnstileWidget";
+import { verifyTurnstile } from "@/lib/turnstile.functions";
 
 export const Route = createFileRoute("/signup")({
   beforeLoad: async () => {
@@ -21,10 +23,18 @@ function SignupPage() {
   const [displayName, setDisplayName] = useState("");
   const [inviteCode, setInviteCode] = useState("");
   const [busy, setBusy] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState("");
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!captchaToken) return toast.error("Please complete the captcha.");
     setBusy(true);
+    const verify = await verifyTurnstile({ data: { token: captchaToken } });
+    if (!verify.success) {
+      setBusy(false);
+      setCaptchaToken("");
+      return toast.error("Captcha verification failed. Please try again.");
+    }
     const { error } = await supabase.auth.signUp({
       email,
       password,
@@ -121,6 +131,7 @@ function SignupPage() {
               <Field label="Email" type="email" value={email} onChange={setEmail} />
               <Field label="Password" type="password" value={password} onChange={setPassword} />
               <Field label="Invite code (optional)" value={inviteCode} onChange={setInviteCode} required={false} />
+              <TurnstileWidget onToken={setCaptchaToken} onExpire={() => setCaptchaToken("")} />
               <button disabled={busy} className="w-full h-11 rounded-lg bg-primary text-primary-foreground font-medium shadow-glow hover:opacity-90 disabled:opacity-50">
                 {busy ? "Creating…" : "Request access"}
               </button>

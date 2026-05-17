@@ -3,6 +3,8 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import loginIllustration from "@/assets/login-illustration.png";
+import { TurnstileWidget } from "@/components/app/TurnstileWidget";
+import { verifyTurnstile } from "@/lib/turnstile.functions";
 
 export const Route = createFileRoute("/login")({
   beforeLoad: async () => {
@@ -17,10 +19,18 @@ function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState("");
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!captchaToken) return toast.error("Please complete the captcha.");
     setBusy(true);
+    const verify = await verifyTurnstile({ data: { token: captchaToken } });
+    if (!verify.success) {
+      setBusy(false);
+      setCaptchaToken("");
+      return toast.error("Captcha verification failed. Please try again.");
+    }
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) { setBusy(false); return toast.error(error.message); }
     // If the account has a verified 2FA factor, require it before proceeding.
@@ -71,6 +81,7 @@ function LoginPage() {
             <form onSubmit={submit} className="space-y-3">
         <Field label="Email" type="email" value={email} onChange={setEmail} />
         <Field label="Password" type="password" value={password} onChange={setPassword} />
+        <TurnstileWidget onToken={setCaptchaToken} onExpire={() => setCaptchaToken("")} />
         <button disabled={busy} className="w-full h-11 rounded-lg bg-primary text-primary-foreground font-medium shadow-glow hover:opacity-90 disabled:opacity-50">
           {busy ? "Signing in…" : "Sign in"}
         </button>
