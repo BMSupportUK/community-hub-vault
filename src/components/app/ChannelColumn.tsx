@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Hash, ChevronDown, Plus, Trash2, Shield, Smile, Pencil } from "lucide-react";
+import { Hash, ChevronDown, Plus, Trash2, Shield, Smile, Pencil, GripVertical } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
@@ -9,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 export interface ChannelGroup {
   label: string;
   icon?: React.ComponentType<{ className?: string }>;
-  items: { to: string; label: string; icon?: React.ComponentType<{ className?: string }>; badge?: number }[];
+  items: { id?: string; to: string; label: string; icon?: React.ComponentType<{ className?: string }>; badge?: number }[];
   onAddItem?: () => void;
   onDeleteItem?: (to: string) => void;
   onDeleteGroup?: () => void;
@@ -26,15 +26,23 @@ export function ChannelColumn({
   groups,
   footer,
   onAddGroup,
+  onReorderChannels,
+  onReorderGroups,
 }: {
   title: string;
   groups: ChannelGroup[];
   footer?: ReactNode;
   onAddGroup?: () => void;
+  onReorderChannels?: (ordered: { id: string; groupLabel: string }[]) => void;
+  onReorderGroups?: (orderedLabels: string[]) => void;
 }) {
   const path = useRouterState({ select: (r) => r.location.pathname });
   const { user } = useAuth();
   const [profile, setProfile] = useState<{ display_name: string | null; username: string | null; avatar_url: string | null } | null>(null);
+  const [dragChan, setDragChan] = useState<{ id: string; group: string } | null>(null);
+  const [dragGroup, setDragGroup] = useState<string | null>(null);
+  const [overChan, setOverChan] = useState<string | null>(null);
+  const [overGroup, setOverGroup] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -45,6 +53,53 @@ export function ChannelColumn({
       .maybeSingle()
       .then(({ data }) => setProfile(data ?? null));
   }, [user?.id]);
+
+  const flatten = () => {
+    const out: { id: string; group: string }[] = [];
+    for (const g of groups) for (const it of g.items) if (it.id) out.push({ id: it.id, group: g.label });
+    return out;
+  };
+
+  const dropChannelOnItem = (targetGroup: string, targetItemId: string) => {
+    if (!dragChan || !onReorderChannels) return;
+    const flat = flatten();
+    const fromIdx = flat.findIndex((c) => c.id === dragChan.id);
+    if (fromIdx < 0) return;
+    const [moved] = flat.splice(fromIdx, 1);
+    moved.group = targetGroup;
+    let targetIdx = flat.findIndex((c) => c.id === targetItemId);
+    if (targetIdx < 0) targetIdx = flat.length;
+    flat.splice(targetIdx, 0, moved);
+    onReorderChannels(flat.map((c) => ({ id: c.id, groupLabel: c.group })));
+  };
+
+  const dropChannelOnGroup = (targetGroup: string) => {
+    if (!dragChan || !onReorderChannels) return;
+    const flat = flatten();
+    const fromIdx = flat.findIndex((c) => c.id === dragChan.id);
+    if (fromIdx < 0) return;
+    const [moved] = flat.splice(fromIdx, 1);
+    moved.group = targetGroup;
+    // append at end of target group
+    let insertAt = flat.length;
+    for (let i = flat.length - 1; i >= 0; i--) {
+      if (flat[i].group === targetGroup) { insertAt = i + 1; break; }
+      if (i === 0) insertAt = 0;
+    }
+    if (!flat.some((c) => c.group === targetGroup)) insertAt = flat.length;
+    flat.splice(insertAt, 0, moved);
+    onReorderChannels(flat.map((c) => ({ id: c.id, groupLabel: c.group })));
+  };
+
+  const dropGroupOnGroup = (targetLabel: string) => {
+    if (!dragGroup || !onReorderGroups || dragGroup === targetLabel) return;
+    const labels = groups.map((g) => g.label);
+    const fromIdx = labels.indexOf(dragGroup);
+    const [moved] = labels.splice(fromIdx, 1);
+    const toIdx = labels.indexOf(targetLabel);
+    labels.splice(toIdx, 0, moved);
+    onReorderGroups(labels);
+  };
 
   return (
     <nav className="w-60 shrink-0 bg-surface flex flex-col border-r border-border">
@@ -62,8 +117,36 @@ export function ChannelColumn({
       </div>
       <div className="flex-1 overflow-y-auto scrollbar-thin px-2 py-3 space-y-4">
         {groups.map((g) => (
-          <div key={g.label}>
-            <div className="group/cat px-2 pb-1 text-[11px] font-bold uppercase tracking-wider text-foreground flex items-center gap-1">
+          <div
+            key={g.label}
+            onDragOver={(e) => {
+              if (dragChan || (dragGroup && dragGroup !== g.label)) {
+                e.preventDefault();
+              }
+            }}
+            onDrop={(e) => {
+              if (dragChan) { e.preventDefault(); dropChannelOnGroup(g.label); setDragChan(null); setOverGroup(null); }
+              else if (dragGroup) { e.preventDefault(); dropGroupOnGroup(g.label); setDragGroup(null); setOverGroup(null); }
+            }}
+            className={cn(overGroup === g.label && dragGroup && dragGroup !== g.label && "ring-1 ring-primary/40 rounded-md")}
+          >
+            <div
+              className={cn(
+                "group/cat px-2 pb-1 text-[11px] font-bold uppercase tracking-wider text-foreground flex items-center gap-1",
+                dragGroup === g.label && "opacity-50",
+              )}
+              draggable={!!onReorderGroups}
+              onDragStart={(e) => {
+                if (!onReorderGroups) return;
+                setDragGroup(g.label);
+                e.dataTransfer.effectAllowed = "move";
+              }}
+              onDragEnd={() => { setDragGroup(null); setOverGroup(null); }}
+              onDragEnter={() => { if (dragGroup && dragGroup !== g.label) setOverGroup(g.label); }}
+            >
+              {onReorderGroups && (
+                <GripVertical className="size-3 opacity-0 group-hover/cat:opacity-60 cursor-grab" />
+              )}
               <ChevronDown className="size-3" />
               {g.icon ? <g.icon className="size-3" /> : null}
               <span className="flex-1 truncate">{g.label}</span>
@@ -117,8 +200,37 @@ export function ChannelColumn({
               {g.items.map((it) => {
                 const Icon = it.icon ?? Hash;
                 const active = path === it.to || path.startsWith(it.to + "/");
+                const canDrag = !!onReorderChannels && !!it.id;
                 return (
-                  <div key={it.to} className="group/ch flex items-center">
+                  <div
+                    key={it.to}
+                    className={cn(
+                      "group/ch flex items-center",
+                      dragChan?.id === it.id && "opacity-40",
+                      overChan === it.to && dragChan && dragChan.id !== it.id && "border-t-2 border-primary",
+                    )}
+                    draggable={canDrag}
+                    onDragStart={(e) => {
+                      if (!canDrag) return;
+                      setDragChan({ id: it.id!, group: g.label });
+                      e.dataTransfer.effectAllowed = "move";
+                    }}
+                    onDragEnd={() => { setDragChan(null); setOverChan(null); }}
+                    onDragOver={(e) => {
+                      if (!dragChan || dragChan.id === it.id) return;
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setOverChan(it.to);
+                    }}
+                    onDragLeave={() => { if (overChan === it.to) setOverChan(null); }}
+                    onDrop={(e) => {
+                      if (!dragChan || dragChan.id === it.id || !it.id) return;
+                      e.preventDefault();
+                      e.stopPropagation();
+                      dropChannelOnItem(g.label, it.id);
+                      setDragChan(null); setOverChan(null);
+                    }}
+                  >
                     <Link
                       to={it.to}
                       className={cn(

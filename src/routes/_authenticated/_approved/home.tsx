@@ -289,6 +289,7 @@ function HomeLayout() {
         label,
         icon: categoryIcons[label] ? getIcon(categoryIcons[label]) : undefined,
         items: items.map((c) => ({
+          id: c.id,
           to: `/home/${c.slug}`,
           label: c.name,
           icon: getIcon(c.icon),
@@ -343,12 +344,59 @@ function HomeLayout() {
     }
   }
 
+  const reorderChannels = async (ordered: { id: string; groupLabel: string }[]) => {
+    if (!channels) return;
+    const byId = new Map(channels.map((c) => [c.id, c]));
+    const next = ordered.map((o, i) => {
+      const prev = byId.get(o.id)!;
+      return { ...prev, group_label: o.groupLabel, sort_order: (i + 1) * 10 };
+    });
+    setChannels(next);
+    const results = await Promise.all(
+      next.map((c) =>
+        supabase
+          .from("chat_channels")
+          .update({ sort_order: c.sort_order, group_label: c.group_label })
+          .eq("id", c.id),
+      ),
+    );
+    const err = results.find((r) => r.error)?.error;
+    if (err) {
+      toast.error(err.message);
+      load();
+    }
+  };
+
+  const reorderGroups = async (orderedLabels: string[]) => {
+    if (!channels) return;
+    const byGroup = new Map<string, ChannelRow[]>();
+    for (const c of channels) {
+      if (!byGroup.has(c.group_label)) byGroup.set(c.group_label, []);
+      byGroup.get(c.group_label)!.push(c);
+    }
+    const flat = orderedLabels.flatMap((l) => byGroup.get(l) ?? []);
+    const next = flat.map((c, i) => ({ ...c, sort_order: (i + 1) * 10 }));
+    setChannels(next);
+    const results = await Promise.all(
+      next.map((c) =>
+        supabase.from("chat_channels").update({ sort_order: c.sort_order }).eq("id", c.id),
+      ),
+    );
+    const err = results.find((r) => r.error)?.error;
+    if (err) {
+      toast.error(err.message);
+      load();
+    }
+  };
+
   return (
     <>
       <ChannelColumn
         title="Support Community"
         groups={groups}
         onAddGroup={isAdmin ? () => setShowAddGroup(true) : undefined}
+        onReorderChannels={isAdmin ? reorderChannels : undefined}
+        onReorderGroups={isAdmin ? reorderGroups : undefined}
       />
       <Outlet />
 
