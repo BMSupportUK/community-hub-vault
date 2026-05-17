@@ -16,6 +16,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import shiftsBg from "@/assets/shifts-bg.jpg";
 
 export const Route = createFileRoute("/_authenticated/_approved/shifts")({
   component: ShiftsPage,
@@ -377,8 +378,12 @@ function ShiftsPage() {
   }
 
   return (
-    <div className="flex-1 overflow-y-auto bg-background">
-      <header className="px-8 pt-8 pb-6 border-b border-border bg-surface/60 backdrop-blur">
+    <div
+      className="flex-1 overflow-y-auto relative bg-cover bg-center bg-fixed"
+      style={{ backgroundImage: `url(${shiftsBg})` }}
+    >
+      <div className="absolute inset-0 bg-background/70 backdrop-blur-[2px] pointer-events-none" aria-hidden />
+      <header className="relative px-8 pt-8 pb-6 border-b border-border bg-surface/60 backdrop-blur">
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div>
             <h1 className="font-display text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">Shifts</h1>
