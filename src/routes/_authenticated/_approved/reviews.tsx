@@ -112,17 +112,12 @@ function ReviewsPage() {
   };
 
   return (
-    <div className="relative flex-1 overflow-y-auto bg-[#1a0b2e]">
-      <div className="pointer-events-none fixed inset-0 z-0">
-        <img
-          src={reviewsBg}
-          alt=""
-          aria-hidden
-          className="absolute inset-0 h-full w-full object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-br from-[#1a0b2e]/80 via-purple-900/65 to-fuchsia-900/55" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(167,139,250,0.18),transparent_60%)]" />
-      </div>
+    <div
+      className="relative flex-1 overflow-y-auto bg-[#1a0b2e] bg-cover bg-center bg-no-repeat bg-fixed"
+      style={{ backgroundImage: `url(${reviewsBg})` }}
+    >
+      <div className="pointer-events-none absolute inset-0 z-0 bg-gradient-to-br from-[#1a0b2e]/80 via-purple-900/65 to-fuchsia-900/55" />
+      <div className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(ellipse_at_top_right,rgba(167,139,250,0.18),transparent_60%)]" />
       <div className="relative z-10">
       <header className="px-8 pt-8 pb-6 border-b border-purple-500/30 bg-purple-950/40 backdrop-blur">
         <h1 className="font-display text-3xl font-bold bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 bg-clip-text text-transparent">Customer Reviews</h1>
