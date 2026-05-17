@@ -618,7 +618,7 @@ function Storefront() {
       shipping_name: info.name,
       email: info.email,
       customer_type: info.customer_type,
-      existing_username: info.customer_type === "existing" ? info.existing_username : null,
+      existing_username: info.existing_username?.trim() || null,
       discount_code: submittedCode || null,
       discount_cents: verifiedDiscountCents,
       wants_adult_content: info.wants_adult_content,
@@ -630,9 +630,10 @@ function Storefront() {
     }));
     const { error: ie } = await supabase.from("order_items").insert(items as never);
     if (ie) { toast.error(ie.message); return; }
+    const uname = info.existing_username?.trim() ?? "";
     const summaryLines = [
       `🧾 New order details`,
-      `• Customer: ${info.customer_type === "existing" ? `Existing — upgrading @${info.existing_username.trim()}` : "New customer"}`,
+      `• Customer: ${info.customer_type === "existing" ? `Existing — upgrading @${uname}` : `New customer — desired username @${uname}`}`,
       `• Adult content access: ${info.wants_adult_content ? "Yes" : "No"}`,
     ];
     await supabase.from("order_messages").insert({
