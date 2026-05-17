@@ -1351,9 +1351,12 @@ function Checkout({ items, total, onClose, onPlace, onRemoveItem, onContinueShop
                 </button>
               </div>
             </div>
-            {customerType === "existing" && (
-              <input value={existingUsername} onChange={(e) => setExistingUsername(e.target.value)} placeholder="Username you're extending" className="w-full px-3 py-2 rounded-lg bg-surface-2 text-sm border border-border focus:border-primary outline-none" />
-            )}
+            <input
+              value={existingUsername}
+              onChange={(e) => setExistingUsername(e.target.value)}
+              placeholder={customerType === "existing" ? "Username you're extending" : "Desired new username"}
+              className="w-full px-3 py-2 rounded-lg bg-surface-2 text-sm border border-border focus:border-primary outline-none"
+            />
             <div>
               <div className="text-[11px] uppercase tracking-wider text-muted-foreground mb-1">
                 Adult content access <span className="text-destructive">*</span>
