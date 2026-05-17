@@ -86,6 +86,33 @@ export type Database = {
         }
         Relationships: []
       }
+      blacklist_entries: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          kind: Database["public"]["Enums"]["blacklist_kind"]
+          reason: string | null
+          value: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          kind: Database["public"]["Enums"]["blacklist_kind"]
+          reason?: string | null
+          value: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          kind?: Database["public"]["Enums"]["blacklist_kind"]
+          reason?: string | null
+          value?: string
+        }
+        Relationships: []
+      }
       breaks: {
         Row: {
           ended_at: string | null
@@ -2302,6 +2329,7 @@ export type Database = {
     }
     Functions: {
       app_encrypt: { Args: { p: string }; Returns: string }
+      apply_blacklist_ban: { Args: { _user_id: string }; Returns: undefined }
       can_in_channel: {
         Args: { _action: string; _channel: string; _user: string }
         Returns: boolean
@@ -2361,6 +2389,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_blacklisted: {
+        Args: { _email: string; _ip: string }
+        Returns: boolean
+      }
       move_to_dlq: {
         Args: {
           dlq_name: string
@@ -2398,6 +2430,7 @@ export type Database = {
         | "subscriber"
         | "nonsubscriber"
         | "rejected"
+      blacklist_kind: "email" | "ip"
       break_kind: "break" | "lunch"
       friendship_status: "pending" | "accepted"
       gate_status: "pending" | "approved" | "denied"
@@ -2557,6 +2590,7 @@ export const Constants = {
         "nonsubscriber",
         "rejected",
       ],
+      blacklist_kind: ["email", "ip"],
       break_kind: ["break", "lunch"],
       friendship_status: ["pending", "accepted"],
       gate_status: ["pending", "approved", "denied"],
