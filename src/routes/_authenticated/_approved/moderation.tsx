@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { ChannelColumn } from "@/components/app/ChannelColumn";
 import { toast } from "sonner";
 import { isAdminUnlocked } from "@/lib/admin-unlock";
+import { SignupInfoDialog } from "@/components/app/SignupInfoDialog";
 
 export const Route = createFileRoute("/_authenticated/_approved/moderation")({
   component: ModerationPage,
@@ -293,6 +294,9 @@ function ModerationPage() {
 
                   {expanded && (
                     <div className="border-t border-border bg-background/50">
+                      <div className="px-4 pt-3 flex justify-end">
+                        <SignupInfoDialog userId={a.user_id} displayName={name} />
+                      </div>
                       {a.reason && (
                         <div className="p-4 border-b border-border">
                           <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-muted-foreground mb-2">
