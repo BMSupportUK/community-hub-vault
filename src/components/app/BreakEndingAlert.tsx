@@ -14,6 +14,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
+import endLunchSfx from "@/assets/end-lunch.mp3";
 
 type BreakKind = "break" | "lunch";
 const BREAK_LIMITS: Record<BreakKind, number> = { break: 15 * 60, lunch: 30 * 60 };
@@ -84,7 +85,11 @@ export function BreakEndingAlert() {
       seen.add("over");
       setStage("over");
       try {
-        new Audio("data:audio/wav;base64,UklGRkQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YSAAAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIA=").play().catch(() => {});
+        if (active.kind === "lunch") {
+          new Audio(endLunchSfx).play().catch(() => {});
+        } else {
+          new Audio("data:audio/wav;base64,UklGRkQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YSAAAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIA=").play().catch(() => {});
+        }
       } catch { /* ignore */ }
     } else if (remaining > 0 && remaining <= WARN_AT && !seen.has("warn") && !seen.has("over")) {
       seen.add("warn");
