@@ -1,8 +1,10 @@
-import { createFileRoute, Link, useNavigate, redirect } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, redirect } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { ShieldCheck, LifeBuoy } from "lucide-react";
+import { ShieldCheck, LifeBuoy, Mail } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
+import { requestMfaReset } from "@/lib/mfa-reset-request.functions";
 
 export const Route = createFileRoute("/mfa-challenge")({
   beforeLoad: async () => {
@@ -18,6 +20,10 @@ function MfaChallengePage() {
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [showReset, setShowReset] = useState(false);
+  const [reason, setReason] = useState("");
+  const [sendingReset, setSendingReset] = useState(false);
+  const requestReset = useServerFn(requestMfaReset);
 
   useEffect(() => {
     (async () => {
@@ -88,13 +94,46 @@ function MfaChallengePage() {
             </form>
           )}
           <div className="mt-6 pt-6 border-t border-border text-xs text-muted-foreground space-y-2">
-            <Link
-              to="/tickets"
-              search={{ id: undefined, view: undefined, new2fa: 1 } as never}
+            <button
+              type="button"
+              onClick={() => setShowReset((v) => !v)}
               className="flex items-center gap-1.5 hover:text-primary"
             >
-              <LifeBuoy className="size-3.5" /> Lost your device? Contact support to reset 2FA
-            </Link>
+              <LifeBuoy className="size-3.5" /> Lost your device? Request a 2FA reset
+            </button>
+            {showReset && (
+              <div className="mt-2 rounded-lg border border-border bg-background p-3 space-y-2">
+                <p className="text-xs text-muted-foreground">
+                  We'll email our admin team and send you a confirmation. They'll verify your identity before resetting.
+                </p>
+                <textarea
+                  value={reason}
+                  onChange={(e) => setReason(e.target.value.slice(0, 500))}
+                  placeholder="Optional: what happened to your device?"
+                  rows={2}
+                  className="w-full text-xs rounded-md bg-input border border-border p-2 focus:outline-none focus:ring-2 focus:ring-ring"
+                />
+                <button
+                  type="button"
+                  disabled={sendingReset}
+                  onClick={async () => {
+                    setSendingReset(true);
+                    try {
+                      const r = await requestReset({ data: { reason: reason || undefined } });
+                      toast.success(`Request sent — ${r.notifiedAdmins} admin(s) notified`);
+                      setShowReset(false);
+                    } catch (e: any) {
+                      toast.error(e?.message ?? "Failed to send request");
+                    }
+                    setSendingReset(false);
+                  }}
+                  className="inline-flex items-center gap-1.5 h-8 px-3 rounded-md bg-primary text-primary-foreground text-xs font-medium disabled:opacity-50"
+                >
+                  <Mail className="size-3.5" />
+                  {sendingReset ? "Sending…" : "Send reset request"}
+                </button>
+              </div>
+            )}
             <button
               type="button"
               onClick={async () => { await supabase.auth.signOut(); navigate({ to: "/login" }); }}

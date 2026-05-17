@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as UnsubscribeRouteImport } from './routes/unsubscribe'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as MfaChallengeRouteImport } from './routes/mfa-challenge'
@@ -16,10 +17,12 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
 import { Route as AuthenticatedRejectedRouteImport } from './routes/_authenticated/rejected'
 import { Route as AuthenticatedGateRouteImport } from './routes/_authenticated/gate'
 import { Route as AuthenticatedAccountRejectedRouteImport } from './routes/_authenticated/account-rejected'
 import { Route as AuthenticatedApprovedRouteImport } from './routes/_authenticated/_approved'
+import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
 import { Route as AuthenticatedApprovedTicketsRouteImport } from './routes/_authenticated/_approved/tickets'
 import { Route as AuthenticatedApprovedStatusRouteImport } from './routes/_authenticated/_approved/status'
 import { Route as AuthenticatedApprovedStaffRouteImport } from './routes/_authenticated/_approved/staff'
@@ -45,6 +48,8 @@ import { Route as AuthenticatedApprovedAdminCredentialsRouteImport } from './rou
 import { Route as AuthenticatedApprovedAdminRouteImport } from './routes/_authenticated/_approved/admin'
 import { Route as AuthenticatedApprovedAccountSecurityRouteImport } from './routes/_authenticated/_approved/account-security'
 import { Route as AuthenticatedApprovedHomeIndexRouteImport } from './routes/_authenticated/_approved/home.index'
+import { Route as LovableEmailTransactionalSendRouteImport } from './routes/lovable/email/transactional/send'
+import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 import { Route as ApiPublicHooksBackupOrdersRouteImport } from './routes/api/public/hooks/backup-orders'
 import { Route as ApiPublicHooksBackupCredentialsRouteImport } from './routes/api/public/hooks/backup-credentials'
@@ -54,6 +59,11 @@ import { Route as AuthenticatedApprovedHomeChannelRouteImport } from './routes/_
 import { Route as AuthenticatedApprovedSportsGuidesReadIdRouteImport } from './routes/_authenticated/_approved/sports-guides.read.$id'
 import { Route as AuthenticatedApprovedSportsGuidesIdEditRouteImport } from './routes/_authenticated/_approved/sports-guides.$id.edit'
 
+const UnsubscribeRoute = UnsubscribeRouteImport.update({
+  id: '/unsubscribe',
+  path: '/unsubscribe',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
   path: '/signup',
@@ -88,6 +98,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const EmailUnsubscribeRoute = EmailUnsubscribeRouteImport.update({
+  id: '/email/unsubscribe',
+  path: '/email/unsubscribe',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedRejectedRoute = AuthenticatedRejectedRouteImport.update({
   id: '/rejected',
   path: '/rejected',
@@ -107,6 +122,11 @@ const AuthenticatedAccountRejectedRoute =
 const AuthenticatedApprovedRoute = AuthenticatedApprovedRouteImport.update({
   id: '/_approved',
   getParentRoute: () => AuthenticatedRoute,
+} as any)
+const LovableEmailSuppressionRoute = LovableEmailSuppressionRouteImport.update({
+  id: '/lovable/email/suppression',
+  path: '/lovable/email/suppression',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedApprovedTicketsRoute =
   AuthenticatedApprovedTicketsRouteImport.update({
@@ -258,6 +278,18 @@ const AuthenticatedApprovedHomeIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedApprovedHomeRoute,
   } as any)
+const LovableEmailTransactionalSendRoute =
+  LovableEmailTransactionalSendRouteImport.update({
+    id: '/lovable/email/transactional/send',
+    path: '/lovable/email/transactional/send',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const LovableEmailTransactionalPreviewRoute =
+  LovableEmailTransactionalPreviewRouteImport.update({
+    id: '/lovable/email/transactional/preview',
+    path: '/lovable/email/transactional/preview',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const LovableEmailQueueProcessRoute =
   LovableEmailQueueProcessRouteImport.update({
     id: '/lovable/email/queue/process',
@@ -314,9 +346,11 @@ export interface FileRoutesByFullPath {
   '/mfa-challenge': typeof MfaChallengeRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
+  '/unsubscribe': typeof UnsubscribeRoute
   '/account-rejected': typeof AuthenticatedAccountRejectedRoute
   '/gate': typeof AuthenticatedGateRoute
   '/rejected': typeof AuthenticatedRejectedRoute
+  '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/account-security': typeof AuthenticatedApprovedAccountSecurityRoute
   '/admin': typeof AuthenticatedApprovedAdminRoute
   '/admin-credentials': typeof AuthenticatedApprovedAdminCredentialsRoute
@@ -341,12 +375,15 @@ export interface FileRoutesByFullPath {
   '/staff': typeof AuthenticatedApprovedStaffRoute
   '/status': typeof AuthenticatedApprovedStatusRoute
   '/tickets': typeof AuthenticatedApprovedTicketsRoute
+  '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/home/$channel': typeof AuthenticatedApprovedHomeChannelRoute
   '/sports-guides/new': typeof AuthenticatedApprovedSportsGuidesNewRoute
   '/u/$username': typeof AuthenticatedApprovedUUsernameRoute
   '/api/public/hooks/backup-credentials': typeof ApiPublicHooksBackupCredentialsRoute
   '/api/public/hooks/backup-orders': typeof ApiPublicHooksBackupOrdersRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
+  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
+  '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
   '/home/': typeof AuthenticatedApprovedHomeIndexRoute
   '/sports-guides/$id/edit': typeof AuthenticatedApprovedSportsGuidesIdEditRoute
   '/sports-guides/read/$id': typeof AuthenticatedApprovedSportsGuidesReadIdRoute
@@ -358,9 +395,11 @@ export interface FileRoutesByTo {
   '/mfa-challenge': typeof MfaChallengeRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
+  '/unsubscribe': typeof UnsubscribeRoute
   '/account-rejected': typeof AuthenticatedAccountRejectedRoute
   '/gate': typeof AuthenticatedGateRoute
   '/rejected': typeof AuthenticatedRejectedRoute
+  '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/account-security': typeof AuthenticatedApprovedAccountSecurityRoute
   '/admin': typeof AuthenticatedApprovedAdminRoute
   '/admin-credentials': typeof AuthenticatedApprovedAdminCredentialsRoute
@@ -384,12 +423,15 @@ export interface FileRoutesByTo {
   '/staff': typeof AuthenticatedApprovedStaffRoute
   '/status': typeof AuthenticatedApprovedStatusRoute
   '/tickets': typeof AuthenticatedApprovedTicketsRoute
+  '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/home/$channel': typeof AuthenticatedApprovedHomeChannelRoute
   '/sports-guides/new': typeof AuthenticatedApprovedSportsGuidesNewRoute
   '/u/$username': typeof AuthenticatedApprovedUUsernameRoute
   '/api/public/hooks/backup-credentials': typeof ApiPublicHooksBackupCredentialsRoute
   '/api/public/hooks/backup-orders': typeof ApiPublicHooksBackupOrdersRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
+  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
+  '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
   '/home': typeof AuthenticatedApprovedHomeIndexRoute
   '/sports-guides/$id/edit': typeof AuthenticatedApprovedSportsGuidesIdEditRoute
   '/sports-guides/read/$id': typeof AuthenticatedApprovedSportsGuidesReadIdRoute
@@ -403,10 +445,12 @@ export interface FileRoutesById {
   '/mfa-challenge': typeof MfaChallengeRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
+  '/unsubscribe': typeof UnsubscribeRoute
   '/_authenticated/_approved': typeof AuthenticatedApprovedRouteWithChildren
   '/_authenticated/account-rejected': typeof AuthenticatedAccountRejectedRoute
   '/_authenticated/gate': typeof AuthenticatedGateRoute
   '/_authenticated/rejected': typeof AuthenticatedRejectedRoute
+  '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/_authenticated/_approved/account-security': typeof AuthenticatedApprovedAccountSecurityRoute
   '/_authenticated/_approved/admin': typeof AuthenticatedApprovedAdminRoute
   '/_authenticated/_approved/admin-credentials': typeof AuthenticatedApprovedAdminCredentialsRoute
@@ -431,12 +475,15 @@ export interface FileRoutesById {
   '/_authenticated/_approved/staff': typeof AuthenticatedApprovedStaffRoute
   '/_authenticated/_approved/status': typeof AuthenticatedApprovedStatusRoute
   '/_authenticated/_approved/tickets': typeof AuthenticatedApprovedTicketsRoute
+  '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/_authenticated/_approved/home/$channel': typeof AuthenticatedApprovedHomeChannelRoute
   '/_authenticated/_approved/sports-guides/new': typeof AuthenticatedApprovedSportsGuidesNewRoute
   '/_authenticated/_approved/u/$username': typeof AuthenticatedApprovedUUsernameRoute
   '/api/public/hooks/backup-credentials': typeof ApiPublicHooksBackupCredentialsRoute
   '/api/public/hooks/backup-orders': typeof ApiPublicHooksBackupOrdersRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
+  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
+  '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
   '/_authenticated/_approved/home/': typeof AuthenticatedApprovedHomeIndexRoute
   '/_authenticated/_approved/sports-guides/$id/edit': typeof AuthenticatedApprovedSportsGuidesIdEditRoute
   '/_authenticated/_approved/sports-guides/read/$id': typeof AuthenticatedApprovedSportsGuidesReadIdRoute
@@ -450,9 +497,11 @@ export interface FileRouteTypes {
     | '/mfa-challenge'
     | '/reset-password'
     | '/signup'
+    | '/unsubscribe'
     | '/account-rejected'
     | '/gate'
     | '/rejected'
+    | '/email/unsubscribe'
     | '/account-security'
     | '/admin'
     | '/admin-credentials'
@@ -477,12 +526,15 @@ export interface FileRouteTypes {
     | '/staff'
     | '/status'
     | '/tickets'
+    | '/lovable/email/suppression'
     | '/home/$channel'
     | '/sports-guides/new'
     | '/u/$username'
     | '/api/public/hooks/backup-credentials'
     | '/api/public/hooks/backup-orders'
     | '/lovable/email/queue/process'
+    | '/lovable/email/transactional/preview'
+    | '/lovable/email/transactional/send'
     | '/home/'
     | '/sports-guides/$id/edit'
     | '/sports-guides/read/$id'
@@ -494,9 +546,11 @@ export interface FileRouteTypes {
     | '/mfa-challenge'
     | '/reset-password'
     | '/signup'
+    | '/unsubscribe'
     | '/account-rejected'
     | '/gate'
     | '/rejected'
+    | '/email/unsubscribe'
     | '/account-security'
     | '/admin'
     | '/admin-credentials'
@@ -520,12 +574,15 @@ export interface FileRouteTypes {
     | '/staff'
     | '/status'
     | '/tickets'
+    | '/lovable/email/suppression'
     | '/home/$channel'
     | '/sports-guides/new'
     | '/u/$username'
     | '/api/public/hooks/backup-credentials'
     | '/api/public/hooks/backup-orders'
     | '/lovable/email/queue/process'
+    | '/lovable/email/transactional/preview'
+    | '/lovable/email/transactional/send'
     | '/home'
     | '/sports-guides/$id/edit'
     | '/sports-guides/read/$id'
@@ -538,10 +595,12 @@ export interface FileRouteTypes {
     | '/mfa-challenge'
     | '/reset-password'
     | '/signup'
+    | '/unsubscribe'
     | '/_authenticated/_approved'
     | '/_authenticated/account-rejected'
     | '/_authenticated/gate'
     | '/_authenticated/rejected'
+    | '/email/unsubscribe'
     | '/_authenticated/_approved/account-security'
     | '/_authenticated/_approved/admin'
     | '/_authenticated/_approved/admin-credentials'
@@ -566,12 +625,15 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/staff'
     | '/_authenticated/_approved/status'
     | '/_authenticated/_approved/tickets'
+    | '/lovable/email/suppression'
     | '/_authenticated/_approved/home/$channel'
     | '/_authenticated/_approved/sports-guides/new'
     | '/_authenticated/_approved/u/$username'
     | '/api/public/hooks/backup-credentials'
     | '/api/public/hooks/backup-orders'
     | '/lovable/email/queue/process'
+    | '/lovable/email/transactional/preview'
+    | '/lovable/email/transactional/send'
     | '/_authenticated/_approved/home/'
     | '/_authenticated/_approved/sports-guides/$id/edit'
     | '/_authenticated/_approved/sports-guides/read/$id'
@@ -585,13 +647,25 @@ export interface RootRouteChildren {
   MfaChallengeRoute: typeof MfaChallengeRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SignupRoute: typeof SignupRoute
+  UnsubscribeRoute: typeof UnsubscribeRoute
+  EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
+  LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
   ApiPublicHooksBackupCredentialsRoute: typeof ApiPublicHooksBackupCredentialsRoute
   ApiPublicHooksBackupOrdersRoute: typeof ApiPublicHooksBackupOrdersRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
+  LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
+  LovableEmailTransactionalSendRoute: typeof LovableEmailTransactionalSendRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/unsubscribe': {
+      id: '/unsubscribe'
+      path: '/unsubscribe'
+      fullPath: '/unsubscribe'
+      preLoaderRoute: typeof UnsubscribeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/signup': {
       id: '/signup'
       path: '/signup'
@@ -641,6 +715,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/email/unsubscribe': {
+      id: '/email/unsubscribe'
+      path: '/email/unsubscribe'
+      fullPath: '/email/unsubscribe'
+      preLoaderRoute: typeof EmailUnsubscribeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/rejected': {
       id: '/_authenticated/rejected'
       path: '/rejected'
@@ -668,6 +749,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof AuthenticatedApprovedRouteImport
       parentRoute: typeof AuthenticatedRoute
+    }
+    '/lovable/email/suppression': {
+      id: '/lovable/email/suppression'
+      path: '/lovable/email/suppression'
+      fullPath: '/lovable/email/suppression'
+      preLoaderRoute: typeof LovableEmailSuppressionRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/_approved/tickets': {
       id: '/_authenticated/_approved/tickets'
@@ -843,6 +931,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/home/'
       preLoaderRoute: typeof AuthenticatedApprovedHomeIndexRouteImport
       parentRoute: typeof AuthenticatedApprovedHomeRoute
+    }
+    '/lovable/email/transactional/send': {
+      id: '/lovable/email/transactional/send'
+      path: '/lovable/email/transactional/send'
+      fullPath: '/lovable/email/transactional/send'
+      preLoaderRoute: typeof LovableEmailTransactionalSendRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lovable/email/transactional/preview': {
+      id: '/lovable/email/transactional/preview'
+      path: '/lovable/email/transactional/preview'
+      fullPath: '/lovable/email/transactional/preview'
+      preLoaderRoute: typeof LovableEmailTransactionalPreviewRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/lovable/email/queue/process': {
       id: '/lovable/email/queue/process'
@@ -1037,9 +1139,14 @@ const rootRouteChildren: RootRouteChildren = {
   MfaChallengeRoute: MfaChallengeRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SignupRoute: SignupRoute,
+  UnsubscribeRoute: UnsubscribeRoute,
+  EmailUnsubscribeRoute: EmailUnsubscribeRoute,
+  LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
   ApiPublicHooksBackupCredentialsRoute: ApiPublicHooksBackupCredentialsRoute,
   ApiPublicHooksBackupOrdersRoute: ApiPublicHooksBackupOrdersRoute,
   LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
+  LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
+  LovableEmailTransactionalSendRoute: LovableEmailTransactionalSendRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
