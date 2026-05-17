@@ -5,6 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 import bg from "@/assets/gate-bg.jpg";
+import mentionAudio from "@/assets/mention-notify.mp3";
+import ticketAudio from "@/assets/ticket-notify.mp3";
 
 export const Route = createFileRoute("/_authenticated/gate")({
   component: GatePage,
@@ -70,6 +72,18 @@ function GatePage() {
       .on("broadcast", { event: "message" }, ({ payload }) => {
         const msg = payload as Msg;
         setMsgs((m) => (m.some((x) => x.id === msg.id) ? m : [...m, msg]));
+        if (user && msg.sender_id !== user.id) {
+          try {
+            const audio = new Audio(mentionAudio);
+            audio.volume = 0.9;
+            void audio.play().catch(() => { /* autoplay may be blocked */ });
+          } catch { /* ignore */ }
+          toast(`💬 New reply from staff`, {
+            description: msg.content.slice(0, 120),
+            duration: 6000,
+            action: { label: "Open chat", onClick: () => setChatOpen(true) },
+          });
+        }
       })
       .on("broadcast", { event: "typing" }, ({ payload }) => {
         const p = payload as { sender_id: string; name?: string };
@@ -83,9 +97,22 @@ function GatePage() {
       .channel(`gate-status-${appId}`)
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "gate_applications", filter: `id=eq.${appId}` }, async (p) => {
         const next = (p.new as { status: string }).status;
+        const prev = (p.old as { status: string } | undefined)?.status;
+        if (prev === next) return;
         setStatus(next);
-        if (next === "approved") { toast.success("You're in! Welcome."); await refreshRoles(); }
-        else if (next === "denied") toast.error("Your request was denied.");
+        try {
+          const audio = new Audio(ticketAudio);
+          audio.volume = 0.9;
+          void audio.play().catch(() => { /* autoplay may be blocked */ });
+        } catch { /* ignore */ }
+        if (next === "approved") {
+          toast.success("✅ You're in! Welcome.", { duration: 8000 });
+          await refreshRoles();
+        } else if (next === "denied") {
+          toast.error("❌ Your request was denied.", { duration: 8000 });
+        } else {
+          toast(`Your request status is now: ${next}`, { duration: 6000 });
+        }
       })
       .subscribe();
     channelRef.current = msgCh;
