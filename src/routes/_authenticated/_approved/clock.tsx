@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useUserTimezone } from "@/hooks/use-user-timezone";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import clockBg from "@/assets/clock-bg.jpg";
 
 export const Route = createFileRoute("/_authenticated/_approved/clock")({
   component: ClockPage,
@@ -154,29 +155,32 @@ function ClockPage() {
   }
 
   return (
-    <main className="flex-1 overflow-y-auto">
+    <main className="flex-1 overflow-y-auto relative">
+      <div
+        className="fixed inset-0 -z-10 bg-cover bg-center"
+        style={{ backgroundImage: `url(${clockBg})` }}
+        aria-hidden
+      />
+      <div className="fixed inset-0 -z-10 bg-background/70 backdrop-blur-[2px]" aria-hidden />
       <div className="max-w-5xl mx-auto px-6 py-8 space-y-6">
-        <div className="relative rounded-3xl overflow-hidden border border-primary/30 shadow-glow bg-gradient-primary p-5 sm:p-6">
-          <div className="absolute inset-0 bg-gradient-to-tr from-background/40 via-transparent to-transparent pointer-events-none" />
-          <header className="relative flex items-center gap-3">
-            <div className="size-12 rounded-2xl bg-white/15 backdrop-blur grid place-items-center shadow-glow ring-1 ring-white/20">
-              <Clock className="size-6 text-white" />
-            </div>
-            <div className="flex-1">
-              <h1 className="font-display text-2xl sm:text-3xl font-bold text-white drop-shadow">Time Tracking</h1>
-              <p className="text-sm text-white/85">{fmtDateTime(now)} <span className="opacity-70">({tz})</span></p>
-            </div>
-            <div className="font-mono text-3xl tabular-nums text-white drop-shadow">{fmtClock(now)}</div>
-          </header>
-        </div>
+        <header className="flex items-center gap-3 flex-wrap">
+          <div className="size-12 rounded-2xl bg-primary/20 backdrop-blur grid place-items-center ring-1 ring-primary/30">
+            <Clock className="size-6 text-primary-foreground" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h1 className="font-display text-2xl sm:text-3xl font-bold drop-shadow">Time Tracking</h1>
+            <p className="text-sm text-muted-foreground">{fmtDateTime(now)} <span className="opacity-70">({tz})</span></p>
+          </div>
+          <div className="font-mono text-3xl tabular-nums drop-shadow">{fmtClock(now)}</div>
+        </header>
 
         {/* Status banner */}
         <div className={cn(
-          "rounded-2xl p-5 border",
-          !myShift && "bg-surface-1 border-border",
-          myShift && !myBreak && "bg-emerald-500/10 border-emerald-500/30",
-          myBreak && !overBreak && "bg-amber-500/10 border-amber-500/30",
-          myBreak && overBreak && "bg-destructive/10 border-destructive/40",
+          "rounded-2xl p-5 border backdrop-blur-md",
+          !myShift && "bg-surface-1/70 border-border",
+          myShift && !myBreak && "bg-emerald-500/15 border-emerald-500/40",
+          myBreak && !overBreak && "bg-amber-500/15 border-amber-500/40",
+          myBreak && overBreak && "bg-destructive/15 border-destructive/50",
         )}>
           {!myShift && (
             <div className="flex items-center justify-between gap-4">
