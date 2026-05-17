@@ -205,7 +205,7 @@ export function ChannelColumn({
                   <div
                     key={it.to}
                     className={cn(
-                      "group/ch flex items-center",
+                      "group/ch relative",
                       dragChan?.id === it.id && "opacity-40",
                       overChan === it.to && dragChan && dragChan.id !== it.id && "border-t-2 border-primary",
                     )}
@@ -235,7 +235,7 @@ export function ChannelColumn({
                       to={it.to}
                       draggable={false}
                       className={cn(
-                        "flex-1 flex items-center gap-2 px-2 py-1.5 rounded-md text-sm font-medium transition-colors",
+                        "w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-sm font-medium transition-colors",
                         active
                           ? "bg-surface-2 text-white"
                           : "text-foreground/90 hover:bg-surface-2/60 hover:text-white",
@@ -249,41 +249,45 @@ export function ChannelColumn({
                         </span>
                       ) : null}
                     </Link>
-                    {g.onDeleteItem && (
-                      <button
-                        onClick={(e) => { e.preventDefault(); g.onDeleteItem!(it.to); }}
-                        title="Delete channel"
-                        className="opacity-0 group-hover/ch:opacity-100 hover:text-destructive p-1"
-                      >
-                        <Trash2 className="size-3.5" />
-                      </button>
-                    )}
-                    {g.onEditItemPerms && (
-                      <button
-                        onClick={(e) => { e.preventDefault(); g.onEditItemPerms!(it.to); }}
-                        title="Channel permissions"
-                        className="opacity-0 group-hover/ch:opacity-100 hover:text-primary p-1"
-                      >
-                        <Shield className="size-3.5" />
-                      </button>
-                    )}
-                    {g.onEditItemIcon && (
-                      <button
-                        onClick={(e) => { e.preventDefault(); g.onEditItemIcon!(it.to); }}
-                        title="Change channel icon"
-                        className="opacity-0 group-hover/ch:opacity-100 hover:text-foreground p-1"
-                      >
-                        <Smile className="size-3.5" />
-                      </button>
-                    )}
-                    {g.onRenameItem && (
-                      <button
-                        onClick={(e) => { e.preventDefault(); g.onRenameItem!(it.to); }}
-                        title="Rename channel"
-                        className="opacity-0 group-hover/ch:opacity-100 hover:text-foreground p-1"
-                      >
-                        <Pencil className="size-3.5" />
-                      </button>
+                    {(g.onDeleteItem || g.onEditItemPerms || g.onEditItemIcon || g.onRenameItem) && (
+                      <div className="hidden group-hover/ch:flex items-center gap-1 pl-6 pr-2 pb-1 -mt-0.5 text-muted-foreground">
+                        {g.onRenameItem && (
+                          <button
+                            onClick={(e) => { e.preventDefault(); g.onRenameItem!(it.to); }}
+                            title="Rename channel"
+                            className="hover:text-foreground p-1"
+                          >
+                            <Pencil className="size-3.5" />
+                          </button>
+                        )}
+                        {g.onEditItemIcon && (
+                          <button
+                            onClick={(e) => { e.preventDefault(); g.onEditItemIcon!(it.to); }}
+                            title="Change channel icon"
+                            className="hover:text-foreground p-1"
+                          >
+                            <Smile className="size-3.5" />
+                          </button>
+                        )}
+                        {g.onEditItemPerms && (
+                          <button
+                            onClick={(e) => { e.preventDefault(); g.onEditItemPerms!(it.to); }}
+                            title="Channel permissions"
+                            className="hover:text-primary p-1"
+                          >
+                            <Shield className="size-3.5" />
+                          </button>
+                        )}
+                        {g.onDeleteItem && (
+                          <button
+                            onClick={(e) => { e.preventDefault(); g.onDeleteItem!(it.to); }}
+                            title="Delete channel"
+                            className="hover:text-destructive p-1"
+                          >
+                            <Trash2 className="size-3.5" />
+                          </button>
+                        )}
+                      </div>
                     )}
                   </div>
                 );
