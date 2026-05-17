@@ -6,8 +6,8 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 async function assertAdmin(supabase: any, userId: string) {
   const { data, error } = await supabase.from("user_roles").select("role").eq("user_id", userId);
   if (error) throw new Error(error.message);
-  const roles = (data ?? []).map((r: any) => String(r.role));
-  if (!roles.some((r) => r === "admin" || r === "management")) {
+  const roles: string[] = (data ?? []).map((r: any) => String(r.role));
+  if (!roles.some((r: string) => r === "admin" || r === "management")) {
     throw new Error("Forbidden: admin or management only");
   }
 }
