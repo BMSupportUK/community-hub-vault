@@ -352,6 +352,66 @@ export type Database = {
         }
         Relationships: []
       }
+      email_templates: {
+        Row: {
+          created_at: string
+          html_body: string
+          key: string
+          subject: string
+          text_body: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          html_body: string
+          key: string
+          subject: string
+          text_body: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          html_body?: string
+          key?: string
+          subject?: string
+          text_body?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      email_verification_codes: {
+        Row: {
+          attempts: number
+          code_hash: string
+          consumed_at: string | null
+          created_at: string
+          expires_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          attempts?: number
+          code_hash: string
+          consumed_at?: string | null
+          created_at?: string
+          expires_at: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          attempts?: number
+          code_hash?: string
+          consumed_at?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       friendships: {
         Row: {
           addressee_id: string
@@ -1204,6 +1264,7 @@ export type Database = {
           connection: string | null
           country: string | null
           created_at: string
+          device_fingerprint: string | null
           device_memory: string | null
           extra: Json | null
           geo_accuracy_m: number | null
@@ -1235,6 +1296,7 @@ export type Database = {
           connection?: string | null
           country?: string | null
           created_at?: string
+          device_fingerprint?: string | null
           device_memory?: string | null
           extra?: Json | null
           geo_accuracy_m?: number | null
@@ -1266,6 +1328,7 @@ export type Database = {
           connection?: string | null
           country?: string | null
           created_at?: string
+          device_fingerprint?: string | null
           device_memory?: string | null
           extra?: Json | null
           geo_accuracy_m?: number | null
@@ -1769,6 +1832,57 @@ export type Database = {
         }
         Relationships: []
       }
+      verification_checks: {
+        Row: {
+          created_at: string
+          duplicate_device_count: number
+          duplicate_ip_count: number
+          email_code_verified: boolean
+          email_code_verified_at: string | null
+          email_disposable: boolean | null
+          email_mx_ok: boolean | null
+          notes: string | null
+          overall_status: Database["public"]["Enums"]["verification_status"]
+          turnstile_ok: boolean | null
+          updated_at: string
+          user_id: string
+          verified_at: string | null
+          verified_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          duplicate_device_count?: number
+          duplicate_ip_count?: number
+          email_code_verified?: boolean
+          email_code_verified_at?: string | null
+          email_disposable?: boolean | null
+          email_mx_ok?: boolean | null
+          notes?: string | null
+          overall_status?: Database["public"]["Enums"]["verification_status"]
+          turnstile_ok?: boolean | null
+          updated_at?: string
+          user_id: string
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          duplicate_device_count?: number
+          duplicate_ip_count?: number
+          email_code_verified?: boolean
+          email_code_verified_at?: string | null
+          email_disposable?: boolean | null
+          email_mx_ok?: boolean | null
+          notes?: string | null
+          overall_status?: Database["public"]["Enums"]["verification_status"]
+          turnstile_ok?: boolean | null
+          updated_at?: string
+          user_id?: string
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       app_credentials: {
@@ -2011,6 +2125,7 @@ export type Database = {
       slot_type: "shift" | "hourly"
       ticket_priority: "low" | "normal" | "high" | "urgent"
       ticket_status: "open" | "in_progress" | "waiting" | "resolved" | "closed"
+      verification_status: "pending" | "verified" | "flagged"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2171,6 +2286,7 @@ export const Constants = {
       slot_type: ["shift", "hourly"],
       ticket_priority: ["low", "normal", "high", "urgent"],
       ticket_status: ["open", "in_progress", "waiting", "resolved", "closed"],
+      verification_status: ["pending", "verified", "flagged"],
     },
   },
 } as const
