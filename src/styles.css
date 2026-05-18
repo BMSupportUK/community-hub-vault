@@ -162,3 +162,92 @@
   pointer-events: none;
   background: linear-gradient(90deg, rgba(0,0,0,0.45), transparent 25%, transparent 75%, rgba(0,0,0,0.45));
 }
+
+/* ---- Soccer Player: slow cinematic pan + stadium light sweep ---- */
+@keyframes nameplate-pitch-pan {
+  0%   { background-position: 0% 50%; }
+  100% { background-position: 100% 50%; }
+}
+@keyframes nameplate-pitch-sheen {
+  0%   { transform: translateX(-120%) skewX(-18deg); opacity: 0; }
+  35%  { opacity: 0.7; }
+  100% { transform: translateX(220%) skewX(-18deg); opacity: 0; }
+}
+@keyframes nameplate-pitch-flash {
+  0%, 100% { opacity: 0.35; }
+  50%      { opacity: 0.9; }
+}
+.nameplate-pitch {
+  background-size: 130% auto !important;
+  background-repeat: no-repeat !important;
+  background-position: 0% 50%;
+  animation: nameplate-pitch-pan 14s ease-in-out infinite alternate;
+}
+.nameplate-pitch > * { position: relative; z-index: 2; }
+.nameplate-pitch::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(115deg, transparent 35%, rgba(255,255,255,0.55) 50%, transparent 65%);
+  mix-blend-mode: screen;
+  animation: nameplate-pitch-sheen 6s ease-in-out infinite;
+}
+.nameplate-pitch::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at 12% 18%, rgba(255,240,180,0.55), transparent 35%),
+    radial-gradient(ellipse at 88% 18%, rgba(255,240,180,0.55), transparent 35%),
+    linear-gradient(90deg, rgba(0,0,0,0.35), transparent 20%, transparent 80%, rgba(0,0,0,0.35));
+  animation: nameplate-pitch-flash 3.2s ease-in-out infinite;
+}
+
+/* ---- Hotdog DJ: bopping zoom, hue pulse, sparkle sweep ---- */
+@keyframes nameplate-hotdog-bop {
+  0%, 100% { background-size: 115% auto; background-position: 50% 48%; }
+  50%      { background-size: 122% auto; background-position: 50% 55%; }
+}
+@keyframes nameplate-hotdog-hue {
+  0%, 100% { filter: hue-rotate(0deg) saturate(1.05); }
+  50%      { filter: hue-rotate(15deg) saturate(1.25); }
+}
+@keyframes nameplate-hotdog-sparkle {
+  0%   { background-position: 0 0, 0 0; }
+  100% { background-position: 80px 40px, -60px -30px; }
+}
+.nameplate-hotdog {
+  background-repeat: no-repeat !important;
+  background-position: 50% 48% !important;
+  background-size: 115% auto !important;
+  animation:
+    nameplate-hotdog-bop 1.4s ease-in-out infinite,
+    nameplate-hotdog-hue 5s ease-in-out infinite;
+}
+.nameplate-hotdog > * { position: relative; z-index: 2; }
+.nameplate-hotdog::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background-image:
+    radial-gradient(circle at 10% 30%, rgba(255,255,255,0.85) 0 1.5px, transparent 2px),
+    radial-gradient(circle at 70% 70%, rgba(255,255,255,0.7) 0 1.5px, transparent 2px);
+  background-size: 80px 80px, 60px 60px;
+  mix-blend-mode: screen;
+  opacity: 0.85;
+  animation: nameplate-hotdog-sparkle 3s linear infinite;
+}
+.nameplate-hotdog::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(90deg, rgba(0,0,0,0.35), transparent 22%, transparent 78%, rgba(0,0,0,0.35));
+}
