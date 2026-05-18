@@ -219,6 +219,12 @@
   0%   { background-position: 0 0, 0 0; }
   100% { background-position: 80px 40px, -60px -30px; }
 }
+@keyframes nameplate-hotdog-dance {
+  0%, 100% { transform: translateY(-50%) rotate(-12deg) scale(1); }
+  25%      { transform: translateY(-58%) rotate(8deg)  scale(1.05); }
+  50%      { transform: translateY(-50%) rotate(-6deg) scale(1); }
+  75%      { transform: translateY(-58%) rotate(12deg) scale(1.08); }
+}
 .nameplate-hotdog {
   background-repeat: no-repeat !important;
   background-position: 50% 50% !important;
@@ -249,6 +255,19 @@
   z-index: 1;
   pointer-events: none;
   background: linear-gradient(90deg, rgba(0,0,0,0.35), transparent 22%, transparent 78%, rgba(0,0,0,0.35));
+}
+.nameplate-hotdog .nameplate-hotdog-icon {
+  position: absolute;
+  left: 6px;
+  top: 50%;
+  z-index: 3;
+  font-size: 22px;
+  line-height: 1;
+  transform-origin: center;
+  transform: translateY(-50%) rotate(-12deg);
+  animation: nameplate-hotdog-dance 0.7s ease-in-out infinite;
+  filter: drop-shadow(0 2px 3px rgba(0,0,0,0.5));
+  pointer-events: none;
 }
 
 /* ---- Middlesbrough FC: rippling scarves + floodlight sweep ---- */
