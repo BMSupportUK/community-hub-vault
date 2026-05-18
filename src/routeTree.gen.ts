@@ -46,6 +46,7 @@ import { Route as AuthenticatedApprovedAdminPermissionsRouteImport } from './rou
 import { Route as AuthenticatedApprovedAdminHeroBoxesRouteImport } from './routes/_authenticated/_approved/admin-hero-boxes'
 import { Route as AuthenticatedApprovedAdminDnsRouteImport } from './routes/_authenticated/_approved/admin-dns'
 import { Route as AuthenticatedApprovedAdminCredentialsRouteImport } from './routes/_authenticated/_approved/admin-credentials'
+import { Route as AuthenticatedApprovedAdminBusinessHoursRouteImport } from './routes/_authenticated/_approved/admin-business-hours'
 import { Route as AuthenticatedApprovedAdminBlacklistRouteImport } from './routes/_authenticated/_approved/admin-blacklist'
 import { Route as AuthenticatedApprovedAdminRouteImport } from './routes/_authenticated/_approved/admin'
 import { Route as AuthenticatedApprovedAccountSecurityRouteImport } from './routes/_authenticated/_approved/account-security'
@@ -270,6 +271,12 @@ const AuthenticatedApprovedAdminCredentialsRoute =
     path: '/admin-credentials',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
+const AuthenticatedApprovedAdminBusinessHoursRoute =
+  AuthenticatedApprovedAdminBusinessHoursRouteImport.update({
+    id: '/admin-business-hours',
+    path: '/admin-business-hours',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
 const AuthenticatedApprovedAdminBlacklistRoute =
   AuthenticatedApprovedAdminBlacklistRouteImport.update({
     id: '/admin-blacklist',
@@ -382,6 +389,7 @@ export interface FileRoutesByFullPath {
   '/account-security': typeof AuthenticatedApprovedAccountSecurityRoute
   '/admin': typeof AuthenticatedApprovedAdminRoute
   '/admin-blacklist': typeof AuthenticatedApprovedAdminBlacklistRoute
+  '/admin-business-hours': typeof AuthenticatedApprovedAdminBusinessHoursRoute
   '/admin-credentials': typeof AuthenticatedApprovedAdminCredentialsRoute
   '/admin-dns': typeof AuthenticatedApprovedAdminDnsRoute
   '/admin-hero-boxes': typeof AuthenticatedApprovedAdminHeroBoxesRoute
@@ -435,6 +443,7 @@ export interface FileRoutesByTo {
   '/account-security': typeof AuthenticatedApprovedAccountSecurityRoute
   '/admin': typeof AuthenticatedApprovedAdminRoute
   '/admin-blacklist': typeof AuthenticatedApprovedAdminBlacklistRoute
+  '/admin-business-hours': typeof AuthenticatedApprovedAdminBusinessHoursRoute
   '/admin-credentials': typeof AuthenticatedApprovedAdminCredentialsRoute
   '/admin-dns': typeof AuthenticatedApprovedAdminDnsRoute
   '/admin-hero-boxes': typeof AuthenticatedApprovedAdminHeroBoxesRoute
@@ -490,6 +499,7 @@ export interface FileRoutesById {
   '/_authenticated/_approved/account-security': typeof AuthenticatedApprovedAccountSecurityRoute
   '/_authenticated/_approved/admin': typeof AuthenticatedApprovedAdminRoute
   '/_authenticated/_approved/admin-blacklist': typeof AuthenticatedApprovedAdminBlacklistRoute
+  '/_authenticated/_approved/admin-business-hours': typeof AuthenticatedApprovedAdminBusinessHoursRoute
   '/_authenticated/_approved/admin-credentials': typeof AuthenticatedApprovedAdminCredentialsRoute
   '/_authenticated/_approved/admin-dns': typeof AuthenticatedApprovedAdminDnsRoute
   '/_authenticated/_approved/admin-hero-boxes': typeof AuthenticatedApprovedAdminHeroBoxesRoute
@@ -545,6 +555,7 @@ export interface FileRouteTypes {
     | '/account-security'
     | '/admin'
     | '/admin-blacklist'
+    | '/admin-business-hours'
     | '/admin-credentials'
     | '/admin-dns'
     | '/admin-hero-boxes'
@@ -598,6 +609,7 @@ export interface FileRouteTypes {
     | '/account-security'
     | '/admin'
     | '/admin-blacklist'
+    | '/admin-business-hours'
     | '/admin-credentials'
     | '/admin-dns'
     | '/admin-hero-boxes'
@@ -652,6 +664,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/account-security'
     | '/_authenticated/_approved/admin'
     | '/_authenticated/_approved/admin-blacklist'
+    | '/_authenticated/_approved/admin-business-hours'
     | '/_authenticated/_approved/admin-credentials'
     | '/_authenticated/_approved/admin-dns'
     | '/_authenticated/_approved/admin-hero-boxes'
@@ -972,6 +985,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedApprovedAdminCredentialsRouteImport
       parentRoute: typeof AuthenticatedApprovedRoute
     }
+    '/_authenticated/_approved/admin-business-hours': {
+      id: '/_authenticated/_approved/admin-business-hours'
+      path: '/admin-business-hours'
+      fullPath: '/admin-business-hours'
+      preLoaderRoute: typeof AuthenticatedApprovedAdminBusinessHoursRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
     '/_authenticated/_approved/admin-blacklist': {
       id: '/_authenticated/_approved/admin-blacklist'
       path: '/admin-blacklist'
@@ -1129,6 +1149,7 @@ interface AuthenticatedApprovedRouteChildren {
   AuthenticatedApprovedAccountSecurityRoute: typeof AuthenticatedApprovedAccountSecurityRoute
   AuthenticatedApprovedAdminRoute: typeof AuthenticatedApprovedAdminRoute
   AuthenticatedApprovedAdminBlacklistRoute: typeof AuthenticatedApprovedAdminBlacklistRoute
+  AuthenticatedApprovedAdminBusinessHoursRoute: typeof AuthenticatedApprovedAdminBusinessHoursRoute
   AuthenticatedApprovedAdminCredentialsRoute: typeof AuthenticatedApprovedAdminCredentialsRoute
   AuthenticatedApprovedAdminDnsRoute: typeof AuthenticatedApprovedAdminDnsRoute
   AuthenticatedApprovedAdminHeroBoxesRoute: typeof AuthenticatedApprovedAdminHeroBoxesRoute
@@ -1161,6 +1182,8 @@ const AuthenticatedApprovedRouteChildren: AuthenticatedApprovedRouteChildren = {
   AuthenticatedApprovedAdminRoute: AuthenticatedApprovedAdminRoute,
   AuthenticatedApprovedAdminBlacklistRoute:
     AuthenticatedApprovedAdminBlacklistRoute,
+  AuthenticatedApprovedAdminBusinessHoursRoute:
+    AuthenticatedApprovedAdminBusinessHoursRoute,
   AuthenticatedApprovedAdminCredentialsRoute:
     AuthenticatedApprovedAdminCredentialsRoute,
   AuthenticatedApprovedAdminDnsRoute: AuthenticatedApprovedAdminDnsRoute,
