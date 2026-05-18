@@ -825,25 +825,50 @@ function ChannelPage() {
                   "group relative flex items-start gap-3 transition-colors",
                 )}
               >
-                {p?.avatar_url ? (
-                  <img src={p.avatar_url} alt="" className="size-9 rounded-full object-cover shrink-0 mt-1" />
-                ) : (
-                  <div className="size-9 rounded-full bg-gradient-primary grid place-items-center text-xs font-semibold text-primary-foreground shrink-0 mt-1">
-                    {initial}
-                  </div>
-                )}
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-baseline gap-2 mb-1">
-                    {p?.equipped_nameplate_id ? (
+                {(() => {
+                  const showNameplate = channel.slug === "talk" && !!p?.equipped_nameplate_id;
+                  const avatarEl = p?.avatar_url ? (
+                    <img
+                      src={p.avatar_url}
+                      alt=""
+                      className={cn(
+                        "size-8 rounded-full object-cover shrink-0 ring-2 ring-white/70",
+                        !showNameplate && "size-9 mt-1 ring-0",
+                      )}
+                    />
+                  ) : (
+                    <div
+                      className={cn(
+                        "size-8 rounded-full bg-gradient-primary grid place-items-center text-xs font-semibold text-primary-foreground shrink-0 ring-2 ring-white/70",
+                        !showNameplate && "size-9 mt-1 ring-0",
+                      )}
+                    >
+                      {initial}
+                    </div>
+                  );
+                  if (showNameplate) {
+                    return (
                       <Nameplate
-                        id={p.equipped_nameplate_id}
-                        className="rounded-md px-2 py-0.5 inline-flex items-center"
+                        id={p!.equipped_nameplate_id}
+                        className="rounded-full pl-1 pr-3 py-1 flex items-center gap-2 shrink-0 mt-0.5 shadow-sm max-w-full"
                       >
-                        <span className="font-medium text-sm text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
+                        {avatarEl}
+                        <span className="font-semibold text-sm text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)] truncate">
                           {name}
                         </span>
+                        {isStaff && (
+                          <span className="text-[10px] font-bold tracking-widest px-1.5 py-0.5 rounded bg-white/90 text-rose-600">
+                            STAFF
+                          </span>
+                        )}
                       </Nameplate>
-                    ) : (
+                    );
+                  }
+                  return avatarEl;
+                })()}
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-baseline gap-2 mb-1">
+                    {!(channel.slug === "talk" && p?.equipped_nameplate_id) && (
                       <span className="font-medium text-sm">{name}</span>
                     )}
                     <span className="text-[10px] text-muted-foreground">
