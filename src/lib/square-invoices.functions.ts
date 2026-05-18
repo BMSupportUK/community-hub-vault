@@ -55,12 +55,14 @@ export const createSquareInvoiceForOrder = createServerFn({ method: "POST" })
       .eq("id", data.orderId)
       .single();
     if (orderErr || !order) throw new Error(orderErr?.message || "Order not found");
+    const orderId = order.id;
+    if (!orderId) throw new Error("Order id missing");
     if (order.paid_at) throw new Error("Order is already paid");
     if (!order.email) throw new Error("Order has no email address");
     if (!order.total_cents || order.total_cents <= 0) throw new Error("Order total must be greater than zero");
 
     const currency = "GBP";
-    const idemBase = `order-${order.id}-${Date.now()}`;
+    const idemBase = `order-${orderId}-${Date.now()}`;
 
     // 1. Create or find Square customer
     let customerId: string | undefined;
@@ -99,7 +101,7 @@ export const createSquareInvoiceForOrder = createServerFn({ method: "POST" })
           location_id: locationId,
           customer_id: customerId,
           line_items: [{
-            name: `Order #${order.id.slice(0, 8)}`,
+            name: `Order #${orderId.slice(0, 8)}`,
             quantity: "1",
             base_price_money: { amount: order.total_cents, currency },
           }],
@@ -124,7 +126,7 @@ export const createSquareInvoiceForOrder = createServerFn({ method: "POST" })
           }],
           delivery_method: "SHARE_MANUALLY",
           accepted_payment_methods: { card: true, square_gift_card: false, bank_account: false, buy_now_pay_later: false },
-          title: `Order #${order.id.slice(0, 8)}`,
+          title: `Order #${orderId.slice(0, 8)}`,
         },
       }),
     });
@@ -141,7 +143,7 @@ export const createSquareInvoiceForOrder = createServerFn({ method: "POST" })
 
     // 5. Save row
     const row = {
-      order_id: order.id,
+      order_id: orderId,
       square_invoice_id: invoice.id,
       square_order_id: squareOrderId,
       invoice_number: invoice.invoice_number ?? null,
@@ -162,7 +164,7 @@ export const createSquareInvoiceForOrder = createServerFn({ method: "POST" })
     // 6. Post invoice link in order chat
     if (invoice.public_url) {
       await supabase.from("order_messages").insert({
-        order_id: order.id,
+        order_id: orderId,
         sender_id: userId,
         content: `💳 Pay your invoice here: ${invoice.public_url}`,
       });
