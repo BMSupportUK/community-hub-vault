@@ -11,6 +11,8 @@ import { ChannelWelcomeEmbed } from "@/components/app/ChannelWelcomeEmbed";
 import { cn } from "@/lib/utils";
 import { DEFAULT_AVATAR_URL } from "@/lib/default-avatar";
 import { Nameplate } from "@/components/app/Nameplate";
+import { useOnlineUsers } from "@/hooks/use-online-users";
+import { formatLastSeen } from "@/lib/relative-time";
 
 export const Route = createFileRoute("/_authenticated/_approved/home/$channel")({
   component: ChannelPage,
@@ -42,6 +44,7 @@ interface Profile {
   username: string | null;
   avatar_url: string | null;
   equipped_nameplate_id: string | null;
+  last_seen_at?: string | null;
 }
 
 interface Reaction {
@@ -61,6 +64,7 @@ function formatSlow(s: number): string {
 }
 
 function ChannelPage() {
+  const onlineUsers = useOnlineUsers();
   const { channel: slug } = Route.useParams();
   const { user, hasAny } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
@@ -344,7 +348,7 @@ function ChannelPage() {
     if (need.length === 0) return;
     const { data } = await supabase
       .from("profiles")
-      .select("id, display_name, username, avatar_url, equipped_nameplate_id")
+      .select("id, display_name, username, avatar_url, equipped_nameplate_id, last_seen_at")
       .in("id", need);
     if (!data) return;
     setProfiles((prev) => {
@@ -855,16 +859,31 @@ function ChannelPage() {
                     </div>
                   );
                   if (showNameplate) {
+                    const isOnline = onlineUsers.has(p!.id);
                     return (
-                      <Nameplate
-                        id={p!.equipped_nameplate_id}
-                        className="rounded-md pl-1 pr-3 h-9 w-56 flex items-center gap-2 shrink-0 mt-0.5 shadow-sm"
-                      >
-                        {avatarEl}
-                        <span className="font-semibold text-sm text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)] truncate">
-                          {name}
-                        </span>
-                      </Nameplate>
+                      <div className="flex flex-col items-start gap-0.5 shrink-0 mt-0.5">
+                        <Nameplate
+                          id={p!.equipped_nameplate_id}
+                          className="rounded-md pl-1 pr-3 h-9 w-56 flex items-center gap-2 shadow-sm"
+                        >
+                          {avatarEl}
+                          <span className="font-semibold text-sm text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)] truncate">
+                            {name}
+                          </span>
+                        </Nameplate>
+                        <div className="flex items-center gap-1.5 pl-1.5 text-[10px] text-muted-foreground">
+                          <span
+                            className={cn(
+                              "size-2 rounded-full ring-1 ring-background",
+                              isOnline ? "bg-emerald-500" : "bg-muted-foreground/50",
+                            )}
+                            aria-label={isOnline ? "Online" : "Offline"}
+                          />
+                          <span>
+                            {isOnline ? "Online" : `Active ${formatLastSeen(p?.last_seen_at)}`}
+                          </span>
+                        </div>
+                      </div>
                     );
                   }
                   return avatarEl;
