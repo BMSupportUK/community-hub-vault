@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Clock, Loader2, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { isAdminUnlocked } from "@/lib/admin-unlock";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/_approved/admin-business-hours")({
@@ -70,6 +71,9 @@ function AdminBusinessHours() {
   };
 
   if (!isAdmin) return <Navigate to="/home" />;
+  if (!isAdminUnlocked(user?.id)) {
+    return <Navigate to="/admin" search={{ next: "/admin-business-hours" } as never} />;
+  }
 
   return (
     <main className="flex-1 overflow-y-auto">
