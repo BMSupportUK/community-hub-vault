@@ -208,8 +208,8 @@
 
 /* ---- Hotdog DJ: bopping zoom, hue pulse, sparkle sweep ---- */
 @keyframes nameplate-hotdog-bop {
-  0%, 100% { background-size: 115% auto; background-position: 50% 48%; }
-  50%      { background-size: 122% auto; background-position: 50% 55%; }
+  0%, 100% { background-size: 100% 100%; background-position: 50% 50%; }
+  50%      { background-size: 100% 100%; background-position: 50% 50%; }
 }
 @keyframes nameplate-hotdog-hue {
   0%, 100% { filter: hue-rotate(0deg) saturate(1.05); }
@@ -221,8 +221,8 @@
 }
 .nameplate-hotdog {
   background-repeat: no-repeat !important;
-  background-position: 50% 48% !important;
-  background-size: 115% auto !important;
+  background-position: 50% 50% !important;
+  background-size: 100% 100% !important;
   animation:
     nameplate-hotdog-bop 1.4s ease-in-out infinite,
     nameplate-hotdog-hue 5s ease-in-out infinite;
