@@ -295,3 +295,45 @@
   mix-blend-mode: screen;
   animation: nameplate-boro-sheen 5.5s ease-in-out infinite;
 }
+
+/* ---- Boro Crest: heraldic lion with gold pulse + sheen ---- */
+@keyframes nameplate-crest-pan {
+  0%, 100% { background-position: 100% 50%; background-size: 115% auto; }
+  50%      { background-position: 95% 50%;  background-size: 120% auto; }
+}
+@keyframes nameplate-crest-glow {
+  0%, 100% { opacity: 0.35; transform: scale(1); }
+  50%      { opacity: 0.85; transform: scale(1.05); }
+}
+@keyframes nameplate-crest-sheen {
+  0%   { transform: translateX(-140%) skewX(-20deg); opacity: 0; }
+  45%  { opacity: 0.7; }
+  100% { transform: translateX(220%) skewX(-20deg); opacity: 0; }
+}
+.nameplate-crest {
+  background-repeat: no-repeat !important;
+  background-position: 100% 50% !important;
+  background-size: 115% auto !important;
+  animation: nameplate-crest-pan 7s ease-in-out infinite;
+}
+.nameplate-crest > * { position: relative; z-index: 2; }
+.nameplate-crest::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: radial-gradient(circle at 88% 50%, rgba(212,170,80,0.55), transparent 45%);
+  mix-blend-mode: screen;
+  animation: nameplate-crest-glow 4s ease-in-out infinite;
+}
+.nameplate-crest::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(115deg, transparent 40%, rgba(255,220,140,0.5) 50%, transparent 60%);
+  mix-blend-mode: screen;
+  animation: nameplate-crest-sheen 6s ease-in-out infinite;
+}
