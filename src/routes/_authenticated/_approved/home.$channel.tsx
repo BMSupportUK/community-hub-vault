@@ -856,11 +856,6 @@ function ChannelPage() {
                         <span className="font-semibold text-sm text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)] truncate">
                           {name}
                         </span>
-                        {isStaff && (
-                          <span className="text-[10px] font-bold tracking-widest px-1.5 py-0.5 rounded bg-white/90 text-rose-600">
-                            STAFF
-                          </span>
-                        )}
                       </Nameplate>
                     );
                   }
