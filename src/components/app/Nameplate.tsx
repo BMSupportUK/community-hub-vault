@@ -17,7 +17,11 @@ export function Nameplate({ id, className, style, fallbackStyle, children }: Nam
   const bg = nameplateBackgroundStyle(np);
   const finalStyle: CSSProperties = { ...(bg ?? fallbackStyle ?? {}), ...style };
   return (
-    <div className={cn("relative overflow-hidden", className)} style={finalStyle} aria-hidden={!children}>
+    <div
+      className={cn("relative overflow-hidden", np?.animation_class, className)}
+      style={finalStyle}
+      aria-hidden={!children}
+    >
       {children}
     </div>
   );
