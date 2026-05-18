@@ -17,6 +17,7 @@ import { useUserTimezone } from "@/hooks/use-user-timezone";
 import { useServerFn } from "@tanstack/react-start";
 import { verifyTurnstile } from "@/lib/turnstile.functions";
 import { TurnstileWidget } from "@/components/app/TurnstileWidget";
+import { getOutOfHoursMessage } from "@/lib/business-hours";
 
 export const Route = createFileRoute("/_authenticated/_approved/tickets")({
   validateSearch: (s: Record<string, unknown>) => ({
@@ -617,6 +618,16 @@ function NewTicketForm({
         sender_id: user!.id,
         content:
           "👋 Welcome to BM Support!\n\nThanks for reporting a Movie/Series issue. To help our staff look into this as quickly as possible, please reply with the following details:\n\n1. **Movie or Series:**\n2. **Name of Movie/Series:**\n3. **Issue:**\n\nThese details are needed so staff can investigate and get the issue resolved for you.",
+        is_internal: false,
+      });
+    }
+
+    const oohMsg = await getOutOfHoursMessage();
+    if (oohMsg) {
+      await supabase.from("ticket_messages").insert({
+        ticket_id: t.id,
+        sender_id: user!.id,
+        content: oohMsg,
         is_internal: false,
       });
     }
