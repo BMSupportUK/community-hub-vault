@@ -1,6 +1,6 @@
 import { createFileRoute, Outlet, redirect, useRouterState, Navigate } from "@tanstack/react-router";
 import { Link } from "@tanstack/react-router";
-import { Users, Briefcase, LayoutDashboard, Shield, ShieldCheck, Menu } from "lucide-react";
+import { Users, Briefcase, LayoutDashboard, Shield, ShieldCheck, Menu, Receipt } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,6 +13,7 @@ import { BreakEndingAlert } from "@/components/app/BreakEndingAlert";
 import { ShiftStartEndAlert } from "@/components/app/ShiftStartEndAlert";
 import { SubscriptionExpiry } from "@/components/app/SubscriptionExpiry";
 import { ModerationPendingBadge } from "@/components/app/ModerationPendingBadge";
+import { PendingOrdersBadge } from "@/components/app/PendingOrdersBadge";
 import { logMyIp } from "@/lib/ip-log.functions";
 import { useOnlineUsers } from "@/hooks/use-online-users";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -102,6 +103,18 @@ function AuthLayout() {
                 <Shield className="size-4" />
                 <span className="hidden sm:inline">Moderation</span>
                 <ModerationPendingBadge />
+              </Link>
+            )}
+            {isAdmin && (
+              <Link
+                to="/shop"
+                search={{ view: "orders" } as any}
+                title="Sales chats"
+                className="flex items-center gap-2 rounded-full px-3 py-1.5 bg-surface-2 hover:bg-primary hover:text-primary-foreground text-xs font-medium transition-colors"
+              >
+                <Receipt className="size-4" />
+                <span className="hidden sm:inline">Sales chats</span>
+                <PendingOrdersBadge />
               </Link>
             )}
             {isAdmin && (
