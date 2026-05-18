@@ -42,6 +42,15 @@ export function Nameplate({ id, className, style, fallbackStyle, children }: Nam
           </span>
         </>
       )}
+      {np?.animation_class === "nameplate-devil" && (
+        <>
+          <span className="nameplate-devil-icon" aria-hidden>😈</span>
+          <span className="nameplate-devil-flame" aria-hidden>🔥</span>
+          <span className="nameplate-devil-ember e1" aria-hidden />
+          <span className="nameplate-devil-ember e2" aria-hidden />
+          <span className="nameplate-devil-ember e3" aria-hidden />
+        </>
+      )}
       {children}
     </div>
   );
