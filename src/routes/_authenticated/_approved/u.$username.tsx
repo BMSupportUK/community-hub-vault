@@ -484,10 +484,10 @@ function ProfilePage() {
           <TabsContent value="profile" className="mt-6">
             <div className="grid lg:grid-cols-3 gap-6">
               <section className="lg:col-span-2 rounded-2xl border border-purple-500/30 bg-purple-950/50 backdrop-blur overflow-hidden text-white">
-                <Nameplate
-                  id={profile.equipped_nameplate_id}
-                  className="h-36 sm:h-44"
-                  fallbackStyle={{ backgroundImage: `url(${profileHeader})`, backgroundSize: "cover", backgroundPosition: "center" }}
+                <div
+                  className="h-36 sm:h-44 bg-cover bg-center"
+                  style={{ backgroundImage: `url(${profileHeader})` }}
+                  aria-hidden
                 />
                 <div className="px-6 pb-6 -mt-12 flex flex-col sm:flex-row sm:items-end gap-4">
                   <Avatar url={profile.avatar_url} name={display} size={96} ring />
