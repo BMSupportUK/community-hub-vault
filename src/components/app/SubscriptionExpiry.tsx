@@ -4,13 +4,11 @@ import { useAuth } from "@/hooks/use-auth";
 import { CalendarClock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useUserTimezone } from "@/hooks/use-user-timezone";
-import { useAuth as useAuthCtx } from "@/hooks/use-auth";
 
 type Cred = { app_login_name: string | null; expiry_at: string | null };
 
 export function SubscriptionExpiry() {
-  const { user } = useAuth();
-  const { refreshRoles } = useAuthCtx();
+  const { user, refreshRoles } = useAuth();
   const tz = useUserTimezone();
   const [creds, setCreds] = useState<Cred[]>([]);
   const [loaded, setLoaded] = useState(false);
