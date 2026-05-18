@@ -251,3 +251,47 @@
   pointer-events: none;
   background: linear-gradient(90deg, rgba(0,0,0,0.35), transparent 22%, transparent 78%, rgba(0,0,0,0.35));
 }
+
+/* ---- Middlesbrough FC: rippling scarves + floodlight sweep ---- */
+@keyframes nameplate-boro-wave {
+  0%, 100% { background-position: 35% 50%; background-size: 125% auto; }
+  50%      { background-position: 65% 55%; background-size: 132% auto; }
+}
+@keyframes nameplate-boro-flare {
+  0%, 100% { opacity: 0.35; transform: translateX(-15%); }
+  50%      { opacity: 0.9;  transform: translateX(15%); }
+}
+@keyframes nameplate-boro-sheen {
+  0%   { transform: translateX(-130%) skewX(-22deg); opacity: 0; }
+  40%  { opacity: 0.65; }
+  100% { transform: translateX(220%) skewX(-22deg); opacity: 0; }
+}
+.nameplate-boro {
+  background-repeat: no-repeat !important;
+  background-position: 50% 50% !important;
+  background-size: 125% auto !important;
+  animation: nameplate-boro-wave 6s ease-in-out infinite;
+}
+.nameplate-boro > * { position: relative; z-index: 2; }
+.nameplate-boro::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at 50% -10%, rgba(255,255,255,0.65), transparent 55%),
+    linear-gradient(180deg, rgba(225,27,34,0.25), transparent 40%, rgba(225,27,34,0.35));
+  mix-blend-mode: screen;
+  animation: nameplate-boro-flare 4.5s ease-in-out infinite;
+}
+.nameplate-boro::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(115deg, transparent 38%, rgba(255,255,255,0.55) 50%, transparent 62%);
+  mix-blend-mode: screen;
+  animation: nameplate-boro-sheen 5.5s ease-in-out infinite;
+}
