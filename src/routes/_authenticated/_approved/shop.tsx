@@ -1686,7 +1686,17 @@ function OrderDetail({ orderId, isAdmin }: { orderId: string; isAdmin: boolean }
     if (busy) return;
     setBusy(true);
     try {
-      await sendSystem(`🛠️ We are currently setting up your account details and will share these next.`);
+      let profileLink = "";
+      if (order.user_id) {
+        const { data: prof } = await supabase
+          .from("profiles")
+          .select("username")
+          .eq("id", order.user_id)
+          .maybeSingle();
+        const uname = (prof as { username?: string | null } | null)?.username;
+        if (uname) profileLink = ` ${window.location.origin}/u/${uname}?tab=creds`;
+      }
+      await sendSystem(`🛠️ We are currently setting up your account. Your login details will appear in the Credentials section of your profile soon.${profileLink}`);
       toast.success("Customer notified");
     } finally { setBusy(false); }
   };
