@@ -102,7 +102,7 @@ function ChannelPage() {
     }
     supabase
       .from("profiles")
-      .select("id, display_name, username, avatar_url")
+      .select("id, display_name, username, avatar_url, equipped_nameplate_id")
       .in("id", ids)
       .then(({ data }) => {
         const next: Record<string, Profile> = {};
@@ -335,7 +335,7 @@ function ChannelPage() {
     if (need.length === 0) return;
     const { data } = await supabase
       .from("profiles")
-      .select("id, display_name, username, avatar_url")
+      .select("id, display_name, username, avatar_url, equipped_nameplate_id")
       .in("id", need);
     if (!data) return;
     setProfiles((prev) => {
