@@ -1776,7 +1776,7 @@ function OrderDetail({ orderId, isAdmin }: { orderId: string; isAdmin: boolean }
               <div className="text-muted-foreground text-xs whitespace-pre-line">{order.notes}</div>
             </div>
           )}
-          {isAdmin && <SquareInvoicePanel orderId={orderId} canCreate={!order.paid_at && !order.completed_at} />}
+          {isAdmin && <SquareInvoicePanel orderId={orderId} canCreate={!order.paid_at && !order.completed_at} onChange={load} />}
         </div>
         <div className="flex-1 flex flex-col">
           <div className="flex-1 overflow-y-auto p-4 space-y-3">
@@ -1812,7 +1812,7 @@ function OrderDetail({ orderId, isAdmin }: { orderId: string; isAdmin: boolean }
 function AdminProducts() {
   return <AdminProductsInner />;
 }
-function SquareInvoicePanel({ orderId, canCreate }: { orderId: string; canCreate: boolean }) {
+function SquareInvoicePanel({ orderId, canCreate, onChange }: { orderId: string; canCreate: boolean; onChange?: () => void | Promise<void> }) {
   const [row, setRow] = useState<any | null>(null);
   const [loading, setLoading] = useState(false);
   const createFn = useServerFn(createSquareInvoiceForOrder);
@@ -1834,20 +1834,20 @@ function SquareInvoicePanel({ orderId, canCreate }: { orderId: string; canCreate
 
   const handleCreate = async () => {
     setLoading(true);
-    try { await createFn({ data: { orderId } }); toast.success("Square invoice sent"); await load(); }
+    try { await createFn({ data: { orderId } }); toast.success("Square invoice sent"); await load(); await onChange?.(); }
     catch (e) { toast.error((e as Error).message); }
     finally { setLoading(false); }
   };
   const handleRefresh = async () => {
     setLoading(true);
-    try { await refreshFn({ data: { orderId } }); toast.success("Status refreshed"); await load(); }
+    try { await refreshFn({ data: { orderId } }); toast.success("Status refreshed"); await load(); await onChange?.(); }
     catch (e) { toast.error((e as Error).message); }
     finally { setLoading(false); }
   };
   const handleCancel = async () => {
     if (!confirm("Cancel this Square invoice?")) return;
     setLoading(true);
-    try { await cancelFn({ data: { orderId } }); toast.success("Invoice cancelled"); await load(); }
+    try { await cancelFn({ data: { orderId } }); toast.success("Invoice cancelled"); await load(); await onChange?.(); }
     catch (e) { toast.error((e as Error).message); }
     finally { setLoading(false); }
   };
