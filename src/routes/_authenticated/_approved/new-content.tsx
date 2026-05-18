@@ -189,7 +189,7 @@ function NewContentPage() {
       {canManage && (
         <Button
           onClick={() => setEditor({ open: true, kind })}
-          className="bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white border-0 shadow-lg shadow-purple-900/50"
+          className="w-full sm:w-auto bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white border-0 shadow-lg shadow-purple-900/50"
         >
           <Plus className="size-4 mr-1" /> Add {kind === "channel" ? "Channel" : "Category"} Post
         </Button>
@@ -242,10 +242,10 @@ function NewContentPage() {
                   <div className="text-[11px] text-purple-300/70 mt-1">
                     Posted {new Date(p.created_at).toLocaleDateString()}
                   </div>
-                  <div className="mt-auto pt-3 flex items-center gap-2">
+                  <div className="mt-auto pt-3 flex flex-wrap items-center gap-2">
                     <Button
                       size="sm"
-                      className="flex-1 bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white border-0"
+                      className="min-w-[140px] flex-1 bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white border-0"
                       onClick={() => { setViewing(p); if (unread) markRead(p); }}
                     >
                       Click to Read
