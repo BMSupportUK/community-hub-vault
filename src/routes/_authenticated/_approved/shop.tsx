@@ -1580,6 +1580,7 @@ function OrderDetail({ orderId, isAdmin }: { orderId: string; isAdmin: boolean }
   const [items, setItems] = useState<OrderItem[]>([]);
   const [msgs, setMsgs] = useState<OrderMessage[]>([]);
   const [text, setText] = useState("");
+  const [busy, setBusy] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
 
   const load = async () => {
@@ -1636,18 +1637,26 @@ function OrderDetail({ orderId, isAdmin }: { orderId: string; isAdmin: boolean }
 
   const acceptOrder = async () => {
     if (!order || order.status !== "pending" || !!order.completed_at) return;
-    const { error } = await supabase.from("orders").update({ status: "processing" } as never).eq("id", orderId);
-    if (error) { toast.error(error.message); return; }
-    await sendSystem(`✅ Order accepted — thank you for your order!`);
-    toast.success("Order accepted");
+    if (busy) return;
+    setBusy(true);
+    try {
+      const { error } = await supabase.from("orders").update({ status: "processing" } as never).eq("id", orderId);
+      if (error) { toast.error(error.message); return; }
+      await sendSystem(`✅ Order accepted — thank you for your order!`);
+      toast.success("Order accepted");
+    } finally { setBusy(false); }
   };
 
   const markPaid = async () => {
     if (!order || order.paid_at || order.status === "completed" || !!order.completed_at) return;
-    const { error } = await supabase.rpc("mark_order_paid" as never, { p_order_id: orderId } as never);
-    if (error) { toast.error(error.message); return; }
-    await load();
-    toast.success("Marked as paid");
+    if (busy) return;
+    setBusy(true);
+    try {
+      const { error } = await supabase.rpc("mark_order_paid" as never, { p_order_id: orderId } as never);
+      if (error) { toast.error(error.message); return; }
+      await load();
+      toast.success("Marked as paid");
+    } finally { setBusy(false); }
   };
 
   const settingUpAccount = async () => {
@@ -1655,18 +1664,26 @@ function OrderDetail({ orderId, isAdmin }: { orderId: string; isAdmin: boolean }
       toast.error("This order is completed and cannot be changed.");
       return;
     }
-    await sendSystem(`🛠️ We are currently setting up your account details and will share these next.`);
-    toast.success("Customer notified");
+    if (busy) return;
+    setBusy(true);
+    try {
+      await sendSystem(`🛠️ We are currently setting up your account details and will share these next.`);
+      toast.success("Customer notified");
+    } finally { setBusy(false); }
   };
 
   const completeSale = async () => {
     if (!order || order.status === "completed" || !!order.completed_at) return;
-    const { error } = await supabase.from("orders").update({
-      completed_at: new Date().toISOString(), completed_by: user?.id ?? null, status: "completed",
-    } as never).eq("id", orderId);
-    if (error) { toast.error(error.message); return; }
-    await sendSystem(`🎉 Order complete — thank you for your business!`);
-    toast.success("Sale completed");
+    if (busy) return;
+    setBusy(true);
+    try {
+      const { error } = await supabase.from("orders").update({
+        completed_at: new Date().toISOString(), completed_by: user?.id ?? null, status: "completed",
+      } as never).eq("id", orderId);
+      if (error) { toast.error(error.message); return; }
+      await sendSystem(`🎉 Order complete — thank you for your business!`);
+      toast.success("Sale completed");
+    } finally { setBusy(false); }
   };
 
   const removeItem = async (itemId: string, productName: string) => {
@@ -1716,19 +1733,19 @@ function OrderDetail({ orderId, isAdmin }: { orderId: string; isAdmin: boolean }
           </button>
           {isAdmin ? (
             <>
-              <button onClick={acceptOrder} disabled={order.status !== "pending" || !!order.completed_at}
+              <button onClick={acceptOrder} disabled={busy || order.status !== "pending" || !!order.completed_at}
                 className="px-2.5 py-1 rounded-md bg-amber-500/15 text-amber-500 text-xs font-medium flex items-center gap-1 hover:bg-amber-500/25 disabled:opacity-50">
                 <Check className="size-3.5" /> {order.status === "pending" ? "Accept Order" : "Accepted"}
               </button>
-              <button onClick={markPaid} disabled={!!order.paid_at || !!order.completed_at}
+              <button onClick={markPaid} disabled={busy || !!order.paid_at || !!order.completed_at}
                 className="px-2.5 py-1 rounded-md bg-success/15 text-success text-xs font-medium flex items-center gap-1 hover:bg-success/25 disabled:opacity-50">
                 <BadgeCheck className="size-3.5" /> {order.paid_at ? "Paid" : "Mark As Paid"}
               </button>
-              <button onClick={settingUpAccount} disabled={!!order.completed_at}
+              <button onClick={settingUpAccount} disabled={busy || !!order.completed_at}
                 className="px-2.5 py-1 rounded-md bg-blue-500/15 text-blue-500 text-xs font-medium flex items-center gap-1 hover:bg-blue-500/25 disabled:opacity-50">
                 <Wrench className="size-3.5" /> Setting Up Account
               </button>
-              <button onClick={completeSale} disabled={!!order.completed_at}
+              <button onClick={completeSale} disabled={busy || !!order.completed_at}
                 className="px-2.5 py-1 rounded-md bg-primary/15 text-primary text-xs font-medium flex items-center gap-1 hover:bg-primary/25 disabled:opacity-50">
                 <CheckCircle2 className="size-3.5" /> {order.completed_at ? "Completed" : "Sale Complete"}
               </button>
