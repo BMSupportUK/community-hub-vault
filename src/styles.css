@@ -778,6 +778,7 @@
   transform: translateY(-50%);
   animation: nameplate-panda-bob 2.4s ease-in-out infinite;
   filter: drop-shadow(0 2px 4px rgba(180, 120, 200, 0.45));
+  z-index: 2;
 }
 .nameplate-panda .nameplate-panda-sparkle {
   position: absolute;
@@ -786,6 +787,7 @@
   opacity: 0;
   animation: nameplate-panda-sparkle 2.2s ease-in-out infinite;
   pointer-events: none;
+  z-index: 2;
 }
 .nameplate-panda .nameplate-panda-sparkle.s1 { right: 56px; top: 22%; animation-delay: 0s; }
 .nameplate-panda .nameplate-panda-sparkle.s2 { right: 70px; bottom: 18%; animation-delay: 0.7s; font-size: 10px; }
