@@ -76,9 +76,14 @@ export type UploadProgress = {
 
 async function uploadTicketFiles(
   files: File[],
+  userId: string,
   onProgress?: (p: UploadProgress) => void,
 ): Promise<Attachment[]> {
   const out: Attachment[] = [];
+  if (!userId) {
+    toast.error("You must be signed in to upload attachments");
+    return out;
+  }
   for (let i = 0; i < files.length; i++) {
     const f = files[i];
     onProgress?.({ index: i, total: files.length, name: f.name, done: i });
@@ -87,7 +92,7 @@ async function uploadTicketFiles(
       continue;
     }
     const safe = f.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-    const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${safe}`;
+    const path = `${userId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${safe}`;
     const { error } = await supabase.storage.from("ticket-attachments").upload(path, f, {
       cacheControl: "3600",
       upsert: false,
@@ -577,7 +582,7 @@ function NewTicketForm({
       setCaptchaToken("");
       return toast.error("Captcha verification failed. Please try again.");
     }
-    const uploaded = files.length ? await uploadTicketFiles(files, setUploadProgress) : [];
+    const uploaded = files.length ? await uploadTicketFiles(files, user!.id, setUploadProgress) : [];
     setUploadProgress(null);
     const { data: t, error } = await supabase
       .from("tickets")
@@ -799,7 +804,7 @@ function TicketDetail({
     if ((content.length < 1 && replyFiles.length === 0) || content.length > 2000) return;
     if (ticket.status === "closed") return toast.error("Ticket is closed");
     setSending(true);
-    const uploaded = replyFiles.length ? await uploadTicketFiles(replyFiles, setReplyProgress) : [];
+    const uploaded = replyFiles.length ? await uploadTicketFiles(replyFiles, currentUserId, setReplyProgress) : [];
     setReplyProgress(null);
     const { error } = await supabase.from("ticket_messages").insert({
       ticket_id: ticket.id, sender_id: currentUserId, content, is_internal: internal && isStaff,
