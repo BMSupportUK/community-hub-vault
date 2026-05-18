@@ -83,6 +83,7 @@ const ROLE_STYLES: Record<AppRole, string> = {
   moderator: "bg-amber-500/15 text-amber-500 border-amber-500/30",
   staff: "bg-emerald-500/15 text-emerald-500 border-emerald-500/30",
   subscriber: "bg-sky-500/15 text-sky-500 border-sky-500/30",
+  nonsubscriber: "bg-surface-2 text-muted-foreground border-border",
   member: "bg-surface-2 text-foreground border-border",
   pending: "bg-muted text-muted-foreground border-border",
   banned: "bg-destructive text-destructive-foreground border-destructive",
