@@ -23,6 +23,25 @@ import { RefreshCw, ExternalLink, Ban } from "lucide-react";
 
 type View = "store" | "orders" | "admin" | "refund" | "multi_room" | "triple_room";
 
+function linkify(text: string): React.ReactNode[] {
+  const re = /(https?:\/\/[^\s]+)/g;
+  const parts: React.ReactNode[] = [];
+  let last = 0;
+  let m: RegExpExecArray | null;
+  let i = 0;
+  while ((m = re.exec(text)) !== null) {
+    if (m.index > last) parts.push(text.slice(last, m.index));
+    parts.push(
+      <a key={i++} href={m[0]} target="_blank" rel="noopener noreferrer" className="underline break-all">
+        {m[0]}
+      </a>,
+    );
+    last = m.index + m[0].length;
+  }
+  if (last < text.length) parts.push(text.slice(last));
+  return parts;
+}
+
 const POLICY_KEYS = ["refund", "multi_room", "triple_room"] as const;
 type PolicyKey = typeof POLICY_KEYS[number];
 
@@ -1823,7 +1842,7 @@ function OrderDetail({ orderId, isAdmin }: { orderId: string; isAdmin: boolean }
                 <div key={m.id} className={cn("flex", mine ? "justify-end" : "justify-start")}>
                   <div className={cn("max-w-[70%] px-3 py-2 rounded-2xl text-sm",
                     mine ? "bg-primary text-primary-foreground" : "bg-surface-2")}>
-                    {m.content}
+                    <div className="whitespace-pre-wrap break-words">{linkify(m.content)}</div>
                     <div className={cn("text-[10px] mt-0.5", mine ? "text-primary-foreground/60" : "text-muted-foreground")}>
                       {new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                     </div>
