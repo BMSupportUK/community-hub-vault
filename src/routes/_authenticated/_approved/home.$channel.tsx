@@ -322,6 +322,14 @@ function ChannelPage() {
           setReactions((prev) => prev.filter((r) => r.id !== old.id));
         },
       )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "profiles" },
+        (payload) => {
+          const updated = payload.new as Profile;
+          setProfiles((prev) => (prev[updated.id] ? { ...prev, [updated.id]: { ...prev[updated.id], ...updated } } : prev));
+        },
+      )
       .subscribe();
 
     return () => {
