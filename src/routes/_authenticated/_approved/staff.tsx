@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import profileHeader from "@/assets/profile-header.jpg";
 import { useOnlineUsers } from "@/hooks/use-online-users";
 import { formatLastSeen } from "@/lib/relative-time";
+import { Nameplate } from "@/components/app/Nameplate";
 
 export const Route = createFileRoute("/_authenticated/_approved/staff")({
   component: StaffPage,
@@ -22,6 +23,7 @@ interface Profile {
   created_at: string;
   is_private: boolean | null;
   last_seen_at: string | null;
+  equipped_nameplate_id: string | null;
 }
 interface RoleRow { user_id: string; role: string }
 
@@ -215,10 +217,10 @@ function StaffPage() {
                           key={p.id}
                           className="group rounded-2xl bg-purple-950/50 border border-purple-500/30 hover:border-fuchsia-400/70 hover:shadow-[0_0_30px_-10px_rgba(217,70,239,0.6)] transition-all overflow-hidden flex flex-col backdrop-blur"
                         >
-                          <div
-                            className="h-16 bg-cover bg-center"
-                            style={{ backgroundImage: `url(${profileHeader})` }}
-                            aria-hidden
+                          <Nameplate
+                            id={p.equipped_nameplate_id}
+                            className="h-16"
+                            fallbackStyle={{ backgroundImage: `url(${profileHeader})`, backgroundSize: "cover", backgroundPosition: "center" }}
                           />
                           <div className="px-4 -mt-8 pb-4 flex flex-col flex-1">
                             <div className="relative w-fit">
