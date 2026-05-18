@@ -143,10 +143,12 @@
   background-repeat: repeat-x !important;
   animation: nameplate-soccer-pan 18s linear infinite;
 }
+.nameplate-soccer-scroll > * { position: relative; z-index: 2; }
 .nameplate-soccer-scroll::before {
   content: "";
   position: absolute;
   inset: 0;
+  z-index: 1;
   pointer-events: none;
   background: radial-gradient(ellipse at 50% -20%, rgba(255,255,255,0.55), transparent 60%);
   mix-blend-mode: screen;
@@ -156,6 +158,7 @@
   content: "";
   position: absolute;
   inset: 0;
+  z-index: 1;
   pointer-events: none;
   background: linear-gradient(90deg, rgba(0,0,0,0.45), transparent 25%, transparent 75%, rgba(0,0,0,0.45));
 }
