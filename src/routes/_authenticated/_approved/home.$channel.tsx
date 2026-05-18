@@ -64,6 +64,7 @@ function formatSlow(s: number): string {
 }
 
 function ChannelPage() {
+  const onlineUsers = useOnlineUsers();
   const { channel: slug } = Route.useParams();
   const { user, hasAny } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
