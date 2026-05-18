@@ -1,0 +1,1 @@
+INSERT INTO public.nameplates (name, animation_class, image_url) VALUES ('Cinema Night', 'nameplate-cinema', 'https://vzrbdawlqyealnlrtwgj.supabase.co/storage/v1/object/public/nameplates/v3/cinema-bg.jpg');
