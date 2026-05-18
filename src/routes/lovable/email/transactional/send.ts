@@ -59,6 +59,23 @@ export const Route = createFileRoute("/lovable/email/transactional/send")({
           return Response.json({ error: 'Unauthorized' }, { status: 401 })
         }
 
+        // Restrict transactional email sends to staff roles. Without this, any
+        // authenticated user could trigger security-sensitive templates
+        // (e.g. 2FA reset notices) addressed to arbitrary recipients.
+        const { data: roleRows, error: roleError } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id)
+        if (roleError) {
+          console.error('Role lookup failed', { error: roleError })
+          return Response.json({ error: 'Forbidden' }, { status: 403 })
+        }
+        const allowed = new Set(['admin', 'management', 'staff', 'moderator'])
+        const isAllowed = (roleRows ?? []).some((r: { role: string }) => allowed.has(r.role))
+        if (!isAllowed) {
+          return Response.json({ error: 'Forbidden' }, { status: 403 })
+        }
+
         // Parse request body
         let templateName: string
         let recipientEmail: string
