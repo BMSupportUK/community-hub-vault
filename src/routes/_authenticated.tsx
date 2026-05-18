@@ -1,7 +1,7 @@
 import { createFileRoute, Outlet, redirect, useRouterState, Navigate } from "@tanstack/react-router";
 import { Link } from "@tanstack/react-router";
-import { Users, Briefcase, LayoutDashboard, Shield, ShieldCheck } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { Users, Briefcase, LayoutDashboard, Shield, ShieldCheck, Menu } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -15,6 +15,7 @@ import { SubscriptionExpiry } from "@/components/app/SubscriptionExpiry";
 import { ModerationPendingBadge } from "@/components/app/ModerationPendingBadge";
 import { logMyIp } from "@/lib/ip-log.functions";
 import { useOnlineUsers } from "@/hooks/use-online-users";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 export const Route = createFileRoute("/_authenticated")({
   beforeLoad: async ({ location }) => {
@@ -30,6 +31,9 @@ function AuthLayout() {
   const path = useRouterState({ select: (r) => r.location.pathname });
   const logIp = useServerFn(logMyIp);
   const loggedRef = useRef(false);
+  const [navOpen, setNavOpen] = useState(false);
+  // Close mobile drawer on route change
+  useEffect(() => { setNavOpen(false); }, [path]);
   // Broadcast this user's presence globally while signed in.
   useOnlineUsers();
 
@@ -66,8 +70,19 @@ function AuthLayout() {
     <div className="min-h-screen flex bg-background">
       <IconRail />
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="h-12 shrink-0 border-b border-border bg-rail/40 backdrop-blur flex items-center justify-between px-4 gap-3">
-          <div className="flex items-center gap-2">
+        <header className="h-12 shrink-0 border-b border-border bg-rail/40 backdrop-blur flex items-center justify-between px-2 md:px-4 gap-2 md:gap-3 overflow-x-auto scrollbar-thin">
+          <div className="flex items-center gap-2 shrink-0">
+            <Sheet open={navOpen} onOpenChange={setNavOpen}>
+              <SheetTrigger
+                className="md:hidden inline-flex items-center justify-center size-9 rounded-md hover:bg-surface-2 text-muted-foreground"
+                aria-label="Open navigation"
+              >
+                <Menu className="size-5" />
+              </SheetTrigger>
+              <SheetContent side="left" className="p-0 w-auto bg-rail border-r border-border">
+                <IconRail inSheet />
+              </SheetContent>
+            </Sheet>
             {isAdmin && (
               <Link
                 to="/admin"
@@ -100,10 +115,10 @@ function AuthLayout() {
               </Link>
             )}
           </div>
-          <div className="flex-1 flex justify-center min-w-0 px-3">
+          <div className="hidden md:flex flex-1 justify-center min-w-0 px-3">
             <SubscriptionExpiry />
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 md:gap-3 shrink-0">
           <Link
             to="/members"
             title="Members directory"
