@@ -483,10 +483,10 @@ function ProfilePage() {
           <TabsContent value="profile" className="mt-6">
             <div className="grid lg:grid-cols-3 gap-6">
               <section className="lg:col-span-2 rounded-2xl border border-purple-500/30 bg-purple-950/50 backdrop-blur overflow-hidden text-white">
-                <div
-                  className="h-36 sm:h-44 bg-cover bg-center"
-                  style={{ backgroundImage: `url(${profileHeader})` }}
-                  aria-hidden
+                <Nameplate
+                  id={profile.equipped_nameplate_id}
+                  className="h-36 sm:h-44"
+                  fallbackStyle={{ backgroundImage: `url(${profileHeader})`, backgroundSize: "cover", backgroundPosition: "center" }}
                 />
                 <div className="px-6 pb-6 -mt-12 flex flex-col sm:flex-row sm:items-end gap-4">
                   <Avatar url={profile.avatar_url} name={display} size={96} ring />
@@ -502,12 +502,20 @@ function ProfilePage() {
                     <p className="text-sm text-purple-200/80">@{profile.username ?? "unknown"}</p>
                   </div>
                   {isOwner && (
+                    <>
                     <button
                       onClick={() => setEditing(true)}
                       className="self-start sm:self-end flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-violet-600 to-blue-600 text-white font-medium text-sm shadow-lg shadow-purple-900/50"
                     >
                       <Pencil className="size-4" /> Edit profile
                     </button>
+                    <button
+                      onClick={() => setPickerOpen(true)}
+                      className="self-start sm:self-end flex items-center gap-2 px-4 py-2 rounded-lg bg-purple-900/60 border border-purple-500/40 text-white font-medium text-sm"
+                    >
+                      Nameplate
+                    </button>
+                    </>
                   )}
                   {!isOwner && viewer && (
                     <FriendActionButton rel={rel} busy={relBusy} onSend={sendFriendRequest} onAccept={acceptFriendRequest} onRemove={() => rel.kind === "friends" && removeFriend(rel.id)} />
