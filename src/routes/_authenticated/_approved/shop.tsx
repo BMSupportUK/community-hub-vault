@@ -1572,6 +1572,7 @@ function OrdersView({ selectedId, isAdmin, adminUnlocked, initialScope }: { sele
     const { data } = await q;
     setOrders((data ?? []) as Order[]);
   };
+  useEffect(() => { if (isAdmin && adminUnlocked) setScope(initialScope); }, [isAdmin, adminUnlocked, initialScope]);
   useEffect(() => { if (!adminUnlocked && scope === "all") setScope("mine"); }, [adminUnlocked, scope]);
   useEffect(() => { load(); }, [scope, user?.id, adminUnlocked]);
   useEffect(() => {
