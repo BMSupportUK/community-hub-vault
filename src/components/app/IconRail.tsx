@@ -24,6 +24,7 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
   const [order, setOrder] = useState<Record<string, number>>({});
   const [pagePerms, setPagePerms] = useState<Record<string, string[]>>({});
   const dragKey = useRef<string | null>(null);
+  const channelInstanceId = useRef(Math.random().toString(36).slice(2)).current;
   const navigate = useNavigate();
   const handleSignOut = async () => {
     await signOut();
@@ -41,13 +42,13 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
     };
     load();
     const ch = supabase
-      .channel(`rail-status-incidents-${Math.random().toString(36).slice(2)}`)
+      .channel(`rail-status-incidents-${channelInstanceId}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "status_incidents" }, () => load())
       .subscribe();
     return () => {
       supabase.removeChannel(ch);
     };
-  }, [isPending]);
+  }, [isPending, channelInstanceId]);
 
   useEffect(() => {
     if (isPending) return;
@@ -75,12 +76,12 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
     };
     load();
     const ch = supabase
-      .channel(`rail-new-content-${Math.random().toString(36).slice(2)}`)
+      .channel(`rail-new-content-${channelInstanceId}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "new_content_posts" }, () => load())
       .on("postgres_changes", { event: "*", schema: "public", table: "new_content_reads" }, () => load())
       .subscribe();
     return () => { supabase.removeChannel(ch); };
-  }, [isPending]);
+  }, [isPending, channelInstanceId]);
 
   useEffect(() => {
     const loadOrder = async () => {
@@ -93,13 +94,13 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
     };
     loadOrder();
     const ch = supabase
-      .channel("rail-nav-order")
+      .channel(`rail-nav-order-${channelInstanceId}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "nav_order" }, () => loadOrder())
       .subscribe();
     return () => {
       supabase.removeChannel(ch);
     };
-  }, []);
+  }, [channelInstanceId]);
 
   useEffect(() => {
     const loadPerms = async () => {
@@ -112,11 +113,11 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
     };
     loadPerms();
     const ch = supabase
-      .channel("rail-page-perms")
+      .channel(`rail-page-perms-${channelInstanceId}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "page_permissions" }, () => loadPerms())
       .subscribe();
     return () => { supabase.removeChannel(ch); };
-  }, []);
+  }, [channelInstanceId]);
 
   if (isPending) {
     return (
