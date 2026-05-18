@@ -1810,6 +1810,103 @@ function OrderDetail({ orderId, isAdmin }: { orderId: string; isAdmin: boolean }
 
 // ============ ADMIN ============
 function AdminProducts() {
+  return <AdminProductsInner />;
+}
+function SquareInvoicePanel({ orderId, canCreate }: { orderId: string; canCreate: boolean }) {
+  const [row, setRow] = useState<any | null>(null);
+  const [loading, setLoading] = useState(false);
+  const createFn = useServerFn(createSquareInvoiceForOrder);
+  const refreshFn = useServerFn(refreshSquareInvoiceStatus);
+  const cancelFn = useServerFn(cancelSquareInvoice);
+
+  const load = async () => {
+    const { data } = await supabase.from("order_invoices").select("*").eq("order_id", orderId).maybeSingle();
+    setRow(data);
+  };
+  useEffect(() => { load(); }, [orderId]);
+  useEffect(() => {
+    const ch = supabase.channel(`oi-${orderId}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "order_invoices", filter: `order_id=eq.${orderId}` },
+        () => load())
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [orderId]);
+
+  const handleCreate = async () => {
+    setLoading(true);
+    try { await createFn({ data: { orderId } }); toast.success("Square invoice sent"); await load(); }
+    catch (e) { toast.error((e as Error).message); }
+    finally { setLoading(false); }
+  };
+  const handleRefresh = async () => {
+    setLoading(true);
+    try { await refreshFn({ data: { orderId } }); toast.success("Status refreshed"); await load(); }
+    catch (e) { toast.error((e as Error).message); }
+    finally { setLoading(false); }
+  };
+  const handleCancel = async () => {
+    if (!confirm("Cancel this Square invoice?")) return;
+    setLoading(true);
+    try { await cancelFn({ data: { orderId } }); toast.success("Invoice cancelled"); await load(); }
+    catch (e) { toast.error((e as Error).message); }
+    finally { setLoading(false); }
+  };
+
+  const statusColor = (s?: string) => {
+    switch ((s ?? "").toUpperCase()) {
+      case "PAID": return "bg-success/15 text-success";
+      case "CANCELED": return "bg-destructive/15 text-destructive";
+      case "UNPAID": case "PARTIALLY_PAID": case "SCHEDULED": return "bg-amber-500/15 text-amber-500";
+      default: return "bg-surface-2 text-muted-foreground";
+    }
+  };
+
+  return (
+    <div>
+      <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Square invoice</div>
+      {!row ? (
+        canCreate ? (
+          <button onClick={handleCreate} disabled={loading}
+            className="w-full px-2.5 py-1.5 rounded-md bg-primary/15 text-primary text-xs font-medium hover:bg-primary/25 disabled:opacity-50">
+            {loading ? "Creating…" : "Create & send Square invoice"}
+          </button>
+        ) : (
+          <div className="text-xs text-muted-foreground">No invoice (order already paid/completed)</div>
+        )
+      ) : (
+        <div className="space-y-2">
+          <div className="flex items-center justify-between gap-2">
+            <span className={cn("text-[10px] px-1.5 py-0.5 rounded font-medium", statusColor(row.status))}>{row.status}</span>
+            {row.invoice_number && <span className="text-[10px] text-muted-foreground font-mono">#{row.invoice_number}</span>}
+          </div>
+          {row.public_url && (
+            <a href={row.public_url} target="_blank" rel="noreferrer"
+              className="text-xs text-primary hover:underline flex items-center gap-1 break-all">
+              <ExternalLink className="size-3 shrink-0" /> Open invoice
+            </a>
+          )}
+          <div className="flex gap-1">
+            <button onClick={handleRefresh} disabled={loading}
+              className="flex-1 px-2 py-1 rounded bg-surface-2 text-xs flex items-center justify-center gap-1 hover:bg-surface-2/70 disabled:opacity-50">
+              <RefreshCw className="size-3" /> Refresh
+            </button>
+            {row.status !== "PAID" && row.status !== "CANCELED" && (
+              <button onClick={handleCancel} disabled={loading}
+                className="flex-1 px-2 py-1 rounded bg-destructive/10 text-destructive text-xs flex items-center justify-center gap-1 hover:bg-destructive/20 disabled:opacity-50">
+                <Ban className="size-3" /> Cancel
+              </button>
+            )}
+          </div>
+          {row.last_synced_at && (
+            <div className="text-[10px] text-muted-foreground">Synced {new Date(row.last_synced_at).toLocaleTimeString()}</div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AdminProductsInner() {
   const [products, setProducts] = useState<Product[]>([]);
   const [editing, setEditing] = useState<Partial<Product> | null>(null);
   const [priceText, setPriceText] = useState("");
