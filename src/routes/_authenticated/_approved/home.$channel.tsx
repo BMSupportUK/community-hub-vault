@@ -826,7 +826,7 @@ function ChannelPage() {
                 )}
               >
                 {(() => {
-                  const showNameplate = channel.slug === "talk" && !!p?.equipped_nameplate_id;
+                  const showNameplate = !!p?.equipped_nameplate_id;
                   const avatarEl = p?.avatar_url ? (
                     <img
                       src={p.avatar_url}
@@ -863,7 +863,7 @@ function ChannelPage() {
                 })()}
                 <div className="min-w-0 flex-1">
                   <div className="flex items-baseline gap-2 mb-1">
-                    {!(channel.slug === "talk" && p?.equipped_nameplate_id) && (
+                    {!(p?.equipped_nameplate_id) && (
                       <span className="font-medium text-sm">{name}</span>
                     )}
                     <span className="text-[10px] text-muted-foreground">
