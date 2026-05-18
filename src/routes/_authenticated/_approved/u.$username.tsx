@@ -673,6 +673,14 @@ function ProfilePage() {
           onSaved={() => { setEditing(false); load(); }}
         />
       )}
+      {pickerOpen && isOwner && (
+        <NameplatePicker
+          userId={profile.id}
+          currentId={profile.equipped_nameplate_id}
+          onClose={() => setPickerOpen(false)}
+          onChange={() => load()}
+        />
+      )}
       </div>
     </div>
   );
