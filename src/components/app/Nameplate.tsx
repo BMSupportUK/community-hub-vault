@@ -22,6 +22,9 @@ export function Nameplate({ id, className, style, fallbackStyle, children }: Nam
       style={finalStyle}
       aria-hidden={!children}
     >
+      {np?.animation_class === "nameplate-hotdog" && (
+        <span className="nameplate-hotdog-icon" aria-hidden>🌭</span>
+      )}
       {children}
     </div>
   );
