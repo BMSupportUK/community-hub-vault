@@ -858,7 +858,7 @@ function ChannelPage() {
                     return (
                       <Nameplate
                         id={p!.equipped_nameplate_id}
-                        className="rounded-md pl-1 pr-3 h-9 w-full flex items-center gap-2 shrink-0 mt-0.5 shadow-sm"
+                        className="rounded-md pl-1 pr-3 h-9 w-56 flex items-center gap-2 shrink-0 mt-0.5 shadow-sm"
                       >
                         {avatarEl}
                         <span className="font-semibold text-sm text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)] truncate">
