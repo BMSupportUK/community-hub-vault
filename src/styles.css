@@ -215,6 +215,28 @@
     linear-gradient(90deg, rgba(0,0,0,0.35), transparent 20%, transparent 80%, rgba(0,0,0,0.35));
   animation: nameplate-pitch-flash 3.2s ease-in-out infinite;
 }
+.nameplate-pitch .nameplate-pitch-player,
+.nameplate-pitch .nameplate-pitch-ball {
+  position: absolute;
+  top: 50%;
+  z-index: 3;
+  font-size: 20px;
+  line-height: 1;
+  pointer-events: none;
+  filter: drop-shadow(0 2px 3px rgba(0,0,0,0.55));
+}
+.nameplate-pitch .nameplate-pitch-player {
+  right: 6px;
+  transform-origin: 70% 80%;
+  transform: translateY(-50%);
+  animation: nameplate-pitch-kick 1.6s ease-in-out infinite;
+}
+.nameplate-pitch .nameplate-pitch-ball {
+  right: 28px;
+  font-size: 16px;
+  transform: translateY(-50%);
+  animation: nameplate-pitch-ball 1.6s ease-in-out infinite;
+}
 
 /* ---- Hotdog DJ: bopping zoom, hue pulse, sparkle sweep ---- */
 @keyframes nameplate-hotdog-bop {
