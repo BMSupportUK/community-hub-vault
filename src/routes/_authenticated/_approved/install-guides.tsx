@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { HeaderImageUpload } from "@/components/ui/header-image-upload";
 import { toast } from "sonner";
-import installHero from "@/assets/install-guides-hero.jpg";
+import installHero from "@/assets/install-guides-bg.jpg";
 
 export const Route = createFileRoute("/_authenticated/_approved/install-guides")({
   component: InstallGuidesPage,
@@ -286,30 +286,28 @@ function InstallGuidesPage() {
           </TabsList>
 
           <TabsContent value="welcome" className="mt-6">
-            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-rose-600/30 via-red-600/30 to-orange-700/30 border border-red-500/30 shadow-[0_0_60px_-15px_rgba(239,68,68,0.5)]">
+            <div className="relative overflow-hidden rounded-2xl border border-red-500/30 shadow-[0_0_60px_-15px_rgba(239,68,68,0.5)] min-h-[60vh] lg:min-h-[70vh]">
               <img
                 src={installHero}
-                alt="Couple watching an install guide on a TV"
-                width={1280}
-                height={768}
-                className="hidden md:block absolute inset-y-0 right-0 h-full w-1/2 object-cover object-left [mask-image:linear-gradient(to_right,transparent,black_30%)]"
+                alt="Couple watching an install guide on TV from their sofa"
+                width={1920}
+                height={1080}
+                className="absolute inset-0 h-full w-full object-cover"
               />
-              <div className="relative p-10 md:max-w-[60%]">
-                <h2 className="font-display text-3xl font-bold text-red-50">Welcome to Install Guides</h2>
-                <p className="mt-3 text-lg text-red-100/80">
+              <div className="absolute inset-0 bg-gradient-to-r from-[#2e0b0b]/95 via-[#2e0b0b]/70 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#2e0b0b]/80 via-transparent to-transparent" />
+              <div className="relative p-6 sm:p-10 md:p-14 max-w-2xl">
+                <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold text-red-50 leading-tight drop-shadow-[0_2px_12px_rgba(0,0,0,0.6)]">
+                  Welcome to Install Guides
+                </h2>
+                <p className="mt-4 text-base sm:text-lg text-red-100/90 drop-shadow">
                   Everything you need to get up and running — written walkthroughs and downloadable PDF references.
                 </p>
-                <p className="mt-4 text-red-100/70">
+                <p className="mt-3 text-red-100/80 drop-shadow">
                   Browse by category, search for what you need, and open PDFs directly in your browser.
                 </p>
-                <Button className="mt-6 bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white" onClick={() => setTab("guides")}>Browse guides</Button>
+                <Button className="mt-6 bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white shadow-lg shadow-red-900/40" onClick={() => setTab("guides")}>Browse guides</Button>
               </div>
-              <img
-                src={installHero}
-                alt=""
-                aria-hidden
-                className="md:hidden w-full h-40 object-cover object-right"
-              />
             </div>
           </TabsContent>
 
