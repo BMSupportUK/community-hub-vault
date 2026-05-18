@@ -734,3 +734,59 @@
   animation: nameplate-corgi-petal 2.4s ease-out infinite;
 }
 .nameplate-corgi .nameplate-corgi-petal.p2 { animation-delay: 1.2s; right: 70px; top: 50%; }
+
+/* ===== Dreamy Panda nameplate ===== */
+@keyframes nameplate-panda-bob {
+  0%, 100% { transform: translateY(-50%) rotate(-3deg); }
+  50%      { transform: translateY(-58%) rotate(3deg); }
+}
+@keyframes nameplate-panda-sparkle {
+  0%, 100% { opacity: 0; transform: scale(0.6) rotate(0deg); }
+  50%      { opacity: 1; transform: scale(1) rotate(180deg); }
+}
+@keyframes nameplate-panda-cloud {
+  0%   { transform: translateX(0); opacity: 0.7; }
+  100% { transform: translateX(-40px); opacity: 0.4; }
+}
+.nameplate-panda {
+  position: relative;
+  isolate: isolate;
+  background: linear-gradient(120deg, #f4c8e8 0%, #d9b8f2 45%, #b8d4f5 100%);
+}
+.nameplate-panda::before {
+  content: "";
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse 60px 22px at 20% 35%, rgba(255,255,255,0.55), transparent 70%),
+    radial-gradient(ellipse 50px 18px at 45% 70%, rgba(255,255,255,0.45), transparent 70%),
+    radial-gradient(ellipse 70px 24px at 10% 80%, rgba(255,255,255,0.4), transparent 70%);
+  animation: nameplate-panda-cloud 6s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+.nameplate-panda::after {
+  content: "";
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 85% 55%, rgba(255,255,255,0.35), transparent 55%);
+  pointer-events: none;
+}
+.nameplate-panda .nameplate-panda-icon {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  font-size: 34px;
+  line-height: 1;
+  transform: translateY(-50%);
+  animation: nameplate-panda-bob 2.4s ease-in-out infinite;
+  filter: drop-shadow(0 2px 4px rgba(180, 120, 200, 0.45));
+}
+.nameplate-panda .nameplate-panda-sparkle {
+  position: absolute;
+  font-size: 12px;
+  color: #fff;
+  opacity: 0;
+  animation: nameplate-panda-sparkle 2.2s ease-in-out infinite;
+  pointer-events: none;
+}
+.nameplate-panda .nameplate-panda-sparkle.s1 { right: 56px; top: 22%; animation-delay: 0s; }
+.nameplate-panda .nameplate-panda-sparkle.s2 { right: 70px; bottom: 18%; animation-delay: 0.7s; font-size: 10px; }
+.nameplate-panda .nameplate-panda-sparkle.s3 { right: 100px; top: 45%; animation-delay: 1.4s; font-size: 14px; }
