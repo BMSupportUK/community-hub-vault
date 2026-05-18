@@ -42,13 +42,14 @@ export function SubscriptionExpiry() {
   }, [user]);
 
   const items = creds.filter((c) => c.expiry_at);
-  if (!loaded || items.length === 0) return null;
 
   // Trigger server-side revoke the moment the latest expiry passes, so the
   // 'subscriber' role drops in real time (cron is the backstop every minute).
   // Admin/management/staff/moderator are protected inside the RPC.
-  // eslint-disable-next-line react-hooks/rules-of-hooks
+  // Must run before any early return to keep hook order stable.
   useScheduledRevoke(items, user?.id);
+
+  if (!loaded || items.length === 0) return null;
 
   const fmt = (d: Date) =>
     d.toLocaleString(undefined, {
