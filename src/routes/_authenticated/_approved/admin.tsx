@@ -1,6 +1,6 @@
 import { createFileRoute, Link, Navigate, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ShieldCheck, Lock, KeyRound, Users, Ticket, ShoppingBag, ShieldAlert, KeySquare, Globe, Clock, FileText, Loader2, Shield, Star, Filter, Sparkles, LifeBuoy, RefreshCw, Copy, Download, Ban } from "lucide-react";
+import { ShieldCheck, Lock, KeyRound, Users, Ticket, ShoppingBag, ShieldAlert, KeySquare, Globe, Clock, FileText, Loader2, Shield, Star, Filter, Sparkles, LifeBuoy, RefreshCw, Copy, Download, Ban, Tag, Receipt, Package } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
@@ -483,6 +483,9 @@ function DashboardBody() {
     { to: "/admin-hero-boxes", label: "Landing hero boxes", desc: "Edit the three boxes shown on the public landing page.", icon: Sparkles },
     { to: "/admin-blacklist", label: "Blacklist", desc: "Ban accounts by email address or IP — applied immediately and at signup.", icon: Ban },
     { to: "/admin-business-hours", label: "Business hours", desc: "Set opening hours per day. Auto-replies when orders or tickets open out of hours.", icon: Clock },
+    { to: "/shop?view=admin", label: "Shop products", desc: "Add, edit and reorder shop products and categories.", icon: Package },
+    { to: "/shop?view=discounts", label: "Discount codes", desc: "Create and manage promotional discount codes.", icon: Tag },
+    { to: "/shop?view=orders", label: "Sales chats", desc: "View all customer orders and reply in their order chats.", icon: Receipt },
   ];
 
   return (
