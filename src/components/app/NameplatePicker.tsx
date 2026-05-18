@@ -19,16 +19,9 @@ export function NameplatePicker({ userId, currentId, onClose, onChange }: Namepl
 
   useEffect(() => {
     (async () => {
-      const { data: unlocks } = await supabase
-        .from("user_nameplates")
-        .select("nameplate_id")
-        .eq("user_id", userId);
-      const ids = ((unlocks as { nameplate_id: string }[]) ?? []).map((u) => u.nameplate_id);
-      if (ids.length === 0) { setRows([]); setLoading(false); return; }
       const { data: nps } = await supabase
         .from("nameplates")
-        .select("id,name,description,image_url,gradient_css,is_active,sort_order")
-        .in("id", ids)
+        .select("id,name,description,image_url,gradient_css,animation_class,is_active,sort_order")
         .eq("is_active", true)
         .order("sort_order", { ascending: true });
       const list = (nps as NameplateRow[]) ?? [];
@@ -74,7 +67,7 @@ export function NameplatePicker({ userId, currentId, onClose, onChange }: Namepl
             <div className="py-10 text-center"><Loader2 className="size-5 animate-spin inline text-muted-foreground" /></div>
           ) : rows.length === 0 ? (
             <div className="text-center text-xs text-muted-foreground py-8">
-              You don't have any nameplates yet. Ask an admin to grant you access.
+              No nameplates are available yet.
             </div>
           ) : (
             rows.map((r) => (
