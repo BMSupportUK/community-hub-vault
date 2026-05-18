@@ -1900,6 +1900,33 @@ export type Database = {
         }
         Relationships: []
       }
+      subscription_expiry_reminders: {
+        Row: {
+          credential_id: string
+          expiry_at: string
+          id: string
+          kind: string
+          recipient_email: string
+          sent_at: string
+        }
+        Insert: {
+          credential_id: string
+          expiry_at: string
+          id?: string
+          kind: string
+          recipient_email: string
+          sent_at?: string
+        }
+        Update: {
+          credential_id?: string
+          expiry_at?: string
+          id?: string
+          kind?: string
+          recipient_email?: string
+          sent_at?: string
+        }
+        Relationships: []
+      }
       suppressed_emails: {
         Row: {
           created_at: string
@@ -2424,6 +2451,16 @@ export type Database = {
           used_count: number
           user_id: string
           username: string
+        }[]
+      }
+      get_pending_expiry_reminders: {
+        Args: { _kind: string }
+        Returns: {
+          app_login_name: string
+          credential_id: string
+          expiry_at: string
+          owner_id: string
+          recipient_email: string
         }[]
       }
       has_any_role: {
