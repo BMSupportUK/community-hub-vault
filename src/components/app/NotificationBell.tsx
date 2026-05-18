@@ -292,7 +292,7 @@ export function NotificationBell() {
 
   const updateOrderStatus = async (orderId: string, status: "processing" | "shipped" | "completed" | "cancelled") => {
     if (!canManageOrders) return;
-    const { error } = await supabase.from("orders").update({ status }).eq("id", orderId);
+    const { error } = await supabase.from("orders").update({ status } as never).eq("id", orderId);
     if (error) return toast.error(error.message);
     toast.success(`Order ${status}`);
   };

@@ -2303,7 +2303,7 @@ export type Database = {
           paid_by: string | null
           shipping_address: string | null
           shipping_name: string | null
-          status: Database["public"]["Enums"]["order_status"] | null
+          status: string | null
           total_cents: number | null
           updated_at: string | null
           user_id: string | null
@@ -2324,7 +2324,7 @@ export type Database = {
           paid_by?: string | null
           shipping_address?: never
           shipping_name?: string | null
-          status?: Database["public"]["Enums"]["order_status"] | null
+          status?: never
           total_cents?: number | null
           updated_at?: string | null
           user_id?: string | null
@@ -2345,7 +2345,7 @@ export type Database = {
           paid_by?: string | null
           shipping_address?: never
           shipping_name?: string | null
-          status?: Database["public"]["Enums"]["order_status"] | null
+          status?: never
           total_cents?: number | null
           updated_at?: string | null
           user_id?: string | null
