@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AtSign, Bell, Check, ShieldCheck, ShoppingBag, UserPlus, X } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
@@ -33,6 +33,7 @@ type Notif = {
 export function NotificationBell() {
   const { user, isStaff, isMod, isPending, hasAny } = useAuth();
   const navigate = useNavigate();
+  const channelInstanceId = useRef(Math.random().toString(36).slice(2)).current;
   const [items, setItems] = useState<Notif[]>([]);
   const [readIds, setReadIds] = useState<Set<string>>(new Set());
   const [open, setOpen] = useState(false);
@@ -84,7 +85,7 @@ export function NotificationBell() {
     load();
 
     const ch = supabase
-      .channel(`notifs-${user.id}`)
+      .channel(`notifs-${user.id}-${channelInstanceId}`)
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "user_notifications", filter: `user_id=eq.${user.id}` },
@@ -130,7 +131,7 @@ export function NotificationBell() {
     let staffCh: ReturnType<typeof supabase.channel> | null = null;
     if (isStaff) {
       staffCh = supabase
-        .channel("staff-notifications")
+        .channel(`staff-notifications-${channelInstanceId}`)
         .on("postgres_changes", { event: "INSERT", schema: "public", table: "staff_notifications" }, (payload) => {
           const n = { ...(payload.new as Notif), source: "staff" as const };
           setItems((prev) => [n, ...prev].slice(0, 80));
@@ -185,7 +186,7 @@ export function NotificationBell() {
     }
 
     const incidentCh = supabase
-      .channel("status-incidents-sound")
+      .channel(`status-incidents-sound-${channelInstanceId}`)
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "status_incidents" },
@@ -230,7 +231,7 @@ export function NotificationBell() {
       if (staffCh) supabase.removeChannel(staffCh);
       supabase.removeChannel(incidentCh);
     };
-  }, [user, isStaff, isPending, canManageOrders, canHandleTickets, canApproveSignups]);
+  }, [user, isStaff, isPending, canManageOrders, canHandleTickets, canApproveSignups, channelInstanceId, navigate]);
 
   if (!user || isPending) return null;
 
