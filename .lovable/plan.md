@@ -1,71 +1,61 @@
-## Goal
+## Nameplates (Discord-style)
 
-From the admin view of an existing order (including ones with discounts applied), admin clicks **Create Square invoice**. We create the invoice in Square via API, drop the public payment link into the order chat, and watch Square for the payment. When Square reports it paid, the order flips to **paid**, a "Payment received ✅" message is auto-posted in the order chat, and admins get an in-app notification.
+Decorative banner behind a user's name, like Discord nameplates. Admins build the catalog, users pick one to equip, and it shows up everywhere the user's name appears.
 
-## User flow
+### Database
 
-1. Admin opens an order in the Shop admin view.
-2. New panel **Square invoice** shows:
-   - If none yet: button **Create & send Square invoice** (uses order total incl. discount, customer name/email from the order).
-   - If one exists: status badge (Draft / Unpaid / Paid / Cancelled), invoice number, public URL, **Refresh status**, **Cancel invoice**.
-3. On create, we:
-   - Call Square to create the invoice for the order total.
-   - Publish it (Square emails the customer automatically; we also post the payment URL as a message in the order chat).
-4. Payment detection: webhook from Square (primary) + manual **Refresh status** (fallback). When status becomes `PAID`:
-   - Order status → `paid` (sets `paid_at`, `paid_by = system`).
-   - System message in order chat: "💷 Payment received via Square — invoice #XXXX".
-   - Admin in-app notification via existing `staff_notifications`.
+New tables (migration):
 
-## Setup the admin does once
+- **`nameplates`** — admin-curated catalog
+  - `name`, `description`
+  - `image_url` (uploaded image, optional)
+  - `gradient_css` (e.g. `linear-gradient(...)`, optional fallback)
+  - `is_active`, `sort_order`
+  - RLS: anyone approved can SELECT active rows; only admin/management can INSERT/UPDATE/DELETE
 
-- Add Square secrets (we'll request them via the secrets tool):
-  - `SQUARE_ACCESS_TOKEN`
-  - `SQUARE_LOCATION_ID`
-  - `SQUARE_ENVIRONMENT` (`production` or `sandbox`)
-  - `SQUARE_WEBHOOK_SIGNATURE_KEY`
-- In Square Dashboard → Webhooks, add subscription to events `invoice.payment_made`, `invoice.updated`, `invoice.canceled` pointing at:
-  `https://project--5e1fe153-4c10-4ade-8c98-e355fcdea791.lovable.app/api/public/hooks/square-invoice`
+- **`user_nameplates`** — which nameplates a user can equip (unlocked)
+  - `user_id`, `nameplate_id`, `unlocked_at`
+  - RLS: user can SELECT own rows; admin/management can manage all
 
-## Technical plan
+- **`profiles.equipped_nameplate_id`** — nullable FK to `nameplates`
+  - User can update only their own; must reference an unlocked nameplate (validated via trigger)
 
-### Database (migration)
+New storage bucket **`nameplates`** (public) with RLS so only admin/management can upload.
 
-New table `public.order_invoices` (one row per order, latest invoice):
-- `order_id uuid` FK → `private.orders.id` (unique)
-- `provider text` default `'square'`
-- `square_invoice_id text`, `square_order_id text`, `invoice_number text`, `public_url text`
-- `status text` (`draft|unpaid|paid|canceled|failed`)
-- `amount_cents int`, `currency text`
-- `created_by uuid`, `created_at`, `updated_at`, `paid_at`
-- RLS: select/insert/update restricted to admin+management; select also allowed to the order owner (so the customer can see status if we surface it later).
+### Admin UI
 
-Trigger on update: when `status` transitions to `paid`, set `private.orders.status='paid'`, `paid_at=now()`, insert system row into `public.order_messages` (sender = a designated system uuid — use the admin/created_by as fallback), and insert into `public.staff_notifications`.
+New route: **`/admin/nameplates`** (admin/management only)
+- Grid of existing nameplates with preview
+- Create / edit modal: name, image upload, optional CSS gradient, active toggle, sort
+- Per-nameplate "Assign to users" panel: search members, toggle who has access
 
-### Server functions (`src/lib/square-invoices.functions.ts`)
+### User equip flow
 
-All `requireSupabaseAuth` + role check `admin|management`:
-- `createSquareInvoiceForOrder({ orderId })` — reads order + items via `supabaseAdmin`, builds Square `Order` (line items + discount line) and `Invoice` (payment request: BALANCE on receipt, delivery method EMAIL + SHARE_MANUALLY), publishes it, stores row in `order_invoices`, posts message in `order_messages` with the public URL.
-- `refreshSquareInvoiceStatus({ orderId })` — GET invoice from Square, update row, run paid-transition logic if needed.
-- `cancelSquareInvoice({ orderId })` — POST cancel, update row.
+On the profile page (`/u/$username`, own profile only):
+- "Nameplate" button opens a picker dialog
+- Shows all unlocked nameplates + a "None" option
+- Click to equip → updates `profiles.equipped_nameplate_id`
 
-All Square calls go to `https://connect.squareup.com/v2/...` (or `https://connect.squareupsandbox.com/v2/...`) using `process.env.SQUARE_ACCESS_TOKEN`. No SDK — plain `fetch`.
+### Render surfaces
 
-### Webhook route
+A new `<Nameplate />` component renders the user's equipped nameplate as a background strip behind their name. Wire it into:
+1. **Members directory cards** — replaces the static `profileHeader` strip when user has a nameplate
+2. **Profile page header** (`/u/$username`)
+3. **Chat messages** — small inline strip next to the username in `ChatChannel` message rows
+4. **Avatar menu / sidebar** — behind the current user's name in `UserAvatarMenu`
 
-`src/routes/api/public/hooks/square-invoice.ts` (TanStack server route):
-- Verify HMAC SHA-256 signature header `x-square-hmacsha256-signature` against `notification_url + body` using `SQUARE_WEBHOOK_SIGNATURE_KEY` (timingSafeEqual).
-- For `invoice.payment_made` / `invoice.updated` / `invoice.canceled`, find `order_invoices` by `square_invoice_id`, update status; trigger handles the paid side-effects.
+Component fetches nameplate data via a small client cache keyed by `equipped_nameplate_id` (already in profile rows) to avoid N+1 queries — the existing profile loaders just need to also select `equipped_nameplate_id` plus a join on `nameplates`.
 
-### UI
+### Out of scope (for now)
 
-In `shop.tsx` admin order detail (existing order drawer), add a `SquareInvoicePanel` component with the buttons above. Show toast on success/error. Refresh order list after status change. No changes to the customer-facing shop.
+- Animated/Lottie nameplates (start static; can add later)
+- Marketplace / purchase flow (admin assignment only)
+- Nameplate previews in notifications/emails
 
-## Out of scope
-
-- No partial payments / multi-payment-request invoices (single BALANCE request).
-- No editing of invoice after sending (admin cancels + creates a new one if amount changes).
-- No Square customer record sync — we pass `primary_recipient` inline from the order's name/email.
-
-## Secrets requested next
-
-After you approve, I'll request `SQUARE_ACCESS_TOKEN`, `SQUARE_LOCATION_ID`, `SQUARE_ENVIRONMENT`, `SQUARE_WEBHOOK_SIGNATURE_KEY` via the secure secrets form before writing code.
+```text
+nameplates (catalog) ──┐
+                       ├─► user_nameplates (unlocks) ──► profiles.equipped_nameplate_id
+admin upload ──────────┘                                          │
+                                                                  ▼
+                                             <Nameplate /> renders on members/profile/chat/menu
+```
