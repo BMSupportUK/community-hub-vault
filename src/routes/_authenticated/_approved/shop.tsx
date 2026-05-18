@@ -18,6 +18,8 @@ import { useCurrency } from "@/hooks/use-currency";
 import { downloadReceipt } from "@/lib/receipt";
 import { Download } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { createSquareInvoiceForOrder, refreshSquareInvoiceStatus, cancelSquareInvoice } from "@/lib/square-invoices.functions";
+import { RefreshCw, ExternalLink, Ban } from "lucide-react";
 
 type View = "store" | "orders" | "admin" | "refund" | "multi_room" | "triple_room";
 
@@ -1774,6 +1776,7 @@ function OrderDetail({ orderId, isAdmin }: { orderId: string; isAdmin: boolean }
               <div className="text-muted-foreground text-xs whitespace-pre-line">{order.notes}</div>
             </div>
           )}
+          {isAdmin && <SquareInvoicePanel orderId={orderId} canCreate={!order.paid_at && !order.completed_at} />}
         </div>
         <div className="flex-1 flex flex-col">
           <div className="flex-1 overflow-y-auto p-4 space-y-3">
