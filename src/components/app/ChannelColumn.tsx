@@ -34,6 +34,7 @@ export function ChannelColumn({
   onAddGroup,
   onReorderChannels,
   onReorderGroups,
+  inSheet = false,
 }: {
   title: string;
   groups: ChannelGroup[];
@@ -41,6 +42,7 @@ export function ChannelColumn({
   onAddGroup?: () => void;
   onReorderChannels?: (ordered: { id: string; groupLabel: string }[]) => void;
   onReorderGroups?: (orderedLabels: string[]) => void;
+  inSheet?: boolean;
 }) {
   const path = useRouterState({ select: (r) => r.location.pathname });
   const { user } = useAuth();
@@ -104,7 +106,10 @@ export function ChannelColumn({
   };
 
   return (
-    <nav className="w-60 shrink-0 bg-surface flex flex-col border-r border-border">
+    <nav className={cn(
+      "w-60 bg-surface flex-col",
+      inSheet ? "flex h-full w-full" : "shrink-0 hidden md:flex border-r border-border",
+    )}>
       <div className="h-14 flex items-center justify-between px-4 border-b border-border shadow-soft">
         <h2 className="font-display font-semibold text-sm tracking-wide">{title}</h2>
         {onAddGroup && (

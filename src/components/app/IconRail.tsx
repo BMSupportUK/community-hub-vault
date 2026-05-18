@@ -15,7 +15,7 @@ interface RailItem {
   badge?: number;
 }
 
-export function IconRail() {
+export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
   const { isStaff, isPending, signOut, hasAny, roles } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
   const path = useRouterState({ select: (r) => r.location.pathname });
@@ -120,7 +120,10 @@ export function IconRail() {
 
   if (isPending) {
     return (
-      <aside className="bg-rail w-[72px] shrink-0 flex flex-col items-center py-4 gap-2 border-r border-border">
+      <aside className={cn(
+        "bg-rail w-[72px] flex-col items-center py-4 gap-2",
+        inSheet ? "flex h-full" : "shrink-0 hidden md:flex border-r border-border",
+      )}>
         <RailIcon to="/gate" label="Gate" Icon={MessageSquare} active={path.startsWith("/gate")} accent />
         <div className="mt-auto" />
         <button onClick={handleSignOut} className="text-muted-foreground hover:text-destructive p-3" title="Sign out">
@@ -175,7 +178,10 @@ export function IconRail() {
   };
 
   return (
-    <aside className="bg-rail w-[72px] shrink-0 flex flex-col items-center py-4 gap-1 border-r border-border">
+    <aside className={cn(
+      "bg-rail w-[72px] flex-col items-center py-4 gap-1",
+      inSheet ? "flex h-full" : "shrink-0 hidden md:flex border-r border-border",
+    )}>
       <Link to="/home" className="size-12 rounded-2xl bg-gradient-primary flex items-center justify-center font-display font-bold text-[15px] text-primary-foreground shadow-glow mb-2">
         BM
       </Link>

@@ -1,6 +1,6 @@
 import { createFileRoute, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Hash } from "lucide-react";
+import { Hash, Menu } from "lucide-react";
 import { ChannelColumn, type ChannelGroup } from "@/components/app/ChannelColumn";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -11,6 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -37,6 +38,8 @@ function HomeLayout() {
   const navigate = useNavigate();
   const path = useRouterState({ select: (r) => r.location.pathname });
   const [channels, setChannels] = useState<ChannelRow[] | null>(null);
+  const [chanNavOpen, setChanNavOpen] = useState(false);
+  useEffect(() => { setChanNavOpen(false); }, [path]);
   const [mentionCounts, setMentionCounts] = useState<Record<string, number>>({});
   const [addChannelGroup, setAddChannelGroup] = useState<string | null>(null);
   const [showAddGroup, setShowAddGroup] = useState(false);
@@ -426,7 +429,29 @@ function HomeLayout() {
         onReorderChannels={isAdmin ? reorderChannels : undefined}
         onReorderGroups={isAdmin ? reorderGroups : undefined}
       />
-      <Outlet />
+      <div className="flex-1 flex flex-col min-w-0">
+        <div className="md:hidden h-10 shrink-0 flex items-center px-3 border-b border-border bg-rail/30">
+          <Sheet open={chanNavOpen} onOpenChange={setChanNavOpen}>
+            <SheetTrigger className="inline-flex items-center gap-2 text-xs font-medium text-muted-foreground hover:text-foreground">
+              <Menu className="size-4" />
+              Channels
+            </SheetTrigger>
+            <SheetContent side="left" className="p-0 w-72 bg-surface border-r border-border">
+              <ChannelColumn
+                inSheet
+                title="Support Community"
+                groups={groups}
+                onAddGroup={isAdmin ? () => setShowAddGroup(true) : undefined}
+                onReorderChannels={isAdmin ? reorderChannels : undefined}
+                onReorderGroups={isAdmin ? reorderGroups : undefined}
+              />
+            </SheetContent>
+          </Sheet>
+        </div>
+        <div className="flex-1 flex min-h-0 min-w-0">
+          <Outlet />
+        </div>
+      </div>
 
       <Dialog open={!!addChannelGroup} onOpenChange={(o) => !o && setAddChannelGroup(null)}>
         <DialogContent className="max-w-sm">
