@@ -1594,10 +1594,25 @@ function OrderDetail({ orderId, isAdmin }: { orderId: string; isAdmin: boolean }
   useEffect(() => {
     const ch = supabase.channel(`order-${orderId}`)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "order_messages", filter: `order_id=eq.${orderId}` },
-        (p) => setMsgs((m) => [...m, p.new as OrderMessage]))
+        (p) => {
+          const nm = p.new as OrderMessage;
+          setMsgs((m) => (m.some((x) => x.id === nm.id) ? m : [...m, nm]));
+        })
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "order_messages", filter: `order_id=eq.${orderId}` },
+        (p) => {
+          const nm = p.new as OrderMessage;
+          setMsgs((m) => m.map((x) => (x.id === nm.id ? nm : x)));
+        })
+      .on("postgres_changes", { event: "DELETE", schema: "public", table: "order_messages", filter: `order_id=eq.${orderId}` },
+        (p) => {
+          const old = p.old as { id?: string };
+          if (old?.id) setMsgs((m) => m.filter((x) => x.id !== old.id));
+        })
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "orders", filter: `id=eq.${orderId}` },
         (p) => setOrder(p.new as Order))
-      .subscribe();
+      .subscribe((status) => {
+        if (status === "SUBSCRIBED") load();
+      });
     return () => { supabase.removeChannel(ch); };
   }, [orderId]);
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [msgs.length]);
@@ -1605,8 +1620,13 @@ function OrderDetail({ orderId, isAdmin }: { orderId: string; isAdmin: boolean }
   const send = async () => {
     if (!text.trim() || !user) return;
     const c = text; setText("");
-    const { error } = await supabase.from("order_messages").insert({ order_id: orderId, sender_id: user.id, content: c });
-    if (error) { toast.error(error.message); setText(c); }
+    const { data, error } = await supabase
+      .from("order_messages")
+      .insert({ order_id: orderId, sender_id: user.id, content: c })
+      .select()
+      .single();
+    if (error) { toast.error(error.message); setText(c); return; }
+    if (data) setMsgs((m) => (m.some((x) => x.id === (data as OrderMessage).id) ? m : [...m, data as OrderMessage]));
   };
 
   const sendSystem = async (content: string) => {
