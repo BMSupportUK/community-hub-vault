@@ -2444,6 +2444,7 @@ export type Database = {
         Args: { _email: string; _ip: string }
         Returns: boolean
       }
+      mark_order_paid: { Args: { p_order_id: string }; Returns: Json }
       move_to_dlq: {
         Args: {
           dlq_name: string

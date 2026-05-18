@@ -1624,11 +1624,9 @@ function OrderDetail({ orderId, isAdmin }: { orderId: string; isAdmin: boolean }
 
   const markPaid = async () => {
     if (!order || order.paid_at || order.status === "completed" || !!order.completed_at) return;
-    const { error } = await supabase.from("orders").update({
-      paid_at: new Date().toISOString(), paid_by: user?.id ?? null, status: "processing",
-    } as never).eq("id", orderId);
+    const { error } = await supabase.rpc("mark_order_paid" as never, { p_order_id: orderId } as never);
     if (error) { toast.error(error.message); return; }
-    await sendSystem(`💳 Payment received — thank you for your payment!`);
+    await load();
     toast.success("Marked as paid");
   };
 
