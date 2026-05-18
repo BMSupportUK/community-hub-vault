@@ -582,7 +582,7 @@ function NewTicketForm({
       setCaptchaToken("");
       return toast.error("Captcha verification failed. Please try again.");
     }
-    const uploaded = files.length ? await uploadTicketFiles(files, setUploadProgress) : [];
+    const uploaded = files.length ? await uploadTicketFiles(files, user!.id, setUploadProgress) : [];
     setUploadProgress(null);
     const { data: t, error } = await supabase
       .from("tickets")
@@ -804,7 +804,7 @@ function TicketDetail({
     if ((content.length < 1 && replyFiles.length === 0) || content.length > 2000) return;
     if (ticket.status === "closed") return toast.error("Ticket is closed");
     setSending(true);
-    const uploaded = replyFiles.length ? await uploadTicketFiles(replyFiles, setReplyProgress) : [];
+    const uploaded = replyFiles.length ? await uploadTicketFiles(replyFiles, currentUserId, setReplyProgress) : [];
     setReplyProgress(null);
     const { error } = await supabase.from("ticket_messages").insert({
       ticket_id: ticket.id, sender_id: currentUserId, content, is_internal: internal && isStaff,
