@@ -21,6 +21,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { createSquareInvoiceForOrder, refreshSquareInvoiceStatus, cancelSquareInvoice } from "@/lib/square-invoices.functions";
 import { RefreshCw, ExternalLink, Ban } from "lucide-react";
 import { getOutOfHoursMessage } from "@/lib/business-hours";
+import { isAdminUnlocked } from "@/lib/admin-unlock";
 
 type View = "store" | "orders" | "admin" | "refund" | "multi_room" | "triple_room";
 
@@ -94,6 +95,14 @@ function ShopPage() {
   const navigate = useNavigate();
   const { user, hasAny } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
+  const adminUnlocked = isAdmin && isAdminUnlocked(user?.id);
+  const isAdminView = view === "admin" || (view as string) === "discounts";
+
+  useEffect(() => {
+    if (isAdminView && isAdmin && !adminUnlocked) {
+      navigate({ to: "/admin", search: { next: "/shop" } });
+    }
+  }, [isAdminView, isAdmin, adminUnlocked, navigate]);
   const { format, symbol } = useCurrency();
   _currentFmt = format;
   _currentSymbol = symbol;
@@ -129,7 +138,7 @@ function ShopPage() {
           <SideBtn active={view === "refund"} onClick={() => navigate({ to: "/shop", search: { view: "refund" } })} Icon={FileText} label="Refund Policy" />
           <SideBtn active={view === "multi_room"} onClick={() => navigate({ to: "/shop", search: { view: "multi_room" } })} Icon={Users} label="Multi-room Rules" />
           <SideBtn active={view === "triple_room"} onClick={() => navigate({ to: "/shop", search: { view: "triple_room" } })} Icon={BedDouble} label="Triple-room Rules" />
-          {isAdmin && (
+          {isAdmin && adminUnlocked && (
             <>
               <div className="pt-3 px-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Admin</div>
               <SideBtn active={view === "admin"} onClick={() => navigate({ to: "/shop", search: { view: "admin" } })} Icon={Settings} label="Manage Products" />
@@ -168,8 +177,8 @@ function ShopPage() {
         <div className="flex-1 flex min-h-0 min-w-0">
           {view === "store" && <Storefront />}
           {view === "orders" && <OrdersView selectedId={id} isAdmin={isAdmin} />}
-          {view === "admin" && isAdmin && <AdminProducts />}
-          {(view as string) === "discounts" && isAdmin && <AdminDiscounts />}
+          {view === "admin" && isAdmin && adminUnlocked && <AdminProducts />}
+          {(view as string) === "discounts" && isAdmin && adminUnlocked && <AdminDiscounts />}
           {(view === "refund" || view === "multi_room" || view === "triple_room") && (
             view === "refund"
               ? <PolicyView policyKey="refund" isAdmin={isAdmin} />

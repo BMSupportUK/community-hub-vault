@@ -1,6 +1,6 @@
 import { createFileRoute, Link, Navigate, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ShieldCheck, Lock, KeyRound, Users, Ticket, ShoppingBag, ShieldAlert, KeySquare, Globe, Clock, FileText, Loader2, Shield, Star, Filter, Sparkles, LifeBuoy, RefreshCw, Copy, Download, Ban } from "lucide-react";
+import { ShieldCheck, Lock, KeyRound, Users, Ticket, ShoppingBag, ShieldAlert, KeySquare, Globe, Clock, FileText, Loader2, Shield, Star, Filter, Sparkles, LifeBuoy, RefreshCw, Copy, Download, Ban, Tag, Receipt, Package } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
@@ -470,7 +470,7 @@ function DashboardBody() {
     { label: "Reviews to approve", value: stats?.pendingReviews, icon: Star, accent: "amber" },
   ];
 
-  const tools: { to: string; label: string; desc: string; icon: any }[] = [
+  const tools: { to: string; search?: Record<string, string>; label: string; desc: string; icon: any }[] = [
     { to: "/admin-roles", label: "Members & roles", desc: "Assign roles to members and create or delete custom roles.", icon: ShieldCheck },
     { to: "/admin-permissions", label: "Role permissions", desc: "Choose which roles can access pages and what they can do in channels.", icon: Shield },
     { to: "/admin-credentials", label: "User credentials", desc: "Set up app logins assigned to each user.", icon: KeySquare },
@@ -483,6 +483,9 @@ function DashboardBody() {
     { to: "/admin-hero-boxes", label: "Landing hero boxes", desc: "Edit the three boxes shown on the public landing page.", icon: Sparkles },
     { to: "/admin-blacklist", label: "Blacklist", desc: "Ban accounts by email address or IP — applied immediately and at signup.", icon: Ban },
     { to: "/admin-business-hours", label: "Business hours", desc: "Set opening hours per day. Auto-replies when orders or tickets open out of hours.", icon: Clock },
+    { to: "/shop", search: { view: "admin" }, label: "Shop products", desc: "Add, edit and reorder shop products and categories.", icon: Package },
+    { to: "/shop", search: { view: "discounts" }, label: "Discount codes", desc: "Create and manage promotional discount codes.", icon: Tag },
+    { to: "/shop", search: { view: "orders" }, label: "Sales chats", desc: "View all customer orders and reply in their order chats.", icon: Receipt },
   ];
 
   return (
@@ -494,8 +497,9 @@ function DashboardBody() {
           <div className="grid sm:grid-cols-2 gap-3">
             {tools.map((t) => (
               <Link
-                key={t.to}
+                key={`${t.to}-${t.label}`}
                 to={t.to}
+                search={t.search as any}
                 className="group relative rounded-2xl border border-border bg-surface-1 p-4 hover:border-primary hover:shadow-glow transition-all overflow-hidden"
               >
                 <div className="absolute inset-x-0 top-0 h-1 bg-gradient-accent opacity-0 group-hover:opacity-100 transition-opacity" />
