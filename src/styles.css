@@ -516,14 +516,15 @@
   content: "";
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse at 18% 50%, rgba(255, 220, 150, 0.35), transparent 55%);
+  background: radial-gradient(ellipse at 82% 50%, rgba(255, 220, 150, 0.35), transparent 55%);
   pointer-events: none;
   z-index: 1;
   animation: nameplate-cinema-spotlight 3.5s ease-in-out infinite;
 }
 .nameplate-cinema .nameplate-cinema-tv {
   position: absolute;
-  left: 6px;
+  right: 6px;
+  left: auto;
   top: 50%;
   transform: translateY(-50%);
   height: calc(100% - 8px);
@@ -588,8 +589,8 @@
   animation: nameplate-cinema-reel 1.6s linear infinite;
   filter: drop-shadow(0 1px 2px rgba(0,0,0,0.6));
 }
-.nameplate-cinema .nameplate-cinema-reel.r1 { left: 4px; top: 14%; }
-.nameplate-cinema .nameplate-cinema-reel.r2 { left: 4px; top: 86%; }
+.nameplate-cinema .nameplate-cinema-reel.r1 { right: 4px; top: 14%; }
+.nameplate-cinema .nameplate-cinema-reel.r2 { right: 4px; top: 86%; }
 
 /* ===== Red Devil nameplate (devil on the left) ===== */
 @keyframes nameplate-devil-bob {
