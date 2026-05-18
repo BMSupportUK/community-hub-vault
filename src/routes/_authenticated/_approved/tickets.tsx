@@ -76,9 +76,14 @@ export type UploadProgress = {
 
 async function uploadTicketFiles(
   files: File[],
+  userId: string,
   onProgress?: (p: UploadProgress) => void,
 ): Promise<Attachment[]> {
   const out: Attachment[] = [];
+  if (!userId) {
+    toast.error("You must be signed in to upload attachments");
+    return out;
+  }
   for (let i = 0; i < files.length; i++) {
     const f = files[i];
     onProgress?.({ index: i, total: files.length, name: f.name, done: i });
@@ -87,7 +92,7 @@ async function uploadTicketFiles(
       continue;
     }
     const safe = f.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-    const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${safe}`;
+    const path = `${userId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${safe}`;
     const { error } = await supabase.storage.from("ticket-attachments").upload(path, f, {
       cacheControl: "3600",
       upsert: false,
