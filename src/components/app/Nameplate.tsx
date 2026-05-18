@@ -60,6 +60,14 @@ export function Nameplate({ id, className, style, fallbackStyle, children }: Nam
           <span className="nameplate-corgi-icon" aria-hidden>🐕</span>
         </>
       )}
+      {np?.animation_class === "nameplate-panda" && (
+        <>
+          <span className="nameplate-panda-sparkle s1" aria-hidden>✨</span>
+          <span className="nameplate-panda-sparkle s2" aria-hidden>✦</span>
+          <span className="nameplate-panda-sparkle s3" aria-hidden>✨</span>
+          <span className="nameplate-panda-icon" aria-hidden>🐼</span>
+        </>
+      )}
       {children}
     </div>
   );
