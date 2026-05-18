@@ -223,10 +223,10 @@ function MembersPage() {
               key={p.id}
               className="group rounded-2xl bg-surface border border-border hover:border-fuchsia-400/50 hover:shadow-lg hover:shadow-fuchsia-500/10 transition-all overflow-hidden flex flex-col"
             >
-              <Nameplate
-                id={p.equipped_nameplate_id}
-                className="h-16"
-                fallbackStyle={{ backgroundImage: `url(${profileHeader})`, backgroundSize: "cover", backgroundPosition: "center" }}
+              <div
+                className="h-16 bg-cover bg-center"
+                style={{ backgroundImage: `url(${profileHeader})` }}
+                aria-hidden
               />
               <div className="px-4 -mt-8 pb-4 flex flex-col flex-1">
                 <div className="relative w-fit">
@@ -244,13 +244,28 @@ function MembersPage() {
                   />
                 </div>
                 <div className="mt-3">
-                  <Link
-                    to="/u/$username"
-                    params={{ username: p.username ?? p.id }}
-                    className="font-semibold text-sm hover:text-fuchsia-300 transition-colors"
-                  >
-                    {name}
-                  </Link>
+                  {p.equipped_nameplate_id ? (
+                    <Nameplate
+                      id={p.equipped_nameplate_id}
+                      className="inline-flex rounded-full px-3 py-1 shadow-sm max-w-full"
+                    >
+                      <Link
+                        to="/u/$username"
+                        params={{ username: p.username ?? p.id }}
+                        className="font-semibold text-sm text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)] truncate hover:opacity-90 transition-opacity"
+                      >
+                        {name}
+                      </Link>
+                    </Nameplate>
+                  ) : (
+                    <Link
+                      to="/u/$username"
+                      params={{ username: p.username ?? p.id }}
+                      className="font-semibold text-sm hover:text-fuchsia-300 transition-colors"
+                    >
+                      {name}
+                    </Link>
+                  )}
                   <div className="text-[10px] mt-0.5 flex items-center gap-1.5">
                     <span className={`size-1.5 rounded-full ${isOnline ? "bg-emerald-500" : "bg-zinc-500"}`} />
                     <span className={isOnline ? "text-emerald-400" : "text-muted-foreground"}>
