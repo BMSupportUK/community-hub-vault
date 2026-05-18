@@ -660,3 +660,64 @@
 .nameplate-devil .nameplate-devil-ember.e1 { right: 26px; bottom: 14px; animation-delay: 0s; }
 .nameplate-devil .nameplate-devil-ember.e2 { right: 16px; bottom: 18px; animation-delay: 0.6s; }
 .nameplate-devil .nameplate-devil-ember.e3 { right: 32px; bottom: 12px; animation-delay: 1.2s; }
+
+/* ===== Happy Corgi nameplate (corgi on the right) ===== */
+@keyframes nameplate-corgi-hop {
+  0%, 100% { transform: translateY(-50%) rotate(-4deg); }
+  50%      { transform: translateY(-62%) rotate(4deg); }
+}
+@keyframes nameplate-corgi-wag {
+  0%, 100% { transform: translateY(-50%) rotate(-18deg); }
+  50%      { transform: translateY(-50%) rotate(18deg); }
+}
+@keyframes nameplate-corgi-paw {
+  0%   { transform: translate(0,0); opacity: 0; }
+  20%  { opacity: 1; }
+  100% { transform: translate(-30px, -4px); opacity: 0; }
+}
+.nameplate-corgi {
+  position: relative;
+  isolation: isolate;
+}
+.nameplate-corgi > * { position: relative; z-index: 3; }
+.nameplate-corgi::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 86% 60%, rgba(255, 200, 140, 0.45), transparent 55%);
+  pointer-events: none;
+  z-index: 1;
+}
+.nameplate-corgi .nameplate-corgi-icon {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%) rotate(-4deg);
+  font-size: 22px;
+  line-height: 1;
+  z-index: 2;
+  filter: drop-shadow(0 2px 3px rgba(0,0,0,0.35));
+  animation: nameplate-corgi-hop 0.6s ease-in-out infinite;
+}
+.nameplate-corgi .nameplate-corgi-tail {
+  position: absolute;
+  right: 28px;
+  top: 50%;
+  transform: translateY(-50%) rotate(-18deg);
+  transform-origin: 100% 50%;
+  font-size: 12px;
+  line-height: 1;
+  z-index: 2;
+  animation: nameplate-corgi-wag 0.25s ease-in-out infinite;
+}
+.nameplate-corgi .nameplate-corgi-paw {
+  position: absolute;
+  right: 32px;
+  bottom: 4px;
+  font-size: 10px;
+  line-height: 1;
+  z-index: 2;
+  opacity: 0;
+  animation: nameplate-corgi-paw 1.6s ease-out infinite;
+}
+.nameplate-corgi .nameplate-corgi-paw.p2 { animation-delay: 0.8s; right: 36px; }
