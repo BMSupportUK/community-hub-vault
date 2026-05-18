@@ -41,7 +41,7 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
     };
     load();
     const ch = supabase
-      .channel("rail-status-incidents")
+      .channel(`rail-status-incidents-${Math.random().toString(36).slice(2)}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "status_incidents" }, () => load())
       .subscribe();
     return () => {
@@ -75,7 +75,7 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
     };
     load();
     const ch = supabase
-      .channel("rail-new-content")
+      .channel(`rail-new-content-${Math.random().toString(36).slice(2)}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "new_content_posts" }, () => load())
       .on("postgres_changes", { event: "*", schema: "public", table: "new_content_reads" }, () => load())
       .subscribe();
