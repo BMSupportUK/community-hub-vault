@@ -1089,6 +1089,57 @@ export type Database = {
         }
         Relationships: []
       }
+      order_invoices: {
+        Row: {
+          amount_cents: number
+          created_at: string
+          created_by: string | null
+          currency: string
+          id: string
+          invoice_number: string | null
+          last_synced_at: string | null
+          order_id: string
+          paid_at: string | null
+          public_url: string | null
+          square_invoice_id: string
+          square_order_id: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount_cents?: number
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          id?: string
+          invoice_number?: string | null
+          last_synced_at?: string | null
+          order_id: string
+          paid_at?: string | null
+          public_url?: string | null
+          square_invoice_id: string
+          square_order_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount_cents?: number
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          id?: string
+          invoice_number?: string | null
+          last_synced_at?: string | null
+          order_id?: string
+          paid_at?: string | null
+          public_url?: string | null
+          square_invoice_id?: string
+          square_order_id?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       order_items: {
         Row: {
           created_at: string
