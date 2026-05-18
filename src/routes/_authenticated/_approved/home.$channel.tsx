@@ -10,6 +10,7 @@ import { StaffOnDutyStrip } from "@/components/app/StaffOnDutyStrip";
 import { ChannelWelcomeEmbed } from "@/components/app/ChannelWelcomeEmbed";
 import { cn } from "@/lib/utils";
 import { DEFAULT_AVATAR_URL } from "@/lib/default-avatar";
+import { Nameplate } from "@/components/app/Nameplate";
 
 export const Route = createFileRoute("/_authenticated/_approved/home/$channel")({
   component: ChannelPage,
@@ -40,6 +41,7 @@ interface Profile {
   display_name: string | null;
   username: string | null;
   avatar_url: string | null;
+  equipped_nameplate_id: string | null;
 }
 
 interface Reaction {
@@ -101,7 +103,7 @@ function ChannelPage() {
     }
     supabase
       .from("profiles")
-      .select("id, display_name, username, avatar_url")
+      .select("id, display_name, username, avatar_url, equipped_nameplate_id")
       .in("id", ids)
       .then(({ data }) => {
         const next: Record<string, Profile> = {};
@@ -334,7 +336,7 @@ function ChannelPage() {
     if (need.length === 0) return;
     const { data } = await supabase
       .from("profiles")
-      .select("id, display_name, username, avatar_url")
+      .select("id, display_name, username, avatar_url, equipped_nameplate_id")
       .in("id", need);
     if (!data) return;
     setProfiles((prev) => {
@@ -832,7 +834,18 @@ function ChannelPage() {
                 )}
                 <div className="min-w-0 flex-1">
                   <div className="flex items-baseline gap-2 mb-1">
-                    <span className="font-medium text-sm">{name}</span>
+                    {p?.equipped_nameplate_id ? (
+                      <Nameplate
+                        id={p.equipped_nameplate_id}
+                        className="rounded-md px-2 py-0.5 inline-flex items-center"
+                      >
+                        <span className="font-medium text-sm text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
+                          {name}
+                        </span>
+                      </Nameplate>
+                    ) : (
+                      <span className="font-medium text-sm">{name}</span>
+                    )}
                     <span className="text-[10px] text-muted-foreground">
                       {new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                     </span>
