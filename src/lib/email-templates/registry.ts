@@ -19,8 +19,10 @@ export interface TemplateEntry {
  */
 import { template as twofaResetAdmin } from './twofa-reset-admin'
 import { template as twofaResetUser } from './twofa-reset-user'
+import { template as subscriptionExpiryReminder } from './subscription-expiry-reminder'
 
 export const TEMPLATES: Record<string, TemplateEntry> = {
   'twofa-reset-admin': twofaResetAdmin,
   'twofa-reset-user': twofaResetUser,
+  'subscription-expiry-reminder': subscriptionExpiryReminder,
 }
