@@ -2496,6 +2496,7 @@ export type Database = {
         | "shipped"
         | "completed"
         | "cancelled"
+        | "paid"
       request_status: "pending" | "approved" | "denied"
       review_status: "pending" | "approved" | "rejected"
       slot_type: "shift" | "hourly"
@@ -2657,6 +2658,7 @@ export const Constants = {
         "shipped",
         "completed",
         "cancelled",
+        "paid",
       ],
       request_status: ["pending", "approved", "denied"],
       review_status: ["pending", "approved", "rejected"],
