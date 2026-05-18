@@ -189,7 +189,7 @@ function NewContentPage() {
       {canManage && (
         <Button
           onClick={() => setEditor({ open: true, kind })}
-          className="bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white border-0 shadow-lg shadow-purple-900/50"
+          className="w-full sm:w-auto bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white border-0 shadow-lg shadow-purple-900/50"
         >
           <Plus className="size-4 mr-1" /> Add {kind === "channel" ? "Channel" : "Category"} Post
         </Button>
@@ -242,10 +242,10 @@ function NewContentPage() {
                   <div className="text-[11px] text-purple-300/70 mt-1">
                     Posted {new Date(p.created_at).toLocaleDateString()}
                   </div>
-                  <div className="mt-auto pt-3 flex items-center gap-2">
+                  <div className="mt-auto pt-3 flex flex-wrap items-center gap-2">
                     <Button
                       size="sm"
-                      className="flex-1 bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white border-0"
+                      className="min-w-[140px] flex-1 bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white border-0"
                       onClick={() => { setViewing(p); if (unread) markRead(p); }}
                     >
                       Click to Read
@@ -307,33 +307,33 @@ function NewContentPage() {
       </header>
 
       <div className="px-4 md:px-8 py-4 md:py-6">
-        <Tabs value={tab} onValueChange={(v) => setTab(v as any)} className="w-full">
-          <TabsList className="grid grid-cols-3 w-full max-w-2xl h-auto bg-purple-950/60 border border-purple-500/30">
-            <TabsTrigger value="welcome" className="text-[11px] sm:text-sm px-1 sm:px-3 py-1.5 whitespace-normal text-center leading-tight data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white">Welcome</TabsTrigger>
-            <TabsTrigger value="channel" className="text-[11px] sm:text-sm px-1 sm:px-3 py-1.5 whitespace-normal text-center leading-tight data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white">
+        <Tabs value={tab} onValueChange={(v) => setTab(v as any)} className="w-full min-w-0">
+          <TabsList className="grid grid-cols-1 min-[380px]:grid-cols-3 w-full max-w-2xl h-auto gap-1 bg-purple-950/60 border border-purple-500/30 overflow-hidden">
+            <TabsTrigger value="welcome" className="min-w-0 w-full text-xs sm:text-sm px-2 sm:px-3 py-2 whitespace-normal text-center leading-tight break-words data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white">Welcome</TabsTrigger>
+            <TabsTrigger value="channel" className="min-w-0 w-full text-xs sm:text-sm px-2 sm:px-3 py-2 whitespace-normal text-center leading-tight break-words data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white">
               New Channels{channels.length ? ` (${channels.length})` : ""}
             </TabsTrigger>
-            <TabsTrigger value="category" className="text-[11px] sm:text-sm px-1 sm:px-3 py-1.5 whitespace-normal text-center leading-tight data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white">
+            <TabsTrigger value="category" className="min-w-0 w-full text-xs sm:text-sm px-2 sm:px-3 py-2 whitespace-normal text-center leading-tight break-words data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white">
               New Categories{categories.length ? ` (${categories.length})` : ""}
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="welcome" className="mt-6">
-            <div className="rounded-2xl bg-gradient-to-br from-fuchsia-600/30 via-purple-600/30 to-violet-700/30 border border-purple-500/40 p-10 shadow-[0_0_60px_-15px_rgba(168,85,247,0.5)]">
-              <h2 className="font-display text-3xl font-bold bg-gradient-to-r from-violet-300 to-blue-300 bg-clip-text text-transparent">
+            <div className="rounded-2xl bg-gradient-to-br from-fuchsia-600/30 via-purple-600/30 to-violet-700/30 border border-purple-500/40 p-5 sm:p-10 shadow-[0_0_60px_-15px_rgba(168,85,247,0.5)] overflow-hidden">
+              <h2 className="font-display text-2xl sm:text-3xl font-bold bg-gradient-to-r from-violet-300 to-blue-300 bg-clip-text text-transparent leading-tight">
                 Welcome to New Content
               </h2>
-              <p className="mt-3 text-lg text-purple-100/90 max-w-2xl">
+              <p className="mt-3 text-base sm:text-lg text-purple-100/90 max-w-2xl">
                 Stay up to date with every new channel and category added to the platform.
               </p>
               <p className="mt-4 text-purple-200/70 max-w-2xl">
                 Browse the <span className="font-semibold text-white">New Channels</span> tab for newly added channels, or the <span className="font-semibold text-white">New Categories</span> tab for new content categories. Admins post details, images, and setup info here so you'll never miss what's new.
               </p>
-              <div className="mt-6 flex gap-2">
-                <Button onClick={() => setTab("channel")} className="bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white border-0 shadow-lg shadow-purple-900/50">
+              <div className="mt-6 grid gap-2 sm:flex sm:flex-wrap">
+                <Button onClick={() => setTab("channel")} className="w-full sm:w-auto min-w-0 bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white border-0 shadow-lg shadow-purple-900/50">
                   <Hash className="size-4 mr-1" /> View new channels
                 </Button>
-                <Button onClick={() => setTab("category")} variant="outline" className="border-purple-500/40 bg-purple-950/40 text-purple-100 hover:bg-purple-900/60">
+                <Button onClick={() => setTab("category")} variant="outline" className="w-full sm:w-auto min-w-0 border-purple-500/40 bg-purple-950/40 text-purple-100 hover:bg-purple-900/60">
                   <FolderPlus className="size-4 mr-1" /> View new categories
                 </Button>
               </div>
