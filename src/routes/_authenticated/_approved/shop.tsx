@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { ChannelColumn, type ChannelGroup } from "@/components/app/ChannelColumn";
-import { ShoppingBag, Package, Settings, Plus, Minus, X, Send, Trash2, Pencil, Image as ImageIcon, Tag, CheckCircle2, BadgeCheck, Check, Wrench, FileText, BedDouble, Users, Loader2, Save, Star, Sparkles, GripVertical, Receipt, UserCog, ArrowRight } from "lucide-react";
+import { ShoppingBag, Package, Settings, Plus, Minus, X, Send, Trash2, Pencil, Image as ImageIcon, Tag, CheckCircle2, BadgeCheck, Check, Wrench, FileText, BedDouble, Users, Loader2, Save, Star, Sparkles, GripVertical, Receipt, UserCog, ArrowRight, Menu } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { TurnstileWidget } from "@/components/app/TurnstileWidget";
@@ -17,6 +17,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useCurrency } from "@/hooks/use-currency";
 import { downloadReceipt } from "@/lib/receipt";
 import { Download } from "lucide-react";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 type View = "store" | "orders" | "admin" | "refund" | "multi_room" | "triple_room";
 
@@ -75,6 +76,8 @@ function ShopPage() {
   _currentFmt = format;
   _currentSymbol = symbol;
   const [username, setUsername] = useState<string | null>(null);
+  const [navOpen, setNavOpen] = useState(false);
+  useEffect(() => { setNavOpen(false); }, [view, id]);
   useEffect(() => {
     if (!user) { setUsername(null); return; }
     let active = true;
@@ -92,9 +95,8 @@ function ShopPage() {
     ...(isAdmin ? [{ label: "Admin", items: [{ to: "/shop", label: "Manage", icon: Settings }] }] : []),
   ];
 
-  return (
+  const navContent = (
     <>
-      <nav className="w-60 shrink-0 bg-surface flex flex-col border-r border-border">
         <div className="h-14 flex items-center px-4 border-b border-border shadow-soft">
           <h2 className="font-display font-semibold text-sm tracking-wide">Shop</h2>
         </div>
@@ -122,16 +124,37 @@ function ShopPage() {
             <div className="min-w-0 flex-1"><div className="text-xs font-medium truncate">{username ?? "…"}</div></div>
           </div>
         )}
+    </>
+  );
+
+  return (
+    <>
+      <nav className="w-60 shrink-0 bg-surface flex-col border-r border-border hidden md:flex">
+        {navContent}
       </nav>
-      {view === "store" && <Storefront />}
-      {view === "orders" && <OrdersView selectedId={id} isAdmin={isAdmin} />}
-      {view === "admin" && isAdmin && <AdminProducts />}
-      {(view as string) === "discounts" && isAdmin && <AdminDiscounts />}
-      {(view === "refund" || view === "multi_room" || view === "triple_room") && (
-        view === "refund"
-          ? <PolicyView policyKey="refund" isAdmin={isAdmin} />
-          : <RoomPolicyView roomKey={view as "multi_room" | "triple_room"} isAdmin={isAdmin} />
-      )}
+      <div className="flex-1 flex flex-col min-w-0">
+        <div className="md:hidden h-10 shrink-0 flex items-center px-3 border-b border-border bg-rail/30">
+          <Sheet open={navOpen} onOpenChange={setNavOpen}>
+            <SheetTrigger className="inline-flex items-center gap-2 text-xs font-medium text-muted-foreground hover:text-foreground">
+              <Menu className="size-4" /> Shop menu
+            </SheetTrigger>
+            <SheetContent side="left" className="p-0 w-64 bg-surface border-r border-border">
+              <nav className="h-full flex flex-col">{navContent}</nav>
+            </SheetContent>
+          </Sheet>
+        </div>
+        <div className="flex-1 flex min-h-0 min-w-0">
+          {view === "store" && <Storefront />}
+          {view === "orders" && <OrdersView selectedId={id} isAdmin={isAdmin} />}
+          {view === "admin" && isAdmin && <AdminProducts />}
+          {(view as string) === "discounts" && isAdmin && <AdminDiscounts />}
+          {(view === "refund" || view === "multi_room" || view === "triple_room") && (
+            view === "refund"
+              ? <PolicyView policyKey="refund" isAdmin={isAdmin} />
+              : <RoomPolicyView roomKey={view as "multi_room" | "triple_room"} isAdmin={isAdmin} />
+          )}
+        </div>
+      </div>
     </>
   );
 }

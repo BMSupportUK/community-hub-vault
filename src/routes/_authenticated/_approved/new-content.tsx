@@ -296,24 +296,24 @@ function NewContentPage() {
     >
       <div className="absolute inset-0 bg-gradient-to-b from-[#1a0b2e]/75 via-[#1a0b2e]/65 to-[#1a0b2e]/85 pointer-events-none" aria-hidden />
       <div className="relative z-10">
-      <header className="px-8 pt-8 pb-6 border-b border-purple-500/30 bg-purple-950/50 backdrop-blur flex items-center gap-3">
-        <div className="size-12 rounded-2xl bg-gradient-to-br from-fuchsia-600 to-violet-700 grid place-items-center shadow-glow">
-          <Sparkles className="size-6 text-white" />
+      <header className="px-4 md:px-8 pt-6 md:pt-8 pb-4 md:pb-6 border-b border-purple-500/30 bg-purple-950/50 backdrop-blur flex items-center gap-3">
+        <div className="size-10 md:size-12 rounded-2xl bg-gradient-to-br from-fuchsia-600 to-violet-700 grid place-items-center shadow-glow shrink-0">
+          <Sparkles className="size-5 md:size-6 text-white" />
         </div>
-        <div>
-          <h1 className="font-display text-3xl font-bold bg-gradient-to-r from-violet-300 via-fuchsia-300 to-blue-300 bg-clip-text text-transparent">New Content</h1>
-          <p className="text-purple-200/80 mt-1">Announcements about new channels and categories</p>
+        <div className="min-w-0">
+          <h1 className="font-display text-xl md:text-3xl font-bold bg-gradient-to-r from-violet-300 via-fuchsia-300 to-blue-300 bg-clip-text text-transparent">New Content</h1>
+          <p className="text-purple-200/80 mt-1 text-xs md:text-sm">Announcements about new channels and categories</p>
         </div>
       </header>
 
-      <div className="px-8 py-6">
+      <div className="px-4 md:px-8 py-4 md:py-6">
         <Tabs value={tab} onValueChange={(v) => setTab(v as any)} className="w-full">
-          <TabsList className="grid grid-cols-3 max-w-2xl bg-purple-950/60 border border-purple-500/30">
-            <TabsTrigger value="welcome" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white">Welcome</TabsTrigger>
-            <TabsTrigger value="channel" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white">
+          <TabsList className="grid grid-cols-3 w-full max-w-2xl h-auto bg-purple-950/60 border border-purple-500/30">
+            <TabsTrigger value="welcome" className="text-[11px] sm:text-sm px-1 sm:px-3 py-1.5 whitespace-normal text-center leading-tight data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white">Welcome</TabsTrigger>
+            <TabsTrigger value="channel" className="text-[11px] sm:text-sm px-1 sm:px-3 py-1.5 whitespace-normal text-center leading-tight data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white">
               New Channels{channels.length ? ` (${channels.length})` : ""}
             </TabsTrigger>
-            <TabsTrigger value="category" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white">
+            <TabsTrigger value="category" className="text-[11px] sm:text-sm px-1 sm:px-3 py-1.5 whitespace-normal text-center leading-tight data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white">
               New Categories{categories.length ? ` (${categories.length})` : ""}
             </TabsTrigger>
           </TabsList>
