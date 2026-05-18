@@ -1,48 +1,71 @@
-## Problem
+## Goal
 
-When a rejected user submits an appeal, neither side can actually chat:
+From the admin view of an existing order (including ones with discounts applied), admin clicks **Create Square invoice**. We create the invoice in Square via API, drop the public payment link into the order chat, and watch Square for the payment. When Square reports it paid, the order flips to **paid**, a "Payment received ✅" message is auto-posted in the order chat, and admins get an in-app notification.
 
-1. `submit_appeal` (DB function) flips their `gate_applications` row back to `pending` and adds a `pending` role, **but it never removes the `rejected` role**.
-2. `_authenticated.tsx` checks `isRejected` **before** `isPending`, so the user is force-redirected back to `/account-rejected` — a static page with no chat UI. The "Open an appeal" button just re-submits the same RPC.
-3. On the admin side, the appeal *does* show up in the Moderation "Pending" queue (because status is `pending`), but it's visually indistinguishable from a normal first-time access request, and it's easy to miss that this is an appeal.
+## User flow
 
-The chat plumbing in `/moderation` and `/gate` already works for pending tickets — the appeal flow just never reaches it.
+1. Admin opens an order in the Shop admin view.
+2. New panel **Square invoice** shows:
+   - If none yet: button **Create & send Square invoice** (uses order total incl. discount, customer name/email from the order).
+   - If one exists: status badge (Draft / Unpaid / Paid / Cancelled), invoice number, public URL, **Refresh status**, **Cancel invoice**.
+3. On create, we:
+   - Call Square to create the invoice for the order total.
+   - Publish it (Square emails the customer automatically; we also post the payment URL as a message in the order chat).
+4. Payment detection: webhook from Square (primary) + manual **Refresh status** (fallback). When status becomes `PAID`:
+   - Order status → `paid` (sets `paid_at`, `paid_by = system`).
+   - System message in order chat: "💷 Payment received via Square — invoice #XXXX".
+   - Admin in-app notification via existing `staff_notifications`.
 
-## Fix
+## Setup the admin does once
 
-### 1. Unblock the user side (DB)
+- Add Square secrets (we'll request them via the secrets tool):
+  - `SQUARE_ACCESS_TOKEN`
+  - `SQUARE_LOCATION_ID`
+  - `SQUARE_ENVIRONMENT` (`production` or `sandbox`)
+  - `SQUARE_WEBHOOK_SIGNATURE_KEY`
+- In Square Dashboard → Webhooks, add subscription to events `invoice.payment_made`, `invoice.updated`, `invoice.canceled` pointing at:
+  `https://project--5e1fe153-4c10-4ade-8c98-e355fcdea791.lovable.app/api/public/hooks/square-invoice`
 
-New migration updating `public.submit_appeal`:
+## Technical plan
 
-- After flipping the application back to `pending`, also `DELETE FROM user_roles WHERE user_id = v_uid AND role = 'rejected'` (mirrors how it already deletes `banned`).
-- Keep the `pending` role insert.
+### Database (migration)
 
-Result: once the user submits an appeal, their effective role becomes `pending`, the `_authenticated` guard routes them to `/gate`, and the existing two-way chat (already wired in `gate.tsx`) lights up.
+New table `public.order_invoices` (one row per order, latest invoice):
+- `order_id uuid` FK → `private.orders.id` (unique)
+- `provider text` default `'square'`
+- `square_invoice_id text`, `square_order_id text`, `invoice_number text`, `public_url text`
+- `status text` (`draft|unpaid|paid|canceled|failed`)
+- `amount_cents int`, `currency text`
+- `created_by uuid`, `created_at`, `updated_at`, `paid_at`
+- RLS: select/insert/update restricted to admin+management; select also allowed to the order owner (so the customer can see status if we surface it later).
 
-When an admin later denies again, `decide()` in `moderation.tsx` already deletes `pending` and inserts `rejected` — no change needed.
+Trigger on update: when `status` transitions to `paid`, set `private.orders.status='paid'`, `paid_at=now()`, insert system row into `public.order_messages` (sender = a designated system uuid — use the admin/created_by as fallback), and insert into `public.staff_notifications`.
 
-### 2. Make appeals obvious in Moderation (UI only)
+### Server functions (`src/lib/square-invoices.functions.ts`)
 
-In `src/routes/_authenticated/_approved/moderation.tsx`:
+All `requireSupabaseAuth` + role check `admin|management`:
+- `createSquareInvoiceForOrder({ orderId })` — reads order + items via `supabaseAdmin`, builds Square `Order` (line items + discount line) and `Invoice` (payment request: BALANCE on receipt, delivery method EMAIL + SHARE_MANUALLY), publishes it, stores row in `order_invoices`, posts message in `order_messages` with the public URL.
+- `refreshSquareInvoiceStatus({ orderId })` — GET invoice from Square, update row, run paid-transition logic if needed.
+- `cancelSquareInvoice({ orderId })` — POST cancel, update row.
 
-- Detect appeals by `reason?.startsWith("[APPEAL]")`.
-- Add an "Appeal" badge (amber/fuchsia) next to the row name in the pending list, and a small "This is an appeal of a previous rejection" banner inside the expanded panel so reviewers see the prior context at a glance.
-- Strip the `[APPEAL]` prefix when displaying the reason text (the badge already conveys it).
-- No changes to chat / approve / deny logic — they already work when status is `pending`.
+All Square calls go to `https://connect.squareup.com/v2/...` (or `https://connect.squareupsandbox.com/v2/...`) using `process.env.SQUARE_ACCESS_TOKEN`. No SDK — plain `fetch`.
 
-### 3. Clean up the dead-end page
+### Webhook route
 
-In `src/routes/_authenticated/account-rejected.tsx`:
+`src/routes/api/public/hooks/square-invoice.ts` (TanStack server route):
+- Verify HMAC SHA-256 signature header `x-square-hmacsha256-signature` against `notification_url + body` using `SQUARE_WEBHOOK_SIGNATURE_KEY` (timingSafeEqual).
+- For `invoice.payment_made` / `invoice.updated` / `invoice.canceled`, find `order_invoices` by `square_invoice_id`, update status; trigger handles the paid side-effects.
 
-- After `submit_appeal` succeeds, the user's role is now `pending` (via #1), so `refreshRoles()` + `navigate({ to: "/gate", search: { chat: 1 } })` will actually land them on the gate chat. No code change needed beyond verifying the existing navigate call still runs — which it does.
+### UI
 
-## Technical notes
+In `shop.tsx` admin order detail (existing order drawer), add a `SquareInvoicePanel` component with the buttons above. Show toast on success/error. Refresh order list after status change. No changes to the customer-facing shop.
 
-- Migration is a `CREATE OR REPLACE FUNCTION` on `public.submit_appeal(text)` — preserves signature, grants, and the `[APPEAL] ...` reason format consumed by the moderation UI.
-- No schema changes, no new tables, no RLS changes (existing `gate_messages` / `gate_applications` policies already allow mod ↔ applicant chat on pending tickets).
-- No changes to `/gate` — the appellant simply reaches it now.
+## Out of scope
 
-## Files touched
+- No partial payments / multi-payment-request invoices (single BALANCE request).
+- No editing of invoice after sending (admin cancels + creates a new one if amount changes).
+- No Square customer record sync — we pass `primary_recipient` inline from the order's name/email.
 
-- `supabase/migrations/<new>.sql` — replace `submit_appeal` to also drop the `rejected` role.
-- `src/routes/_authenticated/_approved/moderation.tsx` — appeal badge + banner in expanded panel; strip `[APPEAL]` prefix when rendering reason.
+## Secrets requested next
+
+After you approve, I'll request `SQUARE_ACCESS_TOKEN`, `SQUARE_LOCATION_ID`, `SQUARE_ENVIRONMENT`, `SQUARE_WEBHOOK_SIGNATURE_KEY` via the secure secrets form before writing code.
