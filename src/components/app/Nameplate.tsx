@@ -25,6 +25,12 @@ export function Nameplate({ id, className, style, fallbackStyle, children }: Nam
       {np?.animation_class === "nameplate-hotdog" && (
         <span className="nameplate-hotdog-icon" aria-hidden>🌭</span>
       )}
+      {np?.animation_class === "nameplate-pitch" && (
+        <>
+          <span className="nameplate-pitch-ball" aria-hidden>⚽</span>
+          <span className="nameplate-pitch-player" aria-hidden>🏃</span>
+        </>
+      )}
       {children}
     </div>
   );
