@@ -13,12 +13,14 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
+import { Nameplate } from "@/components/app/Nameplate";
 
 interface MiniProfile {
   id: string;
   username: string | null;
   display_name: string | null;
   avatar_url: string | null;
+  equipped_nameplate_id: string | null;
 }
 
 export function UserAvatarMenu() {
@@ -33,7 +35,7 @@ export function UserAvatarMenu() {
     const load = async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("id, username, display_name, avatar_url")
+        .select("id, username, display_name, avatar_url, equipped_nameplate_id")
         .eq("id", user.id)
         .maybeSingle();
       if (data) setProfile(data as MiniProfile);
@@ -95,8 +97,13 @@ export function UserAvatarMenu() {
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" sideOffset={8} className="w-72 p-0 overflow-hidden">
-        <div className="bg-gradient-to-br from-primary/30 via-fuchsia-500/20 to-blue-500/20 p-4 pb-3">
-          <div className="flex items-center gap-3">
+        <div className="relative p-4 pb-3 overflow-hidden">
+          <Nameplate
+            id={profile?.equipped_nameplate_id ?? null}
+            className="absolute inset-0"
+            fallbackStyle={{ background: "linear-gradient(to bottom right, hsl(var(--primary)/0.3), hsl(330 80% 60% / 0.2), hsl(220 80% 60% / 0.2))" }}
+          />
+          <div className="relative flex items-center gap-3">
             <Avatar className="h-14 w-14 ring-2 ring-background shadow-lg">
               <AvatarImage src={profile?.avatar_url || "/default-avatar.png"} alt={name} />
               <AvatarFallback className="text-base font-bold bg-gradient-primary text-primary-foreground">

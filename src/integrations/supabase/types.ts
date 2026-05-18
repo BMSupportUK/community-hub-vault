@@ -1047,6 +1047,42 @@ export type Database = {
         }
         Relationships: []
       }
+      nameplates: {
+        Row: {
+          created_at: string
+          description: string | null
+          gradient_css: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean
+          name: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          gradient_css?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          name: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          gradient_css?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          name?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       nav_order: {
         Row: {
           key: string
@@ -1378,6 +1414,7 @@ export type Database = {
           bio: string | null
           created_at: string
           display_name: string | null
+          equipped_nameplate_id: string | null
           id: string
           is_private: boolean
           last_seen_at: string | null
@@ -1392,6 +1429,7 @@ export type Database = {
           bio?: string | null
           created_at?: string
           display_name?: string | null
+          equipped_nameplate_id?: string | null
           id: string
           is_private?: boolean
           last_seen_at?: string | null
@@ -1406,6 +1444,7 @@ export type Database = {
           bio?: string | null
           created_at?: string
           display_name?: string | null
+          equipped_nameplate_id?: string | null
           id?: string
           is_private?: boolean
           last_seen_at?: string | null
@@ -1415,7 +1454,15 @@ export type Database = {
           updated_at?: string
           username?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_equipped_nameplate_id_fkey"
+            columns: ["equipped_nameplate_id"]
+            isOneToOne: false
+            referencedRelation: "nameplates"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       qd_dns_codes: {
         Row: {
@@ -2146,6 +2193,35 @@ export type Database = {
           ignorer_id?: string
         }
         Relationships: []
+      }
+      user_nameplates: {
+        Row: {
+          id: string
+          nameplate_id: string
+          unlocked_at: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          nameplate_id: string
+          unlocked_at?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          nameplate_id?: string
+          unlocked_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_nameplates_nameplate_id_fkey"
+            columns: ["nameplate_id"]
+            isOneToOne: false
+            referencedRelation: "nameplates"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_notifications: {
         Row: {
