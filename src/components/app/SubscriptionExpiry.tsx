@@ -8,7 +8,7 @@ import { useUserTimezone } from "@/hooks/use-user-timezone";
 type Cred = { app_login_name: string | null; expiry_at: string | null };
 
 export function SubscriptionExpiry() {
-  const { user } = useAuth();
+  const { user, refreshRoles } = useAuth();
   const tz = useUserTimezone();
   const [creds, setCreds] = useState<Cred[]>([]);
   const [loaded, setLoaded] = useState(false);
@@ -47,7 +47,7 @@ export function SubscriptionExpiry() {
   // 'subscriber' role drops in real time (cron is the backstop every minute).
   // Admin/management/staff/moderator are protected inside the RPC.
   // Must run before any early return to keep hook order stable.
-  useScheduledRevoke(items, user?.id);
+  useScheduledRevoke(items, user?.id, refreshRoles);
 
   if (!loaded || items.length === 0) return null;
 
@@ -102,6 +102,7 @@ export function SubscriptionExpiry() {
 function useScheduledRevoke(
   items: { expiry_at: string | null }[],
   userId: string | undefined,
+  onRevoked?: () => void | Promise<void>,
 ) {
   useEffect(() => {
     if (!userId || items.length === 0) return;
@@ -112,11 +113,13 @@ function useScheduledRevoke(
     const latest = Math.max(...times);
     const delay = latest - Date.now();
     const fire = () => {
-      supabase.rpc("revoke_expired_subscriber_role", { _user_id: userId }).then(() => {});
+      supabase.rpc("revoke_expired_subscriber_role", { _user_id: userId }).then(() => {
+        onRevoked?.();
+      });
     };
     if (delay <= 0) { fire(); return; }
     // Cap setTimeout to ~24 days
     const t = setTimeout(fire, Math.min(delay + 500, 2_000_000_000));
     return () => clearTimeout(t);
-  }, [items, userId]);
+  }, [items, userId, onRevoked]);
 }

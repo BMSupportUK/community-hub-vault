@@ -67,18 +67,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => sub.subscription.unsubscribe();
   }, []);
 
-  // Realtime: refresh roles when this user's user_roles rows change
+  // Refresh roles without a full page reload:
+  // - poll every 30s while signed in
+  // - re-check on tab focus / visibility change
+  // (user_roles is no longer broadcast via Realtime for security reasons.)
   useEffect(() => {
     if (!user?.id) return;
-    const channel = supabase
-      .channel(`user-roles-${user.id}`)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "user_roles", filter: `user_id=eq.${user.id}` },
-        () => { loadRoles(user.id); },
-      )
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    const uid = user.id;
+    const tick = () => { loadRoles(uid); };
+    const interval = window.setInterval(tick, 30_000);
+    const onFocus = () => tick();
+    const onVis = () => { if (document.visibilityState === "visible") tick(); };
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVis);
+    return () => {
+      window.clearInterval(interval);
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVis);
+    };
   }, [user?.id]);
 
   const hasRole = (r: AppRole) => roles.includes(r);
