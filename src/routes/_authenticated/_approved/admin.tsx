@@ -120,7 +120,9 @@ function AdminDashboard() {
               setHasPin(true);
               if (user) { try { sessionStorage.setItem(UNLOCK_KEY(user.id), String(until)); } catch {} }
               if (next && next.startsWith("/")) {
-                navigate({ to: next });
+                const [to, query = ""] = next.split("?");
+                const search = Object.fromEntries(new URLSearchParams(query));
+                navigate({ to: to as never, search: search as never });
               }
             }}
           />

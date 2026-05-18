@@ -56,6 +56,7 @@ export const Route = createFileRoute("/_authenticated/_approved/shop")({
         : "store"
     ) as View | "discounts",
     id: typeof s.id === "string" ? s.id : undefined,
+    scope: s.scope === "all" ? "all" : undefined,
   }),
   component: ShopPage,
 });
@@ -91,16 +92,16 @@ const fmt = (c: number) => _currentFmt(c);
 let _currentSymbol = "£";
 
 function ShopPage() {
-  const { view, id } = Route.useSearch();
+  const { view, id, scope } = Route.useSearch();
   const navigate = useNavigate();
   const { user, hasAny } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
   const adminUnlocked = isAdmin && isAdminUnlocked(user?.id);
-  const isAdminView = view === "admin" || (view as string) === "discounts";
+  const isAdminView = view === "admin" || (view as string) === "discounts" || (view === "orders" && scope === "all");
 
   useEffect(() => {
     if (isAdminView && isAdmin && !adminUnlocked) {
-      navigate({ to: "/admin", search: { next: "/shop" } });
+      navigate({ to: "/admin", search: { next: view === "orders" ? "/shop?view=orders&scope=all" : "/shop" } });
     }
   }, [isAdminView, isAdmin, adminUnlocked, navigate]);
   const { format, symbol } = useCurrency();
@@ -176,7 +177,7 @@ function ShopPage() {
         </div>
         <div className="flex-1 flex min-h-0 min-w-0">
           {view === "store" && <Storefront />}
-          {view === "orders" && <OrdersView selectedId={id} isAdmin={isAdmin} />}
+          {view === "orders" && <OrdersView selectedId={id} isAdmin={isAdmin} adminUnlocked={adminUnlocked} initialScope={scope === "all" ? "all" : "mine"} />}
           {view === "admin" && isAdmin && adminUnlocked && <AdminProducts />}
           {(view as string) === "discounts" && isAdmin && adminUnlocked && <AdminDiscounts />}
           {(view === "refund" || view === "multi_room" || view === "triple_room") && (
@@ -1559,30 +1560,32 @@ const STATUS_COLOR: Record<string, string> = {
   cancelled: "text-destructive bg-destructive/10",
 };
 
-function OrdersView({ selectedId, isAdmin }: { selectedId?: string; isAdmin: boolean }) {
+function OrdersView({ selectedId, isAdmin, adminUnlocked, initialScope }: { selectedId?: string; isAdmin: boolean; adminUnlocked: boolean; initialScope: "mine" | "all" }) {
   const [orders, setOrders] = useState<Order[]>([]);
-  const [scope, setScope] = useState<"mine" | "all">(isAdmin ? "all" : "mine");
+  const [scope, setScope] = useState<"mine" | "all">(isAdmin && adminUnlocked ? initialScope : "mine");
   const navigate = useNavigate();
   const { user } = useAuth();
 
   const load = async () => {
     let q = supabase.from("orders").select("*").order("created_at", { ascending: false });
-    if (scope === "mine" && user) q = q.eq("user_id", user.id);
+    if ((scope === "mine" || !adminUnlocked) && user) q = q.eq("user_id", user.id);
     const { data } = await q;
     setOrders((data ?? []) as Order[]);
   };
-  useEffect(() => { load(); }, [scope, user?.id]);
+  useEffect(() => { if (isAdmin && adminUnlocked) setScope(initialScope); }, [isAdmin, adminUnlocked, initialScope]);
+  useEffect(() => { if (!adminUnlocked && scope === "all") setScope("mine"); }, [adminUnlocked, scope]);
+  useEffect(() => { load(); }, [scope, user?.id, adminUnlocked]);
   useEffect(() => {
     const ch = supabase.channel("orders-list").on("postgres_changes", { event: "*", schema: "public", table: "orders" }, load).subscribe();
     return () => { supabase.removeChannel(ch); };
-  }, [scope, user?.id]);
+  }, [scope, user?.id, adminUnlocked]);
 
   return (
     <>
       <aside className="w-72 shrink-0 bg-surface border-r border-border flex flex-col">
         <div className="h-14 px-4 border-b border-border flex items-center justify-between">
           <h2 className="font-display font-semibold text-sm">Orders</h2>
-          {isAdmin && (
+          {isAdmin && adminUnlocked && (
             <div className="flex bg-surface-2 rounded-md p-0.5 text-[11px]">
               <button onClick={() => setScope("mine")} className={cn("px-2 py-0.5 rounded", scope === "mine" && "bg-primary text-primary-foreground")}>Mine</button>
               <button onClick={() => setScope("all")} className={cn("px-2 py-0.5 rounded", scope === "all" && "bg-primary text-primary-foreground")}>All</button>
@@ -1592,7 +1595,7 @@ function OrdersView({ selectedId, isAdmin }: { selectedId?: string; isAdmin: boo
         <div className="flex-1 overflow-y-auto p-2 space-y-1">
           {orders.length === 0 && <div className="text-xs text-muted-foreground p-4 text-center">No orders yet.</div>}
           {orders.map((o) => (
-            <button key={o.id} onClick={() => navigate({ to: "/shop", search: { view: "orders", id: o.id } })}
+            <button key={o.id} onClick={() => navigate({ to: "/shop", search: { view: "orders", id: o.id, scope: scope === "all" ? "all" : undefined } })}
               className={cn("w-full text-left p-3 rounded-lg transition", selectedId === o.id ? "bg-surface-2" : "hover:bg-surface-2/60")}>
               <div className="flex items-center justify-between mb-1">
                 <span className="font-mono text-[10px] text-muted-foreground">#{o.id.slice(0, 8)}</span>
@@ -1604,7 +1607,7 @@ function OrdersView({ selectedId, isAdmin }: { selectedId?: string; isAdmin: boo
           ))}
         </div>
       </aside>
-      {selectedId ? <OrderDetail orderId={selectedId} isAdmin={isAdmin} /> : (
+      {selectedId ? <OrderDetail orderId={selectedId} isAdmin={isAdmin && adminUnlocked} /> : (
         <main className="flex-1 grid place-items-center text-muted-foreground text-sm">Select an order</main>
       )}
     </>

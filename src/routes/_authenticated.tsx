@@ -35,6 +35,13 @@ function AuthLayout() {
   const logIp = useServerFn(logMyIp);
   const loggedRef = useRef(false);
   const [navOpen, setNavOpen] = useState(false);
+  const openSalesChats = () => {
+    if (!isAdminUnlocked(user?.id)) {
+      navigate({ to: "/admin", search: { next: "/shop?view=orders&scope=all" } as never });
+      return;
+    }
+    navigate({ to: "/shop", search: { view: "orders", scope: "all" } as never });
+  };
   // Close mobile drawer on route change
   useEffect(() => { setNavOpen(false); }, [path]);
   // Broadcast this user's presence globally while signed in.
@@ -108,22 +115,16 @@ function AuthLayout() {
               </Link>
             )}
             {isAdmin && (
-              <Link
-                to="/shop"
-                search={{ view: "orders" } as any}
+              <button
+                type="button"
                 title="Sales chats"
                 className="flex items-center gap-2 rounded-full px-3 py-1.5 bg-surface-2 hover:bg-primary hover:text-primary-foreground text-xs font-medium transition-colors"
-                onClick={(e) => {
-                  if (!isAdminUnlocked(user?.id)) {
-                    e.preventDefault();
-                    navigate({ to: "/admin", search: { next: "/shop?view=orders" } as never });
-                  }
-                }}
+                onClick={openSalesChats}
               >
                 <Receipt className="size-4" />
                 <span className="hidden sm:inline">Sales chats</span>
                 <PendingOrdersBadge />
-              </Link>
+              </button>
             )}
             {isAdmin && (
               <Link
