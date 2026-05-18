@@ -44,7 +44,7 @@ interface Product {
   image_url: string | null; category: string | null; stock: number | null;
   is_active: boolean; sort_order: number; is_recommended?: boolean;
 }
-type OrderStatus = "pending" | "processing" | "shipped" | "completed" | "cancelled";
+type OrderStatus = "pending" | "processing" | "paid" | "shipped" | "completed" | "cancelled";
 interface Order {
   id: string; user_id: string; status: OrderStatus; total_cents: number;
   shipping_name: string | null; shipping_address: string | null; notes: string | null;
@@ -1516,6 +1516,7 @@ function Checkout({ items, total, onClose, onPlace, onRemoveItem, onContinueShop
 const STATUS_COLOR: Record<string, string> = {
   pending: "text-warning bg-warning/10",
   processing: "text-primary bg-primary/10",
+  paid: "text-success bg-success/10",
   shipped: "text-primary bg-primary/10",
   completed: "text-success bg-success/10",
   cancelled: "text-destructive bg-destructive/10",
@@ -1624,7 +1625,7 @@ function OrderDetail({ orderId, isAdmin }: { orderId: string; isAdmin: boolean }
   const markPaid = async () => {
     if (!order || order.paid_at || order.status === "completed" || !!order.completed_at) return;
     const { error } = await supabase.from("orders").update({
-      paid_at: new Date().toISOString(), paid_by: user?.id ?? null, status: "processing",
+      paid_at: new Date().toISOString(), paid_by: user?.id ?? null, status: "paid",
     } as never).eq("id", orderId);
     if (error) { toast.error(error.message); return; }
     await sendSystem(`💳 Payment received — thank you for your payment!`);
