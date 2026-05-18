@@ -165,8 +165,7 @@
 
 /* ---- Soccer Player: slow cinematic pan + stadium light sweep ---- */
 @keyframes nameplate-pitch-pan {
-  0%   { background-position: 30% 50%; }
-  100% { background-position: 70% 50%; }
+  0%, 100% { background-position: 50% 50%; }
 }
 @keyframes nameplate-pitch-sheen {
   0%   { transform: translateX(-120%) skewX(-18deg); opacity: 0; }
@@ -178,7 +177,7 @@
   50%      { opacity: 0.9; }
 }
 .nameplate-pitch {
-  background-size: auto 100% !important;
+  background-size: 100% 100% !important;
   background-repeat: no-repeat !important;
   background-position: 50% 50%;
   animation: nameplate-pitch-pan 14s ease-in-out infinite alternate;
