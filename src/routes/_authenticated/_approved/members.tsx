@@ -247,7 +247,7 @@ function MembersPage() {
                   {p.equipped_nameplate_id ? (
                     <Nameplate
                       id={p.equipped_nameplate_id}
-                      className="inline-flex rounded-full px-3 py-1 shadow-sm max-w-full"
+                      className="flex items-center w-full h-9 rounded-md px-3 shadow-sm"
                     >
                       <Link
                         to="/u/$username"
