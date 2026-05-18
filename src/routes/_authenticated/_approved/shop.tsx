@@ -20,6 +20,7 @@ import { Download } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { createSquareInvoiceForOrder, refreshSquareInvoiceStatus, cancelSquareInvoice } from "@/lib/square-invoices.functions";
 import { RefreshCw, ExternalLink, Ban } from "lucide-react";
+import { getOutOfHoursMessage } from "@/lib/business-hours";
 
 type View = "store" | "orders" | "admin" | "refund" | "multi_room" | "triple_room";
 
@@ -696,6 +697,14 @@ function Storefront() {
       sender_id: user.id,
       content: summaryLines.join("\n"),
     } as never);
+    const oohMsg = await getOutOfHoursMessage();
+    if (oohMsg) {
+      await supabase.from("order_messages").insert({
+        order_id: order.id,
+        sender_id: user.id,
+        content: oohMsg,
+      } as never);
+    }
     setCart({}); setShowCheckout(false);
     toast.success("Order placed!");
     reloadLatestOrder();
