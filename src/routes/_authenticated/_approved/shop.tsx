@@ -23,6 +23,25 @@ import { RefreshCw, ExternalLink, Ban } from "lucide-react";
 
 type View = "store" | "orders" | "admin" | "refund" | "multi_room" | "triple_room";
 
+function linkify(text: string): React.ReactNode[] {
+  const re = /(https?:\/\/[^\s]+)/g;
+  const parts: React.ReactNode[] = [];
+  let last = 0;
+  let m: RegExpExecArray | null;
+  let i = 0;
+  while ((m = re.exec(text)) !== null) {
+    if (m.index > last) parts.push(text.slice(last, m.index));
+    parts.push(
+      <a key={i++} href={m[0]} target="_blank" rel="noopener noreferrer" className="underline break-all">
+        {m[0]}
+      </a>,
+    );
+    last = m.index + m[0].length;
+  }
+  if (last < text.length) parts.push(text.slice(last));
+  return parts;
+}
+
 const POLICY_KEYS = ["refund", "multi_room", "triple_room"] as const;
 type PolicyKey = typeof POLICY_KEYS[number];
 
