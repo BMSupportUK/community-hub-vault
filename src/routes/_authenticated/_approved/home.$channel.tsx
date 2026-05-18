@@ -40,6 +40,7 @@ interface Profile {
   display_name: string | null;
   username: string | null;
   avatar_url: string | null;
+  equipped_nameplate_id: string | null;
 }
 
 interface Reaction {
