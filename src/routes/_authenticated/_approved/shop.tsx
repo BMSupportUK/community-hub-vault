@@ -1823,7 +1823,7 @@ function OrderDetail({ orderId, isAdmin }: { orderId: string; isAdmin: boolean }
                 <div key={m.id} className={cn("flex", mine ? "justify-end" : "justify-start")}>
                   <div className={cn("max-w-[70%] px-3 py-2 rounded-2xl text-sm",
                     mine ? "bg-primary text-primary-foreground" : "bg-surface-2")}>
-                    {m.content}
+                    <div className="whitespace-pre-wrap break-words">{linkify(m.content)}</div>
                     <div className={cn("text-[10px] mt-0.5", mine ? "text-primary-foreground/60" : "text-muted-foreground")}>
                       {new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                     </div>
