@@ -122,7 +122,7 @@ function AdminDashboard() {
               if (next && next.startsWith("/")) {
                 const [to, query = ""] = next.split("?");
                 const search = Object.fromEntries(new URLSearchParams(query));
-                navigate({ to, search: search as never });
+                navigate({ to: to as never, search: search as never });
               }
             }}
           />
