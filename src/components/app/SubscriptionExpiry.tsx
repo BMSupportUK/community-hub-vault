@@ -44,6 +44,12 @@ export function SubscriptionExpiry() {
   const items = creds.filter((c) => c.expiry_at);
   if (!loaded || items.length === 0) return null;
 
+  // Trigger server-side revoke the moment the latest expiry passes, so the
+  // 'subscriber' role drops in real time (cron is the backstop every minute).
+  // Admin/management/staff/moderator are protected inside the RPC.
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  useScheduledRevoke(items, user?.id);
+
   const fmt = (d: Date) =>
     d.toLocaleString(undefined, {
       weekday: "short", day: "numeric", month: "short", year: "numeric",
@@ -90,4 +96,26 @@ export function SubscriptionExpiry() {
       </div>
     </div>
   );
+}
+
+function useScheduledRevoke(
+  items: { expiry_at: string | null }[],
+  userId: string | undefined,
+) {
+  useEffect(() => {
+    if (!userId || items.length === 0) return;
+    const times = items
+      .map((c) => (c.expiry_at ? new Date(c.expiry_at).getTime() : 0))
+      .filter((t) => t > 0);
+    if (times.length === 0) return;
+    const latest = Math.max(...times);
+    const delay = latest - Date.now();
+    const fire = () => {
+      supabase.rpc("revoke_expired_subscriber_role", { _user_id: userId }).then(() => {});
+    };
+    if (delay <= 0) { fire(); return; }
+    // Cap setTimeout to ~24 days
+    const t = setTimeout(fire, Math.min(delay + 500, 2_000_000_000));
+    return () => clearTimeout(t);
+  }, [items, userId]);
 }
