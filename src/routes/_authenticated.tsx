@@ -1,4 +1,4 @@
-import { createFileRoute, Outlet, redirect, useRouterState, Navigate } from "@tanstack/react-router";
+import { createFileRoute, Outlet, redirect, useRouterState, Navigate, useNavigate } from "@tanstack/react-router";
 import { Link } from "@tanstack/react-router";
 import { Users, Briefcase, LayoutDashboard, Shield, ShieldCheck, Menu, Receipt } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -30,6 +30,7 @@ export const Route = createFileRoute("/_authenticated")({
 function AuthLayout() {
   const { loading, isPending, isBanned, isRejected, isMod, hasAny, user } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
+  const navigate = useNavigate();
   const path = useRouterState({ select: (r) => r.location.pathname });
   const logIp = useServerFn(logMyIp);
   const loggedRef = useRef(false);
@@ -115,7 +116,7 @@ function AuthLayout() {
                 onClick={(e) => {
                   if (!isAdminUnlocked(user?.id)) {
                     e.preventDefault();
-                    window.location.href = "/admin?next=" + encodeURIComponent("/shop?view=orders");
+                    navigate({ to: "/admin", search: { next: "/shop?view=orders" } as never });
                   }
                 }}
               >
