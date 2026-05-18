@@ -16,6 +16,8 @@ import tvLoginIllustration from "@/assets/tv-login-illustration.jpg";
 import referralsBg from "@/assets/referrals-bg.jpg";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { listTimeZones } from "@/hooks/use-user-timezone";
+import { Nameplate } from "@/components/app/Nameplate";
+import { NameplatePicker } from "@/components/app/NameplatePicker";
 
 export const Route = createFileRoute("/_authenticated/_approved/u/$username")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -34,6 +36,7 @@ interface ProfileRow {
   created_at: string;
   is_private: boolean | null;
   timezone: string | null;
+  equipped_nameplate_id: string | null;
 }
 
 interface ShiftRow { id: string; user_id: string; clock_in: string; clock_out: string | null; }
