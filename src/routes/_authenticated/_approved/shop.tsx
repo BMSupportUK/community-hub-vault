@@ -56,6 +56,7 @@ export const Route = createFileRoute("/_authenticated/_approved/shop")({
         : "store"
     ) as View | "discounts",
     id: typeof s.id === "string" ? s.id : undefined,
+    scope: s.scope === "all" ? "all" : undefined,
   }),
   component: ShopPage,
 });
@@ -91,16 +92,16 @@ const fmt = (c: number) => _currentFmt(c);
 let _currentSymbol = "£";
 
 function ShopPage() {
-  const { view, id } = Route.useSearch();
+  const { view, id, scope } = Route.useSearch();
   const navigate = useNavigate();
   const { user, hasAny } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
   const adminUnlocked = isAdmin && isAdminUnlocked(user?.id);
-  const isAdminView = view === "admin" || (view as string) === "discounts";
+  const isAdminView = view === "admin" || (view as string) === "discounts" || (view === "orders" && scope === "all");
 
   useEffect(() => {
     if (isAdminView && isAdmin && !adminUnlocked) {
-      navigate({ to: "/admin", search: { next: "/shop" } });
+      navigate({ to: "/admin", search: { next: view === "orders" ? "/shop?view=orders&scope=all" : "/shop" } });
     }
   }, [isAdminView, isAdmin, adminUnlocked, navigate]);
   const { format, symbol } = useCurrency();
@@ -176,7 +177,7 @@ function ShopPage() {
         </div>
         <div className="flex-1 flex min-h-0 min-w-0">
           {view === "store" && <Storefront />}
-          {view === "orders" && <OrdersView selectedId={id} isAdmin={isAdmin} />}
+          {view === "orders" && <OrdersView selectedId={id} isAdmin={isAdmin} adminUnlocked={adminUnlocked} initialScope={scope === "all" ? "all" : "mine"} />}
           {view === "admin" && isAdmin && adminUnlocked && <AdminProducts />}
           {(view as string) === "discounts" && isAdmin && adminUnlocked && <AdminDiscounts />}
           {(view === "refund" || view === "multi_room" || view === "triple_room") && (
