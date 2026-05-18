@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AtSign, Check } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
@@ -23,6 +23,7 @@ type MentionRow = {
 export function MentionsBadge() {
   const { user, isPending } = useAuth();
   const navigate = useNavigate();
+  const channelInstanceId = useRef(Math.random().toString(36).slice(2)).current;
   const [count, setCount] = useState(0);
   const [pulse, setPulse] = useState(false);
   const [open, setOpen] = useState(false);
@@ -54,7 +55,7 @@ export function MentionsBadge() {
     load();
     loadList(user.id);
     const ch = supabase
-      .channel(`mentions-badge-${user.id}`)
+      .channel(`mentions-badge-${user.id}-${channelInstanceId}`)
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "user_notifications", filter: `user_id=eq.${user.id}` },
@@ -88,7 +89,7 @@ export function MentionsBadge() {
       active = false;
       supabase.removeChannel(ch);
     };
-  }, [user, isPending]);
+  }, [user, isPending, channelInstanceId, navigate]);
 
   if (!user || isPending) return null;
 
