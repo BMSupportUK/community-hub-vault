@@ -9,6 +9,7 @@ import { resetUserMfa } from "@/lib/mfa.functions";
 import profileHeader from "@/assets/profile-header.jpg";
 import { useOnlineUsers } from "@/hooks/use-online-users";
 import { formatLastSeen } from "@/lib/relative-time";
+import { Nameplate } from "@/components/app/Nameplate";
 
 export const Route = createFileRoute("/_authenticated/_approved/members")({
   component: MembersPage,
@@ -23,6 +24,7 @@ interface Profile {
   created_at: string;
   is_private: boolean | null;
   last_seen_at: string | null;
+  equipped_nameplate_id: string | null;
 }
 
 interface RoleRow {
@@ -221,10 +223,10 @@ function MembersPage() {
               key={p.id}
               className="group rounded-2xl bg-surface border border-border hover:border-fuchsia-400/50 hover:shadow-lg hover:shadow-fuchsia-500/10 transition-all overflow-hidden flex flex-col"
             >
-              <div
-                className="h-16 bg-cover bg-center"
-                style={{ backgroundImage: `url(${profileHeader})` }}
-                aria-hidden
+              <Nameplate
+                id={p.equipped_nameplate_id}
+                className="h-16"
+                fallbackStyle={{ backgroundImage: `url(${profileHeader})`, backgroundSize: "cover", backgroundPosition: "center" }}
               />
               <div className="px-4 -mt-8 pb-4 flex flex-col flex-1">
                 <div className="relative w-fit">
