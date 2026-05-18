@@ -7,6 +7,7 @@ export interface NameplateRow {
   description: string | null;
   image_url: string | null;
   gradient_css: string | null;
+  animation_class: string | null;
   is_active: boolean;
   sort_order: number;
 }
@@ -25,7 +26,7 @@ async function fetchOne(id: string): Promise<NameplateRow | null> {
   const p = (async () => {
     const { data } = await supabase
       .from("nameplates")
-      .select("id,name,description,image_url,gradient_css,is_active,sort_order")
+      .select("id,name,description,image_url,gradient_css,animation_class,is_active,sort_order")
       .eq("id", id)
       .maybeSingle();
     const row = (data as NameplateRow | null) ?? null;

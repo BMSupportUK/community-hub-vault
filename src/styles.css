@@ -127,3 +127,38 @@
   .scrollbar-thin::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 8px; }
   .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
 }
+
+/* ===== Animated nameplates ===== */
+@keyframes nameplate-soccer-pan {
+  0%   { background-position: 0% 50%; }
+  100% { background-position: -200% 50%; }
+}
+@keyframes nameplate-soccer-flood {
+  0%, 100% { opacity: 0.55; transform: translateX(-10%); }
+  50%      { opacity: 0.95; transform: translateX(10%); }
+}
+
+.nameplate-soccer-scroll {
+  background-size: auto 200% !important;
+  background-repeat: repeat-x !important;
+  animation: nameplate-soccer-pan 18s linear infinite;
+}
+.nameplate-soccer-scroll > * { position: relative; z-index: 2; }
+.nameplate-soccer-scroll::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: radial-gradient(ellipse at 50% -20%, rgba(255,255,255,0.55), transparent 60%);
+  mix-blend-mode: screen;
+  animation: nameplate-soccer-flood 4.5s ease-in-out infinite;
+}
+.nameplate-soccer-scroll::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(90deg, rgba(0,0,0,0.45), transparent 25%, transparent 75%, rgba(0,0,0,0.45));
+}
