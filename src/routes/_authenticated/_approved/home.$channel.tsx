@@ -11,6 +11,8 @@ import { ChannelWelcomeEmbed } from "@/components/app/ChannelWelcomeEmbed";
 import { cn } from "@/lib/utils";
 import { DEFAULT_AVATAR_URL } from "@/lib/default-avatar";
 import { Nameplate } from "@/components/app/Nameplate";
+import { useOnlineUsers } from "@/hooks/use-online-users";
+import { formatLastSeen } from "@/lib/relative-time";
 
 export const Route = createFileRoute("/_authenticated/_approved/home/$channel")({
   component: ChannelPage,
@@ -42,6 +44,7 @@ interface Profile {
   username: string | null;
   avatar_url: string | null;
   equipped_nameplate_id: string | null;
+  last_seen_at?: string | null;
 }
 
 interface Reaction {
@@ -344,7 +347,7 @@ function ChannelPage() {
     if (need.length === 0) return;
     const { data } = await supabase
       .from("profiles")
-      .select("id, display_name, username, avatar_url, equipped_nameplate_id")
+      .select("id, display_name, username, avatar_url, equipped_nameplate_id, last_seen_at")
       .in("id", need);
     if (!data) return;
     setProfiles((prev) => {
