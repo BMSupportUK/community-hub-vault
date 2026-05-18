@@ -148,6 +148,33 @@ export type Database = {
           },
         ]
       }
+      business_hours: {
+        Row: {
+          close_time: string
+          day_of_week: number
+          is_closed: boolean
+          open_time: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          close_time?: string
+          day_of_week: number
+          is_closed?: boolean
+          open_time?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          close_time?: string
+          day_of_week?: number
+          is_closed?: boolean
+          open_time?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       channel_permissions: {
         Row: {
           can_delete: boolean
@@ -2481,6 +2508,7 @@ export type Database = {
         Args: { _email: string; _ip: string }
         Returns: boolean
       }
+      is_business_open: { Args: never; Returns: boolean }
       mark_order_paid: { Args: { p_order_id: string }; Returns: Json }
       move_to_dlq: {
         Args: {
