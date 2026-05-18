@@ -2468,6 +2468,11 @@ export type Database = {
         Args: { p_mode?: string; p_snapshot: Json }
         Returns: Json
       }
+      revoke_all_expired_subscriber_roles: { Args: never; Returns: number }
+      revoke_expired_subscriber_role: {
+        Args: { _user_id: string }
+        Returns: boolean
+      }
       submit_appeal: { Args: { p_reason: string }; Returns: Json }
     }
     Enums: {
