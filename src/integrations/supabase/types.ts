@@ -1049,6 +1049,7 @@ export type Database = {
       }
       nameplates: {
         Row: {
+          animation_class: string | null
           created_at: string
           description: string | null
           gradient_css: string | null
@@ -1060,6 +1061,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          animation_class?: string | null
           created_at?: string
           description?: string | null
           gradient_css?: string | null
@@ -1071,6 +1073,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          animation_class?: string | null
           created_at?: string
           description?: string | null
           gradient_css?: string | null
