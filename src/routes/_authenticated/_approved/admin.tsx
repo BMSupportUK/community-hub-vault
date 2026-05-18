@@ -485,7 +485,6 @@ function DashboardBody() {
     { to: "/admin-business-hours", label: "Business hours", desc: "Set opening hours per day. Auto-replies when orders or tickets open out of hours.", icon: Clock },
     { to: "/shop", search: { view: "admin" }, label: "Shop products", desc: "Add, edit and reorder shop products and categories.", icon: Package },
     { to: "/shop", search: { view: "discounts" }, label: "Discount codes", desc: "Create and manage promotional discount codes.", icon: Tag },
-    { to: "/shop", search: { view: "orders" }, label: "Sales chats", desc: "View all customer orders and reply in their order chats.", icon: Receipt },
   ];
 
   return (
