@@ -43,6 +43,7 @@ import { Route as AuthenticatedApprovedAdminRolesRouteImport } from './routes/_a
 import { Route as AuthenticatedApprovedAdminReviewsRouteImport } from './routes/_authenticated/_approved/admin-reviews'
 import { Route as AuthenticatedApprovedAdminProfanityRouteImport } from './routes/_authenticated/_approved/admin-profanity'
 import { Route as AuthenticatedApprovedAdminPermissionsRouteImport } from './routes/_authenticated/_approved/admin-permissions'
+import { Route as AuthenticatedApprovedAdminNameplatesRouteImport } from './routes/_authenticated/_approved/admin-nameplates'
 import { Route as AuthenticatedApprovedAdminHeroBoxesRouteImport } from './routes/_authenticated/_approved/admin-hero-boxes'
 import { Route as AuthenticatedApprovedAdminDnsRouteImport } from './routes/_authenticated/_approved/admin-dns'
 import { Route as AuthenticatedApprovedAdminCredentialsRouteImport } from './routes/_authenticated/_approved/admin-credentials'
@@ -253,6 +254,12 @@ const AuthenticatedApprovedAdminPermissionsRoute =
     path: '/admin-permissions',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
+const AuthenticatedApprovedAdminNameplatesRoute =
+  AuthenticatedApprovedAdminNameplatesRouteImport.update({
+    id: '/admin-nameplates',
+    path: '/admin-nameplates',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
 const AuthenticatedApprovedAdminHeroBoxesRoute =
   AuthenticatedApprovedAdminHeroBoxesRouteImport.update({
     id: '/admin-hero-boxes',
@@ -393,6 +400,7 @@ export interface FileRoutesByFullPath {
   '/admin-credentials': typeof AuthenticatedApprovedAdminCredentialsRoute
   '/admin-dns': typeof AuthenticatedApprovedAdminDnsRoute
   '/admin-hero-boxes': typeof AuthenticatedApprovedAdminHeroBoxesRoute
+  '/admin-nameplates': typeof AuthenticatedApprovedAdminNameplatesRoute
   '/admin-permissions': typeof AuthenticatedApprovedAdminPermissionsRoute
   '/admin-profanity': typeof AuthenticatedApprovedAdminProfanityRoute
   '/admin-reviews': typeof AuthenticatedApprovedAdminReviewsRoute
@@ -447,6 +455,7 @@ export interface FileRoutesByTo {
   '/admin-credentials': typeof AuthenticatedApprovedAdminCredentialsRoute
   '/admin-dns': typeof AuthenticatedApprovedAdminDnsRoute
   '/admin-hero-boxes': typeof AuthenticatedApprovedAdminHeroBoxesRoute
+  '/admin-nameplates': typeof AuthenticatedApprovedAdminNameplatesRoute
   '/admin-permissions': typeof AuthenticatedApprovedAdminPermissionsRoute
   '/admin-profanity': typeof AuthenticatedApprovedAdminProfanityRoute
   '/admin-reviews': typeof AuthenticatedApprovedAdminReviewsRoute
@@ -503,6 +512,7 @@ export interface FileRoutesById {
   '/_authenticated/_approved/admin-credentials': typeof AuthenticatedApprovedAdminCredentialsRoute
   '/_authenticated/_approved/admin-dns': typeof AuthenticatedApprovedAdminDnsRoute
   '/_authenticated/_approved/admin-hero-boxes': typeof AuthenticatedApprovedAdminHeroBoxesRoute
+  '/_authenticated/_approved/admin-nameplates': typeof AuthenticatedApprovedAdminNameplatesRoute
   '/_authenticated/_approved/admin-permissions': typeof AuthenticatedApprovedAdminPermissionsRoute
   '/_authenticated/_approved/admin-profanity': typeof AuthenticatedApprovedAdminProfanityRoute
   '/_authenticated/_approved/admin-reviews': typeof AuthenticatedApprovedAdminReviewsRoute
@@ -559,6 +569,7 @@ export interface FileRouteTypes {
     | '/admin-credentials'
     | '/admin-dns'
     | '/admin-hero-boxes'
+    | '/admin-nameplates'
     | '/admin-permissions'
     | '/admin-profanity'
     | '/admin-reviews'
@@ -613,6 +624,7 @@ export interface FileRouteTypes {
     | '/admin-credentials'
     | '/admin-dns'
     | '/admin-hero-boxes'
+    | '/admin-nameplates'
     | '/admin-permissions'
     | '/admin-profanity'
     | '/admin-reviews'
@@ -668,6 +680,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/admin-credentials'
     | '/_authenticated/_approved/admin-dns'
     | '/_authenticated/_approved/admin-hero-boxes'
+    | '/_authenticated/_approved/admin-nameplates'
     | '/_authenticated/_approved/admin-permissions'
     | '/_authenticated/_approved/admin-profanity'
     | '/_authenticated/_approved/admin-reviews'
@@ -964,6 +977,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedApprovedAdminPermissionsRouteImport
       parentRoute: typeof AuthenticatedApprovedRoute
     }
+    '/_authenticated/_approved/admin-nameplates': {
+      id: '/_authenticated/_approved/admin-nameplates'
+      path: '/admin-nameplates'
+      fullPath: '/admin-nameplates'
+      preLoaderRoute: typeof AuthenticatedApprovedAdminNameplatesRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
     '/_authenticated/_approved/admin-hero-boxes': {
       id: '/_authenticated/_approved/admin-hero-boxes'
       path: '/admin-hero-boxes'
@@ -1153,6 +1173,7 @@ interface AuthenticatedApprovedRouteChildren {
   AuthenticatedApprovedAdminCredentialsRoute: typeof AuthenticatedApprovedAdminCredentialsRoute
   AuthenticatedApprovedAdminDnsRoute: typeof AuthenticatedApprovedAdminDnsRoute
   AuthenticatedApprovedAdminHeroBoxesRoute: typeof AuthenticatedApprovedAdminHeroBoxesRoute
+  AuthenticatedApprovedAdminNameplatesRoute: typeof AuthenticatedApprovedAdminNameplatesRoute
   AuthenticatedApprovedAdminPermissionsRoute: typeof AuthenticatedApprovedAdminPermissionsRoute
   AuthenticatedApprovedAdminProfanityRoute: typeof AuthenticatedApprovedAdminProfanityRoute
   AuthenticatedApprovedAdminReviewsRoute: typeof AuthenticatedApprovedAdminReviewsRoute
@@ -1189,6 +1210,8 @@ const AuthenticatedApprovedRouteChildren: AuthenticatedApprovedRouteChildren = {
   AuthenticatedApprovedAdminDnsRoute: AuthenticatedApprovedAdminDnsRoute,
   AuthenticatedApprovedAdminHeroBoxesRoute:
     AuthenticatedApprovedAdminHeroBoxesRoute,
+  AuthenticatedApprovedAdminNameplatesRoute:
+    AuthenticatedApprovedAdminNameplatesRoute,
   AuthenticatedApprovedAdminPermissionsRoute:
     AuthenticatedApprovedAdminPermissionsRoute,
   AuthenticatedApprovedAdminProfanityRoute:
