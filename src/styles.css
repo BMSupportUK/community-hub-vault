@@ -590,3 +590,70 @@
 }
 .nameplate-cinema .nameplate-cinema-reel.r1 { left: 4px; top: 14%; }
 .nameplate-cinema .nameplate-cinema-reel.r2 { left: 4px; top: 86%; }
+
+/* ===== Red Devil nameplate (devil on the left) ===== */
+@keyframes nameplate-devil-bob {
+  0%, 100% { transform: translateY(-50%) rotate(-6deg) scale(1); }
+  50%      { transform: translateY(-58%) rotate(6deg) scale(1.08); }
+}
+@keyframes nameplate-devil-glow {
+  0%, 100% { opacity: 0.55; }
+  50%      { opacity: 0.95; }
+}
+@keyframes nameplate-devil-flame {
+  0%, 100% { transform: translate(-50%, 0) scaleY(1) scaleX(1); opacity: 0.85; }
+  50%      { transform: translate(-50%, -2px) scaleY(1.25) scaleX(0.85); opacity: 1; }
+}
+@keyframes nameplate-devil-ember {
+  0%   { transform: translateY(0) scale(1); opacity: 0; }
+  20%  { opacity: 1; }
+  100% { transform: translateY(-18px) scale(0.4); opacity: 0; }
+}
+.nameplate-devil {
+  position: relative;
+  isolation: isolate;
+}
+.nameplate-devil > * { position: relative; z-index: 3; }
+.nameplate-devil::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 14% 50%, rgba(255, 90, 40, 0.55), transparent 55%);
+  pointer-events: none;
+  z-index: 1;
+  animation: nameplate-devil-glow 1.6s ease-in-out infinite;
+}
+.nameplate-devil .nameplate-devil-icon {
+  position: absolute;
+  left: 6px;
+  top: 50%;
+  transform: translateY(-50%) rotate(-6deg);
+  font-size: 22px;
+  line-height: 1;
+  z-index: 2;
+  filter: drop-shadow(0 0 6px rgba(255, 80, 40, 0.85));
+  animation: nameplate-devil-bob 0.9s ease-in-out infinite;
+}
+.nameplate-devil .nameplate-devil-flame {
+  position: absolute;
+  left: 18px;
+  bottom: 4px;
+  transform: translate(-50%, 0);
+  font-size: 14px;
+  line-height: 1;
+  z-index: 2;
+  animation: nameplate-devil-flame 0.45s ease-in-out infinite;
+}
+.nameplate-devil .nameplate-devil-ember {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #ffd27a 0%, #ff5a1f 60%, transparent 100%);
+  z-index: 2;
+  pointer-events: none;
+  animation: nameplate-devil-ember 1.8s ease-out infinite;
+}
+.nameplate-devil .nameplate-devil-ember.e1 { left: 26px; bottom: 14px; animation-delay: 0s; }
+.nameplate-devil .nameplate-devil-ember.e2 { left: 16px; bottom: 18px; animation-delay: 0.6s; }
+.nameplate-devil .nameplate-devil-ember.e3 { left: 32px; bottom: 12px; animation-delay: 1.2s; }
