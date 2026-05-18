@@ -100,10 +100,9 @@ function ShopPage() {
 
   useEffect(() => {
     if (isAdminView && isAdmin && !adminUnlocked) {
-      const next = `/shop?view=${view}`;
-      navigate({ to: "/admin", search: { next } });
+      navigate({ to: "/admin", search: { next: "/shop" } });
     }
-  }, [isAdminView, isAdmin, adminUnlocked, view, navigate]);
+  }, [isAdminView, isAdmin, adminUnlocked, navigate]);
   const { format, symbol } = useCurrency();
   _currentFmt = format;
   _currentSymbol = symbol;
