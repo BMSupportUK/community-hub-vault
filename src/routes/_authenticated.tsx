@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { isAdminUnlocked } from "@/lib/admin-unlock";
 import { IconRail } from "@/components/app/IconRail";
 import { Clocks } from "@/components/app/Clocks";
 import { UserAvatarMenu } from "@/components/app/UserAvatarMenu";
@@ -27,7 +28,7 @@ export const Route = createFileRoute("/_authenticated")({
 });
 
 function AuthLayout() {
-  const { loading, isPending, isBanned, isRejected, isMod, hasAny } = useAuth();
+  const { loading, isPending, isBanned, isRejected, isMod, hasAny, user } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
   const path = useRouterState({ select: (r) => r.location.pathname });
   const logIp = useServerFn(logMyIp);
@@ -111,6 +112,12 @@ function AuthLayout() {
                 search={{ view: "orders" } as any}
                 title="Sales chats"
                 className="flex items-center gap-2 rounded-full px-3 py-1.5 bg-surface-2 hover:bg-primary hover:text-primary-foreground text-xs font-medium transition-colors"
+                onClick={(e) => {
+                  if (!isAdminUnlocked(user?.id)) {
+                    e.preventDefault();
+                    window.location.href = "/admin?next=" + encodeURIComponent("/shop?view=orders");
+                  }
+                }}
               >
                 <Receipt className="size-4" />
                 <span className="hidden sm:inline">Sales chats</span>
