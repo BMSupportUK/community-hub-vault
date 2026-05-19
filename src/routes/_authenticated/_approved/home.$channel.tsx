@@ -1,9 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { Hash, Megaphone, Loader2, Send, Trash2, EyeOff, Eye, Pin, PinOff, X, ShieldOff, MoreHorizontal, SmilePlus, Pencil, Check, Timer } from "lucide-react";
+import { Hash, Megaphone, Loader2, Send, Trash2, EyeOff, Eye, Pin, PinOff, X, ShieldOff, MoreHorizontal, SmilePlus, Pencil, Check, Timer, MicOff } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+} from "@/components/ui/alert-dialog";
 import { MentionText, mentionsCurrentUser, useMentionAutocomplete } from "@/components/app/mentions";
 import { GifPicker, extractStandaloneGif } from "@/components/app/GifPicker";
 import { StaffOnDutyStrip } from "@/components/app/StaffOnDutyStrip";
@@ -71,6 +78,10 @@ function ChannelPage() {
   const canPin = hasAny(["admin", "management", "moderator", "staff"]);
   const canManageSlow = hasAny(["admin", "management", "moderator", "staff"]);
   const isModOrAdmin = hasAny(["admin", "management", "moderator", "staff"]);
+  const canMute = hasAny(["admin", "management", "moderator", "staff"]);
+  const [muteSubmenuId, setMuteSubmenuId] = useState<string | null>(null);
+  const [myMuteExpires, setMyMuteExpires] = useState<Date | null>(null);
+  const [muteTick, setMuteTick] = useState(0);
   const [pinnedOpen, setPinnedOpen] = useState(false);
   const [ignoredOpen, setIgnoredOpen] = useState(false);
   const [lastSentAt, setLastSentAt] = useState<number | null>(null);
@@ -136,6 +147,62 @@ function ChannelPage() {
       .maybeSingle()
       .then(({ data }) => setMyUsername(data?.username ?? null));
   }, [user?.id]);
+
+  // Load my active mute status and subscribe to mute changes
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    const refresh = async () => {
+      const { data } = await supabase
+        .from("chat_mutes")
+        .select("expires_at")
+        .eq("user_id", user.id)
+        .gt("expires_at", new Date().toISOString())
+        .order("expires_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (cancelled) return;
+      setMyMuteExpires(data?.expires_at ? new Date(data.expires_at) : null);
+    };
+    refresh();
+    const ch = supabase
+      .channel(`my-mutes:${user.id}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "chat_mutes", filter: `user_id=eq.${user.id}` },
+        () => refresh(),
+      )
+      .subscribe();
+    return () => {
+      cancelled = true;
+      supabase.removeChannel(ch);
+    };
+  }, [user?.id]);
+
+  // Tick countdown while muted; clear when expired
+  useEffect(() => {
+    if (!myMuteExpires) return;
+    const id = window.setInterval(() => {
+      if (myMuteExpires.getTime() <= Date.now()) {
+        setMyMuteExpires(null);
+      } else {
+        setMuteTick((t) => t + 1);
+      }
+    }, 1000);
+    return () => window.clearInterval(id);
+  }, [myMuteExpires]);
+
+  const muteUser = async (targetId: string, seconds: number) => {
+    const { data, error } = await supabase.rpc("mute_user", {
+      _user_id: targetId,
+      _duration_seconds: seconds,
+    });
+    if (error) return toast.error(error.message);
+    const label = seconds === 3600 ? "1 hour" : seconds === 10800 ? "3 hours" : "24 hours";
+    toast.success(`User muted for ${label} (until ${new Date(data as string).toLocaleTimeString()}).`);
+    setMuteSubmenuId(null);
+    setOpenMenuId(null);
+  };
 
   const [channel, setChannel] = useState<Channel | null>(null);
   const [missing, setMissing] = useState(false);
@@ -589,6 +656,21 @@ function ChannelPage() {
     if (!channel || channel.slow_mode_seconds <= 0 || isModOrAdmin || !lastSentAt) return 0;
     const r = channel.slow_mode_seconds * 1000 - (now - lastSentAt);
     return r > 0 ? Math.ceil(r / 1000) : 0;
+  })();
+
+  const isMuted = !!myMuteExpires && myMuteExpires.getTime() > Date.now();
+  const muteCountdown = (() => {
+    if (!isMuted || !myMuteExpires) return "";
+    void muteTick;
+    const total = Math.max(0, Math.floor((myMuteExpires.getTime() - Date.now()) / 1000));
+    const h = Math.floor(total / 3600);
+    const m = Math.floor((total % 3600) / 60);
+    const s = total % 60;
+    return h > 0
+      ? `${h}h ${m}m ${s}s`
+      : m > 0
+        ? `${m}m ${s}s`
+        : `${s}s`;
   })();
 
   return (
@@ -1084,6 +1166,40 @@ function ChannelPage() {
                           {isIgnored ? "Unignore user" : "Ignore user"}
                         </button>
                       )}
+                      {canMute && !isSelf && !isStaff && (
+                        <div className="relative">
+                          <button
+                            onClick={() =>
+                              setMuteSubmenuId(muteSubmenuId === m.id ? null : m.id)
+                            }
+                            className="w-full flex items-center gap-2 px-3 py-1.5 hover:bg-surface-2 text-left text-destructive"
+                          >
+                            <MicOff className="size-4" /> Mute user…
+                          </button>
+                          {muteSubmenuId === m.id && (
+                            <div className="absolute right-full top-0 mr-1 w-36 rounded-lg border border-border bg-popover shadow-lg py-1">
+                              <button
+                                onClick={() => muteUser(m.sender_id, 3600)}
+                                className="w-full px-3 py-1.5 text-left hover:bg-surface-2 text-sm"
+                              >
+                                Mute 1 hour
+                              </button>
+                              <button
+                                onClick={() => muteUser(m.sender_id, 10800)}
+                                className="w-full px-3 py-1.5 text-left hover:bg-surface-2 text-sm"
+                              >
+                                Mute 3 hours
+                              </button>
+                              <button
+                                onClick={() => muteUser(m.sender_id, 86400)}
+                                className="w-full px-3 py-1.5 text-left hover:bg-surface-2 text-sm"
+                              >
+                                Mute 24 hours
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      )}
                       {canDelete && (
                         <>
                           <div className="my-1 border-t border-border" />
@@ -1123,12 +1239,14 @@ function ChannelPage() {
               }
             }}
             rows={1}
-            placeholder={!canSend
-              ? `You don't have permission to send messages in this channel`
-              : slowRemaining > 0
-                ? `Slow mode: wait ${slowRemaining}s before sending another message`
-                : `Message #${channel.name} — type @ to mention`}
-            disabled={!canSend || slowRemaining > 0}
+            placeholder={isMuted
+              ? `You are muted — chat unlocks in ${muteCountdown}`
+              : !canSend
+                ? `You don't have permission to send messages in this channel`
+                : slowRemaining > 0
+                  ? `Slow mode: wait ${slowRemaining}s before sending another message`
+                  : `Message #${channel.name} — type @ to mention`}
+            disabled={!canSend || slowRemaining > 0 || isMuted}
             className="flex-1 bg-transparent resize-none outline-none text-sm py-1 max-h-32"
           />
           {slowRemaining > 0 && (
@@ -1137,19 +1255,47 @@ function ChannelPage() {
               <span>{slowRemaining}s</span>
             </div>
           )}
+          {isMuted && (
+            <div className="flex items-center gap-1 text-xs text-destructive tabular-nums px-2 py-1 rounded-md bg-destructive/10 border border-destructive/30">
+              <MicOff className="size-3.5" />
+              <span>{muteCountdown}</span>
+            </div>
+          )}
           <GifPicker
-            disabled={!canSend || slowRemaining > 0}
+            disabled={!canSend || slowRemaining > 0 || isMuted}
             onSelect={(url) => sendGif(url)}
           />
           <button
             onClick={send}
-            disabled={sending || !draft.trim() || !canSend || slowRemaining > 0}
+            disabled={sending || !draft.trim() || !canSend || slowRemaining > 0 || isMuted}
             className="size-8 rounded-lg bg-primary text-primary-foreground grid place-items-center disabled:opacity-50"
           >
             {sending ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
           </button>
         </div>
       </div>
+
+      <AlertDialog open={isMuted}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-destructive">
+              <MicOff className="size-5" /> You've been muted
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              A staff member has temporarily muted you from chat. You won't be able to send messages until the timer ends.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="flex flex-col items-center justify-center py-4">
+            <div className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Time remaining</div>
+            <div className="text-4xl font-bold tabular-nums text-destructive">{muteCountdown}</div>
+            {myMuteExpires && (
+              <div className="text-xs text-muted-foreground mt-2">
+                Ends at {myMuteExpires.toLocaleTimeString()}
+              </div>
+            )}
+          </div>
+        </AlertDialogContent>
+      </AlertDialog>
     </main>
   );
 }
