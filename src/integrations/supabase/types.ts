@@ -2659,6 +2659,7 @@ export type Database = {
         Returns: boolean
       }
       submit_appeal: { Args: { p_reason: string }; Returns: Json }
+      unmute_user: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
       app_role:
