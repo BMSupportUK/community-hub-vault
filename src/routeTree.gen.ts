@@ -30,6 +30,7 @@ import { Route as AuthenticatedApprovedSportsGuidesRouteImport } from './routes/
 import { Route as AuthenticatedApprovedShopRouteImport } from './routes/_authenticated/_approved/shop'
 import { Route as AuthenticatedApprovedShiftsRouteImport } from './routes/_authenticated/_approved/shifts'
 import { Route as AuthenticatedApprovedReviewsRouteImport } from './routes/_authenticated/_approved/reviews'
+import { Route as AuthenticatedApprovedResponsiveCheckRouteImport } from './routes/_authenticated/_approved/responsive-check'
 import { Route as AuthenticatedApprovedProfileRouteImport } from './routes/_authenticated/_approved/profile'
 import { Route as AuthenticatedApprovedNewContentRouteImport } from './routes/_authenticated/_approved/new-content'
 import { Route as AuthenticatedApprovedModerationRouteImport } from './routes/_authenticated/_approved/moderation'
@@ -174,6 +175,12 @@ const AuthenticatedApprovedReviewsRoute =
   AuthenticatedApprovedReviewsRouteImport.update({
     id: '/reviews',
     path: '/reviews',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
+const AuthenticatedApprovedResponsiveCheckRoute =
+  AuthenticatedApprovedResponsiveCheckRouteImport.update({
+    id: '/responsive-check',
+    path: '/responsive-check',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
 const AuthenticatedApprovedProfileRoute =
@@ -414,6 +421,7 @@ export interface FileRoutesByFullPath {
   '/moderation': typeof AuthenticatedApprovedModerationRoute
   '/new-content': typeof AuthenticatedApprovedNewContentRoute
   '/profile': typeof AuthenticatedApprovedProfileRoute
+  '/responsive-check': typeof AuthenticatedApprovedResponsiveCheckRoute
   '/reviews': typeof AuthenticatedApprovedReviewsRoute
   '/shifts': typeof AuthenticatedApprovedShiftsRoute
   '/shop': typeof AuthenticatedApprovedShopRoute
@@ -468,6 +476,7 @@ export interface FileRoutesByTo {
   '/moderation': typeof AuthenticatedApprovedModerationRoute
   '/new-content': typeof AuthenticatedApprovedNewContentRoute
   '/profile': typeof AuthenticatedApprovedProfileRoute
+  '/responsive-check': typeof AuthenticatedApprovedResponsiveCheckRoute
   '/reviews': typeof AuthenticatedApprovedReviewsRoute
   '/shifts': typeof AuthenticatedApprovedShiftsRoute
   '/shop': typeof AuthenticatedApprovedShopRoute
@@ -526,6 +535,7 @@ export interface FileRoutesById {
   '/_authenticated/_approved/moderation': typeof AuthenticatedApprovedModerationRoute
   '/_authenticated/_approved/new-content': typeof AuthenticatedApprovedNewContentRoute
   '/_authenticated/_approved/profile': typeof AuthenticatedApprovedProfileRoute
+  '/_authenticated/_approved/responsive-check': typeof AuthenticatedApprovedResponsiveCheckRoute
   '/_authenticated/_approved/reviews': typeof AuthenticatedApprovedReviewsRoute
   '/_authenticated/_approved/shifts': typeof AuthenticatedApprovedShiftsRoute
   '/_authenticated/_approved/shop': typeof AuthenticatedApprovedShopRoute
@@ -583,6 +593,7 @@ export interface FileRouteTypes {
     | '/moderation'
     | '/new-content'
     | '/profile'
+    | '/responsive-check'
     | '/reviews'
     | '/shifts'
     | '/shop'
@@ -637,6 +648,7 @@ export interface FileRouteTypes {
     | '/moderation'
     | '/new-content'
     | '/profile'
+    | '/responsive-check'
     | '/reviews'
     | '/shifts'
     | '/shop'
@@ -694,6 +706,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/moderation'
     | '/_authenticated/_approved/new-content'
     | '/_authenticated/_approved/profile'
+    | '/_authenticated/_approved/responsive-check'
     | '/_authenticated/_approved/reviews'
     | '/_authenticated/_approved/shifts'
     | '/_authenticated/_approved/shop'
@@ -884,6 +897,13 @@ declare module '@tanstack/react-router' {
       path: '/reviews'
       fullPath: '/reviews'
       preLoaderRoute: typeof AuthenticatedApprovedReviewsRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
+    '/_authenticated/_approved/responsive-check': {
+      id: '/_authenticated/_approved/responsive-check'
+      path: '/responsive-check'
+      fullPath: '/responsive-check'
+      preLoaderRoute: typeof AuthenticatedApprovedResponsiveCheckRouteImport
       parentRoute: typeof AuthenticatedApprovedRoute
     }
     '/_authenticated/_approved/profile': {
@@ -1187,6 +1207,7 @@ interface AuthenticatedApprovedRouteChildren {
   AuthenticatedApprovedModerationRoute: typeof AuthenticatedApprovedModerationRoute
   AuthenticatedApprovedNewContentRoute: typeof AuthenticatedApprovedNewContentRoute
   AuthenticatedApprovedProfileRoute: typeof AuthenticatedApprovedProfileRoute
+  AuthenticatedApprovedResponsiveCheckRoute: typeof AuthenticatedApprovedResponsiveCheckRoute
   AuthenticatedApprovedReviewsRoute: typeof AuthenticatedApprovedReviewsRoute
   AuthenticatedApprovedShiftsRoute: typeof AuthenticatedApprovedShiftsRoute
   AuthenticatedApprovedShopRoute: typeof AuthenticatedApprovedShopRoute
@@ -1230,6 +1251,8 @@ const AuthenticatedApprovedRouteChildren: AuthenticatedApprovedRouteChildren = {
   AuthenticatedApprovedModerationRoute: AuthenticatedApprovedModerationRoute,
   AuthenticatedApprovedNewContentRoute: AuthenticatedApprovedNewContentRoute,
   AuthenticatedApprovedProfileRoute: AuthenticatedApprovedProfileRoute,
+  AuthenticatedApprovedResponsiveCheckRoute:
+    AuthenticatedApprovedResponsiveCheckRoute,
   AuthenticatedApprovedReviewsRoute: AuthenticatedApprovedReviewsRoute,
   AuthenticatedApprovedShiftsRoute: AuthenticatedApprovedShiftsRoute,
   AuthenticatedApprovedShopRoute: AuthenticatedApprovedShopRoute,
