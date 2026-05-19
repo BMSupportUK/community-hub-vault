@@ -9,6 +9,7 @@ import mfaBg from "@/assets/mfa-security-bg.jpg";
 
 export const Route = createFileRoute("/mfa-challenge")({
   beforeLoad: async () => {
+    if (typeof window === "undefined") return;
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) throw redirect({ to: "/login" });
   },
