@@ -37,7 +37,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // logout on reload. Only mark rolesLoaded once we have a real answer.
     if (error) {
       console.warn("[auth] loadRoles failed, keeping previous roles", error);
-      setRolesLoaded((prev) => prev || false);
+      // Retry shortly so we don't sit on a Loading… screen for 30s on first load.
+      setTimeout(() => { loadRoles(uid); }, 2000);
       return;
     }
     setRoles((data ?? []).map((r) => r.role as AppRole));
