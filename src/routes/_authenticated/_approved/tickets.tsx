@@ -1237,3 +1237,76 @@ function StaffOnDutyStrip() {
     </div>
   );
 }
+
+function RatingPromptDialog({
+  ticket,
+  currentUserId,
+  myRating,
+  onRate,
+}: {
+  ticket: Ticket;
+  currentUserId: string;
+  myRating: number;
+  onRate: (v: number) => void;
+}) {
+  const isOwner = ticket.user_id === currentUserId;
+  const isResolved = ticket.status === "resolved" || ticket.status === "closed";
+  const eligible = isOwner && isResolved;
+  const dismissKey = `ticket-rating-dismissed-${ticket.id}`;
+
+  const [open, setOpen] = useState(false);
+  const [hover, setHover] = useState(0);
+
+  useEffect(() => {
+    if (!eligible) { setOpen(false); return; }
+    if (myRating > 0) { setOpen(false); return; }
+    if (typeof window !== "undefined" && sessionStorage.getItem(dismissKey)) return;
+    setOpen(true);
+  }, [eligible, myRating, dismissKey]);
+
+  if (!eligible) return null;
+
+  const handleSelect = (n: number) => {
+    onRate(n);
+    setOpen(false);
+  };
+  const handleClose = (next: boolean) => {
+    setOpen(next);
+    if (!next && myRating === 0 && typeof window !== "undefined") {
+      sessionStorage.setItem(dismissKey, "1");
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={handleClose}>
+      <DialogContent className="sm:max-w-sm">
+        <DialogHeader>
+          <DialogTitle>How did we do?</DialogTitle>
+          <DialogDescription>
+            Tap a star to rate your support experience.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="flex justify-center gap-1 py-4" onMouseLeave={() => setHover(0)}>
+          {[1, 2, 3, 4, 5].map((n) => {
+            const filled = n <= (hover || myRating);
+            return (
+              <button
+                key={n}
+                type="button"
+                onMouseEnter={() => setHover(n)}
+                onClick={() => handleSelect(n)}
+                className="p-1 transition-transform hover:scale-110"
+                aria-label={`${n} star${n === 1 ? "" : "s"}`}
+              >
+                <Star className={cn("size-9", filled ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground/40")} />
+              </button>
+            );
+          })}
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={() => handleClose(false)}>Maybe later</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
