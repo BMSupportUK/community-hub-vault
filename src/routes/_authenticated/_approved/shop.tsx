@@ -2002,8 +2002,26 @@ function OrderDetail({ orderId, isAdmin, onBack }: { orderId: string; isAdmin: b
             })}
             <div ref={endRef} />
           </div>
+          {Object.keys(othersTyping).length > 0 && (() => {
+            const anyAdmin = Object.values(othersTyping).some((v) => v.isAdmin);
+            const anyCustomer = Object.values(othersTyping).some((v) => !v.isAdmin);
+            const label = isAdmin
+              ? (anyCustomer ? "Customer is typing" : "Staff is typing")
+              : (anyAdmin ? "Staff is typing" : "Customer is typing");
+            return (
+              <div className="px-4 pb-1 text-[11px] text-muted-foreground flex items-center gap-2">
+                <span className="inline-flex gap-0.5">
+                  <span className="size-1.5 rounded-full bg-muted-foreground/70 animate-bounce [animation-delay:-0.3s]" />
+                  <span className="size-1.5 rounded-full bg-muted-foreground/70 animate-bounce [animation-delay:-0.15s]" />
+                  <span className="size-1.5 rounded-full bg-muted-foreground/70 animate-bounce" />
+                </span>
+                <span>{label}…</span>
+              </div>
+            );
+          })()}
           <div className="p-3 border-t border-border flex gap-2">
-            <input value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => e.key === "Enter" && send()}
+            <input value={text} onChange={(e) => onTextChange(e.target.value)} onKeyDown={(e) => e.key === "Enter" && send()}
+              onBlur={() => sendTyping(true)}
               placeholder="Message…" className="flex-1 px-3 py-2 rounded-lg bg-surface-2 text-sm outline-none border border-border focus:border-primary" />
             <button onClick={send} className="px-3 py-2 rounded-lg bg-primary text-primary-foreground"><Send className="size-4" /></button>
           </div>
