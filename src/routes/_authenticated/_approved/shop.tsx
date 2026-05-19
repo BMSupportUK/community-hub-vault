@@ -1627,6 +1627,10 @@ function OrderDetail({ orderId, isAdmin, onBack }: { orderId: string; isAdmin: b
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
+  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const [othersTyping, setOthersTyping] = useState<Record<string, { isAdmin: boolean; at: number }>>({});
+  const typingTimerRef = useRef<number | null>(null);
+  const lastSentTypingRef = useRef(0);
 
   const load = async () => {
     const [{ data: o }, { data: it }, { data: m }] = await Promise.all([
@@ -1643,6 +1647,11 @@ function OrderDetail({ orderId, isAdmin, onBack }: { orderId: string; isAdmin: b
         (p) => {
           const nm = p.new as OrderMessage;
           setMsgs((m) => (m.some((x) => x.id === nm.id) ? m : [...m, nm]));
+          // Stop showing typing for the sender of this new message
+          setOthersTyping((s) => {
+            if (!s[nm.sender_id]) return s;
+            const next = { ...s }; delete next[nm.sender_id]; return next;
+          });
         })
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "order_messages", filter: `order_id=eq.${orderId}` },
         (p) => {
@@ -1656,16 +1665,72 @@ function OrderDetail({ orderId, isAdmin, onBack }: { orderId: string; isAdmin: b
         })
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "orders", filter: `id=eq.${orderId}` },
         (p) => setOrder(p.new as Order))
+      .on("broadcast", { event: "typing" }, (payload) => {
+        const d = (payload?.payload ?? {}) as { userId?: string; isAdmin?: boolean; stopped?: boolean };
+        if (!d.userId || d.userId === user?.id) return;
+        setOthersTyping((s) => {
+          if (d.stopped) {
+            if (!s[d.userId!]) return s;
+            const next = { ...s }; delete next[d.userId!]; return next;
+          }
+          return { ...s, [d.userId!]: { isAdmin: !!d.isAdmin, at: Date.now() } };
+        });
+      })
       .subscribe((status) => {
         if (status === "SUBSCRIBED") load();
       });
-    return () => { supabase.removeChannel(ch); };
-  }, [orderId]);
+    channelRef.current = ch;
+    return () => {
+      channelRef.current = null;
+      supabase.removeChannel(ch);
+    };
+  }, [orderId, user?.id]);
+  // Expire typing indicators after 4s of inactivity
+  useEffect(() => {
+    if (Object.keys(othersTyping).length === 0) return;
+    const t = window.setInterval(() => {
+      const now = Date.now();
+      setOthersTyping((s) => {
+        let changed = false;
+        const next: typeof s = {};
+        for (const [k, v] of Object.entries(s)) {
+          if (now - v.at < 4000) next[k] = v; else changed = true;
+        }
+        return changed ? next : s;
+      });
+    }, 1000);
+    return () => window.clearInterval(t);
+  }, [othersTyping]);
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [msgs.length]);
+
+  const sendTyping = (stopped: boolean) => {
+    if (!channelRef.current || !user) return;
+    const now = Date.now();
+    if (!stopped && now - lastSentTypingRef.current < 1500) return;
+    lastSentTypingRef.current = now;
+    channelRef.current.send({
+      type: "broadcast",
+      event: "typing",
+      payload: { userId: user.id, isAdmin, stopped },
+    });
+  };
+  const onTextChange = (v: string) => {
+    setText(v);
+    if (v.trim().length === 0) {
+      sendTyping(true);
+      if (typingTimerRef.current) { window.clearTimeout(typingTimerRef.current); typingTimerRef.current = null; }
+      return;
+    }
+    sendTyping(false);
+    if (typingTimerRef.current) window.clearTimeout(typingTimerRef.current);
+    typingTimerRef.current = window.setTimeout(() => sendTyping(true), 3000);
+  };
 
   const send = async () => {
     if (!text.trim() || !user) return;
     const c = text; setText("");
+    if (typingTimerRef.current) { window.clearTimeout(typingTimerRef.current); typingTimerRef.current = null; }
+    sendTyping(true);
     const { data, error } = await supabase
       .from("order_messages")
       .insert({ order_id: orderId, sender_id: user.id, content: c })
@@ -1937,8 +2002,26 @@ function OrderDetail({ orderId, isAdmin, onBack }: { orderId: string; isAdmin: b
             })}
             <div ref={endRef} />
           </div>
+          {Object.keys(othersTyping).length > 0 && (() => {
+            const anyAdmin = Object.values(othersTyping).some((v) => v.isAdmin);
+            const anyCustomer = Object.values(othersTyping).some((v) => !v.isAdmin);
+            const label = isAdmin
+              ? (anyCustomer ? "Customer is typing" : "Staff is typing")
+              : (anyAdmin ? "Staff is typing" : "Customer is typing");
+            return (
+              <div className="px-4 pb-1 text-[11px] text-muted-foreground flex items-center gap-2">
+                <span className="inline-flex gap-0.5">
+                  <span className="size-1.5 rounded-full bg-muted-foreground/70 animate-bounce [animation-delay:-0.3s]" />
+                  <span className="size-1.5 rounded-full bg-muted-foreground/70 animate-bounce [animation-delay:-0.15s]" />
+                  <span className="size-1.5 rounded-full bg-muted-foreground/70 animate-bounce" />
+                </span>
+                <span>{label}…</span>
+              </div>
+            );
+          })()}
           <div className="p-3 border-t border-border flex gap-2">
-            <input value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => e.key === "Enter" && send()}
+            <input value={text} onChange={(e) => onTextChange(e.target.value)} onKeyDown={(e) => e.key === "Enter" && send()}
+              onBlur={() => sendTyping(true)}
               placeholder="Message…" className="flex-1 px-3 py-2 rounded-lg bg-surface-2 text-sm outline-none border border-border focus:border-primary" />
             <button onClick={send} className="px-3 py-2 rounded-lg bg-primary text-primary-foreground"><Send className="size-4" /></button>
           </div>
