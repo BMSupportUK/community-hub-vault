@@ -2588,6 +2588,10 @@ export type Database = {
         Returns: boolean
       }
       is_business_open: { Args: never; Returns: boolean }
+      is_order_participant: {
+        Args: { _order_id: string; _user_id: string }
+        Returns: boolean
+      }
       mark_order_paid: { Args: { p_order_id: string }; Returns: Json }
       move_to_dlq: {
         Args: {
