@@ -381,7 +381,15 @@ export function NotificationBell() {
                               } else if (n.kind === "order_placed" && n.entity_id) {
                                   navigate({ to: "/shop", search: { view: "orders", id: n.entity_id } } as never);
                               } else {
-                                navigate({ to: n.link_path! } as never);
+                                const [path, search] = n.link_path!.split("?");
+                                const searchObj: Record<string, string> = {};
+                                if (search) {
+                                  for (const part of search.split("&")) {
+                                    const [k, v] = part.split("=");
+                                    if (k) searchObj[k] = decodeURIComponent(v ?? "");
+                                  }
+                                }
+                                navigate({ to: path, search: searchObj } as never);
                               }
                             }}
                           >
