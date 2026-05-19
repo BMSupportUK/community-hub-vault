@@ -2514,6 +2514,7 @@ export type Database = {
     Functions: {
       app_encrypt: { Args: { p: string }; Returns: string }
       apply_blacklist_ban: { Args: { _user_id: string }; Returns: undefined }
+      assign_pending_tickets: { Args: never; Returns: number }
       can_in_channel: {
         Args: { _action: string; _channel: string; _user: string }
         Returns: boolean
