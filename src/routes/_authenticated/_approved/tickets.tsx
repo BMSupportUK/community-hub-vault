@@ -301,6 +301,12 @@ function TicketsPage() {
   }, [isStaff]);
 
   const selected = useMemo(() => tickets.find((t) => t.id === search.id) ?? null, [tickets, search.id]);
+  const detailPanelRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (search.id && selected) {
+      detailPanelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [search.id, selected]);
 
   const groups = useMemo(() => {
     const buckets: Record<Status, Ticket[]> = { open: [], in_progress: [], waiting: [], resolved: [], closed: [] };
@@ -495,7 +501,10 @@ function TicketsPage() {
               </aside>
 
               {/* Right panel */}
-              <div className="rounded-2xl bg-gradient-to-br from-violet-600 via-fuchsia-600 to-rose-600 text-white relative overflow-hidden min-h-[600px] flex flex-col">
+              <div
+                ref={detailPanelRef}
+                className="rounded-2xl bg-gradient-to-br from-violet-600 via-fuchsia-600 to-rose-600 text-white relative overflow-hidden min-h-[600px] flex flex-col scroll-mt-16"
+              >
                 <div className="pointer-events-none absolute inset-0 opacity-60" style={{
                   background:
                     "radial-gradient(800px 400px at 0% 0%, rgba(244,63,94,0.45), transparent 60%), radial-gradient(700px 400px at 100% 0%, rgba(168,85,247,0.4), transparent 60%)",
