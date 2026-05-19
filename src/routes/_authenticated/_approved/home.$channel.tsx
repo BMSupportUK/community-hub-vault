@@ -1239,11 +1239,13 @@ function ChannelPage() {
               }
             }}
             rows={1}
-            placeholder={!canSend
-              ? `You don't have permission to send messages in this channel`
-              : slowRemaining > 0
-                ? `Slow mode: wait ${slowRemaining}s before sending another message`
-                : `Message #${channel.name} — type @ to mention`}
+            placeholder={isMuted
+              ? `You are muted — chat unlocks in ${muteCountdown}`
+              : !canSend
+                ? `You don't have permission to send messages in this channel`
+                : slowRemaining > 0
+                  ? `Slow mode: wait ${slowRemaining}s before sending another message`
+                  : `Message #${channel.name} — type @ to mention`}
             disabled={!canSend || slowRemaining > 0 || isMuted}
             className="flex-1 bg-transparent resize-none outline-none text-sm py-1 max-h-32"
           />
