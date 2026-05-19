@@ -84,11 +84,11 @@ function AuthLayout() {
     <div className="min-h-screen flex bg-background">
       <IconRail />
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="h-12 shrink-0 border-b border-border bg-rail/40 backdrop-blur flex items-center justify-between px-2 md:px-4 gap-2 md:gap-3 overflow-x-auto scrollbar-thin">
-          <div className="flex items-center gap-2 shrink-0">
+        <header className="h-12 shrink-0 border-b border-border bg-rail/40 backdrop-blur flex items-center justify-between px-2 lg:px-4 gap-1.5 lg:gap-3 overflow-x-auto scrollbar-thin">
+          <div className="flex items-center gap-1.5 lg:gap-2 shrink-0">
             <Sheet open={navOpen} onOpenChange={setNavOpen}>
               <SheetTrigger
-                className="md:hidden inline-flex items-center justify-center size-9 rounded-md hover:bg-surface-2 text-muted-foreground"
+                className="lg:hidden inline-flex items-center justify-center size-9 rounded-md hover:bg-surface-2 text-muted-foreground"
                 aria-label="Open navigation"
               >
                 <Menu className="size-5" />
@@ -104,7 +104,7 @@ function AuthLayout() {
                 className="flex items-center gap-2 rounded-full px-3 py-1.5 bg-surface-2 hover:bg-primary hover:text-primary-foreground text-xs font-medium transition-colors"
               >
                 <LayoutDashboard className="size-4" />
-                <span className="hidden sm:inline">Admin dashboard</span>
+                <span className="hidden xl:inline">Admin dashboard</span>
               </Link>
             )}
             {isMod && (
@@ -114,7 +114,7 @@ function AuthLayout() {
                 className="flex items-center gap-2 rounded-full px-3 py-1.5 bg-surface-2 hover:bg-primary hover:text-primary-foreground text-xs font-medium transition-colors"
               >
                 <Shield className="size-4" />
-                <span className="hidden sm:inline">Moderation</span>
+                <span className="hidden xl:inline">Moderation</span>
                 <ModerationPendingBadge />
               </Link>
             )}
@@ -126,7 +126,7 @@ function AuthLayout() {
                 onClick={openSalesChats}
               >
                 <Receipt className="size-4" />
-                <span className="hidden sm:inline">Sales chats</span>
+                <span className="hidden xl:inline">Sales chats</span>
                 <PendingOrdersBadge />
               </button>
             )}
@@ -137,21 +137,21 @@ function AuthLayout() {
                 className="flex items-center gap-2 rounded-full px-3 py-1.5 bg-surface-2 hover:bg-primary hover:text-primary-foreground text-xs font-medium transition-colors"
               >
                 <ShieldCheck className="size-4" />
-                <span className="hidden sm:inline">User roles</span>
+                <span className="hidden xl:inline">User roles</span>
               </Link>
             )}
           </div>
-          <div className="hidden md:flex flex-1 justify-center min-w-0 px-3">
+          <div className="hidden xl:flex flex-1 justify-center min-w-0 px-3">
             <SubscriptionExpiry />
           </div>
-          <div className="flex items-center gap-2 md:gap-3 shrink-0">
+          <div className="flex items-center gap-1.5 lg:gap-3 shrink-0">
           <Link
             to="/members"
             title="Members directory"
             className="group flex items-center gap-2 rounded-full px-3 py-1.5 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 text-white text-xs font-medium shadow-lg shadow-fuchsia-500/20 hover:shadow-fuchsia-500/40 transition-shadow"
           >
             <Users className="size-4" />
-            <span className="hidden sm:inline">Members</span>
+            <span className="hidden xl:inline">Members</span>
           </Link>
           <Link
             to="/staff"
@@ -159,9 +159,9 @@ function AuthLayout() {
             className="group flex items-center gap-2 rounded-full px-3 py-1.5 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 text-white text-xs font-medium shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 transition-shadow"
           >
             <Briefcase className="size-4" />
-            <span className="hidden sm:inline">Staff</span>
+            <span className="hidden xl:inline">Staff</span>
           </Link>
-          <Clocks />
+          <div className="hidden lg:flex"><Clocks /></div>
             <MyWorkingStatus />
           <UserAvatarMenu />
           </div>
