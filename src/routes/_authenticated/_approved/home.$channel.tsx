@@ -82,6 +82,9 @@ function ChannelPage() {
   const [muteSubmenuId, setMuteSubmenuId] = useState<string | null>(null);
   const [myMuteExpires, setMyMuteExpires] = useState<Date | null>(null);
   const [muteTick, setMuteTick] = useState(0);
+  const [mutedUserIds, setMutedUserIds] = useState<Set<string>>(new Set());
+  const [unmuteTarget, setUnmuteTarget] = useState<{ id: string; name: string } | null>(null);
+  const [unmuting, setUnmuting] = useState(false);
   const [pinnedOpen, setPinnedOpen] = useState(false);
   const [ignoredOpen, setIgnoredOpen] = useState(false);
   const [lastSentAt, setLastSentAt] = useState<number | null>(null);
@@ -201,6 +204,50 @@ function ChannelPage() {
     const label = seconds === 3600 ? "1 hour" : seconds === 10800 ? "3 hours" : "24 hours";
     toast.success(`User muted for ${label} (until ${new Date(data as string).toLocaleTimeString()}).`);
     setMuteSubmenuId(null);
+    setOpenMenuId(null);
+    setMutedUserIds((prev) => new Set(prev).add(targetId));
+  };
+
+  // Track which users currently have an active mute (for staff UI).
+  useEffect(() => {
+    if (!canMute) return;
+    let cancelled = false;
+    const refresh = async () => {
+      const { data } = await supabase
+        .from("chat_mutes")
+        .select("user_id")
+        .gt("expires_at", new Date().toISOString());
+      if (cancelled) return;
+      setMutedUserIds(new Set((data ?? []).map((r: { user_id: string }) => r.user_id)));
+    };
+    refresh();
+    const ch = supabase
+      .channel("all-mutes")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "chat_mutes" },
+        () => refresh(),
+      )
+      .subscribe();
+    return () => {
+      cancelled = true;
+      supabase.removeChannel(ch);
+    };
+  }, [canMute]);
+
+  const confirmUnmute = async () => {
+    if (!unmuteTarget) return;
+    setUnmuting(true);
+    const { error } = await supabase.rpc("unmute_user", { _user_id: unmuteTarget.id });
+    setUnmuting(false);
+    if (error) return toast.error(error.message);
+    toast.success(`${unmuteTarget.name} has been unmuted.`);
+    setMutedUserIds((prev) => {
+      const n = new Set(prev);
+      n.delete(unmuteTarget.id);
+      return n;
+    });
+    setUnmuteTarget(null);
     setOpenMenuId(null);
   };
 
