@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "@tanstack/react-router";
+import { Link, useLocation } from "@tanstack/react-router";
 import { ShieldAlert } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/use-auth";
 export function TwoFactorBanner() {
   const { user } = useAuth();
   const [show, setShow] = useState(false);
+  const { pathname } = useLocation();
 
   useEffect(() => {
     if (!user) return;
@@ -18,6 +19,7 @@ export function TwoFactorBanner() {
   }, [user]);
 
   if (!show) return null;
+  if (pathname.startsWith("/shop") || pathname.startsWith("/store")) return null;
 
   return (
     <div className="fixed bottom-4 right-4 z-50 max-w-[280px] animate-in fade-in slide-in-from-bottom-2 duration-300">
