@@ -756,6 +756,14 @@ function TicketDetail({
   const [replyProgress, setReplyProgress] = useState<UploadProgress | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const taRef = useRef<HTMLTextAreaElement>(null);
+  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const [othersTyping, setOthersTyping] = useState<Record<string, { isStaff: boolean; at: number }>>({});
+  const typingTimerRef = useRef<number | null>(null);
+  const lastSentTypingRef = useRef(0);
+  const typingChannelReadyRef = useRef(false);
+  const draftRef = useRef("");
+  const internalRef = useRef(false);
+  useEffect(() => { internalRef.current = internal; }, [internal]);
   const mention = useMentionAutocomplete({
     value: draft,
     onChange: setDraft,
@@ -787,13 +795,95 @@ function TicketDetail({
   useEffect(() => {
     load();
     const ch = supabase
-      .channel(`ticket-${ticket.id}`)
+      .channel(`ticket-${ticket.id}`, { config: { broadcast: { self: false }, presence: { key: currentUserId } } })
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "ticket_messages", filter: `ticket_id=eq.${ticket.id}` },
-        (p) => setMessages((m) => [...m, p.new as unknown as Message]))
-      .subscribe();
-    return () => { supabase.removeChannel(ch); };
+        (p) => {
+          const nm = p.new as unknown as Message;
+          setMessages((m) => (m.some((x) => x.id === nm.id) ? m : [...m, nm]));
+          setOthersTyping((s) => {
+            if (!s[nm.sender_id]) return s;
+            const next = { ...s }; delete next[nm.sender_id]; return next;
+          });
+        })
+      .on("broadcast", { event: "typing" }, (payload) => {
+        const d = (payload?.payload ?? {}) as { userId?: string; isStaff?: boolean; internal?: boolean; stopped?: boolean };
+        if (!d.userId || d.userId === currentUserId) return;
+        // Don't reveal internal-note typing to non-staff users
+        if (d.internal && !isStaff) return;
+        setOthersTyping((s) => {
+          if (d.stopped) {
+            if (!s[d.userId!]) return s;
+            const next = { ...s }; delete next[d.userId!]; return next;
+          }
+          return { ...s, [d.userId!]: { isStaff: !!d.isStaff, at: Date.now() } };
+        });
+      })
+      .on("presence", { event: "sync" }, () => {
+        const state = ch.presenceState() as Record<string, Array<{ userId?: string; isStaff?: boolean; internal?: boolean; typing?: boolean; at?: number }>>;
+        const next: Record<string, { isStaff: boolean; at: number }> = {};
+        Object.values(state).flat().forEach((p) => {
+          if (!p.userId || p.userId === currentUserId || !p.typing) return;
+          if (p.internal && !isStaff) return;
+          next[p.userId] = { isStaff: !!p.isStaff, at: p.at ?? Date.now() };
+        });
+        setOthersTyping(next);
+      })
+      .subscribe((status) => {
+        typingChannelReadyRef.current = status === "SUBSCRIBED";
+        if (status === "SUBSCRIBED" && draftRef.current.trim()) sendTyping(false);
+      });
+    channelRef.current = ch;
+    return () => {
+      typingChannelReadyRef.current = false;
+      channelRef.current = null;
+      if (typingTimerRef.current) { window.clearTimeout(typingTimerRef.current); typingTimerRef.current = null; }
+      void ch.untrack();
+      supabase.removeChannel(ch);
+      setOthersTyping({});
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ticket.id]);
+  }, [ticket.id, currentUserId, isStaff]);
+
+  // Expire stale typing indicators after 4s
+  useEffect(() => {
+    if (Object.keys(othersTyping).length === 0) return;
+    const t = window.setInterval(() => {
+      const now = Date.now();
+      setOthersTyping((s) => {
+        let changed = false;
+        const next: typeof s = {};
+        for (const [k, v] of Object.entries(s)) {
+          if (now - v.at < 4000) next[k] = v; else changed = true;
+        }
+        return changed ? next : s;
+      });
+    }, 1000);
+    return () => window.clearInterval(t);
+  }, [othersTyping]);
+
+  function sendTyping(stopped: boolean) {
+    if (!channelRef.current || !currentUserId || !typingChannelReadyRef.current) return;
+    const now = Date.now();
+    if (!stopped && now - lastSentTypingRef.current < 1500) return;
+    if (!stopped) lastSentTypingRef.current = now;
+    const payload = { userId: currentUserId, isStaff, internal: internalRef.current, typing: !stopped, at: now, stopped };
+    if (stopped) void channelRef.current.untrack();
+    else void channelRef.current.track(payload);
+    void channelRef.current.send({ type: "broadcast", event: "typing", payload });
+  }
+
+  const onDraftChange = (v: string) => {
+    draftRef.current = v;
+    setDraft(v);
+    if (v.trim().length === 0) {
+      sendTyping(true);
+      if (typingTimerRef.current) { window.clearTimeout(typingTimerRef.current); typingTimerRef.current = null; }
+      return;
+    }
+    sendTyping(false);
+    if (typingTimerRef.current) window.clearTimeout(typingTimerRef.current);
+    typingTimerRef.current = window.setTimeout(() => sendTyping(true), 3000);
+  };
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
@@ -820,6 +910,9 @@ function TicketDetail({
       );
     }
     setDraft("");
+    draftRef.current = "";
+    if (typingTimerRef.current) { window.clearTimeout(typingTimerRef.current); typingTimerRef.current = null; }
+    sendTyping(true);
     setReplyFiles([]);
     // Bump updated_at via status touch (only staff allowed) — skip for users
     if (isStaff && ticket.status === "open") {
@@ -948,6 +1041,24 @@ function TicketDetail({
         })}
       </div>
 
+      {othersTyping && Object.keys(othersTyping).length > 0 && ticket.status !== "closed" && (() => {
+        const anyStaff = Object.values(othersTyping).some((v) => v.isStaff);
+        const anyUser = Object.values(othersTyping).some((v) => !v.isStaff);
+        const label = isStaff
+          ? (anyUser ? "User is typing" : "Staff is typing")
+          : (anyStaff ? "Staff is typing" : "User is typing");
+        return (
+          <div className="px-5 pb-1 text-[11px] text-white/80 flex items-center gap-2">
+            <span className="inline-flex gap-0.5">
+              <span className="size-1.5 rounded-full bg-white/70 animate-bounce [animation-delay:-0.3s]" />
+              <span className="size-1.5 rounded-full bg-white/70 animate-bounce [animation-delay:-0.15s]" />
+              <span className="size-1.5 rounded-full bg-white/70 animate-bounce" />
+            </span>
+            <span>{label}…</span>
+          </div>
+        );
+      })()}
+
       <div className="border-t border-white/20 p-3 bg-white/5 backdrop-blur">
         {ticket.status === "closed" ? (
           <div className="text-center text-xs text-white/80 py-2">This ticket is closed.</div>
@@ -957,7 +1068,8 @@ function TicketDetail({
               {mention.dropdown}
               <textarea
                 ref={taRef}
-                value={draft} onChange={(e) => setDraft(e.target.value)} rows={2} maxLength={2000}
+                value={draft} onChange={(e) => onDraftChange(e.target.value)} rows={2} maxLength={2000}
+                onBlur={() => sendTyping(true)}
                 placeholder={internal ? "Internal note (staff only)… type @ to mention" : "Reply to ticket… type @ to mention"}
                 onKeyDown={(e) => {
                   if (mention.onKeyDown(e)) return;
