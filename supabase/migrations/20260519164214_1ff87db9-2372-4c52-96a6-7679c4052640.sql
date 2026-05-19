@@ -1,0 +1,1 @@
+ALTER TABLE public.chat_mutes REPLICA IDENTITY FULL;
