@@ -561,7 +561,7 @@ function Storefront() {
   const [showCheckout, setShowCheckout] = useState(false);
   const [tab, setTab] = useState<string>("welcome");
   const navigate = useNavigate();
-  const { user, hasAny } = useAuth();
+  const { user, hasAny, refreshRoles } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
   const [addingCat, setAddingCat] = useState(false);
   const [newCatName, setNewCatName] = useState("");
@@ -606,7 +606,15 @@ function Storefront() {
     if (!user) return;
     const ch = supabase
       .channel(`orders-progress-${user.id}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "orders", filter: `user_id=eq.${user.id}` }, reloadLatestOrder)
+      .on("postgres_changes", { event: "*", schema: "public", table: "orders", filter: `user_id=eq.${user.id}` }, (payload) => {
+        reloadLatestOrder();
+        const newRow = (payload as { new?: { status?: string; completed_at?: string | null } }).new;
+        const oldRow = (payload as { old?: { status?: string; completed_at?: string | null } }).old;
+        const becameCompleted =
+          newRow && (newRow.status === "completed" || !!newRow.completed_at) &&
+          (!oldRow || (oldRow.status !== "completed" && !oldRow.completed_at));
+        if (becameCompleted) { void refreshRoles(); }
+      })
       .subscribe();
     return () => { supabase.removeChannel(ch); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
