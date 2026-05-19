@@ -2613,6 +2613,10 @@ export type Database = {
       }
       record_admin_unlock_failure: { Args: never; Returns: Json }
       redeem_invite: { Args: { p_code: string }; Returns: Json }
+      request_ticket_admin_help: {
+        Args: { _ticket_id: string }
+        Returns: number
+      }
       restore_app_credentials_from_backup: {
         Args: { p_mode?: string; p_snapshot: Json }
         Returns: Json
