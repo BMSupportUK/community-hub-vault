@@ -39,12 +39,27 @@ async function assertAdmin(supabase: any, userId: string) {
   if (!data || data.length === 0) throw new Error("Not authorized");
 }
 
+async function assertAdminOrOrderOwner(supabase: any, userId: string, orderId: string) {
+  const { data: roles } = await supabase
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", userId)
+    .in("role", ["admin", "management"]);
+  if (roles && roles.length > 0) return;
+  const { data: order } = await supabase
+    .from("orders")
+    .select("user_id")
+    .eq("id", orderId)
+    .maybeSingle();
+  if (!order || order.user_id !== userId) throw new Error("Not authorized");
+}
+
 export const createSquareInvoiceForOrder = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => z.object({ orderId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    await assertAdmin(supabase, userId);
+    await assertAdminOrOrderOwner(supabase, userId, data.orderId);
 
     const locationId = process.env.SQUARE_LOCATION_ID;
     if (!locationId) throw new Error("SQUARE_LOCATION_ID not configured");
@@ -211,7 +226,7 @@ export const cancelSquareInvoice = createServerFn({ method: "POST" })
   .inputValidator((input) => z.object({ orderId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    await assertAdmin(supabase, userId);
+    await assertAdminOrOrderOwner(supabase, userId, data.orderId);
 
     const { data: row } = await supabase
       .from("order_invoices")
