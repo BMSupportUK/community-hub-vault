@@ -22,6 +22,7 @@ import { createSquareInvoiceForOrder, refreshSquareInvoiceStatus, cancelSquareIn
 import { RefreshCw, ExternalLink, Ban } from "lucide-react";
 import { getOutOfHoursMessage } from "@/lib/business-hours";
 import { isAdminUnlocked } from "@/lib/admin-unlock";
+import { useRouter } from "@tanstack/react-router";
 
 type View = "store" | "orders" | "admin" | "refund" | "multi_room" | "triple_room";
 
@@ -33,15 +34,38 @@ function linkify(text: string): React.ReactNode[] {
   let i = 0;
   while ((m = re.exec(text)) !== null) {
     if (m.index > last) parts.push(text.slice(last, m.index));
-    parts.push(
-      <a key={i++} href={m[0]} target="_blank" rel="noopener noreferrer" className="underline break-all">
-        {m[0]}
-      </a>,
-    );
+    const url = m[0];
+    parts.push(<MessageLink key={i++} url={url} />);
     last = m.index + m[0].length;
   }
   if (last < text.length) parts.push(text.slice(last));
   return parts;
+}
+
+function MessageLink({ url }: { url: string }) {
+  const router = useRouter();
+  const isSameOrigin = typeof window !== "undefined" && url.startsWith(window.location.origin);
+  if (!isSameOrigin) {
+    return (
+      <a href={url} target="_blank" rel="noopener noreferrer" className="underline break-all">
+        {url}
+      </a>
+    );
+  }
+  const internal = url.slice(window.location.origin.length) || "/";
+  return (
+    <a
+      href={internal}
+      onClick={(e) => {
+        if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+        e.preventDefault();
+        router.navigate({ to: internal });
+      }}
+      className="underline break-all"
+    >
+      {url}
+    </a>
+  );
 }
 
 const POLICY_KEYS = ["refund", "multi_room", "triple_room"] as const;
