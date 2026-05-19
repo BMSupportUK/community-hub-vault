@@ -3,6 +3,7 @@ import { FriendRequestsListener } from "@/components/app/FriendRequestsListener"
 import { TwoFactorBanner } from "@/components/app/TwoFactorBanner";
 import { OutstandingTicketsAlert } from "@/components/app/OutstandingTicketsAlert";
 import { TicketAssignedAlert } from "@/components/app/TicketAssignedAlert";
+import { TicketHelpRequestedAlert } from "@/components/app/TicketHelpRequestedAlert";
 
 export const Route = createFileRoute("/_authenticated/_approved")({
   beforeLoad: async () => {
@@ -16,6 +17,7 @@ export const Route = createFileRoute("/_authenticated/_approved")({
       <FriendRequestsListener />
       <OutstandingTicketsAlert />
       <TicketAssignedAlert />
+      <TicketHelpRequestedAlert />
     </>
   ),
 });
