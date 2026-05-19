@@ -1359,6 +1359,29 @@ function ChannelPage() {
           </div>
         </AlertDialogContent>
       </AlertDialog>
+
+      <AlertDialog open={!!unmuteTarget} onOpenChange={(o) => { if (!o) setUnmuteTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Mic className="size-5 text-emerald-500" /> Unmute {unmuteTarget?.name}?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This will immediately lift the chat mute on {unmuteTarget?.name}. They'll be able to send messages again right away. Are you sure?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={unmuting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); confirmUnmute(); }}
+              disabled={unmuting}
+              className="bg-emerald-600 hover:bg-emerald-500 text-white"
+            >
+              {unmuting ? "Unmuting…" : "Yes, unmute"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </main>
   );
 }
