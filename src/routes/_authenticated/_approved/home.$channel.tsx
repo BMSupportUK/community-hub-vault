@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { Hash, Megaphone, Loader2, Send, Trash2, EyeOff, Eye, Pin, PinOff, X, ShieldOff, MoreHorizontal, SmilePlus, Pencil, Check, Timer, MicOff } from "lucide-react";
+import { Hash, Megaphone, Loader2, Send, Trash2, EyeOff, Eye, Pin, PinOff, X, ShieldOff, MoreHorizontal, SmilePlus, Pencil, Check, Timer, MicOff, Mic } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
@@ -10,6 +10,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogAction,
+  AlertDialogCancel,
 } from "@/components/ui/alert-dialog";
 import { MentionText, mentionsCurrentUser, useMentionAutocomplete } from "@/components/app/mentions";
 import { GifPicker, extractStandaloneGif } from "@/components/app/GifPicker";
@@ -82,6 +85,9 @@ function ChannelPage() {
   const [muteSubmenuId, setMuteSubmenuId] = useState<string | null>(null);
   const [myMuteExpires, setMyMuteExpires] = useState<Date | null>(null);
   const [muteTick, setMuteTick] = useState(0);
+  const [mutedUserIds, setMutedUserIds] = useState<Set<string>>(new Set());
+  const [unmuteTarget, setUnmuteTarget] = useState<{ id: string; name: string } | null>(null);
+  const [unmuting, setUnmuting] = useState(false);
   const [pinnedOpen, setPinnedOpen] = useState(false);
   const [ignoredOpen, setIgnoredOpen] = useState(false);
   const [lastSentAt, setLastSentAt] = useState<number | null>(null);
@@ -201,6 +207,50 @@ function ChannelPage() {
     const label = seconds === 3600 ? "1 hour" : seconds === 10800 ? "3 hours" : "24 hours";
     toast.success(`User muted for ${label} (until ${new Date(data as string).toLocaleTimeString()}).`);
     setMuteSubmenuId(null);
+    setOpenMenuId(null);
+    setMutedUserIds((prev) => new Set(prev).add(targetId));
+  };
+
+  // Track which users currently have an active mute (for staff UI).
+  useEffect(() => {
+    if (!canMute) return;
+    let cancelled = false;
+    const refresh = async () => {
+      const { data } = await supabase
+        .from("chat_mutes")
+        .select("user_id")
+        .gt("expires_at", new Date().toISOString());
+      if (cancelled) return;
+      setMutedUserIds(new Set((data ?? []).map((r: { user_id: string }) => r.user_id)));
+    };
+    refresh();
+    const ch = supabase
+      .channel("all-mutes")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "chat_mutes" },
+        () => refresh(),
+      )
+      .subscribe();
+    return () => {
+      cancelled = true;
+      supabase.removeChannel(ch);
+    };
+  }, [canMute]);
+
+  const confirmUnmute = async () => {
+    if (!unmuteTarget) return;
+    setUnmuting(true);
+    const { error } = await supabase.rpc("unmute_user", { _user_id: unmuteTarget.id });
+    setUnmuting(false);
+    if (error) return toast.error(error.message);
+    toast.success(`${unmuteTarget.name} has been unmuted.`);
+    setMutedUserIds((prev) => {
+      const n = new Set(prev);
+      n.delete(unmuteTarget.id);
+      return n;
+    });
+    setUnmuteTarget(null);
     setOpenMenuId(null);
   };
 
@@ -1167,6 +1217,18 @@ function ChannelPage() {
                         </button>
                       )}
                       {canMute && !isSelf && !isStaff && (
+                        mutedUserIds.has(m.sender_id) ? (
+                          <button
+                            onClick={() => {
+                              const p = profiles[m.sender_id];
+                              const name = p?.display_name ?? p?.username ?? "this user";
+                              setUnmuteTarget({ id: m.sender_id, name });
+                            }}
+                            className="w-full flex items-center gap-2 px-3 py-1.5 hover:bg-surface-2 text-left text-emerald-500"
+                          >
+                            <Mic className="size-4" /> Unmute user…
+                          </button>
+                        ) : (
                         <div className="relative">
                           <button
                             onClick={() =>
@@ -1199,6 +1261,7 @@ function ChannelPage() {
                             </div>
                           )}
                         </div>
+                        )
                       )}
                       {canDelete && (
                         <>
@@ -1294,6 +1357,29 @@ function ChannelPage() {
               </div>
             )}
           </div>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!unmuteTarget} onOpenChange={(o) => { if (!o) setUnmuteTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Mic className="size-5 text-emerald-500" /> Unmute {unmuteTarget?.name}?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This will immediately lift the chat mute on {unmuteTarget?.name}. They'll be able to send messages again right away. Are you sure?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={unmuting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); confirmUnmute(); }}
+              disabled={unmuting}
+              className="bg-emerald-600 hover:bg-emerald-500 text-white"
+            >
+              {unmuting ? "Unmuting…" : "Yes, unmute"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     </main>
