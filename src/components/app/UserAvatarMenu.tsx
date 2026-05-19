@@ -89,7 +89,7 @@ export function UserAvatarMenu() {
               {initial}
             </AvatarFallback>
           </Avatar>
-          <span className="hidden md:flex flex-col items-start leading-tight pr-2">
+          <span className="hidden lg:flex flex-col items-start leading-tight pr-2">
             <span className="text-xs font-semibold text-foreground max-w-[120px] truncate">{name}</span>
             <span className="text-[10px] text-muted-foreground capitalize">{topRole}</span>
           </span>
