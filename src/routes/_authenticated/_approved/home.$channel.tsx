@@ -148,6 +148,62 @@ function ChannelPage() {
       .then(({ data }) => setMyUsername(data?.username ?? null));
   }, [user?.id]);
 
+  // Load my active mute status and subscribe to mute changes
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    const refresh = async () => {
+      const { data } = await supabase
+        .from("chat_mutes")
+        .select("expires_at")
+        .eq("user_id", user.id)
+        .gt("expires_at", new Date().toISOString())
+        .order("expires_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (cancelled) return;
+      setMyMuteExpires(data?.expires_at ? new Date(data.expires_at) : null);
+    };
+    refresh();
+    const ch = supabase
+      .channel(`my-mutes:${user.id}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "chat_mutes", filter: `user_id=eq.${user.id}` },
+        () => refresh(),
+      )
+      .subscribe();
+    return () => {
+      cancelled = true;
+      supabase.removeChannel(ch);
+    };
+  }, [user?.id]);
+
+  // Tick countdown while muted; clear when expired
+  useEffect(() => {
+    if (!myMuteExpires) return;
+    const id = window.setInterval(() => {
+      if (myMuteExpires.getTime() <= Date.now()) {
+        setMyMuteExpires(null);
+      } else {
+        setMuteTick((t) => t + 1);
+      }
+    }, 1000);
+    return () => window.clearInterval(id);
+  }, [myMuteExpires]);
+
+  const muteUser = async (targetId: string, seconds: number) => {
+    const { data, error } = await supabase.rpc("mute_user", {
+      _user_id: targetId,
+      _duration_seconds: seconds,
+    });
+    if (error) return toast.error(error.message);
+    const label = seconds === 3600 ? "1 hour" : seconds === 10800 ? "3 hours" : "24 hours";
+    toast.success(`User muted for ${label} (until ${new Date(data as string).toLocaleTimeString()}).`);
+    setMuteSubmenuId(null);
+    setOpenMenuId(null);
+  };
+
   const [channel, setChannel] = useState<Channel | null>(null);
   const [missing, setMissing] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
