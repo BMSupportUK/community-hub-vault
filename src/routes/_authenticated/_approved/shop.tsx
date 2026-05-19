@@ -1736,6 +1736,28 @@ function OrderDetail({ orderId, isAdmin }: { orderId: string; isAdmin: boolean }
     } finally { setBusy(false); }
   };
 
+  const cancelOrder = async () => {
+    if (!order) return;
+    if (order.status === "completed" || !!order.completed_at || !!order.paid_at) {
+      toast.error("This order can no longer be cancelled.");
+      return;
+    }
+    if (order.status === "cancelled") return;
+    if (!confirm("Cancel this order? This cannot be undone.")) return;
+    if (busy) return;
+    setBusy(true);
+    try {
+      const { error } = await supabase
+        .from("orders")
+        .update({ status: "cancelled" } as never)
+        .eq("id", orderId);
+      if (error) { toast.error(error.message); return; }
+      await sendSystem(`🚫 Order cancelled by ${order.user_id === user?.id ? "customer" : "staff"}.`);
+      toast.success("Order cancelled");
+      await load();
+    } finally { setBusy(false); }
+  };
+
   const removeItem = async (itemId: string, productName: string) => {
     if (!order) return;
     const isOwner = order.user_id === user?.id;
@@ -1801,7 +1823,21 @@ function OrderDetail({ orderId, isAdmin }: { orderId: string; isAdmin: boolean }
               </button>
             </>
           ) : (
-            <span className={cn("text-xs px-2 py-1 rounded font-medium", STATUS_COLOR[order.status])}>{order.status}</span>
+            <>
+              <span className={cn("text-xs px-2 py-1 rounded font-medium", STATUS_COLOR[order.status])}>{order.status}</span>
+              {order.user_id === user?.id && !order.paid_at && !order.completed_at && order.status !== "cancelled" && (
+                <button onClick={cancelOrder} disabled={busy}
+                  className="px-2.5 py-1 rounded-md bg-destructive/15 text-destructive text-xs font-medium flex items-center gap-1 hover:bg-destructive/25 disabled:opacity-50">
+                  <Ban className="size-3.5" /> Cancel Order
+                </button>
+              )}
+            </>
+          )}
+          {isAdmin && order.status !== "cancelled" && !order.completed_at && (
+            <button onClick={cancelOrder} disabled={busy}
+              className="px-2.5 py-1 rounded-md bg-destructive/15 text-destructive text-xs font-medium flex items-center gap-1 hover:bg-destructive/25 disabled:opacity-50">
+              <Ban className="size-3.5" /> Cancel Order
+            </button>
           )}
         </div>
       </header>
