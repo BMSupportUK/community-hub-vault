@@ -1210,7 +1210,7 @@ function ChannelPage() {
               : slowRemaining > 0
                 ? `Slow mode: wait ${slowRemaining}s before sending another message`
                 : `Message #${channel.name} — type @ to mention`}
-            disabled={!canSend || slowRemaining > 0}
+            disabled={!canSend || slowRemaining > 0 || isMuted}
             className="flex-1 bg-transparent resize-none outline-none text-sm py-1 max-h-32"
           />
           {slowRemaining > 0 && (
@@ -1219,19 +1219,47 @@ function ChannelPage() {
               <span>{slowRemaining}s</span>
             </div>
           )}
+          {isMuted && (
+            <div className="flex items-center gap-1 text-xs text-destructive tabular-nums px-2 py-1 rounded-md bg-destructive/10 border border-destructive/30">
+              <MicOff className="size-3.5" />
+              <span>{muteCountdown}</span>
+            </div>
+          )}
           <GifPicker
-            disabled={!canSend || slowRemaining > 0}
+            disabled={!canSend || slowRemaining > 0 || isMuted}
             onSelect={(url) => sendGif(url)}
           />
           <button
             onClick={send}
-            disabled={sending || !draft.trim() || !canSend || slowRemaining > 0}
+            disabled={sending || !draft.trim() || !canSend || slowRemaining > 0 || isMuted}
             className="size-8 rounded-lg bg-primary text-primary-foreground grid place-items-center disabled:opacity-50"
           >
             {sending ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
           </button>
         </div>
       </div>
+
+      <AlertDialog open={isMuted}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-destructive">
+              <MicOff className="size-5" /> You've been muted
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              A staff member has temporarily muted you from chat. You won't be able to send messages until the timer ends.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="flex flex-col items-center justify-center py-4">
+            <div className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Time remaining</div>
+            <div className="text-4xl font-bold tabular-nums text-destructive">{muteCountdown}</div>
+            {myMuteExpires && (
+              <div className="text-xs text-muted-foreground mt-2">
+                Ends at {myMuteExpires.toLocaleTimeString()}
+              </div>
+            )}
+          </div>
+        </AlertDialogContent>
+      </AlertDialog>
     </main>
   );
 }
