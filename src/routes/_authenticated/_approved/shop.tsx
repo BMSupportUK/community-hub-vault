@@ -33,11 +33,33 @@ function linkify(text: string): React.ReactNode[] {
   let i = 0;
   while ((m = re.exec(text)) !== null) {
     if (m.index > last) parts.push(text.slice(last, m.index));
-    parts.push(
-      <a key={i++} href={m[0]} target="_blank" rel="noopener noreferrer" className="underline break-all">
-        {m[0]}
-      </a>,
-    );
+    const url = m[0];
+    const isSameOrigin = typeof window !== "undefined" && url.startsWith(window.location.origin);
+    if (isSameOrigin) {
+      const internal = url.slice(window.location.origin.length) || "/";
+      parts.push(
+        <a
+          key={i++}
+          href={internal}
+          onClick={(e) => {
+            // Only intercept plain left-clicks so cmd/ctrl/middle-click new-tab still works
+            if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+            e.preventDefault();
+            window.history.pushState({}, "", internal);
+            window.dispatchEvent(new PopStateEvent("popstate"));
+          }}
+          className="underline break-all"
+        >
+          {url}
+        </a>,
+      );
+    } else {
+      parts.push(
+        <a key={i++} href={url} target="_blank" rel="noopener noreferrer" className="underline break-all">
+          {url}
+        </a>,
+      );
+    }
     last = m.index + m[0].length;
   }
   if (last < text.length) parts.push(text.slice(last));
