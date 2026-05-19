@@ -18,6 +18,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { verifyTurnstile } from "@/lib/turnstile.functions";
 import { TurnstileWidget } from "@/components/app/TurnstileWidget";
 import { getOutOfHoursMessage } from "@/lib/business-hours";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/_authenticated/_approved/tickets")({
   validateSearch: (s: Record<string, unknown>) => ({
@@ -993,29 +995,12 @@ function TicketDetail({
         )}
       </header>
 
-      {ticket.user_id === currentUserId && (ticket.status === "resolved" || ticket.status === "closed") && (
-        <div className="mx-5 mt-3 rounded-xl bg-white/15 backdrop-blur border border-white/30 px-4 py-3 flex items-center gap-3 flex-wrap">
-          <div className="text-sm text-white">
-            <div className="font-semibold">How did we do?</div>
-            <div className="text-xs text-white/80">
-              {myRating > 0 ? "Thanks! Tap a star to update your rating." : "Rate your support experience."}
-            </div>
-          </div>
-          <div className="flex ml-auto" onMouseLeave={() => undefined}>
-            {[1, 2, 3, 4, 5].map((n) => (
-              <button
-                key={n}
-                type="button"
-                onClick={() => onRate(n)}
-                className="p-1 hover:scale-110 transition"
-                aria-label={`${n} star${n === 1 ? "" : "s"}`}
-              >
-                <Star className={cn("size-5", n <= myRating ? "text-amber-300 fill-amber-300" : "text-white/50")} />
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
+      <RatingPromptDialog
+        ticket={ticket}
+        currentUserId={currentUserId}
+        myRating={myRating}
+        onRate={onRate}
+      />
 
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-5 py-4 space-y-3">
         {messages.map((m) => {
@@ -1250,5 +1235,78 @@ function StaffOnDutyStrip() {
         </div>
       </div>
     </div>
+  );
+}
+
+function RatingPromptDialog({
+  ticket,
+  currentUserId,
+  myRating,
+  onRate,
+}: {
+  ticket: Ticket;
+  currentUserId: string;
+  myRating: number;
+  onRate: (v: number) => void;
+}) {
+  const isOwner = ticket.user_id === currentUserId;
+  const isResolved = ticket.status === "resolved" || ticket.status === "closed";
+  const eligible = isOwner && isResolved;
+  const dismissKey = `ticket-rating-dismissed-${ticket.id}`;
+
+  const [open, setOpen] = useState(false);
+  const [hover, setHover] = useState(0);
+
+  useEffect(() => {
+    if (!eligible) { setOpen(false); return; }
+    if (myRating > 0) { setOpen(false); return; }
+    if (typeof window !== "undefined" && sessionStorage.getItem(dismissKey)) return;
+    setOpen(true);
+  }, [eligible, myRating, dismissKey]);
+
+  if (!eligible) return null;
+
+  const handleSelect = (n: number) => {
+    onRate(n);
+    setOpen(false);
+  };
+  const handleClose = (next: boolean) => {
+    setOpen(next);
+    if (!next && myRating === 0 && typeof window !== "undefined") {
+      sessionStorage.setItem(dismissKey, "1");
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={handleClose}>
+      <DialogContent className="sm:max-w-sm">
+        <DialogHeader>
+          <DialogTitle>How did we do?</DialogTitle>
+          <DialogDescription>
+            Tap a star to rate your support experience.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="flex justify-center gap-1 py-4" onMouseLeave={() => setHover(0)}>
+          {[1, 2, 3, 4, 5].map((n) => {
+            const filled = n <= (hover || myRating);
+            return (
+              <button
+                key={n}
+                type="button"
+                onMouseEnter={() => setHover(n)}
+                onClick={() => handleSelect(n)}
+                className="p-1 transition-transform hover:scale-110"
+                aria-label={`${n} star${n === 1 ? "" : "s"}`}
+              >
+                <Star className={cn("size-9", filled ? "text-yellow-400 fill-yellow-400" : "text-muted-foreground/40")} />
+              </button>
+            );
+          })}
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={() => handleClose(false)}>Maybe later</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
