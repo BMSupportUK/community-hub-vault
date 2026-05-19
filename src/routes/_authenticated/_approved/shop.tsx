@@ -34,7 +34,7 @@ function linkify(text: string): React.ReactNode[] {
   while ((m = re.exec(text)) !== null) {
     if (m.index > last) parts.push(text.slice(last, m.index));
     parts.push(
-      <a key={i++} href={m[0]} rel="noopener noreferrer" className="underline break-all">
+      <a key={i++} href={m[0]} target="_blank" rel="noopener noreferrer" className="underline break-all">
         {m[0]}
       </a>,
     );
