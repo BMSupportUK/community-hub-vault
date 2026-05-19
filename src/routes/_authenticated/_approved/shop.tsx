@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { ChannelColumn, type ChannelGroup } from "@/components/app/ChannelColumn";
-import { ShoppingBag, Package, Settings, Plus, Minus, X, Send, Trash2, Pencil, Image as ImageIcon, Tag, CheckCircle2, BadgeCheck, Check, Wrench, FileText, BedDouble, Users, Loader2, Save, Star, Sparkles, GripVertical, Receipt, UserCog, ArrowRight, Menu } from "lucide-react";
+import { ShoppingBag, Package, Settings, Plus, Minus, X, Send, Trash2, Pencil, Image as ImageIcon, Tag, CheckCircle2, BadgeCheck, Check, Wrench, FileText, BedDouble, Users, Loader2, Save, Star, Sparkles, GripVertical, Receipt, UserCog, ArrowRight, Menu, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { TurnstileWidget } from "@/components/app/TurnstileWidget";
@@ -1582,7 +1582,10 @@ function OrdersView({ selectedId, isAdmin, adminUnlocked, initialScope }: { sele
 
   return (
     <>
-      <aside className="w-72 shrink-0 bg-surface border-r border-border flex flex-col">
+      <aside className={cn(
+        "w-full md:w-72 shrink-0 bg-surface border-r border-border flex-col",
+        selectedId ? "hidden md:flex" : "flex"
+      )}>
         <div className="h-14 px-4 border-b border-border flex items-center justify-between">
           <h2 className="font-display font-semibold text-sm">Orders</h2>
           {isAdmin && adminUnlocked && (
@@ -1607,14 +1610,16 @@ function OrdersView({ selectedId, isAdmin, adminUnlocked, initialScope }: { sele
           ))}
         </div>
       </aside>
-      {selectedId ? <OrderDetail orderId={selectedId} isAdmin={isAdmin && adminUnlocked} /> : (
-        <main className="flex-1 grid place-items-center text-muted-foreground text-sm">Select an order</main>
+      {selectedId ? (
+        <OrderDetail orderId={selectedId} isAdmin={isAdmin && adminUnlocked} onBack={() => navigate({ to: "/shop", search: { view: "orders", scope: scope === "all" ? "all" : undefined } })} />
+      ) : (
+        <main className="hidden md:grid flex-1 place-items-center text-muted-foreground text-sm">Select an order</main>
       )}
     </>
   );
 }
 
-function OrderDetail({ orderId, isAdmin }: { orderId: string; isAdmin: boolean }) {
+function OrderDetail({ orderId, isAdmin, onBack }: { orderId: string; isAdmin: boolean; onBack?: () => void }) {
   const { user } = useAuth();
   const [order, setOrder] = useState<Order | null>(null);
   const [items, setItems] = useState<OrderItem[]>([]);
@@ -1793,10 +1798,17 @@ function OrderDetail({ orderId, isAdmin }: { orderId: string; isAdmin: boolean }
 
   return (
     <main className="flex-1 flex flex-col overflow-hidden">
-      <header className="h-14 px-6 border-b border-border flex items-center justify-between shrink-0">
-        <div>
+      <header className="min-h-14 px-3 md:px-6 py-2 border-b border-border flex items-center justify-between gap-2 shrink-0">
+        <div className="flex items-center gap-2 min-w-0">
+          {onBack && (
+            <button onClick={onBack} className="md:hidden p-1.5 rounded-md hover:bg-surface-2" aria-label="Back to orders">
+              <ArrowLeft className="size-4" />
+            </button>
+          )}
+          <div className="min-w-0">
           <div className="font-display font-bold text-sm">Order #{order.id.slice(0, 8)}</div>
           <div className="text-[11px] text-muted-foreground">{new Date(order.created_at).toLocaleString()}</div>
+          </div>
         </div>
         <div className="flex items-center gap-2 flex-wrap justify-end">
           <button onClick={handleDownload}
@@ -1841,8 +1853,8 @@ function OrderDetail({ orderId, isAdmin }: { orderId: string; isAdmin: boolean }
           )}
         </div>
       </header>
-      <div className="flex-1 flex overflow-hidden">
-        <div className="w-72 shrink-0 border-r border-border bg-surface/50 p-4 overflow-y-auto space-y-4 text-sm">
+      <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
+        <div className="w-full md:w-72 md:shrink-0 border-b md:border-b-0 md:border-r border-border bg-surface/50 p-4 overflow-y-auto space-y-4 text-sm max-h-[40vh] md:max-h-none">
           <div>
             <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Items</div>
             <div className="space-y-1">
