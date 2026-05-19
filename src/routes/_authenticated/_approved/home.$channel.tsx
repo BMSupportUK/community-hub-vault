@@ -1,9 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { Hash, Megaphone, Loader2, Send, Trash2, EyeOff, Eye, Pin, PinOff, X, ShieldOff, MoreHorizontal, SmilePlus, Pencil, Check, Timer } from "lucide-react";
+import { Hash, Megaphone, Loader2, Send, Trash2, EyeOff, Eye, Pin, PinOff, X, ShieldOff, MoreHorizontal, SmilePlus, Pencil, Check, Timer, MicOff } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+} from "@/components/ui/alert-dialog";
 import { MentionText, mentionsCurrentUser, useMentionAutocomplete } from "@/components/app/mentions";
 import { GifPicker, extractStandaloneGif } from "@/components/app/GifPicker";
 import { StaffOnDutyStrip } from "@/components/app/StaffOnDutyStrip";
@@ -71,6 +78,10 @@ function ChannelPage() {
   const canPin = hasAny(["admin", "management", "moderator", "staff"]);
   const canManageSlow = hasAny(["admin", "management", "moderator", "staff"]);
   const isModOrAdmin = hasAny(["admin", "management", "moderator", "staff"]);
+  const canMute = hasAny(["admin", "management", "moderator", "staff"]);
+  const [muteSubmenuId, setMuteSubmenuId] = useState<string | null>(null);
+  const [myMuteExpires, setMyMuteExpires] = useState<Date | null>(null);
+  const [muteTick, setMuteTick] = useState(0);
   const [pinnedOpen, setPinnedOpen] = useState(false);
   const [ignoredOpen, setIgnoredOpen] = useState(false);
   const [lastSentAt, setLastSentAt] = useState<number | null>(null);
