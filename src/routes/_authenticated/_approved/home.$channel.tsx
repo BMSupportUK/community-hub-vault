@@ -658,6 +658,21 @@ function ChannelPage() {
     return r > 0 ? Math.ceil(r / 1000) : 0;
   })();
 
+  const isMuted = !!myMuteExpires && myMuteExpires.getTime() > Date.now();
+  const muteCountdown = (() => {
+    if (!isMuted || !myMuteExpires) return "";
+    void muteTick;
+    const total = Math.max(0, Math.floor((myMuteExpires.getTime() - Date.now()) / 1000));
+    const h = Math.floor(total / 3600);
+    const m = Math.floor((total % 3600) / 60);
+    const s = total % 60;
+    return h > 0
+      ? `${h}h ${m}m ${s}s`
+      : m > 0
+        ? `${m}m ${s}s`
+        : `${s}s`;
+  })();
+
   return (
     <main className="flex-1 flex flex-col min-w-0 min-h-0 h-full">
       <header className="h-14 border-b border-border px-5 flex items-center gap-2 shrink-0 relative">
