@@ -1862,7 +1862,13 @@ function OrderDetail({ orderId, isAdmin }: { orderId: string; isAdmin: boolean }
               <div className="text-muted-foreground text-xs whitespace-pre-line">{order.notes}</div>
             </div>
           )}
-          {isAdmin && <SquareInvoicePanel orderId={orderId} canCreate={!order.paid_at && !order.completed_at} onChange={load} />}
+          {(isAdmin || order.user_id === user?.id) && (
+            <SquareInvoicePanel
+              orderId={orderId}
+              canCreate={!order.paid_at && !order.completed_at && order.status !== "cancelled"}
+              onChange={load}
+            />
+          )}
         </div>
         <div className="flex-1 flex flex-col">
           <div className="flex-1 overflow-y-auto p-4 space-y-3">
