@@ -1674,7 +1674,7 @@ function OrderDetail({ orderId, isAdmin, onBack }: { orderId: string; isAdmin: b
   };
   useEffect(() => { load(); }, [orderId]);
   useEffect(() => {
-    const ch = supabase.channel(`order-${orderId}`)
+    const ch = supabase.channel(`order-${orderId}`, { config: { broadcast: { self: false } } })
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "order_messages", filter: `order_id=eq.${orderId}` },
         (p) => {
           const nm = p.new as OrderMessage;
