@@ -346,6 +346,33 @@ export type Database = {
           },
         ]
       }
+      chat_mutes: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          muted_by: string
+          reason: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          id?: string
+          muted_by: string
+          reason?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          muted_by?: string
+          reason?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       customer_reviews: {
         Row: {
           body: string
@@ -2549,6 +2576,7 @@ export type Database = {
           updated_at: string
         }[]
       }
+      get_active_mute: { Args: { _user_id: string }; Returns: string }
       get_invite_leaderboard: {
         Args: never
         Returns: {
@@ -2602,6 +2630,10 @@ export type Database = {
           source_queue: string
         }
         Returns: number
+      }
+      mute_user: {
+        Args: { _duration_seconds: number; _reason?: string; _user_id: string }
+        Returns: string
       }
       read_email_batch: {
         Args: { batch_size: number; queue_name: string; vt: number }
