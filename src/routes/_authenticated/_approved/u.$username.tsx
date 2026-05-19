@@ -443,7 +443,7 @@ function ProfilePage() {
         : "bg-gradient-to-br from-[#1a0b2e] via-[#2d1b4e] to-[#1a0b2e]",
     )}>
       {mainTab === "referrals" && (
-        <div className="pointer-events-none fixed inset-0 z-0">
+        <div className="pointer-events-none absolute inset-0 z-0">
           <img
             src={referralsBg}
             alt=""
