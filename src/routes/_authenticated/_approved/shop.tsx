@@ -1754,7 +1754,7 @@ function OrderDetail({ orderId, isAdmin, onBack }: { orderId: string; isAdmin: b
   }, [othersTyping]);
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [msgs.length]);
 
-  const sendTyping = (stopped: boolean) => {
+  function sendTyping(stopped: boolean) {
     if (!channelRef.current || !user || !typingChannelReadyRef.current) return;
     const now = Date.now();
     if (!stopped && now - lastSentTypingRef.current < 1500) return;
@@ -1767,7 +1767,7 @@ function OrderDetail({ orderId, isAdmin, onBack }: { orderId: string; isAdmin: b
       event: "typing",
       payload,
     });
-  };
+  }
   const onTextChange = (v: string) => {
     textRef.current = v;
     setText(v);
