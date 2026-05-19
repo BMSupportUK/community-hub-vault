@@ -1339,16 +1339,18 @@ function ChannelPage() {
       </div>
 
       {isMuted && (
-        <div className="pointer-events-none fixed bottom-4 right-4 z-40 max-w-sm rounded-lg border border-destructive/40 bg-destructive/10 backdrop-blur px-4 py-3 shadow-lg">
+        <div className="pointer-events-none fixed bottom-4 right-4 z-50 max-w-sm rounded-xl border-2 border-red-500 bg-neutral-950/95 backdrop-blur-md px-4 py-3 shadow-2xl shadow-red-500/30 ring-1 ring-red-500/20">
           <div className="flex items-start gap-3">
-            <MicOff className="size-5 text-destructive shrink-0 mt-0.5" />
+            <div className="grid place-items-center size-9 rounded-lg bg-red-500/15 border border-red-500/40 shrink-0">
+              <MicOff className="size-5 text-red-400" />
+            </div>
             <div className="min-w-0">
-              <div className="text-sm font-semibold text-destructive">You've been muted from chat</div>
-              <div className="text-xs text-muted-foreground mt-0.5">
-                Chat unlocks in <span className="font-mono text-destructive">{muteCountdown}</span>
-                {myMuteExpires && <> · ends {myMuteExpires.toLocaleTimeString()}</>}
+              <div className="text-sm font-semibold text-red-400 leading-tight">You've been muted from chat</div>
+              <div className="text-xs text-neutral-300 mt-1">
+                Unlocks in <span className="font-mono font-bold text-white tabular-nums">{muteCountdown}</span>
+                {myMuteExpires && <span className="text-neutral-400"> · ends {myMuteExpires.toLocaleTimeString()}</span>}
               </div>
-              <div className="text-[11px] text-muted-foreground mt-1">You can keep using the rest of the site.</div>
+              <div className="text-[11px] text-neutral-400 mt-1.5">You can keep using the rest of the site.</div>
             </div>
           </div>
         </div>
