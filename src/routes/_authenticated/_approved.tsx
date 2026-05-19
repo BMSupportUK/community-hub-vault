@@ -2,6 +2,7 @@ import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { FriendRequestsListener } from "@/components/app/FriendRequestsListener";
 import { TwoFactorBanner } from "@/components/app/TwoFactorBanner";
 import { OutstandingTicketsAlert } from "@/components/app/OutstandingTicketsAlert";
+import { TicketAssignedAlert } from "@/components/app/TicketAssignedAlert";
 
 export const Route = createFileRoute("/_authenticated/_approved")({
   beforeLoad: async () => {
@@ -14,6 +15,7 @@ export const Route = createFileRoute("/_authenticated/_approved")({
       <Outlet />
       <FriendRequestsListener />
       <OutstandingTicketsAlert />
+      <TicketAssignedAlert />
     </>
   ),
 });
