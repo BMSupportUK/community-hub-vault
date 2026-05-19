@@ -1311,3 +1311,37 @@ function RatingPromptDialog({
     </Dialog>
   );
 }
+
+function RequestAdminHelpButton({ ticketId }: { ticketId: string }) {
+  const [busy, setBusy] = useState(false);
+  const onClick = async () => {
+    if (busy) return;
+    setBusy(true);
+    try {
+      const { data, error } = await supabase.rpc("request_ticket_admin_help", {
+        _ticket_id: ticketId,
+      } as never);
+      if (error) {
+        toast.error(error.message || "Couldn't notify admins");
+      } else if (typeof data === "number" && data === 0) {
+        toast.message("Admins were already notified recently. Please wait a few minutes.");
+      } else {
+        toast.success("Admin and management have been notified.");
+      }
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={busy}
+      title="Request help from admin or management"
+      className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-amber-300 text-amber-950 hover:bg-amber-200 disabled:opacity-60 text-xs font-semibold shadow"
+    >
+      <HelpCircle className="size-3.5" />
+      {busy ? "Notifying…" : "Request admin help"}
+    </button>
+  );
+}
