@@ -108,7 +108,7 @@ export function ChannelColumn({
   return (
     <nav className={cn(
       "w-60 bg-surface flex-col",
-      inSheet ? "flex h-full w-full" : "shrink-0 hidden lg:flex border-r border-border",
+      inSheet ? "flex h-full w-full" : "shrink-0 hidden md:flex border-r border-border",
     )}>
       <div className="h-14 flex items-center justify-between px-4 border-b border-border shadow-soft">
         <h2 className="font-display font-semibold text-sm tracking-wide">{title}</h2>
