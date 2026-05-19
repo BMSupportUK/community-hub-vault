@@ -1,0 +1,1 @@
+DROP TRIGGER IF EXISTS notify_new_order_trg ON private.orders;
