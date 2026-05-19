@@ -12,6 +12,7 @@ import { UserAvatarMenu } from "@/components/app/UserAvatarMenu";
 import { MyWorkingStatus } from "@/components/app/MyWorkingStatus";
 import { BreakEndingAlert } from "@/components/app/BreakEndingAlert";
 import { ShiftStartEndAlert } from "@/components/app/ShiftStartEndAlert";
+import { TwoFactorPill } from "@/components/app/TwoFactorBanner";
 import { SubscriptionExpiry } from "@/components/app/SubscriptionExpiry";
 import { ModerationPendingBadge } from "@/components/app/ModerationPendingBadge";
 import { PendingOrdersBadge } from "@/components/app/PendingOrdersBadge";
@@ -164,6 +165,7 @@ function AuthLayout() {
           <div className="hidden lg:flex"><Clocks /></div>
             <MyWorkingStatus />
           <UserAvatarMenu />
+          <TwoFactorPill />
           </div>
         </header>
         <div className="flex-1 flex min-h-0">
