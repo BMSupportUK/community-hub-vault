@@ -21,6 +21,10 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 export const Route = createFileRoute("/_authenticated")({
   beforeLoad: async ({ location }) => {
+    // Skip during SSR/prerender — Supabase session lives in localStorage and
+    // is unavailable on the server, which would falsely redirect signed-in
+    // users to /login on every F5/page reload.
+    if (typeof window === "undefined") return;
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) throw redirect({ to: "/login", search: { redirect: location.href } as never });
   },
