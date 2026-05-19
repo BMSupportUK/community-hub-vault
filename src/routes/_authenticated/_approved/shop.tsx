@@ -1582,7 +1582,10 @@ function OrdersView({ selectedId, isAdmin, adminUnlocked, initialScope }: { sele
 
   return (
     <>
-      <aside className="w-72 shrink-0 bg-surface border-r border-border flex flex-col">
+      <aside className={cn(
+        "w-full md:w-72 shrink-0 bg-surface border-r border-border flex-col",
+        selectedId ? "hidden md:flex" : "flex"
+      )}>
         <div className="h-14 px-4 border-b border-border flex items-center justify-between">
           <h2 className="font-display font-semibold text-sm">Orders</h2>
           {isAdmin && adminUnlocked && (
@@ -1607,8 +1610,10 @@ function OrdersView({ selectedId, isAdmin, adminUnlocked, initialScope }: { sele
           ))}
         </div>
       </aside>
-      {selectedId ? <OrderDetail orderId={selectedId} isAdmin={isAdmin && adminUnlocked} /> : (
-        <main className="flex-1 grid place-items-center text-muted-foreground text-sm">Select an order</main>
+      {selectedId ? (
+        <OrderDetail orderId={selectedId} isAdmin={isAdmin && adminUnlocked} onBack={() => navigate({ to: "/shop", search: { view: "orders", scope: scope === "all" ? "all" : undefined } })} />
+      ) : (
+        <main className="hidden md:grid flex-1 place-items-center text-muted-foreground text-sm">Select an order</main>
       )}
     </>
   );
