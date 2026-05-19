@@ -1663,6 +1663,8 @@ function OrderDetail({ orderId, isAdmin, onBack }: { orderId: string; isAdmin: b
   const [othersTyping, setOthersTyping] = useState<Record<string, { isAdmin: boolean; at: number }>>({});
   const typingTimerRef = useRef<number | null>(null);
   const lastSentTypingRef = useRef(0);
+  const typingChannelReadyRef = useRef(false);
+  const textRef = useRef("");
 
   const load = async () => {
     const [{ data: o }, { data: it }, { data: m }] = await Promise.all([
@@ -1674,7 +1676,7 @@ function OrderDetail({ orderId, isAdmin, onBack }: { orderId: string; isAdmin: b
   };
   useEffect(() => { load(); }, [orderId]);
   useEffect(() => {
-    const ch = supabase.channel(`order-${orderId}`, { config: { broadcast: { self: false } } })
+    const ch = supabase.channel(`order-${orderId}`, { config: { broadcast: { self: false }, presence: { key: user?.id ?? "guest" } } })
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "order_messages", filter: `order_id=eq.${orderId}` },
         (p) => {
           const nm = p.new as OrderMessage;
@@ -1699,7 +1701,7 @@ function OrderDetail({ orderId, isAdmin, onBack }: { orderId: string; isAdmin: b
         (p) => setOrder(p.new as Order))
       .on("broadcast", { event: "typing" }, (payload) => {
         const d = (payload?.payload ?? {}) as { userId?: string; isAdmin?: boolean; stopped?: boolean };
-        if (!d.userId || d.userId === user?.id) return;
+        if (!d.userId || d.userId === user?.id || !!d.isAdmin === isAdmin) return;
         setOthersTyping((s) => {
           if (d.stopped) {
             if (!s[d.userId!]) return s;
@@ -1708,15 +1710,32 @@ function OrderDetail({ orderId, isAdmin, onBack }: { orderId: string; isAdmin: b
           return { ...s, [d.userId!]: { isAdmin: !!d.isAdmin, at: Date.now() } };
         });
       })
+      .on("presence", { event: "sync" }, () => {
+        const state = ch.presenceState() as Record<string, Array<{ userId?: string; isAdmin?: boolean; typing?: boolean; at?: number }>>;
+        const next: Record<string, { isAdmin: boolean; at: number }> = {};
+        Object.values(state).flat().forEach((p) => {
+          if (!p.userId || p.userId === user?.id || !p.typing || !!p.isAdmin === isAdmin) return;
+          next[p.userId] = { isAdmin: !!p.isAdmin, at: p.at ?? Date.now() };
+        });
+        setOthersTyping(next);
+      })
       .subscribe((status) => {
-        if (status === "SUBSCRIBED") load();
+        typingChannelReadyRef.current = status === "SUBSCRIBED";
+        if (status === "SUBSCRIBED") {
+          load();
+          if (textRef.current.trim()) sendTyping(false);
+        }
       });
     channelRef.current = ch;
     return () => {
+      typingChannelReadyRef.current = false;
       channelRef.current = null;
+      if (typingTimerRef.current) { window.clearTimeout(typingTimerRef.current); typingTimerRef.current = null; }
+      void ch.untrack();
       supabase.removeChannel(ch);
+      setOthersTyping({});
     };
-  }, [orderId, user?.id]);
+  }, [orderId, user?.id, isAdmin]);
   // Expire typing indicators after 4s of inactivity
   useEffect(() => {
     if (Object.keys(othersTyping).length === 0) return;
@@ -1735,18 +1754,22 @@ function OrderDetail({ orderId, isAdmin, onBack }: { orderId: string; isAdmin: b
   }, [othersTyping]);
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [msgs.length]);
 
-  const sendTyping = (stopped: boolean) => {
-    if (!channelRef.current || !user) return;
+  function sendTyping(stopped: boolean) {
+    if (!channelRef.current || !user || !typingChannelReadyRef.current) return;
     const now = Date.now();
     if (!stopped && now - lastSentTypingRef.current < 1500) return;
-    lastSentTypingRef.current = now;
-    channelRef.current.send({
+    if (!stopped) lastSentTypingRef.current = now;
+    const payload = { userId: user.id, isAdmin, typing: !stopped, at: now, stopped };
+    if (stopped) void channelRef.current.untrack();
+    else void channelRef.current.track(payload);
+    void channelRef.current.send({
       type: "broadcast",
       event: "typing",
-      payload: { userId: user.id, isAdmin, stopped },
+      payload,
     });
-  };
+  }
   const onTextChange = (v: string) => {
+    textRef.current = v;
     setText(v);
     if (v.trim().length === 0) {
       sendTyping(true);
@@ -1760,7 +1783,7 @@ function OrderDetail({ orderId, isAdmin, onBack }: { orderId: string; isAdmin: b
 
   const send = async () => {
     if (!text.trim() || !user) return;
-    const c = text; setText("");
+    const c = text; setText(""); textRef.current = "";
     if (typingTimerRef.current) { window.clearTimeout(typingTimerRef.current); typingTimerRef.current = null; }
     sendTyping(true);
     const { data, error } = await supabase
