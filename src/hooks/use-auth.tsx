@@ -30,7 +30,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [rolesLoaded, setRolesLoaded] = useState(false);
 
   const loadRoles = async (uid: string) => {
-    const { data } = await supabase.from("user_roles").select("role").eq("user_id", uid);
+    const { data, error } = await supabase.from("user_roles").select("role").eq("user_id", uid);
+    // If the query fails (transient network / RLS hiccup), keep the previously
+    // loaded roles intact. Otherwise a refresh would clear roles, flip
+    // `isPending` to true, and bounce admin/staff to /gate — i.e. an effective
+    // logout on reload. Only mark rolesLoaded once we have a real answer.
+    if (error) {
+      console.warn("[auth] loadRoles failed, keeping previous roles", error);
+      setRolesLoaded((prev) => prev || false);
+      return;
+    }
     setRoles((data ?? []).map((r) => r.role as AppRole));
     setRolesLoaded(true);
   };
