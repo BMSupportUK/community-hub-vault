@@ -118,7 +118,7 @@ let _currentSymbol = "£";
 function ShopPage() {
   const { view, id, scope } = Route.useSearch();
   const navigate = useNavigate();
-  const { user, hasAny, refreshRoles } = useAuth();
+  const { user, hasAny } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
   const adminUnlocked = isAdmin && isAdminUnlocked(user?.id);
   const isAdminView = view === "admin" || (view as string) === "discounts" || (view === "orders" && scope === "all");
@@ -561,7 +561,7 @@ function Storefront() {
   const [showCheckout, setShowCheckout] = useState(false);
   const [tab, setTab] = useState<string>("welcome");
   const navigate = useNavigate();
-  const { user, hasAny } = useAuth();
+  const { user, hasAny, refreshRoles } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
   const [addingCat, setAddingCat] = useState(false);
   const [newCatName, setNewCatName] = useState("");
