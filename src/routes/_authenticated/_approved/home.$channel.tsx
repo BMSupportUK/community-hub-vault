@@ -1166,6 +1166,40 @@ function ChannelPage() {
                           {isIgnored ? "Unignore user" : "Ignore user"}
                         </button>
                       )}
+                      {canMute && !isSelf && !isStaff && (
+                        <div className="relative">
+                          <button
+                            onClick={() =>
+                              setMuteSubmenuId(muteSubmenuId === m.id ? null : m.id)
+                            }
+                            className="w-full flex items-center gap-2 px-3 py-1.5 hover:bg-surface-2 text-left text-destructive"
+                          >
+                            <MicOff className="size-4" /> Mute user…
+                          </button>
+                          {muteSubmenuId === m.id && (
+                            <div className="absolute right-full top-0 mr-1 w-36 rounded-lg border border-border bg-popover shadow-lg py-1">
+                              <button
+                                onClick={() => muteUser(m.sender_id, 3600)}
+                                className="w-full px-3 py-1.5 text-left hover:bg-surface-2 text-sm"
+                              >
+                                Mute 1 hour
+                              </button>
+                              <button
+                                onClick={() => muteUser(m.sender_id, 10800)}
+                                className="w-full px-3 py-1.5 text-left hover:bg-surface-2 text-sm"
+                              >
+                                Mute 3 hours
+                              </button>
+                              <button
+                                onClick={() => muteUser(m.sender_id, 86400)}
+                                className="w-full px-3 py-1.5 text-left hover:bg-surface-2 text-sm"
+                              >
+                                Mute 24 hours
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      )}
                       {canDelete && (
                         <>
                           <div className="my-1 border-t border-border" />
