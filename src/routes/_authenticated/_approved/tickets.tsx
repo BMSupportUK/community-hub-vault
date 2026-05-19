@@ -18,6 +18,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { verifyTurnstile } from "@/lib/turnstile.functions";
 import { TurnstileWidget } from "@/components/app/TurnstileWidget";
 import { getOutOfHoursMessage } from "@/lib/business-hours";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/_authenticated/_approved/tickets")({
   validateSearch: (s: Record<string, unknown>) => ({
