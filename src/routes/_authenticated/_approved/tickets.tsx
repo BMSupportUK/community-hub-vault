@@ -301,6 +301,12 @@ function TicketsPage() {
   }, [isStaff]);
 
   const selected = useMemo(() => tickets.find((t) => t.id === search.id) ?? null, [tickets, search.id]);
+  const detailPanelRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (search.id && selected) {
+      detailPanelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [search.id, selected]);
 
   const groups = useMemo(() => {
     const buckets: Record<Status, Ticket[]> = { open: [], in_progress: [], waiting: [], resolved: [], closed: [] };
