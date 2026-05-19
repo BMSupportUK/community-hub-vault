@@ -1217,6 +1217,18 @@ function ChannelPage() {
                         </button>
                       )}
                       {canMute && !isSelf && !isStaff && (
+                        mutedUserIds.has(m.sender_id) ? (
+                          <button
+                            onClick={() => {
+                              const p = profiles[m.sender_id];
+                              const name = p?.display_name ?? p?.username ?? "this user";
+                              setUnmuteTarget({ id: m.sender_id, name });
+                            }}
+                            className="w-full flex items-center gap-2 px-3 py-1.5 hover:bg-surface-2 text-left text-emerald-500"
+                          >
+                            <Mic className="size-4" /> Unmute user…
+                          </button>
+                        ) : (
                         <div className="relative">
                           <button
                             onClick={() =>
@@ -1249,6 +1261,7 @@ function ChannelPage() {
                             </div>
                           )}
                         </div>
+                        )
                       )}
                       {canDelete && (
                         <>
