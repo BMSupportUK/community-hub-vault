@@ -19,7 +19,7 @@ const SESSION_KEY = "outstanding-tickets-alert-shown";
 export function OutstandingTicketsAlert() {
   const { user, hasAny } = useAuth();
   const navigate = useNavigate();
-  const isStaffRole = hasAny(["admin", "management", "staff", "moderator"]);
+  const isStaffRole = hasAny(["admin", "management", "staff"]);
   const [open, setOpen] = useState(false);
   const [counts, setCounts] = useState({ open: 0, in_progress: 0, unassigned: 0 });
 
