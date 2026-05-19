@@ -8,7 +8,7 @@ import { useUserTimezone } from "@/hooks/use-user-timezone";
 type Cred = { app_login_name: string | null; expiry_at: string | null };
 
 export function SubscriptionExpiry() {
-  const { user, refreshRoles } = useAuth();
+  const { user, refreshRoles, isStaff } = useAuth();
   const tz = useUserTimezone();
   const [creds, setCreds] = useState<Cred[]>([]);
   const [loaded, setLoaded] = useState(false);
@@ -47,7 +47,9 @@ export function SubscriptionExpiry() {
   // 'subscriber' role drops in real time (cron is the backstop every minute).
   // Admin/management/staff/moderator are protected inside the RPC.
   // Must run before any early return to keep hook order stable.
-  useScheduledRevoke(items, user?.id, refreshRoles);
+  // Never auto-revoke roles for admin/management/staff/moderator — they
+  // shouldn't be logged out / downgraded when an app credential expires.
+  useScheduledRevoke(isStaff ? [] : items, user?.id, refreshRoles);
 
   if (!loaded || items.length === 0) return null;
 
