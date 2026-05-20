@@ -2119,12 +2119,13 @@ function loadSquareSdk(env: "sandbox" | "production"): Promise<any> {
 
 function SquareLogo({ className = "" }: { className?: string }) {
   return (
-    <img
-      src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/35/Square%2C_Inc._-_Square_Logo.svg/512px-Square%2C_Inc._-_Square_Logo.svg.png"
-      alt="Square"
-      className={`h-4 w-auto ${className}`}
-      loading="lazy"
-    />
+    <span className={`inline-flex items-center gap-1.5 ${className}`} aria-label="Square">
+      <svg viewBox="0 0 32 32" className="h-4 w-4" aria-hidden="true">
+        <rect x="1" y="1" width="30" height="30" rx="6" ry="6" fill="#000000" />
+        <rect x="10" y="10" width="12" height="12" rx="2" ry="2" fill="#ffffff" />
+      </svg>
+      <span className="text-[13px] font-semibold tracking-tight text-foreground leading-none">Square</span>
+    </span>
   );
 }
 
