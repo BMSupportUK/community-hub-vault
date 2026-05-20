@@ -2125,6 +2125,12 @@ function SquareCardPanel({ orderId, amountCents, canPay, onChange }: { orderId: 
   const cardRef = useRef<HTMLDivElement | null>(null);
   const cardInstanceRef = useRef<any>(null);
   const paymentsRef = useRef<any>(null);
+  const applePayBtnRef = useRef<HTMLButtonElement | null>(null);
+  const applePayInstanceRef = useRef<any>(null);
+  const [applePayReady, setApplePayReady] = useState(false);
+  const googlePayBtnRef = useRef<HTMLDivElement | null>(null);
+  const googlePayInstanceRef = useRef<any>(null);
+  const [googlePayReady, setGooglePayReady] = useState(false);
   const { format } = useCurrency();
   const getConfig = useServerFn(getSquareWebConfig);
   const chargeFn = useServerFn(chargeOrderWithSquare);
@@ -2160,6 +2166,34 @@ function SquareCardPanel({ orderId, amountCents, canPay, onChange }: { orderId: 
           cardInstanceRef.current = card;
           setReady(true);
         }
+        // Wallet payment request (shared by Apple Pay + Google Pay)
+        const buildPaymentRequest = () => payments.paymentRequest({
+          countryCode: "GB",
+          currencyCode: "GBP",
+          total: { amount: (amountCents / 100).toFixed(2), label: "Total" },
+        });
+        // Google Pay
+        try {
+          const gpReq = buildPaymentRequest();
+          const gp = await payments.googlePay(gpReq);
+          if (cancelled) { try { gp.destroy(); } catch {} }
+          else if (googlePayBtnRef.current) {
+            await gp.attach(googlePayBtnRef.current, { buttonType: "pay", buttonSizeMode: "fill" });
+            googlePayInstanceRef.current = gp;
+            setGooglePayReady(true);
+          }
+        } catch (e) {
+          console.warn("[square] Google Pay unavailable", e);
+        }
+        // Apple Pay (Safari/iOS only; requires domain verification in Square Dashboard)
+        try {
+          const apReq = buildPaymentRequest();
+          const ap = await payments.applePay(apReq);
+          if (cancelled) { /* applePay has no destroy */ }
+          else { applePayInstanceRef.current = ap; setApplePayReady(true); }
+        } catch (e) {
+          console.warn("[square] Apple Pay unavailable", e);
+        }
       } catch (e) {
         if (!cancelled) setBootError((e as Error).message);
       }
@@ -2168,17 +2202,24 @@ function SquareCardPanel({ orderId, amountCents, canPay, onChange }: { orderId: 
       cancelled = true;
       try { cardInstanceRef.current?.destroy(); } catch {}
       cardInstanceRef.current = null;
+      try { googlePayInstanceRef.current?.destroy(); } catch {}
+      googlePayInstanceRef.current = null;
+      applePayInstanceRef.current = null;
       setReady(false);
+      setGooglePayReady(false);
+      setApplePayReady(false);
     };
-  }, [canPay, paid, orderId]);
+  }, [canPay, paid, orderId, amountCents]);
 
-  const handlePay = async () => {
-    if (!cardInstanceRef.current) return;
+  const tokenizeAndCharge = async (instance: any, label: string) => {
+    if (!instance) return;
     setLoading(true);
     try {
-      const result = await cardInstanceRef.current.tokenize();
+      const result = await instance.tokenize();
       if (result.status !== "OK") {
-        const msg = result.errors?.[0]?.message || "Card tokenization failed";
+        // Apple/Google Pay user-cancel comes through here too — silence it.
+        if (result.status === "Cancel") return;
+        const msg = result.errors?.[0]?.message || `${label} tokenization failed`;
         throw new Error(msg);
       }
       const res = await chargeFn({ data: { orderId, sourceId: result.token } });
@@ -2197,6 +2238,9 @@ function SquareCardPanel({ orderId, amountCents, canPay, onChange }: { orderId: 
       setLoading(false);
     }
   };
+  const handlePay = () => tokenizeAndCharge(cardInstanceRef.current, "Card");
+  const handleApplePay = () => tokenizeAndCharge(applePayInstanceRef.current, "Apple Pay");
+  const handleGooglePay = () => tokenizeAndCharge(googlePayInstanceRef.current, "Google Pay");
 
   if (paid) {
     return (
@@ -2234,6 +2278,25 @@ function SquareCardPanel({ orderId, amountCents, canPay, onChange }: { orderId: 
         <div className="text-xs text-destructive">{bootError}</div>
       ) : (
         <div className="space-y-2">
+          {(applePayReady || googlePayReady) && (
+            <div className="space-y-1.5">
+              {googlePayReady && (
+                <div ref={googlePayBtnRef} onClick={handleGooglePay}
+                  className="w-full min-h-[40px] cursor-pointer" aria-disabled={loading} />
+              )}
+              {applePayReady && (
+                <button ref={applePayBtnRef} onClick={handleApplePay} disabled={loading}
+                  className="w-full h-10 rounded-md bg-black text-white text-sm font-medium disabled:opacity-50"
+                  style={{ WebkitAppearance: "-apple-pay-button" as any } as any}
+                   aria-label="Pay with Apple Pay">
+                  Pay
+                </button>
+              )}
+              <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+                <div className="flex-1 h-px bg-border" /> or pay by card <div className="flex-1 h-px bg-border" />
+              </div>
+            </div>
+          )}
           <div ref={cardRef} className="rounded-md bg-surface-2 border border-border px-2 py-2 min-h-[60px]" />
           <button onClick={handlePay} disabled={!ready || loading}
             className="w-full px-2.5 py-2 rounded-md bg-primary text-primary-foreground text-xs font-medium flex items-center justify-center gap-1.5 hover:bg-primary/90 disabled:opacity-50">
