@@ -2254,6 +2254,8 @@ function SquareCardPanel({ orderId, amountCents, canPay, onChange }: { orderId: 
   const handleGooglePay = () => tokenizeAndCharge(googlePayInstanceRef.current, "Google Pay");
 
   if (paid) {
+    // Paid via PayPal — let the PayPal panel render the confirmation instead.
+    if (paid.provider === "paypal") return null;
     return (
       <div>
         <SquareLogo className="mb-1.5" />
