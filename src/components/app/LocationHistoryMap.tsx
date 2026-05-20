@@ -48,10 +48,13 @@ export function LocationHistoryMap({ rows }: { rows: LocationHistoryRow[] }) {
       rows
         .map((r) => ({
           row: r,
-          latitude: Number(r.latitude),
-          longitude: Number(r.longitude),
+          latitude: r.latitude == null ? null : Number(r.latitude),
+          longitude: r.longitude == null ? null : Number(r.longitude),
         }))
-        .filter((p) => Number.isFinite(p.latitude) && Number.isFinite(p.longitude))
+        .filter(
+          (p): p is { row: LocationHistoryRow; latitude: number; longitude: number } =>
+            Number.isFinite(p.latitude) && Number.isFinite(p.longitude),
+        )
         .map((p) => ({
           row: p.row,
           coord: [p.latitude, p.longitude] as [number, number],
