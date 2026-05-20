@@ -6,6 +6,7 @@ interface PcEntry {
   type?: string;
   provider?: string;
   organisation?: string;
+  operator?: { name?: string };
   isp?: string;
   country?: string;
   region?: string;
@@ -83,13 +84,14 @@ export const backfillVpnDetection = createServerFn({ method: "POST" })
       const type = String(entry.type ?? "").toLowerCase();
       const is_vpn = proxy && type === "vpn";
       const is_proxy = proxy;
+      const provider = entry.operator?.name ?? entry.provider ?? entry.organisation ?? null;
       const { error: upErr } = await supabase.rpc("admin_upsert_signup_vpn" as never, {
         _user_id: row.user_id,
         _ip: row.ip,
         _is_vpn: is_vpn,
         _is_proxy: is_proxy,
-        _vpn_provider: entry.provider ?? entry.organisation ?? null,
-        _isp: entry.isp ?? null,
+        _vpn_provider: provider,
+        _isp: entry.isp ?? entry.provider ?? null,
         _country: entry.country ?? null,
         _region: entry.region ?? null,
         _city: entry.city ?? null,
