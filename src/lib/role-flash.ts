@@ -53,7 +53,7 @@ export function roleFlashClass(role: FlashRole | null | undefined): string {
   return `role-name-flash-${role}`;
 }
 
-import { STAFF_DEFAULT_AVATAR_URL, MANAGEMENT_DEFAULT_AVATAR_URL, DEFAULT_AVATAR_URL } from "@/lib/default-avatar";
+import { STAFF_DEFAULT_AVATAR_URL, MANAGEMENT_DEFAULT_AVATAR_URL, MODERATOR_DEFAULT_AVATAR_URL, DEFAULT_AVATAR_URL } from "@/lib/default-avatar";
 
 /** Returns the avatar URL to display. If the user has the `staff` role
  * (and is not higher: admin/management/moderator) and has no avatar set,
@@ -67,6 +67,7 @@ export function resolveAvatarUrl(
   if (userId) {
     const role = roleMap.get(userId);
     if (role === "management") return MANAGEMENT_DEFAULT_AVATAR_URL;
+    if (role === "moderator") return MODERATOR_DEFAULT_AVATAR_URL;
     if (role === "staff") return STAFF_DEFAULT_AVATAR_URL;
   }
   return DEFAULT_AVATAR_URL;
