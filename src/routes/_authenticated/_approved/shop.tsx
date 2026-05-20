@@ -2117,6 +2117,17 @@ function loadSquareSdk(env: "sandbox" | "production"): Promise<any> {
   });
 }
 
+function SquareLogo({ className = "" }: { className?: string }) {
+  return (
+    <img
+      src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/35/Square%2C_Inc._-_Square_Logo.svg/512px-Square%2C_Inc._-_Square_Logo.svg.png"
+      alt="Square"
+      className={`h-4 w-auto ${className}`}
+      loading="lazy"
+    />
+  );
+}
+
 function SquareCardPanel({ orderId, amountCents, canPay, onChange }: { orderId: string; amountCents: number; canPay: boolean; onChange?: () => void | Promise<void> }) {
   const [paid, setPaid] = useState<any | null>(null);
   const [loading, setLoading] = useState(false);
