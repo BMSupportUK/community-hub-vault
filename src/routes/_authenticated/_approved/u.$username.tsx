@@ -18,6 +18,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { listTimeZones } from "@/hooks/use-user-timezone";
 import { Nameplate } from "@/components/app/Nameplate";
 import { NameplatePicker } from "@/components/app/NameplatePicker";
+import { useRoleFlashMap, resolveAvatarUrl } from "@/lib/role-flash";
 
 export const Route = createFileRoute("/_authenticated/_approved/u/$username")({
   validateSearch: (search: Record<string, unknown>) => ({
