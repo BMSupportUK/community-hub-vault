@@ -58,6 +58,7 @@ import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/l
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 import { Route as ApiPublicHooksSubscriptionExpiryRemindersRouteImport } from './routes/api/public/hooks/subscription-expiry-reminders'
 import { Route as ApiPublicHooksSquareInvoiceRouteImport } from './routes/api/public/hooks/square-invoice'
+import { Route as ApiPublicHooksNotifyRouteImport } from './routes/api/public/hooks/notify'
 import { Route as ApiPublicHooksBackupOrdersRouteImport } from './routes/api/public/hooks/backup-orders'
 import { Route as ApiPublicHooksBackupCredentialsRouteImport } from './routes/api/public/hooks/backup-credentials'
 import { Route as AuthenticatedApprovedUUsernameRouteImport } from './routes/_authenticated/_approved/u.$username'
@@ -345,6 +346,11 @@ const ApiPublicHooksSquareInvoiceRoute =
     path: '/api/public/hooks/square-invoice',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksNotifyRoute = ApiPublicHooksNotifyRouteImport.update({
+  id: '/api/public/hooks/notify',
+  path: '/api/public/hooks/notify',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicHooksBackupOrdersRoute =
   ApiPublicHooksBackupOrdersRouteImport.update({
     id: '/api/public/hooks/backup-orders',
@@ -435,6 +441,7 @@ export interface FileRoutesByFullPath {
   '/u/$username': typeof AuthenticatedApprovedUUsernameRoute
   '/api/public/hooks/backup-credentials': typeof ApiPublicHooksBackupCredentialsRoute
   '/api/public/hooks/backup-orders': typeof ApiPublicHooksBackupOrdersRoute
+  '/api/public/hooks/notify': typeof ApiPublicHooksNotifyRoute
   '/api/public/hooks/square-invoice': typeof ApiPublicHooksSquareInvoiceRoute
   '/api/public/hooks/subscription-expiry-reminders': typeof ApiPublicHooksSubscriptionExpiryRemindersRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -490,6 +497,7 @@ export interface FileRoutesByTo {
   '/u/$username': typeof AuthenticatedApprovedUUsernameRoute
   '/api/public/hooks/backup-credentials': typeof ApiPublicHooksBackupCredentialsRoute
   '/api/public/hooks/backup-orders': typeof ApiPublicHooksBackupOrdersRoute
+  '/api/public/hooks/notify': typeof ApiPublicHooksNotifyRoute
   '/api/public/hooks/square-invoice': typeof ApiPublicHooksSquareInvoiceRoute
   '/api/public/hooks/subscription-expiry-reminders': typeof ApiPublicHooksSubscriptionExpiryRemindersRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -549,6 +557,7 @@ export interface FileRoutesById {
   '/_authenticated/_approved/u/$username': typeof AuthenticatedApprovedUUsernameRoute
   '/api/public/hooks/backup-credentials': typeof ApiPublicHooksBackupCredentialsRoute
   '/api/public/hooks/backup-orders': typeof ApiPublicHooksBackupOrdersRoute
+  '/api/public/hooks/notify': typeof ApiPublicHooksNotifyRoute
   '/api/public/hooks/square-invoice': typeof ApiPublicHooksSquareInvoiceRoute
   '/api/public/hooks/subscription-expiry-reminders': typeof ApiPublicHooksSubscriptionExpiryRemindersRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -607,6 +616,7 @@ export interface FileRouteTypes {
     | '/u/$username'
     | '/api/public/hooks/backup-credentials'
     | '/api/public/hooks/backup-orders'
+    | '/api/public/hooks/notify'
     | '/api/public/hooks/square-invoice'
     | '/api/public/hooks/subscription-expiry-reminders'
     | '/lovable/email/queue/process'
@@ -662,6 +672,7 @@ export interface FileRouteTypes {
     | '/u/$username'
     | '/api/public/hooks/backup-credentials'
     | '/api/public/hooks/backup-orders'
+    | '/api/public/hooks/notify'
     | '/api/public/hooks/square-invoice'
     | '/api/public/hooks/subscription-expiry-reminders'
     | '/lovable/email/queue/process'
@@ -720,6 +731,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/u/$username'
     | '/api/public/hooks/backup-credentials'
     | '/api/public/hooks/backup-orders'
+    | '/api/public/hooks/notify'
     | '/api/public/hooks/square-invoice'
     | '/api/public/hooks/subscription-expiry-reminders'
     | '/lovable/email/queue/process'
@@ -743,6 +755,7 @@ export interface RootRouteChildren {
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
   ApiPublicHooksBackupCredentialsRoute: typeof ApiPublicHooksBackupCredentialsRoute
   ApiPublicHooksBackupOrdersRoute: typeof ApiPublicHooksBackupOrdersRoute
+  ApiPublicHooksNotifyRoute: typeof ApiPublicHooksNotifyRoute
   ApiPublicHooksSquareInvoiceRoute: typeof ApiPublicHooksSquareInvoiceRoute
   ApiPublicHooksSubscriptionExpiryRemindersRoute: typeof ApiPublicHooksSubscriptionExpiryRemindersRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
@@ -1095,6 +1108,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksSquareInvoiceRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/notify': {
+      id: '/api/public/hooks/notify'
+      path: '/api/public/hooks/notify'
+      fullPath: '/api/public/hooks/notify'
+      preLoaderRoute: typeof ApiPublicHooksNotifyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/backup-orders': {
       id: '/api/public/hooks/backup-orders'
       path: '/api/public/hooks/backup-orders'
@@ -1300,6 +1320,7 @@ const rootRouteChildren: RootRouteChildren = {
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
   ApiPublicHooksBackupCredentialsRoute: ApiPublicHooksBackupCredentialsRoute,
   ApiPublicHooksBackupOrdersRoute: ApiPublicHooksBackupOrdersRoute,
+  ApiPublicHooksNotifyRoute: ApiPublicHooksNotifyRoute,
   ApiPublicHooksSquareInvoiceRoute: ApiPublicHooksSquareInvoiceRoute,
   ApiPublicHooksSubscriptionExpiryRemindersRoute:
     ApiPublicHooksSubscriptionExpiryRemindersRoute,
