@@ -1480,7 +1480,7 @@ function EditProfileModal({ profile, onClose, onSaved }: { profile: ProfileRow; 
     const u = username.trim();
     if (!u || !/^[a-zA-Z0-9_-]{2,32}$/.test(u)) return toast.error("Username: 2–32 letters, numbers, _ or -");
     if (displayName.length > 64) return toast.error("Display name too long");
-    if (bio.length > 500) return toast.error("Bio too long (500 max)");
+    if (bio.length > 5000) return toast.error("Bio too long (5000 characters max)");
     setSaving(true);
     const { error } = await supabase.from("profiles").update({
       display_name: displayName.trim() || null,
