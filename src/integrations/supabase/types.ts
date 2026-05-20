@@ -2293,6 +2293,60 @@ export type Database = {
         }
         Relationships: []
       }
+      user_location_history: {
+        Row: {
+          city: string | null
+          country: string | null
+          created_at: string
+          event_type: string
+          id: string
+          ip: string | null
+          is_proxy: boolean | null
+          is_vpn: boolean | null
+          isp: string | null
+          latitude: number | null
+          longitude: number | null
+          region: string | null
+          user_agent: string | null
+          user_id: string
+          vpn_provider: string | null
+        }
+        Insert: {
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          event_type: string
+          id?: string
+          ip?: string | null
+          is_proxy?: boolean | null
+          is_vpn?: boolean | null
+          isp?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          region?: string | null
+          user_agent?: string | null
+          user_id: string
+          vpn_provider?: string | null
+        }
+        Update: {
+          city?: string | null
+          country?: string | null
+          created_at?: string
+          event_type?: string
+          id?: string
+          ip?: string | null
+          is_proxy?: boolean | null
+          is_vpn?: boolean | null
+          isp?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          region?: string | null
+          user_agent?: string | null
+          user_id?: string
+          vpn_provider?: string | null
+        }
+        Relationships: []
+      }
       user_nameplates: {
         Row: {
           id: string
@@ -2608,6 +2662,32 @@ export type Database = {
       }
     }
     Functions: {
+      admin_get_user_location_history: {
+        Args: { _limit?: number; _user_id: string }
+        Returns: {
+          city: string | null
+          country: string | null
+          created_at: string
+          event_type: string
+          id: string
+          ip: string | null
+          is_proxy: boolean | null
+          is_vpn: boolean | null
+          isp: string | null
+          latitude: number | null
+          longitude: number | null
+          region: string | null
+          user_agent: string | null
+          user_id: string
+          vpn_provider: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "user_location_history"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       admin_list_user_ips_for_vpn_backfill: {
         Args: never
         Returns: {
@@ -2703,6 +2783,23 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      insert_my_location_event: {
+        Args: {
+          _city: string
+          _country: string
+          _event_type: string
+          _ip: string
+          _is_proxy: boolean
+          _is_vpn: boolean
+          _isp: string
+          _latitude: number
+          _longitude: number
+          _region: string
+          _user_agent: string
+          _vpn_provider: string
+        }
+        Returns: string
       }
       is_blacklisted: {
         Args: { _email: string; _ip: string }
