@@ -150,6 +150,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (event === "SIGNED_IN" && nextUid) {
         runVpnLoginCheck(nextUid, 0);
       }
+      if (event === "TOKEN_REFRESHED" && nextUid) {
+        runVpnLoginCheck(nextUid, 5_000);
+      }
       // Same user (e.g. TOKEN_REFRESHED on tab refocus): do not reload roles —
       // toggling rolesLoaded would flip the global loading state and unmount the app.
     });
