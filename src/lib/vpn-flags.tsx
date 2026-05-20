@@ -7,6 +7,23 @@ import { cn } from "@/lib/utils";
 let cache: Set<string> | null = null;
 let inflight: Promise<Set<string>> | null = null;
 const listeners = new Set<() => void>();
+let realtimeSubscribed = false;
+
+function ensureRealtime() {
+  if (realtimeSubscribed) return;
+  realtimeSubscribed = true;
+  supabase
+    .channel("signup_info-vpn-flags")
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "signup_info" },
+      () => {
+        cache = null;
+        void load();
+      },
+    )
+    .subscribe();
+}
 
 async function load(): Promise<Set<string>> {
   if (cache) return cache;
@@ -44,6 +61,7 @@ export function useVpnUserSet(): Set<string> {
     const l = () => force((n) => n + 1);
     listeners.add(l);
     if (!cache) load();
+    ensureRealtime();
     const onFocus = () => {
       cache = null;
       load();
