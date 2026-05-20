@@ -1,0 +1,1 @@
+DROP FUNCTION IF EXISTS public.insert_my_location_event(text, text, text, text, text, double precision, double precision, text, boolean, boolean, text, text);
