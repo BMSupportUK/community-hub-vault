@@ -499,6 +499,7 @@ function DashboardBody() {
   return (
     <div className="space-y-6">
       <RecoveryCodes />
+      <VpnBackfillCard />
       <div className="grid gap-6 lg:grid-cols-[1fr_300px]">
         <section className="order-1">
           <h2 className="font-display text-sm uppercase tracking-wide text-muted-foreground mb-3">Admin tools</h2>
