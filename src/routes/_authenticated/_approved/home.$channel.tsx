@@ -96,6 +96,7 @@ function ChannelPage() {
   const [myUsername, setMyUsername] = useState<string | null>(null);
   const [ignoredIds, setIgnoredIds] = useState<Set<string>>(new Set());
   const [staffIds, setStaffIds] = useState<Set<string>>(new Set());
+  const roleFlashMap = useRoleFlashMap();
   const [ignoredProfiles, setIgnoredProfiles] = useState<Record<string, Profile>>({});
   const [selectedToUnblock, setSelectedToUnblock] = useState<Set<string>>(new Set());
 
