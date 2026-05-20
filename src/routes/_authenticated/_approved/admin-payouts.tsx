@@ -240,7 +240,7 @@ function SettingsCard({
   onSave: (s: Settings) => Promise<void>;
 }) {
   const [form, setForm] = useState<Settings>(
-    settings ?? { asset: "USDT", network: "TRC20", wallet_address: "", markup_pct: 1.5, min_payout_usdt: 0 },
+    settings ?? { asset: "USDT", network: "ERC20", wallet_address: "", markup_pct: 1.5, min_payout_usdt: 0 },
   );
   const [busy, setBusy] = useState(false);
   useEffect(() => { if (settings) setForm(settings); }, [settings]);
