@@ -2749,6 +2749,20 @@ export type Database = {
       }
       submit_appeal: { Args: { p_reason: string }; Returns: Json }
       unmute_user: { Args: { _user_id: string }; Returns: boolean }
+      upsert_my_signup_vpn: {
+        Args: {
+          _city: string
+          _country: string
+          _ip: string
+          _is_proxy: boolean
+          _is_vpn: boolean
+          _isp: string
+          _region: string
+          _vpn_provider: string
+          _vpn_raw: Json
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role:
