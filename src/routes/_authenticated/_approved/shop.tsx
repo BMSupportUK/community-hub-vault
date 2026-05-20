@@ -118,10 +118,15 @@ let _currentSymbol = "£";
 function ShopPage() {
   const { view, id, scope } = Route.useSearch();
   const navigate = useNavigate();
-  const { user, hasAny } = useAuth();
+  const { user, hasAny, hasRole } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
+  // Product & discount management is restricted to admin only (not management).
+  const isAdminOnly = hasRole("admin");
   const adminUnlocked = isAdmin && isAdminUnlocked(user?.id);
-  const isAdminView = view === "admin" || (view as string) === "discounts" || (view === "orders" && scope === "all");
+  const isAdminView =
+    (view === "admin" && isAdminOnly) ||
+    ((view as string) === "discounts" && isAdminOnly) ||
+    (view === "orders" && scope === "all");
 
   useEffect(() => {
     if (isAdminView && isAdmin && !adminUnlocked) {
@@ -166,8 +171,12 @@ function ShopPage() {
           {isAdmin && adminUnlocked && (
             <>
               <div className="pt-3 px-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Admin</div>
-              <SideBtn active={view === "admin"} onClick={() => navigate({ to: "/shop", search: { view: "admin" } })} Icon={Settings} label="Manage Products" />
-              <SideBtn active={view === ("discounts" as View)} onClick={() => navigate({ to: "/shop", search: { view: "discounts" as never } })} Icon={Tag} label="Discount Codes" />
+              {isAdminOnly && (
+                <>
+                  <SideBtn active={view === "admin"} onClick={() => navigate({ to: "/shop", search: { view: "admin" } })} Icon={Settings} label="Manage Products" />
+                  <SideBtn active={view === ("discounts" as View)} onClick={() => navigate({ to: "/shop", search: { view: "discounts" as never } })} Icon={Tag} label="Discount Codes" />
+                </>
+              )}
               <SideBtn active={view === "orders"} onClick={() => navigate({ to: "/shop", search: { view: "orders" } })} Icon={Receipt} label="Sales Chats" />
             </>
           )}
@@ -202,8 +211,8 @@ function ShopPage() {
         <div className="flex-1 flex min-h-0 min-w-0">
           {view === "store" && <Storefront />}
           {view === "orders" && <OrdersView selectedId={id} isAdmin={isAdmin} adminUnlocked={adminUnlocked} initialScope={scope === "all" ? "all" : "mine"} />}
-          {view === "admin" && isAdmin && adminUnlocked && <AdminProducts />}
-          {(view as string) === "discounts" && isAdmin && adminUnlocked && <AdminDiscounts />}
+          {view === "admin" && isAdminOnly && adminUnlocked && <AdminProducts />}
+          {(view as string) === "discounts" && isAdminOnly && adminUnlocked && <AdminDiscounts />}
           {(view === "refund" || view === "multi_room" || view === "triple_room") && (
             view === "refund"
               ? <PolicyView policyKey="refund" isAdmin={isAdmin} />
