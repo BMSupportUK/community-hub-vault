@@ -28,7 +28,7 @@ interface LogRow {
 }
 
 function AdminNotifications() {
-  const { hasAny } = useAuth();
+  const { hasAny, user } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
   const [settings, setSettings] = useState<Settings | null>(null);
   const [log, setLog] = useState<LogRow[]>([]);
@@ -55,7 +55,7 @@ function AdminNotifications() {
 
   useEffect(() => { loadAll(); }, []);
 
-  if (!isAdmin || !isAdminUnlocked()) return <Navigate to="/home" />;
+  if (!isAdmin || !isAdminUnlocked(user?.id)) return <Navigate to="/home" />;
 
   const save = async () => {
     if (!settings) return;
