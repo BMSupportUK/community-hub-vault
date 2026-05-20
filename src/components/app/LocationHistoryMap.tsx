@@ -31,6 +31,7 @@ const gpsIcon = new L.Icon({
 function FitBounds({ points }: { points: Array<[number, number]> }) {
   const map = useMap();
   useEffect(() => {
+    setTimeout(() => map.invalidateSize(), 0);
     if (points.length === 0) return;
     if (points.length === 1) {
       map.setView(points[0], 11);
