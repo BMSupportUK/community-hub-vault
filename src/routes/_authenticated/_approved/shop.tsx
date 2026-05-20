@@ -2313,6 +2313,158 @@ function SquareCardPanel({ orderId, amountCents, canPay, onChange }: { orderId: 
   );
 }
 
+function PaypalLogo({ className = "" }: { className?: string }) {
+  return (
+    <span className={`inline-flex items-center gap-1 ${className}`} aria-label="PayPal">
+      <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
+        <path d="M7.5 21h2.4l.6-3.6h2.1c3.3 0 5.7-1.8 6.3-5 .3-1.5 0-2.7-.8-3.5-.9-.9-2.4-1.4-4.3-1.4H9.3c-.4 0-.8.3-.9.7L6.6 20.3c-.1.4.2.7.6.7h.3z" fill="#003087"/>
+        <path d="M9 17.4l.6-3.6h2.1c3.3 0 5.7-1.8 6.3-5 .1-.4.1-.8.1-1.1.6.3 1.1.8 1.4 1.4.8.8 1 2 .8 3.5-.6 3.2-3 5-6.3 5h-2.1l-.6 3.6h-2z" fill="#009cde"/>
+        <path d="M9.3 7.5h4.5c1.9 0 3.4.5 4.3 1.4.3.3.6.7.7 1.1-.8-.4-1.7-.6-2.7-.6h-4c-.4 0-.8.3-.9.7l-.7 4.4-.6 3.6H7.5c-.4 0-.7-.3-.6-.7l1.5-9.2c.1-.4.5-.7.9-.7z" fill="#012169"/>
+      </svg>
+      <span className="text-[13px] font-semibold tracking-tight leading-none">
+        <span style={{ color: "#003087" }}>Pay</span><span style={{ color: "#009cde" }}>Pal</span>
+      </span>
+    </span>
+  );
+}
+
+function loadPaypalSdk(clientId: string, currency: string): Promise<any> {
+  return new Promise((resolve, reject) => {
+    const w = window as any;
+    if (w.paypal) { resolve(w.paypal); return; }
+    const existing = document.querySelector<HTMLScriptElement>("script[data-paypal-sdk]");
+    if (existing) {
+      existing.addEventListener("load", () => resolve((window as any).paypal));
+      existing.addEventListener("error", () => reject(new Error("Failed to load PayPal SDK")));
+      return;
+    }
+    const s = document.createElement("script");
+    s.src = `https://www.paypal.com/sdk/js?client-id=${encodeURIComponent(clientId)}&currency=${encodeURIComponent(currency)}&intent=capture`;
+    s.async = true;
+    s.setAttribute("data-paypal-sdk", "1");
+    s.onload = () => resolve((window as any).paypal);
+    s.onerror = () => reject(new Error("Failed to load PayPal SDK"));
+    document.head.appendChild(s);
+  });
+}
+
+function PaypalPanel({ orderId, amountCents, canPay, onChange }: { orderId: string; amountCents: number; canPay: boolean; onChange?: () => void | Promise<void> }) {
+  const [paid, setPaid] = useState<any | null>(null);
+  const [bootError, setBootError] = useState<string | null>(null);
+  const [ready, setReady] = useState(false);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const buttonsInstanceRef = useRef<any>(null);
+  const { format } = useCurrency();
+  const getConfig = useServerFn(getPaypalWebConfig);
+  const createFn = useServerFn(createPaypalOrder);
+  const captureFn = useServerFn(capturePaypalOrder);
+
+  const loadPayment = async () => {
+    const { data } = await supabase.from("order_payments").select("*").eq("order_id", orderId).maybeSingle();
+    setPaid(data);
+  };
+  useEffect(() => { loadPayment(); }, [orderId]);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!canPay || paid) return;
+    (async () => {
+      try {
+        const cfg = await getConfig();
+        const paypal = await loadPaypalSdk(cfg.clientId, cfg.currency);
+        if (cancelled || !containerRef.current) return;
+        containerRef.current.innerHTML = "";
+        const btns = paypal.Buttons({
+          style: { layout: "vertical", color: "gold", shape: "rect", label: "paypal", height: 40 },
+          createOrder: async () => {
+            const res = await createFn({ data: { orderId } });
+            return res.paypalOrderId;
+          },
+          onApprove: async (data: any) => {
+            try {
+              const res = await captureFn({ data: { orderId, paypalOrderId: data.orderID } });
+              toast.success(`Paid ${format(amountCents)} via PayPal`);
+              setPaid({
+                status: res.status,
+                card_brand: "PayPal",
+                last_4: res.payerEmail ?? null,
+                amount_cents: amountCents,
+                provider: "paypal",
+              });
+              await onChange?.();
+            } catch (e) {
+              toast.error((e as Error).message);
+            }
+          },
+          onCancel: () => { /* silent */ },
+          onError: (err: any) => {
+            console.error("[paypal] button error", err);
+            toast.error(err?.message || "PayPal error");
+          },
+        });
+        if (!btns.isEligible || !btns.isEligible()) {
+          setBootError("PayPal not available for this browser/region.");
+          return;
+        }
+        await btns.render(containerRef.current);
+        buttonsInstanceRef.current = btns;
+        setReady(true);
+      } catch (e) {
+        if (!cancelled) setBootError((e as Error).message);
+      }
+    })();
+    return () => {
+      cancelled = true;
+      try { buttonsInstanceRef.current?.close?.(); } catch {}
+      buttonsInstanceRef.current = null;
+      setReady(false);
+    };
+  }, [canPay, paid, orderId, amountCents]);
+
+  if (paid?.provider === "paypal") {
+    return (
+      <div>
+        <PaypalLogo className="mb-1.5" />
+        <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Pay with PayPal</div>
+        <div className="rounded-md bg-success/10 border border-success/20 px-2.5 py-2 space-y-1">
+          <div className="flex items-center gap-2 text-success text-xs font-medium">
+            <CreditCard className="size-3.5" /> Paid
+            {paid.last_4 && <span className="font-mono text-muted-foreground">{paid.last_4}</span>}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Square already paid — hide PayPal entirely
+  if (paid) return null;
+
+  if (!canPay) {
+    return (
+      <div>
+        <PaypalLogo className="mb-1.5" />
+        <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Pay with PayPal</div>
+        <div className="text-xs text-muted-foreground">Not available for this order.</div>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <PaypalLogo className="mb-1.5" />
+      <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Pay with PayPal</div>
+      {bootError ? (
+        <div className="text-xs text-destructive">{bootError}</div>
+      ) : (
+        <>
+          <div ref={containerRef} className="min-h-[40px]" />
+          {!ready && <div className="text-[11px] text-muted-foreground mt-1">Loading PayPal…</div>}
+        </>
+      )}
+    </div>
+  );
+}
+
 function AdminProductsInner() {
   const [products, setProducts] = useState<Product[]>([]);
   const [editing, setEditing] = useState<Partial<Product> | null>(null);
