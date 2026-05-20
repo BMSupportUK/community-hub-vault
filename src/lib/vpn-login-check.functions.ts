@@ -135,7 +135,26 @@ export const checkMyVpnOnLogin = createServerFn({ method: "POST" })
     if (isPrivateIp(ip)) return { ok: false, skipped: true, ip };
 
     const vpn = await checkVpn(ip);
-    if (!vpn) return { ok: false, ip };
+
+    // Always write the login trail even if external VPN/IP enrichment is down.
+    const { error: historyError } = await supabase.rpc("insert_my_location_event" as never, {
+      _event_type: "login",
+      _ip: ip,
+      _country: vpn?.country ?? null,
+      _region: vpn?.region ?? null,
+      _city: vpn?.city ?? null,
+      _latitude: null,
+      _longitude: null,
+      _isp: vpn?.isp ?? null,
+      _is_vpn: vpn?.is_vpn ?? null,
+      _is_proxy: vpn?.is_proxy ?? null,
+      _vpn_provider: vpn?.vpn_provider ?? null,
+      _user_agent: getRequestHeader("user-agent") ?? null,
+      _accuracy_m: null,
+    } as never);
+    if (historyError) throw new Error(historyError.message);
+
+    if (!vpn) return { ok: true, ip, observedIp, clientIp, is_vpn: null, is_proxy: null };
 
     const { error } = await supabase.rpc(
       "upsert_my_signup_vpn" as never,
@@ -152,26 +171,6 @@ export const checkMyVpnOnLogin = createServerFn({ method: "POST" })
       } as never,
     );
     if (error) throw error;
-
-    // Append a login event to the user's location history
-    try {
-      await supabase.rpc("insert_my_location_event" as never, {
-        _event_type: "login",
-        _ip: ip,
-        _country: vpn.country ?? null,
-        _region: vpn.region ?? null,
-        _city: vpn.city ?? null,
-        _latitude: null,
-        _longitude: null,
-        _isp: vpn.isp ?? null,
-        _is_vpn: vpn.is_vpn,
-        _is_proxy: vpn.is_proxy,
-        _vpn_provider: vpn.vpn_provider ?? null,
-        _user_agent: getRequestHeader("user-agent") ?? null,
-      } as never);
-    } catch (e) {
-      console.warn("[vpn-login-check] location history insert failed", e);
-    }
 
     return { ok: true, ip, observedIp, clientIp, is_vpn: vpn.is_vpn, is_proxy: vpn.is_proxy };
   });
