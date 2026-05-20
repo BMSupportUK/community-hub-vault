@@ -2262,6 +2262,7 @@ function SquareCardPanel({ orderId, amountCents, canPay, onChange }: { orderId: 
   if (!canPay) {
     return (
       <div>
+        <SquareLogo className="mb-1.5" />
         <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Card Payment via Square</div>
         <div className="text-xs text-muted-foreground">Not available for this order.</div>
       </div>
