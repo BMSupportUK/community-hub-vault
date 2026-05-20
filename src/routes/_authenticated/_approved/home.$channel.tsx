@@ -1025,7 +1025,7 @@ function ChannelPage() {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-baseline gap-2 mb-1">
                     {!(p?.equipped_nameplate_id) && (
-                      <span className="font-medium text-sm">{name}</span>
+                      <span className={cn("font-medium text-sm", roleFlashClass(roleFlashMap.get(m.sender_id)))}>{name}</span>
                     )}
                     <span className="text-[10px] text-muted-foreground">
                       {new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
