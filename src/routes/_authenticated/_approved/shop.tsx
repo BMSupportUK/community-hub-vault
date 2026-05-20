@@ -2271,6 +2271,7 @@ function SquareCardPanel({ orderId, amountCents, canPay, onChange }: { orderId: 
 
   return (
     <div>
+      <SquareLogo className="mb-1.5" />
       <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Pay by card</div>
       {bootError ? (
         <div className="text-xs text-destructive">{bootError}</div>
