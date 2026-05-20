@@ -62,7 +62,8 @@ export function LocationHistoryMap({ rows }: { rows: LocationHistoryRow[] }) {
   if (points.length === 0) {
     return (
       <div className="grid place-items-center h-full text-sm text-muted-foreground p-6 text-center">
-        No coordinates recorded yet. Coordinates appear here once the user grants location permission.
+        No coordinates recorded yet. Coordinates appear here once the user grants location
+        permission.
       </div>
     );
   }
@@ -77,11 +78,7 @@ export function LocationHistoryMap({ rows }: { rows: LocationHistoryRow[] }) {
       />
       <FitBounds points={points.map((p) => p.coord)} />
       {points.map(({ row, coord }) => (
-        <Marker
-          key={row.id}
-          position={coord}
-          icon={row.event_type === "gps" ? gpsIcon : undefined}
-        >
+        <Marker key={row.id} position={coord} icon={row.event_type === "gps" ? gpsIcon : undefined}>
           <Popup>
             <div className="text-xs space-y-0.5">
               <div className="font-semibold capitalize">{row.event_type}</div>

@@ -24,10 +24,12 @@ export interface LocationHistoryRow {
 export const getUserLocationHistory = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) =>
-    z.object({
-      userId: z.string().uuid(),
-      limit: z.number().int().min(1).max(500).optional().default(50),
-    }).parse(input),
+    z
+      .object({
+        userId: z.string().uuid(),
+        limit: z.number().int().min(1).max(500).optional().default(50),
+      })
+      .parse(input),
   )
   .handler(async ({ data, context }): Promise<{ rows: LocationHistoryRow[] }> => {
     const { supabase } = context;
@@ -36,7 +38,9 @@ export const getUserLocationHistory = createServerFn({ method: "POST" })
       { _user_id: data.userId, _limit: data.limit } as never,
     );
     if (error) throw new Error(error.message);
-    const normalizedRows = ((rows ?? []) as Array<LocationHistoryRow & Record<string, unknown>>).map((row) => ({
+    const normalizedRows = (
+      (rows ?? []) as Array<LocationHistoryRow & Record<string, unknown>>
+    ).map((row) => ({
       ...row,
       latitude: row.latitude == null ? null : Number(row.latitude),
       longitude: row.longitude == null ? null : Number(row.longitude),
