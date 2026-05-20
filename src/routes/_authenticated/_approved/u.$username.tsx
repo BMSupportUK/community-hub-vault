@@ -1229,6 +1229,28 @@ function RevealGate({ hasPin, onUnlocked, onPinSet }: { hasPin: boolean | null; 
   const [confirmPin, setConfirmPin] = useState("");
   const [busy, setBusy] = useState(false);
   const [mode, setMode] = useState<"unlock" | "reset">("unlock");
+  const [totpFactorId, setTotpFactorId] = useState<string | null>(null);
+  const [method, setMethod] = useState<"pin" | "totp">(() => {
+    if (typeof window === "undefined" || !user) return "pin";
+    return (localStorage.getItem(`reveal-method:${user.id}`) as "pin" | "totp") || "pin";
+  });
+  const [totpCode, setTotpCode] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+    supabase.auth.mfa.listFactors().then(({ data }) => {
+      if (cancelled) return;
+      const f = data?.totp?.find((x) => x.status === "verified");
+      setTotpFactorId(f?.id ?? null);
+      if (!f) setMethod("pin");
+    }).catch(() => setTotpFactorId(null));
+    return () => { cancelled = true; };
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (!user) return;
+    try { localStorage.setItem(`reveal-method:${user.id}`, method); } catch {}
+  }, [method, user?.id]);
 
   if (hasPin === null) return <div className="grid place-items-center py-6 text-muted-foreground"><Loader2 className="size-5 animate-spin" /></div>;
 
@@ -1275,6 +1297,22 @@ function RevealGate({ hasPin, onUnlocked, onPinSet }: { hasPin: boolean | null; 
       const hash = await sha256Hex(`${user.id}:${pin}`);
       const { data: row } = await supabase.from("vault_pins").select("pin_hash").eq("user_id", user.id).maybeSingle();
       if (!row || row.pin_hash !== hash) throw new Error("Incorrect PIN");
+      onUnlocked();
+    } catch (e: any) {
+      toast.error(e.message ?? "Unlock failed");
+    } finally { setBusy(false); }
+  };
+
+  const unlockTotp = async () => {
+    if (!totpFactorId) return toast.error("No 2FA factor available");
+    if (!totpCode || totpCode.length < 6) return toast.error("Enter your 6-digit code");
+    setBusy(true);
+    try {
+      const { data: ch, error: chErr } = await supabase.auth.mfa.challenge({ factorId: totpFactorId });
+      if (chErr || !ch) throw new Error(chErr?.message || "Could not start 2FA challenge");
+      const { error: vErr } = await supabase.auth.mfa.verify({ factorId: totpFactorId, challengeId: ch.id, code: totpCode });
+      if (vErr) throw new Error("Incorrect code");
+      setTotpCode("");
       onUnlocked();
     } catch (e: any) {
       toast.error(e.message ?? "Unlock failed");
@@ -1332,26 +1370,61 @@ function RevealGate({ hasPin, onUnlocked, onPinSet }: { hasPin: boolean | null; 
 
   return (
     <div className="rounded-xl bg-surface-2 border border-border p-4">
-      <p className="text-sm text-muted-foreground mb-3">Enter your account password and vault PIN to reveal credentials.</p>
-      <div className="grid sm:grid-cols-2 gap-2 mb-3">
-        <input value={password} onChange={(e) => setPassword(e.target.value)} type="password" placeholder="Account password"
-          className="px-3 py-2 rounded-lg bg-background border border-border text-sm" />
-        <input value={pin} onChange={(e) => setPin(e.target.value)} type="password" placeholder="Vault PIN"
-          className="px-3 py-2 rounded-lg bg-background border border-border text-sm"
-          onKeyDown={(e) => e.key === "Enter" && unlock()} />
-      </div>
-      <div className="flex items-center gap-3 flex-wrap">
-        <button onClick={unlock} disabled={busy} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium disabled:opacity-60">
-          {busy ? <Loader2 className="size-4 animate-spin" /> : <ShieldCheck className="size-4" />} Reveal credentials
-        </button>
-        <button
-          type="button"
-          onClick={() => { setMode("reset"); setPin(""); setConfirmPin(""); }}
-          className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2"
-        >
-          Forgot your PIN? Reset it
-        </button>
-      </div>
+      {totpFactorId && (
+        <div className="mb-3 flex flex-wrap gap-1 p-1 rounded-xl bg-background border border-border w-fit">
+          <button type="button" onClick={() => setMethod("pin")}
+            className={cn("px-3 py-1.5 rounded-lg text-xs font-medium inline-flex items-center gap-1.5 transition-colors",
+              method === "pin" ? "bg-primary text-primary-foreground shadow-glow" : "text-muted-foreground hover:text-foreground")}>
+            <Lock className="size-3.5" /> Password + PIN
+          </button>
+          <button type="button" onClick={() => setMethod("totp")}
+            className={cn("px-3 py-1.5 rounded-lg text-xs font-medium inline-flex items-center gap-1.5 transition-colors",
+              method === "totp" ? "bg-primary text-primary-foreground shadow-glow" : "text-muted-foreground hover:text-foreground")}>
+            <Smartphone className="size-3.5" /> 2FA code
+          </button>
+        </div>
+      )}
+
+      {method === "totp" && totpFactorId ? (
+        <>
+          <p className="text-sm text-muted-foreground mb-3">Enter the 6-digit code from your authenticator app to reveal credentials.</p>
+          <div className="grid sm:grid-cols-2 gap-2 mb-3">
+            <input value={totpCode}
+              onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+              inputMode="numeric" autoComplete="one-time-code" placeholder="123456"
+              className="px-3 py-2 rounded-lg bg-background border border-border text-sm font-mono tracking-widest"
+              onKeyDown={(e) => e.key === "Enter" && unlockTotp()} />
+          </div>
+          <div className="flex items-center gap-3 flex-wrap">
+            <button onClick={unlockTotp} disabled={busy} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium disabled:opacity-60">
+              {busy ? <Loader2 className="size-4 animate-spin" /> : <ShieldCheck className="size-4" />} Reveal credentials
+            </button>
+          </div>
+        </>
+      ) : (
+        <>
+          <p className="text-sm text-muted-foreground mb-3">Enter your account password and vault PIN to reveal credentials.</p>
+          <div className="grid sm:grid-cols-2 gap-2 mb-3">
+            <input value={password} onChange={(e) => setPassword(e.target.value)} type="password" placeholder="Account password"
+              className="px-3 py-2 rounded-lg bg-background border border-border text-sm" />
+            <input value={pin} onChange={(e) => setPin(e.target.value)} type="password" placeholder="Vault PIN"
+              className="px-3 py-2 rounded-lg bg-background border border-border text-sm"
+              onKeyDown={(e) => e.key === "Enter" && unlock()} />
+          </div>
+          <div className="flex items-center gap-3 flex-wrap">
+            <button onClick={unlock} disabled={busy} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium disabled:opacity-60">
+              {busy ? <Loader2 className="size-4 animate-spin" /> : <ShieldCheck className="size-4" />} Reveal credentials
+            </button>
+            <button
+              type="button"
+              onClick={() => { setMode("reset"); setPin(""); setConfirmPin(""); }}
+              className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2"
+            >
+              Forgot your PIN? Reset it
+            </button>
+          </div>
+        </>
+      )}
     </div>
   );
 }
