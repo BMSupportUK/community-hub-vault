@@ -86,6 +86,9 @@ export const createPaypalOrder = createServerFn({ method: "POST" })
     if (error || !order) throw new Error(error?.message || "Order not found");
     if (order.paid_at) throw new Error("Order is already paid");
     if (!order.total_cents || order.total_cents <= 0) throw new Error("Order total must be greater than zero");
+    const totalCents = order.total_cents;
+    const orderRowId = order.id as string;
+    if (!order.total_cents || order.total_cents <= 0) throw new Error("Order total must be greater than zero");
 
     const token = await getPaypalAccessToken();
     const value = (order.total_cents / 100).toFixed(2);
@@ -134,12 +137,12 @@ export const capturePaypalOrder = createServerFn({ method: "POST" })
     if (status !== "COMPLETED") throw new Error(`PayPal status: ${status}`);
 
     const pu = res?.purchase_units?.[0];
-    if (pu?.reference_id && pu.reference_id !== order.id) {
+    if (pu?.reference_id && pu.reference_id !== orderRowId) {
       throw new Error("PayPal reference mismatch");
     }
     const capture = pu?.payments?.captures?.[0];
     const capturedAmount = capture?.amount?.value;
-    const expected = (order.total_cents / 100).toFixed(2);
+    const expected = (totalCents / 100).toFixed(2);
     if (capturedAmount !== expected) {
       throw new Error(`PayPal amount mismatch (expected ${expected}, got ${capturedAmount})`);
     }
@@ -150,12 +153,12 @@ export const capturePaypalOrder = createServerFn({ method: "POST" })
     const { error: upErr } = await supabase
       .from("order_payments")
       .upsert({
-        order_id: order.id,
+        order_id: orderRowId,
         provider: "paypal",
         provider_payment_id: capture?.id ?? data.paypalOrderId,
         square_payment_id: capture?.id ?? data.paypalOrderId, // legacy NOT NULL compatibility
         status,
-        amount_cents: order.total_cents,
+        amount_cents: totalCents,
         currency: "GBP",
         card_brand: "PayPal",
         last_4: payerEmail ? payerEmail.slice(0, 24) : null,
@@ -167,12 +170,12 @@ export const capturePaypalOrder = createServerFn({ method: "POST" })
     const { error: paidErr } = await supabase
       .from("orders")
       .update({ paid_at: new Date().toISOString(), paid_by: userId })
-      .eq("id", order.id);
+      .eq("id", orderRowId);
     if (paidErr) console.error("Failed to set paid_at on order:", paidErr.message);
 
     const who = payerName || payerEmail || "PayPal";
     await supabase.from("order_messages").insert({
-      order_id: order.id,
+      order_id: orderRowId,
       sender_id: userId,
       content: `✅ PayPal payment captured (${who}).`,
     });
