@@ -97,7 +97,9 @@ export const recordSignupInfo = createServerFn({ method: "POST" })
       if (hit === true) {
         await supabase.rpc("apply_blacklist_ban" as never, { _user_id: userId } as never);
       }
-    } catch {}
+    } catch (e) {
+      console.warn("[signup-info] blacklist check failed", e);
+    }
 
     return { ok: true, ip, is_vpn: vpn?.is_vpn ?? null, is_proxy: vpn?.is_proxy ?? null };
   });
