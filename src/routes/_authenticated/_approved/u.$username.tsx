@@ -634,7 +634,7 @@ function ProfilePage() {
                     params={{ username: f.username ?? "" }}
                     className="flex items-center gap-3 min-w-0 hover:underline"
                   >
-                    <Avatar url={f.avatar_url} name={f.display_name || f.username || "Member"} size={32} />
+                    <Avatar url={f.avatar_url} name={f.display_name || f.username || "Member"} size={32} userId={f.user_id} />
                     <span className="truncate">{f.display_name || f.username || "Member"}</span>
                     {f.username && <span className="text-xs text-white/60">@{f.username}</span>}
                   </Link>
