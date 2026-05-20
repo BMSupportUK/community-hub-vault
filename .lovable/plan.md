@@ -1,83 +1,76 @@
 ## Goal
 
-Customer pays by card (Square invoice — already wired). Once Square confirms the charge, the order is flagged for a **manual USDT payout** to your cold wallet. Admin gets a queue showing exactly how much USDT to send, to which address, and marks each payout as done with a tx hash.
-
-This is your own store, single hardcoded destination wallet, so no per-user wallet config UI.
-
-## What stays as-is
-
-- Card checkout flow (`createSquareInvoiceForOrder` → Square hosted invoice → `orders.paid_at` updated by existing Square webhook).
-- All current shop / orders UI.
+Replace the **Square hosted invoice** flow with a **Square Web Payments SDK** card form embedded directly in the order panel. Customer clicks **Pay £X**, enters card details inline, charge captures immediately — no emailed invoice, no Square-hosted page.
 
 ## What changes
 
-### 1. Settings (single row, env-style)
-New table `crypto_payout_settings` (one row, admin-only RLS):
-- `asset` — default `USDT`
-- `network` — `TRC20` | `ERC20` | `BEP20` (default `TRC20`, lowest fees)
-- `wallet_address` — your cold wallet
-- `fx_source` — `coingecko` (free, no key)
-- `markup_pct` — buffer for exchange spread + network fee (default `1.5`)
-- `min_payout_usdt` — batch threshold (default `0`)
+### 1. Frontend: inline card form (Square Web Payments SDK)
+Replace `SquareInvoicePanel` with `SquareCardPanel`:
 
-Seeded with placeholder; admin edits in a new **Shop → Payouts** settings tab.
+- Loads `https://web.squarecdn.com/v1/square.js` (or `sandbox.web.squarecdn.com` in sandbox) via dynamic script tag on mount.
+- Renders Square's hosted card iframe into a `<div ref>` using `payments.card()` → `card.attach()`.
+- **Pay £X** button:
+  1. Calls `card.tokenize()` → gets `sourceId` (single-use nonce).
+  2. POSTs `{ orderId, sourceId }` to a new server fn `chargeOrderWithSquare`.
+  3. On success: toast, refresh order (now shows `paid_at`).
+  4. On failure: show error inline, form stays mounted for retry.
 
-### 2. Payout ledger
-New table `crypto_payouts`:
-- `id`, `order_id` (unique), `status` (`pending` | `sent` | `skipped`)
-- `gbp_amount_cents`, `gbp_to_usd_rate`, `usdt_amount` (computed at order-paid time so FX is locked)
-- `wallet_address`, `network`, `asset` (snapshot)
-- `tx_hash` (nullable), `sent_at`, `sent_by`, `notes`
+Hidden once `order.paid_at` is set — replaced with a green "Paid by card" badge + last-4 + receipt URL.
 
-RLS: admin/management only. Inserts via SECURITY DEFINER trigger when `orders.paid_at` transitions to non-null.
+### 2. Backend: `chargeOrderWithSquare` server fn
+New in `src/lib/square-payments.functions.ts`:
 
-### 3. FX lookup (server fn)
-`getGbpToUsdtRate()` — fetches `https://api.coingecko.com/api/v3/simple/price?ids=tether&vs_currencies=gbp` (no key, cached 5 min in memory). USDT amount = `gbp / rate * (1 - markup_pct/100)` rounded to 2 dp.
+- Validates input with Zod (`orderId` uuid, `sourceId` string).
+- Loads order, asserts admin or order owner, asserts not already paid.
+- Calls Square `POST /v2/payments` with: `source_id`, `idempotency_key` (`order-<id>-<ts>`), `amount_money` (order total + GBP), `location_id`, `reference_id: orderId`, `note: "Order #<short>"`, `autocomplete: true`.
+- On `COMPLETED`: updates `orders.paid_at = now()`, writes new `order_payments` row (see below), posts confirmation in order chat.
+- Returns `{ status, receiptUrl, cardBrand, last4 }`.
 
-### 4. Trigger on payment
-When `orders.paid_at` becomes set (Square webhook already does this), DB trigger inserts a `crypto_payouts` row with status `pending`. The USDT amount is computed by a server fn called from the Square webhook handler right after it marks the order paid, so the FX rate is captured at payment time (triggers can't call HTTP).
+### 3. New table: `order_payments`
+Stores the captured charge metadata (replaces invoice ledger semantics):
 
-Touch point: `src/routes/api/public/hooks/square-invoice.ts` — after the existing `paid_at` update, call a new internal helper `recordCryptoPayoutForOrder(orderId)` that reads settings, fetches rate, inserts the ledger row.
+Fields: `order_id` (unique), `square_payment_id`, `status`, `amount_cents`, `currency`, `card_brand`, `last_4`, `receipt_url`, `created_by`.
 
-### 5. Admin "Crypto payouts" page
-New route `src/routes/_authenticated/_approved/admin-payouts.tsx`:
+RLS: admin/management full; order owner read-only on their own.
+
+### 4. Keep `order_invoices` table for now
+Leave the existing table in place but stop writing to it. (Drop in a follow-up if you confirm you've fully migrated. Old paid invoices stay visible in DB for records.)
+
+### 5. Square webhook simplifies
+`src/routes/api/public/hooks/square-invoice.ts` is no longer needed for the new flow because we capture synchronously. I'll keep it for any historic invoices still outstanding, but new orders won't depend on it.
+
+### 6. Files removed / changed
+- `src/lib/square-invoices.functions.ts` → kept but no longer called from UI (still callable for legacy invoices, or delete on request).
+- `src/routes/_authenticated/_approved/shop.tsx` → swap `SquareInvoicePanel` → `SquareCardPanel`; remove invoice imports.
+
+## Out of scope (ask if wanted)
+
+- Apple Pay / Google Pay buttons via Web Payments SDK (easy add later)
+- Saving cards on file for repeat customers
+- 3DS / SCA challenge UI customisation (Square handles inline by default)
+- Refund button in admin
+
+## What you need to do
+
+Nothing new — you already have:
+- `SQUARE_ACCESS_TOKEN`
+- `SQUARE_LOCATION_ID`
+- `SQUARE_ENVIRONMENT`
+
+I'll also expose your Square **Application ID** as a client-readable env var (`VITE_SQUARE_APPLICATION_ID`) — the Web SDK needs it in the browser. It's a public identifier (safe to expose). You'll need to grab it from Square Dashboard → Developer → your app → **Application ID**, and I'll request it as a secret.
+
+## Implementation steps
 
 ```text
-Pending payouts (3) — total 487.20 USDT
-
-Order #a1b2c3d4   £200.00   →  158.40 USDT   TRC20  T9zk...4f   [Copy addr] [Copy amt] [Mark sent]
-Order #e5f6g7h8   £150.00   →  118.80 USDT   TRC20  T9zk...4f   [Copy addr] [Copy amt] [Mark sent]
-...
-
-Sent (last 30 days)              total 12,430 USDT  [Export CSV]
-Order #...   £...   142.10 USDT  tx 0xabc...   2026-05-18  by Alice
+1. Request VITE_SQUARE_APPLICATION_ID via add_secret
+2. Migration: create order_payments table + RLS
+3. Add src/lib/square-payments.functions.ts (chargeOrderWithSquare)
+4. Add SquareCardPanel component in shop.tsx (Web SDK loader + card.attach + tokenize → server fn)
+5. Replace <SquareInvoicePanel /> usage with <SquareCardPanel />
+6. Test in sandbox: card 4111 1111 1111 1111 → confirm paid_at set, receipt URL shown
 ```
 
-"Mark sent" opens a small dialog: paste tx hash + optional note → status `sent`, stamps `sent_at` + `sent_by`.
-
-Realtime subscription on `crypto_payouts` so the queue updates as new card payments come in.
-
-### 6. Customer-facing
-Nothing changes for the customer. They see the same Square invoice and "Paid" confirmation. The crypto leg is internal treasury.
-
-## Out of scope (ask if you want any)
-
-- Automated payout via exchange API (Binance/Kraken withdraw)
-- Letting the customer pay directly in crypto
-- Multi-wallet routing / per-product wallets
-- Hardware wallet signing UX
-
-## Technical details
-
-**Files**
-- `supabase/migrations/<new>.sql` — `crypto_payout_settings`, `crypto_payouts`, RLS, seed row
-- `src/lib/crypto-payouts.functions.ts` — `getPayoutSettings`, `updatePayoutSettings`, `listPendingPayouts`, `listSentPayouts`, `markPayoutSent`, `getGbpToUsdtRate`, `recordCryptoPayoutForOrder`
-- `src/routes/api/public/hooks/square-invoice.ts` — call `recordCryptoPayoutForOrder` after marking paid
-- `src/routes/_authenticated/_approved/admin-payouts.tsx` — new admin queue + settings panel
-- `src/components/app/PendingPayoutsBadge.tsx` — sidebar badge (mirrors `PendingOrdersBadge`)
-- Sidebar link added wherever admin nav lives
-
-**Security**
-- All payout RPCs gated by `has_role(auth.uid(),'admin') OR has_role(auth.uid(),'management')`.
-- Wallet address visible only to admin/management.
-- FX call server-side only.
+**Files touched**
+- `supabase/migrations/<new>.sql` (new)
+- `src/lib/square-payments.functions.ts` (new)
+- `src/routes/_authenticated/_approved/shop.tsx` (swap panel)
