@@ -84,7 +84,8 @@ export const chargeOrderWithSquare = createServerFn({ method: "POST" })
     if (!order.total_cents || order.total_cents <= 0) throw new Error("Order total must be greater than zero");
 
     const currency = "GBP";
-    const idempotencyKey = `order-${orderId}-${Date.now()}`;
+    // Square caps idempotency_key at 45 chars. Use short order prefix + base36 timestamp.
+    const idempotencyKey = `o${orderId.replace(/-/g, "").slice(0, 24)}${Date.now().toString(36)}`;
 
     const res = await sqFetch("/v2/payments", {
       method: "POST",
