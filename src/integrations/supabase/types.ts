@@ -1182,6 +1182,72 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_log: {
+        Row: {
+          channel: string
+          created_at: string
+          error: string | null
+          id: string
+          kind: string
+          message: string | null
+          status: string
+          target_id: string | null
+        }
+        Insert: {
+          channel: string
+          created_at?: string
+          error?: string | null
+          id?: string
+          kind: string
+          message?: string | null
+          status: string
+          target_id?: string | null
+        }
+        Update: {
+          channel?: string
+          created_at?: string
+          error?: string | null
+          id?: string
+          kind?: string
+          message?: string | null
+          status?: string
+          target_id?: string | null
+        }
+        Relationships: []
+      }
+      notification_settings: {
+        Row: {
+          id: boolean
+          notify_orders: boolean
+          notify_signups: boolean
+          notify_tickets: boolean
+          telegram_chat_id: string | null
+          updated_at: string
+          whatsapp_from: string | null
+          whatsapp_to: string | null
+        }
+        Insert: {
+          id?: boolean
+          notify_orders?: boolean
+          notify_signups?: boolean
+          notify_tickets?: boolean
+          telegram_chat_id?: string | null
+          updated_at?: string
+          whatsapp_from?: string | null
+          whatsapp_to?: string | null
+        }
+        Update: {
+          id?: boolean
+          notify_orders?: boolean
+          notify_signups?: boolean
+          notify_tickets?: boolean
+          telegram_chat_id?: string | null
+          updated_at?: string
+          whatsapp_from?: string | null
+          whatsapp_to?: string | null
+        }
+        Relationships: []
+      }
       order_invoices: {
         Row: {
           amount_cents: number
