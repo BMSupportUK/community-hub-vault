@@ -491,7 +491,7 @@ function ProfilePage() {
                   aria-hidden
                 />
                 <div className="px-6 pb-6 -mt-12 flex flex-col sm:flex-row sm:items-end gap-4">
-                  <Avatar url={profile.avatar_url} name={display} size={96} ring />
+                  <Avatar url={profile.avatar_url} name={display} size={96} ring userId={profile.id} />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <h2 className="font-display text-2xl font-bold truncate">{display}</h2>
@@ -533,7 +533,7 @@ function ProfilePage() {
               <aside className="space-y-4">
                 <div className="rounded-2xl bg-gradient-to-br from-fuchsia-600/30 via-purple-600/30 to-violet-700/30 border border-purple-500/40 p-5 shadow-[0_0_60px_-15px_rgba(168,85,247,0.5)] text-white">
                   <div className="flex items-center gap-3 mb-3">
-                    <Avatar url={profile.avatar_url} name={display} size={48} ring />
+                    <Avatar url={profile.avatar_url} name={display} size={48} ring userId={profile.id} />
                     <div className="min-w-0">
                       <h3 className="font-display text-lg font-bold bg-gradient-to-r from-violet-200 to-blue-200 bg-clip-text text-transparent truncate">
                         {isOwner ? `Welcome back, ${display}` : `Welcome to ${display}'s profile`}
