@@ -1,7 +1,7 @@
 import { createFileRoute, Navigate, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useState } from "react";
-import { ShieldCheck, Search, Loader2, Plus, Trash2, Users, Tags, ArrowLeft, MapPin, X } from "lucide-react";
+import { ShieldCheck, Search, Loader2, Plus, Trash2, Users, Tags, ArrowLeft, MapPin, X, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
@@ -247,19 +247,36 @@ function LocationHistoryDialog({ row, onClose }: { row: Row; onClose: () => void
   const [loading, setLoading] = useState(true);
   const [rows, setRows] = useState<LocationHistoryRow[]>([]);
   const [view, setView] = useState<"table" | "map">("map");
+  const [refreshTick, setRefreshTick] = useState(0);
 
   useEffect(() => {
     let active = true;
-    setLoading(true);
-    fetchHistory({ data: { userId: row.id, limit: 100 } })
-      .then((res) => { if (active) setRows(res.rows); })
-      .catch((e: Error) => toast.error(e.message ?? "Failed to load history"))
-      .finally(() => { if (active) setLoading(false); });
-    return () => { active = false; };
-  }, [row.id, fetchHistory]);
+    const load = (showLoader: boolean) => {
+      if (showLoader) setLoading(true);
+      fetchHistory({ data: { userId: row.id, limit: 100 } })
+        .then((res) => { if (active) setRows(res.rows); })
+        .catch((e: Error) => {
+          if (showLoader) toast.error(e.message ?? "Failed to load history");
+          else console.warn("[location-history] refresh failed", e);
+        })
+        .finally(() => { if (active && showLoader) setLoading(false); });
+    };
 
-  const fmtLoc = (r: LocationHistoryRow) =>
-    [r.city, r.region, r.country].filter(Boolean).join(", ") || "—";
+    setLoading(true);
+    load(true);
+    const interval = window.setInterval(() => load(false), 5_000);
+    return () => { active = false; window.clearInterval(interval); };
+  }, [row.id, fetchHistory, refreshTick]);
+
+  const fmtLoc = (r: LocationHistoryRow) => {
+    const named = [r.city, r.region, r.country].filter(Boolean).join(", ");
+    if (named) return named;
+    if (typeof r.latitude === "number" && typeof r.longitude === "number") {
+      const accuracy = r.accuracy_m == null ? "" : ` · ±${Math.round(r.accuracy_m)}m`;
+      return `${r.latitude.toFixed(6)}, ${r.longitude.toFixed(6)}${accuracy}`;
+    }
+    return "—";
+  };
 
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-background/70 backdrop-blur-sm p-4" onClick={onClose}>
@@ -278,6 +295,14 @@ function LocationHistoryDialog({ row, onClose }: { row: Row; onClose: () => void
                 </button>
               ))}
             </div>
+            <button
+              onClick={() => setRefreshTick((tick) => tick + 1)}
+              disabled={loading}
+              className="p-2 rounded-lg hover:bg-surface-2 text-muted-foreground hover:text-foreground disabled:opacity-50"
+              title="Refresh"
+            >
+              <RefreshCw className={cn("size-4", loading && "animate-spin")} />
+            </button>
             <button onClick={onClose} className="p-2 rounded-lg hover:bg-surface-2 text-muted-foreground hover:text-foreground">
               <X className="size-4" />
             </button>

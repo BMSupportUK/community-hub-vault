@@ -21,6 +21,25 @@ async function getClientIpHint(): Promise<string | null> {
   }
 }
 
+async function recordLoginHistoryFallback(clientIpHint: string | null): Promise<void> {
+  const { error } = await supabase.rpc("insert_my_location_event" as never, {
+    _event_type: "login",
+    _ip: clientIpHint ?? "unknown",
+    _country: null,
+    _region: null,
+    _city: null,
+    _latitude: null,
+    _longitude: null,
+    _isp: null,
+    _is_vpn: null,
+    _is_proxy: null,
+    _vpn_provider: null,
+    _user_agent: typeof navigator === "undefined" ? null : navigator.userAgent,
+    _accuracy_m: null,
+  } as never);
+  if (error) throw error;
+}
+
 export type AppRole =
   | "admin"
   | "management"
@@ -78,20 +97,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const runVpnLoginCheck = (uid: string, minIntervalMs = 60_000) => {
     try {
-      const checkedKey = `vpn-checked:v3:${uid}`;
-      const checkingKey = `vpn-checking:${uid}`;
+      const checkedKey = `vpn-checked:v4:${uid}`;
+      const checkingKey = `vpn-checking:v4:${uid}`;
       const lastChecked = Number(sessionStorage.getItem(checkedKey) ?? "0");
+      const checkingStarted = Number(sessionStorage.getItem(checkingKey) ?? "0");
+      const checkIsStillRunning = checkingStarted > 0 && Date.now() - checkingStarted < 30_000;
       if (
         typeof window === "undefined" ||
         Date.now() - lastChecked < minIntervalMs ||
-        sessionStorage.getItem(checkingKey)
+        checkIsStillRunning
       ) {
         return;
       }
-      sessionStorage.setItem(checkingKey, "1");
+      sessionStorage.setItem(checkingKey, String(Date.now()));
       setTimeout(() => {
         getClientIpHint()
-          .then((clientIpHint) => checkMyVpnOnLogin({ data: { clientIpHint } }))
+          .then((clientIpHint) =>
+            checkMyVpnOnLogin({ data: { clientIpHint } }).catch(async (e) => {
+              console.warn("[auth] vpn check failed; recording basic login event", e);
+              await recordLoginHistoryFallback(clientIpHint);
+            }),
+          )
           .then(() => {
             sessionStorage.setItem(checkedKey, String(Date.now()));
             refreshVpnUserSet();
@@ -100,7 +126,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .finally(() => sessionStorage.removeItem(checkingKey));
       }, 0);
     } catch {
-      checkMyVpnOnLogin({ data: {} })
+      recordLoginHistoryFallback(null)
         .then(() => refreshVpnUserSet())
         .catch((e) => console.warn("[auth] vpn check failed", e));
     }
