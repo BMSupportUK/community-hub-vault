@@ -41,7 +41,8 @@ function isPrivateIp(ip: string): boolean {
   if (!ip) return true;
   if (ip === "unknown") return true;
   if (ip.startsWith("127.") || ip.startsWith("10.") || ip.startsWith("192.168.")) return true;
-  if (ip.startsWith("::1") || ip.startsWith("fe80:") || ip.startsWith("fc") || ip.startsWith("fd")) return true;
+  if (ip.startsWith("::1") || ip.startsWith("fe80:") || ip.startsWith("fc") || ip.startsWith("fd"))
+    return true;
   // 172.16.0.0 – 172.31.255.255
   const m = ip.match(/^172\.(\d+)\./);
   if (m && Number(m[1]) >= 16 && Number(m[1]) <= 31) return true;
@@ -85,18 +86,21 @@ export const backfillVpnDetection = createServerFn({ method: "POST" })
       const is_vpn = proxy && type === "vpn";
       const is_proxy = proxy;
       const provider = entry.operator?.name ?? entry.provider ?? entry.organisation ?? null;
-      const { error: upErr } = await supabase.rpc("admin_upsert_signup_vpn" as never, {
-        _user_id: row.user_id,
-        _ip: row.ip,
-        _is_vpn: is_vpn,
-        _is_proxy: is_proxy,
-        _vpn_provider: provider,
-        _isp: entry.isp ?? entry.provider ?? null,
-        _country: entry.country ?? null,
-        _region: entry.region ?? null,
-        _city: entry.city ?? null,
-        _vpn_raw: entry as unknown as Record<string, unknown>,
-      } as never);
+      const { error: upErr } = await supabase.rpc(
+        "admin_upsert_signup_vpn" as never,
+        {
+          _user_id: row.user_id,
+          _ip: row.ip,
+          _is_vpn: is_vpn,
+          _is_proxy: is_proxy,
+          _vpn_provider: provider,
+          _isp: entry.isp ?? entry.provider ?? null,
+          _country: entry.country ?? null,
+          _region: entry.region ?? null,
+          _city: entry.city ?? null,
+          _vpn_raw: entry as unknown as Record<string, unknown>,
+        } as never,
+      );
       if (upErr) continue;
       updated += 1;
       if (is_vpn || is_proxy) flagged += 1;

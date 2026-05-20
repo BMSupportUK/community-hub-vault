@@ -90,7 +90,10 @@ export const recordSignupInfo = createServerFn({ method: "POST" })
 
     // Auto-ban if this IP is blacklisted
     try {
-      const { data: hit } = await supabase.rpc("is_blacklisted" as never, { _email: null, _ip: ip } as never);
+      const { data: hit } = await supabase.rpc(
+        "is_blacklisted" as never,
+        { _email: null, _ip: ip } as never,
+      );
       if (hit === true) {
         await supabase.rpc("apply_blacklist_ban" as never, { _user_id: userId } as never);
       }
