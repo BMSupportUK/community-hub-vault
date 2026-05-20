@@ -493,7 +493,6 @@ function DashboardBody() {
     { to: "/admin-notifications", label: "Telegram alerts", desc: "Send a Telegram message when a new signup, ticket or sale comes in.", icon: Bell },
     { to: "/shop", search: { view: "admin" }, label: "Shop products", desc: "Add, edit and reorder shop products and categories.", icon: Package, adminOnly: true },
     { to: "/shop", search: { view: "discounts" }, label: "Discount codes", desc: "Create and manage promotional discount codes.", icon: Tag, adminOnly: true },
-    { to: "/admin-payouts", label: "Crypto payouts", desc: "Manually send USDT to your cold wallet after each paid card order.", icon: Wallet, adminOnly: true },
   ];
   const tools = allTools.filter((t) => !t.adminOnly || isAdminOnly);
 

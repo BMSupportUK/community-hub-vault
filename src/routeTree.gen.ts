@@ -44,7 +44,6 @@ import { Route as AuthenticatedApprovedAdminRolesRouteImport } from './routes/_a
 import { Route as AuthenticatedApprovedAdminReviewsRouteImport } from './routes/_authenticated/_approved/admin-reviews'
 import { Route as AuthenticatedApprovedAdminProfanityRouteImport } from './routes/_authenticated/_approved/admin-profanity'
 import { Route as AuthenticatedApprovedAdminPermissionsRouteImport } from './routes/_authenticated/_approved/admin-permissions'
-import { Route as AuthenticatedApprovedAdminPayoutsRouteImport } from './routes/_authenticated/_approved/admin-payouts'
 import { Route as AuthenticatedApprovedAdminNotificationsRouteImport } from './routes/_authenticated/_approved/admin-notifications'
 import { Route as AuthenticatedApprovedAdminNameplatesRouteImport } from './routes/_authenticated/_approved/admin-nameplates'
 import { Route as AuthenticatedApprovedAdminHeroBoxesRouteImport } from './routes/_authenticated/_approved/admin-hero-boxes'
@@ -264,12 +263,6 @@ const AuthenticatedApprovedAdminPermissionsRoute =
     path: '/admin-permissions',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
-const AuthenticatedApprovedAdminPayoutsRoute =
-  AuthenticatedApprovedAdminPayoutsRouteImport.update({
-    id: '/admin-payouts',
-    path: '/admin-payouts',
-    getParentRoute: () => AuthenticatedApprovedRoute,
-  } as any)
 const AuthenticatedApprovedAdminNotificationsRoute =
   AuthenticatedApprovedAdminNotificationsRouteImport.update({
     id: '/admin-notifications',
@@ -429,7 +422,6 @@ export interface FileRoutesByFullPath {
   '/admin-hero-boxes': typeof AuthenticatedApprovedAdminHeroBoxesRoute
   '/admin-nameplates': typeof AuthenticatedApprovedAdminNameplatesRoute
   '/admin-notifications': typeof AuthenticatedApprovedAdminNotificationsRoute
-  '/admin-payouts': typeof AuthenticatedApprovedAdminPayoutsRoute
   '/admin-permissions': typeof AuthenticatedApprovedAdminPermissionsRoute
   '/admin-profanity': typeof AuthenticatedApprovedAdminProfanityRoute
   '/admin-reviews': typeof AuthenticatedApprovedAdminReviewsRoute
@@ -488,7 +480,6 @@ export interface FileRoutesByTo {
   '/admin-hero-boxes': typeof AuthenticatedApprovedAdminHeroBoxesRoute
   '/admin-nameplates': typeof AuthenticatedApprovedAdminNameplatesRoute
   '/admin-notifications': typeof AuthenticatedApprovedAdminNotificationsRoute
-  '/admin-payouts': typeof AuthenticatedApprovedAdminPayoutsRoute
   '/admin-permissions': typeof AuthenticatedApprovedAdminPermissionsRoute
   '/admin-profanity': typeof AuthenticatedApprovedAdminProfanityRoute
   '/admin-reviews': typeof AuthenticatedApprovedAdminReviewsRoute
@@ -549,7 +540,6 @@ export interface FileRoutesById {
   '/_authenticated/_approved/admin-hero-boxes': typeof AuthenticatedApprovedAdminHeroBoxesRoute
   '/_authenticated/_approved/admin-nameplates': typeof AuthenticatedApprovedAdminNameplatesRoute
   '/_authenticated/_approved/admin-notifications': typeof AuthenticatedApprovedAdminNotificationsRoute
-  '/_authenticated/_approved/admin-payouts': typeof AuthenticatedApprovedAdminPayoutsRoute
   '/_authenticated/_approved/admin-permissions': typeof AuthenticatedApprovedAdminPermissionsRoute
   '/_authenticated/_approved/admin-profanity': typeof AuthenticatedApprovedAdminProfanityRoute
   '/_authenticated/_approved/admin-reviews': typeof AuthenticatedApprovedAdminReviewsRoute
@@ -610,7 +600,6 @@ export interface FileRouteTypes {
     | '/admin-hero-boxes'
     | '/admin-nameplates'
     | '/admin-notifications'
-    | '/admin-payouts'
     | '/admin-permissions'
     | '/admin-profanity'
     | '/admin-reviews'
@@ -669,7 +658,6 @@ export interface FileRouteTypes {
     | '/admin-hero-boxes'
     | '/admin-nameplates'
     | '/admin-notifications'
-    | '/admin-payouts'
     | '/admin-permissions'
     | '/admin-profanity'
     | '/admin-reviews'
@@ -729,7 +717,6 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/admin-hero-boxes'
     | '/_authenticated/_approved/admin-nameplates'
     | '/_authenticated/_approved/admin-notifications'
-    | '/_authenticated/_approved/admin-payouts'
     | '/_authenticated/_approved/admin-permissions'
     | '/_authenticated/_approved/admin-profanity'
     | '/_authenticated/_approved/admin-reviews'
@@ -1036,13 +1023,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedApprovedAdminPermissionsRouteImport
       parentRoute: typeof AuthenticatedApprovedRoute
     }
-    '/_authenticated/_approved/admin-payouts': {
-      id: '/_authenticated/_approved/admin-payouts'
-      path: '/admin-payouts'
-      fullPath: '/admin-payouts'
-      preLoaderRoute: typeof AuthenticatedApprovedAdminPayoutsRouteImport
-      parentRoute: typeof AuthenticatedApprovedRoute
-    }
     '/_authenticated/_approved/admin-notifications': {
       id: '/_authenticated/_approved/admin-notifications'
       path: '/admin-notifications'
@@ -1255,7 +1235,6 @@ interface AuthenticatedApprovedRouteChildren {
   AuthenticatedApprovedAdminHeroBoxesRoute: typeof AuthenticatedApprovedAdminHeroBoxesRoute
   AuthenticatedApprovedAdminNameplatesRoute: typeof AuthenticatedApprovedAdminNameplatesRoute
   AuthenticatedApprovedAdminNotificationsRoute: typeof AuthenticatedApprovedAdminNotificationsRoute
-  AuthenticatedApprovedAdminPayoutsRoute: typeof AuthenticatedApprovedAdminPayoutsRoute
   AuthenticatedApprovedAdminPermissionsRoute: typeof AuthenticatedApprovedAdminPermissionsRoute
   AuthenticatedApprovedAdminProfanityRoute: typeof AuthenticatedApprovedAdminProfanityRoute
   AuthenticatedApprovedAdminReviewsRoute: typeof AuthenticatedApprovedAdminReviewsRoute
@@ -1297,8 +1276,6 @@ const AuthenticatedApprovedRouteChildren: AuthenticatedApprovedRouteChildren = {
     AuthenticatedApprovedAdminNameplatesRoute,
   AuthenticatedApprovedAdminNotificationsRoute:
     AuthenticatedApprovedAdminNotificationsRoute,
-  AuthenticatedApprovedAdminPayoutsRoute:
-    AuthenticatedApprovedAdminPayoutsRoute,
   AuthenticatedApprovedAdminPermissionsRoute:
     AuthenticatedApprovedAdminPermissionsRoute,
   AuthenticatedApprovedAdminProfanityRoute:
