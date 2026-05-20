@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useRoleFlashMap, resolveAvatarUrl, roleFlashClass } from "@/lib/role-flash";
 
 export interface ChannelGroup {
   label: string;
@@ -46,6 +47,7 @@ export function ChannelColumn({
 }) {
   const path = useRouterState({ select: (r) => r.location.pathname });
   const { user } = useAuth();
+  const roleFlashMap = useRoleFlashMap();
   const [profile, setProfile] = useState<{
     display_name: string | null;
     username: string | null;
@@ -365,12 +367,12 @@ export function ChannelColumn({
       {user && (
         <div className="h-14 border-t border-border px-3 flex items-center gap-2 bg-rail">
           <img
-            src={profile?.avatar_url || "/default-avatar.png"}
+            src={resolveAvatarUrl(user.id, profile?.avatar_url, roleFlashMap)}
             alt=""
             className="size-8 rounded-full object-cover shrink-0"
           />
           <div className="min-w-0 flex-1">
-            <div className="text-xs font-medium truncate">
+            <div className={cn("text-xs font-medium truncate", roleFlashClass(roleFlashMap.get(user.id)))}>
               {profile?.display_name ?? profile?.username ?? "User"}
             </div>
             <div className="text-[10px] text-muted-foreground">Online</div>
