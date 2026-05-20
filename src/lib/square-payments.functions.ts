@@ -105,9 +105,9 @@ export const chargeOrderWithSquare = createServerFn({ method: "POST" })
       throw new Error(`Square payment status: ${status}`);
     }
 
-    const cardBrand = payment?.card_details?.card?.card_brand ?? null;
-    const last4 = payment?.card_details?.card?.last_4 ?? null;
-    const receiptUrl = payment?.receipt_url ?? null;
+    const cardBrand: string | undefined = payment?.card_details?.card?.card_brand ?? undefined;
+    const last4: string | undefined = payment?.card_details?.card?.last_4 ?? undefined;
+    const receiptUrl: string | undefined = payment?.receipt_url ?? undefined;
 
     const { error: upErr } = await supabase
       .from("order_payments")
