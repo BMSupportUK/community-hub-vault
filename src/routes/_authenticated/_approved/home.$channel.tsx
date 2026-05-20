@@ -23,6 +23,7 @@ import { DEFAULT_AVATAR_URL } from "@/lib/default-avatar";
 import { Nameplate } from "@/components/app/Nameplate";
 import { useOnlineUsers } from "@/hooks/use-online-users";
 import { formatLastSeen } from "@/lib/relative-time";
+import { useRoleFlashMap, roleFlashClass } from "@/lib/role-flash";
 
 export const Route = createFileRoute("/_authenticated/_approved/home/$channel")({
   component: ChannelPage,
@@ -95,6 +96,7 @@ function ChannelPage() {
   const [myUsername, setMyUsername] = useState<string | null>(null);
   const [ignoredIds, setIgnoredIds] = useState<Set<string>>(new Set());
   const [staffIds, setStaffIds] = useState<Set<string>>(new Set());
+  const roleFlashMap = useRoleFlashMap();
   const [ignoredProfiles, setIgnoredProfiles] = useState<Record<string, Profile>>({});
   const [selectedToUnblock, setSelectedToUnblock] = useState<Set<string>>(new Set());
 
@@ -783,7 +785,7 @@ function ChannelPage() {
                     return (
                       <li key={m.id} className="p-3 hover:bg-surface-2/40">
                         <div className="flex items-baseline justify-between gap-2 mb-1">
-                          <span className="text-xs font-medium">{name}</span>
+                          <span className={cn("text-xs font-medium", roleFlashClass(roleFlashMap.get(m.sender_id)))}>{name}</span>
                           <span className="text-[10px] text-muted-foreground">
                             {new Date(m.created_at).toLocaleDateString()}
                           </span>
@@ -999,7 +1001,7 @@ function ChannelPage() {
                           className="rounded-md pl-1 pr-3 h-9 w-56 flex items-center gap-2 shadow-sm"
                         >
                           {avatarEl}
-                          <span className="font-semibold text-sm text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)] truncate">
+                          <span className={cn("font-semibold text-sm text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)] truncate", roleFlashClass(roleFlashMap.get(m.sender_id)))}>
                             {name}
                           </span>
                         </Nameplate>
@@ -1023,7 +1025,7 @@ function ChannelPage() {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-baseline gap-2 mb-1">
                     {!(p?.equipped_nameplate_id) && (
-                      <span className="font-medium text-sm">{name}</span>
+                      <span className={cn("font-medium text-sm", roleFlashClass(roleFlashMap.get(m.sender_id)))}>{name}</span>
                     )}
                     <span className="text-[10px] text-muted-foreground">
                       {new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}

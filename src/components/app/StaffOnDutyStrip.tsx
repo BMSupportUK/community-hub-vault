@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Coffee, UtensilsCrossed, CircleDot } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { useRoleFlashMap, roleFlashClass } from "@/lib/role-flash";
 
 type StaffShift = { id: string; user_id: string; clock_in: string };
 type StaffBreak = { id: string; shift_id: string; user_id: string; kind: "break" | "lunch"; started_at: string };
@@ -13,6 +14,7 @@ export function StaffOnDutyStrip() {
   const [breaks, setBreaks] = useState<StaffBreak[]>([]);
   const [profiles, setProfiles] = useState<Record<string, StaffProfile>>({});
   const [now, setNow] = useState(() => Date.now());
+  const roleFlashMap = useRoleFlashMap();
 
   useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 1000);
@@ -113,7 +115,7 @@ export function StaffOnDutyStrip() {
                     )} />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="text-sm font-semibold text-white truncate">{name}</div>
+                    <div className={cn("text-sm font-semibold text-white truncate", roleFlashClass(roleFlashMap.get(s.user_id)))}>{name}</div>
                     <div className="text-[10px] text-white/80">On {fmtHMS(shiftElapsed)}</div>
                   </div>
                 </div>
