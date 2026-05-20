@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { checkMyVpnOnLogin } from "@/lib/vpn-login-check.functions";
+import { refreshVpnUserSet } from "@/lib/vpn-flags";
 
 export type AppRole = "admin" | "management" | "staff" | "moderator" | "subscriber" | "nonsubscriber" | "member" | "pending" | "banned" | "rejected";
 
@@ -70,13 +71,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (typeof window !== "undefined" && !sessionStorage.getItem(key)) {
             sessionStorage.setItem(key, "1");
             setTimeout(() => {
-              checkMyVpnOnLogin().catch((e) => console.warn("[auth] vpn check failed", e));
+              checkMyVpnOnLogin()
+                .then(() => refreshVpnUserSet())
+                .catch((e) => console.warn("[auth] vpn check failed", e));
             }, 0);
           }
         } catch {
           // sessionStorage may be unavailable; run anyway
           setTimeout(() => {
-            checkMyVpnOnLogin().catch(() => {});
+            checkMyVpnOnLogin()
+              .then(() => refreshVpnUserSet())
+              .catch(() => {});
           }, 0);
         }
       }
