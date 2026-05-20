@@ -2664,6 +2664,7 @@ export type Database = {
           recipient_email: string
         }[]
       }
+      get_vpn_user_ids: { Args: never; Returns: string[] }
       has_any_role: {
         Args: {
           _roles: Database["public"]["Enums"]["app_role"][]
