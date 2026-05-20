@@ -59,42 +59,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setRolesLoaded(true);
   };
 
-  const runVpnLoginCheck = (uid: string) => {
-    const run = () => {
-      checkMyVpnOnLogin()
-        .then(() => refreshVpnUserSet())
-        .catch((e) => console.warn("[auth] vpn check failed", e))
-        .finally(() => {
-          try {
-            sessionStorage.removeItem(`vpn-checking:${uid}`);
-          } catch {
-            // ignore storage issues
-          }
-        });
-    };
-
+  const runVpnLoginCheck = (uid: string, minIntervalMs = 60_000) => {
     try {
       const checkedKey = `vpn-checked:v3:${uid}`;
       const checkingKey = `vpn-checking:${uid}`;
       const lastChecked = Number(sessionStorage.getItem(checkedKey) ?? "0");
       if (
-        typeof window !== "undefined" &&
-        Date.now() - lastChecked > 5 * 60 * 1000 &&
-        !sessionStorage.getItem(checkingKey)
+        typeof window === "undefined" ||
+        Date.now() - lastChecked < minIntervalMs ||
+        sessionStorage.getItem(checkingKey)
       ) {
-        sessionStorage.setItem(checkingKey, "1");
-        setTimeout(() => {
-          checkMyVpnOnLogin()
-            .then(() => {
-              sessionStorage.setItem(checkedKey, String(Date.now()));
-              refreshVpnUserSet();
-            })
-            .catch((e) => console.warn("[auth] vpn check failed", e))
-            .finally(() => sessionStorage.removeItem(checkingKey));
-        }, 0);
+        return;
       }
+      sessionStorage.setItem(checkingKey, "1");
+      setTimeout(() => {
+        checkMyVpnOnLogin()
+          .then(() => {
+            sessionStorage.setItem(checkedKey, String(Date.now()));
+            refreshVpnUserSet();
+          })
+          .catch((e) => console.warn("[auth] vpn check failed", e))
+          .finally(() => sessionStorage.removeItem(checkingKey));
+      }, 0);
     } catch {
-      setTimeout(run, 0);
+      checkMyVpnOnLogin()
+        .then(() => refreshVpnUserSet())
+        .catch((e) => console.warn("[auth] vpn check failed", e));
     }
   };
 
@@ -152,10 +142,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     window.addEventListener("focus", onFocus);
     document.addEventListener("visibilitychange", onVis);
     const onVpnRefresh = () => runVpnLoginCheck(uid);
+    // Poll VPN status every 60s while signed in so connecting a VPN mid-session is detected live.
+    const vpnInterval = window.setInterval(() => runVpnLoginCheck(uid), 60_000);
     window.addEventListener("focus", onVpnRefresh);
     document.addEventListener("visibilitychange", onVpnRefresh);
     return () => {
       window.clearInterval(interval);
+      window.clearInterval(vpnInterval);
       window.removeEventListener("focus", onFocus);
       document.removeEventListener("visibilitychange", onVis);
       window.removeEventListener("focus", onVpnRefresh);
