@@ -271,8 +271,10 @@ function LocationHistoryDialog({ row, onClose }: { row: Row; onClose: () => void
   const fmtLoc = (r: LocationHistoryRow) => {
     const named = [r.city, r.region, r.country].filter(Boolean).join(", ");
     if (named) return named;
-    const latitude = r.latitude == null || r.latitude === "" ? null : Number(r.latitude);
-    const longitude = r.longitude == null || r.longitude === "" ? null : Number(r.longitude);
+    const latitudeRaw = r.latitude as unknown;
+    const longitudeRaw = r.longitude as unknown;
+    const latitude = latitudeRaw == null || latitudeRaw === "" ? null : Number(latitudeRaw);
+    const longitude = longitudeRaw == null || longitudeRaw === "" ? null : Number(longitudeRaw);
     if (latitude != null && longitude != null && Number.isFinite(latitude) && Number.isFinite(longitude)) {
       const accuracyValue = Number(r.accuracy_m);
       const accuracy = Number.isFinite(accuracyValue) ? ` · ±${Math.round(accuracyValue)}m` : "";
