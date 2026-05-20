@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { checkMyVpnOnLogin } from "@/lib/vpn-login-check.functions";
 
 export type AppRole =
   | "admin"
@@ -103,6 +104,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const onFocus = () => tick();
     const onVis = () => {
       if (document.visibilityState === "visible") tick();
+    };
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVis);
+    return () => {
+      window.clearInterval(interval);
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVis);
+    };
+  }, [user?.id]);
+
+  // Re-check the signed-in user's VPN/proxy status periodically so the
+  // `signup_info` row reflects their *current* network state — not just the
+  // state captured at login. Without this, toggling a VPN off mid-session
+  // never updates the badge for admins/staff viewing the user. Throttled to
+  // avoid hammering the upstream IP intel APIs.
+  useEffect(() => {
+    if (!user?.id) return;
+    let lastRun = 0;
+    const MIN_INTERVAL_MS = 60_000;
+    const recheck = () => {
+      const now = Date.now();
+      if (now - lastRun < MIN_INTERVAL_MS) return;
+      lastRun = now;
+      void checkMyVpnOnLogin({ data: {} }).catch((err) => {
+        console.warn("[auth] VPN recheck failed", err);
+      });
+    };
+    recheck();
+    const interval = window.setInterval(recheck, 2 * 60_000);
+    const onFocus = () => recheck();
+    const onVis = () => {
+      if (document.visibilityState === "visible") recheck();
     };
     window.addEventListener("focus", onFocus);
     document.addEventListener("visibilitychange", onVis);
