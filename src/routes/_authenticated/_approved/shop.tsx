@@ -2263,20 +2263,10 @@ function SquareCardPanel({ orderId, amountCents, canPay, onChange }: { orderId: 
         <div className="text-xs text-destructive">{bootError}</div>
       ) : (
         <div className="space-y-2">
-          {(applePayReady || googlePayReady) && (
+          {googlePayReady && (
             <div className="space-y-1.5">
-              {googlePayReady && (
-                <div ref={googlePayBtnRef} onClick={handleGooglePay}
-                  className="w-full min-h-[40px] cursor-pointer" aria-disabled={loading} />
-              )}
-              {applePayReady && (
-                <button ref={applePayBtnRef} onClick={handleApplePay} disabled={loading}
-                  className="w-full h-10 rounded-md bg-black text-white text-sm font-medium disabled:opacity-50"
-                  style={{ WebkitAppearance: "-apple-pay-button" as any } as any}
-                   aria-label="Pay with Apple Pay">
-                  Pay
-                </button>
-              )}
+              <div ref={googlePayBtnRef} onClick={handleGooglePay}
+                className="w-full min-h-[40px] cursor-pointer" aria-disabled={loading} />
               <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
                 <div className="flex-1 h-px bg-border" /> or pay by card <div className="flex-1 h-px bg-border" />
               </div>
