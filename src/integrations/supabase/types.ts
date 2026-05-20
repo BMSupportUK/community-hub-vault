@@ -1376,6 +1376,59 @@ export type Database = {
           },
         ]
       }
+      order_payments: {
+        Row: {
+          amount_cents: number
+          card_brand: string | null
+          created_at: string
+          created_by: string | null
+          currency: string
+          id: string
+          last_4: string | null
+          order_id: string
+          receipt_url: string | null
+          square_payment_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount_cents: number
+          card_brand?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          id?: string
+          last_4?: string | null
+          order_id: string
+          receipt_url?: string | null
+          square_payment_id: string
+          status: string
+          updated_at?: string
+        }
+        Update: {
+          amount_cents?: number
+          card_brand?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          id?: string
+          last_4?: string | null
+          order_id?: string
+          receipt_url?: string | null
+          square_payment_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_payments_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: true
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       page_permissions: {
         Row: {
           allowed_roles: Database["public"]["Enums"]["app_role"][]
