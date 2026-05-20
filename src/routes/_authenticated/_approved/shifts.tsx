@@ -218,7 +218,10 @@ function ShiftsPage() {
     if (s.slot_type === "hourly" && !isMod && !isAdmin) return toast.error("Hourly slots are for moderators");
     if (s.slot_type === "shift" && !isStaffOrAdmin) return toast.error("Full shifts are for staff");
     const { error } = await supabase.from("shift_slots").update({ assigned_to: user.id }).eq("id", s.id).is("assigned_to", null);
-    if (error) return toast.error(error.message);
+    if (error) {
+      if ((error as any).code === "23505") return toast.error("You're already on another shift at this time");
+      return toast.error(error.message);
+    }
     toast.success("Shift claimed");
     load();
   };
@@ -259,7 +262,10 @@ function ShiftsPage() {
       notes: notes || null,
       created_by: user?.id ?? null,
     });
-    if (error) return toast.error(error.message);
+    if (error) {
+      if ((error as any).code === "23505") return toast.error("A shift with the same date and time already exists");
+      return toast.error(error.message);
+    }
     toast.success("Shift added successfully");
     setNewSlot({ ...newSlot, notes: "" });
     load();
@@ -271,7 +277,10 @@ function ShiftsPage() {
       shift_date: date, start_time: preset.start, end_time: preset.end,
       slot_type: "shift", notes: preset.label, created_by: user?.id ?? null,
     });
-    if (error) return toast.error(error.message);
+    if (error) {
+      if ((error as any).code === "23505") return toast.error(`${preset.label} already exists for this date`);
+      return toast.error(error.message);
+    }
     toast.success(`Shift added successfully — ${preset.label}`);
     load();
   };
@@ -289,9 +298,17 @@ function ShiftsPage() {
       })
       .filter(Boolean) as any[];
     if (rows.length === 0) return toast.error("No presets match this week");
-    const { error } = await supabase.from("shift_slots").insert(rows);
-    if (error) return toast.error(error.message);
-    toast.success(`Shift added successfully — ${rows.length} block shifts created for the week`);
+    // Insert one-by-one and skip duplicates so partial weeks still fill in.
+    let added = 0;
+    let skipped = 0;
+    for (const row of rows) {
+      const { error } = await supabase.from("shift_slots").insert(row);
+      if (!error) added++;
+      else if ((error as any).code === "23505") skipped++;
+      else return toast.error(error.message);
+    }
+    if (added === 0) toast.error("All shifts for this week already exist");
+    else toast.success(`Added ${added} shift${added === 1 ? "" : "s"}${skipped ? ` — ${skipped} already existed` : ""}`);
     load();
   };
 
