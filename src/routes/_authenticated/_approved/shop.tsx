@@ -1598,7 +1598,14 @@ function OrdersView({ selectedId, isAdmin, adminUnlocked, initialScope }: { sele
   useEffect(() => { if (!adminUnlocked && scope === "all") setScope("mine"); }, [adminUnlocked, scope]);
   useEffect(() => { load(); }, [scope, user?.id, adminUnlocked]);
   useEffect(() => {
-    const ch = supabase.channel("orders-list").on("postgres_changes", { event: "*", schema: "public", table: "orders" }, load).subscribe();
+    const ch = supabase
+      .channel("orders-list")
+      // orders is a security view over private.orders; subscribe to the base
+      // table so realtime actually delivers insert/update/delete events.
+      .on("postgres_changes", { event: "*", schema: "private", table: "orders" }, load)
+      // New messages should bump/refresh the sales chat list too.
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "order_messages" }, load)
+      .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, [scope, user?.id, adminUnlocked]);
 
@@ -1687,8 +1694,10 @@ function OrderDetail({ orderId, isAdmin, onBack }: { orderId: string; isAdmin: b
           const old = p.old as { id?: string };
           if (old?.id) setMsgs((m) => m.filter((x) => x.id !== old.id));
         })
-      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "orders", filter: `id=eq.${orderId}` },
-        (p) => setOrder(p.new as Order))
+      .on("postgres_changes", { event: "UPDATE", schema: "private", table: "orders", filter: `id=eq.${orderId}` },
+        // The realtime payload is the raw private row (encrypted columns);
+        // refetch via the public view so decrypted fields stay populated.
+        () => { void load(); })
       .on("broadcast", { event: "typing" }, (payload) => {
         const d = (payload?.payload ?? {}) as { userId?: string; isAdmin?: boolean; stopped?: boolean };
         if (!d.userId || d.userId === user?.id || !!d.isAdmin === isAdmin) return;
