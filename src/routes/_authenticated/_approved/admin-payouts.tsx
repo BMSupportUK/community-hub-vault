@@ -259,8 +259,8 @@ function SettingsCard({
         <label className="text-sm">
           <span className="text-muted-foreground">Network</span>
           <select value={form.network} onChange={(e) => setForm({ ...form, network: e.target.value })} className="w-full mt-1 px-3 py-2 rounded-lg bg-surface-2 border border-border">
+            <option value="ERC20">ERC20 (Ethereum) — default</option>
             <option value="TRC20">TRC20 (Tron) — lowest fee</option>
-            <option value="ERC20">ERC20 (Ethereum)</option>
             <option value="BEP20">BEP20 (BNB Chain)</option>
             <option value="POLYGON">Polygon</option>
             <option value="SOL">Solana (SPL)</option>
