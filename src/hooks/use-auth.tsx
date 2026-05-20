@@ -4,6 +4,23 @@ import { supabase } from "@/integrations/supabase/client";
 import { checkMyVpnOnLogin } from "@/lib/vpn-login-check.functions";
 import { refreshVpnUserSet } from "@/lib/vpn-flags";
 
+async function getClientIpHint(): Promise<string | null> {
+  try {
+    const ctrl = new AbortController();
+    const t = window.setTimeout(() => ctrl.abort(), 2500);
+    const res = await fetch("https://api.ipify.org?format=json", {
+      cache: "no-store",
+      signal: ctrl.signal,
+    });
+    window.clearTimeout(t);
+    if (!res.ok) return null;
+    const json = (await res.json()) as { ip?: unknown };
+    return typeof json.ip === "string" ? json.ip : null;
+  } catch {
+    return null;
+  }
+}
+
 export type AppRole =
   | "admin"
   | "management"
@@ -73,7 +90,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       sessionStorage.setItem(checkingKey, "1");
       setTimeout(() => {
-        checkMyVpnOnLogin()
+        getClientIpHint()
+          .then((clientIpHint) => checkMyVpnOnLogin({ data: { clientIpHint } }))
           .then(() => {
             sessionStorage.setItem(checkedKey, String(Date.now()));
             refreshVpnUserSet();
@@ -82,7 +100,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .finally(() => sessionStorage.removeItem(checkingKey));
       }, 0);
     } catch {
-      checkMyVpnOnLogin()
+      checkMyVpnOnLogin({ data: {} })
         .then(() => refreshVpnUserSet())
         .catch((e) => console.warn("[auth] vpn check failed", e));
     }
