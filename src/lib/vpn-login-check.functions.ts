@@ -7,7 +7,7 @@ const InputSchema = z
   .object({
     clientIpHint: z.string().max(80).optional().nullable(),
   })
-  .optional();
+  .default({});
 
 function normalizeIp(value: string | null | undefined): string | null {
   if (!value) return null;
@@ -120,7 +120,7 @@ async function checkVpn(ip: string) {
 
 export const checkMyVpnOnLogin = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input) => InputSchema.parse(input) ?? {})
+  .inputValidator((input) => InputSchema.parse(input))
   .handler(async ({ data, context }) => {
     const { supabase } = context;
     const observedIp = firstPublicIp(
