@@ -2339,7 +2339,7 @@ function loadPaypalSdk(clientId: string, currency: string): Promise<any> {
       return;
     }
     const s = document.createElement("script");
-    s.src = `https://www.paypal.com/sdk/js?client-id=${encodeURIComponent(clientId)}&currency=${encodeURIComponent(currency)}&intent=capture&disable-funding=card,credit,paylater,venmo`;
+    s.src = `https://www.paypal.com/sdk/js?client-id=${encodeURIComponent(clientId)}&currency=${encodeURIComponent(currency)}&intent=capture&components=buttons,card-fields`;
     s.async = true;
     s.setAttribute("data-paypal-sdk", "1");
     s.onload = () => resolve((window as any).paypal);
@@ -2354,6 +2354,13 @@ function PaypalPanel({ orderId, amountCents, canPay, onChange }: { orderId: stri
   const [ready, setReady] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const buttonsInstanceRef = useRef<any>(null);
+  const cardNumberRef = useRef<HTMLDivElement | null>(null);
+  const cardExpiryRef = useRef<HTMLDivElement | null>(null);
+  const cardCvvRef = useRef<HTMLDivElement | null>(null);
+  const cardNameRef = useRef<HTMLDivElement | null>(null);
+  const cardFieldsRef = useRef<any>(null);
+  const [cardReady, setCardReady] = useState(false);
+  const [cardLoading, setCardLoading] = useState(false);
   const { format } = useCurrency();
   const getConfig = useServerFn(getPaypalWebConfig);
   const createFn = useServerFn(createPaypalOrder);
@@ -2409,6 +2416,58 @@ function PaypalPanel({ orderId, amountCents, canPay, onChange }: { orderId: stri
         await btns.render(containerRef.current);
         buttonsInstanceRef.current = btns;
         setReady(true);
+
+        // Advanced Card Fields (embedded in our own UI)
+        try {
+          if (typeof paypal.CardFields !== "function") return;
+          const cf = paypal.CardFields({
+            createOrder: async () => {
+              const res = await createFn({ data: { orderId } });
+              return res.paypalOrderId;
+            },
+            onApprove: async (data: any) => {
+              try {
+                const res = await captureFn({ data: { orderId, paypalOrderId: data.orderID } });
+                toast.success(`Paid ${format(amountCents)} via card`);
+                setPaid({
+                  status: res.status,
+                  card_brand: "Card",
+                  last_4: null,
+                  amount_cents: amountCents,
+                  provider: "paypal",
+                });
+                await onChange?.();
+              } catch (e) {
+                toast.error((e as Error).message);
+              }
+            },
+            onError: (err: any) => {
+              console.error("[paypal] card-fields error", err);
+              toast.error(err?.message || "Card error");
+            },
+            style: {
+              input: {
+                "font-size": "14px",
+                "font-family": "Inter, system-ui, sans-serif",
+                color: "#0f172a",
+                "padding": "8px",
+              },
+              ".invalid": { color: "#dc2626" },
+            },
+          });
+          if (!cf.isEligible()) return;
+          if (cancelled) return;
+          await Promise.all([
+            cardNumberRef.current ? cf.NumberField().render(cardNumberRef.current) : null,
+            cardExpiryRef.current ? cf.ExpiryField().render(cardExpiryRef.current) : null,
+            cardCvvRef.current ? cf.CVVField().render(cardCvvRef.current) : null,
+            cardNameRef.current ? cf.NameField().render(cardNameRef.current) : null,
+          ]);
+          cardFieldsRef.current = cf;
+          if (!cancelled) setCardReady(true);
+        } catch (e) {
+          console.warn("[paypal] card-fields unavailable", e);
+        }
       } catch (e) {
         if (!cancelled) setBootError((e as Error).message);
       }
@@ -2417,9 +2476,24 @@ function PaypalPanel({ orderId, amountCents, canPay, onChange }: { orderId: stri
       cancelled = true;
       try { buttonsInstanceRef.current?.close?.(); } catch {}
       buttonsInstanceRef.current = null;
+      try { cardFieldsRef.current?.close?.(); } catch {}
+      cardFieldsRef.current = null;
       setReady(false);
+      setCardReady(false);
     };
   }, [canPay, paid, orderId, amountCents]);
+
+  const handleCardPay = async () => {
+    if (!cardFieldsRef.current) return;
+    setCardLoading(true);
+    try {
+      await cardFieldsRef.current.submit();
+    } catch (e: any) {
+      toast.error(e?.message || "Card payment failed");
+    } finally {
+      setCardLoading(false);
+    }
+  };
 
   if (paid?.provider === "paypal") {
     return (
@@ -2459,6 +2533,39 @@ function PaypalPanel({ orderId, amountCents, canPay, onChange }: { orderId: stri
         <>
           <div ref={containerRef} className="min-h-[40px]" />
           {!ready && <div className="text-[11px] text-muted-foreground mt-1">Loading PayPal…</div>}
+          {cardReady && (
+            <div className="mt-3 space-y-2">
+              <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider text-muted-foreground">
+                <div className="h-px flex-1 bg-border" /> or pay by card <div className="h-px flex-1 bg-border" />
+              </div>
+              <div>
+                <label className="text-[11px] text-muted-foreground">Cardholder name</label>
+                <div ref={cardNameRef} className="rounded-md bg-white border border-border px-2 min-h-[40px]" />
+              </div>
+              <div>
+                <label className="text-[11px] text-muted-foreground">Card number</label>
+                <div ref={cardNumberRef} className="rounded-md bg-white border border-border px-2 min-h-[40px]" />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-[11px] text-muted-foreground">Expiry</label>
+                  <div ref={cardExpiryRef} className="rounded-md bg-white border border-border px-2 min-h-[40px]" />
+                </div>
+                <div>
+                  <label className="text-[11px] text-muted-foreground">CVV</label>
+                  <div ref={cardCvvRef} className="rounded-md bg-white border border-border px-2 min-h-[40px]" />
+                </div>
+              </div>
+              <button
+                onClick={handleCardPay}
+                disabled={cardLoading}
+                className="w-full px-2.5 py-2 rounded-md bg-primary text-primary-foreground text-xs font-medium flex items-center justify-center gap-1.5 hover:bg-primary/90 disabled:opacity-50"
+              >
+                <CreditCard className="size-3.5" />
+                {cardLoading ? "Processing…" : `Pay ${format(amountCents)}`}
+              </button>
+            </div>
+          )}
         </>
       )}
     </div>
