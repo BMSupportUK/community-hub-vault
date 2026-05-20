@@ -686,8 +686,8 @@ function ProfilePage() {
   );
 }
 
-function Avatar({ url, name, size = 40, ring }: { url: string | null; name: string; size?: number; ring?: boolean }) {
-  return AvatarImpl({ url, name, size, ring });
+function Avatar({ url, name, size = 40, ring, userId }: { url: string | null; name: string; size?: number; ring?: boolean; userId?: string | null }) {
+  return AvatarImpl({ url, name, size, ring, userId });
 }
 
 function FriendActionButton({
@@ -726,7 +726,9 @@ function FriendActionButton({
   );
 }
 
-function AvatarImpl({ url, name, size = 40, ring }: { url: string | null; name: string; size?: number; ring?: boolean }) {
+function AvatarImpl({ url, name, size = 40, ring, userId }: { url: string | null; name: string; size?: number; ring?: boolean; userId?: string | null }) {
+  const roleFlashMap = useRoleFlashMap();
+  const resolved = resolveAvatarUrl(userId ?? null, url, roleFlashMap);
   return (
     <div
       className={cn(
@@ -735,7 +737,7 @@ function AvatarImpl({ url, name, size = 40, ring }: { url: string | null; name: 
       )}
       style={{ width: size, height: size, fontSize: size * 0.36 }}
     >
-      <img src={url || "/default-avatar.png"} alt={name} className="w-full h-full object-cover" />
+      <img src={resolved} alt={name} className="w-full h-full object-cover" />
     </div>
   );
 }
