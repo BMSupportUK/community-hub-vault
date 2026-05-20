@@ -1,47 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import { checkMyVpnOnLogin } from "@/lib/vpn-login-check.functions";
-import { refreshVpnUserSet } from "@/lib/vpn-flags";
-
-async function getClientIpHint(): Promise<string | null> {
-  try {
-    const ctrl = new AbortController();
-    const t = window.setTimeout(() => ctrl.abort(), 2500);
-    const res = await fetch("https://api.ipify.org?format=json", {
-      cache: "no-store",
-      signal: ctrl.signal,
-    });
-    window.clearTimeout(t);
-    if (!res.ok) return null;
-    const json = (await res.json()) as { ip?: unknown };
-    return typeof json.ip === "string" ? json.ip : null;
-  } catch {
-    return null;
-  }
-}
-
-async function recordLoginHistoryFallback(clientIpHint: string | null): Promise<void> {
-  const { error } = await supabase.rpc(
-    "insert_my_location_event" as never,
-    {
-      _event_type: "login",
-      _ip: clientIpHint ?? "unknown",
-      _country: null,
-      _region: null,
-      _city: null,
-      _latitude: null,
-      _longitude: null,
-      _isp: null,
-      _is_vpn: null,
-      _is_proxy: null,
-      _vpn_provider: null,
-      _user_agent: typeof navigator === "undefined" ? null : navigator.userAgent,
-      _accuracy_m: null,
-    } as never,
-  );
-  if (error) throw error;
-}
 
 export type AppRole =
   | "admin"
@@ -98,43 +57,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setRolesLoaded(true);
   };
 
-  const runVpnLoginCheck = (uid: string, minIntervalMs = 60_000) => {
-    try {
-      const checkedKey = `vpn-checked:v4:${uid}`;
-      const checkingKey = `vpn-checking:v4:${uid}`;
-      const lastChecked = Number(sessionStorage.getItem(checkedKey) ?? "0");
-      const checkingStarted = Number(sessionStorage.getItem(checkingKey) ?? "0");
-      const checkIsStillRunning = checkingStarted > 0 && Date.now() - checkingStarted < 30_000;
-      if (
-        typeof window === "undefined" ||
-        Date.now() - lastChecked < minIntervalMs ||
-        checkIsStillRunning
-      ) {
-        return;
-      }
-      sessionStorage.setItem(checkingKey, String(Date.now()));
-      setTimeout(() => {
-        getClientIpHint()
-          .then((clientIpHint) =>
-            checkMyVpnOnLogin({ data: { clientIpHint } }).catch(async (e) => {
-              console.warn("[auth] vpn check failed; recording basic login event", e);
-              await recordLoginHistoryFallback(clientIpHint);
-            }),
-          )
-          .then(() => {
-            sessionStorage.setItem(checkedKey, String(Date.now()));
-            refreshVpnUserSet();
-          })
-          .catch((e) => console.warn("[auth] vpn check failed", e))
-          .finally(() => sessionStorage.removeItem(checkingKey));
-      }, 0);
-    } catch {
-      recordLoginHistoryFallback(null)
-        .then(() => refreshVpnUserSet())
-        .catch((e) => console.warn("[auth] vpn check failed", e));
-    }
-  };
-
   useEffect(() => {
     let currentUid: string | null = null;
     const { data: sub } = supabase.auth.onAuthStateChange((event, s) => {
@@ -150,12 +72,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setRoles([]);
         setRolesLoaded(true);
       }
-      if (event === "SIGNED_IN" && nextUid) {
-        runVpnLoginCheck(nextUid, 0);
-      }
-      if (event === "TOKEN_REFRESHED" && nextUid) {
-        runVpnLoginCheck(nextUid, 5_000);
-      }
       // Same user (e.g. TOKEN_REFRESHED on tab refocus): do not reload roles —
       // toggling rolesLoaded would flip the global loading state and unmount the app.
     });
@@ -165,7 +81,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (s?.user) {
         currentUid = s.user.id;
         await loadRoles(s.user.id);
-        runVpnLoginCheck(s.user.id);
       } else {
         setRolesLoaded(true);
       }
@@ -191,20 +106,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
     window.addEventListener("focus", onFocus);
     document.addEventListener("visibilitychange", onVis);
-    // On focus/visibility (user-driven), re-check almost immediately (5s throttle)
-    // so toggling a VPN and switching back to the tab updates the shield right away.
-    const onVpnRefresh = () => runVpnLoginCheck(uid, 5_000);
-    // Poll VPN status every 10s while signed in so connecting a VPN mid-session is detected live.
-    const vpnInterval = window.setInterval(() => runVpnLoginCheck(uid, 10_000), 10_000);
-    window.addEventListener("focus", onVpnRefresh);
-    document.addEventListener("visibilitychange", onVpnRefresh);
     return () => {
       window.clearInterval(interval);
-      window.clearInterval(vpnInterval);
       window.removeEventListener("focus", onFocus);
       document.removeEventListener("visibilitychange", onVis);
-      window.removeEventListener("focus", onVpnRefresh);
-      document.removeEventListener("visibilitychange", onVpnRefresh);
     };
   }, [user?.id]);
 
