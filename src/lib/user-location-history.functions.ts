@@ -17,6 +17,7 @@ export interface LocationHistoryRow {
   is_proxy: boolean | null;
   vpn_provider: string | null;
   user_agent: string | null;
+  accuracy_m: number | null;
   created_at: string;
 }
 
