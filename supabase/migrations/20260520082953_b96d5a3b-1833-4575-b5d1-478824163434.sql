@@ -1,0 +1,8 @@
+DO $$
+DECLARE v_exists boolean;
+BEGIN
+  SELECT EXISTS(SELECT 1 FROM vault.secrets WHERE name='SUPABASE_ANON_KEY') INTO v_exists;
+  IF NOT v_exists THEN
+    PERFORM vault.create_secret('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ6cmJkYXdscXllYWxubHJ0d2dqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2OTA5NDIsImV4cCI6MjA5NDI2Njk0Mn0.uZD07rXDfXt-g3mEMlhS-m_784yaID0-cabPobpMIoE', 'SUPABASE_ANON_KEY');
+  END IF;
+END $$;
