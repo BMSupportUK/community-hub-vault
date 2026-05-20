@@ -2116,7 +2116,7 @@ function SquareCardPanel({ orderId, amountCents, canPay, onChange }: { orderId: 
   const cardRef = useRef<HTMLDivElement | null>(null);
   const cardInstanceRef = useRef<any>(null);
   const paymentsRef = useRef<any>(null);
-  const { symbol } = useCurrency();
+  const { format } = useCurrency();
   const getConfig = useServerFn(getSquareWebConfig);
   const chargeFn = useServerFn(chargeOrderWithSquare);
 
@@ -2173,7 +2173,7 @@ function SquareCardPanel({ orderId, amountCents, canPay, onChange }: { orderId: 
         throw new Error(msg);
       }
       const res = await chargeFn({ data: { orderId, sourceId: result.token } });
-      toast.success(`Paid ${symbol}${(amountCents / 100).toFixed(2)}`);
+      toast.success(`Paid ${format(amountCents)}`);
       setPaid({
         status: res.status,
         card_brand: res.cardBrand,
@@ -2229,7 +2229,7 @@ function SquareCardPanel({ orderId, amountCents, canPay, onChange }: { orderId: 
           <button onClick={handlePay} disabled={!ready || loading}
             className="w-full px-2.5 py-2 rounded-md bg-primary text-primary-foreground text-xs font-medium flex items-center justify-center gap-1.5 hover:bg-primary/90 disabled:opacity-50">
             <CreditCard className="size-3.5" />
-            {loading ? "Processing…" : ready ? `Pay ${symbol}${(amountCents / 100).toFixed(2)}` : "Loading…"}
+            {loading ? "Processing…" : ready ? `Pay ${format(amountCents)}` : "Loading…"}
           </button>
         </div>
       )}
