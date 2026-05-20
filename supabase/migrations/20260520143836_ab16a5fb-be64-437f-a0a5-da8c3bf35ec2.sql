@@ -1,0 +1,1 @@
+revoke execute on function public.get_vpn_user_ids() from public, anon;
