@@ -1,15 +1,45 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getRequestHeader, getRequestIP } from "@tanstack/react-start/server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { z } from "zod";
+
+const InputSchema = z
+  .object({
+    clientIpHint: z.string().max(80).optional().nullable(),
+  })
+  .optional();
+
+function normalizeIp(value: string | null | undefined): string | null {
+  if (!value) return null;
+  const raw = value.split(",")[0]?.trim().replace(/^\[|\]$/g, "") ?? "";
+  const ip = raw.includes(":") ? raw.toLowerCase() : raw.replace(/:\d+$/, "");
+  if (/^(\d{1,3}\.){3}\d{1,3}$/.test(ip)) {
+    const parts = ip.split(".").map(Number);
+    return parts.every((part) => Number.isInteger(part) && part >= 0 && part <= 255) ? ip : null;
+  }
+  if (/^[0-9a-f:]+$/i.test(ip) && ip.includes(":")) return ip;
+  return null;
+}
 
 function isPrivateIp(ip: string): boolean {
   if (!ip || ip === "unknown") return true;
   if (ip.startsWith("127.") || ip.startsWith("10.") || ip.startsWith("192.168.")) return true;
+  if (ip.startsWith("169.254.")) return true;
+  const cgnat = ip.match(/^100\.(\d+)\./);
+  if (cgnat && Number(cgnat[1]) >= 64 && Number(cgnat[1]) <= 127) return true;
   if (ip === "::1" || ip.startsWith("fe80:") || ip.startsWith("fc") || ip.startsWith("fd"))
     return true;
   const m = ip.match(/^172\.(\d+)\./);
   if (m && Number(m[1]) >= 16 && Number(m[1]) <= 31) return true;
   return false;
+}
+
+function firstPublicIp(...values: Array<string | null | undefined>): string {
+  for (const value of values) {
+    const ip = normalizeIp(value);
+    if (ip && !isPrivateIp(ip)) return ip;
+  }
+  return normalizeIp(values.find(Boolean)) ?? "unknown";
 }
 
 async function checkVpn(ip: string) {
@@ -23,13 +53,22 @@ async function checkVpn(ip: string) {
     clearTimeout(t);
     if (!res.ok) return null;
     const json = (await res.json()) as Record<string, unknown>;
-    const entry = (json[ip] ?? {}) as Record<string, unknown>;
+    const directEntry = json[ip] as Record<string, unknown> | undefined;
+    const fallbackEntry = Object.values(json).find(
+      (value): value is Record<string, unknown> =>
+        value != null && typeof value === "object" && "proxy" in value,
+    );
+    const entry = directEntry ?? fallbackEntry ?? {};
     const operator = (entry.operator ?? {}) as Record<string, unknown>;
     const proxy = String(entry.proxy ?? "no").toLowerCase() === "yes";
     const type = String(entry.type ?? "").toLowerCase();
+    const providerText = [operator.name, entry.provider, entry.organisation, entry.isp, entry.hostname]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
     return {
       is_proxy: proxy,
-      is_vpn: proxy && type === "vpn",
+      is_vpn: proxy && (type === "vpn" || providerText.includes("vpn")),
       vpn_provider:
         (operator.name as string) ??
         (entry.provider as string) ??
@@ -48,13 +87,17 @@ async function checkVpn(ip: string) {
 
 export const checkMyVpnOnLogin = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .inputValidator((input) => InputSchema.parse(input) ?? {})
+  .handler(async ({ data, context }) => {
     const { supabase } = context;
-    const ip =
-      getRequestIP({ xForwardedFor: true }) ??
-      getRequestHeader("cf-connecting-ip") ??
-      getRequestHeader("x-real-ip") ??
-      "unknown";
+    const observedIp = firstPublicIp(
+      getRequestHeader("cf-connecting-ip"),
+      getRequestHeader("x-real-ip"),
+      getRequestHeader("x-forwarded-for"),
+      getRequestIP({ xForwardedFor: true }),
+    );
+    const clientIp = normalizeIp(data.clientIpHint);
+    const ip = clientIp && !isPrivateIp(clientIp) ? clientIp : observedIp;
 
     if (isPrivateIp(ip)) return { ok: false, skipped: true, ip };
 
@@ -77,5 +120,5 @@ export const checkMyVpnOnLogin = createServerFn({ method: "POST" })
     );
     if (error) throw error;
 
-    return { ok: true, ip, is_vpn: vpn.is_vpn, is_proxy: vpn.is_proxy };
+    return { ok: true, ip, observedIp, clientIp, is_vpn: vpn.is_vpn, is_proxy: vpn.is_proxy };
   });
