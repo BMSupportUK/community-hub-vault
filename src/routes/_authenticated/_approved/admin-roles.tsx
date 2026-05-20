@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { isAdminUnlocked } from "@/lib/admin-unlock";
 import { deleteMember } from "@/lib/admin-users.functions";
 import { getUserLocationHistory, type LocationHistoryRow } from "@/lib/user-location-history.functions";
+import { LocationHistoryMap } from "@/components/app/LocationHistoryMap";
 
 export const Route = createFileRoute("/_authenticated/_approved/admin-roles")({
   component: AdminRolesPage,
@@ -245,6 +246,7 @@ function LocationHistoryDialog({ row, onClose }: { row: Row; onClose: () => void
   const fetchHistory = useServerFn(getUserLocationHistory);
   const [loading, setLoading] = useState(true);
   const [rows, setRows] = useState<LocationHistoryRow[]>([]);
+  const [view, setView] = useState<"table" | "map">("map");
 
   useEffect(() => {
     let active = true;
@@ -267,15 +269,27 @@ function LocationHistoryDialog({ row, onClose }: { row: Row; onClose: () => void
             <h2 className="font-display font-bold truncate">Location history</h2>
             <p className="text-xs text-muted-foreground truncate">{row.display_name || row.username || row.id} · @{row.username ?? row.id.slice(0,8)}</p>
           </div>
-          <button onClick={onClose} className="p-2 rounded-lg hover:bg-surface-2 text-muted-foreground hover:text-foreground">
-            <X className="size-4" />
-          </button>
+          <div className="flex items-center gap-2">
+            <div className="flex rounded-lg border border-border overflow-hidden text-xs">
+              {(["map","table"] as const).map((v) => (
+                <button key={v} onClick={() => setView(v)}
+                  className={cn("px-3 py-1.5 capitalize", view === v ? "bg-primary text-primary-foreground" : "bg-surface-2 text-muted-foreground hover:text-foreground")}>
+                  {v}
+                </button>
+              ))}
+            </div>
+            <button onClick={onClose} className="p-2 rounded-lg hover:bg-surface-2 text-muted-foreground hover:text-foreground">
+              <X className="size-4" />
+            </button>
+          </div>
         </header>
-        <div className="overflow-auto flex-1">
+        <div className={cn("flex-1 min-h-0", view === "table" && "overflow-auto")}>
           {loading ? (
             <div className="grid place-items-center py-16 text-muted-foreground"><Loader2 className="size-5 animate-spin" /></div>
           ) : rows.length === 0 ? (
             <div className="px-5 py-16 text-center text-muted-foreground text-sm">No location events recorded yet. They'll appear here next time this user signs in.</div>
+          ) : view === "map" ? (
+            <LocationHistoryMap rows={rows} />
           ) : (
             <table className="w-full text-sm">
               <thead className="text-xs uppercase tracking-wide text-muted-foreground bg-surface-2 sticky top-0">

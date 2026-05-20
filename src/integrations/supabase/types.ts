@@ -2295,6 +2295,7 @@ export type Database = {
       }
       user_location_history: {
         Row: {
+          accuracy_m: number | null
           city: string | null
           country: string | null
           created_at: string
@@ -2312,6 +2313,7 @@ export type Database = {
           vpn_provider: string | null
         }
         Insert: {
+          accuracy_m?: number | null
           city?: string | null
           country?: string | null
           created_at?: string
@@ -2329,6 +2331,7 @@ export type Database = {
           vpn_provider?: string | null
         }
         Update: {
+          accuracy_m?: number | null
           city?: string | null
           country?: string | null
           created_at?: string
@@ -2665,6 +2668,7 @@ export type Database = {
       admin_get_user_location_history: {
         Args: { _limit?: number; _user_id: string }
         Returns: {
+          accuracy_m: number | null
           city: string | null
           country: string | null
           created_at: string
@@ -2784,23 +2788,42 @@ export type Database = {
         }
         Returns: boolean
       }
-      insert_my_location_event: {
-        Args: {
-          _city: string
-          _country: string
-          _event_type: string
-          _ip: string
-          _is_proxy: boolean
-          _is_vpn: boolean
-          _isp: string
-          _latitude: number
-          _longitude: number
-          _region: string
-          _user_agent: string
-          _vpn_provider: string
-        }
-        Returns: string
-      }
+      insert_my_location_event:
+        | {
+            Args: {
+              _city: string
+              _country: string
+              _event_type: string
+              _ip: string
+              _is_proxy: boolean
+              _is_vpn: boolean
+              _isp: string
+              _latitude: number
+              _longitude: number
+              _region: string
+              _user_agent: string
+              _vpn_provider: string
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              _accuracy_m?: number
+              _city: string
+              _country: string
+              _event_type: string
+              _ip: string
+              _is_proxy: boolean
+              _is_vpn: boolean
+              _isp: string
+              _latitude: number
+              _longitude: number
+              _region: string
+              _user_agent: string
+              _vpn_provider: string
+            }
+            Returns: string
+          }
       is_blacklisted: {
         Args: { _email: string; _ip: string }
         Returns: boolean
