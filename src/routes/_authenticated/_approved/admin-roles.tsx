@@ -263,7 +263,7 @@ function LocationHistoryDialog({ row, onClose }: { row: Row; onClose: () => void
 
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-background/70 backdrop-blur-sm p-4" onClick={onClose}>
-      <div className="w-full max-w-4xl max-h-[85vh] bg-surface-1 border border-border rounded-2xl shadow-elegant overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
+      <div className="w-full max-w-4xl h-[85vh] bg-surface-1 border border-border rounded-2xl shadow-elegant overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
         <header className="flex items-center justify-between gap-4 px-5 py-4 border-b border-border">
           <div className="min-w-0">
             <h2 className="font-display font-bold truncate">Location history</h2>
@@ -283,7 +283,7 @@ function LocationHistoryDialog({ row, onClose }: { row: Row; onClose: () => void
             </button>
           </div>
         </header>
-        <div className={cn("flex-1 min-h-0", view === "table" && "overflow-auto")}>
+        <div className={cn("flex-1 min-h-0 overflow-hidden", view === "table" && "overflow-auto")}>
           {loading ? (
             <div className="grid place-items-center py-16 text-muted-foreground"><Loader2 className="size-5 animate-spin" /></div>
           ) : rows.length === 0 ? (
