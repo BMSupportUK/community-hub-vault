@@ -44,6 +44,7 @@ import { Route as AuthenticatedApprovedAdminRolesRouteImport } from './routes/_a
 import { Route as AuthenticatedApprovedAdminReviewsRouteImport } from './routes/_authenticated/_approved/admin-reviews'
 import { Route as AuthenticatedApprovedAdminProfanityRouteImport } from './routes/_authenticated/_approved/admin-profanity'
 import { Route as AuthenticatedApprovedAdminPermissionsRouteImport } from './routes/_authenticated/_approved/admin-permissions'
+import { Route as AuthenticatedApprovedAdminNotificationsRouteImport } from './routes/_authenticated/_approved/admin-notifications'
 import { Route as AuthenticatedApprovedAdminNameplatesRouteImport } from './routes/_authenticated/_approved/admin-nameplates'
 import { Route as AuthenticatedApprovedAdminHeroBoxesRouteImport } from './routes/_authenticated/_approved/admin-hero-boxes'
 import { Route as AuthenticatedApprovedAdminDnsRouteImport } from './routes/_authenticated/_approved/admin-dns'
@@ -58,6 +59,7 @@ import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/l
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 import { Route as ApiPublicHooksSubscriptionExpiryRemindersRouteImport } from './routes/api/public/hooks/subscription-expiry-reminders'
 import { Route as ApiPublicHooksSquareInvoiceRouteImport } from './routes/api/public/hooks/square-invoice'
+import { Route as ApiPublicHooksNotifyRouteImport } from './routes/api/public/hooks/notify'
 import { Route as ApiPublicHooksBackupOrdersRouteImport } from './routes/api/public/hooks/backup-orders'
 import { Route as ApiPublicHooksBackupCredentialsRouteImport } from './routes/api/public/hooks/backup-credentials'
 import { Route as AuthenticatedApprovedUUsernameRouteImport } from './routes/_authenticated/_approved/u.$username'
@@ -261,6 +263,12 @@ const AuthenticatedApprovedAdminPermissionsRoute =
     path: '/admin-permissions',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
+const AuthenticatedApprovedAdminNotificationsRoute =
+  AuthenticatedApprovedAdminNotificationsRouteImport.update({
+    id: '/admin-notifications',
+    path: '/admin-notifications',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
 const AuthenticatedApprovedAdminNameplatesRoute =
   AuthenticatedApprovedAdminNameplatesRouteImport.update({
     id: '/admin-nameplates',
@@ -345,6 +353,11 @@ const ApiPublicHooksSquareInvoiceRoute =
     path: '/api/public/hooks/square-invoice',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksNotifyRoute = ApiPublicHooksNotifyRouteImport.update({
+  id: '/api/public/hooks/notify',
+  path: '/api/public/hooks/notify',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicHooksBackupOrdersRoute =
   ApiPublicHooksBackupOrdersRouteImport.update({
     id: '/api/public/hooks/backup-orders',
@@ -408,6 +421,7 @@ export interface FileRoutesByFullPath {
   '/admin-dns': typeof AuthenticatedApprovedAdminDnsRoute
   '/admin-hero-boxes': typeof AuthenticatedApprovedAdminHeroBoxesRoute
   '/admin-nameplates': typeof AuthenticatedApprovedAdminNameplatesRoute
+  '/admin-notifications': typeof AuthenticatedApprovedAdminNotificationsRoute
   '/admin-permissions': typeof AuthenticatedApprovedAdminPermissionsRoute
   '/admin-profanity': typeof AuthenticatedApprovedAdminProfanityRoute
   '/admin-reviews': typeof AuthenticatedApprovedAdminReviewsRoute
@@ -435,6 +449,7 @@ export interface FileRoutesByFullPath {
   '/u/$username': typeof AuthenticatedApprovedUUsernameRoute
   '/api/public/hooks/backup-credentials': typeof ApiPublicHooksBackupCredentialsRoute
   '/api/public/hooks/backup-orders': typeof ApiPublicHooksBackupOrdersRoute
+  '/api/public/hooks/notify': typeof ApiPublicHooksNotifyRoute
   '/api/public/hooks/square-invoice': typeof ApiPublicHooksSquareInvoiceRoute
   '/api/public/hooks/subscription-expiry-reminders': typeof ApiPublicHooksSubscriptionExpiryRemindersRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -464,6 +479,7 @@ export interface FileRoutesByTo {
   '/admin-dns': typeof AuthenticatedApprovedAdminDnsRoute
   '/admin-hero-boxes': typeof AuthenticatedApprovedAdminHeroBoxesRoute
   '/admin-nameplates': typeof AuthenticatedApprovedAdminNameplatesRoute
+  '/admin-notifications': typeof AuthenticatedApprovedAdminNotificationsRoute
   '/admin-permissions': typeof AuthenticatedApprovedAdminPermissionsRoute
   '/admin-profanity': typeof AuthenticatedApprovedAdminProfanityRoute
   '/admin-reviews': typeof AuthenticatedApprovedAdminReviewsRoute
@@ -490,6 +506,7 @@ export interface FileRoutesByTo {
   '/u/$username': typeof AuthenticatedApprovedUUsernameRoute
   '/api/public/hooks/backup-credentials': typeof ApiPublicHooksBackupCredentialsRoute
   '/api/public/hooks/backup-orders': typeof ApiPublicHooksBackupOrdersRoute
+  '/api/public/hooks/notify': typeof ApiPublicHooksNotifyRoute
   '/api/public/hooks/square-invoice': typeof ApiPublicHooksSquareInvoiceRoute
   '/api/public/hooks/subscription-expiry-reminders': typeof ApiPublicHooksSubscriptionExpiryRemindersRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -522,6 +539,7 @@ export interface FileRoutesById {
   '/_authenticated/_approved/admin-dns': typeof AuthenticatedApprovedAdminDnsRoute
   '/_authenticated/_approved/admin-hero-boxes': typeof AuthenticatedApprovedAdminHeroBoxesRoute
   '/_authenticated/_approved/admin-nameplates': typeof AuthenticatedApprovedAdminNameplatesRoute
+  '/_authenticated/_approved/admin-notifications': typeof AuthenticatedApprovedAdminNotificationsRoute
   '/_authenticated/_approved/admin-permissions': typeof AuthenticatedApprovedAdminPermissionsRoute
   '/_authenticated/_approved/admin-profanity': typeof AuthenticatedApprovedAdminProfanityRoute
   '/_authenticated/_approved/admin-reviews': typeof AuthenticatedApprovedAdminReviewsRoute
@@ -549,6 +567,7 @@ export interface FileRoutesById {
   '/_authenticated/_approved/u/$username': typeof AuthenticatedApprovedUUsernameRoute
   '/api/public/hooks/backup-credentials': typeof ApiPublicHooksBackupCredentialsRoute
   '/api/public/hooks/backup-orders': typeof ApiPublicHooksBackupOrdersRoute
+  '/api/public/hooks/notify': typeof ApiPublicHooksNotifyRoute
   '/api/public/hooks/square-invoice': typeof ApiPublicHooksSquareInvoiceRoute
   '/api/public/hooks/subscription-expiry-reminders': typeof ApiPublicHooksSubscriptionExpiryRemindersRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -580,6 +599,7 @@ export interface FileRouteTypes {
     | '/admin-dns'
     | '/admin-hero-boxes'
     | '/admin-nameplates'
+    | '/admin-notifications'
     | '/admin-permissions'
     | '/admin-profanity'
     | '/admin-reviews'
@@ -607,6 +627,7 @@ export interface FileRouteTypes {
     | '/u/$username'
     | '/api/public/hooks/backup-credentials'
     | '/api/public/hooks/backup-orders'
+    | '/api/public/hooks/notify'
     | '/api/public/hooks/square-invoice'
     | '/api/public/hooks/subscription-expiry-reminders'
     | '/lovable/email/queue/process'
@@ -636,6 +657,7 @@ export interface FileRouteTypes {
     | '/admin-dns'
     | '/admin-hero-boxes'
     | '/admin-nameplates'
+    | '/admin-notifications'
     | '/admin-permissions'
     | '/admin-profanity'
     | '/admin-reviews'
@@ -662,6 +684,7 @@ export interface FileRouteTypes {
     | '/u/$username'
     | '/api/public/hooks/backup-credentials'
     | '/api/public/hooks/backup-orders'
+    | '/api/public/hooks/notify'
     | '/api/public/hooks/square-invoice'
     | '/api/public/hooks/subscription-expiry-reminders'
     | '/lovable/email/queue/process'
@@ -693,6 +716,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/admin-dns'
     | '/_authenticated/_approved/admin-hero-boxes'
     | '/_authenticated/_approved/admin-nameplates'
+    | '/_authenticated/_approved/admin-notifications'
     | '/_authenticated/_approved/admin-permissions'
     | '/_authenticated/_approved/admin-profanity'
     | '/_authenticated/_approved/admin-reviews'
@@ -720,6 +744,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/u/$username'
     | '/api/public/hooks/backup-credentials'
     | '/api/public/hooks/backup-orders'
+    | '/api/public/hooks/notify'
     | '/api/public/hooks/square-invoice'
     | '/api/public/hooks/subscription-expiry-reminders'
     | '/lovable/email/queue/process'
@@ -743,6 +768,7 @@ export interface RootRouteChildren {
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
   ApiPublicHooksBackupCredentialsRoute: typeof ApiPublicHooksBackupCredentialsRoute
   ApiPublicHooksBackupOrdersRoute: typeof ApiPublicHooksBackupOrdersRoute
+  ApiPublicHooksNotifyRoute: typeof ApiPublicHooksNotifyRoute
   ApiPublicHooksSquareInvoiceRoute: typeof ApiPublicHooksSquareInvoiceRoute
   ApiPublicHooksSubscriptionExpiryRemindersRoute: typeof ApiPublicHooksSubscriptionExpiryRemindersRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
@@ -997,6 +1023,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedApprovedAdminPermissionsRouteImport
       parentRoute: typeof AuthenticatedApprovedRoute
     }
+    '/_authenticated/_approved/admin-notifications': {
+      id: '/_authenticated/_approved/admin-notifications'
+      path: '/admin-notifications'
+      fullPath: '/admin-notifications'
+      preLoaderRoute: typeof AuthenticatedApprovedAdminNotificationsRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
     '/_authenticated/_approved/admin-nameplates': {
       id: '/_authenticated/_approved/admin-nameplates'
       path: '/admin-nameplates'
@@ -1093,6 +1126,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/hooks/square-invoice'
       fullPath: '/api/public/hooks/square-invoice'
       preLoaderRoute: typeof ApiPublicHooksSquareInvoiceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/notify': {
+      id: '/api/public/hooks/notify'
+      path: '/api/public/hooks/notify'
+      fullPath: '/api/public/hooks/notify'
+      preLoaderRoute: typeof ApiPublicHooksNotifyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/hooks/backup-orders': {
@@ -1194,6 +1234,7 @@ interface AuthenticatedApprovedRouteChildren {
   AuthenticatedApprovedAdminDnsRoute: typeof AuthenticatedApprovedAdminDnsRoute
   AuthenticatedApprovedAdminHeroBoxesRoute: typeof AuthenticatedApprovedAdminHeroBoxesRoute
   AuthenticatedApprovedAdminNameplatesRoute: typeof AuthenticatedApprovedAdminNameplatesRoute
+  AuthenticatedApprovedAdminNotificationsRoute: typeof AuthenticatedApprovedAdminNotificationsRoute
   AuthenticatedApprovedAdminPermissionsRoute: typeof AuthenticatedApprovedAdminPermissionsRoute
   AuthenticatedApprovedAdminProfanityRoute: typeof AuthenticatedApprovedAdminProfanityRoute
   AuthenticatedApprovedAdminReviewsRoute: typeof AuthenticatedApprovedAdminReviewsRoute
@@ -1233,6 +1274,8 @@ const AuthenticatedApprovedRouteChildren: AuthenticatedApprovedRouteChildren = {
     AuthenticatedApprovedAdminHeroBoxesRoute,
   AuthenticatedApprovedAdminNameplatesRoute:
     AuthenticatedApprovedAdminNameplatesRoute,
+  AuthenticatedApprovedAdminNotificationsRoute:
+    AuthenticatedApprovedAdminNotificationsRoute,
   AuthenticatedApprovedAdminPermissionsRoute:
     AuthenticatedApprovedAdminPermissionsRoute,
   AuthenticatedApprovedAdminProfanityRoute:
@@ -1300,6 +1343,7 @@ const rootRouteChildren: RootRouteChildren = {
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
   ApiPublicHooksBackupCredentialsRoute: ApiPublicHooksBackupCredentialsRoute,
   ApiPublicHooksBackupOrdersRoute: ApiPublicHooksBackupOrdersRoute,
+  ApiPublicHooksNotifyRoute: ApiPublicHooksNotifyRoute,
   ApiPublicHooksSquareInvoiceRoute: ApiPublicHooksSquareInvoiceRoute,
   ApiPublicHooksSubscriptionExpiryRemindersRoute:
     ApiPublicHooksSubscriptionExpiryRemindersRoute,
