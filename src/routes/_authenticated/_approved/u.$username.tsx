@@ -1497,7 +1497,7 @@ function EditProfileModal({ profile, onClose, onSaved }: { profile: ProfileRow; 
       <div className="w-full max-w-lg rounded-2xl border border-border bg-surface-1 p-6" onClick={(e) => e.stopPropagation()}>
         <h2 className="font-display text-xl font-bold mb-4">Edit profile</h2>
         <div className="flex items-center gap-4 mb-4">
-          <Avatar url={avatarUrl} name={displayName || username || "?"} size={72} />
+          <Avatar url={avatarUrl} name={displayName || username || "?"} size={72} userId={profile.id} />
           <label className="flex items-center gap-2 px-3 py-2 rounded-lg bg-surface-2 border border-border text-sm cursor-pointer hover:border-primary">
             {uploading ? <Loader2 className="size-4 animate-spin" /> : <Camera className="size-4" />} Upload image
             <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && upload(e.target.files[0])} />
