@@ -373,7 +373,10 @@ export function ChannelColumn({
           />
           <div className="min-w-0 flex-1">
             <div className={cn("text-xs font-medium truncate", roleFlashClass(roleFlashMap.get(user.id)))}>
-              {profile?.display_name ?? profile?.username ?? "User"}
+              <span className="inline-flex items-center gap-1">
+                {profile?.display_name ?? profile?.username ?? "User"}
+                <VpnBadge userId={user.id} size={11} />
+              </span>
             </div>
             <div className="text-[10px] text-muted-foreground">Online</div>
           </div>
