@@ -23,13 +23,18 @@ async function checkVpn(ip: string) {
     if (!res.ok) return null;
     const json = (await res.json()) as Record<string, unknown>;
     const entry = (json[ip] ?? {}) as Record<string, unknown>;
+    const operator = (entry.operator ?? {}) as Record<string, unknown>;
     const proxy = String(entry.proxy ?? "no").toLowerCase() === "yes";
     const type = String(entry.type ?? "").toLowerCase();
     return {
       is_proxy: proxy,
       is_vpn: proxy && type === "vpn",
-      vpn_provider: (entry.provider as string) ?? (entry.organisation as string) ?? null,
-      isp: (entry.isp as string) ?? null,
+      vpn_provider:
+        (operator.name as string) ??
+        (entry.provider as string) ??
+        (entry.organisation as string) ??
+        null,
+      isp: (entry.isp as string) ?? (entry.provider as string) ?? null,
       country: (entry.country as string) ?? null,
       region: (entry.region as string) ?? null,
       city: (entry.city as string) ?? null,
