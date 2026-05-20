@@ -1386,8 +1386,10 @@ export type Database = {
           id: string
           last_4: string | null
           order_id: string
+          provider: string
+          provider_payment_id: string | null
           receipt_url: string | null
-          square_payment_id: string
+          square_payment_id: string | null
           status: string
           updated_at: string
         }
@@ -1400,8 +1402,10 @@ export type Database = {
           id?: string
           last_4?: string | null
           order_id: string
+          provider?: string
+          provider_payment_id?: string | null
           receipt_url?: string | null
-          square_payment_id: string
+          square_payment_id?: string | null
           status: string
           updated_at?: string
         }
@@ -1414,8 +1418,10 @@ export type Database = {
           id?: string
           last_4?: string | null
           order_id?: string
+          provider?: string
+          provider_payment_id?: string | null
           receipt_url?: string | null
-          square_payment_id?: string
+          square_payment_id?: string | null
           status?: string
           updated_at?: string
         }
