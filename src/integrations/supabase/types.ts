@@ -2788,42 +2788,24 @@ export type Database = {
         }
         Returns: boolean
       }
-      insert_my_location_event:
-        | {
-            Args: {
-              _city: string
-              _country: string
-              _event_type: string
-              _ip: string
-              _is_proxy: boolean
-              _is_vpn: boolean
-              _isp: string
-              _latitude: number
-              _longitude: number
-              _region: string
-              _user_agent: string
-              _vpn_provider: string
-            }
-            Returns: string
-          }
-        | {
-            Args: {
-              _accuracy_m?: number
-              _city: string
-              _country: string
-              _event_type: string
-              _ip: string
-              _is_proxy: boolean
-              _is_vpn: boolean
-              _isp: string
-              _latitude: number
-              _longitude: number
-              _region: string
-              _user_agent: string
-              _vpn_provider: string
-            }
-            Returns: string
-          }
+      insert_my_location_event: {
+        Args: {
+          _accuracy_m?: number
+          _city: string
+          _country: string
+          _event_type: string
+          _ip: string
+          _is_proxy: boolean
+          _is_vpn: boolean
+          _isp: string
+          _latitude: number
+          _longitude: number
+          _region: string
+          _user_agent: string
+          _vpn_provider: string
+        }
+        Returns: string
+      }
       is_blacklisted: {
         Args: { _email: string; _ip: string }
         Returns: boolean
