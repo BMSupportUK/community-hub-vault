@@ -329,7 +329,7 @@ function AdminRolesPage() {
                   <button
                     onClick={() => setHistoryFor(row)}
                     title="View location history"
-                    className="p-2 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 -ml-1"
+                    className="hidden"
                   >
                     <MapPin className="size-4" />
                   </button>
