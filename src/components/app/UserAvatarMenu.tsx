@@ -14,6 +14,8 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { Nameplate } from "@/components/app/Nameplate";
+import { roleFlashClass, type FlashRole } from "@/lib/role-flash";
+import { cn } from "@/lib/utils";
 
 interface MiniProfile {
   id: string;
@@ -59,6 +61,9 @@ export function UserAvatarMenu() {
   const handle = profile?.username ? `@${profile.username}` : user.email ?? "";
   const initial = name.slice(0, 2).toUpperCase();
   const topRole = roles[0] ?? "member";
+  const FLASH_PRIORITY: FlashRole[] = ["admin", "management", "moderator", "staff"];
+  const flashRole = FLASH_PRIORITY.find((r) => roles.includes(r)) ?? null;
+  const flashCls = roleFlashClass(flashRole);
 
   const copyHandle = async () => {
     if (!profile?.username) return;
