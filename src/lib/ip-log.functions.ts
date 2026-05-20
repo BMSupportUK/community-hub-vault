@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getRequestHeader, getRequestIP } from "@tanstack/react-start/server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 export const logMyIp = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -19,5 +20,14 @@ export const logMyIp = createServerFn({ method: "POST" })
       user_agent: userAgent,
     } as never);
     if (error) throw error;
+
+    const { error: historyError } = await supabaseAdmin.from("user_location_history").insert({
+      user_id: userId,
+      event_type: "login",
+      ip,
+      user_agent: userAgent,
+    } as never);
+    if (historyError) throw historyError;
+
     return { ok: true, ip };
   });

@@ -1,14 +1,29 @@
 import { createFileRoute, Navigate, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useState } from "react";
-import { ShieldCheck, Search, Loader2, Plus, Trash2, Users, Tags, ArrowLeft, MapPin, X, RefreshCw } from "lucide-react";
+import {
+  ShieldCheck,
+  Search,
+  Loader2,
+  Plus,
+  Trash2,
+  Users,
+  Tags,
+  ArrowLeft,
+  MapPin,
+  X,
+  RefreshCw,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { isAdminUnlocked } from "@/lib/admin-unlock";
 import { deleteMember } from "@/lib/admin-users.functions";
-import { getUserLocationHistory, type LocationHistoryRow } from "@/lib/user-location-history.functions";
+import {
+  getUserLocationHistory,
+  type LocationHistoryRow,
+} from "@/lib/user-location-history.functions";
 import { LocationHistoryMap } from "@/components/app/LocationHistoryMap";
 
 export const Route = createFileRoute("/_authenticated/_approved/admin-roles")({
@@ -57,12 +72,19 @@ function AdminRolesPage() {
 
   const loadAll = async () => {
     setLoading(true);
-    const [{ data: profs }, { data: rolesData }, { data: defs }, { data: ipsData }] = await Promise.all([
-      supabase.from("profiles").select("id, username, display_name").order("created_at", { ascending: true }),
-      supabase.from("user_roles").select("user_id, role"),
-      supabase.from("role_definitions").select("name, label, is_system, is_active, sort_order").order("sort_order"),
-      supabase.from("signup_info").select("user_id, ip"),
-    ]);
+    const [{ data: profs }, { data: rolesData }, { data: defs }, { data: ipsData }] =
+      await Promise.all([
+        supabase
+          .from("profiles")
+          .select("id, username, display_name")
+          .order("created_at", { ascending: true }),
+        supabase.from("user_roles").select("user_id, role"),
+        supabase
+          .from("role_definitions")
+          .select("name, label, is_system, is_active, sort_order")
+          .order("sort_order"),
+        supabase.from("signup_info").select("user_id, ip"),
+      ]);
     const roleMap = new Map<string, string[]>();
     (rolesData ?? []).forEach((r: any) => {
       const arr = roleMap.get(r.user_id) ?? [];
@@ -73,26 +95,34 @@ function AdminRolesPage() {
     (ipsData ?? []).forEach((r: any) => {
       ipMap.set(r.user_id, (r.ip as string | null) ?? null);
     });
-    setRows((profs ?? []).map((p: any) => ({
-      id: p.id, username: p.username, display_name: p.display_name, roles: roleMap.get(p.id) ?? [],
-      last_ip: ipMap.get(p.id) ?? null,
-    })));
+    setRows(
+      (profs ?? []).map((p: any) => ({
+        id: p.id,
+        username: p.username,
+        display_name: p.display_name,
+        roles: roleMap.get(p.id) ?? [],
+        last_ip: ipMap.get(p.id) ?? null,
+      })),
+    );
     setRoleDefs((defs ?? []) as RoleDef[]);
     setLoading(false);
   };
 
-  useEffect(() => { if (isAdmin) loadAll(); }, [isAdmin]);
+  useEffect(() => {
+    if (isAdmin) loadAll();
+  }, [isAdmin]);
 
   const activeRoles = useMemo(() => roleDefs.filter((r) => r.is_active), [roleDefs]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return rows;
-    return rows.filter((r) =>
-      (r.username ?? "").toLowerCase().includes(q) ||
-      (r.display_name ?? "").toLowerCase().includes(q) ||
-      r.id.toLowerCase().includes(q) ||
-      (r.last_ip ?? "").toLowerCase().includes(q),
+    return rows.filter(
+      (r) =>
+        (r.username ?? "").toLowerCase().includes(q) ||
+        (r.display_name ?? "").toLowerCase().includes(q) ||
+        r.id.toLowerCase().includes(q) ||
+        (r.last_ip ?? "").toLowerCase().includes(q),
     );
   }, [rows, query]);
 
@@ -105,19 +135,31 @@ function AdminRolesPage() {
     setSaving(`${row.id}:${role}`);
     try {
       if (has) {
-        const { error } = await supabase.from("user_roles").delete().eq("user_id", row.id).eq("role", role as any);
+        const { error } = await supabase
+          .from("user_roles")
+          .delete()
+          .eq("user_id", row.id)
+          .eq("role", role as any);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("user_roles").insert({ user_id: row.id, role: role as any });
+        const { error } = await supabase
+          .from("user_roles")
+          .insert({ user_id: row.id, role: role as any });
         if (error) throw error;
       }
-      setRows((all) => all.map((r) => r.id === row.id
-        ? { ...r, roles: has ? r.roles.filter((x) => x !== role) : [...r.roles, role] }
-        : r));
+      setRows((all) =>
+        all.map((r) =>
+          r.id === row.id
+            ? { ...r, roles: has ? r.roles.filter((x) => x !== role) : [...r.roles, role] }
+            : r,
+        ),
+      );
       toast.success(has ? `Removed ${role}` : `Granted ${role}`);
     } catch (e: any) {
       toast.error(e.message ?? "Failed to update role");
-    } finally { setSaving(null); }
+    } finally {
+      setSaving(null);
+    }
   };
 
   const styleFor = (role: string) => SYSTEM_STYLE[role] ?? CUSTOM_STYLE;
@@ -128,7 +170,12 @@ function AdminRolesPage() {
       return;
     }
     const name = row.display_name || row.username || row.id.slice(0, 8);
-    if (!confirm(`Permanently delete ${name}? This removes their account and all associated data and cannot be undone.`)) return;
+    if (
+      !confirm(
+        `Permanently delete ${name}? This removes their account and all associated data and cannot be undone.`,
+      )
+    )
+      return;
     setDeletingUser(row.id);
     try {
       await deleteMemberFn({ data: { userId: row.id } });
@@ -149,7 +196,10 @@ function AdminRolesPage() {
   return (
     <main className="flex-1 overflow-y-auto">
       <div className="max-w-6xl mx-auto px-6 py-8">
-        <Link to="/admin" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-4">
+        <Link
+          to="/admin"
+          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-4"
+        >
           <ArrowLeft className="size-4" /> Back to admin dashboard
         </Link>
         <header className="flex items-center gap-3 mb-6">
@@ -158,43 +208,76 @@ function AdminRolesPage() {
           </div>
           <div>
             <h1 className="font-display text-2xl font-bold">Members & Roles</h1>
-            <p className="text-sm text-muted-foreground">Assign roles to members or manage the role list.</p>
+            <p className="text-sm text-muted-foreground">
+              Assign roles to members or manage the role list.
+            </p>
           </div>
         </header>
 
         <div className="flex gap-2 mb-5 border-b border-border">
-          {([["members","Members",Users],["roles","Manage roles",Tags]] as const).map(([k, lbl, Icon]) => (
-            <button key={k} onClick={() => setTab(k)}
-              className={cn("flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors",
-                tab === k ? "border-primary text-foreground" : "border-transparent text-muted-foreground hover:text-foreground")}>
+          {(
+            [
+              ["members", "Members", Users],
+              ["roles", "Manage roles", Tags],
+            ] as const
+          ).map(([k, lbl, Icon]) => (
+            <button
+              key={k}
+              onClick={() => setTab(k)}
+              className={cn(
+                "flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors",
+                tab === k
+                  ? "border-primary text-foreground"
+                  : "border-transparent text-muted-foreground hover:text-foreground",
+              )}
+            >
               <Icon className="size-4" /> {lbl}
             </button>
           ))}
         </div>
 
         {loading ? (
-          <div className="grid place-items-center py-16 text-muted-foreground"><Loader2 className="size-5 animate-spin" /></div>
+          <div className="grid place-items-center py-16 text-muted-foreground">
+            <Loader2 className="size-5 animate-spin" />
+          </div>
         ) : tab === "members" ? (
           <>
             <div className="relative mb-4">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-              <input value={query} onChange={(e) => setQuery(e.target.value)}
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search by name, username, or user id…"
-                className="w-full pl-10 pr-3 py-2.5 rounded-lg bg-surface-2 border border-border focus:outline-none focus:ring-2 focus:ring-primary text-sm" />
+                className="w-full pl-10 pr-3 py-2.5 rounded-lg bg-surface-2 border border-border focus:outline-none focus:ring-2 focus:ring-primary text-sm"
+              />
             </div>
             <div className="rounded-2xl border border-border bg-surface-1 overflow-hidden">
               <div className="grid grid-cols-[1fr_2fr_auto] gap-4 px-5 py-3 border-b border-border bg-surface-2 text-xs uppercase tracking-wide text-muted-foreground font-semibold">
-                <div>User</div><div>Roles</div><div></div>
+                <div>User</div>
+                <div>Roles</div>
+                <div></div>
               </div>
               {filtered.length === 0 && (
-                <div className="px-5 py-10 text-center text-muted-foreground text-sm">No users found.</div>
+                <div className="px-5 py-10 text-center text-muted-foreground text-sm">
+                  No users found.
+                </div>
               )}
               {filtered.map((row) => (
-                <div key={row.id} className="grid grid-cols-[1fr_2fr_auto] gap-4 px-5 py-4 border-b border-border last:border-0 items-center">
+                <div
+                  key={row.id}
+                  className="grid grid-cols-[1fr_2fr_auto] gap-4 px-5 py-4 border-b border-border last:border-0 items-center"
+                >
                   <div className="min-w-0">
-                    <div className="font-medium truncate">{row.display_name || row.username || "Unnamed"}</div>
-                    <div className="text-xs text-muted-foreground truncate">@{row.username ?? row.id.slice(0, 8)}</div>
-                    <div className="text-[11px] text-muted-foreground/80 font-mono truncate mt-0.5" title={row.last_ip ?? "No IP recorded"}>
+                    <div className="font-medium truncate">
+                      {row.display_name || row.username || "Unnamed"}
+                    </div>
+                    <div className="text-xs text-muted-foreground truncate">
+                      @{row.username ?? row.id.slice(0, 8)}
+                    </div>
+                    <div
+                      className="text-[11px] text-muted-foreground/80 font-mono truncate mt-0.5"
+                      title={row.last_ip ?? "No IP recorded"}
+                    >
                       Last IP: {row.last_ip ?? "—"}
                     </div>
                   </div>
@@ -203,10 +286,18 @@ function AdminRolesPage() {
                       const active = row.roles.includes(rd.name);
                       const busy = saving === `${row.id}:${rd.name}`;
                       return (
-                        <button key={rd.name} onClick={() => toggleRole(row, rd.name)} disabled={busy}
-                          className={cn("px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all capitalize",
-                            active ? styleFor(rd.name) : "bg-transparent text-muted-foreground border-border hover:border-primary hover:text-foreground",
-                            busy && "opacity-60 cursor-wait")}>
+                        <button
+                          key={rd.name}
+                          onClick={() => toggleRole(row, rd.name)}
+                          disabled={busy}
+                          className={cn(
+                            "px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all capitalize",
+                            active
+                              ? styleFor(rd.name)
+                              : "bg-transparent text-muted-foreground border-border hover:border-primary hover:text-foreground",
+                            busy && "opacity-60 cursor-wait",
+                          )}
+                        >
                           {busy ? "…" : rd.label}
                         </button>
                       );
@@ -215,10 +306,16 @@ function AdminRolesPage() {
                   <button
                     onClick={() => removeMember(row)}
                     disabled={deletingUser === row.id || row.id === user?.id}
-                    title={row.id === user?.id ? "You can't delete your own account" : "Delete member"}
+                    title={
+                      row.id === user?.id ? "You can't delete your own account" : "Delete member"
+                    }
                     className="p-2 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-muted-foreground"
                   >
-                    {deletingUser === row.id ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
+                    {deletingUser === row.id ? (
+                      <Loader2 className="size-4 animate-spin" />
+                    ) : (
+                      <Trash2 className="size-4" />
+                    )}
                   </button>
                   <button
                     onClick={() => setHistoryFor(row)}
@@ -235,9 +332,7 @@ function AdminRolesPage() {
           <RolesManager defs={roleDefs} onChange={loadAll} />
         )}
       </div>
-      {historyFor && (
-        <LocationHistoryDialog row={historyFor} onClose={() => setHistoryFor(null)} />
-      )}
+      {historyFor && <LocationHistoryDialog row={historyFor} onClose={() => setHistoryFor(null)} />}
     </main>
   );
 }
@@ -254,43 +349,76 @@ function LocationHistoryDialog({ row, onClose }: { row: Row; onClose: () => void
     const load = (showLoader: boolean) => {
       if (showLoader) setLoading(true);
       fetchHistory({ data: { userId: row.id, limit: 100 } })
-        .then((res) => { if (active) setRows(res.rows); })
+        .then((res) => {
+          if (active) setRows(res.rows);
+        })
         .catch((e: Error) => {
           if (showLoader) toast.error(e.message ?? "Failed to load history");
           else console.warn("[location-history] refresh failed", e);
         })
-        .finally(() => { if (active && showLoader) setLoading(false); });
+        .finally(() => {
+          if (active && showLoader) setLoading(false);
+        });
     };
 
     setLoading(true);
     load(true);
     const interval = window.setInterval(() => load(false), 5_000);
-    return () => { active = false; window.clearInterval(interval); };
+    return () => {
+      active = false;
+      window.clearInterval(interval);
+    };
   }, [row.id, fetchHistory, refreshTick]);
 
   const fmtLoc = (r: LocationHistoryRow) => {
     const named = [r.city, r.region, r.country].filter(Boolean).join(", ");
     if (named) return named;
-    if (typeof r.latitude === "number" && typeof r.longitude === "number") {
-      const accuracy = r.accuracy_m == null ? "" : ` · ±${Math.round(r.accuracy_m)}m`;
-      return `${r.latitude.toFixed(6)}, ${r.longitude.toFixed(6)}${accuracy}`;
+    const latitudeRaw = r.latitude as unknown;
+    const longitudeRaw = r.longitude as unknown;
+    const latitude = latitudeRaw == null || latitudeRaw === "" ? null : Number(latitudeRaw);
+    const longitude = longitudeRaw == null || longitudeRaw === "" ? null : Number(longitudeRaw);
+    if (
+      latitude != null &&
+      longitude != null &&
+      Number.isFinite(latitude) &&
+      Number.isFinite(longitude)
+    ) {
+      const accuracyValue = Number(r.accuracy_m);
+      const accuracy = Number.isFinite(accuracyValue) ? ` · ±${Math.round(accuracyValue)}m` : "";
+      return `${latitude.toFixed(6)}, ${longitude.toFixed(6)}${accuracy}`;
     }
     return "—";
   };
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-background/70 backdrop-blur-sm p-4" onClick={onClose}>
-      <div className="w-full max-w-4xl h-[85vh] bg-surface-1 border border-border rounded-2xl shadow-elegant overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
+    <div
+      className="fixed inset-0 z-50 grid place-items-center bg-background/70 backdrop-blur-sm p-4"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-4xl h-[85vh] bg-surface-1 border border-border rounded-2xl shadow-elegant overflow-hidden flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
         <header className="flex items-center justify-between gap-4 px-5 py-4 border-b border-border">
           <div className="min-w-0">
             <h2 className="font-display font-bold truncate">Location history</h2>
-            <p className="text-xs text-muted-foreground truncate">{row.display_name || row.username || row.id} · @{row.username ?? row.id.slice(0,8)}</p>
+            <p className="text-xs text-muted-foreground truncate">
+              {row.display_name || row.username || row.id} · @{row.username ?? row.id.slice(0, 8)}
+            </p>
           </div>
           <div className="flex items-center gap-2">
             <div className="flex rounded-lg border border-border overflow-hidden text-xs">
-              {(["map","table"] as const).map((v) => (
-                <button key={v} onClick={() => setView(v)}
-                  className={cn("px-3 py-1.5 capitalize", view === v ? "bg-primary text-primary-foreground" : "bg-surface-2 text-muted-foreground hover:text-foreground")}>
+              {(["map", "table"] as const).map((v) => (
+                <button
+                  key={v}
+                  onClick={() => setView(v)}
+                  className={cn(
+                    "px-3 py-1.5 capitalize",
+                    view === v
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-surface-2 text-muted-foreground hover:text-foreground",
+                  )}
+                >
                   {v}
                 </button>
               ))}
@@ -303,16 +431,23 @@ function LocationHistoryDialog({ row, onClose }: { row: Row; onClose: () => void
             >
               <RefreshCw className={cn("size-4", loading && "animate-spin")} />
             </button>
-            <button onClick={onClose} className="p-2 rounded-lg hover:bg-surface-2 text-muted-foreground hover:text-foreground">
+            <button
+              onClick={onClose}
+              className="p-2 rounded-lg hover:bg-surface-2 text-muted-foreground hover:text-foreground"
+            >
               <X className="size-4" />
             </button>
           </div>
         </header>
         <div className={cn("flex-1 min-h-0 overflow-hidden", view === "table" && "overflow-auto")}>
           {loading ? (
-            <div className="grid place-items-center py-16 text-muted-foreground"><Loader2 className="size-5 animate-spin" /></div>
+            <div className="grid place-items-center py-16 text-muted-foreground">
+              <Loader2 className="size-5 animate-spin" />
+            </div>
           ) : rows.length === 0 ? (
-            <div className="px-5 py-16 text-center text-muted-foreground text-sm">No location events recorded yet. They'll appear here next time this user signs in.</div>
+            <div className="px-5 py-16 text-center text-muted-foreground text-sm">
+              No location events recorded yet. They'll appear here next time this user signs in.
+            </div>
           ) : view === "map" ? (
             <LocationHistoryMap rows={rows} />
           ) : (
@@ -330,16 +465,29 @@ function LocationHistoryDialog({ row, onClose }: { row: Row; onClose: () => void
               <tbody>
                 {rows.map((r) => (
                   <tr key={r.id} className="border-t border-border">
-                    <td className="px-4 py-2.5 whitespace-nowrap text-muted-foreground">{new Date(r.created_at).toLocaleString()}</td>
+                    <td className="px-4 py-2.5 whitespace-nowrap text-muted-foreground">
+                      {new Date(r.created_at).toLocaleString()}
+                    </td>
                     <td className="px-4 py-2.5 capitalize">{r.event_type}</td>
                     <td className="px-4 py-2.5 font-mono text-xs">{r.ip ?? "—"}</td>
                     <td className="px-4 py-2.5">{fmtLoc(r)}</td>
                     <td className="px-4 py-2.5">
-                      {r.is_vpn ? <span className="text-xs px-2 py-0.5 rounded-md bg-destructive/15 text-destructive border border-destructive/30">VPN</span>
-                        : r.is_proxy ? <span className="text-xs px-2 py-0.5 rounded-md bg-accent/15 text-accent border border-accent/30">Proxy</span>
-                        : <span className="text-muted-foreground">—</span>}
+                      {r.is_vpn ? (
+                        <span className="text-xs px-2 py-0.5 rounded-md bg-destructive/15 text-destructive border border-destructive/30">
+                          VPN
+                        </span>
+                      ) : r.is_proxy ? (
+                        <span className="text-xs px-2 py-0.5 rounded-md bg-accent/15 text-accent border border-accent/30">
+                          Proxy
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
                     </td>
-                    <td className="px-4 py-2.5 text-muted-foreground truncate max-w-[220px]" title={r.vpn_provider ?? r.isp ?? ""}>
+                    <td
+                      className="px-4 py-2.5 text-muted-foreground truncate max-w-[220px]"
+                      title={r.vpn_provider ?? r.isp ?? ""}
+                    >
                       {r.vpn_provider ?? r.isp ?? "—"}
                     </td>
                   </tr>
@@ -363,13 +511,20 @@ function RolesManager({ defs, onChange }: { defs: RoleDef[]; onChange: () => voi
     if (!name.trim()) return toast.error("Enter a role key");
     setBusy(true);
     try {
-      const { error } = await supabase.rpc("create_app_role", { _name: name.trim(), _label: label.trim() || name.trim() });
+      const { error } = await supabase.rpc("create_app_role", {
+        _name: name.trim(),
+        _label: label.trim() || name.trim(),
+      });
       if (error) throw error;
       toast.success("Role created");
-      setName(""); setLabel("");
+      setName("");
+      setLabel("");
       onChange();
-    } catch (e: any) { toast.error(e.message ?? "Failed to create role"); }
-    finally { setBusy(false); }
+    } catch (e: any) {
+      toast.error(e.message ?? "Failed to create role");
+    } finally {
+      setBusy(false);
+    }
   };
 
   const remove = async (n: string) => {
@@ -380,22 +535,39 @@ function RolesManager({ defs, onChange }: { defs: RoleDef[]; onChange: () => voi
       if (error) throw error;
       toast.success("Role deleted");
       onChange();
-    } catch (e: any) { toast.error(e.message ?? "Failed to delete role"); }
-    finally { setDeleting(null); }
+    } catch (e: any) {
+      toast.error(e.message ?? "Failed to delete role");
+    } finally {
+      setDeleting(null);
+    }
   };
 
   return (
     <div className="space-y-6">
       <div className="rounded-2xl border border-border bg-surface-1 p-5">
         <h3 className="font-display font-bold mb-1">Add a new role</h3>
-        <p className="text-xs text-muted-foreground mb-4">Role key is lowercase letters, numbers and underscores. Once created, it can be assigned to members on the Members tab.</p>
+        <p className="text-xs text-muted-foreground mb-4">
+          Role key is lowercase letters, numbers and underscores. Once created, it can be assigned
+          to members on the Members tab.
+        </p>
         <div className="grid sm:grid-cols-[1fr_1fr_auto] gap-2">
-          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="role key (e.g. support_lead)"
-            className="px-3 py-2.5 rounded-lg bg-surface-2 border border-border text-sm" />
-          <input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Display label (e.g. Support Lead)"
-            className="px-3 py-2.5 rounded-lg bg-surface-2 border border-border text-sm" />
-          <button onClick={create} disabled={busy}
-            className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-primary text-primary-foreground font-medium disabled:opacity-60">
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="role key (e.g. support_lead)"
+            className="px-3 py-2.5 rounded-lg bg-surface-2 border border-border text-sm"
+          />
+          <input
+            value={label}
+            onChange={(e) => setLabel(e.target.value)}
+            placeholder="Display label (e.g. Support Lead)"
+            className="px-3 py-2.5 rounded-lg bg-surface-2 border border-border text-sm"
+          />
+          <button
+            onClick={create}
+            disabled={busy}
+            className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-primary text-primary-foreground font-medium disabled:opacity-60"
+          >
             {busy ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />} Add
           </button>
         </div>
@@ -403,21 +575,42 @@ function RolesManager({ defs, onChange }: { defs: RoleDef[]; onChange: () => voi
 
       <div className="rounded-2xl border border-border bg-surface-1 overflow-hidden">
         <div className="grid grid-cols-[1fr_1fr_auto_auto] gap-4 px-5 py-3 border-b border-border bg-surface-2 text-xs uppercase tracking-wide text-muted-foreground font-semibold">
-          <div>Label</div><div>Key</div><div>Type</div><div></div>
+          <div>Label</div>
+          <div>Key</div>
+          <div>Type</div>
+          <div></div>
         </div>
-        {defs.length === 0 && <div className="px-5 py-10 text-center text-muted-foreground text-sm">No roles yet.</div>}
+        {defs.length === 0 && (
+          <div className="px-5 py-10 text-center text-muted-foreground text-sm">No roles yet.</div>
+        )}
         {defs.map((r) => (
-          <div key={r.name} className="grid grid-cols-[1fr_1fr_auto_auto] gap-4 px-5 py-3 border-b border-border last:border-0 items-center text-sm">
+          <div
+            key={r.name}
+            className="grid grid-cols-[1fr_1fr_auto_auto] gap-4 px-5 py-3 border-b border-border last:border-0 items-center text-sm"
+          >
             <div className="font-medium">{r.label}</div>
             <code className="text-xs text-muted-foreground">{r.name}</code>
-            <span className={cn("text-xs px-2 py-0.5 rounded-md border",
-              r.is_system ? "border-border text-muted-foreground" : "border-primary/40 text-primary",
-              !r.is_active && "opacity-50")}>
+            <span
+              className={cn(
+                "text-xs px-2 py-0.5 rounded-md border",
+                r.is_system
+                  ? "border-border text-muted-foreground"
+                  : "border-primary/40 text-primary",
+                !r.is_active && "opacity-50",
+              )}
+            >
               {r.is_system ? "System" : r.is_active ? "Custom" : "Deleted"}
             </span>
-            <button onClick={() => remove(r.name)} disabled={r.is_system || !r.is_active || deleting === r.name}
-              className="p-2 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-muted-foreground">
-              {deleting === r.name ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
+            <button
+              onClick={() => remove(r.name)}
+              disabled={r.is_system || !r.is_active || deleting === r.name}
+              className="p-2 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-muted-foreground"
+            >
+              {deleting === r.name ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Trash2 className="size-4" />
+              )}
             </button>
           </div>
         ))}

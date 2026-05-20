@@ -22,21 +22,24 @@ async function getClientIpHint(): Promise<string | null> {
 }
 
 async function recordLoginHistoryFallback(clientIpHint: string | null): Promise<void> {
-  const { error } = await supabase.rpc("insert_my_location_event" as never, {
-    _event_type: "login",
-    _ip: clientIpHint ?? "unknown",
-    _country: null,
-    _region: null,
-    _city: null,
-    _latitude: null,
-    _longitude: null,
-    _isp: null,
-    _is_vpn: null,
-    _is_proxy: null,
-    _vpn_provider: null,
-    _user_agent: typeof navigator === "undefined" ? null : navigator.userAgent,
-    _accuracy_m: null,
-  } as never);
+  const { error } = await supabase.rpc(
+    "insert_my_location_event" as never,
+    {
+      _event_type: "login",
+      _ip: clientIpHint ?? "unknown",
+      _country: null,
+      _region: null,
+      _city: null,
+      _latitude: null,
+      _longitude: null,
+      _isp: null,
+      _is_vpn: null,
+      _is_proxy: null,
+      _vpn_provider: null,
+      _user_agent: typeof navigator === "undefined" ? null : navigator.userAgent,
+      _accuracy_m: null,
+    } as never,
+  );
   if (error) throw error;
 }
 
@@ -149,6 +152,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       if (event === "SIGNED_IN" && nextUid) {
         runVpnLoginCheck(nextUid, 0);
+      }
+      if (event === "TOKEN_REFRESHED" && nextUid) {
+        runVpnLoginCheck(nextUid, 5_000);
       }
       // Same user (e.g. TOKEN_REFRESHED on tab refocus): do not reload roles —
       // toggling rolesLoaded would flip the global loading state and unmount the app.
