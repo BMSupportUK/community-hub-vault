@@ -8,6 +8,7 @@ let cache: Set<string> | null = null;
 let inflight: Promise<Set<string>> | null = null;
 const listeners = new Set<() => void>();
 let realtimeSubscribed = false;
+let requestSeq = 0;
 
 function ensureRealtime() {
   if (realtimeSubscribed) return;
@@ -18,22 +19,21 @@ function ensureRealtime() {
       "postgres_changes",
       { event: "*", schema: "public", table: "signup_info" },
       () => {
-        cache = null;
-        void load();
+        refreshVpnUserSet();
       },
     )
     .subscribe();
 }
 
-async function load(): Promise<Set<string>> {
-  if (cache) return cache;
-  if (inflight) return inflight;
-  inflight = (async () => {
+async function load(force = false): Promise<Set<string>> {
+  if (cache && !force) return cache;
+  if (inflight && !force) return inflight;
+  const seq = ++requestSeq;
+  const request = (async () => {
     const { data, error } = await supabase.rpc("get_vpn_user_ids" as never);
     const set = new Set<string>();
     if (error) {
       console.warn("[vpn] failed to load VPN user flags", error);
-      inflight = null;
       return set;
     }
     if (Array.isArray(data)) {
@@ -42,17 +42,21 @@ async function load(): Promise<Set<string>> {
         if (id) set.add(id);
       }
     }
-    cache = set;
-    inflight = null;
-    for (const l of listeners) l();
+    if (seq === requestSeq) {
+      cache = set;
+      for (const l of listeners) l();
+    }
     return set;
-  })();
+  })().finally(() => {
+    if (inflight === request) inflight = null;
+  });
+  inflight = request;
   return inflight;
 }
 
 export function refreshVpnUserSet() {
   cache = null;
-  void load();
+  void load(true);
 }
 
 export function useVpnUserSet(): Set<string> {
@@ -63,8 +67,7 @@ export function useVpnUserSet(): Set<string> {
     if (!cache) load();
     ensureRealtime();
     const onFocus = () => {
-      cache = null;
-      load();
+      refreshVpnUserSet();
     };
     window.addEventListener("focus", onFocus);
     return () => {
