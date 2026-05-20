@@ -14,7 +14,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { Nameplate } from "@/components/app/Nameplate";
-import { roleFlashClass, type FlashRole } from "@/lib/role-flash";
+import { roleFlashClass, type FlashRole, resolveAvatarUrl, useRoleFlashMap } from "@/lib/role-flash";
 import { cn } from "@/lib/utils";
 
 interface MiniProfile {
@@ -64,6 +64,8 @@ export function UserAvatarMenu() {
   const FLASH_PRIORITY: FlashRole[] = ["admin", "management", "moderator", "staff"];
   const flashRole = FLASH_PRIORITY.find((r) => roles.includes(r)) ?? null;
   const flashCls = roleFlashClass(flashRole);
+  const roleFlashMap = useRoleFlashMap();
+  const resolvedAvatar = resolveAvatarUrl(user.id, profile?.avatar_url, roleFlashMap);
 
   const copyHandle = async () => {
     if (!profile?.username) return;
@@ -89,7 +91,7 @@ export function UserAvatarMenu() {
           className="group relative flex items-center gap-2 rounded-full bg-rail/80 ring-1 ring-border hover:ring-primary/60 hover:bg-surface-2 transition-all px-1.5 py-1 shadow-soft"
         >
           <Avatar className="h-7 w-7 ring-2 ring-primary/40 group-hover:ring-primary transition">
-            <AvatarImage src={profile?.avatar_url || "/default-avatar.png"} alt={name} />
+            <AvatarImage src={resolvedAvatar} alt={name} />
             <AvatarFallback className="text-[10px] font-bold bg-gradient-primary text-primary-foreground">
               {initial}
             </AvatarFallback>
@@ -110,7 +112,7 @@ export function UserAvatarMenu() {
           />
           <div className="relative flex items-center gap-3">
             <Avatar className="h-14 w-14 ring-2 ring-background shadow-lg">
-              <AvatarImage src={profile?.avatar_url || "/default-avatar.png"} alt={name} />
+              <AvatarImage src={resolvedAvatar} alt={name} />
               <AvatarFallback className="text-base font-bold bg-gradient-primary text-primary-foreground">
                 {initial}
               </AvatarFallback>

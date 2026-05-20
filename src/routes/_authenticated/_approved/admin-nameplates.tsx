@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 import { Nameplate } from "@/components/app/Nameplate";
 import { primeNameplates, clearNameplateCache, type NameplateRow } from "@/lib/nameplates";
+import { useRoleFlashMap, resolveAvatarUrl } from "@/lib/role-flash";
 
 export const Route = createFileRoute("/_authenticated/_approved/admin-nameplates")({
   component: AdminNameplates,
@@ -244,6 +245,7 @@ function AssignDialog({ nameplate, onClose }: { nameplate: NameplateRow; onClose
   const [members, setMembers] = useState<ProfileLite[]>([]);
   const [unlocked, setUnlocked] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
+  const roleFlashMap = useRoleFlashMap();
 
   useEffect(() => {
     (async () => {
@@ -300,7 +302,7 @@ function AssignDialog({ nameplate, onClose }: { nameplate: NameplateRow; onClose
             <ul className="divide-y divide-border">
               {filtered.map((m) => (
                 <li key={m.id} className="flex items-center gap-3 px-4 py-2.5">
-                  <img src={m.avatar_url || "/default-avatar.png"} alt="" className="size-8 rounded-full object-cover" />
+                  <img src={resolveAvatarUrl(m.id, m.avatar_url, roleFlashMap)} alt="" className="size-8 rounded-full object-cover" />
                   <div className="min-w-0 flex-1">
                     <div className="text-sm font-medium truncate">{m.display_name ?? m.username ?? "Unknown"}</div>
                     {m.username && <div className="text-[11px] text-muted-foreground truncate">@{m.username}</div>}

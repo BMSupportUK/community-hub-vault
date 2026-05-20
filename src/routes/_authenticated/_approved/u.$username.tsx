@@ -18,6 +18,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { listTimeZones } from "@/hooks/use-user-timezone";
 import { Nameplate } from "@/components/app/Nameplate";
 import { NameplatePicker } from "@/components/app/NameplatePicker";
+import { useRoleFlashMap, resolveAvatarUrl } from "@/lib/role-flash";
 
 export const Route = createFileRoute("/_authenticated/_approved/u/$username")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -490,7 +491,7 @@ function ProfilePage() {
                   aria-hidden
                 />
                 <div className="px-6 pb-6 -mt-12 flex flex-col sm:flex-row sm:items-end gap-4">
-                  <Avatar url={profile.avatar_url} name={display} size={96} ring />
+                  <Avatar url={profile.avatar_url} name={display} size={96} ring userId={profile.id} />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <h2 className="font-display text-2xl font-bold truncate">{display}</h2>
@@ -532,7 +533,7 @@ function ProfilePage() {
               <aside className="space-y-4">
                 <div className="rounded-2xl bg-gradient-to-br from-fuchsia-600/30 via-purple-600/30 to-violet-700/30 border border-purple-500/40 p-5 shadow-[0_0_60px_-15px_rgba(168,85,247,0.5)] text-white">
                   <div className="flex items-center gap-3 mb-3">
-                    <Avatar url={profile.avatar_url} name={display} size={48} ring />
+                    <Avatar url={profile.avatar_url} name={display} size={48} ring userId={profile.id} />
                     <div className="min-w-0">
                       <h3 className="font-display text-lg font-bold bg-gradient-to-r from-violet-200 to-blue-200 bg-clip-text text-transparent truncate">
                         {isOwner ? `Welcome back, ${display}` : `Welcome to ${display}'s profile`}
@@ -633,7 +634,7 @@ function ProfilePage() {
                     params={{ username: f.username ?? "" }}
                     className="flex items-center gap-3 min-w-0 hover:underline"
                   >
-                    <Avatar url={f.avatar_url} name={f.display_name || f.username || "Member"} size={32} />
+                    <Avatar url={f.avatar_url} name={f.display_name || f.username || "Member"} size={32} userId={f.user_id} />
                     <span className="truncate">{f.display_name || f.username || "Member"}</span>
                     {f.username && <span className="text-xs text-white/60">@{f.username}</span>}
                   </Link>
@@ -686,8 +687,8 @@ function ProfilePage() {
   );
 }
 
-function Avatar({ url, name, size = 40, ring }: { url: string | null; name: string; size?: number; ring?: boolean }) {
-  return AvatarImpl({ url, name, size, ring });
+function Avatar({ url, name, size = 40, ring, userId }: { url: string | null; name: string; size?: number; ring?: boolean; userId?: string | null }) {
+  return AvatarImpl({ url, name, size, ring, userId });
 }
 
 function FriendActionButton({
@@ -726,7 +727,9 @@ function FriendActionButton({
   );
 }
 
-function AvatarImpl({ url, name, size = 40, ring }: { url: string | null; name: string; size?: number; ring?: boolean }) {
+function AvatarImpl({ url, name, size = 40, ring, userId }: { url: string | null; name: string; size?: number; ring?: boolean; userId?: string | null }) {
+  const roleFlashMap = useRoleFlashMap();
+  const resolved = resolveAvatarUrl(userId ?? null, url, roleFlashMap);
   return (
     <div
       className={cn(
@@ -735,7 +738,7 @@ function AvatarImpl({ url, name, size = 40, ring }: { url: string | null; name: 
       )}
       style={{ width: size, height: size, fontSize: size * 0.36 }}
     >
-      <img src={url || "/default-avatar.png"} alt={name} className="w-full h-full object-cover" />
+      <img src={resolved} alt={name} className="w-full h-full object-cover" />
     </div>
   );
 }
@@ -1494,7 +1497,7 @@ function EditProfileModal({ profile, onClose, onSaved }: { profile: ProfileRow; 
       <div className="w-full max-w-lg rounded-2xl border border-border bg-surface-1 p-6" onClick={(e) => e.stopPropagation()}>
         <h2 className="font-display text-xl font-bold mb-4">Edit profile</h2>
         <div className="flex items-center gap-4 mb-4">
-          <Avatar url={avatarUrl} name={displayName || username || "?"} size={72} />
+          <Avatar url={avatarUrl} name={displayName || username || "?"} size={72} userId={profile.id} />
           <label className="flex items-center gap-2 px-3 py-2 rounded-lg bg-surface-2 border border-border text-sm cursor-pointer hover:border-primary">
             {uploading ? <Loader2 className="size-4 animate-spin" /> : <Camera className="size-4" />} Upload image
             <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && upload(e.target.files[0])} />

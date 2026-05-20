@@ -23,7 +23,7 @@ import { DEFAULT_AVATAR_URL } from "@/lib/default-avatar";
 import { Nameplate } from "@/components/app/Nameplate";
 import { useOnlineUsers } from "@/hooks/use-online-users";
 import { formatLastSeen } from "@/lib/relative-time";
-import { useRoleFlashMap, roleFlashClass } from "@/lib/role-flash";
+import { useRoleFlashMap, roleFlashClass, resolveAvatarUrl } from "@/lib/role-flash";
 
 export const Route = createFileRoute("/_authenticated/_approved/home/$channel")({
   component: ChannelPage,
@@ -851,7 +851,7 @@ function ChannelPage() {
                           className="size-4 accent-primary cursor-pointer"
                         />
                         <img
-                          src={p?.avatar_url ?? DEFAULT_AVATAR_URL}
+                          src={resolveAvatarUrl(id, p?.avatar_url, roleFlashMap)}
                           alt=""
                           className="size-8 rounded-full object-cover shrink-0"
                         />
@@ -973,9 +973,11 @@ function ChannelPage() {
               >
                 {(() => {
                   const showNameplate = !!p?.equipped_nameplate_id;
-                  const avatarEl = p?.avatar_url ? (
-                    <img
-                      src={p.avatar_url}
+                   const resolvedAvatar = resolveAvatarUrl(m.sender_id, p?.avatar_url, roleFlashMap);
+                   const hasAvatar = !!p?.avatar_url || roleFlashMap.get(m.sender_id) === "staff";
+                   const avatarEl = hasAvatar ? (
+                     <img
+                       src={resolvedAvatar}
                       alt=""
                       className={cn(
                         "size-8 rounded-full object-cover shrink-0 ring-2 ring-white/70",

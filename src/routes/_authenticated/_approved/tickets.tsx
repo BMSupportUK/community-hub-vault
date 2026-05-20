@@ -20,6 +20,7 @@ import { TurnstileWidget } from "@/components/app/TurnstileWidget";
 import { getOutOfHoursMessage } from "@/lib/business-hours";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { useRoleFlashMap, resolveAvatarUrl } from "@/lib/role-flash";
 
 export const Route = createFileRoute("/_authenticated/_approved/tickets")({
   validateSearch: (s: Record<string, unknown>) => ({
@@ -1123,6 +1124,7 @@ function StaffOnDutyStrip() {
   const [breaks, setBreaks] = useState<StaffBreak[]>([]);
   const [profiles, setProfiles] = useState<Record<string, StaffProfile>>({});
   const [now, setNow] = useState(() => Date.now());
+  const roleFlashMap = useRoleFlashMap();
 
   useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 1000);
@@ -1212,7 +1214,7 @@ function StaffOnDutyStrip() {
               >
                 <div className="flex items-center gap-2">
                   <div className="relative">
-                    <img src={p?.avatar_url || "/default-avatar.png"} alt={name} className="size-8 rounded-full object-cover ring-2 ring-white/40" />
+                    <img src={resolveAvatarUrl(s.user_id, p?.avatar_url, roleFlashMap)} alt={name} className="size-8 rounded-full object-cover ring-2 ring-white/40" />
                     <span className={cn(
                       "absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full ring-2 ring-white",
                       onBreak ? (over ? "bg-red-500" : "bg-amber-400") : "bg-emerald-500",
