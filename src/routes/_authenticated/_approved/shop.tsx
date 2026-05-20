@@ -1694,7 +1694,7 @@ function OrderDetail({ orderId, isAdmin, onBack }: { orderId: string; isAdmin: b
           const old = p.old as { id?: string };
           if (old?.id) setMsgs((m) => m.filter((x) => x.id !== old.id));
         })
-      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "orders", filter: `id=eq.${orderId}` },
+      .on("postgres_changes", { event: "UPDATE", schema: "private", table: "orders", filter: `id=eq.${orderId}` },
         (p) => setOrder(p.new as Order))
       .on("broadcast", { event: "typing" }, (payload) => {
         const d = (payload?.payload ?? {}) as { userId?: string; isAdmin?: boolean; stopped?: boolean };
