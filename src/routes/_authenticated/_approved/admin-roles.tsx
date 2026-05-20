@@ -1,13 +1,14 @@
 import { createFileRoute, Navigate, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useMemo, useState } from "react";
-import { ShieldCheck, Search, Loader2, Plus, Trash2, Users, Tags, ArrowLeft } from "lucide-react";
+import { ShieldCheck, Search, Loader2, Plus, Trash2, Users, Tags, ArrowLeft, MapPin, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { isAdminUnlocked } from "@/lib/admin-unlock";
 import { deleteMember } from "@/lib/admin-users.functions";
+import { getUserLocationHistory, type LocationHistoryRow } from "@/lib/user-location-history.functions";
 
 export const Route = createFileRoute("/_authenticated/_approved/admin-roles")({
   component: AdminRolesPage,
@@ -51,6 +52,7 @@ function AdminRolesPage() {
   const [saving, setSaving] = useState<string | null>(null);
   const [deletingUser, setDeletingUser] = useState<string | null>(null);
   const deleteMemberFn = useServerFn(deleteMember);
+  const [historyFor, setHistoryFor] = useState<Row | null>(null);
 
   const loadAll = async () => {
     setLoading(true);
@@ -217,6 +219,13 @@ function AdminRolesPage() {
                   >
                     {deletingUser === row.id ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
                   </button>
+                  <button
+                    onClick={() => setHistoryFor(row)}
+                    title="View location history"
+                    className="p-2 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 -ml-1"
+                  >
+                    <MapPin className="size-4" />
+                  </button>
                 </div>
               ))}
             </div>
@@ -225,7 +234,83 @@ function AdminRolesPage() {
           <RolesManager defs={roleDefs} onChange={loadAll} />
         )}
       </div>
+      {historyFor && (
+        <LocationHistoryDialog row={historyFor} onClose={() => setHistoryFor(null)} />
+      )}
     </main>
+  );
+}
+
+function LocationHistoryDialog({ row, onClose }: { row: Row; onClose: () => void }) {
+  const fetchHistory = useServerFn(getUserLocationHistory);
+  const [loading, setLoading] = useState(true);
+  const [rows, setRows] = useState<LocationHistoryRow[]>([]);
+
+  useEffect(() => {
+    let active = true;
+    setLoading(true);
+    fetchHistory({ data: { userId: row.id, limit: 100 } })
+      .then((res) => { if (active) setRows(res.rows); })
+      .catch((e: Error) => toast.error(e.message ?? "Failed to load history"))
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, [row.id, fetchHistory]);
+
+  const fmtLoc = (r: LocationHistoryRow) =>
+    [r.city, r.region, r.country].filter(Boolean).join(", ") || "—";
+
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center bg-background/70 backdrop-blur-sm p-4" onClick={onClose}>
+      <div className="w-full max-w-4xl max-h-[85vh] bg-surface-1 border border-border rounded-2xl shadow-elegant overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
+        <header className="flex items-center justify-between gap-4 px-5 py-4 border-b border-border">
+          <div className="min-w-0">
+            <h2 className="font-display font-bold truncate">Location history</h2>
+            <p className="text-xs text-muted-foreground truncate">{row.display_name || row.username || row.id} · @{row.username ?? row.id.slice(0,8)}</p>
+          </div>
+          <button onClick={onClose} className="p-2 rounded-lg hover:bg-surface-2 text-muted-foreground hover:text-foreground">
+            <X className="size-4" />
+          </button>
+        </header>
+        <div className="overflow-auto flex-1">
+          {loading ? (
+            <div className="grid place-items-center py-16 text-muted-foreground"><Loader2 className="size-5 animate-spin" /></div>
+          ) : rows.length === 0 ? (
+            <div className="px-5 py-16 text-center text-muted-foreground text-sm">No location events recorded yet. They'll appear here next time this user signs in.</div>
+          ) : (
+            <table className="w-full text-sm">
+              <thead className="text-xs uppercase tracking-wide text-muted-foreground bg-surface-2 sticky top-0">
+                <tr>
+                  <th className="text-left px-4 py-2.5 font-semibold">When</th>
+                  <th className="text-left px-4 py-2.5 font-semibold">Event</th>
+                  <th className="text-left px-4 py-2.5 font-semibold">IP</th>
+                  <th className="text-left px-4 py-2.5 font-semibold">Location</th>
+                  <th className="text-left px-4 py-2.5 font-semibold">VPN</th>
+                  <th className="text-left px-4 py-2.5 font-semibold">Provider / ISP</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((r) => (
+                  <tr key={r.id} className="border-t border-border">
+                    <td className="px-4 py-2.5 whitespace-nowrap text-muted-foreground">{new Date(r.created_at).toLocaleString()}</td>
+                    <td className="px-4 py-2.5 capitalize">{r.event_type}</td>
+                    <td className="px-4 py-2.5 font-mono text-xs">{r.ip ?? "—"}</td>
+                    <td className="px-4 py-2.5">{fmtLoc(r)}</td>
+                    <td className="px-4 py-2.5">
+                      {r.is_vpn ? <span className="text-xs px-2 py-0.5 rounded-md bg-destructive/15 text-destructive border border-destructive/30">VPN</span>
+                        : r.is_proxy ? <span className="text-xs px-2 py-0.5 rounded-md bg-accent/15 text-accent border border-accent/30">Proxy</span>
+                        : <span className="text-muted-foreground">—</span>}
+                    </td>
+                    <td className="px-4 py-2.5 text-muted-foreground truncate max-w-[220px]" title={r.vpn_provider ?? r.isp ?? ""}>
+                      {r.vpn_provider ?? r.isp ?? "—"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }
 
