@@ -785,7 +785,7 @@ function ChannelPage() {
                     return (
                       <li key={m.id} className="p-3 hover:bg-surface-2/40">
                         <div className="flex items-baseline justify-between gap-2 mb-1">
-                          <span className="text-xs font-medium">{name}</span>
+                          <span className={cn("text-xs font-medium", roleFlashClass(roleFlashMap.get(m.sender_id)))}>{name}</span>
                           <span className="text-[10px] text-muted-foreground">
                             {new Date(m.created_at).toLocaleDateString()}
                           </span>
