@@ -16,8 +16,8 @@ import { useCurrency } from "@/hooks/use-currency";
 import { downloadReceipt } from "@/lib/receipt";
 import { Download } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { createSquareInvoiceForOrder, refreshSquareInvoiceStatus, cancelSquareInvoice } from "@/lib/square-invoices.functions";
-import { RefreshCw, ExternalLink, Ban } from "lucide-react";
+import { chargeOrderWithSquare, getSquareWebConfig } from "@/lib/square-payments.functions";
+import { CreditCard, Ban } from "lucide-react";
 import { getOutOfHoursMessage } from "@/lib/business-hours";
 import { isAdminUnlocked } from "@/lib/admin-unlock";
 import { useRouter } from "@tanstack/react-router";
@@ -2021,9 +2021,10 @@ function OrderDetail({ orderId, isAdmin, onBack }: { orderId: string; isAdmin: b
             </div>
           )}
           {(isAdmin || order.user_id === user?.id) && (
-            <SquareInvoicePanel
+            <SquareCardPanel
               orderId={orderId}
-              canCreate={!order.paid_at && !order.completed_at && order.status !== "cancelled"}
+              amountCents={order.total_cents ?? 0}
+              canPay={!order.paid_at && !order.completed_at && order.status !== "cancelled"}
               onChange={load}
             />
           )}
@@ -2080,94 +2081,156 @@ function OrderDetail({ orderId, isAdmin, onBack }: { orderId: string; isAdmin: b
 function AdminProducts() {
   return <AdminProductsInner />;
 }
-function SquareInvoicePanel({ orderId, canCreate, onChange }: { orderId: string; canCreate: boolean; onChange?: () => void | Promise<void> }) {
-  const [row, setRow] = useState<any | null>(null);
-  const [loading, setLoading] = useState(false);
-  const createFn = useServerFn(createSquareInvoiceForOrder);
-  const refreshFn = useServerFn(refreshSquareInvoiceStatus);
-  const cancelFn = useServerFn(cancelSquareInvoice);
+declare global {
+  interface Window { Square?: any }
+}
 
-  const load = async () => {
-    const { data } = await supabase.from("order_invoices").select("*").eq("order_id", orderId).maybeSingle();
-    setRow(data);
+function loadSquareSdk(env: "sandbox" | "production"): Promise<any> {
+  if (typeof window === "undefined") return Promise.reject(new Error("No window"));
+  if (window.Square) return Promise.resolve(window.Square);
+  const id = "square-web-sdk";
+  const existing = document.getElementById(id) as HTMLScriptElement | null;
+  const src = env === "sandbox"
+    ? "https://sandbox.web.squarecdn.com/v1/square.js"
+    : "https://web.squarecdn.com/v1/square.js";
+  return new Promise((resolve, reject) => {
+    if (existing) {
+      existing.addEventListener("load", () => resolve(window.Square));
+      existing.addEventListener("error", () => reject(new Error("Failed to load Square SDK")));
+      if (window.Square) resolve(window.Square);
+      return;
+    }
+    const s = document.createElement("script");
+    s.id = id; s.src = src; s.async = true;
+    s.onload = () => resolve(window.Square);
+    s.onerror = () => reject(new Error("Failed to load Square SDK"));
+    document.head.appendChild(s);
+  });
+}
+
+function SquareCardPanel({ orderId, amountCents, canPay, onChange }: { orderId: string; amountCents: number; canPay: boolean; onChange?: () => void | Promise<void> }) {
+  const [paid, setPaid] = useState<any | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [bootError, setBootError] = useState<string | null>(null);
+  const [ready, setReady] = useState(false);
+  const cardRef = useRef<HTMLDivElement | null>(null);
+  const cardInstanceRef = useRef<any>(null);
+  const paymentsRef = useRef<any>(null);
+  const { format } = useCurrency();
+  const getConfig = useServerFn(getSquareWebConfig);
+  const chargeFn = useServerFn(chargeOrderWithSquare);
+
+  const loadPayment = async () => {
+    const { data } = await supabase.from("order_payments").select("*").eq("order_id", orderId).maybeSingle();
+    setPaid(data);
   };
-  useEffect(() => { load(); }, [orderId]);
+
+  useEffect(() => { loadPayment(); }, [orderId]);
   useEffect(() => {
-    const ch = supabase.channel(`oi-${orderId}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "order_invoices", filter: `order_id=eq.${orderId}` },
-        () => load())
+    const ch = supabase.channel(`op-${orderId}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "order_payments", filter: `order_id=eq.${orderId}` },
+        () => loadPayment())
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, [orderId]);
 
-  const handleCreate = async () => {
-    setLoading(true);
-    try { await createFn({ data: { orderId } }); toast.success("Square invoice sent"); await load(); await onChange?.(); }
-    catch (e) { toast.error((e as Error).message); }
-    finally { setLoading(false); }
-  };
-  const handleRefresh = async () => {
-    setLoading(true);
-    try { await refreshFn({ data: { orderId } }); toast.success("Status refreshed"); await load(); await onChange?.(); }
-    catch (e) { toast.error((e as Error).message); }
-    finally { setLoading(false); }
-  };
-  const handleCancel = async () => {
-    if (!confirm("Cancel this Square invoice?")) return;
-    setLoading(true);
-    try { await cancelFn({ data: { orderId } }); toast.success("Invoice cancelled"); await load(); await onChange?.(); }
-    catch (e) { toast.error((e as Error).message); }
-    finally { setLoading(false); }
-  };
+  useEffect(() => {
+    let cancelled = false;
+    if (!canPay || paid) return;
+    (async () => {
+      try {
+        const cfg = await getConfig();
+        const Square = await loadSquareSdk(cfg.environment);
+        if (cancelled) return;
+        const payments = Square.payments(cfg.applicationId, cfg.locationId);
+        paymentsRef.current = payments;
+        const card = await payments.card();
+        if (cancelled) { try { card.destroy(); } catch {} return; }
+        if (cardRef.current) {
+          await card.attach(cardRef.current);
+          cardInstanceRef.current = card;
+          setReady(true);
+        }
+      } catch (e) {
+        if (!cancelled) setBootError((e as Error).message);
+      }
+    })();
+    return () => {
+      cancelled = true;
+      try { cardInstanceRef.current?.destroy(); } catch {}
+      cardInstanceRef.current = null;
+      setReady(false);
+    };
+  }, [canPay, paid, orderId]);
 
-  const statusColor = (s?: string) => {
-    switch ((s ?? "").toUpperCase()) {
-      case "PAID": return "bg-success/15 text-success";
-      case "CANCELED": return "bg-destructive/15 text-destructive";
-      case "UNPAID": case "PARTIALLY_PAID": case "SCHEDULED": return "bg-amber-500/15 text-amber-500";
-      default: return "bg-surface-2 text-muted-foreground";
+  const handlePay = async () => {
+    if (!cardInstanceRef.current) return;
+    setLoading(true);
+    try {
+      const result = await cardInstanceRef.current.tokenize();
+      if (result.status !== "OK") {
+        const msg = result.errors?.[0]?.message || "Card tokenization failed";
+        throw new Error(msg);
+      }
+      const res = await chargeFn({ data: { orderId, sourceId: result.token } });
+      toast.success(`Paid ${format(amountCents)}`);
+      setPaid({
+        status: res.status,
+        card_brand: res.cardBrand,
+        last_4: res.last4,
+        receipt_url: res.receiptUrl,
+        amount_cents: amountCents,
+      });
+      await onChange?.();
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setLoading(false);
     }
   };
 
-  return (
-    <div>
-      <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Square invoice</div>
-      {!row ? (
-        canCreate ? (
-          <button onClick={handleCreate} disabled={loading}
-            className="w-full px-2.5 py-1.5 rounded-md bg-primary/15 text-primary text-xs font-medium hover:bg-primary/25 disabled:opacity-50">
-            {loading ? "Creating…" : "Create & send Square invoice"}
-          </button>
-        ) : (
-          <div className="text-xs text-muted-foreground">No invoice (order already paid/completed)</div>
-        )
-      ) : (
-        <div className="space-y-2">
-          <div className="flex items-center justify-between gap-2">
-            <span className={cn("text-[10px] px-1.5 py-0.5 rounded font-medium", statusColor(row.status))}>{row.status}</span>
-            {row.invoice_number && <span className="text-[10px] text-muted-foreground font-mono">#{row.invoice_number}</span>}
-          </div>
-          {row.public_url && (
-            <a href={row.public_url} target="_blank" rel="noreferrer"
-              className="text-xs text-primary hover:underline flex items-center gap-1 break-all">
-              <ExternalLink className="size-3 shrink-0" /> Open invoice
-            </a>
-          )}
-          <div className="flex gap-1">
-            <button onClick={handleRefresh} disabled={loading}
-              className="flex-1 px-2 py-1 rounded bg-surface-2 text-xs flex items-center justify-center gap-1 hover:bg-surface-2/70 disabled:opacity-50">
-              <RefreshCw className="size-3" /> Refresh
-            </button>
-            {row.status !== "PAID" && row.status !== "CANCELED" && (
-              <button onClick={handleCancel} disabled={loading}
-                className="flex-1 px-2 py-1 rounded bg-destructive/10 text-destructive text-xs flex items-center justify-center gap-1 hover:bg-destructive/20 disabled:opacity-50">
-                <Ban className="size-3" /> Cancel
-              </button>
+  if (paid) {
+    return (
+      <div>
+        <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Card payment</div>
+        <div className="rounded-md bg-success/10 border border-success/20 px-2.5 py-2 space-y-1">
+          <div className="flex items-center gap-2 text-success text-xs font-medium">
+            <CreditCard className="size-3.5" /> Paid
+            {paid.card_brand && paid.last_4 && (
+              <span className="font-mono text-muted-foreground">{paid.card_brand} •••• {paid.last_4}</span>
             )}
           </div>
-          {row.last_synced_at && (
-            <div className="text-[10px] text-muted-foreground">Synced {new Date(row.last_synced_at).toLocaleTimeString()}</div>
+          {paid.receipt_url && (
+            <a href={paid.receipt_url} target="_blank" rel="noreferrer"
+              className="text-[11px] text-primary hover:underline">View receipt</a>
           )}
+        </div>
+      </div>
+    );
+  }
+
+  if (!canPay) {
+    return (
+      <div>
+        <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Card payment</div>
+        <div className="text-xs text-muted-foreground">Not available for this order.</div>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Pay by card</div>
+      {bootError ? (
+        <div className="text-xs text-destructive">{bootError}</div>
+      ) : (
+        <div className="space-y-2">
+          <div ref={cardRef} className="rounded-md bg-surface-2 border border-border px-2 py-2 min-h-[60px]" />
+          <button onClick={handlePay} disabled={!ready || loading}
+            className="w-full px-2.5 py-2 rounded-md bg-primary text-primary-foreground text-xs font-medium flex items-center justify-center gap-1.5 hover:bg-primary/90 disabled:opacity-50">
+            <CreditCard className="size-3.5" />
+            {loading ? "Processing…" : ready ? `Pay ${format(amountCents)}` : "Loading…"}
+          </button>
         </div>
       )}
     </div>
