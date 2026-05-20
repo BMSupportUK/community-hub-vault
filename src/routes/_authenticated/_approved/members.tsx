@@ -10,6 +10,7 @@ import profileHeader from "@/assets/profile-header.jpg";
 import { useOnlineUsers } from "@/hooks/use-online-users";
 import { formatLastSeen } from "@/lib/relative-time";
 import { Nameplate } from "@/components/app/Nameplate";
+import { VpnBadge } from "@/lib/vpn-flags";
 
 export const Route = createFileRoute("/_authenticated/_approved/members")({
   component: MembersPage,
@@ -266,6 +267,7 @@ function MembersPage() {
                       {name}
                     </Link>
                   )}
+                  <span className="ml-1 inline-flex align-middle"><VpnBadge userId={p.id} size={12} /></span>
                   <div className="text-[10px] mt-0.5 flex items-center gap-1.5">
                     <span className={`size-1.5 rounded-full ${isOnline ? "bg-emerald-500" : "bg-zinc-500"}`} />
                     <span className={isOnline ? "text-emerald-400" : "text-muted-foreground"}>
