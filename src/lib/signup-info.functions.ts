@@ -18,13 +18,18 @@ async function checkVpn(ip: string) {
     if (!res.ok) return null;
     const json = (await res.json()) as Record<string, unknown>;
     const entry = (json[ip] ?? {}) as Record<string, unknown>;
+    const operator = (entry.operator ?? {}) as Record<string, unknown>;
     const proxy = String(entry.proxy ?? "no").toLowerCase() === "yes";
     const type = String(entry.type ?? "").toLowerCase();
     return {
       is_proxy: proxy,
       is_vpn: proxy && type === "vpn",
-      vpn_provider: (entry.provider as string) ?? (entry.organisation as string) ?? null,
-      isp: (entry.isp as string) ?? null,
+      vpn_provider:
+        (operator.name as string) ??
+        (entry.provider as string) ??
+        (entry.organisation as string) ??
+        null,
+      isp: (entry.isp as string) ?? (entry.provider as string) ?? null,
       country: (entry.country as string) ?? null,
       region: (entry.region as string) ?? null,
       city: (entry.city as string) ?? null,
@@ -85,11 +90,16 @@ export const recordSignupInfo = createServerFn({ method: "POST" })
 
     // Auto-ban if this IP is blacklisted
     try {
-      const { data: hit } = await supabase.rpc("is_blacklisted" as never, { _email: null, _ip: ip } as never);
+      const { data: hit } = await supabase.rpc(
+        "is_blacklisted" as never,
+        { _email: null, _ip: ip } as never,
+      );
       if (hit === true) {
         await supabase.rpc("apply_blacklist_ban" as never, { _user_id: userId } as never);
       }
-    } catch {}
+    } catch (e) {
+      console.warn("[signup-info] blacklist check failed", e);
+    }
 
     return { ok: true, ip, is_vpn: vpn?.is_vpn ?? null, is_proxy: vpn?.is_proxy ?? null };
   });
