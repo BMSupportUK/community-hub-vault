@@ -132,9 +132,7 @@ export const checkMyVpnOnLogin = createServerFn({ method: "POST" })
     const clientIp = normalizeIp(data.clientIpHint);
     const ip = clientIp && !isPrivateIp(clientIp) ? clientIp : observedIp;
 
-    if (isPrivateIp(ip)) return { ok: false, skipped: true, ip };
-
-    const vpn = await checkVpn(ip);
+    const vpn = isPrivateIp(ip) ? null : await checkVpn(ip);
 
     // Always write the login trail even if external VPN/IP enrichment is down.
     const { error: historyError } = await supabase.rpc("insert_my_location_event" as never, {
@@ -154,7 +152,7 @@ export const checkMyVpnOnLogin = createServerFn({ method: "POST" })
     } as never);
     if (historyError) throw new Error(historyError.message);
 
-    if (!vpn) return { ok: true, ip, observedIp, clientIp, is_vpn: null, is_proxy: null };
+    if (!vpn) return { ok: true, ip, observedIp, clientIp, skipped: isPrivateIp(ip), is_vpn: null, is_proxy: null };
 
     const { error } = await supabase.rpc(
       "upsert_my_signup_vpn" as never,
