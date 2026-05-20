@@ -2117,6 +2117,17 @@ function loadSquareSdk(env: "sandbox" | "production"): Promise<any> {
   });
 }
 
+function SquareLogo({ className = "" }: { className?: string }) {
+  return (
+    <img
+      src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/35/Square%2C_Inc._-_Square_Logo.svg/512px-Square%2C_Inc._-_Square_Logo.svg.png"
+      alt="Square"
+      className={`h-4 w-auto ${className}`}
+      loading="lazy"
+    />
+  );
+}
+
 function SquareCardPanel({ orderId, amountCents, canPay, onChange }: { orderId: string; amountCents: number; canPay: boolean; onChange?: () => void | Promise<void> }) {
   const [paid, setPaid] = useState<any | null>(null);
   const [loading, setLoading] = useState(false);
@@ -2230,6 +2241,7 @@ function SquareCardPanel({ orderId, amountCents, canPay, onChange }: { orderId: 
   if (paid) {
     return (
       <div>
+        <SquareLogo className="mb-1.5" />
         <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Card Payment via Square</div>
         <div className="rounded-md bg-success/10 border border-success/20 px-2.5 py-2 space-y-1">
           <div className="flex items-center gap-2 text-success text-xs font-medium">
@@ -2250,6 +2262,7 @@ function SquareCardPanel({ orderId, amountCents, canPay, onChange }: { orderId: 
   if (!canPay) {
     return (
       <div>
+        <SquareLogo className="mb-1.5" />
         <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Card Payment via Square</div>
         <div className="text-xs text-muted-foreground">Not available for this order.</div>
       </div>
@@ -2258,6 +2271,7 @@ function SquareCardPanel({ orderId, amountCents, canPay, onChange }: { orderId: 
 
   return (
     <div>
+      <SquareLogo className="mb-1.5" />
       <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Pay by card</div>
       {bootError ? (
         <div className="text-xs text-destructive">{bootError}</div>
