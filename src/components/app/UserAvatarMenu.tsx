@@ -100,7 +100,7 @@ export function UserAvatarMenu() {
           <span className="hidden lg:flex flex-col items-start leading-tight pr-2">
             <span className={cn("text-xs font-semibold text-foreground max-w-[120px] truncate inline-flex items-center gap-1", flashCls)}>
               {name}
-              <VpnBadge userId={user.id} size={11} />
+              <VpnBadge userId={user.id} size={11} showInactive />
             </span>
             <span className="text-[10px] text-muted-foreground capitalize">{topRole}</span>
           </span>
@@ -124,7 +124,7 @@ export function UserAvatarMenu() {
             <div className="min-w-0 flex-1">
               <div className={cn("font-semibold text-sm truncate inline-flex items-center gap-1", flashCls)}>
                 {name}
-                <VpnBadge userId={user.id} size={12} />
+                <VpnBadge userId={user.id} size={12} showInactive />
               </div>
               <div className="text-xs text-muted-foreground truncate flex items-center gap-1">
                 <AtSign className="size-3" />
