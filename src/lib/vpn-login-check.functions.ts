@@ -153,5 +153,25 @@ export const checkMyVpnOnLogin = createServerFn({ method: "POST" })
     );
     if (error) throw error;
 
+    // Append a login event to the user's location history
+    try {
+      await supabase.rpc("insert_my_location_event" as never, {
+        _event_type: "login",
+        _ip: ip,
+        _country: vpn.country ?? null,
+        _region: vpn.region ?? null,
+        _city: vpn.city ?? null,
+        _latitude: null,
+        _longitude: null,
+        _isp: vpn.isp ?? null,
+        _is_vpn: vpn.is_vpn,
+        _is_proxy: vpn.is_proxy,
+        _vpn_provider: vpn.vpn_provider ?? null,
+        _user_agent: getRequestHeader("user-agent") ?? null,
+      } as never);
+    } catch (e) {
+      console.warn("[vpn-login-check] location history insert failed", e);
+    }
+
     return { ok: true, ip, observedIp, clientIp, is_vpn: vpn.is_vpn, is_proxy: vpn.is_proxy };
   });

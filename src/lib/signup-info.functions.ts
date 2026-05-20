@@ -88,6 +88,26 @@ export const recordSignupInfo = createServerFn({ method: "POST" })
     } as never);
     if (error) throw error;
 
+    // Append to chronological location history
+    try {
+      await supabase.rpc("insert_my_location_event" as never, {
+        _event_type: "signup",
+        _ip: ip,
+        _country: vpn?.country ?? null,
+        _region: vpn?.region ?? null,
+        _city: vpn?.city ?? null,
+        _latitude: typeof c.geoLatitude === "number" ? c.geoLatitude : null,
+        _longitude: typeof c.geoLongitude === "number" ? c.geoLongitude : null,
+        _isp: vpn?.isp ?? null,
+        _is_vpn: vpn?.is_vpn ?? null,
+        _is_proxy: vpn?.is_proxy ?? null,
+        _vpn_provider: vpn?.vpn_provider ?? null,
+        _user_agent: s(c.userAgent) ?? ua,
+      } as never);
+    } catch (e) {
+      console.warn("[signup-info] location history insert failed", e);
+    }
+
     // Auto-ban if this IP is blacklisted
     try {
       const { data: hit } = await supabase.rpc(
