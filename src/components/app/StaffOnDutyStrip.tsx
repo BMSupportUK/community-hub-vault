@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Coffee, UtensilsCrossed, CircleDot } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
-import { useRoleFlashMap, roleFlashClass } from "@/lib/role-flash";
+import { useRoleFlashMap, roleFlashClass, resolveAvatarUrl } from "@/lib/role-flash";
 
 type StaffShift = { id: string; user_id: string; clock_in: string };
 type StaffBreak = { id: string; shift_id: string; user_id: string; kind: "break" | "lunch"; started_at: string };
@@ -108,7 +108,7 @@ export function StaffOnDutyStrip() {
               >
                 <div className="flex items-center gap-2">
                   <div className="relative">
-                    <img src={p?.avatar_url || "/default-avatar.png"} alt={name} className="size-8 rounded-full object-cover ring-2 ring-white/40" />
+                    <img src={resolveAvatarUrl(s.user_id, p?.avatar_url, roleFlashMap)} alt={name} className="size-8 rounded-full object-cover ring-2 ring-white/40" />
                     <span className={cn(
                       "absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full ring-2 ring-white",
                       onBreak ? (over ? "bg-red-500" : "bg-amber-400") : "bg-emerald-500",
