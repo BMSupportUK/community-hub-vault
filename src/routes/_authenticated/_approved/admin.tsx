@@ -4,6 +4,8 @@ import { ShieldCheck, Lock, KeyRound, Users, Ticket, ShoppingBag, ShieldAlert, K
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
+import { backfillVpnDetection } from "@/lib/vpn-backfill.functions";
 
 export const Route = createFileRoute("/_authenticated/_approved/admin")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -497,6 +499,7 @@ function DashboardBody() {
   return (
     <div className="space-y-6">
       <RecoveryCodes />
+      <VpnBackfillCard />
       <div className="grid gap-6 lg:grid-cols-[1fr_300px]">
         <section className="order-1">
           <h2 className="font-display text-sm uppercase tracking-wide text-muted-foreground mb-3">Admin tools</h2>
@@ -547,6 +550,62 @@ interface BackupCodeRow {
   used_at: string | null;
   created_at: string;
   batch_id: string;
+}
+
+function VpnBackfillCard() {
+  const { hasAny } = useAuth();
+  const isAdmin = hasAny(["admin", "management"]);
+  const runBackfill = useServerFn(backfillVpnDetection);
+  const [busy, setBusy] = useState(false);
+  const [last, setLast] = useState<{ scanned: number; uniqueIps: number; updated: number; flagged: number } | null>(null);
+
+  if (!isAdmin) return null;
+
+  const run = async () => {
+    if (!confirm("Run VPN/proxy detection across all known user IPs? This calls proxycheck.io.")) return;
+    setBusy(true);
+    try {
+      const res = await runBackfill();
+      setLast(res);
+      toast.success(`Done — flagged ${res.flagged} of ${res.updated} users (from ${res.uniqueIps} unique IPs).`);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Backfill failed");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <section className="rounded-2xl border border-border bg-surface-1 p-5">
+      <div className="flex items-start justify-between gap-3 flex-wrap">
+        <div className="flex items-center gap-3">
+          <div className="size-10 rounded-xl bg-amber-500/15 text-amber-400 grid place-items-center">
+            <ShieldAlert className="size-5" />
+          </div>
+          <div>
+            <h2 className="font-display font-bold">VPN / proxy backfill</h2>
+            <p className="text-xs text-muted-foreground max-w-xl">
+              Detect VPN or proxy use across all existing members using their most recent known IP.
+              Flagged users will show an amber shield next to their name everywhere on the site.
+            </p>
+            {last && (
+              <p className="text-[11px] text-muted-foreground mt-1">
+                Last run: scanned {last.scanned} users, {last.uniqueIps} unique IPs, updated {last.updated}, flagged {last.flagged}.
+              </p>
+            )}
+          </div>
+        </div>
+        <button
+          onClick={run}
+          disabled={busy}
+          className="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium disabled:opacity-60"
+        >
+          {busy ? <Loader2 className="size-4 animate-spin" /> : <RefreshCw className="size-4" />}
+          {busy ? "Scanning…" : "Run VPN scan"}
+        </button>
+      </div>
+    </section>
+  );
 }
 
 function RecoveryCodes() {
