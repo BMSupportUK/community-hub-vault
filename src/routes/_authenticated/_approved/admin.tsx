@@ -4,6 +4,8 @@ import { ShieldCheck, Lock, KeyRound, Users, Ticket, ShoppingBag, ShieldAlert, K
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
+import { backfillVpnDetection } from "@/lib/vpn-backfill.functions";
 
 export const Route = createFileRoute("/_authenticated/_approved/admin")({
   validateSearch: (search: Record<string, unknown>) => ({
