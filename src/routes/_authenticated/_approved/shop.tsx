@@ -2339,7 +2339,7 @@ function loadPaypalSdk(clientId: string, currency: string): Promise<any> {
       return;
     }
     const s = document.createElement("script");
-    s.src = `https://www.paypal.com/sdk/js?client-id=${encodeURIComponent(clientId)}&currency=${encodeURIComponent(currency)}&intent=capture`;
+    s.src = `https://www.paypal.com/sdk/js?client-id=${encodeURIComponent(clientId)}&currency=${encodeURIComponent(currency)}&intent=capture&disable-funding=card,credit,paylater,venmo`;
     s.async = true;
     s.setAttribute("data-paypal-sdk", "1");
     s.onload = () => resolve((window as any).paypal);
