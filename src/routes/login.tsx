@@ -1,10 +1,30 @@
 import { createFileRoute, Link, useNavigate, redirect } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import loginIllustration from "@/assets/login-illustration.png";
 import { TurnstileWidget } from "@/components/app/TurnstileWidget";
 import { verifyTurnstile } from "@/lib/turnstile.functions";
+import { checkMyVpnOnLogin } from "@/lib/vpn-login-check.functions";
+import { refreshVpnUserSet } from "@/lib/vpn-flags";
+
+async function getClientIpHint(): Promise<string | null> {
+  try {
+    const ctrl = new AbortController();
+    const t = window.setTimeout(() => ctrl.abort(), 2500);
+    const res = await fetch("https://api.ipify.org?format=json", {
+      cache: "no-store",
+      signal: ctrl.signal,
+    });
+    window.clearTimeout(t);
+    if (!res.ok) return null;
+    const json = (await res.json()) as { ip?: unknown };
+    return typeof json.ip === "string" ? json.ip : null;
+  } catch {
+    return null;
+  }
+}
 
 export const Route = createFileRoute("/login")({
   beforeLoad: async () => {
@@ -16,6 +36,7 @@ export const Route = createFileRoute("/login")({
 
 function LoginPage() {
   const navigate = useNavigate();
+  const checkLoginLocation = useServerFn(checkMyVpnOnLogin);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
@@ -33,6 +54,14 @@ function LoginPage() {
     }
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) { setBusy(false); return toast.error(error.message); }
+    try {
+      await supabase.auth.getSession();
+      const clientIpHint = await getClientIpHint();
+      await checkLoginLocation({ data: { clientIpHint } });
+      refreshVpnUserSet();
+    } catch (locationError) {
+      console.warn("[login] location history check failed", locationError);
+    }
     // If the account has a verified 2FA factor, require it before proceeding.
     const aal = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
     setBusy(false);
