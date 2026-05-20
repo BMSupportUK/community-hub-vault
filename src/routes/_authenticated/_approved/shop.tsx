@@ -2225,7 +2225,6 @@ function SquareCardPanel({ orderId, amountCents, canPay, onChange }: { orderId: 
     }
   };
   const handlePay = () => tokenizeAndCharge(cardInstanceRef.current, "Card");
-  const handleApplePay = () => tokenizeAndCharge(applePayInstanceRef.current, "Apple Pay");
   const handleGooglePay = () => tokenizeAndCharge(googlePayInstanceRef.current, "Google Pay");
 
   if (paid) {
