@@ -2,8 +2,19 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { checkMyVpnOnLogin } from "@/lib/vpn-login-check.functions";
+import { refreshVpnUserSet } from "@/lib/vpn-flags";
 
-export type AppRole = "admin" | "management" | "staff" | "moderator" | "subscriber" | "nonsubscriber" | "member" | "pending" | "banned" | "rejected";
+export type AppRole =
+  | "admin"
+  | "management"
+  | "staff"
+  | "moderator"
+  | "subscriber"
+  | "nonsubscriber"
+  | "member"
+  | "pending"
+  | "banned"
+  | "rejected";
 
 interface AuthCtx {
   user: User | null;
@@ -39,11 +50,51 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (error) {
       console.warn("[auth] loadRoles failed, keeping previous roles", error);
       // Retry shortly so we don't sit on a Loading… screen for 30s on first load.
-      setTimeout(() => { loadRoles(uid); }, 2000);
+      setTimeout(() => {
+        loadRoles(uid);
+      }, 2000);
       return;
     }
     setRoles((data ?? []).map((r) => r.role as AppRole));
     setRolesLoaded(true);
+  };
+
+  const runVpnLoginCheck = (uid: string) => {
+    const run = () => {
+      checkMyVpnOnLogin()
+        .then(() => refreshVpnUserSet())
+        .catch((e) => console.warn("[auth] vpn check failed", e))
+        .finally(() => {
+          try {
+            sessionStorage.removeItem(`vpn-checking:${uid}`);
+          } catch {
+            // ignore storage issues
+          }
+        });
+    };
+
+    try {
+      const checkedKey = `vpn-checked:v2:${uid}`;
+      const checkingKey = `vpn-checking:${uid}`;
+      if (
+        typeof window !== "undefined" &&
+        !sessionStorage.getItem(checkedKey) &&
+        !sessionStorage.getItem(checkingKey)
+      ) {
+        sessionStorage.setItem(checkingKey, "1");
+        setTimeout(() => {
+          checkMyVpnOnLogin()
+            .then(() => {
+              sessionStorage.setItem(checkedKey, "1");
+              refreshVpnUserSet();
+            })
+            .catch((e) => console.warn("[auth] vpn check failed", e))
+            .finally(() => sessionStorage.removeItem(checkingKey));
+        }, 0);
+      }
+    } catch {
+      setTimeout(run, 0);
+    }
   };
 
   useEffect(() => {
@@ -61,24 +112,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setRoles([]);
         setRolesLoaded(true);
       }
-      // On sign-in, run a VPN/proxy check against the current request IP and
-      // upsert the result into signup_info. Guard with sessionStorage so it
-      // fires once per browser session, not on every token refresh.
       if (event === "SIGNED_IN" && nextUid) {
-        try {
-          const key = `vpn-checked:${nextUid}`;
-          if (typeof window !== "undefined" && !sessionStorage.getItem(key)) {
-            sessionStorage.setItem(key, "1");
-            setTimeout(() => {
-              checkMyVpnOnLogin().catch((e) => console.warn("[auth] vpn check failed", e));
-            }, 0);
-          }
-        } catch {
-          // sessionStorage may be unavailable; run anyway
-          setTimeout(() => {
-            checkMyVpnOnLogin().catch(() => {});
-          }, 0);
-        }
+        runVpnLoginCheck(nextUid);
       }
       // Same user (e.g. TOKEN_REFRESHED on tab refocus): do not reload roles —
       // toggling rolesLoaded would flip the global loading state and unmount the app.
@@ -89,6 +124,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (s?.user) {
         currentUid = s.user.id;
         await loadRoles(s.user.id);
+        runVpnLoginCheck(s.user.id);
       } else {
         setRolesLoaded(true);
       }
@@ -104,10 +140,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!user?.id) return;
     const uid = user.id;
-    const tick = () => { loadRoles(uid); };
+    const tick = () => {
+      loadRoles(uid);
+    };
     const interval = window.setInterval(tick, 30_000);
     const onFocus = () => tick();
-    const onVis = () => { if (document.visibilityState === "visible") tick(); };
+    const onVis = () => {
+      if (document.visibilityState === "visible") tick();
+    };
     window.addEventListener("focus", onFocus);
     document.addEventListener("visibilitychange", onVis);
     return () => {
@@ -121,7 +161,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const hasAny = (rs: AppRole[]) => rs.some((r) => roles.includes(r));
   // While roles are still loading we should NOT treat the user as pending —
   // otherwise approved users get bounced to /gate on login/reload.
-  const isPending = rolesLoaded && (roles.length === 0 || (roles.length === 1 && roles[0] === "pending"));
+  const isPending =
+    rolesLoaded && (roles.length === 0 || (roles.length === 1 && roles[0] === "pending"));
   const isBanned = roles.includes("banned");
   const isRejected = roles.includes("rejected");
   const isStaff = hasAny(["admin", "management", "staff", "moderator"]);
