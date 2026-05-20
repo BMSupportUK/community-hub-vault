@@ -2031,12 +2031,25 @@ function OrderDetail({ orderId, isAdmin, onBack }: { orderId: string; isAdmin: b
             </div>
           )}
           {(isAdmin || order.user_id === user?.id) && (
-            <SquareCardPanel
-              orderId={orderId}
-              amountCents={order.total_cents ?? 0}
-              canPay={!order.paid_at && !order.completed_at && order.status !== "cancelled"}
-              onChange={load}
-            />
+            <div className="space-y-3">
+              <SquareCardPanel
+                orderId={orderId}
+                amountCents={order.total_cents ?? 0}
+                canPay={!order.paid_at && !order.completed_at && order.status !== "cancelled"}
+                onChange={load}
+              />
+              {!order.paid_at && !order.completed_at && order.status !== "cancelled" && (
+                <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider text-muted-foreground">
+                  <div className="h-px flex-1 bg-border" /> or <div className="h-px flex-1 bg-border" />
+                </div>
+              )}
+              <PaypalPanel
+                orderId={orderId}
+                amountCents={order.total_cents ?? 0}
+                canPay={!order.paid_at && !order.completed_at && order.status !== "cancelled"}
+                onChange={load}
+              />
+            </div>
           )}
         </div>
         <div className="flex-1 flex flex-col">
