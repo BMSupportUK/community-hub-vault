@@ -19,7 +19,12 @@ async function load(): Promise<Set<string>> {
   inflight = (async () => {
     const { data, error } = await supabase.rpc("get_vpn_user_ids" as never);
     const set = new Set<string>();
-    if (!error && Array.isArray(data)) {
+    if (error) {
+      console.warn("[vpn] failed to load VPN user flags", error);
+      inflight = null;
+      return set;
+    }
+    if (Array.isArray(data)) {
       for (const row of data as Array<{ get_vpn_user_ids?: string } | string>) {
         const id = typeof row === "string" ? row : row?.get_vpn_user_ids;
         if (id) set.add(id);
@@ -31,6 +36,11 @@ async function load(): Promise<Set<string>> {
     return set;
   })();
   return inflight;
+}
+
+export function refreshVpnUserSet() {
+  cache = null;
+  void load();
 }
 
 export function useVpnUserSet(): Set<string> {
