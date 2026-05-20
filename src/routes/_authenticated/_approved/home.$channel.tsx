@@ -974,7 +974,7 @@ function ChannelPage() {
                 {(() => {
                   const showNameplate = !!p?.equipped_nameplate_id;
                    const resolvedAvatar = resolveAvatarUrl(m.sender_id, p?.avatar_url, roleFlashMap);
-                   const hasAvatar = !!p?.avatar_url || roleFlashMap.get(m.sender_id) === "staff" || roleFlashMap.get(m.sender_id) === "management";
+                   const hasAvatar = !!p?.avatar_url || roleFlashMap.get(m.sender_id) === "staff" || roleFlashMap.get(m.sender_id) === "management" || roleFlashMap.get(m.sender_id) === "moderator";
                    const avatarEl = hasAvatar ? (
                      <img
                        src={resolvedAvatar}
