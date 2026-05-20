@@ -167,11 +167,24 @@ export const capturePaypalOrder = createServerFn({ method: "POST" })
       }, { onConflict: "order_id" });
     if (upErr) throw new Error(upErr.message);
 
-    const { error: paidErr } = await supabase
-      .from("orders")
-      .update({ paid_at: new Date().toISOString(), paid_by: userId })
-      .eq("id", orderRowId);
-    if (paidErr) console.error("Failed to set paid_at on order:", paidErr.message);
+    // Use the same RPC as the Square flow so the order transitions
+    // pending → processing, paid_at/paid_by are stamped, and the standard
+    // "💳 Payment received" system message is posted. This keeps the admin
+    // order panel (Setting Up Account / Sale Complete buttons, status badge,
+    // chat history) identical regardless of which provider captured payment.
+    const { error: paidErr } = await supabase.rpc(
+      "mark_order_paid" as never,
+      { p_order_id: orderRowId } as never,
+    );
+    if (paidErr) {
+      // Non-admin customers can't call this RPC — fall back to a direct
+      // update of paid_at/paid_by so the order is still marked paid.
+      const { error: fallbackErr } = await supabase
+        .from("orders")
+        .update({ paid_at: new Date().toISOString(), paid_by: userId })
+        .eq("id", orderRowId);
+      if (fallbackErr) console.error("Failed to mark order paid:", fallbackErr.message);
+    }
 
     const who = payerName || payerEmail || "PayPal";
     await supabase.from("order_messages").insert({
