@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ShieldAlert } from "lucide-react";
+import { ShieldAlert, ShieldCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
@@ -79,26 +79,31 @@ export function VpnBadge({
   userId,
   className,
   size = 14,
+  showInactive = false,
 }: {
   userId: string | null | undefined;
   className?: string;
   size?: number;
+  showInactive?: boolean;
 }) {
   const set = useVpnUserSet();
-  if (!userId || !set.has(userId)) return null;
+  const isVpn = Boolean(userId && set.has(userId));
+  if (!userId || (!isVpn && !showInactive)) return null;
+  const label = isVpn ? "VPN Protected" : "No VPN";
+  const Icon = isVpn ? ShieldAlert : ShieldCheck;
   return (
     <TooltipProvider delayDuration={150}>
       <Tooltip>
         <TooltipTrigger asChild>
           <span
-            aria-label="Currently using VPN or proxy"
-            className={cn("inline-flex items-center text-amber-400", className)}
+            aria-label={label}
+            className={cn("inline-flex items-center", isVpn ? "text-amber-400" : "text-emerald-400", className)}
           >
-            <ShieldAlert size={size} strokeWidth={2.25} />
+            <Icon size={size} strokeWidth={2.25} />
           </span>
         </TooltipTrigger>
         <TooltipContent side="top" className="text-xs">
-          Currently using VPN / proxy
+          {label}
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
