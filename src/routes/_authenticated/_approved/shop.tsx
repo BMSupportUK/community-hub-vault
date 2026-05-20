@@ -2038,6 +2038,17 @@ function OrderDetail({ orderId, isAdmin, onBack }: { orderId: string; isAdmin: b
                 canPay={!order.paid_at && !order.completed_at && order.status !== "cancelled"}
                 onChange={load}
               />
+              {!order.paid_at && !order.completed_at && order.status !== "cancelled" && (
+                <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider text-muted-foreground">
+                  <div className="h-px flex-1 bg-border" /> or <div className="h-px flex-1 bg-border" />
+                </div>
+              )}
+              <PaypalPanel
+                orderId={orderId}
+                amountCents={order.total_cents ?? 0}
+                canPay={!order.paid_at && !order.completed_at && order.status !== "cancelled"}
+                onChange={load}
+              />
             </div>
           )}
         </div>
