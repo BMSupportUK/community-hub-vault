@@ -125,22 +125,45 @@ function Landing() {
           </p>
           <div className="flex flex-col items-center md:items-end gap-2 order-1 md:order-2">
             <span className="text-[11px] uppercase tracking-wider text-red-100/60">Accepted payment methods</span>
-            <div className="flex items-center gap-3">
-              <div className="px-3 py-1.5 rounded-md bg-white text-black text-xs font-bold shadow-sm">
-                Square
+            <div className="flex items-stretch gap-4">
+              {/* Square group */}
+              <div className="flex flex-col items-center gap-2">
+                <div className="px-3 py-1.5 rounded-md bg-white shadow-sm flex items-center justify-center h-7">
+                  <svg viewBox="0 0 24 24" className="h-4 w-auto" aria-label="Square">
+                    <path fill="#000" d="M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2zm3 5v8h8V8H8zm2 2h4v4h-4v-4z"/>
+                  </svg>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="px-2 py-1 rounded bg-white text-[#1a1f71] text-[10px] font-extrabold italic tracking-tight shadow-sm">VISA</div>
+                  <div className="px-2 py-1 rounded bg-white text-[10px] font-bold shadow-sm">
+                    <span className="text-[#eb001b]">●</span><span className="text-[#f79e1b] -ml-1.5">●</span>
+                    <span className="ml-1 text-black">MC</span>
+                  </div>
+                  <div className="px-2 py-1 rounded bg-white text-[#006fcf] text-[10px] font-extrabold shadow-sm">AMEX</div>
+                  <div className="px-2 py-1 rounded bg-white text-[#0079be] text-[10px] font-bold shadow-sm">Maestro</div>
+                </div>
               </div>
-              <div className="px-2.5 py-1.5 rounded-md bg-white text-[#1a1f71] text-xs font-extrabold italic tracking-tight shadow-sm">
-                VISA
-              </div>
-              <div className="px-2.5 py-1.5 rounded-md bg-white text-xs font-bold shadow-sm">
-                <span className="text-[#eb001b]">●</span><span className="text-[#f79e1b] -ml-1.5">●</span>
-                <span className="ml-1 text-black">Mastercard</span>
-              </div>
-              <div className="px-2.5 py-1.5 rounded-md bg-white text-[#006fcf] text-xs font-extrabold shadow-sm">
-                AMEX
-              </div>
-              <div className="px-2.5 py-1.5 rounded-md bg-white text-[#0079be] text-xs font-bold shadow-sm">
-                Maestro
+
+              {/* Divider */}
+              <div className="w-px bg-red-500/30 self-stretch" aria-hidden />
+
+              {/* PayPal group */}
+              <div className="flex flex-col items-center gap-2">
+                <div className="px-3 py-1.5 rounded-md bg-white shadow-sm flex items-center justify-center h-7">
+                  <svg viewBox="0 0 100 26" className="h-4 w-auto" aria-label="PayPal">
+                    <text x="0" y="20" fontFamily="Arial, Helvetica, sans-serif" fontWeight="900" fontStyle="italic" fontSize="22">
+                      <tspan fill="#003087">Pay</tspan><tspan fill="#009cde">Pal</tspan>
+                    </text>
+                  </svg>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="px-2 py-1 rounded bg-white text-[#1a1f71] text-[10px] font-extrabold italic tracking-tight shadow-sm">VISA</div>
+                  <div className="px-2 py-1 rounded bg-white text-[10px] font-bold shadow-sm">
+                    <span className="text-[#eb001b]">●</span><span className="text-[#f79e1b] -ml-1.5">●</span>
+                    <span className="ml-1 text-black">MC</span>
+                  </div>
+                  <div className="px-2 py-1 rounded bg-white text-[#006fcf] text-[10px] font-extrabold shadow-sm">AMEX</div>
+                </div>
               </div>
             </div>
           </div>
