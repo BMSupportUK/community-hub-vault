@@ -46,10 +46,15 @@ export function LocationHistoryMap({ rows }: { rows: LocationHistoryRow[] }) {
   const points = useMemo(
     () =>
       rows
-        .filter((r) => typeof r.latitude === "number" && typeof r.longitude === "number")
         .map((r) => ({
           row: r,
-          coord: [r.latitude as number, r.longitude as number] as [number, number],
+          latitude: Number(r.latitude),
+          longitude: Number(r.longitude),
+        }))
+        .filter((p) => Number.isFinite(p.latitude) && Number.isFinite(p.longitude))
+        .map((p) => ({
+          row: p.row,
+          coord: [p.latitude, p.longitude] as [number, number],
         })),
     [rows],
   );
