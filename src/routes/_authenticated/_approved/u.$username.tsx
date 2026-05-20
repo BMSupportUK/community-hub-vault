@@ -18,7 +18,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { listTimeZones } from "@/hooks/use-user-timezone";
 import { Nameplate } from "@/components/app/Nameplate";
 import { NameplatePicker } from "@/components/app/NameplatePicker";
-import { useRoleFlashMap, resolveAvatarUrl } from "@/lib/role-flash";
+import { useRoleFlashMap, resolveAvatarUrl, roleFlashClass } from "@/lib/role-flash";
 
 export const Route = createFileRoute("/_authenticated/_approved/u/$username")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -112,6 +112,7 @@ function ProfilePage() {
   const search = Route.useSearch();
   const { user: viewer, hasAny } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
+  const roleFlashMap = useRoleFlashMap();
   const { format: fmtCurrency } = useCurrency();
   const [now, setNow] = useState(() => Date.now());
   const [profile, setProfile] = useState<ProfileRow | null>(null);
@@ -494,7 +495,7 @@ function ProfilePage() {
                   <Avatar url={profile.avatar_url} name={display} size={96} ring userId={profile.id} />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <h2 className="font-display text-2xl font-bold truncate">{display}</h2>
+                      <h2 className={cn("font-display text-2xl font-bold truncate", roleFlashClass(roleFlashMap.get(profile.id)))}>{display}</h2>
                       {sortedRoles.map((r) => (
                         <span key={r} className={cn("text-xs px-2 py-0.5 rounded-full border font-medium", ROLE_STYLES[r])}>
                           {r}
@@ -535,7 +536,7 @@ function ProfilePage() {
                   <div className="flex items-center gap-3 mb-3">
                     <Avatar url={profile.avatar_url} name={display} size={48} ring userId={profile.id} />
                     <div className="min-w-0">
-                      <h3 className="font-display text-lg font-bold bg-gradient-to-r from-violet-200 to-blue-200 bg-clip-text text-transparent truncate">
+                      <h3 className={cn("font-display text-lg font-bold bg-gradient-to-r from-violet-200 to-blue-200 bg-clip-text text-transparent truncate", roleFlashClass(roleFlashMap.get(profile.id)))}>
                         {isOwner ? `Welcome back, ${display}` : `Welcome to ${display}'s profile`}
                       </h3>
                       <p className="text-xs text-purple-200/80 truncate">@{profile.username ?? "unknown"}</p>
