@@ -1695,7 +1695,9 @@ function OrderDetail({ orderId, isAdmin, onBack }: { orderId: string; isAdmin: b
           if (old?.id) setMsgs((m) => m.filter((x) => x.id !== old.id));
         })
       .on("postgres_changes", { event: "UPDATE", schema: "private", table: "orders", filter: `id=eq.${orderId}` },
-        (p) => setOrder(p.new as Order))
+        // The realtime payload is the raw private row (encrypted columns);
+        // refetch via the public view so decrypted fields stay populated.
+        () => { void load(); })
       .on("broadcast", { event: "typing" }, (payload) => {
         const d = (payload?.payload ?? {}) as { userId?: string; isAdmin?: boolean; stopped?: boolean };
         if (!d.userId || d.userId === user?.id || !!d.isAdmin === isAdmin) return;
