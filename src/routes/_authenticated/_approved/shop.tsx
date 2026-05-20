@@ -2201,7 +2201,7 @@ function SquareCardPanel({ orderId, amountCents, canPay, onChange }: { orderId: 
   if (paid) {
     return (
       <div>
-        <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Card payment</div>
+        <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Card Payment via Square</div>
         <div className="rounded-md bg-success/10 border border-success/20 px-2.5 py-2 space-y-1">
           <div className="flex items-center gap-2 text-success text-xs font-medium">
             <CreditCard className="size-3.5" /> Paid
@@ -2221,7 +2221,7 @@ function SquareCardPanel({ orderId, amountCents, canPay, onChange }: { orderId: 
   if (!canPay) {
     return (
       <div>
-        <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Card payment</div>
+        <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Card Payment via Square</div>
         <div className="text-xs text-muted-foreground">Not available for this order.</div>
       </div>
     );
