@@ -2182,12 +2182,6 @@ function SquareCardPanel({ orderId, amountCents, canPay, onChange }: { orderId: 
         } catch (e) {
           console.warn("[square] Google Pay unavailable", e);
         }
-        // Apple Pay (Safari/iOS only; requires domain verification in Square Dashboard)
-        try {
-          const apReq = buildPaymentRequest();
-          const ap = await payments.applePay(apReq);
-          if (cancelled) { /* applePay has no destroy */ }
-          else { applePayInstanceRef.current = ap; setApplePayReady(true); }
         } catch (e) {
           console.warn("[square] Apple Pay unavailable", e);
         }
