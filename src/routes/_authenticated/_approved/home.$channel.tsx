@@ -851,7 +851,7 @@ function ChannelPage() {
                           className="size-4 accent-primary cursor-pointer"
                         />
                         <img
-                          src={resolveAvatarUrl(m.sender_id, p?.avatar_url, roleFlashMap)}
+                          src={resolveAvatarUrl(id, p?.avatar_url, roleFlashMap)}
                           alt=""
                           className="size-8 rounded-full object-cover shrink-0"
                         />
