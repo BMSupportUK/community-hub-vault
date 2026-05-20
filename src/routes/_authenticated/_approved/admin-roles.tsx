@@ -26,6 +26,7 @@ interface Row {
   username: string | null;
   display_name: string | null;
   roles: string[];
+  last_ip: string | null;
 }
 
 const SYSTEM_STYLE: Record<string, string> = {
@@ -53,10 +54,11 @@ function AdminRolesPage() {
 
   const loadAll = async () => {
     setLoading(true);
-    const [{ data: profs }, { data: rolesData }, { data: defs }] = await Promise.all([
+    const [{ data: profs }, { data: rolesData }, { data: defs }, { data: ipsData }] = await Promise.all([
       supabase.from("profiles").select("id, username, display_name").order("created_at", { ascending: true }),
       supabase.from("user_roles").select("user_id, role"),
       supabase.from("role_definitions").select("name, label, is_system, is_active, sort_order").order("sort_order"),
+      supabase.from("signup_info").select("user_id, ip"),
     ]);
     const roleMap = new Map<string, string[]>();
     (rolesData ?? []).forEach((r: any) => {
@@ -64,8 +66,13 @@ function AdminRolesPage() {
       arr.push(String(r.role));
       roleMap.set(r.user_id, arr);
     });
+    const ipMap = new Map<string, string | null>();
+    (ipsData ?? []).forEach((r: any) => {
+      ipMap.set(r.user_id, (r.ip as string | null) ?? null);
+    });
     setRows((profs ?? []).map((p: any) => ({
       id: p.id, username: p.username, display_name: p.display_name, roles: roleMap.get(p.id) ?? [],
+      last_ip: ipMap.get(p.id) ?? null,
     })));
     setRoleDefs((defs ?? []) as RoleDef[]);
     setLoading(false);
@@ -81,7 +88,8 @@ function AdminRolesPage() {
     return rows.filter((r) =>
       (r.username ?? "").toLowerCase().includes(q) ||
       (r.display_name ?? "").toLowerCase().includes(q) ||
-      r.id.toLowerCase().includes(q),
+      r.id.toLowerCase().includes(q) ||
+      (r.last_ip ?? "").toLowerCase().includes(q),
     );
   }, [rows, query]);
 
@@ -183,6 +191,9 @@ function AdminRolesPage() {
                   <div className="min-w-0">
                     <div className="font-medium truncate">{row.display_name || row.username || "Unnamed"}</div>
                     <div className="text-xs text-muted-foreground truncate">@{row.username ?? row.id.slice(0, 8)}</div>
+                    <div className="text-[11px] text-muted-foreground/80 font-mono truncate mt-0.5" title={row.last_ip ?? "No IP recorded"}>
+                      Last IP: {row.last_ip ?? "—"}
+                    </div>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {activeRoles.map((rd) => {
