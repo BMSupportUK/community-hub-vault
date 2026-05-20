@@ -440,6 +440,8 @@ function SecurityGate({ hasPin, onUnlocked }: { hasPin: boolean; onUnlocked: () 
 }
 
 function DashboardBody() {
+  const { hasRole } = useAuth();
+  const isAdminOnly = hasRole("admin");
   const [stats, setStats] = useState<Stats | null>(null);
 
   useEffect(() => {
@@ -472,7 +474,7 @@ function DashboardBody() {
     { label: "Reviews to approve", value: stats?.pendingReviews, icon: Star, accent: "amber" },
   ];
 
-  const tools: { to: string; search?: Record<string, string>; label: string; desc: string; icon: any }[] = [
+  const allTools: { to: string; search?: Record<string, string>; label: string; desc: string; icon: any; adminOnly?: boolean }[] = [
     { to: "/admin-roles", label: "Members & roles", desc: "Assign roles to members and create or delete custom roles.", icon: ShieldCheck },
     { to: "/admin-permissions", label: "Role permissions", desc: "Choose which roles can access pages and what they can do in channels.", icon: Shield },
     { to: "/admin-credentials", label: "User credentials", desc: "Set up app logins assigned to each user.", icon: KeySquare },
@@ -487,9 +489,10 @@ function DashboardBody() {
     { to: "/admin-business-hours", label: "Business hours", desc: "Set opening hours per day. Auto-replies when orders or tickets open out of hours.", icon: Clock },
     { to: "/admin-nameplates", label: "Nameplates", desc: "Manage the catalog of decorative nameplates and assign them to members.", icon: Sparkles },
     { to: "/admin-notifications", label: "Telegram alerts", desc: "Send a Telegram message when a new signup, ticket or sale comes in.", icon: Bell },
-    { to: "/shop", search: { view: "admin" }, label: "Shop products", desc: "Add, edit and reorder shop products and categories.", icon: Package },
-    { to: "/shop", search: { view: "discounts" }, label: "Discount codes", desc: "Create and manage promotional discount codes.", icon: Tag },
+    { to: "/shop", search: { view: "admin" }, label: "Shop products", desc: "Add, edit and reorder shop products and categories.", icon: Package, adminOnly: true },
+    { to: "/shop", search: { view: "discounts" }, label: "Discount codes", desc: "Create and manage promotional discount codes.", icon: Tag, adminOnly: true },
   ];
+  const tools = allTools.filter((t) => !t.adminOnly || isAdminOnly);
 
   return (
     <div className="space-y-6">
