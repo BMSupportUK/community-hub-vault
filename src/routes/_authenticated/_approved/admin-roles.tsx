@@ -268,8 +268,17 @@ function AdminRolesPage() {
                   className="grid grid-cols-[1fr_2fr_auto] gap-4 px-5 py-4 border-b border-border last:border-0 items-center"
                 >
                   <div className="min-w-0">
-                    <div className="font-medium truncate">
-                      {row.display_name || row.username || "Unnamed"}
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <div className="font-medium truncate">
+                        {row.display_name || row.username || "Unnamed"}
+                      </div>
+                      <button
+                        onClick={() => setHistoryFor(row)}
+                        title="View location history"
+                        className="shrink-0 p-1 rounded-md text-muted-foreground hover:text-primary hover:bg-primary/10"
+                      >
+                        <MapPin className="size-3.5" />
+                      </button>
                     </div>
                     <div className="text-xs text-muted-foreground truncate">
                       @{row.username ?? row.id.slice(0, 8)}
@@ -316,13 +325,6 @@ function AdminRolesPage() {
                     ) : (
                       <Trash2 className="size-4" />
                     )}
-                  </button>
-                  <button
-                    onClick={() => setHistoryFor(row)}
-                    title="View location history"
-                    className="p-2 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 -ml-1"
-                  >
-                    <MapPin className="size-4" />
                   </button>
                 </div>
               ))}
