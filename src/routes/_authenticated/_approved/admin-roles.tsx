@@ -326,13 +326,6 @@ function AdminRolesPage() {
                       <Trash2 className="size-4" />
                     )}
                   </button>
-                  <button
-                    onClick={() => setHistoryFor(row)}
-                    title="View location history"
-                    className="hidden"
-                  >
-                    <MapPin className="size-4" />
-                  </button>
                 </div>
               ))}
             </div>
