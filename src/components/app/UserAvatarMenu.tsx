@@ -15,6 +15,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { Nameplate } from "@/components/app/Nameplate";
 import { roleFlashClass, type FlashRole, resolveAvatarUrl, useRoleFlashMap } from "@/lib/role-flash";
+import { VpnBadge } from "@/lib/vpn-flags";
 import { cn } from "@/lib/utils";
 
 interface MiniProfile {
@@ -97,7 +98,10 @@ export function UserAvatarMenu() {
             </AvatarFallback>
           </Avatar>
           <span className="hidden lg:flex flex-col items-start leading-tight pr-2">
-            <span className={cn("text-xs font-semibold text-foreground max-w-[120px] truncate", flashCls)}>{name}</span>
+            <span className={cn("text-xs font-semibold text-foreground max-w-[120px] truncate inline-flex items-center gap-1", flashCls)}>
+              {name}
+              <VpnBadge userId={user.id} size={11} />
+            </span>
             <span className="text-[10px] text-muted-foreground capitalize">{topRole}</span>
           </span>
           <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-rail" />
@@ -118,7 +122,10 @@ export function UserAvatarMenu() {
               </AvatarFallback>
             </Avatar>
             <div className="min-w-0 flex-1">
-              <div className={cn("font-semibold text-sm truncate", flashCls)}>{name}</div>
+              <div className={cn("font-semibold text-sm truncate inline-flex items-center gap-1", flashCls)}>
+                {name}
+                <VpnBadge userId={user.id} size={12} />
+              </div>
               <div className="text-xs text-muted-foreground truncate flex items-center gap-1">
                 <AtSign className="size-3" />
                 {profile?.username ?? user.email}
