@@ -81,7 +81,34 @@ async function checkVpn(ip: string) {
       vpn_raw: entry,
     };
   } catch {
-    return null;
+    try {
+      const ctrl = new AbortController();
+      const t = setTimeout(() => ctrl.abort(), 3500);
+      const res = await fetch(`https://api.ipapi.is/?q=${encodeURIComponent(ip)}`, {
+        signal: ctrl.signal,
+        headers: { Accept: "application/json" },
+      });
+      clearTimeout(t);
+      if (!res.ok) return null;
+      const entry = (await res.json()) as Record<string, unknown>;
+      const vpn = (entry.vpn ?? {}) as Record<string, unknown>;
+      const company = (entry.company ?? {}) as Record<string, unknown>;
+      const location = (entry.location ?? {}) as Record<string, unknown>;
+      const isVpn = entry.is_vpn === true || vpn.is_vpn === true;
+      const isProxy = entry.is_proxy === true || isVpn;
+      return {
+        is_proxy: isProxy,
+        is_vpn: isVpn,
+        vpn_provider: (vpn.service as string) ?? null,
+        isp: (company.name as string) ?? null,
+        country: (location.country as string) ?? null,
+        region: (location.state as string) ?? null,
+        city: (location.city as string) ?? null,
+        vpn_raw: entry,
+      };
+    } catch {
+      return null;
+    }
   }
 }
 
