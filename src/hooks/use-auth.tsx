@@ -4,7 +4,17 @@ import { supabase } from "@/integrations/supabase/client";
 import { checkMyVpnOnLogin } from "@/lib/vpn-login-check.functions";
 import { refreshVpnUserSet } from "@/lib/vpn-flags";
 
-export type AppRole = "admin" | "management" | "staff" | "moderator" | "subscriber" | "nonsubscriber" | "member" | "pending" | "banned" | "rejected";
+export type AppRole =
+  | "admin"
+  | "management"
+  | "staff"
+  | "moderator"
+  | "subscriber"
+  | "nonsubscriber"
+  | "member"
+  | "pending"
+  | "banned"
+  | "rejected";
 
 interface AuthCtx {
   user: User | null;
@@ -40,7 +50,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (error) {
       console.warn("[auth] loadRoles failed, keeping previous roles", error);
       // Retry shortly so we don't sit on a Loading… screen for 30s on first load.
-      setTimeout(() => { loadRoles(uid); }, 2000);
+      setTimeout(() => {
+        loadRoles(uid);
+      }, 2000);
       return;
     }
     setRoles((data ?? []).map((r) => r.role as AppRole));
@@ -64,7 +76,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const checkedKey = `vpn-checked:v2:${uid}`;
       const checkingKey = `vpn-checking:${uid}`;
-      if (typeof window !== "undefined" && !sessionStorage.getItem(checkedKey) && !sessionStorage.getItem(checkingKey)) {
+      if (
+        typeof window !== "undefined" &&
+        !sessionStorage.getItem(checkedKey) &&
+        !sessionStorage.getItem(checkingKey)
+      ) {
         sessionStorage.setItem(checkingKey, "1");
         setTimeout(() => {
           checkMyVpnOnLogin()
@@ -124,10 +140,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!user?.id) return;
     const uid = user.id;
-    const tick = () => { loadRoles(uid); };
+    const tick = () => {
+      loadRoles(uid);
+    };
     const interval = window.setInterval(tick, 30_000);
     const onFocus = () => tick();
-    const onVis = () => { if (document.visibilityState === "visible") tick(); };
+    const onVis = () => {
+      if (document.visibilityState === "visible") tick();
+    };
     window.addEventListener("focus", onFocus);
     document.addEventListener("visibilitychange", onVis);
     return () => {
@@ -141,7 +161,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const hasAny = (rs: AppRole[]) => rs.some((r) => roles.includes(r));
   // While roles are still loading we should NOT treat the user as pending —
   // otherwise approved users get bounced to /gate on login/reload.
-  const isPending = rolesLoaded && (roles.length === 0 || (roles.length === 1 && roles[0] === "pending"));
+  const isPending =
+    rolesLoaded && (roles.length === 0 || (roles.length === 1 && roles[0] === "pending"));
   const isBanned = roles.includes("banned");
   const isRejected = roles.includes("rejected");
   const isStaff = hasAny(["admin", "management", "staff", "moderator"]);

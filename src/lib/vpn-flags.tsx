@@ -1,12 +1,7 @@
 import { useEffect, useState } from "react";
 import { ShieldAlert } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
 let cache: Set<string> | null = null;
@@ -49,7 +44,10 @@ export function useVpnUserSet(): Set<string> {
     const l = () => force((n) => n + 1);
     listeners.add(l);
     if (!cache) load();
-    const onFocus = () => { cache = null; load(); };
+    const onFocus = () => {
+      cache = null;
+      load();
+    };
     window.addEventListener("focus", onFocus);
     return () => {
       listeners.delete(l);
