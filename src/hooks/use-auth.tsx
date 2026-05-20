@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { checkMyVpnOnLogin } from "@/lib/vpn-login-check.functions";
 
 export type AppRole = "admin" | "management" | "staff" | "moderator" | "subscriber" | "nonsubscriber" | "member" | "pending" | "banned" | "rejected";
 
@@ -47,7 +48,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let currentUid: string | null = null;
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
+    const { data: sub } = supabase.auth.onAuthStateChange((event, s) => {
       setSession(s);
       setUser(s?.user ?? null);
       const nextUid = s?.user?.id ?? null;
@@ -59,6 +60,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         currentUid = null;
         setRoles([]);
         setRolesLoaded(true);
+      }
+      // On sign-in, run a VPN/proxy check against the current request IP and
+      // upsert the result into signup_info. Guard with sessionStorage so it
+      // fires once per browser session, not on every token refresh.
+      if (event === "SIGNED_IN" && nextUid) {
+        try {
+          const key = `vpn-checked:${nextUid}`;
+          if (typeof window !== "undefined" && !sessionStorage.getItem(key)) {
+            sessionStorage.setItem(key, "1");
+            setTimeout(() => {
+              checkMyVpnOnLogin().catch((e) => console.warn("[auth] vpn check failed", e));
+            }, 0);
+          }
+        } catch {
+          // sessionStorage may be unavailable; run anyway
+          setTimeout(() => {
+            checkMyVpnOnLogin().catch(() => {});
+          }, 0);
+        }
       }
       // Same user (e.g. TOKEN_REFRESHED on tab refocus): do not reload roles —
       // toggling rolesLoaded would flip the global loading state and unmount the app.
