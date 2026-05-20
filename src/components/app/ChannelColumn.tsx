@@ -301,7 +301,7 @@ export function ChannelColumn({
                           g.onEditItemPerms ||
                           g.onEditItemIcon ||
                           g.onRenameItem) && (
-                          <div className="hidden group-hover/ch:flex items-center gap-1 pl-6 pr-2 pb-1 -mt-0.5 text-muted-foreground">
+                          <div className="flex items-center gap-1 pl-6 pr-2 pb-1 -mt-0.5 text-muted-foreground">
                             {g.onRenameItem && (
                               <button
                                 onClick={(e) => {
