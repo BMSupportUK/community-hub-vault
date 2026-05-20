@@ -19,6 +19,8 @@ import { listTimeZones } from "@/hooks/use-user-timezone";
 import { Nameplate } from "@/components/app/Nameplate";
 import { NameplatePicker } from "@/components/app/NameplatePicker";
 import { useRoleFlashMap, resolveAvatarUrl, roleFlashClass } from "@/lib/role-flash";
+import { HtmlEditor } from "@/components/ui/html-editor";
+import { sanitizeRichHtml } from "@/lib/sanitize-html";
 
 export const Route = createFileRoute("/_authenticated/_approved/u/$username")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -525,10 +527,15 @@ function ProfilePage() {
                   )}
                 </div>
                 <div className="px-6 pb-6">
-                  <p className="text-xs uppercase tracking-wider text-amber-100/80 mb-2">Bio</p>
-                  <p className="text-sm whitespace-pre-wrap text-purple-50">
-                    {profile.bio || <span className="text-purple-200/60 italic">No bio yet.</span>}
-                  </p>
+                   <p className="text-xs uppercase tracking-wider text-amber-100/80 mb-2">Bio</p>
+                   {profile.bio ? (
+                     <div
+                       className="prose prose-sm dark:prose-invert max-w-none text-purple-50 [&_a]:text-blue-300"
+                       dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(profile.bio) }}
+                     />
+                   ) : (
+                     <p className="text-sm text-purple-200/60 italic">No bio yet.</p>
+                   )}
                 </div>
               </section>
               <aside className="space-y-4">
@@ -1473,7 +1480,7 @@ function EditProfileModal({ profile, onClose, onSaved }: { profile: ProfileRow; 
     const u = username.trim();
     if (!u || !/^[a-zA-Z0-9_-]{2,32}$/.test(u)) return toast.error("Username: 2–32 letters, numbers, _ or -");
     if (displayName.length > 64) return toast.error("Display name too long");
-    if (bio.length > 500) return toast.error("Bio too long (500 max)");
+    if (bio.length > 5000) return toast.error("Bio too long (5000 characters max)");
     setSaving(true);
     const { error } = await supabase.from("profiles").update({
       display_name: displayName.trim() || null,
@@ -1516,8 +1523,7 @@ function EditProfileModal({ profile, onClose, onSaved }: { profile: ProfileRow; 
             className="w-full px-3 py-2 rounded-lg bg-surface-2 border border-border text-sm" />
         </Field>
         <Field label="Bio">
-          <textarea value={bio} onChange={(e) => setBio(e.target.value)} maxLength={500} rows={3}
-            className="w-full px-3 py-2 rounded-lg bg-surface-2 border border-border text-sm resize-none" />
+          <HtmlEditor value={bio} onChange={setBio} placeholder="Tell us about yourself…" />
         </Field>
         <Field label="Timezone">
           <select
