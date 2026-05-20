@@ -122,7 +122,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setRolesLoaded(true);
       }
       if (event === "SIGNED_IN" && nextUid) {
-        runVpnLoginCheck(nextUid);
+        runVpnLoginCheck(nextUid, 0);
       }
       // Same user (e.g. TOKEN_REFRESHED on tab refocus): do not reload roles —
       // toggling rolesLoaded would flip the global loading state and unmount the app.
