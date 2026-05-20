@@ -1770,6 +1770,7 @@ export type Database = {
           referrer: string | null
           region: string | null
           screen: string | null
+          signed_up_via_vpn: boolean | null
           timezone: string | null
           url: string | null
           user_agent: string | null
@@ -1802,6 +1803,7 @@ export type Database = {
           referrer?: string | null
           region?: string | null
           screen?: string | null
+          signed_up_via_vpn?: boolean | null
           timezone?: string | null
           url?: string | null
           user_agent?: string | null
@@ -1834,6 +1836,7 @@ export type Database = {
           referrer?: string | null
           region?: string | null
           screen?: string | null
+          signed_up_via_vpn?: boolean | null
           timezone?: string | null
           url?: string | null
           user_agent?: string | null
