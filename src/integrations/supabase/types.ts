@@ -2605,6 +2605,28 @@ export type Database = {
       }
     }
     Functions: {
+      admin_list_user_ips_for_vpn_backfill: {
+        Args: never
+        Returns: {
+          ip: string
+          user_id: string
+        }[]
+      }
+      admin_upsert_signup_vpn: {
+        Args: {
+          _city: string
+          _country: string
+          _ip: string
+          _is_proxy: boolean
+          _is_vpn: boolean
+          _isp: string
+          _region: string
+          _user_id: string
+          _vpn_provider: string
+          _vpn_raw: Json
+        }
+        Returns: undefined
+      }
       app_encrypt: { Args: { p: string }; Returns: string }
       apply_blacklist_ban: { Args: { _user_id: string }; Returns: undefined }
       assign_pending_tickets: { Args: never; Returns: number }
