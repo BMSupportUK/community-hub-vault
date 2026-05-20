@@ -4,6 +4,23 @@ import { supabase } from "@/integrations/supabase/client";
 import { checkMyVpnOnLogin } from "@/lib/vpn-login-check.functions";
 import { refreshVpnUserSet } from "@/lib/vpn-flags";
 
+async function getClientIpHint(): Promise<string | null> {
+  try {
+    const ctrl = new AbortController();
+    const t = window.setTimeout(() => ctrl.abort(), 2500);
+    const res = await fetch("https://api.ipify.org?format=json", {
+      cache: "no-store",
+      signal: ctrl.signal,
+    });
+    window.clearTimeout(t);
+    if (!res.ok) return null;
+    const json = (await res.json()) as { ip?: unknown };
+    return typeof json.ip === "string" ? json.ip : null;
+  } catch {
+    return null;
+  }
+}
+
 export type AppRole =
   | "admin"
   | "management"
@@ -73,7 +90,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       sessionStorage.setItem(checkingKey, "1");
       setTimeout(() => {
-        checkMyVpnOnLogin()
+        getClientIpHint()
+          .then((clientIpHint) => checkMyVpnOnLogin({ data: { clientIpHint } }))
           .then(() => {
             sessionStorage.setItem(checkedKey, String(Date.now()));
             refreshVpnUserSet();
@@ -82,7 +100,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .finally(() => sessionStorage.removeItem(checkingKey));
       }, 0);
     } catch {
-      checkMyVpnOnLogin()
+      checkMyVpnOnLogin({ data: {} })
         .then(() => refreshVpnUserSet())
         .catch((e) => console.warn("[auth] vpn check failed", e));
     }
@@ -144,8 +162,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // On focus/visibility (user-driven), re-check almost immediately (5s throttle)
     // so toggling a VPN and switching back to the tab updates the shield right away.
     const onVpnRefresh = () => runVpnLoginCheck(uid, 5_000);
-    // Poll VPN status every 20s while signed in so connecting a VPN mid-session is detected live.
-    const vpnInterval = window.setInterval(() => runVpnLoginCheck(uid, 20_000), 20_000);
+    // Poll VPN status every 10s while signed in so connecting a VPN mid-session is detected live.
+    const vpnInterval = window.setInterval(() => runVpnLoginCheck(uid, 10_000), 10_000);
     window.addEventListener("focus", onVpnRefresh);
     document.addEventListener("visibilitychange", onVpnRefresh);
     return () => {

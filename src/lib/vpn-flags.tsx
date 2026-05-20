@@ -91,14 +91,14 @@ export function VpnBadge({
       <Tooltip>
         <TooltipTrigger asChild>
           <span
-            aria-label="Signed up via VPN or proxy"
+            aria-label="Currently using VPN or proxy"
             className={cn("inline-flex items-center text-amber-400", className)}
           >
             <ShieldAlert size={size} strokeWidth={2.25} />
           </span>
         </TooltipTrigger>
         <TooltipContent side="top" className="text-xs">
-          Signed up via VPN / proxy
+          Currently using VPN / proxy
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
