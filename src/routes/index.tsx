@@ -117,6 +117,35 @@ function Landing() {
           ))}
         </div>
       </main>
+
+      <footer className="mt-20 border-t border-red-500/20 bg-black/60 backdrop-blur-sm">
+        <div className="max-w-7xl mx-auto px-6 py-8 flex flex-col md:flex-row items-center justify-between gap-6">
+          <p className="text-sm text-red-50/70 order-2 md:order-1">
+            © BM Support 2026. All rights reserved.
+          </p>
+          <div className="flex flex-col items-center md:items-end gap-2 order-1 md:order-2">
+            <span className="text-[11px] uppercase tracking-wider text-red-100/60">Accepted payment methods</span>
+            <div className="flex items-center gap-3">
+              <div className="px-3 py-1.5 rounded-md bg-white text-black text-xs font-bold shadow-sm">
+                Square
+              </div>
+              <div className="px-2.5 py-1.5 rounded-md bg-white text-[#1a1f71] text-xs font-extrabold italic tracking-tight shadow-sm">
+                VISA
+              </div>
+              <div className="px-2.5 py-1.5 rounded-md bg-white text-xs font-bold shadow-sm">
+                <span className="text-[#eb001b]">●</span><span className="text-[#f79e1b] -ml-1.5">●</span>
+                <span className="ml-1 text-black">Mastercard</span>
+              </div>
+              <div className="px-2.5 py-1.5 rounded-md bg-white text-[#006fcf] text-xs font-extrabold shadow-sm">
+                AMEX
+              </div>
+              <div className="px-2.5 py-1.5 rounded-md bg-white text-[#0079be] text-xs font-bold shadow-sm">
+                Maestro
+              </div>
+            </div>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
