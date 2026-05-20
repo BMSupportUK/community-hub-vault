@@ -1,76 +1,101 @@
 ## Goal
 
-Replace the **Square hosted invoice** flow with a **Square Web Payments SDK** card form embedded directly in the order panel. Customer clicks **Pay £X**, enters card details inline, charge captures immediately — no emailed invoice, no Square-hosted page.
+Add PayPal as a second checkout option in the order payment panel, sitting next to the existing Square card flow (same `SquareCardPanel` area in `src/routes/_authenticated/_approved/shop.tsx`). Customer can choose either Square (card / Google Pay) **or** PayPal to pay the order.
 
-## What changes
+## What the user will see
 
-### 1. Frontend: inline card form (Square Web Payments SDK)
-Replace `SquareInvoicePanel` with `SquareCardPanel`:
-
-- Loads `https://web.squarecdn.com/v1/square.js` (or `sandbox.web.squarecdn.com` in sandbox) via dynamic script tag on mount.
-- Renders Square's hosted card iframe into a `<div ref>` using `payments.card()` → `card.attach()`.
-- **Pay £X** button:
-  1. Calls `card.tokenize()` → gets `sourceId` (single-use nonce).
-  2. POSTs `{ orderId, sourceId }` to a new server fn `chargeOrderWithSquare`.
-  3. On success: toast, refresh order (now shows `paid_at`).
-  4. On failure: show error inline, form stays mounted for retry.
-
-Hidden once `order.paid_at` is set — replaced with a green "Paid by card" badge + last-4 + receipt URL.
-
-### 2. Backend: `chargeOrderWithSquare` server fn
-New in `src/lib/square-payments.functions.ts`:
-
-- Validates input with Zod (`orderId` uuid, `sourceId` string).
-- Loads order, asserts admin or order owner, asserts not already paid.
-- Calls Square `POST /v2/payments` with: `source_id`, `idempotency_key` (`order-<id>-<ts>`), `amount_money` (order total + GBP), `location_id`, `reference_id: orderId`, `note: "Order #<short>"`, `autocomplete: true`.
-- On `COMPLETED`: updates `orders.paid_at = now()`, writes new `order_payments` row (see below), posts confirmation in order chat.
-- Returns `{ status, receiptUrl, cardBrand, last4 }`.
-
-### 3. New table: `order_payments`
-Stores the captured charge metadata (replaces invoice ledger semantics):
-
-Fields: `order_id` (unique), `square_payment_id`, `status`, `amount_cents`, `currency`, `card_brand`, `last_4`, `receipt_url`, `created_by`.
-
-RLS: admin/management full; order owner read-only on their own.
-
-### 4. Keep `order_invoices` table for now
-Leave the existing table in place but stop writing to it. (Drop in a follow-up if you confirm you've fully migrated. Old paid invoices stay visible in DB for records.)
-
-### 5. Square webhook simplifies
-`src/routes/api/public/hooks/square-invoice.ts` is no longer needed for the new flow because we capture synchronously. I'll keep it for any historic invoices still outstanding, but new orders won't depend on it.
-
-### 6. Files removed / changed
-- `src/lib/square-invoices.functions.ts` → kept but no longer called from UI (still callable for legacy invoices, or delete on request).
-- `src/routes/_authenticated/_approved/shop.tsx` → swap `SquareInvoicePanel` → `SquareCardPanel`; remove invoice imports.
-
-## Out of scope (ask if wanted)
-
-- Apple Pay / Google Pay buttons via Web Payments SDK (easy add later)
-- Saving cards on file for repeat customers
-- 3DS / SCA challenge UI customisation (Square handles inline by default)
-- Refund button in admin
-
-## What you need to do
-
-Nothing new — you already have:
-- `SQUARE_ACCESS_TOKEN`
-- `SQUARE_LOCATION_ID`
-- `SQUARE_ENVIRONMENT`
-
-I'll also expose your Square **Application ID** as a client-readable env var (`VITE_SQUARE_APPLICATION_ID`) — the Web SDK needs it in the browser. It's a public identifier (safe to expose). You'll need to grab it from Square Dashboard → Developer → your app → **Application ID**, and I'll request it as a secret.
-
-## Implementation steps
+In the sales chat order panel, when an unpaid order is selected:
 
 ```text
-1. Request VITE_SQUARE_APPLICATION_ID via add_secret
-2. Migration: create order_payments table + RLS
-3. Add src/lib/square-payments.functions.ts (chargeOrderWithSquare)
-4. Add SquareCardPanel component in shop.tsx (Web SDK loader + card.attach + tokenize → server fn)
-5. Replace <SquareInvoicePanel /> usage with <SquareCardPanel />
-6. Test in sandbox: card 4111 1111 1111 1111 → confirm paid_at set, receipt URL shown
+[ Square logo ]  Card Payment via Square
+   [ Google Pay button ]
+   [ Card form + Pay button ]
+
+   ── or ──
+
+[ PayPal logo ]  Pay with PayPal
+   [ Yellow PayPal button ]   <- official PayPal Smart Button
 ```
 
-**Files touched**
-- `supabase/migrations/<new>.sql` (new)
-- `src/lib/square-payments.functions.ts` (new)
-- `src/routes/_authenticated/_approved/shop.tsx` (swap panel)
+Once either provider captures payment, the same "Paid (brand •••• last4 / receipt)" view shows — no UI duplication.
+
+## Credentials needed from you
+
+PayPal requires its own app credentials. I'll request these via secrets after you confirm:
+
+- `PAYPAL_CLIENT_ID` — public client ID (shipped to browser, OK)
+- `PAYPAL_CLIENT_SECRET` — server-only secret
+- `PAYPAL_ENVIRONMENT` — `sandbox` or `live` (default `live`)
+
+You get these from the PayPal Developer Dashboard → My Apps & Credentials → create a REST app.
+
+## Implementation
+
+### 1. Server functions — `src/lib/paypal-payments.functions.ts`
+
+Mirrors `square-payments.functions.ts`:
+
+- `getPaypalWebConfig` (GET, auth) — returns `{ clientId, environment, currency: "GBP" }` so the browser can boot the PayPal JS SDK.
+- `createPaypalOrder` (POST, auth) — input `{ orderId }`. Validates admin/management OR order owner. Calls PayPal `/v2/checkout/orders` to create an order with `amount = orders.total_cents / 100` GBP and `reference_id = orderId`. Returns `{ paypalOrderId }`.
+- `capturePaypalOrder` (POST, auth) — input `{ orderId, paypalOrderId }`. Calls PayPal `/v2/checkout/orders/{id}/capture`, verifies the capture's `reference_id` matches `orderId` and `amount` matches `total_cents`, then:
+  - Upserts `order_payments` row (re-use existing table) with `square_payment_id` replaced by a generic identifier — see schema change below.
+  - Updates `orders.paid_at` / `paid_by`.
+  - Inserts an `order_messages` row: `"✅ PayPal payment captured (PayPal account: name@…)."`.
+
+Both functions use `requireSupabaseAuth` middleware and read `PAYPAL_CLIENT_SECRET` / env inside `.handler()` (never at module scope).
+
+OAuth token: small helper `getPaypalAccessToken()` that POSTs to `/v1/oauth2/token` with basic auth (`PAYPAL_CLIENT_ID:PAYPAL_CLIENT_SECRET`). No caching needed for v1 — one extra call per payment.
+
+### 2. Schema change — generalise `order_payments`
+
+The current `order_payments` row stores `square_payment_id`. To support multiple providers cleanly, one new migration:
+
+- Add `provider text not null default 'square'` (values: `square`, `paypal`)
+- Add `provider_payment_id text` (mirrors the existing column for new rows)
+- Backfill: `update order_payments set provider_payment_id = square_payment_id where provider_payment_id is null`
+- Keep `square_payment_id` for now (don't break existing reads) but new writes go through `provider` + `provider_payment_id`
+
+No RLS policy change needed — same authorization model.
+
+### 3. UI — `src/routes/_authenticated/_approved/shop.tsx`
+
+- New component `PaypalPanel({ orderId, amountCents, canPay, onChange })` styled like `SquareCardPanel`:
+  - Loads `https://www.paypal.com/sdk/js?client-id=…&currency=GBP&intent=capture` once on mount.
+  - Renders official `<div>` mount point; calls `window.paypal.Buttons({ style: { layout: 'horizontal', color: 'gold', shape: 'rect', label: 'paypal' }, createOrder, onApprove, onCancel, onError }).render(...)`.
+  - `createOrder` → calls `createPaypalOrder` serverFn, returns `paypalOrderId`.
+  - `onApprove` → calls `capturePaypalOrder`, toasts success, calls `onChange()` so the parent refetches the order/messages.
+  - Identical "paid" success state as Square (re-uses the `paid` row from `order_payments` joined with provider).
+- In the sales-chat order panel where `<SquareCardPanel />` is rendered, render both:
+  ```tsx
+  <SquareCardPanel … />
+  <div className="my-3 flex items-center gap-2 text-[10px] uppercase tracking-wider text-muted-foreground">
+    <div className="h-px flex-1 bg-border" /> or <div className="h-px flex-1 bg-border" />
+  </div>
+  <PaypalPanel … />
+  ```
+  Both panels share `onChange` so a successful capture from either provider refreshes the panel.
+
+### 4. PayPal logo
+
+Inline SVG component `<PaypalLogo />` next to `<SquareLogo />` (same approach we used for Square) — the official PayPal "PP" monogram + "PayPal" wordmark. Avoids broken external image URLs.
+
+### 5. Tests / verification
+
+- Verify in sandbox first with the PayPal sandbox buyer account.
+- Manually pay one test order end-to-end:
+  - Order moves to `paid_at = now()`
+  - `order_payments` row written with `provider = 'paypal'`
+  - Sales chat shows the "✅ PayPal payment captured" message (already realtime-subscribed)
+
+## Files changed
+
+- **new** `src/lib/paypal-payments.functions.ts`
+- **new** `supabase/migrations/<timestamp>_order_payments_provider.sql`
+- **edit** `src/routes/_authenticated/_approved/shop.tsx` — add `PaypalPanel` component, `PaypalLogo` SVG, render it under the Square panel.
+- **secrets added** `PAYPAL_CLIENT_ID`, `PAYPAL_CLIENT_SECRET`, `PAYPAL_ENVIRONMENT`.
+
+## Out of scope (ask if you want them)
+
+- PayPal subscriptions / recurring billing
+- Refunds from the admin UI (Square refunds aren't built either)
+- Saving PayPal payment methods for repeat customers
