@@ -97,7 +97,7 @@ export function VpnBadge({
         <TooltipTrigger asChild>
           <span
             aria-label={label}
-            className={cn("inline-flex items-center", isVpn ? "text-amber-400" : "text-emerald-400", className)}
+            className={cn("inline-flex items-center", isVpn ? "text-emerald-500" : "text-red-500", className)}
           >
             <Icon size={size} strokeWidth={2.25} />
           </span>
