@@ -108,7 +108,7 @@ function AuthLayout() {
                 <span className="hidden xl:inline">Admin dashboard</span>
               </Link>
             )}
-            {isMod && (
+            {isAdmin && (
               <Link
                 to="/moderation"
                 title="Moderation"
