@@ -78,11 +78,13 @@ export const chargeOrderWithSquare = createServerFn({ method: "POST" })
       .eq("id", data.orderId)
       .single();
     if (orderErr || !order) throw new Error(orderErr?.message || "Order not found");
+    const orderId = order.id;
+    if (!orderId) throw new Error("Order id missing");
     if (order.paid_at) throw new Error("Order is already paid");
     if (!order.total_cents || order.total_cents <= 0) throw new Error("Order total must be greater than zero");
 
     const currency = "GBP";
-    const idempotencyKey = `order-${order.id}-${Date.now()}`;
+    const idempotencyKey = `order-${orderId}-${Date.now()}`;
 
     const res = await sqFetch("/v2/payments", {
       method: "POST",
@@ -91,8 +93,8 @@ export const chargeOrderWithSquare = createServerFn({ method: "POST" })
         idempotency_key: idempotencyKey,
         amount_money: { amount: order.total_cents, currency },
         location_id: locationId,
-        reference_id: order.id,
-        note: `Order #${String(order.id).slice(0, 8)}`,
+        reference_id: orderId,
+        note: `Order #${orderId.slice(0, 8)}`,
         autocomplete: true,
         ...(data.verificationToken ? { verification_token: data.verificationToken } : {}),
       }),
@@ -112,7 +114,7 @@ export const chargeOrderWithSquare = createServerFn({ method: "POST" })
     const { error: upErr } = await supabase
       .from("order_payments")
       .upsert({
-        order_id: order.id,
+        order_id: orderId,
         square_payment_id: payment.id,
         status,
         amount_cents: order.total_cents,
@@ -129,14 +131,14 @@ export const chargeOrderWithSquare = createServerFn({ method: "POST" })
     const { error: paidErr } = await supabase
       .from("orders")
       .update({ paid_at: new Date().toISOString(), paid_by: userId })
-      .eq("id", order.id);
+      .eq("id", orderId);
     if (paidErr) {
       // Non-fatal: payment was captured. Surface so admin can investigate.
       console.error("Failed to set paid_at on order:", paidErr.message);
     }
 
     await supabase.from("order_messages").insert({
-      order_id: order.id,
+      order_id: orderId,
       sender_id: userId,
       content: `✅ Card payment captured${cardBrand && last4 ? ` (${cardBrand} •••• ${last4})` : ""}.`,
     });
