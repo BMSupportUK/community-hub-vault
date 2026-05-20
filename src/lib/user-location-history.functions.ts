@@ -5,7 +5,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 export interface LocationHistoryRow {
   id: string;
   user_id: string;
-  event_type: "signup" | "login";
+  event_type: "signup" | "login" | "gps";
   ip: string | null;
   country: string | null;
   region: string | null;
