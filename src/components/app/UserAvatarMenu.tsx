@@ -95,7 +95,7 @@ export function UserAvatarMenu() {
             </AvatarFallback>
           </Avatar>
           <span className="hidden lg:flex flex-col items-start leading-tight pr-2">
-            <span className="text-xs font-semibold text-foreground max-w-[120px] truncate">{name}</span>
+            <span className={cn("text-xs font-semibold text-foreground max-w-[120px] truncate", flashCls)}>{name}</span>
             <span className="text-[10px] text-muted-foreground capitalize">{topRole}</span>
           </span>
           <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-rail" />
@@ -116,7 +116,7 @@ export function UserAvatarMenu() {
               </AvatarFallback>
             </Avatar>
             <div className="min-w-0 flex-1">
-              <div className="font-semibold text-sm truncate">{name}</div>
+              <div className={cn("font-semibold text-sm truncate", flashCls)}>{name}</div>
               <div className="text-xs text-muted-foreground truncate flex items-center gap-1">
                 <AtSign className="size-3" />
                 {profile?.username ?? user.email}
