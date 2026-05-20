@@ -1598,7 +1598,14 @@ function OrdersView({ selectedId, isAdmin, adminUnlocked, initialScope }: { sele
   useEffect(() => { if (!adminUnlocked && scope === "all") setScope("mine"); }, [adminUnlocked, scope]);
   useEffect(() => { load(); }, [scope, user?.id, adminUnlocked]);
   useEffect(() => {
-    const ch = supabase.channel("orders-list").on("postgres_changes", { event: "*", schema: "public", table: "orders" }, load).subscribe();
+    const ch = supabase
+      .channel("orders-list")
+      // orders is a security view over private.orders; subscribe to the base
+      // table so realtime actually delivers insert/update/delete events.
+      .on("postgres_changes", { event: "*", schema: "private", table: "orders" }, load)
+      // New messages should bump/refresh the sales chat list too.
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "order_messages" }, load)
+      .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, [scope, user?.id, adminUnlocked]);
 
