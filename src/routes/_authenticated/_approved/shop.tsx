@@ -2125,9 +2125,6 @@ function SquareCardPanel({ orderId, amountCents, canPay, onChange }: { orderId: 
   const cardRef = useRef<HTMLDivElement | null>(null);
   const cardInstanceRef = useRef<any>(null);
   const paymentsRef = useRef<any>(null);
-  const applePayBtnRef = useRef<HTMLButtonElement | null>(null);
-  const applePayInstanceRef = useRef<any>(null);
-  const [applePayReady, setApplePayReady] = useState(false);
   const googlePayBtnRef = useRef<HTMLDivElement | null>(null);
   const googlePayInstanceRef = useRef<any>(null);
   const [googlePayReady, setGooglePayReady] = useState(false);
