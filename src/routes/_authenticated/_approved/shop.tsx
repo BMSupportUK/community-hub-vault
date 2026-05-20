@@ -2182,9 +2182,6 @@ function SquareCardPanel({ orderId, amountCents, canPay, onChange }: { orderId: 
         } catch (e) {
           console.warn("[square] Google Pay unavailable", e);
         }
-        } catch (e) {
-          console.warn("[square] Apple Pay unavailable", e);
-        }
       } catch (e) {
         if (!cancelled) setBootError((e as Error).message);
       }
@@ -2195,10 +2192,8 @@ function SquareCardPanel({ orderId, amountCents, canPay, onChange }: { orderId: 
       cardInstanceRef.current = null;
       try { googlePayInstanceRef.current?.destroy(); } catch {}
       googlePayInstanceRef.current = null;
-      applePayInstanceRef.current = null;
       setReady(false);
       setGooglePayReady(false);
-      setApplePayReady(false);
     };
   }, [canPay, paid, orderId, amountCents]);
 
