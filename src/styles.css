@@ -349,6 +349,8 @@
 
 /* ---- Boro Crest: heraldic lion with gold pulse + sheen ---- */
 @keyframes nameplate-crest-pan {
+  0%, 100% { background-position: 100% 50%; background-size: 115% auto; }
+  50%      { background-position: 95% 50%;  background-size: 120% auto; }
 }
 
 /* ---- Flashing: bold rainbow flashing strobe nameplate ---- */
@@ -401,10 +403,6 @@
   animation: nameplate-flash-sheen 3.2s ease-in-out infinite;
 }
 
-@keyframes nameplate-crest-pan-placeholder {
-  0%, 100% { background-position: 100% 50%; background-size: 115% auto; }
-  50%      { background-position: 95% 50%;  background-size: 120% auto; }
-}
 @keyframes nameplate-crest-glow {
   0%, 100% { opacity: 0.35; transform: scale(1); }
   50%      { opacity: 0.85; transform: scale(1.05); }
