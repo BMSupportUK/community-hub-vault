@@ -17,6 +17,7 @@ import { downloadReceipt } from "@/lib/receipt";
 import { Download } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { chargeOrderWithSquare, getSquareWebConfig } from "@/lib/square-payments.functions";
+import { capturePaypalOrder, createPaypalOrder, getPaypalWebConfig } from "@/lib/paypal-payments.functions";
 import { CreditCard, Ban } from "lucide-react";
 import { getOutOfHoursMessage } from "@/lib/business-hours";
 import { isAdminUnlocked } from "@/lib/admin-unlock";
