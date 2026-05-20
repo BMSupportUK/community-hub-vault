@@ -86,9 +86,6 @@ export const createPaypalOrder = createServerFn({ method: "POST" })
     if (error || !order) throw new Error(error?.message || "Order not found");
     if (order.paid_at) throw new Error("Order is already paid");
     if (!order.total_cents || order.total_cents <= 0) throw new Error("Order total must be greater than zero");
-    const totalCents = order.total_cents;
-    const orderRowId = order.id as string;
-    if (!order.total_cents || order.total_cents <= 0) throw new Error("Order total must be greater than zero");
 
     const token = await getPaypalAccessToken();
     const value = (order.total_cents / 100).toFixed(2);
@@ -126,6 +123,9 @@ export const capturePaypalOrder = createServerFn({ method: "POST" })
       .single();
     if (error || !order) throw new Error(error?.message || "Order not found");
     if (order.paid_at) throw new Error("Order is already paid");
+    if (!order.total_cents || order.total_cents <= 0) throw new Error("Order total must be greater than zero");
+    const totalCents = order.total_cents;
+    const orderRowId = order.id as string;
 
     const token = await getPaypalAccessToken();
     const res = await ppFetch(`/v2/checkout/orders/${encodeURIComponent(data.paypalOrderId)}/capture`, token, {
