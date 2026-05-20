@@ -36,5 +36,11 @@ export const getUserLocationHistory = createServerFn({ method: "POST" })
       { _user_id: data.userId, _limit: data.limit } as never,
     );
     if (error) throw new Error(error.message);
-    return { rows: (rows ?? []) as LocationHistoryRow[] };
+    const normalizedRows = ((rows ?? []) as Array<LocationHistoryRow & Record<string, unknown>>).map((row) => ({
+      ...row,
+      latitude: row.latitude == null ? null : Number(row.latitude),
+      longitude: row.longitude == null ? null : Number(row.longitude),
+      accuracy_m: row.accuracy_m == null ? null : Number(row.accuracy_m),
+    }));
+    return { rows: normalizedRows as LocationHistoryRow[] };
   });
