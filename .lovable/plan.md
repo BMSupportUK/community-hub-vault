@@ -1,61 +1,56 @@
-## Nameplates (Discord-style)
+## Add 2FA option to reveal credentials
 
-Decorative banner behind a user's name, like Discord nameplates. Admins build the catalog, users pick one to equip, and it shows up everywhere the user's name appears.
+Add a second unlock method on the Credentials & DNS gate so users with 2FA enabled can verify with their authenticator code instead of typing their account password + vault PIN every time.
 
-### Database
+### Where
 
-New tables (migration):
+`src/routes/_authenticated/_approved/u.$username.tsx` — the `RevealGate` component (around lines 1225–1357). No backend / schema changes.
 
-- **`nameplates`** — admin-curated catalog
-  - `name`, `description`
-  - `image_url` (uploaded image, optional)
-  - `gradient_css` (e.g. `linear-gradient(...)`, optional fallback)
-  - `is_active`, `sort_order`
-  - RLS: anyone approved can SELECT active rows; only admin/management can INSERT/UPDATE/DELETE
+### Behaviour
 
-- **`user_nameplates`** — which nameplates a user can equip (unlocked)
-  - `user_id`, `nameplate_id`, `unlocked_at`
-  - RLS: user can SELECT own rows; admin/management can manage all
+On mount, `RevealGate` checks `supabase.auth.mfa.listFactors()`. If the user has at least one **verified TOTP factor** AND has already set a vault PIN (existing precondition), show a small two-option toggle at the top of the unlock card:
 
-- **`profiles.equipped_nameplate_id`** — nullable FK to `nameplates`
-  - User can update only their own; must reference an unlocked nameplate (validated via trigger)
+- **Password + PIN** (existing flow, unchanged — stays the default)
+- **2FA code** (new)
 
-New storage bucket **`nameplates`** (public) with RLS so only admin/management can upload.
+If the user has no verified TOTP factor, nothing changes — they see today's password + PIN form exactly as now.
 
-### Admin UI
+The "Forgot PIN? Reset it" link still requires account password (it's a credential reset, not a reveal — should stay password-gated).
 
-New route: **`/admin/nameplates`** (admin/management only)
-- Grid of existing nameplates with preview
-- Create / edit modal: name, image upload, optional CSS gradient, active toggle, sort
-- Per-nameplate "Assign to users" panel: search members, toggle who has access
+### 2FA unlock flow
 
-### User equip flow
+When the user picks the 2FA tab:
 
-On the profile page (`/u/$username`, own profile only):
-- "Nameplate" button opens a picker dialog
-- Shows all unlocked nameplates + a "None" option
-- Click to equip → updates `profiles.equipped_nameplate_id`
+1. Show a single 6-digit input ("Authenticator code") + "Reveal credentials" button.
+2. On submit:
+   - `supabase.auth.mfa.challenge({ factorId })` using the first verified TOTP factor.
+   - `supabase.auth.mfa.verify({ factorId, challengeId, code })`.
+   - On success → call `onUnlocked()` (same as password+PIN path).
+   - On failure → toast "Incorrect code".
+3. Same 5-minute auto-lock timeout already applied to the unlocked state — no change needed there.
 
-### Render surfaces
+### Why this is safe
 
-A new `<Nameplate />` component renders the user's equipped nameplate as a background strip behind their name. Wire it into:
-1. **Members directory cards** — replaces the static `profileHeader` strip when user has a nameplate
-2. **Profile page header** (`/u/$username`)
-3. **Chat messages** — small inline strip next to the username in `ChatChannel` message rows
-4. **Avatar menu / sidebar** — behind the current user's name in `UserAvatarMenu`
+- Verifying a TOTP factor proves possession of the second factor that already gates account sign-in — equivalent or stronger than re-entering the account password.
+- The vault PIN's purpose was "a second secret in case someone leaves the session unlocked"; a fresh TOTP code from the user's phone serves the same shoulder-surfing-resistance purpose.
+- The reveal still requires an *active* action (TOTP code) each time — it's not a "remember me".
+- Reveal still auto-locks after 5 minutes.
 
-Component fetches nameplate data via a small client cache keyed by `equipped_nameplate_id` (already in profile rows) to avoid N+1 queries — the existing profile loaders just need to also select `equipped_nameplate_id` plus a join on `nameplates`.
+### UI details
 
-### Out of scope (for now)
+- Toggle uses the same pill style as the existing `creds / dns` tab switcher above.
+- 2FA tab shows a `Smartphone` icon (add to existing lucide-react import).
+- Default tab = whichever method the user used last (persist in `localStorage` under `reveal-method:<userId>`), falling back to "password+PIN".
+- If 2FA tab is selected but the factor lookup later returns nothing, silently fall back to password+PIN tab.
 
-- Animated/Lottie nameplates (start static; can add later)
-- Marketplace / purchase flow (admin assignment only)
-- Nameplate previews in notifications/emails
+### Implementation notes
 
-```text
-nameplates (catalog) ──┐
-                       ├─► user_nameplates (unlocks) ──► profiles.equipped_nameplate_id
-admin upload ──────────┘                                          │
-                                                                  ▼
-                                             <Nameplate /> renders on members/profile/chat/menu
-```
+- Add a `useEffect` in `RevealGate` to load factors: `supabase.auth.mfa.listFactors()` → keep `factorId` state of first `status === "verified"` TOTP factor (or null).
+- Add `method` state: `"pin" | "totp"`.
+- Reuse existing `busy` / `onUnlocked` plumbing.
+- No changes to `vault_pins` table, no changes to credentials policies, no new server fn.
+
+### Out of scope
+
+- Adding 2FA enrollment UI (already exists at `/account-security` per earlier work).
+- Letting users skip the vault PIN setup entirely when 2FA is enabled — PIN setup remains the one-time bootstrap. Can be a follow-up if you want.
