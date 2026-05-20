@@ -141,9 +141,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
     window.addEventListener("focus", onFocus);
     document.addEventListener("visibilitychange", onVis);
-    const onVpnRefresh = () => runVpnLoginCheck(uid);
-    // Poll VPN status every 60s while signed in so connecting a VPN mid-session is detected live.
-    const vpnInterval = window.setInterval(() => runVpnLoginCheck(uid), 60_000);
+    // On focus/visibility (user-driven), re-check almost immediately (5s throttle)
+    // so toggling a VPN and switching back to the tab updates the shield right away.
+    const onVpnRefresh = () => runVpnLoginCheck(uid, 5_000);
+    // Poll VPN status every 20s while signed in so connecting a VPN mid-session is detected live.
+    const vpnInterval = window.setInterval(() => runVpnLoginCheck(uid, 20_000), 20_000);
     window.addEventListener("focus", onVpnRefresh);
     document.addEventListener("visibilitychange", onVpnRefresh);
     return () => {
