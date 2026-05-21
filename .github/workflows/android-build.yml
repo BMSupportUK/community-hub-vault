@@ -28,13 +28,8 @@ jobs:
       - name: Install required Android SDK packages
         run: sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0"
 
-      - name: Set up Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-
       - name: Install JS dependencies
-        run: bun install --frozen-lockfile
+        run: npm install --no-audit --no-fund
 
       - name: Create dist placeholder (app loads remote URL)
         run: mkdir -p dist && echo '<!doctype html><title>BM Support</title>' > dist/index.html
@@ -42,8 +37,10 @@ jobs:
       - name: Ensure Android assets dir exists
         run: mkdir -p android/app/src/main/assets
 
-      - name: Capacitor sync (android)
-        run: npx cap sync android
+      - name: Capacitor sync with Node.js 22 (never bunx)
+        run: |
+          node --version
+          ./node_modules/.bin/cap sync android
 
       - name: Make gradlew executable
         run: chmod +x android/gradlew
