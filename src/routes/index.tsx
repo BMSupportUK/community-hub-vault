@@ -1,10 +1,7 @@
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
-import { Headphones, Pencil } from "lucide-react";
+import { Headphones } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
-import { toast } from "sonner";
 import welcomeHero from "@/assets/welcome-hero.jpg";
 
 export const Route = createFileRoute("/")({
@@ -26,12 +23,6 @@ interface HeroBox {
 
 function Landing() {
   const [boxes, setBoxes] = useState<HeroBox[]>([]);
-  const [event, setEvent] = useState<{ id: string; body: string } | null>(null);
-  const [eventOpen, setEventOpen] = useState(false);
-  const [editOpen, setEditOpen] = useState(false);
-  const [editBody, setEditBody] = useState("");
-  const [saving, setSaving] = useState(false);
-  const [canEdit, setCanEdit] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -41,51 +32,7 @@ function Landing() {
         .order("position");
       setBoxes((data ?? []) as HeroBox[]);
     })();
-    (async () => {
-      const { data } = await supabase
-        .from("upcoming_event")
-        .select("id, body")
-        .order("updated_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      if (data) setEvent(data as { id: string; body: string });
-    })();
-    (async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
-      const { data: roles } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", session.user.id);
-      const allowed = (roles ?? []).some((r) =>
-        ["admin", "management", "staff"].includes(String(r.role)),
-      );
-      setCanEdit(allowed);
-    })();
   }, []);
-
-  const openEdit = () => {
-    setEditBody(event?.body ?? "");
-    setEditOpen(true);
-  };
-
-  const saveEdit = async () => {
-    if (!event) return;
-    setSaving(true);
-    const { data: { session } } = await supabase.auth.getSession();
-    const { error } = await supabase
-      .from("upcoming_event")
-      .update({ body: editBody, updated_by: session?.user.id ?? null })
-      .eq("id", event.id);
-    setSaving(false);
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
-    setEvent({ ...event, body: editBody });
-    setEditOpen(false);
-    toast.success("Event updated");
-  };
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -100,37 +47,7 @@ function Landing() {
         </div>
       </header>
 
-      <main className="relative flex-1 px-6 py-10 md:py-16">
-        {/* Upcoming event advert — floats to the right of the hero on large screens */}
-        <section className="max-w-7xl mx-auto mb-8 lg:mb-0 lg:absolute lg:right-6 xl:right-10 lg:top-24 lg:z-20 flex justify-center px-6 lg:px-0">
-          <div
-            className="relative rounded-2xl border-2 border-red-500/60 bg-black/60 backdrop-blur-md shadow-[0_0_40px_rgba(220,38,38,0.45)] p-5 flex flex-col items-center justify-between gap-3"
-            style={{ width: 300, height: 250 }}
-          >
-            {canEdit && (
-              <button
-                onClick={openEdit}
-                className="absolute top-2 right-2 size-7 grid place-items-center rounded-md bg-white/10 hover:bg-white/20 text-red-100 transition"
-                aria-label="Edit event"
-              >
-                <Pencil className="size-3.5" />
-              </button>
-            )}
-            <h2 className="font-display font-bold text-center text-lg leading-tight text-white">
-              The Next Big Event on BM Support
-            </h2>
-            <p className="text-sm text-red-50/80 text-center line-clamp-4">
-              {event?.body || "Stay tuned…"}
-            </p>
-            <button
-              onClick={() => setEventOpen(true)}
-              className="px-4 py-2 rounded-md bg-red-600 hover:bg-red-500 text-white text-sm font-medium shadow-[0_0_20px_rgba(220,38,38,0.55)] transition"
-            >
-              Read more
-            </button>
-          </div>
-        </section>
-
+      <main className="flex-1 px-6 py-10 md:py-16">
         <section
           className="relative max-w-7xl mx-auto rounded-3xl border border-red-900/60 p-8 md:p-14 pb-24 md:pb-32"
           style={{
@@ -200,46 +117,6 @@ function Landing() {
           ))}
         </div>
       </main>
-
-      <Dialog open={eventOpen} onOpenChange={setEventOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>The Next Big Event on BM Support</DialogTitle>
-          </DialogHeader>
-          <p className="text-sm text-foreground whitespace-pre-wrap">
-            {event?.body || "Stay tuned…"}
-          </p>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={editOpen} onOpenChange={setEditOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Edit upcoming event</DialogTitle>
-          </DialogHeader>
-          <Textarea
-            value={editBody}
-            onChange={(e) => setEditBody(e.target.value)}
-            rows={8}
-            placeholder="Tell members about the next big event…"
-          />
-          <DialogFooter>
-            <button
-              onClick={() => setEditOpen(false)}
-              className="px-4 py-2 rounded-md border border-border text-sm"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={saveEdit}
-              disabled={saving}
-              className="px-4 py-2 rounded-md bg-red-600 hover:bg-red-500 text-white text-sm disabled:opacity-50"
-            >
-              {saving ? "Saving…" : "Save"}
-            </button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       <footer className="mt-20 border-t border-red-500/20 bg-black/60 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-6 py-8 flex flex-col md:flex-row items-center justify-between gap-6">
