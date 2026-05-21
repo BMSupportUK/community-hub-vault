@@ -30,6 +30,16 @@ export function usePushRegister() {
         }
         if (!granted || removed) return;
 
+        await PushNotifications.createChannel({
+          id: "bm_support_alerts",
+          name: "BM Support alerts",
+          description: "Signups, tickets, orders and staff alerts",
+          importance: 4,
+          visibility: 1,
+          lights: true,
+          vibration: true,
+        });
+
         const reg = await PushNotifications.addListener("registration", async (t) => {
           try {
             await register({ data: { token: t.value, platform: "android" } });
