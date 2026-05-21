@@ -66,8 +66,19 @@ function WelcomePage() {
   const uploadBanner = async (file: File) => {
     if (!event || !user) return;
     setBannerBusy(true);
-    const path = `${event.id}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
-    const { error: upErr } = await supabase.storage.from("event-banners").upload(path, file, { upsert: true, contentType: file.type });
+    let blob: Blob = file;
+    let contentType = file.type || "image/jpeg";
+    let ext = "jpg";
+    try {
+      if (file.type.startsWith("image/")) {
+        const resized = await cropToCover(file, 300, 250);
+        if (resized) { blob = resized; contentType = "image/jpeg"; ext = "jpg"; }
+      }
+    } catch {
+      // fall back to original file
+    }
+    const path = `${event.id}/${Date.now()}.${ext}`;
+    const { error: upErr } = await supabase.storage.from("event-banners").upload(path, blob, { upsert: true, contentType });
     if (upErr) { setBannerBusy(false); toast.error(upErr.message); return; }
     const { data: pub } = supabase.storage.from("event-banners").getPublicUrl(path);
     const url = pub.publicUrl;
