@@ -6,6 +6,24 @@ import { pushToAllDevices, pushToRoles } from "@/lib/fcm.server";
 
 const VAPID_PUBLIC_KEY = "BD9Va9J0l6BMmpUuUyeUAG3zZ1x3GUc29WHmMPZtJRowqqDGr9KmbBQqH6p699WFj9Xmf5s_Vqo602MiCFKnjEI";
 
+const IncidentStatusSchema = z.enum(["investigating", "identified", "monitoring", "completed"]);
+const AttachmentSchema = z.object({
+  name: z.string().min(1).max(255),
+  url: z.string().url().max(2000),
+  size: z.number().int().nonnegative().max(25 * 1024 * 1024),
+  type: z.string().max(120),
+});
+
+async function requireIncidentManager(userId: string) {
+  const { data, error } = await supabaseAdmin
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", userId)
+    .in("role", ["admin", "management", "staff"]);
+  if (error) throw new Error(error.message);
+  if (!data?.length) throw new Response("Unauthorized", { status: 403 });
+}
+
 async function getWebPush() {
   const mod = await import("web-push");
   const webpush = (mod as any).default ?? mod;
@@ -142,6 +160,38 @@ async function getActorName(userId: string): Promise<string> {
     .eq("id", userId)
     .maybeSingle();
   return (data?.display_name as string) || (data?.username as string) || "Someone";
+}
+
+async function sendIncidentNotification(data: {
+  incidentId: string;
+  title: string;
+  kind: "created" | "updated";
+  message?: string;
+}) {
+  const title =
+    data.kind === "created"
+      ? `New outage: ${data.title}`
+      : `Update: ${data.title}`;
+  const body = data.message?.trim() || (data.kind === "created" ? "An outage has been reported." : "A new update has been posted.");
+  console.log(`[push] incident ${data.kind} ${data.incidentId}`);
+  const [web, fcm] = await Promise.all([
+    broadcast(title, body, "/status", `incident-${data.incidentId}`).catch((e) => ({ sent: 0, error: String(e) })),
+    pushToAllDevices({
+      title,
+      body,
+      data: { kind: "incident", incidentId: data.incidentId, url: "/status" },
+    }).catch((e) => ({ sent: 0, failed: 0, error: String(e) })),
+  ]);
+  await supabaseAdmin.from("notification_log").insert({
+    kind: "incident",
+    channel: "push",
+    target_id: data.incidentId,
+    status: (web.sent > 0 || fcm.sent > 0) ? "sent" : "skipped",
+    message: `web=${web.sent}${"failed" in web ? " failed" : ""}; fcm=${fcm.sent} failed=${"failed" in fcm ? fcm.failed : 0}`,
+    error: ["error" in web ? web.error : null, "error" in fcm ? fcm.error : null].filter(Boolean).join(" | ") || null,
+  } as never);
+  console.log(`[push] incident result web=${web.sent} fcm=${fcm.sent} failed=${"failed" in fcm ? fcm.failed : 0}`);
+  return { web, fcm };
 }
 
 export const sendShiftEventPush = createServerFn({ method: "POST" })
