@@ -146,6 +146,30 @@ function ProfilePage() {
     return () => clearInterval(t);
   }, []);
 
+  // Keep roles fresh without a full page reload: poll every 15s and refresh
+  // when the tab regains focus. Mirrors the pattern in use-auth so role
+  // changes (e.g. an admin promoting a member) show up live on the profile.
+  useEffect(() => {
+    if (!profile?.id) return;
+    const pid = profile.id;
+    const refreshRoles = async () => {
+      const { data, error } = await supabase
+        .from("user_roles").select("role").eq("user_id", pid);
+      if (error) return;
+      setRoles((data ?? []).map((x: any) => x.role as AppRole));
+    };
+    const interval = window.setInterval(refreshRoles, 15_000);
+    const onFocus = () => refreshRoles();
+    const onVis = () => { if (document.visibilityState === "visible") refreshRoles(); };
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVis);
+    return () => {
+      window.clearInterval(interval);
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVis);
+    };
+  }, [profile?.id]);
+
   const load = async () => {
     setLoading(true);
     const { data: p } = await supabase
