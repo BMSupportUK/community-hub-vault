@@ -19,6 +19,9 @@ import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 import statusHero from "@/assets/status-hero.png";
 import statusBg from "@/assets/status-bg.jpg";
+import { PushNotificationsToggle } from "@/components/app/PushNotificationsToggle";
+import { useServerFn } from "@tanstack/react-start";
+import { sendIncidentPush } from "@/lib/push.functions";
 
 export const Route = createFileRoute("/_authenticated/_approved/status")({
   component: StatusPage,
@@ -261,6 +264,15 @@ function StatusPage() {
                 : "Our team is working to resolve the issues below."}
             </div>
           </div>
+        </div>
+
+        {/* Push notifications */}
+        <div className="rounded-2xl border border-border bg-surface-1/60 p-4 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <div className="font-display text-sm font-semibold">Get notified about outages</div>
+            <div className="text-xs text-muted-foreground">Push alerts when an outage is created or updated. Works on Android Chrome (add to home screen for app-like alerts).</div>
+          </div>
+          <PushNotificationsToggle />
         </div>
 
         {/* Tabs */}
