@@ -109,3 +109,28 @@ export const sendIncidentPush = createServerFn({ method: "POST" })
     const body = data.message?.trim() || (data.kind === "created" ? "An outage has been reported." : "A new update has been posted.");
     return broadcast(title, body, "/status", `incident-${data.incidentId}`);
   });
+
+// Legacy Capacitor/FCM device token registration (kept for native shell)
+export const registerDeviceToken = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z.object({
+      token: z.string().min(1).max(500),
+      platform: z.enum(["android", "ios"]).default("android"),
+    }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { error } = await supabaseAdmin
+      .from("device_push_tokens")
+      .upsert(
+        {
+          user_id: context.userId,
+          token: data.token,
+          platform: data.platform,
+          last_seen_at: new Date().toISOString(),
+        },
+        { onConflict: "token" },
+      );
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
