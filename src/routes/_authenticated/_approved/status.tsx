@@ -21,7 +21,11 @@ import statusHero from "@/assets/status-hero.png";
 import statusBg from "@/assets/status-bg.jpg";
 import { PushNotificationsToggle } from "@/components/app/PushNotificationsToggle";
 import { useServerFn } from "@tanstack/react-start";
-import { sendIncidentPush } from "@/lib/push.functions";
+import {
+  createIncidentWithPush,
+  postIncidentUpdateWithPush,
+  updateIncidentWithPush,
+} from "@/lib/push.functions";
 
 export const Route = createFileRoute("/_authenticated/_approved/status")({
   component: StatusPage,
@@ -332,7 +336,7 @@ function IncidentCard({ incident, canManage, onEdit }: { incident: Incident; can
   const [posting, setPosting] = useState(false);
   const [msg, setMsg] = useState("");
   const [status, setStatus] = useState<IncidentStatus>(incident.status);
-  const notify = useServerFn(sendIncidentPush);
+  const postUpdate = useServerFn(postIncidentUpdateWithPush);
   const [updateFiles, setUpdateFiles] = useState<File[]>([]);
   const { user } = useAuth();
 
@@ -358,22 +362,16 @@ function IncidentCard({ incident, canManage, onEdit }: { incident: Incident; can
     setPosting(true);
     try {
       const uploaded = updateFiles.length ? await uploadFiles(updateFiles) : [];
-      const { error: uErr } = await supabase
-        .from("status_incident_updates")
-        .insert({
-          incident_id: incident.id,
+      await postUpdate({
+        data: {
+          incidentId: incident.id,
+          title: incident.title,
           status,
-          message: msg.trim(),
-          created_by: user.id,
-          attachments: uploaded as unknown as never,
-        });
-      if (uErr) throw uErr;
-      const patch: { status: IncidentStatus; resolved_at?: string | null } = { status };
-      if (status === "completed" && !incident.resolved_at) patch.resolved_at = new Date().toISOString();
-      if (status !== "completed" && incident.resolved_at) patch.resolved_at = null;
-      const { error: iErr } = await supabase.from("status_incidents").update(patch).eq("id", incident.id);
-      if (iErr) throw iErr;
-      notify({ data: { incidentId: incident.id, title: incident.title, kind: "updated", message: msg.trim().slice(0, 500) } }).catch(() => {});
+          message: msg.trim().slice(0, 500),
+          attachments: uploaded,
+          currentResolvedAt: incident.resolved_at,
+        },
+      });
       setMsg("");
       setUpdateFiles([]);
       await loadUpdates();
