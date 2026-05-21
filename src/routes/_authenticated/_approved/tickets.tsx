@@ -639,6 +639,16 @@ function NewTicketForm({
       });
     }
 
+    if (cat?.slug === "owner-management") {
+      await supabase.from("ticket_messages").insert({
+        ticket_id: t.id,
+        sender_id: user!.id,
+        content:
+          "🔒 This ticket is private to the **Owner and Management team**.\n\nNo other staff or moderators can see or reply to this conversation. A member of management will respond as soon as possible.",
+        is_internal: false,
+      });
+    }
+
     const oohMsg = await getOutOfHoursMessage();
     if (oohMsg) {
       await supabase.from("ticket_messages").insert({
