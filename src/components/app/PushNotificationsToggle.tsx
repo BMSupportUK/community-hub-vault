@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { Bell, BellOff, Loader2 } from "lucide-react";
+import { Bell, BellOff, Loader2, Smartphone } from "lucide-react";
 import { toast } from "sonner";
+import { Capacitor } from "@capacitor/core";
 import {
   enablePush,
   disablePush,
@@ -11,11 +12,12 @@ import {
 } from "@/lib/push-client";
 
 export function PushNotificationsToggle() {
-  const [status, setStatus] = useState<"loading" | "unsupported" | "denied" | "subscribed" | "default" | "preview">("loading");
+  const [status, setStatus] = useState<"loading" | "unsupported" | "denied" | "subscribed" | "default" | "preview" | "native">("loading");
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     (async () => {
+      if (Capacitor.isNativePlatform()) { setStatus("native"); return; }
       if (isInIframe() || isPreviewHost()) { setStatus("preview"); return; }
       if (!pushSupported()) { setStatus("unsupported"); return; }
       setStatus(await getPushStatus());
@@ -48,6 +50,13 @@ export function PushNotificationsToggle() {
     return (
       <div className="inline-flex items-center gap-2 text-xs text-muted-foreground">
         <Loader2 className="size-3 animate-spin" /> Checking notifications…
+      </div>
+    );
+  }
+  if (status === "native") {
+    return (
+      <div className="inline-flex items-center gap-2 text-xs text-emerald-400">
+        <Smartphone className="size-4" /> Notifications are active via the BM Support app (FCM). Manage them in your device settings.
       </div>
     );
   }
