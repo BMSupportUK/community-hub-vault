@@ -21,7 +21,11 @@ import statusHero from "@/assets/status-hero.png";
 import statusBg from "@/assets/status-bg.jpg";
 import { PushNotificationsToggle } from "@/components/app/PushNotificationsToggle";
 import { useServerFn } from "@tanstack/react-start";
-import { sendIncidentPush } from "@/lib/push.functions";
+import {
+  createIncidentWithPush,
+  postIncidentUpdateWithPush,
+  updateIncidentWithPush,
+} from "@/lib/push.functions";
 
 export const Route = createFileRoute("/_authenticated/_approved/status")({
   component: StatusPage,
@@ -332,7 +336,7 @@ function IncidentCard({ incident, canManage, onEdit }: { incident: Incident; can
   const [posting, setPosting] = useState(false);
   const [msg, setMsg] = useState("");
   const [status, setStatus] = useState<IncidentStatus>(incident.status);
-  const notify = useServerFn(sendIncidentPush);
+  const postUpdate = useServerFn(postIncidentUpdateWithPush);
   const [updateFiles, setUpdateFiles] = useState<File[]>([]);
   const { user } = useAuth();
 
@@ -358,22 +362,16 @@ function IncidentCard({ incident, canManage, onEdit }: { incident: Incident; can
     setPosting(true);
     try {
       const uploaded = updateFiles.length ? await uploadFiles(updateFiles) : [];
-      const { error: uErr } = await supabase
-        .from("status_incident_updates")
-        .insert({
-          incident_id: incident.id,
+      await postUpdate({
+        data: {
+          incidentId: incident.id,
+          title: incident.title,
           status,
-          message: msg.trim(),
-          created_by: user.id,
-          attachments: uploaded as unknown as never,
-        });
-      if (uErr) throw uErr;
-      const patch: { status: IncidentStatus; resolved_at?: string | null } = { status };
-      if (status === "completed" && !incident.resolved_at) patch.resolved_at = new Date().toISOString();
-      if (status !== "completed" && incident.resolved_at) patch.resolved_at = null;
-      const { error: iErr } = await supabase.from("status_incidents").update(patch).eq("id", incident.id);
-      if (iErr) throw iErr;
-      notify({ data: { incidentId: incident.id, title: incident.title, kind: "updated", message: msg.trim().slice(0, 500) } }).catch(() => {});
+          message: msg.trim().slice(0, 500),
+          attachments: uploaded,
+          currentResolvedAt: incident.resolved_at,
+        },
+      });
       setMsg("");
       setUpdateFiles([]);
       await loadUpdates();
@@ -502,8 +500,8 @@ function IncidentEditor({
   onClose: () => void;
   onSaved: () => void;
 }) {
-  const { user } = useAuth();
-  const notify = useServerFn(sendIncidentPush);
+  const createIncident = useServerFn(createIncidentWithPush);
+  const updateIncident = useServerFn(updateIncidentWithPush);
   const [title, setTitle] = useState(incident?.title ?? "");
   const [description, setDescription] = useState(incident?.description ?? "");
   const [status, setStatus] = useState<IncidentStatus>(incident?.status ?? "investigating");
@@ -519,37 +517,29 @@ function IncidentEditor({
       const issueUploads = issueFiles.length ? await uploadFiles(issueFiles) : [];
       if (incident) {
         const merged = [...(incident.attachments ?? []), ...issueUploads];
-        const { error } = await supabase
-          .from("status_incidents")
-          .update({ title, description, status, attachments: merged as unknown as never })
-          .eq("id", incident.id);
-        if (error) throw error;
-      } else {
-        const { data, error } = await supabase
-          .from("status_incidents")
-          .insert({
+        await updateIncident({
+          data: {
+            incidentId: incident.id,
             title,
             description,
             status,
-            created_by: user?.id,
-            attachments: issueUploads as unknown as never,
-          })
-          .select("id")
-          .single();
-        if (error) throw error;
+            attachments: merged,
+            resolvedAt: status === "completed" ? (incident.resolved_at || new Date().toISOString()) : null,
+            notify: false,
+          },
+        });
+      } else {
         const updateUploads = updateFiles.length ? await uploadFiles(updateFiles) : [];
-        if ((initialUpdate.trim() || updateUploads.length) && data) {
-          await supabase.from("status_incident_updates").insert({
-            incident_id: data.id,
+        await createIncident({
+          data: {
+            title,
+            description,
             status,
-            message: initialUpdate.trim(),
-            created_by: user?.id,
-            attachments: updateUploads as unknown as never,
-          });
-        }
-        if (data) {
-          notify({ data: { incidentId: data.id, title, kind: "created", message: (initialUpdate || description || "").slice(0, 500) } }).catch(() => {});
-        }
+            attachments: issueUploads,
+            initialUpdate: initialUpdate.slice(0, 500),
+            updateAttachments: updateUploads,
+          },
+        });
       }
       toast.success(incident ? "Issue updated" : "Issue created");
       onSaved();
