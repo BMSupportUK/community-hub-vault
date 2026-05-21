@@ -7,6 +7,8 @@ import { useUserTimezone } from "@/hooks/use-user-timezone";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import clockBg from "@/assets/clock-bg.jpg";
+import { useServerFn } from "@tanstack/react-start";
+import { sendShiftEventPush, sendBreakEventPush } from "@/lib/push.functions";
 
 export const Route = createFileRoute("/_authenticated/_approved/clock")({
   component: ClockPage,
@@ -35,6 +37,8 @@ function fmtMin(seconds: number) {
 
 function ClockPage() {
   const { user, isStaff } = useAuth();
+  const notifyShift = useServerFn(sendShiftEventPush);
+  const notifyBreak = useServerFn(sendBreakEventPush);
   const tz = useUserTimezone();
   const fmtTime = (iso: string) =>
     new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", timeZone: tz });
@@ -101,6 +105,7 @@ function ClockPage() {
     setBusy(false);
     if (error) return toast.error(error.message);
     toast.success("Clocked in");
+    notifyShift({ data: { kind: "clock_in" } }).catch(() => {});
     refresh();
   };
 
@@ -109,11 +114,13 @@ function ClockPage() {
     setBusy(true);
     if (myBreak) {
       await supabase.from("breaks").update({ ended_at: new Date().toISOString() }).eq("id", myBreak.id);
+      notifyBreak({ data: { kind: "end", breakKind: myBreak.kind } }).catch(() => {});
     }
     const { error } = await supabase.from("shifts").update({ clock_out: new Date().toISOString() }).eq("id", myShift.id);
     setBusy(false);
     if (error) return toast.error(error.message);
     toast.success("Clocked out");
+    notifyShift({ data: { kind: "clock_out" } }).catch(() => {});
     refresh();
   };
 
@@ -124,6 +131,7 @@ function ClockPage() {
     setBusy(false);
     if (error) return toast.error(error.message);
     toast.success(kind === "lunch" ? "Lunch started — 30 min" : "Break started — 15 min");
+    notifyBreak({ data: { kind: "start", breakKind: kind } }).catch(() => {});
     refresh();
   };
 
@@ -134,6 +142,7 @@ function ClockPage() {
     setBusy(false);
     if (error) return toast.error(error.message);
     toast.success("Break ended");
+    notifyBreak({ data: { kind: "end", breakKind: myBreak.kind } }).catch(() => {});
     refresh();
   };
 
