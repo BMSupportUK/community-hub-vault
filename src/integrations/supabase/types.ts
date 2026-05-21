@@ -2360,18 +2360,21 @@ export type Database = {
       }
       upcoming_event: {
         Row: {
+          banner_url: string | null
           body: string
           id: string
           updated_at: string
           updated_by: string | null
         }
         Insert: {
+          banner_url?: string | null
           body?: string
           id?: string
           updated_at?: string
           updated_by?: string | null
         }
         Update: {
+          banner_url?: string | null
           body?: string
           id?: string
           updated_at?: string
