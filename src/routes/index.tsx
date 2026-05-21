@@ -100,7 +100,37 @@ function Landing() {
         </div>
       </header>
 
-      <main className="flex-1 px-6 py-10 md:py-16">
+      <main className="relative flex-1 px-6 py-10 md:py-16">
+        {/* Upcoming event advert — floats to the right of the hero on large screens */}
+        <section className="max-w-7xl mx-auto mb-8 lg:mb-0 lg:absolute lg:right-6 xl:right-10 lg:top-24 lg:z-20 flex justify-center px-6 lg:px-0">
+          <div
+            className="relative rounded-2xl border-2 border-red-500/60 bg-black/60 backdrop-blur-md shadow-[0_0_40px_rgba(220,38,38,0.45)] p-5 flex flex-col items-center justify-between gap-3"
+            style={{ width: 300, height: 250 }}
+          >
+            {canEdit && (
+              <button
+                onClick={openEdit}
+                className="absolute top-2 right-2 size-7 grid place-items-center rounded-md bg-white/10 hover:bg-white/20 text-red-100 transition"
+                aria-label="Edit event"
+              >
+                <Pencil className="size-3.5" />
+              </button>
+            )}
+            <h2 className="font-display font-bold text-center text-lg leading-tight text-white">
+              The Next Big Event on BM Support
+            </h2>
+            <p className="text-sm text-red-50/80 text-center line-clamp-4">
+              {event?.body || "Stay tuned…"}
+            </p>
+            <button
+              onClick={() => setEventOpen(true)}
+              className="px-4 py-2 rounded-md bg-red-600 hover:bg-red-500 text-white text-sm font-medium shadow-[0_0_20px_rgba(220,38,38,0.55)] transition"
+            >
+              Read more
+            </button>
+          </div>
+        </section>
+
         <section
           className="relative max-w-7xl mx-auto rounded-3xl border border-red-900/60 p-8 md:p-14 pb-24 md:pb-32"
           style={{
@@ -169,36 +199,6 @@ function Landing() {
             </div>
           ))}
         </div>
-
-        {/* Upcoming event advert */}
-        <section className="max-w-7xl mx-auto mt-16 flex justify-center px-6">
-          <div
-            className="relative rounded-2xl border-2 border-red-500/60 bg-black/40 backdrop-blur-sm shadow-[0_0_40px_rgba(220,38,38,0.35)] p-5 flex flex-col items-center justify-between gap-4"
-            style={{ width: 300, height: 250 }}
-          >
-            {canEdit && (
-              <button
-                onClick={openEdit}
-                className="absolute top-2 right-2 size-7 grid place-items-center rounded-md bg-white/10 hover:bg-white/20 text-red-100 transition"
-                aria-label="Edit event"
-              >
-                <Pencil className="size-3.5" />
-              </button>
-            )}
-            <h2 className="font-display font-bold text-center text-lg leading-tight text-white">
-              The Next Big Event on BM Support
-            </h2>
-            <p className="text-sm text-red-50/80 text-center line-clamp-4">
-              {event?.body || "Stay tuned…"}
-            </p>
-            <button
-              onClick={() => setEventOpen(true)}
-              className="px-4 py-2 rounded-md bg-red-600 hover:bg-red-500 text-white text-sm font-medium shadow-[0_0_20px_rgba(220,38,38,0.55)] transition"
-            >
-              Read more
-            </button>
-          </div>
-        </section>
       </main>
 
       <Dialog open={eventOpen} onOpenChange={setEventOpen}>
