@@ -169,7 +169,77 @@ function Landing() {
             </div>
           ))}
         </div>
+
+        {/* Upcoming event advert */}
+        <section className="max-w-7xl mx-auto mt-16 flex justify-center px-6">
+          <div
+            className="relative rounded-2xl border-2 border-red-500/60 bg-black/40 backdrop-blur-sm shadow-[0_0_40px_rgba(220,38,38,0.35)] p-5 flex flex-col items-center justify-between gap-4"
+            style={{ width: 300, height: 250 }}
+          >
+            {canEdit && (
+              <button
+                onClick={openEdit}
+                className="absolute top-2 right-2 size-7 grid place-items-center rounded-md bg-white/10 hover:bg-white/20 text-red-100 transition"
+                aria-label="Edit event"
+              >
+                <Pencil className="size-3.5" />
+              </button>
+            )}
+            <h2 className="font-display font-bold text-center text-lg leading-tight text-white">
+              The Next Big Event on BM Support
+            </h2>
+            <p className="text-sm text-red-50/80 text-center line-clamp-4">
+              {event?.body || "Stay tuned…"}
+            </p>
+            <button
+              onClick={() => setEventOpen(true)}
+              className="px-4 py-2 rounded-md bg-red-600 hover:bg-red-500 text-white text-sm font-medium shadow-[0_0_20px_rgba(220,38,38,0.55)] transition"
+            >
+              Read more
+            </button>
+          </div>
+        </section>
       </main>
+
+      <Dialog open={eventOpen} onOpenChange={setEventOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>The Next Big Event on BM Support</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-foreground whitespace-pre-wrap">
+            {event?.body || "Stay tuned…"}
+          </p>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit upcoming event</DialogTitle>
+          </DialogHeader>
+          <Textarea
+            value={editBody}
+            onChange={(e) => setEditBody(e.target.value)}
+            rows={8}
+            placeholder="Tell members about the next big event…"
+          />
+          <DialogFooter>
+            <button
+              onClick={() => setEditOpen(false)}
+              className="px-4 py-2 rounded-md border border-border text-sm"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={saveEdit}
+              disabled={saving}
+              className="px-4 py-2 rounded-md bg-red-600 hover:bg-red-500 text-white text-sm disabled:opacity-50"
+            >
+              {saving ? "Saving…" : "Save"}
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <footer className="mt-20 border-t border-red-500/20 bg-black/60 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-6 py-8 flex flex-col md:flex-row items-center justify-between gap-6">
