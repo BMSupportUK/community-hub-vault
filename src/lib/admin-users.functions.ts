@@ -39,3 +39,35 @@ export const deleteMember = createServerFn({ method: "POST" })
 
     return { success: true };
   });
+
+export const listMemberEmails = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+
+    const { data: roles, error: rolesError } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId);
+    if (rolesError) throw new Error(rolesError.message);
+    const callerRoles = (roles ?? []).map((r) => String(r.role));
+    if (!callerRoles.some((r) => r === "admin" || r === "management")) {
+      throw new Error("Forbidden: admin or management only");
+    }
+
+    const emails: Record<string, string> = {};
+    let page = 1;
+    // paginate through auth users
+    // perPage max 1000
+    while (true) {
+      const { data, error } = await supabaseAdmin.auth.admin.listUsers({ page, perPage: 1000 });
+      if (error) throw new Error(error.message);
+      for (const u of data.users) {
+        if (u.email) emails[u.id] = u.email;
+      }
+      if (data.users.length < 1000) break;
+      page += 1;
+      if (page > 20) break; // safety
+    }
+    return { emails };
+  });

@@ -19,7 +19,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { isAdminUnlocked } from "@/lib/admin-unlock";
-import { deleteMember } from "@/lib/admin-users.functions";
+import { deleteMember, listMemberEmails } from "@/lib/admin-users.functions";
 import {
   getUserLocationHistory,
   type LocationHistoryRow,
@@ -44,6 +44,7 @@ interface Row {
   display_name: string | null;
   roles: string[];
   last_ip: string | null;
+  email: string | null;
 }
 
 const SYSTEM_STYLE: Record<string, string> = {
@@ -68,11 +69,12 @@ function AdminRolesPage() {
   const [saving, setSaving] = useState<string | null>(null);
   const [deletingUser, setDeletingUser] = useState<string | null>(null);
   const deleteMemberFn = useServerFn(deleteMember);
+  const listEmailsFn = useServerFn(listMemberEmails);
   const [historyFor, setHistoryFor] = useState<Row | null>(null);
 
   const loadAll = async () => {
     setLoading(true);
-    const [{ data: profs }, { data: rolesData }, { data: defs }, { data: ipsData }] =
+    const [{ data: profs }, { data: rolesData }, { data: defs }, { data: ipsData }, emailsRes] =
       await Promise.all([
         supabase
           .from("profiles")
@@ -84,6 +86,10 @@ function AdminRolesPage() {
           .select("name, label, is_system, is_active, sort_order")
           .order("sort_order"),
         supabase.from("signup_info").select("user_id, ip"),
+        listEmailsFn({} as never).catch((e) => {
+          console.warn("[admin-roles] email fetch failed", e);
+          return { emails: {} as Record<string, string> };
+        }),
       ]);
     const roleMap = new Map<string, string[]>();
     (rolesData ?? []).forEach((r: any) => {
@@ -95,6 +101,7 @@ function AdminRolesPage() {
     (ipsData ?? []).forEach((r: any) => {
       ipMap.set(r.user_id, (r.ip as string | null) ?? null);
     });
+    const emailMap = (emailsRes as { emails: Record<string, string> }).emails ?? {};
     setRows(
       (profs ?? []).map((p: any) => ({
         id: p.id,
@@ -102,6 +109,7 @@ function AdminRolesPage() {
         display_name: p.display_name,
         roles: roleMap.get(p.id) ?? [],
         last_ip: ipMap.get(p.id) ?? null,
+        email: emailMap[p.id] ?? null,
       })),
     );
     setRoleDefs((defs ?? []) as RoleDef[]);
@@ -122,6 +130,7 @@ function AdminRolesPage() {
         (r.username ?? "").toLowerCase().includes(q) ||
         (r.display_name ?? "").toLowerCase().includes(q) ||
         r.id.toLowerCase().includes(q) ||
+        (r.email ?? "").toLowerCase().includes(q) ||
         (r.last_ip ?? "").toLowerCase().includes(q),
     );
   }, [rows, query]);
@@ -282,6 +291,12 @@ function AdminRolesPage() {
                     </div>
                     <div className="text-xs text-muted-foreground truncate">
                       @{row.username ?? row.id.slice(0, 8)}
+                    </div>
+                    <div
+                      className="text-xs text-muted-foreground truncate mt-0.5"
+                      title={row.email ?? "No email on file"}
+                    >
+                      {row.email ?? "—"}
                     </div>
                     <div
                       className="text-[11px] text-muted-foreground/80 font-mono truncate mt-0.5"
