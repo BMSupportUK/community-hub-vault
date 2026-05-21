@@ -66,6 +66,7 @@ async function buildMessage(kind: Kind, id: string): Promise<string | null> {
 
   if (kind === "order") {
     const { data: o } = await supabaseAdmin
+      .schema("private" as never)
       .from("orders")
       .select("user_id, status, total_cents, shipping_name")
       .eq("id", id)
