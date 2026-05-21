@@ -36,6 +36,9 @@ jobs:
       - name: Create dist placeholder (app loads remote URL)
         run: mkdir -p dist && echo '<!doctype html><title>BM Support</title>' > dist/index.html
 
+      - name: Ensure Android assets dir exists
+        run: mkdir -p android/app/src/main/assets
+
       - name: Capacitor sync (android)
         run: npx cap sync android
 
