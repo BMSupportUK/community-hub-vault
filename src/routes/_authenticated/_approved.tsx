@@ -4,13 +4,19 @@ import { TwoFactorBanner } from "@/components/app/TwoFactorBanner";
 import { OutstandingTicketsAlert } from "@/components/app/OutstandingTicketsAlert";
 import { TicketAssignedAlert } from "@/components/app/TicketAssignedAlert";
 import { TicketHelpRequestedAlert } from "@/components/app/TicketHelpRequestedAlert";
+import { usePushRegister } from "@/hooks/use-push-register";
 
 export const Route = createFileRoute("/_authenticated/_approved")({
   beforeLoad: async () => {
     // Pending users are intercepted by the parent layout, but block the loader too.
     // (No data needed here; auth context handles redirect UI.)
   },
-  component: () => (
+  component: ApprovedLayout,
+});
+
+function ApprovedLayout() {
+  usePushRegister();
+  return (
     <>
       <TwoFactorBanner />
       <Outlet />
@@ -19,5 +25,5 @@ export const Route = createFileRoute("/_authenticated/_approved")({
       <TicketAssignedAlert />
       <TicketHelpRequestedAlert />
     </>
-  ),
-});
+  );
+}
