@@ -10,6 +10,8 @@ import { generateEventBanner } from "@/lib/event-banner.functions";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
+import { Slider } from "@/components/ui/slider";
+import Cropper, { type Area } from "react-easy-crop";
 
 export const Route = createFileRoute("/_authenticated/_approved/home/")({
   component: WelcomePage,
@@ -30,6 +32,11 @@ function WelcomePage() {
   const [bannerOpen, setBannerOpen] = useState(false);
   const [bannerPrompt, setBannerPrompt] = useState("");
   const [bannerBusy, setBannerBusy] = useState(false);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [pendingUrl, setPendingUrl] = useState<string | null>(null);
+  const [crop, setCrop] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
   const callGenerateBanner = useServerFn(generateEventBanner);
 
   useEffect(() => {
@@ -63,31 +70,45 @@ function WelcomePage() {
     toast.success("Event updated");
   };
 
-  const uploadBanner = async (file: File) => {
-    if (!event || !user) return;
+  const pickFile = (file: File) => {
+    if (!file.type.startsWith("image/")) { toast.error("Please pick an image"); return; }
+    if (pendingUrl) URL.revokeObjectURL(pendingUrl);
+    setPendingFile(file);
+    setPendingUrl(URL.createObjectURL(file));
+    setCrop({ x: 0, y: 0 });
+    setZoom(1);
+    setCroppedAreaPixels(null);
+  };
+
+  const cancelCrop = () => {
+    if (pendingUrl) URL.revokeObjectURL(pendingUrl);
+    setPendingFile(null);
+    setPendingUrl(null);
+    setCroppedAreaPixels(null);
+  };
+
+  const confirmCrop = async () => {
+    if (!event || !user || !pendingUrl || !croppedAreaPixels) return;
     setBannerBusy(true);
-    let blob: Blob = file;
-    let contentType = file.type || "image/jpeg";
-    let ext = "jpg";
     try {
-      if (file.type.startsWith("image/")) {
-        const resized = await cropToCover(file, 300, 250);
-        if (resized) { blob = resized; contentType = "image/jpeg"; ext = "jpg"; }
-      }
-    } catch {
-      // fall back to original file
+      const blob = await renderCrop(pendingUrl, croppedAreaPixels, 300, 250);
+      if (!blob) throw new Error("Could not process image");
+      const path = `${event.id}/${Date.now()}.jpg`;
+      const { error: upErr } = await supabase.storage.from("event-banners").upload(path, blob, { upsert: true, contentType: "image/jpeg" });
+      if (upErr) throw new Error(upErr.message);
+      const { data: pub } = supabase.storage.from("event-banners").getPublicUrl(path);
+      const url = pub.publicUrl;
+      const { error } = await supabase.from("upcoming_event").update({ banner_url: url, updated_by: user.id }).eq("id", event.id);
+      if (error) throw new Error(error.message);
+      setEvent({ ...event, banner_url: url });
+      cancelCrop();
+      setBannerOpen(false);
+      toast.success("Banner updated");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Upload failed");
+    } finally {
+      setBannerBusy(false);
     }
-    const path = `${event.id}/${Date.now()}.${ext}`;
-    const { error: upErr } = await supabase.storage.from("event-banners").upload(path, blob, { upsert: true, contentType });
-    if (upErr) { setBannerBusy(false); toast.error(upErr.message); return; }
-    const { data: pub } = supabase.storage.from("event-banners").getPublicUrl(path);
-    const url = pub.publicUrl;
-    const { error } = await supabase.from("upcoming_event").update({ banner_url: url, updated_by: user.id }).eq("id", event.id);
-    setBannerBusy(false);
-    if (error) { toast.error(error.message); return; }
-    setEvent({ ...event, banner_url: url });
-    setBannerOpen(false);
-    toast.success("Banner updated");
   };
 
   const aiGenerateBanner = async () => {
@@ -395,6 +416,31 @@ function WelcomePage() {
           <DialogHeader>
             <DialogTitle>Event banner (300×250)</DialogTitle>
           </DialogHeader>
+          {pendingUrl ? (
+            <div className="space-y-4">
+              <div className="relative w-full bg-black/40 rounded-md overflow-hidden" style={{ height: 280 }}>
+                <Cropper
+                  image={pendingUrl}
+                  crop={crop}
+                  zoom={zoom}
+                  aspect={300 / 250}
+                  onCropChange={setCrop}
+                  onZoomChange={setZoom}
+                  onCropComplete={(_a, areaPixels) => setCroppedAreaPixels(areaPixels)}
+                />
+              </div>
+              <div>
+                <label className="text-xs text-foreground/70 mb-1 block">Zoom</label>
+                <Slider value={[zoom]} min={1} max={4} step={0.05} onValueChange={(v) => setZoom(v[0])} />
+              </div>
+              <DialogFooter>
+                <button onClick={cancelCrop} disabled={bannerBusy} className="px-4 py-2 rounded-md border border-border text-sm">Cancel</button>
+                <button onClick={confirmCrop} disabled={bannerBusy || !croppedAreaPixels} className="px-4 py-2 rounded-md bg-gradient-to-br from-violet-600 to-blue-600 text-white text-sm disabled:opacity-50">
+                  {bannerBusy ? "Uploading…" : "Use this crop"}
+                </button>
+              </DialogFooter>
+            </div>
+          ) : (
           <div className="space-y-4">
             <div>
               <label className="text-sm font-medium mb-2 flex items-center gap-2">
@@ -406,10 +452,10 @@ function WelcomePage() {
                 disabled={bannerBusy}
                 onChange={(e) => {
                   const f = e.target.files?.[0];
-                  if (f) void uploadBanner(f);
+                  if (f) pickFile(f);
                 }}
               />
-              <p className="text-xs text-foreground/60 mt-1">Recommended: 300×250 px</p>
+              <p className="text-xs text-foreground/60 mt-1">You'll be able to crop the image to fit 300×250.</p>
             </div>
             <div className="border-t border-border pt-4">
               <label className="text-sm font-medium mb-2 flex items-center gap-2">
@@ -443,6 +489,7 @@ function WelcomePage() {
               </div>
             )}
           </div>
+          )}
         </DialogContent>
       </Dialog>
     </main>
@@ -506,44 +553,20 @@ function QuickAction({
   );
 }
 
-async function cropToCover(file: File, w: number, h: number): Promise<Blob | null> {
-  const bitmap = await loadBitmap(file);
-  const srcW = bitmap.width;
-  const srcH = bitmap.height;
-  const scale = Math.max(w / srcW, h / srcH);
-  const drawW = srcW * scale;
-  const drawH = srcH * scale;
-  const dx = (w - drawW) / 2;
-  const dy = (h - drawH) / 2;
-  const canvas = typeof OffscreenCanvas !== "undefined"
-    ? new OffscreenCanvas(w, h)
-    : Object.assign(document.createElement("canvas"), { width: w, height: h });
-  const ctx = (canvas as HTMLCanvasElement).getContext("2d");
+async function renderCrop(src: string, area: Area, outW: number, outH: number): Promise<Blob | null> {
+  const img = new Image();
+  img.crossOrigin = "anonymous";
+  img.src = src;
+  await img.decode();
+  const canvas = document.createElement("canvas");
+  canvas.width = outW;
+  canvas.height = outH;
+  const ctx = canvas.getContext("2d");
   if (!ctx) return null;
   ctx.fillStyle = "#ffffff";
-  ctx.fillRect(0, 0, w, h);
-  ctx.drawImage(bitmap as CanvasImageSource, dx, dy, drawW, drawH);
-  if ("convertToBlob" in canvas) {
-    return await (canvas as OffscreenCanvas).convertToBlob({ type: "image/jpeg", quality: 0.9 });
-  }
+  ctx.fillRect(0, 0, outW, outH);
+  ctx.drawImage(img, area.x, area.y, area.width, area.height, 0, 0, outW, outH);
   return await new Promise<Blob | null>((resolve) =>
-    (canvas as HTMLCanvasElement).toBlob((b) => resolve(b), "image/jpeg", 0.9)
+    canvas.toBlob((b) => resolve(b), "image/jpeg", 0.9)
   );
-}
-
-async function loadBitmap(file: File): Promise<ImageBitmap | HTMLImageElement> {
-  if (typeof createImageBitmap === "function") {
-    try { return await createImageBitmap(file); } catch { /* fall through */ }
-  }
-  const url = URL.createObjectURL(file);
-  try {
-    const img = new Image();
-    img.decoding = "async";
-    img.src = url;
-    await img.decode();
-    return img;
-  } finally {
-    // Revoke after decode; image data is already in memory
-    URL.revokeObjectURL(url);
-  }
 }
