@@ -2149,6 +2149,7 @@ function SquareCardPanel({ orderId, amountCents, canPay, onChange }: { orderId: 
   const [loading, setLoading] = useState(false);
   const [bootError, setBootError] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
+  const [open, setOpen] = useState(false);
   const cardRef = useRef<HTMLDivElement | null>(null);
   const cardInstanceRef = useRef<any>(null);
   const paymentsRef = useRef<any>(null);
@@ -2175,7 +2176,7 @@ function SquareCardPanel({ orderId, amountCents, canPay, onChange }: { orderId: 
 
   useEffect(() => {
     let cancelled = false;
-    if (!canPay || paid) return;
+    if (!canPay || paid || !open) return;
     (async () => {
       try {
         const cfg = await getConfig();
@@ -2222,7 +2223,7 @@ function SquareCardPanel({ orderId, amountCents, canPay, onChange }: { orderId: 
       setReady(false);
       setGooglePayReady(false);
     };
-  }, [canPay, paid, orderId, amountCents]);
+  }, [canPay, paid, orderId, amountCents, open]);
 
   const tokenizeAndCharge = async (instance: any, label: string) => {
     if (!instance) return;
@@ -2244,6 +2245,7 @@ function SquareCardPanel({ orderId, amountCents, canPay, onChange }: { orderId: 
         receipt_url: res.receiptUrl,
         amount_cents: amountCents,
       });
+      setOpen(false);
       await onChange?.();
     } catch (e) {
       toast.error((e as Error).message);
@@ -2291,27 +2293,41 @@ function SquareCardPanel({ orderId, amountCents, canPay, onChange }: { orderId: 
     <div>
       <SquareLogo className="mb-1.5" />
       <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Pay by card</div>
-      {bootError ? (
-        <div className="text-xs text-destructive">{bootError}</div>
-      ) : (
-        <div className="space-y-2">
-          {googlePayReady && (
-            <div className="space-y-1.5">
-              <div ref={googlePayBtnRef} onClick={handleGooglePay}
-                className="w-full min-h-[40px] cursor-pointer" aria-disabled={loading} />
-              <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
-                <div className="flex-1 h-px bg-border" /> or pay by card <div className="flex-1 h-px bg-border" />
-              </div>
+      <button
+        onClick={() => setOpen(true)}
+        className="w-full px-2.5 py-2 rounded-md bg-primary text-primary-foreground text-xs font-medium flex items-center justify-center gap-1.5 hover:bg-primary/90"
+      >
+        <CreditCard className="size-3.5" />
+        Pay {format(amountCents)} by card
+      </button>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><SquareLogo /> Card Payment</DialogTitle>
+          </DialogHeader>
+          {bootError ? (
+            <div className="text-xs text-destructive">{bootError}</div>
+          ) : (
+            <div className="space-y-3">
+              {googlePayReady && (
+                <div className="space-y-1.5">
+                  <div ref={googlePayBtnRef} onClick={handleGooglePay}
+                    className="w-full min-h-[44px] cursor-pointer" aria-disabled={loading} />
+                  <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+                    <div className="flex-1 h-px bg-border" /> or pay by card <div className="flex-1 h-px bg-border" />
+                  </div>
+                </div>
+              )}
+              <div ref={cardRef} className="rounded-md bg-surface-2 border border-border px-2 py-2 min-h-[60px]" />
+              <button onClick={handlePay} disabled={!ready || loading}
+                className="w-full px-2.5 py-2 rounded-md bg-primary text-primary-foreground text-xs font-medium flex items-center justify-center gap-1.5 hover:bg-primary/90 disabled:opacity-50">
+                <CreditCard className="size-3.5" />
+                {loading ? "Processing…" : ready ? `Pay ${format(amountCents)}` : "Loading…"}
+              </button>
             </div>
           )}
-          <div ref={cardRef} className="rounded-md bg-surface-2 border border-border px-2 py-2 min-h-[60px]" />
-          <button onClick={handlePay} disabled={!ready || loading}
-            className="w-full px-2.5 py-2 rounded-md bg-primary text-primary-foreground text-xs font-medium flex items-center justify-center gap-1.5 hover:bg-primary/90 disabled:opacity-50">
-            <CreditCard className="size-3.5" />
-            {loading ? "Processing…" : ready ? `Pay ${format(amountCents)}` : "Loading…"}
-          </button>
-        </div>
-      )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
