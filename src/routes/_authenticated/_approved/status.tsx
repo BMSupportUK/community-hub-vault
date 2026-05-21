@@ -500,7 +500,6 @@ function IncidentEditor({
   onClose: () => void;
   onSaved: () => void;
 }) {
-  const { user } = useAuth();
   const createIncident = useServerFn(createIncidentWithPush);
   const updateIncident = useServerFn(updateIncidentWithPush);
   const [title, setTitle] = useState(incident?.title ?? "");
