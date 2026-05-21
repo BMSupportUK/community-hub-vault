@@ -236,8 +236,8 @@ function WelcomePage() {
             Open channels →
           </Link>
         </div>
-        <div className="grid lg:grid-cols-[1fr_320px_320px] gap-6 items-start">
-          <div className="grid sm:grid-cols-2 gap-3">
+        <div className="flex flex-col gap-6">
+          <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
             {order.map((key, idx) => {
             const c = CARDS[key];
             if (!c) return null;
@@ -276,8 +276,9 @@ function WelcomePage() {
             })}
           </div>
 
-          {/* Upcoming event 300x250 advert */}
-          <div className="justify-self-center lg:justify-self-end">
+          {/* Adverts row: event + banner */}
+          <div className="flex flex-wrap gap-6 justify-center lg:justify-start">
+            {/* Upcoming event 300x250 advert */}
             <div
               className="relative rounded-2xl border-2 border-violet-500/60 bg-surface shadow-[0_0_30px_rgba(139,92,246,0.25)] p-5 flex flex-col items-center justify-between gap-3"
               style={{ width: 300, height: 250 }}
@@ -304,10 +305,8 @@ function WelcomePage() {
                 Read more
               </button>
             </div>
-          </div>
 
-          {/* Event banner 300x250 advert */}
-          <div className="justify-self-center lg:justify-self-end">
+            {/* Event banner 300x250 advert */}
             <div
               className="relative rounded-2xl border-2 border-violet-500/60 bg-surface shadow-[0_0_30px_rgba(139,92,246,0.25)] overflow-hidden"
               style={{ width: 300, height: 250 }}
