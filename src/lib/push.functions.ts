@@ -215,6 +215,7 @@ export const sendIncidentPush = createServerFn({ method: "POST" })
         ? `New outage: ${data.title}`
         : `Update: ${data.title}`;
     const body = data.message?.trim() || (data.kind === "created" ? "An outage has been reported." : "A new update has been posted.");
+    console.log(`[push] incident ${data.kind} ${data.incidentId}`);
     const [web, fcm] = await Promise.all([
       broadcast(title, body, "/status", `incident-${data.incidentId}`).catch((e) => ({ sent: 0, error: String(e) })),
       pushToAllDevices({
@@ -223,6 +224,15 @@ export const sendIncidentPush = createServerFn({ method: "POST" })
         data: { kind: "incident", incidentId: data.incidentId, url: "/status" },
       }).catch((e) => ({ sent: 0, failed: 0, error: String(e) })),
     ]);
+    await supabaseAdmin.from("notification_log").insert({
+      kind: "incident",
+      channel: "push",
+      target_id: data.incidentId,
+      status: (web.sent > 0 || fcm.sent > 0) ? "sent" : "skipped",
+      message: `web=${web.sent}${"failed" in web ? " failed" : ""}; fcm=${fcm.sent} failed=${"failed" in fcm ? fcm.failed : 0}`,
+      error: ["error" in web ? web.error : null, "error" in fcm ? fcm.error : null].filter(Boolean).join(" | ") || null,
+    } as never);
+    console.log(`[push] incident result web=${web.sent} fcm=${fcm.sent}`);
     return { web, fcm };
   });
 
@@ -236,6 +246,7 @@ export const registerDeviceToken = createServerFn({ method: "POST" })
     }).parse(input),
   )
   .handler(async ({ data, context }) => {
+    console.log(`[push] registering ${data.platform} token for ${context.userId}`);
     const { error } = await supabaseAdmin
       .from("device_push_tokens")
       .upsert(
@@ -248,5 +259,6 @@ export const registerDeviceToken = createServerFn({ method: "POST" })
         { onConflict: "token" },
       );
     if (error) throw new Error(error.message);
+    console.log(`[push] registered ${data.platform} token`);
     return { ok: true };
   });
