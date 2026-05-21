@@ -292,7 +292,7 @@ function WelcomePage() {
       </section>
 
       {/* Quick links */}
-      <section className="p-6 md:p-10 max-w-6xl">
+      <section className="p-6 md:p-10">
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-display text-lg font-semibold">Jump back in</h2>
           <Link to="/home/$channel" params={{ channel: "welcome" }} className="text-sm text-sky-300 hover:text-sky-200">
