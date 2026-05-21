@@ -2874,6 +2874,10 @@ export type Database = {
         Args: { _order_id: string; _user_id: string }
         Returns: boolean
       }
+      is_owner_management_category: {
+        Args: { _category_id: string }
+        Returns: boolean
+      }
       mark_order_paid: { Args: { p_order_id: string }; Returns: Json }
       move_to_dlq: {
         Args: {
