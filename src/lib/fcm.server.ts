@@ -86,13 +86,37 @@ export async function pushToAdmins(args: {
   if (tokErr) throw new Error(tokErr.message);
   if (!tokens?.length) return { sent: 0, failed: 0, skipped: "no device tokens" };
 
+  return sendFcmToTokens(tokens.map((t) => t.token), args);
+}
+
+/** Send a push to ALL users that have a registered device token. */
+export async function pushToAllDevices(args: {
+  title: string;
+  body: string;
+  data?: Record<string, string>;
+}): Promise<{ sent: number; failed: number; skipped?: string }> {
+  if (!process.env.FCM_SERVICE_ACCOUNT_JSON) {
+    return { sent: 0, failed: 0, skipped: "FCM_SERVICE_ACCOUNT_JSON not configured" };
+  }
+  const { data: tokens, error } = await supabaseAdmin
+    .from("device_push_tokens")
+    .select("token");
+  if (error) throw new Error(error.message);
+  if (!tokens?.length) return { sent: 0, failed: 0, skipped: "no device tokens" };
+  return sendFcmToTokens(tokens.map((t) => t.token), args);
+}
+
+async function sendFcmToTokens(
+  tokens: string[],
+  args: { title: string; body: string; data?: Record<string, string> },
+): Promise<{ sent: number; failed: number }> {
   const { token: accessToken, projectId } = await getFcmAccessToken();
   const url = `https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`;
 
   let sent = 0;
   let failed = 0;
   const stale: string[] = [];
-  for (const { token } of tokens) {
+  for (const token of tokens) {
     const res = await fetch(url, {
       method: "POST",
       headers: {
