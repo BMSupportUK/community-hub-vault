@@ -326,7 +326,7 @@ function WelcomePage() {
               </div>
             ) : null;
             return (
-              <div key={key} className="relative">
+              <div key={key} className="relative h-full">
                 {controls}
                 {c.to ? (
                   <QuickCard to={c.to} params={c.params} icon={c.icon} title={c.title} desc={c.desc} />
@@ -455,7 +455,7 @@ function QuickCard({
     <Link
       to={to as never}
       params={params as never}
-      className="group rounded-xl border-2 border-violet-500/40 bg-surface hover:bg-surface-2 hover:border-violet-400/70 hover:shadow-[0_0_20px_rgba(139,92,246,0.25)] transition-all p-4 flex items-start gap-3"
+      className="group w-full h-full rounded-xl border-2 border-violet-500/40 bg-surface hover:bg-surface-2 hover:border-violet-400/70 hover:shadow-[0_0_20px_rgba(139,92,246,0.25)] transition-all p-4 flex items-start gap-3"
     >
       <span className="grid place-items-center size-10 rounded-lg bg-gradient-to-br from-violet-600 to-blue-600 text-white shrink-0">
         <Icon className="size-5" />
@@ -482,7 +482,7 @@ function QuickAction({
   return (
     <button
       onClick={onClick}
-      className="group text-left rounded-xl border-2 border-violet-500/40 bg-surface hover:bg-surface-2 hover:border-violet-400/70 hover:shadow-[0_0_20px_rgba(139,92,246,0.25)] transition-all p-4 flex items-start gap-3"
+      className="group w-full h-full text-left rounded-xl border-2 border-violet-500/40 bg-surface hover:bg-surface-2 hover:border-violet-400/70 hover:shadow-[0_0_20px_rgba(139,92,246,0.25)] transition-all p-4 flex items-start gap-3"
     >
       <span className="grid place-items-center size-10 rounded-lg bg-gradient-to-br from-violet-600 to-blue-600 text-white shrink-0">
         <Icon className="size-5" />
