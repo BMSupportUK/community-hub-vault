@@ -501,7 +501,8 @@ function IncidentEditor({
   onSaved: () => void;
 }) {
   const { user } = useAuth();
-  const notify = useServerFn(sendIncidentPush);
+  const createIncident = useServerFn(createIncidentWithPush);
+  const updateIncident = useServerFn(updateIncidentWithPush);
   const [title, setTitle] = useState(incident?.title ?? "");
   const [description, setDescription] = useState(incident?.description ?? "");
   const [status, setStatus] = useState<IncidentStatus>(incident?.status ?? "investigating");
@@ -517,37 +518,29 @@ function IncidentEditor({
       const issueUploads = issueFiles.length ? await uploadFiles(issueFiles) : [];
       if (incident) {
         const merged = [...(incident.attachments ?? []), ...issueUploads];
-        const { error } = await supabase
-          .from("status_incidents")
-          .update({ title, description, status, attachments: merged as unknown as never })
-          .eq("id", incident.id);
-        if (error) throw error;
-      } else {
-        const { data, error } = await supabase
-          .from("status_incidents")
-          .insert({
+        await updateIncident({
+          data: {
+            incidentId: incident.id,
             title,
             description,
             status,
-            created_by: user?.id,
-            attachments: issueUploads as unknown as never,
-          })
-          .select("id")
-          .single();
-        if (error) throw error;
+            attachments: merged,
+            resolvedAt: status === "completed" ? (incident.resolved_at || new Date().toISOString()) : null,
+            notify: false,
+          },
+        });
+      } else {
         const updateUploads = updateFiles.length ? await uploadFiles(updateFiles) : [];
-        if ((initialUpdate.trim() || updateUploads.length) && data) {
-          await supabase.from("status_incident_updates").insert({
-            incident_id: data.id,
+        await createIncident({
+          data: {
+            title,
+            description,
             status,
-            message: initialUpdate.trim(),
-            created_by: user?.id,
-            attachments: updateUploads as unknown as never,
-          });
-        }
-        if (data) {
-          notify({ data: { incidentId: data.id, title, kind: "created", message: (initialUpdate || description || "").slice(0, 500) } }).catch(() => {});
-        }
+            attachments: issueUploads,
+            initialUpdate: initialUpdate.slice(0, 500),
+            updateAttachments: updateUploads,
+          },
+        });
       }
       toast.success(incident ? "Issue updated" : "Issue created");
       onSaved();
