@@ -135,8 +135,18 @@ async function sendFcmToTokens(
   tokens: string[],
   args: { title: string; body: string; data?: Record<string, string> },
 ): Promise<{ sent: number; failed: number }> {
-  const { token: accessToken, projectId } = await getFcmAccessToken();
+  let accessToken: string;
+  let projectId: string;
+  try {
+    const t = await getFcmAccessToken();
+    accessToken = t.token;
+    projectId = t.projectId;
+  } catch (e) {
+    console.error("[fcm] getAccessToken failed:", e);
+    throw e;
+  }
   const url = `https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`;
+  console.log(`[fcm] sending to ${tokens.length} token(s) project=${projectId}`);
 
   let sent = 0;
   let failed = 0;
@@ -160,9 +170,15 @@ async function sendFcmToTokens(
     if (res.ok) sent++;
     else {
       failed++;
-      if (res.status === 404 || res.status === 400) stale.push(token);
+      const txt = await res.text().catch(() => "");
+      console.error(`[fcm] send failed status=${res.status} body=${txt.slice(0, 500)}`);
+      // Only treat UNREGISTERED / INVALID_ARGUMENT as stale.
+      if (res.status === 404 || (res.status === 400 && /UNREGISTERED|INVALID_ARGUMENT/i.test(txt))) {
+        stale.push(token);
+      }
     }
   }
+  console.log(`[fcm] done sent=${sent} failed=${failed} stale=${stale.length}`);
   if (stale.length) {
     await supabaseAdmin.from("device_push_tokens").delete().in("token", stale);
   }
