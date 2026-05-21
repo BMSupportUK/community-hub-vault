@@ -123,7 +123,7 @@ function Landing() {
           <p className="text-sm text-red-50/70 order-2 md:order-1">
             © BM Support 2026. All rights reserved.
           </p>
-          <div className="flex flex-col items-center md:items-end gap-2 order-1 md:order-2">
+          <div className="flex flex-col items-center gap-2 order-1 md:order-2">
             <span className="text-[11px] uppercase tracking-wider text-red-100/60">Accepted payment methods</span>
             <div className="flex items-stretch gap-4">
               {/* Square group */}
