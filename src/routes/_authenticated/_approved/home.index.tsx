@@ -505,3 +505,45 @@ function QuickAction({
     </button>
   );
 }
+
+async function cropToCover(file: File, w: number, h: number): Promise<Blob | null> {
+  const bitmap = await loadBitmap(file);
+  const srcW = bitmap.width;
+  const srcH = bitmap.height;
+  const scale = Math.max(w / srcW, h / srcH);
+  const drawW = srcW * scale;
+  const drawH = srcH * scale;
+  const dx = (w - drawW) / 2;
+  const dy = (h - drawH) / 2;
+  const canvas = typeof OffscreenCanvas !== "undefined"
+    ? new OffscreenCanvas(w, h)
+    : Object.assign(document.createElement("canvas"), { width: w, height: h });
+  const ctx = (canvas as HTMLCanvasElement).getContext("2d");
+  if (!ctx) return null;
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, w, h);
+  ctx.drawImage(bitmap as CanvasImageSource, dx, dy, drawW, drawH);
+  if ("convertToBlob" in canvas) {
+    return await (canvas as OffscreenCanvas).convertToBlob({ type: "image/jpeg", quality: 0.9 });
+  }
+  return await new Promise<Blob | null>((resolve) =>
+    (canvas as HTMLCanvasElement).toBlob((b) => resolve(b), "image/jpeg", 0.9)
+  );
+}
+
+async function loadBitmap(file: File): Promise<ImageBitmap | HTMLImageElement> {
+  if (typeof createImageBitmap === "function") {
+    try { return await createImageBitmap(file); } catch { /* fall through */ }
+  }
+  const url = URL.createObjectURL(file);
+  try {
+    const img = new Image();
+    img.decoding = "async";
+    img.src = url;
+    await img.decode();
+    return img;
+  } finally {
+    // Revoke after decode; image data is already in memory
+    URL.revokeObjectURL(url);
+  }
+}
