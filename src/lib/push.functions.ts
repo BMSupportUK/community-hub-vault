@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { pushToAllDevices } from "@/lib/fcm.server";
+import { pushToAllDevices, pushToRoles } from "@/lib/fcm.server";
 
 const VAPID_PUBLIC_KEY = "BD9Va9J0l6BMmpUuUyeUAG3zZ1x3GUc29WHmMPZtJRowqqDGr9KmbBQqH6p699WFj9Xmf5s_Vqo602MiCFKnjEI";
 
@@ -91,6 +91,113 @@ async function broadcast(title: string, body: string, url: string, tag: string) 
   }
   return { sent };
 }
+
+async function broadcastToRoles(
+  roles: ("admin" | "management" | "staff" | "moderator")[],
+  title: string,
+  body: string,
+  url: string,
+  tag: string,
+) {
+  const webpush = await getWebPush();
+  const { data: roleRows } = await supabaseAdmin
+    .from("user_roles")
+    .select("user_id, role")
+    .in("role", roles);
+  const userIds = Array.from(new Set((roleRows ?? []).map((r) => String(r.user_id))));
+  if (!userIds.length) return { sent: 0 };
+  const { data: subs } = await supabaseAdmin
+    .from("push_subscriptions")
+    .select("id, endpoint, p256dh, auth, user_id")
+    .in("user_id", userIds);
+  if (!subs?.length) return { sent: 0 };
+
+  const payload = JSON.stringify({ title, body, url, tag });
+  const stale: string[] = [];
+  let sent = 0;
+  await Promise.all(
+    subs.map(async (s) => {
+      try {
+        await webpush.sendNotification(
+          { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
+          payload,
+        );
+        sent++;
+      } catch (err: any) {
+        const code = err?.statusCode;
+        if (code === 404 || code === 410) stale.push(s.id);
+      }
+    }),
+  );
+  if (stale.length) {
+    await supabaseAdmin.from("push_subscriptions").delete().in("id", stale);
+  }
+  return { sent };
+}
+
+async function getActorName(userId: string): Promise<string> {
+  const { data } = await supabaseAdmin
+    .from("profiles")
+    .select("display_name, username")
+    .eq("id", userId)
+    .maybeSingle();
+  return (data?.display_name as string) || (data?.username as string) || "Someone";
+}
+
+export const sendShiftEventPush = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z.object({
+      kind: z.enum(["clock_in", "clock_out"]),
+    }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const name = await getActorName(context.userId);
+    const title = data.kind === "clock_in" ? "Shift started" : "Shift ended";
+    const body = `${name} ${data.kind === "clock_in" ? "clocked in" : "clocked out"}.`;
+    const roles = ["admin", "management"] as const;
+    const tag = `shift-${context.userId}-${data.kind}`;
+    const [web, fcm] = await Promise.all([
+      broadcastToRoles([...roles], title, body, "/clock", tag).catch((e) => ({ sent: 0, error: String(e) })),
+      pushToRoles([...roles], {
+        title,
+        body,
+        data: { kind: "shift", event: data.kind, userId: context.userId, url: "/clock" },
+      }).catch((e) => ({ sent: 0, failed: 0, error: String(e) })),
+    ]);
+    return { web, fcm };
+  });
+
+export const sendBreakEventPush = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z.object({
+      kind: z.enum(["start", "end"]),
+      breakKind: z.enum(["break", "lunch"]).optional(),
+    }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const name = await getActorName(context.userId);
+    const label = data.breakKind === "lunch" ? "lunch" : "break";
+    const title =
+      data.kind === "start"
+        ? data.breakKind === "lunch" ? "Lunch started" : "Break started"
+        : "Break ended";
+    const body = data.kind === "start"
+      ? `${name} started a ${label} (${data.breakKind === "lunch" ? "30" : "15"} min).`
+      : `${name} ended their ${label}.`;
+    const roles = ["admin", "management"] as const;
+    const tag = `break-${context.userId}-${data.kind}`;
+    const [web, fcm] = await Promise.all([
+      broadcastToRoles([...roles], title, body, "/clock", tag).catch((e) => ({ sent: 0, error: String(e) })),
+      pushToRoles([...roles], {
+        title,
+        body,
+        data: { kind: "break", event: data.kind, userId: context.userId, url: "/clock" },
+      }).catch((e) => ({ sent: 0, failed: 0, error: String(e) })),
+    ]);
+    return { web, fcm };
+  });
 
 export const sendIncidentPush = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
