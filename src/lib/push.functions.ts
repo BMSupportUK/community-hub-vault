@@ -352,6 +352,53 @@ export const updateIncidentWithPush = createServerFn({ method: "POST" })
     return { id: incident.id, push };
   });
 
+export const postIncidentUpdateWithPush = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z.object({
+      incidentId: z.string().uuid(),
+      title: z.string().min(1).max(200),
+      status: IncidentStatusSchema,
+      message: z.string().max(500).optional(),
+      attachments: z.array(AttachmentSchema).max(20).default([]),
+      currentResolvedAt: z.string().datetime().nullable().optional(),
+    }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    await requireIncidentManager(context.userId);
+    const message = data.message?.trim() || "";
+    if (!message && !data.attachments.length) throw new Error("Update message or attachment required");
+
+    const { error: updateError } = await supabaseAdmin.from("status_incident_updates").insert({
+      incident_id: data.incidentId,
+      status: data.status,
+      message,
+      created_by: context.userId,
+      attachments: data.attachments,
+    } as never);
+    if (updateError) throw new Error(updateError.message);
+
+    const patch = {
+      status: data.status,
+      resolved_at: data.status === "completed"
+        ? data.currentResolvedAt || new Date().toISOString()
+        : null,
+    };
+    const { error: incidentError } = await supabaseAdmin
+      .from("status_incidents")
+      .update(patch as never)
+      .eq("id", data.incidentId);
+    if (incidentError) throw new Error(incidentError.message);
+
+    const push = await sendIncidentNotification({
+      incidentId: data.incidentId,
+      title: data.title,
+      kind: "updated",
+      message,
+    });
+    return { ok: true, push };
+  });
+
 // Legacy Capacitor/FCM device token registration (kept for native shell)
 export const registerDeviceToken = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
