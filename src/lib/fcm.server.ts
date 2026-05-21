@@ -172,8 +172,10 @@ async function sendFcmToTokens(
       failed++;
       const txt = await res.text().catch(() => "");
       console.error(`[fcm] send failed status=${res.status} body=${txt.slice(0, 500)}`);
-      // Only treat UNREGISTERED / INVALID_ARGUMENT as stale.
-      if (res.status === 404 || (res.status === 400 && /UNREGISTERED|INVALID_ARGUMENT/i.test(txt))) {
+      // Only remove tokens Firebase explicitly says are unregistered. A 400
+      // INVALID_ARGUMENT can also mean the payload is wrong, so deleting tokens
+      // there can wipe every valid Android registration during debugging.
+      if (res.status === 404 || /UNREGISTERED|registration-token-not-registered/i.test(txt)) {
         stale.push(token);
       }
     }
