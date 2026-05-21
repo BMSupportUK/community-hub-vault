@@ -1,0 +1,13 @@
+{
+  "name": "BM Support",
+  "short_name": "BM Support",
+  "description": "BM Support community server",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0a",
+  "theme_color": "#0a0a0a",
+  "icons": [
+    { "src": "/favicon.ico", "sizes": "any", "type": "image/x-icon" }
+  ]
+}
