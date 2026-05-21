@@ -1,12 +1,15 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { Headphones, MessageSquare, Activity, Ticket, ShoppingBag, BookOpen, UserPlus, ArrowUp, ArrowDown, Pencil } from "lucide-react";
+import { Headphones, MessageSquare, Activity, Ticket, ShoppingBag, BookOpen, UserPlus, ArrowUp, ArrowDown, Pencil, Upload, Sparkles, Image as ImageIcon } from "lucide-react";
 import heroImg from "@/assets/welcome-hero.jpg";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useEffect, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { generateEventBanner } from "@/lib/event-banner.functions";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 
 export const Route = createFileRoute("/_authenticated/_approved/home/")({
   component: WelcomePage,
@@ -19,21 +22,25 @@ function WelcomePage() {
   const name = (user?.email ?? "there").split("@")[0];
   const navigate = useNavigate();
 
-  const [event, setEvent] = useState<{ id: string; body: string } | null>(null);
+  const [event, setEvent] = useState<{ id: string; body: string; banner_url: string | null } | null>(null);
   const [eventOpen, setEventOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [editBody, setEditBody] = useState("");
   const [savingEvent, setSavingEvent] = useState(false);
+  const [bannerOpen, setBannerOpen] = useState(false);
+  const [bannerPrompt, setBannerPrompt] = useState("");
+  const [bannerBusy, setBannerBusy] = useState(false);
+  const callGenerateBanner = useServerFn(generateEventBanner);
 
   useEffect(() => {
     (async () => {
       const { data } = await supabase
         .from("upcoming_event")
-        .select("id, body")
+        .select("id, body, banner_url")
         .order("updated_at", { ascending: false })
         .limit(1)
         .maybeSingle();
-      if (data) setEvent(data as { id: string; body: string });
+      if (data) setEvent(data as { id: string; body: string; banner_url: string | null });
     })();
   }, []);
 
@@ -54,6 +61,46 @@ function WelcomePage() {
     setEvent({ ...event, body: editBody });
     setEditOpen(false);
     toast.success("Event updated");
+  };
+
+  const uploadBanner = async (file: File) => {
+    if (!event || !user) return;
+    setBannerBusy(true);
+    const path = `${event.id}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
+    const { error: upErr } = await supabase.storage.from("event-banners").upload(path, file, { upsert: true, contentType: file.type });
+    if (upErr) { setBannerBusy(false); toast.error(upErr.message); return; }
+    const { data: pub } = supabase.storage.from("event-banners").getPublicUrl(path);
+    const url = pub.publicUrl;
+    const { error } = await supabase.from("upcoming_event").update({ banner_url: url, updated_by: user.id }).eq("id", event.id);
+    setBannerBusy(false);
+    if (error) { toast.error(error.message); return; }
+    setEvent({ ...event, banner_url: url });
+    setBannerOpen(false);
+    toast.success("Banner updated");
+  };
+
+  const aiGenerateBanner = async () => {
+    if (!event || !bannerPrompt.trim()) return;
+    setBannerBusy(true);
+    try {
+      const res = await callGenerateBanner({ data: { prompt: bannerPrompt.trim(), eventId: event.id } });
+      setEvent({ ...event, banner_url: res.url });
+      toast.success("Banner generated");
+      setBannerOpen(false);
+      setBannerPrompt("");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to generate");
+    } finally {
+      setBannerBusy(false);
+    }
+  };
+
+  const clearBanner = async () => {
+    if (!event) return;
+    const { error } = await supabase.from("upcoming_event").update({ banner_url: null }).eq("id", event.id);
+    if (error) { toast.error(error.message); return; }
+    setEvent({ ...event, banner_url: null });
+    toast.success("Banner removed");
   };
 
   const goToInvite = async () => {
@@ -189,7 +236,7 @@ function WelcomePage() {
             Open channels →
           </Link>
         </div>
-        <div className="grid lg:grid-cols-[1fr_320px] gap-6 items-start">
+        <div className="grid lg:grid-cols-[1fr_320px_320px] gap-6 items-start">
           <div className="grid sm:grid-cols-2 gap-3">
             {order.map((key, idx) => {
             const c = CARDS[key];
@@ -258,6 +305,38 @@ function WelcomePage() {
               </button>
             </div>
           </div>
+
+          {/* Event banner 300x250 advert */}
+          <div className="justify-self-center lg:justify-self-end">
+            <div
+              className="relative rounded-2xl border-2 border-violet-500/60 bg-surface shadow-[0_0_30px_rgba(139,92,246,0.25)] overflow-hidden"
+              style={{ width: 300, height: 250 }}
+            >
+              {canEditEvent && (
+                <button
+                  onClick={() => setBannerOpen(true)}
+                  className="absolute top-2 right-2 z-10 size-7 grid place-items-center rounded-md bg-background/80 border border-violet-500/40 text-foreground/80 hover:bg-violet-500/20 transition"
+                  aria-label="Edit banner"
+                >
+                  <Pencil className="size-3.5" />
+                </button>
+              )}
+              {event?.banner_url ? (
+                <img
+                  src={event.banner_url}
+                  alt="Upcoming event banner"
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full flex flex-col items-center justify-center gap-3 p-5 text-center bg-gradient-to-br from-violet-600/10 to-blue-600/10">
+                  <ImageIcon className="size-10 text-violet-400" />
+                  <p className="font-display font-semibold text-base text-foreground">
+                    Awaiting The Next Event.
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </section>
 
@@ -298,6 +377,62 @@ function WelcomePage() {
               {savingEvent ? "Saving…" : "Save"}
             </button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={bannerOpen} onOpenChange={setBannerOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Event banner (300×250)</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium mb-2 flex items-center gap-2">
+                <Upload className="size-4" /> Upload an image
+              </label>
+              <Input
+                type="file"
+                accept="image/*"
+                disabled={bannerBusy}
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) void uploadBanner(f);
+                }}
+              />
+              <p className="text-xs text-foreground/60 mt-1">Recommended: 300×250 px</p>
+            </div>
+            <div className="border-t border-border pt-4">
+              <label className="text-sm font-medium mb-2 flex items-center gap-2">
+                <Sparkles className="size-4" /> Or design with AI
+              </label>
+              <Textarea
+                value={bannerPrompt}
+                onChange={(e) => setBannerPrompt(e.target.value)}
+                rows={3}
+                placeholder="Describe the banner you want (e.g. 'Summer LAN party, neon retro arcade vibe, with date June 15')"
+                disabled={bannerBusy}
+              />
+              <button
+                onClick={aiGenerateBanner}
+                disabled={bannerBusy || !bannerPrompt.trim()}
+                className="mt-2 px-4 py-2 rounded-md bg-gradient-to-br from-violet-600 to-blue-600 text-white text-sm disabled:opacity-50 inline-flex items-center gap-2"
+              >
+                <Sparkles className="size-4" />
+                {bannerBusy ? "Generating…" : "Generate banner"}
+              </button>
+            </div>
+            {event?.banner_url && (
+              <div className="border-t border-border pt-4">
+                <button
+                  onClick={clearBanner}
+                  disabled={bannerBusy}
+                  className="text-sm text-red-400 hover:text-red-300"
+                >
+                  Remove current banner
+                </button>
+              </div>
+            )}
+          </div>
         </DialogContent>
       </Dialog>
     </main>
