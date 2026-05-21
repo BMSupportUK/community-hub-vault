@@ -260,30 +260,96 @@ export const sendIncidentPush = createServerFn({ method: "POST" })
     }).parse(input),
   )
   .handler(async ({ data }) => {
-    const title =
-      data.kind === "created"
-        ? `New outage: ${data.title}`
-        : `Update: ${data.title}`;
-    const body = data.message?.trim() || (data.kind === "created" ? "An outage has been reported." : "A new update has been posted.");
-    console.log(`[push] incident ${data.kind} ${data.incidentId}`);
-    const [web, fcm] = await Promise.all([
-      broadcast(title, body, "/status", `incident-${data.incidentId}`).catch((e) => ({ sent: 0, error: String(e) })),
-      pushToAllDevices({
-        title,
-        body,
-        data: { kind: "incident", incidentId: data.incidentId, url: "/status" },
-      }).catch((e) => ({ sent: 0, failed: 0, error: String(e) })),
-    ]);
-    await supabaseAdmin.from("notification_log").insert({
-      kind: "incident",
-      channel: "push",
-      target_id: data.incidentId,
-      status: (web.sent > 0 || fcm.sent > 0) ? "sent" : "skipped",
-      message: `web=${web.sent}${"failed" in web ? " failed" : ""}; fcm=${fcm.sent} failed=${"failed" in fcm ? fcm.failed : 0}`,
-      error: ["error" in web ? web.error : null, "error" in fcm ? fcm.error : null].filter(Boolean).join(" | ") || null,
-    } as never);
-    console.log(`[push] incident result web=${web.sent} fcm=${fcm.sent}`);
-    return { web, fcm };
+    return sendIncidentNotification(data);
+  });
+
+export const createIncidentWithPush = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z.object({
+      title: z.string().min(1).max(200),
+      description: z.string().max(5000).optional(),
+      status: IncidentStatusSchema,
+      attachments: z.array(AttachmentSchema).max(20).default([]),
+      initialUpdate: z.string().max(500).optional(),
+      updateAttachments: z.array(AttachmentSchema).max(20).default([]),
+    }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    await requireIncidentManager(context.userId);
+    const { data: incident, error } = await supabaseAdmin
+      .from("status_incidents")
+      .insert({
+        title: data.title.trim(),
+        description: data.description?.trim() || null,
+        status: data.status,
+        created_by: context.userId,
+        attachments: data.attachments,
+      } as never)
+      .select("id, title")
+      .single();
+    if (error) throw new Error(error.message);
+
+    const message = data.initialUpdate?.trim() || "";
+    if ((message || data.updateAttachments.length) && incident) {
+      const { error: updateError } = await supabaseAdmin.from("status_incident_updates").insert({
+        incident_id: incident.id,
+        status: data.status,
+        message,
+        created_by: context.userId,
+        attachments: data.updateAttachments,
+      } as never);
+      if (updateError) throw new Error(updateError.message);
+    }
+
+    const push = await sendIncidentNotification({
+      incidentId: incident.id,
+      title: incident.title,
+      kind: "created",
+      message: (message || data.description || "").slice(0, 500),
+    });
+    return { id: incident.id, push };
+  });
+
+export const updateIncidentWithPush = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z.object({
+      incidentId: z.string().uuid(),
+      title: z.string().min(1).max(200),
+      description: z.string().max(5000).optional(),
+      status: IncidentStatusSchema,
+      attachments: z.array(AttachmentSchema).max(40).default([]),
+      resolvedAt: z.string().datetime().nullable().optional(),
+      notify: z.boolean().default(false),
+      message: z.string().max(500).optional(),
+    }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    await requireIncidentManager(context.userId);
+    const { data: incident, error } = await supabaseAdmin
+      .from("status_incidents")
+      .update({
+        title: data.title.trim(),
+        description: data.description?.trim() || null,
+        status: data.status,
+        attachments: data.attachments,
+        resolved_at: data.resolvedAt ?? null,
+      } as never)
+      .eq("id", data.incidentId)
+      .select("id, title")
+      .single();
+    if (error) throw new Error(error.message);
+
+    const push = data.notify
+      ? await sendIncidentNotification({
+          incidentId: incident.id,
+          title: incident.title,
+          kind: "updated",
+          message: data.message,
+        })
+      : null;
+    return { id: incident.id, push };
   });
 
 // Legacy Capacitor/FCM device token registration (kept for native shell)
