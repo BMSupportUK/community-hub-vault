@@ -261,34 +261,6 @@ function WelcomePage() {
 
             {/* Event adverts beside hero image */}
             <div className="flex flex-row xl:flex-col gap-4 justify-center xl:justify-start flex-wrap">
-              {/* Upcoming event 300x250 advert */}
-              <div
-                className="relative rounded-2xl border-2 border-violet-500/60 bg-surface shadow-[0_0_30px_rgba(139,92,246,0.25)] p-5 flex flex-col items-center justify-between gap-3"
-                style={{ width: 300, height: 250 }}
-              >
-                {canEditEvent && (
-                  <button
-                    onClick={openEdit}
-                    className="absolute top-2 right-2 size-7 grid place-items-center rounded-md bg-background/80 border border-violet-500/40 text-foreground/80 hover:bg-violet-500/20 transition"
-                    aria-label="Edit event"
-                  >
-                    <Pencil className="size-3.5" />
-                  </button>
-                )}
-                <h3 className="font-display font-bold text-center text-base leading-tight text-foreground">
-                  The Next Big Event on BM Support
-                </h3>
-                <p className="text-sm text-foreground/75 text-center line-clamp-4">
-                  {event?.body || "Stay tuned…"}
-                </p>
-                <button
-                  onClick={() => setEventOpen(true)}
-                  className="px-4 py-2 rounded-md bg-gradient-to-br from-violet-600 to-blue-600 hover:opacity-90 text-white text-sm font-medium shadow-[0_0_20px_rgba(139,92,246,0.45)] transition"
-                >
-                  Read more
-                </button>
-              </div>
-
               {/* Event banner 300x250 advert */}
               <div
                 className="relative rounded-2xl border-2 border-violet-500/60 bg-surface shadow-[0_0_30px_rgba(139,92,246,0.25)] overflow-hidden"
@@ -317,6 +289,34 @@ function WelcomePage() {
                     </p>
                   </div>
                 )}
+              </div>
+
+              {/* Upcoming event 300x250 advert */}
+              <div
+                className="relative rounded-2xl border-2 border-violet-500/60 bg-surface shadow-[0_0_30px_rgba(139,92,246,0.25)] p-5 flex flex-col items-center justify-between gap-3"
+                style={{ width: 300, height: 250 }}
+              >
+                {canEditEvent && (
+                  <button
+                    onClick={openEdit}
+                    className="absolute top-2 right-2 size-7 grid place-items-center rounded-md bg-background/80 border border-violet-500/40 text-foreground/80 hover:bg-violet-500/20 transition"
+                    aria-label="Edit event"
+                  >
+                    <Pencil className="size-3.5" />
+                  </button>
+                )}
+                <h3 className="font-display font-bold text-center text-base leading-tight text-foreground">
+                  The Next Big Event on BM Support
+                </h3>
+                <p className="text-sm text-foreground/75 text-center line-clamp-4">
+                  {event?.body || "Stay tuned…"}
+                </p>
+                <button
+                  onClick={() => setEventOpen(true)}
+                  className="px-4 py-2 rounded-md bg-gradient-to-br from-violet-600 to-blue-600 hover:opacity-90 text-white text-sm font-medium shadow-[0_0_20px_rgba(139,92,246,0.45)] transition"
+                >
+                  Read more
+                </button>
               </div>
             </div>
           </div>
