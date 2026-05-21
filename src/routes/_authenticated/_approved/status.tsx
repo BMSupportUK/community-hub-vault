@@ -19,6 +19,9 @@ import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 import statusHero from "@/assets/status-hero.png";
 import statusBg from "@/assets/status-bg.jpg";
+import { PushNotificationsToggle } from "@/components/app/PushNotificationsToggle";
+import { useServerFn } from "@tanstack/react-start";
+import { sendIncidentPush } from "@/lib/push.functions";
 
 export const Route = createFileRoute("/_authenticated/_approved/status")({
   component: StatusPage,
@@ -263,6 +266,15 @@ function StatusPage() {
           </div>
         </div>
 
+        {/* Push notifications */}
+        <div className="rounded-2xl border border-border bg-surface-1/60 p-4 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <div className="font-display text-sm font-semibold">Get notified about outages</div>
+            <div className="text-xs text-muted-foreground">Push alerts when an outage is created or updated. Works on Android Chrome (add to home screen for app-like alerts).</div>
+          </div>
+          <PushNotificationsToggle />
+        </div>
+
         {/* Tabs */}
         <div className="flex gap-2 border-b border-border">
           {(["active", "completed"] as const).map((t) => (
@@ -320,6 +332,7 @@ function IncidentCard({ incident, canManage, onEdit }: { incident: Incident; can
   const [posting, setPosting] = useState(false);
   const [msg, setMsg] = useState("");
   const [status, setStatus] = useState<IncidentStatus>(incident.status);
+  const notify = useServerFn(sendIncidentPush);
   const [updateFiles, setUpdateFiles] = useState<File[]>([]);
   const { user } = useAuth();
 
@@ -360,6 +373,7 @@ function IncidentCard({ incident, canManage, onEdit }: { incident: Incident; can
       if (status !== "completed" && incident.resolved_at) patch.resolved_at = null;
       const { error: iErr } = await supabase.from("status_incidents").update(patch).eq("id", incident.id);
       if (iErr) throw iErr;
+      notify({ data: { incidentId: incident.id, title: incident.title, kind: "updated", message: msg.trim().slice(0, 500) } }).catch(() => {});
       setMsg("");
       setUpdateFiles([]);
       await loadUpdates();
@@ -489,6 +503,7 @@ function IncidentEditor({
   onSaved: () => void;
 }) {
   const { user } = useAuth();
+  const notify = useServerFn(sendIncidentPush);
   const [title, setTitle] = useState(incident?.title ?? "");
   const [description, setDescription] = useState(incident?.description ?? "");
   const [status, setStatus] = useState<IncidentStatus>(incident?.status ?? "investigating");
@@ -531,6 +546,9 @@ function IncidentEditor({
             created_by: user?.id,
             attachments: updateUploads as unknown as never,
           });
+        }
+        if (data) {
+          notify({ data: { incidentId: data.id, title, kind: "created", message: (initialUpdate || description || "").slice(0, 500) } }).catch(() => {});
         }
       }
       toast.success(incident ? "Issue updated" : "Issue created");
