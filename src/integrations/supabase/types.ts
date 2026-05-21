@@ -2358,6 +2358,27 @@ export type Database = {
           },
         ]
       }
+      upcoming_event: {
+        Row: {
+          body: string
+          id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          body?: string
+          id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          body?: string
+          id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       user_ignores: {
         Row: {
           created_at: string
