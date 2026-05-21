@@ -106,6 +106,31 @@ export async function pushToAllDevices(args: {
   return sendFcmToTokens(tokens.map((t) => t.token), args);
 }
 
+/** Send a push to users with any of the given roles. */
+export async function pushToRoles(
+  roles: ("admin" | "management" | "staff" | "moderator")[],
+  args: { title: string; body: string; data?: Record<string, string> },
+): Promise<{ sent: number; failed: number; skipped?: string }> {
+  if (!process.env.FCM_SERVICE_ACCOUNT_JSON) {
+    return { sent: 0, failed: 0, skipped: "FCM_SERVICE_ACCOUNT_JSON not configured" };
+  }
+  const { data: roleRows, error: rolesErr } = await supabaseAdmin
+    .from("user_roles")
+    .select("user_id, role")
+    .in("role", roles);
+  if (rolesErr) throw new Error(rolesErr.message);
+  const userIds = Array.from(new Set((roleRows ?? []).map((r) => String(r.user_id))));
+  if (!userIds.length) return { sent: 0, failed: 0, skipped: "no users with roles" };
+
+  const { data: tokens, error: tokErr } = await supabaseAdmin
+    .from("device_push_tokens")
+    .select("token")
+    .in("user_id", userIds);
+  if (tokErr) throw new Error(tokErr.message);
+  if (!tokens?.length) return { sent: 0, failed: 0, skipped: "no device tokens" };
+  return sendFcmToTokens(tokens.map((t) => t.token), args);
+}
+
 async function sendFcmToTokens(
   tokens: string[],
   args: { title: string; body: string; data?: Record<string, string> },
