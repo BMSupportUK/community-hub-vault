@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { pushToAdmins } from "@/lib/fcm.server";
 
 // POST /api/public/hooks/notify
 // Called by Postgres triggers via pg_net when a row is inserted in
@@ -226,6 +227,24 @@ export const Route = createFileRoute("/api/public/hooks/notify")({
         try {
           await sendTelegram(chatId, text);
           await log(kind, id, "sent", text, null);
+          // Fan out to admin devices via FCM (best-effort, never blocks/fails the hook)
+          try {
+            const title =
+              kind === "signup" ? "New signup" :
+              kind === "ticket" ? "New support ticket" :
+              "New order";
+            const bodyText = text.replace(/[*_`\\[\]]/g, "").split("\n").slice(0, 3).join(" · ");
+            const res = await pushToAdmins({
+              title,
+              body: bodyText,
+              data: { kind, id },
+            });
+            await log(kind, id, res.sent > 0 ? "sent" : "skipped",
+              `push: sent=${res.sent} failed=${res.failed}${res.skipped ? " (" + res.skipped + ")" : ""}`,
+              null);
+          } catch (e) {
+            await log(kind, id, "failed", "push", e instanceof Error ? e.message : String(e));
+          }
           return Response.json({ ok: true });
         } catch (e) {
           const msg = e instanceof Error ? e.message : String(e);
