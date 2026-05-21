@@ -66,8 +66,19 @@ function WelcomePage() {
   const uploadBanner = async (file: File) => {
     if (!event || !user) return;
     setBannerBusy(true);
-    const path = `${event.id}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
-    const { error: upErr } = await supabase.storage.from("event-banners").upload(path, file, { upsert: true, contentType: file.type });
+    let blob: Blob = file;
+    let contentType = file.type || "image/jpeg";
+    let ext = "jpg";
+    try {
+      if (file.type.startsWith("image/")) {
+        const resized = await cropToCover(file, 300, 250);
+        if (resized) { blob = resized; contentType = "image/jpeg"; ext = "jpg"; }
+      }
+    } catch {
+      // fall back to original file
+    }
+    const path = `${event.id}/${Date.now()}.${ext}`;
+    const { error: upErr } = await supabase.storage.from("event-banners").upload(path, blob, { upsert: true, contentType });
     if (upErr) { setBannerBusy(false); toast.error(upErr.message); return; }
     const { data: pub } = supabase.storage.from("event-banners").getPublicUrl(path);
     const url = pub.publicUrl;
@@ -493,4 +504,46 @@ function QuickAction({
       </span>
     </button>
   );
+}
+
+async function cropToCover(file: File, w: number, h: number): Promise<Blob | null> {
+  const bitmap = await loadBitmap(file);
+  const srcW = bitmap.width;
+  const srcH = bitmap.height;
+  const scale = Math.max(w / srcW, h / srcH);
+  const drawW = srcW * scale;
+  const drawH = srcH * scale;
+  const dx = (w - drawW) / 2;
+  const dy = (h - drawH) / 2;
+  const canvas = typeof OffscreenCanvas !== "undefined"
+    ? new OffscreenCanvas(w, h)
+    : Object.assign(document.createElement("canvas"), { width: w, height: h });
+  const ctx = (canvas as HTMLCanvasElement).getContext("2d");
+  if (!ctx) return null;
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, w, h);
+  ctx.drawImage(bitmap as CanvasImageSource, dx, dy, drawW, drawH);
+  if ("convertToBlob" in canvas) {
+    return await (canvas as OffscreenCanvas).convertToBlob({ type: "image/jpeg", quality: 0.9 });
+  }
+  return await new Promise<Blob | null>((resolve) =>
+    (canvas as HTMLCanvasElement).toBlob((b) => resolve(b), "image/jpeg", 0.9)
+  );
+}
+
+async function loadBitmap(file: File): Promise<ImageBitmap | HTMLImageElement> {
+  if (typeof createImageBitmap === "function") {
+    try { return await createImageBitmap(file); } catch { /* fall through */ }
+  }
+  const url = URL.createObjectURL(file);
+  try {
+    const img = new Image();
+    img.decoding = "async";
+    img.src = url;
+    await img.decode();
+    return img;
+  } finally {
+    // Revoke after decode; image data is already in memory
+    URL.revokeObjectURL(url);
+  }
 }
