@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Headphones, MessageSquare, Activity, Ticket, ShoppingBag, BookOpen, UserPlus, ArrowUp, ArrowDown, Pencil, Upload, Sparkles, Image as ImageIcon } from "lucide-react";
-import heroImg from "@/assets/welcome-hero.jpg";
+import heroImg from "@/assets/member-hero.jpg";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -185,7 +185,7 @@ function WelcomePage() {
       {/* Hero */}
       <section className="relative overflow-hidden border-b border-border">
         <div className="absolute inset-0 bg-gradient-to-br from-violet-600 via-fuchsia-600 to-blue-600" />
-        <div className="relative grid md:grid-cols-2 gap-6 p-6 md:p-10">
+        <div className="relative grid md:grid-cols-[1fr_1.4fr] gap-6 p-6 md:p-10">
           <div className="flex flex-col justify-center text-white">
             <div className="text-xs uppercase tracking-[0.2em] text-sky-200/80 mb-3">BM Support · Member Hub</div>
             <h1 className="font-display text-3xl md:text-5xl font-bold leading-tight">
