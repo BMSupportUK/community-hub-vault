@@ -16,6 +16,7 @@ import { useCurrency } from "@/hooks/use-currency";
 import { downloadReceipt } from "@/lib/receipt";
 import { Download } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { chargeOrderWithSquare, getSquareWebConfig } from "@/lib/square-payments.functions";
 import { capturePaypalOrder, createPaypalOrder, getPaypalWebConfig } from "@/lib/paypal-payments.functions";
 import { CreditCard, Ban } from "lucide-react";
