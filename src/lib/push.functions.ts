@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { pushToAllDevices } from "@/lib/fcm.server";
 
 const VAPID_PUBLIC_KEY = "BD9Va9J0l6BMmpUuUyeUAG3zZ1x3GUc29WHmMPZtJRowqqDGr9KmbBQqH6p699WFj9Xmf5s_Vqo602MiCFKnjEI";
 
@@ -107,7 +108,15 @@ export const sendIncidentPush = createServerFn({ method: "POST" })
         ? `New outage: ${data.title}`
         : `Update: ${data.title}`;
     const body = data.message?.trim() || (data.kind === "created" ? "An outage has been reported." : "A new update has been posted.");
-    return broadcast(title, body, "/status", `incident-${data.incidentId}`);
+    const [web, fcm] = await Promise.all([
+      broadcast(title, body, "/status", `incident-${data.incidentId}`).catch((e) => ({ sent: 0, error: String(e) })),
+      pushToAllDevices({
+        title,
+        body,
+        data: { kind: "incident", incidentId: data.incidentId, url: "/status" },
+      }).catch((e) => ({ sent: 0, failed: 0, error: String(e) })),
+    ]);
+    return { web, fcm };
   });
 
 // Legacy Capacitor/FCM device token registration (kept for native shell)
