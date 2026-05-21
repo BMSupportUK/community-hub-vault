@@ -1,7 +1,10 @@
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
-import { Headphones } from "lucide-react";
+import { Headphones, Pencil } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
 import welcomeHero from "@/assets/welcome-hero.jpg";
 
 export const Route = createFileRoute("/")({
@@ -23,6 +26,12 @@ interface HeroBox {
 
 function Landing() {
   const [boxes, setBoxes] = useState<HeroBox[]>([]);
+  const [event, setEvent] = useState<{ id: string; body: string } | null>(null);
+  const [eventOpen, setEventOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editBody, setEditBody] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [canEdit, setCanEdit] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -32,7 +41,51 @@ function Landing() {
         .order("position");
       setBoxes((data ?? []) as HeroBox[]);
     })();
+    (async () => {
+      const { data } = await supabase
+        .from("upcoming_event")
+        .select("id, body")
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (data) setEvent(data as { id: string; body: string });
+    })();
+    (async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      const { data: roles } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", session.user.id);
+      const allowed = (roles ?? []).some((r) =>
+        ["admin", "management", "staff"].includes(String(r.role)),
+      );
+      setCanEdit(allowed);
+    })();
   }, []);
+
+  const openEdit = () => {
+    setEditBody(event?.body ?? "");
+    setEditOpen(true);
+  };
+
+  const saveEdit = async () => {
+    if (!event) return;
+    setSaving(true);
+    const { data: { session } } = await supabase.auth.getSession();
+    const { error } = await supabase
+      .from("upcoming_event")
+      .update({ body: editBody, updated_by: session?.user.id ?? null })
+      .eq("id", event.id);
+    setSaving(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    setEvent({ ...event, body: editBody });
+    setEditOpen(false);
+    toast.success("Event updated");
+  };
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
