@@ -1,10 +1,12 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { Headphones, MessageSquare, Activity, Ticket, ShoppingBag, BookOpen, UserPlus, ArrowUp, ArrowDown } from "lucide-react";
+import { Headphones, MessageSquare, Activity, Ticket, ShoppingBag, BookOpen, UserPlus, ArrowUp, ArrowDown, Pencil } from "lucide-react";
 import heroImg from "@/assets/welcome-hero.jpg";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useEffect, useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 
 export const Route = createFileRoute("/_authenticated/_approved/home/")({
   component: WelcomePage,
@@ -13,8 +15,46 @@ export const Route = createFileRoute("/_authenticated/_approved/home/")({
 function WelcomePage() {
   const { user, hasRole } = useAuth();
   const canManage = hasRole("admin") || hasRole("management");
+  const canEditEvent = hasRole("admin") || hasRole("management") || hasRole("staff");
   const name = (user?.email ?? "there").split("@")[0];
   const navigate = useNavigate();
+
+  const [event, setEvent] = useState<{ id: string; body: string } | null>(null);
+  const [eventOpen, setEventOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editBody, setEditBody] = useState("");
+  const [savingEvent, setSavingEvent] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from("upcoming_event")
+        .select("id, body")
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (data) setEvent(data as { id: string; body: string });
+    })();
+  }, []);
+
+  const openEdit = () => {
+    setEditBody(event?.body ?? "");
+    setEditOpen(true);
+  };
+
+  const saveEvent = async () => {
+    if (!event) return;
+    setSavingEvent(true);
+    const { error } = await supabase
+      .from("upcoming_event")
+      .update({ body: editBody, updated_by: user?.id ?? null })
+      .eq("id", event.id);
+    setSavingEvent(false);
+    if (error) { toast.error(error.message); return; }
+    setEvent({ ...event, body: editBody });
+    setEditOpen(false);
+    toast.success("Event updated");
+  };
 
   const goToInvite = async () => {
     if (!user) return;
@@ -149,8 +189,9 @@ function WelcomePage() {
             Open channels →
           </Link>
         </div>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {order.map((key, idx) => {
+        <div className="grid lg:grid-cols-[1fr_320px] gap-6 items-start">
+          <div className="grid sm:grid-cols-2 gap-3">
+            {order.map((key, idx) => {
             const c = CARDS[key];
             if (!c) return null;
             const controls = canManage ? (
@@ -185,9 +226,80 @@ function WelcomePage() {
                 )}
               </div>
             );
-          })}
+            })}
+          </div>
+
+          {/* Upcoming event 300x250 advert */}
+          <div className="justify-self-center lg:justify-self-end">
+            <div
+              className="relative rounded-2xl border-2 border-violet-500/60 bg-surface shadow-[0_0_30px_rgba(139,92,246,0.25)] p-5 flex flex-col items-center justify-between gap-3"
+              style={{ width: 300, height: 250 }}
+            >
+              {canEditEvent && (
+                <button
+                  onClick={openEdit}
+                  className="absolute top-2 right-2 size-7 grid place-items-center rounded-md bg-background/80 border border-violet-500/40 text-foreground/80 hover:bg-violet-500/20 transition"
+                  aria-label="Edit event"
+                >
+                  <Pencil className="size-3.5" />
+                </button>
+              )}
+              <h3 className="font-display font-bold text-center text-base leading-tight text-foreground">
+                The Next Big Event on BM Support
+              </h3>
+              <p className="text-sm text-foreground/75 text-center line-clamp-4">
+                {event?.body || "Stay tuned…"}
+              </p>
+              <button
+                onClick={() => setEventOpen(true)}
+                className="px-4 py-2 rounded-md bg-gradient-to-br from-violet-600 to-blue-600 hover:opacity-90 text-white text-sm font-medium shadow-[0_0_20px_rgba(139,92,246,0.45)] transition"
+              >
+                Read more
+              </button>
+            </div>
+          </div>
         </div>
       </section>
+
+      <Dialog open={eventOpen} onOpenChange={setEventOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>The Next Big Event on BM Support</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-foreground whitespace-pre-wrap">
+            {event?.body || "Stay tuned…"}
+          </p>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit upcoming event</DialogTitle>
+          </DialogHeader>
+          <Textarea
+            value={editBody}
+            onChange={(e) => setEditBody(e.target.value)}
+            rows={8}
+            placeholder="Tell members about the next big event…"
+          />
+          <DialogFooter>
+            <button
+              onClick={() => setEditOpen(false)}
+              className="px-4 py-2 rounded-md border border-border text-sm"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={saveEvent}
+              disabled={savingEvent}
+              className="px-4 py-2 rounded-md bg-gradient-to-br from-violet-600 to-blue-600 text-white text-sm disabled:opacity-50"
+            >
+              {savingEvent ? "Saving…" : "Save"}
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </main>
   );
 }
