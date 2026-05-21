@@ -104,7 +104,7 @@ export async function pushToAdmins(args: {
           token,
           notification: { title: args.title, body: args.body },
           data: args.data ?? {},
-          android: { priority: "HIGH" },
+          android: { priority: "HIGH", notification: { channel_id: "bm_support_alerts" } },
         },
       }),
     });
