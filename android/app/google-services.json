@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "159415458600",
+    "project_id": "bm-support-c6437",
+    "storage_bucket": "bm-support-c6437.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:159415458600:android:d9efb31dd8d039f2d38e1d",
+        "android_client_info": {
+          "package_name": "uk.bmsupport.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCgFQYO_2x1HQFtAEL7EXt1I3QGG32xUe4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
