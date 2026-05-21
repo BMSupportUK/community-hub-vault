@@ -145,7 +145,7 @@ export const sendPushToUsers = createServerFn({ method: "POST" })
             token,
             notification: { title: data.title, body: data.body },
             data: data.data ?? {},
-            android: { priority: "HIGH" },
+            android: { priority: "HIGH", notification: { channel_id: "bm_support_alerts" } },
           },
         }),
       });
