@@ -72,7 +72,7 @@ export const Route = createFileRoute("/api/public/hooks/nowpayments")({
         if (!order) return new Response("ok");
 
         const networkLabel = payCurrency.startsWith("USDT")
-          ? `USDT-${payCurrency.replace(/^USDT/, "") || "TRC20"}`
+          ? `USDT-${payCurrency.replace(/^USDT/, "") || "ERC20"}`
           : payCurrency || "USDT";
 
         // Always upsert latest status (waiting/confirming/finished/failed/expired/refunded)
