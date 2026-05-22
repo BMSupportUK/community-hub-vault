@@ -3356,18 +3356,7 @@ function CryptoPanel({ orderId, amountCents, canPay, onChange }: { orderId: stri
     <div>
       <UsdtLogo className="mb-1.5" />
       <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Pay with USDT</div>
-      <div className="flex items-center gap-2 mb-2">
-        <label className="text-[11px] text-muted-foreground">Network</label>
-        <select
-          value={network}
-          onChange={(e) => setNetwork(e.target.value)}
-          className="text-xs rounded-md bg-surface-2 border border-border px-2 py-1"
-        >
-          {networks.map((n) => (
-            <option key={n} value={n}>{n}{n === "TRC20" ? " (lowest fees)" : ""}</option>
-          ))}
-        </select>
-      </div>
+      <div className="text-[11px] text-muted-foreground mb-2">Network: USDT ERC20 (Ethereum)</div>
       {bootError && <div className="text-xs text-destructive mb-2">{bootError}</div>}
       <button
         onClick={startPayment}
