@@ -1,8 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { MapPin, Clock, Pencil, Save, X, Plus, Trash2 } from "lucide-react";
+import { MapPin, Clock, Pencil, Save, X, Plus, Trash2, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { getPublicRatingSummary } from "@/lib/reviews-public.functions";
 
 export const Route = createFileRoute("/about")({
   component: AboutPage,
@@ -59,6 +60,7 @@ function AboutPage() {
   const [canEdit, setCanEdit] = useState(false);
   const [editing, setEditing] = useState<Section | null>(null);
   const [saving, setSaving] = useState(false);
+  const [rating, setRating] = useState<{ count: number; average: number } | null>(null);
 
   const load = async () => {
     const [{ data: secs }, { data: hrs }] = await Promise.all([
@@ -77,6 +79,7 @@ function AboutPage() {
 
   useEffect(() => {
     load();
+    getPublicRatingSummary().then(setRating).catch(() => setRating(null));
     (async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
