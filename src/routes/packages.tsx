@@ -3,6 +3,9 @@ import { useEffect, useState } from "react";
 import { Check, Shield, Clock, MapPin, Users, Pencil, Plus, Trash2, X, Save } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { LandingHeader } from "@/components/LandingHeader";
+import { checkVisitorVpn } from "@/lib/vpn-public-check.functions";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { ShieldAlert } from "lucide-react";
 
 export const Route = createFileRoute("/packages")({
   component: PackagesPage,
