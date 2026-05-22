@@ -7,7 +7,6 @@ import { ChannelColumn } from "@/components/app/ChannelColumn";
 import { toast } from "sonner";
 import { isAdminUnlocked } from "@/lib/admin-unlock";
 import { SignupInfoDialog } from "@/components/app/SignupInfoDialog";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/_authenticated/_approved/moderation")({
   component: ModerationPage,
