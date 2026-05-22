@@ -2,10 +2,10 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { to: "/contact", label: "Contact us" },
   { to: "/packages", label: "Packages" },
   { to: "/faq", label: "FAQ" },
   { to: "/about", label: "About" },
+  { to: "/contact", label: "Contact us" },
 ];
 
 export function LandingHeader() {
