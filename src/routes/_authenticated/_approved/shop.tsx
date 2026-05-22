@@ -19,6 +19,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { chargeOrderWithSquare, getSquareWebConfig } from "@/lib/square-payments.functions";
 import { capturePaypalOrder, createPaypalOrder, getPaypalWebConfig } from "@/lib/paypal-payments.functions";
+import { createCryptoInvoice, getCryptoConfig, getCryptoInvoiceStatus } from "@/lib/nowpayments.functions";
 import { CreditCard, Ban } from "lucide-react";
 import { getOutOfHoursMessage } from "@/lib/business-hours";
 import { isAdminUnlocked } from "@/lib/admin-unlock";
@@ -2045,6 +2046,17 @@ function OrderDetail({ orderId, isAdmin, onBack }: { orderId: string; isAdmin: b
                 </div>
               )}
               <PaypalPanel
+                orderId={orderId}
+                amountCents={order.total_cents ?? 0}
+                canPay={!order.paid_at && !order.completed_at && order.status !== "cancelled"}
+                onChange={load}
+              />
+              {!order.paid_at && !order.completed_at && order.status !== "cancelled" && (
+                <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider text-muted-foreground">
+                  <div className="h-px flex-1 bg-border" /> or <div className="h-px flex-1 bg-border" />
+                </div>
+              )}
+              <CryptoPanel
                 orderId={orderId}
                 amountCents={order.total_cents ?? 0}
                 canPay={!order.paid_at && !order.completed_at && order.status !== "cancelled"}
