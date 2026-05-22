@@ -131,6 +131,23 @@ export async function pushToRoles(
   return sendFcmToTokens(tokens.map((t) => t.token), args);
 }
 
+/** Send a push to a single user's registered devices. */
+export async function pushToUser(
+  userId: string,
+  args: { title: string; body: string; data?: Record<string, string> },
+): Promise<{ sent: number; failed: number; skipped?: string }> {
+  if (!process.env.FCM_SERVICE_ACCOUNT_JSON) {
+    return { sent: 0, failed: 0, skipped: "FCM_SERVICE_ACCOUNT_JSON not configured" };
+  }
+  const { data: tokens, error } = await supabaseAdmin
+    .from("device_push_tokens")
+    .select("token")
+    .eq("user_id", userId);
+  if (error) throw new Error(error.message);
+  if (!tokens?.length) return { sent: 0, failed: 0, skipped: "no device tokens" };
+  return sendFcmToTokens(tokens.map((t) => t.token), args);
+}
+
 async function sendFcmToTokens(
   tokens: string[],
   args: { title: string; body: string; data?: Record<string, string> },
@@ -163,7 +180,20 @@ async function sendFcmToTokens(
           token,
           notification: { title: args.title, body: args.body },
           data: args.data ?? {},
-          android: { priority: "HIGH", notification: { channel_id: "bm_support_alerts" } },
+          android: {
+            priority: "HIGH",
+            notification: {
+              channel_id: "bm_support_alerts",
+              sound: "default",
+              default_sound: true,
+              default_vibrate_timings: true,
+              notification_priority: "PRIORITY_HIGH",
+            },
+          },
+          apns: {
+            payload: { aps: { sound: "default" } },
+            headers: { "apns-priority": "10" },
+          },
         },
       }),
     });
