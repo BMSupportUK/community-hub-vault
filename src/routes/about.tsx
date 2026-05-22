@@ -165,6 +165,28 @@ function AboutPage() {
           <p className="text-lg text-muted-foreground max-w-2xl">
             Who we are and where to find us.
           </p>
+
+          {rating && rating.count > 0 && (
+            <div className="mt-8 inline-flex items-center gap-4 rounded-2xl border border-border bg-card px-5 py-4">
+              <div className="flex items-center gap-1">
+                {[1, 2, 3, 4, 5].map((n) => {
+                  const filled = rating.average >= n - 0.25;
+                  const half = !filled && rating.average >= n - 0.75;
+                  return (
+                    <Star
+                      key={n}
+                      className={`size-5 ${filled ? "fill-yellow-400 text-yellow-400" : half ? "fill-yellow-400/50 text-yellow-400" : "text-muted-foreground/40"}`}
+                    />
+                  );
+                })}
+              </div>
+              <div className="text-sm">
+                <span className="font-bold text-lg">{rating.average.toFixed(1)}</span>
+                <span className="text-muted-foreground"> / 5</span>
+                <span className="text-muted-foreground"> · based on {rating.count} customer {rating.count === 1 ? "review" : "reviews"}</span>
+              </div>
+            </div>
+          )}
         </section>
 
         <section className="px-6 pb-16 max-w-6xl mx-auto grid lg:grid-cols-2 gap-10">
