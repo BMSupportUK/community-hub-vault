@@ -7,10 +7,10 @@ export const Route = createFileRoute("/faq")({
   component: FaqPage,
   head: () => ({
     meta: [
-      { title: "FAQ — BM Support Packages | Middlesbrough UK" },
-      { name: "description", content: "Frequently asked questions about BM Support's digital access packages in Middlesbrough and across the UK." },
+      { title: "FAQ — BM Support Packages | Middlesbrough UK & Overseas" },
+      { name: "description", content: "Frequently asked questions about BM Support's digital access packages in Middlesbrough, across the UK, and overseas." },
       { property: "og:title", content: "FAQ — BM Support Packages" },
-      { property: "og:description", content: "Answers to common questions about our UK support packages." },
+      { property: "og:description", content: "Answers to common questions about our UK and overseas support packages." },
       { property: "og:type", content: "website" },
       { rel: "canonical", href: "https://bmsupport.uk/faq" },
     ],
@@ -100,7 +100,7 @@ function FaqPage() {
 
       <main className="flex-1 px-6 py-16 max-w-3xl mx-auto w-full">
         <h1 className="font-display text-4xl md:text-5xl font-bold mb-3 text-center">Frequently asked questions</h1>
-        <p className="text-muted-foreground text-center mb-10">Everything you need to know about BM Support packages.</p>
+        <p className="text-muted-foreground text-center mb-10">Everything you need to know about BM Support packages — UK & overseas.</p>
 
         {canEdit && (
           <div className="mb-4 flex justify-end">
@@ -148,7 +148,7 @@ function FaqPage() {
       </main>
 
       <footer className="px-8 py-6 border-t border-border text-center text-xs text-muted-foreground">
-        BM Support — Middlesbrough, UK
+        BM Support — Middlesbrough, UK & Overseas
       </footer>
 
       {editing && (

@@ -11,13 +11,13 @@ export const Route = createFileRoute("/packages")({
       {
         name: "description",
         content:
-          "Digital access support packages in Middlesbrough, UK. Flexible tiers, local expert help, and secure account access. Sign up to view full pricing.",
+          "Digital access support packages in Middlesbrough, UK and overseas. Flexible tiers, local expert help, and secure account access. Sign up to view full pricing.",
       },
       { property: "og:title", content: "Support Packages Middlesbrough UK | BM Support" },
       {
         property: "og:description",
-        content:
-          "Local digital access support packages tailored for Middlesbrough and the wider UK. Sign up to unlock full pricing.",
+          content:
+            "Local digital access support packages tailored for Middlesbrough, the wider UK, and overseas clients. Sign up to unlock full pricing.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -92,19 +92,23 @@ function PackagesPage() {
   const serviceJsonLd = {
     "@context": "https://schema.org",
     "@type": "Service",
-    name: "BM Support — Digital Access Support Packages",
-    provider: {
-      "@type": "LocalBusiness",
-      name: "BM Support",
-      address: {
-        "@type": "PostalAddress",
-        addressLocality: "Middlesbrough",
-        addressCountry: "UK",
+      name: "BM Support — Digital Access Support Packages",
+      provider: {
+        "@type": "LocalBusiness",
+        name: "BM Support",
+        address: {
+          "@type": "PostalAddress",
+          addressLocality: "Middlesbrough",
+          addressCountry: "UK",
+        },
+        url: "https://bmsupport.uk",
       },
-      url: "https://bmsupport.uk",
-    },
-    areaServed: { "@type": "Place", name: "Middlesbrough, United Kingdom" },
-    serviceType: "Digital access support package",
+      areaServed: [
+        { "@type": "Place", name: "Middlesbrough, United Kingdom" },
+        { "@type": "Place", name: "United Kingdom" },
+        { "@type": "Place", name: "Overseas" }
+      ],
+      serviceType: "Digital access support package",
   };
 
   return (
@@ -128,13 +132,13 @@ function PackagesPage() {
         {/* Hero */}
         <section className="px-6 py-16 md:py-24 text-center max-w-4xl mx-auto">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-border text-xs text-muted-foreground mb-6">
-            <MapPin className="size-3" /> Middlesbrough, United Kingdom
+            <MapPin className="size-3" /> Middlesbrough, UK & Overseas
           </div>
           <h1 className="font-display text-4xl md:text-6xl font-bold tracking-tight mb-6">
-            Support Packages in <span className="bg-gradient-to-r from-red-500 to-orange-400 bg-clip-text text-transparent">Middlesbrough, UK</span>
+            Support Packages in <span className="bg-gradient-to-r from-red-500 to-orange-400 bg-clip-text text-transparent">Middlesbrough, UK & Overseas</span>
           </h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Flexible digital access support packages backed by a real, locally based team. Pick the tier that fits — sign up to see full pricing inside your account.
+            Flexible digital access support packages backed by a real, locally based team — serving Middlesbrough, the UK, and overseas clients. Pick the tier that fits — sign up to see full pricing inside your account.
           </p>
           <div className="mt-8 flex items-center justify-center gap-3">
             <Link to="/signup" className="px-5 py-3 rounded-md bg-red-600 text-white hover:bg-red-500 font-medium">Sign up to see prices</Link>
@@ -213,7 +217,7 @@ function PackagesPage() {
         <section className="px-6 py-16 bg-muted/30 border-y border-border">
           <div className="max-w-6xl mx-auto grid md:grid-cols-4 gap-8 text-center">
             {[
-              { icon: MapPin, title: "Locally based", body: "Middlesbrough team, UK-wide service." },
+              { icon: MapPin, title: "Local & overseas", body: "Middlesbrough team, UK-wide and overseas service." },
               { icon: Shield, title: "Secure access", body: "Encrypted accounts and role-based controls." },
               { icon: Clock, title: "Fast response", body: "Priority handling on Standard & Premium." },
               { icon: Users, title: "Real humans", body: "Talk to people, not bots." },
@@ -246,7 +250,7 @@ function PackagesPage() {
       </main>
 
       <footer className="px-8 py-6 border-t border-border text-center text-xs text-muted-foreground">
-        BM Support — Middlesbrough, UK
+        BM Support — Middlesbrough, UK & Overseas
       </footer>
 
       {editing && (
