@@ -16,7 +16,7 @@ interface RailItem {
 }
 
 export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
-  const { isStaff, isPending, signOut, hasAny, roles } = useAuth();
+  const { isStaff, isPending, signOut, hasAny, roles, hasRole } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
   const path = useRouterState({ select: (r) => r.location.pathname });
   const [activeIncidents, setActiveIncidents] = useState(0);
