@@ -1675,6 +1675,37 @@ function OrderDetail({ orderId, isAdmin, onBack }: { orderId: string; isAdmin: b
     setOrder(o as Order | null); setItems(it ?? []); setMsgs(m ?? []);
   };
   useEffect(() => { load(); }, [orderId]);
+
+  // Track active crypto invoice so we can lock out other payment methods
+  // while the customer's USDT payment is on its way.
+  const [pendingCrypto, setPendingCrypto] = useState<{ status: string } | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    const loadPay = async () => {
+      const { data } = await supabase
+        .from("order_payments")
+        .select("provider,status")
+        .eq("order_id", orderId)
+        .maybeSingle();
+      if (cancelled) return;
+      const pending =
+        data?.provider === "nowpayments" &&
+        ["waiting", "confirming", "partially_paid", "sending", "pending"].includes(
+          (data.status ?? "").toLowerCase(),
+        );
+      setPendingCrypto(pending ? { status: data!.status as string } : null);
+    };
+    loadPay();
+    const ch = supabase
+      .channel(`orderpay-${orderId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "order_payments", filter: `order_id=eq.${orderId}` },
+        () => loadPay(),
+      )
+      .subscribe();
+    return () => { cancelled = true; supabase.removeChannel(ch); };
+  }, [orderId]);
   useEffect(() => {
     const ch = supabase.channel(`order-${orderId}`, { config: { broadcast: { self: false }, presence: { key: user?.id ?? "guest" } } })
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "order_messages", filter: `order_id=eq.${orderId}` },
