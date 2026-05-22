@@ -1679,12 +1679,13 @@ function OrderDetail({ orderId, isAdmin, onBack }: { orderId: string; isAdmin: b
   // Track active crypto invoice so we can lock out other payment methods
   // while the customer's USDT payment is on its way.
   const [pendingCrypto, setPendingCrypto] = useState<{ status: string } | null>(null);
+  const [paidMethodLabel, setPaidMethodLabel] = useState<string | null>(null);
   useEffect(() => {
     let cancelled = false;
     const loadPay = async () => {
       const { data } = await supabase
         .from("order_payments")
-        .select("provider,status")
+        .select("provider,status,card_brand,last_4")
         .eq("order_id", orderId)
         .maybeSingle();
       if (cancelled) return;
@@ -1694,6 +1695,21 @@ function OrderDetail({ orderId, isAdmin, onBack }: { orderId: string; isAdmin: b
           (data.status ?? "").toLowerCase(),
         );
       setPendingCrypto(pending ? { status: data!.status as string } : null);
+      if (data && (data.status === "finished" || data.status === "COMPLETED" || data.status === "captured" || data.status === "paid")) {
+        if (data.provider === "nowpayments") {
+          setPaidMethodLabel(data.card_brand || "USDT");
+        } else if (data.provider === "paypal") {
+          setPaidMethodLabel(data.card_brand === "Card" ? "Card (PayPal)" : "PayPal");
+        } else {
+          setPaidMethodLabel(
+            data.card_brand && data.last_4
+              ? `${data.card_brand} •••• ${data.last_4}`
+              : "Card",
+          );
+        }
+      } else {
+        setPaidMethodLabel(null);
+      }
     };
     loadPay();
     const ch = supabase
