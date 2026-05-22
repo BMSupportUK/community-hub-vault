@@ -123,6 +123,7 @@ function PackagesPage() {
         <div className="flex items-center gap-2">
           <Link to="/contact" className="text-sm text-muted-foreground hover:text-foreground px-3 py-2">Contact us</Link>
           <Link to="/faq" className="text-sm text-muted-foreground hover:text-foreground px-3 py-2">FAQ</Link>
+          <Link to="/about" className="text-sm text-muted-foreground hover:text-foreground px-3 py-2">About</Link>
           <Link to="/login" className="text-sm text-muted-foreground hover:text-foreground px-3 py-2">Sign in</Link>
           <Link to="/signup" className="text-sm font-medium px-4 py-2 rounded-md bg-red-600 text-white hover:bg-red-500 transition-all">Request access</Link>
         </div>
