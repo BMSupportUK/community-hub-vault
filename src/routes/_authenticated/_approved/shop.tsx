@@ -3315,6 +3315,7 @@ function CryptoPanel({ orderId, amountCents, canPay, onChange }: { orderId: stri
       const res = await createInvoice({ data: { orderId, network: network as any } });
       setInvoice({ url: res.invoiceUrl, id: res.invoiceId });
       setOpen(true);
+      try { window.open(res.invoiceUrl, "_blank", "noopener,noreferrer"); } catch {}
     } catch (e) {
       setBootError((e as Error).message);
       toast.error((e as Error).message);
@@ -3367,25 +3368,30 @@ function CryptoPanel({ orderId, amountCents, canPay, onChange }: { orderId: stri
         {loading ? "Creating invoice…" : `Pay ${format(amountCents)} with USDT`}
       </button>
       <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) setInvoice(null); }}>
-        <DialogContent className="max-w-md p-0 overflow-hidden">
-          <DialogHeader className="px-4 pt-4">
+        <DialogContent className="max-w-md">
+          <DialogHeader>
             <DialogTitle className="flex items-center gap-2"><UsdtLogo /> USDT Payment ({network})</DialogTitle>
           </DialogHeader>
           {invoice ? (
-            <div className="w-full h-[640px] bg-white">
-              <iframe
-                src={invoice.url}
-                className="w-full h-full border-0"
-                title="USDT payment"
-                allow="clipboard-write"
-              />
+            <div className="space-y-3">
+              <p className="text-sm text-foreground">
+                Your USDT (ERC20) checkout has opened in a new tab. If it didn't, use the button below.
+              </p>
+              <a
+                href={invoice.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90"
+              >
+                <UsdtLogo /> Open USDT checkout
+              </a>
+              <div className="text-[11px] text-muted-foreground border-t border-border pt-2">
+                Waiting for on-chain confirmation. This window will close automatically once payment is detected. You can safely leave this page open.
+              </div>
             </div>
           ) : (
-            <div className="p-6 text-xs text-muted-foreground">Loading invoice…</div>
+            <div className="text-xs text-muted-foreground">Loading invoice…</div>
           )}
-          <div className="px-4 py-2 text-[11px] text-muted-foreground border-t border-border">
-            Waiting for on-chain confirmation. This window will close automatically once payment is detected.
-          </div>
         </DialogContent>
       </Dialog>
     </div>
