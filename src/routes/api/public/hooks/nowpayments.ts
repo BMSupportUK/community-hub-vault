@@ -113,11 +113,13 @@ export const Route = createFileRoute("/api/public/hooks/nowpayments")({
               .eq("id", orderId);
           }
 
-          await supabaseAdmin.from("order_messages").insert({
-            order_id: orderId,
-            sender_id: order.user_id,
-            content: `✅ USDT payment received (${networkLabel}${txHash ? `, tx ${txHash.slice(0, 10)}…` : ""}).`,
-          });
+          if (order.user_id) {
+            await supabaseAdmin.from("order_messages").insert({
+              order_id: orderId,
+              sender_id: order.user_id,
+              content: `✅ USDT payment received (${networkLabel}${txHash ? `, tx ${txHash.slice(0, 10)}…` : ""}).`,
+            });
+          }
         }
 
         return new Response("ok");
