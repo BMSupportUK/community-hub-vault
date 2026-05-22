@@ -87,7 +87,7 @@ export const createCryptoInvoice = createServerFn({ method: "POST" })
     // (configurable via NOWPAYMENTS_EXPIRY_MINUTES, capped 20–1440).
     const minutes = Math.max(
       20,
-      Math.min(1440, Number(process.env.NOWPAYMENTS_EXPIRY_MINUTES) || 60),
+      Math.min(1440, Number(process.env.NOWPAYMENTS_EXPIRY_MINUTES) || 1440),
     );
     const expirationEstimateDate = new Date(Date.now() + minutes * 60 * 1000)
       .toISOString();
@@ -115,6 +115,7 @@ export const createCryptoInvoice = createServerFn({ method: "POST" })
       invoiceUrl: String(invoice.invoice_url),
       network: data.network,
       payCurrency,
+      expiresAt: expirationEstimateDate,
     };
   });
 
