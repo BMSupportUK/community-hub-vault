@@ -232,19 +232,21 @@ function WelcomePage() {
               services. Everything you need is just one click away.
             </p>
 
-            <Link
-              to="/tickets"
-              className="mt-6 inline-flex items-center gap-3 self-start rounded-xl border-2 border-white/40 bg-white/10 backdrop-blur px-4 py-3 text-sm font-medium text-white shadow-[0_0_24px_rgba(255,255,255,0.15)] hover:bg-white/20 hover:border-white/60 transition"
-            >
-              <span className="grid place-items-center size-9 rounded-lg bg-gradient-to-br from-violet-600 to-blue-600">
-                <Headphones className="size-4 text-white" />
-              </span>
-              <span>
-                <span className="block text-white">Expert Support</span>
-                <span className="block text-[11px] text-sky-50/90">We're always here to help.</span>
-              </span>
-              <span className="ml-2 size-2 rounded-full bg-emerald-400 shadow-[0_0_12px] shadow-emerald-400/60" />
-            </Link>
+            {!hasRole("moderator") && (
+              <Link
+                to="/tickets"
+                className="mt-6 inline-flex items-center gap-3 self-start rounded-xl border-2 border-white/40 bg-white/10 backdrop-blur px-4 py-3 text-sm font-medium text-white shadow-[0_0_24px_rgba(255,255,255,0.15)] hover:bg-white/20 hover:border-white/60 transition"
+              >
+                <span className="grid place-items-center size-9 rounded-lg bg-gradient-to-br from-violet-600 to-blue-600">
+                  <Headphones className="size-4 text-white" />
+                </span>
+                <span>
+                  <span className="block text-white">Expert Support</span>
+                  <span className="block text-[11px] text-sky-50/90">We're always here to help.</span>
+                </span>
+                <span className="ml-2 size-2 rounded-full bg-emerald-400 shadow-[0_0_12px] shadow-emerald-400/60" />
+              </Link>
+            )}
           </div>
 
           <div className="flex flex-col xl:flex-row gap-4 items-stretch">
@@ -332,7 +334,8 @@ function WelcomePage() {
           </Link>
         </div>
         <div className="grid sm:grid-cols-2 gap-3">
-            {order.map((key, idx) => {
+          {order.map((key, idx) => {
+            if (hasRole("moderator") && key === "tickets") return null;
             const c = CARDS[key];
             if (!c) return null;
             const controls = canManage ? (

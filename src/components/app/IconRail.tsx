@@ -16,7 +16,7 @@ interface RailItem {
 }
 
 export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
-  const { isStaff, isPending, signOut, hasAny, roles } = useAuth();
+  const { isStaff, isPending, signOut, hasAny, roles, hasRole } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
   const path = useRouterState({ select: (r) => r.location.pathname });
   const [activeIncidents, setActiveIncidents] = useState(0);
@@ -137,7 +137,7 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
   const items: RailItem[] = [
     { to: "/home", label: "Home", icon: Home, show: true },
     { to: "/profile", label: "My profile", icon: UserCircle2, show: true },
-    { to: "/tickets", label: "Tickets", icon: Ticket, show: true },
+    { to: "/tickets", label: "Tickets", icon: Ticket, show: !hasRole("moderator") },
     { to: "/shop", label: "Shop", icon: ShoppingBag, show: true },
     { to: "/install-guides", label: "Install guides", icon: Wrench, show: true },
     { to: "/sports-guides", label: "Sports guides", icon: Goal, show: true },
