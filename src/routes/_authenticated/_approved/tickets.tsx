@@ -1236,7 +1236,14 @@ function StaffOnDutyStrip() {
                     )} />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="text-sm font-semibold text-white truncate">{name}</div>
+                    <div className="flex items-center gap-1.5">
+                      <div className={cn("text-sm font-semibold text-white truncate", roleFlashClass(roleFlashMap.get(s.user_id)))}>{name}</div>
+                      {roleFlashMap.get(s.user_id) && (
+                        <span className="text-[9px] font-medium uppercase tracking-wider text-white/70">
+                          {roleFlashMap.get(s.user_id)}
+                        </span>
+                      )}
+                    </div>
                     <div className="text-[10px] text-white/80">On {fmtHMS(shiftElapsed)}</div>
                   </div>
                 </div>
