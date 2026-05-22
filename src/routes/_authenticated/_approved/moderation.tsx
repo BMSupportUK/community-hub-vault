@@ -431,6 +431,63 @@ function ModerationPage() {
           </div>
         </div>
       </main>
+      <Dialog open={!!approveTarget} onOpenChange={(o) => { if (!o) setApproveTarget(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Approve applicant</DialogTitle>
+            <DialogDescription>
+              Choose which role to assign. The <code>pending</code> role will be removed.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-2 py-2 max-h-[50vh] overflow-y-auto">
+            {roleOptions.map((r) => (
+              <label
+                key={r.name}
+                className={`flex items-center gap-3 px-3 py-2 rounded-lg border cursor-pointer transition-colors ${
+                  selectedRole === r.name
+                    ? "border-primary bg-primary/10"
+                    : "border-border hover:bg-surface-2"
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="approve-role"
+                  value={r.name}
+                  checked={selectedRole === r.name}
+                  onChange={() => setSelectedRole(r.name)}
+                  className="accent-primary"
+                />
+                <span className="font-medium">{r.label}</span>
+                <span className="text-xs text-muted-foreground ml-auto">{r.name}</span>
+              </label>
+            ))}
+          </div>
+          <DialogFooter>
+            <button
+              onClick={() => setApproveTarget(null)}
+              className="px-4 py-2 rounded-lg bg-surface-2 hover:bg-surface-2/70 text-sm font-medium"
+            >
+              Cancel
+            </button>
+            <button
+              disabled={approving || !selectedRole}
+              onClick={async () => {
+                if (!approveTarget) return;
+                setApproving(true);
+                try {
+                  await decide(approveTarget, "approved", selectedRole);
+                  setApproveTarget(null);
+                } finally {
+                  setApproving(false);
+                }
+              }}
+              className="px-4 py-2 rounded-lg bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 hover:from-violet-500 hover:via-fuchsia-500 hover:to-blue-500 text-white text-sm font-semibold inline-flex items-center gap-1.5 shadow-glow disabled:opacity-60"
+            >
+              {approving ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />} Approve as {selectedRole}
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
