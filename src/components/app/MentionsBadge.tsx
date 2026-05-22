@@ -66,12 +66,7 @@ export function MentionsBadge() {
           setPulse(true);
           setTimeout(() => setPulse(false), 1500);
           loadList(user.id);
-          toast(r.title, {
-            description: r.body ?? undefined,
-            action: r.link_path
-              ? { label: "Open", onClick: () => navigate({ to: r.link_path! } as never) }
-              : undefined,
-          });
+          // Toast is fired by NotificationBell to avoid duplicate toasts.
         },
       )
       .on(
