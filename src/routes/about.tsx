@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { MapPin, Clock, Pencil, Save, X, Plus, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 export const Route = createFileRoute("/about")({
   component: AboutPage,
@@ -200,59 +201,64 @@ function AboutPage() {
             ))}
           </div>
 
-          {/* Right: map + hours */}
-          <div className="space-y-6">
-            <div className="rounded-2xl border border-border overflow-hidden bg-card">
-              <div className="px-5 py-4 border-b border-border flex items-center gap-2">
-                <MapPin className="size-4 text-red-500" />
-                <h2 className="font-display font-semibold">Find us in Middlesbrough</h2>
-              </div>
-              <div className="aspect-square w-full">
-                <iframe
-                  title="BM Support — Middlesbrough location"
-                  src="https://www.openstreetmap.org/export/embed.html?bbox=-1.2697%2C54.5475%2C-1.1897%2C54.5875&amp;layer=mapnik&amp;marker=54.5742%2C-1.2350"
-                  className="w-full h-full border-0"
-                  loading="lazy"
-                />
-              </div>
-              <div className="px-5 py-3 text-xs text-muted-foreground border-t border-border flex justify-between">
-                <span>Middlesbrough, UK</span>
-                <a
-                  href="https://www.openstreetmap.org/?mlat=54.5742&mlon=-1.2350#map=14/54.5742/-1.2350"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="hover:text-foreground"
-                >
-                  View larger map →
-                </a>
-              </div>
-            </div>
-
-            <div className="rounded-2xl border border-border bg-card">
-              <div className="px-5 py-4 border-b border-border flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Clock className="size-4 text-red-500" />
-                  <h2 className="font-display font-semibold">Opening hours</h2>
+          {/* Right: tabs for map + hours */}
+          <div>
+            <div className="rounded-2xl border border-border bg-card overflow-hidden">
+              <Tabs defaultValue="location">
+                <div className="px-5 py-4 border-b border-border flex items-center justify-between">
+                  <TabsList className="bg-muted/60">
+                    <TabsTrigger value="location" className="gap-1.5">
+                      <MapPin className="size-3.5" /> Location
+                    </TabsTrigger>
+                    <TabsTrigger value="hours" className="gap-1.5">
+                      <Clock className="size-3.5" /> Opening hours
+                    </TabsTrigger>
+                  </TabsList>
+                  {canEdit && (
+                    <Link to="/admin-business-hours" className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1">
+                      <Pencil className="size-3" /> Edit hours
+                    </Link>
+                  )}
                 </div>
-                {canEdit && (
-                  <Link to="/admin-business-hours" className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1">
-                    <Pencil className="size-3" /> Edit
-                  </Link>
-                )}
-              </div>
-              <ul className="divide-y divide-border">
-                {orderedHours.map((h) => (
-                  <li key={h.day_of_week} className="px-5 py-3 flex justify-between text-sm">
-                    <span className="font-medium">{DAY_NAMES[h.day_of_week]}</span>
-                    <span className="text-muted-foreground">
-                      {h.is_closed ? "Closed" : `${formatTime(h.open_time)} – ${formatTime(h.close_time)}`}
-                    </span>
-                  </li>
-                ))}
-                {orderedHours.length === 0 && (
-                  <li className="px-5 py-4 text-sm text-muted-foreground">Hours coming soon.</li>
-                )}
-              </ul>
+
+                <TabsContent value="location" className="m-0">
+                  <div className="aspect-square w-full">
+                    <iframe
+                      title="BM Support — Middlesbrough location"
+                      src="https://www.openstreetmap.org/export/embed.html?bbox=-1.2697%2C54.5475%2C-1.1897%2C54.5875&amp;layer=mapnik&amp;marker=54.5742%2C-1.2350"
+                      className="w-full h-full border-0"
+                      loading="lazy"
+                    />
+                  </div>
+                  <div className="px-5 py-3 text-xs text-muted-foreground border-t border-border flex justify-between">
+                    <span>Middlesbrough, UK</span>
+                    <a
+                      href="https://www.openstreetmap.org/?mlat=54.5742&mlon=-1.2350#map=14/54.5742/-1.2350"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="hover:text-foreground"
+                    >
+                      View larger map →
+                    </a>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="hours" className="m-0">
+                  <ul className="divide-y divide-border">
+                    {orderedHours.map((h) => (
+                      <li key={h.day_of_week} className="px-5 py-3 flex justify-between text-sm">
+                        <span className="font-medium">{DAY_NAMES[h.day_of_week]}</span>
+                        <span className="text-muted-foreground">
+                          {h.is_closed ? "Closed" : `${formatTime(h.open_time)} – ${formatTime(h.close_time)}`}
+                        </span>
+                      </li>
+                    ))}
+                    {orderedHours.length === 0 && (
+                      <li className="px-5 py-4 text-sm text-muted-foreground">Hours coming soon.</li>
+                    )}
+                  </ul>
+                </TabsContent>
+              </Tabs>
             </div>
           </div>
         </section>
