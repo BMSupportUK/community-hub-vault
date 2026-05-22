@@ -11,7 +11,7 @@ export const Route = createFileRoute("/packages")({
       {
         name: "description",
         content:
-          "Digital access support packages in Middlesbrough, UK. Flexible tiers, local expert help, and secure account access. Sign up to view full pricing.",
+          "Digital access support packages in Middlesbrough, UK and overseas. Flexible tiers, local expert help, and secure account access. Sign up to view full pricing.",
       },
       { property: "og:title", content: "Support Packages Middlesbrough UK | BM Support" },
       {
