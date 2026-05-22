@@ -11,13 +11,13 @@ export const Route = createFileRoute("/about")({
       {
         name: "description",
         content:
-          "Learn about BM Support — a Middlesbrough-based team selling tiered digital access support packages to customers across the UK and overseas. See our opening hours and location.",
+          "Learn about BM Support — a Middlesbrough-based team serving customers across the UK and overseas. See our opening hours and location.",
       },
       { property: "og:title", content: "About BM Support | Middlesbrough UK & Overseas" },
       {
         property: "og:description",
         content:
-          "Middlesbrough-based digital access support packages, serving the UK and overseas. Opening hours, location and what we sell.",
+          "Middlesbrough-based team serving the UK and overseas. Opening hours and location.",
       },
       { property: "og:type", content: "website" },
       { rel: "canonical", href: "https://bmsupport.uk/about" },
@@ -159,7 +159,7 @@ function AboutPage() {
             About <span className="bg-gradient-to-r from-red-500 to-orange-400 bg-clip-text text-transparent">BM Support</span>
           </h1>
           <p className="text-lg text-muted-foreground max-w-2xl">
-            Who we are, what we sell, and where to find us.
+            Who we are and where to find us.
           </p>
         </section>
 
