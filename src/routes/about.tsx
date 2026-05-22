@@ -155,27 +155,6 @@ function AboutPage() {
             Who we are and where to find us.
           </p>
 
-          {rating && rating.count > 0 && (
-            <div className="mt-8 inline-flex items-center gap-4 rounded-2xl border border-border bg-card px-5 py-4">
-              <div className="flex items-center gap-1">
-                {[1, 2, 3, 4, 5].map((n) => {
-                  const filled = rating.average >= n - 0.25;
-                  const half = !filled && rating.average >= n - 0.75;
-                  return (
-                    <Star
-                      key={n}
-                      className={`size-5 ${filled ? "fill-yellow-400 text-yellow-400" : half ? "fill-yellow-400/50 text-yellow-400" : "text-muted-foreground/40"}`}
-                    />
-                  );
-                })}
-              </div>
-              <div className="text-sm">
-                <span className="font-bold text-lg">{rating.average.toFixed(1)}</span>
-                <span className="text-muted-foreground"> / 5</span>
-                <span className="text-muted-foreground"> · based on {rating.count} customer {rating.count === 1 ? "review" : "reviews"}</span>
-              </div>
-            </div>
-          )}
         </section>
 
         <section className="px-6 pb-16 max-w-6xl mx-auto grid lg:grid-cols-2 gap-10">
@@ -227,6 +206,9 @@ function AboutPage() {
                     <TabsTrigger value="hours" className="gap-1.5">
                       <Clock className="size-3.5" /> Opening hours
                     </TabsTrigger>
+                    <TabsTrigger value="rating" className="gap-1.5">
+                      <Star className="size-3.5" /> Customer Rating
+                    </TabsTrigger>
                   </TabsList>
                   {canEdit && (
                     <Link to="/admin-business-hours" className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1">
@@ -271,6 +253,35 @@ function AboutPage() {
                       <li className="px-5 py-4 text-sm text-muted-foreground">Hours coming soon.</li>
                     )}
                   </ul>
+                </TabsContent>
+
+                <TabsContent value="rating" className="m-0">
+                  {rating && rating.count > 0 ? (
+                    <div className="px-5 py-8 flex flex-col items-center text-center gap-4">
+                      <div className="flex items-center gap-1">
+                        {[1, 2, 3, 4, 5].map((n) => {
+                          const filled = rating.average >= n - 0.25;
+                          const half = !filled && rating.average >= n - 0.75;
+                          return (
+                            <Star
+                              key={n}
+                              className={`size-7 ${filled ? "fill-yellow-400 text-yellow-400" : half ? "fill-yellow-400/50 text-yellow-400" : "text-muted-foreground/40"}`}
+                            />
+                          );
+                        })}
+                      </div>
+                      <div>
+                        <div className="font-display text-4xl font-bold">{rating.average.toFixed(1)}<span className="text-xl text-muted-foreground"> / 5</span></div>
+                        <p className="mt-2 text-sm text-muted-foreground">
+                          That's how much our customers like us.
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="px-5 py-8 text-center text-sm text-muted-foreground">
+                      No customer ratings yet.
+                    </div>
+                  )}
                 </TabsContent>
               </Tabs>
             </div>
