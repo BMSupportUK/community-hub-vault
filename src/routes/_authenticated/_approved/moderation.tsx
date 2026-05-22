@@ -145,7 +145,7 @@ function ModerationPage() {
     );
   }
 
-  const decide = async (app: AppRow, decision: "approved" | "denied") => {
+  const decide = async (app: AppRow, decision: "approved" | "denied", roleToAssign?: string) => {
     const { error: e1 } = await supabase
       .from("gate_applications")
       .update({ status: decision, reviewed_by: user!.id, reviewed_at: new Date().toISOString() })
@@ -153,9 +153,10 @@ function ModerationPage() {
     if (e1) return toast.error(e1.message);
 
     if (decision === "approved") {
-      // Remove pending role, add member role
+      const role = roleToAssign ?? "member";
+      // Remove pending role, add the chosen role
       await supabase.from("user_roles").delete().eq("user_id", app.user_id).eq("role", "pending");
-      const { error: e2 } = await supabase.from("user_roles").insert({ user_id: app.user_id, role: "member" });
+      const { error: e2 } = await supabase.from("user_roles").insert({ user_id: app.user_id, role: role as never });
       if (e2 && !e2.message.includes("duplicate")) toast.error(e2.message);
       // Send automated approval message so the applicant knows to continue
       const { data: approvedMsg } = await supabase
