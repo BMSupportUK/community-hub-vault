@@ -5,6 +5,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { getPublicRatingSummary } from "@/lib/reviews-public.functions";
 import { LandingHeader } from "@/components/LandingHeader";
+import { useVisitorVpn } from "@/hooks/use-visitor-vpn";
+import { VpnBlockedDialog } from "@/components/VpnBlockedDialog";
+import { ShieldAlert } from "lucide-react";
 
 export const Route = createFileRoute("/about")({
   component: AboutPage,
@@ -292,7 +295,7 @@ function AboutPage() {
           <h2 className="font-display text-3xl font-bold mb-4">Ready to get started?</h2>
           <p className="text-muted-foreground mb-8">Request access to view full pricing and choose the package that fits.</p>
           <div className="flex items-center justify-center gap-3">
-            <Link to="/signup" className="px-6 py-3 rounded-md bg-red-600 text-white hover:bg-red-500 font-medium">Request access</Link>
+            <RequestAccessCta />
             <Link to="/packages" className="px-6 py-3 rounded-md border border-border hover:bg-muted font-medium">See packages</Link>
           </div>
         </section>
@@ -349,5 +352,30 @@ function AboutPage() {
         </div>
       )}
     </div>
+  );
+}
+
+function RequestAccessCta() {
+  const isVpn = useVisitorVpn();
+  const [open, setOpen] = useState(false);
+  if (isVpn) {
+    return (
+      <>
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          aria-disabled="true"
+          className="px-6 py-3 rounded-md bg-red-600/50 text-white font-medium cursor-not-allowed inline-flex items-center gap-2"
+        >
+          <ShieldAlert className="size-4" /> Request access
+        </button>
+        <VpnBlockedDialog open={open} onOpenChange={setOpen} />
+      </>
+    );
+  }
+  return (
+    <Link to="/signup" className="px-6 py-3 rounded-md bg-red-600 text-white hover:bg-red-500 font-medium">
+      Request access
+    </Link>
   );
 }

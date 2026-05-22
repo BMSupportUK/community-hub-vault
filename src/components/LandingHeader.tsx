@@ -1,15 +1,8 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
-import { useEffect, useState } from "react";
-import { checkVisitorVpn } from "@/lib/vpn-public-check.functions";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
+import { useState } from "react";
+import { useVisitorVpn } from "@/hooks/use-visitor-vpn";
+import { VpnBlockedDialog } from "@/components/VpnBlockedDialog";
 import { ShieldAlert } from "lucide-react";
 
 const navItems = [
@@ -21,19 +14,8 @@ const navItems = [
 
 export function LandingHeader() {
   const path = useRouterState({ select: (r) => r.location.pathname });
-  const [isVpn, setIsVpn] = useState(false);
+  const isVpn = useVisitorVpn();
   const [vpnDialogOpen, setVpnDialogOpen] = useState(false);
-
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await checkVisitorVpn();
-        if (res?.is_vpn || res?.is_proxy) setIsVpn(true);
-      } catch {
-        // fail open
-      }
-    })();
-  }, []);
 
   return (
     <header className="px-8 py-5 flex items-center justify-between border-b border-border">
@@ -91,26 +73,7 @@ export function LandingHeader() {
         )}
       </nav>
 
-      <Dialog open={vpnDialogOpen} onOpenChange={setVpnDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <ShieldAlert className="size-5 text-red-500" /> Please disable your VPN
-            </DialogTitle>
-            <DialogDescription>
-              We've detected that you're connected through a VPN or proxy. To request access, please disable your VPN and reload this page so we can verify your connection.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <button
-              onClick={() => setVpnDialogOpen(false)}
-              className="px-4 py-2 rounded-md border border-border hover:bg-muted font-medium"
-            >
-              Got it
-            </button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <VpnBlockedDialog open={vpnDialogOpen} onOpenChange={setVpnDialogOpen} />
     </header>
   );
 }

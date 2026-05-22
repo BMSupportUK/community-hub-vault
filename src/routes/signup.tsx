@@ -7,6 +7,9 @@ import signupIllustration from "@/assets/signup-illustration.png";
 import { recordSignupInfo } from "@/lib/signup-info.functions";
 import { TurnstileWidget } from "@/components/app/TurnstileWidget";
 import { verifyTurnstile } from "@/lib/turnstile.functions";
+import { useVisitorVpn } from "@/hooks/use-visitor-vpn";
+import { VpnBlockedDialog } from "@/components/VpnBlockedDialog";
+import { ShieldAlert } from "lucide-react";
 
 export const Route = createFileRoute("/signup")({
   beforeLoad: async () => {
@@ -24,9 +27,15 @@ function SignupPage() {
   const [inviteCode, setInviteCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [captchaToken, setCaptchaToken] = useState("");
+  const isVpn = useVisitorVpn();
+  const [vpnDialogOpen, setVpnDialogOpen] = useState(false);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isVpn) {
+      setVpnDialogOpen(true);
+      return;
+    }
     if (!captchaToken) return toast.error("Please complete the captcha.");
     setBusy(true);
     const verify = await verifyTurnstile({ data: { token: captchaToken } });
@@ -132,9 +141,20 @@ function SignupPage() {
               <Field label="Password" type="password" value={password} onChange={setPassword} />
               <Field label="Invite code (optional)" value={inviteCode} onChange={setInviteCode} required={false} />
               <TurnstileWidget onToken={setCaptchaToken} onExpire={() => setCaptchaToken("")} />
-              <button disabled={busy} className="w-full h-11 rounded-lg bg-primary text-primary-foreground font-medium shadow-glow hover:opacity-90 disabled:opacity-50">
-                {busy ? "Creating…" : "Request access"}
-              </button>
+              {isVpn ? (
+                <button
+                  type="button"
+                  onClick={() => setVpnDialogOpen(true)}
+                  aria-disabled="true"
+                  className="w-full h-11 rounded-lg bg-primary/50 text-primary-foreground font-medium cursor-not-allowed inline-flex items-center justify-center gap-2"
+                >
+                  <ShieldAlert className="size-4" /> Request access
+                </button>
+              ) : (
+                <button disabled={busy} className="w-full h-11 rounded-lg bg-primary text-primary-foreground font-medium shadow-glow hover:opacity-90 disabled:opacity-50">
+                  {busy ? "Creating…" : "Request access"}
+                </button>
+              )}
             </form>
             <div className="text-sm text-muted-foreground text-center mt-6">
               Already in?{" "}
@@ -143,6 +163,7 @@ function SignupPage() {
           </div>
         </div>
       </main>
+      <VpnBlockedDialog open={vpnDialogOpen} onOpenChange={setVpnDialogOpen} />
     </div>
   );
 }
