@@ -238,14 +238,18 @@ export function NotificationBell() {
   const unread = items.filter((i) => !readIds.has(i.id));
 
   const markRead = async (id: string) => {
-    if (readIds.has(id)) return;
     const it = items.find((x) => x.id === id);
     setReadIds((prev) => new Set(prev).add(id));
     setItems((prev) => prev.filter((x) => x.id !== id));
     if (it?.source === "user") {
       await supabase.from("user_notifications").delete().eq("id", id);
     } else {
-      await supabase.from("staff_notification_reads").insert({ notification_id: id, user_id: user.id });
+      await supabase
+        .from("staff_notification_reads")
+        .upsert(
+          { notification_id: id, user_id: user.id },
+          { onConflict: "notification_id,user_id" },
+        );
     }
   };
 
@@ -357,15 +361,13 @@ export function NotificationBell() {
                             {new Date(n.created_at).toLocaleString()}
                           </div>
                         </div>
-                        {isUnread && (
-                          <button
-                            onClick={() => markRead(n.id)}
-                            className="text-muted-foreground hover:text-foreground p-1 -mr-1"
-                            title="Mark read"
-                          >
-                            <X className="size-3.5" />
-                          </button>
-                        )}
+                        <button
+                          onClick={() => markRead(n.id)}
+                          className="text-muted-foreground hover:text-foreground p-1 -mr-1"
+                          title={isUnread ? "Mark read" : "Dismiss"}
+                        >
+                          <X className="size-3.5" />
+                        </button>
                       </div>
                       <div className="mt-2 flex flex-wrap gap-1.5">
                         {n.link_path && (
