@@ -2,6 +2,7 @@ import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { Headphones } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { LandingHeader } from "@/components/LandingHeader";
 import welcomeHero from "@/assets/welcome-hero.jpg";
 
 export const Route = createFileRoute("/")({
@@ -36,20 +37,7 @@ function Landing() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <header className="px-8 py-5 flex items-center justify-between border-b border-border">
-        <div className="flex items-center gap-2">
-          <div className="size-9 rounded-xl bg-gradient-to-br from-violet-600 to-blue-600 shadow-[0_0_30px_rgba(220,38,38,0.6)] grid place-items-center font-display font-bold text-[13px] text-white">BM</div>
-          <span className="font-display font-bold text-lg">Support</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <Link to="/contact" className="text-sm text-muted-foreground hover:text-foreground px-3 py-2">Contact us</Link>
-          <Link to="/packages" className="text-sm text-muted-foreground hover:text-foreground px-3 py-2">Packages</Link>
-          <Link to="/faq" className="text-sm text-muted-foreground hover:text-foreground px-3 py-2">FAQ</Link>
-          <Link to="/about" className="text-sm text-muted-foreground hover:text-foreground px-3 py-2">About</Link>
-          <Link to="/login" className="text-sm text-muted-foreground hover:text-foreground px-3 py-2">Sign in</Link>
-          <Link to="/signup" className="text-sm font-medium px-4 py-2 rounded-md bg-red-600 text-white hover:bg-red-500 shadow-[0_0_24px_rgba(220,38,38,0.55)] transition-all">Request access</Link>
-        </div>
-      </header>
+      <LandingHeader />
 
       <main className="flex-1 px-6 py-10 md:py-16">
         <section

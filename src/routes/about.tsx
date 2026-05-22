@@ -4,6 +4,7 @@ import { MapPin, Clock, Pencil, Save, X, Plus, Trash2, Star } from "lucide-react
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { getPublicRatingSummary } from "@/lib/reviews-public.functions";
+import { LandingHeader } from "@/components/LandingHeader";
 
 export const Route = createFileRoute("/about")({
   component: AboutPage,
@@ -140,19 +141,7 @@ function AboutPage() {
     <div className="min-h-screen bg-background flex flex-col">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }} />
 
-      <header className="px-8 py-5 flex items-center justify-between border-b border-border">
-        <Link to="/" className="flex items-center gap-2">
-          <div className="size-9 rounded-xl bg-gradient-to-br from-violet-600 to-blue-600 grid place-items-center font-display font-bold text-[13px] text-white">BM</div>
-          <span className="font-display font-bold text-lg">Support</span>
-        </Link>
-        <div className="flex items-center gap-2">
-          <Link to="/packages" className="text-sm text-muted-foreground hover:text-foreground px-3 py-2">Packages</Link>
-          <Link to="/faq" className="text-sm text-muted-foreground hover:text-foreground px-3 py-2">FAQ</Link>
-          <Link to="/contact" className="text-sm text-muted-foreground hover:text-foreground px-3 py-2">Contact us</Link>
-          <Link to="/login" className="text-sm text-muted-foreground hover:text-foreground px-3 py-2">Sign in</Link>
-          <Link to="/signup" className="text-sm font-medium px-4 py-2 rounded-md bg-red-600 text-white hover:bg-red-500 transition-all">Request access</Link>
-        </div>
-      </header>
+      <LandingHeader />
 
       <main className="flex-1">
         <section className="px-6 py-16 md:py-20 max-w-6xl mx-auto">
