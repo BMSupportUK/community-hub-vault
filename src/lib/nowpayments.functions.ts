@@ -83,6 +83,15 @@ export const createCryptoInvoice = createServerFn({ method: "POST" })
     const ipnUrl = process.env.NOWPAYMENTS_IPN_URL
       || "https://bmsupport.uk/api/public/hooks/nowpayments";
 
+    // Extend payment window. NOWPayments default is 20 min; raise to 60 min
+    // (configurable via NOWPAYMENTS_EXPIRY_MINUTES, capped 20–1440).
+    const minutes = Math.max(
+      20,
+      Math.min(1440, Number(process.env.NOWPAYMENTS_EXPIRY_MINUTES) || 60),
+    );
+    const expirationEstimateDate = new Date(Date.now() + minutes * 60 * 1000)
+      .toISOString();
+
     const invoice = await npFetch("/invoice", {
       method: "POST",
       body: JSON.stringify({
@@ -93,6 +102,7 @@ export const createCryptoInvoice = createServerFn({ method: "POST" })
         order_description: `Order #${String(order.id).slice(0, 8)}`,
         ipn_callback_url: ipnUrl,
         is_fee_paid_by_user: false,
+        expiration_estimate_date: expirationEstimateDate,
       }),
     });
 
