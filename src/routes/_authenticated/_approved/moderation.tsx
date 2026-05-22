@@ -398,13 +398,15 @@ function ModerationPage() {
                             <div className="mt-3 flex items-center justify-end gap-2">
                               <button
                                 onClick={() => decide(a, "denied")}
-                                className="px-4 py-2 rounded-lg bg-destructive/15 text-destructive hover:bg-destructive/25 text-sm font-medium inline-flex items-center gap-1.5"
+                                disabled={processingId === a.id}
+                                className="px-4 py-2 rounded-lg bg-destructive/15 text-destructive hover:bg-destructive/25 text-sm font-medium inline-flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
                               >
                                 <X className="size-4" /> Deny
                               </button>
                               <button
                                 onClick={() => decide(a, "approved")}
-                                className="px-4 py-2 rounded-lg bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 hover:from-violet-500 hover:via-fuchsia-500 hover:to-blue-500 text-white text-sm font-semibold inline-flex items-center gap-1.5 shadow-glow"
+                                disabled={processingId === a.id}
+                                className="px-4 py-2 rounded-lg bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 hover:from-violet-500 hover:via-fuchsia-500 hover:to-blue-500 text-white text-sm font-semibold inline-flex items-center gap-1.5 shadow-glow disabled:opacity-50 disabled:cursor-not-allowed"
                               >
                                 <Check className="size-4" /> Approve access
                               </button>
