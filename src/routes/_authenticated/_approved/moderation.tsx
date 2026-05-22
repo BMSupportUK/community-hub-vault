@@ -7,7 +7,6 @@ import { ChannelColumn } from "@/components/app/ChannelColumn";
 import { toast } from "sonner";
 import { isAdminUnlocked } from "@/lib/admin-unlock";
 import { SignupInfoDialog } from "@/components/app/SignupInfoDialog";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/_authenticated/_approved/moderation")({
   component: ModerationPage,
@@ -41,22 +40,6 @@ function ModerationPage() {
   const [peerTyping, setPeerTyping] = useState<{ id: string } | null>(null);
   const peerTypingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastTypingSent = useRef<number>(0);
-  const [approveTarget, setApproveTarget] = useState<AppRow | null>(null);
-  const [roleOptions, setRoleOptions] = useState<{ name: string; label: string }[]>([]);
-  const [selectedRole, setSelectedRole] = useState<string>("member");
-  const [approving, setApproving] = useState(false);
-
-  useEffect(() => {
-    (async () => {
-      const { data } = await supabase
-        .from("role_definitions")
-        .select("name,label,sort_order,is_active")
-        .eq("is_active", true)
-        .order("sort_order");
-      const filtered = (data ?? []).filter((r: any) => !["pending", "banned"].includes(r.name));
-      setRoleOptions(filtered.map((r: any) => ({ name: r.name, label: r.label })));
-    })();
-  }, []);
 
   const load = async () => {
     const { data: rows } = await supabase
@@ -145,7 +128,7 @@ function ModerationPage() {
     );
   }
 
-  const decide = async (app: AppRow, decision: "approved" | "denied", roleToAssign?: string) => {
+  const decide = async (app: AppRow, decision: "approved" | "denied") => {
     const { error: e1 } = await supabase
       .from("gate_applications")
       .update({ status: decision, reviewed_by: user!.id, reviewed_at: new Date().toISOString() })
@@ -153,10 +136,9 @@ function ModerationPage() {
     if (e1) return toast.error(e1.message);
 
     if (decision === "approved") {
-      const role = roleToAssign ?? "member";
-      // Remove pending role, add the chosen role
+      // Remove pending role, add member role
       await supabase.from("user_roles").delete().eq("user_id", app.user_id).eq("role", "pending");
-      const { error: e2 } = await supabase.from("user_roles").insert({ user_id: app.user_id, role: role as never });
+      const { error: e2 } = await supabase.from("user_roles").insert({ user_id: app.user_id, role: "member" });
       if (e2 && !e2.message.includes("duplicate")) toast.error(e2.message);
       // Send automated approval message so the applicant knows to continue
       const { data: approvedMsg } = await supabase
@@ -410,7 +392,7 @@ function ModerationPage() {
                                 <X className="size-4" /> Deny
                               </button>
                               <button
-                                onClick={() => { setApproveTarget(a); setSelectedRole("member"); }}
+                                onClick={() => decide(a, "approved")}
                                 className="px-4 py-2 rounded-lg bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 hover:from-violet-500 hover:via-fuchsia-500 hover:to-blue-500 text-white text-sm font-semibold inline-flex items-center gap-1.5 shadow-glow"
                               >
                                 <Check className="size-4" /> Approve access
@@ -431,63 +413,6 @@ function ModerationPage() {
           </div>
         </div>
       </main>
-      <Dialog open={!!approveTarget} onOpenChange={(o) => { if (!o) setApproveTarget(null); }}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Approve applicant</DialogTitle>
-            <DialogDescription>
-              Choose which role to assign. The <code>pending</code> role will be removed.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-2 py-2 max-h-[50vh] overflow-y-auto">
-            {roleOptions.map((r) => (
-              <label
-                key={r.name}
-                className={`flex items-center gap-3 px-3 py-2 rounded-lg border cursor-pointer transition-colors ${
-                  selectedRole === r.name
-                    ? "border-primary bg-primary/10"
-                    : "border-border hover:bg-surface-2"
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="approve-role"
-                  value={r.name}
-                  checked={selectedRole === r.name}
-                  onChange={() => setSelectedRole(r.name)}
-                  className="accent-primary"
-                />
-                <span className="font-medium">{r.label}</span>
-                <span className="text-xs text-muted-foreground ml-auto">{r.name}</span>
-              </label>
-            ))}
-          </div>
-          <DialogFooter>
-            <button
-              onClick={() => setApproveTarget(null)}
-              className="px-4 py-2 rounded-lg bg-surface-2 hover:bg-surface-2/70 text-sm font-medium"
-            >
-              Cancel
-            </button>
-            <button
-              disabled={approving || !selectedRole}
-              onClick={async () => {
-                if (!approveTarget) return;
-                setApproving(true);
-                try {
-                  await decide(approveTarget, "approved", selectedRole);
-                  setApproveTarget(null);
-                } finally {
-                  setApproving(false);
-                }
-              }}
-              className="px-4 py-2 rounded-lg bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 hover:from-violet-500 hover:via-fuchsia-500 hover:to-blue-500 text-white text-sm font-semibold inline-flex items-center gap-1.5 shadow-glow disabled:opacity-60"
-            >
-              {approving ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />} Approve as {selectedRole}
-            </button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </>
   );
 }
