@@ -81,7 +81,7 @@ export const createCryptoInvoice = createServerFn({ method: "POST" })
 
     // ipn_callback_url uses the project's stable preview URL when not in production
     const ipnUrl = process.env.NOWPAYMENTS_IPN_URL
-      || "https://community-hub-vault.lovable.app/api/public/hooks/nowpayments";
+      || "https://bmsupport.uk/api/public/hooks/nowpayments";
 
     const invoice = await npFetch("/invoice", {
       method: "POST",
