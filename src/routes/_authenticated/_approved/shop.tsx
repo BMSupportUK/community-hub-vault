@@ -3233,3 +3233,174 @@ function AdminDiscounts() {
     </main>
   );
 }
+
+function UsdtLogo({ className = "" }: { className?: string }) {
+  return (
+    <span className={`inline-flex items-center gap-1.5 ${className}`} aria-label="USDT">
+      <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
+        <circle cx="12" cy="12" r="12" fill="#26A17B" />
+        <path d="M13.3 10.9V9.5h3.2V7.4H7.5v2.1h3.2v1.4c-2.6.1-4.6.6-4.6 1.2 0 .6 2 1.1 4.6 1.2v4.5h2.6v-4.5c2.6-.1 4.6-.6 4.6-1.2 0-.6-2-1.1-4.6-1.2zm0 2v0c-.1 0-.7.1-1.9.1-1 0-1.7-.1-1.9-.1v0c-2.2-.1-3.8-.5-3.8-.9 0-.5 1.6-.8 3.8-.9v1.5c.2 0 .9.1 1.9.1 1.2 0 1.8-.1 1.9-.1v-1.5c2.2.1 3.8.4 3.8.9 0 .4-1.6.8-3.8.9z" fill="#fff" />
+      </svg>
+      <span className="text-xs font-semibold tracking-tight">USDT</span>
+    </span>
+  );
+}
+
+function CryptoPanel({ orderId, amountCents, canPay, onChange }: { orderId: string; amountCents: number; canPay: boolean; onChange?: () => void | Promise<void> }) {
+  const [paid, setPaid] = useState<any | null>(null);
+  const [enabled, setEnabled] = useState<boolean | null>(null);
+  const [networks, setNetworks] = useState<string[]>(["TRC20", "ERC20", "BEP20", "POLYGON"]);
+  const [network, setNetwork] = useState<string>("TRC20");
+  const [loading, setLoading] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [invoice, setInvoice] = useState<{ url: string; id: string } | null>(null);
+  const [bootError, setBootError] = useState<string | null>(null);
+  const { format } = useCurrency();
+  const getCfg = useServerFn(getCryptoConfig);
+  const createInvoice = useServerFn(createCryptoInvoice);
+  const checkStatus = useServerFn(getCryptoInvoiceStatus);
+
+  const loadPayment = async () => {
+    const { data } = await supabase.from("order_payments").select("*").eq("order_id", orderId).maybeSingle();
+    setPaid(data);
+  };
+
+  useEffect(() => { loadPayment(); }, [orderId]);
+  useEffect(() => {
+    const ch = supabase.channel(`opcrypto-${orderId}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "order_payments", filter: `order_id=eq.${orderId}` },
+        () => loadPayment())
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [orderId]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const cfg = await getCfg();
+        if (cancelled) return;
+        setEnabled(cfg.enabled);
+        if (cfg.networks?.length) setNetworks(cfg.networks);
+      } catch {
+        if (!cancelled) setEnabled(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  // Poll for status while dialog is open
+  useEffect(() => {
+    if (!open || !invoice) return;
+    let stopped = false;
+    const tick = async () => {
+      try {
+        const res = await checkStatus({ data: { orderId } });
+        if (stopped) return;
+        if (res.paid) {
+          toast.success(`Paid ${format(amountCents)} via USDT`);
+          setOpen(false);
+          setInvoice(null);
+          await loadPayment();
+          await onChange?.();
+        }
+      } catch {/* ignore */}
+    };
+    const handle = setInterval(tick, 5000);
+    return () => { stopped = true; clearInterval(handle); };
+  }, [open, invoice, orderId, amountCents]);
+
+  const startPayment = async () => {
+    setLoading(true);
+    setBootError(null);
+    try {
+      const res = await createInvoice({ data: { orderId, network: network as any } });
+      setInvoice({ url: res.invoiceUrl, id: res.invoiceId });
+      setOpen(true);
+    } catch (e) {
+      setBootError((e as Error).message);
+      toast.error((e as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (paid?.provider === "nowpayments") {
+    return (
+      <div>
+        <UsdtLogo className="mb-1.5" />
+        <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Pay with USDT</div>
+        <div className="rounded-md bg-success/10 border border-success/20 px-2.5 py-2 space-y-1">
+          <div className="flex items-center gap-2 text-success text-xs font-medium">
+            <CreditCard className="size-3.5" /> {paid.status === "finished" ? "Paid" : `Status: ${paid.status}`}
+            {paid.card_brand && <span className="font-mono text-muted-foreground">{paid.card_brand}</span>}
+            {paid.last_4 && <span className="font-mono text-muted-foreground">tx …{paid.last_4}</span>}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (paid) return null; // paid via another provider
+  if (enabled === false) return null;
+
+  if (!canPay) {
+    return (
+      <div>
+        <UsdtLogo className="mb-1.5" />
+        <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Pay with USDT</div>
+        <div className="text-xs text-muted-foreground">Not available for this order.</div>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <UsdtLogo className="mb-1.5" />
+      <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Pay with USDT</div>
+      <div className="flex items-center gap-2 mb-2">
+        <label className="text-[11px] text-muted-foreground">Network</label>
+        <select
+          value={network}
+          onChange={(e) => setNetwork(e.target.value)}
+          className="text-xs rounded-md bg-surface-2 border border-border px-2 py-1"
+        >
+          {networks.map((n) => (
+            <option key={n} value={n}>{n}{n === "TRC20" ? " (lowest fees)" : ""}</option>
+          ))}
+        </select>
+      </div>
+      {bootError && <div className="text-xs text-destructive mb-2">{bootError}</div>}
+      <button
+        onClick={startPayment}
+        disabled={loading || enabled === null}
+        className="w-full px-2.5 py-2 rounded-md bg-primary text-primary-foreground text-xs font-medium flex items-center justify-center gap-1.5 hover:bg-primary/90 disabled:opacity-50"
+      >
+        <UsdtLogo />
+        {loading ? "Creating invoice…" : `Pay ${format(amountCents)} with USDT`}
+      </button>
+      <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) setInvoice(null); }}>
+        <DialogContent className="max-w-md p-0 overflow-hidden">
+          <DialogHeader className="px-4 pt-4">
+            <DialogTitle className="flex items-center gap-2"><UsdtLogo /> USDT Payment ({network})</DialogTitle>
+          </DialogHeader>
+          {invoice ? (
+            <div className="w-full h-[640px] bg-white">
+              <iframe
+                src={invoice.url}
+                className="w-full h-full border-0"
+                title="USDT payment"
+                allow="clipboard-write"
+              />
+            </div>
+          ) : (
+            <div className="p-6 text-xs text-muted-foreground">Loading invoice…</div>
+          )}
+          <div className="px-4 py-2 text-[11px] text-muted-foreground border-t border-border">
+            Waiting for on-chain confirmation. This window will close automatically once payment is detected.
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
