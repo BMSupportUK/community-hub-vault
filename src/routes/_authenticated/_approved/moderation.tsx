@@ -130,68 +130,73 @@ function ModerationPage() {
   }
 
   const decide = async (app: AppRow, decision: "approved" | "denied") => {
-    const { error: e1 } = await supabase
-      .from("gate_applications")
-      .update({ status: decision, reviewed_by: user!.id, reviewed_at: new Date().toISOString() })
-      .eq("id", app.id);
-    if (e1) return toast.error(e1.message);
+    setProcessingId(app.id);
+    try {
+      const { error: e1 } = await supabase
+        .from("gate_applications")
+        .update({ status: decision, reviewed_by: user!.id, reviewed_at: new Date().toISOString() })
+        .eq("id", app.id);
+      if (e1) return toast.error(e1.message);
 
-    if (decision === "approved") {
-      // Remove pending role, add member role
-      await supabase.from("user_roles").delete().eq("user_id", app.user_id).eq("role", "pending");
-      const { error: e2 } = await supabase.from("user_roles").insert({ user_id: app.user_id, role: "member" });
-      if (e2 && !e2.message.includes("duplicate")) toast.error(e2.message);
-      // Send automated approval message so the applicant knows to continue
-      const { data: approvedMsg } = await supabase
-        .from("gate_messages")
-        .insert({
+      if (decision === "approved") {
+        // Remove pending role, add member role
+        await supabase.from("user_roles").delete().eq("user_id", app.user_id).eq("role", "pending");
+        const { error: e2 } = await supabase.from("user_roles").insert({ user_id: app.user_id, role: "member" });
+        if (e2 && !e2.message.includes("duplicate")) toast.error(e2.message);
+        // Send automated approval message so the applicant knows to continue
+        const { data: approvedMsg } = await supabase
+          .from("gate_messages")
+          .insert({
+            application_id: app.id,
+            sender_id: user!.id,
+            content:
+              "✅ Your access request has been approved!\n\nYou now have member access. Click 'Continue to dashboard' to enter the app.",
+          } as never)
+          .select("id, sender_id, content, created_at")
+          .single();
+        if (approvedMsg) {
+          const msg = approvedMsg as ThreadMsg;
+          setThread((m) => (m.some((x) => x.id === msg.id) ? m : [...m, msg]));
+          const ch = supabase.channel(`gate-msgs-${app.id}`, { config: { broadcast: { self: false } } });
+          await new Promise<void>((resolve) => {
+            ch.subscribe((s) => { if (s === "SUBSCRIBED") resolve(); });
+          });
+          await ch.send({ type: "broadcast", event: "message", payload: msg });
+          supabase.removeChannel(ch);
+        }
+      } else if (decision === "denied") {
+        // Send automated rejection message + close the conversation
+        const { data: deniedMsg } = await supabase.from("gate_messages").insert({
           application_id: app.id,
           sender_id: user!.id,
           content:
-            "✅ Your access request has been approved!\n\nYou now have member access. Click 'Continue to dashboard' to enter the app.",
-        } as never)
-        .select("id, sender_id, content, created_at")
-        .single();
-      if (approvedMsg) {
-        const msg = approvedMsg as ThreadMsg;
-        setThread((m) => (m.some((x) => x.id === msg.id) ? m : [...m, msg]));
-        const ch = supabase.channel(`gate-msgs-${app.id}`, { config: { broadcast: { self: false } } });
-        await new Promise<void>((resolve) => {
-          ch.subscribe((s) => { if (s === "SUBSCRIBED") resolve(); });
-        });
-        await ch.send({ type: "broadcast", event: "message", payload: msg });
-        supabase.removeChannel(ch);
+            "❌ Your application has been rejected.\n\nThis conversation is now closed. If you believe this is a mistake, you can submit an appeal from your rejected screen using the reference: APPEAL",
+        } as never).select("id, sender_id, content, created_at").single();
+        if (deniedMsg) {
+          const msg = deniedMsg as ThreadMsg;
+          setThread((m) => (m.some((x) => x.id === msg.id) ? m : [...m, msg]));
+          const ch = supabase.channel(`gate-msgs-${app.id}`, { config: { broadcast: { self: false } } });
+          await new Promise<void>((resolve) => {
+            ch.subscribe((s) => { if (s === "SUBSCRIBED") resolve(); });
+          });
+          await ch.send({ type: "broadcast", event: "message", payload: msg });
+          supabase.removeChannel(ch);
+        }
+        // Remove pending role, add rejected role so user is sent to /account-rejected
+        await supabase.from("user_roles").delete().eq("user_id", app.user_id).eq("role", "pending");
+        const { error: e2 } = await supabase.from("user_roles").insert({ user_id: app.user_id, role: "rejected" });
+        if (e2 && !e2.message.includes("duplicate")) toast.error(e2.message);
       }
-    } else if (decision === "denied") {
-      // Send automated rejection message + close the conversation
-      const { data: deniedMsg } = await supabase.from("gate_messages").insert({
-        application_id: app.id,
-        sender_id: user!.id,
-        content:
-          "❌ Your application has been rejected.\n\nThis conversation is now closed. If you believe this is a mistake, you can submit an appeal from your rejected screen using the reference: APPEAL",
-      } as never).select("id, sender_id, content, created_at").single();
-      if (deniedMsg) {
-        const msg = deniedMsg as ThreadMsg;
-        setThread((m) => (m.some((x) => x.id === msg.id) ? m : [...m, msg]));
-        const ch = supabase.channel(`gate-msgs-${app.id}`, { config: { broadcast: { self: false } } });
-        await new Promise<void>((resolve) => {
-          ch.subscribe((s) => { if (s === "SUBSCRIBED") resolve(); });
-        });
-        await ch.send({ type: "broadcast", event: "message", payload: msg });
-        supabase.removeChannel(ch);
+      const name = app.profile?.display_name ?? app.profile?.username ?? "Applicant";
+      if (decision === "approved") {
+        toast.success(`${name} approved and assigned Member role`);
+      } else {
+        toast.success(`Application ${decision}`);
       }
-      // Remove pending role, add rejected role so user is sent to /account-rejected
-      await supabase.from("user_roles").delete().eq("user_id", app.user_id).eq("role", "pending");
-      const { error: e2 } = await supabase.from("user_roles").insert({ user_id: app.user_id, role: "rejected" });
-      if (e2 && !e2.message.includes("duplicate")) toast.error(e2.message);
+      load();
+    } finally {
+      setProcessingId(null);
     }
-    const name = app.profile?.display_name ?? app.profile?.username ?? "Applicant";
-    if (decision === "approved") {
-      toast.success(`${name} approved and assigned Member role`);
-    } else {
-      toast.success(`Application ${decision}`);
-    }
-    load();
   };
 
   const sendReply = async (e: React.FormEvent) => {
