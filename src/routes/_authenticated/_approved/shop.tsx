@@ -3302,6 +3302,8 @@ function CryptoPanel({ orderId, amountCents, canPay, onChange }: { orderId: stri
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
   const [invoice, setInvoice] = useState<{ url: string; id: string } | null>(null);
+  const [expiresAt, setExpiresAt] = useState<number | null>(null);
+  const [now, setNow] = useState<number>(() => Date.now());
   const [bootError, setBootError] = useState<string | null>(null);
   const { format } = useCurrency();
   const getCfg = useServerFn(getCryptoConfig);
@@ -3363,6 +3365,7 @@ function CryptoPanel({ orderId, amountCents, canPay, onChange }: { orderId: stri
     try {
       const res = await createInvoice({ data: { orderId, network: network as any } });
       setInvoice({ url: res.invoiceUrl, id: res.invoiceId });
+      setExpiresAt(res.expiresAt ? new Date(res.expiresAt).getTime() : Date.now() + 24 * 60 * 60 * 1000);
       setOpen(true);
       try { window.open(res.invoiceUrl, "_blank", "noopener,noreferrer"); } catch {}
     } catch (e) {
@@ -3371,6 +3374,23 @@ function CryptoPanel({ orderId, amountCents, canPay, onChange }: { orderId: stri
     } finally {
       setLoading(false);
     }
+  };
+
+  // 1s ticker while the dialog is open so the countdown updates live
+  useEffect(() => {
+    if (!open || !expiresAt) return;
+    setNow(Date.now());
+    const h = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(h);
+  }, [open, expiresAt]);
+
+  const remainingMs = expiresAt ? Math.max(0, expiresAt - now) : 0;
+  const fmtCountdown = (ms: number) => {
+    const s = Math.floor(ms / 1000);
+    const h = Math.floor(s / 3600);
+    const m = Math.floor((s % 3600) / 60);
+    const sec = s % 60;
+    return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
   };
 
   if (paid?.provider === "nowpayments") {
@@ -3415,6 +3435,12 @@ function CryptoPanel({ orderId, amountCents, canPay, onChange }: { orderId: stri
           </DialogHeader>
           {invoice ? (
             <div className="space-y-3">
+              <div className="rounded-md border border-border bg-muted/40 px-3 py-2 flex items-center justify-between">
+                <span className="text-[11px] uppercase tracking-wider text-muted-foreground">Invoice expires in</span>
+                <span className={`font-mono text-sm font-semibold tabular-nums ${remainingMs < 60 * 60 * 1000 ? "text-destructive" : "text-foreground"}`}>
+                  {remainingMs > 0 ? fmtCountdown(remainingMs) : "Expired"}
+                </span>
+              </div>
               <p className="text-sm text-foreground">
                 Your USDT (ERC20) checkout has opened in a new tab. If it didn't, use the button below.
               </p>
