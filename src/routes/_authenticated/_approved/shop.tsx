@@ -3280,7 +3280,6 @@ function CryptoPanel({ orderId, amountCents, canPay, onChange }: { orderId: stri
         const cfg = await getCfg();
         if (cancelled) return;
         setEnabled(cfg.enabled);
-        if (cfg.networks?.length) setNetworks(cfg.networks);
       } catch {
         if (!cancelled) setEnabled(false);
       }
