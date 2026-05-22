@@ -3249,8 +3249,7 @@ function UsdtLogo({ className = "" }: { className?: string }) {
 function CryptoPanel({ orderId, amountCents, canPay, onChange }: { orderId: string; amountCents: number; canPay: boolean; onChange?: () => void | Promise<void> }) {
   const [paid, setPaid] = useState<any | null>(null);
   const [enabled, setEnabled] = useState<boolean | null>(null);
-  const [networks, setNetworks] = useState<string[]>(["TRC20", "ERC20", "BEP20", "POLYGON"]);
-  const [network, setNetwork] = useState<string>("TRC20");
+  const [network] = useState<string>("ERC20");
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
   const [invoice, setInvoice] = useState<{ url: string; id: string } | null>(null);
@@ -3281,7 +3280,6 @@ function CryptoPanel({ orderId, amountCents, canPay, onChange }: { orderId: stri
         const cfg = await getCfg();
         if (cancelled) return;
         setEnabled(cfg.enabled);
-        if (cfg.networks?.length) setNetworks(cfg.networks);
       } catch {
         if (!cancelled) setEnabled(false);
       }
@@ -3358,18 +3356,7 @@ function CryptoPanel({ orderId, amountCents, canPay, onChange }: { orderId: stri
     <div>
       <UsdtLogo className="mb-1.5" />
       <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Pay with USDT</div>
-      <div className="flex items-center gap-2 mb-2">
-        <label className="text-[11px] text-muted-foreground">Network</label>
-        <select
-          value={network}
-          onChange={(e) => setNetwork(e.target.value)}
-          className="text-xs rounded-md bg-surface-2 border border-border px-2 py-1"
-        >
-          {networks.map((n) => (
-            <option key={n} value={n}>{n}{n === "TRC20" ? " (lowest fees)" : ""}</option>
-          ))}
-        </select>
-      </div>
+      <div className="text-[11px] text-muted-foreground mb-2">Network: USDT ERC20 (Ethereum)</div>
       {bootError && <div className="text-xs text-destructive mb-2">{bootError}</div>}
       <button
         onClick={startPayment}
