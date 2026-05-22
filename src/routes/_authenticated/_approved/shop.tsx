@@ -1675,6 +1675,37 @@ function OrderDetail({ orderId, isAdmin, onBack }: { orderId: string; isAdmin: b
     setOrder(o as Order | null); setItems(it ?? []); setMsgs(m ?? []);
   };
   useEffect(() => { load(); }, [orderId]);
+
+  // Track active crypto invoice so we can lock out other payment methods
+  // while the customer's USDT payment is on its way.
+  const [pendingCrypto, setPendingCrypto] = useState<{ status: string } | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    const loadPay = async () => {
+      const { data } = await supabase
+        .from("order_payments")
+        .select("provider,status")
+        .eq("order_id", orderId)
+        .maybeSingle();
+      if (cancelled) return;
+      const pending =
+        data?.provider === "nowpayments" &&
+        ["waiting", "confirming", "partially_paid", "sending", "pending"].includes(
+          (data.status ?? "").toLowerCase(),
+        );
+      setPendingCrypto(pending ? { status: data!.status as string } : null);
+    };
+    loadPay();
+    const ch = supabase
+      .channel(`orderpay-${orderId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "order_payments", filter: `order_id=eq.${orderId}` },
+        () => loadPay(),
+      )
+      .subscribe();
+    return () => { cancelled = true; supabase.removeChannel(ch); };
+  }, [orderId]);
   useEffect(() => {
     const ch = supabase.channel(`order-${orderId}`, { config: { broadcast: { self: false }, presence: { key: user?.id ?? "guest" } } })
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "order_messages", filter: `order_id=eq.${orderId}` },
@@ -2034,27 +2065,38 @@ function OrderDetail({ orderId, isAdmin, onBack }: { orderId: string; isAdmin: b
           )}
           {(isAdmin || order.user_id === user?.id) && (
             <div className="space-y-3">
-              <SquareCardPanel
-                orderId={orderId}
-                amountCents={order.total_cents ?? 0}
-                canPay={!order.paid_at && !order.completed_at && order.status !== "cancelled"}
-                onChange={load}
-              />
-              {!order.paid_at && !order.completed_at && order.status !== "cancelled" && (
-                <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider text-muted-foreground">
-                  <div className="h-px flex-1 bg-border" /> or <div className="h-px flex-1 bg-border" />
+              {pendingCrypto ? (
+                <div className="rounded-md border border-warning/30 bg-warning/10 px-3 py-2.5 text-xs text-foreground">
+                  <div className="font-medium mb-0.5">USDT payment in progress</div>
+                  <div className="text-muted-foreground">
+                    Awaiting on-chain confirmation ({pendingCrypto.status}). Other payment methods are locked until this clears. If you didn't send anything, wait for the invoice to expire or contact support.
+                  </div>
                 </div>
-              )}
-              <PaypalPanel
-                orderId={orderId}
-                amountCents={order.total_cents ?? 0}
-                canPay={!order.paid_at && !order.completed_at && order.status !== "cancelled"}
-                onChange={load}
-              />
-              {!order.paid_at && !order.completed_at && order.status !== "cancelled" && (
-                <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider text-muted-foreground">
-                  <div className="h-px flex-1 bg-border" /> or <div className="h-px flex-1 bg-border" />
-                </div>
+              ) : (
+                <>
+                  <SquareCardPanel
+                    orderId={orderId}
+                    amountCents={order.total_cents ?? 0}
+                    canPay={!order.paid_at && !order.completed_at && order.status !== "cancelled"}
+                    onChange={load}
+                  />
+                  {!order.paid_at && !order.completed_at && order.status !== "cancelled" && (
+                    <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider text-muted-foreground">
+                      <div className="h-px flex-1 bg-border" /> or <div className="h-px flex-1 bg-border" />
+                    </div>
+                  )}
+                  <PaypalPanel
+                    orderId={orderId}
+                    amountCents={order.total_cents ?? 0}
+                    canPay={!order.paid_at && !order.completed_at && order.status !== "cancelled"}
+                    onChange={load}
+                  />
+                  {!order.paid_at && !order.completed_at && order.status !== "cancelled" && (
+                    <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider text-muted-foreground">
+                      <div className="h-px flex-1 bg-border" /> or <div className="h-px flex-1 bg-border" />
+                    </div>
+                  )}
+                </>
               )}
               <CryptoPanel
                 orderId={orderId}
