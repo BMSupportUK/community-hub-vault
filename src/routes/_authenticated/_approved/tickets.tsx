@@ -1136,6 +1136,11 @@ function StaffOnDutyStrip() {
   const [now, setNow] = useState(() => Date.now());
   const roleFlashMap = useRoleFlashMap();
 
+  const visibleShifts = useMemo(
+    () => shifts.filter((s) => roleFlashMap.get(s.user_id) !== "moderator"),
+    [shifts, roleFlashMap],
+  );
+
   useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(t);
@@ -1175,7 +1180,7 @@ function StaffOnDutyStrip() {
     return m;
   }, [breaks]);
 
-  if (shifts.length === 0) return null;
+  if (visibleShifts.length === 0) return null;
 
   const fmtMinSec = (sec: number) => {
     const s = Math.max(0, Math.floor(sec));
@@ -1195,14 +1200,14 @@ function StaffOnDutyStrip() {
       <div className="rounded-xl bg-white/15 backdrop-blur border border-white/25 p-3 shadow-lg">
         <div className="flex items-center justify-between mb-2">
           <div className="text-[11px] font-semibold uppercase tracking-wider text-white/90">
-            Staff on duty · {shifts.length}
+            Staff on duty · {visibleShifts.length}
           </div>
           <div className="flex items-center gap-1 text-[10px] text-white/80">
             <span className="size-2 rounded-full bg-emerald-400 animate-pulse" /> live
           </div>
         </div>
         <div className="flex gap-2 overflow-x-auto pb-1">
-          {shifts.map((s) => {
+          {visibleShifts.map((s) => {
             const p = profiles[s.user_id];
             const name = p?.display_name || p?.username || "Staff";
             const initials = name.slice(0, 2).toUpperCase();
