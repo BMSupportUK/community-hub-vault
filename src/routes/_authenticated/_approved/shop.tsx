@@ -2333,15 +2333,7 @@ function SquareCardPanel({ orderId, amountCents, canPay, onChange }: { orderId: 
     );
   }
 
-  if (!canPay) {
-    return (
-      <div>
-        <SquareLogo className="mb-1.5" />
-        <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Card Payment via Square</div>
-        <div className="text-xs text-muted-foreground">Not available for this order.</div>
-      </div>
-    );
-  }
+  if (!canPay) return null;
 
   return (
     <div>
@@ -2586,15 +2578,7 @@ function PaypalPanel({ orderId, amountCents, canPay, onChange }: { orderId: stri
   // Square already paid — hide PayPal entirely
   if (paid) return null;
 
-  if (!canPay) {
-    return (
-      <div>
-        <PaypalLogo className="mb-1.5" />
-        <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Pay with PayPal</div>
-        <div className="text-xs text-muted-foreground">Not available for this order.</div>
-      </div>
-    );
-  }
+  if (!canPay) return null;
 
   return (
     <div>
@@ -3385,15 +3369,7 @@ function CryptoPanel({ orderId, amountCents, canPay, onChange }: { orderId: stri
   if (paid) return null; // paid via another provider
   if (enabled === false) return null;
 
-  if (!canPay) {
-    return (
-      <div>
-        <UsdtLogo className="mb-1.5" />
-        <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Pay with USDT</div>
-        <div className="text-xs text-muted-foreground">Not available for this order.</div>
-      </div>
-    );
-  }
+  if (!canPay) return null;
 
   return (
     <div>
