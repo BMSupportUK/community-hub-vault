@@ -1495,6 +1495,66 @@ export type Database = {
           },
         ]
       }
+      packages_faqs: {
+        Row: {
+          answer: string
+          created_at: string
+          id: string
+          question: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          answer: string
+          created_at?: string
+          id?: string
+          question: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          answer?: string
+          created_at?: string
+          id?: string
+          question?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      packages_tiers: {
+        Row: {
+          created_at: string
+          featured: boolean
+          features: string[]
+          id: string
+          name: string
+          sort_order: number
+          tagline: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          featured?: boolean
+          features?: string[]
+          id?: string
+          name: string
+          sort_order?: number
+          tagline?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          featured?: boolean
+          features?: string[]
+          id?: string
+          name?: string
+          sort_order?: number
+          tagline?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       page_permissions: {
         Row: {
           allowed_roles: Database["public"]["Enums"]["app_role"][]
