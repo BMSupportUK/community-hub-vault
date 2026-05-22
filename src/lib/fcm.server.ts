@@ -163,7 +163,20 @@ async function sendFcmToTokens(
           token,
           notification: { title: args.title, body: args.body },
           data: args.data ?? {},
-          android: { priority: "HIGH", notification: { channel_id: "bm_support_alerts" } },
+          android: {
+            priority: "HIGH",
+            notification: {
+              channel_id: "bm_support_alerts",
+              sound: "default",
+              default_sound: true,
+              default_vibrate_timings: true,
+              notification_priority: "PRIORITY_HIGH",
+            },
+          },
+          apns: {
+            payload: { aps: { sound: "default" } },
+            headers: { "apns-priority": "10" },
+          },
         },
       }),
     });
