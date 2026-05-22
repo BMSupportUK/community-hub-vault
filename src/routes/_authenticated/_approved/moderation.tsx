@@ -7,6 +7,7 @@ import { ChannelColumn } from "@/components/app/ChannelColumn";
 import { toast } from "sonner";
 import { isAdminUnlocked } from "@/lib/admin-unlock";
 import { SignupInfoDialog } from "@/components/app/SignupInfoDialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/_authenticated/_approved/moderation")({
   component: ModerationPage,
@@ -40,6 +41,22 @@ function ModerationPage() {
   const [peerTyping, setPeerTyping] = useState<{ id: string } | null>(null);
   const peerTypingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastTypingSent = useRef<number>(0);
+  const [approveTarget, setApproveTarget] = useState<AppRow | null>(null);
+  const [roleOptions, setRoleOptions] = useState<{ name: string; label: string }[]>([]);
+  const [selectedRole, setSelectedRole] = useState<string>("member");
+  const [approving, setApproving] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from("role_definitions")
+        .select("name,label,sort_order,is_active")
+        .eq("is_active", true)
+        .order("sort_order");
+      const filtered = (data ?? []).filter((r: any) => !["pending", "banned"].includes(r.name));
+      setRoleOptions(filtered.map((r: any) => ({ name: r.name, label: r.label })));
+    })();
+  }, []);
 
   const load = async () => {
     const { data: rows } = await supabase
