@@ -354,3 +354,28 @@ function AboutPage() {
     </div>
   );
 }
+
+function RequestAccessCta() {
+  const isVpn = useVisitorVpn();
+  const [open, setOpen] = useState(false);
+  if (isVpn) {
+    return (
+      <>
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          aria-disabled="true"
+          className="px-6 py-3 rounded-md bg-red-600/50 text-white font-medium cursor-not-allowed inline-flex items-center gap-2"
+        >
+          <ShieldAlert className="size-4" /> Request access
+        </button>
+        <VpnBlockedDialog open={open} onOpenChange={setOpen} />
+      </>
+    );
+  }
+  return (
+    <Link to="/signup" className="px-6 py-3 rounded-md bg-red-600 text-white hover:bg-red-500 font-medium">
+      Request access
+    </Link>
+  );
+}
