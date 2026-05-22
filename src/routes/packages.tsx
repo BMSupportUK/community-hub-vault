@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
-import { Check, ChevronDown, Shield, Clock, MapPin, Users } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Check, Shield, Clock, MapPin, Users, Pencil, Plus, Trash2, X, Save } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/packages")({
   component: PackagesPage,
@@ -25,85 +26,68 @@ export const Route = createFileRoute("/packages")({
   }),
 });
 
-const tiers = [
-  {
-    name: "Starter",
-    tagline: "For individuals trying our support out",
-    features: [
-      "Single account access",
-      "Standard local support hours",
-      "Email assistance",
-      "Getting-started guidance",
-    ],
-  },
-  {
-    name: "Standard",
-    tagline: "Our most popular package",
-    features: [
-      "Multi-device household access",
-      "Priority support response",
-      "Setup help by a Middlesbrough-based agent",
-      "Ongoing account maintenance",
-    ],
-    featured: true,
-  },
-  {
-    name: "Premium",
-    tagline: "Full-service for power users",
-    features: [
-      "Highest access tier available",
-      "Fastest support response",
-      "Dedicated local point of contact",
-      "Advanced configuration & tuning",
-    ],
-  },
-];
-
-const faqs = [
-  {
-    q: "Where are you based?",
-    a: "We're based in Middlesbrough and serve customers across the North East and the wider UK.",
-  },
-  {
-    q: "Why aren't prices shown on this page?",
-    a: "Our packages are tailored to each customer's setup. Sign up for a free account to view full pricing inside your dashboard, or contact us for a personalised quote.",
-  },
-  {
-    q: "What is included in a support package?",
-    a: "Each package bundles digital access with hands-on UK-based support — setup help, ongoing assistance, and account management from a real person.",
-  },
-  {
-    q: "Do you offer support outside Middlesbrough?",
-    a: "Yes. While we're proudly Middlesbrough-based, we support customers right across the UK remotely.",
-  },
-  {
-    q: "How do I get started?",
-    a: "Request access via the sign-up page. Once approved, you'll see all available packages and pricing inside your account.",
-  },
-  {
-    q: "Is my account secure?",
-    a: "Yes. Accounts use secure authentication, encrypted storage, and role-based access controls.",
-  },
-  {
-    q: "Can I upgrade my package later?",
-    a: "Absolutely. You can move between Starter, Standard, and Premium at any time from inside your account.",
-  },
-  {
-    q: "Do you offer business or multi-user packages?",
-    a: "Yes. The Premium tier supports advanced multi-user setups. Contact us to discuss specific business requirements.",
-  },
-  {
-    q: "How quickly will I hear back if I contact support?",
-    a: "Response times vary by tier — Standard and Premium customers receive priority handling during UK business hours.",
-  },
-  {
-    q: "What payment methods do you accept?",
-    a: "We accept all major payment methods. Crypto (USDT) is also available for those who prefer it.",
-  },
-];
+interface Tier {
+  id: string;
+  name: string;
+  tagline: string;
+  features: string[];
+  featured: boolean;
+  sort_order: number;
+}
 
 function PackagesPage() {
-  const [open, setOpen] = useState<number | null>(0);
+  const [tiers, setTiers] = useState<Tier[]>([]);
+  const [canEdit, setCanEdit] = useState(false);
+  const [editing, setEditing] = useState<Tier | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  const load = async () => {
+    const { data } = await supabase
+      .from("packages_tiers")
+      .select("id, name, tagline, features, featured, sort_order")
+      .order("sort_order");
+    setTiers((data ?? []) as Tier[]);
+  };
+
+  useEffect(() => {
+    load();
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id);
+      const roles = (data ?? []).map((r) => r.role);
+      setCanEdit(roles.includes("admin") || roles.includes("management"));
+    })();
+  }, []);
+
+  const saveTier = async () => {
+    if (!editing) return;
+    setSaving(true);
+    const payload = {
+      name: editing.name,
+      tagline: editing.tagline,
+      features: editing.features.filter((f) => f.trim().length > 0),
+      featured: editing.featured,
+      sort_order: editing.sort_order,
+    };
+    if (editing.id === "new") {
+      await supabase.from("packages_tiers").insert(payload);
+    } else {
+      await supabase.from("packages_tiers").update(payload).eq("id", editing.id);
+    }
+    setEditing(null);
+    setSaving(false);
+    load();
+  };
+
+  const deleteTier = async (id: string) => {
+    if (!confirm("Delete this tier?")) return;
+    await supabase.from("packages_tiers").delete().eq("id", id);
+    load();
+  };
 
   const serviceJsonLd = {
     "@context": "https://schema.org",
@@ -123,20 +107,9 @@ function PackagesPage() {
     serviceType: "Digital access support package",
   };
 
-  const faqJsonLd = {
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    mainEntity: faqs.map((f) => ({
-      "@type": "Question",
-      name: f.q,
-      acceptedAnswer: { "@type": "Answer", text: f.a },
-    })),
-  };
-
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceJsonLd) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
 
       <header className="px-8 py-5 flex items-center justify-between border-b border-border">
         <Link to="/" className="flex items-center gap-2">
@@ -145,6 +118,7 @@ function PackagesPage() {
         </Link>
         <div className="flex items-center gap-2">
           <Link to="/contact" className="text-sm text-muted-foreground hover:text-foreground px-3 py-2">Contact us</Link>
+          <Link to="/faq" className="text-sm text-muted-foreground hover:text-foreground px-3 py-2">FAQ</Link>
           <Link to="/login" className="text-sm text-muted-foreground hover:text-foreground px-3 py-2">Sign in</Link>
           <Link to="/signup" className="text-sm font-medium px-4 py-2 rounded-md bg-red-600 text-white hover:bg-red-500 transition-all">Request access</Link>
         </div>
@@ -169,16 +143,45 @@ function PackagesPage() {
         </section>
 
         {/* Tiers */}
+        {canEdit && (
+          <div className="max-w-6xl mx-auto px-6 mb-4 flex justify-end">
+            <button
+              onClick={() =>
+                setEditing({
+                  id: "new",
+                  name: "",
+                  tagline: "",
+                  features: [""],
+                  featured: false,
+                  sort_order: (tiers.at(-1)?.sort_order ?? 0) + 1,
+                })
+              }
+              className="inline-flex items-center gap-2 text-sm px-3 py-2 rounded-md border border-border hover:bg-muted"
+            >
+              <Plus className="size-4" /> Add tier
+            </button>
+          </div>
+        )}
         <section className="px-6 pb-16 max-w-6xl mx-auto grid md:grid-cols-3 gap-6">
           {tiers.map((t) => (
             <div
               key={t.name}
-              className={`rounded-2xl border p-8 flex flex-col ${
+              className={`relative rounded-2xl border p-8 flex flex-col ${
                 t.featured
                   ? "border-red-500/60 bg-gradient-to-b from-red-950/30 to-transparent shadow-[0_0_40px_rgba(220,38,38,0.2)]"
                   : "border-border bg-card"
               }`}
             >
+              {canEdit && (
+                <div className="absolute top-3 right-3 flex gap-1">
+                  <button onClick={() => setEditing(t)} className="p-1.5 rounded-md bg-background/70 border border-border hover:bg-muted" title="Edit">
+                    <Pencil className="size-3.5" />
+                  </button>
+                  <button onClick={() => deleteTier(t.id)} className="p-1.5 rounded-md bg-background/70 border border-border hover:bg-muted text-red-500" title="Delete">
+                    <Trash2 className="size-3.5" />
+                  </button>
+                </div>
+              )}
               {t.featured && (
                 <div className="text-xs uppercase tracking-wide text-red-400 font-semibold mb-2">Most popular</div>
               )}
@@ -224,25 +227,11 @@ function PackagesPage() {
           </div>
         </section>
 
-        {/* FAQ */}
-        <section className="px-6 py-16 max-w-3xl mx-auto">
-          <h2 className="font-display text-3xl md:text-4xl font-bold mb-8 text-center">Frequently asked questions</h2>
-          <div className="space-y-3">
-            {faqs.map((f, i) => (
-              <div key={f.q} className="border border-border rounded-lg bg-card">
-                <button
-                  onClick={() => setOpen(open === i ? null : i)}
-                  className="w-full px-5 py-4 flex items-center justify-between text-left"
-                >
-                  <span className="font-medium">{f.q}</span>
-                  <ChevronDown className={`size-4 shrink-0 transition-transform ${open === i ? "rotate-180" : ""}`} />
-                </button>
-                {open === i && (
-                  <div className="px-5 pb-4 text-sm text-muted-foreground">{f.a}</div>
-                )}
-              </div>
-            ))}
-          </div>
+        {/* FAQ link */}
+        <section className="px-6 py-12 text-center max-w-3xl mx-auto">
+          <h2 className="font-display text-2xl font-bold mb-2">Got questions?</h2>
+          <p className="text-muted-foreground mb-6">Read our frequently asked questions.</p>
+          <Link to="/faq" className="px-5 py-3 rounded-md border border-border hover:bg-muted font-medium inline-block">View FAQ</Link>
         </section>
 
         {/* Final CTA */}
@@ -259,6 +248,72 @@ function PackagesPage() {
       <footer className="px-8 py-6 border-t border-border text-center text-xs text-muted-foreground">
         BM Support — Middlesbrough, UK
       </footer>
+
+      {editing && (
+        <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-card border border-border rounded-2xl p-6 w-full max-w-lg my-8">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-display text-xl font-bold">{editing.id === "new" ? "Add tier" : "Edit tier"}</h3>
+              <button onClick={() => setEditing(null)} className="p-1 hover:bg-muted rounded"><X className="size-4" /></button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="text-xs font-medium text-muted-foreground">Name</label>
+                <input value={editing.name} onChange={(e) => setEditing({ ...editing, name: e.target.value })}
+                  className="w-full mt-1 px-3 py-2 rounded-md bg-background border border-border" />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-muted-foreground">Tagline</label>
+                <input value={editing.tagline} onChange={(e) => setEditing({ ...editing, tagline: e.target.value })}
+                  className="w-full mt-1 px-3 py-2 rounded-md bg-background border border-border" />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-muted-foreground">Features</label>
+                <div className="space-y-2 mt-1">
+                  {editing.features.map((f, i) => (
+                    <div key={i} className="flex gap-2">
+                      <input value={f}
+                        onChange={(e) => {
+                          const next = [...editing.features];
+                          next[i] = e.target.value;
+                          setEditing({ ...editing, features: next });
+                        }}
+                        className="flex-1 px-3 py-2 rounded-md bg-background border border-border text-sm" />
+                      <button
+                        onClick={() => setEditing({ ...editing, features: editing.features.filter((_, idx) => idx !== i) })}
+                        className="p-2 rounded-md border border-border hover:bg-muted text-red-500"
+                      ><Trash2 className="size-3.5" /></button>
+                    </div>
+                  ))}
+                  <button onClick={() => setEditing({ ...editing, features: [...editing.features, ""] })}
+                    className="text-xs inline-flex items-center gap-1 px-2 py-1 rounded border border-border hover:bg-muted">
+                    <Plus className="size-3" /> Add feature
+                  </button>
+                </div>
+              </div>
+              <div className="flex items-center gap-4">
+                <label className="flex items-center gap-2 text-sm">
+                  <input type="checkbox" checked={editing.featured}
+                    onChange={(e) => setEditing({ ...editing, featured: e.target.checked })} />
+                  Featured (most popular)
+                </label>
+                <label className="flex items-center gap-2 text-sm ml-auto">
+                  Sort
+                  <input type="number" value={editing.sort_order}
+                    onChange={(e) => setEditing({ ...editing, sort_order: Number(e.target.value) })}
+                    className="w-16 px-2 py-1 rounded bg-background border border-border" />
+                </label>
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 mt-6">
+              <button onClick={() => setEditing(null)} className="px-4 py-2 rounded-md border border-border hover:bg-muted">Cancel</button>
+              <button onClick={saveTier} disabled={saving} className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-red-600 text-white hover:bg-red-500 disabled:opacity-50">
+                <Save className="size-4" /> {saving ? "Saving..." : "Save"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
