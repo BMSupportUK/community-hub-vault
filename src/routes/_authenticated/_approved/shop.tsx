@@ -1679,12 +1679,13 @@ function OrderDetail({ orderId, isAdmin, onBack }: { orderId: string; isAdmin: b
   // Track active crypto invoice so we can lock out other payment methods
   // while the customer's USDT payment is on its way.
   const [pendingCrypto, setPendingCrypto] = useState<{ status: string } | null>(null);
+  const [paidMethodLabel, setPaidMethodLabel] = useState<string | null>(null);
   useEffect(() => {
     let cancelled = false;
     const loadPay = async () => {
       const { data } = await supabase
         .from("order_payments")
-        .select("provider,status")
+        .select("provider,status,card_brand,last_4")
         .eq("order_id", orderId)
         .maybeSingle();
       if (cancelled) return;
@@ -1694,6 +1695,21 @@ function OrderDetail({ orderId, isAdmin, onBack }: { orderId: string; isAdmin: b
           (data.status ?? "").toLowerCase(),
         );
       setPendingCrypto(pending ? { status: data!.status as string } : null);
+      if (data && (data.status === "finished" || data.status === "COMPLETED" || data.status === "captured" || data.status === "paid")) {
+        if (data.provider === "nowpayments") {
+          setPaidMethodLabel(data.card_brand || "USDT");
+        } else if (data.provider === "paypal") {
+          setPaidMethodLabel(data.card_brand === "Card" ? "Card (PayPal)" : "PayPal");
+        } else {
+          setPaidMethodLabel(
+            data.card_brand && data.last_4
+              ? `${data.card_brand} •••• ${data.last_4}`
+              : "Card",
+          );
+        }
+      } else {
+        setPaidMethodLabel(null);
+      }
     };
     loadPay();
     const ch = supabase
@@ -1977,6 +1993,9 @@ function OrderDetail({ orderId, isAdmin, onBack }: { orderId: string; isAdmin: b
               <button onClick={markPaid} disabled={busy || !!order.paid_at || !!order.completed_at}
                 className="px-2.5 py-1 rounded-md bg-success/15 text-success text-xs font-medium flex items-center gap-1 hover:bg-success/25 disabled:opacity-50">
                 <BadgeCheck className="size-3.5" /> {order.paid_at ? "Paid" : "Mark As Paid"}
+                {order.paid_at && paidMethodLabel && (
+                  <span className="ml-1 font-mono text-[11px] opacity-80">· {paidMethodLabel}</span>
+                )}
               </button>
               <button onClick={settingUpAccount} disabled={busy || !!order.completed_at}
                 className="px-2.5 py-1 rounded-md bg-blue-500/15 text-blue-500 text-xs font-medium flex items-center gap-1 hover:bg-blue-500/25 disabled:opacity-50">
@@ -2313,6 +2332,10 @@ function SquareCardPanel({ orderId, amountCents, canPay, onChange }: { orderId: 
   if (paid) {
     // Paid via PayPal — let the PayPal panel render the confirmation instead.
     if (paid.provider === "paypal") return null;
+    // Paid via crypto/NOWPayments — hide the Square block; the order header
+    // already shows the paid method and the CryptoPanel renders its own
+    // confirmation.
+    if (paid.provider === "nowpayments") return null;
     return (
       <div>
         <SquareLogo className="mb-1.5" />
