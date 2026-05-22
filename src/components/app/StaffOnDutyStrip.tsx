@@ -16,11 +16,6 @@ export function StaffOnDutyStrip() {
   const [now, setNow] = useState(() => Date.now());
   const roleFlashMap = useRoleFlashMap();
 
-  const visibleShifts = useMemo(() =>
-    shifts.filter((s) => roleFlashMap.get(s.user_id) !== "moderator"),
-    [shifts, roleFlashMap]
-  );
-
   useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(t);
@@ -78,20 +73,20 @@ export function StaffOnDutyStrip() {
       <div className="rounded-xl border border-white/15 p-3 shadow-lg relative overflow-hidden bg-gradient-to-r from-violet-600/40 via-fuchsia-600/40 to-blue-600/40 backdrop-blur">
         <div className="flex items-center justify-between mb-2 relative">
           <div className="text-[11px] font-semibold uppercase tracking-wider text-white/90">
-            Staff on duty · {visibleShifts.length}
+            Staff on duty · {shifts.length}
           </div>
           <div className="flex items-center gap-1 text-[10px] text-white/80">
             <span className="size-2 rounded-full bg-emerald-400 animate-pulse" /> live
           </div>
         </div>
         <div className="flex gap-2 overflow-x-auto pb-1 relative">
-          {visibleShifts.length === 0 && (
+          {shifts.length === 0 && (
             <div className="shrink-0 min-w-[180px] rounded-lg p-2.5 border border-white/20 bg-white/10 text-white/80 text-xs flex items-center gap-2">
               <CircleDot className="size-3.5 opacity-60" />
               <span>No staff currently on duty</span>
             </div>
           )}
-          {visibleShifts.map((s) => {
+          {shifts.map((s) => {
             const p = profiles[s.user_id];
             const name = p?.display_name || p?.username || "Staff";
             const br = breakByUser.get(s.user_id);
