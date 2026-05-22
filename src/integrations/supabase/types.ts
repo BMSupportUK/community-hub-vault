@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      about_us_content: {
+        Row: {
+          body: string
+          created_at: string
+          heading: string
+          id: string
+          section_key: string
+          sort_order: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          heading: string
+          id?: string
+          section_key: string
+          sort_order?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          heading?: string
+          id?: string
+          section_key?: string
+          sort_order?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       admin_backup_codes: {
         Row: {
           batch_id: string
