@@ -6,10 +6,7 @@ const NP_BASE = "https://api.nowpayments.io/v1";
 
 /** USDT network → NOWPayments pay_currency code */
 const NETWORK_TO_CODE: Record<string, string> = {
-  TRC20: "usdttrc20",
   ERC20: "usdterc20",
-  BEP20: "usdtbsc",
-  POLYGON: "usdtmatic",
 };
 
 async function npFetch(path: string, init: RequestInit = {}) {
@@ -63,7 +60,7 @@ export const createCryptoInvoice = createServerFn({ method: "POST" })
   .inputValidator((input) =>
     z.object({
       orderId: z.string().uuid(),
-      network: z.enum(["TRC20", "ERC20", "BEP20", "POLYGON"]).default("TRC20"),
+      network: z.enum(["ERC20"]).default("ERC20"),
     }).parse(input)
   )
   .handler(async ({ data, context }) => {
