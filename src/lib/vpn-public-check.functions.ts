@@ -40,6 +40,26 @@ async function probe(ip: string): Promise<{ is_vpn: boolean; is_proxy: boolean }
   }
 }
 
+async function probeIpapi(ip: string): Promise<{ is_vpn: boolean; is_proxy: boolean } | null> {
+  try {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 3500);
+    const res = await fetch(`https://api.ipapi.is/?q=${encodeURIComponent(ip)}`, {
+      signal: ctrl.signal,
+      headers: { Accept: "application/json" },
+    });
+    clearTimeout(t);
+    if (!res.ok) return null;
+    const entry = (await res.json()) as Record<string, unknown>;
+    const vpn = (entry.vpn ?? {}) as Record<string, unknown>;
+    const isVpn = entry.is_vpn === true || vpn.is_vpn === true;
+    const isProxy = entry.is_proxy === true || entry.is_datacenter === true || isVpn;
+    return { is_vpn: isVpn, is_proxy: isProxy };
+  } catch {
+    return null;
+  }
+}
+
 export const checkVisitorVpn = createServerFn({ method: "GET" }).handler(async () => {
   const candidate =
     getRequestHeader("cf-connecting-ip") ??
@@ -48,7 +68,10 @@ export const checkVisitorVpn = createServerFn({ method: "GET" }).handler(async (
     getRequestIP({ xForwardedFor: true });
   const ip = normalizeIp(candidate) ?? "unknown";
   if (isPrivateIp(ip)) return { is_vpn: false, is_proxy: false, skipped: true };
-  const result = await probe(ip);
-  if (!result) return { is_vpn: false, is_proxy: false, skipped: true };
-  return { ...result, skipped: false };
+  const primary = await probe(ip);
+  if (primary && (primary.is_vpn || primary.is_proxy)) return { ...primary, skipped: false };
+  const fallback = await probeIpapi(ip);
+  if (fallback) return { ...fallback, skipped: false };
+  if (primary) return { ...primary, skipped: false };
+  return { is_vpn: false, is_proxy: false, skipped: true };
 });
