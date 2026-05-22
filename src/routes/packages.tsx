@@ -44,6 +44,8 @@ function PackagesPage() {
   const [canEdit, setCanEdit] = useState(false);
   const [editing, setEditing] = useState<Tier | null>(null);
   const [saving, setSaving] = useState(false);
+  const [isVpn, setIsVpn] = useState(false);
+  const [vpnDialogOpen, setVpnDialogOpen] = useState(false);
 
   const load = async () => {
     const { data } = await supabase
@@ -64,6 +66,14 @@ function PackagesPage() {
         .eq("user_id", user.id);
       const roles = (data ?? []).map((r) => r.role);
       setCanEdit(roles.includes("admin") || roles.includes("management"));
+    })();
+    (async () => {
+      try {
+        const res = await checkVisitorVpn();
+        if (res?.is_vpn || res?.is_proxy) setIsVpn(true);
+      } catch {
+        // ignore — fail open
+      }
     })();
   }, []);
 
