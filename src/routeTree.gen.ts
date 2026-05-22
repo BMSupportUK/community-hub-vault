@@ -60,6 +60,7 @@ import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/e
 import { Route as ApiPublicHooksUserNotificationPushRouteImport } from './routes/api/public/hooks/user-notification-push'
 import { Route as ApiPublicHooksSubscriptionExpiryRemindersRouteImport } from './routes/api/public/hooks/subscription-expiry-reminders'
 import { Route as ApiPublicHooksSquareInvoiceRouteImport } from './routes/api/public/hooks/square-invoice'
+import { Route as ApiPublicHooksNowpaymentsRouteImport } from './routes/api/public/hooks/nowpayments'
 import { Route as ApiPublicHooksNotifyRouteImport } from './routes/api/public/hooks/notify'
 import { Route as ApiPublicHooksBackupOrdersRouteImport } from './routes/api/public/hooks/backup-orders'
 import { Route as ApiPublicHooksBackupCredentialsRouteImport } from './routes/api/public/hooks/backup-credentials'
@@ -360,6 +361,12 @@ const ApiPublicHooksSquareInvoiceRoute =
     path: '/api/public/hooks/square-invoice',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksNowpaymentsRoute =
+  ApiPublicHooksNowpaymentsRouteImport.update({
+    id: '/api/public/hooks/nowpayments',
+    path: '/api/public/hooks/nowpayments',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksNotifyRoute = ApiPublicHooksNotifyRouteImport.update({
   id: '/api/public/hooks/notify',
   path: '/api/public/hooks/notify',
@@ -457,6 +464,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/backup-credentials': typeof ApiPublicHooksBackupCredentialsRoute
   '/api/public/hooks/backup-orders': typeof ApiPublicHooksBackupOrdersRoute
   '/api/public/hooks/notify': typeof ApiPublicHooksNotifyRoute
+  '/api/public/hooks/nowpayments': typeof ApiPublicHooksNowpaymentsRoute
   '/api/public/hooks/square-invoice': typeof ApiPublicHooksSquareInvoiceRoute
   '/api/public/hooks/subscription-expiry-reminders': typeof ApiPublicHooksSubscriptionExpiryRemindersRoute
   '/api/public/hooks/user-notification-push': typeof ApiPublicHooksUserNotificationPushRoute
@@ -515,6 +523,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/backup-credentials': typeof ApiPublicHooksBackupCredentialsRoute
   '/api/public/hooks/backup-orders': typeof ApiPublicHooksBackupOrdersRoute
   '/api/public/hooks/notify': typeof ApiPublicHooksNotifyRoute
+  '/api/public/hooks/nowpayments': typeof ApiPublicHooksNowpaymentsRoute
   '/api/public/hooks/square-invoice': typeof ApiPublicHooksSquareInvoiceRoute
   '/api/public/hooks/subscription-expiry-reminders': typeof ApiPublicHooksSubscriptionExpiryRemindersRoute
   '/api/public/hooks/user-notification-push': typeof ApiPublicHooksUserNotificationPushRoute
@@ -577,6 +586,7 @@ export interface FileRoutesById {
   '/api/public/hooks/backup-credentials': typeof ApiPublicHooksBackupCredentialsRoute
   '/api/public/hooks/backup-orders': typeof ApiPublicHooksBackupOrdersRoute
   '/api/public/hooks/notify': typeof ApiPublicHooksNotifyRoute
+  '/api/public/hooks/nowpayments': typeof ApiPublicHooksNowpaymentsRoute
   '/api/public/hooks/square-invoice': typeof ApiPublicHooksSquareInvoiceRoute
   '/api/public/hooks/subscription-expiry-reminders': typeof ApiPublicHooksSubscriptionExpiryRemindersRoute
   '/api/public/hooks/user-notification-push': typeof ApiPublicHooksUserNotificationPushRoute
@@ -638,6 +648,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/backup-credentials'
     | '/api/public/hooks/backup-orders'
     | '/api/public/hooks/notify'
+    | '/api/public/hooks/nowpayments'
     | '/api/public/hooks/square-invoice'
     | '/api/public/hooks/subscription-expiry-reminders'
     | '/api/public/hooks/user-notification-push'
@@ -696,6 +707,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/backup-credentials'
     | '/api/public/hooks/backup-orders'
     | '/api/public/hooks/notify'
+    | '/api/public/hooks/nowpayments'
     | '/api/public/hooks/square-invoice'
     | '/api/public/hooks/subscription-expiry-reminders'
     | '/api/public/hooks/user-notification-push'
@@ -757,6 +769,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/backup-credentials'
     | '/api/public/hooks/backup-orders'
     | '/api/public/hooks/notify'
+    | '/api/public/hooks/nowpayments'
     | '/api/public/hooks/square-invoice'
     | '/api/public/hooks/subscription-expiry-reminders'
     | '/api/public/hooks/user-notification-push'
@@ -782,6 +795,7 @@ export interface RootRouteChildren {
   ApiPublicHooksBackupCredentialsRoute: typeof ApiPublicHooksBackupCredentialsRoute
   ApiPublicHooksBackupOrdersRoute: typeof ApiPublicHooksBackupOrdersRoute
   ApiPublicHooksNotifyRoute: typeof ApiPublicHooksNotifyRoute
+  ApiPublicHooksNowpaymentsRoute: typeof ApiPublicHooksNowpaymentsRoute
   ApiPublicHooksSquareInvoiceRoute: typeof ApiPublicHooksSquareInvoiceRoute
   ApiPublicHooksSubscriptionExpiryRemindersRoute: typeof ApiPublicHooksSubscriptionExpiryRemindersRoute
   ApiPublicHooksUserNotificationPushRoute: typeof ApiPublicHooksUserNotificationPushRoute
@@ -1149,6 +1163,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksSquareInvoiceRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/nowpayments': {
+      id: '/api/public/hooks/nowpayments'
+      path: '/api/public/hooks/nowpayments'
+      fullPath: '/api/public/hooks/nowpayments'
+      preLoaderRoute: typeof ApiPublicHooksNowpaymentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/notify': {
       id: '/api/public/hooks/notify'
       path: '/api/public/hooks/notify'
@@ -1365,6 +1386,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksBackupCredentialsRoute: ApiPublicHooksBackupCredentialsRoute,
   ApiPublicHooksBackupOrdersRoute: ApiPublicHooksBackupOrdersRoute,
   ApiPublicHooksNotifyRoute: ApiPublicHooksNotifyRoute,
+  ApiPublicHooksNowpaymentsRoute: ApiPublicHooksNowpaymentsRoute,
   ApiPublicHooksSquareInvoiceRoute: ApiPublicHooksSquareInvoiceRoute,
   ApiPublicHooksSubscriptionExpiryRemindersRoute:
     ApiPublicHooksSubscriptionExpiryRemindersRoute,
