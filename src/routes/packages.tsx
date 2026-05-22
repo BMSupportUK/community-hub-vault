@@ -1,11 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Check, Shield, Clock, MapPin, Users, Pencil, Plus, Trash2, X, Save } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { LandingHeader } from "@/components/LandingHeader";
-import { checkVisitorVpn } from "@/lib/vpn-public-check.functions";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { useVisitorVpn } from "@/hooks/use-visitor-vpn";
+import { VpnBlockedDialog } from "@/components/VpnBlockedDialog";
 import { ShieldAlert } from "lucide-react";
+import { useEffect } from "react";
 
 export const Route = createFileRoute("/packages")({
   component: PackagesPage,
@@ -44,7 +45,7 @@ function PackagesPage() {
   const [canEdit, setCanEdit] = useState(false);
   const [editing, setEditing] = useState<Tier | null>(null);
   const [saving, setSaving] = useState(false);
-  const [isVpn, setIsVpn] = useState(false);
+  const isVpn = useVisitorVpn();
   const [vpnDialogOpen, setVpnDialogOpen] = useState(false);
 
   const load = async () => {
@@ -66,14 +67,6 @@ function PackagesPage() {
         .eq("user_id", user.id);
       const roles = (data ?? []).map((r) => r.role);
       setCanEdit(roles.includes("admin") || roles.includes("management"));
-    })();
-    (async () => {
-      try {
-        const res = await checkVisitorVpn();
-        if (res?.is_vpn || res?.is_proxy) setIsVpn(true);
-      } catch {
-        // ignore — fail open
-      }
     })();
   }, []);
 
@@ -267,26 +260,7 @@ function PackagesPage() {
         BM Support — Middlesbrough, UK & Overseas
       </footer>
 
-      <Dialog open={vpnDialogOpen} onOpenChange={setVpnDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <ShieldAlert className="size-5 text-red-500" /> Please disable your VPN
-            </DialogTitle>
-            <DialogDescription>
-              We've detected that you're connected through a VPN or proxy. To request access, please disable your VPN and reload this page so we can verify your connection.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <button
-              onClick={() => setVpnDialogOpen(false)}
-              className="px-4 py-2 rounded-md border border-border hover:bg-muted font-medium"
-            >
-              Got it
-            </button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <VpnBlockedDialog open={vpnDialogOpen} onOpenChange={setVpnDialogOpen} />
 
       {editing && (
         <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 overflow-y-auto">
