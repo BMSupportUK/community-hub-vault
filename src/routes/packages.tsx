@@ -3,6 +3,9 @@ import { useEffect, useState } from "react";
 import { Check, Shield, Clock, MapPin, Users, Pencil, Plus, Trash2, X, Save } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { LandingHeader } from "@/components/LandingHeader";
+import { checkVisitorVpn } from "@/lib/vpn-public-check.functions";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { ShieldAlert } from "lucide-react";
 
 export const Route = createFileRoute("/packages")({
   component: PackagesPage,
@@ -41,6 +44,8 @@ function PackagesPage() {
   const [canEdit, setCanEdit] = useState(false);
   const [editing, setEditing] = useState<Tier | null>(null);
   const [saving, setSaving] = useState(false);
+  const [isVpn, setIsVpn] = useState(false);
+  const [vpnDialogOpen, setVpnDialogOpen] = useState(false);
 
   const load = async () => {
     const { data } = await supabase
@@ -61,6 +66,14 @@ function PackagesPage() {
         .eq("user_id", user.id);
       const roles = (data ?? []).map((r) => r.role);
       setCanEdit(roles.includes("admin") || roles.includes("management"));
+    })();
+    (async () => {
+      try {
+        const res = await checkVisitorVpn();
+        if (res?.is_vpn || res?.is_proxy) setIsVpn(true);
+      } catch {
+        // ignore — fail open
+      }
     })();
   }, []);
 
@@ -233,7 +246,18 @@ function PackagesPage() {
           <h2 className="font-display text-3xl md:text-4xl font-bold mb-4">Ready to get started?</h2>
           <p className="text-muted-foreground mb-8">Request access to view full pricing and choose the package that fits.</p>
           <div className="flex items-center justify-center gap-3">
-            <Link to="/signup" className="px-6 py-3 rounded-md bg-red-600 text-white hover:bg-red-500 font-medium">Request access</Link>
+            {isVpn ? (
+              <button
+                type="button"
+                onClick={() => setVpnDialogOpen(true)}
+                className="px-6 py-3 rounded-md bg-red-600/50 text-white font-medium cursor-not-allowed inline-flex items-center gap-2"
+                aria-disabled="true"
+              >
+                <ShieldAlert className="size-4" /> Request access
+              </button>
+            ) : (
+              <Link to="/signup" className="px-6 py-3 rounded-md bg-red-600 text-white hover:bg-red-500 font-medium">Request access</Link>
+            )}
             <Link to="/contact" className="px-6 py-3 rounded-md border border-border hover:bg-muted font-medium">Contact us</Link>
           </div>
         </section>
@@ -242,6 +266,27 @@ function PackagesPage() {
       <footer className="px-8 py-6 border-t border-border text-center text-xs text-muted-foreground">
         BM Support — Middlesbrough, UK & Overseas
       </footer>
+
+      <Dialog open={vpnDialogOpen} onOpenChange={setVpnDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ShieldAlert className="size-5 text-red-500" /> Please disable your VPN
+            </DialogTitle>
+            <DialogDescription>
+              We've detected that you're connected through a VPN or proxy. To request access, please disable your VPN and reload this page so we can verify your connection.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <button
+              onClick={() => setVpnDialogOpen(false)}
+              className="px-4 py-2 rounded-md border border-border hover:bg-muted font-medium"
+            >
+              Got it
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {editing && (
         <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 overflow-y-auto">
