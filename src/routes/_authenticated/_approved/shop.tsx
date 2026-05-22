@@ -1993,6 +1993,9 @@ function OrderDetail({ orderId, isAdmin, onBack }: { orderId: string; isAdmin: b
               <button onClick={markPaid} disabled={busy || !!order.paid_at || !!order.completed_at}
                 className="px-2.5 py-1 rounded-md bg-success/15 text-success text-xs font-medium flex items-center gap-1 hover:bg-success/25 disabled:opacity-50">
                 <BadgeCheck className="size-3.5" /> {order.paid_at ? "Paid" : "Mark As Paid"}
+                {order.paid_at && paidMethodLabel && (
+                  <span className="ml-1 font-mono text-[11px] opacity-80">· {paidMethodLabel}</span>
+                )}
               </button>
               <button onClick={settingUpAccount} disabled={busy || !!order.completed_at}
                 className="px-2.5 py-1 rounded-md bg-blue-500/15 text-blue-500 text-xs font-medium flex items-center gap-1 hover:bg-blue-500/25 disabled:opacity-50">
