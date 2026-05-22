@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Check, Shield, Clock, MapPin, Users, Pencil, Plus, Trash2, X, Save } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { LandingHeader } from "@/components/LandingHeader";
 
 export const Route = createFileRoute("/packages")({
   component: PackagesPage,
@@ -115,19 +116,7 @@ function PackagesPage() {
     <div className="min-h-screen bg-background flex flex-col">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceJsonLd) }} />
 
-      <header className="px-8 py-5 flex items-center justify-between border-b border-border">
-        <Link to="/" className="flex items-center gap-2">
-          <div className="size-9 rounded-xl bg-gradient-to-br from-violet-600 to-blue-600 grid place-items-center font-display font-bold text-[13px] text-white">BM</div>
-          <span className="font-display font-bold text-lg">Support</span>
-        </Link>
-        <div className="flex items-center gap-2">
-          <Link to="/contact" className="text-sm text-muted-foreground hover:text-foreground px-3 py-2">Contact us</Link>
-          <Link to="/faq" className="text-sm text-muted-foreground hover:text-foreground px-3 py-2">FAQ</Link>
-          <Link to="/about" className="text-sm text-muted-foreground hover:text-foreground px-3 py-2">About</Link>
-          <Link to="/login" className="text-sm text-muted-foreground hover:text-foreground px-3 py-2">Sign in</Link>
-          <Link to="/signup" className="text-sm font-medium px-4 py-2 rounded-md bg-red-600 text-white hover:bg-red-500 transition-all">Request access</Link>
-        </div>
-      </header>
+      <LandingHeader />
 
       <main className="flex-1">
         {/* Hero */}
