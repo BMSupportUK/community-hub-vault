@@ -45,6 +45,7 @@ function Landing() {
           <Link to="/contact" className="text-sm text-muted-foreground hover:text-foreground px-3 py-2">Contact us</Link>
           <Link to="/packages" className="text-sm text-muted-foreground hover:text-foreground px-3 py-2">Packages</Link>
           <Link to="/faq" className="text-sm text-muted-foreground hover:text-foreground px-3 py-2">FAQ</Link>
+          <Link to="/about" className="text-sm text-muted-foreground hover:text-foreground px-3 py-2">About</Link>
           <Link to="/login" className="text-sm text-muted-foreground hover:text-foreground px-3 py-2">Sign in</Link>
           <Link to="/signup" className="text-sm font-medium px-4 py-2 rounded-md bg-red-600 text-white hover:bg-red-500 shadow-[0_0_24px_rgba(220,38,38,0.55)] transition-all">Request access</Link>
         </div>
