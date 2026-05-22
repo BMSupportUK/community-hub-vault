@@ -2065,27 +2065,38 @@ function OrderDetail({ orderId, isAdmin, onBack }: { orderId: string; isAdmin: b
           )}
           {(isAdmin || order.user_id === user?.id) && (
             <div className="space-y-3">
-              <SquareCardPanel
-                orderId={orderId}
-                amountCents={order.total_cents ?? 0}
-                canPay={!order.paid_at && !order.completed_at && order.status !== "cancelled"}
-                onChange={load}
-              />
-              {!order.paid_at && !order.completed_at && order.status !== "cancelled" && (
-                <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider text-muted-foreground">
-                  <div className="h-px flex-1 bg-border" /> or <div className="h-px flex-1 bg-border" />
+              {pendingCrypto ? (
+                <div className="rounded-md border border-warning/30 bg-warning/10 px-3 py-2.5 text-xs text-foreground">
+                  <div className="font-medium mb-0.5">USDT payment in progress</div>
+                  <div className="text-muted-foreground">
+                    Awaiting on-chain confirmation ({pendingCrypto.status}). Other payment methods are locked until this clears. If you didn't send anything, wait for the invoice to expire or contact support.
+                  </div>
                 </div>
-              )}
-              <PaypalPanel
-                orderId={orderId}
-                amountCents={order.total_cents ?? 0}
-                canPay={!order.paid_at && !order.completed_at && order.status !== "cancelled"}
-                onChange={load}
-              />
-              {!order.paid_at && !order.completed_at && order.status !== "cancelled" && (
-                <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider text-muted-foreground">
-                  <div className="h-px flex-1 bg-border" /> or <div className="h-px flex-1 bg-border" />
-                </div>
+              ) : (
+                <>
+                  <SquareCardPanel
+                    orderId={orderId}
+                    amountCents={order.total_cents ?? 0}
+                    canPay={!order.paid_at && !order.completed_at && order.status !== "cancelled"}
+                    onChange={load}
+                  />
+                  {!order.paid_at && !order.completed_at && order.status !== "cancelled" && (
+                    <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider text-muted-foreground">
+                      <div className="h-px flex-1 bg-border" /> or <div className="h-px flex-1 bg-border" />
+                    </div>
+                  )}
+                  <PaypalPanel
+                    orderId={orderId}
+                    amountCents={order.total_cents ?? 0}
+                    canPay={!order.paid_at && !order.completed_at && order.status !== "cancelled"}
+                    onChange={load}
+                  />
+                  {!order.paid_at && !order.completed_at && order.status !== "cancelled" && (
+                    <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider text-muted-foreground">
+                      <div className="h-px flex-1 bg-border" /> or <div className="h-px flex-1 bg-border" />
+                    </div>
+                  )}
+                </>
               )}
               <CryptoPanel
                 orderId={orderId}
