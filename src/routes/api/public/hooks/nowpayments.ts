@@ -66,7 +66,7 @@ export const Route = createFileRoute("/api/public/hooks/nowpayments")({
         // Fetch order to validate amount
         const { data: order } = await supabaseAdmin
           .from("orders")
-          .select("id,total_cents,paid_at")
+          .select("id,total_cents,paid_at,user_id")
           .eq("id", orderId)
           .maybeSingle();
         if (!order) return new Response("ok");
@@ -115,7 +115,7 @@ export const Route = createFileRoute("/api/public/hooks/nowpayments")({
 
           await supabaseAdmin.from("order_messages").insert({
             order_id: orderId,
-            sender_id: null,
+            sender_id: order.user_id,
             content: `✅ USDT payment received (${networkLabel}${txHash ? `, tx ${txHash.slice(0, 10)}…` : ""}).`,
           });
         }
