@@ -3,7 +3,6 @@ import { AtSign, Check } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { toast } from "sonner";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { formatDistanceToNow } from "date-fns";
 
@@ -66,12 +65,7 @@ export function MentionsBadge() {
           setPulse(true);
           setTimeout(() => setPulse(false), 1500);
           loadList(user.id);
-          toast(r.title, {
-            description: r.body ?? undefined,
-            action: r.link_path
-              ? { label: "Open", onClick: () => navigate({ to: r.link_path! } as never) }
-              : undefined,
-          });
+          // Toast is fired by NotificationBell to avoid duplicate toasts.
         },
       )
       .on(
