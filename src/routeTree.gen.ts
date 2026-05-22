@@ -57,6 +57,7 @@ import { Route as AuthenticatedApprovedHomeIndexRouteImport } from './routes/_au
 import { Route as LovableEmailTransactionalSendRouteImport } from './routes/lovable/email/transactional/send'
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
+import { Route as ApiPublicHooksUserNotificationPushRouteImport } from './routes/api/public/hooks/user-notification-push'
 import { Route as ApiPublicHooksSubscriptionExpiryRemindersRouteImport } from './routes/api/public/hooks/subscription-expiry-reminders'
 import { Route as ApiPublicHooksSquareInvoiceRouteImport } from './routes/api/public/hooks/square-invoice'
 import { Route as ApiPublicHooksNotifyRouteImport } from './routes/api/public/hooks/notify'
@@ -341,6 +342,12 @@ const LovableEmailQueueProcessRoute =
     path: '/lovable/email/queue/process',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksUserNotificationPushRoute =
+  ApiPublicHooksUserNotificationPushRouteImport.update({
+    id: '/api/public/hooks/user-notification-push',
+    path: '/api/public/hooks/user-notification-push',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksSubscriptionExpiryRemindersRoute =
   ApiPublicHooksSubscriptionExpiryRemindersRouteImport.update({
     id: '/api/public/hooks/subscription-expiry-reminders',
@@ -452,6 +459,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/notify': typeof ApiPublicHooksNotifyRoute
   '/api/public/hooks/square-invoice': typeof ApiPublicHooksSquareInvoiceRoute
   '/api/public/hooks/subscription-expiry-reminders': typeof ApiPublicHooksSubscriptionExpiryRemindersRoute
+  '/api/public/hooks/user-notification-push': typeof ApiPublicHooksUserNotificationPushRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
   '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
@@ -509,6 +517,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/notify': typeof ApiPublicHooksNotifyRoute
   '/api/public/hooks/square-invoice': typeof ApiPublicHooksSquareInvoiceRoute
   '/api/public/hooks/subscription-expiry-reminders': typeof ApiPublicHooksSubscriptionExpiryRemindersRoute
+  '/api/public/hooks/user-notification-push': typeof ApiPublicHooksUserNotificationPushRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
   '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
@@ -570,6 +579,7 @@ export interface FileRoutesById {
   '/api/public/hooks/notify': typeof ApiPublicHooksNotifyRoute
   '/api/public/hooks/square-invoice': typeof ApiPublicHooksSquareInvoiceRoute
   '/api/public/hooks/subscription-expiry-reminders': typeof ApiPublicHooksSubscriptionExpiryRemindersRoute
+  '/api/public/hooks/user-notification-push': typeof ApiPublicHooksUserNotificationPushRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
   '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
@@ -630,6 +640,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/notify'
     | '/api/public/hooks/square-invoice'
     | '/api/public/hooks/subscription-expiry-reminders'
+    | '/api/public/hooks/user-notification-push'
     | '/lovable/email/queue/process'
     | '/lovable/email/transactional/preview'
     | '/lovable/email/transactional/send'
@@ -687,6 +698,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/notify'
     | '/api/public/hooks/square-invoice'
     | '/api/public/hooks/subscription-expiry-reminders'
+    | '/api/public/hooks/user-notification-push'
     | '/lovable/email/queue/process'
     | '/lovable/email/transactional/preview'
     | '/lovable/email/transactional/send'
@@ -747,6 +759,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/notify'
     | '/api/public/hooks/square-invoice'
     | '/api/public/hooks/subscription-expiry-reminders'
+    | '/api/public/hooks/user-notification-push'
     | '/lovable/email/queue/process'
     | '/lovable/email/transactional/preview'
     | '/lovable/email/transactional/send'
@@ -771,6 +784,7 @@ export interface RootRouteChildren {
   ApiPublicHooksNotifyRoute: typeof ApiPublicHooksNotifyRoute
   ApiPublicHooksSquareInvoiceRoute: typeof ApiPublicHooksSquareInvoiceRoute
   ApiPublicHooksSubscriptionExpiryRemindersRoute: typeof ApiPublicHooksSubscriptionExpiryRemindersRoute
+  ApiPublicHooksUserNotificationPushRoute: typeof ApiPublicHooksUserNotificationPushRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
   LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
   LovableEmailTransactionalSendRoute: typeof LovableEmailTransactionalSendRoute
@@ -1114,6 +1128,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LovableEmailQueueProcessRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/user-notification-push': {
+      id: '/api/public/hooks/user-notification-push'
+      path: '/api/public/hooks/user-notification-push'
+      fullPath: '/api/public/hooks/user-notification-push'
+      preLoaderRoute: typeof ApiPublicHooksUserNotificationPushRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/subscription-expiry-reminders': {
       id: '/api/public/hooks/subscription-expiry-reminders'
       path: '/api/public/hooks/subscription-expiry-reminders'
@@ -1347,6 +1368,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksSquareInvoiceRoute: ApiPublicHooksSquareInvoiceRoute,
   ApiPublicHooksSubscriptionExpiryRemindersRoute:
     ApiPublicHooksSubscriptionExpiryRemindersRoute,
+  ApiPublicHooksUserNotificationPushRoute:
+    ApiPublicHooksUserNotificationPushRoute,
   LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
   LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
   LovableEmailTransactionalSendRoute: LovableEmailTransactionalSendRoute,
