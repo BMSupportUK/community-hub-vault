@@ -2332,6 +2332,10 @@ function SquareCardPanel({ orderId, amountCents, canPay, onChange }: { orderId: 
   if (paid) {
     // Paid via PayPal — let the PayPal panel render the confirmation instead.
     if (paid.provider === "paypal") return null;
+    // Paid via crypto/NOWPayments — hide the Square block; the order header
+    // already shows the paid method and the CryptoPanel renders its own
+    // confirmation.
+    if (paid.provider === "nowpayments") return null;
     return (
       <div>
         <SquareLogo className="mb-1.5" />
