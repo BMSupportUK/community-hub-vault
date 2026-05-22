@@ -184,7 +184,12 @@ function ModerationPage() {
       const { error: e2 } = await supabase.from("user_roles").insert({ user_id: app.user_id, role: "rejected" });
       if (e2 && !e2.message.includes("duplicate")) toast.error(e2.message);
     }
-    toast.success(`Application ${decision}`);
+    const name = app.profile?.display_name ?? app.profile?.username ?? "Applicant";
+    if (decision === "approved") {
+      toast.success(`${name} approved and assigned Member role`);
+    } else {
+      toast.success(`Application ${decision}`);
+    }
     load();
   };
 
