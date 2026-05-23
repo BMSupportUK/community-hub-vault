@@ -136,12 +136,19 @@ export function findEventTimes(html: string, viewerTz: string): EventTime[] {
 export function annotateTimesInEl(root: HTMLElement, viewerTz: string): void {
   // Remove any previously inserted pills so re-runs stay idempotent.
   root.querySelectorAll("[data-tz-pill]").forEach((n) => n.remove());
+  root.querySelectorAll("[data-tz-source-pill]").forEach((n) => {
+    const parent = n.parentNode;
+    if (!parent) return;
+    // Unwrap: replace pill with its text content
+    parent.replaceChild(document.createTextNode(n.textContent ?? ""), n);
+  });
 
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
     acceptNode: (node) => {
       const parent = node.parentElement;
       if (!parent) return NodeFilter.FILTER_REJECT;
       if (parent.closest("[data-tz-pill]")) return NodeFilter.FILTER_REJECT;
+      if (parent.closest("[data-tz-source-pill]")) return NodeFilter.FILTER_REJECT;
       const tag = parent.tagName;
       if (tag === "SCRIPT" || tag === "STYLE" || tag === "CODE" || tag === "PRE") return NodeFilter.FILTER_REJECT;
       return node.nodeValue && node.nodeValue.trim() ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
@@ -155,31 +162,46 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string): void {
     cur = walker.nextNode();
   }
 
+  let annotated = false;
   for (const textNode of targets) {
+    if (annotated) break;
     const text = textNode.nodeValue ?? "";
     const matches = parseMatches(text, viewerTz);
     if (!matches.length) continue;
 
+    const m = matches[0];
     const frag = document.createDocumentFragment();
-    let cursor = 0;
-    for (const m of matches) {
-      if (m.start > cursor) frag.appendChild(document.createTextNode(text.slice(cursor, m.start)));
-      frag.appendChild(document.createTextNode(text.slice(m.start, m.end)));
-      const pill = document.createElement("span");
-      pill.setAttribute("data-tz-pill", "1");
-      pill.className =
-        "inline-flex items-center gap-2 ml-1 px-2 py-0.5 rounded-md bg-fuchsia-500/15 text-fuchsia-100 border border-fuchsia-400/30 text-xs align-baseline";
-      const divider = document.createElement("span");
-      divider.className = "opacity-40";
-      divider.textContent = "|";
-      pill.appendChild(divider);
-      const label = document.createElement("span");
-      label.textContent = m.converted;
-      pill.appendChild(label);
-      frag.appendChild(pill);
-      cursor = m.end;
-    }
-    if (cursor < text.length) frag.appendChild(document.createTextNode(text.slice(cursor)));
+    if (m.start > 0) frag.appendChild(document.createTextNode(text.slice(0, m.start)));
+
+    // Source-time pill
+    const sourcePill = document.createElement("span");
+    sourcePill.setAttribute("data-tz-source-pill", "1");
+    sourcePill.className =
+      "inline-flex items-center px-2 py-0.5 rounded-md bg-violet-500/20 text-violet-100 border border-violet-400/40 text-xs font-medium align-baseline";
+    sourcePill.textContent = text.slice(m.start, m.end);
+    frag.appendChild(sourcePill);
+
+    // Divider + label + converted pill
+    const wrapper = document.createElement("span");
+    wrapper.setAttribute("data-tz-pill", "1");
+    wrapper.className = "inline-flex items-center gap-2 ml-2 align-baseline";
+    const divider = document.createElement("span");
+    divider.className = "opacity-40";
+    divider.textContent = "|";
+    wrapper.appendChild(divider);
+    const label = document.createElement("span");
+    label.className = "text-xs text-purple-100/80";
+    label.textContent = "Event Start Time In Your Timezone is";
+    wrapper.appendChild(label);
+    const convertedPill = document.createElement("span");
+    convertedPill.className =
+      "inline-flex items-center px-2 py-0.5 rounded-md bg-fuchsia-500/20 text-fuchsia-100 border border-fuchsia-400/40 text-xs font-medium";
+    convertedPill.textContent = m.converted;
+    wrapper.appendChild(convertedPill);
+    frag.appendChild(wrapper);
+
+    if (m.end < text.length) frag.appendChild(document.createTextNode(text.slice(m.end)));
     textNode.parentNode?.replaceChild(frag, textNode);
+    annotated = true;
   }
 }
