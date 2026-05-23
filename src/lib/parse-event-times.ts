@@ -58,10 +58,12 @@ function weekdayFromDateStr(dateStr: string): string | null {
   return ["sun", "mon", "tue", "wed", "thu", "fri", "sat"][date.getUTCDay()];
 }
 
-function eventNameAfterTimeWeekday(text: string, end: number, sourceDateStr?: string): string | null {
-  const match = text
-    .slice(end)
-    .match(/^\s+(mon|tue|wed|thu|fri|sat|sun)(?:day)?\b/i);
+function eventNameAfterTimeWeekday(
+  text: string,
+  end: number,
+  sourceDateStr?: string,
+): string | null {
+  const match = text.slice(end).match(/^\s+(mon|tue|wed|thu|fri|sat|sun)(?:day)?\b/i);
   if (!match) return null;
   const token = match[1].toLowerCase().slice(0, 3);
   return sourceDateStr && weekdayFromDateStr(sourceDateStr) === token ? null : match[0].trim();
@@ -600,7 +602,8 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
 
     const chev = document.createElement("span");
     chev.setAttribute("aria-hidden", "true");
-    chev.className = "hidden text-purple-300/40 group-hover:text-fuchsia-400 text-lg leading-none lg:inline";
+    chev.className =
+      "hidden text-purple-300/40 group-hover:text-fuchsia-400 text-lg leading-none lg:inline";
     chev.textContent = "›";
     block.appendChild(chev);
   }
