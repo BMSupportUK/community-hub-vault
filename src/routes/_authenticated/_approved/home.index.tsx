@@ -26,7 +26,7 @@ function WelcomePage() {
   const name = (user?.email ?? "there").split("@")[0];
   const navigate = useNavigate();
 
-  type EventRow = { id: string; body: string; banner_url: string | null };
+  type EventRow = { id: string; body: string; banner_url: string | null; event_date: string | null };
   const [events, setEvents] = useState<EventRow[]>([]);
   const [currentIdx, setCurrentIdx] = useState(0);
   const event = events[currentIdx] ?? null;
@@ -36,6 +36,7 @@ function WelcomePage() {
   const [eventOpen, setEventOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [editBody, setEditBody] = useState("");
+  const [editDate, setEditDate] = useState("");
   const [savingEvent, setSavingEvent] = useState(false);
   const [bannerOpen, setBannerOpen] = useState(false);
   const [bannerPrompt, setBannerPrompt] = useState("");
@@ -51,9 +52,15 @@ function WelcomePage() {
     (async () => {
       const { data } = await supabase
         .from("upcoming_event")
-        .select("id, body, banner_url")
+        .select("id, body, banner_url, event_date")
         .order("updated_at", { ascending: false });
-      setEvents((data ?? []) as EventRow[]);
+      const all = (data ?? []) as EventRow[];
+      const todayStr = new Date().toISOString().slice(0, 10);
+      const expired = all.filter((e) => e.event_date && e.event_date < todayStr);
+      if (expired.length > 0) {
+        await supabase.from("upcoming_event").delete().in("id", expired.map((e) => e.id));
+      }
+      setEvents(all.filter((e) => !e.event_date || e.event_date >= todayStr));
     })();
   }, []);
 
@@ -74,6 +81,7 @@ function WelcomePage() {
 
   const openEdit = () => {
     setEditBody(event?.body ?? "");
+    setEditDate(event?.event_date ?? "");
     setEditOpen(true);
   };
 
@@ -82,11 +90,11 @@ function WelcomePage() {
     setSavingEvent(true);
     const { error } = await supabase
       .from("upcoming_event")
-      .update({ body: editBody, updated_by: user?.id ?? null })
+      .update({ body: editBody, event_date: editDate || null, updated_by: user?.id ?? null })
       .eq("id", event.id);
     setSavingEvent(false);
     if (error) { toast.error(error.message); return; }
-    setEvent({ ...event, body: editBody });
+    setEvent({ ...event, body: editBody, event_date: editDate || null });
     setEditOpen(false);
     toast.success("Event updated");
   };
@@ -95,12 +103,13 @@ function WelcomePage() {
     const { data, error } = await supabase
       .from("upcoming_event")
       .insert({ body: "", updated_by: user?.id ?? null })
-      .select("id, body, banner_url")
+      .select("id, body, banner_url, event_date")
       .single();
     if (error || !data) { toast.error(error?.message ?? "Failed"); return; }
     setEvents((prev) => [data as EventRow, ...prev]);
     setCurrentIdx(0);
     setEditBody("");
+    setEditDate("");
     setEditOpen(true);
   };
 
