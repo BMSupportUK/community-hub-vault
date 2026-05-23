@@ -75,7 +75,7 @@ export interface EventTime {
   converted: string;
 }
 
-function parseMatches(text: string, viewerTz: string, defaultZone?: string): ParsedMatch[] {
+function parseMatches(text: string, viewerTz: string, defaultZone?: string, sourceDateStr?: string): ParsedMatch[] {
   const results: ParsedMatch[] = [];
   TIME_RE.lastIndex = 0;
   let m: RegExpExecArray | null;
@@ -98,7 +98,7 @@ function parseMatches(text: string, viewerTz: string, defaultZone?: string): Par
     if (abbrev) {
       const tz = ZONE_MAP[abbrev.toUpperCase()];
       if (!tz) continue;
-      const dateStr = dateInTimeZone(todayUtc, tz);
+      const dateStr = sourceDateStr ?? dateInTimeZone(todayUtc, tz);
       const timeStr = `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}:00`;
       utcMs = zonedWallTimeToUtcMs(dateStr, timeStr, tz);
       sourceLabel = tz;
@@ -109,7 +109,7 @@ function parseMatches(text: string, viewerTz: string, defaultZone?: string): Par
       const offM = offMStr ? parseInt(offMStr, 10) : 0;
       const offsetMin = (offH * 60 + offM) * (sign === "-" ? -1 : 1);
       // Source wall time interpreted at this offset:
-      const todayStr = new Date().toISOString().slice(0, 10);
+      const todayStr = sourceDateStr ?? new Date().toISOString().slice(0, 10);
       const naiveUtc = Date.parse(`${todayStr}T${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}:00Z`);
       utcMs = naiveUtc - offsetMin * 60000;
       sourceLabel = "offset";
@@ -170,7 +170,7 @@ function parseMatches(text: string, viewerTz: string, defaultZone?: string): Par
         if (!ampm && hour > 23) continue;
         if (!ampm && !mStr) continue;
         const todayUtc = new Date();
-        const dateStr = dateInTimeZone(todayUtc, tz);
+        const dateStr = sourceDateStr ?? dateInTimeZone(todayUtc, tz);
         const timeStr = `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}:00`;
         const utcMs = zonedWallTimeToUtcMs(dateStr, timeStr, tz);
         if (!Number.isFinite(utcMs)) continue;
