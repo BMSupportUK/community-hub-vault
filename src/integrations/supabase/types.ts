@@ -1865,6 +1865,24 @@ export type Database = {
         }
         Relationships: []
       }
+      scheduled_alert_log: {
+        Row: {
+          alert_key: string
+          sent_at: string
+          user_id: string
+        }
+        Insert: {
+          alert_key: string
+          sent_at?: string
+          user_id: string
+        }
+        Update: {
+          alert_key?: string
+          sent_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       shift_slots: {
         Row: {
           assigned_to: string | null
