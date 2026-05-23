@@ -516,7 +516,7 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
     block.dataset.tzPrevClass = block.className;
     block.setAttribute("data-tz-row", "1");
     block.className =
-      "group not-prose list-none my-2 grid grid-cols-[auto_minmax(0,1fr)] md:grid-cols-[auto_minmax(0,1fr)_10rem_10rem_auto] items-center gap-3 px-4 py-3 rounded-xl bg-purple-950/40 border border-purple-500/20 hover:border-fuchsia-500/60 transition-colors";
+      "group not-prose list-none my-2 grid max-w-full grid-cols-[auto_minmax(0,1fr)] lg:grid-cols-[auto_minmax(0,1fr)_minmax(8.5rem,10rem)_minmax(8.5rem,10rem)_auto] items-center gap-3 overflow-hidden px-3 sm:px-4 py-3 rounded-xl bg-purple-950/40 border border-purple-500/20 hover:border-fuchsia-500/60 transition-colors";
 
     block.innerHTML = "";
 
@@ -545,9 +545,9 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
     const sourcePill = document.createElement("span");
     sourcePill.setAttribute("data-tz-pill", "1");
     sourcePill.className =
-      "inline-flex w-full min-w-0 flex-col items-center justify-center px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-purple-100/80 md:w-40";
+      "col-span-2 inline-flex w-full min-w-0 max-w-full flex-col items-center justify-center px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-purple-100/80 lg:col-span-1";
     const srcDate = document.createElement("span");
-    srcDate.className = "block w-full truncate text-center text-[10px] text-purple-200/70";
+    srcDate.className = "block w-full text-center text-[9px] leading-tight text-purple-200/70";
     srcDate.textContent = m.sourceDate;
     const srcRow = document.createElement("span");
     srcRow.className = "flex w-full min-w-0 items-baseline justify-center gap-1.5";
@@ -567,9 +567,9 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
     const localPill = document.createElement("span");
     localPill.setAttribute("data-tz-pill", "1");
     localPill.className =
-      "inline-flex w-full min-w-0 flex-col items-center justify-center px-3 py-1.5 rounded-lg bg-fuchsia-600 text-white shadow-[0_0_15px_rgba(192,38,211,0.25)] md:w-40";
+      "col-span-2 inline-flex w-full min-w-0 max-w-full flex-col items-center justify-center px-3 py-1.5 rounded-lg bg-fuchsia-600 text-white shadow-[0_0_15px_rgba(192,38,211,0.25)] lg:col-span-1";
     const locDate = document.createElement("span");
-    locDate.className = "block w-full truncate text-center text-[10px] text-white/80";
+    locDate.className = "block w-full text-center text-[9px] leading-tight text-white/80";
     locDate.textContent = m.localDate;
     const locRow = document.createElement("span");
     locRow.className = "flex w-full min-w-0 items-baseline justify-center gap-1.5";
@@ -587,7 +587,7 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
 
     const chev = document.createElement("span");
     chev.setAttribute("aria-hidden", "true");
-    chev.className = "text-purple-300/40 group-hover:text-fuchsia-400 text-lg leading-none";
+    chev.className = "hidden text-purple-300/40 group-hover:text-fuchsia-400 text-lg leading-none lg:inline";
     chev.textContent = "›";
     block.appendChild(chev);
   }
