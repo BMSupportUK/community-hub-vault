@@ -41,6 +41,34 @@ const BARE_TIME_RE = new RegExp(
   "gi",
 );
 
+const WEEKDAY_INDEX: Record<string, number> = {
+  sun: 0,
+  mon: 1,
+  tue: 2,
+  wed: 3,
+  thu: 4,
+  fri: 5,
+  sat: 6,
+};
+
+function weekdayAfterSpan(text: string, end: number): string | null {
+  const match = text
+    .slice(end)
+    .match(/^\s+(mon|tue|wed|thu|fri|sat|sun)(?:day)?\b/i);
+  return match?.[1]?.toLowerCase() ?? null;
+}
+
+function dateWithWeekdayOnOrAfter(dateStr: string, weekday: string): string {
+  const target = WEEKDAY_INDEX[weekday.slice(0, 3).toLowerCase()];
+  if (target == null) return dateStr;
+  const [year, month, day] = dateStr.split("-").map((part) => parseInt(part, 10));
+  const base = new Date(Date.UTC(year, month - 1, day));
+  if (!Number.isFinite(base.getTime())) return dateStr;
+  const delta = (target - base.getUTCDay() + 7) % 7;
+  base.setUTCDate(base.getUTCDate() + delta);
+  return base.toISOString().slice(0, 10);
+}
+
 function tzOffsetMinutes(instantMs: number, tz: string): number {
   const parts = new Intl.DateTimeFormat("en-US", {
     timeZone: tz,
@@ -96,6 +124,7 @@ function parseMatches(
   let m: RegExpExecArray | null;
   while ((m = TIME_RE.exec(text)) !== null) {
     const [, hStr, mStr, ampmRaw, abbrev, offsetBase, sign, offHStr, offMStr] = m;
+    const trailingWeekday = weekdayAfterSpan(text, m.index + m[0].length);
     let hour = parseInt(hStr, 10);
     const minute = mStr ? parseInt(mStr, 10) : 0;
     if (hour > 23 || minute > 59) continue;
@@ -113,7 +142,11 @@ function parseMatches(
     if (abbrev) {
       const tz = ZONE_MAP[abbrev.toUpperCase()];
       if (!tz) continue;
-      const dateStr = sourceDateStr ?? dateInTimeZone(todayUtc, tz);
+      const dateStr = sourceDateStr
+        ? trailingWeekday
+          ? dateWithWeekdayOnOrAfter(sourceDateStr, trailingWeekday)
+          : sourceDateStr
+        : dateInTimeZone(todayUtc, tz);
       const timeStr = `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}:00`;
       utcMs = zonedWallTimeToUtcMs(dateStr, timeStr, tz);
       sourceLabel = tz;
@@ -124,7 +157,11 @@ function parseMatches(
       const offM = offMStr ? parseInt(offMStr, 10) : 0;
       const offsetMin = (offH * 60 + offM) * (sign === "-" ? -1 : 1);
       // Source wall time interpreted at this offset:
-      const todayStr = sourceDateStr ?? new Date().toISOString().slice(0, 10);
+      const todayStr = sourceDateStr
+        ? trailingWeekday
+          ? dateWithWeekdayOnOrAfter(sourceDateStr, trailingWeekday)
+          : sourceDateStr
+        : new Date().toISOString().slice(0, 10);
       const naiveUtc = Date.parse(
         `${todayStr}T${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}:00Z`,
       );
@@ -189,6 +226,7 @@ function parseMatches(
       BARE_TIME_RE.lastIndex = 0;
       let bm: RegExpExecArray | null;
       while ((bm = BARE_TIME_RE.exec(text)) !== null) {
+        const trailingWeekday = weekdayAfterSpan(text, bm.index + bm[0].length);
         // Skip if this span overlaps a zone-tagged match already captured
         if (results.some((r) => bm!.index < r.end && bm!.index + bm![0].length > r.start)) continue;
         const [, hStr, mStr, ampmRaw] = bm;
@@ -201,7 +239,11 @@ function parseMatches(
         if (!ampm && hour > 23) continue;
         if (!ampm && !mStr) continue;
         const todayUtc = new Date();
-        const dateStr = sourceDateStr ?? dateInTimeZone(todayUtc, tz);
+        const dateStr = sourceDateStr
+          ? trailingWeekday
+            ? dateWithWeekdayOnOrAfter(sourceDateStr, trailingWeekday)
+            : sourceDateStr
+          : dateInTimeZone(todayUtc, tz);
         const timeStr = `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}:00`;
         const utcMs = zonedWallTimeToUtcMs(dateStr, timeStr, tz);
         if (!Number.isFinite(utcMs)) continue;
