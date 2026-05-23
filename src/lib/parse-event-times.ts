@@ -138,8 +138,6 @@ function parseMatches(
       const timeStr = `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}:00`;
       utcMs = zonedWallTimeToUtcMs(dateStr, timeStr, tz);
       sourceLabel = tz;
-      // Skip if viewer is in the same zone (same offset right now)
-      if (tzOffsetMinutes(utcMs, tz) === tzOffsetMinutes(utcMs, viewerTz)) continue;
     } else if (offsetBase && sign && offHStr) {
       const offH = parseInt(offHStr, 10);
       const offM = offMStr ? parseInt(offMStr, 10) : 0;
@@ -151,7 +149,6 @@ function parseMatches(
       );
       utcMs = naiveUtc - offsetMin * 60000;
       sourceLabel = "offset";
-      if (tzOffsetMinutes(utcMs, viewerTz) === offsetMin) continue;
     } else {
       continue;
     }
@@ -229,7 +226,6 @@ function parseMatches(
         const timeStr = `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}:00`;
         const utcMs = zonedWallTimeToUtcMs(dateStr, timeStr, tz);
         if (!Number.isFinite(utcMs)) continue;
-        if (tzOffsetMinutes(utcMs, tz) === tzOffsetMinutes(utcMs, viewerTz)) continue;
         const hh = new Intl.DateTimeFormat("en-GB", {
           timeZone: viewerTz,
           hour: "2-digit",
