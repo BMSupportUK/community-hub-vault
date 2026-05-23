@@ -363,7 +363,7 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
     block.dataset.tzPrevClass = block.className;
     block.setAttribute("data-tz-row", "1");
     block.className =
-      "group not-prose list-none my-2 grid grid-cols-[auto_1fr_auto_auto_auto] items-center gap-4 px-4 py-3 rounded-xl bg-purple-950/40 border border-purple-500/20 hover:border-fuchsia-500/60 transition-colors";
+      "group not-prose list-none my-2 grid grid-cols-[auto_minmax(0,1fr)] md:grid-cols-[auto_minmax(0,1fr)_10rem_10rem_auto] items-center gap-3 px-4 py-3 rounded-xl bg-purple-950/40 border border-purple-500/20 hover:border-fuchsia-500/60 transition-colors";
 
     block.innerHTML = "";
 
@@ -390,17 +390,17 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
     const sourcePill = document.createElement("span");
     sourcePill.setAttribute("data-tz-pill", "1");
     sourcePill.className =
-      "inline-flex flex-col items-center px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-purple-100/80 min-w-[140px]";
+      "inline-flex w-full min-w-0 flex-col items-center justify-center px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-purple-100/80 md:w-40";
     const srcDate = document.createElement("span");
     srcDate.className = "sr-only";
     srcDate.textContent = m.sourceDate;
     const srcRow = document.createElement("span");
-    srcRow.className = "flex items-baseline gap-1.5";
+    srcRow.className = "flex w-full min-w-0 items-baseline justify-center gap-1.5";
     const srcTime = document.createElement("span");
     srcTime.className = "font-bold text-sm tabular-nums";
     srcTime.textContent = m.sourceTime;
     const srcZone = document.createElement("span");
-    srcZone.className = "text-[10px] uppercase tracking-wide text-purple-200/60";
+    srcZone.className = "min-w-0 truncate text-[10px] uppercase tracking-wide text-purple-200/60";
     srcZone.textContent = m.sourceZone;
     srcRow.appendChild(srcTime);
     srcRow.appendChild(srcZone);
@@ -412,17 +412,17 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
     const localPill = document.createElement("span");
     localPill.setAttribute("data-tz-pill", "1");
     localPill.className =
-      "inline-flex flex-col items-center px-3 py-1.5 rounded-lg bg-fuchsia-600 text-white shadow-[0_0_15px_rgba(192,38,211,0.25)] min-w-[140px]";
+      "inline-flex w-full min-w-0 flex-col items-center justify-center px-3 py-1.5 rounded-lg bg-fuchsia-600 text-white shadow-[0_0_15px_rgba(192,38,211,0.25)] md:w-40";
     const locDate = document.createElement("span");
     locDate.className = "sr-only";
     locDate.textContent = m.localDate;
     const locRow = document.createElement("span");
-    locRow.className = "flex items-baseline gap-1.5";
+    locRow.className = "flex w-full min-w-0 items-baseline justify-center gap-1.5";
     const locTime = document.createElement("span");
     locTime.className = "font-bold text-sm tabular-nums";
     locTime.textContent = m.localTime;
     const locZone = document.createElement("span");
-    locZone.className = "text-[10px] uppercase tracking-wide text-white/80";
+    locZone.className = "min-w-0 truncate text-[10px] uppercase tracking-wide text-white/80";
     locZone.textContent = m.localZone;
     locRow.appendChild(locTime);
     locRow.appendChild(locZone);
