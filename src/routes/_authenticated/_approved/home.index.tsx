@@ -306,7 +306,7 @@ function WelcomePage() {
             {/* Combined event advert (image + divider + text) */}
             <div className="flex justify-center xl:justify-start">
               <div
-                className="relative rounded-2xl border-2 border-violet-500/60 bg-surface shadow-[0_0_30px_rgba(139,92,246,0.25)] overflow-hidden flex flex-col"
+                className="group relative rounded-2xl border-2 border-violet-500/60 bg-surface shadow-[0_0_30px_rgba(139,92,246,0.25)] overflow-hidden flex flex-col"
                 style={{ width: 300 }}
               >
                 {canEditEvent && (
@@ -382,7 +382,7 @@ function WelcomePage() {
                   <button
                     onClick={() => setEventOpen(true)}
                     disabled={!event}
-                    className="px-4 py-2 rounded-md bg-gradient-to-br from-violet-600 to-blue-600 hover:opacity-90 text-white text-sm font-medium shadow-[0_0_20px_rgba(139,92,246,0.45)] transition disabled:opacity-40"
+                    className="px-4 py-2 rounded-md bg-gradient-to-br from-violet-600 to-blue-600 hover:opacity-90 text-white text-sm font-medium shadow-[0_0_20px_rgba(139,92,246,0.45)] transition disabled:opacity-40 opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
                   >
                     Read more
                   </button>
