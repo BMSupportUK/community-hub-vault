@@ -1,6 +1,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { Hash, ChevronDown, Plus, Trash2, Shield, Smile, Pencil, ChevronUp } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import { useBusinessOpen } from "@/hooks/use-business-open";
 import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
@@ -48,6 +49,9 @@ export function ChannelColumn({
 }) {
   const path = useRouterState({ select: (r) => r.location.pathname });
   const { user } = useAuth();
+  const { isStaff } = useAuth();
+  const businessOpen = useBusinessOpen();
+  const isAway = isStaff && !businessOpen;
   const roleFlashMap = useRoleFlashMap();
   const [profile, setProfile] = useState<{
     display_name: string | null;
@@ -379,7 +383,10 @@ export function ChannelColumn({
                 <VpnBadge userId={user.id} size={11} showInactive />
               </span>
             </div>
-            <div className="text-[10px] text-muted-foreground">Online</div>
+            <div className={cn("text-[10px] flex items-center gap-1", isAway ? "text-yellow-400" : "text-muted-foreground")}>
+              <span className={cn("size-1.5 rounded-full", isAway ? "bg-yellow-400" : "bg-emerald-500")} />
+              {isAway ? "Away From The Office" : "Online"}
+            </div>
           </div>
         </div>
       )}
