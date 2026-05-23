@@ -367,8 +367,8 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
     if (!text.trim()) continue;
     const parsedBlockDate = parseGuideDate(text);
     if (parsedBlockDate) currentSourceDate = parsedBlockDate;
-    let rowSourceDate = currentSourceDate;
-    let matches = parseMatches(text, viewerTz, defaultZone, rowSourceDate ?? undefined);
+    const rowSourceDate = currentSourceDate;
+    const matches = parseMatches(text, viewerTz, defaultZone, rowSourceDate ?? undefined);
     if (!matches.length) {
       // Hide standalone date headings like "Saturday 23-05-26" or
       // "Saturday, 23 May 2026" — the per-row pills already show the date.
@@ -418,10 +418,6 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
         const isDate = Boolean(parsedSiblingDate);
         if (isDate) {
           currentSourceDate = parsedSiblingDate;
-          if (!eventName && !caption && absorbed.length === 0) {
-            rowSourceDate = parsedSiblingDate;
-            matches = parseMatches(text, viewerTz, defaultZone, rowSourceDate ?? undefined);
-          }
           // Hide the date-only heading but keep absorbing siblings past it,
           // so the event name + channels that follow still attach to this row.
           if (sib.dataset.tzOriginal == null) {
