@@ -121,7 +121,7 @@ function ReadPage() {
         {loading || !blog ? (
           <div className="px-6 py-12 text-center text-purple-200/70">Loading…</div>
         ) : (
-          <article className="w-full max-w-5xl mx-auto px-3 sm:px-6 py-8 space-y-5 overflow-hidden">
+          <article className="w-full max-w-none mx-auto px-3 sm:px-6 py-8 space-y-5 overflow-hidden">
             <div className="flex flex-wrap gap-2">
               <span className="text-xs px-2 py-1 rounded-md bg-fuchsia-500/20 text-fuchsia-200 font-medium border border-fuchsia-500/30">
                 {categories.find((c) => c.id === blog.category_id)?.name}
@@ -164,7 +164,7 @@ function ReadPage() {
                 </div>
                 <div
                   ref={bodyRef}
-                  className="prose prose-invert max-w-none text-purple-50/90 leading-relaxed lg:grid lg:grid-cols-2 lg:gap-3 prose-ul:contents prose-ol:contents"
+                  className="prose prose-invert max-w-none text-purple-50/90 leading-relaxed"
                   dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(blog.body) }}
                 />
               </div>
