@@ -437,6 +437,18 @@ function SportsGuidesPage() {
                             )}
                             <span>{b.title}</span>
                           </h3>
+                          <div className="text-[11px] text-purple-300/70">
+                            Last edited:{" "}
+                            <time dateTime={b.updated_at ?? b.created_at}>
+                              {new Date(b.updated_at ?? b.created_at).toLocaleString(undefined, {
+                                day: "2-digit",
+                                month: "short",
+                                year: "numeric",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
+                            </time>
+                          </div>
                           {b.refresh_notice && (
                             <div className="rounded-md border border-amber-400/50 bg-amber-500/15 text-amber-100 px-3 py-2 text-xs leading-snug">
                               {b.refresh_notice}
