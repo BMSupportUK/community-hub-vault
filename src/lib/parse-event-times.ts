@@ -26,7 +26,9 @@ const ZONE_MAP: Record<string, string> = {
   IST: "Asia/Kolkata",
 };
 
-const ZONE_TOKENS = Object.keys(ZONE_MAP).sort((a, b) => b.length - a.length).join("|");
+const ZONE_TOKENS = Object.keys(ZONE_MAP)
+  .sort((a, b) => b.length - a.length)
+  .join("|");
 // Matches: "19:45 GMT", "7:30pm ET", "8 pm CET", "20:00 UTC+1", "9am GMT-05:30"
 const TIME_RE = new RegExp(
   `\\b(\\d{1,2})(?::(\\d{2}))?\\s*(am|pm|a\\.m\\.|p\\.m\\.)?\\s*(?:(${ZONE_TOKENS})|(?:(UTC|GMT)\\s*([+-])\\s*(\\d{1,2})(?::?(\\d{2}))?))\\b`,
@@ -41,9 +43,15 @@ const BARE_TIME_RE = new RegExp(
 
 function tzOffsetMinutes(instantMs: number, tz: string): number {
   const parts = new Intl.DateTimeFormat("en-US", {
-    timeZone: tz, hour12: false, hourCycle: "h23",
-    year: "numeric", month: "2-digit", day: "2-digit",
-    hour: "2-digit", minute: "2-digit", second: "2-digit",
+    timeZone: tz,
+    hour12: false,
+    hourCycle: "h23",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
   }).formatToParts(new Date(instantMs));
   const g = (t: string) => parseInt(parts.find((p) => p.type === t)?.value ?? "0", 10);
   const asUtc = Date.UTC(g("year"), g("month") - 1, g("day"), g("hour"), g("minute"), g("second"));
@@ -51,8 +59,10 @@ function tzOffsetMinutes(instantMs: number, tz: string): number {
 }
 
 function tzAbbrev(instantMs: number, tz: string): string {
-  const parts = new Intl.DateTimeFormat("en-GB", { timeZone: tz, timeZoneName: "short" })
-    .formatToParts(new Date(instantMs));
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: tz,
+    timeZoneName: "short",
+  }).formatToParts(new Date(instantMs));
   return parts.find((p) => p.type === "timeZoneName")?.value ?? "";
 }
 
@@ -75,7 +85,12 @@ export interface EventTime {
   converted: string;
 }
 
-function parseMatches(text: string, viewerTz: string, defaultZone?: string, sourceDateStr?: string): ParsedMatch[] {
+function parseMatches(
+  text: string,
+  viewerTz: string,
+  defaultZone?: string,
+  sourceDateStr?: string,
+): ParsedMatch[] {
   const results: ParsedMatch[] = [];
   TIME_RE.lastIndex = 0;
   let m: RegExpExecArray | null;
@@ -110,7 +125,9 @@ function parseMatches(text: string, viewerTz: string, defaultZone?: string, sour
       const offsetMin = (offH * 60 + offM) * (sign === "-" ? -1 : 1);
       // Source wall time interpreted at this offset:
       const todayStr = sourceDateStr ?? new Date().toISOString().slice(0, 10);
-      const naiveUtc = Date.parse(`${todayStr}T${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}:00Z`);
+      const naiveUtc = Date.parse(
+        `${todayStr}T${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}:00Z`,
+      );
       utcMs = naiveUtc - offsetMin * 60000;
       sourceLabel = "offset";
       if (tzOffsetMinutes(utcMs, viewerTz) === offsetMin) continue;
@@ -122,22 +139,36 @@ function parseMatches(text: string, viewerTz: string, defaultZone?: string, sour
 
     const hh = new Intl.DateTimeFormat("en-GB", {
       timeZone: viewerTz,
-      hour: "2-digit", minute: "2-digit", hour12: false,
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
     }).format(new Date(utcMs));
     const abbr = viewerTz;
     const dayDate = new Intl.DateTimeFormat("en-GB", {
-      timeZone: viewerTz, weekday: "long", day: "numeric", month: "long", year: "numeric",
+      timeZone: viewerTz,
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      year: "numeric",
     }).format(new Date(utcMs));
     const sourceTz = sourceLabel !== "offset" ? sourceLabel : viewerTz;
     const sourceDayDate = new Intl.DateTimeFormat("en-GB", {
-      timeZone: sourceTz, weekday: "long", day: "numeric", month: "long", year: "numeric",
+      timeZone: sourceTz,
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      year: "numeric",
     }).format(new Date(utcMs));
     const sourceHH = new Intl.DateTimeFormat("en-GB", {
-      timeZone: sourceTz, hour: "2-digit", minute: "2-digit", hour12: false,
+      timeZone: sourceTz,
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
     }).format(new Date(utcMs));
-    const sourceAbbr = sourceLabel !== "offset"
-      ? (tzAbbrev(utcMs, sourceTz) || "GMT")
-      : (tzAbbrev(utcMs, viewerTz) || "");
+    const sourceAbbr =
+      sourceLabel !== "offset"
+        ? tzAbbrev(utcMs, sourceTz) || "GMT"
+        : tzAbbrev(utcMs, viewerTz) || "";
     results.push({
       start: m.index,
       end: m.index + m[0].length,
@@ -176,17 +207,31 @@ function parseMatches(text: string, viewerTz: string, defaultZone?: string, sour
         if (!Number.isFinite(utcMs)) continue;
         if (tzOffsetMinutes(utcMs, tz) === tzOffsetMinutes(utcMs, viewerTz)) continue;
         const hh = new Intl.DateTimeFormat("en-GB", {
-          timeZone: viewerTz, hour: "2-digit", minute: "2-digit", hour12: false,
+          timeZone: viewerTz,
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: false,
         }).format(new Date(utcMs));
         const abbr = viewerTz;
         const dayDate = new Intl.DateTimeFormat("en-GB", {
-          timeZone: viewerTz, weekday: "long", day: "numeric", month: "long", year: "numeric",
+          timeZone: viewerTz,
+          weekday: "long",
+          day: "numeric",
+          month: "long",
+          year: "numeric",
         }).format(new Date(utcMs));
         const sourceDayDate = new Intl.DateTimeFormat("en-GB", {
-          timeZone: tz, weekday: "long", day: "numeric", month: "long", year: "numeric",
+          timeZone: tz,
+          weekday: "long",
+          day: "numeric",
+          month: "long",
+          year: "numeric",
         }).format(new Date(utcMs));
         const sourceHH = new Intl.DateTimeFormat("en-GB", {
-          timeZone: tz, hour: "2-digit", minute: "2-digit", hour12: false,
+          timeZone: tz,
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: false,
         }).format(new Date(utcMs));
         const sourceAbbr = tzAbbrev(utcMs, tz) || defaultZone.toUpperCase();
         results.push({
@@ -214,7 +259,10 @@ function parseMatches(text: string, viewerTz: string, defaultZone?: string, sour
  * Useful for showing a summary pill on list/card views.
  */
 export function findEventTimes(html: string, viewerTz: string): EventTime[] {
-  const text = html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+  const text = html
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
   const matches = parseMatches(text, viewerTz);
   return matches.map((m) => ({
     source: text.slice(m.start, m.end),
@@ -235,7 +283,20 @@ function parseGuideDate(text: string): string | null {
   }
   const named = withoutWeekday.match(/^(\d{1,2})(?:st|nd|rd|th)?\s+([a-z]+)\s+(\d{2}|\d{4})$/i);
   if (named) {
-    const months = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+    const months = [
+      "jan",
+      "feb",
+      "mar",
+      "apr",
+      "may",
+      "jun",
+      "jul",
+      "aug",
+      "sep",
+      "oct",
+      "nov",
+      "dec",
+    ];
     const [, d, mon, y] = named;
     const month = months.findIndex((m) => mon.toLowerCase().startsWith(m)) + 1;
     if (!month) return null;
@@ -264,8 +325,7 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
   // tags (h1-h6, strong, span, div, p, li...) so editor formatting can't
   // hide them from the row-block pass.
   const DATE_RE = /^(mon|tue|wed|thu|fri|sat|sun)[a-z]*[,\s].{0,40}$/i;
-  const isDateOnly = (s: string) =>
-    DATE_RE.test(s) && /\d/.test(s) && s.length < 60;
+  const isDateOnly = (s: string) => DATE_RE.test(s) && /\d/.test(s) && s.length < 60;
   Array.from(root.querySelectorAll<HTMLElement>("*")).forEach((el) => {
     if (el.closest("[data-tz-row]")) return;
     const t = (el.textContent ?? "").trim();
@@ -273,8 +333,8 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
     // Only hide a leaf-ish node — skip if a child element also matches
     // (we'll get to the child on its own iteration and hiding the parent
     // would over-hide).
-    const childMatch = Array.from(el.children).some(
-      (c) => isDateOnly((c.textContent ?? "").trim()),
+    const childMatch = Array.from(el.children).some((c) =>
+      isDateOnly((c.textContent ?? "").trim()),
     );
     if (childMatch) return;
     if (el.dataset.tzOriginal == null) {
@@ -291,9 +351,7 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
   // contains multiple lines.
   const BLOCK_SELECTOR = "li, p, tr, div";
   const all = Array.from(root.querySelectorAll<HTMLElement>(BLOCK_SELECTOR));
-  const blocks = all.filter(
-    (el) => !el.querySelector(BLOCK_SELECTOR),
-  );
+  const blocks = all.filter((el) => !el.querySelector(BLOCK_SELECTOR));
 
   let rowIndex = 0;
   let currentSourceDate: string | null = null;
@@ -335,7 +393,10 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
     // If subsequent matches exist, their text becomes a caption.
     let caption = "";
     if (matches.length > 1) {
-      caption = matches.slice(1).map((mx) => text.slice(mx.start, mx.end)).join(" · ");
+      caption = matches
+        .slice(1)
+        .map((mx) => text.slice(mx.start, mx.end))
+        .join(" · ");
     }
 
     // Absorb up to 2 following sibling leaf-blocks as name/caption when the
@@ -347,7 +408,10 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
       if (!(sib instanceof HTMLElement)) break;
       if (sib.matches(BLOCK_SELECTOR) && !sib.querySelector(BLOCK_SELECTOR)) {
         const sText = (sib.textContent ?? "").trim();
-        if (!sText) { sib = sib.nextElementSibling as HTMLElement | null; continue; }
+        if (!sText) {
+          sib = sib.nextElementSibling as HTMLElement | null;
+          continue;
+        }
         // Stop if this sibling itself contains a time or is a date-only line.
         if (parseMatches(sText, viewerTz, defaultZone).length) break;
         const parsedSiblingDate = parseGuideDate(sText);
@@ -375,7 +439,8 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
       eventName = (absorbed[0].textContent ?? "").trim() || eventName;
     }
     if (absorbed.length > 1) {
-      const extras = absorbed.slice(1)
+      const extras = absorbed
+        .slice(1)
         .map((a) => (a.textContent ?? "").trim())
         .filter(Boolean)
         .join(" · ");
@@ -405,12 +470,14 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
     block.innerHTML = "";
 
     const numCell = document.createElement("span");
-    numCell.className = "font-display text-2xl font-bold text-purple-200/60 group-hover:text-fuchsia-400 tabular-nums w-10";
+    numCell.className =
+      "font-display text-2xl font-bold text-purple-200/60 group-hover:text-fuchsia-400 tabular-nums w-10";
     numCell.textContent = number;
     block.appendChild(numCell);
 
     const nameCell = document.createElement("div");
-    nameCell.className = "min-w-0 px-3 py-2 rounded-lg bg-purple-900/40 border border-purple-500/20";
+    nameCell.className =
+      "min-w-0 px-3 py-2 rounded-lg bg-purple-900/40 border border-purple-500/20";
     const nameEl = document.createElement("div");
     nameEl.className = "text-white font-semibold text-base md:text-lg break-words";
     nameEl.textContent = eventName;
