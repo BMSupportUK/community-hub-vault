@@ -583,19 +583,25 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
       titleText = splitMatch[2].trim();
     }
     const nameEl = document.createElement("div");
-    nameEl.className = "text-white font-semibold text-base md:text-lg leading-snug break-words";
+    nameEl.className =
+      "text-white font-bold text-lg md:text-xl leading-snug break-words drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)]";
     nameEl.textContent = titleText;
     nameCell.appendChild(nameEl);
     if (channel) {
-      const chanEl = document.createElement("div");
-      chanEl.className =
-        "mt-1 text-[11px] uppercase tracking-wider text-fuchsia-300/80 font-medium break-words";
-      chanEl.textContent = channel;
-      nameCell.appendChild(chanEl);
+      const chanWrap = document.createElement("div");
+      chanWrap.className = "mt-2 flex flex-wrap gap-1.5";
+      for (const part of channel.split(/\s*[·•|]\s*/).filter(Boolean)) {
+        const pill = document.createElement("span");
+        pill.className =
+          "inline-flex items-center px-2 py-0.5 rounded-md bg-fuchsia-500/15 border border-fuchsia-400/40 text-fuchsia-100 text-xs md:text-sm font-semibold tracking-wide break-words";
+        pill.textContent = part;
+        chanWrap.appendChild(pill);
+      }
+      nameCell.appendChild(chanWrap);
     }
     if (caption) {
       const capEl = document.createElement("div");
-      capEl.className = "mt-1 text-xs text-purple-200/60 break-words";
+      capEl.className = "mt-1.5 text-sm text-purple-100/80 break-words leading-snug";
       capEl.textContent = caption;
       nameCell.appendChild(capEl);
     }
