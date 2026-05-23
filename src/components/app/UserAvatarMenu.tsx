@@ -22,6 +22,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { Nameplate } from "@/components/app/Nameplate";
@@ -109,12 +110,15 @@ export function UserAvatarMenu() {
   };
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <button
-          aria-label="Account menu"
-          className="group relative flex items-center gap-2 rounded-full bg-rail/80 ring-1 ring-border hover:ring-primary/60 hover:bg-surface-2 transition-all px-1.5 py-1 shadow-soft"
-        >
+    <TooltipProvider delayDuration={150}>
+      <DropdownMenu>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <DropdownMenuTrigger asChild>
+              <button
+                aria-label="Account menu"
+                className="group relative flex items-center gap-2 rounded-full bg-rail/80 ring-1 ring-border hover:ring-primary/60 hover:bg-surface-2 transition-all px-1.5 py-1 shadow-soft"
+              >
           <Avatar className="h-7 w-7 ring-2 ring-primary/40 group-hover:ring-primary transition">
             <AvatarImage src={resolvedAvatar} alt={name} />
             <AvatarFallback className="text-[10px] font-bold bg-gradient-primary text-primary-foreground">
@@ -140,14 +144,18 @@ export function UserAvatarMenu() {
             )}
             aria-label={statusLabel}
           />
-          <span
-            role="tooltip"
-            className="pointer-events-none absolute left-1/2 top-full mt-2 -translate-x-1/2 whitespace-nowrap rounded-md bg-popover px-2 py-1 text-[10px] font-medium text-popover-foreground shadow-md ring-1 ring-border opacity-0 group-hover:opacity-100 transition-opacity z-50"
+              </button>
+            </DropdownMenuTrigger>
+          </TooltipTrigger>
+          <TooltipContent
+            side="bottom"
+            align="center"
+            sideOffset={8}
+            className="z-[1000] whitespace-nowrap bg-popover px-2 py-1 text-[10px] font-medium text-popover-foreground shadow-md ring-1 ring-border"
           >
             {statusLabel}
-          </span>
-        </button>
-      </DropdownMenuTrigger>
+          </TooltipContent>
+        </Tooltip>
       <DropdownMenuContent align="end" sideOffset={8} className="w-72 p-0 overflow-hidden">
         <div className="relative p-4 pb-3 overflow-hidden">
           <Nameplate
@@ -243,6 +251,7 @@ export function UserAvatarMenu() {
           </DropdownMenuItem>
         </div>
       </DropdownMenuContent>
-    </DropdownMenu>
+      </DropdownMenu>
+    </TooltipProvider>
   );
 }
