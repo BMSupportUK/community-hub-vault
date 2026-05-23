@@ -417,10 +417,10 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
 
   let rowIndex = 0;
   let currentSourceDate: string | null = null;
-  for (const block of blocks) {
+  for (const [blockIndex, block] of blocks.entries()) {
     // Skip nested blocks (e.g. <p> inside <li>) — outer wins, but we mark
     // already-transformed rows so descendants don't double-process.
-    if (block.closest("[data-tz-row]") && block.getAttribute("data-tz-row") == null) continue;
+    if (block.closest("[data-tz-row]")) continue;
 
     const text = block.textContent ?? "";
     if (!text.trim()) continue;
@@ -460,46 +460,27 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
         .join(" · ");
     }
 
-    // Absorb up to 2 following sibling leaf-blocks as name/caption when the
-    // time block itself only contains the time (rich-text editors put each
-    // line in its own <div>).
+    // Absorb following leaf lines as name/caption even when the editor wrapped
+    // them in extra containers. Stop cleanly at the next time or date heading.
     const absorbed: HTMLElement[] = [];
-    let sib = block.nextElementSibling as HTMLElement | null;
-    while (sib) {
-      if (!(sib instanceof HTMLElement)) break;
-      if (sib.tagName === "BR") {
-        sib = sib.nextElementSibling as HTMLElement | null;
-        continue;
-      }
-      if (isLineElement(sib)) {
-        const sText = (sib.textContent ?? "").trim();
-        if (!sText) {
-          sib = sib.nextElementSibling as HTMLElement | null;
-          continue;
+    for (const candidate of blocks.slice(blockIndex + 1)) {
+      if (candidate.closest("[data-tz-row]")) continue;
+      const sText = (candidate.textContent ?? "").trim();
+      if (!sText) continue;
+      const parsedSiblingDate = parseGuideDate(sText);
+      if (parsedSiblingDate) {
+        currentSourceDate = parsedSiblingDate;
+        if (candidate.dataset.tzOriginal == null) {
+          candidate.dataset.tzOriginal = candidate.innerHTML;
+          candidate.dataset.tzPrevClass = candidate.className;
         }
-        const parsedSiblingDate = parseGuideDate(sText);
-        const isDate = Boolean(parsedSiblingDate);
-        if (isDate) {
-          currentSourceDate = parsedSiblingDate;
-          // Hide the date-only heading but keep absorbing siblings past it,
-          // so the event name + channels that follow still attach to this row.
-          if (sib.dataset.tzOriginal == null) {
-            sib.dataset.tzOriginal = sib.innerHTML;
-            sib.dataset.tzPrevClass = sib.className;
-          }
-          sib.setAttribute("data-tz-row", "1");
-          sib.className = "hidden";
-          sib = sib.nextElementSibling as HTMLElement | null;
-          continue;
-        }
-        // Stop if this sibling itself contains a time.
-        if (parseMatches(sText, viewerTz, defaultZone, currentSourceDate ?? undefined).length)
-          break;
-        absorbed.push(sib);
-        sib = sib.nextElementSibling as HTMLElement | null;
-        continue;
+        candidate.setAttribute("data-tz-row", "1");
+        candidate.className = "hidden";
+        break;
       }
-      break;
+      if (parseMatches(sText, viewerTz, defaultZone, currentSourceDate ?? undefined).length) break;
+      absorbed.push(candidate);
+      if (absorbed.length >= 8) break;
     }
     if (absorbed[0]) {
       eventName = (absorbed[0].textContent ?? "").trim() || eventName;
