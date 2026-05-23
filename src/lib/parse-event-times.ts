@@ -151,7 +151,7 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string): void {
       pill.setAttribute("data-tz-pill", "1");
       pill.className =
         "inline-flex items-center ml-1 px-1.5 py-0.5 rounded-md bg-fuchsia-500/15 text-fuchsia-100 border border-fuchsia-400/30 text-xs align-baseline";
-      pill.textContent = `→ ${m.converted}`;
+      pill.textContent = `Start Time For Your Timezone ${m.converted}`;
       frag.appendChild(pill);
       cursor = m.end;
     }
