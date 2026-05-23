@@ -117,11 +117,14 @@ function parseMatches(text: string, viewerTz: string, defaultZone?: string): Par
       hour: "2-digit", minute: "2-digit", hour12: false,
     }).format(new Date(utcMs));
     const abbr = tzAbbrev(utcMs, viewerTz);
+    const dayDate = new Intl.DateTimeFormat("en-GB", {
+      timeZone: viewerTz, weekday: "long", day: "numeric", month: "long", year: "numeric",
+    }).format(new Date(utcMs));
     void sourceLabel;
     results.push({
       start: m.index,
       end: m.index + m[0].length,
-      converted: `${hh}${abbr ? ` ${abbr}` : ""}`,
+      converted: `${dayDate} ${hh}${abbr ? ` ${abbr}` : ""}`,
     });
   }
   if (defaultZone) {
@@ -151,10 +154,13 @@ function parseMatches(text: string, viewerTz: string, defaultZone?: string): Par
           timeZone: viewerTz, hour: "2-digit", minute: "2-digit", hour12: false,
         }).format(new Date(utcMs));
         const abbr = tzAbbrev(utcMs, viewerTz);
+        const dayDate = new Intl.DateTimeFormat("en-GB", {
+          timeZone: viewerTz, weekday: "long", day: "numeric", month: "long", year: "numeric",
+        }).format(new Date(utcMs));
         results.push({
           start: bm.index,
           end: bm.index + bm[0].length,
-          converted: `${hh}${abbr ? ` ${abbr}` : ""}`,
+          converted: `${dayDate} ${hh}${abbr ? ` ${abbr}` : ""}`,
         });
       }
       results.sort((a, b) => a.start - b.start);
