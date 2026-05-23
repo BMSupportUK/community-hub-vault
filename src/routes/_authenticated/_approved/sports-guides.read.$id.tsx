@@ -76,7 +76,7 @@ function ReadPage() {
   useEffect(() => {
     const el = bodyRef.current;
     if (!el || !blog?.body) return;
-    annotateTimesInEl(el, viewerTz);
+    annotateTimesInEl(el, viewerTz, "GMT");
     // React may re-set innerHTML on subsequent renders (e.g. after query
     // invalidations), which wipes our injected pills. Re-annotate whenever
     // the body subtree is replaced.
@@ -87,7 +87,7 @@ function ReadPage() {
         ),
       );
       if (!contentChanged) return;
-      annotateTimesInEl(el, viewerTz);
+      annotateTimesInEl(el, viewerTz, "GMT");
     });
     observer.observe(el, { childList: true, subtree: true });
     return () => observer.disconnect();
