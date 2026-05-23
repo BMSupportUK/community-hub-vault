@@ -425,6 +425,10 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
     let sib = block.nextElementSibling as HTMLElement | null;
     while (sib) {
       if (!(sib instanceof HTMLElement)) break;
+      if (sib.tagName === "BR") {
+        sib = sib.nextElementSibling as HTMLElement | null;
+        continue;
+      }
       if (isLineElement(sib)) {
         const sText = (sib.textContent ?? "").trim();
         if (!sText) {
