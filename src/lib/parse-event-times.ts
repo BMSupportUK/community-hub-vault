@@ -574,13 +574,20 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
 
     const nameCell = document.createElement("div");
     nameCell.className = "min-w-0 flex-1";
-    // Split on " : " or " - " — left side is the channel, right side is the event name.
+    // Detect a channel list (multiple channels separated by · • |) on the
+    // left side of a " : " or " - " separator. A single token on the left
+    // (e.g. "Montreal - Opening Race") is treated as part of the event title
+    // and rendered on a single line.
     let channel = "";
     let titleText = eventName;
     const splitMatch = eventName.match(/^\s*(.+?)\s*[:\-–—]\s+(.+)$/);
     if (splitMatch) {
-      channel = splitMatch[1].trim();
-      titleText = splitMatch[2].trim();
+      const left = splitMatch[1].trim();
+      const channels = left.split(/\s*[·•|]\s*/).filter(Boolean);
+      if (channels.length > 1) {
+        channel = channels.join(" | ");
+        titleText = splitMatch[2].trim();
+      }
     }
     const nameEl = document.createElement("div");
     nameEl.className =
@@ -591,7 +598,7 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
       const chanWrap = document.createElement("div");
       chanWrap.className =
         "mt-2 min-w-0 truncate text-xs md:text-sm font-semibold tracking-wide text-fuchsia-100";
-      chanWrap.textContent = channel.split(/\s*[·•|]\s*/).filter(Boolean).join(" | ");
+      chanWrap.textContent = channel;
       nameCell.appendChild(chanWrap);
     }
     if (caption) {
@@ -603,9 +610,9 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
     header.appendChild(nameCell);
     block.appendChild(header);
 
-    // Pills row (source + local side by side)
+    // Pills row (source + local side by side — never wrap)
     const pillsRow = document.createElement("div");
-    pillsRow.className = "flex w-full flex-wrap gap-2 pl-0 md:pl-[3.25rem]";
+    pillsRow.className = "flex w-full flex-nowrap gap-2 pl-0 md:pl-[3.25rem]";
     block.appendChild(pillsRow);
 
     // Source pill (muted) — listed FIRST after name to match mockup order request
