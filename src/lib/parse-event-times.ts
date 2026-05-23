@@ -305,30 +305,44 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
     const sourcePill = document.createElement("span");
     sourcePill.setAttribute("data-tz-pill", "1");
     sourcePill.className =
-      "inline-flex items-baseline gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-purple-100/80 min-w-[110px] justify-center";
+      "inline-flex flex-col items-center px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-purple-100/80 min-w-[140px]";
+    const srcDate = document.createElement("span");
+    srcDate.className = "text-[9px] uppercase tracking-wide text-purple-200/60 leading-tight";
+    srcDate.textContent = m.sourceDate;
+    const srcRow = document.createElement("span");
+    srcRow.className = "flex items-baseline gap-1.5";
     const srcTime = document.createElement("span");
     srcTime.className = "font-bold text-sm tabular-nums";
     srcTime.textContent = m.sourceTime;
     const srcZone = document.createElement("span");
     srcZone.className = "text-[10px] uppercase tracking-wide text-purple-200/60";
     srcZone.textContent = m.sourceZone;
-    sourcePill.appendChild(srcTime);
-    sourcePill.appendChild(srcZone);
+    srcRow.appendChild(srcTime);
+    srcRow.appendChild(srcZone);
+    sourcePill.appendChild(srcDate);
+    sourcePill.appendChild(srcRow);
     block.appendChild(sourcePill);
 
     // Local pill (fuchsia, bold)
     const localPill = document.createElement("span");
     localPill.setAttribute("data-tz-pill", "1");
     localPill.className =
-      "inline-flex items-baseline gap-1.5 px-3 py-1.5 rounded-lg bg-fuchsia-600 text-white shadow-[0_0_15px_rgba(192,38,211,0.25)] min-w-[110px] justify-center";
+      "inline-flex flex-col items-center px-3 py-1.5 rounded-lg bg-fuchsia-600 text-white shadow-[0_0_15px_rgba(192,38,211,0.25)] min-w-[140px]";
+    const locDate = document.createElement("span");
+    locDate.className = "text-[9px] uppercase tracking-wide text-white/75 leading-tight";
+    locDate.textContent = m.localDate;
+    const locRow = document.createElement("span");
+    locRow.className = "flex items-baseline gap-1.5";
     const locTime = document.createElement("span");
     locTime.className = "font-bold text-sm tabular-nums";
     locTime.textContent = m.localTime;
     const locZone = document.createElement("span");
     locZone.className = "text-[10px] uppercase tracking-wide text-white/80";
     locZone.textContent = m.localZone;
-    localPill.appendChild(locTime);
-    localPill.appendChild(locZone);
+    locRow.appendChild(locTime);
+    locRow.appendChild(locZone);
+    localPill.appendChild(locDate);
+    localPill.appendChild(locRow);
     block.appendChild(localPill);
 
     const chev = document.createElement("span");
