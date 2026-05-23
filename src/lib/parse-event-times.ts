@@ -390,21 +390,35 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
 
   let rowIndex = 0;
   let currentSourceDate: string | null = null;
+  let currentSourceDateLabel: string | null = null;
   for (const [blockIndex, block] of blocks.entries()) {
     // Skip nested blocks (e.g. <p> inside <li>) — outer wins, but we mark
     // already-transformed rows so descendants don't double-process.
     if (block.closest("[data-tz-row]")) {
       const skippedDate = parseGuideDate(block.textContent ?? "");
-      if (skippedDate) currentSourceDate = skippedDate;
+      if (skippedDate) {
+        currentSourceDate = skippedDate;
+        currentSourceDateLabel = sourceDateLabelFromHeading(block.textContent ?? "", skippedDate);
+      }
       continue;
     }
 
     const text = block.textContent ?? "";
     if (!text.trim()) continue;
     const parsedBlockDate = parseGuideDate(text);
-    if (parsedBlockDate) currentSourceDate = parsedBlockDate;
+    if (parsedBlockDate) {
+      currentSourceDate = parsedBlockDate;
+      currentSourceDateLabel = sourceDateLabelFromHeading(text, parsedBlockDate);
+    }
     const rowSourceDate = currentSourceDate;
-    const matches = parseMatches(text, viewerTz, defaultZone, rowSourceDate ?? undefined);
+    const rowSourceDateLabel = currentSourceDateLabel;
+    const matches = parseMatches(
+      text,
+      viewerTz,
+      defaultZone,
+      rowSourceDate ?? undefined,
+      rowSourceDateLabel ?? undefined,
+    );
     if (!matches.length) {
       // Hide standalone date headings like "Saturday 23-05-26" or
       // "Saturday, 23 May 2026" — the per-row pills already show the date.
@@ -446,6 +460,7 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
       const parsedSiblingDate = parseGuideDate(sText);
       if (parsedSiblingDate) {
         currentSourceDate = parsedSiblingDate;
+        currentSourceDateLabel = sourceDateLabelFromHeading(sText, parsedSiblingDate);
         if (candidate.dataset.tzOriginal == null) {
           candidate.dataset.tzOriginal = candidate.innerHTML;
           candidate.dataset.tzPrevClass = candidate.className;
@@ -455,7 +470,16 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
         break;
       }
       if (candidate.closest("[data-tz-row]")) continue;
-      if (parseMatches(sText, viewerTz, defaultZone, currentSourceDate ?? undefined).length) break;
+      if (
+        parseMatches(
+          sText,
+          viewerTz,
+          defaultZone,
+          currentSourceDate ?? undefined,
+          currentSourceDateLabel ?? undefined,
+        ).length
+      )
+        break;
       absorbed.push(candidate);
       if (absorbed.length >= 8) break;
     }
