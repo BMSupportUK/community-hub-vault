@@ -2548,6 +2548,7 @@ export type Database = {
         Row: {
           banner_url: string | null
           body: string
+          event_date: string | null
           id: string
           updated_at: string
           updated_by: string | null
@@ -2555,6 +2556,7 @@ export type Database = {
         Insert: {
           banner_url?: string | null
           body?: string
+          event_date?: string | null
           id?: string
           updated_at?: string
           updated_by?: string | null
@@ -2562,6 +2564,7 @@ export type Database = {
         Update: {
           banner_url?: string | null
           body?: string
+          event_date?: string | null
           id?: string
           updated_at?: string
           updated_by?: string | null
