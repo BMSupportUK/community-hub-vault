@@ -2113,6 +2113,7 @@ export type Database = {
       }
       sports_blogs: {
         Row: {
+          auto_clear_at: string | null
           badge: string | null
           body: string | null
           category_id: string
@@ -2122,11 +2123,13 @@ export type Database = {
           id: string
           image_url: string | null
           published: boolean
+          refresh_notice: string | null
           sort_order: number
           title: string
           updated_at: string
         }
         Insert: {
+          auto_clear_at?: string | null
           badge?: string | null
           body?: string | null
           category_id: string
@@ -2136,11 +2139,13 @@ export type Database = {
           id?: string
           image_url?: string | null
           published?: boolean
+          refresh_notice?: string | null
           sort_order?: number
           title: string
           updated_at?: string
         }
         Update: {
+          auto_clear_at?: string | null
           badge?: string | null
           body?: string | null
           category_id?: string
@@ -2150,6 +2155,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           published?: boolean
+          refresh_notice?: string | null
           sort_order?: number
           title?: string
           updated_at?: string
@@ -3125,6 +3131,7 @@ export type Database = {
         Args: { _user_id: string }
         Returns: boolean
       }
+      sports_blogs_clear_expired: { Args: never; Returns: undefined }
       submit_appeal: { Args: { p_reason: string }; Returns: Json }
       unmute_user: { Args: { _user_id: string }; Returns: boolean }
       upsert_my_signup_vpn: {

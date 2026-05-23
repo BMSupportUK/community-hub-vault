@@ -1,37 +1,44 @@
 ## Goal
-On the order chat in the store (customer + admin order panel), collapse the three stacked payment panels into a single "Pay" button that opens a dialog containing the payment options, ordered: Square → PayPal → Crypto.
+1. Add an optional "Refresh notice" field to each sports guide. When set, it renders as a highlighted notice box directly under the guide's title on the read page.
+2. Auto-clear sports guide body content (excerpt + body) 24 hours after publish, while keeping the row, title, category, image, and badge intact.
 
-## Scope
-File: `src/routes/_authenticated/_approved/shop.tsx` (the order detail view around lines 2085–2127). No backend / server function changes — the existing `SquareCardPanel`, `PaypalPanel`, and `CryptoPanel` components are reused as-is.
+## Schema changes (`sports_blogs`)
+- Add `refresh_notice text NULL` — admin-editable message shown under the title.
+- Add `auto_clear_at timestamptz NULL` — when set, content is wiped at this time. Defaults to `created_at + interval '24 hours'` for new rows via trigger. Admins can leave NULL to opt-out.
 
-## Changes
+No RLS changes; existing `manage blogs` policy covers writes.
 
-1. **Replace the inline payment stack** in the order sidebar with a single primary CTA:
-   - Button label: `Pay <amount>` (uses existing `fmt(order.total_cents)`).
-   - Icon: `CreditCard` from lucide-react.
-   - Shown only when: `!order.paid_at && !order.completed_at && order.status !== "cancelled"` and the viewer is admin or owner.
-   - Hidden (and replaced by the existing "USDT payment in progress" notice) when `pendingCrypto` is active — crypto still locks other methods.
-   - When already paid/completed, render the existing `SquareCardPanel` / `PaypalPanel` confirmation states inline as today (they self-render the paid receipt) so the user can still see which method paid.
+## Auto-clear mechanism
+- Add SQL function `sports_blogs_clear_expired()` that runs:
+  ```sql
+  UPDATE sports_blogs
+     SET excerpt = NULL, body = NULL
+   WHERE auto_clear_at IS NOT NULL
+     AND auto_clear_at <= now()
+     AND (excerpt IS NOT NULL OR body IS NOT NULL);
+  ```
+- Schedule via `pg_cron` to run every 15 minutes (`*/15 * * * *`). Enable `pg_cron` if not already.
+- Title, category, image, badge, and the new `refresh_notice` are preserved so the guide still appears in the list — only the article body is cleared.
 
-2. **New "Choose payment method" dialog** (local component in the same file):
-   - Triggered by the Pay button, controlled via `useState`.
-   - Title: `Choose how to pay`, subtitle showing the amount.
-   - Body contains three sections stacked in this order, each with a small heading:
-     1. **Square** — renders `<SquareCardPanel />`
-     2. **PayPal** — renders `<PaypalPanel />`
-     3. **Crypto (USDT)** — renders `<CryptoPanel />`
-   - Same `orderId`, `amountCents`, `canPay`, `onChange={load}` props as today.
-   - `onChange` also closes the dialog once the order becomes paid (detected on next `load`).
-   - Dividers between sections replace the existing "or" separators.
+## UI changes
 
-3. **Paid-state rendering** (outside the dialog):
-   - Continue rendering the three panels' paid-confirmation branches inline below the order summary so the receipt remains visible without opening the dialog. (Each panel already early-returns a confirmation block when paid; we just mount them outside the dialog with `canPay={false}` when `order.paid_at` is set.)
+### Admin editor (`sports-guides.new.tsx`, `sports-guides.$id.edit.tsx`)
+- Add a "Refresh notice" text input (single line, optional) — placeholder e.g. "Refresh your player to load tonight's matches".
+- Persist via existing insert/update flow.
+
+### Read page (`sports-guides.read.$id.tsx`)
+- Directly under the `<h1>` title, conditionally render a notice box when `refresh_notice` is set: amber/warning background, `RefreshCw` icon, the notice text.
+- Component is purely presentational; no extra fetch needed.
+
+### List page (`sports-guides.tsx`)
+- No visual change required, but show a small "Updated" badge stays as-is. (Body-cleared guides will simply show empty excerpt.)
 
 ## Technical notes
-- No prop signature changes to `SquareCardPanel`, `PaypalPanel`, `CryptoPanel`.
-- Dialog uses existing `Dialog`, `DialogContent`, `DialogHeader`, `DialogTitle` already imported in the file.
-- No route, schema, or server-function changes.
+- Migration order: add columns first, then backfill `auto_clear_at = created_at + interval '24 hours'` for existing rows so historical content also auto-clears on next cron tick (admins can null-out specific rows they want kept).
+- Trigger on INSERT: `IF NEW.auto_clear_at IS NULL THEN NEW.auto_clear_at := NEW.created_at + interval '24 hours'; END IF;` — so the default applies but admins can override.
+- After migration, regenerate Supabase types automatically (handled by the platform).
 
 ## Out of scope
-- Visual redesign of individual payment panels.
-- Changing payment provider behavior, fees, or order status logic.
+- Per-category opt-in/out toggles.
+- Restoring cleared content (admins re-publish manually).
+- Notifications when content is cleared.
