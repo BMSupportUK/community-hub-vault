@@ -161,7 +161,7 @@ function parseMatches(
       minute: "2-digit",
       hour12: false,
     }).format(new Date(utcMs));
-    const abbr = viewerTz;
+    const abbr = tzAbbrev(utcMs, viewerTz) || viewerTz;
     const dayDate = new Intl.DateTimeFormat("en-GB", {
       timeZone: viewerTz,
       weekday: "long",
@@ -232,7 +232,7 @@ function parseMatches(
           minute: "2-digit",
           hour12: false,
         }).format(new Date(utcMs));
-        const abbr = viewerTz;
+        const abbr = tzAbbrev(utcMs, viewerTz) || viewerTz;
         const dayDate = new Intl.DateTimeFormat("en-GB", {
           timeZone: viewerTz,
           weekday: "long",
