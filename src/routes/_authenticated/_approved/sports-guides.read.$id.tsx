@@ -150,7 +150,7 @@ function ReadPage() {
               <img
                 src={blog.image_url}
                 alt={blog.title}
-                className="w-full rounded-2xl border border-purple-500/30"
+                className="max-h-48 md:max-h-64 w-auto mx-auto rounded-2xl border border-purple-500/30 object-contain"
               />
             )}
             {blog.excerpt && <p className="text-lg text-purple-100/80 italic">{blog.excerpt}</p>}
