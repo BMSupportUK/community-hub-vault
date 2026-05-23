@@ -675,7 +675,7 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
   const eventRows = Array.from(
     root.querySelectorAll<HTMLElement>("[data-tz-row][data-tz-utc]"),
   );
-  if (eventRows.length > 1) {
+  if (eventRows.length >= 1) {
     // Anchor at the first row's top-level ancestor within root, then reparent
     // every row to be a direct child of `root`. This bypasses editor wrappers
     // (grids, columns, extra divs) so rows always stack vertically full-width.
