@@ -141,6 +141,11 @@ function ReadPage() {
                 <div className="text-sm leading-relaxed">{blog.refresh_notice}</div>
               </div>
             )}
+            {blog.not_guaranteed && (
+              <div className="rounded-xl border border-rose-400/40 bg-rose-500/10 px-4 py-3 text-rose-100 text-sm leading-relaxed">
+                These are not guaranteed and no reports allowed to source.
+              </div>
+            )}
             {blog.image_url && (
               <img
                 src={blog.image_url}
