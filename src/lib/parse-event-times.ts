@@ -124,7 +124,7 @@ function parseMatches(text: string, viewerTz: string, defaultZone?: string): Par
       timeZone: viewerTz,
       hour: "2-digit", minute: "2-digit", hour12: false,
     }).format(new Date(utcMs));
-    const abbr = tzAbbrev(utcMs, viewerTz);
+    const abbr = viewerTz;
     const dayDate = new Intl.DateTimeFormat("en-GB", {
       timeZone: viewerTz, weekday: "long", day: "numeric", month: "long", year: "numeric",
     }).format(new Date(utcMs));
@@ -178,7 +178,7 @@ function parseMatches(text: string, viewerTz: string, defaultZone?: string): Par
         const hh = new Intl.DateTimeFormat("en-GB", {
           timeZone: viewerTz, hour: "2-digit", minute: "2-digit", hour12: false,
         }).format(new Date(utcMs));
-        const abbr = tzAbbrev(utcMs, viewerTz);
+        const abbr = viewerTz;
         const dayDate = new Intl.DateTimeFormat("en-GB", {
           timeZone: viewerTz, weekday: "long", day: "numeric", month: "long", year: "numeric",
         }).format(new Date(utcMs));
