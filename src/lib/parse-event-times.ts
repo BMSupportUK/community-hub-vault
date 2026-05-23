@@ -255,7 +255,24 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
     const text = block.textContent ?? "";
     if (!text.trim()) continue;
     const matches = parseMatches(text, viewerTz, defaultZone);
-    if (!matches.length) continue;
+    if (!matches.length) {
+      // Hide standalone date headings like "Saturday 23-05-26" or
+      // "Saturday, 23 May 2026" — the per-row pills already show the date.
+      const trimmed = text.trim();
+      const dateOnly =
+        /^(mon|tue|wed|thu|fri|sat|sun)[a-z]*[,\s].{0,40}$/i.test(trimmed) &&
+        /\d/.test(trimmed) &&
+        trimmed.length < 60;
+      if (dateOnly) {
+        if (block.dataset.tzOriginal == null) {
+          block.dataset.tzOriginal = block.innerHTML;
+          block.dataset.tzPrevClass = block.className;
+        }
+        block.setAttribute("data-tz-row", "1");
+        block.className = "hidden";
+      }
+      continue;
+    }
 
     const m = matches[0];
     // Derive event name = text with the matched time substring removed.
