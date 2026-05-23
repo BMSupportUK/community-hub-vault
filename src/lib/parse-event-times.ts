@@ -481,7 +481,6 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
     // them in extra containers. Stop cleanly at the next time or date heading.
     const absorbed: HTMLElement[] = [];
     for (const candidate of blocks.slice(blockIndex + 1)) {
-      if (candidate.closest("[data-tz-row]")) continue;
       const sText = (candidate.textContent ?? "").trim();
       if (!sText) continue;
       const parsedSiblingDate = parseGuideDate(sText);
@@ -495,6 +494,7 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
         candidate.className = "hidden";
         break;
       }
+      if (candidate.closest("[data-tz-row]")) continue;
       if (parseMatches(sText, viewerTz, defaultZone, currentSourceDate ?? undefined).length) break;
       absorbed.push(candidate);
       if (absorbed.length >= 8) break;
