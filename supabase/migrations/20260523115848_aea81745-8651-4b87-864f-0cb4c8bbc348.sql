@@ -1,0 +1,1 @@
+ALTER TABLE public.sports_blogs ADD COLUMN not_guaranteed boolean NOT NULL DEFAULT false;

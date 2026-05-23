@@ -2122,6 +2122,7 @@ export type Database = {
           excerpt: string | null
           id: string
           image_url: string | null
+          not_guaranteed: boolean
           published: boolean
           refresh_notice: string | null
           sort_order: number
@@ -2138,6 +2139,7 @@ export type Database = {
           excerpt?: string | null
           id?: string
           image_url?: string | null
+          not_guaranteed?: boolean
           published?: boolean
           refresh_notice?: string | null
           sort_order?: number
@@ -2154,6 +2156,7 @@ export type Database = {
           excerpt?: string | null
           id?: string
           image_url?: string | null
+          not_guaranteed?: boolean
           published?: boolean
           refresh_notice?: string | null
           sort_order?: number
