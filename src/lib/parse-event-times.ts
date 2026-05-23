@@ -291,7 +291,7 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
     // line in its own <div>).
     const absorbed: HTMLElement[] = [];
     let sib = block.nextElementSibling as HTMLElement | null;
-    while (sib && absorbed.length < 2) {
+    while (sib) {
       if (!(sib instanceof HTMLElement)) break;
       if (sib.matches(BLOCK_SELECTOR) && !sib.querySelector(BLOCK_SELECTOR)) {
         const sText = (sib.textContent ?? "").trim();
@@ -311,9 +311,12 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
     if (absorbed[0]) {
       eventName = (absorbed[0].textContent ?? "").trim() || eventName;
     }
-    if (absorbed[1]) {
-      const cap2 = (absorbed[1].textContent ?? "").trim();
-      caption = caption ? `${caption} · ${cap2}` : cap2;
+    if (absorbed.length > 1) {
+      const extras = absorbed.slice(1)
+        .map((a) => (a.textContent ?? "").trim())
+        .filter(Boolean)
+        .join(" · ");
+      if (extras) caption = caption ? `${caption} · ${extras}` : extras;
     }
     for (const a of absorbed) {
       if (a.dataset.tzOriginal == null) {
@@ -346,12 +349,12 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
     const nameCell = document.createElement("div");
     nameCell.className = "min-w-0 px-3 py-2 rounded-lg bg-purple-900/40 border border-purple-500/20";
     const nameEl = document.createElement("div");
-    nameEl.className = "text-white font-semibold text-base md:text-lg truncate";
+    nameEl.className = "text-white font-semibold text-base md:text-lg break-words";
     nameEl.textContent = eventName;
     nameCell.appendChild(nameEl);
     if (caption) {
       const capEl = document.createElement("div");
-      capEl.className = "text-xs text-purple-200/60 truncate";
+      capEl.className = "text-xs text-purple-200/60 break-words";
       capEl.textContent = caption;
       nameCell.appendChild(capEl);
     }
