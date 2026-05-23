@@ -61,6 +61,11 @@ interface ParsedMatch {
   end: number;
   converted: string;
   sourcePrefix?: string;
+  sourceTime: string;
+  sourceZone: string;
+  localTime: string;
+  localZone: string;
+  raw: string;
 }
 
 export interface EventTime {
