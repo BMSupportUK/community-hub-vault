@@ -187,7 +187,16 @@ export const Route = createFileRoute("/api/public/hooks/scheduled-reminders")({
 
         // Dedup: drop any job we've already logged.
         const keys = jobs.map((j) => j.key);
-        const { data: existing } = await supabaseAdmin
+        const adminAny = supabaseAdmin as unknown as {
+          from: (t: string) => {
+            select: (cols: string) => {
+              in: (col: string, vals: string[]) => Promise<{ data: { alert_key: string }[] | null }>;
+            };
+            upsert: (row: unknown, opts: { onConflict: string }) => Promise<unknown>;
+            delete: () => { lt: (col: string, val: string) => Promise<unknown> };
+          };
+        };
+        const { data: existing } = await adminAny
           .from("scheduled_alert_log")
           .select("alert_key")
           .in("alert_key", keys);
@@ -210,13 +219,13 @@ export const Route = createFileRoute("/api/public/hooks/scheduled-reminders")({
             console.error("[scheduled-reminders] pushToUser failed", job.key, e);
           }
           // Record regardless so we don't spam if push delivery is flaky.
-          await supabaseAdmin
+          await adminAny
             .from("scheduled_alert_log")
             .upsert({ alert_key: job.key, user_id: job.userId }, { onConflict: "alert_key" });
         }
 
         // GC old rows so the table doesn't grow unbounded.
-        await supabaseAdmin
+        await adminAny
           .from("scheduled_alert_log")
           .delete()
           .lt(

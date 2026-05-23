@@ -64,6 +64,7 @@ import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/e
 import { Route as ApiPublicHooksUserNotificationPushRouteImport } from './routes/api/public/hooks/user-notification-push'
 import { Route as ApiPublicHooksSubscriptionExpiryRemindersRouteImport } from './routes/api/public/hooks/subscription-expiry-reminders'
 import { Route as ApiPublicHooksSquareInvoiceRouteImport } from './routes/api/public/hooks/square-invoice'
+import { Route as ApiPublicHooksScheduledRemindersRouteImport } from './routes/api/public/hooks/scheduled-reminders'
 import { Route as ApiPublicHooksNowpaymentsRouteImport } from './routes/api/public/hooks/nowpayments'
 import { Route as ApiPublicHooksNotifyRouteImport } from './routes/api/public/hooks/notify'
 import { Route as ApiPublicHooksBackupOrdersRouteImport } from './routes/api/public/hooks/backup-orders'
@@ -385,6 +386,12 @@ const ApiPublicHooksSquareInvoiceRoute =
     path: '/api/public/hooks/square-invoice',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksScheduledRemindersRoute =
+  ApiPublicHooksScheduledRemindersRouteImport.update({
+    id: '/api/public/hooks/scheduled-reminders',
+    path: '/api/public/hooks/scheduled-reminders',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksNowpaymentsRoute =
   ApiPublicHooksNowpaymentsRouteImport.update({
     id: '/api/public/hooks/nowpayments',
@@ -493,6 +500,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/backup-orders': typeof ApiPublicHooksBackupOrdersRoute
   '/api/public/hooks/notify': typeof ApiPublicHooksNotifyRoute
   '/api/public/hooks/nowpayments': typeof ApiPublicHooksNowpaymentsRoute
+  '/api/public/hooks/scheduled-reminders': typeof ApiPublicHooksScheduledRemindersRoute
   '/api/public/hooks/square-invoice': typeof ApiPublicHooksSquareInvoiceRoute
   '/api/public/hooks/subscription-expiry-reminders': typeof ApiPublicHooksSubscriptionExpiryRemindersRoute
   '/api/public/hooks/user-notification-push': typeof ApiPublicHooksUserNotificationPushRoute
@@ -556,6 +564,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/backup-orders': typeof ApiPublicHooksBackupOrdersRoute
   '/api/public/hooks/notify': typeof ApiPublicHooksNotifyRoute
   '/api/public/hooks/nowpayments': typeof ApiPublicHooksNowpaymentsRoute
+  '/api/public/hooks/scheduled-reminders': typeof ApiPublicHooksScheduledRemindersRoute
   '/api/public/hooks/square-invoice': typeof ApiPublicHooksSquareInvoiceRoute
   '/api/public/hooks/subscription-expiry-reminders': typeof ApiPublicHooksSubscriptionExpiryRemindersRoute
   '/api/public/hooks/user-notification-push': typeof ApiPublicHooksUserNotificationPushRoute
@@ -623,6 +632,7 @@ export interface FileRoutesById {
   '/api/public/hooks/backup-orders': typeof ApiPublicHooksBackupOrdersRoute
   '/api/public/hooks/notify': typeof ApiPublicHooksNotifyRoute
   '/api/public/hooks/nowpayments': typeof ApiPublicHooksNowpaymentsRoute
+  '/api/public/hooks/scheduled-reminders': typeof ApiPublicHooksScheduledRemindersRoute
   '/api/public/hooks/square-invoice': typeof ApiPublicHooksSquareInvoiceRoute
   '/api/public/hooks/subscription-expiry-reminders': typeof ApiPublicHooksSubscriptionExpiryRemindersRoute
   '/api/public/hooks/user-notification-push': typeof ApiPublicHooksUserNotificationPushRoute
@@ -689,6 +699,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/backup-orders'
     | '/api/public/hooks/notify'
     | '/api/public/hooks/nowpayments'
+    | '/api/public/hooks/scheduled-reminders'
     | '/api/public/hooks/square-invoice'
     | '/api/public/hooks/subscription-expiry-reminders'
     | '/api/public/hooks/user-notification-push'
@@ -752,6 +763,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/backup-orders'
     | '/api/public/hooks/notify'
     | '/api/public/hooks/nowpayments'
+    | '/api/public/hooks/scheduled-reminders'
     | '/api/public/hooks/square-invoice'
     | '/api/public/hooks/subscription-expiry-reminders'
     | '/api/public/hooks/user-notification-push'
@@ -818,6 +830,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/backup-orders'
     | '/api/public/hooks/notify'
     | '/api/public/hooks/nowpayments'
+    | '/api/public/hooks/scheduled-reminders'
     | '/api/public/hooks/square-invoice'
     | '/api/public/hooks/subscription-expiry-reminders'
     | '/api/public/hooks/user-notification-push'
@@ -848,6 +861,7 @@ export interface RootRouteChildren {
   ApiPublicHooksBackupOrdersRoute: typeof ApiPublicHooksBackupOrdersRoute
   ApiPublicHooksNotifyRoute: typeof ApiPublicHooksNotifyRoute
   ApiPublicHooksNowpaymentsRoute: typeof ApiPublicHooksNowpaymentsRoute
+  ApiPublicHooksScheduledRemindersRoute: typeof ApiPublicHooksScheduledRemindersRoute
   ApiPublicHooksSquareInvoiceRoute: typeof ApiPublicHooksSquareInvoiceRoute
   ApiPublicHooksSubscriptionExpiryRemindersRoute: typeof ApiPublicHooksSubscriptionExpiryRemindersRoute
   ApiPublicHooksUserNotificationPushRoute: typeof ApiPublicHooksUserNotificationPushRoute
@@ -1243,6 +1257,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksSquareInvoiceRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/scheduled-reminders': {
+      id: '/api/public/hooks/scheduled-reminders'
+      path: '/api/public/hooks/scheduled-reminders'
+      fullPath: '/api/public/hooks/scheduled-reminders'
+      preLoaderRoute: typeof ApiPublicHooksScheduledRemindersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/nowpayments': {
       id: '/api/public/hooks/nowpayments'
       path: '/api/public/hooks/nowpayments'
@@ -1471,6 +1492,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksBackupOrdersRoute: ApiPublicHooksBackupOrdersRoute,
   ApiPublicHooksNotifyRoute: ApiPublicHooksNotifyRoute,
   ApiPublicHooksNowpaymentsRoute: ApiPublicHooksNowpaymentsRoute,
+  ApiPublicHooksScheduledRemindersRoute: ApiPublicHooksScheduledRemindersRoute,
   ApiPublicHooksSquareInvoiceRoute: ApiPublicHooksSquareInvoiceRoute,
   ApiPublicHooksSubscriptionExpiryRemindersRoute:
     ApiPublicHooksSubscriptionExpiryRemindersRoute,
