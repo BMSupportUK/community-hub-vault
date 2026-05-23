@@ -288,7 +288,7 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
     block.appendChild(numCell);
 
     const nameCell = document.createElement("div");
-    nameCell.className = "min-w-0";
+    nameCell.className = "min-w-0 px-3 py-2 rounded-lg bg-purple-900/40 border border-purple-500/20";
     const nameEl = document.createElement("div");
     nameEl.className = "text-white font-semibold text-base md:text-lg truncate";
     nameEl.textContent = eventName;
