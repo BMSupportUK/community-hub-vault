@@ -55,6 +55,11 @@ interface ParsedMatch {
   converted: string;
 }
 
+export interface EventTime {
+  source: string;
+  converted: string;
+}
+
 function parseMatches(text: string, viewerTz: string): ParsedMatch[] {
   const results: ParsedMatch[] = [];
   TIME_RE.lastIndex = 0;
@@ -113,6 +118,19 @@ function parseMatches(text: string, viewerTz: string): ParsedMatch[] {
     });
   }
   return results;
+}
+
+/**
+ * Strip HTML and return matched event times (source text + viewer-tz time).
+ * Useful for showing a summary pill on list/card views.
+ */
+export function findEventTimes(html: string, viewerTz: string): EventTime[] {
+  const text = html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+  const matches = parseMatches(text, viewerTz);
+  return matches.map((m) => ({
+    source: text.slice(m.start, m.end),
+    converted: m.converted,
+  }));
 }
 
 export function annotateTimesInEl(root: HTMLElement, viewerTz: string): void {

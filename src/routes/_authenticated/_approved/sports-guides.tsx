@@ -9,6 +9,24 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import sportsBg from "@/assets/sports-bg.jpg";
+import { findEventTimes } from "@/lib/parse-event-times";
+
+const viewerTz =
+  (typeof Intl !== "undefined" && Intl.DateTimeFormat().resolvedOptions().timeZone) || "UTC";
+
+function StartTimePill({ body, excerpt }: { body: string | null; excerpt: string | null }) {
+  const haystack = `${excerpt ?? ""} ${body ?? ""}`;
+  const matches = findEventTimes(haystack, viewerTz);
+  if (!matches.length) return null;
+  const first = matches[0];
+  return (
+    <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-fuchsia-500/15 text-fuchsia-100 border border-fuchsia-400/30 text-xs font-medium">
+      <span>{first.source}</span>
+      <span className="opacity-40">|</span>
+      <span>{first.converted}</span>
+    </div>
+  );
+}
 
 export const Route = createFileRoute("/_authenticated/_approved/sports-guides")({
   component: SportsGuidesRoute,
@@ -483,6 +501,7 @@ function SportsGuidesPage() {
                             </div>
                           )}
                           {b.excerpt && <p className="text-sm text-purple-200/70 line-clamp-2">{b.excerpt}</p>}
+                          <StartTimePill body={b.body} excerpt={b.excerpt} />
                           <div className="mt-auto pt-3 flex items-center gap-2">
                             <Button size="sm" className="flex-1 bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white border-0" onClick={() => navigate({ to: "/sports-guides/read/$id", params: { id: b.id }, search: { cat: b.category_id } })}>Click to Read</Button>
                             <span
