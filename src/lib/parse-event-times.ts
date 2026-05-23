@@ -107,6 +107,9 @@ function parseMatches(
   sourceDateLabel?: string,
 ): ParsedMatch[] {
   const results: ParsedMatch[] = [];
+  const inlineDate = parseLeadingGuideDate(text);
+  const effectiveSourceDateStr = inlineDate?.dateStr ?? sourceDateStr;
+  const effectiveSourceDateLabel = inlineDate?.sourceDateLabel ?? sourceDateLabel;
   TIME_RE.lastIndex = 0;
   let m: RegExpExecArray | null;
   while ((m = TIME_RE.exec(text)) !== null) {
@@ -128,7 +131,7 @@ function parseMatches(
     if (abbrev) {
       const tz = ZONE_MAP[abbrev.toUpperCase()];
       if (!tz) continue;
-      const dateStr = sourceDateStr ?? dateInTimeZone(todayUtc, tz);
+      const dateStr = effectiveSourceDateStr ?? dateInTimeZone(todayUtc, tz);
       const timeStr = `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}:00`;
       utcMs = zonedWallTimeToUtcMs(dateStr, timeStr, tz);
       sourceLabel = tz;
@@ -139,7 +142,7 @@ function parseMatches(
       const offM = offMStr ? parseInt(offMStr, 10) : 0;
       const offsetMin = (offH * 60 + offM) * (sign === "-" ? -1 : 1);
       // Source wall time interpreted at this offset:
-      const todayStr = sourceDateStr ?? new Date().toISOString().slice(0, 10);
+      const todayStr = effectiveSourceDateStr ?? new Date().toISOString().slice(0, 10);
       const naiveUtc = Date.parse(
         `${todayStr}T${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}:00Z`,
       );
@@ -168,7 +171,7 @@ function parseMatches(
     }).format(new Date(utcMs));
     const sourceTz = sourceLabel !== "offset" ? sourceLabel : viewerTz;
     const sourceDayDate =
-      sourceDateLabel ??
+      effectiveSourceDateLabel ??
       new Intl.DateTimeFormat("en-GB", {
         timeZone: sourceTz,
         weekday: "long",
@@ -218,7 +221,7 @@ function parseMatches(
         if (!ampm && hour > 23) continue;
         if (!ampm && !mStr) continue;
         const todayUtc = new Date();
-        const dateStr = sourceDateStr ?? dateInTimeZone(todayUtc, tz);
+        const dateStr = effectiveSourceDateStr ?? dateInTimeZone(todayUtc, tz);
         const timeStr = `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}:00`;
         const utcMs = zonedWallTimeToUtcMs(dateStr, timeStr, tz);
         if (!Number.isFinite(utcMs)) continue;
@@ -238,7 +241,7 @@ function parseMatches(
           year: "numeric",
         }).format(new Date(utcMs));
         const sourceDayDate =
-          sourceDateLabel ??
+          effectiveSourceDateLabel ??
           new Intl.DateTimeFormat("en-GB", {
             timeZone: tz,
             weekday: "long",
@@ -325,6 +328,21 @@ function parseGuideDate(text: string): string | null {
   return null;
 }
 
+function parseLeadingGuideDate(text: string): { dateStr: string; sourceDateLabel: string } | null {
+  const trimmed = text.replace(/\s+/g, " ").trim();
+  const leading = trimmed.match(
+    /^((?:(?:mon|tue|wed|thu|fri|sat|sun)[a-z]*\b[\s,]+)?(?:\d{1,2}[-/.]\d{1,2}[-/.](?:\d{2}|\d{4})|\d{1,2}(?:st|nd|rd|th)?\s+[a-z]+\s+(?:\d{2}|\d{4})))(?=\s+\d{1,2}(?::\d{2})?\s*(?:am|pm|a\.m\.|p\.m\.)?\b)/i,
+  )?.[1];
+  if (!leading) return null;
+  const hasWeekday = /^(mon|tue|wed|thu|fri|sat|sun)[a-z]*\b/i.test(leading);
+  const dateStr = parseGuideDate(hasWeekday ? leading : `Monday ${leading}`);
+  if (!dateStr) return null;
+  return {
+    dateStr,
+    sourceDateLabel: sourceDateLabelFromHeading(hasWeekday ? leading : "", dateStr),
+  };
+}
+
 function isWeekdayOnly(text: string): boolean {
   return /^(mon|tue|wed|thu|fri|sat|sun)(day)?$/i.test(text.trim());
 }
@@ -367,12 +385,34 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
     el.className = "hidden";
   });
 
+  const BLOCK_SELECTOR = "li, p, tr, div, h1, h2, h3, h4, h5, h6";
+  const INLINE_LINE_SELECTOR = "b, strong";
+  // Some pasted editor content stores the first event time as direct text in a
+  // wrapper div before nested event-name/source divs. Move that loose leading
+  // text into its own line so it can be numbered like the later events.
+  Array.from(root.querySelectorAll<HTMLElement>(BLOCK_SELECTOR)).forEach((el) => {
+    if (el.closest("[data-tz-row]")) return;
+    const firstBlockChild = Array.from(el.children).find((child) =>
+      (child as HTMLElement).matches(BLOCK_SELECTOR),
+    );
+    if (!firstBlockChild) return;
+    const leadingNodes: ChildNode[] = [];
+    for (const node of Array.from(el.childNodes)) {
+      if (node === firstBlockChild) break;
+      if (node.nodeType === Node.ELEMENT_NODE && (node as HTMLElement).matches(BLOCK_SELECTOR)) break;
+      leadingNodes.push(node);
+    }
+    const leadingText = leadingNodes.map((node) => node.textContent ?? " ").join(" ").trim();
+    if (!leadingText || !parseMatches(leadingText, viewerTz, defaultZone).length) return;
+    const line = document.createElement("div");
+    for (const node of leadingNodes) line.appendChild(node);
+    el.insertBefore(line, firstBlockChild);
+  });
+
   // Pick blocks that look like a single schedule entry. The rich-text editor
   // wraps lines in <div>, so include that — but only leaf-level blocks
   // (no nested block children) so we don't wipe a wrapping <div> that
   // contains multiple lines.
-  const BLOCK_SELECTOR = "li, p, tr, div, h1, h2, h3, h4, h5, h6";
-  const INLINE_LINE_SELECTOR = "b, strong";
   const hasBlockAncestor = (el: HTMLElement) => {
     let parent = el.parentElement;
     while (parent && parent !== root) {
