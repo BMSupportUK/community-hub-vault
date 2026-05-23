@@ -74,8 +74,23 @@ function ReadPage() {
   }, [id, user?.id, navigate, queryClient]);
 
   useEffect(() => {
-    if (!bodyRef.current || !blog?.body) return;
-    annotateTimesInEl(bodyRef.current, viewerTz);
+    const el = bodyRef.current;
+    if (!el || !blog?.body) return;
+    annotateTimesInEl(el, viewerTz);
+    // React may re-set innerHTML on subsequent renders (e.g. after query
+    // invalidations), which wipes our injected pills. Re-annotate whenever
+    // the body subtree is replaced.
+    const observer = new MutationObserver((mutations) => {
+      const contentChanged = mutations.some((m) =>
+        Array.from(m.addedNodes).some(
+          (n) => !(n instanceof HTMLElement) || !n.hasAttribute("data-tz-pill"),
+        ),
+      );
+      if (!contentChanged) return;
+      annotateTimesInEl(el, viewerTz);
+    });
+    observer.observe(el, { childList: true, subtree: true });
+    return () => observer.disconnect();
   }, [blog?.body, viewerTz]);
 
   return (
