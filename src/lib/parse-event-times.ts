@@ -353,8 +353,25 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
   // (no nested block children) so we don't wipe a wrapping <div> that
   // contains multiple lines.
   const BLOCK_SELECTOR = "li, p, tr, div, h1, h2, h3, h4, h5, h6";
-  const all = Array.from(root.querySelectorAll<HTMLElement>(BLOCK_SELECTOR));
-  const blocks = all.filter((el) => !el.querySelector(BLOCK_SELECTOR));
+  const INLINE_LINE_SELECTOR = "b, strong";
+  const hasBlockAncestor = (el: HTMLElement) => {
+    let parent = el.parentElement;
+    while (parent && parent !== root) {
+      if (parent.matches(BLOCK_SELECTOR)) return true;
+      parent = parent.parentElement;
+    }
+    return false;
+  };
+  const isLineElement = (el: HTMLElement) =>
+    (el.matches(BLOCK_SELECTOR) && !el.querySelector(BLOCK_SELECTOR)) ||
+    (el.matches(INLINE_LINE_SELECTOR) && !hasBlockAncestor(el));
+  const all = Array.from(
+    root.querySelectorAll<HTMLElement>(`${BLOCK_SELECTOR}, ${INLINE_LINE_SELECTOR}`),
+  );
+  const blocks = all.filter(isLineElement).sort((a, b) => {
+    const position = a.compareDocumentPosition(b);
+    return position & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1;
+  });
 
   let rowIndex = 0;
   let currentSourceDate: string | null = null;
@@ -408,7 +425,7 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
     let sib = block.nextElementSibling as HTMLElement | null;
     while (sib) {
       if (!(sib instanceof HTMLElement)) break;
-      if (sib.matches(BLOCK_SELECTOR) && !sib.querySelector(BLOCK_SELECTOR)) {
+      if (isLineElement(sib)) {
         const sText = (sib.textContent ?? "").trim();
         if (!sText) {
           sib = sib.nextElementSibling as HTMLElement | null;
