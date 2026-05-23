@@ -65,6 +65,8 @@ interface ParsedMatch {
   sourceZone: string;
   localTime: string;
   localZone: string;
+  sourceDate: string;
+  localDate: string;
   raw: string;
 }
 
@@ -145,6 +147,8 @@ function parseMatches(text: string, viewerTz: string, defaultZone?: string): Par
       sourceZone: sourceAbbr,
       localTime: hh,
       localZone: abbr,
+      sourceDate: sourceDayDate,
+      localDate: dayDate,
       raw: m[0],
     });
   }
@@ -194,6 +198,8 @@ function parseMatches(text: string, viewerTz: string, defaultZone?: string): Par
           sourceZone: sourceAbbr,
           localTime: hh,
           localZone: abbr,
+          sourceDate: sourceDayDate,
+          localDate: dayDate,
           raw: bm[0],
         });
       }
