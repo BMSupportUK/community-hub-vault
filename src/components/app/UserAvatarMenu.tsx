@@ -113,9 +113,8 @@ export function UserAvatarMenu() {
       <DropdownMenuTrigger asChild>
         <button
           aria-label="Account menu"
-          className="group relative flex flex-col items-center gap-1"
+          className="group relative flex items-center gap-2 rounded-full bg-rail/80 ring-1 ring-border hover:ring-primary/60 hover:bg-surface-2 transition-all px-1.5 py-1 shadow-soft"
         >
-          <div className="relative flex items-center gap-2 rounded-full bg-rail/80 ring-1 ring-border hover:ring-primary/60 hover:bg-surface-2 transition-all px-1.5 py-1 shadow-soft">
           <Avatar className="h-7 w-7 ring-2 ring-primary/40 group-hover:ring-primary transition">
             <AvatarImage src={resolvedAvatar} alt={name} />
             <AvatarFallback className="text-[10px] font-bold bg-gradient-primary text-primary-foreground">
@@ -139,15 +138,14 @@ export function UserAvatarMenu() {
               "absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full ring-2 ring-rail",
               isAway ? "bg-yellow-400 shadow-[0_0_10px_rgba(250,204,21,0.8)]" : "bg-emerald-500",
             )}
-            title={statusLabel}
             aria-label={statusLabel}
           />
-          </div>
-          {isAway ? (
-            <span className="text-[10px] font-medium text-yellow-400 leading-none whitespace-nowrap">
-              Away From The Office
-            </span>
-          ) : null}
+          <span
+            role="tooltip"
+            className="pointer-events-none absolute left-1/2 top-full mt-2 -translate-x-1/2 whitespace-nowrap rounded-md bg-popover px-2 py-1 text-[10px] font-medium text-popover-foreground shadow-md ring-1 ring-border opacity-0 group-hover:opacity-100 transition-opacity z-50"
+          >
+            {statusLabel}
+          </span>
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" sideOffset={8} className="w-72 p-0 overflow-hidden">
