@@ -637,4 +637,26 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
     chev.textContent = "›";
     block.appendChild(chev);
   }
+
+  // Sort all transformed event rows by earliest source time and renumber.
+  const eventRows = Array.from(
+    root.querySelectorAll<HTMLElement>("[data-tz-row][data-tz-utc]"),
+  );
+  if (eventRows.length > 1) {
+    const anchorParent = eventRows[0].parentElement;
+    if (anchorParent && eventRows.every((el) => el.parentElement === anchorParent)) {
+      const placeholder = document.createComment("tz-sort-anchor");
+      anchorParent.insertBefore(placeholder, eventRows[0]);
+      const sorted = [...eventRows].sort(
+        (a, b) => Number(a.dataset.tzUtc) - Number(b.dataset.tzUtc),
+      );
+      for (const el of eventRows) el.remove();
+      for (const el of sorted) anchorParent.insertBefore(el, placeholder);
+      placeholder.remove();
+      sorted.forEach((el, idx) => {
+        const numCell = el.querySelector("span");
+        if (numCell) numCell.textContent = String(idx + 1).padStart(2, "0");
+      });
+    }
+  }
 }
