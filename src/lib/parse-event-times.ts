@@ -66,6 +66,20 @@ function tzAbbrev(instantMs: number, tz: string): string {
   return parts.find((p) => p.type === "timeZoneName")?.value ?? "";
 }
 
+function sourceDateLabelFromHeading(text: string, dateStr: string): string {
+  const weekday = text.trim().match(/^(mon|tue|wed|thu|fri|sat|sun)[a-z]*/i)?.[0];
+  const weekdayName = weekday
+    ? `${weekday.charAt(0).toUpperCase()}${weekday.slice(1).toLowerCase()}`
+    : null;
+  const [, month, day] = dateStr.split("-").map((part) => parseInt(part, 10));
+  const monthYear = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "UTC",
+    month: "long",
+    year: "numeric",
+  }).format(new Date(`${dateStr}T00:00:00Z`));
+  return weekdayName ? `${weekdayName} ${day} ${monthYear}` : `${day} ${monthYear}`;
+}
+
 interface ParsedMatch {
   start: number;
   end: number;
@@ -90,6 +104,7 @@ function parseMatches(
   viewerTz: string,
   defaultZone?: string,
   sourceDateStr?: string,
+  sourceDateLabel?: string,
 ): ParsedMatch[] {
   const results: ParsedMatch[] = [];
   TIME_RE.lastIndex = 0;
@@ -152,13 +167,15 @@ function parseMatches(
       year: "numeric",
     }).format(new Date(utcMs));
     const sourceTz = sourceLabel !== "offset" ? sourceLabel : viewerTz;
-    const sourceDayDate = new Intl.DateTimeFormat("en-GB", {
-      timeZone: sourceTz,
-      weekday: "long",
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    }).format(new Date(utcMs));
+    const sourceDayDate =
+      sourceDateLabel ??
+      new Intl.DateTimeFormat("en-GB", {
+        timeZone: sourceTz,
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      }).format(new Date(utcMs));
     const sourceHH = new Intl.DateTimeFormat("en-GB", {
       timeZone: sourceTz,
       hour: "2-digit",
@@ -220,13 +237,15 @@ function parseMatches(
           month: "long",
           year: "numeric",
         }).format(new Date(utcMs));
-        const sourceDayDate = new Intl.DateTimeFormat("en-GB", {
-          timeZone: tz,
-          weekday: "long",
-          day: "numeric",
-          month: "long",
-          year: "numeric",
-        }).format(new Date(utcMs));
+        const sourceDayDate =
+          sourceDateLabel ??
+          new Intl.DateTimeFormat("en-GB", {
+            timeZone: tz,
+            weekday: "long",
+            day: "numeric",
+            month: "long",
+            year: "numeric",
+          }).format(new Date(utcMs));
         const sourceHH = new Intl.DateTimeFormat("en-GB", {
           timeZone: tz,
           hour: "2-digit",
@@ -375,17 +394,35 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
 
   let rowIndex = 0;
   let currentSourceDate: string | null = null;
-  for (const block of blocks) {
+  let currentSourceDateLabel: string | null = null;
+  for (const [blockIndex, block] of blocks.entries()) {
     // Skip nested blocks (e.g. <p> inside <li>) — outer wins, but we mark
     // already-transformed rows so descendants don't double-process.
-    if (block.closest("[data-tz-row]") && block.getAttribute("data-tz-row") == null) continue;
+    if (block.closest("[data-tz-row]")) {
+      const skippedDate = parseGuideDate(block.textContent ?? "");
+      if (skippedDate) {
+        currentSourceDate = skippedDate;
+        currentSourceDateLabel = sourceDateLabelFromHeading(block.textContent ?? "", skippedDate);
+      }
+      continue;
+    }
 
     const text = block.textContent ?? "";
     if (!text.trim()) continue;
     const parsedBlockDate = parseGuideDate(text);
-    if (parsedBlockDate) currentSourceDate = parsedBlockDate;
+    if (parsedBlockDate) {
+      currentSourceDate = parsedBlockDate;
+      currentSourceDateLabel = sourceDateLabelFromHeading(text, parsedBlockDate);
+    }
     const rowSourceDate = currentSourceDate;
-    const matches = parseMatches(text, viewerTz, defaultZone, rowSourceDate ?? undefined);
+    const rowSourceDateLabel = currentSourceDateLabel;
+    const matches = parseMatches(
+      text,
+      viewerTz,
+      defaultZone,
+      rowSourceDate ?? undefined,
+      rowSourceDateLabel ?? undefined,
+    );
     if (!matches.length) {
       // Hide standalone date headings like "Saturday 23-05-26" or
       // "Saturday, 23 May 2026" — the per-row pills already show the date.
@@ -418,46 +455,37 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
         .join(" · ");
     }
 
-    // Absorb up to 2 following sibling leaf-blocks as name/caption when the
-    // time block itself only contains the time (rich-text editors put each
-    // line in its own <div>).
+    // Absorb following leaf lines as name/caption even when the editor wrapped
+    // them in extra containers. Stop cleanly at the next time or date heading.
     const absorbed: HTMLElement[] = [];
-    let sib = block.nextElementSibling as HTMLElement | null;
-    while (sib) {
-      if (!(sib instanceof HTMLElement)) break;
-      if (sib.tagName === "BR") {
-        sib = sib.nextElementSibling as HTMLElement | null;
-        continue;
-      }
-      if (isLineElement(sib)) {
-        const sText = (sib.textContent ?? "").trim();
-        if (!sText) {
-          sib = sib.nextElementSibling as HTMLElement | null;
-          continue;
+    for (const candidate of blocks.slice(blockIndex + 1)) {
+      const sText = (candidate.textContent ?? "").trim();
+      if (!sText) continue;
+      const parsedSiblingDate = parseGuideDate(sText);
+      if (parsedSiblingDate) {
+        currentSourceDate = parsedSiblingDate;
+        currentSourceDateLabel = sourceDateLabelFromHeading(sText, parsedSiblingDate);
+        if (candidate.dataset.tzOriginal == null) {
+          candidate.dataset.tzOriginal = candidate.innerHTML;
+          candidate.dataset.tzPrevClass = candidate.className;
         }
-        const parsedSiblingDate = parseGuideDate(sText);
-        const isDate = Boolean(parsedSiblingDate);
-        if (isDate) {
-          currentSourceDate = parsedSiblingDate;
-          // Hide the date-only heading but keep absorbing siblings past it,
-          // so the event name + channels that follow still attach to this row.
-          if (sib.dataset.tzOriginal == null) {
-            sib.dataset.tzOriginal = sib.innerHTML;
-            sib.dataset.tzPrevClass = sib.className;
-          }
-          sib.setAttribute("data-tz-row", "1");
-          sib.className = "hidden";
-          sib = sib.nextElementSibling as HTMLElement | null;
-          continue;
-        }
-        // Stop if this sibling itself contains a time.
-        if (parseMatches(sText, viewerTz, defaultZone, currentSourceDate ?? undefined).length)
-          break;
-        absorbed.push(sib);
-        sib = sib.nextElementSibling as HTMLElement | null;
-        continue;
+        candidate.setAttribute("data-tz-row", "1");
+        candidate.className = "hidden";
+        break;
       }
-      break;
+      if (candidate.closest("[data-tz-row]")) continue;
+      if (
+        parseMatches(
+          sText,
+          viewerTz,
+          defaultZone,
+          currentSourceDate ?? undefined,
+          currentSourceDateLabel ?? undefined,
+        ).length
+      )
+        break;
+      absorbed.push(candidate);
+      if (absorbed.length >= 8) break;
     }
     if (absorbed[0]) {
       eventName = (absorbed[0].textContent ?? "").trim() || eventName;
@@ -489,7 +517,7 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
     block.dataset.tzPrevClass = block.className;
     block.setAttribute("data-tz-row", "1");
     block.className =
-      "group not-prose list-none my-2 grid grid-cols-[auto_minmax(0,1fr)] md:grid-cols-[auto_minmax(0,1fr)_10rem_10rem_auto] items-center gap-3 px-4 py-3 rounded-xl bg-purple-950/40 border border-purple-500/20 hover:border-fuchsia-500/60 transition-colors";
+      "group not-prose list-none my-2 grid max-w-full grid-cols-[auto_minmax(0,1fr)] lg:grid-cols-[auto_minmax(0,1fr)_minmax(8.5rem,10rem)_minmax(8.5rem,10rem)_auto] items-center gap-3 overflow-hidden px-3 sm:px-4 py-3 rounded-xl bg-purple-950/40 border border-purple-500/20 hover:border-fuchsia-500/60 transition-colors";
 
     block.innerHTML = "";
 
@@ -518,9 +546,9 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
     const sourcePill = document.createElement("span");
     sourcePill.setAttribute("data-tz-pill", "1");
     sourcePill.className =
-      "inline-flex w-full min-w-0 flex-col items-center justify-center px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-purple-100/80 md:w-40";
+      "col-span-2 inline-flex w-full min-w-0 max-w-full flex-col items-center justify-center px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-purple-100/80 lg:col-span-1";
     const srcDate = document.createElement("span");
-    srcDate.className = "block w-full truncate text-center text-[10px] text-purple-200/70";
+    srcDate.className = "block w-full text-center text-[9px] leading-tight text-purple-200/70";
     srcDate.textContent = m.sourceDate;
     const srcRow = document.createElement("span");
     srcRow.className = "flex w-full min-w-0 items-baseline justify-center gap-1.5";
@@ -540,9 +568,9 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
     const localPill = document.createElement("span");
     localPill.setAttribute("data-tz-pill", "1");
     localPill.className =
-      "inline-flex w-full min-w-0 flex-col items-center justify-center px-3 py-1.5 rounded-lg bg-fuchsia-600 text-white shadow-[0_0_15px_rgba(192,38,211,0.25)] md:w-40";
+      "col-span-2 inline-flex w-full min-w-0 max-w-full flex-col items-center justify-center px-3 py-1.5 rounded-lg bg-fuchsia-600 text-white shadow-[0_0_15px_rgba(192,38,211,0.25)] lg:col-span-1";
     const locDate = document.createElement("span");
-    locDate.className = "block w-full truncate text-center text-[10px] text-white/80";
+    locDate.className = "block w-full text-center text-[9px] leading-tight text-white/80";
     locDate.textContent = m.localDate;
     const locRow = document.createElement("span");
     locRow.className = "flex w-full min-w-0 items-baseline justify-center gap-1.5";
@@ -560,7 +588,8 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
 
     const chev = document.createElement("span");
     chev.setAttribute("aria-hidden", "true");
-    chev.className = "text-purple-300/40 group-hover:text-fuchsia-400 text-lg leading-none";
+    chev.className =
+      "hidden text-purple-300/40 group-hover:text-fuchsia-400 text-lg leading-none lg:inline";
     chev.textContent = "›";
     block.appendChild(chev);
   }

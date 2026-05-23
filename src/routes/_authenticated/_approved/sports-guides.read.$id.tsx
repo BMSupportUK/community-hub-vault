@@ -60,14 +60,22 @@ function ReadPage() {
         const readAt = new Date().toISOString();
         queryClient.setQueryData(
           ["sports-guides-data", user.id],
-          (prev: { categories: Category[]; blogs: Blog[]; reads: Record<string, string>; baselineAt: string | null } | undefined) =>
-            prev ? { ...prev, reads: { ...prev.reads, [id]: readAt } } : prev
+          (
+            prev:
+              | {
+                  categories: Category[];
+                  blogs: Blog[];
+                  reads: Record<string, string>;
+                  baselineAt: string | null;
+                }
+              | undefined,
+          ) => (prev ? { ...prev, reads: { ...prev.reads, [id]: readAt } } : prev),
         );
         await supabase
           .from("sports_blog_reads")
           .upsert(
             { user_id: user.id, blog_id: id, read_at: readAt },
-            { onConflict: "user_id,blog_id" }
+            { onConflict: "user_id,blog_id" },
           );
         queryClient.invalidateQueries({ queryKey: ["sports-guides-data", user.id] });
       }
@@ -101,7 +109,9 @@ function ReadPage() {
         <Button
           variant="ghost"
           className="text-purple-200 hover:text-white hover:bg-purple-800/60"
-          onClick={() => navigate({ to: "/sports-guides", search: { cat: blog?.category_id || undefined } })}
+          onClick={() =>
+            navigate({ to: "/sports-guides", search: { cat: blog?.category_id || undefined } })
+          }
         >
           <ArrowLeft className="size-4 mr-1" /> Back to guides
         </Button>
@@ -110,7 +120,7 @@ function ReadPage() {
         {loading || !blog ? (
           <div className="px-6 py-12 text-center text-purple-200/70">Loading…</div>
         ) : (
-          <article className="max-w-3xl mx-auto px-6 py-8 space-y-5">
+          <article className="w-full max-w-5xl mx-auto px-3 sm:px-6 py-8 space-y-5 overflow-hidden">
             <div className="flex flex-wrap gap-2">
               <span className="text-xs px-2 py-1 rounded-md bg-fuchsia-500/20 text-fuchsia-200 font-medium border border-fuchsia-500/30">
                 {categories.find((c) => c.id === blog.category_id)?.name}
@@ -131,14 +141,16 @@ function ReadPage() {
               </div>
             )}
             {blog.image_url && (
-              <img src={blog.image_url} alt={blog.title} className="w-full rounded-2xl border border-purple-500/30" />
+              <img
+                src={blog.image_url}
+                alt={blog.title}
+                className="w-full rounded-2xl border border-purple-500/30"
+              />
             )}
-            {blog.excerpt && (
-              <p className="text-lg text-purple-100/80 italic">{blog.excerpt}</p>
-            )}
+            {blog.excerpt && <p className="text-lg text-purple-100/80 italic">{blog.excerpt}</p>}
             {blog.body && (
               <div className="space-y-2">
-                <div className="hidden md:grid grid-cols-[auto_minmax(0,1fr)_10rem_10rem_auto] items-center gap-3 px-4 pb-2 text-[10px] uppercase tracking-[0.18em] text-purple-200/50 font-semibold border-b border-purple-500/20">
+                <div className="hidden lg:grid grid-cols-[auto_minmax(0,1fr)_10rem_10rem_auto] items-center gap-3 px-4 pb-2 text-[10px] uppercase tracking-[0.18em] text-purple-200/50 font-semibold border-b border-purple-500/20">
                   <span className="w-10">#</span>
                   <span>Event</span>
                   <span className="w-40 text-center">Source (GMT)</span>
