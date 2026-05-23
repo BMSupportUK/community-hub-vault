@@ -460,11 +460,6 @@ function SportsGuidesPage() {
                               <span className="text-xs px-2 py-1 rounded-md bg-violet-500/20 text-violet-200 font-medium border border-violet-500/30">{b.badge}</span>
                             )}
                           </div>
-                          {b.not_guaranteed && (
-                            <div className="rounded-md border border-red-400/50 bg-red-500/15 text-red-100 px-3 py-2 text-xs leading-snug">
-                              These are not guaranteed and no reports allowed to source.
-                            </div>
-                          )}
                           <h3 className="font-display font-semibold text-lg leading-snug text-purple-50 flex items-center gap-2">
                             {isUnread(b) && (
                               <span className="size-2 rounded-full bg-fuchsia-400 shadow-[0_0_8px_rgba(232,121,249,0.9)] shrink-0 animate-pulse" title="Unread" />
@@ -486,6 +481,11 @@ function SportsGuidesPage() {
                           {b.refresh_notice && (
                             <div className="rounded-md border border-amber-400/50 bg-amber-500/15 text-amber-100 px-3 py-2 text-xs leading-snug">
                               {b.refresh_notice}
+                            </div>
+                          )}
+                          {b.not_guaranteed && (
+                            <div className="rounded-md border border-red-400/50 bg-red-500/15 text-red-100 px-3 py-2 text-xs leading-snug">
+                              These are not guaranteed and no reports allowed to source.
                             </div>
                           )}
                           {b.excerpt && <p className="text-sm text-purple-200/70 line-clamp-2">{b.excerpt}</p>}
