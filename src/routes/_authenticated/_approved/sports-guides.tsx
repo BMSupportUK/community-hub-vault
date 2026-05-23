@@ -317,7 +317,35 @@ function SportsGuidesPage() {
           <TabsContent value="guides" className="mt-6">
             <div className={`grid grid-cols-1 gap-6 ${search.trim() ? "lg:grid-cols-[280px_1fr_340px]" : "lg:grid-cols-[280px_1fr]"}`}>
               <aside className="rounded-2xl bg-purple-950/50 border border-purple-500/30 p-4 h-fit backdrop-blur">
-                <h3 className="font-display font-semibold mb-3 px-2 text-purple-100">Categories</h3>
+                <div className="flex items-center justify-between mb-3 px-2 gap-2">
+                  <h3 className="font-display font-semibold text-purple-100">Categories</h3>
+                  {user && blogs.some(isUnread) && (
+                    <button
+                      onClick={async () => {
+                        const unread = blogs.filter(isUnread);
+                        if (!unread.length) return;
+                        const nowIso = new Date().toISOString();
+                        queryClient.setQueryData<typeof dataQuery.data>(queryKey, (prev) => {
+                          if (!prev) return prev;
+                          const next = { ...prev.reads };
+                          for (const b of unread) next[b.id] = nowIso;
+                          return { ...prev, reads: next };
+                        });
+                        const { error } = await supabase
+                          .from("sports_blog_reads")
+                          .upsert(
+                            unread.map((b) => ({ user_id: user.id, blog_id: b.id, read_at: nowIso })),
+                            { onConflict: "user_id,blog_id" },
+                          );
+                        if (error) { toast.error(error.message); load(); return; }
+                        toast.success("Marked all as read");
+                      }}
+                      className="text-[10px] font-semibold px-2 py-1 rounded-md bg-fuchsia-600/80 hover:bg-fuchsia-500 text-white shadow-sm transition-colors"
+                    >
+                      Mark all read
+                    </button>
+                  )}
+                </div>
                 <div className="space-y-1">
                   {categories.map((c) => {
                     const active = c.id === activeCat;
