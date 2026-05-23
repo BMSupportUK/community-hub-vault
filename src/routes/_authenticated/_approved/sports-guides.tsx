@@ -9,6 +9,24 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import sportsBg from "@/assets/sports-bg.jpg";
+import { findEventTimes } from "@/lib/parse-event-times";
+
+const viewerTz =
+  (typeof Intl !== "undefined" && Intl.DateTimeFormat().resolvedOptions().timeZone) || "UTC";
+
+function StartTimePill({ body, excerpt }: { body: string | null; excerpt: string | null }) {
+  const haystack = `${excerpt ?? ""} ${body ?? ""}`;
+  const matches = findEventTimes(haystack, viewerTz);
+  if (!matches.length) return null;
+  const first = matches[0];
+  return (
+    <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-fuchsia-500/15 text-fuchsia-100 border border-fuchsia-400/30 text-xs font-medium">
+      <span>{first.source}</span>
+      <span className="opacity-40">|</span>
+      <span>{first.converted}</span>
+    </div>
+  );
+}
 
 export const Route = createFileRoute("/_authenticated/_approved/sports-guides")({
   component: SportsGuidesRoute,
