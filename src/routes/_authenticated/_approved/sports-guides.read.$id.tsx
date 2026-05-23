@@ -7,7 +7,6 @@ import { sanitizeRichHtml } from "@/lib/sanitize-html";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { useUserTimezone } from "@/hooks/use-user-timezone";
 import { annotateTimesInEl } from "@/lib/parse-event-times";
 
 export const Route = createFileRoute("/_authenticated/_approved/sports-guides/read/$id")({
@@ -31,7 +30,11 @@ function ReadPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const viewerTz = useUserTimezone();
+  // Use the browser-detected timezone (the viewer's PC clock) so the pill
+  // reflects the device the page is rendered on, regardless of any saved
+  // profile timezone preference.
+  const viewerTz =
+    (typeof Intl !== "undefined" && Intl.DateTimeFormat().resolvedOptions().timeZone) || "UTC";
   const bodyRef = useRef<HTMLDivElement | null>(null);
   const [blog, setBlog] = useState<Blog | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
