@@ -559,7 +559,7 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
     block.setAttribute("data-tz-row", "1");
     block.dataset.tzUtc = String(m.utcMs);
     block.className =
-      "group not-prose list-none m-0 flex flex-col gap-3 overflow-hidden p-4 rounded-xl bg-purple-950/40 border border-purple-500/20 hover:border-fuchsia-500/60 transition-colors";
+      "group not-prose list-none m-0 flex h-full min-h-[12.5rem] flex-col gap-3 overflow-hidden p-4 rounded-xl bg-purple-950/40 border border-purple-500/20 hover:border-fuchsia-500/60 transition-colors";
 
     block.innerHTML = "";
 
@@ -611,7 +611,7 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
 
     // Pills row: fixed two-column grid so pill positions stay aligned on every row.
     const pillsRow = document.createElement("div");
-    pillsRow.className = "grid w-full grid-cols-2 gap-2 pl-0 md:pl-[3.25rem]";
+    pillsRow.className = "mt-auto grid w-full grid-cols-2 gap-2 pl-0 md:pl-[3.25rem]";
     block.appendChild(pillsRow);
 
     // Source pill (muted) — listed FIRST after name to match mockup order request
