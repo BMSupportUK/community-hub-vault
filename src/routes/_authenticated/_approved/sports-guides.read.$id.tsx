@@ -164,7 +164,7 @@ function ReadPage() {
                 </div>
                 <div
                   ref={bodyRef}
-                  className="prose prose-invert max-w-none text-purple-50/90 leading-relaxed"
+                  className="prose prose-invert max-w-none text-purple-50/90 leading-relaxed grid grid-cols-1 lg:grid-cols-2 gap-3"
                   dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(blog.body) }}
                 />
               </div>
