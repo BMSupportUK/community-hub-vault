@@ -236,6 +236,32 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
     }
   });
 
+  // Hide any element whose entire visible text is just a date heading
+  // like "Saturday 23-05-26" or "Saturday, 23 May 2026". Runs across ALL
+  // tags (h1-h6, strong, span, div, p, li...) so editor formatting can't
+  // hide them from the row-block pass.
+  const DATE_RE = /^(mon|tue|wed|thu|fri|sat|sun)[a-z]*[,\s].{0,40}$/i;
+  const isDateOnly = (s: string) =>
+    DATE_RE.test(s) && /\d/.test(s) && s.length < 60;
+  Array.from(root.querySelectorAll<HTMLElement>("*")).forEach((el) => {
+    if (el.closest("[data-tz-row]")) return;
+    const t = (el.textContent ?? "").trim();
+    if (!t || !isDateOnly(t)) return;
+    // Only hide a leaf-ish node — skip if a child element also matches
+    // (we'll get to the child on its own iteration and hiding the parent
+    // would over-hide).
+    const childMatch = Array.from(el.children).some(
+      (c) => isDateOnly((c.textContent ?? "").trim()),
+    );
+    if (childMatch) return;
+    if (el.dataset.tzOriginal == null) {
+      el.dataset.tzOriginal = el.innerHTML;
+      el.dataset.tzPrevClass = el.className;
+    }
+    el.setAttribute("data-tz-row", "1");
+    el.className = "hidden";
+  });
+
   // Pick blocks that look like a single schedule entry. The rich-text editor
   // wraps lines in <div>, so include that — but only leaf-level blocks
   // (no nested block children) so we don't wipe a wrapping <div> that
