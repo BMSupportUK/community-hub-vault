@@ -513,6 +513,10 @@ function WelcomePage() {
             onChange={setEditBody}
             placeholder="Tell members about the next big event…"
           />
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-foreground/70">Event date (auto-deletes after this date)</label>
+            <Input type="date" value={editDate} onChange={(e) => setEditDate(e.target.value)} />
+          </div>
           <DialogFooter>
             <button
               onClick={() => setEditOpen(false)}
