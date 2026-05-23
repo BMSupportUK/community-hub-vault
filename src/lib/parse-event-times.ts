@@ -285,6 +285,45 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
     if (matches.length > 1) {
       caption = matches.slice(1).map((mx) => text.slice(mx.start, mx.end)).join(" · ");
     }
+
+    // Absorb up to 2 following sibling leaf-blocks as name/caption when the
+    // time block itself only contains the time (rich-text editors put each
+    // line in its own <div>).
+    const absorbed: HTMLElement[] = [];
+    let sib = block.nextElementSibling as HTMLElement | null;
+    while (sib && absorbed.length < 2) {
+      if (!(sib instanceof HTMLElement)) break;
+      if (sib.matches(BLOCK_SELECTOR) && !sib.querySelector(BLOCK_SELECTOR)) {
+        const sText = (sib.textContent ?? "").trim();
+        if (!sText) { sib = sib.nextElementSibling as HTMLElement | null; continue; }
+        // Stop if this sibling itself contains a time or is a date-only line.
+        if (parseMatches(sText, viewerTz, defaultZone).length) break;
+        const isDate =
+          /^(mon|tue|wed|thu|fri|sat|sun)[a-z]*[,\s].{0,40}$/i.test(sText) &&
+          /\d/.test(sText) && sText.length < 60;
+        if (isDate) break;
+        absorbed.push(sib);
+        sib = sib.nextElementSibling as HTMLElement | null;
+        continue;
+      }
+      break;
+    }
+    if (absorbed[0]) {
+      eventName = (absorbed[0].textContent ?? "").trim() || eventName;
+    }
+    if (absorbed[1]) {
+      const cap2 = (absorbed[1].textContent ?? "").trim();
+      caption = caption ? `${caption} · ${cap2}` : cap2;
+    }
+    for (const a of absorbed) {
+      if (a.dataset.tzOriginal == null) {
+        a.dataset.tzOriginal = a.innerHTML;
+        a.dataset.tzPrevClass = a.className;
+      }
+      a.setAttribute("data-tz-row", "1");
+      a.className = "hidden";
+    }
+
     if (!eventName) eventName = "Event";
 
     rowIndex += 1;
