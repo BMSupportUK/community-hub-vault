@@ -575,9 +575,8 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
     const nameCell = document.createElement("div");
     nameCell.className = "min-w-0 flex-1";
     // Detect a channel list (multiple channels separated by · • |) on the
-    // left side of a " : " or " - " separator. A single token on the left
-    // (e.g. "Montreal - Opening Race") is treated as part of the event title
-    // and rendered on a single line.
+    // left side of a " : " or " - " separator. The event title always
+    // renders on a single line; channels go on a second line.
     let channel = "";
     let titleText = eventName;
     const splitMatch = eventName.match(/^\s*(.+?)\s*[:\-–—]\s+(.+)$/);
@@ -591,7 +590,7 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
     }
     const nameEl = document.createElement("div");
     nameEl.className =
-      "min-w-0 truncate text-white font-bold text-lg md:text-xl leading-snug drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)]";
+      "min-w-0 truncate whitespace-nowrap text-white font-bold text-lg md:text-xl leading-snug drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)]";
     nameEl.textContent = titleText;
     nameCell.appendChild(nameEl);
     if (channel) {
