@@ -230,25 +230,23 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
     for (const m of matches) {
       if (m.start > cursor) frag.appendChild(document.createTextNode(text.slice(cursor, m.start)));
 
-      // Source-time pill (the original written time)
+      // Wrapper holds source pill (GMT, muted) FIRST, then converted pill (local, fuchsia)
+      const wrapper = document.createElement("span");
+      wrapper.setAttribute("data-tz-pill", "1");
+      wrapper.className = "inline-flex flex-wrap items-center gap-2 align-baseline";
+
+      // Source-time pill (the original written time) — muted, listed first
       const sourcePill = document.createElement("span");
       sourcePill.setAttribute("data-tz-source-pill", "1");
       sourcePill.className =
-        "inline-flex items-center px-2 py-0.5 rounded-md bg-violet-500/20 text-violet-100 border border-violet-400/40 text-xs font-medium align-baseline";
+        "inline-flex items-center px-3 py-1 rounded-lg bg-white/5 border border-white/10 text-purple-100/80 text-xs font-semibold align-baseline";
       sourcePill.textContent = `${m.sourcePrefix ?? ""}${text.slice(m.start, m.end)}`;
-      frag.appendChild(sourcePill);
+      wrapper.appendChild(sourcePill);
 
-      // Divider + converted pill (viewer's timezone)
-      const wrapper = document.createElement("span");
-      wrapper.setAttribute("data-tz-pill", "1");
-      wrapper.className = "inline-flex items-center gap-2 mx-1 align-baseline";
-      const divider = document.createElement("span");
-      divider.className = "opacity-40";
-      divider.textContent = "|";
-      wrapper.appendChild(divider);
+      // Converted pill (viewer's timezone) — primary, bold fuchsia
       const convertedPill = document.createElement("span");
       convertedPill.className =
-        "inline-flex items-center px-2 py-0.5 rounded-md bg-fuchsia-500/20 text-fuchsia-100 border border-fuchsia-400/40 text-xs font-medium";
+        "inline-flex items-center px-3 py-1 rounded-lg bg-fuchsia-600 text-white text-xs font-bold shadow-[0_0_15px_rgba(192,38,211,0.25)] align-baseline";
       convertedPill.textContent = m.converted;
       wrapper.appendChild(convertedPill);
       frag.appendChild(wrapper);
