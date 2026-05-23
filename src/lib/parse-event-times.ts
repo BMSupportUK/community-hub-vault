@@ -589,14 +589,9 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
     nameCell.appendChild(nameEl);
     if (channel) {
       const chanWrap = document.createElement("div");
-      chanWrap.className = "mt-2 flex flex-wrap gap-1.5";
-      for (const part of channel.split(/\s*[·•|]\s*/).filter(Boolean)) {
-        const pill = document.createElement("span");
-        pill.className =
-          "inline-flex items-center px-2 py-0.5 rounded-md bg-fuchsia-500/15 border border-fuchsia-400/40 text-fuchsia-100 text-xs md:text-sm font-semibold tracking-wide break-words";
-        pill.textContent = part;
-        chanWrap.appendChild(pill);
-      }
+      chanWrap.className =
+        "mt-2 min-w-0 truncate text-xs md:text-sm font-semibold tracking-wide text-fuchsia-100";
+      chanWrap.textContent = channel.split(/\s*[·•|]\s*/).filter(Boolean).join(" | ");
       nameCell.appendChild(chanWrap);
     }
     if (caption) {
@@ -610,17 +605,14 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
 
     // Pills row (source + local side by side)
     const pillsRow = document.createElement("div");
-    // On desktop `contents` dissolves this wrapper so the pills become direct
-    // flex children of the row (sitting horizontally next to the name). On
-    // mobile it stays a wrapping flex row so the pills sit below the name.
-    pillsRow.className = "flex gap-2 w-full md:contents";
+    pillsRow.className = "flex w-full flex-wrap gap-2 pl-0 md:pl-13";
     block.appendChild(pillsRow);
 
     // Source pill (muted) — listed FIRST after name to match mockup order request
     const sourcePill = document.createElement("span");
     sourcePill.setAttribute("data-tz-pill", "1");
     sourcePill.className =
-      "flex-1 md:flex-none md:w-auto md:shrink-0 inline-flex min-w-0 max-w-full flex-col items-center justify-center px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-purple-100/80";
+      "flex-1 md:flex-none md:w-auto inline-flex min-w-0 max-w-full flex-col items-center justify-center px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-purple-100/80";
     const srcDate = document.createElement("span");
     srcDate.className =
       "block w-full text-center text-[11px] md:text-xs font-bold uppercase tracking-wider text-fuchsia-200 leading-tight mb-0.5";
@@ -643,7 +635,7 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
     const localPill = document.createElement("span");
     localPill.setAttribute("data-tz-pill", "1");
     localPill.className =
-      "flex-1 md:flex-none md:w-auto md:shrink-0 inline-flex min-w-0 max-w-full flex-col items-center justify-center px-3 py-1.5 rounded-lg bg-fuchsia-600 text-white shadow-[0_0_15px_rgba(192,38,211,0.25)]";
+      "flex-1 md:flex-none md:w-auto inline-flex min-w-0 max-w-full flex-col items-center justify-center px-3 py-1.5 rounded-lg bg-fuchsia-600 text-white shadow-[0_0_15px_rgba(192,38,211,0.25)]";
     const locDate = document.createElement("span");
     locDate.className =
       "block w-full text-center text-[11px] md:text-xs font-bold uppercase tracking-wider text-white leading-tight mb-0.5";
