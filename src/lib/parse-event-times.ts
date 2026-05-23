@@ -559,13 +559,13 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
     block.setAttribute("data-tz-row", "1");
     block.dataset.tzUtc = String(m.utcMs);
     block.className =
-      "group not-prose list-none m-0 flex flex-col md:flex-row md:items-center gap-3 md:gap-4 overflow-hidden p-4 rounded-xl bg-purple-950/40 border border-purple-500/20 hover:border-fuchsia-500/60 transition-colors";
+      "group not-prose list-none m-0 flex flex-col gap-3 overflow-hidden p-4 rounded-xl bg-purple-950/40 border border-purple-500/20 hover:border-fuchsia-500/60 transition-colors";
 
     block.innerHTML = "";
 
     // Header row: number + (event name / channel)
     const header = document.createElement("div");
-    header.className = "flex items-start gap-3 md:flex-1 md:min-w-0";
+    header.className = "flex min-w-0 items-start gap-3";
     const numCell = document.createElement("span");
     numCell.className =
       "font-display text-2xl font-bold text-purple-200/60 group-hover:text-fuchsia-400 tabular-nums w-10 shrink-0 leading-none pt-0.5";
@@ -584,7 +584,7 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
     }
     const nameEl = document.createElement("div");
     nameEl.className =
-      "text-white font-bold text-lg md:text-xl leading-snug break-words drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)]";
+      "min-w-0 truncate text-white font-bold text-lg md:text-xl leading-snug drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)]";
     nameEl.textContent = titleText;
     nameCell.appendChild(nameEl);
     if (channel) {
