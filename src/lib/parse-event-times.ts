@@ -609,16 +609,16 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
     header.appendChild(nameCell);
     block.appendChild(header);
 
-    // Pills row (source + local side by side — never wrap)
+    // Pills row: fixed two-column grid so pill positions stay aligned on every row.
     const pillsRow = document.createElement("div");
-    pillsRow.className = "flex w-full flex-nowrap gap-2 pl-0 md:pl-[3.25rem]";
+    pillsRow.className = "grid w-full grid-cols-2 gap-2 pl-0 md:pl-[3.25rem]";
     block.appendChild(pillsRow);
 
     // Source pill (muted) — listed FIRST after name to match mockup order request
     const sourcePill = document.createElement("span");
     sourcePill.setAttribute("data-tz-pill", "1");
     sourcePill.className =
-      "flex-1 md:flex-none md:w-auto inline-flex min-w-0 max-w-full flex-col items-center justify-center px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-purple-100/80";
+      "inline-flex w-full min-w-0 max-w-full flex-col items-center justify-center px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-purple-100/80";
     const srcDate = document.createElement("span");
     srcDate.className =
       "block w-full text-center text-[11px] md:text-xs font-bold uppercase tracking-wider text-fuchsia-200 leading-tight mb-0.5";
@@ -641,7 +641,7 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
     const localPill = document.createElement("span");
     localPill.setAttribute("data-tz-pill", "1");
     localPill.className =
-      "flex-1 md:flex-none md:w-auto inline-flex min-w-0 max-w-full flex-col items-center justify-center px-3 py-1.5 rounded-lg bg-fuchsia-600 text-white shadow-[0_0_15px_rgba(192,38,211,0.25)]";
+      "inline-flex w-full min-w-0 max-w-full flex-col items-center justify-center px-3 py-1.5 rounded-lg bg-fuchsia-600 text-white shadow-[0_0_15px_rgba(192,38,211,0.25)]";
     const locDate = document.createElement("span");
     locDate.className =
       "block w-full text-center text-[11px] md:text-xs font-bold uppercase tracking-wider text-white leading-tight mb-0.5";
