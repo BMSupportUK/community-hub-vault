@@ -559,36 +559,59 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
     block.setAttribute("data-tz-row", "1");
     block.dataset.tzUtc = String(m.utcMs);
     block.className =
-      "group not-prose list-none my-2 grid max-w-full grid-cols-[auto_minmax(0,1fr)] lg:grid-cols-[auto_minmax(0,1fr)_minmax(8.5rem,10rem)_minmax(8.5rem,10rem)_auto] items-center gap-3 overflow-hidden px-3 sm:px-4 py-3 rounded-xl bg-purple-950/40 border border-purple-500/20 hover:border-fuchsia-500/60 transition-colors";
+      "group not-prose list-none m-0 flex flex-col gap-3 overflow-hidden p-4 rounded-xl bg-purple-950/40 border border-purple-500/20 hover:border-fuchsia-500/60 transition-colors";
 
     block.innerHTML = "";
 
+    // Header row: number + (event name / channel)
+    const header = document.createElement("div");
+    header.className = "flex items-start gap-3";
     const numCell = document.createElement("span");
     numCell.className =
-      "font-display text-2xl font-bold text-purple-200/60 group-hover:text-fuchsia-400 tabular-nums w-10";
+      "font-display text-2xl font-bold text-purple-200/60 group-hover:text-fuchsia-400 tabular-nums w-10 shrink-0 leading-none pt-0.5";
     numCell.textContent = number;
-    block.appendChild(numCell);
+    header.appendChild(numCell);
 
     const nameCell = document.createElement("div");
-    nameCell.className =
-      "min-w-0 px-3 py-2 rounded-lg bg-purple-900/40 border border-purple-500/20";
+    nameCell.className = "min-w-0 flex-1";
+    // Split on " : " or " - " — left side is the channel, right side is the event name.
+    let channel = "";
+    let titleText = eventName;
+    const splitMatch = eventName.match(/^\s*(.+?)\s*[:\-–—]\s+(.+)$/);
+    if (splitMatch) {
+      channel = splitMatch[1].trim();
+      titleText = splitMatch[2].trim();
+    }
     const nameEl = document.createElement("div");
-    nameEl.className = "text-white font-semibold text-base md:text-lg break-words";
-    nameEl.textContent = eventName;
+    nameEl.className = "text-white font-semibold text-base md:text-lg leading-snug break-words";
+    nameEl.textContent = titleText;
     nameCell.appendChild(nameEl);
+    if (channel) {
+      const chanEl = document.createElement("div");
+      chanEl.className =
+        "mt-1 text-[11px] uppercase tracking-wider text-fuchsia-300/80 font-medium break-words";
+      chanEl.textContent = channel;
+      nameCell.appendChild(chanEl);
+    }
     if (caption) {
       const capEl = document.createElement("div");
-      capEl.className = "text-xs text-purple-200/60 break-words";
+      capEl.className = "mt-1 text-xs text-purple-200/60 break-words";
       capEl.textContent = caption;
       nameCell.appendChild(capEl);
     }
-    block.appendChild(nameCell);
+    header.appendChild(nameCell);
+    block.appendChild(header);
+
+    // Pills row (source + local side by side)
+    const pillsRow = document.createElement("div");
+    pillsRow.className = "flex gap-2";
+    block.appendChild(pillsRow);
 
     // Source pill (muted) — listed FIRST after name to match mockup order request
     const sourcePill = document.createElement("span");
     sourcePill.setAttribute("data-tz-pill", "1");
     sourcePill.className =
-      "col-span-2 inline-flex w-full min-w-0 max-w-full flex-col items-center justify-center px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-purple-100/80 lg:col-span-1";
+      "flex-1 inline-flex min-w-0 max-w-full flex-col items-center justify-center px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-purple-100/80";
     const srcDate = document.createElement("span");
     srcDate.className = "block w-full text-center text-[9px] leading-tight text-purple-200/70";
     srcDate.textContent = m.sourceDate;
@@ -604,13 +627,13 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
     srcRow.appendChild(srcZone);
     sourcePill.appendChild(srcDate);
     sourcePill.appendChild(srcRow);
-    block.appendChild(sourcePill);
+    pillsRow.appendChild(sourcePill);
 
     // Local pill (fuchsia, bold)
     const localPill = document.createElement("span");
     localPill.setAttribute("data-tz-pill", "1");
     localPill.className =
-      "col-span-2 inline-flex w-full min-w-0 max-w-full flex-col items-center justify-center px-3 py-1.5 rounded-lg bg-fuchsia-600 text-white shadow-[0_0_15px_rgba(192,38,211,0.25)] lg:col-span-1";
+      "flex-1 inline-flex min-w-0 max-w-full flex-col items-center justify-center px-3 py-1.5 rounded-lg bg-fuchsia-600 text-white shadow-[0_0_15px_rgba(192,38,211,0.25)]";
     const locDate = document.createElement("span");
     locDate.className = "block w-full text-center text-[9px] leading-tight text-white/80";
     locDate.textContent = m.localDate;
@@ -626,14 +649,7 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
     locRow.appendChild(locZone);
     localPill.appendChild(locDate);
     localPill.appendChild(locRow);
-    block.appendChild(localPill);
-
-    const chev = document.createElement("span");
-    chev.setAttribute("aria-hidden", "true");
-    chev.className =
-      "hidden text-purple-300/40 group-hover:text-fuchsia-400 text-lg leading-none lg:inline";
-    chev.textContent = "›";
-    block.appendChild(chev);
+    pillsRow.appendChild(localPill);
   }
 
   // Sort all transformed event rows by earliest source time and renumber.
@@ -660,7 +676,8 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
     }
     placeholder.remove();
     sorted.forEach((el, idx) => {
-      const numCell = el.querySelector("span");
+      // Number cell is the first span inside the header row.
+      const numCell = el.querySelector(":scope > div > span");
       if (numCell) numCell.textContent = String(idx + 1).padStart(2, "0");
     });
   }
