@@ -433,7 +433,8 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
           continue;
         }
         // Stop if this sibling itself contains a time.
-        if (parseMatches(sText, viewerTz, defaultZone, currentSourceDate ?? undefined).length) break;
+        if (parseMatches(sText, viewerTz, defaultZone, currentSourceDate ?? undefined).length)
+          break;
         absorbed.push(sib);
         sib = sib.nextElementSibling as HTMLElement | null;
         continue;
