@@ -110,7 +110,7 @@ function ReadPage() {
         {loading || !blog ? (
           <div className="px-6 py-12 text-center text-purple-200/70">Loading…</div>
         ) : (
-          <article className="max-w-3xl mx-auto px-6 py-8 space-y-5">
+          <article className="w-full max-w-5xl mx-auto px-3 sm:px-6 py-8 space-y-5 overflow-hidden">
             <div className="flex flex-wrap gap-2">
               <span className="text-xs px-2 py-1 rounded-md bg-fuchsia-500/20 text-fuchsia-200 font-medium border border-fuchsia-500/30">
                 {categories.find((c) => c.id === blog.category_id)?.name}
@@ -138,7 +138,7 @@ function ReadPage() {
             )}
             {blog.body && (
               <div className="space-y-2">
-                <div className="hidden md:grid grid-cols-[auto_minmax(0,1fr)_10rem_10rem_auto] items-center gap-3 px-4 pb-2 text-[10px] uppercase tracking-[0.18em] text-purple-200/50 font-semibold border-b border-purple-500/20">
+                <div className="hidden lg:grid grid-cols-[auto_minmax(0,1fr)_10rem_10rem_auto] items-center gap-3 px-4 pb-2 text-[10px] uppercase tracking-[0.18em] text-purple-200/50 font-semibold border-b border-purple-500/20">
                   <span className="w-10">#</span>
                   <span>Event</span>
                   <span className="w-40 text-center">Source (GMT)</span>
