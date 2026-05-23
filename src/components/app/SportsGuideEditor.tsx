@@ -21,6 +21,7 @@ type Blog = {
   badge: string | null;
   refresh_notice: string | null;
   published: boolean;
+  not_guaranteed: boolean;
 };
 
 const DRAFT_KEY = "sports-guide-new-draft";
@@ -99,6 +100,7 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
           badge: draft?.badge ?? "",
           refresh_notice: draft?.refresh_notice ?? "",
           published: draft?.published ?? true,
+          not_guaranteed: draft?.not_guaranteed ?? false,
         });
         if (draft && (draft.title || draft.body || draft.excerpt || draft.image_url)) {
           toast.message("Draft restored");
@@ -141,6 +143,7 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
       badge: string | null;
       refresh_notice: string | null;
       published: boolean;
+      not_guaranteed: boolean;
       sort_order?: number;
     } = {
       category_id: editing.category_id,
@@ -151,6 +154,7 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
       badge: editing.badge?.trim() || null,
       refresh_notice: editing.refresh_notice?.trim() || null,
       published: editing.published,
+      not_guaranteed: editing.not_guaranteed,
     };
     if (!editing.id) {
       // Append to the end of the chosen category so the admin-defined order is preserved.
@@ -284,6 +288,14 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
                 onChange={(e) => setEditing({ ...editing, published: e.target.checked })}
               />
               Published
+            </label>
+            <label className="flex items-center gap-2 text-sm text-purple-100">
+              <input
+                type="checkbox"
+                checked={editing.not_guaranteed}
+                onChange={(e) => setEditing({ ...editing, not_guaranteed: e.target.checked })}
+              />
+              Not Guaranteed
             </label>
           </div>
         )}
