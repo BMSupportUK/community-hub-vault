@@ -590,13 +590,13 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
     }
     const nameEl = document.createElement("div");
     nameEl.className =
-      "min-w-0 truncate whitespace-nowrap text-white font-bold text-lg md:text-xl leading-snug drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)]";
+      "min-w-0 break-words text-white font-bold text-lg md:text-xl leading-snug drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)]";
     nameEl.textContent = titleText;
     nameCell.appendChild(nameEl);
     if (channel) {
       const chanWrap = document.createElement("div");
       chanWrap.className =
-        "mt-2 min-w-0 truncate text-xs md:text-sm font-semibold tracking-wide text-fuchsia-100";
+        "mt-2 min-w-0 break-words text-xs md:text-sm font-semibold tracking-wide text-fuchsia-100";
       chanWrap.textContent = channel;
       nameCell.appendChild(chanWrap);
     }
