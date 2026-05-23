@@ -227,7 +227,7 @@ function parseGuideDate(text: string): string | null {
   const weekdayPrefix = /^(mon|tue|wed|thu|fri|sat|sun)[a-z]*\b[\s,]*/i;
   if (!weekdayPrefix.test(trimmed) || !/\d/.test(trimmed) || trimmed.length >= 80) return null;
   const withoutWeekday = trimmed.replace(weekdayPrefix, "").trim();
-  const numeric = withoutWeekday.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2}|\d{4})$/);
+  const numeric = withoutWeekday.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{2}|\d{4})$/);
   if (numeric) {
     const [, d, m, y] = numeric;
     const year = y.length === 2 ? 2000 + parseInt(y, 10) : parseInt(y, 10);
