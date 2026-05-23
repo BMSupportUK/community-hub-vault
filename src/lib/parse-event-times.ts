@@ -328,8 +328,7 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
   // like "Saturday 23-05-26" or "Saturday, 23 May 2026". Runs across ALL
   // tags (h1-h6, strong, span, div, p, li...) so editor formatting can't
   // hide them from the row-block pass.
-  const DATE_RE = /^(mon|tue|wed|thu|fri|sat|sun)[a-z]*[,\s].{0,40}$/i;
-  const isDateOnly = (s: string) => DATE_RE.test(s) && /\d/.test(s) && s.length < 60;
+  const isDateOnly = (s: string) => Boolean(parseGuideDate(s));
   Array.from(root.querySelectorAll<HTMLElement>("*")).forEach((el) => {
     if (el.closest("[data-tz-row]")) return;
     const t = (el.textContent ?? "").trim();
@@ -353,9 +352,26 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
   // wraps lines in <div>, so include that — but only leaf-level blocks
   // (no nested block children) so we don't wipe a wrapping <div> that
   // contains multiple lines.
-  const BLOCK_SELECTOR = "li, p, tr, div";
-  const all = Array.from(root.querySelectorAll<HTMLElement>(BLOCK_SELECTOR));
-  const blocks = all.filter((el) => !el.querySelector(BLOCK_SELECTOR));
+  const BLOCK_SELECTOR = "li, p, tr, div, h1, h2, h3, h4, h5, h6";
+  const INLINE_LINE_SELECTOR = "b, strong";
+  const hasBlockAncestor = (el: HTMLElement) => {
+    let parent = el.parentElement;
+    while (parent && parent !== root) {
+      if (parent.matches(BLOCK_SELECTOR)) return true;
+      parent = parent.parentElement;
+    }
+    return false;
+  };
+  const isLineElement = (el: HTMLElement) =>
+    (el.matches(BLOCK_SELECTOR) && !el.querySelector(BLOCK_SELECTOR)) ||
+    (el.matches(INLINE_LINE_SELECTOR) && !hasBlockAncestor(el));
+  const all = Array.from(
+    root.querySelectorAll<HTMLElement>(`${BLOCK_SELECTOR}, ${INLINE_LINE_SELECTOR}`),
+  );
+  const blocks = all.filter(isLineElement).sort((a, b) => {
+    const position = a.compareDocumentPosition(b);
+    return position & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1;
+  });
 
   let rowIndex = 0;
   let currentSourceDate: string | null = null;
@@ -368,15 +384,13 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
     if (!text.trim()) continue;
     const parsedBlockDate = parseGuideDate(text);
     if (parsedBlockDate) currentSourceDate = parsedBlockDate;
-    const matches = parseMatches(text, viewerTz, defaultZone, currentSourceDate ?? undefined);
+    const rowSourceDate = currentSourceDate;
+    const matches = parseMatches(text, viewerTz, defaultZone, rowSourceDate ?? undefined);
     if (!matches.length) {
       // Hide standalone date headings like "Saturday 23-05-26" or
       // "Saturday, 23 May 2026" — the per-row pills already show the date.
       const trimmed = text.trim();
-      const dateOnly =
-        /^(mon|tue|wed|thu|fri|sat|sun)[a-z]*[,\s].{0,40}$/i.test(trimmed) &&
-        /\d/.test(trimmed) &&
-        trimmed.length < 60;
+      const dateOnly = Boolean(parseGuideDate(trimmed));
       if (dateOnly) {
         if (block.dataset.tzOriginal == null) {
           block.dataset.tzOriginal = block.innerHTML;
@@ -411,7 +425,11 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
     let sib = block.nextElementSibling as HTMLElement | null;
     while (sib) {
       if (!(sib instanceof HTMLElement)) break;
-      if (sib.matches(BLOCK_SELECTOR) && !sib.querySelector(BLOCK_SELECTOR)) {
+      if (sib.tagName === "BR") {
+        sib = sib.nextElementSibling as HTMLElement | null;
+        continue;
+      }
+      if (isLineElement(sib)) {
         const sText = (sib.textContent ?? "").trim();
         if (!sText) {
           sib = sib.nextElementSibling as HTMLElement | null;
