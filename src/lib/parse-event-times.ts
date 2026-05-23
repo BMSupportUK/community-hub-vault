@@ -559,6 +559,7 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
     block.dataset.tzOriginal = block.innerHTML;
     block.dataset.tzPrevClass = block.className;
     block.setAttribute("data-tz-row", "1");
+    block.dataset.tzUtc = String(m.utcMs);
     block.className =
       "group not-prose list-none my-2 grid max-w-full grid-cols-[auto_minmax(0,1fr)] lg:grid-cols-[auto_minmax(0,1fr)_minmax(8.5rem,10rem)_minmax(8.5rem,10rem)_auto] items-center gap-3 overflow-hidden px-3 sm:px-4 py-3 rounded-xl bg-purple-950/40 border border-purple-500/20 hover:border-fuchsia-500/60 transition-colors";
 
