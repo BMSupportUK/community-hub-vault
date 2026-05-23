@@ -32,6 +32,12 @@ const TIME_RE = new RegExp(
   `\\b(\\d{1,2})(?::(\\d{2}))?\\s*(am|pm|a\\.m\\.|p\\.m\\.)?\\s*(?:(${ZONE_TOKENS})|(?:(UTC|GMT)\\s*([+-])\\s*(\\d{1,2})(?::?(\\d{2}))?))\\b`,
   "gi",
 );
+// Bare time without an explicit zone (e.g. "19:45", "7:30pm", "8 pm").
+// Used when caller specifies a defaultZone (e.g. sports guide is always GMT).
+const BARE_TIME_RE = new RegExp(
+  `\\b(\\d{1,2})(?::(\\d{2}))?\\s*(am|pm|a\\.m\\.|p\\.m\\.)?\\b`,
+  "gi",
+);
 
 function tzOffsetMinutes(instantMs: number, tz: string): number {
   const parts = new Intl.DateTimeFormat("en-US", {
@@ -61,7 +67,7 @@ export interface EventTime {
   converted: string;
 }
 
-function parseMatches(text: string, viewerTz: string): ParsedMatch[] {
+function parseMatches(text: string, viewerTz: string, defaultZone?: string): ParsedMatch[] {
   const results: ParsedMatch[] = [];
   TIME_RE.lastIndex = 0;
   let m: RegExpExecArray | null;
@@ -118,6 +124,42 @@ function parseMatches(text: string, viewerTz: string): ParsedMatch[] {
       converted: `${hh}${abbr ? ` ${abbr}` : ""}`,
     });
   }
+  if (defaultZone) {
+    const tz = ZONE_MAP[defaultZone.toUpperCase()];
+    if (tz) {
+      BARE_TIME_RE.lastIndex = 0;
+      let bm: RegExpExecArray | null;
+      while ((bm = BARE_TIME_RE.exec(text)) !== null) {
+        // Skip if this span overlaps a zone-tagged match already captured
+        if (results.some((r) => bm!.index < r.end && bm!.index + bm![0].length > r.start)) continue;
+        const [, hStr, mStr, ampmRaw] = bm;
+        let hour = parseInt(hStr, 10);
+        const minute = mStr ? parseInt(mStr, 10) : 0;
+        if (hour > 23 || minute > 59) continue;
+        const ampm = ampmRaw?.toLowerCase().replace(/\./g, "");
+        if (ampm === "pm" && hour < 12) hour += 12;
+        if (ampm === "am" && hour === 12) hour = 0;
+        if (!ampm && hour > 23) continue;
+        if (!ampm && !mStr) continue;
+        const todayUtc = new Date();
+        const dateStr = dateInTimeZone(todayUtc, tz);
+        const timeStr = `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}:00`;
+        const utcMs = zonedWallTimeToUtcMs(dateStr, timeStr, tz);
+        if (!Number.isFinite(utcMs)) continue;
+        if (tzOffsetMinutes(utcMs, tz) === tzOffsetMinutes(utcMs, viewerTz)) continue;
+        const hh = new Intl.DateTimeFormat("en-GB", {
+          timeZone: viewerTz, hour: "2-digit", minute: "2-digit", hour12: false,
+        }).format(new Date(utcMs));
+        const abbr = tzAbbrev(utcMs, viewerTz);
+        results.push({
+          start: bm.index,
+          end: bm.index + bm[0].length,
+          converted: `${hh}${abbr ? ` ${abbr}` : ""}`,
+        });
+      }
+      results.sort((a, b) => a.start - b.start);
+    }
+  }
   return results;
 }
 
@@ -134,7 +176,7 @@ export function findEventTimes(html: string, viewerTz: string): EventTime[] {
   }));
 }
 
-export function annotateTimesInEl(root: HTMLElement, viewerTz: string): void {
+export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZone?: string): void {
   // Remove any previously inserted pills so re-runs stay idempotent.
   root.querySelectorAll("[data-tz-pill]").forEach((n) => n.remove());
   root.querySelectorAll("[data-tz-source-pill]").forEach((n) => {
@@ -165,7 +207,7 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string): void {
 
   for (const textNode of targets) {
     const text = textNode.nodeValue ?? "";
-    const matches = parseMatches(text, viewerTz);
+    const matches = parseMatches(text, viewerTz, defaultZone);
     if (!matches.length) continue;
 
     const frag = document.createDocumentFragment();
