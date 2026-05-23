@@ -60,6 +60,7 @@ interface ParsedMatch {
   start: number;
   end: number;
   converted: string;
+  sourcePrefix?: string;
 }
 
 export interface EventTime {
@@ -120,11 +121,15 @@ function parseMatches(text: string, viewerTz: string, defaultZone?: string): Par
     const dayDate = new Intl.DateTimeFormat("en-GB", {
       timeZone: viewerTz, weekday: "long", day: "numeric", month: "long", year: "numeric",
     }).format(new Date(utcMs));
-    void sourceLabel;
+    const sourceTz = sourceLabel !== "offset" ? sourceLabel : viewerTz;
+    const sourceDayDate = new Intl.DateTimeFormat("en-GB", {
+      timeZone: sourceTz, weekday: "long", day: "numeric", month: "long", year: "numeric",
+    }).format(new Date(utcMs));
     results.push({
       start: m.index,
       end: m.index + m[0].length,
       converted: `${dayDate} ${hh}${abbr ? ` ${abbr}` : ""}`,
+      sourcePrefix: `${sourceDayDate} `,
     });
   }
   if (defaultZone) {
@@ -157,10 +162,14 @@ function parseMatches(text: string, viewerTz: string, defaultZone?: string): Par
         const dayDate = new Intl.DateTimeFormat("en-GB", {
           timeZone: viewerTz, weekday: "long", day: "numeric", month: "long", year: "numeric",
         }).format(new Date(utcMs));
+        const sourceDayDate = new Intl.DateTimeFormat("en-GB", {
+          timeZone: tz, weekday: "long", day: "numeric", month: "long", year: "numeric",
+        }).format(new Date(utcMs));
         results.push({
           start: bm.index,
           end: bm.index + bm[0].length,
           converted: `${dayDate} ${hh}${abbr ? ` ${abbr}` : ""}`,
+          sourcePrefix: `${sourceDayDate} `,
         });
       }
       results.sort((a, b) => a.start - b.start);
@@ -226,7 +235,7 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
       sourcePill.setAttribute("data-tz-source-pill", "1");
       sourcePill.className =
         "inline-flex items-center px-2 py-0.5 rounded-md bg-violet-500/20 text-violet-100 border border-violet-400/40 text-xs font-medium align-baseline";
-      sourcePill.textContent = text.slice(m.start, m.end);
+      sourcePill.textContent = `${m.sourcePrefix ?? ""}${text.slice(m.start, m.end)}`;
       frag.appendChild(sourcePill);
 
       // Divider + converted pill (viewer's timezone)
