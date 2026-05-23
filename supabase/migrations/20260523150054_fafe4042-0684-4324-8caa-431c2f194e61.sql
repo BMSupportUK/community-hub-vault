@@ -1,0 +1,1 @@
+CREATE POLICY "upcoming_event staff delete" ON public.upcoming_event FOR DELETE TO authenticated USING (has_any_role(auth.uid(), ARRAY['admin'::app_role, 'management'::app_role, 'staff'::app_role]));

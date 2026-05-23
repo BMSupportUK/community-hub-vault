@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { Headphones, MessageSquare, Activity, Ticket, ShoppingBag, BookOpen, UserPlus, ArrowUp, ArrowDown, Pencil, Upload, Sparkles, Image as ImageIcon } from "lucide-react";
+import { Headphones, MessageSquare, Activity, Ticket, ShoppingBag, BookOpen, UserPlus, ArrowUp, ArrowDown, Pencil, Upload, Sparkles, Image as ImageIcon, Plus, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
 import heroImg from "@/assets/member-hero.jpg";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
@@ -24,7 +24,13 @@ function WelcomePage() {
   const name = (user?.email ?? "there").split("@")[0];
   const navigate = useNavigate();
 
-  const [event, setEvent] = useState<{ id: string; body: string; banner_url: string | null } | null>(null);
+  type EventRow = { id: string; body: string; banner_url: string | null };
+  const [events, setEvents] = useState<EventRow[]>([]);
+  const [currentIdx, setCurrentIdx] = useState(0);
+  const event = events[currentIdx] ?? null;
+  const setEvent = (next: EventRow) => {
+    setEvents((prev) => prev.map((e) => (e.id === next.id ? next : e)));
+  };
   const [eventOpen, setEventOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [editBody, setEditBody] = useState("");
@@ -44,12 +50,25 @@ function WelcomePage() {
       const { data } = await supabase
         .from("upcoming_event")
         .select("id, body, banner_url")
-        .order("updated_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      if (data) setEvent(data as { id: string; body: string; banner_url: string | null });
+        .order("updated_at", { ascending: false });
+      setEvents((data ?? []) as EventRow[]);
     })();
   }, []);
+
+  // Auto-rotate every 60s when there are multiple events and no dialog open
+  useEffect(() => {
+    if (events.length < 2) return;
+    if (eventOpen || editOpen || bannerOpen) return;
+    const t = setInterval(() => {
+      setCurrentIdx((i) => (i + 1) % events.length);
+    }, 60_000);
+    return () => clearInterval(t);
+  }, [events.length, eventOpen, editOpen, bannerOpen]);
+
+  // Keep index in range when events change
+  useEffect(() => {
+    if (currentIdx >= events.length && events.length > 0) setCurrentIdx(0);
+  }, [events.length, currentIdx]);
 
   const openEdit = () => {
     setEditBody(event?.body ?? "");
@@ -68,6 +87,29 @@ function WelcomePage() {
     setEvent({ ...event, body: editBody });
     setEditOpen(false);
     toast.success("Event updated");
+  };
+
+  const addEvent = async () => {
+    const { data, error } = await supabase
+      .from("upcoming_event")
+      .insert({ body: "", updated_by: user?.id ?? null })
+      .select("id, body, banner_url")
+      .single();
+    if (error || !data) { toast.error(error?.message ?? "Failed"); return; }
+    setEvents((prev) => [data as EventRow, ...prev]);
+    setCurrentIdx(0);
+    setEditBody("");
+    setEditOpen(true);
+  };
+
+  const deleteEvent = async () => {
+    if (!event) return;
+    if (!confirm("Delete this event?")) return;
+    const { error } = await supabase.from("upcoming_event").delete().eq("id", event.id);
+    if (error) { toast.error(error.message); return; }
+    setEvents((prev) => prev.filter((e) => e.id !== event.id));
+    setCurrentIdx(0);
+    toast.success("Event deleted");
   };
 
   const pickFile = (file: File) => {
@@ -261,64 +303,119 @@ function WelcomePage() {
               <div className="absolute inset-0 bg-gradient-to-tr from-blue-950/40 via-transparent to-transparent" />
             </div>
 
-            {/* Event adverts beside hero image */}
-            <div className="flex flex-row xl:flex-col gap-4 justify-center xl:justify-start flex-wrap">
-              {/* Event banner 300x250 advert */}
+            {/* Combined event advert (image + divider + text) */}
+            <div className="flex justify-center xl:justify-start">
               <div
-                className="relative rounded-2xl border-2 border-violet-500/60 bg-surface shadow-[0_0_30px_rgba(139,92,246,0.25)] overflow-hidden"
-                style={{ width: 300, height: 250 }}
+                className="relative rounded-2xl border-2 border-violet-500/60 bg-surface shadow-[0_0_30px_rgba(139,92,246,0.25)] overflow-hidden flex flex-col"
+                style={{ width: 300 }}
               >
                 {canEditEvent && (
-                  <button
-                    onClick={() => setBannerOpen(true)}
-                    className="absolute top-2 right-2 z-10 size-7 grid place-items-center rounded-md bg-background/80 border border-violet-500/40 text-foreground/80 hover:bg-violet-500/20 transition"
-                    aria-label="Edit banner"
-                  >
-                    <Pencil className="size-3.5" />
-                  </button>
-                )}
-                {event?.banner_url ? (
-                  <img
-                    src={event.banner_url}
-                    alt="Upcoming event banner"
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full flex flex-col items-center justify-center gap-3 p-5 text-center bg-gradient-to-br from-violet-600/10 to-blue-600/10">
-                    <ImageIcon className="size-10 text-violet-400" />
-                    <p className="font-display font-semibold text-base text-foreground">
-                      Awaiting The Next Event.
-                    </p>
+                  <div className="absolute top-2 right-2 z-20 flex items-center gap-1">
+                    <button
+                      onClick={() => setBannerOpen(true)}
+                      disabled={!event}
+                      className="size-7 grid place-items-center rounded-md bg-background/80 border border-violet-500/40 text-foreground/80 hover:bg-violet-500/20 transition disabled:opacity-40"
+                      aria-label="Edit banner"
+                      title="Edit banner"
+                    >
+                      <ImageIcon className="size-3.5" />
+                    </button>
+                    <button
+                      onClick={openEdit}
+                      disabled={!event}
+                      className="size-7 grid place-items-center rounded-md bg-background/80 border border-violet-500/40 text-foreground/80 hover:bg-violet-500/20 transition disabled:opacity-40"
+                      aria-label="Edit event text"
+                      title="Edit text"
+                    >
+                      <Pencil className="size-3.5" />
+                    </button>
+                    <button
+                      onClick={addEvent}
+                      className="size-7 grid place-items-center rounded-md bg-background/80 border border-violet-500/40 text-foreground/80 hover:bg-violet-500/20 transition"
+                      aria-label="Add event"
+                      title="Add event"
+                    >
+                      <Plus className="size-3.5" />
+                    </button>
+                    {events.length > 0 && (
+                      <button
+                        onClick={deleteEvent}
+                        className="size-7 grid place-items-center rounded-md bg-background/80 border border-red-500/40 text-red-300 hover:bg-red-500/20 transition"
+                        aria-label="Delete event"
+                        title="Delete event"
+                      >
+                        <Trash2 className="size-3.5" />
+                      </button>
+                    )}
                   </div>
                 )}
-              </div>
 
-              {/* Upcoming event 300x250 advert */}
-              <div
-                className="relative rounded-2xl border-2 border-violet-500/60 bg-surface shadow-[0_0_30px_rgba(139,92,246,0.25)] p-5 flex flex-col items-center justify-between gap-3"
-                style={{ width: 300, height: 250 }}
-              >
-                {canEditEvent && (
+                {/* Image area */}
+                <div className="relative w-full" style={{ height: 250 }}>
+                  {event?.banner_url ? (
+                    <img
+                      src={event.banner_url}
+                      alt="Upcoming event banner"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex flex-col items-center justify-center gap-3 p-5 text-center bg-gradient-to-br from-violet-600/15 to-blue-600/15">
+                      <ImageIcon className="size-10 text-violet-400" />
+                      <p className="font-display font-semibold text-base text-foreground">
+                        Awaiting The Next Event.
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Divider */}
+                <div className="h-px bg-gradient-to-r from-transparent via-violet-500/60 to-transparent" />
+
+                {/* Text area */}
+                <div className="p-5 flex flex-col items-center gap-3 min-h-[230px]">
+                  <h3 className="font-display font-bold text-center text-base leading-tight text-foreground">
+                    The Next Big Event on BM Support
+                  </h3>
+                  <p className="text-sm text-foreground/75 text-center line-clamp-4 flex-1">
+                    {event?.body || "Stay tuned…"}
+                  </p>
                   <button
-                    onClick={openEdit}
-                    className="absolute top-2 right-2 size-7 grid place-items-center rounded-md bg-background/80 border border-violet-500/40 text-foreground/80 hover:bg-violet-500/20 transition"
-                    aria-label="Edit event"
+                    onClick={() => setEventOpen(true)}
+                    disabled={!event}
+                    className="px-4 py-2 rounded-md bg-gradient-to-br from-violet-600 to-blue-600 hover:opacity-90 text-white text-sm font-medium shadow-[0_0_20px_rgba(139,92,246,0.45)] transition disabled:opacity-40"
                   >
-                    <Pencil className="size-3.5" />
+                    Read more
                   </button>
-                )}
-                <h3 className="font-display font-bold text-center text-base leading-tight text-foreground">
-                  The Next Big Event on BM Support
-                </h3>
-                <p className="text-sm text-foreground/75 text-center line-clamp-4">
-                  {event?.body || "Stay tuned…"}
-                </p>
-                <button
-                  onClick={() => setEventOpen(true)}
-                  className="px-4 py-2 rounded-md bg-gradient-to-br from-violet-600 to-blue-600 hover:opacity-90 text-white text-sm font-medium shadow-[0_0_20px_rgba(139,92,246,0.45)] transition"
-                >
-                  Read more
-                </button>
+
+                  {events.length > 1 && (
+                    <div className="flex items-center justify-between w-full pt-1">
+                      <button
+                        onClick={() => setCurrentIdx((i) => (i - 1 + events.length) % events.length)}
+                        className="size-7 grid place-items-center rounded-md hover:bg-violet-500/20 text-foreground/70"
+                        aria-label="Previous event"
+                      >
+                        <ChevronLeft className="size-4" />
+                      </button>
+                      <div className="flex items-center gap-1.5">
+                        {events.map((e, i) => (
+                          <button
+                            key={e.id}
+                            onClick={() => setCurrentIdx(i)}
+                            aria-label={`Go to event ${i + 1}`}
+                            className={`size-1.5 rounded-full transition-all ${i === currentIdx ? "bg-violet-400 w-4" : "bg-foreground/30 hover:bg-foreground/50"}`}
+                          />
+                        ))}
+                      </div>
+                      <button
+                        onClick={() => setCurrentIdx((i) => (i + 1) % events.length)}
+                        className="size-7 grid place-items-center rounded-md hover:bg-violet-500/20 text-foreground/70"
+                        aria-label="Next event"
+                      >
+                        <ChevronRight className="size-4" />
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
