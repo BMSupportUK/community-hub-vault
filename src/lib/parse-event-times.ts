@@ -167,13 +167,15 @@ function parseMatches(
       year: "numeric",
     }).format(new Date(utcMs));
     const sourceTz = sourceLabel !== "offset" ? sourceLabel : viewerTz;
-    const sourceDayDate = sourceDateLabel ?? new Intl.DateTimeFormat("en-GB", {
-      timeZone: sourceTz,
-      weekday: "long",
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    }).format(new Date(utcMs));
+    const sourceDayDate =
+      sourceDateLabel ??
+      new Intl.DateTimeFormat("en-GB", {
+        timeZone: sourceTz,
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      }).format(new Date(utcMs));
     const sourceHH = new Intl.DateTimeFormat("en-GB", {
       timeZone: sourceTz,
       hour: "2-digit",
@@ -235,13 +237,15 @@ function parseMatches(
           month: "long",
           year: "numeric",
         }).format(new Date(utcMs));
-        const sourceDayDate = sourceDateLabel ?? new Intl.DateTimeFormat("en-GB", {
-          timeZone: tz,
-          weekday: "long",
-          day: "numeric",
-          month: "long",
-          year: "numeric",
-        }).format(new Date(utcMs));
+        const sourceDayDate =
+          sourceDateLabel ??
+          new Intl.DateTimeFormat("en-GB", {
+            timeZone: tz,
+            weekday: "long",
+            day: "numeric",
+            month: "long",
+            year: "numeric",
+          }).format(new Date(utcMs));
         const sourceHH = new Intl.DateTimeFormat("en-GB", {
           timeZone: tz,
           hour: "2-digit",
