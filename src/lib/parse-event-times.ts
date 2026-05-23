@@ -168,8 +168,14 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string): void {
       const pill = document.createElement("span");
       pill.setAttribute("data-tz-pill", "1");
       pill.className =
-        "inline-flex items-center ml-1 px-1.5 py-0.5 rounded-md bg-fuchsia-500/15 text-fuchsia-100 border border-fuchsia-400/30 text-xs align-baseline";
-      pill.textContent = `Start Time For Your Timezone ${m.converted}`;
+        "inline-flex items-center gap-2 ml-1 px-2 py-0.5 rounded-md bg-fuchsia-500/15 text-fuchsia-100 border border-fuchsia-400/30 text-xs align-baseline";
+      const divider = document.createElement("span");
+      divider.className = "opacity-40";
+      divider.textContent = "|";
+      pill.appendChild(divider);
+      const label = document.createElement("span");
+      label.textContent = m.converted;
+      pill.appendChild(label);
       frag.appendChild(pill);
       cursor = m.end;
     }
