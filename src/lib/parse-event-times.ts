@@ -385,12 +385,34 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
     el.className = "hidden";
   });
 
+  const BLOCK_SELECTOR = "li, p, tr, div, h1, h2, h3, h4, h5, h6";
+  const INLINE_LINE_SELECTOR = "b, strong";
+  // Some pasted editor content stores the first event time as direct text in a
+  // wrapper div before nested event-name/source divs. Move that loose leading
+  // text into its own line so it can be numbered like the later events.
+  Array.from(root.querySelectorAll<HTMLElement>(BLOCK_SELECTOR)).forEach((el) => {
+    if (el.closest("[data-tz-row]")) return;
+    const firstBlockChild = Array.from(el.children).find((child) =>
+      (child as HTMLElement).matches(BLOCK_SELECTOR),
+    );
+    if (!firstBlockChild) return;
+    const leadingNodes: ChildNode[] = [];
+    for (const node of Array.from(el.childNodes)) {
+      if (node === firstBlockChild) break;
+      if (node.nodeType === Node.ELEMENT_NODE && (node as HTMLElement).matches(BLOCK_SELECTOR)) break;
+      leadingNodes.push(node);
+    }
+    const leadingText = leadingNodes.map((node) => node.textContent ?? " ").join(" ").trim();
+    if (!leadingText || !parseMatches(leadingText, viewerTz, defaultZone).length) return;
+    const line = document.createElement("div");
+    for (const node of leadingNodes) line.appendChild(node);
+    el.insertBefore(line, firstBlockChild);
+  });
+
   // Pick blocks that look like a single schedule entry. The rich-text editor
   // wraps lines in <div>, so include that — but only leaf-level blocks
   // (no nested block children) so we don't wipe a wrapping <div> that
   // contains multiple lines.
-  const BLOCK_SELECTOR = "li, p, tr, div, h1, h2, h3, h4, h5, h6";
-  const INLINE_LINE_SELECTOR = "b, strong";
   const hasBlockAncestor = (el: HTMLElement) => {
     let parent = el.parentElement;
     while (parent && parent !== root) {
