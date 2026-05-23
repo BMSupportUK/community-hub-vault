@@ -501,6 +501,7 @@ function SportsGuidesPage() {
                             </div>
                           )}
                           {b.excerpt && <p className="text-sm text-purple-200/70 line-clamp-2">{b.excerpt}</p>}
+                          <StartTimePill body={b.body} excerpt={b.excerpt} />
                           <div className="mt-auto pt-3 flex items-center gap-2">
                             <Button size="sm" className="flex-1 bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white border-0" onClick={() => navigate({ to: "/sports-guides/read/$id", params: { id: b.id }, search: { cat: b.category_id } })}>Click to Read</Button>
                             <span
