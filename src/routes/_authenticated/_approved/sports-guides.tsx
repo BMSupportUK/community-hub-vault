@@ -434,7 +434,7 @@ function SportsGuidesPage() {
                       >
                         <div className="aspect-[16/10] bg-purple-900/50 relative overflow-hidden">
                           {b.image_url ? (
-                            <img src={b.image_url} alt={b.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                            <img src={b.image_url} alt={b.title} className="w-full h-full object-contain group-hover:scale-105 transition-transform" />
                           ) : (
                             <div className="w-full h-full grid place-items-center text-purple-300/60">
                               <ImageIcon className="size-10" />
