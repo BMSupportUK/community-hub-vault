@@ -92,6 +92,7 @@ interface ParsedMatch {
   sourceDate: string;
   localDate: string;
   raw: string;
+  utcMs: number;
 }
 
 export interface EventTime {
@@ -201,6 +202,7 @@ function parseMatches(
       sourceDate: sourceDayDate,
       localDate: dayDate,
       raw: m[0],
+      utcMs,
     });
   }
   if (defaultZone) {
@@ -268,6 +270,7 @@ function parseMatches(
           sourceDate: sourceDayDate,
           localDate: dayDate,
           raw: bm[0],
+          utcMs,
         });
       }
       results.sort((a, b) => a.start - b.start);
