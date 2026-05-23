@@ -417,7 +417,7 @@ function SportsGuidesPage() {
                     No blogs in this category yet.
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+                  <div className="flex flex-col gap-4">
                     {filtered.map((b) => (
                       <article
                         key={b.id}
@@ -430,9 +430,9 @@ function SportsGuidesPage() {
                           if (dragBlogId.current) reorderBlogs(dragBlogId.current, b.id);
                           dragBlogId.current = null;
                         }}
-                        className={`rounded-2xl bg-purple-950/50 border overflow-hidden flex flex-col group hover:shadow-[0_0_30px_-10px_rgba(217,70,239,0.6)] transition-all ${isUnread(b) ? "border-fuchsia-500/70 shadow-[0_0_20px_-10px_rgba(232,121,249,0.8)]" : "border-purple-500/30 hover:border-fuchsia-500/60"}`}
+                        className={`rounded-2xl bg-purple-950/50 border overflow-hidden flex flex-col sm:flex-row group hover:shadow-[0_0_30px_-10px_rgba(217,70,239,0.6)] transition-all ${isUnread(b) ? "border-fuchsia-500/70 shadow-[0_0_20px_-10px_rgba(232,121,249,0.8)]" : "border-purple-500/30 hover:border-fuchsia-500/60"}`}
                       >
-                        <div className="aspect-[16/10] bg-purple-900/50 relative overflow-hidden">
+                        <div className="relative overflow-hidden bg-purple-900/50 sm:w-72 sm:shrink-0 aspect-[16/10] sm:aspect-auto">
                           {b.image_url ? (
                             <img src={b.image_url} alt={b.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
                           ) : (
@@ -451,7 +451,7 @@ function SportsGuidesPage() {
                             </div>
                           )}
                         </div>
-                        <div className="p-4 flex-1 flex flex-col gap-2">
+                        <div className="p-4 sm:p-5 flex-1 min-w-0 flex flex-col gap-2">
                           <div className="flex flex-wrap gap-2">
                             <span className="text-xs px-2 py-1 rounded-md bg-fuchsia-500/20 text-fuchsia-200 font-medium border border-fuchsia-500/30">
                               {categories.find((c) => c.id === b.category_id)?.name}
