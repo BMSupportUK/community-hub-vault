@@ -51,11 +51,27 @@ const WEEKDAY_INDEX: Record<string, number> = {
   sat: 6,
 };
 
+function weekdayFromDateStr(dateStr: string): string | null {
+  const [year, month, day] = dateStr.split("-").map((part) => parseInt(part, 10));
+  const date = new Date(Date.UTC(year, month - 1, day));
+  if (!Number.isFinite(date.getTime())) return null;
+  return ["sun", "mon", "tue", "wed", "thu", "fri", "sat"][date.getUTCDay()];
+}
+
 function weekdayAfterSpan(text: string, end: number): string | null {
   const match = text
     .slice(end)
     .match(/^\s+(mon|tue|wed|thu|fri|sat|sun)(?:day)?\b/i);
   return match?.[1]?.toLowerCase() ?? null;
+}
+
+function eventNameAfterTimeWeekday(text: string, end: number, sourceDateStr?: string): string | null {
+  const match = text
+    .slice(end)
+    .match(/^\s+(mon|tue|wed|thu|fri|sat|sun)(?:day)?\b/i);
+  if (!match) return null;
+  const token = match[1].toLowerCase().slice(0, 3);
+  return sourceDateStr && weekdayFromDateStr(sourceDateStr) === token ? null : match[0].trim();
 }
 
 function dateWithWeekdayOnOrAfter(dateStr: string, weekday: string): string {
@@ -124,7 +140,9 @@ function parseMatches(
   let m: RegExpExecArray | null;
   while ((m = TIME_RE.exec(text)) !== null) {
     const [, hStr, mStr, ampmRaw, abbrev, offsetBase, sign, offHStr, offMStr] = m;
-    const trailingWeekday = weekdayAfterSpan(text, m.index + m[0].length);
+    const trailingWeekday = sourceDateStr
+      ? eventNameAfterTimeWeekday(text, m.index + m[0].length, sourceDateStr)
+      : null;
     let hour = parseInt(hStr, 10);
     const minute = mStr ? parseInt(mStr, 10) : 0;
     if (hour > 23 || minute > 59) continue;
@@ -226,7 +244,9 @@ function parseMatches(
       BARE_TIME_RE.lastIndex = 0;
       let bm: RegExpExecArray | null;
       while ((bm = BARE_TIME_RE.exec(text)) !== null) {
-        const trailingWeekday = weekdayAfterSpan(text, bm.index + bm[0].length);
+        const trailingWeekday = sourceDateStr
+          ? eventNameAfterTimeWeekday(text, bm.index + bm[0].length, sourceDateStr)
+          : null;
         // Skip if this span overlaps a zone-tagged match already captured
         if (results.some((r) => bm!.index < r.end && bm!.index + bm![0].length > r.start)) continue;
         const [, hStr, mStr, ampmRaw] = bm;
