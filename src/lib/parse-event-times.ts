@@ -349,12 +349,12 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
     const nameCell = document.createElement("div");
     nameCell.className = "min-w-0 px-3 py-2 rounded-lg bg-purple-900/40 border border-purple-500/20";
     const nameEl = document.createElement("div");
-    nameEl.className = "text-white font-semibold text-base md:text-lg truncate";
+    nameEl.className = "text-white font-semibold text-base md:text-lg break-words";
     nameEl.textContent = eventName;
     nameCell.appendChild(nameEl);
     if (caption) {
       const capEl = document.createElement("div");
-      capEl.className = "text-xs text-purple-200/60 truncate";
+      capEl.className = "text-xs text-purple-200/60 break-words";
       capEl.textContent = caption;
       nameCell.appendChild(capEl);
     }
