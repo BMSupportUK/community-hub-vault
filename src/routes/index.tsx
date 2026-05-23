@@ -163,14 +163,13 @@ function Landing() {
 
               {/* Crypto group */}
               <div className="flex flex-col items-center gap-2">
-                <span className="text-[10px] font-bold text-red-100/80 tracking-tight">Crypto payment</span>
                 <div className="px-3 py-1.5 rounded-md bg-white shadow-sm flex items-center justify-center h-7">
                   <svg viewBox="0 0 24 24" className="h-4 w-auto" aria-label="USDT">
                     <circle cx="12" cy="12" r="12" fill="#26A17B"/>
                     <path d="M12.75 13.2v3.15h-1.5v-3.15c-2.25-.12-4.2-.9-5.4-2.1l1.2-1.2c1.05 1.05 2.7 1.65 4.65 1.77V6h1.5v5.82c1.95-.12 3.6-.72 4.65-1.77l1.2 1.2c-1.2 1.2-3.15 1.98-5.4 2.1v2.85z" fill="#fff"/>
                   </svg>
                 </div>
-                <span className="text-[10px] font-bold text-red-100/80 tracking-tight">USDT</span>
+                <div className="px-2 py-1 rounded bg-white text-[#26A17B] text-[10px] font-extrabold tracking-tight shadow-sm">USDT</div>
               </div>
             </div>
           </div>
