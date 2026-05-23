@@ -123,7 +123,7 @@ function ReadPage() {
         ) : (
           <article className="w-full max-w-none mx-auto px-3 sm:px-6 py-8 space-y-5 overflow-hidden">
             <div className="flex flex-wrap gap-2">
-              <span className="text-xs px-2 py-1 rounded-md bg-fuchsia-500/20 text-fuchsia-200 font-medium border border-fuchsia-500/30">
+              <span className="text-xs px-2 py-1 rounded-md bg-fuchsia-500/30 text-white font-semibold border border-fuchsia-400/50">
                 {categories.find((c) => c.id === blog.category_id)?.name}
               </span>
               {blog.badge && (
