@@ -222,6 +222,29 @@ export function findEventTimes(html: string, viewerTz: string): EventTime[] {
   }));
 }
 
+function parseGuideDate(text: string): string | null {
+  const trimmed = text.replace(/\s+/g, " ").trim();
+  const weekdayPrefix = /^(mon|tue|wed|thu|fri|sat|sun)[a-z]*\b[\s,]*/i;
+  if (!weekdayPrefix.test(trimmed) || !/\d/.test(trimmed) || trimmed.length >= 80) return null;
+  const withoutWeekday = trimmed.replace(weekdayPrefix, "").trim();
+  const numeric = withoutWeekday.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2}|\d{4})$/);
+  if (numeric) {
+    const [, d, m, y] = numeric;
+    const year = y.length === 2 ? 2000 + parseInt(y, 10) : parseInt(y, 10);
+    return `${year}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`;
+  }
+  const named = withoutWeekday.match(/^(\d{1,2})(?:st|nd|rd|th)?\s+([a-z]+)\s+(\d{2}|\d{4})$/i);
+  if (named) {
+    const months = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+    const [, d, mon, y] = named;
+    const month = months.findIndex((m) => mon.toLowerCase().startsWith(m)) + 1;
+    if (!month) return null;
+    const year = y.length === 2 ? 2000 + parseInt(y, 10) : parseInt(y, 10);
+    return `${year}-${String(month).padStart(2, "0")}-${d.padStart(2, "0")}`;
+  }
+  return null;
+}
+
 export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZone?: string): void {
   // Restore any previously transformed rows back to their original markup so
   // re-runs (e.g. body content changed) stay idempotent.
