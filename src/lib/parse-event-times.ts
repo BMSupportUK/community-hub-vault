@@ -306,6 +306,10 @@ function parseGuideDate(text: string): string | null {
   return null;
 }
 
+function isWeekdayOnly(text: string): boolean {
+  return /^(mon|tue|wed|thu|fri|sat|sun)(day)?$/i.test(text.trim());
+}
+
 export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZone?: string): void {
   // Restore any previously transformed rows back to their original markup so
   // re-runs (e.g. body content changed) stay idempotent.
@@ -390,6 +394,7 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
       .replace(/\s+/g, " ")
       .replace(/^[\s\-–—:·•|]+|[\s\-–—:·•|]+$/g, "")
       .trim();
+    if (isWeekdayOnly(eventName)) eventName = "";
     // If subsequent matches exist, their text becomes a caption.
     let caption = "";
     if (matches.length > 1) {
