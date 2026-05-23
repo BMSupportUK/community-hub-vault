@@ -230,10 +230,15 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
     }
   });
 
-  // Strip the matched-time regex against block text. Pick blocks that look like
-  // a single schedule entry: list items, paragraphs, table rows.
-  const BLOCK_SELECTOR = "li, p, tr";
-  const blocks = Array.from(root.querySelectorAll<HTMLElement>(BLOCK_SELECTOR));
+  // Pick blocks that look like a single schedule entry. The rich-text editor
+  // wraps lines in <div>, so include that — but only leaf-level blocks
+  // (no nested block children) so we don't wipe a wrapping <div> that
+  // contains multiple lines.
+  const BLOCK_SELECTOR = "li, p, tr, div";
+  const all = Array.from(root.querySelectorAll<HTMLElement>(BLOCK_SELECTOR));
+  const blocks = all.filter(
+    (el) => !el.querySelector(BLOCK_SELECTOR),
+  );
 
   let rowIndex = 0;
   for (const block of blocks) {
