@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { Headphones, MessageSquare, Activity, Ticket, ShoppingBag, BookOpen, UserPlus, ArrowUp, ArrowDown, Pencil, Upload, Sparkles, Image as ImageIcon } from "lucide-react";
+import { Headphones, MessageSquare, Activity, Ticket, ShoppingBag, BookOpen, UserPlus, ArrowUp, ArrowDown, Pencil, Upload, Sparkles, Image as ImageIcon, Plus, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
 import heroImg from "@/assets/member-hero.jpg";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
@@ -24,7 +24,13 @@ function WelcomePage() {
   const name = (user?.email ?? "there").split("@")[0];
   const navigate = useNavigate();
 
-  const [event, setEvent] = useState<{ id: string; body: string; banner_url: string | null } | null>(null);
+  type EventRow = { id: string; body: string; banner_url: string | null };
+  const [events, setEvents] = useState<EventRow[]>([]);
+  const [currentIdx, setCurrentIdx] = useState(0);
+  const event = events[currentIdx] ?? null;
+  const setEvent = (next: EventRow) => {
+    setEvents((prev) => prev.map((e) => (e.id === next.id ? next : e)));
+  };
   const [eventOpen, setEventOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [editBody, setEditBody] = useState("");
@@ -44,12 +50,25 @@ function WelcomePage() {
       const { data } = await supabase
         .from("upcoming_event")
         .select("id, body, banner_url")
-        .order("updated_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      if (data) setEvent(data as { id: string; body: string; banner_url: string | null });
+        .order("updated_at", { ascending: false });
+      setEvents((data ?? []) as EventRow[]);
     })();
   }, []);
+
+  // Auto-rotate every 60s when there are multiple events and no dialog open
+  useEffect(() => {
+    if (events.length < 2) return;
+    if (eventOpen || editOpen || bannerOpen) return;
+    const t = setInterval(() => {
+      setCurrentIdx((i) => (i + 1) % events.length);
+    }, 60_000);
+    return () => clearInterval(t);
+  }, [events.length, eventOpen, editOpen, bannerOpen]);
+
+  // Keep index in range when events change
+  useEffect(() => {
+    if (currentIdx >= events.length && events.length > 0) setCurrentIdx(0);
+  }, [events.length, currentIdx]);
 
   const openEdit = () => {
     setEditBody(event?.body ?? "");
@@ -68,6 +87,29 @@ function WelcomePage() {
     setEvent({ ...event, body: editBody });
     setEditOpen(false);
     toast.success("Event updated");
+  };
+
+  const addEvent = async () => {
+    const { data, error } = await supabase
+      .from("upcoming_event")
+      .insert({ body: "", updated_by: user?.id ?? null })
+      .select("id, body, banner_url")
+      .single();
+    if (error || !data) { toast.error(error?.message ?? "Failed"); return; }
+    setEvents((prev) => [data as EventRow, ...prev]);
+    setCurrentIdx(0);
+    setEditBody("");
+    setEditOpen(true);
+  };
+
+  const deleteEvent = async () => {
+    if (!event) return;
+    if (!confirm("Delete this event?")) return;
+    const { error } = await supabase.from("upcoming_event").delete().eq("id", event.id);
+    if (error) { toast.error(error.message); return; }
+    setEvents((prev) => prev.filter((e) => e.id !== event.id));
+    setCurrentIdx(0);
+    toast.success("Event deleted");
   };
 
   const pickFile = (file: File) => {
