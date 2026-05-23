@@ -1,8 +1,19 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { UserCircle2, Pencil, Copy, LogOut, Settings, AtSign, Check, Shield, ShieldCheck } from "lucide-react";
+import {
+  UserCircle2,
+  Pencil,
+  Copy,
+  LogOut,
+  Settings,
+  AtSign,
+  Check,
+  Shield,
+  ShieldCheck,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { useBusinessOpen } from "@/hooks/use-business-open";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,7 +25,12 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { Nameplate } from "@/components/app/Nameplate";
-import { roleFlashClass, type FlashRole, resolveAvatarUrl, useRoleFlashMap } from "@/lib/role-flash";
+import {
+  roleFlashClass,
+  type FlashRole,
+  resolveAvatarUrl,
+  useRoleFlashMap,
+} from "@/lib/role-flash";
 import { VpnBadge } from "@/lib/vpn-flags";
 import { cn } from "@/lib/utils";
 
@@ -32,6 +48,8 @@ export function UserAvatarMenu() {
   const [profile, setProfile] = useState<MiniProfile | null>(null);
   const [copied, setCopied] = useState(false);
   const isAdmin = hasAny(["admin", "management"]);
+  const businessOpen = useBusinessOpen();
+  const roleFlashMap = useRoleFlashMap();
 
   useEffect(() => {
     if (!user) return;
@@ -59,14 +77,16 @@ export function UserAvatarMenu() {
 
   if (!user) return null;
   const name = profile?.display_name || profile?.username || user.email?.split("@")[0] || "User";
-  const handle = profile?.username ? `@${profile.username}` : user.email ?? "";
+  const handle = profile?.username ? `@${profile.username}` : (user.email ?? "");
   const initial = name.slice(0, 2).toUpperCase();
   const topRole = roles[0] ?? "member";
   const FLASH_PRIORITY: FlashRole[] = ["admin", "management", "moderator", "staff"];
   const flashRole = FLASH_PRIORITY.find((r) => roles.includes(r)) ?? null;
   const flashCls = roleFlashClass(flashRole);
-  const roleFlashMap = useRoleFlashMap();
   const resolvedAvatar = resolveAvatarUrl(user.id, profile?.avatar_url, roleFlashMap);
+  const isStaffRole = hasAny(["admin", "management", "moderator", "staff"]);
+  const isAway = isStaffRole && !businessOpen;
+  const statusLabel = isAway ? "Away From The Office" : "Online";
 
   const copyHandle = async () => {
     if (!profile?.username) return;
@@ -78,7 +98,11 @@ export function UserAvatarMenu() {
 
   const goEdit = () => {
     if (profile?.username) {
-      navigate({ to: "/u/$username", params: { username: profile.username }, search: { tab: "profile", edit: 1 } as never });
+      navigate({
+        to: "/u/$username",
+        params: { username: profile.username },
+        search: { tab: "profile", edit: 1 } as never,
+      });
     } else {
       navigate({ to: "/profile" });
     }
@@ -98,13 +122,25 @@ export function UserAvatarMenu() {
             </AvatarFallback>
           </Avatar>
           <span className="hidden lg:flex flex-col items-start leading-tight pr-2">
-            <span className={cn("text-xs font-semibold text-foreground max-w-[120px] truncate inline-flex items-center gap-1", flashCls)}>
+            <span
+              className={cn(
+                "text-xs font-semibold text-foreground max-w-[120px] truncate inline-flex items-center gap-1",
+                flashCls,
+              )}
+            >
               {name}
               <VpnBadge userId={user.id} size={11} showInactive />
             </span>
             <span className="text-[10px] text-muted-foreground capitalize">{topRole}</span>
           </span>
-          <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-rail" />
+          <span
+            className={cn(
+              "absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full ring-2 ring-rail",
+              isAway ? "bg-yellow-400 shadow-[0_0_10px_rgba(250,204,21,0.8)]" : "bg-emerald-500",
+            )}
+            title={statusLabel}
+            aria-label={statusLabel}
+          />
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" sideOffset={8} className="w-72 p-0 overflow-hidden">
@@ -112,7 +148,10 @@ export function UserAvatarMenu() {
           <Nameplate
             id={profile?.equipped_nameplate_id ?? null}
             className="absolute inset-0"
-            fallbackStyle={{ background: "linear-gradient(to bottom right, hsl(var(--primary)/0.3), hsl(330 80% 60% / 0.2), hsl(220 80% 60% / 0.2))" }}
+            fallbackStyle={{
+              background:
+                "linear-gradient(to bottom right, hsl(var(--primary)/0.3), hsl(330 80% 60% / 0.2), hsl(220 80% 60% / 0.2))",
+            }}
           />
           <div className="relative flex items-center gap-3">
             <Avatar className="h-14 w-14 ring-2 ring-background shadow-lg">
@@ -122,7 +161,12 @@ export function UserAvatarMenu() {
               </AvatarFallback>
             </Avatar>
             <div className="min-w-0 flex-1">
-              <div className={cn("font-semibold text-sm truncate inline-flex items-center gap-1", flashCls)}>
+              <div
+                className={cn(
+                  "font-semibold text-sm truncate inline-flex items-center gap-1",
+                  flashCls,
+                )}
+              >
                 {name}
                 <VpnBadge userId={user.id} size={12} showInactive />
               </div>
@@ -153,8 +197,18 @@ export function UserAvatarMenu() {
               </Link>
             </DropdownMenuItem>
           ) : null}
-          <DropdownMenuItem onSelect={(e) => { e.preventDefault(); copyHandle(); }} className="cursor-pointer">
-            {copied ? <Check className="size-4 mr-2 text-emerald-500" /> : <Copy className="size-4 mr-2" />}
+          <DropdownMenuItem
+            onSelect={(e) => {
+              e.preventDefault();
+              copyHandle();
+            }}
+            className="cursor-pointer"
+          >
+            {copied ? (
+              <Check className="size-4 mr-2 text-emerald-500" />
+            ) : (
+              <Copy className="size-4 mr-2" />
+            )}
             Copy username
           </DropdownMenuItem>
           <DropdownMenuItem asChild className="cursor-pointer">
