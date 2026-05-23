@@ -9,6 +9,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { generateEventBanner } from "@/lib/event-banner.functions";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { HtmlEditor } from "@/components/ui/html-editor";
+import { sanitizeRichHtml } from "@/lib/sanitize-html";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import Cropper, { type Area } from "react-easy-crop";
@@ -376,9 +378,14 @@ function WelcomePage() {
                   <h3 className="font-display font-bold text-center text-base leading-tight text-foreground">
                     The Next Big Event on BM Support
                   </h3>
-                  <p className="text-sm text-foreground/75 text-center line-clamp-4 flex-1">
-                    {event?.body || "Stay tuned…"}
-                  </p>
+                  {event?.body ? (
+                    <div
+                      className="prose prose-sm dark:prose-invert max-w-none text-sm text-foreground/75 text-center line-clamp-4 flex-1"
+                      dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(event.body) }}
+                    />
+                  ) : (
+                    <p className="text-sm text-foreground/75 text-center line-clamp-4 flex-1">Stay tuned…</p>
+                  )}
                   <button
                     onClick={() => setEventOpen(true)}
                     disabled={!event}
@@ -476,9 +483,14 @@ function WelcomePage() {
           <DialogHeader>
             <DialogTitle>The Next Big Event on BM Support</DialogTitle>
           </DialogHeader>
-          <p className="text-sm text-foreground whitespace-pre-wrap">
-            {event?.body || "Stay tuned…"}
-          </p>
+          {event?.body ? (
+            <div
+              className="prose prose-sm dark:prose-invert max-w-none text-sm text-foreground"
+              dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(event.body) }}
+            />
+          ) : (
+            <p className="text-sm text-foreground">Stay tuned…</p>
+          )}
         </DialogContent>
       </Dialog>
 
@@ -487,10 +499,9 @@ function WelcomePage() {
           <DialogHeader>
             <DialogTitle>Edit upcoming event</DialogTitle>
           </DialogHeader>
-          <Textarea
+          <HtmlEditor
             value={editBody}
-            onChange={(e) => setEditBody(e.target.value)}
-            rows={8}
+            onChange={setEditBody}
             placeholder="Tell members about the next big event…"
           />
           <DialogFooter>
