@@ -58,13 +58,6 @@ function weekdayFromDateStr(dateStr: string): string | null {
   return ["sun", "mon", "tue", "wed", "thu", "fri", "sat"][date.getUTCDay()];
 }
 
-function weekdayAfterSpan(text: string, end: number): string | null {
-  const match = text
-    .slice(end)
-    .match(/^\s+(mon|tue|wed|thu|fri|sat|sun)(?:day)?\b/i);
-  return match?.[1]?.toLowerCase() ?? null;
-}
-
 function eventNameAfterTimeWeekday(text: string, end: number, sourceDateStr?: string): string | null {
   const match = text
     .slice(end)
