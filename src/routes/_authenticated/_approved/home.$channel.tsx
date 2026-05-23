@@ -22,6 +22,7 @@ import { cn } from "@/lib/utils";
 import { DEFAULT_AVATAR_URL } from "@/lib/default-avatar";
 import { Nameplate } from "@/components/app/Nameplate";
 import { useOnlineUsers } from "@/hooks/use-online-users";
+import { useBusinessOpen } from "@/hooks/use-business-open";
 import { formatLastSeen } from "@/lib/relative-time";
 import { useRoleFlashMap, roleFlashClass, resolveAvatarUrl } from "@/lib/role-flash";
 
@@ -76,6 +77,7 @@ function formatSlow(s: number): string {
 
 function ChannelPage() {
   const onlineUsers = useOnlineUsers();
+  const businessOpen = useBusinessOpen();
   const { channel: slug } = Route.useParams();
   const { user, hasAny } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
@@ -996,6 +998,9 @@ function ChannelPage() {
                   );
                   if (showNameplate) {
                     const isOnline = onlineUsers.has(p!.id);
+                    const senderRole = roleFlashMap.get(m.sender_id);
+                    const isStaffSender = senderRole === "admin" || senderRole === "management" || senderRole === "moderator" || senderRole === "staff";
+                    const isAway = isOnline && isStaffSender && !businessOpen;
                     return (
                       <div className="flex flex-col items-start gap-0.5 shrink-0 mt-0.5">
                         <Nameplate
@@ -1011,12 +1016,16 @@ function ChannelPage() {
                           <span
                             className={cn(
                               "size-2 rounded-full ring-1 ring-background",
-                              isOnline ? "bg-emerald-500" : "bg-muted-foreground/50",
+                              isAway ? "bg-yellow-400" : isOnline ? "bg-emerald-500" : "bg-muted-foreground/50",
                             )}
-                            aria-label={isOnline ? "Online" : "Offline"}
+                            aria-label={isAway ? "Away From The Office" : isOnline ? "Online" : "Offline"}
                           />
-                          <span>
-                            {isOnline ? "Online" : `Active ${formatLastSeen(p?.last_seen_at)}`}
+                          <span className={cn(isAway && "text-yellow-400")}>
+                            {isAway
+                              ? "Away From The Office"
+                              : isOnline
+                                ? "Online"
+                                : `Active ${formatLastSeen(p?.last_seen_at)}`}
                           </span>
                         </div>
                       </div>
