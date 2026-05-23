@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, RefreshCw } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,6 +7,8 @@ import { sanitizeRichHtml } from "@/lib/sanitize-html";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { useUserTimezone } from "@/hooks/use-user-timezone";
+import { annotateTimesInEl } from "@/lib/parse-event-times";
 
 export const Route = createFileRoute("/_authenticated/_approved/sports-guides/read/$id")({
   component: ReadPage,
@@ -29,6 +31,8 @@ function ReadPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const viewerTz = useUserTimezone();
+  const bodyRef = useRef<HTMLDivElement | null>(null);
   const [blog, setBlog] = useState<Blog | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -65,6 +69,11 @@ function ReadPage() {
       }
     })();
   }, [id, user?.id, navigate, queryClient]);
+
+  useEffect(() => {
+    if (!bodyRef.current || !blog?.body) return;
+    annotateTimesInEl(bodyRef.current, viewerTz);
+  }, [blog?.body, viewerTz]);
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden bg-gradient-to-br from-[#1a0b2e] via-[#2d1b4e] to-[#1a0b2e]">
@@ -109,6 +118,7 @@ function ReadPage() {
             )}
             {blog.body && (
               <div
+                ref={bodyRef}
                 className="prose prose-invert max-w-none text-purple-50/90 leading-relaxed"
                 dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(blog.body) }}
               />
