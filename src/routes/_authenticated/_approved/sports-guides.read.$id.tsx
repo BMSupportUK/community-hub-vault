@@ -76,20 +76,21 @@ function ReadPage() {
   useEffect(() => {
     const el = bodyRef.current;
     if (!el || !blog?.body) return;
-    annotateTimesInEl(el, viewerTz, "GMT");
-    // React may re-set innerHTML on subsequent renders (e.g. after query
-    // invalidations), which wipes our injected pills. Re-annotate whenever
-    // the body subtree is replaced.
-    const observer = new MutationObserver((mutations) => {
-      const contentChanged = mutations.some((m) =>
-        Array.from(m.addedNodes).some(
-          (n) => !(n instanceof HTMLElement) || !n.hasAttribute("data-tz-pill"),
-        ),
-      );
-      if (!contentChanged) return;
+    let scheduled = false;
+    const run = () => {
+      observer.disconnect();
       annotateTimesInEl(el, viewerTz, "GMT");
+      observer.observe(el, { childList: true, subtree: true });
+    };
+    const observer = new MutationObserver(() => {
+      if (scheduled) return;
+      scheduled = true;
+      queueMicrotask(() => {
+        scheduled = false;
+        run();
+      });
     });
-    observer.observe(el, { childList: true, subtree: true });
+    run();
     return () => observer.disconnect();
   }, [blog?.body, viewerTz]);
 
