@@ -1,0 +1,161 @@
+import { zonedWallTimeToUtcMs, dateInTimeZone } from "@/hooks/use-timezone";
+
+// Abbreviation -> IANA zone. IANA zones already handle DST correctly.
+const ZONE_MAP: Record<string, string> = {
+  GMT: "Etc/GMT",
+  UTC: "Etc/UTC",
+  BST: "Europe/London",
+  ET: "America/New_York",
+  EST: "America/New_York",
+  EDT: "America/New_York",
+  CT: "America/Chicago",
+  CST: "America/Chicago",
+  CDT: "America/Chicago",
+  MT: "America/Denver",
+  MST: "America/Denver",
+  MDT: "America/Denver",
+  PT: "America/Los_Angeles",
+  PST: "America/Los_Angeles",
+  PDT: "America/Los_Angeles",
+  CET: "Europe/Paris",
+  CEST: "Europe/Paris",
+  AEST: "Australia/Sydney",
+  AEDT: "Australia/Sydney",
+  JST: "Asia/Tokyo",
+  IST: "Asia/Kolkata",
+};
+
+const ZONE_TOKENS = Object.keys(ZONE_MAP).sort((a, b) => b.length - a.length).join("|");
+// Matches: "19:45 GMT", "7:30pm ET", "8 pm CET", "20:00 UTC+1", "9am GMT-05:30"
+const TIME_RE = new RegExp(
+  `\\b(\\d{1,2})(?::(\\d{2}))?\\s*(am|pm|a\\.m\\.|p\\.m\\.)?\\s*(?:(${ZONE_TOKENS})|(?:(UTC|GMT)\\s*([+-])\\s*(\\d{1,2})(?::?(\\d{2}))?))\\b`,
+  "gi",
+);
+
+function tzOffsetMinutes(instantMs: number, tz: string): number {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: tz, hour12: false, hourCycle: "h23",
+    year: "numeric", month: "2-digit", day: "2-digit",
+    hour: "2-digit", minute: "2-digit", second: "2-digit",
+  }).formatToParts(new Date(instantMs));
+  const g = (t: string) => parseInt(parts.find((p) => p.type === t)?.value ?? "0", 10);
+  const asUtc = Date.UTC(g("year"), g("month") - 1, g("day"), g("hour"), g("minute"), g("second"));
+  return (asUtc - instantMs) / 60000;
+}
+
+function tzAbbrev(instantMs: number, tz: string): string {
+  const parts = new Intl.DateTimeFormat("en-GB", { timeZone: tz, timeZoneName: "short" })
+    .formatToParts(new Date(instantMs));
+  return parts.find((p) => p.type === "timeZoneName")?.value ?? "";
+}
+
+interface ParsedMatch {
+  start: number;
+  end: number;
+  converted: string;
+}
+
+function parseMatches(text: string, viewerTz: string): ParsedMatch[] {
+  const results: ParsedMatch[] = [];
+  TIME_RE.lastIndex = 0;
+  let m: RegExpExecArray | null;
+  while ((m = TIME_RE.exec(text)) !== null) {
+    const [, hStr, mStr, ampmRaw, abbrev, offsetBase, sign, offHStr, offMStr] = m;
+    let hour = parseInt(hStr, 10);
+    const minute = mStr ? parseInt(mStr, 10) : 0;
+    if (hour > 23 || minute > 59) continue;
+    const ampm = ampmRaw?.toLowerCase().replace(/\./g, "");
+    if (ampm === "pm" && hour < 12) hour += 12;
+    if (ampm === "am" && hour === 12) hour = 0;
+    if (!ampm && hour > 23) continue;
+    // Need either ampm or HH:MM form to count as a real time
+    if (!ampm && !mStr) continue;
+
+    const todayUtc = new Date();
+    let utcMs: number;
+    let sourceLabel: string;
+
+    if (abbrev) {
+      const tz = ZONE_MAP[abbrev.toUpperCase()];
+      if (!tz) continue;
+      const dateStr = dateInTimeZone(todayUtc, tz);
+      const timeStr = `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}:00`;
+      utcMs = zonedWallTimeToUtcMs(dateStr, timeStr, tz);
+      sourceLabel = tz;
+      // Skip if viewer is in the same zone (same offset right now)
+      if (tzOffsetMinutes(utcMs, tz) === tzOffsetMinutes(utcMs, viewerTz)) continue;
+    } else if (offsetBase && sign && offHStr) {
+      const offH = parseInt(offHStr, 10);
+      const offM = offMStr ? parseInt(offMStr, 10) : 0;
+      const offsetMin = (offH * 60 + offM) * (sign === "-" ? -1 : 1);
+      // Source wall time interpreted at this offset:
+      const todayStr = new Date().toISOString().slice(0, 10);
+      const naiveUtc = Date.parse(`${todayStr}T${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}:00Z`);
+      utcMs = naiveUtc - offsetMin * 60000;
+      sourceLabel = "offset";
+      if (tzOffsetMinutes(utcMs, viewerTz) === offsetMin) continue;
+    } else {
+      continue;
+    }
+
+    if (!Number.isFinite(utcMs)) continue;
+
+    const hh = new Intl.DateTimeFormat("en-GB", {
+      timeZone: viewerTz,
+      hour: "2-digit", minute: "2-digit", hour12: false,
+    }).format(new Date(utcMs));
+    const abbr = tzAbbrev(utcMs, viewerTz);
+    void sourceLabel;
+    results.push({
+      start: m.index,
+      end: m.index + m[0].length,
+      converted: `${hh}${abbr ? ` ${abbr}` : ""}`,
+    });
+  }
+  return results;
+}
+
+export function annotateTimesInEl(root: HTMLElement, viewerTz: string): void {
+  // Remove any previously inserted pills so re-runs stay idempotent.
+  root.querySelectorAll("[data-tz-pill]").forEach((n) => n.remove());
+
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+    acceptNode: (node) => {
+      const parent = node.parentElement;
+      if (!parent) return NodeFilter.FILTER_REJECT;
+      if (parent.closest("[data-tz-pill]")) return NodeFilter.FILTER_REJECT;
+      const tag = parent.tagName;
+      if (tag === "SCRIPT" || tag === "STYLE" || tag === "CODE" || tag === "PRE") return NodeFilter.FILTER_REJECT;
+      return node.nodeValue && node.nodeValue.trim() ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+    },
+  });
+
+  const targets: Text[] = [];
+  let cur: Node | null = walker.nextNode();
+  while (cur) {
+    targets.push(cur as Text);
+    cur = walker.nextNode();
+  }
+
+  for (const textNode of targets) {
+    const text = textNode.nodeValue ?? "";
+    const matches = parseMatches(text, viewerTz);
+    if (!matches.length) continue;
+
+    const frag = document.createDocumentFragment();
+    let cursor = 0;
+    for (const m of matches) {
+      if (m.start > cursor) frag.appendChild(document.createTextNode(text.slice(cursor, m.start)));
+      frag.appendChild(document.createTextNode(text.slice(m.start, m.end)));
+      const pill = document.createElement("span");
+      pill.setAttribute("data-tz-pill", "1");
+      pill.className =
+        "inline-flex items-center ml-1 px-1.5 py-0.5 rounded-md bg-fuchsia-500/15 text-fuchsia-100 border border-fuchsia-400/30 text-xs align-baseline";
+      pill.textContent = `→ ${m.converted}`;
+      frag.appendChild(pill);
+      cursor = m.end;
+    }
+    if (cursor < text.length) frag.appendChild(document.createTextNode(text.slice(cursor)));
+    textNode.parentNode?.replaceChild(frag, textNode);
+  }
+}
