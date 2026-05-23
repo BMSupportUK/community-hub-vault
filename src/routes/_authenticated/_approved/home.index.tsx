@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Headphones, MessageSquare, Activity, Ticket, ShoppingBag, BookOpen, UserPlus, ArrowUp, ArrowDown, Pencil, Upload, Sparkles, Image as ImageIcon, Plus, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
 import heroImg from "@/assets/member-hero.jpg";
+import eventPlaceholder from "@/assets/event-placeholder.jpg";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -370,10 +371,18 @@ function WelcomePage() {
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    <div className="w-full h-full flex flex-col items-center justify-center gap-3 p-5 text-center bg-gradient-to-br from-violet-600/15 to-blue-600/15">
-                      <ImageIcon className="size-10 text-violet-400" />
-                      <p className="font-display font-semibold text-base text-foreground">
-                        Awaiting The Next Event.
+                    <div className="relative w-full h-full">
+                      <img
+                        src={eventPlaceholder}
+                        alt="Awaiting the next event"
+                        width={300}
+                        height={250}
+                        loading="lazy"
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+                      <p className="absolute inset-x-0 bottom-0 p-3 font-display font-semibold text-sm text-center text-white drop-shadow">
+                        Awaiting The Next Event Information.
                       </p>
                     </div>
                   )}
