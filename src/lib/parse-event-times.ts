@@ -61,6 +61,11 @@ interface ParsedMatch {
   end: number;
   converted: string;
   sourcePrefix?: string;
+  sourceTime: string;
+  sourceZone: string;
+  localTime: string;
+  localZone: string;
+  raw: string;
 }
 
 export interface EventTime {
@@ -125,11 +130,22 @@ function parseMatches(text: string, viewerTz: string, defaultZone?: string): Par
     const sourceDayDate = new Intl.DateTimeFormat("en-GB", {
       timeZone: sourceTz, weekday: "long", day: "numeric", month: "long", year: "numeric",
     }).format(new Date(utcMs));
+    const sourceHH = new Intl.DateTimeFormat("en-GB", {
+      timeZone: sourceTz, hour: "2-digit", minute: "2-digit", hour12: false,
+    }).format(new Date(utcMs));
+    const sourceAbbr = sourceLabel !== "offset"
+      ? (tzAbbrev(utcMs, sourceTz) || "GMT")
+      : (tzAbbrev(utcMs, viewerTz) || "");
     results.push({
       start: m.index,
       end: m.index + m[0].length,
       converted: `${dayDate} ${hh}${abbr ? ` ${abbr}` : ""}`,
       sourcePrefix: `${sourceDayDate} `,
+      sourceTime: sourceHH,
+      sourceZone: sourceAbbr,
+      localTime: hh,
+      localZone: abbr,
+      raw: m[0],
     });
   }
   if (defaultZone) {
@@ -165,11 +181,20 @@ function parseMatches(text: string, viewerTz: string, defaultZone?: string): Par
         const sourceDayDate = new Intl.DateTimeFormat("en-GB", {
           timeZone: tz, weekday: "long", day: "numeric", month: "long", year: "numeric",
         }).format(new Date(utcMs));
+        const sourceHH = new Intl.DateTimeFormat("en-GB", {
+          timeZone: tz, hour: "2-digit", minute: "2-digit", hour12: false,
+        }).format(new Date(utcMs));
+        const sourceAbbr = tzAbbrev(utcMs, tz) || defaultZone.toUpperCase();
         results.push({
           start: bm.index,
           end: bm.index + bm[0].length,
           converted: `${dayDate} ${hh}${abbr ? ` ${abbr}` : ""}`,
           sourcePrefix: `${sourceDayDate} `,
+          sourceTime: sourceHH,
+          sourceZone: sourceAbbr,
+          localTime: hh,
+          localZone: abbr,
+          raw: bm[0],
         });
       }
       results.sort((a, b) => a.start - b.start);
@@ -192,68 +217,113 @@ export function findEventTimes(html: string, viewerTz: string): EventTime[] {
 }
 
 export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZone?: string): void {
-  // Remove any previously inserted pills so re-runs stay idempotent.
-  root.querySelectorAll("[data-tz-pill]").forEach((n) => n.remove());
-  root.querySelectorAll("[data-tz-source-pill]").forEach((n) => {
-    const parent = n.parentNode;
-    if (!parent) return;
-    // Unwrap: replace pill with its text content
-    parent.replaceChild(document.createTextNode(n.textContent ?? ""), n);
+  // Restore any previously transformed rows back to their original markup so
+  // re-runs (e.g. body content changed) stay idempotent.
+  root.querySelectorAll("[data-tz-row]").forEach((row) => {
+    const original = (row as HTMLElement).dataset.tzOriginal;
+    if (original != null) {
+      row.innerHTML = original;
+      (row as HTMLElement).className = (row as HTMLElement).dataset.tzPrevClass ?? "";
+      row.removeAttribute("data-tz-row");
+      delete (row as HTMLElement).dataset.tzOriginal;
+      delete (row as HTMLElement).dataset.tzPrevClass;
+    }
   });
 
-  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
-    acceptNode: (node) => {
-      const parent = node.parentElement;
-      if (!parent) return NodeFilter.FILTER_REJECT;
-      if (parent.closest("[data-tz-pill]")) return NodeFilter.FILTER_REJECT;
-      if (parent.closest("[data-tz-source-pill]")) return NodeFilter.FILTER_REJECT;
-      const tag = parent.tagName;
-      if (tag === "SCRIPT" || tag === "STYLE" || tag === "CODE" || tag === "PRE") return NodeFilter.FILTER_REJECT;
-      return node.nodeValue && node.nodeValue.trim() ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
-    },
-  });
+  // Strip the matched-time regex against block text. Pick blocks that look like
+  // a single schedule entry: list items, paragraphs, table rows.
+  const BLOCK_SELECTOR = "li, p, tr";
+  const blocks = Array.from(root.querySelectorAll<HTMLElement>(BLOCK_SELECTOR));
 
-  const targets: Text[] = [];
-  let cur: Node | null = walker.nextNode();
-  while (cur) {
-    targets.push(cur as Text);
-    cur = walker.nextNode();
-  }
+  let rowIndex = 0;
+  for (const block of blocks) {
+    // Skip nested blocks (e.g. <p> inside <li>) — outer wins, but we mark
+    // already-transformed rows so descendants don't double-process.
+    if (block.closest("[data-tz-row]") && block.getAttribute("data-tz-row") == null) continue;
 
-  for (const textNode of targets) {
-    const text = textNode.nodeValue ?? "";
+    const text = block.textContent ?? "";
+    if (!text.trim()) continue;
     const matches = parseMatches(text, viewerTz, defaultZone);
     if (!matches.length) continue;
 
-    const frag = document.createDocumentFragment();
-    let cursor = 0;
-    for (const m of matches) {
-      if (m.start > cursor) frag.appendChild(document.createTextNode(text.slice(cursor, m.start)));
-
-      // Wrapper holds source pill (GMT, muted) FIRST, then converted pill (local, fuchsia)
-      const wrapper = document.createElement("span");
-      wrapper.setAttribute("data-tz-pill", "1");
-      wrapper.className = "inline-flex flex-wrap items-center gap-2 align-baseline";
-
-      // Source-time pill (the original written time) — muted, listed first
-      const sourcePill = document.createElement("span");
-      sourcePill.setAttribute("data-tz-source-pill", "1");
-      sourcePill.className =
-        "inline-flex items-center px-3 py-1 rounded-lg bg-white/5 border border-white/10 text-purple-100/80 text-xs font-semibold align-baseline";
-      sourcePill.textContent = `${m.sourcePrefix ?? ""}${text.slice(m.start, m.end)}`;
-      wrapper.appendChild(sourcePill);
-
-      // Converted pill (viewer's timezone) — primary, bold fuchsia
-      const convertedPill = document.createElement("span");
-      convertedPill.className =
-        "inline-flex items-center px-3 py-1 rounded-lg bg-fuchsia-600 text-white text-xs font-bold shadow-[0_0_15px_rgba(192,38,211,0.25)] align-baseline";
-      convertedPill.textContent = m.converted;
-      wrapper.appendChild(convertedPill);
-      frag.appendChild(wrapper);
-
-      cursor = m.end;
+    const m = matches[0];
+    // Derive event name = text with the matched time substring removed.
+    let eventName = (text.slice(0, m.start) + " " + text.slice(m.end))
+      .replace(/\s+/g, " ")
+      .replace(/^[\s\-–—:·•|]+|[\s\-–—:·•|]+$/g, "")
+      .trim();
+    // If subsequent matches exist, their text becomes a caption.
+    let caption = "";
+    if (matches.length > 1) {
+      caption = matches.slice(1).map((mx) => text.slice(mx.start, mx.end)).join(" · ");
     }
-    if (cursor < text.length) frag.appendChild(document.createTextNode(text.slice(cursor)));
-    textNode.parentNode?.replaceChild(frag, textNode);
+    if (!eventName) eventName = "Event";
+
+    rowIndex += 1;
+    const number = String(rowIndex).padStart(2, "0");
+
+    // Preserve original markup so we can restore on re-run.
+    block.dataset.tzOriginal = block.innerHTML;
+    block.dataset.tzPrevClass = block.className;
+    block.setAttribute("data-tz-row", "1");
+    block.className =
+      "group not-prose list-none my-2 grid grid-cols-[auto_1fr_auto_auto_auto] items-center gap-4 px-4 py-3 rounded-xl bg-purple-950/40 border border-purple-500/20 hover:border-fuchsia-500/60 transition-colors";
+
+    block.innerHTML = "";
+
+    const numCell = document.createElement("span");
+    numCell.className = "font-display text-2xl font-bold text-purple-200/60 group-hover:text-fuchsia-400 tabular-nums w-10";
+    numCell.textContent = number;
+    block.appendChild(numCell);
+
+    const nameCell = document.createElement("div");
+    nameCell.className = "min-w-0";
+    const nameEl = document.createElement("div");
+    nameEl.className = "text-white font-semibold text-base md:text-lg truncate";
+    nameEl.textContent = eventName;
+    nameCell.appendChild(nameEl);
+    if (caption) {
+      const capEl = document.createElement("div");
+      capEl.className = "text-xs text-purple-200/60 truncate";
+      capEl.textContent = caption;
+      nameCell.appendChild(capEl);
+    }
+    block.appendChild(nameCell);
+
+    // Source pill (muted) — listed FIRST after name to match mockup order request
+    const sourcePill = document.createElement("span");
+    sourcePill.setAttribute("data-tz-pill", "1");
+    sourcePill.className =
+      "inline-flex items-baseline gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-purple-100/80 min-w-[110px] justify-center";
+    const srcTime = document.createElement("span");
+    srcTime.className = "font-bold text-sm tabular-nums";
+    srcTime.textContent = m.sourceTime;
+    const srcZone = document.createElement("span");
+    srcZone.className = "text-[10px] uppercase tracking-wide text-purple-200/60";
+    srcZone.textContent = m.sourceZone;
+    sourcePill.appendChild(srcTime);
+    sourcePill.appendChild(srcZone);
+    block.appendChild(sourcePill);
+
+    // Local pill (fuchsia, bold)
+    const localPill = document.createElement("span");
+    localPill.setAttribute("data-tz-pill", "1");
+    localPill.className =
+      "inline-flex items-baseline gap-1.5 px-3 py-1.5 rounded-lg bg-fuchsia-600 text-white shadow-[0_0_15px_rgba(192,38,211,0.25)] min-w-[110px] justify-center";
+    const locTime = document.createElement("span");
+    locTime.className = "font-bold text-sm tabular-nums";
+    locTime.textContent = m.localTime;
+    const locZone = document.createElement("span");
+    locZone.className = "text-[10px] uppercase tracking-wide text-white/80";
+    locZone.textContent = m.localZone;
+    localPill.appendChild(locTime);
+    localPill.appendChild(locZone);
+    block.appendChild(localPill);
+
+    const chev = document.createElement("span");
+    chev.setAttribute("aria-hidden", "true");
+    chev.className = "text-purple-300/40 group-hover:text-fuchsia-400 text-lg leading-none";
+    chev.textContent = "›";
+    block.appendChild(chev);
   }
 }

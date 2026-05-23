@@ -35,6 +35,10 @@ function ReadPage() {
   // profile timezone preference.
   const viewerTz =
     (typeof Intl !== "undefined" && Intl.DateTimeFormat().resolvedOptions().timeZone) || "UTC";
+  const viewerTzAbbr =
+    new Intl.DateTimeFormat("en-GB", { timeZone: viewerTz, timeZoneName: "short" })
+      .formatToParts(new Date())
+      .find((p) => p.type === "timeZoneName")?.value ?? viewerTz;
   const bodyRef = useRef<HTMLDivElement | null>(null);
   const [blog, setBlog] = useState<Blog | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -136,11 +140,22 @@ function ReadPage() {
               <p className="text-lg text-purple-100/80 italic">{blog.excerpt}</p>
             )}
             {blog.body && (
-              <div
-                ref={bodyRef}
-                className="prose prose-invert max-w-none text-purple-50/90 leading-relaxed"
-                dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(blog.body) }}
-              />
+              <div className="space-y-2">
+                <div className="hidden md:grid grid-cols-[auto_1fr_auto_auto_auto] items-center gap-4 px-4 pb-2 text-[10px] uppercase tracking-[0.18em] text-purple-200/50 font-semibold border-b border-purple-500/20">
+                  <span className="w-10">#</span>
+                  <span>Event</span>
+                  <span className="min-w-[110px] text-center">Source (GMT)</span>
+                  <span className="min-w-[110px] text-center text-fuchsia-300">
+                    Local ({viewerTzAbbr})
+                  </span>
+                  <span aria-hidden="true" className="w-3" />
+                </div>
+                <div
+                  ref={bodyRef}
+                  className="prose prose-invert max-w-none text-purple-50/90 leading-relaxed"
+                  dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(blog.body) }}
+                />
+              </div>
             )}
           </article>
         )}
