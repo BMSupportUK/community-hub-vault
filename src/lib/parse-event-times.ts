@@ -162,46 +162,42 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string): void {
     cur = walker.nextNode();
   }
 
-  let annotated = false;
   for (const textNode of targets) {
-    if (annotated) break;
     const text = textNode.nodeValue ?? "";
     const matches = parseMatches(text, viewerTz);
     if (!matches.length) continue;
 
-    const m = matches[0];
     const frag = document.createDocumentFragment();
-    if (m.start > 0) frag.appendChild(document.createTextNode(text.slice(0, m.start)));
+    let cursor = 0;
+    for (const m of matches) {
+      if (m.start > cursor) frag.appendChild(document.createTextNode(text.slice(cursor, m.start)));
 
-    // Source-time pill
-    const sourcePill = document.createElement("span");
-    sourcePill.setAttribute("data-tz-source-pill", "1");
-    sourcePill.className =
-      "inline-flex items-center px-2 py-0.5 rounded-md bg-violet-500/20 text-violet-100 border border-violet-400/40 text-xs font-medium align-baseline";
-    sourcePill.textContent = text.slice(m.start, m.end);
-    frag.appendChild(sourcePill);
+      // Source-time pill (the original written time)
+      const sourcePill = document.createElement("span");
+      sourcePill.setAttribute("data-tz-source-pill", "1");
+      sourcePill.className =
+        "inline-flex items-center px-2 py-0.5 rounded-md bg-violet-500/20 text-violet-100 border border-violet-400/40 text-xs font-medium align-baseline";
+      sourcePill.textContent = text.slice(m.start, m.end);
+      frag.appendChild(sourcePill);
 
-    // Divider + label + converted pill
-    const wrapper = document.createElement("span");
-    wrapper.setAttribute("data-tz-pill", "1");
-    wrapper.className = "inline-flex items-center gap-2 ml-2 align-baseline";
-    const divider = document.createElement("span");
-    divider.className = "opacity-40";
-    divider.textContent = "|";
-    wrapper.appendChild(divider);
-    const label = document.createElement("span");
-    label.className = "text-xs text-purple-100/80";
-    label.textContent = "Event Start Time In Your Timezone is";
-    wrapper.appendChild(label);
-    const convertedPill = document.createElement("span");
-    convertedPill.className =
-      "inline-flex items-center px-2 py-0.5 rounded-md bg-fuchsia-500/20 text-fuchsia-100 border border-fuchsia-400/40 text-xs font-medium";
-    convertedPill.textContent = m.converted;
-    wrapper.appendChild(convertedPill);
-    frag.appendChild(wrapper);
+      // Divider + converted pill (viewer's timezone)
+      const wrapper = document.createElement("span");
+      wrapper.setAttribute("data-tz-pill", "1");
+      wrapper.className = "inline-flex items-center gap-2 mx-1 align-baseline";
+      const divider = document.createElement("span");
+      divider.className = "opacity-40";
+      divider.textContent = "|";
+      wrapper.appendChild(divider);
+      const convertedPill = document.createElement("span");
+      convertedPill.className =
+        "inline-flex items-center px-2 py-0.5 rounded-md bg-fuchsia-500/20 text-fuchsia-100 border border-fuchsia-400/40 text-xs font-medium";
+      convertedPill.textContent = m.converted;
+      wrapper.appendChild(convertedPill);
+      frag.appendChild(wrapper);
 
-    if (m.end < text.length) frag.appendChild(document.createTextNode(text.slice(m.end)));
+      cursor = m.end;
+    }
+    if (cursor < text.length) frag.appendChild(document.createTextNode(text.slice(cursor)));
     textNode.parentNode?.replaceChild(frag, textNode);
-    annotated = true;
   }
 }
