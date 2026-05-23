@@ -132,7 +132,7 @@ function ReadPage() {
                 </span>
               )}
             </div>
-            <h1 className="font-display text-3xl md:text-4xl font-bold bg-gradient-to-r from-violet-400 via-fuchsia-400 to-blue-400 bg-clip-text text-transparent">
+            <h1 className="font-display text-3xl md:text-4xl font-bold text-white">
               {blog.title}
             </h1>
             {blog.refresh_notice && (
