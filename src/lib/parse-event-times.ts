@@ -107,6 +107,9 @@ function parseMatches(
   sourceDateLabel?: string,
 ): ParsedMatch[] {
   const results: ParsedMatch[] = [];
+  const inlineDate = parseLeadingGuideDate(text);
+  const effectiveSourceDateStr = inlineDate?.dateStr ?? sourceDateStr;
+  const effectiveSourceDateLabel = inlineDate?.sourceDateLabel ?? sourceDateLabel;
   TIME_RE.lastIndex = 0;
   let m: RegExpExecArray | null;
   while ((m = TIME_RE.exec(text)) !== null) {
@@ -128,7 +131,7 @@ function parseMatches(
     if (abbrev) {
       const tz = ZONE_MAP[abbrev.toUpperCase()];
       if (!tz) continue;
-      const dateStr = sourceDateStr ?? dateInTimeZone(todayUtc, tz);
+      const dateStr = effectiveSourceDateStr ?? dateInTimeZone(todayUtc, tz);
       const timeStr = `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}:00`;
       utcMs = zonedWallTimeToUtcMs(dateStr, timeStr, tz);
       sourceLabel = tz;
@@ -139,7 +142,7 @@ function parseMatches(
       const offM = offMStr ? parseInt(offMStr, 10) : 0;
       const offsetMin = (offH * 60 + offM) * (sign === "-" ? -1 : 1);
       // Source wall time interpreted at this offset:
-      const todayStr = sourceDateStr ?? new Date().toISOString().slice(0, 10);
+      const todayStr = effectiveSourceDateStr ?? new Date().toISOString().slice(0, 10);
       const naiveUtc = Date.parse(
         `${todayStr}T${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}:00Z`,
       );
@@ -168,7 +171,7 @@ function parseMatches(
     }).format(new Date(utcMs));
     const sourceTz = sourceLabel !== "offset" ? sourceLabel : viewerTz;
     const sourceDayDate =
-      sourceDateLabel ??
+      effectiveSourceDateLabel ??
       new Intl.DateTimeFormat("en-GB", {
         timeZone: sourceTz,
         weekday: "long",
@@ -218,7 +221,7 @@ function parseMatches(
         if (!ampm && hour > 23) continue;
         if (!ampm && !mStr) continue;
         const todayUtc = new Date();
-        const dateStr = sourceDateStr ?? dateInTimeZone(todayUtc, tz);
+        const dateStr = effectiveSourceDateStr ?? dateInTimeZone(todayUtc, tz);
         const timeStr = `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}:00`;
         const utcMs = zonedWallTimeToUtcMs(dateStr, timeStr, tz);
         if (!Number.isFinite(utcMs)) continue;
@@ -238,7 +241,7 @@ function parseMatches(
           year: "numeric",
         }).format(new Date(utcMs));
         const sourceDayDate =
-          sourceDateLabel ??
+          effectiveSourceDateLabel ??
           new Intl.DateTimeFormat("en-GB", {
             timeZone: tz,
             weekday: "long",
