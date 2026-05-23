@@ -395,7 +395,7 @@ function InstallGuidesPage() {
                       >
                         <div className="aspect-[16/10] bg-violet-900/50 relative overflow-hidden">
                           {b.image_url ? (
-                            <img src={b.image_url} alt={b.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                            <img src={b.image_url} alt={b.title} className="w-full h-full object-contain group-hover:scale-105 transition-transform" />
                           ) : (
                             <div className="w-full h-full grid place-items-center text-violet-300/70">
                               {b.pdf_url ? <FileText className="size-10" /> : <ImageIcon className="size-10" />}
@@ -414,7 +414,7 @@ function InstallGuidesPage() {
                         </div>
                         <div className="p-4 flex-1 flex flex-col gap-2">
                           <div className="flex flex-wrap gap-2">
-                            <span className="text-xs px-2 py-1 rounded-md bg-violet-500/20 text-violet-200 font-medium">
+                            <span className="text-xs px-2 py-1 rounded-md bg-fuchsia-500/30 text-white font-semibold border border-fuchsia-400/50">
                               {categories.find((c) => c.id === b.category_id)?.name}
                             </span>
                             {b.badge && (
@@ -528,7 +528,7 @@ function InstallGuidesPage() {
           {reading && (
             <>
               <DialogHeader>
-                <DialogTitle className="font-display text-2xl flex items-center gap-3">
+                <DialogTitle className="font-display text-2xl flex items-center gap-3 text-white">
                   <span className="flex-1">{reading.title}</span>
                   {reading.pdf_url && (
                     <a
@@ -551,10 +551,10 @@ function InstallGuidesPage() {
               ) : (
                 <>
                   {reading.image_url && (
-                    <img src={reading.image_url} alt={reading.title} className="w-full rounded-lg" />
+                    <img src={reading.image_url} alt={reading.title} className="max-h-48 md:max-h-64 w-auto mx-auto rounded-2xl border border-purple-500/30 object-contain" />
                   )}
                   <div className="flex flex-wrap gap-2">
-                    <span className="text-xs px-2 py-1 rounded-md bg-primary/15 text-primary font-medium">
+                    <span className="text-xs px-2 py-1 rounded-md bg-fuchsia-500/30 text-white font-semibold border border-fuchsia-400/50">
                       {categories.find((c) => c.id === reading.category_id)?.name}
                     </span>
                     {reading.badge && (
