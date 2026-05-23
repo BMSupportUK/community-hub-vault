@@ -130,11 +130,22 @@ function parseMatches(text: string, viewerTz: string, defaultZone?: string): Par
     const sourceDayDate = new Intl.DateTimeFormat("en-GB", {
       timeZone: sourceTz, weekday: "long", day: "numeric", month: "long", year: "numeric",
     }).format(new Date(utcMs));
+    const sourceHH = new Intl.DateTimeFormat("en-GB", {
+      timeZone: sourceTz, hour: "2-digit", minute: "2-digit", hour12: false,
+    }).format(new Date(utcMs));
+    const sourceAbbr = sourceLabel !== "offset"
+      ? (tzAbbrev(utcMs, sourceTz) || "GMT")
+      : (tzAbbrev(utcMs, viewerTz) || "");
     results.push({
       start: m.index,
       end: m.index + m[0].length,
       converted: `${dayDate} ${hh}${abbr ? ` ${abbr}` : ""}`,
       sourcePrefix: `${sourceDayDate} `,
+      sourceTime: sourceHH,
+      sourceZone: sourceAbbr,
+      localTime: hh,
+      localZone: abbr,
+      raw: m[0],
     });
   }
   if (defaultZone) {
