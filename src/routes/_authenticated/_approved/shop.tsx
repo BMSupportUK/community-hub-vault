@@ -2085,44 +2085,33 @@ function OrderDetail({ orderId, isAdmin, onBack }: { orderId: string; isAdmin: b
           {(isAdmin || order.user_id === user?.id) && (
             <div className="space-y-3">
               {pendingCrypto ? (
-                <div className="rounded-md border border-warning/30 bg-warning/10 px-3 py-2.5 text-xs text-foreground">
-                  <div className="font-medium mb-0.5">USDT payment in progress</div>
-                  <div className="text-muted-foreground">
-                    Awaiting on-chain confirmation ({pendingCrypto.status}). Other payment methods are locked until this clears. If you didn't send anything, wait for the invoice to expire or contact support.
-                  </div>
-                </div>
-              ) : (
                 <>
-                  <SquareCardPanel
+                  <div className="rounded-md border border-warning/30 bg-warning/10 px-3 py-2.5 text-xs text-foreground">
+                    <div className="font-medium mb-0.5">USDT payment in progress</div>
+                    <div className="text-muted-foreground">
+                      Awaiting on-chain confirmation ({pendingCrypto.status}). Other payment methods are locked until this clears. If you didn't send anything, wait for the invoice to expire or contact support.
+                    </div>
+                  </div>
+                  <CryptoPanel
                     orderId={orderId}
                     amountCents={order.total_cents ?? 0}
-                    canPay={!order.paid_at && !order.completed_at && order.status !== "cancelled"}
+                    canPay={false}
                     onChange={load}
                   />
-                  {!order.paid_at && !order.completed_at && order.status !== "cancelled" && (
-                    <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider text-muted-foreground">
-                      <div className="h-px flex-1 bg-border" /> or <div className="h-px flex-1 bg-border" />
-                    </div>
-                  )}
-                  <PaypalPanel
-                    orderId={orderId}
-                    amountCents={order.total_cents ?? 0}
-                    canPay={!order.paid_at && !order.completed_at && order.status !== "cancelled"}
-                    onChange={load}
-                  />
-                  {!order.paid_at && !order.completed_at && order.status !== "cancelled" && (
-                    <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider text-muted-foreground">
-                      <div className="h-px flex-1 bg-border" /> or <div className="h-px flex-1 bg-border" />
-                    </div>
-                  )}
                 </>
+              ) : order.paid_at || order.completed_at || order.status === "cancelled" ? (
+                <>
+                  <SquareCardPanel orderId={orderId} amountCents={order.total_cents ?? 0} canPay={false} onChange={load} />
+                  <PaypalPanel orderId={orderId} amountCents={order.total_cents ?? 0} canPay={false} onChange={load} />
+                  <CryptoPanel orderId={orderId} amountCents={order.total_cents ?? 0} canPay={false} onChange={load} />
+                </>
+              ) : (
+                <PayOrderDialog
+                  orderId={orderId}
+                  amountCents={order.total_cents ?? 0}
+                  onChange={load}
+                />
               )}
-              <CryptoPanel
-                orderId={orderId}
-                amountCents={order.total_cents ?? 0}
-                canPay={!order.paid_at && !order.completed_at && order.status !== "cancelled"}
-                onChange={load}
-              />
             </div>
           )}
         </div>
@@ -2177,6 +2166,44 @@ function OrderDetail({ orderId, isAdmin, onBack }: { orderId: string; isAdmin: b
 // ============ ADMIN ============
 function AdminProducts() {
   return <AdminProductsInner />;
+}
+
+function PayOrderDialog({ orderId, amountCents, onChange }: { orderId: string; amountCents: number; onChange?: () => void | Promise<void> }) {
+  const [open, setOpen] = useState(false);
+  const handleChange = async () => {
+    await onChange?.();
+  };
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-primary text-primary-foreground font-medium hover:opacity-90 transition"
+      >
+        <CreditCard className="size-4" />
+        Pay {fmt(amountCents)}
+      </button>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Choose how to pay</DialogTitle>
+            <div className="text-sm text-muted-foreground">Total {fmt(amountCents)}</div>
+          </DialogHeader>
+          <div className="space-y-3 pt-2">
+            <SquareCardPanel orderId={orderId} amountCents={amountCents} canPay={true} onChange={handleChange} />
+            <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider text-muted-foreground">
+              <div className="h-px flex-1 bg-border" /> or <div className="h-px flex-1 bg-border" />
+            </div>
+            <PaypalPanel orderId={orderId} amountCents={amountCents} canPay={true} onChange={handleChange} />
+            <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider text-muted-foreground">
+              <div className="h-px flex-1 bg-border" /> or <div className="h-px flex-1 bg-border" />
+            </div>
+            <CryptoPanel orderId={orderId} amountCents={amountCents} canPay={true} onChange={handleChange} />
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
 }
 declare global {
   interface Window { Square?: any }
