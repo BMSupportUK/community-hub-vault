@@ -132,11 +132,6 @@ function ReadPage() {
                 </span>
               )}
             </div>
-            {blog.not_guaranteed && (
-              <div className="rounded-xl border border-rose-400/40 bg-rose-500/10 px-4 py-3 text-rose-100 text-sm leading-relaxed">
-                These are not guaranteed and no reports allowed to source.
-              </div>
-            )}
             <h1 className="font-display text-3xl md:text-4xl font-bold bg-gradient-to-r from-violet-400 via-fuchsia-400 to-blue-400 bg-clip-text text-transparent">
               {blog.title}
             </h1>
@@ -144,6 +139,11 @@ function ReadPage() {
               <div className="flex items-start gap-3 rounded-xl border border-amber-400/40 bg-amber-500/10 px-4 py-3 text-amber-100">
                 <RefreshCw className="size-5 shrink-0 mt-0.5" />
                 <div className="text-sm leading-relaxed">{blog.refresh_notice}</div>
+              </div>
+            )}
+            {blog.not_guaranteed && (
+              <div className="rounded-xl border border-rose-400/40 bg-rose-500/10 px-4 py-3 text-rose-100 text-sm leading-relaxed">
+                These are not guaranteed and no reports allowed to source.
               </div>
             )}
             {blog.image_url && (
