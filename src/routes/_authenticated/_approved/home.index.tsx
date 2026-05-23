@@ -9,6 +9,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { generateEventBanner } from "@/lib/event-banner.functions";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { HtmlEditor } from "@/components/ui/html-editor";
+import { sanitizeRichHtml } from "@/lib/sanitize-html";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import Cropper, { type Area } from "react-easy-crop";
