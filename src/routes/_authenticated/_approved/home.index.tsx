@@ -310,7 +310,7 @@ function WelcomePage() {
                 style={{ width: 300 }}
               >
                 {canEditEvent && (
-                  <div className="absolute top-2 right-2 z-20 flex items-center gap-1">
+                  <div className="absolute top-2 right-2 z-20 flex items-center gap-1 opacity-0 pointer-events-none transition-opacity group-hover:opacity-100 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:pointer-events-auto">
                     <button
                       onClick={() => setBannerOpen(true)}
                       disabled={!event}
@@ -436,7 +436,7 @@ function WelcomePage() {
             const c = CARDS[key];
             if (!c) return null;
             const controls = canManage ? (
-              <div className="absolute top-1.5 right-1.5 flex flex-col gap-1 z-10">
+              <div className="absolute top-1.5 right-1.5 flex flex-col gap-1 z-10 opacity-0 pointer-events-none transition-opacity group-hover:opacity-100 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:pointer-events-auto">
                 <button
                   type="button"
                   aria-label="Move up"
@@ -458,7 +458,7 @@ function WelcomePage() {
               </div>
             ) : null;
             return (
-              <div key={key} className="relative h-full">
+              <div key={key} className="group relative h-full">
                 {controls}
                 {c.to ? (
                   <QuickCard to={c.to} params={c.params} icon={c.icon} title={c.title} desc={c.desc} />
