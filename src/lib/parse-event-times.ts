@@ -327,7 +327,18 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
         const isDate =
           /^(mon|tue|wed|thu|fri|sat|sun)[a-z]*[,\s].{0,40}$/i.test(sText) &&
           /\d/.test(sText) && sText.length < 60;
-        if (isDate) break;
+        if (isDate) {
+          // Hide the date-only heading but keep absorbing siblings past it,
+          // so the event name + channels that follow still attach to this row.
+          if (sib.dataset.tzOriginal == null) {
+            sib.dataset.tzOriginal = sib.innerHTML;
+            sib.dataset.tzPrevClass = sib.className;
+          }
+          sib.setAttribute("data-tz-row", "1");
+          sib.className = "hidden";
+          sib = sib.nextElementSibling as HTMLElement | null;
+          continue;
+        }
         absorbed.push(sib);
         sib = sib.nextElementSibling as HTMLElement | null;
         continue;
