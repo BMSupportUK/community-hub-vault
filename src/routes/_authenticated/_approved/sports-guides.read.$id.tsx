@@ -164,7 +164,7 @@ function ReadPage() {
                 </div>
                 <div
                   ref={bodyRef}
-                  className="prose prose-invert max-w-none text-purple-50/90 leading-relaxed"
+                  className="prose prose-invert max-w-none text-purple-50/90 leading-relaxed grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 prose-ul:contents prose-ol:contents [&_[data-tz-row]]:rounded-xl [&_[data-tz-row]]:border [&_[data-tz-row]]:border-purple-500/30 [&_[data-tz-row]]:bg-purple-950/50 [&_[data-tz-row]]:p-3 [&_[data-tz-row]]:shadow-sm hover:[&_[data-tz-row]]:border-fuchsia-500/60"
                   dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(blog.body) }}
                 />
               </div>
