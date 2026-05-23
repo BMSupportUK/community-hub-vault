@@ -181,11 +181,20 @@ function parseMatches(text: string, viewerTz: string, defaultZone?: string): Par
         const sourceDayDate = new Intl.DateTimeFormat("en-GB", {
           timeZone: tz, weekday: "long", day: "numeric", month: "long", year: "numeric",
         }).format(new Date(utcMs));
+        const sourceHH = new Intl.DateTimeFormat("en-GB", {
+          timeZone: tz, hour: "2-digit", minute: "2-digit", hour12: false,
+        }).format(new Date(utcMs));
+        const sourceAbbr = tzAbbrev(utcMs, tz) || defaultZone.toUpperCase();
         results.push({
           start: bm.index,
           end: bm.index + bm[0].length,
           converted: `${dayDate} ${hh}${abbr ? ` ${abbr}` : ""}`,
           sourcePrefix: `${sourceDayDate} `,
+          sourceTime: sourceHH,
+          sourceZone: sourceAbbr,
+          localTime: hh,
+          localZone: abbr,
+          raw: bm[0],
         });
       }
       results.sort((a, b) => a.start - b.start);
