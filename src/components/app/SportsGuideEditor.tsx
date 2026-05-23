@@ -19,6 +19,7 @@ type Blog = {
   body: string | null;
   image_url: string | null;
   badge: string | null;
+  refresh_notice: string | null;
   published: boolean;
 };
 
@@ -96,6 +97,7 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
           body: draft?.body ?? "",
           image_url: draft?.image_url ?? "",
           badge: draft?.badge ?? "",
+          refresh_notice: draft?.refresh_notice ?? "",
           published: draft?.published ?? true,
         });
         if (draft && (draft.title || draft.body || draft.excerpt || draft.image_url)) {
@@ -137,6 +139,7 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
       body: string | null;
       image_url: string | null;
       badge: string | null;
+      refresh_notice: string | null;
       published: boolean;
       sort_order?: number;
     } = {
@@ -146,6 +149,7 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
       body: editing.body?.trim() || null,
       image_url: editing.image_url?.trim() || null,
       badge: editing.badge?.trim() || null,
+      refresh_notice: editing.refresh_notice?.trim() || null,
       published: editing.published,
     };
     if (!editing.id) {
@@ -250,6 +254,16 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
             <div>
               <Label className="text-purple-100">Badge (optional)</Label>
               <Input value={editing.badge ?? ""} onChange={(e) => setEditing({ ...editing, badge: e.target.value })} placeholder="e.g. Updated with New Listings" className="bg-purple-950/50 border-purple-500/30 text-purple-50 placeholder:text-purple-300/50" />
+            </div>
+            <div>
+              <Label className="text-purple-100">Refresh notice (optional)</Label>
+              <Input
+                value={editing.refresh_notice ?? ""}
+                onChange={(e) => setEditing({ ...editing, refresh_notice: e.target.value })}
+                placeholder="e.g. Refresh your player to load tonight's matches"
+                className="bg-purple-950/50 border-purple-500/30 text-purple-50 placeholder:text-purple-300/50"
+              />
+              <p className="text-[11px] text-purple-300/70 mt-1">Shown as a highlighted notice under the guide title.</p>
             </div>
             <div>
               <Label className="text-purple-100">Excerpt</Label>
