@@ -453,7 +453,7 @@ function SportsGuidesPage() {
                         </div>
                         <div className="p-4 flex-1 flex flex-col gap-2">
                           <div className="flex flex-wrap gap-2">
-                            <span className="text-xs px-2 py-1 rounded-md bg-fuchsia-500/20 text-fuchsia-200 font-medium border border-fuchsia-500/30">
+                            <span className="text-xs px-2 py-1 rounded-md bg-fuchsia-500/30 text-white font-semibold border border-fuchsia-400/50">
                               {categories.find((c) => c.id === b.category_id)?.name}
                             </span>
                             {b.badge && (
