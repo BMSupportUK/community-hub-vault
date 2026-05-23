@@ -296,6 +296,7 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
   );
 
   let rowIndex = 0;
+  let currentSourceDate: string | null = null;
   for (const block of blocks) {
     // Skip nested blocks (e.g. <p> inside <li>) — outer wins, but we mark
     // already-transformed rows so descendants don't double-process.
@@ -303,7 +304,9 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
 
     const text = block.textContent ?? "";
     if (!text.trim()) continue;
-    const matches = parseMatches(text, viewerTz, defaultZone);
+    const parsedBlockDate = parseGuideDate(text);
+    if (parsedBlockDate) currentSourceDate = parsedBlockDate;
+    const matches = parseMatches(text, viewerTz, defaultZone, currentSourceDate ?? undefined);
     if (!matches.length) {
       // Hide standalone date headings like "Saturday 23-05-26" or
       // "Saturday, 23 May 2026" — the per-row pills already show the date.
@@ -347,10 +350,10 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
         if (!sText) { sib = sib.nextElementSibling as HTMLElement | null; continue; }
         // Stop if this sibling itself contains a time or is a date-only line.
         if (parseMatches(sText, viewerTz, defaultZone).length) break;
-        const isDate =
-          /^(mon|tue|wed|thu|fri|sat|sun)[a-z]*[,\s].{0,40}$/i.test(sText) &&
-          /\d/.test(sText) && sText.length < 60;
+        const parsedSiblingDate = parseGuideDate(sText);
+        const isDate = Boolean(parsedSiblingDate);
         if (isDate) {
+          currentSourceDate = parsedSiblingDate;
           // Hide the date-only heading but keep absorbing siblings past it,
           // so the event name + channels that follow still attach to this row.
           if (sib.dataset.tzOriginal == null) {
