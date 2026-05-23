@@ -605,7 +605,7 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
 
     // Pills row (source + local side by side)
     const pillsRow = document.createElement("div");
-    pillsRow.className = "flex w-full flex-wrap gap-2 pl-0 md:pl-13";
+    pillsRow.className = "flex w-full flex-wrap gap-2 pl-0 md:pl-[3.25rem]";
     block.appendChild(pillsRow);
 
     // Source pill (muted) — listed FIRST after name to match mockup order request
@@ -654,13 +654,7 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
     localPill.appendChild(locRow);
     pillsRow.appendChild(localPill);
 
-    // Decorative chevron — desktop only, matches the mockup.
-    const chev = document.createElement("span");
-    chev.setAttribute("data-tz-pill", "1");
-    chev.className =
-      "hidden md:inline shrink-0 pl-1 text-xl text-purple-300/50 group-hover:text-fuchsia-300/80 leading-none select-none";
-    chev.textContent = "›";
-    block.appendChild(chev);
+    // Keep transformed content to two text lines plus the time pills.
   }
 
   // Sort all transformed event rows by earliest source time and renumber.
