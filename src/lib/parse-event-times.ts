@@ -92,6 +92,7 @@ interface ParsedMatch {
   sourceDate: string;
   localDate: string;
   raw: string;
+  utcMs: number;
 }
 
 export interface EventTime {
@@ -201,6 +202,7 @@ function parseMatches(
       sourceDate: sourceDayDate,
       localDate: dayDate,
       raw: m[0],
+      utcMs,
     });
   }
   if (defaultZone) {
@@ -268,6 +270,7 @@ function parseMatches(
           sourceDate: sourceDayDate,
           localDate: dayDate,
           raw: bm[0],
+          utcMs,
         });
       }
       results.sort((a, b) => a.start - b.start);
@@ -556,6 +559,7 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
     block.dataset.tzOriginal = block.innerHTML;
     block.dataset.tzPrevClass = block.className;
     block.setAttribute("data-tz-row", "1");
+    block.dataset.tzUtc = String(m.utcMs);
     block.className =
       "group not-prose list-none my-2 grid max-w-full grid-cols-[auto_minmax(0,1fr)] lg:grid-cols-[auto_minmax(0,1fr)_minmax(8.5rem,10rem)_minmax(8.5rem,10rem)_auto] items-center gap-3 overflow-hidden px-3 sm:px-4 py-3 rounded-xl bg-purple-950/40 border border-purple-500/20 hover:border-fuchsia-500/60 transition-colors";
 
@@ -632,5 +636,27 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
       "hidden text-purple-300/40 group-hover:text-fuchsia-400 text-lg leading-none lg:inline";
     chev.textContent = "›";
     block.appendChild(chev);
+  }
+
+  // Sort all transformed event rows by earliest source time and renumber.
+  const eventRows = Array.from(
+    root.querySelectorAll<HTMLElement>("[data-tz-row][data-tz-utc]"),
+  );
+  if (eventRows.length > 1) {
+    const anchorParent = eventRows[0].parentElement;
+    if (anchorParent && eventRows.every((el) => el.parentElement === anchorParent)) {
+      const placeholder = document.createComment("tz-sort-anchor");
+      anchorParent.insertBefore(placeholder, eventRows[0]);
+      const sorted = [...eventRows].sort(
+        (a, b) => Number(a.dataset.tzUtc) - Number(b.dataset.tzUtc),
+      );
+      for (const el of eventRows) el.remove();
+      for (const el of sorted) anchorParent.insertBefore(el, placeholder);
+      placeholder.remove();
+      sorted.forEach((el, idx) => {
+        const numCell = el.querySelector("span");
+        if (numCell) numCell.textContent = String(idx + 1).padStart(2, "0");
+      });
+    }
   }
 }
