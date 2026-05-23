@@ -35,6 +35,10 @@ function ReadPage() {
   // profile timezone preference.
   const viewerTz =
     (typeof Intl !== "undefined" && Intl.DateTimeFormat().resolvedOptions().timeZone) || "UTC";
+  const viewerTzAbbr =
+    new Intl.DateTimeFormat("en-GB", { timeZone: viewerTz, timeZoneName: "short" })
+      .formatToParts(new Date())
+      .find((p) => p.type === "timeZoneName")?.value ?? viewerTz;
   const bodyRef = useRef<HTMLDivElement | null>(null);
   const [blog, setBlog] = useState<Blog | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
