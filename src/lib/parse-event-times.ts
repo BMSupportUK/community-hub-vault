@@ -4,6 +4,7 @@ import { zonedWallTimeToUtcMs, dateInTimeZone } from "@/hooks/use-timezone";
 const ZONE_MAP: Record<string, string> = {
   GMT: "Etc/GMT",
   UTC: "Etc/UTC",
+  UK: "Europe/London",
   BST: "Europe/London",
   ET: "America/New_York",
   EST: "America/New_York",
