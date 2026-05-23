@@ -643,20 +643,27 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
     root.querySelectorAll<HTMLElement>("[data-tz-row][data-tz-utc]"),
   );
   if (eventRows.length > 1) {
-    const anchorParent = eventRows[0].parentElement;
-    if (anchorParent && eventRows.every((el) => el.parentElement === anchorParent)) {
-      const placeholder = document.createComment("tz-sort-anchor");
-      anchorParent.insertBefore(placeholder, eventRows[0]);
-      const sorted = [...eventRows].sort(
-        (a, b) => Number(a.dataset.tzUtc) - Number(b.dataset.tzUtc),
-      );
-      for (const el of eventRows) el.remove();
-      for (const el of sorted) anchorParent.insertBefore(el, placeholder);
-      placeholder.remove();
-      sorted.forEach((el, idx) => {
-        const numCell = el.querySelector("span");
-        if (numCell) numCell.textContent = String(idx + 1).padStart(2, "0");
-      });
+    // Anchor at the first row's top-level ancestor within root. Reparent
+    // every row there so editor wrapping divs don't prevent sorting.
+    const topAncestor = (el: HTMLElement): HTMLElement => {
+      let cur: HTMLElement = el;
+      while (cur.parentElement && cur.parentElement !== root) cur = cur.parentElement;
+      return cur;
+    };
+    const anchorEl = topAncestor(eventRows[0]);
+    const placeholder = document.createComment("tz-sort-anchor");
+    root.insertBefore(placeholder, anchorEl);
+    const sorted = [...eventRows].sort(
+      (a, b) => Number(a.dataset.tzUtc) - Number(b.dataset.tzUtc),
+    );
+    for (const el of sorted) {
+      el.remove();
+      root.insertBefore(el, placeholder);
     }
+    placeholder.remove();
+    sorted.forEach((el, idx) => {
+      const numCell = el.querySelector("span");
+      if (numCell) numCell.textContent = String(idx + 1).padStart(2, "0");
+    });
   }
 }
