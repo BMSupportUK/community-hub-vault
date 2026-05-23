@@ -57,6 +57,7 @@ type Blog = {
   created_at: string;
   sort_order: number;
   updated_at?: string;
+  refresh_notice?: string | null;
 };
 
 function SportsGuidesPage() {
