@@ -403,7 +403,7 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
     sourcePill.className =
       "inline-flex w-full min-w-0 flex-col items-center justify-center px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-purple-100/80 md:w-40";
     const srcDate = document.createElement("span");
-    srcDate.className = "sr-only";
+    srcDate.className = "block w-full truncate text-center text-[10px] text-purple-200/70";
     srcDate.textContent = m.sourceDate;
     const srcRow = document.createElement("span");
     srcRow.className = "flex w-full min-w-0 items-baseline justify-center gap-1.5";
@@ -425,7 +425,7 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
     localPill.className =
       "inline-flex w-full min-w-0 flex-col items-center justify-center px-3 py-1.5 rounded-lg bg-fuchsia-600 text-white shadow-[0_0_15px_rgba(192,38,211,0.25)] md:w-40";
     const locDate = document.createElement("span");
-    locDate.className = "sr-only";
+    locDate.className = "block w-full truncate text-center text-[10px] text-white/80";
     locDate.textContent = m.localDate;
     const locRow = document.createElement("span");
     locRow.className = "flex w-full min-w-0 items-baseline justify-center gap-1.5";
