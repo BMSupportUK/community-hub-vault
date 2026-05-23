@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, RefreshCw } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { sanitizeRichHtml } from "@/lib/sanitize-html";
@@ -20,6 +20,7 @@ type Blog = {
   body: string | null;
   image_url: string | null;
   badge: string | null;
+  refresh_notice: string | null;
 };
 type Category = { id: string; name: string };
 
@@ -94,6 +95,12 @@ function ReadPage() {
             <h1 className="font-display text-3xl md:text-4xl font-bold bg-gradient-to-r from-violet-400 via-fuchsia-400 to-blue-400 bg-clip-text text-transparent">
               {blog.title}
             </h1>
+            {blog.refresh_notice && (
+              <div className="flex items-start gap-3 rounded-xl border border-amber-400/40 bg-amber-500/10 px-4 py-3 text-amber-100">
+                <RefreshCw className="size-5 shrink-0 mt-0.5" />
+                <div className="text-sm leading-relaxed">{blog.refresh_notice}</div>
+              </div>
+            )}
             {blog.image_url && (
               <img src={blog.image_url} alt={blog.title} className="w-full rounded-2xl border border-purple-500/30" />
             )}
