@@ -559,13 +559,13 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
     block.setAttribute("data-tz-row", "1");
     block.dataset.tzUtc = String(m.utcMs);
     block.className =
-      "group not-prose list-none m-0 flex flex-col gap-3 overflow-hidden p-4 rounded-xl bg-purple-950/40 border border-purple-500/20 hover:border-fuchsia-500/60 transition-colors";
+      "group not-prose list-none m-0 flex flex-col md:flex-row md:items-center gap-3 md:gap-4 overflow-hidden p-4 rounded-xl bg-purple-950/40 border border-purple-500/20 hover:border-fuchsia-500/60 transition-colors";
 
     block.innerHTML = "";
 
     // Header row: number + (event name / channel)
     const header = document.createElement("div");
-    header.className = "flex items-start gap-3";
+    header.className = "flex items-start gap-3 md:flex-1 md:min-w-0";
     const numCell = document.createElement("span");
     numCell.className =
       "font-display text-2xl font-bold text-purple-200/60 group-hover:text-fuchsia-400 tabular-nums w-10 shrink-0 leading-none pt-0.5";
@@ -610,14 +610,17 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
 
     // Pills row (source + local side by side)
     const pillsRow = document.createElement("div");
-    pillsRow.className = "flex gap-2";
+    // On desktop `contents` dissolves this wrapper so the pills become direct
+    // flex children of the row (sitting horizontally next to the name). On
+    // mobile it stays a wrapping flex row so the pills sit below the name.
+    pillsRow.className = "flex gap-2 w-full md:contents";
     block.appendChild(pillsRow);
 
     // Source pill (muted) — listed FIRST after name to match mockup order request
     const sourcePill = document.createElement("span");
     sourcePill.setAttribute("data-tz-pill", "1");
     sourcePill.className =
-      "flex-1 inline-flex min-w-0 max-w-full flex-col items-center justify-center px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-purple-100/80";
+      "flex-1 md:flex-none md:w-auto md:shrink-0 inline-flex min-w-0 max-w-full flex-col items-center justify-center px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-purple-100/80";
     const srcDate = document.createElement("span");
     srcDate.className =
       "block w-full text-center text-[11px] md:text-xs font-bold uppercase tracking-wider text-fuchsia-200 leading-tight mb-0.5";
@@ -640,7 +643,7 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
     const localPill = document.createElement("span");
     localPill.setAttribute("data-tz-pill", "1");
     localPill.className =
-      "flex-1 inline-flex min-w-0 max-w-full flex-col items-center justify-center px-3 py-1.5 rounded-lg bg-fuchsia-600 text-white shadow-[0_0_15px_rgba(192,38,211,0.25)]";
+      "flex-1 md:flex-none md:w-auto md:shrink-0 inline-flex min-w-0 max-w-full flex-col items-center justify-center px-3 py-1.5 rounded-lg bg-fuchsia-600 text-white shadow-[0_0_15px_rgba(192,38,211,0.25)]";
     const locDate = document.createElement("span");
     locDate.className =
       "block w-full text-center text-[11px] md:text-xs font-bold uppercase tracking-wider text-white leading-tight mb-0.5";
@@ -658,15 +661,24 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
     localPill.appendChild(locDate);
     localPill.appendChild(locRow);
     pillsRow.appendChild(localPill);
+
+    // Decorative chevron — desktop only, matches the mockup.
+    const chev = document.createElement("span");
+    chev.setAttribute("data-tz-pill", "1");
+    chev.className =
+      "hidden md:inline shrink-0 pl-1 text-xl text-purple-300/50 group-hover:text-fuchsia-300/80 leading-none select-none";
+    chev.textContent = "›";
+    block.appendChild(chev);
   }
 
   // Sort all transformed event rows by earliest source time and renumber.
   const eventRows = Array.from(
     root.querySelectorAll<HTMLElement>("[data-tz-row][data-tz-utc]"),
   );
-  if (eventRows.length > 1) {
-    // Anchor at the first row's top-level ancestor within root. Reparent
-    // every row there so editor wrapping divs don't prevent sorting.
+  if (eventRows.length >= 1) {
+    // Anchor at the first row's top-level ancestor within root, then reparent
+    // every row to be a direct child of `root`. This bypasses editor wrappers
+    // (grids, columns, extra divs) so rows always stack vertically full-width.
     const topAncestor = (el: HTMLElement): HTMLElement => {
       let cur: HTMLElement = el;
       while (cur.parentElement && cur.parentElement !== root) cur = cur.parentElement;
