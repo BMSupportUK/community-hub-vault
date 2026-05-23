@@ -420,7 +420,11 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
   for (const [blockIndex, block] of blocks.entries()) {
     // Skip nested blocks (e.g. <p> inside <li>) — outer wins, but we mark
     // already-transformed rows so descendants don't double-process.
-    if (block.closest("[data-tz-row]")) continue;
+    if (block.closest("[data-tz-row]")) {
+      const skippedDate = parseGuideDate(block.textContent ?? "");
+      if (skippedDate) currentSourceDate = skippedDate;
+      continue;
+    }
 
     const text = block.textContent ?? "";
     if (!text.trim()) continue;
