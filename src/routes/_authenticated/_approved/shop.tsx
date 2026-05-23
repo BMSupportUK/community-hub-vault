@@ -2167,6 +2167,44 @@ function OrderDetail({ orderId, isAdmin, onBack }: { orderId: string; isAdmin: b
 function AdminProducts() {
   return <AdminProductsInner />;
 }
+
+function PayOrderDialog({ orderId, amountCents, onChange }: { orderId: string; amountCents: number; onChange?: () => void | Promise<void> }) {
+  const [open, setOpen] = useState(false);
+  const handleChange = async () => {
+    await onChange?.();
+  };
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-primary text-primary-foreground font-medium hover:opacity-90 transition"
+      >
+        <CreditCard className="size-4" />
+        Pay {fmt(amountCents)}
+      </button>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Choose how to pay</DialogTitle>
+            <div className="text-sm text-muted-foreground">Total {fmt(amountCents)}</div>
+          </DialogHeader>
+          <div className="space-y-3 pt-2">
+            <SquareCardPanel orderId={orderId} amountCents={amountCents} canPay={true} onChange={handleChange} />
+            <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider text-muted-foreground">
+              <div className="h-px flex-1 bg-border" /> or <div className="h-px flex-1 bg-border" />
+            </div>
+            <PaypalPanel orderId={orderId} amountCents={amountCents} canPay={true} onChange={handleChange} />
+            <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider text-muted-foreground">
+              <div className="h-px flex-1 bg-border" /> or <div className="h-px flex-1 bg-border" />
+            </div>
+            <CryptoPanel orderId={orderId} amountCents={amountCents} canPay={true} onChange={handleChange} />
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
 declare global {
   interface Window { Square?: any }
 }
