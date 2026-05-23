@@ -3,6 +3,7 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { UserCircle2, Pencil, Copy, LogOut, Settings, AtSign, Check, Shield, ShieldCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { useBusinessOpen } from "@/hooks/use-business-open";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -32,6 +33,8 @@ export function UserAvatarMenu() {
   const [profile, setProfile] = useState<MiniProfile | null>(null);
   const [copied, setCopied] = useState(false);
   const isAdmin = hasAny(["admin", "management"]);
+  const businessOpen = useBusinessOpen();
+  const roleFlashMap = useRoleFlashMap();
 
   useEffect(() => {
     if (!user) return;
@@ -65,8 +68,10 @@ export function UserAvatarMenu() {
   const FLASH_PRIORITY: FlashRole[] = ["admin", "management", "moderator", "staff"];
   const flashRole = FLASH_PRIORITY.find((r) => roles.includes(r)) ?? null;
   const flashCls = roleFlashClass(flashRole);
-  const roleFlashMap = useRoleFlashMap();
   const resolvedAvatar = resolveAvatarUrl(user.id, profile?.avatar_url, roleFlashMap);
+  const isStaffRole = hasAny(["admin", "management", "moderator", "staff"]);
+  const isAway = isStaffRole && !businessOpen;
+  const statusLabel = isAway ? "Away From The Office" : "Online";
 
   const copyHandle = async () => {
     if (!profile?.username) return;
@@ -104,7 +109,14 @@ export function UserAvatarMenu() {
             </span>
             <span className="text-[10px] text-muted-foreground capitalize">{topRole}</span>
           </span>
-          <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-rail" />
+          <span
+            className={cn(
+              "absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full ring-2 ring-rail",
+              isAway ? "bg-yellow-400 shadow-[0_0_10px_rgba(250,204,21,0.8)]" : "bg-emerald-500",
+            )}
+            title={statusLabel}
+            aria-label={statusLabel}
+          />
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" sideOffset={8} className="w-72 p-0 overflow-hidden">
