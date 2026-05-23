@@ -48,8 +48,7 @@ export function ChannelColumn({
   inSheet?: boolean;
 }) {
   const path = useRouterState({ select: (r) => r.location.pathname });
-  const { user } = useAuth();
-  const { isStaff } = useAuth();
+  const { user, isStaff } = useAuth();
   const businessOpen = useBusinessOpen();
   const isAway = isStaff && !businessOpen;
   const roleFlashMap = useRoleFlashMap();
