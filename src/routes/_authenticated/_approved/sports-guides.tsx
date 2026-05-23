@@ -57,6 +57,7 @@ type Blog = {
   created_at: string;
   sort_order: number;
   updated_at?: string;
+  refresh_notice?: string | null;
 };
 
 function SportsGuidesPage() {
@@ -432,10 +433,15 @@ function SportsGuidesPage() {
                           </div>
                           <h3 className="font-display font-semibold text-lg leading-snug text-purple-50 flex items-center gap-2">
                             {isUnread(b) && (
-                              <span className="size-2 rounded-full bg-fuchsia-400 shadow-[0_0_8px_rgba(232,121,249,0.9)] shrink-0" title="Unread" />
+                              <span className="size-2 rounded-full bg-fuchsia-400 shadow-[0_0_8px_rgba(232,121,249,0.9)] shrink-0 animate-pulse" title="Unread" />
                             )}
                             <span>{b.title}</span>
                           </h3>
+                          {b.refresh_notice && (
+                            <div className="rounded-md border border-amber-400/50 bg-amber-500/15 text-amber-100 px-3 py-2 text-xs leading-snug">
+                              {b.refresh_notice}
+                            </div>
+                          )}
                           {b.excerpt && <p className="text-sm text-purple-200/70 line-clamp-2">{b.excerpt}</p>}
                           <div className="mt-auto pt-3 flex items-center gap-2">
                             <Button size="sm" className="flex-1 bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white border-0" onClick={() => navigate({ to: "/sports-guides/read/$id", params: { id: b.id }, search: { cat: b.category_id } })}>Click to Read</Button>
