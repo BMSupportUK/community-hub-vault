@@ -66,6 +66,20 @@ function tzAbbrev(instantMs: number, tz: string): string {
   return parts.find((p) => p.type === "timeZoneName")?.value ?? "";
 }
 
+function sourceDateLabelFromHeading(text: string, dateStr: string): string {
+  const weekday = text.trim().match(/^(mon|tue|wed|thu|fri|sat|sun)[a-z]*/i)?.[0];
+  const weekdayName = weekday
+    ? `${weekday.charAt(0).toUpperCase()}${weekday.slice(1).toLowerCase()}`
+    : null;
+  const [, month, day] = dateStr.split("-").map((part) => parseInt(part, 10));
+  const monthYear = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "UTC",
+    month: "long",
+    year: "numeric",
+  }).format(new Date(`${dateStr}T00:00:00Z`));
+  return weekdayName ? `${weekdayName} ${day} ${monthYear}` : `${day} ${monthYear}`;
+}
+
 interface ParsedMatch {
   start: number;
   end: number;
@@ -90,6 +104,7 @@ function parseMatches(
   viewerTz: string,
   defaultZone?: string,
   sourceDateStr?: string,
+  sourceDateLabel?: string,
 ): ParsedMatch[] {
   const results: ParsedMatch[] = [];
   TIME_RE.lastIndex = 0;
@@ -152,7 +167,7 @@ function parseMatches(
       year: "numeric",
     }).format(new Date(utcMs));
     const sourceTz = sourceLabel !== "offset" ? sourceLabel : viewerTz;
-    const sourceDayDate = new Intl.DateTimeFormat("en-GB", {
+    const sourceDayDate = sourceDateLabel ?? new Intl.DateTimeFormat("en-GB", {
       timeZone: sourceTz,
       weekday: "long",
       day: "numeric",
@@ -220,7 +235,7 @@ function parseMatches(
           month: "long",
           year: "numeric",
         }).format(new Date(utcMs));
-        const sourceDayDate = new Intl.DateTimeFormat("en-GB", {
+        const sourceDayDate = sourceDateLabel ?? new Intl.DateTimeFormat("en-GB", {
           timeZone: tz,
           weekday: "long",
           day: "numeric",
