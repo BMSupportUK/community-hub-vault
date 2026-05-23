@@ -417,8 +417,6 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
           sib = sib.nextElementSibling as HTMLElement | null;
           continue;
         }
-        // Stop if this sibling itself contains a time or is a date-only line.
-        if (parseMatches(sText, viewerTz, defaultZone).length) break;
         const parsedSiblingDate = parseGuideDate(sText);
         const isDate = Boolean(parsedSiblingDate);
         if (isDate) {
@@ -434,6 +432,8 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
           sib = sib.nextElementSibling as HTMLElement | null;
           continue;
         }
+        // Stop if this sibling itself contains a time.
+        if (parseMatches(sText, viewerTz, defaultZone, currentSourceDate ?? undefined).length) break;
         absorbed.push(sib);
         sib = sib.nextElementSibling as HTMLElement | null;
         continue;
