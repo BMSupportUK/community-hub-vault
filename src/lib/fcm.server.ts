@@ -183,8 +183,12 @@ async function sendFcmToTokens(
           android: {
             priority: "HIGH",
             notification: {
-              channel_id: "bm_support_alerts",
-              sound: "default",
+            // Keep in sync with strings.xml and use-push-register.tsx.
+            // Channels are immutable once created on a device, so when the
+            // sound or importance changes we bump the id (v2) to force
+            // recreation on existing installs.
+            channel_id: "bm_support_alerts_v2",
+            sound: "default",
               default_sound: true,
               default_vibrate_timings: true,
               notification_priority: "PRIORITY_HIGH",
