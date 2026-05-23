@@ -2189,17 +2189,22 @@ function PayOrderDialog({ orderId, amountCents, onChange }: { orderId: string; a
             <DialogTitle>Choose how to pay</DialogTitle>
             <div className="text-sm text-muted-foreground">Total {fmt(amountCents)}</div>
           </DialogHeader>
-          <div className="space-y-3 pt-2">
-            <SquareCardPanel orderId={orderId} amountCents={amountCents} canPay={true} onChange={handleChange} />
-            <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider text-muted-foreground">
-              <div className="h-px flex-1 bg-border" /> or <div className="h-px flex-1 bg-border" />
-            </div>
-            <PaypalPanel orderId={orderId} amountCents={amountCents} canPay={true} onChange={handleChange} />
-            <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider text-muted-foreground">
-              <div className="h-px flex-1 bg-border" /> or <div className="h-px flex-1 bg-border" />
-            </div>
-            <CryptoPanel orderId={orderId} amountCents={amountCents} canPay={true} onChange={handleChange} />
-          </div>
+          <Tabs defaultValue="square" className="pt-2">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="square">Square</TabsTrigger>
+              <TabsTrigger value="paypal">PayPal</TabsTrigger>
+              <TabsTrigger value="usdt">USDT</TabsTrigger>
+            </TabsList>
+            <TabsContent value="square" className="mt-3">
+              <SquareCardPanel orderId={orderId} amountCents={amountCents} canPay={true} onChange={handleChange} />
+            </TabsContent>
+            <TabsContent value="paypal" className="mt-3">
+              <PaypalPanel orderId={orderId} amountCents={amountCents} canPay={true} onChange={handleChange} />
+            </TabsContent>
+            <TabsContent value="usdt" className="mt-3">
+              <CryptoPanel orderId={orderId} amountCents={amountCents} canPay={true} onChange={handleChange} />
+            </TabsContent>
+          </Tabs>
         </DialogContent>
       </Dialog>
     </>
