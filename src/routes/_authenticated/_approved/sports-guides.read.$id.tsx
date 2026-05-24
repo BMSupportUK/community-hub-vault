@@ -31,12 +31,21 @@ function ReadPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  // Use the browser-detected timezone (the viewer's PC clock) so the pill
-  // reflects the device the page is rendered on, regardless of any saved
-  // profile timezone preference.
-  const viewerTz =
-    (typeof Intl !== "undefined" && Intl.DateTimeFormat().resolvedOptions().timeZone) || "UTC";
-  const viewerTzLabel = viewerTz.replace(/_/g, " ");
+  // Always render local times in UK time (Europe/London), which automatically
+  // observes GMT in winter and BST in summer. The label reflects the current
+  // abbreviation so readers see "GMT" or "BST" appropriately.
+  const viewerTz = "Europe/London";
+  const viewerTzLabel = (() => {
+    try {
+      const parts = new Intl.DateTimeFormat("en-GB", {
+        timeZone: viewerTz,
+        timeZoneName: "short",
+      }).formatToParts(new Date());
+      return parts.find((p) => p.type === "timeZoneName")?.value ?? "GMT";
+    } catch {
+      return "GMT";
+    }
+  })();
   const bodyRef = useRef<HTMLDivElement | null>(null);
   const [blog, setBlog] = useState<Blog | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -89,7 +98,7 @@ function ReadPage() {
     let scheduled = false;
     const run = () => {
       observer.disconnect();
-      annotateTimesInEl(el, viewerTz, "GMT");
+            annotateTimesInEl(el, viewerTz, "GMT");
       observer.observe(el, { childList: true, subtree: true });
     };
     const observer = new MutationObserver(() => {
