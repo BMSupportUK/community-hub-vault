@@ -526,12 +526,37 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
     if (absorbed[0]) {
       eventName = (absorbed[0].textContent ?? "").trim() || eventName;
     }
-    if (absorbed.length > 1) {
-      const extras = absorbed
-        .slice(1)
-        .map((a) => (a.textContent ?? "").trim())
-        .filter(Boolean)
-        .join(" · ");
+    // Detect channel-group headers (Premier League guides). When present,
+    // render each group as a bold label on its own line with its channels
+    // listed underneath, instead of one flat dot-separated caption.
+    const extraLines = absorbed
+      .slice(1)
+      .map((a) => (a.textContent ?? "").trim())
+      .filter(Boolean);
+    const GROUP_HEADERS = [
+      "EPL | Premier League",
+      "EPL | Premier League Hub",
+      "Other Channels",
+    ];
+    const normalize = (s: string) => s.replace(/\s+/g, " ").trim().toLowerCase();
+    const isGroupHeader = (s: string) =>
+      GROUP_HEADERS.some((h) => normalize(h) === normalize(s));
+    let groupedChannels: { label: string; items: string[] }[] | null = null;
+    if (extraLines.some(isGroupHeader)) {
+      groupedChannels = [];
+      let current: { label: string; items: string[] } | null = null;
+      for (const line of extraLines) {
+        if (isGroupHeader(line)) {
+          current = { label: line, items: [] };
+          groupedChannels.push(current);
+        } else if (current) {
+          current.items.push(line);
+        } else {
+          caption = caption ? `${caption} · ${line}` : line;
+        }
+      }
+    } else if (extraLines.length) {
+      const extras = extraLines.join(" · ");
       if (extras) caption = caption ? `${caption} · ${extras}` : extras;
     }
     for (const a of absorbed) {
@@ -600,6 +625,22 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
       capEl.className = "mt-1.5 text-sm text-purple-100/80 break-words leading-snug";
       capEl.textContent = caption;
       nameCell.appendChild(capEl);
+    }
+    if (groupedChannels && groupedChannels.length) {
+      for (const g of groupedChannels) {
+        const sec = document.createElement("div");
+        sec.className = "mt-1.5 text-sm text-purple-100/80 break-words leading-snug";
+        const lbl = document.createElement("div");
+        lbl.className = "font-bold text-fuchsia-200";
+        lbl.textContent = g.label;
+        sec.appendChild(lbl);
+        if (g.items.length) {
+          const list = document.createElement("div");
+          list.textContent = g.items.join(" · ");
+          sec.appendChild(list);
+        }
+        nameCell.appendChild(sec);
+      }
     }
     header.appendChild(nameCell);
     block.appendChild(header);
