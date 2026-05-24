@@ -148,16 +148,6 @@ function StaffPage() {
               className="w-full pl-9 pr-3 py-2 rounded-lg bg-purple-950/50 border border-purple-500/30 text-purple-50 placeholder:text-purple-300/50 outline-none focus:border-fuchsia-400 focus:ring-2 focus:ring-fuchsia-500/40"
             />
           </div>
-            <div className="relative max-w-md">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-purple-300" />
-              <input
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-                placeholder="Search staff…"
-                className="w-full pl-9 pr-3 py-2 rounded-lg bg-purple-950/50 border border-purple-500/30 text-purple-50 placeholder:text-purple-300/50 outline-none focus:border-fuchsia-400 focus:ring-2 focus:ring-fuchsia-500/40"
-              />
-            </div>
-
             {ROLE_ORDER.every((r) => grouped[r].length === 0) && (
               <div className="rounded-2xl border border-dashed border-purple-500/40 p-12 text-center text-purple-200/70 bg-purple-950/30">
                 No staff members found.
