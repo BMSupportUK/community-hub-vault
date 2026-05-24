@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Activity, CheckCircle2, Users, Briefcase } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { cn } from "@/lib/utils";
 
 interface ServiceStatusBoxProps {
   hideButtons?: boolean;
@@ -53,7 +54,16 @@ export function ServiceStatusBox({ hideButtons }: ServiceStatusBoxProps = {}) {
 
   return (
     <section className="px-2 pt-4">
-      <div className="rounded-lg bg-surface-2/60 border border-border overflow-hidden">
+      <div
+        className={cn(
+          "rounded-lg bg-surface-2/60 border overflow-hidden",
+          loading
+            ? "border-border"
+            : operational
+              ? "border-emerald-500/70 shadow-[0_0_12px_rgba(16,185,129,0.35)]"
+              : "membership-expired-flash border-red-500",
+        )}
+      >
         <div className="flex items-center justify-between px-3 py-2 border-b border-border bg-gradient-to-r from-violet-600/10 via-fuchsia-600/10 to-blue-600/10">
           <div className="flex items-center gap-2">
             <Activity className="size-3.5 text-fuchsia-300" />
