@@ -12,7 +12,6 @@ import { MyWorkingStatus } from "@/components/app/MyWorkingStatus";
 import { BreakEndingAlert } from "@/components/app/BreakEndingAlert";
 import { ShiftStartEndAlert } from "@/components/app/ShiftStartEndAlert";
 import { TwoFactorPill } from "@/components/app/TwoFactorBanner";
-import { SubscriptionExpiry } from "@/components/app/SubscriptionExpiry";
 import { ModerationPendingBadge } from "@/components/app/ModerationPendingBadge";
 import { PendingOrdersBadge } from "@/components/app/PendingOrdersBadge";
 import { logMyIp } from "@/lib/ip-log.functions";
@@ -142,9 +141,7 @@ function AuthLayout() {
               </Link>
             )}
           </div>
-          <div className="hidden xl:flex flex-1 justify-center min-w-0 px-3">
-            <SubscriptionExpiry />
-          </div>
+          <div className="hidden xl:flex flex-1 min-w-0 px-3" />
           <div className="flex items-center gap-1.5 lg:gap-3 shrink-0">
           <div className="hidden lg:flex"><Clocks /></div>
             <MyWorkingStatus />
