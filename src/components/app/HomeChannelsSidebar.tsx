@@ -116,8 +116,8 @@ export function HomeChannelsSidebar() {
       footer={
         <>
           <MembershipBox />
-          <SecurityBox />
           <ServiceStatusBox />
+          <SecurityBox />
         </>
       }
     />
