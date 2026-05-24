@@ -89,7 +89,36 @@ function sourceDateLabelFromHeading(text: string, dateStr: string): string {
     month: "long",
     year: "numeric",
   }).format(new Date(`${dateStr}T00:00:00Z`));
-  return weekdayName ? `${weekdayName} ${day} ${monthYear}` : `${day} ${monthYear}`;
+  if (weekdayName) return `${weekdayName} ${day} ${monthYear}`;
+  return new Intl.DateTimeFormat("en-GB", {
+    timeZone: "UTC",
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  }).format(new Date(`${dateStr}T00:00:00Z`));
+}
+
+function hasSecondsSuffix(text: string, end: number): boolean {
+  return text[end] === ":" && /^\d{2}\b/.test(text.slice(end + 1));
+}
+
+function shouldIgnoreBareSecondsMatch(text: string, start: number, end: number): boolean {
+  if (!hasSecondsSuffix(text, end)) return false;
+  if (parseLeadingGuideDate(text)) return false;
+  const trimmed = text.trim();
+  const matchedWithSeconds = text.slice(start, end + 3).trim();
+  return trimmed !== matchedWithSeconds;
+}
+
+function cleanEventTitleText(value: string): string {
+  return value
+    .replace(/\b\d{1,2}:\d{2}:\d{2}\b\s*$/g, " ")
+    .replace(/\b\d{4}-\d{1,2}-\d{1,2}\b/g, " ")
+    .replace(/(^|\s):\d{2}\b/g, " ")
+    .replace(/\s+/g, " ")
+    .replace(/^[\s\-–—:·•|]+|[\s\-–—:·•|]+$/g, "")
+    .trim();
 }
 
 function normalizedMatchedTime(hour: number, minute: number): string {
@@ -221,6 +250,7 @@ function parseMatches(
       while ((bm = BARE_TIME_RE.exec(text)) !== null) {
         // Skip if this span overlaps a zone-tagged match already captured
         if (results.some((r) => bm!.index < r.end && bm!.index + bm![0].length > r.start)) continue;
+        if (shouldIgnoreBareSecondsMatch(text, bm.index, bm.index + bm[0].length)) continue;
         const [, hStr, mStr, ampmRaw] = bm;
         let hour = parseInt(hStr, 10);
         const minute = mStr ? parseInt(mStr, 10) : 0;
