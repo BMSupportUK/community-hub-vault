@@ -21,6 +21,10 @@ export interface ChannelGroup {
     label: string;
     icon?: React.ComponentType<{ className?: string }>;
     badge?: number;
+    /** Override the auto path-match active state (useful for query-param views). */
+    active?: boolean;
+    /** When provided, render as a button instead of a Link. */
+    onClick?: () => void;
   }[];
   onAddItem?: () => void;
   onDeleteItem?: (to: string) => void;
@@ -250,7 +254,7 @@ export function ChannelColumn({
                 <div className="space-y-px">
                   {g.items.map((it) => {
                     const Icon = it.icon ?? Hash;
-                    const active = path === it.to || path.startsWith(it.to + "/");
+                    const active = it.active ?? (path === it.to || path.startsWith(it.to + "/"));
                     const canDrag = !!onReorderChannels && !!it.id;
                     return (
                       <div
@@ -293,24 +297,46 @@ export function ChannelColumn({
                           setOverChan(null);
                         }}
                       >
-                        <Link
-                          to={it.to}
-                          draggable={false}
-                          className={cn(
-                            "w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-sm font-medium transition-colors",
-                            active
-                              ? "bg-surface-2 text-white"
-                              : "text-foreground/90 hover:bg-surface-2/60 hover:text-white",
-                          )}
-                        >
-                          <Icon className="size-4 shrink-0" />
-                          <span className="truncate">{it.label}</span>
-                          {it.badge && it.badge > 0 ? (
-                            <span className="ml-auto min-w-5 h-5 px-1.5 rounded-full bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 text-white text-[10px] font-bold grid place-items-center shadow-glow">
-                              {it.badge > 99 ? "99+" : it.badge}
-                            </span>
-                          ) : null}
-                        </Link>
+                        {it.onClick ? (
+                          <button
+                            type="button"
+                            onClick={it.onClick}
+                            draggable={false}
+                            className={cn(
+                              "w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-sm font-medium transition-colors text-left",
+                              active
+                                ? "bg-surface-2 text-white"
+                                : "text-foreground/90 hover:bg-surface-2/60 hover:text-white",
+                            )}
+                          >
+                            <Icon className="size-4 shrink-0" />
+                            <span className="truncate">{it.label}</span>
+                            {it.badge && it.badge > 0 ? (
+                              <span className="ml-auto min-w-5 h-5 px-1.5 rounded-full bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 text-white text-[10px] font-bold grid place-items-center shadow-glow">
+                                {it.badge > 99 ? "99+" : it.badge}
+                              </span>
+                            ) : null}
+                          </button>
+                        ) : (
+                          <Link
+                            to={it.to}
+                            draggable={false}
+                            className={cn(
+                              "w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-sm font-medium transition-colors",
+                              active
+                                ? "bg-surface-2 text-white"
+                                : "text-foreground/90 hover:bg-surface-2/60 hover:text-white",
+                            )}
+                          >
+                            <Icon className="size-4 shrink-0" />
+                            <span className="truncate">{it.label}</span>
+                            {it.badge && it.badge > 0 ? (
+                              <span className="ml-auto min-w-5 h-5 px-1.5 rounded-full bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 text-white text-[10px] font-bold grid place-items-center shadow-glow">
+                                {it.badge > 99 ? "99+" : it.badge}
+                              </span>
+                            ) : null}
+                          </Link>
+                        )}
                         {(g.onDeleteItem ||
                           g.onEditItemPerms ||
                           g.onEditItemIcon ||
