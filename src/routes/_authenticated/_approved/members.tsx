@@ -10,7 +10,7 @@ import profileHeader from "@/assets/profile-header.jpg";
 import { useOnlineUsers } from "@/hooks/use-online-users";
 import { useBusinessOpen } from "@/hooks/use-business-open";
 import { formatLastSeen } from "@/lib/relative-time";
-import { Nameplate } from "@/components/app/Nameplate";
+
 import { VpnBadge } from "@/lib/vpn-flags";
 
 export const Route = createFileRoute("/_authenticated/_approved/members")({
