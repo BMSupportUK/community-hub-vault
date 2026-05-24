@@ -1,31 +1,19 @@
-# Service Status box on members home
+## Move Staff on Duty strip into the ticket header
 
-Add a compact, real-time service status widget to `src/routes/_authenticated/_approved/home.index.tsx`, rendered directly underneath the last channel section. It mirrors the data from `/status` but only shows whether things are operational or not — no incident bodies.
+In `src/routes/_authenticated/_approved/tickets.tsx`, the hero section currently renders the text block (max-w-3xl on the left) and then `<StaffOnDutyStrip />` below it in a separate full-width row.
 
-## Behaviour
+The arrow in the screenshot points to the right half of the hero (around the headset area). Move the staff strip there.
 
-- Reads the `incidents` table (same source `/status` uses).
-- "Active" = any incident whose `status` is `investigating`, `identified`, or `monitoring` (i.e. not `completed`).
-- States shown:
-  - **All systems operational** — green dot, when there are zero active incidents.
-  - **N issue(s) reported** — coloured dot per status, when there are active incidents. For each active incident render one row: status dot + status label (Investigating / Identified / Monitoring) + incident title only. No description, no updates, no attachments.
-- Real-time: subscribe to `postgres_changes` on the `incidents` table (and refetch on any insert/update/delete), same pattern used elsewhere in the app (e.g. `ModerationPendingBadge`, members directory channel).
-- "Read more" button on the card links to `/status` via TanStack `Link`.
+### Changes
 
-## Visual
+1. Restructure the hero inner container into a two-column flex layout on `md+`:
+   - Left column: existing eyebrow + H1 + paragraph + ratings pill (keeps max-w).
+   - Right column: `<StaffOnDutyStrip />` floated to the right, vertically centered, constrained width (e.g. `w-[320px]` / `max-w-sm`), so it overlays the right portion of the hero image.
+2. Remove the existing `<div className="relative px-6 md:px-10 pb-6 -mt-8"><StaffOnDutyStrip /></div>` block below the hero text.
+3. On mobile (`<md`), stack the strip below the text (existing behavior preserved via flex-col → md:flex-row).
+4. The `StaffOnDutyStrip` component itself has an outer `px-4 pt-4` wrapper — wrap the right-column usage so the strip sits flush without extra outer padding (use a small wrapper override or pass through; easiest is to wrap in a div that negates the padding, or simply accept the existing spacing since it's visually fine in the right column).
 
-- Card styled to match existing home page surfaces (rounded-2xl, `bg-surface`, `border-border`, subtle gradient header consistent with the page).
-- Header: "Service Status" with an `Activity` lucide icon.
-- Status rows: small coloured dot (emerald for operational, violet/fuchsia/blue per status meta already defined in `status.tsx`) + text label + truncated title.
-- Footer: right-aligned "Read more" button linking to `/status`.
+No logic changes — purely layout.
 
-## Files changed
-
-- `src/routes/_authenticated/_approved/home.index.tsx` — render the new component immediately after the last channel block.
-- `src/components/app/ServiceStatusBox.tsx` *(new)* — self-contained component that fetches active incidents, subscribes to realtime, and renders the card.
-
-## Out of scope
-
-- No schema changes.
-- No edits to `/status` page itself.
-- No incident detail/description rendering in the box.
+### Files
+- `src/routes/_authenticated/_approved/tickets.tsx` (hero JSX only)
