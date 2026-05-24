@@ -425,6 +425,106 @@ function ProductCard({
 // ============ STOREFRONT ============
 type OrderProgress = { id: string; status: string; paid_at: string | null; completed_at: string | null; created_at: string } | null;
 
+function OrderProgressStrip({ order }: { order: Order }) {
+  const placed = true;
+  const paid = !!order.paid_at;
+  const setup = order.status === "completed" || !!order.completed_at;
+  const cancelled = order.status === "cancelled";
+
+  const steps = [
+    {
+      n: 1,
+      title: "Place Order",
+      icon: ShoppingBag,
+      done: placed && !cancelled,
+      active: !cancelled && !paid,
+      cancelled: false,
+    },
+    {
+      n: 2,
+      title: cancelled ? "Cancelled" : "Pay Invoice",
+      icon: cancelled ? X : Receipt,
+      done: paid && !cancelled,
+      active: !cancelled && placed && !paid,
+      cancelled,
+    },
+    {
+      n: 3,
+      title: "Account Setup",
+      icon: UserCog,
+      done: setup && !cancelled,
+      active: !cancelled && paid && !setup,
+      cancelled,
+    },
+  ];
+
+  const completed = steps.filter((s) => s.done).length;
+  const pct = cancelled ? 0 : Math.round((completed / steps.length) * 100);
+
+  return (
+    <div className="border-b border-border bg-surface/40 px-3 md:px-4 py-3">
+      <div className="flex items-center justify-between text-[10px] uppercase tracking-wider text-muted-foreground mb-2">
+        <span className="font-semibold">Order Progress</span>
+        <span>{cancelled ? "Cancelled" : `${completed} of ${steps.length} · ${pct}%`}</span>
+      </div>
+      <div className="h-1 rounded-full bg-surface-2 overflow-hidden mb-3">
+        <div
+          className={cn(
+            "h-full transition-all duration-500",
+            cancelled
+              ? "bg-destructive"
+              : "bg-gradient-to-r from-violet-600 via-fuchsia-500 to-blue-600",
+          )}
+          style={{ width: `${cancelled ? 100 : pct}%` }}
+        />
+      </div>
+      <ol className="grid grid-cols-3 gap-2">
+        {steps.map((s) => (
+          <li
+            key={s.n}
+            className={cn(
+              "rounded-lg border px-2 py-1.5 flex items-center gap-2 min-w-0",
+              s.cancelled
+                ? "border-destructive/40 bg-destructive/5"
+                : s.done
+                  ? "border-emerald-500/40 bg-emerald-500/10"
+                  : s.active
+                    ? "border-sky-400/60 bg-sky-400/5 ring-1 ring-sky-400/30"
+                    : "border-border bg-surface-2/60 opacity-70",
+            )}
+          >
+            <span
+              className={cn(
+                "size-6 rounded-md grid place-items-center shrink-0",
+                s.cancelled
+                  ? "bg-destructive/20 text-destructive"
+                  : s.done
+                    ? "bg-emerald-500/20 text-emerald-400"
+                    : s.active
+                      ? "bg-gradient-to-br from-violet-600/30 to-blue-600/30 text-sky-300"
+                      : "bg-surface-2 text-muted-foreground",
+              )}
+            >
+              {s.done && !s.cancelled ? <Check className="size-3.5" /> : <s.icon className="size-3.5" />}
+            </span>
+            <div className="min-w-0">
+              <div className="text-[9px] uppercase tracking-wider text-muted-foreground leading-none">
+                Step {s.n}
+              </div>
+              <div className="text-[11px] font-semibold truncate flex items-center gap-1">
+                {s.title}
+                {s.active && !s.cancelled && (
+                  <span className="size-1.5 rounded-full bg-sky-400 animate-pulse" />
+                )}
+              </div>
+            </div>
+          </li>
+        ))}
+      </ol>
+    </div>
+  );
+}
+
 function BuySteps({ latestOrder, onBrowse, onViewOrder }: {
   latestOrder: OrderProgress;
   onBrowse: () => void;
@@ -2024,6 +2124,7 @@ function OrderDetail({ orderId, isAdmin, onBack }: { orderId: string; isAdmin: b
           )}
         </div>
         <div className="flex-1 flex flex-col">
+          <OrderProgressStrip order={order} />
           <div className="flex-1 overflow-y-auto p-4 space-y-3">
             <div className="text-center text-[11px] text-muted-foreground">Chat with management about this order</div>
             {msgs.map((m) => {
