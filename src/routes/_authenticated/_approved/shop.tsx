@@ -2124,6 +2124,7 @@ function OrderDetail({ orderId, isAdmin, onBack }: { orderId: string; isAdmin: b
           )}
         </div>
         <div className="flex-1 flex flex-col">
+          <OrderProgressStrip order={order} />
           <div className="flex-1 overflow-y-auto p-4 space-y-3">
             <div className="text-center text-[11px] text-muted-foreground">Chat with management about this order</div>
             {msgs.map((m) => {
