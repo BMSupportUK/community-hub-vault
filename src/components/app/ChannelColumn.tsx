@@ -10,6 +10,7 @@ import { useRoleFlashMap, resolveAvatarUrl, roleFlashClass } from "@/lib/role-fl
 import { VpnBadge } from "@/lib/vpn-flags";
 import { MentionsBadge } from "@/components/app/MentionsBadge";
 import { NotificationBell } from "@/components/app/NotificationBell";
+import { UserAvatarMenu } from "@/components/app/UserAvatarMenu";
 
 export interface ChannelGroup {
   label: string;
@@ -384,19 +385,13 @@ export function ChannelColumn({
         >
           {!inSheet && (
             <div className="hidden lg:flex w-[72px] shrink-0 items-center justify-center">
-              <img
-                src={resolveAvatarUrl(user.id, profile?.avatar_url, roleFlashMap)}
-                alt=""
-                className="size-9 rounded-full object-cover"
-              />
+              <UserAvatarMenu variant="bar" />
             </div>
           )}
           <div className={cn("flex items-center gap-2 flex-1 min-w-0", inSheet ? "px-3" : "lg:pl-0 pl-3 pr-2")}>
-            <img
-              src={resolveAvatarUrl(user.id, profile?.avatar_url, roleFlashMap)}
-              alt=""
-              className={cn("size-8 rounded-full object-cover shrink-0", !inSheet && "lg:hidden")}
-            />
+            <div className={cn("shrink-0", !inSheet && "lg:hidden")}>
+              <UserAvatarMenu variant="bar" />
+            </div>
             <div className="min-w-0 flex-1">
               <div className={cn("text-xs font-medium truncate", roleFlashClass(roleFlashMap.get(user.id)))}>
                 <span className="inline-flex items-center gap-1">
