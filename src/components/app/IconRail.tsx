@@ -145,7 +145,6 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
     { to: "/reviews", label: "Customer reviews", icon: Star, show: true },
     { to: "/leaderboard", label: "Leaderboard", icon: Trophy, show: true },
     { to: "/new-content", label: "New content", icon: Tv, show: true, badge: unreadNewContent },
-    { to: "/new-content", label: "New content", icon: Tv, show: true, badge: unreadNewContent },
     { to: "/clock", label: "Clock", icon: Clock, show: isStaff },
     { to: "/shifts", label: "Shifts", icon: Calendar, show: isStaff },
   ];
