@@ -88,12 +88,14 @@ export function ServiceStatusBox({ hideButtons }: ServiceStatusBoxProps = {}) {
               })}
             </ul>
           )}
-          <Link
-            to="/status"
-            className="block text-center text-[11px] font-medium px-2 py-1.5 rounded-md bg-surface border border-border hover:border-fuchsia-400 hover:text-fuchsia-300 transition"
-          >
-            Read more →
-          </Link>
+          {!operational && (
+            <Link
+              to="/status"
+              className="block text-center text-[11px] font-medium px-2 py-1.5 rounded-md bg-surface border border-border hover:border-fuchsia-400 hover:text-fuchsia-300 transition"
+            >
+              Read more →
+            </Link>
+          )}
         </div>
       </div>
       {!hideButtons && (
