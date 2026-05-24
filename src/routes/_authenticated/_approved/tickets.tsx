@@ -681,7 +681,7 @@ function NewTicketForm({
         <button onClick={onCancel} className="ml-auto text-white/70 hover:text-white"><X className="size-4" /></button>
       </header>
       <form onSubmit={submit} className="flex-1 overflow-y-auto p-6">
-        <div className="max-w-5xl mx-auto grid gap-6 lg:grid-cols-[1fr_320px]">
+        <div className="max-w-6xl mx-auto grid gap-6 lg:grid-cols-[1fr_300px_180px]">
           <div className="space-y-5 min-w-0">
           <Field label="Subject">
             <input
@@ -689,19 +689,6 @@ function NewTicketForm({
               placeholder="Briefly describe the issue"
               className="w-full px-3 py-2 rounded-lg bg-white/15 backdrop-blur border border-white/30 focus:border-white text-white placeholder:text-white/60 outline-none"
             />
-          </Field>
-          <Field label="Priority">
-            <div className="flex gap-2">
-              {PRIORITIES.map((p) => (
-                <button
-                  type="button" key={p} onClick={() => setPriority(p)}
-                  className={cn(
-                    "px-3 py-1.5 rounded-lg text-xs capitalize border",
-                    priority === p ? "border-white bg-white/25 text-white" : "border-white/30 text-white/75 hover:text-white",
-                  )}
-                >{p}</button>
-              ))}
-            </div>
           </Field>
           <Field label="Message">
             <textarea
@@ -751,6 +738,21 @@ function NewTicketForm({
                     </button>
                   );
                 })}
+              </div>
+            </Field>
+          </aside>
+          <aside className="lg:sticky lg:top-0 lg:self-start">
+            <Field label="Priority">
+              <div className="flex flex-col gap-2">
+                {PRIORITIES.map((p) => (
+                  <button
+                    type="button" key={p} onClick={() => setPriority(p)}
+                    className={cn(
+                      "px-3 py-2 rounded-lg text-xs capitalize border w-full text-center",
+                      priority === p ? "border-white bg-white/25 text-white" : "border-white/30 text-white/75 hover:text-white",
+                    )}
+                  >{p}</button>
+                ))}
               </div>
             </Field>
           </aside>
