@@ -8,7 +8,6 @@ import { useAuth } from "@/hooks/use-auth";
 import { isAdminUnlocked } from "@/lib/admin-unlock";
 import { IconRail } from "@/components/app/IconRail";
 import { Clocks } from "@/components/app/Clocks";
-import { UserAvatarMenu } from "@/components/app/UserAvatarMenu";
 import { MyWorkingStatus } from "@/components/app/MyWorkingStatus";
 import { BreakEndingAlert } from "@/components/app/BreakEndingAlert";
 import { ShiftStartEndAlert } from "@/components/app/ShiftStartEndAlert";
@@ -149,7 +148,6 @@ function AuthLayout() {
           <div className="flex items-center gap-1.5 lg:gap-3 shrink-0">
           <div className="hidden lg:flex"><Clocks /></div>
             <MyWorkingStatus />
-          <UserAvatarMenu />
           <TwoFactorPill />
           </div>
         </header>
