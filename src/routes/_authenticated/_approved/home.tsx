@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import { Hash, Menu } from "lucide-react";
 import { ChannelColumn, type ChannelGroup } from "@/components/app/ChannelColumn";
 import { ServiceStatusBox } from "@/components/app/ServiceStatusBox";
-import { MembershipBox } from "@/components/app/MembershipBox";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import {
@@ -430,12 +429,7 @@ function HomeLayout() {
         onAddGroup={isAdmin ? () => setShowAddGroup(true) : undefined}
         onReorderChannels={isAdmin ? reorderChannels : undefined}
         onReorderGroups={isAdmin ? reorderGroups : undefined}
-        footer={
-          <>
-            <MembershipBox />
-            <ServiceStatusBox />
-          </>
-        }
+        footer={<ServiceStatusBox />}
       />
       <div className="flex-1 flex flex-col min-w-0">
         <div className="md:hidden h-10 shrink-0 flex items-center px-3 border-b border-border bg-rail/30">
@@ -452,12 +446,7 @@ function HomeLayout() {
                 onAddGroup={isAdmin ? () => setShowAddGroup(true) : undefined}
                 onReorderChannels={isAdmin ? reorderChannels : undefined}
                 onReorderGroups={isAdmin ? reorderGroups : undefined}
-                footer={
-                  <>
-                    <MembershipBox />
-                    <ServiceStatusBox />
-                  </>
-                }
+                footer={<ServiceStatusBox />}
               />
             </SheetContent>
           </Sheet>
