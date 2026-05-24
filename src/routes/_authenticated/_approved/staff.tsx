@@ -309,8 +309,8 @@ function StaffPage() {
                 </section>
               );
             })}
-          </TabsContent>
-        </Tabs>
+          </div>
+        </div>
       </div>
     </div>
   );
