@@ -43,7 +43,7 @@ interface MiniProfile {
   equipped_nameplate_id: string | null;
 }
 
-export function UserAvatarMenu() {
+export function UserAvatarMenu({ variant = "header" }: { variant?: "header" | "bar" } = {}) {
   const { user, roles, signOut, hasAny } = useAuth();
   const navigate = useNavigate();
   const [profile, setProfile] = useState<MiniProfile | null>(null);
@@ -115,6 +115,28 @@ export function UserAvatarMenu() {
         <Tooltip>
           <TooltipTrigger asChild>
             <DropdownMenuTrigger asChild>
+              {variant === "bar" ? (
+                <button
+                  aria-label="Account menu"
+                  className="group relative rounded-full focus:outline-none focus:ring-2 focus:ring-primary/60"
+                >
+                  <Avatar className="h-9 w-9 ring-2 ring-primary/40 group-hover:ring-primary transition">
+                    <AvatarImage src={resolvedAvatar} alt={name} />
+                    <AvatarFallback className="text-[11px] font-bold bg-gradient-primary text-primary-foreground">
+                      {initial}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span
+                    className={cn(
+                      "absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full ring-2 ring-rail",
+                      isAway
+                        ? "bg-yellow-400 shadow-[0_0_10px_rgba(250,204,21,0.8)]"
+                        : "bg-emerald-500",
+                    )}
+                    aria-label={statusLabel}
+                  />
+                </button>
+              ) : (
               <button
                 aria-label="Account menu"
                 className="group relative flex items-center gap-2 rounded-full bg-rail/80 ring-1 ring-border hover:ring-primary/60 hover:bg-surface-2 transition-all px-1.5 py-1 shadow-soft"
@@ -147,10 +169,11 @@ export function UserAvatarMenu() {
                   aria-label={statusLabel}
                 />
               </button>
+              )}
             </DropdownMenuTrigger>
           </TooltipTrigger>
           <TooltipContent
-            side="bottom"
+            side={variant === "bar" ? "top" : "bottom"}
             align="center"
             sideOffset={8}
             className="z-[1000] whitespace-nowrap bg-popover px-2 py-1 text-[10px] font-medium text-popover-foreground shadow-md ring-1 ring-border"
@@ -158,7 +181,12 @@ export function UserAvatarMenu() {
             {statusLabel}
           </TooltipContent>
         </Tooltip>
-        <DropdownMenuContent align="end" sideOffset={8} className="w-72 p-0 overflow-hidden">
+        <DropdownMenuContent
+          side={variant === "bar" ? "top" : "bottom"}
+          align={variant === "bar" ? "start" : "end"}
+          sideOffset={8}
+          className="w-72 p-0 overflow-hidden"
+        >
           <div className="relative p-4 pb-3 overflow-hidden">
             <Nameplate
               id={profile?.equipped_nameplate_id ?? null}
