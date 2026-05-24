@@ -2,10 +2,9 @@ import { zonedWallTimeToUtcMs, dateInTimeZone } from "@/hooks/use-timezone";
 
 // Abbreviation -> IANA zone. IANA zones already handle DST correctly.
 const ZONE_MAP: Record<string, string> = {
-  // GMT is a fixed offset (UTC+0). It must NOT shift to BST in summer —
-  // otherwise a "19:45 GMT" source time gets re-displayed as the same
-  // 19:45 to a UK viewer in summer, and the local conversion is wrong.
-  GMT: "Etc/UTC",
+  // Sports guide editors use GMT to mean UK clock time, so it must follow
+  // Europe/London and automatically switch between GMT and BST.
+  GMT: "Europe/London",
   UTC: "Etc/UTC",
   UK: "Europe/London",
   BST: "Europe/London",
@@ -250,10 +249,7 @@ function parseMatches(
             month: "long",
             year: "numeric",
           }).format(new Date(utcMs));
-        // When a defaultZone label was provided (e.g. "GMT" for sports guides),
-        // prefer it verbatim so the source pill reads "GMT" instead of the IANA
-        // abbreviation ("UTC") that maps from Etc/UTC.
-        const sourceAbbr = defaultZone.toUpperCase() || tzAbbrev(utcMs, tz);
+        const sourceAbbr = tzAbbrev(utcMs, tz) || defaultZone.toUpperCase();
         results.push({
           start: bm.index,
           end: bm.index + bm[0].length,
