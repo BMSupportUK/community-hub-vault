@@ -341,7 +341,8 @@ function TicketsPage() {
           <div className="absolute inset-0 bg-gradient-to-br from-rose-700/85 via-fuchsia-700/75 to-violet-800/85" />
           <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-b from-transparent to-rose-950" />
         </div>
-        <div className="relative px-6 md:px-10 pt-10 md:pt-14 pb-20 md:pb-24 max-w-3xl">
+        <div className="relative px-6 md:px-10 pt-10 md:pt-14 pb-20 md:pb-24 flex flex-col md:flex-row md:items-center md:gap-8">
+         <div className="max-w-3xl flex-1">
           <div className="text-xs uppercase tracking-[0.2em] text-rose-100/90 mb-3">BM Support · Help Desk</div>
           <h1 className="font-display text-4xl md:text-5xl font-bold leading-tight drop-shadow">
             Support Tickets
@@ -375,9 +376,10 @@ function TicketsPage() {
               </span>
             </div>
           </div>
-        </div>
-        <div className="relative px-6 md:px-10 pb-6 -mt-8">
-          <StaffOnDutyStrip />
+         </div>
+         <div className="mt-6 md:mt-0 md:w-[340px] md:shrink-0 [&>div]:px-0 [&>div]:pt-0">
+           <StaffOnDutyStrip />
+         </div>
         </div>
       </section>
 
