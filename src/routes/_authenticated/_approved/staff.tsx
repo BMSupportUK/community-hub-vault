@@ -312,9 +312,8 @@ function StaffPage() {
           </div>
         </div>
       </div>
-    </div>
-  );
-}
+    );
+  }
 
 function FriendActionMini({
   viewerId, targetId, state, busy, onSend, onAccept,
