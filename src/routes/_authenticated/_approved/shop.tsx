@@ -916,7 +916,6 @@ function Storefront() {
               return next;
             });
           }}
-          onContinueShopping={() => setShowCheckout(false)}
         />
       )}
       {count > 0 && !showCheckout && (
