@@ -425,8 +425,8 @@ function KnowledgeBasePage() {
 
   return (
     <main className="flex-1 overflow-y-auto bg-background">
-      <header className="px-8 pt-8 pb-6 border-b border-border bg-surface-2/40 backdrop-blur">
-        <h1 className="font-display text-3xl font-bold" style={{ backgroundImage: "var(--gradient-primary)", WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent" }}>
+      <header className="relative px-8 pt-8 pb-6 border-b border-border bg-surface-2/40 backdrop-blur">
+        <h1 className="font-display text-3xl font-bold bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 bg-clip-text text-transparent leading-[1.2] pb-1">
           Knowledge Base
         </h1>
         <p className="text-muted-foreground mt-1">Guides, answers and how-tos — all in one place.</p>
