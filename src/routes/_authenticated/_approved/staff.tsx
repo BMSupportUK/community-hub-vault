@@ -2,7 +2,6 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Briefcase, Search, Clock, UserPlus, Eye, Check, Lock } from "lucide-react";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 import profileHeader from "@/assets/profile-header.jpg";
@@ -47,7 +46,6 @@ function StaffPage() {
   const { user: viewer } = useAuth();
   const onlineUsers = useOnlineUsers();
   const businessOpen = useBusinessOpen();
-  const [tab, setTab] = useState("welcome");
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [rolesByUser, setRolesByUser] = useState<Record<string, string[]>>({});
   const [friendByUser, setFriendByUser] = useState<Record<string, FriendState>>({});
@@ -140,44 +138,16 @@ function StaffPage() {
       </header>
 
       <div className="px-8 py-6">
-        <Tabs value={tab} onValueChange={setTab} className="w-full">
-          <TabsList className="grid grid-cols-2 max-w-md bg-purple-950/60 border border-purple-500/30">
-            <TabsTrigger
-              value="welcome"
-              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-violet-600 data-[state=active]:to-fuchsia-600 data-[state=active]:text-white"
-            >
-              Welcome
-            </TabsTrigger>
-            <TabsTrigger
-              value="staff"
-              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-violet-600 data-[state=active]:to-fuchsia-600 data-[state=active]:text-white"
-            >
-              Staff
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="welcome" className="mt-6">
-            <div className="rounded-2xl bg-gradient-to-br from-violet-600/30 via-fuchsia-600/30 to-blue-600/30 border border-purple-500/40 p-10 shadow-[0_0_60px_-15px_rgba(168,85,247,0.5)]">
-              <h2 className="font-display text-3xl font-bold bg-gradient-to-r from-violet-600 to-blue-600 bg-clip-text text-transparent">
-                Welcome to the Staff Directory
-              </h2>
-              <p className="mt-3 text-lg text-purple-100/90 max-w-2xl">
-                Meet the team keeping BM Support running smoothly — administrators, management,
-                moderators, and staff working together.
-              </p>
-              <p className="mt-4 text-purple-200/70 max-w-2xl">
-                Browse by role, search by name, and click any profile to learn more about the people behind the platform.
-              </p>
-              <button
-                onClick={() => setTab("staff")}
-                className="mt-6 inline-flex items-center gap-2 rounded-md px-4 py-2 bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white font-medium shadow-lg shadow-purple-900/50 transition"
-              >
-                <Briefcase className="size-4" /> Browse staff
-              </button>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="staff" className="mt-6 space-y-8">
+        <div className="mt-6 space-y-8">
+          <div className="relative max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-purple-300" />
+            <input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Search staff…"
+              className="w-full pl-9 pr-3 py-2 rounded-lg bg-purple-950/50 border border-purple-500/30 text-purple-50 placeholder:text-purple-300/50 outline-none focus:border-fuchsia-400 focus:ring-2 focus:ring-fuchsia-500/40"
+            />
+          </div>
             <div className="relative max-w-md">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-purple-300" />
               <input
@@ -337,12 +307,11 @@ function StaffPage() {
                 </section>
               );
             })}
-          </TabsContent>
-        </Tabs>
+          </div>
+        </div>
       </div>
-    </div>
-  );
-}
+    );
+  }
 
 function FriendActionMini({
   viewerId, targetId, state, busy, onSend, onAccept,
