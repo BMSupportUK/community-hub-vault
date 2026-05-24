@@ -433,12 +433,14 @@ function BuySteps({ latestOrder, onBrowse, onViewOrder }: {
   const placed = !!latestOrder;
   const paid = !!latestOrder?.paid_at;
   const setup = latestOrder?.status === "completed" || !!latestOrder?.completed_at;
+  const cancelled = latestOrder?.status === "cancelled";
 
   const steps = [
     {
       n: 1, title: "Place Order", icon: ShoppingBag,
       done: placed,
       active: !placed,
+      cancelled: false,
       desc: placed
         ? `Order received on ${new Date(latestOrder!.created_at).toLocaleDateString()}.`
         : "Pick your plan in the Shop tab and add it to your order.",
@@ -446,31 +448,39 @@ function BuySteps({ latestOrder, onBrowse, onViewOrder }: {
       action: placed ? () => onViewOrder(latestOrder!.id) : onBrowse,
     },
     {
-      n: 2, title: "Pay Invoice", icon: Receipt,
-      done: paid,
-      active: placed && !paid,
-      desc: paid
+      n: 2,
+      title: cancelled ? "Order Cancelled" : "Pay Invoice",
+      icon: cancelled ? X : Receipt,
+      done: paid && !cancelled,
+      active: placed && !paid && !cancelled,
+      cancelled,
+      desc: cancelled
+        ? "This order was cancelled. Browse the shop to place a new order."
+        : paid
         ? `Invoice paid on ${new Date(latestOrder!.paid_at!).toLocaleDateString()}.`
         : placed ? "Awaiting your payment — open the order to view the invoice."
                  : "We'll send your invoice — pay it securely and we'll confirm receipt.",
-      cta: placed ? "Open order" : undefined,
-      action: placed ? () => onViewOrder(latestOrder!.id) : undefined,
+      cta: cancelled ? "Browse products" : placed ? "Open order" : undefined,
+      action: cancelled ? onBrowse : placed ? () => onViewOrder(latestOrder!.id) : undefined,
     },
     {
       n: 3, title: "Account Setup", icon: UserCog,
-      done: setup,
-      active: paid && !setup,
-      desc: setup
+      done: setup && !cancelled,
+      active: paid && !setup && !cancelled,
+      cancelled,
+      desc: cancelled
+        ? "Unavailable — order was cancelled."
+        : setup
         ? `All set! Account completed on ${new Date(latestOrder!.completed_at ?? latestOrder!.created_at).toLocaleDateString()}.`
         : paid ? "We're setting up your account and will share your login details shortly."
                : "We set up your account and share your login details to get you started.",
-      cta: placed ? "View order" : undefined,
-      action: placed ? () => onViewOrder(latestOrder!.id) : undefined,
+      cta: cancelled ? undefined : placed ? "View order" : undefined,
+      action: cancelled ? undefined : placed ? () => onViewOrder(latestOrder!.id) : undefined,
     },
   ];
 
   const completed = steps.filter((s) => s.done).length;
-  const pct = Math.round((completed / steps.length) * 100);
+  const pct = cancelled ? 0 : Math.round((completed / steps.length) * 100);
 
   return (
     <section className="-mt-12 md:-mt-16 relative z-10 px-2 md:px-0 pb-6">
@@ -493,26 +503,35 @@ function BuySteps({ latestOrder, onBrowse, onViewOrder }: {
             key={s.n}
             className={cn(
               "group relative rounded-2xl border p-5 transition",
-              s.done
+              s.cancelled
+                ? "border-destructive/40 bg-destructive/5"
+                : s.done
                 ? "border-emerald-500/40 bg-emerald-500/5 shadow-lg shadow-emerald-500/10"
                 : s.active
                   ? "border-sky-400/60 bg-surface shadow-lg shadow-blue-500/10 ring-2 ring-sky-400/30"
                   : "border-border bg-surface opacity-80",
+              s.cancelled && s.n === 3 && "opacity-50 grayscale pointer-events-none",
             )}
           >
             <div className={cn(
               "absolute -top-3 left-5 inline-flex items-center gap-1 text-[11px] font-bold tracking-wider px-2 py-0.5 rounded-full text-white",
-              s.done
+              s.cancelled
+                ? "bg-destructive"
+                : s.done
                 ? "bg-gradient-to-r from-emerald-500 to-green-600"
                 : s.active
                   ? "bg-gradient-to-r from-violet-600 to-blue-600"
                   : "bg-surface-2 text-muted-foreground",
             )}>
-              {s.done ? <><Check className="size-3" /> DONE</> : `STEP ${s.n}`}
+              {s.cancelled
+                ? (s.n === 2 ? <><X className="size-3" /> CANCELLED</> : `STEP ${s.n}`)
+                : s.done ? <><Check className="size-3" /> DONE</> : `STEP ${s.n}`}
             </div>
             <div className={cn(
               "size-10 rounded-xl grid place-items-center mb-3",
-              s.done
+              s.cancelled
+                ? "bg-destructive/15 text-destructive"
+                : s.done
                 ? "bg-emerald-500/15 text-emerald-400"
                 : s.active
                   ? "bg-gradient-to-br from-violet-600/20 to-blue-600/20 text-sky-300"
