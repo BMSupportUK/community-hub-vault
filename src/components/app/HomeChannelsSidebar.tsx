@@ -1,9 +1,7 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useRouterState } from "@tanstack/react-router";
+import { useRouterState } from "@tanstack/react-router";
 import { ChannelColumn, type ChannelGroup } from "@/components/app/ChannelColumn";
 import { ServiceStatusBox } from "@/components/app/ServiceStatusBox";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Menu } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { getIcon } from "@/components/app/IconPicker";
@@ -109,30 +107,7 @@ function useChannelGroups() {
 
 export function HomeChannelsSidebar() {
   const groups = useChannelGroups();
-  const path = useRouterState({ select: (r) => r.location.pathname });
-  const [open, setOpen] = useState(false);
-  useEffect(() => {
-    setOpen(false);
-  }, [path]);
   return (
-    <>
-      <ChannelColumn title="Support Community" groups={groups} footer={<ServiceStatusBox />} />
-      <div className="md:hidden absolute top-12 left-0 z-20">
-        <Sheet open={open} onOpenChange={setOpen}>
-          <SheetTrigger className="inline-flex items-center gap-2 px-3 h-10 text-xs font-medium text-muted-foreground hover:text-foreground bg-rail/40 border-b border-r border-border rounded-br-md">
-            <Menu className="size-4" />
-            Channels
-          </SheetTrigger>
-          <SheetContent side="left" className="p-0 w-72 bg-surface border-r border-border">
-            <ChannelColumn
-              inSheet
-              title="Support Community"
-              groups={groups}
-              footer={<ServiceStatusBox />}
-            />
-          </SheetContent>
-        </Sheet>
-      </div>
-    </>
+    <ChannelColumn title="Support Community" groups={groups} footer={<ServiceStatusBox />} />
   );
 }
