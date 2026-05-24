@@ -47,8 +47,9 @@ const UK_GUIDE_ZONE_TOKENS = new Set(["GMT", "UTC", "UK", "BST"]);
 
 function resolveSourceTz(abbrev: string, defaultZone?: string): string | null {
   const source = abbrev.toUpperCase();
-  const defaultTz = defaultZone ? ZONE_MAP[defaultZone.toUpperCase()] : undefined;
-  if (defaultTz && UK_GUIDE_ZONE_TOKENS.has(source)) return defaultTz;
+  const defaultSource = defaultZone?.toUpperCase();
+  const defaultTz = defaultSource ? ZONE_MAP[defaultSource] : undefined;
+  if (defaultTz && defaultSource && UK_GUIDE_ZONE_TOKENS.has(defaultSource) && UK_GUIDE_ZONE_TOKENS.has(source)) return defaultTz;
   return ZONE_MAP[source] ?? null;
 }
 
