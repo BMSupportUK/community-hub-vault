@@ -916,7 +916,6 @@ function Storefront() {
               return next;
             });
           }}
-          onContinueShopping={() => setShowCheckout(false)}
         />
       )}
       {count > 0 && !showCheckout && (
@@ -1259,11 +1258,10 @@ function PolicyCard({
   );
 }
 
-function Checkout({ items, total, onClose, onPlace, onRemoveItem, onContinueShopping }: {
+function Checkout({ items, total, onClose, onPlace, onRemoveItem }: {
   items: (Product & { qty: number })[]; total: number; onClose: () => void;
   onPlace: (s: { name: string; email: string; customer_type: "new" | "existing"; existing_username: string; discount_code: string; discount_cents: number; wants_adult_content: boolean }) => void;
   onRemoveItem: (id: string) => void;
-  onContinueShopping: () => void;
 }) {
   const { user } = useAuth();
   const [name, setName] = useState("");
@@ -1271,13 +1269,8 @@ function Checkout({ items, total, onClose, onPlace, onRemoveItem, onContinueShop
   const [customerType, setCustomerType] = useState<"new" | "existing">("new");
   const [existingUsername, setExistingUsername] = useState("");
   const [adultContent, setAdultContent] = useState<"yes" | "no" | "">("");
-  const [discountInput, setDiscountInput] = useState("");
   const [appliedCode, setAppliedCode] = useState<DiscountCode | null>(null);
-  const [applying, setApplying] = useState(false);
-  const [browseOpen, setBrowseOpen] = useState(false);
-  const [browseQuery, setBrowseQuery] = useState("");
-  const [available, setAvailable] = useState<DiscountCode[]>([]);
-  const [loadingAvailable, setLoadingAvailable] = useState(false);
+  const [autoLoading, setAutoLoading] = useState(true);
 
   const requiresMulti = useMemo(
     () => items.some((i) => (i.category ?? "").toLowerCase().includes("multi")),
@@ -1290,18 +1283,36 @@ function Checkout({ items, total, onClose, onPlace, onRemoveItem, onContinueShop
   const [agreedMulti, setAgreedMulti] = useState(false);
   const [agreedTriple, setAgreedTriple] = useState(false);
 
-  const openBrowse = async () => {
-    setBrowseOpen(true);
-    setLoadingAvailable(true);
-    const { data } = await supabase
-      .from("discount_codes")
-      .select("*")
-      .eq("is_active", true)
-      .order("code", { ascending: true });
-    const codes = (data ?? []) as DiscountCode[];
-    const cartIds = items.map((i) => i.id);
-    let filtered: DiscountCode[] = codes;
-    if (codes.length > 0) {
+  const discountCents = useMemo(() => {
+    if (!appliedCode) return 0;
+    if (appliedCode.amount_cents) return Math.min(total, appliedCode.amount_cents);
+    if (appliedCode.percent) return Math.round(total * (appliedCode.percent / 100));
+    return 0;
+  }, [appliedCode, total]);
+  const finalTotal = Math.max(0, total - discountCents);
+
+  // Auto-pick the best valid discount code for this cart.
+  // Rule: if the user has a personal code (user_id = current user) that applies,
+  // use ONLY that one — global codes are ignored. Otherwise pick the global code
+  // that gives the biggest discount on this cart.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setAutoLoading(true);
+      const cartIds = items.map((i) => i.id);
+      if (cartIds.length === 0) {
+        if (!cancelled) { setAppliedCode(null); setAutoLoading(false); }
+        return;
+      }
+      const { data } = await supabase
+        .from("discount_codes")
+        .select("*")
+        .eq("is_active", true);
+      const codes = (data ?? []) as DiscountCode[];
+      if (codes.length === 0) {
+        if (!cancelled) { setAppliedCode(null); setAutoLoading(false); }
+        return;
+      }
       const { data: links } = await supabase
         .from("discount_code_products")
         .select("discount_code_id, product_id")
@@ -1312,85 +1323,31 @@ function Checkout({ items, total, onClose, onPlace, onRemoveItem, onContinueShop
         arr.push(l.product_id);
         linkMap.set(l.discount_code_id, arr);
       });
-      filtered = codes.filter((c) => {
+      const applies = (c: DiscountCode) => {
         const restricted = linkMap.get(c.id);
-        // No restrictions => applies to all
         if (!restricted || restricted.length === 0) return true;
-        // Restricted => only show if every cart product is allowed for this code
-        return cartIds.length > 0 && cartIds.every((id) => restricted.includes(id));
-      });
-    }
-    setAvailable(filtered);
-    setLoadingAvailable(false);
-  };
+        return cartIds.every((id) => restricted.includes(id));
+      };
+      const valueOf = (c: DiscountCode) => {
+        if (c.amount_cents) return Math.min(total, c.amount_cents);
+        if (c.percent) return Math.round(total * (c.percent / 100));
+        return 0;
+      };
+      const pickBest = (list: DiscountCode[]) =>
+        list.filter(applies).sort((a, b) => valueOf(b) - valueOf(a))[0] ?? null;
 
-  const filteredAvailable = useMemo(() => {
-    const q = browseQuery.trim().toLowerCase();
-    if (!q) return available;
-    return available.filter((c) =>
-      c.code.toLowerCase().includes(q) || (c.description ?? "").toLowerCase().includes(q)
-    );
-  }, [available, browseQuery]);
+      const personal = user ? codes.filter((c) => c.user_id === user.id) : [];
+      const chosen = personal.length > 0
+        ? pickBest(personal)
+        : pickBest(codes.filter((c) => !c.user_id));
 
-  const previewValue = (c: DiscountCode) => {
-    if (c.amount_cents) return `-${fmt(Math.min(total, c.amount_cents))}`;
-    if (c.percent) return `-${c.percent}%`;
-    return "";
-  };
-
-  const selectCode = (c: DiscountCode) => {
-    if (appliedCode) {
-      toast.error("Only 1 discount code per order. Remove the current code first.");
-      return;
-    }
-    void acceptCode(c, () => setBrowseOpen(false));
-  };
-
-  const discountCents = useMemo(() => {
-    if (!appliedCode) return 0;
-    if (appliedCode.amount_cents) return Math.min(total, appliedCode.amount_cents);
-    if (appliedCode.percent) return Math.round(total * (appliedCode.percent / 100));
-    return 0;
-  }, [appliedCode, total]);
-  const finalTotal = Math.max(0, total - discountCents);
-
-  const acceptCode = async (c: DiscountCode, onDone?: () => void) => {
-    const { data: links } = await supabase
-      .from("discount_code_products")
-      .select("product_id")
-      .eq("discount_code_id", c.id);
-    const ids = (links ?? []).map((r: { product_id: string }) => r.product_id);
-    if (ids.length > 0) {
-      const hasBlockedItem = items.some((i) => !ids.includes(i.id));
-      if (hasBlockedItem) {
-        toast.error("This code is not allowed for one or more products in your cart");
-        return;
+      if (!cancelled) {
+        setAppliedCode(chosen);
+        setAutoLoading(false);
       }
-    }
-    setAppliedCode(c);
-    setDiscountInput(c.code);
-    toast.success(`Code "${c.code}" applied`);
-    onDone?.();
-  };
-
-  const applyCode = async () => {
-    const code = discountInput.trim();
-    if (!code) return;
-    if (appliedCode && appliedCode.code.toLowerCase() !== code.toLowerCase()) {
-      toast.error("Only 1 discount code per order. Remove the current code first.");
-      return;
-    }
-    if (appliedCode && appliedCode.code.toLowerCase() === code.toLowerCase()) {
-      toast.info("This code is already applied");
-      return;
-    }
-    setApplying(true);
-    const { data, error } = await supabase.from("discount_codes").select("*")
-      .ilike("code", code).eq("is_active", true).maybeSingle();
-    setApplying(false);
-    if (error || !data) { toast.error("Invalid code"); return; }
-    await acceptCode(data as DiscountCode);
-  };
+    })();
+    return () => { cancelled = true; };
+  }, [items, total, user?.id]);
 
   const canSubmit =
     !!name && !!email && (customerType === "new" || !!existingUsername.trim())
@@ -1478,58 +1435,18 @@ function Checkout({ items, total, onClose, onPlace, onRemoveItem, onContinueShop
               <p className="text-[11px] text-muted-foreground mt-1">Required — do you want access to adult content?</p>
             </div>
             <div className="space-y-2">
-              <div className="flex gap-2">
-                <input value={discountInput} onChange={(e) => setDiscountInput(e.target.value)} placeholder="Discount code (optional)" className="flex-1 px-3 py-2 rounded-lg bg-surface-2 text-sm border border-border focus:border-primary outline-none" />
-                <button type="button" onClick={applyCode} disabled={applying || !discountInput.trim()}
-                  className="px-3 py-2 rounded-lg bg-surface-2 text-sm font-medium border border-border disabled:opacity-50">
-                  {appliedCode ? "Re-apply" : "Apply"}
-                </button>
-                <button type="button" onClick={openBrowse}
-                  className="px-3 py-2 rounded-lg bg-surface-2 text-sm font-medium border border-border inline-flex items-center gap-1">
-                  <Tag className="size-4" /> Browse
-                </button>
-              </div>
-              {appliedCode && (
+              {autoLoading ? (
+                <div className="text-xs text-muted-foreground px-2 py-1.5">Checking for voucher codes…</div>
+              ) : appliedCode ? (
                 <div className="flex items-center justify-between text-xs px-2 py-1.5 rounded-md bg-success/10 text-success">
-                  <span>Applied: <span className="font-mono font-semibold">{appliedCode.code}</span> — only 1 code per order</span>
-                  <button type="button" onClick={() => { setAppliedCode(null); setDiscountInput(""); }} className="underline hover:no-underline">Remove</button>
+                  <span className="inline-flex items-center gap-1.5">
+                    <Tag className="size-3.5" />
+                    Voucher <span className="font-mono font-semibold">{appliedCode.code}</span> applied automatically
+                    {appliedCode.description ? <span className="text-muted-foreground">— {appliedCode.description}</span> : null}
+                  </span>
                 </div>
-              )}
-              {browseOpen && (
-                <div className="rounded-lg border border-border bg-surface-2 p-2 space-y-2">
-                  <div className="flex items-center justify-between gap-2">
-                    <input
-                      autoFocus
-                      value={browseQuery}
-                      onChange={(e) => setBrowseQuery(e.target.value)}
-                      placeholder="Search valid codes..."
-                      className="flex-1 px-3 py-1.5 rounded-md bg-surface text-sm border border-border focus:border-primary outline-none"
-                    />
-                    <button type="button" onClick={() => setBrowseOpen(false)} className="text-xs text-muted-foreground hover:text-foreground">Close</button>
-                  </div>
-                  <div className="max-h-48 overflow-y-auto divide-y divide-border rounded-md">
-                    {loadingAvailable ? (
-                      <div className="p-3 text-xs text-muted-foreground text-center">Loading…</div>
-                    ) : filteredAvailable.length === 0 ? (
-                      <div className="p-3 text-xs text-muted-foreground text-center">No matching codes</div>
-                    ) : (
-                      filteredAvailable.map((c) => (
-                        <button
-                          key={c.id}
-                          type="button"
-                          onClick={() => selectCode(c)}
-                          className="w-full text-left p-2 hover:bg-surface flex items-center justify-between gap-2"
-                        >
-                          <div className="min-w-0">
-                            <div className="font-mono text-sm font-semibold">{c.code}</div>
-                            {c.description && <div className="text-xs text-muted-foreground truncate">{c.description}</div>}
-                          </div>
-                          <div className="text-xs font-semibold text-success shrink-0">{previewValue(c)}</div>
-                        </button>
-                      ))
-                    )}
-                  </div>
-                </div>
+              ) : (
+                <div className="text-xs text-muted-foreground px-2 py-1.5">No voucher codes available for this order.</div>
               )}
             </div>
           </div>
@@ -1558,7 +1475,6 @@ function Checkout({ items, total, onClose, onPlace, onRemoveItem, onContinueShop
         )}
         <div className="p-5 border-t border-border flex flex-wrap gap-2 justify-end">
           <button onClick={onClose} className="px-4 py-2 rounded-lg bg-surface-2 text-sm">Cancel</button>
-          <button onClick={onContinueShopping} className="px-4 py-2 rounded-lg bg-surface-2 text-sm border border-border">Continue shopping</button>
           <button onClick={() => onPlace({ name, email, customer_type: customerType, existing_username: existingUsername, discount_code: appliedCode?.code ?? "", discount_cents: discountCents, wants_adult_content: adultContent === "yes" })}
             disabled={!canSubmit} className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium disabled:opacity-50">Place Order</button>
         </div>
