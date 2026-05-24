@@ -26,7 +26,7 @@ export function ServiceStatusBox() {
 
   const load = async () => {
     const { data } = await supabase
-      .from("incidents")
+      .from("status_incidents")
       .select("id, title, status")
       .neq("status", "completed")
       .order("created_at", { ascending: false });
@@ -38,7 +38,7 @@ export function ServiceStatusBox() {
     load();
     const ch = supabase
       .channel(`service-status-box-${Math.random().toString(36).slice(2)}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "incidents" }, () => load())
+      .on("postgres_changes", { event: "*", schema: "public", table: "status_incidents" }, () => load())
       .subscribe();
     return () => {
       supabase.removeChannel(ch);
