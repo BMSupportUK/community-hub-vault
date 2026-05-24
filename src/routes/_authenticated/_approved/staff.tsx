@@ -2,7 +2,6 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Briefcase, Search, Clock, UserPlus, Eye, Check, Lock } from "lucide-react";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 import profileHeader from "@/assets/profile-header.jpg";
@@ -47,7 +46,6 @@ function StaffPage() {
   const { user: viewer } = useAuth();
   const onlineUsers = useOnlineUsers();
   const businessOpen = useBusinessOpen();
-  const [tab, setTab] = useState("staff");
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [rolesByUser, setRolesByUser] = useState<Record<string, string[]>>({});
   const [friendByUser, setFriendByUser] = useState<Record<string, FriendState>>({});
