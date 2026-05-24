@@ -121,7 +121,9 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
     return (
       <aside className={cn(
         "bg-rail w-[72px] flex-col items-center py-4 gap-2",
-        inSheet ? "flex h-full" : "shrink-0 hidden lg:flex border-r border-border",
+        inSheet
+          ? "flex h-full"
+          : "shrink-0 hidden lg:flex border-r border-border sticky top-0 self-start h-screen",
       )}>
         <RailIcon to="/gate" label="Gate" Icon={MessageSquare} active={path.startsWith("/gate")} accent />
         <div className="mt-auto" />
@@ -178,7 +180,9 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
   return (
     <aside className={cn(
       "bg-rail w-[72px] flex-col items-center py-4 gap-1",
-      inSheet ? "flex h-full" : "shrink-0 hidden lg:flex border-r border-border",
+      inSheet
+        ? "flex h-full"
+        : "shrink-0 hidden lg:flex border-r border-border sticky top-0 self-start h-screen",
     )}>
       <Link to="/home" className="size-12 rounded-2xl bg-gradient-primary flex items-center justify-center font-display font-bold text-[15px] text-primary-foreground shadow-glow mb-2">
         BM
