@@ -1,6 +1,6 @@
 import { createFileRoute, Outlet, redirect, useRouterState, Navigate, useNavigate } from "@tanstack/react-router";
 import { Link } from "@tanstack/react-router";
-import { Users, Briefcase, LayoutDashboard, Shield, ShieldCheck, Menu, Receipt } from "lucide-react";
+import { LayoutDashboard, Shield, ShieldCheck, Menu, Receipt } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
@@ -147,22 +147,6 @@ function AuthLayout() {
             <SubscriptionExpiry />
           </div>
           <div className="flex items-center gap-1.5 lg:gap-3 shrink-0">
-          <Link
-            to="/members"
-            title="Members directory"
-            className="group flex items-center gap-2 rounded-full px-3 py-1.5 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 text-white text-xs font-medium shadow-lg shadow-fuchsia-500/20 hover:shadow-fuchsia-500/40 transition-shadow"
-          >
-            <Users className="size-4" />
-            <span className="hidden xl:inline">Members</span>
-          </Link>
-          <Link
-            to="/staff"
-            title="Staff directory"
-            className="group flex items-center gap-2 rounded-full px-3 py-1.5 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 text-white text-xs font-medium shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 transition-shadow"
-          >
-            <Briefcase className="size-4" />
-            <span className="hidden xl:inline">Staff</span>
-          </Link>
           <div className="hidden lg:flex"><Clocks /></div>
             <MyWorkingStatus />
           <UserAvatarMenu />
