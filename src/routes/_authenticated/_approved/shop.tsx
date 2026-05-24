@@ -179,7 +179,11 @@ function ShopPage() {
 
   return (
     <>
-      <ChannelColumn title="Shop" groups={groups} />
+      <ChannelColumn
+        title="Shop"
+        groups={groups}
+        footer={view === "orders" && id ? <SidebarOrderProgress orderId={id} /> : undefined}
+      />
       <div className="flex-1 flex flex-col min-w-0">
         <div className="md:hidden h-10 shrink-0 flex items-center px-3 border-b border-border bg-rail/30">
           <Sheet open={navOpen} onOpenChange={setNavOpen}>
@@ -187,7 +191,12 @@ function ShopPage() {
               <Menu className="size-4" /> Shop menu
             </SheetTrigger>
             <SheetContent side="left" className="p-0 w-72 bg-surface border-r border-border">
-              <ChannelColumn inSheet title="Shop" groups={groups} />
+              <ChannelColumn
+                inSheet
+                title="Shop"
+                groups={groups}
+                footer={view === "orders" && id ? <SidebarOrderProgress orderId={id} /> : undefined}
+              />
             </SheetContent>
           </Sheet>
         </div>
