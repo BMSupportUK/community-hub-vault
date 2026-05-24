@@ -2,9 +2,10 @@ import { zonedWallTimeToUtcMs, dateInTimeZone } from "@/hooks/use-timezone";
 
 // Abbreviation -> IANA zone. IANA zones already handle DST correctly.
 const ZONE_MAP: Record<string, string> = {
-  // Map GMT to Europe/London so the source time follows UK clocks and
-  // automatically shifts to BST during British Summer Time.
-  GMT: "Europe/London",
+  // GMT is a fixed offset (UTC+0). It must NOT shift to BST in summer —
+  // otherwise a "19:45 GMT" source time gets re-displayed as the same
+  // 19:45 to a UK viewer in summer, and the local conversion is wrong.
+  GMT: "Etc/UTC",
   UTC: "Etc/UTC",
   UK: "Europe/London",
   BST: "Europe/London",
