@@ -1,19 +1,19 @@
-## Move Staff on Duty strip into the ticket header
+## Add a Service Status box to the Help Desk welcome panel
 
-In `src/routes/_authenticated/_approved/tickets.tsx`, the hero section currently renders the text block (max-w-3xl on the left) and then `<StaffOnDutyStrip />` below it in a separate full-width row.
-
-The arrow in the screenshot points to the right half of the hero (around the headset area). Move the staff strip there.
+The screenshot points at the empty right-hand side of the "Welcome to the Help Desk" panel (inside the Welcome tab). The same kind of box already exists in the left icon-rail as `ServiceStatusBox` (`src/components/app/ServiceStatusBox.tsx`) — show live incidents from `status_incidents` with an Operational fallback and a link to `/status`.
 
 ### Changes
 
-1. Restructure the hero inner container into a two-column flex layout on `md+`:
-   - Left column: existing eyebrow + H1 + paragraph + ratings pill (keeps max-w).
-   - Right column: `<StaffOnDutyStrip />` floated to the right, vertically centered, constrained width (e.g. `w-[320px]` / `max-w-sm`), so it overlays the right portion of the hero image.
-2. Remove the existing `<div className="relative px-6 md:px-10 pb-6 -mt-8"><StaffOnDutyStrip /></div>` block below the hero text.
-3. On mobile (`<md`), stack the strip below the text (existing behavior preserved via flex-col → md:flex-row).
-4. The `StaffOnDutyStrip` component itself has an outer `px-4 pt-4` wrapper — wrap the right-column usage so the strip sits flush without extra outer padding (use a small wrapper override or pass through; easiest is to wrap in a div that negates the padding, or simply accept the existing spacing since it's visually fine in the right column).
+**File: `src/routes/_authenticated/_approved/tickets.tsx`**
 
-No logic changes — purely layout.
+1. Import `ServiceStatusBox` from `@/components/app/ServiceStatusBox`.
+2. In the Welcome `TabsContent` (around line 405), restructure the inner rounded card into a two-column grid on `md+`:
+   - Left column: existing H2 + paragraphs + the two action buttons (New ticket / View tickets), keeps `max-w-2xl`.
+   - Right column: `<ServiceStatusBox />` wrapped in a div that neutralises its outer `px-2 pt-4` (e.g. `[&>section]:px-0 [&>section]:pt-0`) and constrains width (`md:w-[300px] md:shrink-0`).
+3. On mobile, stack the status box below the text (default flex-col → md:flex-row behaviour).
+
+No changes to `ServiceStatusBox` itself — it already handles loading, realtime updates, the "Read more →" link to `/status`, and the Members/Staff buttons. If those Members/Staff buttons feel out of place in the ticket context, I can hide them with a prop — flag this if you'd prefer a status-only variant.
 
 ### Files
-- `src/routes/_authenticated/_approved/tickets.tsx` (hero JSX only)
+- `src/routes/_authenticated/_approved/tickets.tsx` (Welcome tab panel JSX only)
+- Optional: `src/components/app/ServiceStatusBox.tsx` if you want a `compact` / status-only prop
