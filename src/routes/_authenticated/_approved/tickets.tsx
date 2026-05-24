@@ -430,7 +430,7 @@ function TicketsPage() {
                   </div>
                 </div>
                 <div className="mt-6 md:mt-0 md:w-[300px] md:shrink-0 [&>section]:px-0 [&>section]:pt-0">
-                  <ServiceStatusBox />
+                  <ServiceStatusBox hideButtons />
                 </div>
               </div>
             </div>
