@@ -24,7 +24,9 @@ function WelcomePage() {
   const { user, hasRole } = useAuth();
   const canManage = hasRole("admin") || hasRole("management");
   const canEditEvent = hasRole("admin") || hasRole("management") || hasRole("staff");
-  const name = (user?.email ?? "there").split("@")[0];
+  const fallbackName = (user?.email ?? "there").split("@")[0];
+  const [displayName, setDisplayName] = useState<string>(fallbackName);
+  const name = displayName;
   const navigate = useNavigate();
 
   type EventRow = { id: string; body: string; banner_url: string | null; event_date: string | null };
@@ -64,6 +66,19 @@ function WelcomePage() {
       setEvents(all.filter((e) => !e.event_date || e.event_date >= todayStr));
     })();
   }, []);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    (async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("display_name, username")
+        .eq("id", user.id)
+        .maybeSingle();
+      const n = data?.display_name || data?.username;
+      if (n) setDisplayName(n);
+    })();
+  }, [user?.id]);
 
   // Auto-rotate every 60s when there are multiple events and no dialog open
   useEffect(() => {
