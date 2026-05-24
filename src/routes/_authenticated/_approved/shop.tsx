@@ -2097,7 +2097,6 @@ function OrderDetail({ orderId, isAdmin, onBack }: { orderId: string; isAdmin: b
       </header>
       <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
         <div className="w-full md:w-72 md:shrink-0 border-b md:border-b-0 md:border-r border-border bg-surface/50 p-4 overflow-y-auto space-y-4 text-sm max-h-[40vh] md:max-h-none">
-          <OrderProgressStrip order={order} />
           <div>
             <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Items</div>
             <div className="space-y-1">
