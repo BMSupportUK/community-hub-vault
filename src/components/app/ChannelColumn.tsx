@@ -1,5 +1,5 @@
-import { Link, useRouterState } from "@tanstack/react-router";
-import { Hash, ChevronDown, Plus, Trash2, Shield, Smile, Pencil, ChevronUp } from "lucide-react";
+import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
+import { Hash, ChevronDown, Plus, Trash2, Shield, Smile, Pencil, ChevronUp, LogOut } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useBusinessOpen } from "@/hooks/use-business-open";
 import { cn } from "@/lib/utils";
@@ -8,6 +8,8 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useRoleFlashMap, resolveAvatarUrl, roleFlashClass } from "@/lib/role-flash";
 import { VpnBadge } from "@/lib/vpn-flags";
+import { MentionsBadge } from "@/components/app/MentionsBadge";
+import { NotificationBell } from "@/components/app/NotificationBell";
 
 export interface ChannelGroup {
   label: string;
@@ -48,7 +50,12 @@ export function ChannelColumn({
   inSheet?: boolean;
 }) {
   const path = useRouterState({ select: (r) => r.location.pathname });
-  const { user, isStaff } = useAuth();
+  const { user, isStaff, signOut } = useAuth();
+  const navigate = useNavigate();
+  const handleSignOut = async () => {
+    await signOut();
+    navigate({ to: "/login" });
+  };
   const businessOpen = useBusinessOpen();
   const isAway = isStaff && !businessOpen;
   const roleFlashMap = useRoleFlashMap();
