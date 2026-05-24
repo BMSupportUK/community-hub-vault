@@ -420,7 +420,7 @@ function KnowledgeBasePage() {
             </div>
           )}
         </div>
-        {editing && <ArticleEditor editing={editing} setEditing={setEditing} categories={categories} onSave={saveArticle} />}
+        {editing && <ArticleEditor editing={editing} setEditing={setEditing} categories={categories} onSave={saveArticle} userId={user?.id ?? null} />}
       </main>
     );
   }
@@ -679,7 +679,7 @@ function KnowledgeBasePage() {
         </Tabs>
       </div>
 
-      {editing && <ArticleEditor editing={editing} setEditing={setEditing} categories={categories} onSave={saveArticle} />}
+      {editing && <ArticleEditor editing={editing} setEditing={setEditing} categories={categories} onSave={saveArticle} userId={user?.id ?? null} />}
 
       <Dialog open={showCatEditor} onOpenChange={(o) => { if (!o) { setShowCatEditor(false); setEditingCat(null); } }}>
         <DialogContent>
@@ -712,12 +712,13 @@ function EmptyState({ text, cta }: { text: string; cta?: { label: string; onClic
 }
 
 function ArticleEditor({
-  editing, setEditing, categories, onSave,
+  editing, setEditing, categories, onSave, userId,
 }: {
   editing: Article;
   setEditing: (a: Article | null) => void;
   categories: Category[];
   onSave: () => void;
+  userId: string | null;
 }) {
   return (
     <Dialog open onOpenChange={(o) => { if (!o) setEditing(null); }}>
@@ -750,7 +751,8 @@ function ArticleEditor({
           <HtmlEditor
             value={editing.body ?? ""}
             onChange={(html) => setEditing({ ...editing, body: html })}
-            placeholder="Write the article. Use the YouTube button to embed a video."
+            placeholder="Write the article. Use the YouTube button to embed a video, or the film icon to upload one."
+            videoUpload={{ userId, folder: "articles" }}
           />
           <Label>Header image (optional)</Label>
           <HeaderImageUpload
