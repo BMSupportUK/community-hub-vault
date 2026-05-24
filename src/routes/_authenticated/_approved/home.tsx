@@ -428,6 +428,7 @@ function HomeLayout() {
         onAddGroup={isAdmin ? () => setShowAddGroup(true) : undefined}
         onReorderChannels={isAdmin ? reorderChannels : undefined}
         onReorderGroups={isAdmin ? reorderGroups : undefined}
+        footer={<ServiceStatusBox />}
       />
       <div className="flex-1 flex flex-col min-w-0">
         <div className="md:hidden h-10 shrink-0 flex items-center px-3 border-b border-border bg-rail/30">
@@ -444,6 +445,7 @@ function HomeLayout() {
                 onAddGroup={isAdmin ? () => setShowAddGroup(true) : undefined}
                 onReorderChannels={isAdmin ? reorderChannels : undefined}
                 onReorderGroups={isAdmin ? reorderGroups : undefined}
+                footer={<ServiceStatusBox />}
               />
             </SheetContent>
           </Sheet>
