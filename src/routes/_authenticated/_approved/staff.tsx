@@ -47,7 +47,7 @@ function StaffPage() {
   const { user: viewer } = useAuth();
   const onlineUsers = useOnlineUsers();
   const businessOpen = useBusinessOpen();
-  const [tab, setTab] = useState("welcome");
+  const [tab, setTab] = useState("staff");
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [rolesByUser, setRolesByUser] = useState<Record<string, string[]>>({});
   const [friendByUser, setFriendByUser] = useState<Record<string, FriendState>>({});
