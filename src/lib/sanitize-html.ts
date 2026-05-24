@@ -32,7 +32,7 @@ function ensureHook() {
 export function sanitizeRichHtml(html: string): string {
   ensureHook();
   return DOMPurify.sanitize(html, {
-    ADD_TAGS: ["iframe"],
+    ADD_TAGS: ["iframe", "video", "source"],
     ADD_ATTR: [
       "allow",
       "allowfullscreen",
@@ -43,6 +43,13 @@ export function sanitizeRichHtml(html: string): string {
       "referrerpolicy",
       "loading",
       "style",
+      "controls",
+      "playsinline",
+      "poster",
+      "preload",
+      "muted",
+      "loop",
+      "type",
     ],
     ALLOWED_URI_REGEXP:
       /^(?:(?:https?|mailto|tel|ftp):|[^a-z]|[a-z+.-]+(?:[^a-z+.\-:]|$))/i,
