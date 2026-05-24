@@ -75,15 +75,14 @@ function Landing() {
               </div>
             </div>
 
-            <div className="relative max-w-md mx-auto w-full">
+            <div className="relative w-full">
               <div className="absolute -inset-4 bg-gradient-to-tr from-red-500/40 via-transparent to-blue-500/30 blur-2xl rounded-3xl" aria-hidden />
-              <div className="relative rounded-3xl overflow-hidden border border-white/20 shadow-[0_20px_80px_rgba(0,0,0,0.6)] aspect-[4/3]">
+              <div className="relative rounded-3xl overflow-hidden border border-white/20 shadow-[0_20px_80px_rgba(0,0,0,0.6)]">
                 <img
                   src={welcomeHero}
                   alt="BM Support hero"
-                  className="absolute inset-0 w-full h-full object-cover"
+                  className="block w-full h-auto object-contain"
                 />
-                <div className="absolute inset-0 bg-gradient-to-tr from-red-950/40 via-transparent to-transparent" aria-hidden />
               </div>
             </div>
           </div>
