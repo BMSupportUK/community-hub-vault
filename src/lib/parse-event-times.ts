@@ -222,8 +222,9 @@ function parseMatches(
         if (!ampm && hour > 23) continue;
         if (!ampm && !mStr) continue;
         const todayUtc = new Date();
+        const matchedSourceTime = normalizedMatchedTime(hour, minute);
         const dateStr = effectiveSourceDateStr ?? dateInTimeZone(todayUtc, tz);
-        const timeStr = `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}:00`;
+        const timeStr = `${matchedSourceTime}:00`;
         const utcMs = zonedWallTimeToUtcMs(dateStr, timeStr, tz);
         if (!Number.isFinite(utcMs)) continue;
         const hh = new Intl.DateTimeFormat("en-GB", {
@@ -249,19 +250,13 @@ function parseMatches(
             month: "long",
             year: "numeric",
           }).format(new Date(utcMs));
-        const sourceHH = new Intl.DateTimeFormat("en-GB", {
-          timeZone: tz,
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: false,
-        }).format(new Date(utcMs));
         const sourceAbbr = tzAbbrev(utcMs, tz) || defaultZone.toUpperCase();
         results.push({
           start: bm.index,
           end: bm.index + bm[0].length,
           converted: `${dayDate} ${hh}${abbr ? ` ${abbr}` : ""}`,
           sourcePrefix: `${sourceDayDate} `,
-          sourceTime: sourceHH,
+          sourceTime: matchedSourceTime,
           sourceZone: sourceAbbr,
           localTime: hh,
           localZone: abbr,
