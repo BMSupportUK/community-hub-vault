@@ -179,7 +179,11 @@ function ShopPage() {
 
   return (
     <>
-      <ChannelColumn title="Shop" groups={groups} />
+      <ChannelColumn
+        title="Shop"
+        groups={groups}
+        footer={view === "orders" && id ? <SidebarOrderProgress orderId={id} /> : undefined}
+      />
       <div className="flex-1 flex flex-col min-w-0">
         <div className="md:hidden h-10 shrink-0 flex items-center px-3 border-b border-border bg-rail/30">
           <Sheet open={navOpen} onOpenChange={setNavOpen}>
@@ -187,7 +191,12 @@ function ShopPage() {
               <Menu className="size-4" /> Shop menu
             </SheetTrigger>
             <SheetContent side="left" className="p-0 w-72 bg-surface border-r border-border">
-              <ChannelColumn inSheet title="Shop" groups={groups} />
+              <ChannelColumn
+                inSheet
+                title="Shop"
+                groups={groups}
+                footer={view === "orders" && id ? <SidebarOrderProgress orderId={id} /> : undefined}
+              />
             </SheetContent>
           </Sheet>
         </div>
@@ -424,6 +433,36 @@ function ProductCard({
 
 // ============ STOREFRONT ============
 type OrderProgress = { id: string; status: string; paid_at: string | null; completed_at: string | null; created_at: string } | null;
+
+function SidebarOrderProgress({ orderId }: { orderId: string }) {
+  const [order, setOrder] = useState<Order | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      const { data } = await supabase.from("orders").select("*").eq("id", orderId).maybeSingle();
+      if (!cancelled) setOrder((data as Order | null) ?? null);
+    };
+    void load();
+    const ch = supabase
+      .channel(`sidebar-order-progress-${orderId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "orders", filter: `id=eq.${orderId}` },
+        () => void load(),
+      )
+      .subscribe();
+    return () => {
+      cancelled = true;
+      supabase.removeChannel(ch);
+    };
+  }, [orderId]);
+  if (!order) return null;
+  return (
+    <div className="mt-6 px-3 pb-3">
+      <OrderProgressStrip order={order} />
+    </div>
+  );
+}
 
 function OrderProgressStrip({ order }: { order: Order }) {
   const placed = true;
@@ -2058,7 +2097,6 @@ function OrderDetail({ orderId, isAdmin, onBack }: { orderId: string; isAdmin: b
       </header>
       <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
         <div className="w-full md:w-72 md:shrink-0 border-b md:border-b-0 md:border-r border-border bg-surface/50 p-4 overflow-y-auto space-y-4 text-sm max-h-[40vh] md:max-h-none">
-          <OrderProgressStrip order={order} />
           <div>
             <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Items</div>
             <div className="space-y-1">
