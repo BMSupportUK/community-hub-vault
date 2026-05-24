@@ -89,7 +89,36 @@ function sourceDateLabelFromHeading(text: string, dateStr: string): string {
     month: "long",
     year: "numeric",
   }).format(new Date(`${dateStr}T00:00:00Z`));
-  return weekdayName ? `${weekdayName} ${day} ${monthYear}` : `${day} ${monthYear}`;
+  if (weekdayName) return `${weekdayName} ${day} ${monthYear}`;
+  return new Intl.DateTimeFormat("en-GB", {
+    timeZone: "UTC",
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  }).format(new Date(`${dateStr}T00:00:00Z`));
+}
+
+function hasSecondsSuffix(text: string, end: number): boolean {
+  return text[end] === ":" && /^\d{2}\b/.test(text.slice(end + 1));
+}
+
+function shouldIgnoreBareSecondsMatch(text: string, start: number, end: number): boolean {
+  if (!hasSecondsSuffix(text, end)) return false;
+  if (parseLeadingGuideDate(text)) return false;
+  const trimmed = text.trim();
+  const matchedWithSeconds = text.slice(start, end + 3).trim();
+  return trimmed !== matchedWithSeconds;
+}
+
+function cleanEventTitleText(value: string): string {
+  return value
+    .replace(/\b\d{1,2}:\d{2}:\d{2}\b\s*$/g, " ")
+    .replace(/\b\d{4}-\d{1,2}-\d{1,2}\b/g, " ")
+    .replace(/(^|\s):\d{2}\b/g, " ")
+    .replace(/\s+/g, " ")
+    .replace(/^[\s\-–—:·•|]+|[\s\-–—:·•|]+$/g, "")
+    .trim();
 }
 
 function normalizedMatchedTime(hour: number, minute: number): string {
@@ -221,6 +250,7 @@ function parseMatches(
       while ((bm = BARE_TIME_RE.exec(text)) !== null) {
         // Skip if this span overlaps a zone-tagged match already captured
         if (results.some((r) => bm!.index < r.end && bm!.index + bm![0].length > r.start)) continue;
+        if (shouldIgnoreBareSecondsMatch(text, bm.index, bm.index + bm[0].length)) continue;
         const [, hStr, mStr, ampmRaw] = bm;
         let hour = parseInt(hStr, 10);
         const minute = mStr ? parseInt(mStr, 10) : 0;
@@ -300,11 +330,16 @@ export function findEventTimes(html: string, viewerTz: string): EventTime[] {
 function parseGuideDate(text: string): string | null {
   const trimmed = text.replace(/\s+/g, " ").trim();
   const weekdayPrefix = /^(mon|tue|wed|thu|fri|sat|sun)[a-z]*\b[\s,]*/i;
-  if (!weekdayPrefix.test(trimmed) || !/\d/.test(trimmed) || trimmed.length >= 80) return null;
+  if (!/\d/.test(trimmed) || trimmed.length >= 80) return null;
   const withoutWeekday = trimmed.replace(weekdayPrefix, "").trim();
-  const numeric = withoutWeekday.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{2}|\d{4})$/);
+  const numeric = withoutWeekday.match(
+    /^(?:(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})|(\d{1,2})[-/.](\d{1,2})[-/.](\d{2}|\d{4}))$/,
+  );
   if (numeric) {
-    const [, d, m, y] = numeric;
+    const [, isoY, isoM, isoD, d, m, y] = numeric;
+    if (isoY && isoM && isoD) {
+      return `${isoY}-${isoM.padStart(2, "0")}-${isoD.padStart(2, "0")}`;
+    }
     const year = y.length === 2 ? 2000 + parseInt(y, 10) : parseInt(y, 10);
     return `${year}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`;
   }
@@ -486,10 +521,7 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
 
     const m = matches[0];
     // Derive event name = text with the matched time substring removed.
-    let eventName = (text.slice(0, m.start) + " " + text.slice(m.end))
-      .replace(/\s+/g, " ")
-      .replace(/^[\s\-–—:·•|]+|[\s\-–—:·•|]+$/g, "")
-      .trim();
+    let eventName = cleanEventTitleText(text.slice(0, m.start) + " " + text.slice(m.end));
     if (isWeekdayOnly(eventName)) eventName = "";
     // If subsequent matches exist, their text becomes a caption.
     let caption = "";
@@ -533,7 +565,7 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
       if (absorbed.length >= 40) break;
     }
     if (absorbed[0]) {
-      eventName = (absorbed[0].textContent ?? "").trim() || eventName;
+      eventName = cleanEventTitleText(absorbed[0].textContent ?? "") || eventName;
     }
     // Detect channel-group headers (Premier League guides). When present,
     // render each group as a bold label on its own line with its channels
