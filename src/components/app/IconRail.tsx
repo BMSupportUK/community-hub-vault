@@ -1,5 +1,5 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
-import { Home, Ticket, ShoppingBag, BookOpen, FileText, Clock, Calendar, LogOut, MessageSquare, UserCircle2, Star, Trophy, Tv, Volleyball, Wrench, Goal } from "lucide-react";
+import { Home, Ticket, ShoppingBag, BookOpen, FileText, Clock, Calendar, LogOut, MessageSquare, UserCircle2, Star, Trophy, Tv, Volleyball, Wrench, Goal, Users, Briefcase } from "lucide-react";
 import { useAuth, type AppRole } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 import { useEffect, useRef, useState } from "react";
@@ -145,6 +145,8 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
     { to: "/reviews", label: "Customer reviews", icon: Star, show: true },
     { to: "/leaderboard", label: "Leaderboard", icon: Trophy, show: true },
     { to: "/new-content", label: "New content", icon: Tv, show: true, badge: unreadNewContent },
+    { to: "/members", label: "Members", icon: Users, show: true },
+    { to: "/staff", label: "Staff", icon: Briefcase, show: true },
     { to: "/clock", label: "Clock", icon: Clock, show: isStaff },
     { to: "/shifts", label: "Shifts", icon: Calendar, show: isStaff },
   ];
