@@ -67,10 +67,11 @@ export function MembershipBox() {
     });
 
   const now = Date.now();
+  const anyExpired = items.some((c) => new Date(c.expiry_at!).getTime() < now);
 
   return (
     <section className="px-2 pt-4">
-      <div className="rounded-lg bg-surface-2/60 border border-border overflow-hidden">
+      <div className={cn("rounded-lg bg-surface-2/60 border border-border overflow-hidden", anyExpired && "membership-expired-flash")}>
         <div className="flex items-center justify-between px-3 py-2 border-b border-border bg-gradient-to-r from-violet-600/10 via-fuchsia-600/10 to-blue-600/10">
           <div className="flex items-center gap-2">
             <BadgeCheck className="size-3.5 text-violet-300" />
