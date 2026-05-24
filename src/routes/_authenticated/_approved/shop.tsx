@@ -434,6 +434,36 @@ function ProductCard({
 // ============ STOREFRONT ============
 type OrderProgress = { id: string; status: string; paid_at: string | null; completed_at: string | null; created_at: string } | null;
 
+function SidebarOrderProgress({ orderId }: { orderId: string }) {
+  const [order, setOrder] = useState<Order | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      const { data } = await supabase.from("orders").select("*").eq("id", orderId).maybeSingle();
+      if (!cancelled) setOrder((data as Order | null) ?? null);
+    };
+    void load();
+    const ch = supabase
+      .channel(`sidebar-order-progress-${orderId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "orders", filter: `id=eq.${orderId}` },
+        () => void load(),
+      )
+      .subscribe();
+    return () => {
+      cancelled = true;
+      supabase.removeChannel(ch);
+    };
+  }, [orderId]);
+  if (!order) return null;
+  return (
+    <div className="mt-6 px-3 pb-3">
+      <OrderProgressStrip order={order} />
+    </div>
+  );
+}
+
 function OrderProgressStrip({ order }: { order: Order }) {
   const placed = true;
   const paid = !!order.paid_at;
