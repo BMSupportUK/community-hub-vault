@@ -521,7 +521,7 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
       )
         break;
       absorbed.push(candidate);
-      if (absorbed.length >= 8) break;
+      if (absorbed.length >= 40) break;
     }
     if (absorbed[0]) {
       eventName = (absorbed[0].textContent ?? "").trim() || eventName;
