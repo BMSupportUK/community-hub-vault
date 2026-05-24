@@ -521,10 +521,7 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
 
     const m = matches[0];
     // Derive event name = text with the matched time substring removed.
-    let eventName = (text.slice(0, m.start) + " " + text.slice(m.end))
-      .replace(/\s+/g, " ")
-      .replace(/^[\s\-–—:·•|]+|[\s\-–—:·•|]+$/g, "")
-      .trim();
+    let eventName = cleanEventTitleText(text.slice(0, m.start) + " " + text.slice(m.end));
     if (isWeekdayOnly(eventName)) eventName = "";
     // If subsequent matches exist, their text becomes a caption.
     let caption = "";
@@ -568,7 +565,7 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
       if (absorbed.length >= 40) break;
     }
     if (absorbed[0]) {
-      eventName = (absorbed[0].textContent ?? "").trim() || eventName;
+      eventName = cleanEventTitleText(absorbed[0].textContent ?? "") || eventName;
     }
     // Detect channel-group headers (Premier League guides). When present,
     // render each group as a bold label on its own line with its channels
