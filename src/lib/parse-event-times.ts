@@ -330,11 +330,16 @@ export function findEventTimes(html: string, viewerTz: string): EventTime[] {
 function parseGuideDate(text: string): string | null {
   const trimmed = text.replace(/\s+/g, " ").trim();
   const weekdayPrefix = /^(mon|tue|wed|thu|fri|sat|sun)[a-z]*\b[\s,]*/i;
-  if (!weekdayPrefix.test(trimmed) || !/\d/.test(trimmed) || trimmed.length >= 80) return null;
+  if (!/\d/.test(trimmed) || trimmed.length >= 80) return null;
   const withoutWeekday = trimmed.replace(weekdayPrefix, "").trim();
-  const numeric = withoutWeekday.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{2}|\d{4})$/);
+  const numeric = withoutWeekday.match(
+    /^(?:(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})|(\d{1,2})[-/.](\d{1,2})[-/.](\d{2}|\d{4}))$/,
+  );
   if (numeric) {
-    const [, d, m, y] = numeric;
+    const [, isoY, isoM, isoD, d, m, y] = numeric;
+    if (isoY && isoM && isoD) {
+      return `${isoY}-${isoM.padStart(2, "0")}-${isoD.padStart(2, "0")}`;
+    }
     const year = y.length === 2 ? 2000 + parseInt(y, 10) : parseInt(y, 10);
     return `${year}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`;
   }
