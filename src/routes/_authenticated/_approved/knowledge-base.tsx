@@ -208,16 +208,18 @@ function KnowledgeBasePage() {
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return articles.filter((a) => {
-      if (!q && activeCat && a.category_id !== activeCat) return false;
-      if (!isMod && !a.published) return false;
-      if (!q) return true;
-      return (
-        a.title.toLowerCase().includes(q) ||
-        (a.excerpt ?? "").toLowerCase().includes(q) ||
-        (a.body ?? "").toLowerCase().includes(q)
-      );
-    });
+    return articles
+      .filter((a) => {
+        if (!q && activeCat && a.category_id !== activeCat) return false;
+        if (!isMod && !a.published) return false;
+        if (!q) return true;
+        return (
+          a.title.toLowerCase().includes(q) ||
+          (a.excerpt ?? "").toLowerCase().includes(q) ||
+          (a.body ?? "").toLowerCase().includes(q)
+        );
+      })
+      .sort((a, b) => a.title.localeCompare(b.title));
   }, [articles, activeCat, search, isMod]);
 
   const activeCategory = categories.find((c) => c.id === activeCat) ?? null;
