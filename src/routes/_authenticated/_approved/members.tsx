@@ -10,7 +10,7 @@ import profileHeader from "@/assets/profile-header.jpg";
 import { useOnlineUsers } from "@/hooks/use-online-users";
 import { useBusinessOpen } from "@/hooks/use-business-open";
 import { formatLastSeen } from "@/lib/relative-time";
-import { Nameplate } from "@/components/app/Nameplate";
+
 import { VpnBadge } from "@/lib/vpn-flags";
 
 export const Route = createFileRoute("/_authenticated/_approved/members")({
@@ -265,28 +265,13 @@ function MembersPage() {
                   />
                 </div>
                 <div className="mt-3">
-                  {p.equipped_nameplate_id ? (
-                    <Nameplate
-                      id={p.equipped_nameplate_id}
-                      className="flex items-center w-full h-9 rounded-md px-3 shadow-sm"
-                    >
-                      <Link
-                        to="/u/$username"
-                        params={{ username: p.username ?? p.id }}
-                        className="font-semibold text-sm text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)] truncate hover:opacity-90 transition-opacity"
-                      >
-                        {name}
-                      </Link>
-                    </Nameplate>
-                  ) : (
-                    <Link
-                      to="/u/$username"
-                      params={{ username: p.username ?? p.id }}
-                      className="font-semibold text-sm hover:text-fuchsia-300 transition-colors"
-                    >
-                      {name}
-                    </Link>
-                  )}
+                  <Link
+                    to="/u/$username"
+                    params={{ username: p.username ?? p.id }}
+                    className="font-semibold text-sm hover:text-fuchsia-300 transition-colors"
+                  >
+                    {name}
+                  </Link>
                   <span className="ml-1 inline-flex align-middle"><VpnBadge userId={p.id} size={12} /></span>
                   <div className="text-[10px] mt-0.5 flex items-center gap-1.5">
                     <span className={`size-1.5 rounded-full ${smallDot}`} />
