@@ -83,6 +83,10 @@ function sourceDateLabelFromHeading(text: string, dateStr: string): string {
   return weekdayName ? `${weekdayName} ${day} ${monthYear}` : `${day} ${monthYear}`;
 }
 
+function normalizedMatchedTime(hour: number, minute: number): string {
+  return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+}
+
 interface ParsedMatch {
   start: number;
   end: number;
@@ -129,6 +133,7 @@ function parseMatches(
     if (!ampm && !mStr) continue;
 
     const todayUtc = new Date();
+    const matchedSourceTime = normalizedMatchedTime(hour, minute);
     let utcMs: number;
     let sourceLabel: string;
 
@@ -136,7 +141,7 @@ function parseMatches(
       const tz = ZONE_MAP[abbrev.toUpperCase()];
       if (!tz) continue;
       const dateStr = effectiveSourceDateStr ?? dateInTimeZone(todayUtc, tz);
-      const timeStr = `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}:00`;
+      const timeStr = `${matchedSourceTime}:00`;
       utcMs = zonedWallTimeToUtcMs(dateStr, timeStr, tz);
       sourceLabel = tz;
     } else if (offsetBase && sign && offHStr) {
@@ -146,7 +151,7 @@ function parseMatches(
       // Source wall time interpreted at this offset:
       const todayStr = effectiveSourceDateStr ?? new Date().toISOString().slice(0, 10);
       const naiveUtc = Date.parse(
-        `${todayStr}T${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}:00Z`,
+        `${todayStr}T${matchedSourceTime}:00Z`,
       );
       utcMs = naiveUtc - offsetMin * 60000;
       sourceLabel = "offset";
@@ -180,12 +185,6 @@ function parseMatches(
         month: "long",
         year: "numeric",
       }).format(new Date(utcMs));
-    const sourceHH = new Intl.DateTimeFormat("en-GB", {
-      timeZone: sourceTz,
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false,
-    }).format(new Date(utcMs));
     const sourceAbbr =
       sourceLabel !== "offset"
         ? tzAbbrev(utcMs, sourceTz) || "GMT"
@@ -195,7 +194,7 @@ function parseMatches(
       end: m.index + m[0].length,
       converted: `${dayDate} ${hh}${abbr ? ` ${abbr}` : ""}`,
       sourcePrefix: `${sourceDayDate} `,
-      sourceTime: sourceHH,
+      sourceTime: matchedSourceTime,
       sourceZone: sourceAbbr,
       localTime: hh,
       localZone: abbr,
@@ -223,8 +222,9 @@ function parseMatches(
         if (!ampm && hour > 23) continue;
         if (!ampm && !mStr) continue;
         const todayUtc = new Date();
+        const matchedSourceTime = normalizedMatchedTime(hour, minute);
         const dateStr = effectiveSourceDateStr ?? dateInTimeZone(todayUtc, tz);
-        const timeStr = `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}:00`;
+        const timeStr = `${matchedSourceTime}:00`;
         const utcMs = zonedWallTimeToUtcMs(dateStr, timeStr, tz);
         if (!Number.isFinite(utcMs)) continue;
         const hh = new Intl.DateTimeFormat("en-GB", {
@@ -250,19 +250,13 @@ function parseMatches(
             month: "long",
             year: "numeric",
           }).format(new Date(utcMs));
-        const sourceHH = new Intl.DateTimeFormat("en-GB", {
-          timeZone: tz,
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: false,
-        }).format(new Date(utcMs));
         const sourceAbbr = tzAbbrev(utcMs, tz) || defaultZone.toUpperCase();
         results.push({
           start: bm.index,
           end: bm.index + bm[0].length,
           converted: `${dayDate} ${hh}${abbr ? ` ${abbr}` : ""}`,
           sourcePrefix: `${sourceDayDate} `,
-          sourceTime: sourceHH,
+          sourceTime: matchedSourceTime,
           sourceZone: sourceAbbr,
           localTime: hh,
           localZone: abbr,
