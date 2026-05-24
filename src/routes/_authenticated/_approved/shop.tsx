@@ -462,65 +462,88 @@ function OrderProgressStrip({ order }: { order: Order }) {
   const pct = cancelled ? 0 : Math.round((completed / steps.length) * 100);
 
   return (
-    <div className="border-b border-border bg-surface/40 px-3 md:px-4 py-3">
-      <div className="flex items-center justify-between text-[10px] uppercase tracking-wider text-muted-foreground mb-2">
-        <span className="font-semibold">Order Progress</span>
-        <span>{cancelled ? "Cancelled" : `${completed} of ${steps.length} · ${pct}%`}</span>
-      </div>
-      <div className="h-1 rounded-full bg-surface-2 overflow-hidden mb-3">
-        <div
-          className={cn(
-            "h-full transition-all duration-500",
-            cancelled
-              ? "bg-destructive"
-              : "bg-gradient-to-r from-violet-600 via-fuchsia-500 to-blue-600",
-          )}
-          style={{ width: `${cancelled ? 100 : pct}%` }}
-        />
-      </div>
-      <ol className="grid grid-cols-3 gap-2">
-        {steps.map((s) => (
-          <li
-            key={s.n}
+    <div className="relative rounded-xl p-[1px] bg-gradient-to-br from-violet-600 via-fuchsia-500 to-blue-600 shadow-[0_6px_24px_-6px_rgba(124,58,237,0.5)]">
+      <div className="rounded-[11px] bg-surface/95 backdrop-blur p-3 space-y-3">
+        <div className="flex items-center justify-between">
+          <span className="text-[10px] uppercase tracking-[0.14em] font-bold bg-gradient-to-r from-violet-400 via-fuchsia-400 to-sky-400 bg-clip-text text-transparent">
+            Order Progress
+          </span>
+          <span className="text-[10px] font-semibold text-muted-foreground">
+            {cancelled ? "Cancelled" : `${completed}/${steps.length} · ${pct}%`}
+          </span>
+        </div>
+        <div className="h-1.5 rounded-full bg-surface-2 overflow-hidden">
+          <div
             className={cn(
-              "rounded-lg border px-2 py-1.5 flex items-center gap-2 min-w-0",
-              s.cancelled
-                ? "border-destructive/40 bg-destructive/5"
-                : s.done
-                  ? "border-emerald-500/40 bg-emerald-500/10"
-                  : s.active
-                    ? "border-sky-400/60 bg-sky-400/5 ring-1 ring-sky-400/30"
-                    : "border-border bg-surface-2/60 opacity-70",
+              "h-full transition-all duration-700 rounded-full",
+              cancelled
+                ? "bg-destructive"
+                : "bg-gradient-to-r from-violet-600 via-fuchsia-500 to-sky-500 shadow-[0_0_10px_rgba(217,70,239,0.6)]",
             )}
-          >
-            <span
-              className={cn(
-                "size-6 rounded-md grid place-items-center shrink-0",
-                s.cancelled
-                  ? "bg-destructive/20 text-destructive"
-                  : s.done
-                    ? "bg-emerald-500/20 text-emerald-400"
-                    : s.active
-                      ? "bg-gradient-to-br from-violet-600/30 to-blue-600/30 text-sky-300"
-                      : "bg-surface-2 text-muted-foreground",
+            style={{ width: `${cancelled ? 100 : pct}%` }}
+          />
+        </div>
+        <ol className="relative space-y-2">
+          {steps.map((s, idx) => (
+            <li key={s.n} className="relative">
+              {idx < steps.length - 1 && (
+                <span
+                  className={cn(
+                    "absolute left-[18px] top-9 bottom-[-8px] w-0.5 rounded",
+                    s.done && !s.cancelled
+                      ? "bg-gradient-to-b from-emerald-400 to-emerald-500/30"
+                      : "bg-border",
+                  )}
+                />
               )}
-            >
-              {s.done && !s.cancelled ? <Check className="size-3.5" /> : <s.icon className="size-3.5" />}
-            </span>
-            <div className="min-w-0">
-              <div className="text-[9px] uppercase tracking-wider text-muted-foreground leading-none">
-                Step {s.n}
-              </div>
-              <div className="text-[11px] font-semibold truncate flex items-center gap-1">
-                {s.title}
+              <div
+                className={cn(
+                  "relative flex items-center gap-2.5 rounded-lg border px-2.5 py-2 transition-all",
+                  s.cancelled
+                    ? "border-destructive/50 bg-destructive/10"
+                    : s.done
+                      ? "border-emerald-500/50 bg-emerald-500/10"
+                      : s.active
+                        ? "border-fuchsia-400/60 bg-gradient-to-r from-violet-600/15 via-fuchsia-500/15 to-sky-500/15 ring-1 ring-fuchsia-400/40 shadow-[0_0_18px_-4px_rgba(217,70,239,0.55)]"
+                        : "border-border bg-surface-2/50 opacity-70",
+                )}
+              >
+                <span
+                  className={cn(
+                    "size-9 rounded-lg grid place-items-center shrink-0 shadow-inner",
+                    s.cancelled
+                      ? "bg-destructive/25 text-destructive"
+                      : s.done
+                        ? "bg-gradient-to-br from-emerald-400 to-emerald-600 text-white"
+                        : s.active
+                          ? "bg-gradient-to-br from-violet-600 via-fuchsia-500 to-sky-500 text-white animate-pulse"
+                          : "bg-surface-2 text-muted-foreground",
+                  )}
+                >
+                  {s.done && !s.cancelled ? <Check className="size-4" /> : <s.icon className="size-4" />}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <div className="text-[9px] uppercase tracking-wider text-muted-foreground leading-none font-semibold">
+                    Step {s.n}
+                  </div>
+                  <div className="text-[12px] font-bold truncate flex items-center gap-1.5 mt-0.5">
+                    {s.title}
+                    {s.active && !s.cancelled && (
+                      <span className="size-1.5 rounded-full bg-fuchsia-400 animate-pulse" />
+                    )}
+                  </div>
+                </div>
+                {s.done && !s.cancelled && (
+                  <span className="text-[9px] font-bold uppercase tracking-wider text-emerald-400 shrink-0">Done</span>
+                )}
                 {s.active && !s.cancelled && (
-                  <span className="size-1.5 rounded-full bg-sky-400 animate-pulse" />
+                  <span className="text-[9px] font-bold uppercase tracking-wider text-fuchsia-300 shrink-0">Now</span>
                 )}
               </div>
-            </div>
-          </li>
-        ))}
-      </ol>
+            </li>
+          ))}
+        </ol>
+      </div>
     </div>
   );
 }
