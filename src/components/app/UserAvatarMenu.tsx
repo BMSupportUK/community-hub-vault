@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import {
   UserCircle2,
@@ -51,6 +51,7 @@ export function UserAvatarMenu({ variant = "header" }: { variant?: "header" | "b
   const isAdmin = hasAny(["admin", "management"]);
   const businessOpen = useBusinessOpen();
   const roleFlashMap = useRoleFlashMap();
+  const instanceId = useRef(Math.random().toString(36).slice(2)).current;
 
   useEffect(() => {
     if (!user) return;
@@ -64,7 +65,7 @@ export function UserAvatarMenu({ variant = "header" }: { variant?: "header" | "b
     };
     load();
     const ch = supabase
-      .channel(`avatar-menu-${user.id}`)
+      .channel(`avatar-menu-${user.id}-${instanceId}`)
       .on(
         "postgres_changes",
         { event: "UPDATE", schema: "public", table: "profiles", filter: `id=eq.${user.id}` },
