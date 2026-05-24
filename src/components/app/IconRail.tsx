@@ -2,8 +2,6 @@ import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import { Home, Ticket, ShoppingBag, BookOpen, FileText, Clock, Calendar, LogOut, MessageSquare, UserCircle2, Star, Trophy, Tv, Volleyball, Wrench, Goal } from "lucide-react";
 import { useAuth, type AppRole } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
-import { NotificationBell } from "@/components/app/NotificationBell";
-import { MentionsBadge } from "@/components/app/MentionsBadge";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -199,8 +197,6 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
         </div>
       ))}
       <div className="mt-auto" />
-      <MentionsBadge />
-      <NotificationBell />
       <button onClick={handleSignOut} className="text-muted-foreground hover:text-destructive p-3 rounded-xl hover:bg-surface-2 transition-colors" title="Sign out">
         <LogOut className="size-5" />
       </button>
