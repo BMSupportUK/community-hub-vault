@@ -250,7 +250,10 @@ function parseMatches(
             month: "long",
             year: "numeric",
           }).format(new Date(utcMs));
-        const sourceAbbr = tzAbbrev(utcMs, tz) || defaultZone.toUpperCase();
+        // When a defaultZone label was provided (e.g. "GMT" for sports guides),
+        // prefer it verbatim so the source pill reads "GMT" instead of the IANA
+        // abbreviation ("UTC") that maps from Etc/UTC.
+        const sourceAbbr = defaultZone.toUpperCase() || tzAbbrev(utcMs, tz);
         results.push({
           start: bm.index,
           end: bm.index + bm[0].length,
