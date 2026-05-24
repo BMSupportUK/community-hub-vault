@@ -374,7 +374,7 @@ function KnowledgeBasePage() {
             <ArrowLeft className="size-4" /> Back to knowledge base
           </button>
           {reading.image_url && (
-            <img src={reading.image_url} alt={reading.title} className="w-full h-64 object-cover rounded-2xl mb-6 border border-border" />
+            <img src={reading.image_url} alt={reading.title} className="max-h-48 md:max-h-64 w-auto mx-auto rounded-2xl mb-6 border border-border object-contain" />
           )}
           <div className="flex items-center gap-2 mb-2 text-xs text-muted-foreground">
             <span>{categories.find((c) => c.id === reading.category_id)?.name ?? "Knowledge Base"}</span>
