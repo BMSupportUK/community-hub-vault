@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useRouterState } from "@tanstack/react-router";
 import { ChannelColumn, type ChannelGroup } from "@/components/app/ChannelColumn";
 import { ServiceStatusBox } from "@/components/app/ServiceStatusBox";
+import { MembershipBox } from "@/components/app/MembershipBox";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { getIcon } from "@/components/app/IconPicker";
@@ -108,6 +109,15 @@ function useChannelGroups() {
 export function HomeChannelsSidebar() {
   const groups = useChannelGroups();
   return (
-    <ChannelColumn title="Support Community" groups={groups} footer={<ServiceStatusBox />} />
+    <ChannelColumn
+      title="Support Community"
+      groups={groups}
+      footer={
+        <>
+          <MembershipBox />
+          <ServiceStatusBox />
+        </>
+      }
+    />
   );
 }
