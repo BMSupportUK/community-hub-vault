@@ -3,6 +3,10 @@ import { Link } from "@tanstack/react-router";
 import { Activity, CheckCircle2, Users, Briefcase } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
+interface ServiceStatusBoxProps {
+  hideButtons?: boolean;
+}
+
 type IncidentStatus = "investigating" | "identified" | "monitoring" | "completed";
 
 interface ActiveIncident {
@@ -20,7 +24,7 @@ const STATUS_META: Record<
   monitoring: { label: "Monitoring", dot: "bg-blue-400 shadow-[0_0_8px_rgba(96,165,250,0.8)]", text: "text-blue-300" },
 };
 
-export function ServiceStatusBox() {
+export function ServiceStatusBox({ hideButtons }: ServiceStatusBoxProps = {}) {
   const [incidents, setIncidents] = useState<ActiveIncident[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -92,24 +96,26 @@ export function ServiceStatusBox() {
           </Link>
         </div>
       </div>
-      <div className="mt-2 grid grid-cols-2 gap-2">
-        <Link
-          to="/members"
-          title="Members directory"
-          className="flex items-center justify-center gap-1.5 rounded-md px-2 py-1.5 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 text-white text-[11px] font-medium shadow shadow-fuchsia-500/20 hover:shadow-fuchsia-500/40 transition-shadow"
-        >
-          <Users className="size-3.5" />
-          Members
-        </Link>
-        <Link
-          to="/staff"
-          title="Staff directory"
-          className="flex items-center justify-center gap-1.5 rounded-md px-2 py-1.5 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 text-white text-[11px] font-medium shadow shadow-blue-500/20 hover:shadow-blue-500/40 transition-shadow"
-        >
-          <Briefcase className="size-3.5" />
-          Staff
-        </Link>
-      </div>
+      {!hideButtons && (
+        <div className="mt-2 grid grid-cols-2 gap-2">
+          <Link
+            to="/members"
+            title="Members directory"
+            className="flex items-center justify-center gap-1.5 rounded-md px-2 py-1.5 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 text-white text-[11px] font-medium shadow shadow-fuchsia-500/20 hover:shadow-fuchsia-500/40 transition-shadow"
+          >
+            <Users className="size-3.5" />
+            Members
+          </Link>
+          <Link
+            to="/staff"
+            title="Staff directory"
+            className="flex items-center justify-center gap-1.5 rounded-md px-2 py-1.5 bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 text-white text-[11px] font-medium shadow shadow-blue-500/20 hover:shadow-blue-500/40 transition-shadow"
+          >
+            <Briefcase className="size-3.5" />
+            Staff
+          </Link>
+        </div>
+      )}
     </section>
   );
 }
