@@ -598,7 +598,11 @@ function KnowledgeBasePage() {
                           onDrop={(e) => { if (!isMod) return; e.preventDefault(); if (dragArtId.current) reorderArticles(dragArtId.current, a.id); dragArtId.current = null; }}
                           className="rounded-2xl border border-border bg-surface-2/40 overflow-hidden flex flex-col group hover:border-primary/50 hover:shadow-glow transition-all"
                         >
-                          {a.image_url && <img src={a.image_url} alt="" className="h-36 w-full object-cover" />}
+                          {a.image_url && (
+                            <div className="w-full bg-surface-1/40 flex items-center justify-center p-3">
+                              <img src={a.image_url} alt="" className="max-h-40 w-auto object-contain" />
+                            </div>
+                          )}
                           <div className="p-4 flex-1 flex flex-col">
                             <div className="flex items-center gap-2 mb-1.5 text-[11px]">
                               {a.badge && <span className="px-1.5 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/30">{a.badge}</span>}
