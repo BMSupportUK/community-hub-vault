@@ -1,5 +1,5 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
-import { Home, Ticket, ShoppingBag, BookOpen, FileText, Clock, Calendar, LogOut, MessageSquare, UserCircle2, Activity, Star, Trophy, Tv, Volleyball, Wrench, Goal } from "lucide-react";
+import { Home, Ticket, ShoppingBag, BookOpen, FileText, Clock, Calendar, LogOut, MessageSquare, UserCircle2, Star, Trophy, Tv, Volleyball, Wrench, Goal } from "lucide-react";
 import { useAuth, type AppRole } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 import { NotificationBell } from "@/components/app/NotificationBell";
