@@ -31,21 +31,11 @@ function ReadPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  // Always render local times in UK time (Europe/London), which automatically
-  // observes GMT in winter and BST in summer. The label reflects the current
-  // abbreviation so readers see "GMT" or "BST" appropriately.
-  const viewerTz = "Europe/London";
-  const viewerTzLabel = (() => {
-    try {
-      const parts = new Intl.DateTimeFormat("en-GB", {
-        timeZone: viewerTz,
-        timeZoneName: "short",
-      }).formatToParts(new Date());
-      return parts.find((p) => p.type === "timeZoneName")?.value ?? "GMT";
-    } catch {
-      return "GMT";
-    }
-  })();
+  // Local pill uses the viewer's browser-detected timezone. The source pill is
+  // always labeled "GMT" (handled by annotateTimesInEl's defaultZone).
+  const viewerTz =
+    (typeof Intl !== "undefined" && Intl.DateTimeFormat().resolvedOptions().timeZone) || "UTC";
+  const viewerTzLabel = viewerTz.replace(/_/g, " ");
   const bodyRef = useRef<HTMLDivElement | null>(null);
   const [blog, setBlog] = useState<Blog | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
