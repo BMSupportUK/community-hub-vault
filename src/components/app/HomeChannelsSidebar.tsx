@@ -3,6 +3,7 @@ import { useRouterState } from "@tanstack/react-router";
 import { ChannelColumn, type ChannelGroup } from "@/components/app/ChannelColumn";
 import { ServiceStatusBox } from "@/components/app/ServiceStatusBox";
 import { MembershipBox } from "@/components/app/MembershipBox";
+import { SecurityBox } from "@/components/app/SecurityBox";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { getIcon } from "@/components/app/IconPicker";
@@ -115,6 +116,7 @@ export function HomeChannelsSidebar() {
       footer={
         <>
           <MembershipBox />
+          <SecurityBox />
           <ServiceStatusBox />
         </>
       }
