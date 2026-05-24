@@ -149,63 +149,54 @@ function ShopPage() {
     return () => { active = false; };
   }, [user]);
 
-  const groups: ChannelGroup[] = [
-    { label: "Shop", items: [
-      { to: "/shop", label: "Storefront", icon: ShoppingBag },
-      { to: "/shop", label: "My Orders", icon: Package },
-    ]},
-    ...(isAdmin ? [{ label: "Admin", items: [{ to: "/shop", label: "Manage", icon: Settings }] }] : []),
-  ];
+  const go = (next: Partial<{ view: View | "discounts"; id: string; scope: string }>) =>
+    navigate({ to: "/shop", search: next as never });
 
-  const navContent = (
-    <>
-        <div className="h-14 flex items-center px-4 border-b border-border shadow-soft">
-          <h2 className="font-display font-semibold text-sm tracking-wide">Shop</h2>
-        </div>
-        <div className="flex-1 overflow-y-auto px-2 py-3 space-y-1">
-          <SideBtn active={view === "store"} onClick={() => navigate({ to: "/shop", search: { view: "store" } })} Icon={ShoppingBag} label="Storefront" />
-          <SideBtn active={view === "orders"} onClick={() => navigate({ to: "/shop", search: { view: "orders" } })} Icon={Package} label="My Orders" />
-          <div className="pt-3 px-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Policies</div>
-          <SideBtn active={view === "refund"} onClick={() => navigate({ to: "/shop", search: { view: "refund" } })} Icon={FileText} label="Refund Policy" />
-          <SideBtn active={view === "multi_room"} onClick={() => navigate({ to: "/shop", search: { view: "multi_room" } })} Icon={Users} label="Multi-room Rules" />
-          <SideBtn active={view === "triple_room"} onClick={() => navigate({ to: "/shop", search: { view: "triple_room" } })} Icon={BedDouble} label="Triple-room Rules" />
-          {isAdmin && adminUnlocked && (
-            <>
-              <div className="pt-3 px-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Admin</div>
-              {isAdminOnly && (
-                <>
-                  <SideBtn active={view === "admin"} onClick={() => navigate({ to: "/shop", search: { view: "admin" } })} Icon={Settings} label="Manage Products" />
-                  <SideBtn active={view === ("discounts" as View)} onClick={() => navigate({ to: "/shop", search: { view: "discounts" as never } })} Icon={Tag} label="Discount Codes" />
-                </>
-              )}
-              <SideBtn active={view === "orders"} onClick={() => navigate({ to: "/shop", search: { view: "orders" } })} Icon={Receipt} label="Sales Chats" />
-            </>
-          )}
-        </div>
-        {user && (
-          <div className="h-14 border-t border-border px-3 flex items-center gap-2 bg-rail">
-            <div className="size-8 rounded-full bg-gradient-primary flex items-center justify-center text-xs font-semibold text-primary-foreground">
-              {(username ?? "?").slice(0, 1).toUpperCase()}
-            </div>
-            <div className="min-w-0 flex-1"><div className="text-xs font-medium truncate">{username ?? "…"}</div></div>
-          </div>
-        )}
-    </>
-  );
+  const groups: ChannelGroup[] = [
+    {
+      label: "Shop",
+      items: [
+        { to: "/shop", label: "Storefront", icon: ShoppingBag, active: view === "store", onClick: () => go({ view: "store" }) },
+        { to: "/shop", label: "My Orders", icon: Package, active: view === "orders" && scope !== "all", onClick: () => go({ view: "orders" }) },
+      ],
+    },
+    {
+      label: "Policies",
+      items: [
+        { to: "/shop", label: "Refund Policy", icon: FileText, active: view === "refund", onClick: () => go({ view: "refund" }) },
+        { to: "/shop", label: "Multi-room Rules", icon: Users, active: view === "multi_room", onClick: () => go({ view: "multi_room" }) },
+        { to: "/shop", label: "Triple-room Rules", icon: BedDouble, active: view === "triple_room", onClick: () => go({ view: "triple_room" }) },
+      ],
+    },
+    ...(isAdmin && adminUnlocked
+      ? [
+          {
+            label: "Admin",
+            items: [
+              ...(isAdminOnly
+                ? [
+                    { to: "/shop", label: "Manage Products", icon: Settings, active: view === "admin", onClick: () => go({ view: "admin" }) },
+                    { to: "/shop", label: "Discount Codes", icon: Tag, active: (view as string) === "discounts", onClick: () => go({ view: "discounts" }) },
+                  ]
+                : []),
+              { to: "/shop", label: "Sales Chats", icon: Receipt, active: view === "orders" && scope === "all", onClick: () => go({ view: "orders", scope: "all" }) },
+            ],
+          } as ChannelGroup,
+        ]
+      : []),
+  ];
 
   return (
     <>
-      <nav className="w-60 shrink-0 bg-surface flex-col border-r border-border hidden md:flex">
-        {navContent}
-      </nav>
+      <ChannelColumn title="Shop" groups={groups} />
       <div className="flex-1 flex flex-col min-w-0">
         <div className="md:hidden h-10 shrink-0 flex items-center px-3 border-b border-border bg-rail/30">
           <Sheet open={navOpen} onOpenChange={setNavOpen}>
             <SheetTrigger className="inline-flex items-center gap-2 text-xs font-medium text-muted-foreground hover:text-foreground">
               <Menu className="size-4" /> Shop menu
             </SheetTrigger>
-            <SheetContent side="left" className="p-0 w-64 bg-surface border-r border-border">
-              <nav className="h-full flex flex-col">{navContent}</nav>
+            <SheetContent side="left" className="p-0 w-72 bg-surface border-r border-border">
+              <ChannelColumn inSheet title="Shop" groups={groups} />
             </SheetContent>
           </Sheet>
         </div>
