@@ -15,7 +15,6 @@ import { sanitizeRichHtml } from "@/lib/sanitize-html";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import Cropper, { type Area } from "react-easy-crop";
-import { ServiceStatusBox } from "@/components/app/ServiceStatusBox";
 
 export const Route = createFileRoute("/_authenticated/_approved/home/")({
   component: WelcomePage,
@@ -496,8 +495,6 @@ function WelcomePage() {
             })}
         </div>
       </section>
-
-      <ServiceStatusBox />
 
       <Dialog open={eventOpen} onOpenChange={setEventOpen}>
         <DialogContent>
