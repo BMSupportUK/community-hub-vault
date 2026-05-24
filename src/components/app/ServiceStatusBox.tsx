@@ -24,7 +24,7 @@ const STATUS_META: Record<
   monitoring: { label: "Monitoring", dot: "bg-blue-400 shadow-[0_0_8px_rgba(96,165,250,0.8)]", text: "text-blue-300" },
 };
 
-export function ServiceStatusBox() {
+export function ServiceStatusBox({ hideButtons }: ServiceStatusBoxProps = {}) {
   const [incidents, setIncidents] = useState<ActiveIncident[]>([]);
   const [loading, setLoading] = useState(true);
 
