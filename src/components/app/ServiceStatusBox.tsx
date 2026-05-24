@@ -3,6 +3,10 @@ import { Link } from "@tanstack/react-router";
 import { Activity, CheckCircle2, Users, Briefcase } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
+interface ServiceStatusBoxProps {
+  hideButtons?: boolean;
+}
+
 type IncidentStatus = "investigating" | "identified" | "monitoring" | "completed";
 
 interface ActiveIncident {
