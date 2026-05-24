@@ -399,10 +399,6 @@ export function ChannelColumn({
                   <VpnBadge userId={user.id} size={11} showInactive />
                 </span>
               </div>
-              <div className={cn("text-[10px] flex items-center gap-1", isAway ? "text-yellow-400" : "text-muted-foreground")}>
-                <span className={cn("size-1.5 rounded-full", isAway ? "bg-yellow-400" : "bg-emerald-500")} />
-                {isAway ? "Away From The Office" : "Online"}
-              </div>
             </div>
             <div className="ml-auto flex items-center gap-0.5 shrink-0 text-muted-foreground">
               <MentionsBadge />
