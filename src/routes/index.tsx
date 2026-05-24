@@ -46,7 +46,7 @@ function Landing() {
 
       <main className="flex-1 px-6 py-10 md:py-16">
         <section
-          className="relative max-w-7xl mx-auto rounded-3xl border border-red-900/60 p-6 md:p-10 lg:p-12"
+          className="relative max-w-7xl mx-auto rounded-3xl border border-red-900/60 p-6 md:p-10 lg:p-12 pb-24 md:pb-28"
           style={{
             background:
               "radial-gradient(1200px 600px at 10% 10%, rgba(248,113,113,0.25), transparent 60%), radial-gradient(900px 500px at 90% 90%, rgba(127,29,29,0.6), transparent 60%), linear-gradient(135deg, #7f1d1d 0%, #991b1b 50%, #450a0a 100%)",
@@ -88,7 +88,7 @@ function Landing() {
           </div>
         </section>
 
-        <div className="relative max-w-7xl mx-auto mt-6 px-6 grid grid-cols-1 sm:grid-cols-3 gap-4 z-10">
+        <div className="relative max-w-7xl mx-auto -mt-16 md:-mt-20 px-10 md:px-14 grid grid-cols-1 sm:grid-cols-3 gap-4 z-10">
           {boxes.map((b) => (
             <div
               key={b.id}
