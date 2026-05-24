@@ -1,6 +1,6 @@
 import { createFileRoute, Outlet, redirect, useRouterState, Navigate, useNavigate } from "@tanstack/react-router";
 import { Link } from "@tanstack/react-router";
-import { LayoutDashboard, Shield, ShieldCheck, Menu, Receipt } from "lucide-react";
+import { LayoutDashboard, Shield, ShieldCheck, Menu, Receipt, Clock } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
@@ -31,7 +31,7 @@ export const Route = createFileRoute("/_authenticated")({
 });
 
 function AuthLayout() {
-  const { loading, isPending, isBanned, isRejected, isMod, hasAny, user } = useAuth();
+  const { loading, isPending, isBanned, isRejected, isMod, isStaff, hasAny, user } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
   const navigate = useNavigate();
   const path = useRouterState({ select: (r) => r.location.pathname });
@@ -137,6 +137,16 @@ function AuthLayout() {
               >
                 <ShieldCheck className="size-4" />
                 <span className="hidden xl:inline">User roles</span>
+              </Link>
+            )}
+            {isStaff && (
+              <Link
+                to="/clock"
+                title="Clock in / out"
+                className="flex items-center gap-2 rounded-full px-3 py-1.5 bg-surface-2 hover:bg-primary hover:text-primary-foreground text-xs font-medium transition-colors"
+              >
+                <Clock className="size-4" />
+                <span className="hidden xl:inline">Clock</span>
               </Link>
             )}
           </div>
