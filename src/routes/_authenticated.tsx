@@ -139,6 +139,16 @@ function AuthLayout() {
                 <span className="hidden xl:inline">User roles</span>
               </Link>
             )}
+            {isStaff && (
+              <Link
+                to="/clock"
+                title="Clock in / out"
+                className="flex items-center gap-2 rounded-full px-3 py-1.5 bg-surface-2 hover:bg-primary hover:text-primary-foreground text-xs font-medium transition-colors"
+              >
+                <Clock className="size-4" />
+                <span className="hidden xl:inline">Clock</span>
+              </Link>
+            )}
           </div>
           <div className="hidden xl:flex flex-1 min-w-0 px-3" />
           <div className="flex items-center gap-1.5 lg:gap-3 shrink-0">
