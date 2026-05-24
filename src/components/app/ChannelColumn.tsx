@@ -1,5 +1,5 @@
-import { Link, useRouterState } from "@tanstack/react-router";
-import { Hash, ChevronDown, Plus, Trash2, Shield, Smile, Pencil, ChevronUp } from "lucide-react";
+import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
+import { Hash, ChevronDown, Plus, Trash2, Shield, Smile, Pencil, ChevronUp, LogOut } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useBusinessOpen } from "@/hooks/use-business-open";
 import { cn } from "@/lib/utils";
@@ -8,6 +8,8 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useRoleFlashMap, resolveAvatarUrl, roleFlashClass } from "@/lib/role-flash";
 import { VpnBadge } from "@/lib/vpn-flags";
+import { MentionsBadge } from "@/components/app/MentionsBadge";
+import { NotificationBell } from "@/components/app/NotificationBell";
 
 export interface ChannelGroup {
   label: string;
@@ -48,7 +50,12 @@ export function ChannelColumn({
   inSheet?: boolean;
 }) {
   const path = useRouterState({ select: (r) => r.location.pathname });
-  const { user, isStaff } = useAuth();
+  const { user, isStaff, signOut } = useAuth();
+  const navigate = useNavigate();
+  const handleSignOut = async () => {
+    await signOut();
+    navigate({ to: "/login" });
+  };
   const businessOpen = useBusinessOpen();
   const isAway = isStaff && !businessOpen;
   const roleFlashMap = useRoleFlashMap();
@@ -369,22 +376,49 @@ export function ChannelColumn({
         {footer}
       </div>
       {user && (
-        <div className="h-14 border-t border-border px-3 flex items-center gap-2 bg-rail">
-          <img
-            src={resolveAvatarUrl(user.id, profile?.avatar_url, roleFlashMap)}
-            alt=""
-            className="size-8 rounded-full object-cover shrink-0"
-          />
-          <div className="min-w-0 flex-1">
-            <div className={cn("text-xs font-medium truncate", roleFlashClass(roleFlashMap.get(user.id)))}>
-              <span className="inline-flex items-center gap-1">
-                {profile?.display_name ?? profile?.username ?? "User"}
-                <VpnBadge userId={user.id} size={11} showInactive />
-              </span>
+        <div
+          className={cn(
+            "relative z-10 h-14 border-t border-border bg-rail flex items-center",
+            inSheet ? "" : "lg:-ml-[72px]",
+          )}
+        >
+          {!inSheet && (
+            <div className="hidden lg:flex w-[72px] shrink-0 items-center justify-center">
+              <img
+                src={resolveAvatarUrl(user.id, profile?.avatar_url, roleFlashMap)}
+                alt=""
+                className="size-9 rounded-full object-cover"
+              />
             </div>
-            <div className={cn("text-[10px] flex items-center gap-1", isAway ? "text-yellow-400" : "text-muted-foreground")}>
-              <span className={cn("size-1.5 rounded-full", isAway ? "bg-yellow-400" : "bg-emerald-500")} />
-              {isAway ? "Away From The Office" : "Online"}
+          )}
+          <div className={cn("flex items-center gap-2 flex-1 min-w-0", inSheet ? "px-3" : "lg:pl-0 pl-3 pr-2")}>
+            <img
+              src={resolveAvatarUrl(user.id, profile?.avatar_url, roleFlashMap)}
+              alt=""
+              className={cn("size-8 rounded-full object-cover shrink-0", !inSheet && "lg:hidden")}
+            />
+            <div className="min-w-0 flex-1">
+              <div className={cn("text-xs font-medium truncate", roleFlashClass(roleFlashMap.get(user.id)))}>
+                <span className="inline-flex items-center gap-1">
+                  {profile?.display_name ?? profile?.username ?? "User"}
+                  <VpnBadge userId={user.id} size={11} showInactive />
+                </span>
+              </div>
+              <div className={cn("text-[10px] flex items-center gap-1", isAway ? "text-yellow-400" : "text-muted-foreground")}>
+                <span className={cn("size-1.5 rounded-full", isAway ? "bg-yellow-400" : "bg-emerald-500")} />
+                {isAway ? "Away From The Office" : "Online"}
+              </div>
+            </div>
+            <div className="ml-auto flex items-center gap-0.5 shrink-0 text-muted-foreground">
+              <MentionsBadge />
+              <NotificationBell />
+              <button
+                onClick={handleSignOut}
+                className="p-2 rounded-lg hover:bg-surface-2 hover:text-destructive transition-colors"
+                title="Sign out"
+              >
+                <LogOut className="size-4" />
+              </button>
             </div>
           </div>
         </div>
