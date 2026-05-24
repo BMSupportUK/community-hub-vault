@@ -7,6 +7,11 @@ import welcomeHero from "@/assets/welcome-hero.jpg";
 
 export const Route = createFileRoute("/")({
   beforeLoad: async () => {
+    // On the native Android (Capacitor) app, skip the marketing landing page
+    // entirely and send users straight to the login screen.
+    if (typeof window !== "undefined" && (window as any).Capacitor?.isNativePlatform?.()) {
+      throw redirect({ to: "/login" });
+    }
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) return;
     throw redirect({ to: "/home" });
