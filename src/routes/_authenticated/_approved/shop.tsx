@@ -1436,58 +1436,18 @@ function Checkout({ items, total, onClose, onPlace, onRemoveItem }: {
               <p className="text-[11px] text-muted-foreground mt-1">Required — do you want access to adult content?</p>
             </div>
             <div className="space-y-2">
-              <div className="flex gap-2">
-                <input value={discountInput} onChange={(e) => setDiscountInput(e.target.value)} placeholder="Discount code (optional)" className="flex-1 px-3 py-2 rounded-lg bg-surface-2 text-sm border border-border focus:border-primary outline-none" />
-                <button type="button" onClick={applyCode} disabled={applying || !discountInput.trim()}
-                  className="px-3 py-2 rounded-lg bg-surface-2 text-sm font-medium border border-border disabled:opacity-50">
-                  {appliedCode ? "Re-apply" : "Apply"}
-                </button>
-                <button type="button" onClick={openBrowse}
-                  className="px-3 py-2 rounded-lg bg-surface-2 text-sm font-medium border border-border inline-flex items-center gap-1">
-                  <Tag className="size-4" /> Browse
-                </button>
-              </div>
-              {appliedCode && (
+              {autoLoading ? (
+                <div className="text-xs text-muted-foreground px-2 py-1.5">Checking for voucher codes…</div>
+              ) : appliedCode ? (
                 <div className="flex items-center justify-between text-xs px-2 py-1.5 rounded-md bg-success/10 text-success">
-                  <span>Applied: <span className="font-mono font-semibold">{appliedCode.code}</span> — only 1 code per order</span>
-                  <button type="button" onClick={() => { setAppliedCode(null); setDiscountInput(""); }} className="underline hover:no-underline">Remove</button>
+                  <span className="inline-flex items-center gap-1.5">
+                    <Tag className="size-3.5" />
+                    Voucher <span className="font-mono font-semibold">{appliedCode.code}</span> applied automatically
+                    {appliedCode.description ? <span className="text-muted-foreground">— {appliedCode.description}</span> : null}
+                  </span>
                 </div>
-              )}
-              {browseOpen && (
-                <div className="rounded-lg border border-border bg-surface-2 p-2 space-y-2">
-                  <div className="flex items-center justify-between gap-2">
-                    <input
-                      autoFocus
-                      value={browseQuery}
-                      onChange={(e) => setBrowseQuery(e.target.value)}
-                      placeholder="Search valid codes..."
-                      className="flex-1 px-3 py-1.5 rounded-md bg-surface text-sm border border-border focus:border-primary outline-none"
-                    />
-                    <button type="button" onClick={() => setBrowseOpen(false)} className="text-xs text-muted-foreground hover:text-foreground">Close</button>
-                  </div>
-                  <div className="max-h-48 overflow-y-auto divide-y divide-border rounded-md">
-                    {loadingAvailable ? (
-                      <div className="p-3 text-xs text-muted-foreground text-center">Loading…</div>
-                    ) : filteredAvailable.length === 0 ? (
-                      <div className="p-3 text-xs text-muted-foreground text-center">No matching codes</div>
-                    ) : (
-                      filteredAvailable.map((c) => (
-                        <button
-                          key={c.id}
-                          type="button"
-                          onClick={() => selectCode(c)}
-                          className="w-full text-left p-2 hover:bg-surface flex items-center justify-between gap-2"
-                        >
-                          <div className="min-w-0">
-                            <div className="font-mono text-sm font-semibold">{c.code}</div>
-                            {c.description && <div className="text-xs text-muted-foreground truncate">{c.description}</div>}
-                          </div>
-                          <div className="text-xs font-semibold text-success shrink-0">{previewValue(c)}</div>
-                        </button>
-                      ))
-                    )}
-                  </div>
-                </div>
+              ) : (
+                <div className="text-xs text-muted-foreground px-2 py-1.5">No voucher codes available for this order.</div>
               )}
             </div>
           </div>
@@ -1516,7 +1476,6 @@ function Checkout({ items, total, onClose, onPlace, onRemoveItem }: {
         )}
         <div className="p-5 border-t border-border flex flex-wrap gap-2 justify-end">
           <button onClick={onClose} className="px-4 py-2 rounded-lg bg-surface-2 text-sm">Cancel</button>
-          <button onClick={onContinueShopping} className="px-4 py-2 rounded-lg bg-surface-2 text-sm border border-border">Continue shopping</button>
           <button onClick={() => onPlace({ name, email, customer_type: customerType, existing_username: existingUsername, discount_code: appliedCode?.code ?? "", discount_cents: discountCents, wants_adult_content: adultContent === "yes" })}
             disabled={!canSubmit} className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium disabled:opacity-50">Place Order</button>
         </div>
