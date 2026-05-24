@@ -67,6 +67,7 @@ export function MembershipBox() {
     });
 
   const now = Date.now();
+  const anyExpired = items.some((c) => new Date(c.expiry_at!).getTime() < now);
 
   return (
     <section className="px-2 pt-4">
