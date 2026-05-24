@@ -31,7 +31,7 @@ export const Route = createFileRoute("/_authenticated")({
 });
 
 function AuthLayout() {
-  const { loading, isPending, isBanned, isRejected, isMod, hasAny, user } = useAuth();
+  const { loading, isPending, isBanned, isRejected, isMod, isStaff, hasAny, user } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
   const navigate = useNavigate();
   const path = useRouterState({ select: (r) => r.location.pathname });
