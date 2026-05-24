@@ -137,17 +137,8 @@ function ShopPage() {
   const { format, symbol } = useCurrency();
   _currentFmt = format;
   _currentSymbol = symbol;
-  const [username, setUsername] = useState<string | null>(null);
   const [navOpen, setNavOpen] = useState(false);
   useEffect(() => { setNavOpen(false); }, [view, id]);
-  useEffect(() => {
-    if (!user) { setUsername(null); return; }
-    let active = true;
-    supabase.from("profiles").select("username").eq("id", user.id).maybeSingle().then(({ data }) => {
-      if (active) setUsername((data as { username?: string | null } | null)?.username ?? null);
-    });
-    return () => { active = false; };
-  }, [user]);
 
   const go = (next: Partial<{ view: View | "discounts"; id: string; scope: string }>) =>
     navigate({ to: "/shop", search: next as never });
@@ -213,15 +204,6 @@ function ShopPage() {
         </div>
       </div>
     </>
-  );
-}
-
-function SideBtn({ active, onClick, Icon, label }: { active: boolean; onClick: () => void; Icon: any; label: string }) {
-  return (
-    <button onClick={onClick} className={cn("w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-sm transition-colors",
-      active ? "bg-surface-2 text-foreground" : "text-muted-foreground hover:bg-surface-2/60 hover:text-foreground")}>
-      <Icon className="size-4" /><span>{label}</span>
-    </button>
   );
 }
 
