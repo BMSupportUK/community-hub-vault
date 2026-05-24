@@ -286,7 +286,7 @@ function WelcomePage() {
       {/* Hero */}
       <section className="relative overflow-hidden border-b border-border">
         <div className="absolute inset-0 bg-gradient-to-br from-violet-600 via-fuchsia-600 to-blue-600" />
-        <div className="relative grid md:grid-cols-[1fr_1.4fr] gap-6 p-6 md:p-10">
+        <div className="relative grid md:grid-cols-[1fr_1.6fr] gap-4 p-6 md:p-8">
           <div className="flex flex-col justify-center text-white">
             <div className="text-xs uppercase tracking-[0.2em] text-sky-200/80 mb-3">BM Support · Member Hub</div>
             <h1 className="font-display text-3xl md:text-5xl font-bold leading-tight">
@@ -319,13 +319,13 @@ function WelcomePage() {
           </div>
 
           <div className="flex flex-col xl:flex-row gap-4 items-stretch">
-            <div className="relative rounded-2xl overflow-hidden ring-1 ring-white/10 shadow-2xl flex-1 min-h-[300px]">
+            <div className="relative rounded-2xl overflow-hidden ring-1 ring-white/10 shadow-2xl flex-1 min-h-[300px] bg-blue-950/30">
               <img
                 src={heroImg}
                 alt="BM Support — community and support"
                 width={1280}
                 height={832}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-contain"
               />
               <div className="absolute inset-0 bg-gradient-to-tr from-blue-950/40 via-transparent to-transparent" />
             </div>
