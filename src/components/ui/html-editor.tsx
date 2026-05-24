@@ -1,19 +1,25 @@
 import { useEffect, useRef, useState } from "react";
-import { Bold, Italic, Underline, Heading1, Heading2, List, ListOrdered, Link2, Quote, Code, Undo2, Redo2, Eraser, Youtube, Minus } from "lucide-react";
+import { Bold, Italic, Underline, Heading1, Heading2, List, ListOrdered, Link2, Quote, Code, Undo2, Redo2, Eraser, Youtube, Minus, Film, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 type Props = {
   value: string;
   onChange: (html: string) => void;
   className?: string;
   placeholder?: string;
+  /** Enable an "upload video" button. Provide the userId to scope the storage path. */
+  videoUpload?: { userId: string | null | undefined; bucket?: string; folder?: string };
 };
 
 function exec(cmd: string, arg?: string) {
   document.execCommand(cmd, false, arg);
 }
 
-export function HtmlEditor({ value, onChange, className, placeholder }: Props) {
+export function HtmlEditor({ value, onChange, className, placeholder, videoUpload }: Props) {
   const ref = useRef<HTMLDivElement>(null);
+  const videoInputRef = useRef<HTMLInputElement>(null);
+  const [uploadingVideo, setUploadingVideo] = useState(false);
   const [active, setActive] = useState<Record<string, boolean>>({});
 
   const refreshActive = () => {
@@ -54,7 +60,18 @@ export function HtmlEditor({ value, onChange, className, placeholder }: Props) {
   const Btn = ({ onClick, title, isActive, children }: { onClick: () => void; title: string; isActive?: boolean; children: React.ReactNode }) => (
     <button
       type="button"
-      onMouseDown={(e) => { e.preventDefault(); onClick(); }}
+      onMouseDown={(e) => {
+        // Prevent the toolbar button from stealing focus / collapsing the
+        // current selection inside the contenteditable. Then ensure the
+        // editor is focused so execCommand has a valid selection to act on
+        // (otherwise list / format buttons silently do nothing when the
+        // editor hasn't been clicked yet).
+        e.preventDefault();
+        if (ref.current && document.activeElement !== ref.current) {
+          ref.current.focus();
+        }
+        onClick();
+      }}
       title={title}
       className={`p-1.5 rounded transition-colors ${isActive ? "bg-primary/20 text-primary ring-1 ring-primary/40" : "hover:bg-accent text-foreground/80 hover:text-foreground"}`}
     >
@@ -95,6 +112,29 @@ export function HtmlEditor({ value, onChange, className, placeholder }: Props) {
     handleInput();
   };
 
+  const uploadVideo = async (file: File) => {
+    if (!videoUpload) return;
+    if (!file.type.startsWith("video/")) { toast.error("Please choose a video file"); return; }
+    if (file.size > 100 * 1024 * 1024) { toast.error("Video must be under 100MB"); return; }
+    const bucket = videoUpload.bucket ?? "kb-videos";
+    const folder = videoUpload.folder ? `${videoUpload.folder}/` : "";
+    const owner = videoUpload.userId ?? "anon";
+    const ext = file.name.split(".").pop()?.toLowerCase() || "mp4";
+    const path = `${owner}/${folder}${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+    setUploadingVideo(true);
+    const { error } = await supabase.storage.from(bucket).upload(path, file, {
+      cacheControl: "3600", upsert: false, contentType: file.type,
+    });
+    if (error) { setUploadingVideo(false); toast.error(error.message); return; }
+    const { data } = supabase.storage.from(bucket).getPublicUrl(path);
+    ref.current?.focus();
+    const html = `<p><video src="${data.publicUrl}" controls playsinline style="max-width:100%;border-radius:0.5rem;margin:1rem 0;"></video></p><p><br/></p>`;
+    exec("insertHTML", html);
+    handleInput();
+    setUploadingVideo(false);
+    toast.success("Video uploaded");
+  };
+
   return (
     <div className={`rounded-md border border-border bg-background ${className ?? ""}`}>
       <div className="flex flex-wrap items-center gap-0.5 border-b border-border p-1">
@@ -111,6 +151,23 @@ export function HtmlEditor({ value, onChange, className, placeholder }: Props) {
         <Btn title="Numbered list" isActive={active.ol} onClick={() => { exec("insertOrderedList"); handleInput(); }}><ListOrdered className="size-4" /></Btn>
         <Btn title="Link" onClick={promptLink}><Link2 className="size-4" /></Btn>
         <Btn title="Embed YouTube video" onClick={promptYouTube}><Youtube className="size-4" /></Btn>
+        {videoUpload && (
+          <>
+            <input
+              ref={videoInputRef}
+              type="file"
+              accept="video/*"
+              className="hidden"
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadVideo(f); e.currentTarget.value = ""; }}
+            />
+            <Btn
+              title={uploadingVideo ? "Uploading video…" : "Upload video"}
+              onClick={() => { if (!uploadingVideo) videoInputRef.current?.click(); }}
+            >
+              {uploadingVideo ? <Loader2 className="size-4 animate-spin" /> : <Film className="size-4" />}
+            </Btn>
+          </>
+        )}
         <Btn title="Horizontal line" onClick={() => { exec("insertHorizontalRule"); handleInput(); }}><Minus className="size-4" /></Btn>
         <span className="mx-1 h-5 w-px bg-border" />
         <Btn title="Clear formatting" onClick={() => { exec("removeFormat"); handleInput(); }}><Eraser className="size-4" /></Btn>
