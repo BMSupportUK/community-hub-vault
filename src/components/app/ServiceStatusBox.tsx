@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Activity, CheckCircle2, AlertTriangle, Eye, Search } from "lucide-react";
+import { Activity, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 type IncidentStatus = "investigating" | "identified" | "monitoring" | "completed";
@@ -13,11 +13,11 @@ interface ActiveIncident {
 
 const STATUS_META: Record<
   Exclude<IncidentStatus, "completed">,
-  { label: string; dot: string; text: string; icon: React.ComponentType<{ className?: string }> }
+  { label: string; dot: string; text: string }
 > = {
-  investigating: { label: "Investigating", dot: "bg-violet-400 shadow-[0_0_8px_rgba(167,139,250,0.8)]", text: "text-violet-300", icon: Search },
-  identified: { label: "Identified", dot: "bg-fuchsia-400 shadow-[0_0_8px_rgba(232,121,249,0.8)]", text: "text-fuchsia-300", icon: AlertTriangle },
-  monitoring: { label: "Monitoring", dot: "bg-blue-400 shadow-[0_0_8px_rgba(96,165,250,0.8)]", text: "text-blue-300", icon: Eye },
+  investigating: { label: "Investigating", dot: "bg-violet-400 shadow-[0_0_8px_rgba(167,139,250,0.8)]", text: "text-violet-300" },
+  identified: { label: "Identified", dot: "bg-fuchsia-400 shadow-[0_0_8px_rgba(232,121,249,0.8)]", text: "text-fuchsia-300" },
+  monitoring: { label: "Monitoring", dot: "bg-blue-400 shadow-[0_0_8px_rgba(96,165,250,0.8)]", text: "text-blue-300" },
 };
 
 export function ServiceStatusBox() {
