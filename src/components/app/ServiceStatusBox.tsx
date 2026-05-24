@@ -48,49 +48,48 @@ export function ServiceStatusBox() {
   const operational = incidents.length === 0;
 
   return (
-    <section className="px-6 md:px-10 pb-6 md:pb-10">
-      <div className="rounded-2xl bg-surface border border-border overflow-hidden">
-        <div className="flex items-center justify-between px-5 py-3 border-b border-border bg-gradient-to-r from-violet-600/10 via-fuchsia-600/10 to-blue-600/10">
+    <section className="px-2 pt-4">
+      <div className="rounded-lg bg-surface-2/60 border border-border overflow-hidden">
+        <div className="flex items-center justify-between px-3 py-2 border-b border-border bg-gradient-to-r from-violet-600/10 via-fuchsia-600/10 to-blue-600/10">
           <div className="flex items-center gap-2">
-            <Activity className="size-4 text-fuchsia-300" />
-            <h2 className="font-display text-sm font-semibold tracking-wide uppercase">Service Status</h2>
+            <Activity className="size-3.5 text-fuchsia-300" />
+            <h2 className="font-display text-[11px] font-bold tracking-wider uppercase">Service Status</h2>
           </div>
-          <Link
-            to="/status"
-            className="text-xs font-medium px-3 py-1.5 rounded-md bg-surface-2 border border-border hover:border-fuchsia-400 hover:text-fuchsia-300 transition"
-          >
-            Read more →
-          </Link>
         </div>
-        <div className="px-5 py-4">
+        <div className="px-3 py-3 space-y-3">
           {loading ? (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <span className="size-2 rounded-full bg-zinc-500 animate-pulse" />
               Checking status…
             </div>
           ) : operational ? (
-            <div className="flex items-center gap-2.5">
-              <span className="size-2.5 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.9)]" />
-              <CheckCircle2 className="size-4 text-emerald-400" />
-              <span className="text-sm font-medium text-emerald-300">All systems operational</span>
+            <div className="flex items-center gap-2">
+              <span className="size-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.9)]" />
+              <CheckCircle2 className="size-3.5 text-emerald-400 shrink-0" />
+              <span className="text-xs font-medium text-emerald-300">Operational</span>
             </div>
           ) : (
-            <ul className="space-y-2">
+            <ul className="space-y-1.5">
               {incidents.map((i) => {
                 const meta = STATUS_META[i.status as Exclude<IncidentStatus, "completed">] ?? STATUS_META.investigating;
-                const Icon = meta.icon;
                 return (
-                  <li key={i.id} className="flex items-center gap-2.5 text-sm">
-                    <span className={`size-2.5 rounded-full ${meta.dot}`} />
-                    <Icon className={`size-3.5 ${meta.text}`} />
-                    <span className={`font-medium ${meta.text}`}>{meta.label}</span>
-                    <span className="text-muted-foreground">·</span>
-                    <span className="truncate text-foreground/90">{i.title}</span>
+                  <li key={i.id} className="flex items-start gap-2 text-xs">
+                    <span className={`mt-1 size-2 rounded-full shrink-0 ${meta.dot}`} />
+                    <div className="min-w-0 flex-1">
+                      <div className={`font-semibold ${meta.text}`}>{meta.label}</div>
+                      <div className="truncate text-foreground/80">{i.title}</div>
+                    </div>
                   </li>
                 );
               })}
             </ul>
           )}
+          <Link
+            to="/status"
+            className="block text-center text-[11px] font-medium px-2 py-1.5 rounded-md bg-surface border border-border hover:border-fuchsia-400 hover:text-fuchsia-300 transition"
+          >
+            Read more →
+          </Link>
         </div>
       </div>
     </section>
