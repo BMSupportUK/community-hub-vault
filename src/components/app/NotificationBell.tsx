@@ -16,6 +16,7 @@ import staffMentionAudio from "@/assets/staff-mention.mp3";
 import orderAudio from "@/assets/order-notify.mp3";
 import ticketAudio from "@/assets/ticket-notify.mp3";
 import newSignupAudio from "@/assets/new-signup-notify.mp3";
+import { playSound } from "@/lib/sound";
 
 type Notif = {
   id: string;
