@@ -108,7 +108,7 @@ export function NotificationBell() {
             const isStaffRole = !!token && staffRoles.includes(token);
             const isBroadcast =
               !!token && !isStaffRole && (token === "all" || token === "here" || !staffRoles.includes(token));
-            playSound(isStaffRole ? staffMentionAudio : isBroadcast ? broadcastAudio : mentionAudio, { label: "mention" });
+            playSound(isStaffRole ? staffMentionAudio : isBroadcast ? broadcastAudio : mentionAudio, { label: "mention", gain: 1.5 });
             toast(`📣 ${n.title}`, {
               description: n.body ?? undefined,
               duration: 6000,
@@ -131,10 +131,10 @@ export function NotificationBell() {
           const n = { ...(payload.new as Notif), source: "staff" as const };
           setItems((prev) => [n, ...prev].slice(0, 80));
           if (n.kind === "order_placed" && canManageOrders) {
-            playSound(orderAudio, { label: "order" });
+            playSound(orderAudio, { label: "order", gain: 1.8 });
           }
           if (n.kind === "ticket_raised" && canHandleTickets) {
-            playSound(ticketAudio, { label: "ticket" });
+            playSound(ticketAudio, { label: "ticket", gain: 2.0 });
             toast(`🎫 ${n.title}`, {
               description: n.body ?? "A ticket is needing assistance.",
               duration: 8000,
@@ -143,7 +143,7 @@ export function NotificationBell() {
             return;
           }
           if (n.kind === "gate_application" && canApproveSignups) {
-            playSound(newSignupAudio, { label: "signup" });
+            playSound(newSignupAudio, { label: "signup", gain: 1.8 });
             toast(`👋 ${n.title}`, {
               description: n.body ?? "A new user is requesting access.",
               duration: 8000,
@@ -175,7 +175,7 @@ export function NotificationBell() {
         { event: "INSERT", schema: "public", table: "status_incidents" },
         (payload) => {
           const row = payload.new as { title?: string; description?: string | null };
-          playSound(outageAudio, { label: "outage" });
+          playSound(outageAudio, { label: "outage", gain: 2.2 });
           toast(`🚨 New outage: ${row.title ?? "Incident reported"}`, {
             description: row.description ?? undefined,
             duration: 8000,
@@ -190,7 +190,7 @@ export function NotificationBell() {
           const newRow = payload.new as { title?: string; status?: string };
           const oldRow = payload.old as { status?: string };
           if (newRow.status === "completed" && oldRow.status !== "completed") {
-            playSound(outageResolvedAudio, { label: "outage-resolved" });
+            playSound(outageResolvedAudio, { label: "outage-resolved", gain: 1.8 });
             toast(`✅ Outage resolved: ${newRow.title ?? "Incident"}`, {
               duration: 8000,
               action: { label: "Open", onClick: () => navigate({ to: "/status" } as never) },

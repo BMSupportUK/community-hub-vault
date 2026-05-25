@@ -186,7 +186,7 @@ export function ShiftStartEndAlert() {
     if (playedRef.current.has(key)) return;
     playedRef.current.add(key);
     const src = active.stage === "start" ? shiftStartAudio : shiftEndAudio;
-    playSound(src, { label: `shift-${active.stage}` });
+    playSound(src, { label: `shift-${active.stage}`, gain: 2.2 });
   }, [active]);
 
   if (!active) return null;

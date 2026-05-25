@@ -1,12 +1,25 @@
-// Shared audio playback helper that preloads sounds and unlocks playback on
-// the first user gesture. Browsers block `new Audio().play()` triggered by
-// timers or realtime subscriptions when there has been no prior user gesture
-// in the document — this helper works around that and surfaces failures to
-// the console instead of swallowing them.
+// Shared audio playback helper. Preloads sounds, unlocks playback on the
+// first user gesture, and routes through the Web Audio API with a GainNode
+// so we can boost output above the HTMLAudio 1.0 ceiling. Plays reliably
+// while the tab is backgrounded once it has been unlocked.
 
-const cache = new Map<string, HTMLAudioElement>();
+type Entry = { el: HTMLAudioElement; source?: MediaElementAudioSourceNode; gainNode?: GainNode };
+
+const cache = new Map<string, Entry>();
 let unlocked = false;
 let listenersAttached = false;
+let ctx: AudioContext | null = null;
+
+function getCtx(): AudioContext | null {
+  if (typeof window === "undefined") return null;
+  if (ctx) return ctx;
+  const AC: typeof AudioContext | undefined =
+    (window as unknown as { AudioContext?: typeof AudioContext; webkitAudioContext?: typeof AudioContext }).AudioContext ||
+    (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+  if (!AC) return null;
+  try { ctx = new AC(); } catch { ctx = null; }
+  return ctx;
+}
 
 function ensureUnlockListeners() {
   if (listenersAttached || typeof window === "undefined") return;
@@ -14,7 +27,9 @@ function ensureUnlockListeners() {
   const unlock = () => {
     if (unlocked) return;
     unlocked = true;
-    cache.forEach((a) => primeAudio(a));
+    const c = getCtx();
+    if (c && c.state === "suspended") c.resume().catch(() => {});
+    cache.forEach((e) => primeAudio(e.el));
     window.removeEventListener("pointerdown", unlock);
     window.removeEventListener("keydown", unlock);
     window.removeEventListener("touchstart", unlock);
@@ -22,6 +37,12 @@ function ensureUnlockListeners() {
   window.addEventListener("pointerdown", unlock);
   window.addEventListener("keydown", unlock);
   window.addEventListener("touchstart", unlock);
+
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState !== "visible") return;
+    const c = getCtx();
+    if (c && c.state === "suspended") c.resume().catch(() => {});
+  });
 }
 
 function primeAudio(a: HTMLAudioElement) {
@@ -33,39 +54,61 @@ function primeAudio(a: HTMLAudioElement) {
         a.pause();
         a.currentTime = 0;
         a.muted = false;
-      }).catch(() => {
-        a.muted = false;
-      });
+      }).catch(() => { a.muted = false; });
     }
   } catch {
     a.muted = false;
   }
 }
 
-function getAudio(src: string, volume: number): HTMLAudioElement {
-  let a = cache.get(src);
-  if (!a) {
-    a = new Audio(src);
-    a.preload = "auto";
-    cache.set(src, a);
-    if (unlocked) primeAudio(a);
+function getEntry(src: string, volume: number, gain: number): Entry {
+  let e = cache.get(src);
+  if (!e) {
+    const el = new Audio(src);
+    el.preload = "auto";
+    el.crossOrigin = "anonymous";
+    (el as HTMLAudioElement & { playsInline?: boolean }).playsInline = true;
+    e = { el };
+    const c = getCtx();
+    if (c) {
+      try {
+        const source = c.createMediaElementSource(el);
+        const gainNode = c.createGain();
+        source.connect(gainNode).connect(c.destination);
+        e.source = source;
+        e.gainNode = gainNode;
+      } catch {
+        // ignore — fall back to plain element volume
+      }
+    }
+    cache.set(src, e);
+    if (unlocked) primeAudio(el);
   }
-  a.volume = volume;
-  return a;
+  e.el.volume = Math.max(0, Math.min(1, volume));
+  if (e.gainNode) {
+    try { e.gainNode.gain.value = Math.max(0, gain); } catch { /* noop */ }
+  }
+  return e;
 }
 
 /**
  * Play a notification sound. Safe to call from realtime handlers / timers —
  * sound will play once the user has interacted with the page at least once.
+ * `gain` boosts above 1.0 via Web Audio (default 1.8).
  */
-export function playSound(src: string, opts: { volume?: number; label?: string } = {}) {
+export function playSound(
+  src: string,
+  opts: { volume?: number; gain?: number; label?: string } = {},
+) {
   if (typeof window === "undefined") return;
   ensureUnlockListeners();
-  const { volume = 0.9, label } = opts;
-  const a = getAudio(src, volume);
+  const { volume = 1.0, gain = 1.8, label } = opts;
+  const c = getCtx();
+  if (c && c.state === "suspended") c.resume().catch(() => {});
+  const e = getEntry(src, volume, gain);
   try {
-    a.currentTime = 0;
-    const p = a.play();
+    e.el.currentTime = 0;
+    const p = e.el.play();
     if (p && typeof p.catch === "function") {
       p.catch((err) => {
         console.warn(`[sound] play blocked${label ? ` (${label})` : ""}:`, err?.message ?? err);

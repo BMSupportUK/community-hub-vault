@@ -88,6 +88,7 @@ export function BreakEndingAlert() {
       setStage("over");
       playSound(active.kind === "lunch" ? endLunchSfx : endBreakSfx, {
         label: `break-over-${active.kind}`,
+        gain: 2.2,
       });
     } else if (remaining > 0 && remaining <= WARN_AT && !seen.has("warn") && !seen.has("over")) {
       seen.add("warn");
