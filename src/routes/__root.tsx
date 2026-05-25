@@ -8,7 +8,7 @@ import {
   Link,
 } from "@tanstack/react-router";
 import { Toaster } from "sonner";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 import appCss from "../styles.css?url";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
@@ -28,8 +28,23 @@ function NotFoundComponent() {
 }
 
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
-  console.error(error);
   const router = useRouter();
+  const [showError, setShowError] = useState(false);
+
+  useEffect(() => {
+    console.error(error);
+    const timer = window.setTimeout(() => setShowError(true), 800);
+    return () => window.clearTimeout(timer);
+  }, [error]);
+
+  if (!showError) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background px-4 text-sm text-muted-foreground">
+        Loading…
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
