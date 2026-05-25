@@ -11,6 +11,7 @@ import profileHeaderModerator from "@/assets/profile-header-moderator.jpg";
 import { useOnlineUsers } from "@/hooks/use-online-users";
 import { useBusinessOpen } from "@/hooks/use-business-open";
 import { formatLastSeen } from "@/lib/relative-time";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 import { VpnBadge } from "@/lib/vpn-flags";
 
@@ -37,7 +38,7 @@ type FriendState =
   | { kind: "incoming"; id: string }
   | { kind: "friends"; id: string };
 
-const ROLE_ORDER = ["admin", "management", "moderator", "staff"] as const;
+const ROLE_ORDER = ["admin", "management", "staff", "moderator"] as const;
 const ROLE_LABEL: Record<string, string> = {
   admin: "Administrators",
   management: "Management",
@@ -147,8 +148,7 @@ function StaffPage() {
       </header>
 
       <div className="px-8 py-6">
-        <div className="mt-6 space-y-8">
-          <div className="relative max-w-md">
+        <div className="relative max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-purple-300" />
             <input
               value={q}
@@ -157,17 +157,28 @@ function StaffPage() {
               className="w-full pl-9 pr-3 py-2 rounded-lg bg-purple-950/50 border border-purple-500/30 text-purple-50 placeholder:text-purple-300/50 outline-none focus:border-fuchsia-400 focus:ring-2 focus:ring-fuchsia-500/40"
             />
           </div>
-            {ROLE_ORDER.every((r) => grouped[r].length === 0) && (
-              <div className="rounded-2xl border border-dashed border-purple-500/40 p-12 text-center text-purple-200/70 bg-purple-950/30">
-                No staff members found.
-              </div>
-            )}
 
-            {ROLE_ORDER.map((role) => {
-              const list = grouped[role];
-              if (!list.length) return null;
-              return (
-                <section key={role}>
+        <Tabs defaultValue="admin" className="mt-6">
+          <TabsList className="bg-purple-950/50 border border-purple-500/30 h-auto p-1 flex-wrap">
+            {ROLE_ORDER.map((role) => (
+              <TabsTrigger
+                key={role}
+                value={role}
+                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-violet-600 data-[state=active]:to-fuchsia-600 data-[state=active]:text-white text-purple-200"
+              >
+                {ROLE_LABEL[role]}
+                <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded-full bg-purple-900/70 border border-purple-400/30">
+                  {grouped[role].length}
+                </span>
+              </TabsTrigger>
+            ))}
+          </TabsList>
+
+          {ROLE_ORDER.map((role) => {
+            const list = grouped[role];
+            return (
+              <TabsContent key={role} value={role} className="mt-6">
+                <section>
                   <div
                     className="relative mb-4 h-32 sm:h-40 rounded-2xl overflow-hidden border border-purple-500/30 bg-cover bg-center"
                     style={{ backgroundImage: `url(${ROLE_HEADER[role]})` }}
@@ -184,6 +195,11 @@ function StaffPage() {
                     </div>
                   </div>
 
+                  {list.length === 0 ? (
+                    <div className="rounded-2xl border border-dashed border-purple-500/40 p-12 text-center text-purple-200/70 bg-purple-950/30">
+                      No {ROLE_LABEL[role].toLowerCase()} found.
+                    </div>
+                  ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                     {list.map((p) => {
                       const name = p.display_name ?? p.username ?? "Unknown";
@@ -309,10 +325,12 @@ function StaffPage() {
                       );
                     })}
                   </div>
+                  )}
                 </section>
-              );
-            })}
-          </div>
+              </TabsContent>
+            );
+          })}
+        </Tabs>
         </div>
       </div>
     );
