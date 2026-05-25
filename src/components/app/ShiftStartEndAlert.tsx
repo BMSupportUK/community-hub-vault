@@ -19,6 +19,7 @@ import shiftEndAudio from "@/assets/shift-end.mp3";
 import { playSound } from "@/lib/sound";
 
 const WARN_BEFORE = 10 * 60 * 1000; // 10 minutes
+const START_OVERDUE_GRACE = 30 * 60 * 1000; // stop nagging 30 min after shift start
 
 interface Slot {
   id: string;
@@ -125,8 +126,8 @@ export function ShiftStartEndAlert() {
       // Start: warn before start OR keep showing overdue while not yet clocked in
       const toStart = startsAt - now;
       if (!openShift) {
-        // Overdue only while still within today's shift (don't nag after end_time)
-        if (toStart <= 0 && now < endsAt) {
+        // Overdue only for a short grace window after start (don't nag all shift)
+        if (toStart <= 0 && now < Math.min(endsAt, startsAt + START_OVERDUE_GRACE)) {
           const key = `${slot.id}:start:overdue`;
           if (!dismissedRef.current.has(key)) return { slot, stage: "start" as Stage };
         } else if (toStart > 0 && toStart <= WARN_BEFORE) {
