@@ -392,5 +392,58 @@ export function ChannelColumn({
         </div>
       )}
     </nav>
+    {settings && (() => {
+      const isGroup = settings.type === "group";
+      const g = settings.group;
+      const close = () => setSettings(null);
+      const run = (fn?: () => void) => { if (fn) { fn(); close(); } };
+      const runItem = (fn?: (to: string) => void) => {
+        if (fn && settings.type === "item") { fn(settings.itemTo); close(); }
+      };
+      const title = isGroup
+        ? `Category: ${g.label}`
+        : `Channel: ${settings.type === "item" ? settings.itemLabel : ""}`;
+      const Btn = ({ onClick, icon: Icon, label, danger }: { onClick: () => void; icon: typeof Pencil; label: string; danger?: boolean }) => (
+        <button
+          onClick={onClick}
+          className={cn(
+            "w-full flex items-center gap-3 px-3 py-2.5 rounded-md border border-border text-sm font-medium transition-colors",
+            danger
+              ? "hover:bg-destructive/10 hover:text-destructive hover:border-destructive/40"
+              : "hover:bg-surface-2 hover:text-foreground",
+          )}
+        >
+          <Icon className="size-4" />
+          <span>{label}</span>
+        </button>
+      );
+      return (
+        <Dialog open onOpenChange={(o) => { if (!o) close(); }}>
+          <DialogContent className="sm:max-w-sm">
+            <DialogHeader>
+              <DialogTitle>{title}</DialogTitle>
+            </DialogHeader>
+            <div className="grid gap-2 pt-1">
+              {isGroup ? (
+                <>
+                  {g.onRenameGroup && <Btn onClick={() => run(g.onRenameGroup)} icon={Pencil} label="Rename category" />}
+                  {g.onEditGroupIcon && <Btn onClick={() => run(g.onEditGroupIcon)} icon={Smile} label="Change icon" />}
+                  {g.onEditGroupPerms && <Btn onClick={() => run(g.onEditGroupPerms)} icon={Shield} label="Permissions" />}
+                  {g.onDeleteGroup && <Btn onClick={() => run(g.onDeleteGroup)} icon={Trash2} label="Delete category" danger />}
+                </>
+              ) : (
+                <>
+                  {g.onRenameItem && <Btn onClick={() => runItem(g.onRenameItem)} icon={Pencil} label="Rename channel" />}
+                  {g.onEditItemIcon && <Btn onClick={() => runItem(g.onEditItemIcon)} icon={Smile} label="Change icon" />}
+                  {g.onEditItemPerms && <Btn onClick={() => runItem(g.onEditItemPerms)} icon={Shield} label="Permissions" />}
+                  {g.onDeleteItem && <Btn onClick={() => runItem(g.onDeleteItem)} icon={Trash2} label="Delete channel" danger />}
+                </>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
+      );
+    })()}
+    </>
   );
 }
