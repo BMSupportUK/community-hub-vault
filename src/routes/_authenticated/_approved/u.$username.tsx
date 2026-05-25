@@ -521,10 +521,9 @@ function ProfilePage() {
           <TabsContent value="profile" className="mt-6">
             <div className="grid lg:grid-cols-3 gap-6">
               <section className="lg:col-span-2 rounded-2xl border border-purple-500/30 bg-purple-950/50 backdrop-blur overflow-hidden text-white">
-                <div
-                  className="h-36 sm:h-44 bg-cover"
-                  style={{
-                    backgroundImage: `url(${
+                <div className="relative h-36 sm:h-44 bg-purple-950/80" aria-hidden>
+                  <img
+                    src={
                       sortedRoles.some((r) => r === "admin" || r === "management")
                         ? profileHeaderManagement
                         : sortedRoles.some((r) => r === "moderator")
@@ -532,11 +531,12 @@ function ProfilePage() {
                           : sortedRoles.some((r) => r === "staff")
                             ? profileHeaderStaff
                             : profileHeader
-                    })`,
-                    backgroundPosition: "center 25%",
-                  }}
-                  aria-hidden
-                />
+                    }
+                    alt=""
+                    className="h-full w-full object-contain object-center"
+                    decoding="async"
+                  />
+                </div>
                 <div className="px-6 pb-6 -mt-12 flex flex-col sm:flex-row sm:items-end gap-4">
                   <Avatar url={profile.avatar_url} name={display} size={96} ring userId={profile.id} />
                   <div className="flex-1 min-w-0">
