@@ -1964,6 +1964,7 @@ function OrderDetail({ orderId, isAdmin, onBack }: { orderId: string; isAdmin: b
       }
       await sendSystem(`🛠️ We are currently setting up your account. Your login details will appear in the Credentials section of your profile soon.${profileLink}`);
       toast.success("Customer notified");
+      if (isAdmin && order.user_id) setCredsOpen(true);
     } finally { setBusy(false); }
   };
 
