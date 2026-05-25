@@ -526,7 +526,9 @@ function ProfilePage() {
                     backgroundImage: `url(${
                       sortedRoles.some((r) => r === "admin" || r === "management")
                         ? profileHeaderManagement
-                        : profileHeader
+                        : sortedRoles.some((r) => r === "staff")
+                          ? profileHeaderStaff
+                          : profileHeader
                     })`,
                   }}
                   aria-hidden
