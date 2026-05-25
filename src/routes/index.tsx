@@ -43,7 +43,7 @@ function Landing() {
     <div className="h-screen overflow-hidden bg-background flex flex-col">
       <LandingHeader />
 
-      <main className="flex-1 min-h-0 overflow-hidden px-6 py-4 md:py-6 flex flex-col">
+      <main className="flex-1 min-h-0 overflow-hidden px-6 py-4 md:py-6 flex flex-col gap-4">
         <section
           className="relative max-w-7xl w-full mx-auto rounded-3xl border border-red-900/60 p-4 md:p-6 lg:p-8 pb-16 md:pb-20"
           style={{
@@ -79,17 +79,17 @@ function Landing() {
           </div>
         </section>
 
-        <div className="relative max-w-7xl w-full mx-auto -mt-3 px-10 md:px-14 grid grid-cols-1 sm:grid-cols-3 gap-3 z-10">
+        <div className="relative max-w-7xl w-full mx-auto -mt-3 px-10 md:px-14 grid grid-cols-1 sm:grid-cols-3 gap-3 z-10 flex-1 items-stretch">
           {boxes.map((b) => (
             <div
               key={b.id}
-              className="group relative flex items-start gap-3 p-3 rounded-2xl border border-red-400/30 backdrop-blur-md shadow-[0_12px_50px_rgba(127,29,29,0.5)] hover:border-red-300/60 transition-all"
+              className="group relative flex items-center gap-4 p-5 rounded-2xl border border-red-400/30 backdrop-blur-md shadow-[0_12px_50px_rgba(127,29,29,0.5)] hover:border-red-300/60 transition-all h-full"
               style={{
                 background:
                   "linear-gradient(135deg, rgba(127,29,29,0.9) 0%, rgba(69,10,10,0.9) 100%)",
               }}
             >
-              <div className="shrink-0 size-10 rounded-xl bg-black/40 border border-white/10 grid place-items-center overflow-hidden ring-1 ring-red-500/30 group-hover:ring-red-300/60 transition">
+              <div className="shrink-0 size-14 rounded-xl bg-black/40 border border-white/10 grid place-items-center overflow-hidden ring-1 ring-red-500/30 group-hover:ring-red-300/60 transition">
                 {b.icon_url ? (
                   <img src={b.icon_url} alt="" className="size-full object-contain p-2" />
                 ) : (
@@ -97,8 +97,8 @@ function Landing() {
                 )}
               </div>
               <div className="min-w-0">
-                <div className="font-display font-bold text-white text-sm leading-tight">{b.title}</div>
-                <p className="text-xs text-red-50/85 mt-0.5 leading-snug">{b.description}</p>
+                <div className="font-display font-bold text-white text-base leading-tight">{b.title}</div>
+                <p className="text-sm text-red-50/85 mt-1 leading-snug">{b.description}</p>
               </div>
             </div>
           ))}
