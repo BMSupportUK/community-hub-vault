@@ -5,6 +5,9 @@ import { Briefcase, Search, Clock, UserPlus, Eye, Check, Lock } from "lucide-rea
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 import profileHeader from "@/assets/profile-header.jpg";
+import profileHeaderManagement from "@/assets/profile-header-management.jpg";
+import profileHeaderStaff from "@/assets/profile-header-staff.jpg";
+import profileHeaderModerator from "@/assets/profile-header-moderator.jpg";
 import { useOnlineUsers } from "@/hooks/use-online-users";
 import { useBusinessOpen } from "@/hooks/use-business-open";
 import { formatLastSeen } from "@/lib/relative-time";
@@ -40,6 +43,12 @@ const ROLE_LABEL: Record<string, string> = {
   management: "Management",
   moderator: "Moderators",
   staff: "Staff",
+};
+const ROLE_HEADER: Record<string, string> = {
+  admin: profileHeaderManagement,
+  management: profileHeaderManagement,
+  moderator: profileHeaderModerator,
+  staff: profileHeaderStaff,
 };
 
 function StaffPage() {
