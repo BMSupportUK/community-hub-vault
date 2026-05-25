@@ -5,6 +5,7 @@ import { ChannelColumn, type ChannelGroup } from "@/components/app/ChannelColumn
 import { ServiceStatusBox } from "@/components/app/ServiceStatusBox";
 import { MembershipBox } from "@/components/app/MembershipBox";
 import { SecurityBox } from "@/components/app/SecurityBox";
+import { WorkingStatusBox } from "@/components/app/WorkingStatusBox";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import {
@@ -431,7 +432,7 @@ function HomeLayout() {
         onAddGroup={isAdmin ? () => setShowAddGroup(true) : undefined}
         onReorderChannels={isAdmin ? reorderChannels : undefined}
         onReorderGroups={isAdmin ? reorderGroups : undefined}
-        footer={<><MembershipBox /><ServiceStatusBox /><SecurityBox /></>}
+        footer={<><MembershipBox /><ServiceStatusBox /><SecurityBox /><WorkingStatusBox /></>}
       />
       <div className="flex-1 flex flex-col min-w-0">
         <div className="md:hidden h-10 shrink-0 flex items-center px-3 border-b border-border bg-rail/30">
@@ -448,7 +449,7 @@ function HomeLayout() {
                 onAddGroup={isAdmin ? () => setShowAddGroup(true) : undefined}
                 onReorderChannels={isAdmin ? reorderChannels : undefined}
                 onReorderGroups={isAdmin ? reorderGroups : undefined}
-                footer={<><MembershipBox /><ServiceStatusBox /><SecurityBox /></>}
+                footer={<><MembershipBox /><ServiceStatusBox /><SecurityBox /><WorkingStatusBox /></>}
               />
             </SheetContent>
           </Sheet>
