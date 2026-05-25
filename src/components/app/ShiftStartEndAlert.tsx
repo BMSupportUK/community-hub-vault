@@ -55,6 +55,7 @@ export function ShiftStartEndAlert() {
   const [now, setNow] = useState(() => Date.now());
   const [active, setActive] = useState<{ slot: Slot; stage: Stage } | null>(null);
   const dismissedRef = useRef<Set<string>>(new Set()); // `${slotId}:${stage}:${phase}`
+  const autoClockedRef = useRef<Set<string>>(new Set());
   const localDate = useMemo(() => dateInTimeZone(now), [dateInTimeZone, now]);
 
   // Tick every second
@@ -102,6 +103,36 @@ export function ShiftStartEndAlert() {
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, [user, isStaff, localDate]);
+
+  // Auto clock-in: if a shift has started and the user is not clocked in,
+  // create a shift record automatically using the slot's start time.
+  useEffect(() => {
+    if (!user || !isStaff) return;
+    if (openShift) return;
+    for (const slot of slots) {
+      if (autoClockedRef.current.has(slot.id)) continue;
+      const { startsAt, endsAt } = shiftWindowToUtcMs(slot.shift_date, slot.start_time, slot.end_time);
+      if (isNaN(startsAt) || isNaN(endsAt)) continue;
+      if (now >= startsAt && now < endsAt) {
+        autoClockedRef.current.add(slot.id);
+        (async () => {
+          // Double-check no open shift exists for this user before inserting
+          const { data: existing } = await supabase
+            .from("shifts")
+            .select("id")
+            .eq("user_id", user.id)
+            .is("clock_out", null)
+            .maybeSingle();
+          if (existing) return;
+          await supabase.from("shifts").insert({
+            user_id: user.id,
+            clock_in: new Date(startsAt).toISOString(),
+          });
+        })();
+        break;
+      }
+    }
+  }, [user, isStaff, slots, openShift, now, shiftWindowToUtcMs]);
 
   // Determine which alert (if any) should currently be visible
   const candidate = useMemo(() => {
