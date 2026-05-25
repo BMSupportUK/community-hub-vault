@@ -134,6 +134,19 @@ function cleanEventTitleText(value: string): string {
     .trim();
 }
 
+function isDateOnlyText(value: string): boolean {
+  return Boolean(parseGuideDate(value.trim()));
+}
+
+function hasMeaningfulTextOutsideMatches(text: string, matches: ParsedMatch[]): boolean {
+  let remaining = text;
+  for (const match of [...matches].sort((a, b) => b.start - a.start)) {
+    remaining = `${remaining.slice(0, match.start)} ${remaining.slice(match.end)}`;
+  }
+  const cleaned = cleanEventTitleText(remaining);
+  return Boolean(cleaned && !isWeekdayOnly(cleaned) && !isDateOnlyText(cleaned));
+}
+
 function normalizedMatchedTime(hour: number, minute: number): string {
   return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
 }
@@ -175,6 +188,7 @@ function parseMatches(
   const inlineDate = parseLeadingGuideDate(text);
   const effectiveSourceDateStr = inlineDate?.dateStr ?? sourceDateStr;
   const effectiveSourceDateLabel = inlineDate?.sourceDateLabel ?? sourceDateLabel;
+  const effectiveDefaultZone = inlineDate?.sourceZone ?? defaultZone;
   TIME_RE.lastIndex = 0;
   let m: RegExpExecArray | null;
   while ((m = TIME_RE.exec(text)) !== null) {
@@ -261,8 +275,8 @@ function parseMatches(
       utcMs,
     });
   }
-  if (defaultZone) {
-    const tz = ZONE_MAP[defaultZone.toUpperCase()];
+  if (effectiveDefaultZone) {
+    const tz = ZONE_MAP[effectiveDefaultZone.toUpperCase()];
     if (tz) {
       BARE_TIME_RE.lastIndex = 0;
       let bm: RegExpExecArray | null;
@@ -308,7 +322,7 @@ function parseMatches(
             month: "long",
             year: "numeric",
           }).format(new Date(utcMs));
-        const sourceAbbr = tzAbbrev(utcMs, tz) || defaultZone.toUpperCase();
+        const sourceAbbr = tzAbbrev(utcMs, tz) || effectiveDefaultZone.toUpperCase();
         results.push({
           start: bm.index,
           end: bm.index + bm[0].length,
@@ -405,19 +419,36 @@ function parseGuideDate(text: string): string | null {
   return null;
 }
 
-function parseLeadingGuideDate(text: string): { dateStr: string; sourceDateLabel: string } | null {
+function parseLeadingGuideDate(text: string): { dateStr: string; sourceDateLabel: string; sourceZone?: string } | null {
   const trimmed = text.replace(/\s+/g, " ").trim();
   const leading = trimmed.match(
     /^((?:(?:GMT|UTC|UK|BST|CET|CEST|ET|EST|EDT|CT|CST|CDT|MT|MST|MDT|PT|PST|PDT|AEST|AEDT|JST|IST)\s+)?(?:(?:mon|tue|wed|thu|fri|sat|sun)[a-z]*\b[\s,]+)?(?:\d{4}[-/.]\d{1,2}[-/.]\d{1,2}|\d{1,2}[-/.]\d{1,2}[-/.](?:\d{2}|\d{4})|\d{1,2}(?:st|nd|rd|th)?\s+[a-z]+(?:\s+(?:\d{2}|\d{4}))?))(?=\s+\d{1,2}(?:[:.]\d{2})?\s*(?:am|pm|a\.m\.|p\.m\.)?\b)/i,
   )?.[1];
   if (!leading) return null;
+  const sourceZone = leading.match(/^(GMT|UTC|UK|BST|CET|CEST|ET|EST|EDT|CT|CST|CDT|MT|MST|MDT|PT|PST|PDT|AEST|AEDT|JST|IST)\b/i)?.[1]?.toUpperCase();
   const hasWeekday = /^(mon|tue|wed|thu|fri|sat|sun)[a-z]*\b/i.test(leading);
   const dateStr = parseGuideDate(hasWeekday ? leading : `Monday ${leading}`);
   if (!dateStr) return null;
   return {
     dateStr,
     sourceDateLabel: sourceDateLabelFromHeading(hasWeekday ? leading : "", dateStr),
+    sourceZone,
   };
+}
+
+function startsWithScheduleTime(
+  text: string,
+  viewerTz: string,
+  defaultZone?: string,
+  sourceDateStr?: string,
+  sourceDateLabel?: string,
+): boolean {
+  const matches = parseMatches(text, viewerTz, defaultZone, sourceDateStr, sourceDateLabel);
+  if (!matches.length) return false;
+  if (parseLeadingGuideDate(text)) return true;
+  const first = matches[0];
+  const prefix = cleanEventTitleText(text.slice(0, first.start));
+  return !prefix || isWeekdayOnly(prefix) || isDateOnlyText(prefix) || !hasMeaningfulTextOutsideMatches(text, [first]);
 }
 
 function isWeekdayOnly(text: string): boolean {
@@ -589,13 +620,13 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
       }
       if (candidate.closest("[data-tz-row]")) continue;
       if (
-        parseMatches(
+        startsWithScheduleTime(
           sText,
           viewerTz,
           defaultZone,
           currentSourceDate ?? undefined,
           currentSourceDateLabel ?? undefined,
-        ).length
+        )
       )
         break;
       absorbed.push(candidate);
