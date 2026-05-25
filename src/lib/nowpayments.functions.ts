@@ -110,6 +110,37 @@ export const createCryptoInvoice = createServerFn({ method: "POST" })
       throw new Error("NOWPayments did not return an invoice");
     }
 
+    // Track invoice creation locally so admins can see which orders have a
+    // crypto invoice outstanding, even before any IPN arrives. Only upsert if
+    // there is no existing finished/confirming row (don't downgrade status).
+    try {
+      const { data: existing } = await supabase
+        .from("order_payments")
+        .select("status,provider")
+        .eq("order_id", order.id)
+        .maybeSingle();
+      const finalStatuses = new Set(["finished", "confirming", "partially_paid"]);
+      if (!existing || !finalStatuses.has(String(existing.status))) {
+        await supabase.from("order_payments").upsert(
+          {
+            order_id: order.id,
+            provider: "nowpayments",
+            provider_payment_id: String(invoice.id),
+            square_payment_id: String(invoice.id),
+            status: "invoice_created",
+            amount_cents: order.total_cents ?? 0,
+            currency: "GBP",
+            card_brand: `USDT-${data.network}`,
+            last_4: null,
+            receipt_url: String(invoice.invoice_url),
+          },
+          { onConflict: "order_id" },
+        );
+      }
+    } catch (e) {
+      console.warn("[nowpayments] failed to track invoice creation", e);
+    }
+
     return {
       invoiceId: String(invoice.id),
       invoiceUrl: String(invoice.invoice_url),
