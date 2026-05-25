@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import profileHeader from "@/assets/profile-header.jpg";
 import profileHeaderManagement from "@/assets/profile-header-management.jpg";
+import profileHeaderStaff from "@/assets/profile-header-staff.jpg";
 import tvLoginIllustration from "@/assets/tv-login-illustration.jpg";
 import referralsBg from "@/assets/referrals-bg.jpg";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
