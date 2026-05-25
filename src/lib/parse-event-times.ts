@@ -665,8 +665,21 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
         }
       }
     } else if (extraLines.length) {
-      const extras = extraLines.join(" · ");
-      if (extras) caption = caption ? `${caption} · ${extras}` : extras;
+      // Heuristic: short lines with no sentence punctuation are channel names,
+      // not descriptive captions. Promote them to the channel chip list so they
+      // render with the bordered chip styling.
+      const looksLikeChannel = (s: string) =>
+        s.length > 0 && s.length <= 60 && !/[.!?]\s|,\s/.test(s);
+      if (extraLines.every(looksLikeChannel)) {
+        const merged = [
+          ...(channel ? channel.split(/\s*\|\s*/).filter(Boolean) : []),
+          ...extraLines,
+        ];
+        channel = merged.join(" | ");
+      } else {
+        const extras = extraLines.join(" · ");
+        if (extras) caption = caption ? `${caption} · ${extras}` : extras;
+      }
     }
     for (const a of absorbed) {
       if (a.dataset.tzOriginal == null) {
