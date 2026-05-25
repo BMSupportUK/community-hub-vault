@@ -326,56 +326,21 @@ export function ChannelColumn({
                           g.onEditItemPerms ||
                           g.onEditItemIcon ||
                           g.onRenameItem) && (
-                          <div className="flex items-center gap-1 pl-6 pr-2 pb-1 -mt-0.5 text-muted-foreground">
-                            {g.onRenameItem && (
-                              <button
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  g.onRenameItem!(it.to);
-                                }}
-                                title="Rename channel"
-                                className="hover:text-foreground p-1"
-                              >
-                                <Pencil className="size-3.5" />
-                              </button>
-                            )}
-                            {g.onEditItemIcon && (
-                              <button
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  g.onEditItemIcon!(it.to);
-                                }}
-                                title="Change channel icon"
-                                className="hover:text-foreground p-1"
-                              >
-                                <Smile className="size-3.5" />
-                              </button>
-                            )}
-                            {g.onEditItemPerms && (
-                              <button
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  g.onEditItemPerms!(it.to);
-                                }}
-                                title="Channel permissions"
-                                className="hover:text-primary p-1"
-                              >
-                                <Shield className="size-3.5" />
-                              </button>
-                            )}
-                            {g.onDeleteItem && (
-                              <button
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  g.onDeleteItem!(it.to);
-                                }}
-                                title="Delete channel"
-                                className="hover:text-destructive p-1"
-                              >
-                                <Trash2 className="size-3.5" />
-                              </button>
-                            )}
-                          </div>
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              setSettings({
+                                type: "item",
+                                group: g,
+                                itemTo: it.to,
+                                itemLabel: it.label,
+                              });
+                            }}
+                            title="Channel settings"
+                            className="absolute right-1 top-1/2 -translate-y-1/2 hidden group-hover/ch:flex items-center justify-center p-1 rounded hover:bg-surface-2 text-muted-foreground hover:text-foreground"
+                          >
+                            <Settings className="size-3.5" />
+                          </button>
                         )}
                       </div>
                     );
