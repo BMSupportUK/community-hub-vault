@@ -183,15 +183,6 @@ function StaffPage() {
                       </span>
                     </div>
                   </div>
-                  <div className="hidden items-center gap-3 mb-4">
-                    <h2 className="font-display text-xl font-bold bg-gradient-to-r from-violet-600 to-blue-600 bg-clip-text text-transparent">
-                      {ROLE_LABEL[role]}
-                    </h2>
-                    <span className="text-xs px-2 py-0.5 rounded-full bg-purple-800/60 text-purple-100 border border-purple-500/30">
-                      {list.length}
-                    </span>
-                    <div className="flex-1 h-px bg-purple-500/20" />
-                  </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                     {list.map((p) => {
