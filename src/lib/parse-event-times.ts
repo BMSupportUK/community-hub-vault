@@ -31,6 +31,19 @@ const ZONE_MAP: Record<string, string> = {
 const ZONE_TOKENS = Object.keys(ZONE_MAP)
   .sort((a, b) => b.length - a.length)
   .join("|");
+// Some sources (e.g. US schedules) write the zone BEFORE the time:
+//   "ET 7:00 PM", "ET 19:45", "PT 8 pm"
+// Rewrite those to the canonical "<time> <zone>" form before the main
+// regex pass so a single ET-only event doesn't break the card.
+// Require an actual time shape (HH:MM / HH.MM or am/pm suffix) so bare
+// day numbers in a date heading like "ET 25 May 2026" are NOT rewritten.
+const LEADING_ZONE_TIME_RE = new RegExp(
+  `\\b(${Object.keys(ZONE_MAP).sort((a, b) => b.length - a.length).join("|")})\\s+(\\d{1,2}(?:[:.]\\d{2}\\s*(?:am|pm|a\\.m\\.|p\\.m\\.)?|\\s*(?:am|pm|a\\.m\\.|p\\.m\\.)))\\b`,
+  "gi",
+);
+function normalizeLeadingZoneTimes(text: string): string {
+  return text.replace(LEADING_ZONE_TIME_RE, (_, zone: string, time: string) => `${time} ${zone}`);
+}
 // Matches: "19:45 GMT", "10.30 GMT", "7:30pm ET", "8 pm CET", "20:00 UTC+1", "9am GMT-05:30"
 const TIME_RE = new RegExp(
   `\\b(\\d{1,2})(?:[:.](\\d{2}))?\\s*(am|pm|a\\.m\\.|p\\.m\\.)?\\s*(?:(${ZONE_TOKENS})|(?:(UTC|GMT)\\s*([+-])\\s*(\\d{1,2})(?::?(\\d{2}))?))\\b`,
@@ -153,6 +166,12 @@ function parseMatches(
   sourceDateLabel?: string,
 ): ParsedMatch[] {
   const results: ParsedMatch[] = [];
+  // Normalize "ET 7:00 PM" -> "7:00 PM ET" so a leading-zone time still
+  // matches TIME_RE and BARE_TIME_RE below. Length-preserving as long as
+  // the swap keeps the same characters separated by a single space (it
+  // does for the cases we care about), so match indices remain valid for
+  // the purpose of locating the time within the line.
+  text = normalizeLeadingZoneTimes(text);
   const inlineDate = parseLeadingGuideDate(text);
   const effectiveSourceDateStr = inlineDate?.dateStr ?? sourceDateStr;
   const effectiveSourceDateLabel = inlineDate?.sourceDateLabel ?? sourceDateLabel;
