@@ -221,40 +221,16 @@ export function ChannelColumn({
                           <Plus className="size-3.5" />
                         </button>
                       )}
-                      {g.onRenameGroup && (
+                      {(g.onRenameGroup ||
+                        g.onEditGroupIcon ||
+                        g.onEditGroupPerms ||
+                        g.onDeleteGroup) && (
                         <button
-                          onClick={g.onRenameGroup}
-                          title="Rename category"
+                          onClick={() => setSettings({ type: "group", group: g })}
+                          title="Category settings"
                           className="hover:text-foreground p-0.5"
                         >
-                          <Pencil className="size-3.5" />
-                        </button>
-                      )}
-                      {g.onEditGroupIcon && (
-                        <button
-                          onClick={g.onEditGroupIcon}
-                          title="Change category icon"
-                          className="hover:text-foreground p-0.5"
-                        >
-                          <Smile className="size-3.5" />
-                        </button>
-                      )}
-                      {g.onEditGroupPerms && (
-                        <button
-                          onClick={g.onEditGroupPerms}
-                          title="Category permissions"
-                          className="hover:text-primary p-0.5"
-                        >
-                          <Shield className="size-3.5" />
-                        </button>
-                      )}
-                      {g.onDeleteGroup && (
-                        <button
-                          onClick={g.onDeleteGroup}
-                          title="Delete category"
-                          className="hover:text-destructive p-0.5"
-                        >
-                          <Trash2 className="size-3.5" />
+                          <Settings className="size-3.5" />
                         </button>
                       )}
                     </div>
