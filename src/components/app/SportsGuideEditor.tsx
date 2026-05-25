@@ -59,8 +59,10 @@ const ZONE_ABBR_GROUP =
 // "ET 7:00 PM Event - Channel" or "ET 19:45") into the canonical
 // "<time> <zone> ..." shape so the rest of the normalizer treats them
 // as proper event time rows.
+// Require an actual time shape (HH:MM / HH.MM or am/pm suffix) so a
+// date heading like "ET 25 May 2026" is NOT rewritten into a time line.
 const LEADING_ZONE_TIME_LINE_RE = new RegExp(
-  `^(\\s*)(${ZONE_ABBR_GROUP})\\s+(\\d{1,2}(?:[:.]\\d{2})?\\s*(?:am|pm|a\\.m\\.|p\\.m\\.)?)(\\b.*)$`,
+  `^(\\s*)(${ZONE_ABBR_GROUP})\\s+(\\d{1,2}(?:[:.]\\d{2}\\s*(?:am|pm|a\\.m\\.|p\\.m\\.)?|\\s*(?:am|pm|a\\.m\\.|p\\.m\\.)))(\\b.*)$`,
   "i",
 );
 function moveLeadingZoneToTrailing(line: string): string {

@@ -35,8 +35,10 @@ const ZONE_TOKENS = Object.keys(ZONE_MAP)
 //   "ET 7:00 PM", "ET 19:45", "PT 8 pm"
 // Rewrite those to the canonical "<time> <zone>" form before the main
 // regex pass so a single ET-only event doesn't break the card.
+// Require an actual time shape (HH:MM / HH.MM or am/pm suffix) so bare
+// day numbers in a date heading like "ET 25 May 2026" are NOT rewritten.
 const LEADING_ZONE_TIME_RE = new RegExp(
-  `\\b(${Object.keys(ZONE_MAP).sort((a, b) => b.length - a.length).join("|")})\\s+(\\d{1,2}(?:[:.]\\d{2})?\\s*(?:am|pm|a\\.m\\.|p\\.m\\.)?)\\b`,
+  `\\b(${Object.keys(ZONE_MAP).sort((a, b) => b.length - a.length).join("|")})\\s+(\\d{1,2}(?:[:.]\\d{2}\\s*(?:am|pm|a\\.m\\.|p\\.m\\.)?|\\s*(?:am|pm|a\\.m\\.|p\\.m\\.)))\\b`,
   "gi",
 );
 function normalizeLeadingZoneTimes(text: string): string {
