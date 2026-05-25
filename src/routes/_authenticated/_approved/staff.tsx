@@ -218,7 +218,7 @@ function StaffPage() {
                         >
                           <div
                             className="h-16 bg-cover bg-center"
-                            style={{ backgroundImage: `url(${profileHeader})` }}
+                            style={{ backgroundImage: `url(${ROLE_HEADER[role] ?? profileHeader})` }}
                             aria-hidden
                           />
                           <div className="px-4 -mt-8 pb-4 flex flex-col flex-1">
