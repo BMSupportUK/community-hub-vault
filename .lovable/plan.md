@@ -1,25 +1,29 @@
-## Plan: Membership box in sidebar
+## Plan: Fit landing page into viewport (no scroll)
 
-### 1. New component `src/components/app/MembershipBox.tsx`
-Styled to match `ServiceStatusBox` (rounded card, gradient header bar, same typography). Reuses the data-loading logic currently inside `SubscriptionExpiry` (queries `app_credentials` for the signed-in user, realtime subscription, scheduled role revoke). Renders:
+Make the landing page fill exactly the viewport height so the hero, the three feature boxes, and the footer all fit on screen without scrolling at desktop sizes.
 
-- Header strip: icon + "Membership" title (gradient bar like Service Status).
-- Body: one row per credential, showing `{app_login_name}` and "expires on / expired on {formatted date}" using the user's timezone.
-- Color cues: red for expired, amber for <7 days, neutral otherwise (matching current pill states).
-- Hidden entirely when the user has no credentials with an `expiry_at` (same condition as today).
+### Changes in `src/routes/index.tsx`
 
-Keeps the existing `useScheduledRevoke` behaviour so role revocation timing is unchanged.
+1. **Lock the page to viewport height**
+   - Change the root wrapper from `min-h-screen` to `h-screen overflow-hidden` so the page can never exceed the viewport.
 
-### 2. Sidebar wiring — `src/components/app/HomeChannelsSidebar.tsx`
-Replace the footer with a fragment that renders `<MembershipBox />` first, then `<ServiceStatusBox />`, so Membership sits directly above Status in every sidebar instance.
+2. **Make `<main>` the flexible region**
+   - Keep `flex-1` but add `min-h-0 overflow-hidden` and tighten vertical padding (`py-4 md:py-6` instead of `py-10 md:py-16`).
 
-### 3. Remove from header — `src/routes/_authenticated.tsx`
-Drop the `<SubscriptionExpiry />` render (line 146) and its import. The existing `SubscriptionExpiry` component file can stay for now (small, self-contained); if you'd prefer, we can delete it since nothing else imports it.
+3. **Shrink the hero**
+   - Reduce hero padding (`p-4 md:p-6 lg:p-8`, `pb-16 md:pb-20`).
+   - Reduce headline size (`text-3xl md:text-5xl`) and trim the gap/spacing between text blocks (`space-y-4`).
+   - Cap the hero image height with `max-h-[40vh]` and use `object-cover` so it scales down on short screens instead of pushing content.
 
-### Technical notes
-- No DB / RLS / server-function changes.
-- No behaviour change to expiry revoke logic — same hook moved into the new component.
-- The Membership box appears on every page that uses `HomeChannelsSidebar` (i.e. every approved page except `/home`, `/shop`, `/moderation`, `/store` which manage their own sidebars). If you want it inside those sidebars too, that's a follow-up (they each render their own `ChannelColumn` footer).
+4. **Tighten the feature boxes row**
+   - Reduce padding (`p-3`), icon size (`size-10`), and text sizes so the row sits comfortably under the hero.
+   - Reduce the negative-top overlap to `-mt-3`.
 
-### Question
-Should I also surface the Membership box inside the Home / Shop / Moderation sidebars (which currently render `ServiceStatusBox` themselves), or only in the shared `HomeChannelsSidebar`?
+5. **Compact the footer**
+   - Reduce footer padding (`py-3`) and the payment-logo sizes slightly so it occupies less vertical space.
+
+### Notes
+
+- This targets desktop (≥1024px). On narrow mobile the content will still need to scroll — true single-screen fit on a 375px phone isn't realistic with this much content. Let me know if you'd rather I:
+  - (a) keep mobile scrolling and only enforce no-scroll on desktop (proposed above), or
+  - (b) hide/condense more content on mobile to make it fit there too.

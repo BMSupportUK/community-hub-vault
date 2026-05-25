@@ -40,12 +40,12 @@ function Landing() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="h-screen overflow-hidden bg-background flex flex-col">
       <LandingHeader />
 
-      <main className="flex-1 px-6 py-10 md:py-16">
+      <main className="flex-1 min-h-0 overflow-hidden px-6 py-4 md:py-6 flex flex-col">
         <section
-          className="relative max-w-7xl mx-auto rounded-3xl border border-red-900/60 p-6 md:p-10 lg:p-12 pb-24 md:pb-28"
+          className="relative max-w-7xl w-full mx-auto rounded-3xl border border-red-900/60 p-4 md:p-6 lg:p-8 pb-16 md:pb-20"
           style={{
             background:
               "radial-gradient(1200px 600px at 10% 10%, rgba(248,113,113,0.25), transparent 60%), radial-gradient(900px 500px at 90% 90%, rgba(127,29,29,0.6), transparent 60%), linear-gradient(135deg, #7f1d1d 0%, #991b1b 50%, #450a0a 100%)",
@@ -54,42 +54,42 @@ function Landing() {
           }}
         >
           <div className="grid md:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] gap-5 md:gap-3 lg:gap-4 items-center">
-            <div className="space-y-6 text-white">
-              <h1 className="font-display text-4xl md:text-6xl font-bold tracking-tight leading-[1.05] drop-shadow-[0_2px_20px_rgba(0,0,0,0.5)]">
+            <div className="space-y-4 text-white">
+              <h1 className="font-display text-3xl md:text-5xl font-bold tracking-tight leading-[1.05] drop-shadow-[0_2px_20px_rgba(0,0,0,0.5)]">
                 Welcome to <span className="bg-gradient-to-r from-red-200 via-white to-red-300 bg-clip-text text-transparent">BM Support</span>
               </h1>
-              <p className="text-lg md:text-xl text-red-50/95 max-w-xl">
+              <p className="text-base md:text-lg text-red-50/95 max-w-xl">
                 Your all-in-one server for BM Support — stay connected, all in one place.
               </p>
-              <p className="text-red-100/80 max-w-xl">
+              <p className="text-sm text-red-100/80 max-w-xl">
                 Access community channels, manage your time, view schedules, get support, and explore our services. Everything you need is just one click away.
               </p>
             </div>
 
             <div className="relative w-full md:-ml-2 lg:-ml-4">
               <div className="absolute -inset-4 bg-gradient-to-tr from-red-500/40 via-transparent to-blue-500/30 blur-2xl rounded-3xl" aria-hidden />
-              <div className="relative rounded-3xl overflow-hidden border border-white/20 shadow-[0_20px_80px_rgba(0,0,0,0.6)] max-w-[620px] ml-auto">
+              <div className="relative rounded-3xl overflow-hidden border border-white/20 shadow-[0_20px_80px_rgba(0,0,0,0.6)] max-w-[520px] ml-auto">
                 <img
                   src={welcomeHero}
                   alt="BM Support hero"
-                  className="block w-full h-auto object-contain"
+                  className="block w-full h-auto max-h-[38vh] object-cover"
                 />
               </div>
             </div>
           </div>
         </section>
 
-        <div className="relative max-w-7xl mx-auto -mt-4 md:-mt-6 px-10 md:px-14 grid grid-cols-1 sm:grid-cols-3 gap-4 z-10">
+        <div className="relative max-w-7xl w-full mx-auto -mt-3 px-10 md:px-14 grid grid-cols-1 sm:grid-cols-3 gap-3 z-10">
           {boxes.map((b) => (
             <div
               key={b.id}
-              className="group relative flex items-start gap-4 p-5 rounded-2xl border border-red-400/30 backdrop-blur-md shadow-[0_12px_50px_rgba(127,29,29,0.5)] hover:border-red-300/60 transition-all"
+              className="group relative flex items-start gap-3 p-3 rounded-2xl border border-red-400/30 backdrop-blur-md shadow-[0_12px_50px_rgba(127,29,29,0.5)] hover:border-red-300/60 transition-all"
               style={{
                 background:
                   "linear-gradient(135deg, rgba(127,29,29,0.9) 0%, rgba(69,10,10,0.9) 100%)",
               }}
             >
-              <div className="shrink-0 size-12 rounded-xl bg-black/40 border border-white/10 grid place-items-center overflow-hidden ring-1 ring-red-500/30 group-hover:ring-red-300/60 transition">
+              <div className="shrink-0 size-10 rounded-xl bg-black/40 border border-white/10 grid place-items-center overflow-hidden ring-1 ring-red-500/30 group-hover:ring-red-300/60 transition">
                 {b.icon_url ? (
                   <img src={b.icon_url} alt="" className="size-full object-contain p-2" />
                 ) : (
@@ -97,16 +97,16 @@ function Landing() {
                 )}
               </div>
               <div className="min-w-0">
-                <div className="font-display font-bold text-white text-base leading-tight">{b.title}</div>
-                <p className="text-sm text-red-50/85 mt-1 leading-snug">{b.description}</p>
+                <div className="font-display font-bold text-white text-sm leading-tight">{b.title}</div>
+                <p className="text-xs text-red-50/85 mt-0.5 leading-snug">{b.description}</p>
               </div>
             </div>
           ))}
         </div>
       </main>
 
-      <footer className="mt-20 border-t border-red-500/20 bg-black/60 backdrop-blur-sm">
-        <div className="max-w-7xl mx-auto px-6 py-8 flex flex-col md:flex-row items-center justify-between gap-6">
+      <footer className="border-t border-red-500/20 bg-black/60 backdrop-blur-sm">
+        <div className="max-w-7xl mx-auto px-6 py-3 flex flex-col md:flex-row items-center justify-between gap-3">
           <p className="text-sm text-red-50/70 order-2 md:order-1">
             © BM Support 2026. All rights reserved.
           </p>
