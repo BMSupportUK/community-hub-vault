@@ -182,7 +182,7 @@ function ShopPage() {
       <ChannelColumn
         title="Shop"
         groups={groups}
-        footer={view === "orders" && id ? <SidebarOrderProgress orderId={id} /> : undefined}
+        footer={view === "orders" && id ? <SidebarOrderProgress orderId={id} /> : <SidebarLatestOrderProgress />}
       />
       <div className="flex-1 flex flex-col min-w-0">
         <div className="md:hidden h-10 shrink-0 flex items-center px-3 border-b border-border bg-rail/30">
@@ -195,7 +195,7 @@ function ShopPage() {
                 inSheet
                 title="Shop"
                 groups={groups}
-                footer={view === "orders" && id ? <SidebarOrderProgress orderId={id} /> : undefined}
+                footer={view === "orders" && id ? <SidebarOrderProgress orderId={id} /> : <SidebarLatestOrderProgress />}
               />
             </SheetContent>
           </Sheet>
@@ -456,6 +456,44 @@ function SidebarOrderProgress({ orderId }: { orderId: string }) {
       supabase.removeChannel(ch);
     };
   }, [orderId]);
+  if (!order) return null;
+  return (
+    <div className="mt-6 px-3 pb-3">
+      <OrderProgressStrip order={order} />
+    </div>
+  );
+}
+
+function SidebarLatestOrderProgress() {
+  const { user } = useAuth();
+  const [order, setOrder] = useState<Order | null>(null);
+  useEffect(() => {
+    if (!user?.id) return;
+    let cancelled = false;
+    const load = async () => {
+      const { data } = await supabase
+        .from("orders")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (!cancelled) setOrder((data as Order | null) ?? null);
+    };
+    void load();
+    const ch = supabase
+      .channel(`sidebar-latest-order-${user.id}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "orders", filter: `user_id=eq.${user.id}` },
+        () => void load(),
+      )
+      .subscribe();
+    return () => {
+      cancelled = true;
+      supabase.removeChannel(ch);
+    };
+  }, [user?.id]);
   if (!order) return null;
   return (
     <div className="mt-6 px-3 pb-3">
