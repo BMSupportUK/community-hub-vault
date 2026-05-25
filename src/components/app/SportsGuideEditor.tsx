@@ -48,8 +48,16 @@ const escapeHtml = (s: string) =>
 const LEADING_TIME_RE =
   /^\s*(\d{1,2}(?:[:.]\d{2})?\s*(?:am|pm|a\.m\.|p\.m\.)?\s*(?:GMT|UTC|UK|BST|CET|CEST|ET|EST|EDT|CT|CST|CDT|MT|MST|MDT|PT|PST|PDT|AEST|AEDT|JST|IST)?)\s*[-–—:|·•]?\s*(.*)$/i;
 
-const DATE_RE =
-  /^\s*(?:(?:mon|tue|wed|thu|fri|sat|sun)[a-z]*\b[\s,]+)?(?:\d{4}[-/.]\d{1,2}[-/.]\d{1,2}|\d{1,2}[-/.]\d{1,2}[-/.](?:\d{2}|\d{4})|\d{1,2}(?:st|nd|rd|th)?\s+[a-z]+\s+(?:\d{2}|\d{4}))\s*$/i;
+// Date heading. Tolerates a leading/trailing timezone abbreviation (e.g.
+// "ET 25 May", "25 May ET") and a missing year ("25 May") so guides that
+// only label US timings still split into proper date headings instead of
+// leaking the zone label into the next event name.
+const ZONE_ABBR_GROUP =
+  "GMT|UTC|UK|BST|CET|CEST|ET|EST|EDT|CT|CST|CDT|MT|MST|MDT|PT|PST|PDT|AEST|AEDT|JST|IST";
+const DATE_RE = new RegExp(
+  `^\\s*(?:(?:${ZONE_ABBR_GROUP})\\s+)?(?:(?:mon|tue|wed|thu|fri|sat|sun)[a-z]*\\b[\\s,]+)?(?:\\d{4}[-/.]\\d{1,2}[-/.]\\d{1,2}|\\d{1,2}[-/.]\\d{1,2}[-/.](?:\\d{2}|\\d{4})|\\d{1,2}(?:st|nd|rd|th)?\\s+[a-z]+(?:\\s+(?:\\d{2}|\\d{4}))?)(?:\\s+(?:${ZONE_ABBR_GROUP}))?\\s*$`,
+  "i",
+);
 
 const isDateOnlyLine = (s: string) => DATE_RE.test(s.trim());
 

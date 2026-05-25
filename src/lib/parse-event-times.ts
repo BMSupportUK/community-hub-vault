@@ -328,7 +328,16 @@ export function findEventTimes(html: string, viewerTz: string): EventTime[] {
 }
 
 function parseGuideDate(text: string): string | null {
-  const trimmed = text.replace(/\s+/g, " ").trim();
+  // Strip leading/trailing timezone abbreviations (e.g. "ET 25 May 2026",
+  // "25 May 2026 ET") so the date itself can still be parsed when guides
+  // label their headings with a zone instead of (or in addition to) GMT.
+  const trimmed = text
+    .replace(
+      /(^|\s)(?:GMT|UTC|UK|BST|CET|CEST|ET|EST|EDT|CT|CST|CDT|MT|MST|MDT|PT|PST|PDT|AEST|AEDT|JST|IST)(?=\s|$)/gi,
+      " ",
+    )
+    .replace(/\s+/g, " ")
+    .trim();
   const weekdayPrefix = /^(mon|tue|wed|thu|fri|sat|sun)[a-z]*\b[\s,]*/i;
   if (!/\d/.test(trimmed) || trimmed.length >= 80) return null;
   const withoutWeekday = trimmed.replace(weekdayPrefix, "").trim();
@@ -343,7 +352,12 @@ function parseGuideDate(text: string): string | null {
     const year = y.length === 2 ? 2000 + parseInt(y, 10) : parseInt(y, 10);
     return `${year}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`;
   }
-  const named = withoutWeekday.match(/^(\d{1,2})(?:st|nd|rd|th)?\s+([a-z]+)\s+(\d{2}|\d{4})$/i);
+  // Year is optional — bare "25 May" defaults to the current year so guides
+  // that omit it still produce a proper date heading instead of leaking into
+  // the next event's title.
+  const named = withoutWeekday.match(
+    /^(\d{1,2})(?:st|nd|rd|th)?\s+([a-z]+)(?:\s+(\d{2}|\d{4}))?$/i,
+  );
   if (named) {
     const months = [
       "jan",
@@ -362,7 +376,11 @@ function parseGuideDate(text: string): string | null {
     const [, d, mon, y] = named;
     const month = months.findIndex((m) => mon.toLowerCase().startsWith(m)) + 1;
     if (!month) return null;
-    const year = y.length === 2 ? 2000 + parseInt(y, 10) : parseInt(y, 10);
+    const year = !y
+      ? new Date().getUTCFullYear()
+      : y.length === 2
+        ? 2000 + parseInt(y, 10)
+        : parseInt(y, 10);
     return `${year}-${String(month).padStart(2, "0")}-${d.padStart(2, "0")}`;
   }
   return null;
@@ -371,7 +389,7 @@ function parseGuideDate(text: string): string | null {
 function parseLeadingGuideDate(text: string): { dateStr: string; sourceDateLabel: string } | null {
   const trimmed = text.replace(/\s+/g, " ").trim();
   const leading = trimmed.match(
-    /^((?:(?:mon|tue|wed|thu|fri|sat|sun)[a-z]*\b[\s,]+)?(?:\d{4}[-/.]\d{1,2}[-/.]\d{1,2}|\d{1,2}[-/.]\d{1,2}[-/.](?:\d{2}|\d{4})|\d{1,2}(?:st|nd|rd|th)?\s+[a-z]+\s+(?:\d{2}|\d{4})))(?=\s+\d{1,2}(?:[:.]\d{2})?\s*(?:am|pm|a\.m\.|p\.m\.)?\b)/i,
+    /^((?:(?:GMT|UTC|UK|BST|CET|CEST|ET|EST|EDT|CT|CST|CDT|MT|MST|MDT|PT|PST|PDT|AEST|AEDT|JST|IST)\s+)?(?:(?:mon|tue|wed|thu|fri|sat|sun)[a-z]*\b[\s,]+)?(?:\d{4}[-/.]\d{1,2}[-/.]\d{1,2}|\d{1,2}[-/.]\d{1,2}[-/.](?:\d{2}|\d{4})|\d{1,2}(?:st|nd|rd|th)?\s+[a-z]+(?:\s+(?:\d{2}|\d{4}))?))(?=\s+\d{1,2}(?:[:.]\d{2})?\s*(?:am|pm|a\.m\.|p\.m\.)?\b)/i,
   )?.[1];
   if (!leading) return null;
   const hasWeekday = /^(mon|tue|wed|thu|fri|sat|sun)[a-z]*\b/i.test(leading);
