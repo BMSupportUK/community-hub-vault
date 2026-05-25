@@ -413,7 +413,7 @@ function WelcomePage() {
                 {/* Text area */}
                 <div className="p-5 flex flex-col items-center gap-3 min-h-[230px]">
                   <h3 className="font-display font-bold text-center text-base leading-tight text-foreground">
-                    The Next Big Event on BM Support
+                    Upcoming Events On BM Support
                   </h3>
                   {event?.body ? (
                     <div
