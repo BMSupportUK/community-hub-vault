@@ -131,6 +131,7 @@ export function ChannelColumn({
   };
 
   return (
+    <>
     <nav className={cn(
       "w-60 bg-surface flex-col",
       inSheet
