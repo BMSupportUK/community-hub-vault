@@ -1695,6 +1695,8 @@ const STATUS_COLOR: Record<string, string> = {
 
 function OrdersView({ selectedId, isAdmin, adminUnlocked, initialScope }: { selectedId?: string; isAdmin: boolean; adminUnlocked: boolean; initialScope: "mine" | "all" }) {
   const [orders, setOrders] = useState<Order[]>([]);
+  const [cryptoOrderIds, setCryptoOrderIds] = useState<Set<string>>(new Set());
+  const [cryptoPendingIds, setCryptoPendingIds] = useState<Set<string>>(new Set());
   const [scope, setScope] = useState<"mine" | "all">(isAdmin && adminUnlocked ? initialScope : "mine");
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -1703,7 +1705,27 @@ function OrdersView({ selectedId, isAdmin, adminUnlocked, initialScope }: { sele
     let q = supabase.from("orders").select("*").order("created_at", { ascending: false });
     if ((scope === "mine" || !adminUnlocked) && user) q = q.eq("user_id", user.id);
     const { data } = await q;
-    setOrders((data ?? []) as Order[]);
+    const rows = (data ?? []) as Order[];
+    setOrders(rows);
+    if (rows.length > 0) {
+      const ids = rows.map((o) => o.id);
+      const { data: pays } = await supabase
+        .from("order_payments")
+        .select("order_id,provider,status")
+        .in("order_id", ids)
+        .eq("provider", "nowpayments");
+      const all = new Set<string>();
+      const pending = new Set<string>();
+      (pays ?? []).forEach((p: any) => {
+        all.add(p.order_id);
+        if (!["finished", "superseded"].includes(String(p.status))) pending.add(p.order_id);
+      });
+      setCryptoOrderIds(all);
+      setCryptoPendingIds(pending);
+    } else {
+      setCryptoOrderIds(new Set());
+      setCryptoPendingIds(new Set());
+    }
   };
   useEffect(() => { if (isAdmin && adminUnlocked) setScope(initialScope); }, [isAdmin, adminUnlocked, initialScope]);
   useEffect(() => { if (!adminUnlocked && scope === "all") setScope("mine"); }, [adminUnlocked, scope]);
@@ -1742,7 +1764,22 @@ function OrdersView({ selectedId, isAdmin, adminUnlocked, initialScope }: { sele
               className={cn("w-full text-left p-3 rounded-lg transition", selectedId === o.id ? "bg-surface-2" : "hover:bg-surface-2/60")}>
               <div className="flex items-center justify-between mb-1">
                 <span className="font-mono text-[10px] text-muted-foreground">#{o.id.slice(0, 8)}</span>
-                <span className={cn("text-[10px] px-1.5 py-0.5 rounded font-medium", STATUS_COLOR[o.status] ?? "bg-surface-2")}>{o.status}</span>
+                <div className="flex items-center gap-1">
+                  {cryptoOrderIds.has(o.id) && (
+                    <span
+                      title={cryptoPendingIds.has(o.id) ? "Crypto invoice created (awaiting payment)" : "Paid via crypto"}
+                      className={cn(
+                        "text-[10px] px-1.5 py-0.5 rounded font-medium",
+                        cryptoPendingIds.has(o.id)
+                          ? "bg-amber-500/15 text-amber-500"
+                          : "bg-success/10 text-success",
+                      )}
+                    >
+                      ₿
+                    </span>
+                  )}
+                  <span className={cn("text-[10px] px-1.5 py-0.5 rounded font-medium", STATUS_COLOR[o.status] ?? "bg-surface-2")}>{o.status}</span>
+                </div>
               </div>
               <div className="font-display font-bold text-sm">{fmt(o.total_cents)}</div>
               <div className="text-[10px] text-muted-foreground mt-0.5">{new Date(o.created_at).toLocaleDateString()}</div>
