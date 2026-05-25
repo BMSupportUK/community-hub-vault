@@ -40,6 +40,90 @@ const DEFAULT_BODY_TEMPLATE =
   "<div>Home Team vs Away Team</div>" +
   "<div>Premier Sports 1</div>";
 
+const escapeHtml = (s: string) =>
+  s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+// Detect a leading time (optionally followed by zone). Captures: timeStr, rest.
+const LEADING_TIME_RE =
+  /^\s*(\d{1,2}(?::\d{2})?\s*(?:am|pm|a\.m\.|p\.m\.)?\s*(?:GMT|UTC|UK|BST|CET|CEST|ET|EST|EDT|CT|CST|CDT|MT|MST|MDT|PT|PST|PDT|AEST|AEDT|JST|IST)?)\s*[-–—:|·•]?\s*(.*)$/i;
+
+const DATE_RE =
+  /^\s*(?:(?:mon|tue|wed|thu|fri|sat|sun)[a-z]*\b[\s,]+)?(?:\d{4}[-/.]\d{1,2}[-/.]\d{1,2}|\d{1,2}[-/.]\d{1,2}[-/.](?:\d{2}|\d{4})|\d{1,2}(?:st|nd|rd|th)?\s+[a-z]+\s+(?:\d{2}|\d{4}))\s*$/i;
+
+const isDateOnlyLine = (s: string) => DATE_RE.test(s.trim());
+
+const isTimeOnlyLine = (s: string) =>
+  /^\s*\d{1,2}(?::\d{2})?\s*(?:am|pm|a\.m\.|p\.m\.)?\s*(?:GMT|UTC|UK|BST|CET|CEST|ET|EST|EDT|CT|CST|CDT|MT|MST|MDT|PT|PST|PDT|AEST|AEDT|JST|IST)?\s*$/i.test(
+    s,
+  );
+
+/**
+ * Normalize pasted sports-guide text into the per-event block layout the
+ * card renderer expects:
+ *   <div>{date heading}</div>
+ *   <div></div>
+ *   <div>{time + zone}</div>
+ *   <div>{event name}</div>
+ *   <div>{channels}</div>
+ *   <div></div>
+ *   ...next event
+ */
+function normalizeSportsGuidePaste(text: string): string {
+  const rawLines = text.replace(/\r\n?/g, "\n").split("\n");
+  const lines = rawLines.map((l) => l.replace(/\s+/g, " ").trim()).filter(Boolean);
+  const out: string[] = [];
+  const push = (s: string) =>
+    out.push(s ? `<div>${escapeHtml(s)}</div>` : "<div><br></div>");
+
+  let lastWasEventBlock = false;
+
+  for (const line of lines) {
+    if (isDateOnlyLine(line)) {
+      if (lastWasEventBlock) push("");
+      push(line);
+      push("");
+      lastWasEventBlock = false;
+      continue;
+    }
+
+    // Already a clean time-only line → start of an event block as-is.
+    if (isTimeOnlyLine(line)) {
+      if (lastWasEventBlock) push("");
+      push(line);
+      lastWasEventBlock = true;
+      continue;
+    }
+
+    // Line starts with a time + extra content → split into time / rest.
+    const m = line.match(LEADING_TIME_RE);
+    if (m && m[1] && m[2]) {
+      if (lastWasEventBlock) push("");
+      push(m[1].trim());
+      // Try to split "Event - Channels" or "Event | Channels".
+      const rest = m[2].trim();
+      const splitIdx = rest.search(/\s+[-–—]\s+|\s*:\s+/);
+      if (splitIdx >= 0) {
+        const evt = rest.slice(0, splitIdx).trim();
+        const ch = rest.slice(splitIdx).replace(/^[\s\-–—:]+/, "").trim();
+        if (evt) push(evt);
+        if (ch) push(ch);
+      } else {
+        push(rest);
+      }
+      lastWasEventBlock = true;
+      continue;
+    }
+
+    // Continuation line (event name or channels) — just append.
+    push(line);
+    lastWasEventBlock = true;
+  }
+
+  // Trailing blank line so the next paste/typed event starts cleanly.
+  if (lastWasEventBlock) push("");
+  return out.join("");
+}
+
 export function SportsGuideEditor({ blogId }: { blogId?: string }) {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -299,6 +383,7 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
                 value={editing.body ?? ""}
                 onChange={(html) => setEditing({ ...editing, body: html })}
                 placeholder="Saturday 1 January 2026\n\n19:45 GMT\nHome vs Away\nSky Sports Main Event"
+                pasteTransform={normalizeSportsGuidePaste}
               />
             </div>
             <label className="flex items-center gap-2 text-sm text-purple-100">
