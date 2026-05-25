@@ -79,11 +79,11 @@ function Landing() {
           </div>
         </section>
 
-        <div className="relative max-w-7xl w-full mx-auto -mt-6 md:-mt-7 px-10 md:px-14 grid grid-cols-1 sm:grid-cols-3 gap-3 z-10 flex-1 items-stretch">
+        <div className="relative max-w-7xl w-full mx-auto -mt-6 md:-mt-7 px-10 md:px-14 grid grid-cols-1 sm:grid-cols-3 gap-3 z-10 items-stretch">
           {boxes.map((b) => (
             <div
               key={b.id}
-              className="group relative flex items-center gap-4 p-5 rounded-2xl border border-red-400/30 backdrop-blur-md shadow-[0_12px_50px_rgba(127,29,29,0.5)] hover:border-red-300/60 transition-all h-full"
+              className="group relative flex items-center gap-4 p-4 rounded-2xl border border-red-400/30 backdrop-blur-md shadow-[0_12px_50px_rgba(127,29,29,0.5)] hover:border-red-300/60 transition-all"
               style={{
                 background:
                   "linear-gradient(135deg, rgba(127,29,29,0.9) 0%, rgba(69,10,10,0.9) 100%)",
