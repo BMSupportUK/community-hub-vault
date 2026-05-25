@@ -664,18 +664,16 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
           caption = caption ? `${caption} · ${line}` : line;
         }
       }
-    } else if (extraLines.length) {
-      // Heuristic: short lines with no sentence punctuation are channel names,
-      // not descriptive captions. Promote them to the channel chip list so they
-      // render with the bordered chip styling.
+    }
+    // Heuristic: short extra lines with no sentence punctuation are channel
+    // names, not descriptive captions. Collected here and merged into the
+    // channel chip list below so they render with bordered chip styling.
+    const extraChannelLines: string[] = [];
+    if (!groupedChannels && extraLines.length) {
       const looksLikeChannel = (s: string) =>
         s.length > 0 && s.length <= 60 && !/[.!?]\s|,\s/.test(s);
       if (extraLines.every(looksLikeChannel)) {
-        const merged = [
-          ...(channel ? channel.split(/\s*\|\s*/).filter(Boolean) : []),
-          ...extraLines,
-        ];
-        channel = merged.join(" | ");
+        extraChannelLines.push(...extraLines);
       } else {
         const extras = extraLines.join(" · ");
         if (extras) caption = caption ? `${caption} · ${extras}` : extras;
@@ -729,6 +727,10 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
         channel = channels.join(" | ");
         titleText = splitMatch[2].trim();
       }
+    }
+    if (extraChannelLines.length) {
+      const existing = channel ? channel.split(/\s*\|\s*/).filter(Boolean) : [];
+      channel = [...existing, ...extraChannelLines].join(" | ");
     }
     const nameEl = document.createElement("div");
     nameEl.className =
