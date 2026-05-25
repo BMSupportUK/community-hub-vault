@@ -180,7 +180,7 @@ function StaffPage() {
               <TabsContent key={role} value={role} className="mt-6">
                 <section>
                   <div
-                    className="relative mb-4 h-32 sm:h-40 rounded-2xl overflow-hidden border border-purple-500/30 bg-purple-950/80"
+                    className="relative mb-4 w-full aspect-[15/4] rounded-2xl overflow-hidden border border-purple-500/30 bg-purple-950/80"
                     aria-hidden
                   >
                     <img
