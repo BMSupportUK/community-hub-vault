@@ -54,6 +54,21 @@ const LEADING_TIME_RE =
 // leaking the zone label into the next event name.
 const ZONE_ABBR_GROUP =
   "GMT|UTC|UK|BST|CET|CEST|ET|EST|EDT|CT|CST|CDT|MT|MST|MDT|PT|PST|PDT|AEST|AEDT|JST|IST";
+
+// Rewrite lines that put the timezone BEFORE the time (e.g.
+// "ET 7:00 PM Event - Channel" or "ET 19:45") into the canonical
+// "<time> <zone> ..." shape so the rest of the normalizer treats them
+// as proper event time rows.
+const LEADING_ZONE_TIME_LINE_RE = new RegExp(
+  `^(\\s*)(${ZONE_ABBR_GROUP})\\s+(\\d{1,2}(?:[:.]\\d{2})?\\s*(?:am|pm|a\\.m\\.|p\\.m\\.)?)(\\b.*)$`,
+  "i",
+);
+function moveLeadingZoneToTrailing(line: string): string {
+  const m = line.match(LEADING_ZONE_TIME_LINE_RE);
+  if (!m) return line;
+  const [, pre, zone, time, rest] = m;
+  return `${pre}${time} ${zone}${rest}`;
+}
 const DATE_RE = new RegExp(
   `^\\s*(?:(?:${ZONE_ABBR_GROUP})\\s+)?(?:(?:mon|tue|wed|thu|fri|sat|sun)[a-z]*\\b[\\s,]+)?(?:\\d{4}[-/.]\\d{1,2}[-/.]\\d{1,2}|\\d{1,2}[-/.]\\d{1,2}[-/.](?:\\d{2}|\\d{4})|\\d{1,2}(?:st|nd|rd|th)?\\s+[a-z]+(?:\\s+(?:\\d{2}|\\d{4}))?)(?:\\s+(?:${ZONE_ABBR_GROUP}))?\\s*$`,
   "i",

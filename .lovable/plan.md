@@ -1,10 +1,7 @@
-## Plan: Remove empty space and enlarge boxes to fit one screen
+I’ll fix the sports guide card parser so ET works whether the source writes the timezone before or after the time.
 
-Reclaim the purple void between the feature boxes and the footer by letting `<main>` distribute its space and growing the boxes to fill it.
-
-### Changes in `src/routes/index.tsx`
-
-1. **Distribute vertical space in `<main>`** — add `gap-4` and let the boxes row use `flex-1` so it expands to fill the remaining height instead of leaving a gap.
-2. **Make the boxes bigger** — boxes row: `flex-1 items-stretch`. Each card: `p-5`, icon `size-14`, title `text-base`, description `text-sm`, content vertically centered so the taller card looks intentional.
-3. **Keep the small `-mt-3` blended overlap** with the hero.
-4. **Verify** on the 954×853 viewport via screenshot — confirm no scrollbar and cards fill cleanly.
+Plan:
+1. Update the sports guide paste normalizer to recognize time lines like `ET 7:00 PM`, `ET 19:45`, `7:00 PM ET`, and `19:45 ET` as valid event time rows.
+2. Update the card rendering parser to detect leading timezone times, not just trailing timezone times, so one ET-only event does not get swallowed into the event title/channel text or break the card layout.
+3. Keep existing GMT/default handling unchanged, including Flosports titles defaulting to ET when no timezone is shown.
+4. Add a small local verification script/check for the exact cases: `ET 7:00 PM`, `7:00 PM ET`, `19:45 ET`, date heading plus ET event, and mixed GMT/ET events in one guide.
