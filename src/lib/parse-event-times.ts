@@ -657,8 +657,20 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
     if (channel) {
       const chanWrap = document.createElement("div");
       chanWrap.className =
-        "mt-2 min-w-0 break-words text-xs md:text-sm font-semibold tracking-wide text-fuchsia-100";
-      chanWrap.textContent = channel;
+        "mt-2 min-w-0 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs md:text-sm font-semibold tracking-wide text-fuchsia-100";
+      const chanParts = channel.split(/\s*\|\s*/).filter(Boolean);
+      chanParts.forEach((part, idx) => {
+        if (idx > 0) {
+          const divider = document.createElement("span");
+          divider.className = "inline-block h-3 w-px bg-fuchsia-300/40";
+          divider.setAttribute("aria-hidden", "true");
+          chanWrap.appendChild(divider);
+        }
+        const chip = document.createElement("span");
+        chip.className = "break-words";
+        chip.textContent = part;
+        chanWrap.appendChild(chip);
+      });
       nameCell.appendChild(chanWrap);
     }
     if (caption) {
