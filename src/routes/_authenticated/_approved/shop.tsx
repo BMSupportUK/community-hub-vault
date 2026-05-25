@@ -2083,10 +2083,17 @@ function OrderDetail({ orderId, isAdmin, onBack }: { orderId: string; isAdmin: b
                   <span className="ml-1 font-mono text-[11px] opacity-80">· {paidMethodLabel}</span>
                 )}
               </button>
-              <button onClick={settingUpAccount} disabled={busy || !!order.completed_at || order.status === "cancelled"}
-                className="px-2.5 py-1 rounded-md bg-blue-500/15 text-blue-500 text-xs font-medium flex items-center gap-1 hover:bg-blue-500/25 disabled:opacity-50">
-                <Wrench className="size-3.5" /> Setting Up Account
-              </button>
+              {order.customer_type === "existing" ? (
+                <button onClick={extendSubscription} disabled={busy || !!order.completed_at || order.status === "cancelled"}
+                  className="px-2.5 py-1 rounded-md bg-violet-500/15 text-violet-500 text-xs font-medium flex items-center gap-1 hover:bg-violet-500/25 disabled:opacity-50">
+                  <Wrench className="size-3.5" /> Extend Subscription
+                </button>
+              ) : (
+                <button onClick={settingUpAccount} disabled={busy || !!order.completed_at || order.status === "cancelled"}
+                  className="px-2.5 py-1 rounded-md bg-blue-500/15 text-blue-500 text-xs font-medium flex items-center gap-1 hover:bg-blue-500/25 disabled:opacity-50">
+                  <Wrench className="size-3.5" /> Setting Up Account
+                </button>
+              )}
               <button onClick={completeSale} disabled={busy || !!order.completed_at}
                 className="px-2.5 py-1 rounded-md bg-primary/15 text-primary text-xs font-medium flex items-center gap-1 hover:bg-primary/25 disabled:opacity-50">
                 <CheckCircle2 className="size-3.5" /> {order.completed_at ? "Completed" : "Sale Complete"}
