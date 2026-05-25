@@ -44,8 +44,9 @@ const escapeHtml = (s: string) =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
 // Detect a leading time (optionally followed by zone). Captures: timeStr, rest.
+// Accept both 10:30 GMT and common pasted listings like 10.30 GMT.
 const LEADING_TIME_RE =
-  /^\s*(\d{1,2}(?::\d{2})?\s*(?:am|pm|a\.m\.|p\.m\.)?\s*(?:GMT|UTC|UK|BST|CET|CEST|ET|EST|EDT|CT|CST|CDT|MT|MST|MDT|PT|PST|PDT|AEST|AEDT|JST|IST)?)\s*[-–—:|·•]?\s*(.*)$/i;
+  /^\s*(\d{1,2}(?:[:.]\d{2})?\s*(?:am|pm|a\.m\.|p\.m\.)?\s*(?:GMT|UTC|UK|BST|CET|CEST|ET|EST|EDT|CT|CST|CDT|MT|MST|MDT|PT|PST|PDT|AEST|AEDT|JST|IST)?)\s*[-–—:|·•]?\s*(.*)$/i;
 
 const DATE_RE =
   /^\s*(?:(?:mon|tue|wed|thu|fri|sat|sun)[a-z]*\b[\s,]+)?(?:\d{4}[-/.]\d{1,2}[-/.]\d{1,2}|\d{1,2}[-/.]\d{1,2}[-/.](?:\d{2}|\d{4})|\d{1,2}(?:st|nd|rd|th)?\s+[a-z]+\s+(?:\d{2}|\d{4}))\s*$/i;
@@ -53,7 +54,7 @@ const DATE_RE =
 const isDateOnlyLine = (s: string) => DATE_RE.test(s.trim());
 
 const isTimeOnlyLine = (s: string) =>
-  /^\s*\d{1,2}(?::\d{2})?\s*(?:am|pm|a\.m\.|p\.m\.)?\s*(?:GMT|UTC|UK|BST|CET|CEST|ET|EST|EDT|CT|CST|CDT|MT|MST|MDT|PT|PST|PDT|AEST|AEDT|JST|IST)?\s*$/i.test(
+  /^\s*\d{1,2}(?:[:.]\d{2})?\s*(?:am|pm|a\.m\.|p\.m\.)?\s*(?:GMT|UTC|UK|BST|CET|CEST|ET|EST|EDT|CT|CST|CDT|MT|MST|MDT|PT|PST|PDT|AEST|AEDT|JST|IST)?\s*$/i.test(
     s,
   );
 
@@ -89,7 +90,7 @@ function normalizeSportsGuidePaste(text: string): string {
     // Already a clean time-only line → start of an event block as-is.
     if (isTimeOnlyLine(line)) {
       if (lastWasEventBlock) push("");
-      push(line);
+      push(line.replace(/^(\s*\d{1,2})\.(\d{2}\b)/, "$1:$2"));
       lastWasEventBlock = true;
       continue;
     }
@@ -98,7 +99,7 @@ function normalizeSportsGuidePaste(text: string): string {
     const m = line.match(LEADING_TIME_RE);
     if (m && m[1] && m[2]) {
       if (lastWasEventBlock) push("");
-      push(m[1].trim());
+      push(m[1].trim().replace(/^(\d{1,2})\.(\d{2}\b)/, "$1:$2"));
       // Try to split "Event - Channels" or "Event | Channels".
       const rest = m[2].trim();
       const splitIdx = rest.search(/\s+[-–—]\s+|\s*:\s+/);

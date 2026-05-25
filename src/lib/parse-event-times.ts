@@ -31,15 +31,15 @@ const ZONE_MAP: Record<string, string> = {
 const ZONE_TOKENS = Object.keys(ZONE_MAP)
   .sort((a, b) => b.length - a.length)
   .join("|");
-// Matches: "19:45 GMT", "7:30pm ET", "8 pm CET", "20:00 UTC+1", "9am GMT-05:30"
+// Matches: "19:45 GMT", "10.30 GMT", "7:30pm ET", "8 pm CET", "20:00 UTC+1", "9am GMT-05:30"
 const TIME_RE = new RegExp(
-  `\\b(\\d{1,2})(?::(\\d{2}))?\\s*(am|pm|a\\.m\\.|p\\.m\\.)?\\s*(?:(${ZONE_TOKENS})|(?:(UTC|GMT)\\s*([+-])\\s*(\\d{1,2})(?::?(\\d{2}))?))\\b`,
+  `\\b(\\d{1,2})(?:[:.](\\d{2}))?\\s*(am|pm|a\\.m\\.|p\\.m\\.)?\\s*(?:(${ZONE_TOKENS})|(?:(UTC|GMT)\\s*([+-])\\s*(\\d{1,2})(?::?(\\d{2}))?))\\b`,
   "gi",
 );
 // Bare time without an explicit zone (e.g. "19:45", "7:30pm", "8 pm").
 // Used when caller specifies a defaultZone (e.g. sports guide is always GMT).
 const BARE_TIME_RE = new RegExp(
-  `\\b(\\d{1,2})(?::(\\d{2}))?\\s*(am|pm|a\\.m\\.|p\\.m\\.)?\\b`,
+  `\\b(\\d{1,2})(?:[:.](\\d{2}))?\\s*(am|pm|a\\.m\\.|p\\.m\\.)?\\b`,
   "gi",
 );
 
@@ -371,7 +371,7 @@ function parseGuideDate(text: string): string | null {
 function parseLeadingGuideDate(text: string): { dateStr: string; sourceDateLabel: string } | null {
   const trimmed = text.replace(/\s+/g, " ").trim();
   const leading = trimmed.match(
-    /^((?:(?:mon|tue|wed|thu|fri|sat|sun)[a-z]*\b[\s,]+)?(?:\d{4}[-/.]\d{1,2}[-/.]\d{1,2}|\d{1,2}[-/.]\d{1,2}[-/.](?:\d{2}|\d{4})|\d{1,2}(?:st|nd|rd|th)?\s+[a-z]+\s+(?:\d{2}|\d{4})))(?=\s+\d{1,2}(?::\d{2})?\s*(?:am|pm|a\.m\.|p\.m\.)?\b)/i,
+    /^((?:(?:mon|tue|wed|thu|fri|sat|sun)[a-z]*\b[\s,]+)?(?:\d{4}[-/.]\d{1,2}[-/.]\d{1,2}|\d{1,2}[-/.]\d{1,2}[-/.](?:\d{2}|\d{4})|\d{1,2}(?:st|nd|rd|th)?\s+[a-z]+\s+(?:\d{2}|\d{4})))(?=\s+\d{1,2}(?:[:.]\d{2})?\s*(?:am|pm|a\.m\.|p\.m\.)?\b)/i,
   )?.[1];
   if (!leading) return null;
   const hasWeekday = /^(mon|tue|wed|thu|fri|sat|sun)[a-z]*\b/i.test(leading);
