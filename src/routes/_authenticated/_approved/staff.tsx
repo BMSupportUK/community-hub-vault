@@ -180,10 +180,15 @@ function StaffPage() {
               <TabsContent key={role} value={role} className="mt-6">
                 <section>
                   <div
-                    className="relative mb-4 h-32 sm:h-40 rounded-2xl overflow-hidden border border-purple-500/30 bg-cover"
-                    style={{ backgroundImage: `url(${ROLE_HEADER[role]})`, backgroundPosition: "center 25%" }}
+                    className="relative mb-4 h-32 sm:h-40 rounded-2xl overflow-hidden border border-purple-500/30 bg-purple-950/80"
                     aria-hidden
                   >
+                    <img
+                      src={ROLE_HEADER[role]}
+                      alt=""
+                      className="absolute inset-0 h-full w-full object-contain object-center"
+                      decoding="async"
+                    />
                     <div className="absolute inset-0 bg-gradient-to-r from-purple-950/90 via-purple-950/40 to-transparent" />
                     <div className="absolute inset-0 flex items-center gap-3 px-5">
                       <h2 className="font-display text-2xl sm:text-3xl font-bold text-white drop-shadow-lg">
@@ -232,11 +237,15 @@ function StaffPage() {
                           key={p.id}
                           className="group rounded-2xl bg-purple-950/50 border border-purple-500/30 hover:border-fuchsia-400/70 hover:shadow-[0_0_30px_-10px_rgba(217,70,239,0.6)] transition-all overflow-hidden flex flex-col backdrop-blur"
                         >
-                          <div
-                            className="h-16 bg-cover"
-                            style={{ backgroundImage: `url(${ROLE_HEADER[role] ?? profileHeader})`, backgroundPosition: "center 25%" }}
-                            aria-hidden
-                          />
+                          <div className="relative h-16 bg-purple-950/80" aria-hidden>
+                            <img
+                              src={ROLE_HEADER[role] ?? profileHeader}
+                              alt=""
+                              className="h-full w-full object-contain object-center"
+                              loading="lazy"
+                              decoding="async"
+                            />
+                          </div>
                           <div className="px-4 -mt-8 pb-4 flex flex-col flex-1">
                             <div className="relative w-fit">
                               {p.avatar_url ? (
