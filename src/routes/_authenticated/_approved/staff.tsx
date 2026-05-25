@@ -186,7 +186,7 @@ function StaffPage() {
                     <img
                       src={ROLE_HEADER[role]}
                       alt=""
-                      className="absolute inset-0 h-full w-full object-contain object-center"
+                      className="absolute inset-0 h-full w-full object-cover object-center"
                       decoding="async"
                     />
                     <div className="absolute inset-0 bg-gradient-to-r from-purple-950/90 via-purple-950/40 to-transparent" />
@@ -237,11 +237,11 @@ function StaffPage() {
                           key={p.id}
                           className="group rounded-2xl bg-purple-950/50 border border-purple-500/30 hover:border-fuchsia-400/70 hover:shadow-[0_0_30px_-10px_rgba(217,70,239,0.6)] transition-all overflow-hidden flex flex-col backdrop-blur"
                         >
-                          <div className="relative h-16 bg-purple-950/80" aria-hidden>
+                          <div className="relative h-16 bg-purple-950/80 overflow-hidden" aria-hidden>
                             <img
                               src={ROLE_HEADER[role] ?? profileHeader}
                               alt=""
-                              className="h-full w-full object-contain object-center"
+                              className="h-full w-full object-cover object-center"
                               loading="lazy"
                               decoding="async"
                             />
