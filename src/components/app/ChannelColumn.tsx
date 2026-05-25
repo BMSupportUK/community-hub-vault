@@ -1,5 +1,5 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
-import { Hash, ChevronDown, Plus, Trash2, Shield, Smile, Pencil, ChevronUp, LogOut } from "lucide-react";
+import { Hash, ChevronDown, Plus, Trash2, Shield, Smile, Pencil, ChevronUp, LogOut, Settings } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useBusinessOpen } from "@/hooks/use-business-open";
 import { cn } from "@/lib/utils";
@@ -12,6 +12,7 @@ import { MentionsBadge } from "@/components/app/MentionsBadge";
 import { NotificationBell } from "@/components/app/NotificationBell";
 import { UserAvatarMenu } from "@/components/app/UserAvatarMenu";
 import { MyWorkingStatus } from "@/components/app/MyWorkingStatus";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 export interface ChannelGroup {
   label: string;
@@ -72,6 +73,11 @@ export function ChannelColumn({
   } | null>(null);
   const [dragChan, setDragChan] = useState<{ id: string; group: string } | null>(null);
   const [overChan, setOverChan] = useState<string | null>(null);
+  const [settings, setSettings] = useState<
+    | { type: "group"; group: ChannelGroup }
+    | { type: "item"; group: ChannelGroup; itemTo: string; itemLabel: string }
+    | null
+  >(null);
 
   useEffect(() => {
     if (!user) return;
@@ -125,6 +131,7 @@ export function ChannelColumn({
   };
 
   return (
+    <>
     <nav className={cn(
       "w-60 bg-surface flex-col",
       inSheet
@@ -215,40 +222,16 @@ export function ChannelColumn({
                           <Plus className="size-3.5" />
                         </button>
                       )}
-                      {g.onRenameGroup && (
+                      {(g.onRenameGroup ||
+                        g.onEditGroupIcon ||
+                        g.onEditGroupPerms ||
+                        g.onDeleteGroup) && (
                         <button
-                          onClick={g.onRenameGroup}
-                          title="Rename category"
+                          onClick={() => setSettings({ type: "group", group: g })}
+                          title="Category settings"
                           className="hover:text-foreground p-0.5"
                         >
-                          <Pencil className="size-3.5" />
-                        </button>
-                      )}
-                      {g.onEditGroupIcon && (
-                        <button
-                          onClick={g.onEditGroupIcon}
-                          title="Change category icon"
-                          className="hover:text-foreground p-0.5"
-                        >
-                          <Smile className="size-3.5" />
-                        </button>
-                      )}
-                      {g.onEditGroupPerms && (
-                        <button
-                          onClick={g.onEditGroupPerms}
-                          title="Category permissions"
-                          className="hover:text-primary p-0.5"
-                        >
-                          <Shield className="size-3.5" />
-                        </button>
-                      )}
-                      {g.onDeleteGroup && (
-                        <button
-                          onClick={g.onDeleteGroup}
-                          title="Delete category"
-                          className="hover:text-destructive p-0.5"
-                        >
-                          <Trash2 className="size-3.5" />
+                          <Settings className="size-3.5" />
                         </button>
                       )}
                     </div>
@@ -344,56 +327,21 @@ export function ChannelColumn({
                           g.onEditItemPerms ||
                           g.onEditItemIcon ||
                           g.onRenameItem) && (
-                          <div className="flex items-center gap-1 pl-6 pr-2 pb-1 -mt-0.5 text-muted-foreground">
-                            {g.onRenameItem && (
-                              <button
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  g.onRenameItem!(it.to);
-                                }}
-                                title="Rename channel"
-                                className="hover:text-foreground p-1"
-                              >
-                                <Pencil className="size-3.5" />
-                              </button>
-                            )}
-                            {g.onEditItemIcon && (
-                              <button
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  g.onEditItemIcon!(it.to);
-                                }}
-                                title="Change channel icon"
-                                className="hover:text-foreground p-1"
-                              >
-                                <Smile className="size-3.5" />
-                              </button>
-                            )}
-                            {g.onEditItemPerms && (
-                              <button
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  g.onEditItemPerms!(it.to);
-                                }}
-                                title="Channel permissions"
-                                className="hover:text-primary p-1"
-                              >
-                                <Shield className="size-3.5" />
-                              </button>
-                            )}
-                            {g.onDeleteItem && (
-                              <button
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  g.onDeleteItem!(it.to);
-                                }}
-                                title="Delete channel"
-                                className="hover:text-destructive p-1"
-                              >
-                                <Trash2 className="size-3.5" />
-                              </button>
-                            )}
-                          </div>
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              setSettings({
+                                type: "item",
+                                group: g,
+                                itemTo: it.to,
+                                itemLabel: it.label,
+                              });
+                            }}
+                            title="Channel settings"
+                            className="absolute right-1 top-1/2 -translate-y-1/2 hidden group-hover/ch:flex items-center justify-center p-1 rounded hover:bg-surface-2 text-muted-foreground hover:text-foreground"
+                          >
+                            <Settings className="size-3.5" />
+                          </button>
                         )}
                       </div>
                     );
@@ -445,5 +393,58 @@ export function ChannelColumn({
         </div>
       )}
     </nav>
+    {settings && (() => {
+      const isGroup = settings.type === "group";
+      const g = settings.group;
+      const close = () => setSettings(null);
+      const run = (fn?: () => void) => { if (fn) { fn(); close(); } };
+      const runItem = (fn?: (to: string) => void) => {
+        if (fn && settings.type === "item") { fn(settings.itemTo); close(); }
+      };
+      const title = isGroup
+        ? `Category: ${g.label}`
+        : `Channel: ${settings.type === "item" ? settings.itemLabel : ""}`;
+      const Btn = ({ onClick, icon: Icon, label, danger }: { onClick: () => void; icon: typeof Pencil; label: string; danger?: boolean }) => (
+        <button
+          onClick={onClick}
+          className={cn(
+            "w-full flex items-center gap-3 px-3 py-2.5 rounded-md border border-border text-sm font-medium transition-colors",
+            danger
+              ? "hover:bg-destructive/10 hover:text-destructive hover:border-destructive/40"
+              : "hover:bg-surface-2 hover:text-foreground",
+          )}
+        >
+          <Icon className="size-4" />
+          <span>{label}</span>
+        </button>
+      );
+      return (
+        <Dialog open onOpenChange={(o) => { if (!o) close(); }}>
+          <DialogContent className="sm:max-w-sm">
+            <DialogHeader>
+              <DialogTitle>{title}</DialogTitle>
+            </DialogHeader>
+            <div className="grid gap-2 pt-1">
+              {isGroup ? (
+                <>
+                  {g.onRenameGroup && <Btn onClick={() => run(g.onRenameGroup)} icon={Pencil} label="Rename category" />}
+                  {g.onEditGroupIcon && <Btn onClick={() => run(g.onEditGroupIcon)} icon={Smile} label="Change icon" />}
+                  {g.onEditGroupPerms && <Btn onClick={() => run(g.onEditGroupPerms)} icon={Shield} label="Permissions" />}
+                  {g.onDeleteGroup && <Btn onClick={() => run(g.onDeleteGroup)} icon={Trash2} label="Delete category" danger />}
+                </>
+              ) : (
+                <>
+                  {g.onRenameItem && <Btn onClick={() => runItem(g.onRenameItem)} icon={Pencil} label="Rename channel" />}
+                  {g.onEditItemIcon && <Btn onClick={() => runItem(g.onEditItemIcon)} icon={Smile} label="Change icon" />}
+                  {g.onEditItemPerms && <Btn onClick={() => runItem(g.onEditItemPerms)} icon={Shield} label="Permissions" />}
+                  {g.onDeleteItem && <Btn onClick={() => runItem(g.onDeleteItem)} icon={Trash2} label="Delete channel" danger />}
+                </>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
+      );
+    })()}
+    </>
   );
 }
