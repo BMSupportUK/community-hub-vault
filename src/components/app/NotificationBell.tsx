@@ -16,6 +16,7 @@ import staffMentionAudio from "@/assets/staff-mention.mp3";
 import orderAudio from "@/assets/order-notify.mp3";
 import ticketAudio from "@/assets/ticket-notify.mp3";
 import newSignupAudio from "@/assets/new-signup-notify.mp3";
+import { playSound } from "@/lib/sound";
 
 type Notif = {
   id: string;
@@ -107,13 +108,7 @@ export function NotificationBell() {
             const isStaffRole = !!token && staffRoles.includes(token);
             const isBroadcast =
               !!token && !isStaffRole && (token === "all" || token === "here" || !staffRoles.includes(token));
-            try {
-              const audio = new Audio(
-                isStaffRole ? staffMentionAudio : isBroadcast ? broadcastAudio : mentionAudio,
-              );
-              audio.volume = 0.9;
-              void audio.play().catch(() => { /* autoplay may be blocked; ignore */ });
-            } catch { /* ignore */ }
+            playSound(isStaffRole ? staffMentionAudio : isBroadcast ? broadcastAudio : mentionAudio, { label: "mention" });
             toast(`📣 ${n.title}`, {
               description: n.body ?? undefined,
               duration: 6000,
@@ -136,18 +131,10 @@ export function NotificationBell() {
           const n = { ...(payload.new as Notif), source: "staff" as const };
           setItems((prev) => [n, ...prev].slice(0, 80));
           if (n.kind === "order_placed" && canManageOrders) {
-            try {
-              const audio = new Audio(orderAudio);
-              audio.volume = 0.9;
-              void audio.play().catch(() => { /* autoplay may be blocked */ });
-            } catch { /* ignore */ }
+            playSound(orderAudio, { label: "order" });
           }
           if (n.kind === "ticket_raised" && canHandleTickets) {
-            try {
-              const audio = new Audio(ticketAudio);
-              audio.volume = 0.9;
-              void audio.play().catch(() => { /* autoplay may be blocked */ });
-            } catch { /* ignore */ }
+            playSound(ticketAudio, { label: "ticket" });
             toast(`🎫 ${n.title}`, {
               description: n.body ?? "A ticket is needing assistance.",
               duration: 8000,
@@ -156,11 +143,7 @@ export function NotificationBell() {
             return;
           }
           if (n.kind === "gate_application" && canApproveSignups) {
-            try {
-              const audio = new Audio(newSignupAudio);
-              audio.volume = 0.9;
-              void audio.play().catch(() => { /* autoplay may be blocked */ });
-            } catch { /* ignore */ }
+            playSound(newSignupAudio, { label: "signup" });
             toast(`👋 ${n.title}`, {
               description: n.body ?? "A new user is requesting access.",
               duration: 8000,
@@ -192,11 +175,7 @@ export function NotificationBell() {
         { event: "INSERT", schema: "public", table: "status_incidents" },
         (payload) => {
           const row = payload.new as { title?: string; description?: string | null };
-          try {
-            const audio = new Audio(outageAudio);
-            audio.volume = 0.9;
-            void audio.play().catch(() => { /* autoplay may be blocked */ });
-          } catch { /* ignore */ }
+          playSound(outageAudio, { label: "outage" });
           toast(`🚨 New outage: ${row.title ?? "Incident reported"}`, {
             description: row.description ?? undefined,
             duration: 8000,
@@ -211,11 +190,7 @@ export function NotificationBell() {
           const newRow = payload.new as { title?: string; status?: string };
           const oldRow = payload.old as { status?: string };
           if (newRow.status === "completed" && oldRow.status !== "completed") {
-            try {
-              const audio = new Audio(outageResolvedAudio);
-              audio.volume = 0.9;
-              void audio.play().catch(() => { /* autoplay may be blocked */ });
-            } catch { /* ignore */ }
+            playSound(outageResolvedAudio, { label: "outage-resolved" });
             toast(`✅ Outage resolved: ${newRow.title ?? "Incident"}`, {
               duration: 8000,
               action: { label: "Open", onClick: () => navigate({ to: "/status" } as never) },

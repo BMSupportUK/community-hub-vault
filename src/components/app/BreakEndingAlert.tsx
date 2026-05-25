@@ -16,6 +16,7 @@ import {
 import { toast } from "sonner";
 import endLunchSfx from "@/assets/end-lunch.mp3";
 import endBreakSfx from "@/assets/end-break.mp3";
+import { playSound } from "@/lib/sound";
 
 type BreakKind = "break" | "lunch";
 const BREAK_LIMITS: Record<BreakKind, number> = { break: 15 * 60, lunch: 30 * 60 };
@@ -39,43 +40,6 @@ export function BreakEndingAlert() {
   const [now, setNow] = useState(() => Date.now());
   const [stage, setStage] = useState<Stage>(null);
   const shownRef = useRef<Record<string, Set<Stage>>>({});
-  const breakAudioRef = useRef<HTMLAudioElement | null>(null);
-  const lunchAudioRef = useRef<HTMLAudioElement | null>(null);
-
-  // Preload audio elements and unlock playback on first user interaction
-  // (browsers block audio.play() that originates from a timer without a prior gesture).
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const brk = new Audio(endBreakSfx);
-    const lun = new Audio(endLunchSfx);
-    brk.preload = "auto";
-    lun.preload = "auto";
-    brk.volume = 1;
-    lun.volume = 1;
-    breakAudioRef.current = brk;
-    lunchAudioRef.current = lun;
-
-    let unlocked = false;
-    const unlock = () => {
-      if (unlocked) return;
-      unlocked = true;
-      [brk, lun].forEach((a) => {
-        a.muted = true;
-        a.play().then(() => { a.pause(); a.currentTime = 0; a.muted = false; }).catch(() => { a.muted = false; });
-      });
-      window.removeEventListener("pointerdown", unlock);
-      window.removeEventListener("keydown", unlock);
-      window.removeEventListener("touchstart", unlock);
-    };
-    window.addEventListener("pointerdown", unlock, { once: false });
-    window.addEventListener("keydown", unlock, { once: false });
-    window.addEventListener("touchstart", unlock, { once: false });
-    return () => {
-      window.removeEventListener("pointerdown", unlock);
-      window.removeEventListener("keydown", unlock);
-      window.removeEventListener("touchstart", unlock);
-    };
-  }, []);
 
   // tick every second while a break is active
   useEffect(() => {
@@ -122,17 +86,9 @@ export function BreakEndingAlert() {
     if (remaining <= 0 && !seen.has("over")) {
       seen.add("over");
       setStage("over");
-      const a = active.kind === "lunch" ? lunchAudioRef.current : breakAudioRef.current;
-      if (a) {
-        try {
-          a.currentTime = 0;
-          a.play().catch((err) => {
-            console.warn("[BreakEndingAlert] audio play blocked:", err);
-          });
-        } catch (err) {
-          console.warn("[BreakEndingAlert] audio play threw:", err);
-        }
-      }
+      playSound(active.kind === "lunch" ? endLunchSfx : endBreakSfx, {
+        label: `break-over-${active.kind}`,
+      });
     } else if (remaining > 0 && remaining <= WARN_AT && !seen.has("warn") && !seen.has("over")) {
       seen.add("warn");
       setStage("warn");

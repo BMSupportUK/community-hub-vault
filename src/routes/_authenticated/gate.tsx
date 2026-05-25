@@ -10,6 +10,7 @@ import { TurnstileWidget } from "@/components/app/TurnstileWidget";
 import bg from "@/assets/gate-bg.jpg";
 import mentionAudio from "@/assets/mention-notify.mp3";
 import ticketAudio from "@/assets/ticket-notify.mp3";
+import { playSound } from "@/lib/sound";
 
 export const Route = createFileRoute("/_authenticated/gate")({
   component: GatePage,
@@ -119,11 +120,7 @@ function GatePage() {
         const msg = payload as Msg;
         setMsgs((m) => (m.some((x) => x.id === msg.id) ? m : [...m, msg]));
         if (user && msg.sender_id !== user.id) {
-          try {
-            const audio = new Audio(mentionAudio);
-            audio.volume = 0.9;
-            void audio.play().catch(() => { /* autoplay may be blocked */ });
-          } catch { /* ignore */ }
+          playSound(mentionAudio, { label: "gate-msg" });
           toast(`💬 New reply from staff`, {
             description: msg.content.slice(0, 120),
             duration: 6000,
@@ -146,11 +143,7 @@ function GatePage() {
         const prev = (p.old as { status: string } | undefined)?.status;
         if (prev === next) return;
         setStatus(next);
-        try {
-          const audio = new Audio(ticketAudio);
-          audio.volume = 0.9;
-          void audio.play().catch(() => { /* autoplay may be blocked */ });
-        } catch { /* ignore */ }
+        playSound(ticketAudio, { label: "gate-status" });
         if (next === "approved") {
           toast.success("✅ You're in! Welcome.", { duration: 8000 });
           await refreshRoles();
