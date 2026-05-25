@@ -120,7 +120,7 @@ export const createCryptoInvoice = createServerFn({ method: "POST" })
         .eq("order_id", order.id)
         .maybeSingle();
       const finalStatuses = new Set(["finished", "confirming", "partially_paid"]);
-      if (!existing || !finalStatuses.has(String(existing.status))) {
+      if (!existing || !finalStatuses.has(String(existing.status ?? ""))) {
         await supabase.from("order_payments").upsert(
           {
             order_id: order.id,
