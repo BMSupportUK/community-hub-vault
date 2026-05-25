@@ -51,7 +51,7 @@ export function SecurityBox() {
             )}
           />
           <div className="min-w-0 flex-1">
-            <div className="font-semibold text-foreground">Two-factor auth</div>
+            <div className="font-semibold text-foreground mb-1.5">Two-factor auth</div>
             {enabled ? (
               <Link
                 to="/account-security"
