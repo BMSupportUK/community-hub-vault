@@ -26,6 +26,20 @@ type Blog = {
 
 const DRAFT_KEY = "sports-guide-new-draft";
 
+// Default body template for new guides. The reader splits one card per event
+// using: date heading, then each event as time → event name → channels with a
+// blank line between events. Keep this format so cards render correctly.
+const DEFAULT_BODY_TEMPLATE =
+  "<div>Saturday 1 January 2026</div>" +
+  "<div><br></div>" +
+  "<div>19:45 GMT</div>" +
+  "<div>Home Team vs Away Team</div>" +
+  "<div>Sky Sports Main Event | TNT Sports 1</div>" +
+  "<div><br></div>" +
+  "<div>20:00 GMT</div>" +
+  "<div>Home Team vs Away Team</div>" +
+  "<div>Premier Sports 1</div>";
+
 export function SportsGuideEditor({ blogId }: { blogId?: string }) {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -95,7 +109,7 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
           category_id: draft?.category_id || cats?.[0]?.id || "",
           title: draft?.title ?? "",
           excerpt: draft?.excerpt ?? "",
-          body: draft?.body ?? "",
+          body: draft?.body ?? DEFAULT_BODY_TEMPLATE,
           image_url: draft?.image_url ?? "",
           badge: draft?.badge ?? "",
           refresh_notice: draft?.refresh_notice ?? "",
@@ -275,10 +289,16 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
             </div>
             <div>
               <Label className="text-purple-100">Body</Label>
+              <p className="text-[11px] text-purple-300/70 mb-1">
+                Format per event: <strong>date heading</strong> at the top, then for each event a
+                line with the <strong>time + zone</strong> (e.g. <code>19:45 GMT</code>), a line with the
+                <strong> event name</strong>, a line with the <strong>channel(s)</strong>, then a blank line
+                before the next event. Each event becomes its own card.
+              </p>
               <HtmlEditor
                 value={editing.body ?? ""}
                 onChange={(html) => setEditing({ ...editing, body: html })}
-                placeholder="Write the guide content..."
+                placeholder="Saturday 1 January 2026\n\n19:45 GMT\nHome vs Away\nSky Sports Main Event"
               />
             </div>
             <label className="flex items-center gap-2 text-sm text-purple-100">
