@@ -134,6 +134,19 @@ function cleanEventTitleText(value: string): string {
     .trim();
 }
 
+function isDateOnlyText(value: string): boolean {
+  return Boolean(parseGuideDate(value.trim()));
+}
+
+function hasMeaningfulTextOutsideMatches(text: string, matches: ParsedMatch[]): boolean {
+  let remaining = text;
+  for (const match of [...matches].sort((a, b) => b.start - a.start)) {
+    remaining = `${remaining.slice(0, match.start)} ${remaining.slice(match.end)}`;
+  }
+  const cleaned = cleanEventTitleText(remaining);
+  return Boolean(cleaned && !isWeekdayOnly(cleaned) && !isDateOnlyText(cleaned));
+}
+
 function normalizedMatchedTime(hour: number, minute: number): string {
   return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
 }
