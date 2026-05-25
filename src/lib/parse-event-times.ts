@@ -620,13 +620,13 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
       }
       if (candidate.closest("[data-tz-row]")) continue;
       if (
-        parseMatches(
+        startsWithScheduleTime(
           sText,
           viewerTz,
           defaultZone,
           currentSourceDate ?? undefined,
           currentSourceDateLabel ?? undefined,
-        ).length
+        )
       )
         break;
       absorbed.push(candidate);
