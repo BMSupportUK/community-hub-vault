@@ -385,7 +385,7 @@ function WelcomePage() {
                       alt="Upcoming event banner"
                       className="w-full h-full object-cover"
                     />
-                  ) : (
+                  ) : events.length === 0 ? (
                     <div className="relative w-full h-full">
                       <img
                         src={eventPlaceholder}
@@ -399,6 +399,10 @@ function WelcomePage() {
                       <p className="absolute inset-x-0 bottom-0 p-3 font-display font-semibold text-sm text-center text-white drop-shadow">
                         Awaiting The Next Event Information.
                       </p>
+                    </div>
+                  ) : (
+                    <div className="w-full h-full grid place-items-center bg-gradient-to-br from-violet-950/40 to-blue-950/40 text-foreground/50 text-xs">
+                      No banner yet
                     </div>
                   )}
                 </div>
