@@ -725,7 +725,7 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
     if (channel) {
       const chanWrap = document.createElement("div");
       chanWrap.className =
-        "mt-2 min-w-0 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs md:text-sm font-semibold tracking-wide text-fuchsia-100";
+        "mt-2 min-w-0 flex flex-wrap items-center gap-x-2 gap-y-1.5 text-xs md:text-sm font-semibold tracking-wide text-fuchsia-100";
       const chanParts = channel.split(/\s*\|\s*/).filter(Boolean);
       chanParts.forEach((part, idx) => {
         if (idx > 0) {
@@ -735,7 +735,8 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
           chanWrap.appendChild(divider);
         }
         const chip = document.createElement("span");
-        chip.className = "break-words";
+        chip.className =
+          "break-words px-2 py-0.5 rounded-md border border-fuchsia-300/40 bg-fuchsia-950/40 text-fuchsia-200/90";
         chip.textContent = part;
         chanWrap.appendChild(chip);
       });
