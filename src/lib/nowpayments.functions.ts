@@ -114,16 +114,17 @@ export const createCryptoInvoice = createServerFn({ method: "POST" })
     // crypto invoice outstanding, even before any IPN arrives. Only upsert if
     // there is no existing finished/confirming row (don't downgrade status).
     try {
+      const orderIdStr = String(order.id);
       const { data: existing } = await supabase
         .from("order_payments")
         .select("status,provider")
-        .eq("order_id", order.id)
+        .eq("order_id", orderIdStr)
         .maybeSingle();
       const finalStatuses = new Set(["finished", "confirming", "partially_paid"]);
       if (!existing || !finalStatuses.has(String(existing.status ?? ""))) {
         await supabase.from("order_payments").upsert(
           {
-            order_id: order.id,
+            order_id: orderIdStr,
             provider: "nowpayments",
             provider_payment_id: String(invoice.id),
             square_payment_id: String(invoice.id),
