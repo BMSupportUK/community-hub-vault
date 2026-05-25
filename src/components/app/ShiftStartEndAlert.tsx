@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import shiftStartAudio from "@/assets/shift-start.mp3";
 import shiftEndAudio from "@/assets/shift-end.mp3";
+import { playSound } from "@/lib/sound";
 
 const WARN_BEFORE = 10 * 60 * 1000; // 10 minutes
 
@@ -152,12 +153,8 @@ export function ShiftStartEndAlert() {
     const key = `${active.slot.id}:${active.stage}`;
     if (playedRef.current.has(key)) return;
     playedRef.current.add(key);
-    try {
-      const src = active.stage === "start" ? shiftStartAudio : shiftEndAudio;
-      const audio = new Audio(src);
-      audio.volume = 0.9;
-      void audio.play().catch(() => { /* autoplay may be blocked; ignore */ });
-    } catch { /* ignore */ }
+    const src = active.stage === "start" ? shiftStartAudio : shiftEndAudio;
+    playSound(src, { label: `shift-${active.stage}` });
   }, [active]);
 
   if (!active) return null;
