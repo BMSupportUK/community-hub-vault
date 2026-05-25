@@ -175,6 +175,7 @@ function parseMatches(
   const inlineDate = parseLeadingGuideDate(text);
   const effectiveSourceDateStr = inlineDate?.dateStr ?? sourceDateStr;
   const effectiveSourceDateLabel = inlineDate?.sourceDateLabel ?? sourceDateLabel;
+  const effectiveDefaultZone = inlineDate?.sourceZone ?? defaultZone;
   TIME_RE.lastIndex = 0;
   let m: RegExpExecArray | null;
   while ((m = TIME_RE.exec(text)) !== null) {
@@ -261,8 +262,8 @@ function parseMatches(
       utcMs,
     });
   }
-  if (defaultZone) {
-    const tz = ZONE_MAP[defaultZone.toUpperCase()];
+  if (effectiveDefaultZone) {
+    const tz = ZONE_MAP[effectiveDefaultZone.toUpperCase()];
     if (tz) {
       BARE_TIME_RE.lastIndex = 0;
       let bm: RegExpExecArray | null;
@@ -308,7 +309,7 @@ function parseMatches(
             month: "long",
             year: "numeric",
           }).format(new Date(utcMs));
-        const sourceAbbr = tzAbbrev(utcMs, tz) || defaultZone.toUpperCase();
+        const sourceAbbr = tzAbbrev(utcMs, tz) || effectiveDefaultZone.toUpperCase();
         results.push({
           start: bm.index,
           end: bm.index + bm[0].length,
