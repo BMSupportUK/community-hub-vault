@@ -37,7 +37,7 @@ export function MyWorkingStatus() {
     };
     refresh();
     const ch = supabase
-      .channel(`my-working-${user.id}`)
+      .channel(`my-working-${user.id}-${Math.random().toString(36).slice(2)}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "shifts", filter: `user_id=eq.${user.id}` }, () => refresh())
       .on("postgres_changes", { event: "*", schema: "public", table: "breaks", filter: `user_id=eq.${user.id}` }, () => refresh())
       .subscribe();
