@@ -521,7 +521,13 @@ function ProfilePage() {
               <section className="lg:col-span-2 rounded-2xl border border-purple-500/30 bg-purple-950/50 backdrop-blur overflow-hidden text-white">
                 <div
                   className="h-36 sm:h-44 bg-cover bg-center"
-                  style={{ backgroundImage: `url(${profileHeader})` }}
+                  style={{
+                    backgroundImage: `url(${
+                      sortedRoles.some((r) => r === "admin" || r === "management")
+                        ? profileHeaderManagement
+                        : profileHeader
+                    })`,
+                  }}
                   aria-hidden
                 />
                 <div className="px-6 pb-6 -mt-12 flex flex-col sm:flex-row sm:items-end gap-4">
