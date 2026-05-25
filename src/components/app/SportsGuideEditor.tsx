@@ -101,7 +101,8 @@ function normalizeSportsGuidePaste(text: string): string {
 
   let lastWasEventBlock = false;
 
-  for (const line of lines) {
+  for (const rawLine of lines) {
+    const line = moveLeadingZoneToTrailing(rawLine);
     if (isDateOnlyLine(line)) {
       if (lastWasEventBlock) push("");
       push(line);
