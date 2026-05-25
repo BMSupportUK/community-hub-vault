@@ -1968,6 +1968,20 @@ function OrderDetail({ orderId, isAdmin, onBack }: { orderId: string; isAdmin: b
     } finally { setBusy(false); }
   };
 
+  const extendSubscription = async () => {
+    if (!order || order.status === "completed" || !!order.completed_at) {
+      toast.error("This order is completed and cannot be changed.");
+      return;
+    }
+    if (busy) return;
+    setBusy(true);
+    try {
+      const handle = order.existing_username ? ` for @${order.existing_username}` : "";
+      await sendSystem(`🔄 Your subscription${handle} is being updated. You'll receive confirmation once the extension is complete.`);
+      toast.success("Customer notified");
+    } finally { setBusy(false); }
+  };
+
   const completeSale = async () => {
     if (!order || order.status === "completed" || !!order.completed_at) return;
     if (busy) return;
