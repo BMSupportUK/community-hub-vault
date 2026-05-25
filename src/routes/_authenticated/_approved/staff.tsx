@@ -180,8 +180,8 @@ function StaffPage() {
               <TabsContent key={role} value={role} className="mt-6">
                 <section>
                   <div
-                    className="relative mb-4 h-32 sm:h-40 rounded-2xl overflow-hidden border border-purple-500/30 bg-cover bg-center"
-                    style={{ backgroundImage: `url(${ROLE_HEADER[role]})` }}
+                    className="relative mb-4 h-32 sm:h-40 rounded-2xl overflow-hidden border border-purple-500/30 bg-cover"
+                    style={{ backgroundImage: `url(${ROLE_HEADER[role]})`, backgroundPosition: "center 25%" }}
                     aria-hidden
                   >
                     <div className="absolute inset-0 bg-gradient-to-r from-purple-950/90 via-purple-950/40 to-transparent" />
@@ -233,8 +233,8 @@ function StaffPage() {
                           className="group rounded-2xl bg-purple-950/50 border border-purple-500/30 hover:border-fuchsia-400/70 hover:shadow-[0_0_30px_-10px_rgba(217,70,239,0.6)] transition-all overflow-hidden flex flex-col backdrop-blur"
                         >
                           <div
-                            className="h-16 bg-cover bg-center"
-                            style={{ backgroundImage: `url(${ROLE_HEADER[role] ?? profileHeader})` }}
+                            className="h-16 bg-cover"
+                            style={{ backgroundImage: `url(${ROLE_HEADER[role] ?? profileHeader})`, backgroundPosition: "center 25%" }}
                             aria-hidden
                           />
                           <div className="px-4 -mt-8 pb-4 flex flex-col flex-1">
