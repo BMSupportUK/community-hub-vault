@@ -703,6 +703,12 @@ function ProfilePage() {
               />
             </TabsContent>
           )}
+
+          {isOwner && (
+            <TabsContent value="notifications" className="mt-6">
+              <SoundSettings />
+            </TabsContent>
+          )}
         </Tabs>
       </div>
 
