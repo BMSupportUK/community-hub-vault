@@ -5,6 +5,9 @@ import { Briefcase, Search, Clock, UserPlus, Eye, Check, Lock } from "lucide-rea
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 import profileHeader from "@/assets/profile-header.jpg";
+import profileHeaderManagement from "@/assets/profile-header-management.jpg";
+import profileHeaderStaff from "@/assets/profile-header-staff.jpg";
+import profileHeaderModerator from "@/assets/profile-header-moderator.jpg";
 import { useOnlineUsers } from "@/hooks/use-online-users";
 import { useBusinessOpen } from "@/hooks/use-business-open";
 import { formatLastSeen } from "@/lib/relative-time";
@@ -40,6 +43,12 @@ const ROLE_LABEL: Record<string, string> = {
   management: "Management",
   moderator: "Moderators",
   staff: "Staff",
+};
+const ROLE_HEADER: Record<string, string> = {
+  admin: profileHeaderManagement,
+  management: profileHeaderManagement,
+  moderator: profileHeaderModerator,
+  staff: profileHeaderStaff,
 };
 
 function StaffPage() {
@@ -159,14 +168,20 @@ function StaffPage() {
               if (!list.length) return null;
               return (
                 <section key={role}>
-                  <div className="flex items-center gap-3 mb-4">
-                    <h2 className="font-display text-xl font-bold bg-gradient-to-r from-violet-600 to-blue-600 bg-clip-text text-transparent">
-                      {ROLE_LABEL[role]}
-                    </h2>
-                    <span className="text-xs px-2 py-0.5 rounded-full bg-purple-800/60 text-purple-100 border border-purple-500/30">
-                      {list.length}
-                    </span>
-                    <div className="flex-1 h-px bg-purple-500/20" />
+                  <div
+                    className="relative mb-4 h-32 sm:h-40 rounded-2xl overflow-hidden border border-purple-500/30 bg-cover bg-center"
+                    style={{ backgroundImage: `url(${ROLE_HEADER[role]})` }}
+                    aria-hidden
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-r from-purple-950/90 via-purple-950/40 to-transparent" />
+                    <div className="absolute inset-0 flex items-center gap-3 px-5">
+                      <h2 className="font-display text-2xl sm:text-3xl font-bold text-white drop-shadow-lg">
+                        {ROLE_LABEL[role]}
+                      </h2>
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-purple-900/70 text-purple-100 border border-purple-400/40 backdrop-blur">
+                        {list.length}
+                      </span>
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -203,7 +218,7 @@ function StaffPage() {
                         >
                           <div
                             className="h-16 bg-cover bg-center"
-                            style={{ backgroundImage: `url(${profileHeader})` }}
+                            style={{ backgroundImage: `url(${ROLE_HEADER[role] ?? profileHeader})` }}
                             aria-hidden
                           />
                           <div className="px-4 -mt-8 pb-4 flex flex-col flex-1">
