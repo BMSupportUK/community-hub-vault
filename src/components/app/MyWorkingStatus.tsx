@@ -79,7 +79,7 @@ export function MyWorkingStatus() {
       ) : (
         <CircleDot className="size-3 sm:size-3.5" />
       )}
-      <span className="capitalize hidden sm:inline">{brk ? brk.kind : "Working"}</span>
+      {brk && <span className="capitalize hidden sm:inline">{brk.kind}</span>}
       <span className="tabular-nums opacity-90">
         {brk ? (over ? `+${fmtMS(-brRemain)}` : fmtMS(brRemain)) : fmtHM(shiftSec)}
       </span>
