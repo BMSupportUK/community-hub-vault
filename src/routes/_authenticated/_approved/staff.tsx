@@ -168,7 +168,22 @@ function StaffPage() {
               if (!list.length) return null;
               return (
                 <section key={role}>
-                  <div className="flex items-center gap-3 mb-4">
+                  <div
+                    className="relative mb-4 h-32 sm:h-40 rounded-2xl overflow-hidden border border-purple-500/30 bg-cover bg-center"
+                    style={{ backgroundImage: `url(${ROLE_HEADER[role]})` }}
+                    aria-hidden
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-r from-purple-950/90 via-purple-950/40 to-transparent" />
+                    <div className="absolute inset-0 flex items-center gap-3 px-5">
+                      <h2 className="font-display text-2xl sm:text-3xl font-bold text-white drop-shadow-lg">
+                        {ROLE_LABEL[role]}
+                      </h2>
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-purple-900/70 text-purple-100 border border-purple-400/40 backdrop-blur">
+                        {list.length}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="hidden items-center gap-3 mb-4">
                     <h2 className="font-display text-xl font-bold bg-gradient-to-r from-violet-600 to-blue-600 bg-clip-text text-transparent">
                       {ROLE_LABEL[role]}
                     </h2>
