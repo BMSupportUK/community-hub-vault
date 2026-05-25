@@ -521,7 +521,7 @@ function ProfilePage() {
           <TabsContent value="profile" className="mt-6">
             <div className="grid lg:grid-cols-3 gap-6">
               <section className="lg:col-span-2 rounded-2xl border border-purple-500/30 bg-purple-950/50 backdrop-blur overflow-hidden text-white">
-                <div className="relative h-36 sm:h-44 bg-purple-950/80" aria-hidden>
+                <div className="relative w-full aspect-[15/4] bg-purple-950/80" aria-hidden>
                   <img
                     src={
                       sortedRoles.some((r) => r === "admin" || r === "management")
