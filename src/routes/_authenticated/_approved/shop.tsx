@@ -182,7 +182,7 @@ function ShopPage() {
       <ChannelColumn
         title="Shop"
         groups={groups}
-        footer={view === "orders" && id ? <SidebarOrderProgress orderId={id} /> : undefined}
+        footer={view === "orders" && id ? <SidebarOrderProgress orderId={id} /> : <SidebarLatestOrderProgress />}
       />
       <div className="flex-1 flex flex-col min-w-0">
         <div className="md:hidden h-10 shrink-0 flex items-center px-3 border-b border-border bg-rail/30">
@@ -195,7 +195,7 @@ function ShopPage() {
                 inSheet
                 title="Shop"
                 groups={groups}
-                footer={view === "orders" && id ? <SidebarOrderProgress orderId={id} /> : undefined}
+                footer={view === "orders" && id ? <SidebarOrderProgress orderId={id} /> : <SidebarLatestOrderProgress />}
               />
             </SheetContent>
           </Sheet>
