@@ -148,9 +148,6 @@ export function ShiftStartEndAlert() {
         if (toEnd <= 0) {
           const key = `${slot.id}:end:overdue`;
           if (!dismissedRef.current.has(key)) return { slot, stage: "end" as Stage };
-        } else if (toEnd <= WARN_BEFORE) {
-          const key = `${slot.id}:end:warn`;
-          if (!dismissedRef.current.has(key)) return { slot, stage: "end" as Stage };
         }
       }
 
