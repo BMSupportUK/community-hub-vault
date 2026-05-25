@@ -10,6 +10,56 @@ let unlocked = false;
 let listenersAttached = false;
 let ctx: AudioContext | null = null;
 
+// ---------- User preferences (per-device, localStorage) ----------
+
+const PREFS_KEY = "sound-prefs:v1";
+const PREFS_EVENT = "sound-prefs-changed";
+
+export interface SoundPrefs {
+  /** 0..2 — overall multiplier applied on top of per-call gain. */
+  volume: number;
+  /** When true, no sounds play. */
+  muted: boolean;
+}
+
+const DEFAULT_PREFS: SoundPrefs = { volume: 1, muted: false };
+
+export function getSoundPrefs(): SoundPrefs {
+  if (typeof window === "undefined") return DEFAULT_PREFS;
+  try {
+    const raw = window.localStorage.getItem(PREFS_KEY);
+    if (!raw) return DEFAULT_PREFS;
+    const parsed = JSON.parse(raw) as Partial<SoundPrefs>;
+    return {
+      volume: typeof parsed.volume === "number" ? Math.max(0, Math.min(2, parsed.volume)) : 1,
+      muted: !!parsed.muted,
+    };
+  } catch {
+    return DEFAULT_PREFS;
+  }
+}
+
+export function setSoundPrefs(next: Partial<SoundPrefs>) {
+  if (typeof window === "undefined") return;
+  const merged = { ...getSoundPrefs(), ...next };
+  merged.volume = Math.max(0, Math.min(2, merged.volume));
+  try {
+    window.localStorage.setItem(PREFS_KEY, JSON.stringify(merged));
+    window.dispatchEvent(new CustomEvent(PREFS_EVENT));
+  } catch { /* noop */ }
+}
+
+export function onSoundPrefsChange(cb: () => void): () => void {
+  if (typeof window === "undefined") return () => {};
+  const handler = () => cb();
+  window.addEventListener(PREFS_EVENT, handler);
+  window.addEventListener("storage", handler);
+  return () => {
+    window.removeEventListener(PREFS_EVENT, handler);
+    window.removeEventListener("storage", handler);
+  };
+}
+
 function getCtx(): AudioContext | null {
   if (typeof window === "undefined") return null;
   if (ctx) return ctx;
@@ -102,10 +152,12 @@ export function playSound(
 ) {
   if (typeof window === "undefined") return;
   ensureUnlockListeners();
+  const prefs = getSoundPrefs();
+  if (prefs.muted) return;
   const { volume = 1.0, gain = 1.8, label } = opts;
   const c = getCtx();
   if (c && c.state === "suspended") c.resume().catch(() => {});
-  const e = getEntry(src, volume, gain);
+  const e = getEntry(src, volume, gain * prefs.volume);
   try {
     e.el.currentTime = 0;
     const p = e.el.play();
