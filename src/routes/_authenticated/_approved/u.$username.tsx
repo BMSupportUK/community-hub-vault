@@ -537,7 +537,7 @@ function ProfilePage() {
                     decoding="async"
                   />
                 </div>
-                <div className="px-6 pb-6 -mt-12 flex flex-col sm:flex-row sm:items-end gap-4">
+                <div className="px-6 pt-4 pb-6 flex flex-col sm:flex-row sm:items-end gap-4">
                   <Avatar url={profile.avatar_url} name={display} size={96} ring userId={profile.id} />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
