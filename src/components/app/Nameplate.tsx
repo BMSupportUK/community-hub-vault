@@ -22,6 +22,15 @@ export function Nameplate({ id, className, style, fallbackStyle, children }: Nam
       style={finalStyle}
       aria-hidden={!children}
     >
+      {/* Readability scrim: tones down bright nameplate backgrounds so overlaid
+          text and badges stay legible. Sits above the background but below
+          decorative icons/sparkles and content. */}
+      {(np || fallbackStyle) && (
+        <div
+          className="pointer-events-none absolute inset-0 bg-background/35 dark:bg-background/45 mix-blend-multiply dark:mix-blend-normal"
+          aria-hidden
+        />
+      )}
       {np?.animation_class === "nameplate-hotdog" && (
         <span className="nameplate-hotdog-icon" aria-hidden>🌭</span>
       )}
