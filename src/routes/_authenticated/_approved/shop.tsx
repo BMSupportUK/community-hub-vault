@@ -1735,6 +1735,7 @@ function OrderDetail({ orderId, isAdmin, onBack }: { orderId: string; isAdmin: b
   const lastSentTypingRef = useRef(0);
   const typingChannelReadyRef = useRef(false);
   const textRef = useRef("");
+  const [credsOpen, setCredsOpen] = useState(false);
 
   const load = async () => {
     const [{ data: o }, { data: it }, { data: m }] = await Promise.all([
