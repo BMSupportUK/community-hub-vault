@@ -2231,7 +2231,109 @@ function OrderDetail({ orderId, isAdmin, onBack }: { orderId: string; isAdmin: b
           </div>
         </div>
       </div>
+      {credsOpen && order.user_id && (
+        <AddCredentialDialog
+          ownerId={order.user_id}
+          currentUserId={user?.id ?? ""}
+          onClose={() => setCredsOpen(false)}
+          onSaved={async () => {
+            setCredsOpen(false);
+            await sendSystem(`🔐 Your login details have been added to the Credentials section of your profile.`);
+          }}
+        />
+      )}
     </main>
+  );
+}
+
+function AddCredentialDialog({
+  ownerId, currentUserId, onClose, onSaved,
+}: {
+  ownerId: string;
+  currentUserId: string;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const [appLoginName, setAppLoginName] = useState("");
+  const [password, setPassword] = useState("");
+  const [expiry, setExpiry] = useState("");
+  const [notes, setNotes] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const generate = () => {
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#$%";
+    let out = "";
+    const buf = new Uint32Array(16);
+    crypto.getRandomValues(buf);
+    for (let i = 0; i < 16; i++) out += chars[buf[i] % chars.length];
+    setPassword(out);
+  };
+
+  const save = async () => {
+    if (!appLoginName || !password) return toast.error("Name and password required");
+    setBusy(true);
+    try {
+      const payload = {
+        app_login_name: appLoginName,
+        password,
+        owner_id: ownerId,
+        expiry_at: expiry ? new Date(expiry).toISOString() : null,
+        notes: notes || null,
+        created_by: currentUserId,
+      };
+      const { error } = await supabase.from("app_credentials").insert(payload as never);
+      if (error) throw error;
+      toast.success("Credential successfully added");
+      onSaved();
+    } catch (e: any) {
+      toast.error(e?.message ?? "Failed to save credential");
+    } finally { setBusy(false); }
+  };
+
+  return (
+    <Dialog open onOpenChange={(o) => { if (!o) onClose(); }}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Add credential</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div>
+            <label className="text-xs font-medium text-muted-foreground mb-1 block">App login name</label>
+            <input value={appLoginName} onChange={(e) => setAppLoginName(e.target.value)}
+              className="w-full px-3 py-2 rounded-lg bg-surface-2 text-sm outline-none border border-border focus:border-primary"
+              placeholder="e.g. IPTV portal" />
+          </div>
+          <div>
+            <label className="text-xs font-medium text-muted-foreground mb-1 block">Password</label>
+            <div className="flex gap-2">
+              <input value={password} onChange={(e) => setPassword(e.target.value)}
+                className="flex-1 px-3 py-2 rounded-lg bg-surface-2 text-sm font-mono outline-none border border-border focus:border-primary" />
+              <button type="button" onClick={generate}
+                className="px-3 py-2 rounded-lg border border-border text-xs whitespace-nowrap hover:border-primary">
+                Generate
+              </button>
+            </div>
+          </div>
+          <div>
+            <label className="text-xs font-medium text-muted-foreground mb-1 block">Expiry (optional)</label>
+            <input type="datetime-local" value={expiry} onChange={(e) => setExpiry(e.target.value)}
+              className="w-full px-3 py-2 rounded-lg bg-surface-2 text-sm outline-none border border-border focus:border-primary" />
+          </div>
+          <div>
+            <label className="text-xs font-medium text-muted-foreground mb-1 block">Notes (optional)</label>
+            <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3}
+              className="w-full px-3 py-2 rounded-lg bg-surface-2 text-sm outline-none border border-border focus:border-primary resize-none" />
+          </div>
+        </div>
+        <div className="flex justify-end gap-2 mt-2">
+          <button onClick={onClose} className="px-4 py-2 rounded-lg border border-border text-sm">Cancel</button>
+          <button onClick={save} disabled={busy}
+            className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium flex items-center gap-2 disabled:opacity-50">
+            {busy ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />} Save
+          </button>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
