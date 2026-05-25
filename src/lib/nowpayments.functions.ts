@@ -76,6 +76,37 @@ export const createCryptoInvoice = createServerFn({ method: "POST" })
     if (order.paid_at) throw new Error("Order is already paid");
     if (!order.total_cents || order.total_cents <= 0) throw new Error("Order total must be greater than zero");
 
+    // Reuse an existing active invoice for this order instead of creating a
+    // second one. Prevents accidental duplicate NOWPayments invoices when the
+    // user double-clicks "Pay with USDT" or re-opens the order.
+    const orderIdStr = String(order.id);
+    const { data: existingPay } = await supabase
+      .from("order_payments")
+      .select("provider,status,provider_payment_id,receipt_url")
+      .eq("order_id", orderIdStr)
+      .maybeSingle();
+    const reusableStatuses = new Set([
+      "invoice_created",
+      "waiting",
+      "confirming",
+      "partially_paid",
+    ]);
+    if (
+      existingPay?.provider === "nowpayments" &&
+      reusableStatuses.has(String(existingPay.status ?? "")) &&
+      existingPay.receipt_url &&
+      existingPay.provider_payment_id
+    ) {
+      return {
+        invoiceId: String(existingPay.provider_payment_id),
+        invoiceUrl: String(existingPay.receipt_url),
+        network: data.network,
+        payCurrency: NETWORK_TO_CODE[data.network],
+        expiresAt: null,
+        reused: true,
+      };
+    }
+
     const payCurrency = NETWORK_TO_CODE[data.network];
     const priceAmount = +(order.total_cents / 100).toFixed(2);
 
@@ -114,14 +145,8 @@ export const createCryptoInvoice = createServerFn({ method: "POST" })
     // crypto invoice outstanding, even before any IPN arrives. Only upsert if
     // there is no existing finished/confirming row (don't downgrade status).
     try {
-      const orderIdStr = String(order.id);
-      const { data: existing } = await supabase
-        .from("order_payments")
-        .select("status,provider")
-        .eq("order_id", orderIdStr)
-        .maybeSingle();
       const finalStatuses = new Set(["finished", "confirming", "partially_paid"]);
-      if (!existing || !finalStatuses.has(String(existing.status ?? ""))) {
+      if (!existingPay || !finalStatuses.has(String(existingPay.status ?? ""))) {
         await supabase.from("order_payments").upsert(
           {
             order_id: orderIdStr,
