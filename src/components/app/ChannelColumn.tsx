@@ -1,5 +1,5 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
-import { Hash, ChevronDown, Plus, Trash2, Shield, Smile, Pencil, ChevronUp, LogOut } from "lucide-react";
+import { Hash, ChevronDown, Plus, Trash2, Shield, Smile, Pencil, ChevronUp, LogOut, Settings } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useBusinessOpen } from "@/hooks/use-business-open";
 import { cn } from "@/lib/utils";
@@ -12,6 +12,7 @@ import { MentionsBadge } from "@/components/app/MentionsBadge";
 import { NotificationBell } from "@/components/app/NotificationBell";
 import { UserAvatarMenu } from "@/components/app/UserAvatarMenu";
 import { MyWorkingStatus } from "@/components/app/MyWorkingStatus";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 export interface ChannelGroup {
   label: string;
@@ -72,6 +73,11 @@ export function ChannelColumn({
   } | null>(null);
   const [dragChan, setDragChan] = useState<{ id: string; group: string } | null>(null);
   const [overChan, setOverChan] = useState<string | null>(null);
+  const [settings, setSettings] = useState<
+    | { type: "group"; group: ChannelGroup }
+    | { type: "item"; group: ChannelGroup; itemTo: string; itemLabel: string }
+    | null
+  >(null);
 
   useEffect(() => {
     if (!user) return;
