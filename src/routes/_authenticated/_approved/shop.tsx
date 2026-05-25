@@ -3706,6 +3706,16 @@ function CryptoPanel({ orderId, amountCents, canPay, onChange }: { orderId: stri
             {paid.card_brand && <span className="font-mono text-muted-foreground">{paid.card_brand}</span>}
             {paid.last_4 && <span className="font-mono text-muted-foreground">tx …{paid.last_4}</span>}
           </div>
+          {paid.status !== "finished" && paid.receipt_url && canPay && (
+            <a
+              href={paid.receipt_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block text-center text-[11px] underline text-success hover:text-success/80"
+            >
+              Open existing invoice
+            </a>
+          )}
         </div>
       </div>
     );
