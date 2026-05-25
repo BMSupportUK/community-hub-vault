@@ -40,6 +40,12 @@ function ReadPage() {
   const [blog, setBlog] = useState<Blog | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
+  // Guides sourced from Flosports (College Football, Racing) publish their
+  // schedules in US Eastern time, not GMT. Detect by title so bare times
+  // without a zone are interpreted in ET.
+  const defaultSourceZone =
+    blog && /^\s*flosports\b/i.test(blog.title) ? "ET" : "GMT";
+  const sourceLabel = defaultSourceZone === "ET" ? "ET" : "GMT";
 
   useEffect(() => {
     (async () => {
@@ -88,7 +94,7 @@ function ReadPage() {
     let scheduled = false;
     const run = () => {
       observer.disconnect();
-            annotateTimesInEl(el, viewerTz, "GMT");
+      annotateTimesInEl(el, viewerTz, defaultSourceZone);
       observer.observe(el, { childList: true, subtree: true });
     };
     const observer = new MutationObserver(() => {
@@ -101,7 +107,7 @@ function ReadPage() {
     });
     run();
     return () => observer.disconnect();
-  }, [blog?.body, viewerTz]);
+  }, [blog?.body, viewerTz, defaultSourceZone]);
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden bg-gradient-to-br from-[#1a0b2e] via-[#2d1b4e] to-[#1a0b2e]">
@@ -156,7 +162,7 @@ function ReadPage() {
             {blog.body && (
               <div className="space-y-2">
                 <div className="text-[10px] uppercase tracking-[0.18em] text-purple-200/50 font-semibold px-1 pb-2 flex flex-wrap gap-x-4 gap-y-1">
-                  <span>Source (GMT)</span>
+                  <span>Source ({sourceLabel})</span>
                   <span className="text-fuchsia-300 normal-case tracking-wide">
                     Local ({viewerTzLabel})
                   </span>
