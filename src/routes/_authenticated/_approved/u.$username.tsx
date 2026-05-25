@@ -22,6 +22,7 @@ import { useRoleFlashMap, resolveAvatarUrl, roleFlashClass } from "@/lib/role-fl
 import { VpnBadge } from "@/lib/vpn-flags";
 import { HtmlEditor } from "@/components/ui/html-editor";
 import { sanitizeRichHtml } from "@/lib/sanitize-html";
+import { SoundSettings } from "@/components/app/SoundSettings";
 
 export const Route = createFileRoute("/_authenticated/_approved/u/$username")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -135,7 +136,10 @@ function ProfilePage() {
   const [rel, setRel] = useState<FriendRel>({ kind: "none" });
   const [relBusy, setRelBusy] = useState(false);
   const initialTab = (["profile","creds","tickets","orders","referrals","friends"].includes(search.tab ?? "") ? search.tab : "profile") as "profile" | "creds" | "tickets" | "orders" | "referrals" | "friends";
-  const [mainTab, setMainTab] = useState<"profile" | "creds" | "tickets" | "orders" | "referrals" | "friends">(initialTab);
+  const allowedTabs = ["profile","creds","tickets","orders","referrals","friends","notifications"] as const;
+  type TabId = typeof allowedTabs[number];
+  const initialTabSafe = (allowedTabs.includes((search.tab ?? "") as TabId) ? search.tab : initialTab) as TabId;
+  const [mainTab, setMainTab] = useState<TabId>(initialTabSafe);
 
   const isOwner = !!profile && !!viewer && profile.id === viewer.id;
   const canSeeCreds = isOwner || isAdmin;
@@ -462,6 +466,7 @@ function ProfilePage() {
     { id: "orders", label: `Orders (${orders.length})` },
     { id: "friends", label: `Friends (${friends.length})` },
     ...(canSeeReferrals ? [{ id: "referrals", label: `Referrals (${referrals.length})` }] : []),
+    ...(isOwner ? [{ id: "notifications", label: "Notifications" }] : []),
   ];
 
   return (
