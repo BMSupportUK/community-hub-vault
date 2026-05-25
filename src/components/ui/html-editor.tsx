@@ -10,13 +10,21 @@ type Props = {
   placeholder?: string;
   /** Enable an "upload video" button. Provide the userId to scope the storage path. */
   videoUpload?: { userId: string | null | undefined; bucket?: string; folder?: string };
+  /**
+   * Optional transform applied to pasted plain text BEFORE insertion. Return
+   * an HTML string. When set, the editor intercepts paste events, reads the
+   * text/plain payload, runs it through this function, and inserts the
+   * returned HTML. Use to normalize copy/pasted listings into a specific
+   * block layout (e.g. sports guides: one event per block).
+   */
+  pasteTransform?: (plainText: string) => string;
 };
 
 function exec(cmd: string, arg?: string) {
   document.execCommand(cmd, false, arg);
 }
 
-export function HtmlEditor({ value, onChange, className, placeholder, videoUpload }: Props) {
+export function HtmlEditor({ value, onChange, className, placeholder, videoUpload, pasteTransform }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
   const [uploadingVideo, setUploadingVideo] = useState(false);
@@ -55,6 +63,17 @@ export function HtmlEditor({ value, onChange, className, placeholder, videoUploa
   const handleInput = () => {
     if (ref.current) onChange(ref.current.innerHTML);
     refreshActive();
+  };
+
+  const handlePaste = (e: React.ClipboardEvent<HTMLDivElement>) => {
+    if (!pasteTransform) return;
+    const text = e.clipboardData.getData("text/plain");
+    if (!text) return;
+    e.preventDefault();
+    const html = pasteTransform(text);
+    ref.current?.focus();
+    exec("insertHTML", html);
+    handleInput();
   };
 
   const Btn = ({ onClick, title, isActive, children }: { onClick: () => void; title: string; isActive?: boolean; children: React.ReactNode }) => (
@@ -179,6 +198,7 @@ export function HtmlEditor({ value, onChange, className, placeholder, videoUploa
         contentEditable
         suppressContentEditableWarning
         onInput={handleInput}
+        onPaste={handlePaste}
         onKeyUp={refreshActive}
         onMouseUp={refreshActive}
         onFocus={refreshActive}
