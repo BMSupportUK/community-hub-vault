@@ -522,7 +522,7 @@ function ProfilePage() {
             <div className="grid lg:grid-cols-3 gap-6">
               <section className="lg:col-span-2 rounded-2xl border border-purple-500/30 bg-purple-950/50 backdrop-blur overflow-hidden text-white">
                 <div
-                  className="h-36 sm:h-44 bg-cover bg-center"
+                  className="h-36 sm:h-44 bg-cover"
                   style={{
                     backgroundImage: `url(${
                       sortedRoles.some((r) => r === "admin" || r === "management")
@@ -533,6 +533,7 @@ function ProfilePage() {
                             ? profileHeaderStaff
                             : profileHeader
                     })`,
+                    backgroundPosition: "center 25%",
                   }}
                   aria-hidden
                 />
