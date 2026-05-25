@@ -436,6 +436,21 @@ function parseLeadingGuideDate(text: string): { dateStr: string; sourceDateLabel
   };
 }
 
+function startsWithScheduleTime(
+  text: string,
+  viewerTz: string,
+  defaultZone?: string,
+  sourceDateStr?: string,
+  sourceDateLabel?: string,
+): boolean {
+  const matches = parseMatches(text, viewerTz, defaultZone, sourceDateStr, sourceDateLabel);
+  if (!matches.length) return false;
+  if (parseLeadingGuideDate(text)) return true;
+  const first = matches[0];
+  const prefix = cleanEventTitleText(text.slice(0, first.start));
+  return !prefix || isWeekdayOnly(prefix) || isDateOnlyText(prefix) || !hasMeaningfulTextOutsideMatches(text, [first]);
+}
+
 function isWeekdayOnly(text: string): boolean {
   return /^(mon|tue|wed|thu|fri|sat|sun)(day)?$/i.test(text.trim());
 }
