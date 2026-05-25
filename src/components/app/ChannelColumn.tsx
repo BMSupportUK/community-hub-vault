@@ -11,6 +11,7 @@ import { VpnBadge } from "@/lib/vpn-flags";
 import { MentionsBadge } from "@/components/app/MentionsBadge";
 import { NotificationBell } from "@/components/app/NotificationBell";
 import { UserAvatarMenu } from "@/components/app/UserAvatarMenu";
+import { MyWorkingStatus } from "@/components/app/MyWorkingStatus";
 
 export interface ChannelGroup {
   label: string;
@@ -429,6 +430,7 @@ export function ChannelColumn({
               </div>
             </div>
             <div className="ml-auto flex items-center gap-0.5 shrink-0 text-muted-foreground">
+              <MyWorkingStatus />
               <MentionsBadge />
               <NotificationBell />
               <button
