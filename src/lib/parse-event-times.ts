@@ -416,13 +416,41 @@ function parseGuideDate(text: string): string | null {
         : parseInt(y, 10);
     return `${year}-${String(month).padStart(2, "0")}-${d.padStart(2, "0")}`;
   }
+  const monthFirst = withoutWeekday.match(
+    /^([a-z]+)\s+(\d{1,2})(?:st|nd|rd|th)?(?:,?\s+(\d{2}|\d{4}))?$/i,
+  );
+  if (monthFirst) {
+    const months = [
+      "jan",
+      "feb",
+      "mar",
+      "apr",
+      "may",
+      "jun",
+      "jul",
+      "aug",
+      "sep",
+      "oct",
+      "nov",
+      "dec",
+    ];
+    const [, mon, d, y] = monthFirst;
+    const month = months.findIndex((m) => mon.toLowerCase().startsWith(m)) + 1;
+    if (!month) return null;
+    const year = !y
+      ? new Date().getUTCFullYear()
+      : y.length === 2
+        ? 2000 + parseInt(y, 10)
+        : parseInt(y, 10);
+    return `${year}-${String(month).padStart(2, "0")}-${d.padStart(2, "0")}`;
+  }
   return null;
 }
 
 function parseLeadingGuideDate(text: string): { dateStr: string; sourceDateLabel: string; sourceZone?: string } | null {
   const trimmed = text.replace(/\s+/g, " ").trim();
   const leading = trimmed.match(
-    /^((?:(?:GMT|UTC|UK|BST|CET|CEST|ET|EST|EDT|CT|CST|CDT|MT|MST|MDT|PT|PST|PDT|AEST|AEDT|JST|IST)\s+)?(?:(?:mon|tue|wed|thu|fri|sat|sun)[a-z]*\b[\s,]+)?(?:\d{4}[-/.]\d{1,2}[-/.]\d{1,2}|\d{1,2}[-/.]\d{1,2}[-/.](?:\d{2}|\d{4})|\d{1,2}(?:st|nd|rd|th)?\s+[a-z]+(?:\s+(?:\d{2}|\d{4}))?))(?=\s+\d{1,2}(?:[:.]\d{2})?\s*(?:am|pm|a\.m\.|p\.m\.)?\b)/i,
+    /^((?:(?:GMT|UTC|UK|BST|CET|CEST|ET|EST|EDT|CT|CST|CDT|MT|MST|MDT|PT|PST|PDT|AEST|AEDT|JST|IST)\s+)?(?:(?:mon|tue|wed|thu|fri|sat|sun)[a-z]*\b[\s,]+)?(?:\d{4}[-/.]\d{1,2}[-/.]\d{1,2}|\d{1,2}[-/.]\d{1,2}[-/.](?:\d{2}|\d{4})|\d{1,2}(?:st|nd|rd|th)?\s+[a-z]+(?:\s+(?:\d{2}|\d{4}))?|[a-z]+\s+\d{1,2}(?:st|nd|rd|th)?(?:,?\s+(?:\d{2}|\d{4}))?))(?=\s+\d{1,2}(?:[:.]\d{2})?\s*(?:am|pm|a\.m\.|p\.m\.)?\b)/i,
   )?.[1];
   if (!leading) return null;
   const sourceZone = leading.match(/^(GMT|UTC|UK|BST|CET|CEST|ET|EST|EDT|CT|CST|CDT|MT|MST|MDT|PT|PST|PDT|AEST|AEDT|JST|IST)\b/i)?.[1]?.toUpperCase();
