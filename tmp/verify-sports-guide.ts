@@ -3,6 +3,7 @@ import { annotateTimesInEl } from '../src/lib/parse-event-times.ts';
 
 const body = process.argv.slice(2).join(' ');
 const window = new Window();
+(window as any).SyntaxError = SyntaxError;
 (globalThis as any).window = window;
 (globalThis as any).document = window.document;
 (globalThis as any).Node = window.Node;
