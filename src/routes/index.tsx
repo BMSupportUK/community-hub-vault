@@ -2,7 +2,7 @@ import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { LandingHeader } from "@/components/LandingHeader";
-import welcomeHero from "@/assets/welcome-hero.jpg";
+import welcomeHero from "@/assets/welcome-hero.webp";
 
 function isAndroidAppShell() {
   if (typeof window === "undefined") return false;
@@ -95,6 +95,11 @@ function Landing() {
                 <img
                   src={welcomeHero}
                   alt="BM Support hero"
+                  width={1040}
+                  height={780}
+                  loading="eager"
+                  fetchPriority="high"
+                  decoding="async"
                   className="block w-full h-auto max-h-[38vh] object-cover"
                 />
               </div>
