@@ -31,11 +31,6 @@ function ReadPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  // Local pill uses the viewer's browser-detected timezone. The source pill is
-  // always labeled "GMT" (handled by annotateTimesInEl's defaultZone).
-  const viewerTz =
-    (typeof Intl !== "undefined" && Intl.DateTimeFormat().resolvedOptions().timeZone) || "UTC";
-  const viewerTzLabel = viewerTz.replace(/_/g, " ");
   const bodyRef = useRef<HTMLDivElement | null>(null);
   const [blog, setBlog] = useState<Blog | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -45,7 +40,8 @@ function ReadPage() {
   // without a zone are interpreted in ET.
   const defaultSourceZone =
     blog && /^\s*flosports\b/i.test(blog.title) ? "ET" : "GMT";
-  const sourceLabel = defaultSourceZone === "ET" ? "ET" : "GMT";
+  const viewerTz =
+    (typeof Intl !== "undefined" && Intl.DateTimeFormat().resolvedOptions().timeZone) || "UTC";
 
   useEffect(() => {
     (async () => {
@@ -161,12 +157,6 @@ function ReadPage() {
             {blog.excerpt && <p className="text-lg text-purple-100/80 italic">{blog.excerpt}</p>}
             {blog.body && (
               <div className="space-y-2">
-                <div className="text-[10px] uppercase tracking-[0.18em] text-purple-200/50 font-semibold px-1 pb-2 flex flex-wrap gap-x-4 gap-y-1">
-                  <span>Source ({sourceLabel})</span>
-                  <span className="text-fuchsia-300 normal-case tracking-wide">
-                    Local ({viewerTzLabel})
-                  </span>
-                </div>
                 <div
                   ref={bodyRef}
                   className="prose prose-invert max-w-none text-purple-50/90 leading-relaxed grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3"
