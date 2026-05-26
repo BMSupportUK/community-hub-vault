@@ -56,7 +56,7 @@ export function ChannelColumn({
   inSheet?: boolean;
 }) {
   const path = useRouterState({ select: (r) => r.location.pathname });
-  const { user, isStaff, signOut } = useAuth();
+  const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const handleSignOut = async () => {
     await signOut();
