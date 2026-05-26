@@ -191,6 +191,7 @@ function ReadPage() {
                 <PagedGrid
                   items={bodyItems}
                   availableHeight={stageHeight}
+                  maxRows={2}
                   page={page}
                   onPagesChange={setPageCount}
                   className="prose prose-invert max-w-none text-purple-50/90 leading-relaxed grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3"
