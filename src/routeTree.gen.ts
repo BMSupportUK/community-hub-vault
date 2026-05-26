@@ -53,6 +53,7 @@ import { Route as AuthenticatedApprovedAdminPermissionsRouteImport } from './rou
 import { Route as AuthenticatedApprovedAdminNotificationsRouteImport } from './routes/_authenticated/_approved/admin-notifications'
 import { Route as AuthenticatedApprovedAdminNameplatesRouteImport } from './routes/_authenticated/_approved/admin-nameplates'
 import { Route as AuthenticatedApprovedAdminHeroBoxesRouteImport } from './routes/_authenticated/_approved/admin-hero-boxes'
+import { Route as AuthenticatedApprovedAdminForumRouteImport } from './routes/_authenticated/_approved/admin-forum'
 import { Route as AuthenticatedApprovedAdminFanZoneRouteImport } from './routes/_authenticated/_approved/admin-fan-zone'
 import { Route as AuthenticatedApprovedAdminDnsRouteImport } from './routes/_authenticated/_approved/admin-dns'
 import { Route as AuthenticatedApprovedAdminCredentialsRouteImport } from './routes/_authenticated/_approved/admin-credentials'
@@ -325,6 +326,12 @@ const AuthenticatedApprovedAdminHeroBoxesRoute =
     path: '/admin-hero-boxes',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
+const AuthenticatedApprovedAdminForumRoute =
+  AuthenticatedApprovedAdminForumRouteImport.update({
+    id: '/admin-forum',
+    path: '/admin-forum',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
 const AuthenticatedApprovedAdminFanZoneRoute =
   AuthenticatedApprovedAdminFanZoneRouteImport.update({
     id: '/admin-fan-zone',
@@ -504,6 +511,7 @@ export interface FileRoutesByFullPath {
   '/admin-credentials': typeof AuthenticatedApprovedAdminCredentialsRoute
   '/admin-dns': typeof AuthenticatedApprovedAdminDnsRoute
   '/admin-fan-zone': typeof AuthenticatedApprovedAdminFanZoneRoute
+  '/admin-forum': typeof AuthenticatedApprovedAdminForumRoute
   '/admin-hero-boxes': typeof AuthenticatedApprovedAdminHeroBoxesRoute
   '/admin-nameplates': typeof AuthenticatedApprovedAdminNameplatesRoute
   '/admin-notifications': typeof AuthenticatedApprovedAdminNotificationsRoute
@@ -574,6 +582,7 @@ export interface FileRoutesByTo {
   '/admin-credentials': typeof AuthenticatedApprovedAdminCredentialsRoute
   '/admin-dns': typeof AuthenticatedApprovedAdminDnsRoute
   '/admin-fan-zone': typeof AuthenticatedApprovedAdminFanZoneRoute
+  '/admin-forum': typeof AuthenticatedApprovedAdminForumRoute
   '/admin-hero-boxes': typeof AuthenticatedApprovedAdminHeroBoxesRoute
   '/admin-nameplates': typeof AuthenticatedApprovedAdminNameplatesRoute
   '/admin-notifications': typeof AuthenticatedApprovedAdminNotificationsRoute
@@ -646,6 +655,7 @@ export interface FileRoutesById {
   '/_authenticated/_approved/admin-credentials': typeof AuthenticatedApprovedAdminCredentialsRoute
   '/_authenticated/_approved/admin-dns': typeof AuthenticatedApprovedAdminDnsRoute
   '/_authenticated/_approved/admin-fan-zone': typeof AuthenticatedApprovedAdminFanZoneRoute
+  '/_authenticated/_approved/admin-forum': typeof AuthenticatedApprovedAdminForumRoute
   '/_authenticated/_approved/admin-hero-boxes': typeof AuthenticatedApprovedAdminHeroBoxesRoute
   '/_authenticated/_approved/admin-nameplates': typeof AuthenticatedApprovedAdminNameplatesRoute
   '/_authenticated/_approved/admin-notifications': typeof AuthenticatedApprovedAdminNotificationsRoute
@@ -718,6 +728,7 @@ export interface FileRouteTypes {
     | '/admin-credentials'
     | '/admin-dns'
     | '/admin-fan-zone'
+    | '/admin-forum'
     | '/admin-hero-boxes'
     | '/admin-nameplates'
     | '/admin-notifications'
@@ -788,6 +799,7 @@ export interface FileRouteTypes {
     | '/admin-credentials'
     | '/admin-dns'
     | '/admin-fan-zone'
+    | '/admin-forum'
     | '/admin-hero-boxes'
     | '/admin-nameplates'
     | '/admin-notifications'
@@ -859,6 +871,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/admin-credentials'
     | '/_authenticated/_approved/admin-dns'
     | '/_authenticated/_approved/admin-fan-zone'
+    | '/_authenticated/_approved/admin-forum'
     | '/_authenticated/_approved/admin-hero-boxes'
     | '/_authenticated/_approved/admin-nameplates'
     | '/_authenticated/_approved/admin-notifications'
@@ -1245,6 +1258,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedApprovedAdminHeroBoxesRouteImport
       parentRoute: typeof AuthenticatedApprovedRoute
     }
+    '/_authenticated/_approved/admin-forum': {
+      id: '/_authenticated/_approved/admin-forum'
+      path: '/admin-forum'
+      fullPath: '/admin-forum'
+      preLoaderRoute: typeof AuthenticatedApprovedAdminForumRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
     '/_authenticated/_approved/admin-fan-zone': {
       id: '/_authenticated/_approved/admin-fan-zone'
       path: '/admin-fan-zone'
@@ -1506,6 +1526,7 @@ interface AuthenticatedApprovedRouteChildren {
   AuthenticatedApprovedAdminCredentialsRoute: typeof AuthenticatedApprovedAdminCredentialsRoute
   AuthenticatedApprovedAdminDnsRoute: typeof AuthenticatedApprovedAdminDnsRoute
   AuthenticatedApprovedAdminFanZoneRoute: typeof AuthenticatedApprovedAdminFanZoneRoute
+  AuthenticatedApprovedAdminForumRoute: typeof AuthenticatedApprovedAdminForumRoute
   AuthenticatedApprovedAdminHeroBoxesRoute: typeof AuthenticatedApprovedAdminHeroBoxesRoute
   AuthenticatedApprovedAdminNameplatesRoute: typeof AuthenticatedApprovedAdminNameplatesRoute
   AuthenticatedApprovedAdminNotificationsRoute: typeof AuthenticatedApprovedAdminNotificationsRoute
@@ -1548,6 +1569,7 @@ const AuthenticatedApprovedRouteChildren: AuthenticatedApprovedRouteChildren = {
   AuthenticatedApprovedAdminDnsRoute: AuthenticatedApprovedAdminDnsRoute,
   AuthenticatedApprovedAdminFanZoneRoute:
     AuthenticatedApprovedAdminFanZoneRoute,
+  AuthenticatedApprovedAdminForumRoute: AuthenticatedApprovedAdminForumRoute,
   AuthenticatedApprovedAdminHeroBoxesRoute:
     AuthenticatedApprovedAdminHeroBoxesRoute,
   AuthenticatedApprovedAdminNameplatesRoute:
