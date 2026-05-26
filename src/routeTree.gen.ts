@@ -75,6 +75,7 @@ import { Route as ApiPublicHooksBackupCredentialsRouteImport } from './routes/ap
 import { Route as AuthenticatedApprovedUUsernameRouteImport } from './routes/_authenticated/_approved/u.$username'
 import { Route as AuthenticatedApprovedSportsGuidesNewRouteImport } from './routes/_authenticated/_approved/sports-guides.new'
 import { Route as AuthenticatedApprovedHomeChannelRouteImport } from './routes/_authenticated/_approved/home.$channel'
+import { Route as AuthenticatedApprovedForumBoardRouteImport } from './routes/_authenticated/_approved/forum.$board'
 import { Route as AuthenticatedApprovedSportsGuidesReadIdRouteImport } from './routes/_authenticated/_approved/sports-guides.read.$id'
 import { Route as AuthenticatedApprovedSportsGuidesIdEditRouteImport } from './routes/_authenticated/_approved/sports-guides.$id.edit'
 
@@ -454,6 +455,12 @@ const AuthenticatedApprovedHomeChannelRoute =
     path: '/$channel',
     getParentRoute: () => AuthenticatedApprovedHomeRoute,
   } as any)
+const AuthenticatedApprovedForumBoardRoute =
+  AuthenticatedApprovedForumBoardRouteImport.update({
+    id: '/$board',
+    path: '/$board',
+    getParentRoute: () => AuthenticatedApprovedForumRoute,
+  } as any)
 const AuthenticatedApprovedSportsGuidesReadIdRoute =
   AuthenticatedApprovedSportsGuidesReadIdRouteImport.update({
     id: '/read/$id',
@@ -499,7 +506,7 @@ export interface FileRoutesByFullPath {
   '/admin-roles': typeof AuthenticatedApprovedAdminRolesRoute
   '/admin-ticket-categories': typeof AuthenticatedApprovedAdminTicketCategoriesRoute
   '/clock': typeof AuthenticatedApprovedClockRoute
-  '/forum': typeof AuthenticatedApprovedForumRoute
+  '/forum': typeof AuthenticatedApprovedForumRouteWithChildren
   '/home': typeof AuthenticatedApprovedHomeRouteWithChildren
   '/install-guides': typeof AuthenticatedApprovedInstallGuidesRoute
   '/knowledge-base': typeof AuthenticatedApprovedKnowledgeBaseRoute
@@ -517,6 +524,7 @@ export interface FileRoutesByFullPath {
   '/status': typeof AuthenticatedApprovedStatusRoute
   '/tickets': typeof AuthenticatedApprovedTicketsRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
+  '/forum/$board': typeof AuthenticatedApprovedForumBoardRoute
   '/home/$channel': typeof AuthenticatedApprovedHomeChannelRoute
   '/sports-guides/new': typeof AuthenticatedApprovedSportsGuidesNewRoute
   '/u/$username': typeof AuthenticatedApprovedUUsernameRoute
@@ -567,7 +575,7 @@ export interface FileRoutesByTo {
   '/admin-roles': typeof AuthenticatedApprovedAdminRolesRoute
   '/admin-ticket-categories': typeof AuthenticatedApprovedAdminTicketCategoriesRoute
   '/clock': typeof AuthenticatedApprovedClockRoute
-  '/forum': typeof AuthenticatedApprovedForumRoute
+  '/forum': typeof AuthenticatedApprovedForumRouteWithChildren
   '/install-guides': typeof AuthenticatedApprovedInstallGuidesRoute
   '/knowledge-base': typeof AuthenticatedApprovedKnowledgeBaseRoute
   '/leaderboard': typeof AuthenticatedApprovedLeaderboardRoute
@@ -584,6 +592,7 @@ export interface FileRoutesByTo {
   '/status': typeof AuthenticatedApprovedStatusRoute
   '/tickets': typeof AuthenticatedApprovedTicketsRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
+  '/forum/$board': typeof AuthenticatedApprovedForumBoardRoute
   '/home/$channel': typeof AuthenticatedApprovedHomeChannelRoute
   '/sports-guides/new': typeof AuthenticatedApprovedSportsGuidesNewRoute
   '/u/$username': typeof AuthenticatedApprovedUUsernameRoute
@@ -637,7 +646,7 @@ export interface FileRoutesById {
   '/_authenticated/_approved/admin-roles': typeof AuthenticatedApprovedAdminRolesRoute
   '/_authenticated/_approved/admin-ticket-categories': typeof AuthenticatedApprovedAdminTicketCategoriesRoute
   '/_authenticated/_approved/clock': typeof AuthenticatedApprovedClockRoute
-  '/_authenticated/_approved/forum': typeof AuthenticatedApprovedForumRoute
+  '/_authenticated/_approved/forum': typeof AuthenticatedApprovedForumRouteWithChildren
   '/_authenticated/_approved/home': typeof AuthenticatedApprovedHomeRouteWithChildren
   '/_authenticated/_approved/install-guides': typeof AuthenticatedApprovedInstallGuidesRoute
   '/_authenticated/_approved/knowledge-base': typeof AuthenticatedApprovedKnowledgeBaseRoute
@@ -655,6 +664,7 @@ export interface FileRoutesById {
   '/_authenticated/_approved/status': typeof AuthenticatedApprovedStatusRoute
   '/_authenticated/_approved/tickets': typeof AuthenticatedApprovedTicketsRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
+  '/_authenticated/_approved/forum/$board': typeof AuthenticatedApprovedForumBoardRoute
   '/_authenticated/_approved/home/$channel': typeof AuthenticatedApprovedHomeChannelRoute
   '/_authenticated/_approved/sports-guides/new': typeof AuthenticatedApprovedSportsGuidesNewRoute
   '/_authenticated/_approved/u/$username': typeof AuthenticatedApprovedUUsernameRoute
@@ -725,6 +735,7 @@ export interface FileRouteTypes {
     | '/status'
     | '/tickets'
     | '/lovable/email/suppression'
+    | '/forum/$board'
     | '/home/$channel'
     | '/sports-guides/new'
     | '/u/$username'
@@ -792,6 +803,7 @@ export interface FileRouteTypes {
     | '/status'
     | '/tickets'
     | '/lovable/email/suppression'
+    | '/forum/$board'
     | '/home/$channel'
     | '/sports-guides/new'
     | '/u/$username'
@@ -862,6 +874,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/status'
     | '/_authenticated/_approved/tickets'
     | '/lovable/email/suppression'
+    | '/_authenticated/_approved/forum/$board'
     | '/_authenticated/_approved/home/$channel'
     | '/_authenticated/_approved/sports-guides/new'
     | '/_authenticated/_approved/u/$username'
@@ -1373,6 +1386,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedApprovedHomeChannelRouteImport
       parentRoute: typeof AuthenticatedApprovedHomeRoute
     }
+    '/_authenticated/_approved/forum/$board': {
+      id: '/_authenticated/_approved/forum/$board'
+      path: '/$board'
+      fullPath: '/forum/$board'
+      preLoaderRoute: typeof AuthenticatedApprovedForumBoardRouteImport
+      parentRoute: typeof AuthenticatedApprovedForumRoute
+    }
     '/_authenticated/_approved/sports-guides/read/$id': {
       id: '/_authenticated/_approved/sports-guides/read/$id'
       path: '/read/$id'
@@ -1389,6 +1409,20 @@ declare module '@tanstack/react-router' {
     }
   }
 }
+
+interface AuthenticatedApprovedForumRouteChildren {
+  AuthenticatedApprovedForumBoardRoute: typeof AuthenticatedApprovedForumBoardRoute
+}
+
+const AuthenticatedApprovedForumRouteChildren: AuthenticatedApprovedForumRouteChildren =
+  {
+    AuthenticatedApprovedForumBoardRoute: AuthenticatedApprovedForumBoardRoute,
+  }
+
+const AuthenticatedApprovedForumRouteWithChildren =
+  AuthenticatedApprovedForumRoute._addFileChildren(
+    AuthenticatedApprovedForumRouteChildren,
+  )
 
 interface AuthenticatedApprovedHomeRouteChildren {
   AuthenticatedApprovedHomeChannelRoute: typeof AuthenticatedApprovedHomeChannelRoute
@@ -1445,7 +1479,7 @@ interface AuthenticatedApprovedRouteChildren {
   AuthenticatedApprovedAdminRolesRoute: typeof AuthenticatedApprovedAdminRolesRoute
   AuthenticatedApprovedAdminTicketCategoriesRoute: typeof AuthenticatedApprovedAdminTicketCategoriesRoute
   AuthenticatedApprovedClockRoute: typeof AuthenticatedApprovedClockRoute
-  AuthenticatedApprovedForumRoute: typeof AuthenticatedApprovedForumRoute
+  AuthenticatedApprovedForumRoute: typeof AuthenticatedApprovedForumRouteWithChildren
   AuthenticatedApprovedHomeRoute: typeof AuthenticatedApprovedHomeRouteWithChildren
   AuthenticatedApprovedInstallGuidesRoute: typeof AuthenticatedApprovedInstallGuidesRoute
   AuthenticatedApprovedKnowledgeBaseRoute: typeof AuthenticatedApprovedKnowledgeBaseRoute
@@ -1494,7 +1528,7 @@ const AuthenticatedApprovedRouteChildren: AuthenticatedApprovedRouteChildren = {
   AuthenticatedApprovedAdminTicketCategoriesRoute:
     AuthenticatedApprovedAdminTicketCategoriesRoute,
   AuthenticatedApprovedClockRoute: AuthenticatedApprovedClockRoute,
-  AuthenticatedApprovedForumRoute: AuthenticatedApprovedForumRoute,
+  AuthenticatedApprovedForumRoute: AuthenticatedApprovedForumRouteWithChildren,
   AuthenticatedApprovedHomeRoute: AuthenticatedApprovedHomeRouteWithChildren,
   AuthenticatedApprovedInstallGuidesRoute:
     AuthenticatedApprovedInstallGuidesRoute,
