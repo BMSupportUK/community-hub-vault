@@ -23,6 +23,7 @@ export function PagedGrid<T>({
   page,
   onPagesChange,
   emptyState,
+  maxRows,
 }: {
   items: T[];
   renderItem: (item: T, i: number) => ReactNode;
@@ -31,6 +32,8 @@ export function PagedGrid<T>({
   page: number;
   onPagesChange: (count: number) => void;
   emptyState?: ReactNode;
+  /** If set, cap each page to this many grid rows (in addition to height fit). */
+  maxRows?: number;
 }) {
   const visibleRef = useRef<HTMLDivElement>(null);
   const measureRef = useRef<HTMLDivElement>(null);
@@ -63,6 +66,8 @@ export function PagedGrid<T>({
       const out: number[][] = [];
       let cur: number[] = [];
       let top = 0;
+      let rowsOnPage = 0;
+      let lastRowTop = -1;
       for (let i = 0; i < kids.length; i++) {
         const k = kids[i];
         const kTop = k.offsetTop;
@@ -70,14 +75,25 @@ export function PagedGrid<T>({
         if (cur.length === 0) {
           top = kTop;
           cur.push(i);
+          rowsOnPage = 1;
+          lastRowTop = kTop;
           continue;
         }
-        if (kBottom - top > availableHeight) {
+        const isNewRow = kTop > lastRowTop + 1;
+        const wouldExceedRows =
+          isNewRow && maxRows != null && rowsOnPage + 1 > maxRows;
+        if (kBottom - top > availableHeight || wouldExceedRows) {
           out.push(cur);
           cur = [i];
           top = kTop;
+          rowsOnPage = 1;
+          lastRowTop = kTop;
         } else {
           cur.push(i);
+          if (isNewRow) {
+            rowsOnPage += 1;
+            lastRowTop = kTop;
+          }
         }
       }
       if (cur.length) out.push(cur);
@@ -93,7 +109,7 @@ export function PagedGrid<T>({
       cancelAnimationFrame(raf);
       ro.disconnect();
     };
-  }, [items, availableHeight, width]);
+  }, [items, availableHeight, width, maxRows]);
 
   useEffect(() => {
     onPagesChange(Math.max(pages.length, 1));
