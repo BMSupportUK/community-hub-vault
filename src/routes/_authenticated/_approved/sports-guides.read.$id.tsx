@@ -96,7 +96,14 @@ function ReadPage() {
     const wrap = document.createElement("div");
     wrap.innerHTML = sanitizeRichHtml(blog.body);
     annotateTimesInEl(wrap, viewerTz, defaultSourceZone);
-    return Array.from(wrap.children).map((el) => (el as HTMLElement).outerHTML);
+    return Array.from(wrap.children)
+      .filter((el) => {
+        const e = el as HTMLElement;
+        const hasText = (e.textContent ?? "").replace(/\s|\u00a0/g, "").length > 0;
+        const hasMedia = !!e.querySelector("img,video,iframe,svg,picture,canvas");
+        return hasText || hasMedia;
+      })
+      .map((el) => (el as HTMLElement).outerHTML);
   }, [blog?.body, viewerTz, defaultSourceZone]);
 
   // Reset to first page when switching guides.
