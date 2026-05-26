@@ -22,7 +22,9 @@ export function ModerationPendingBadge() {
         () => load(),
       )
       .subscribe();
-    const interval = setInterval(load, 30000);
+    // Realtime postgres_changes above handles fresh updates;
+    // this interval is only a reconciliation safety net.
+    const interval = setInterval(load, 120_000);
     return () => {
       active = false;
       clearInterval(interval);

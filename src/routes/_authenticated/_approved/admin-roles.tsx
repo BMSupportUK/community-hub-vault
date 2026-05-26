@@ -380,7 +380,7 @@ function LocationHistoryDialog({ row, onClose }: { row: Row; onClose: () => void
 
     setLoading(true);
     load(true);
-    const interval = window.setInterval(() => load(false), 5_000);
+    const interval = window.setInterval(() => load(false), 30_000);
     return () => {
       active = false;
       window.clearInterval(interval);
