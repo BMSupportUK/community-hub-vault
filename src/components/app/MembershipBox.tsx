@@ -35,13 +35,13 @@ export function MembershipBox() {
     };
     load();
     const channel = supabase
-      .channel(`membership-box-${user.id}`)
+      .channel(`membership-box-${user.id}-${Math.random().toString(36).slice(2)}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "private", table: "app_credentials", filter: `owner_id=eq.${user.id}` },
         () => load(),
-      )
-      .subscribe();
+      );
+    channel.subscribe();
     return () => {
       active = false;
       supabase.removeChannel(channel);
