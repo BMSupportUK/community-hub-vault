@@ -2,7 +2,7 @@ import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { LandingHeader } from "@/components/LandingHeader";
-import welcomeHero from "@/assets/welcome-hero.jpg";
+import welcomeHero from "@/assets/welcome-hero.webp";
 
 function isAndroidAppShell() {
   if (typeof window === "undefined") return false;
