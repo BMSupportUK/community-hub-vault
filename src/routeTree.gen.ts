@@ -78,6 +78,7 @@ import { Route as AuthenticatedApprovedHomeChannelRouteImport } from './routes/_
 import { Route as AuthenticatedApprovedForumBoardRouteImport } from './routes/_authenticated/_approved/forum.$board'
 import { Route as AuthenticatedApprovedSportsGuidesReadIdRouteImport } from './routes/_authenticated/_approved/sports-guides.read.$id'
 import { Route as AuthenticatedApprovedSportsGuidesIdEditRouteImport } from './routes/_authenticated/_approved/sports-guides.$id.edit'
+import { Route as AuthenticatedApprovedForumBoardTopicRouteImport } from './routes/_authenticated/_approved/forum.$board.$topic'
 
 const UnsubscribeRoute = UnsubscribeRouteImport.update({
   id: '/unsubscribe',
@@ -473,6 +474,12 @@ const AuthenticatedApprovedSportsGuidesIdEditRoute =
     path: '/$id/edit',
     getParentRoute: () => AuthenticatedApprovedSportsGuidesRoute,
   } as any)
+const AuthenticatedApprovedForumBoardTopicRoute =
+  AuthenticatedApprovedForumBoardTopicRouteImport.update({
+    id: '/$topic',
+    path: '/$topic',
+    getParentRoute: () => AuthenticatedApprovedForumBoardRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -524,7 +531,7 @@ export interface FileRoutesByFullPath {
   '/status': typeof AuthenticatedApprovedStatusRoute
   '/tickets': typeof AuthenticatedApprovedTicketsRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
-  '/forum/$board': typeof AuthenticatedApprovedForumBoardRoute
+  '/forum/$board': typeof AuthenticatedApprovedForumBoardRouteWithChildren
   '/home/$channel': typeof AuthenticatedApprovedHomeChannelRoute
   '/sports-guides/new': typeof AuthenticatedApprovedSportsGuidesNewRoute
   '/u/$username': typeof AuthenticatedApprovedUUsernameRoute
@@ -540,6 +547,7 @@ export interface FileRoutesByFullPath {
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
   '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
   '/home/': typeof AuthenticatedApprovedHomeIndexRoute
+  '/forum/$board/$topic': typeof AuthenticatedApprovedForumBoardTopicRoute
   '/sports-guides/$id/edit': typeof AuthenticatedApprovedSportsGuidesIdEditRoute
   '/sports-guides/read/$id': typeof AuthenticatedApprovedSportsGuidesReadIdRoute
 }
@@ -592,7 +600,7 @@ export interface FileRoutesByTo {
   '/status': typeof AuthenticatedApprovedStatusRoute
   '/tickets': typeof AuthenticatedApprovedTicketsRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
-  '/forum/$board': typeof AuthenticatedApprovedForumBoardRoute
+  '/forum/$board': typeof AuthenticatedApprovedForumBoardRouteWithChildren
   '/home/$channel': typeof AuthenticatedApprovedHomeChannelRoute
   '/sports-guides/new': typeof AuthenticatedApprovedSportsGuidesNewRoute
   '/u/$username': typeof AuthenticatedApprovedUUsernameRoute
@@ -608,6 +616,7 @@ export interface FileRoutesByTo {
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
   '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
   '/home': typeof AuthenticatedApprovedHomeIndexRoute
+  '/forum/$board/$topic': typeof AuthenticatedApprovedForumBoardTopicRoute
   '/sports-guides/$id/edit': typeof AuthenticatedApprovedSportsGuidesIdEditRoute
   '/sports-guides/read/$id': typeof AuthenticatedApprovedSportsGuidesReadIdRoute
 }
@@ -664,7 +673,7 @@ export interface FileRoutesById {
   '/_authenticated/_approved/status': typeof AuthenticatedApprovedStatusRoute
   '/_authenticated/_approved/tickets': typeof AuthenticatedApprovedTicketsRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
-  '/_authenticated/_approved/forum/$board': typeof AuthenticatedApprovedForumBoardRoute
+  '/_authenticated/_approved/forum/$board': typeof AuthenticatedApprovedForumBoardRouteWithChildren
   '/_authenticated/_approved/home/$channel': typeof AuthenticatedApprovedHomeChannelRoute
   '/_authenticated/_approved/sports-guides/new': typeof AuthenticatedApprovedSportsGuidesNewRoute
   '/_authenticated/_approved/u/$username': typeof AuthenticatedApprovedUUsernameRoute
@@ -680,6 +689,7 @@ export interface FileRoutesById {
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
   '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
   '/_authenticated/_approved/home/': typeof AuthenticatedApprovedHomeIndexRoute
+  '/_authenticated/_approved/forum/$board/$topic': typeof AuthenticatedApprovedForumBoardTopicRoute
   '/_authenticated/_approved/sports-guides/$id/edit': typeof AuthenticatedApprovedSportsGuidesIdEditRoute
   '/_authenticated/_approved/sports-guides/read/$id': typeof AuthenticatedApprovedSportsGuidesReadIdRoute
 }
@@ -751,6 +761,7 @@ export interface FileRouteTypes {
     | '/lovable/email/transactional/preview'
     | '/lovable/email/transactional/send'
     | '/home/'
+    | '/forum/$board/$topic'
     | '/sports-guides/$id/edit'
     | '/sports-guides/read/$id'
   fileRoutesByTo: FileRoutesByTo
@@ -819,6 +830,7 @@ export interface FileRouteTypes {
     | '/lovable/email/transactional/preview'
     | '/lovable/email/transactional/send'
     | '/home'
+    | '/forum/$board/$topic'
     | '/sports-guides/$id/edit'
     | '/sports-guides/read/$id'
   id:
@@ -890,6 +902,7 @@ export interface FileRouteTypes {
     | '/lovable/email/transactional/preview'
     | '/lovable/email/transactional/send'
     | '/_authenticated/_approved/home/'
+    | '/_authenticated/_approved/forum/$board/$topic'
     | '/_authenticated/_approved/sports-guides/$id/edit'
     | '/_authenticated/_approved/sports-guides/read/$id'
   fileRoutesById: FileRoutesById
@@ -1407,16 +1420,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedApprovedSportsGuidesIdEditRouteImport
       parentRoute: typeof AuthenticatedApprovedSportsGuidesRoute
     }
+    '/_authenticated/_approved/forum/$board/$topic': {
+      id: '/_authenticated/_approved/forum/$board/$topic'
+      path: '/$topic'
+      fullPath: '/forum/$board/$topic'
+      preLoaderRoute: typeof AuthenticatedApprovedForumBoardTopicRouteImport
+      parentRoute: typeof AuthenticatedApprovedForumBoardRoute
+    }
   }
 }
 
+interface AuthenticatedApprovedForumBoardRouteChildren {
+  AuthenticatedApprovedForumBoardTopicRoute: typeof AuthenticatedApprovedForumBoardTopicRoute
+}
+
+const AuthenticatedApprovedForumBoardRouteChildren: AuthenticatedApprovedForumBoardRouteChildren =
+  {
+    AuthenticatedApprovedForumBoardTopicRoute:
+      AuthenticatedApprovedForumBoardTopicRoute,
+  }
+
+const AuthenticatedApprovedForumBoardRouteWithChildren =
+  AuthenticatedApprovedForumBoardRoute._addFileChildren(
+    AuthenticatedApprovedForumBoardRouteChildren,
+  )
+
 interface AuthenticatedApprovedForumRouteChildren {
-  AuthenticatedApprovedForumBoardRoute: typeof AuthenticatedApprovedForumBoardRoute
+  AuthenticatedApprovedForumBoardRoute: typeof AuthenticatedApprovedForumBoardRouteWithChildren
 }
 
 const AuthenticatedApprovedForumRouteChildren: AuthenticatedApprovedForumRouteChildren =
   {
-    AuthenticatedApprovedForumBoardRoute: AuthenticatedApprovedForumBoardRoute,
+    AuthenticatedApprovedForumBoardRoute:
+      AuthenticatedApprovedForumBoardRouteWithChildren,
   }
 
 const AuthenticatedApprovedForumRouteWithChildren =
