@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { useBusinessOpen } from "@/hooks/use-business-open";
+import { usePresence } from "@/components/app/PresenceIndicators";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -49,7 +49,6 @@ export function UserAvatarMenu({ variant = "header" }: { variant?: "header" | "b
   const [profile, setProfile] = useState<MiniProfile | null>(null);
   const [copied, setCopied] = useState(false);
   const isAdmin = hasAny(["admin", "management"]);
-  const businessOpen = useBusinessOpen();
   const roleFlashMap = useRoleFlashMap();
   const instanceId = useRef(Math.random().toString(36).slice(2)).current;
 
@@ -86,9 +85,11 @@ export function UserAvatarMenu({ variant = "header" }: { variant?: "header" | "b
   const flashRole = FLASH_PRIORITY.find((r) => roles.includes(r)) ?? null;
   const flashCls = roleFlashClass(flashRole);
   const resolvedAvatar = resolveAvatarUrl(user.id, profile?.avatar_url, roleFlashMap);
-  const isStaffRole = hasAny(["admin", "management", "moderator", "staff"]);
-  const isAway = isStaffRole && !businessOpen;
-  const statusLabel = isAway ? "Away From The Office" : "Online";
+  // Treat the signed-in user as always "online" here; DND, if enabled,
+  // upgrades the indicator to violet via usePresence.
+  const presence = usePresence(user.id, true);
+  const isDnd = presence.kind === "dnd";
+  const statusLabel = presence.shortLabel;
 
   const copyHandle = async () => {
     if (!profile?.username) return;
@@ -130,8 +131,8 @@ export function UserAvatarMenu({ variant = "header" }: { variant?: "header" | "b
                   <span
                     className={cn(
                       "absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full ring-2 ring-rail",
-                      isAway
-                        ? "bg-yellow-400 shadow-[0_0_10px_rgba(250,204,21,0.8)]"
+                      isDnd
+                        ? "bg-violet-500 shadow-[0_0_10px_rgba(167,139,250,0.85)]"
                         : "bg-emerald-500",
                     )}
                     aria-label={statusLabel}
@@ -163,8 +164,8 @@ export function UserAvatarMenu({ variant = "header" }: { variant?: "header" | "b
                 <span
                   className={cn(
                     "absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full ring-2 ring-rail",
-                    isAway
-                      ? "bg-yellow-400 shadow-[0_0_10px_rgba(250,204,21,0.8)]"
+                    isDnd
+                      ? "bg-violet-500 shadow-[0_0_10px_rgba(167,139,250,0.85)]"
                       : "bg-emerald-500",
                   )}
                   aria-label={statusLabel}
