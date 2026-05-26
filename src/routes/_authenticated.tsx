@@ -152,7 +152,8 @@ function AuthLayout() {
           </div>
           <div className="hidden xl:flex flex-1 min-w-0 px-3" />
           <div className="flex items-center gap-1.5 lg:gap-3 shrink-0">
-          <div className="hidden lg:flex"><Clocks /></div>
+            <TwoFactorPill />
+            <div className="hidden lg:flex"><Clocks /></div>
           </div>
         </header>
         <div className="flex-1 flex min-h-0">
