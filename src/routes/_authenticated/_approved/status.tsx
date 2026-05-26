@@ -17,7 +17,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
-import statusHero from "@/assets/status-hero.png";
+import statusHero from "@/assets/status-hero.webp";
 import statusBg from "@/assets/status-bg.jpg";
 import { PushNotificationsToggle } from "@/components/app/PushNotificationsToggle";
 import { useServerFn } from "@tanstack/react-start";

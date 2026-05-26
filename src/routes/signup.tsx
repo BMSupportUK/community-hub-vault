@@ -3,7 +3,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Field } from "./login";
-import signupIllustration from "@/assets/signup-illustration.png";
+import signupIllustration from "@/assets/signup-illustration.webp";
 import { recordSignupInfo } from "@/lib/signup-info.functions";
 import { TurnstileWidget } from "@/components/app/TurnstileWidget";
 import { verifyTurnstile } from "@/lib/turnstile.functions";

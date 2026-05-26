@@ -3,7 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import loginIllustration from "@/assets/login-illustration.png";
+import loginIllustration from "@/assets/login-illustration.webp";
 import { TurnstileWidget } from "@/components/app/TurnstileWidget";
 import { verifyTurnstile } from "@/lib/turnstile.functions";
 import { checkMyVpnOnLogin } from "@/lib/vpn-login-check.functions";
