@@ -88,15 +88,16 @@ function ReadPage() {
     })();
   }, [id, user?.id, navigate, queryClient]);
 
-  // Split the sanitized body HTML into top-level item strings so the grid
-  // can be paginated by height.
+  // Annotate the full sanitized guide first, then split into top-level item
+  // strings so each paginated grid item keeps its complete event-card wrapper.
   const bodyItems = useMemo(() => {
     if (!blog?.body) return [] as string[];
     if (typeof document === "undefined") return [];
     const wrap = document.createElement("div");
     wrap.innerHTML = sanitizeRichHtml(blog.body);
+    annotateTimesInEl(wrap, viewerTz, defaultSourceZone);
     return Array.from(wrap.children).map((el) => (el as HTMLElement).outerHTML);
-  }, [blog?.body]);
+  }, [blog?.body, viewerTz, defaultSourceZone]);
 
   // Reset to first page when switching guides.
   useEffect(() => {
@@ -113,15 +114,6 @@ function ReadPage() {
     ro.observe(el);
     return () => ro.disconnect();
   }, [loading]);
-
-  // Re-annotate times inside the visible grid after each page render.
-  useEffect(() => {
-    const stage = stageRef.current;
-    if (!stage) return;
-    const visible = stage.firstElementChild as HTMLElement | null;
-    if (!visible) return;
-    annotateTimesInEl(visible, viewerTz, defaultSourceZone);
-  }, [page, bodyItems, viewerTz, defaultSourceZone, stageHeight]);
 
   // Arrow-key navigation.
   useEffect(() => {
