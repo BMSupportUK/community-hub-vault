@@ -55,7 +55,8 @@ export function PagedGrid<T>({
   useLayoutEffect(() => {
     const el = measureRef.current;
     if (!el) return;
-    if (!items.length || availableHeight <= 0 || width <= 0) {
+    const rowLimited = maxRows != null && maxRows > 0;
+    if (!items.length || width <= 0 || (!rowLimited && availableHeight <= 0)) {
       setPages(items.length ? [items.map((_, i) => i)] : []);
       return;
     }
@@ -64,7 +65,7 @@ export function PagedGrid<T>({
       const kids = Array.from(el.children) as HTMLElement[];
       if (!kids.length) return;
       // If maxRows is set, slice strictly by rows*cols (deterministic).
-      if (maxRows != null && maxRows > 0) {
+      if (rowLimited) {
         const firstTop = kids[0].offsetTop;
         let cols = 0;
         for (const k of kids) {
