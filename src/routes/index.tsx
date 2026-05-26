@@ -30,6 +30,12 @@ function Landing() {
   const [boxes, setBoxes] = useState<HeroBox[]>([]);
 
   useEffect(() => {
+    if (typeof window !== "undefined" && (window as any).Capacitor?.isNativePlatform?.()) {
+      window.location.replace("/login");
+    }
+  }, []);
+
+  useEffect(() => {
     (async () => {
       const { data } = await supabase
         .from("hero_boxes")
