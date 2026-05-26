@@ -11,6 +11,7 @@ import { VpnBadge } from "@/lib/vpn-flags";
 import { MentionsBadge } from "@/components/app/MentionsBadge";
 import { NotificationBell } from "@/components/app/NotificationBell";
 import { UserAvatarMenu } from "@/components/app/UserAvatarMenu";
+import { DndDialogButton } from "@/components/app/DndDialogButton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 export interface ChannelGroup {
@@ -378,6 +379,7 @@ export function ChannelColumn({
             </div>
             <div className="ml-auto flex items-center gap-0.5 shrink-0 text-muted-foreground">
               <MentionsBadge />
+              <DndDialogButton />
               <NotificationBell />
               <button
                 onClick={handleSignOut}
