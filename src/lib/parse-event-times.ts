@@ -456,6 +456,9 @@ function isWeekdayOnly(text: string): boolean {
 }
 
 export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZone?: string): void {
+  const BLOCK_SELECTOR = "li, p, tr, div, h1, h2, h3, h4, h5, h6";
+  const INLINE_LINE_SELECTOR = "b, strong";
+
   // Restore any previously transformed rows back to their original markup so
   // re-runs (e.g. body content changed) stay idempotent.
   root.querySelectorAll("[data-tz-row]").forEach((row) => {
@@ -467,6 +470,26 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
       delete (row as HTMLElement).dataset.tzOriginal;
       delete (row as HTMLElement).dataset.tzPrevClass;
     }
+  });
+
+  // Some editors paste one event as a nested wrapper:
+  //   <div><div>May 26 7:00 PM ET</div><div>Team A vs Team B</div></div><div>Channel</div>
+  // The card parser expects those as sibling lines. Flatten only obvious
+  // top-level wrappers whose first child is a time and second child is a title.
+  Array.from(root.children).forEach((child) => {
+    const wrapper = child as HTMLElement;
+    if (!wrapper.matches("div, li, p")) return;
+    const childLines = Array.from(wrapper.children).filter((el) =>
+      (el as HTMLElement).matches(BLOCK_SELECTOR),
+    ) as HTMLElement[];
+    if (childLines.length < 2) return;
+    const firstText = (childLines[0].textContent ?? "").trim();
+    const secondText = (childLines[1].textContent ?? "").trim();
+    if (!firstText || !secondText) return;
+    if (!parseMatches(firstText, viewerTz, defaultZone).length) return;
+    if (parseMatches(secondText, viewerTz, defaultZone).length || parseGuideDate(secondText)) return;
+    for (const node of Array.from(wrapper.childNodes)) root.insertBefore(node, wrapper);
+    wrapper.remove();
   });
 
   // Hide any element whose entire visible text is just a date heading
@@ -493,8 +516,6 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
     el.className = "hidden";
   });
 
-  const BLOCK_SELECTOR = "li, p, tr, div, h1, h2, h3, h4, h5, h6";
-  const INLINE_LINE_SELECTOR = "b, strong";
   // Some pasted editor content stores the first event time as direct text in a
   // wrapper div before nested event-name/source divs. Move that loose leading
   // text into its own line so it can be numbered like the later events.
