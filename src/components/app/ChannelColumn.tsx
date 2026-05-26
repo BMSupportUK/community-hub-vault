@@ -1,7 +1,6 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import { Hash, ChevronDown, Plus, Trash2, Shield, Smile, Pencil, ChevronUp, LogOut, Settings } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
-import { useBusinessOpen } from "@/hooks/use-business-open";
 import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
@@ -63,8 +62,6 @@ export function ChannelColumn({
     await signOut();
     navigate({ to: "/login" });
   };
-  const businessOpen = useBusinessOpen();
-  const isAway = isStaff && !businessOpen;
   const roleFlashMap = useRoleFlashMap();
   const [profile, setProfile] = useState<{
     display_name: string | null;
