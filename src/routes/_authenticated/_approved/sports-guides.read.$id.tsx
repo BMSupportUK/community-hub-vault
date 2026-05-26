@@ -96,9 +96,14 @@ function ReadPage() {
     const wrap = document.createElement("div");
     wrap.innerHTML = sanitizeRichHtml(blog.body);
     annotateTimesInEl(wrap, viewerTz, defaultSourceZone);
+    const eventRows = Array.from(
+      wrap.querySelectorAll<HTMLElement>("[data-tz-row][data-tz-utc]"),
+    );
+    if (eventRows.length) return eventRows.map((el) => el.outerHTML);
     return Array.from(wrap.children)
       .filter((el) => {
         const e = el as HTMLElement;
+        if (e.matches(".hidden,[hidden]")) return false;
         const hasText = (e.textContent ?? "").replace(/\s|\u00a0/g, "").length > 0;
         const hasMedia = !!e.querySelector("img,video,iframe,svg,picture,canvas");
         return hasText || hasMedia;
