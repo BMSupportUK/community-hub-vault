@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import sportsBg from "@/assets/sports-bg.jpg";
-import { PagedGrid, PaginationBar, useViewportFit } from "@/lib/paginate-by-height";
+import { PagedGrid, PaginationBar } from "@/lib/paginate-by-height";
 
 export const Route = createFileRoute("/_authenticated/_approved/sports-guides")({
   component: SportsGuidesRoute,
@@ -82,8 +82,6 @@ function SportsGuidesPage() {
   const dragBlogId = useRef<string | null>(null);
   const [listPage, setListPage] = useState(0);
   const [listPageCount, setListPageCount] = useState(1);
-  const listStageRef = useRef<HTMLDivElement>(null);
-  const listAvail = useViewportFit(listStageRef, 80);
 
   // Reset paging when the visible set changes.
   useEffect(() => {
@@ -428,12 +426,12 @@ function SportsGuidesPage() {
                   </div>
                 ) : (
                   <>
-                  <div ref={listStageRef} className="overflow-hidden" style={{ height: listAvail || undefined }}>
+                  <div>
                   <PagedGrid
                     items={filtered}
                     page={listPage}
                     onPagesChange={setListPageCount}
-                    availableHeight={listAvail}
+                    availableHeight={0}
                     maxRows={2}
                     className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5"
                     renderItem={(b) => (
