@@ -22,7 +22,7 @@ import { cn } from "@/lib/utils";
 import { DEFAULT_AVATAR_URL } from "@/lib/default-avatar";
 import { Nameplate } from "@/components/app/Nameplate";
 import { useOnlineUsers } from "@/hooks/use-online-users";
-import { useBusinessOpen } from "@/hooks/use-business-open";
+import { PresenceMiniDot, PresenceMiniLabel } from "@/components/app/PresenceIndicators";
 import { formatLastSeen } from "@/lib/relative-time";
 import { useRoleFlashMap, roleFlashClass, resolveAvatarUrl } from "@/lib/role-flash";
 
