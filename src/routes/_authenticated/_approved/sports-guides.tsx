@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import sportsBg from "@/assets/sports-bg.jpg";
+import { PagedGrid, PaginationBar, useViewportFit } from "@/lib/paginate-by-height";
 
 export const Route = createFileRoute("/_authenticated/_approved/sports-guides")({
   component: SportsGuidesRoute,
@@ -79,6 +80,15 @@ function SportsGuidesPage() {
   const [addingCat, setAddingCat] = useState(false);
   const dragCatId = useRef<string | null>(null);
   const dragBlogId = useRef<string | null>(null);
+  const [listPage, setListPage] = useState(0);
+  const [listPageCount, setListPageCount] = useState(1);
+  const listStageRef = useRef<HTMLDivElement>(null);
+  const listAvail = useViewportFit(listStageRef, 80);
+
+  // Reset paging when the visible set changes.
+  useEffect(() => {
+    setListPage(0);
+  }, [activeCat, search]);
 
   // Persist UI state across screen swaps (route remounts).
   useEffect(() => { try { sessionStorage.setItem("sports-guides-active-tab", tab); } catch { /* ignore */ } }, [tab]);
@@ -417,8 +427,15 @@ function SportsGuidesPage() {
                     No blogs in this category yet.
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-                    {filtered.map((b) => (
+                  <>
+                  <div ref={listStageRef} className="overflow-hidden" style={{ height: listAvail || undefined }}>
+                  <PagedGrid
+                    items={filtered}
+                    page={listPage}
+                    onPagesChange={setListPageCount}
+                    availableHeight={listAvail}
+                    className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5"
+                    renderItem={(b) => (
                       <article
                         key={b.id}
                         draggable={isMod}
@@ -524,8 +541,15 @@ function SportsGuidesPage() {
                           </div>
                         </div>
                       </article>
-                    ))}
+                    )}
+                  />
                   </div>
+                  {listPageCount > 1 && (
+                    <div className="mt-3">
+                      <PaginationBar page={listPage} pageCount={listPageCount} onPageChange={setListPage} />
+                    </div>
+                  )}
+                  </>
                 )}
               </section>
 

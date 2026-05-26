@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, RefreshCw } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { annotateTimesInEl } from "@/lib/parse-event-times";
+import { PagedGrid, PaginationBar } from "@/lib/paginate-by-height";
 
 export const Route = createFileRoute("/_authenticated/_approved/sports-guides/read/$id")({
   component: ReadPage,
@@ -31,10 +32,13 @@ function ReadPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const bodyRef = useRef<HTMLDivElement | null>(null);
+  const stageRef = useRef<HTMLDivElement | null>(null);
   const [blog, setBlog] = useState<Blog | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(0);
+  const [pageCount, setPageCount] = useState(1);
+  const [stageHeight, setStageHeight] = useState(0);
   // Guides sourced from Flosports (College Football, Racing) publish their
   // schedules in US Eastern time, not GMT. Detect by title so bare times
   // without a zone are interpreted in ET.
@@ -84,26 +88,54 @@ function ReadPage() {
     })();
   }, [id, user?.id, navigate, queryClient]);
 
+  // Split the sanitized body HTML into top-level item strings so the grid
+  // can be paginated by height.
+  const bodyItems = useMemo(() => {
+    if (!blog?.body) return [] as string[];
+    if (typeof document === "undefined") return [];
+    const wrap = document.createElement("div");
+    wrap.innerHTML = sanitizeRichHtml(blog.body);
+    return Array.from(wrap.children).map((el) => (el as HTMLElement).outerHTML);
+  }, [blog?.body]);
+
+  // Reset to first page when switching guides.
   useEffect(() => {
-    const el = bodyRef.current;
-    if (!el || !blog?.body) return;
-    let scheduled = false;
-    const run = () => {
-      observer.disconnect();
-      annotateTimesInEl(el, viewerTz, defaultSourceZone);
-      observer.observe(el, { childList: true, subtree: true });
+    setPage(0);
+  }, [id]);
+
+  // Measure available height of the body stage.
+  useLayoutEffect(() => {
+    const el = stageRef.current;
+    if (!el) return;
+    const update = () => setStageHeight(el.clientHeight);
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [loading]);
+
+  // Re-annotate times inside the visible grid after each page render.
+  useEffect(() => {
+    const stage = stageRef.current;
+    if (!stage) return;
+    const visible = stage.firstElementChild as HTMLElement | null;
+    if (!visible) return;
+    annotateTimesInEl(visible, viewerTz, defaultSourceZone);
+  }, [page, bodyItems, viewerTz, defaultSourceZone, stageHeight]);
+
+  // Arrow-key navigation.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLElement) {
+        const tag = e.target.tagName;
+        if (tag === "INPUT" || tag === "TEXTAREA" || e.target.isContentEditable) return;
+      }
+      if (e.key === "ArrowLeft") setPage((p) => Math.max(0, p - 1));
+      else if (e.key === "ArrowRight") setPage((p) => Math.min(pageCount - 1, p + 1));
     };
-    const observer = new MutationObserver(() => {
-      if (scheduled) return;
-      scheduled = true;
-      queueMicrotask(() => {
-        scheduled = false;
-        run();
-      });
-    });
-    run();
-    return () => observer.disconnect();
-  }, [blog?.body, viewerTz, defaultSourceZone]);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [pageCount]);
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden bg-gradient-to-br from-[#1a0b2e] via-[#2d1b4e] to-[#1a0b2e]">
@@ -117,12 +149,17 @@ function ReadPage() {
         >
           <ArrowLeft className="size-4 mr-1" /> Back to guides
         </Button>
+        {pageCount > 1 && (
+          <span className="text-xs text-purple-200/70 font-medium">
+            Page {page + 1} of {pageCount}
+          </span>
+        )}
       </header>
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
         {loading || !blog ? (
           <div className="px-6 py-12 text-center text-purple-200/70">Loading…</div>
         ) : (
-          <article className="w-full max-w-none mx-auto px-3 sm:px-6 py-8 space-y-5 overflow-hidden">
+          <article className="flex-1 min-h-0 w-full max-w-none mx-auto px-3 sm:px-6 py-6 flex flex-col gap-4 overflow-hidden">
             <div className="flex flex-wrap gap-2">
               <span className="text-xs px-2 py-1 rounded-md bg-fuchsia-500/30 text-white font-semibold border border-fuchsia-400/50">
                 {categories.find((c) => c.id === blog.category_id)?.name}
@@ -133,17 +170,17 @@ function ReadPage() {
                 </span>
               )}
             </div>
-            <h1 className="font-display text-3xl md:text-4xl font-bold text-white">
+            <h1 className="font-display text-2xl md:text-3xl font-bold text-white">
               {blog.title}
             </h1>
             {blog.refresh_notice && (
-              <div className="flex items-start gap-3 rounded-xl border border-amber-400/40 bg-amber-500/10 px-4 py-3 text-amber-100">
-                <RefreshCw className="size-5 shrink-0 mt-0.5" />
+              <div className="flex items-start gap-2 rounded-xl border border-amber-400/40 bg-amber-500/10 px-3 py-2 text-amber-100">
+                <RefreshCw className="size-4 shrink-0 mt-0.5" />
                 <div className="text-sm leading-relaxed">{blog.refresh_notice}</div>
               </div>
             )}
             {blog.not_guaranteed && (
-              <div className="rounded-xl border border-rose-400/40 bg-rose-500/10 px-4 py-3 text-rose-100 text-sm leading-relaxed">
+              <div className="rounded-xl border border-rose-400/40 bg-rose-500/10 px-3 py-2 text-rose-100 text-sm leading-relaxed">
                 These are not guaranteed and no reports allowed to source.
               </div>
             )}
@@ -151,20 +188,32 @@ function ReadPage() {
               <img
                 src={blog.image_url}
                 alt={blog.title}
-                className="max-h-48 md:max-h-64 w-auto mx-auto rounded-2xl border border-purple-500/30 object-contain"
+                className="max-h-32 md:max-h-40 w-auto mx-auto rounded-2xl border border-purple-500/30 object-contain"
               />
             )}
-            {blog.excerpt && <p className="text-lg text-purple-100/80 italic">{blog.excerpt}</p>}
+            {blog.excerpt && (
+              <p className="text-base text-purple-100/80 italic line-clamp-2">{blog.excerpt}</p>
+            )}
             {blog.body && (
-              <div className="space-y-2">
-                <div
-                  ref={bodyRef}
+              <div ref={stageRef} className="flex-1 min-h-0 relative overflow-hidden">
+                <PagedGrid
+                  items={bodyItems}
+                  availableHeight={stageHeight}
+                  page={page}
+                  onPagesChange={setPageCount}
                   className="prose prose-invert max-w-none text-purple-50/90 leading-relaxed grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3"
-                  dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(blog.body) }}
+                  renderItem={(html, i) => (
+                    <div key={`bi-${i}`} dangerouslySetInnerHTML={{ __html: html }} />
+                  )}
                 />
               </div>
             )}
           </article>
+        )}
+        {pageCount > 1 && (
+          <div className="shrink-0 py-2 border-t border-purple-500/30 bg-purple-950/60 backdrop-blur">
+            <PaginationBar page={page} pageCount={pageCount} onPageChange={setPage} />
+          </div>
         )}
       </div>
     </div>
