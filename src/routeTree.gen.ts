@@ -43,6 +43,7 @@ import { Route as AuthenticatedApprovedLeaderboardRouteImport } from './routes/_
 import { Route as AuthenticatedApprovedKnowledgeBaseRouteImport } from './routes/_authenticated/_approved/knowledge-base'
 import { Route as AuthenticatedApprovedInstallGuidesRouteImport } from './routes/_authenticated/_approved/install-guides'
 import { Route as AuthenticatedApprovedHomeRouteImport } from './routes/_authenticated/_approved/home'
+import { Route as AuthenticatedApprovedForumRouteImport } from './routes/_authenticated/_approved/forum'
 import { Route as AuthenticatedApprovedClockRouteImport } from './routes/_authenticated/_approved/clock'
 import { Route as AuthenticatedApprovedAdminTicketCategoriesRouteImport } from './routes/_authenticated/_approved/admin-ticket-categories'
 import { Route as AuthenticatedApprovedAdminRolesRouteImport } from './routes/_authenticated/_approved/admin-roles'
@@ -52,6 +53,7 @@ import { Route as AuthenticatedApprovedAdminPermissionsRouteImport } from './rou
 import { Route as AuthenticatedApprovedAdminNotificationsRouteImport } from './routes/_authenticated/_approved/admin-notifications'
 import { Route as AuthenticatedApprovedAdminNameplatesRouteImport } from './routes/_authenticated/_approved/admin-nameplates'
 import { Route as AuthenticatedApprovedAdminHeroBoxesRouteImport } from './routes/_authenticated/_approved/admin-hero-boxes'
+import { Route as AuthenticatedApprovedAdminForumRouteImport } from './routes/_authenticated/_approved/admin-forum'
 import { Route as AuthenticatedApprovedAdminFanZoneRouteImport } from './routes/_authenticated/_approved/admin-fan-zone'
 import { Route as AuthenticatedApprovedAdminDnsRouteImport } from './routes/_authenticated/_approved/admin-dns'
 import { Route as AuthenticatedApprovedAdminCredentialsRouteImport } from './routes/_authenticated/_approved/admin-credentials'
@@ -74,8 +76,10 @@ import { Route as ApiPublicHooksBackupCredentialsRouteImport } from './routes/ap
 import { Route as AuthenticatedApprovedUUsernameRouteImport } from './routes/_authenticated/_approved/u.$username'
 import { Route as AuthenticatedApprovedSportsGuidesNewRouteImport } from './routes/_authenticated/_approved/sports-guides.new'
 import { Route as AuthenticatedApprovedHomeChannelRouteImport } from './routes/_authenticated/_approved/home.$channel'
+import { Route as AuthenticatedApprovedForumBoardRouteImport } from './routes/_authenticated/_approved/forum.$board'
 import { Route as AuthenticatedApprovedSportsGuidesReadIdRouteImport } from './routes/_authenticated/_approved/sports-guides.read.$id'
 import { Route as AuthenticatedApprovedSportsGuidesIdEditRouteImport } from './routes/_authenticated/_approved/sports-guides.$id.edit'
+import { Route as AuthenticatedApprovedForumBoardTopicRouteImport } from './routes/_authenticated/_approved/forum.$board.$topic'
 
 const UnsubscribeRoute = UnsubscribeRouteImport.update({
   id: '/unsubscribe',
@@ -262,6 +266,12 @@ const AuthenticatedApprovedHomeRoute =
     path: '/home',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
+const AuthenticatedApprovedForumRoute =
+  AuthenticatedApprovedForumRouteImport.update({
+    id: '/forum',
+    path: '/forum',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
 const AuthenticatedApprovedClockRoute =
   AuthenticatedApprovedClockRouteImport.update({
     id: '/clock',
@@ -314,6 +324,12 @@ const AuthenticatedApprovedAdminHeroBoxesRoute =
   AuthenticatedApprovedAdminHeroBoxesRouteImport.update({
     id: '/admin-hero-boxes',
     path: '/admin-hero-boxes',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
+const AuthenticatedApprovedAdminForumRoute =
+  AuthenticatedApprovedAdminForumRouteImport.update({
+    id: '/admin-forum',
+    path: '/admin-forum',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
 const AuthenticatedApprovedAdminFanZoneRoute =
@@ -447,6 +463,12 @@ const AuthenticatedApprovedHomeChannelRoute =
     path: '/$channel',
     getParentRoute: () => AuthenticatedApprovedHomeRoute,
   } as any)
+const AuthenticatedApprovedForumBoardRoute =
+  AuthenticatedApprovedForumBoardRouteImport.update({
+    id: '/$board',
+    path: '/$board',
+    getParentRoute: () => AuthenticatedApprovedForumRoute,
+  } as any)
 const AuthenticatedApprovedSportsGuidesReadIdRoute =
   AuthenticatedApprovedSportsGuidesReadIdRouteImport.update({
     id: '/read/$id',
@@ -458,6 +480,12 @@ const AuthenticatedApprovedSportsGuidesIdEditRoute =
     id: '/$id/edit',
     path: '/$id/edit',
     getParentRoute: () => AuthenticatedApprovedSportsGuidesRoute,
+  } as any)
+const AuthenticatedApprovedForumBoardTopicRoute =
+  AuthenticatedApprovedForumBoardTopicRouteImport.update({
+    id: '/$topic',
+    path: '/$topic',
+    getParentRoute: () => AuthenticatedApprovedForumBoardRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -483,6 +511,7 @@ export interface FileRoutesByFullPath {
   '/admin-credentials': typeof AuthenticatedApprovedAdminCredentialsRoute
   '/admin-dns': typeof AuthenticatedApprovedAdminDnsRoute
   '/admin-fan-zone': typeof AuthenticatedApprovedAdminFanZoneRoute
+  '/admin-forum': typeof AuthenticatedApprovedAdminForumRoute
   '/admin-hero-boxes': typeof AuthenticatedApprovedAdminHeroBoxesRoute
   '/admin-nameplates': typeof AuthenticatedApprovedAdminNameplatesRoute
   '/admin-notifications': typeof AuthenticatedApprovedAdminNotificationsRoute
@@ -492,6 +521,7 @@ export interface FileRoutesByFullPath {
   '/admin-roles': typeof AuthenticatedApprovedAdminRolesRoute
   '/admin-ticket-categories': typeof AuthenticatedApprovedAdminTicketCategoriesRoute
   '/clock': typeof AuthenticatedApprovedClockRoute
+  '/forum': typeof AuthenticatedApprovedForumRouteWithChildren
   '/home': typeof AuthenticatedApprovedHomeRouteWithChildren
   '/install-guides': typeof AuthenticatedApprovedInstallGuidesRoute
   '/knowledge-base': typeof AuthenticatedApprovedKnowledgeBaseRoute
@@ -509,6 +539,7 @@ export interface FileRoutesByFullPath {
   '/status': typeof AuthenticatedApprovedStatusRoute
   '/tickets': typeof AuthenticatedApprovedTicketsRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
+  '/forum/$board': typeof AuthenticatedApprovedForumBoardRouteWithChildren
   '/home/$channel': typeof AuthenticatedApprovedHomeChannelRoute
   '/sports-guides/new': typeof AuthenticatedApprovedSportsGuidesNewRoute
   '/u/$username': typeof AuthenticatedApprovedUUsernameRoute
@@ -524,6 +555,7 @@ export interface FileRoutesByFullPath {
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
   '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
   '/home/': typeof AuthenticatedApprovedHomeIndexRoute
+  '/forum/$board/$topic': typeof AuthenticatedApprovedForumBoardTopicRoute
   '/sports-guides/$id/edit': typeof AuthenticatedApprovedSportsGuidesIdEditRoute
   '/sports-guides/read/$id': typeof AuthenticatedApprovedSportsGuidesReadIdRoute
 }
@@ -550,6 +582,7 @@ export interface FileRoutesByTo {
   '/admin-credentials': typeof AuthenticatedApprovedAdminCredentialsRoute
   '/admin-dns': typeof AuthenticatedApprovedAdminDnsRoute
   '/admin-fan-zone': typeof AuthenticatedApprovedAdminFanZoneRoute
+  '/admin-forum': typeof AuthenticatedApprovedAdminForumRoute
   '/admin-hero-boxes': typeof AuthenticatedApprovedAdminHeroBoxesRoute
   '/admin-nameplates': typeof AuthenticatedApprovedAdminNameplatesRoute
   '/admin-notifications': typeof AuthenticatedApprovedAdminNotificationsRoute
@@ -559,6 +592,7 @@ export interface FileRoutesByTo {
   '/admin-roles': typeof AuthenticatedApprovedAdminRolesRoute
   '/admin-ticket-categories': typeof AuthenticatedApprovedAdminTicketCategoriesRoute
   '/clock': typeof AuthenticatedApprovedClockRoute
+  '/forum': typeof AuthenticatedApprovedForumRouteWithChildren
   '/install-guides': typeof AuthenticatedApprovedInstallGuidesRoute
   '/knowledge-base': typeof AuthenticatedApprovedKnowledgeBaseRoute
   '/leaderboard': typeof AuthenticatedApprovedLeaderboardRoute
@@ -575,6 +609,7 @@ export interface FileRoutesByTo {
   '/status': typeof AuthenticatedApprovedStatusRoute
   '/tickets': typeof AuthenticatedApprovedTicketsRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
+  '/forum/$board': typeof AuthenticatedApprovedForumBoardRouteWithChildren
   '/home/$channel': typeof AuthenticatedApprovedHomeChannelRoute
   '/sports-guides/new': typeof AuthenticatedApprovedSportsGuidesNewRoute
   '/u/$username': typeof AuthenticatedApprovedUUsernameRoute
@@ -590,6 +625,7 @@ export interface FileRoutesByTo {
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
   '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
   '/home': typeof AuthenticatedApprovedHomeIndexRoute
+  '/forum/$board/$topic': typeof AuthenticatedApprovedForumBoardTopicRoute
   '/sports-guides/$id/edit': typeof AuthenticatedApprovedSportsGuidesIdEditRoute
   '/sports-guides/read/$id': typeof AuthenticatedApprovedSportsGuidesReadIdRoute
 }
@@ -619,6 +655,7 @@ export interface FileRoutesById {
   '/_authenticated/_approved/admin-credentials': typeof AuthenticatedApprovedAdminCredentialsRoute
   '/_authenticated/_approved/admin-dns': typeof AuthenticatedApprovedAdminDnsRoute
   '/_authenticated/_approved/admin-fan-zone': typeof AuthenticatedApprovedAdminFanZoneRoute
+  '/_authenticated/_approved/admin-forum': typeof AuthenticatedApprovedAdminForumRoute
   '/_authenticated/_approved/admin-hero-boxes': typeof AuthenticatedApprovedAdminHeroBoxesRoute
   '/_authenticated/_approved/admin-nameplates': typeof AuthenticatedApprovedAdminNameplatesRoute
   '/_authenticated/_approved/admin-notifications': typeof AuthenticatedApprovedAdminNotificationsRoute
@@ -628,6 +665,7 @@ export interface FileRoutesById {
   '/_authenticated/_approved/admin-roles': typeof AuthenticatedApprovedAdminRolesRoute
   '/_authenticated/_approved/admin-ticket-categories': typeof AuthenticatedApprovedAdminTicketCategoriesRoute
   '/_authenticated/_approved/clock': typeof AuthenticatedApprovedClockRoute
+  '/_authenticated/_approved/forum': typeof AuthenticatedApprovedForumRouteWithChildren
   '/_authenticated/_approved/home': typeof AuthenticatedApprovedHomeRouteWithChildren
   '/_authenticated/_approved/install-guides': typeof AuthenticatedApprovedInstallGuidesRoute
   '/_authenticated/_approved/knowledge-base': typeof AuthenticatedApprovedKnowledgeBaseRoute
@@ -645,6 +683,7 @@ export interface FileRoutesById {
   '/_authenticated/_approved/status': typeof AuthenticatedApprovedStatusRoute
   '/_authenticated/_approved/tickets': typeof AuthenticatedApprovedTicketsRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
+  '/_authenticated/_approved/forum/$board': typeof AuthenticatedApprovedForumBoardRouteWithChildren
   '/_authenticated/_approved/home/$channel': typeof AuthenticatedApprovedHomeChannelRoute
   '/_authenticated/_approved/sports-guides/new': typeof AuthenticatedApprovedSportsGuidesNewRoute
   '/_authenticated/_approved/u/$username': typeof AuthenticatedApprovedUUsernameRoute
@@ -660,6 +699,7 @@ export interface FileRoutesById {
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
   '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
   '/_authenticated/_approved/home/': typeof AuthenticatedApprovedHomeIndexRoute
+  '/_authenticated/_approved/forum/$board/$topic': typeof AuthenticatedApprovedForumBoardTopicRoute
   '/_authenticated/_approved/sports-guides/$id/edit': typeof AuthenticatedApprovedSportsGuidesIdEditRoute
   '/_authenticated/_approved/sports-guides/read/$id': typeof AuthenticatedApprovedSportsGuidesReadIdRoute
 }
@@ -688,6 +728,7 @@ export interface FileRouteTypes {
     | '/admin-credentials'
     | '/admin-dns'
     | '/admin-fan-zone'
+    | '/admin-forum'
     | '/admin-hero-boxes'
     | '/admin-nameplates'
     | '/admin-notifications'
@@ -697,6 +738,7 @@ export interface FileRouteTypes {
     | '/admin-roles'
     | '/admin-ticket-categories'
     | '/clock'
+    | '/forum'
     | '/home'
     | '/install-guides'
     | '/knowledge-base'
@@ -714,6 +756,7 @@ export interface FileRouteTypes {
     | '/status'
     | '/tickets'
     | '/lovable/email/suppression'
+    | '/forum/$board'
     | '/home/$channel'
     | '/sports-guides/new'
     | '/u/$username'
@@ -729,6 +772,7 @@ export interface FileRouteTypes {
     | '/lovable/email/transactional/preview'
     | '/lovable/email/transactional/send'
     | '/home/'
+    | '/forum/$board/$topic'
     | '/sports-guides/$id/edit'
     | '/sports-guides/read/$id'
   fileRoutesByTo: FileRoutesByTo
@@ -755,6 +799,7 @@ export interface FileRouteTypes {
     | '/admin-credentials'
     | '/admin-dns'
     | '/admin-fan-zone'
+    | '/admin-forum'
     | '/admin-hero-boxes'
     | '/admin-nameplates'
     | '/admin-notifications'
@@ -764,6 +809,7 @@ export interface FileRouteTypes {
     | '/admin-roles'
     | '/admin-ticket-categories'
     | '/clock'
+    | '/forum'
     | '/install-guides'
     | '/knowledge-base'
     | '/leaderboard'
@@ -780,6 +826,7 @@ export interface FileRouteTypes {
     | '/status'
     | '/tickets'
     | '/lovable/email/suppression'
+    | '/forum/$board'
     | '/home/$channel'
     | '/sports-guides/new'
     | '/u/$username'
@@ -795,6 +842,7 @@ export interface FileRouteTypes {
     | '/lovable/email/transactional/preview'
     | '/lovable/email/transactional/send'
     | '/home'
+    | '/forum/$board/$topic'
     | '/sports-guides/$id/edit'
     | '/sports-guides/read/$id'
   id:
@@ -823,6 +871,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/admin-credentials'
     | '/_authenticated/_approved/admin-dns'
     | '/_authenticated/_approved/admin-fan-zone'
+    | '/_authenticated/_approved/admin-forum'
     | '/_authenticated/_approved/admin-hero-boxes'
     | '/_authenticated/_approved/admin-nameplates'
     | '/_authenticated/_approved/admin-notifications'
@@ -832,6 +881,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/admin-roles'
     | '/_authenticated/_approved/admin-ticket-categories'
     | '/_authenticated/_approved/clock'
+    | '/_authenticated/_approved/forum'
     | '/_authenticated/_approved/home'
     | '/_authenticated/_approved/install-guides'
     | '/_authenticated/_approved/knowledge-base'
@@ -849,6 +899,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/status'
     | '/_authenticated/_approved/tickets'
     | '/lovable/email/suppression'
+    | '/_authenticated/_approved/forum/$board'
     | '/_authenticated/_approved/home/$channel'
     | '/_authenticated/_approved/sports-guides/new'
     | '/_authenticated/_approved/u/$username'
@@ -864,6 +915,7 @@ export interface FileRouteTypes {
     | '/lovable/email/transactional/preview'
     | '/lovable/email/transactional/send'
     | '/_authenticated/_approved/home/'
+    | '/_authenticated/_approved/forum/$board/$topic'
     | '/_authenticated/_approved/sports-guides/$id/edit'
     | '/_authenticated/_approved/sports-guides/read/$id'
   fileRoutesById: FileRoutesById
@@ -1136,6 +1188,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedApprovedHomeRouteImport
       parentRoute: typeof AuthenticatedApprovedRoute
     }
+    '/_authenticated/_approved/forum': {
+      id: '/_authenticated/_approved/forum'
+      path: '/forum'
+      fullPath: '/forum'
+      preLoaderRoute: typeof AuthenticatedApprovedForumRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
     '/_authenticated/_approved/clock': {
       id: '/_authenticated/_approved/clock'
       path: '/clock'
@@ -1197,6 +1256,13 @@ declare module '@tanstack/react-router' {
       path: '/admin-hero-boxes'
       fullPath: '/admin-hero-boxes'
       preLoaderRoute: typeof AuthenticatedApprovedAdminHeroBoxesRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
+    '/_authenticated/_approved/admin-forum': {
+      id: '/_authenticated/_approved/admin-forum'
+      path: '/admin-forum'
+      fullPath: '/admin-forum'
+      preLoaderRoute: typeof AuthenticatedApprovedAdminForumRouteImport
       parentRoute: typeof AuthenticatedApprovedRoute
     }
     '/_authenticated/_approved/admin-fan-zone': {
@@ -1353,6 +1419,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedApprovedHomeChannelRouteImport
       parentRoute: typeof AuthenticatedApprovedHomeRoute
     }
+    '/_authenticated/_approved/forum/$board': {
+      id: '/_authenticated/_approved/forum/$board'
+      path: '/$board'
+      fullPath: '/forum/$board'
+      preLoaderRoute: typeof AuthenticatedApprovedForumBoardRouteImport
+      parentRoute: typeof AuthenticatedApprovedForumRoute
+    }
     '/_authenticated/_approved/sports-guides/read/$id': {
       id: '/_authenticated/_approved/sports-guides/read/$id'
       path: '/read/$id'
@@ -1367,8 +1440,45 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedApprovedSportsGuidesIdEditRouteImport
       parentRoute: typeof AuthenticatedApprovedSportsGuidesRoute
     }
+    '/_authenticated/_approved/forum/$board/$topic': {
+      id: '/_authenticated/_approved/forum/$board/$topic'
+      path: '/$topic'
+      fullPath: '/forum/$board/$topic'
+      preLoaderRoute: typeof AuthenticatedApprovedForumBoardTopicRouteImport
+      parentRoute: typeof AuthenticatedApprovedForumBoardRoute
+    }
   }
 }
+
+interface AuthenticatedApprovedForumBoardRouteChildren {
+  AuthenticatedApprovedForumBoardTopicRoute: typeof AuthenticatedApprovedForumBoardTopicRoute
+}
+
+const AuthenticatedApprovedForumBoardRouteChildren: AuthenticatedApprovedForumBoardRouteChildren =
+  {
+    AuthenticatedApprovedForumBoardTopicRoute:
+      AuthenticatedApprovedForumBoardTopicRoute,
+  }
+
+const AuthenticatedApprovedForumBoardRouteWithChildren =
+  AuthenticatedApprovedForumBoardRoute._addFileChildren(
+    AuthenticatedApprovedForumBoardRouteChildren,
+  )
+
+interface AuthenticatedApprovedForumRouteChildren {
+  AuthenticatedApprovedForumBoardRoute: typeof AuthenticatedApprovedForumBoardRouteWithChildren
+}
+
+const AuthenticatedApprovedForumRouteChildren: AuthenticatedApprovedForumRouteChildren =
+  {
+    AuthenticatedApprovedForumBoardRoute:
+      AuthenticatedApprovedForumBoardRouteWithChildren,
+  }
+
+const AuthenticatedApprovedForumRouteWithChildren =
+  AuthenticatedApprovedForumRoute._addFileChildren(
+    AuthenticatedApprovedForumRouteChildren,
+  )
 
 interface AuthenticatedApprovedHomeRouteChildren {
   AuthenticatedApprovedHomeChannelRoute: typeof AuthenticatedApprovedHomeChannelRoute
@@ -1416,6 +1526,7 @@ interface AuthenticatedApprovedRouteChildren {
   AuthenticatedApprovedAdminCredentialsRoute: typeof AuthenticatedApprovedAdminCredentialsRoute
   AuthenticatedApprovedAdminDnsRoute: typeof AuthenticatedApprovedAdminDnsRoute
   AuthenticatedApprovedAdminFanZoneRoute: typeof AuthenticatedApprovedAdminFanZoneRoute
+  AuthenticatedApprovedAdminForumRoute: typeof AuthenticatedApprovedAdminForumRoute
   AuthenticatedApprovedAdminHeroBoxesRoute: typeof AuthenticatedApprovedAdminHeroBoxesRoute
   AuthenticatedApprovedAdminNameplatesRoute: typeof AuthenticatedApprovedAdminNameplatesRoute
   AuthenticatedApprovedAdminNotificationsRoute: typeof AuthenticatedApprovedAdminNotificationsRoute
@@ -1425,6 +1536,7 @@ interface AuthenticatedApprovedRouteChildren {
   AuthenticatedApprovedAdminRolesRoute: typeof AuthenticatedApprovedAdminRolesRoute
   AuthenticatedApprovedAdminTicketCategoriesRoute: typeof AuthenticatedApprovedAdminTicketCategoriesRoute
   AuthenticatedApprovedClockRoute: typeof AuthenticatedApprovedClockRoute
+  AuthenticatedApprovedForumRoute: typeof AuthenticatedApprovedForumRouteWithChildren
   AuthenticatedApprovedHomeRoute: typeof AuthenticatedApprovedHomeRouteWithChildren
   AuthenticatedApprovedInstallGuidesRoute: typeof AuthenticatedApprovedInstallGuidesRoute
   AuthenticatedApprovedKnowledgeBaseRoute: typeof AuthenticatedApprovedKnowledgeBaseRoute
@@ -1457,6 +1569,7 @@ const AuthenticatedApprovedRouteChildren: AuthenticatedApprovedRouteChildren = {
   AuthenticatedApprovedAdminDnsRoute: AuthenticatedApprovedAdminDnsRoute,
   AuthenticatedApprovedAdminFanZoneRoute:
     AuthenticatedApprovedAdminFanZoneRoute,
+  AuthenticatedApprovedAdminForumRoute: AuthenticatedApprovedAdminForumRoute,
   AuthenticatedApprovedAdminHeroBoxesRoute:
     AuthenticatedApprovedAdminHeroBoxesRoute,
   AuthenticatedApprovedAdminNameplatesRoute:
@@ -1473,6 +1586,7 @@ const AuthenticatedApprovedRouteChildren: AuthenticatedApprovedRouteChildren = {
   AuthenticatedApprovedAdminTicketCategoriesRoute:
     AuthenticatedApprovedAdminTicketCategoriesRoute,
   AuthenticatedApprovedClockRoute: AuthenticatedApprovedClockRoute,
+  AuthenticatedApprovedForumRoute: AuthenticatedApprovedForumRouteWithChildren,
   AuthenticatedApprovedHomeRoute: AuthenticatedApprovedHomeRouteWithChildren,
   AuthenticatedApprovedInstallGuidesRoute:
     AuthenticatedApprovedInstallGuidesRoute,

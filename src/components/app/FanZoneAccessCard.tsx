@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Trophy, Lock, Loader2, Check, X, Clock } from "lucide-react";
+import { Trophy, Lock, Loader2, Check, X, Clock, ArrowRight } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useFanZoneMembership } from "@/hooks/use-fan-zone";
@@ -33,7 +34,25 @@ export function FanZoneAccessCard() {
 
   if (!user || isStaff) return null;
   if (!info) return null;
-  if (info.status === "approved") return null;
+  if (info.status === "approved") {
+    return (
+      <section className="px-2 pt-3">
+        <Link
+          to="/forum"
+          className="block rounded-lg border border-rose-500/40 bg-gradient-to-br from-rose-600/20 via-amber-500/10 to-rose-600/20 overflow-hidden hover:border-rose-400 transition-colors"
+        >
+          <div className="flex items-center gap-2 px-3 py-2 border-b border-border/50">
+            <Trophy className="size-3.5 text-amber-300" />
+            <h2 className="font-display text-[11px] font-bold tracking-wider uppercase flex-1">Boro Fan Zone</h2>
+            <ArrowRight className="size-3.5 text-amber-300" />
+          </div>
+          <div className="px-3 py-2 text-xs text-muted-foreground">
+            Enter the forum — boards, topics & match-day banter.
+          </div>
+        </Link>
+      </section>
+    );
+  }
 
   const canRequest = info.status === "none" || info.status === "rejected" || info.status === "revoked";
 
