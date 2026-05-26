@@ -306,6 +306,7 @@ export type Database = {
           icon: string
           id: string
           name: string
+          requires_fan_zone: boolean
           slow_mode_seconds: number
           slug: string
           sort_order: number
@@ -318,6 +319,7 @@ export type Database = {
           icon?: string
           id?: string
           name: string
+          requires_fan_zone?: boolean
           slow_mode_seconds?: number
           slug: string
           sort_order?: number
@@ -330,6 +332,7 @@ export type Database = {
           icon?: string
           id?: string
           name?: string
+          requires_fan_zone?: boolean
           slow_mode_seconds?: number
           slug?: string
           sort_order?: number
@@ -720,6 +723,39 @@ export type Database = {
           created_at?: string
           expires_at?: string
           id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      fan_zone_members: {
+        Row: {
+          decided_at: string | null
+          decided_by: string | null
+          note: string | null
+          reason: string | null
+          requested_at: string
+          status: Database["public"]["Enums"]["fan_zone_status"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          decided_at?: string | null
+          decided_by?: string | null
+          note?: string | null
+          reason?: string | null
+          requested_at?: string
+          status?: Database["public"]["Enums"]["fan_zone_status"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          decided_at?: string | null
+          decided_by?: string | null
+          note?: string | null
+          reason?: string | null
+          requested_at?: string
+          status?: Database["public"]["Enums"]["fan_zone_status"]
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
@@ -3137,6 +3173,7 @@ export type Database = {
         Returns: boolean
       }
       is_business_open: { Args: never; Returns: boolean }
+      is_fan_zone_member: { Args: { _user: string }; Returns: boolean }
       is_order_participant: {
         Args: { _order_id: string; _user_id: string }
         Returns: boolean
@@ -3215,6 +3252,7 @@ export type Database = {
         | "rejected"
       blacklist_kind: "email" | "ip"
       break_kind: "break" | "lunch"
+      fan_zone_status: "pending" | "approved" | "rejected" | "revoked"
       friendship_status: "pending" | "accepted"
       gate_status: "pending" | "approved" | "denied"
       incident_status:
@@ -3376,6 +3414,7 @@ export const Constants = {
       ],
       blacklist_kind: ["email", "ip"],
       break_kind: ["break", "lunch"],
+      fan_zone_status: ["pending", "approved", "rejected", "revoked"],
       friendship_status: ["pending", "accepted"],
       gate_status: ["pending", "approved", "denied"],
       incident_status: [
