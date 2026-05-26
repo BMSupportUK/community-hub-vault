@@ -8,10 +8,10 @@ import { useServerFn } from "@tanstack/react-start";
 import { resetUserMfa } from "@/lib/mfa.functions";
 import profileHeader from "@/assets/profile-header.jpg";
 import { useOnlineUsers } from "@/hooks/use-online-users";
-import { useBusinessOpen } from "@/hooks/use-business-open";
 import { formatLastSeen } from "@/lib/relative-time";
 
 import { VpnBadge } from "@/lib/vpn-flags";
+import { PresenceDot, PresenceInline } from "@/components/app/PresenceIndicators";
 
 export const Route = createFileRoute("/_authenticated/_approved/members")({
   component: MembersPage,
@@ -54,7 +54,6 @@ function MembersPage() {
   const { hasAny, user: viewer } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
   const onlineUsers = useOnlineUsers();
-  const businessOpen = useBusinessOpen();
 
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [rolesByUser, setRolesByUser] = useState<Record<string, string[]>>({});
@@ -221,26 +220,6 @@ function MembersPage() {
           const name = p.display_name ?? p.username ?? "Unknown";
           const initial = name.slice(0, 1).toUpperCase();
           const isOnline = onlineUsers.has(p.id);
-          const isStaffUser = userRoles.some((r) =>
-            ["admin", "management", "moderator", "staff"].includes(r),
-          );
-          const isAway = isOnline && isStaffUser && !businessOpen;
-          const statusLabel = isAway
-            ? "Away From The Office"
-            : isOnline
-              ? "Online"
-              : "Offline";
-          const dotClass = isAway
-            ? "bg-yellow-400 shadow-[0_0_8px_rgba(250,204,21,0.9)]"
-            : isOnline
-              ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]"
-              : "bg-zinc-500";
-          const textClass = isAway
-            ? "text-yellow-300"
-            : isOnline
-              ? "text-emerald-400"
-              : "text-muted-foreground";
-          const smallDot = isAway ? "bg-yellow-400" : isOnline ? "bg-emerald-500" : "bg-zinc-500";
           return (
             <div
               key={p.id}
@@ -258,11 +237,7 @@ function MembersPage() {
                     alt=""
                     className="size-16 rounded-2xl object-cover ring-4 ring-surface"
                   />
-                  <span
-                    title={statusLabel}
-                    aria-label={statusLabel}
-                    className={`absolute -bottom-0.5 -right-0.5 size-4 rounded-full ring-2 ring-surface ${dotClass}`}
-                  />
+                  <PresenceDot userId={p.id} isOnline={isOnline} ringClass="ring-surface" />
                 </div>
                 <div className="mt-3">
                   <Link
@@ -274,14 +249,11 @@ function MembersPage() {
                   </Link>
                   <span className="ml-1 inline-flex align-middle"><VpnBadge userId={p.id} size={12} /></span>
                   <div className="text-[10px] mt-0.5 flex items-center gap-1.5">
-                    <span className={`size-1.5 rounded-full ${smallDot}`} />
-                    <span className={textClass}>
-                      {isAway
-                        ? "Away From The Office"
-                        : isOnline
-                          ? "Online"
-                          : `Last seen ${formatLastSeen(p.last_seen_at)}`}
-                    </span>
+                    <PresenceInline
+                      userId={p.id}
+                      isOnline={isOnline}
+                      offlineText={`Last seen ${formatLastSeen(p.last_seen_at)}`}
+                    />
                   </div>
                   {p.username && (
                     <div className="text-[11px] text-muted-foreground">@{p.username}</div>
