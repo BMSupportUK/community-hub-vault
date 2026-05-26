@@ -43,6 +43,7 @@ import { Route as AuthenticatedApprovedLeaderboardRouteImport } from './routes/_
 import { Route as AuthenticatedApprovedKnowledgeBaseRouteImport } from './routes/_authenticated/_approved/knowledge-base'
 import { Route as AuthenticatedApprovedInstallGuidesRouteImport } from './routes/_authenticated/_approved/install-guides'
 import { Route as AuthenticatedApprovedHomeRouteImport } from './routes/_authenticated/_approved/home'
+import { Route as AuthenticatedApprovedForumRouteImport } from './routes/_authenticated/_approved/forum'
 import { Route as AuthenticatedApprovedClockRouteImport } from './routes/_authenticated/_approved/clock'
 import { Route as AuthenticatedApprovedAdminTicketCategoriesRouteImport } from './routes/_authenticated/_approved/admin-ticket-categories'
 import { Route as AuthenticatedApprovedAdminRolesRouteImport } from './routes/_authenticated/_approved/admin-roles'
@@ -260,6 +261,12 @@ const AuthenticatedApprovedHomeRoute =
   AuthenticatedApprovedHomeRouteImport.update({
     id: '/home',
     path: '/home',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
+const AuthenticatedApprovedForumRoute =
+  AuthenticatedApprovedForumRouteImport.update({
+    id: '/forum',
+    path: '/forum',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
 const AuthenticatedApprovedClockRoute =
@@ -492,6 +499,7 @@ export interface FileRoutesByFullPath {
   '/admin-roles': typeof AuthenticatedApprovedAdminRolesRoute
   '/admin-ticket-categories': typeof AuthenticatedApprovedAdminTicketCategoriesRoute
   '/clock': typeof AuthenticatedApprovedClockRoute
+  '/forum': typeof AuthenticatedApprovedForumRoute
   '/home': typeof AuthenticatedApprovedHomeRouteWithChildren
   '/install-guides': typeof AuthenticatedApprovedInstallGuidesRoute
   '/knowledge-base': typeof AuthenticatedApprovedKnowledgeBaseRoute
@@ -559,6 +567,7 @@ export interface FileRoutesByTo {
   '/admin-roles': typeof AuthenticatedApprovedAdminRolesRoute
   '/admin-ticket-categories': typeof AuthenticatedApprovedAdminTicketCategoriesRoute
   '/clock': typeof AuthenticatedApprovedClockRoute
+  '/forum': typeof AuthenticatedApprovedForumRoute
   '/install-guides': typeof AuthenticatedApprovedInstallGuidesRoute
   '/knowledge-base': typeof AuthenticatedApprovedKnowledgeBaseRoute
   '/leaderboard': typeof AuthenticatedApprovedLeaderboardRoute
@@ -628,6 +637,7 @@ export interface FileRoutesById {
   '/_authenticated/_approved/admin-roles': typeof AuthenticatedApprovedAdminRolesRoute
   '/_authenticated/_approved/admin-ticket-categories': typeof AuthenticatedApprovedAdminTicketCategoriesRoute
   '/_authenticated/_approved/clock': typeof AuthenticatedApprovedClockRoute
+  '/_authenticated/_approved/forum': typeof AuthenticatedApprovedForumRoute
   '/_authenticated/_approved/home': typeof AuthenticatedApprovedHomeRouteWithChildren
   '/_authenticated/_approved/install-guides': typeof AuthenticatedApprovedInstallGuidesRoute
   '/_authenticated/_approved/knowledge-base': typeof AuthenticatedApprovedKnowledgeBaseRoute
@@ -697,6 +707,7 @@ export interface FileRouteTypes {
     | '/admin-roles'
     | '/admin-ticket-categories'
     | '/clock'
+    | '/forum'
     | '/home'
     | '/install-guides'
     | '/knowledge-base'
@@ -764,6 +775,7 @@ export interface FileRouteTypes {
     | '/admin-roles'
     | '/admin-ticket-categories'
     | '/clock'
+    | '/forum'
     | '/install-guides'
     | '/knowledge-base'
     | '/leaderboard'
@@ -832,6 +844,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/admin-roles'
     | '/_authenticated/_approved/admin-ticket-categories'
     | '/_authenticated/_approved/clock'
+    | '/_authenticated/_approved/forum'
     | '/_authenticated/_approved/home'
     | '/_authenticated/_approved/install-guides'
     | '/_authenticated/_approved/knowledge-base'
@@ -1136,6 +1149,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedApprovedHomeRouteImport
       parentRoute: typeof AuthenticatedApprovedRoute
     }
+    '/_authenticated/_approved/forum': {
+      id: '/_authenticated/_approved/forum'
+      path: '/forum'
+      fullPath: '/forum'
+      preLoaderRoute: typeof AuthenticatedApprovedForumRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
     '/_authenticated/_approved/clock': {
       id: '/_authenticated/_approved/clock'
       path: '/clock'
@@ -1425,6 +1445,7 @@ interface AuthenticatedApprovedRouteChildren {
   AuthenticatedApprovedAdminRolesRoute: typeof AuthenticatedApprovedAdminRolesRoute
   AuthenticatedApprovedAdminTicketCategoriesRoute: typeof AuthenticatedApprovedAdminTicketCategoriesRoute
   AuthenticatedApprovedClockRoute: typeof AuthenticatedApprovedClockRoute
+  AuthenticatedApprovedForumRoute: typeof AuthenticatedApprovedForumRoute
   AuthenticatedApprovedHomeRoute: typeof AuthenticatedApprovedHomeRouteWithChildren
   AuthenticatedApprovedInstallGuidesRoute: typeof AuthenticatedApprovedInstallGuidesRoute
   AuthenticatedApprovedKnowledgeBaseRoute: typeof AuthenticatedApprovedKnowledgeBaseRoute
@@ -1473,6 +1494,7 @@ const AuthenticatedApprovedRouteChildren: AuthenticatedApprovedRouteChildren = {
   AuthenticatedApprovedAdminTicketCategoriesRoute:
     AuthenticatedApprovedAdminTicketCategoriesRoute,
   AuthenticatedApprovedClockRoute: AuthenticatedApprovedClockRoute,
+  AuthenticatedApprovedForumRoute: AuthenticatedApprovedForumRoute,
   AuthenticatedApprovedHomeRoute: AuthenticatedApprovedHomeRouteWithChildren,
   AuthenticatedApprovedInstallGuidesRoute:
     AuthenticatedApprovedInstallGuidesRoute,
