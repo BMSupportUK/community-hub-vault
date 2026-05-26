@@ -116,6 +116,10 @@ function ReadPage() {
     setPage(0);
   }, [id]);
 
+  useEffect(() => {
+    setPage((current) => Math.min(current, Math.max(0, pageCount - 1)));
+  }, [pageCount]);
+
   // Measure available height of the body stage.
   useLayoutEffect(() => {
     const el = stageRef.current;
