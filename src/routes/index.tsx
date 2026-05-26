@@ -45,11 +45,8 @@ function Landing() {
     }
   }, []);
 
-  if (redirectingToLogin) {
-    return <div className="min-h-screen bg-background" />;
-  }
-
   useEffect(() => {
+    if (redirectingToLogin) return;
     (async () => {
       const { data } = await supabase
         .from("hero_boxes")
@@ -57,7 +54,11 @@ function Landing() {
         .order("position");
       setBoxes((data ?? []) as HeroBox[]);
     })();
-  }, []);
+  }, [redirectingToLogin]);
+
+  if (redirectingToLogin) {
+    return <div className="min-h-screen bg-background" />;
+  }
 
   return (
     <div className="h-screen overflow-hidden bg-background flex flex-col">
