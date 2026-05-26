@@ -6,10 +6,12 @@ import welcomeHero from "@/assets/welcome-hero.jpg";
 
 function isAndroidAppShell() {
   if (typeof window === "undefined") return false;
-  const hasCapacitorBridge = Boolean((window as any).Capacitor?.isNativePlatform?.());
+  const capacitor = (window as any).Capacitor;
+  const isCapacitorAndroid = capacitor?.getPlatform?.() === "android" || capacitor?.platform === "android";
+  const hasCapacitorBridge = Boolean(capacitor?.isNativePlatform?.());
   const ua = window.navigator.userAgent.toLowerCase();
   const isAndroidWebView = ua.includes("android") && (ua.includes("; wv") || ua.includes(" version/4.0"));
-  return hasCapacitorBridge || isAndroidWebView;
+  return isCapacitorAndroid || hasCapacitorBridge || isAndroidWebView;
 }
 
 export const Route = createFileRoute("/")({
