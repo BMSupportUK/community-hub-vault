@@ -100,7 +100,9 @@ export function PagedGrid<T>({
   }, [pages.length, onPagesChange]);
 
   const safePage = pages.length ? Math.min(Math.max(page, 0), pages.length - 1) : 0;
-  const slice = pages[safePage] ?? items.map((_, i) => i);
+  const rawSlice = pages[safePage] ?? items.map((_, i) => i);
+  // Guard against stale page indices after `items` shrinks (e.g. category switch).
+  const slice = rawSlice.filter((i) => i < items.length);
 
   if (!items.length && emptyState) return <>{emptyState}</>;
 
