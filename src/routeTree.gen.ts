@@ -52,6 +52,7 @@ import { Route as AuthenticatedApprovedAdminPermissionsRouteImport } from './rou
 import { Route as AuthenticatedApprovedAdminNotificationsRouteImport } from './routes/_authenticated/_approved/admin-notifications'
 import { Route as AuthenticatedApprovedAdminNameplatesRouteImport } from './routes/_authenticated/_approved/admin-nameplates'
 import { Route as AuthenticatedApprovedAdminHeroBoxesRouteImport } from './routes/_authenticated/_approved/admin-hero-boxes'
+import { Route as AuthenticatedApprovedAdminFanZoneRouteImport } from './routes/_authenticated/_approved/admin-fan-zone'
 import { Route as AuthenticatedApprovedAdminDnsRouteImport } from './routes/_authenticated/_approved/admin-dns'
 import { Route as AuthenticatedApprovedAdminCredentialsRouteImport } from './routes/_authenticated/_approved/admin-credentials'
 import { Route as AuthenticatedApprovedAdminBusinessHoursRouteImport } from './routes/_authenticated/_approved/admin-business-hours'
@@ -315,6 +316,12 @@ const AuthenticatedApprovedAdminHeroBoxesRoute =
     path: '/admin-hero-boxes',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
+const AuthenticatedApprovedAdminFanZoneRoute =
+  AuthenticatedApprovedAdminFanZoneRouteImport.update({
+    id: '/admin-fan-zone',
+    path: '/admin-fan-zone',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
 const AuthenticatedApprovedAdminDnsRoute =
   AuthenticatedApprovedAdminDnsRouteImport.update({
     id: '/admin-dns',
@@ -475,6 +482,7 @@ export interface FileRoutesByFullPath {
   '/admin-business-hours': typeof AuthenticatedApprovedAdminBusinessHoursRoute
   '/admin-credentials': typeof AuthenticatedApprovedAdminCredentialsRoute
   '/admin-dns': typeof AuthenticatedApprovedAdminDnsRoute
+  '/admin-fan-zone': typeof AuthenticatedApprovedAdminFanZoneRoute
   '/admin-hero-boxes': typeof AuthenticatedApprovedAdminHeroBoxesRoute
   '/admin-nameplates': typeof AuthenticatedApprovedAdminNameplatesRoute
   '/admin-notifications': typeof AuthenticatedApprovedAdminNotificationsRoute
@@ -541,6 +549,7 @@ export interface FileRoutesByTo {
   '/admin-business-hours': typeof AuthenticatedApprovedAdminBusinessHoursRoute
   '/admin-credentials': typeof AuthenticatedApprovedAdminCredentialsRoute
   '/admin-dns': typeof AuthenticatedApprovedAdminDnsRoute
+  '/admin-fan-zone': typeof AuthenticatedApprovedAdminFanZoneRoute
   '/admin-hero-boxes': typeof AuthenticatedApprovedAdminHeroBoxesRoute
   '/admin-nameplates': typeof AuthenticatedApprovedAdminNameplatesRoute
   '/admin-notifications': typeof AuthenticatedApprovedAdminNotificationsRoute
@@ -609,6 +618,7 @@ export interface FileRoutesById {
   '/_authenticated/_approved/admin-business-hours': typeof AuthenticatedApprovedAdminBusinessHoursRoute
   '/_authenticated/_approved/admin-credentials': typeof AuthenticatedApprovedAdminCredentialsRoute
   '/_authenticated/_approved/admin-dns': typeof AuthenticatedApprovedAdminDnsRoute
+  '/_authenticated/_approved/admin-fan-zone': typeof AuthenticatedApprovedAdminFanZoneRoute
   '/_authenticated/_approved/admin-hero-boxes': typeof AuthenticatedApprovedAdminHeroBoxesRoute
   '/_authenticated/_approved/admin-nameplates': typeof AuthenticatedApprovedAdminNameplatesRoute
   '/_authenticated/_approved/admin-notifications': typeof AuthenticatedApprovedAdminNotificationsRoute
@@ -677,6 +687,7 @@ export interface FileRouteTypes {
     | '/admin-business-hours'
     | '/admin-credentials'
     | '/admin-dns'
+    | '/admin-fan-zone'
     | '/admin-hero-boxes'
     | '/admin-nameplates'
     | '/admin-notifications'
@@ -743,6 +754,7 @@ export interface FileRouteTypes {
     | '/admin-business-hours'
     | '/admin-credentials'
     | '/admin-dns'
+    | '/admin-fan-zone'
     | '/admin-hero-boxes'
     | '/admin-nameplates'
     | '/admin-notifications'
@@ -810,6 +822,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/admin-business-hours'
     | '/_authenticated/_approved/admin-credentials'
     | '/_authenticated/_approved/admin-dns'
+    | '/_authenticated/_approved/admin-fan-zone'
     | '/_authenticated/_approved/admin-hero-boxes'
     | '/_authenticated/_approved/admin-nameplates'
     | '/_authenticated/_approved/admin-notifications'
@@ -1186,6 +1199,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedApprovedAdminHeroBoxesRouteImport
       parentRoute: typeof AuthenticatedApprovedRoute
     }
+    '/_authenticated/_approved/admin-fan-zone': {
+      id: '/_authenticated/_approved/admin-fan-zone'
+      path: '/admin-fan-zone'
+      fullPath: '/admin-fan-zone'
+      preLoaderRoute: typeof AuthenticatedApprovedAdminFanZoneRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
     '/_authenticated/_approved/admin-dns': {
       id: '/_authenticated/_approved/admin-dns'
       path: '/admin-dns'
@@ -1395,6 +1415,7 @@ interface AuthenticatedApprovedRouteChildren {
   AuthenticatedApprovedAdminBusinessHoursRoute: typeof AuthenticatedApprovedAdminBusinessHoursRoute
   AuthenticatedApprovedAdminCredentialsRoute: typeof AuthenticatedApprovedAdminCredentialsRoute
   AuthenticatedApprovedAdminDnsRoute: typeof AuthenticatedApprovedAdminDnsRoute
+  AuthenticatedApprovedAdminFanZoneRoute: typeof AuthenticatedApprovedAdminFanZoneRoute
   AuthenticatedApprovedAdminHeroBoxesRoute: typeof AuthenticatedApprovedAdminHeroBoxesRoute
   AuthenticatedApprovedAdminNameplatesRoute: typeof AuthenticatedApprovedAdminNameplatesRoute
   AuthenticatedApprovedAdminNotificationsRoute: typeof AuthenticatedApprovedAdminNotificationsRoute
@@ -1434,6 +1455,8 @@ const AuthenticatedApprovedRouteChildren: AuthenticatedApprovedRouteChildren = {
   AuthenticatedApprovedAdminCredentialsRoute:
     AuthenticatedApprovedAdminCredentialsRoute,
   AuthenticatedApprovedAdminDnsRoute: AuthenticatedApprovedAdminDnsRoute,
+  AuthenticatedApprovedAdminFanZoneRoute:
+    AuthenticatedApprovedAdminFanZoneRoute,
   AuthenticatedApprovedAdminHeroBoxesRoute:
     AuthenticatedApprovedAdminHeroBoxesRoute,
   AuthenticatedApprovedAdminNameplatesRoute:
