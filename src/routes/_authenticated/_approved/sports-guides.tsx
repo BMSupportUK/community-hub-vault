@@ -434,6 +434,7 @@ function SportsGuidesPage() {
                     page={listPage}
                     onPagesChange={setListPageCount}
                     availableHeight={listAvail}
+                    maxRows={2}
                     className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5"
                     renderItem={(b) => (
                       <article
