@@ -63,11 +63,28 @@ export function PagedGrid<T>({
     const compute = () => {
       const kids = Array.from(el.children) as HTMLElement[];
       if (!kids.length) return;
+      // If maxRows is set, slice strictly by rows*cols (deterministic).
+      if (maxRows != null && maxRows > 0) {
+        const firstTop = kids[0].offsetTop;
+        let cols = 0;
+        for (const k of kids) {
+          if (Math.abs(k.offsetTop - firstTop) <= 1) cols++;
+          else break;
+        }
+        if (cols < 1) cols = 1;
+        const pageSize = cols * maxRows;
+        const out: number[][] = [];
+        for (let i = 0; i < kids.length; i += pageSize) {
+          out.push(
+            Array.from({ length: Math.min(pageSize, kids.length - i) }, (_, j) => i + j),
+          );
+        }
+        setPages(out);
+        return;
+      }
       const out: number[][] = [];
       let cur: number[] = [];
       let top = 0;
-      let rowsOnPage = 0;
-      let lastRowTop = -1;
       for (let i = 0; i < kids.length; i++) {
         const k = kids[i];
         const kTop = k.offsetTop;
@@ -75,25 +92,14 @@ export function PagedGrid<T>({
         if (cur.length === 0) {
           top = kTop;
           cur.push(i);
-          rowsOnPage = 1;
-          lastRowTop = kTop;
           continue;
         }
-        const isNewRow = kTop > lastRowTop + 1;
-        const wouldExceedRows =
-          isNewRow && maxRows != null && rowsOnPage + 1 > maxRows;
-        if (kBottom - top > availableHeight || wouldExceedRows) {
+        if (kBottom - top > availableHeight) {
           out.push(cur);
           cur = [i];
           top = kTop;
-          rowsOnPage = 1;
-          lastRowTop = kTop;
         } else {
           cur.push(i);
-          if (isNewRow) {
-            rowsOnPage += 1;
-            lastRowTop = kTop;
-          }
         }
       }
       if (cur.length) out.push(cur);
