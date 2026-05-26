@@ -165,7 +165,9 @@ function ProfilePage() {
       if (error) return;
       setRoles((data ?? []).map((x: any) => x.role as AppRole));
     };
-    const interval = window.setInterval(refreshRoles, 15_000);
+    // Focus + visibilitychange listeners below already cover the common case;
+    // background poll only needs to catch slow-moving role changes.
+    const interval = window.setInterval(refreshRoles, 60_000);
     const onFocus = () => refreshRoles();
     const onVis = () => { if (document.visibilityState === "visible") refreshRoles(); };
     window.addEventListener("focus", onFocus);
