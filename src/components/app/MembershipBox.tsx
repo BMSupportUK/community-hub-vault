@@ -38,7 +38,7 @@ export function MembershipBox() {
       .channel(`membership-box-${user.id}-${Math.random().toString(36).slice(2)}`)
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "app_credentials", filter: `owner_id=eq.${user.id}` },
+        { event: "*", schema: "private", table: "app_credentials", filter: `owner_id=eq.${user.id}` },
         () => load(),
       );
     channel.subscribe();
