@@ -1,6 +1,6 @@
 import { createFileRoute, Link, Navigate, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ShieldCheck, Lock, KeyRound, Users, Ticket, ShoppingBag, ShieldAlert, KeySquare, Globe, Clock, FileText, Loader2, Shield, Star, Filter, Sparkles, LifeBuoy, RefreshCw, Copy, Download, Ban, Tag, Receipt, Package, Bell, Wallet } from "lucide-react";
+import { ShieldCheck, Lock, KeyRound, Users, Ticket, ShoppingBag, ShieldAlert, KeySquare, Globe, Clock, FileText, Loader2, Shield, Star, Filter, Sparkles, LifeBuoy, RefreshCw, Copy, Download, Ban, Tag, Receipt, Package, Bell, Wallet, Trophy } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
@@ -492,6 +492,7 @@ function DashboardBody() {
     { to: "/admin-nameplates", label: "Nameplates", desc: "Manage the catalog of decorative nameplates and assign them to members.", icon: Sparkles },
     { to: "/admin-notifications", label: "Telegram alerts", desc: "Send a Telegram message when a new signup, ticket or sale comes in.", icon: Bell },
     { to: "/admin-ticket-categories", label: "Ticket categories", desc: "Edit the names and descriptions of support ticket categories.", icon: LifeBuoy },
+    { to: "/admin-fan-zone", label: "Boro Fan Zone", desc: "Approve, reject or revoke fan-zone access for Middlesbrough F.C. supporters.", icon: Trophy },
     { to: "/shop", search: { view: "admin" }, label: "Shop products", desc: "Add, edit and reorder shop products and categories.", icon: Package, adminOnly: true },
     { to: "/shop", search: { view: "discounts" }, label: "Discount codes", desc: "Create and manage promotional discount codes.", icon: Tag, adminOnly: true },
   ];
