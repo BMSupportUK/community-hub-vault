@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 import { DndBadge } from "@/components/app/DndBadge";
+import { useDndStatus } from "@/hooks/use-dnd";
 
 type Shift = { id: string; clock_in: string };
 type Break = { id: string; kind: "break" | "lunch"; started_at: string };
@@ -11,6 +12,7 @@ const LIMITS = { break: 15 * 60, lunch: 30 * 60 } as const;
 
 export function MyWorkingStatus() {
   const { user } = useAuth();
+  const dnd = useDndStatus(user?.id);
   const [shift, setShift] = useState<Shift | null>(null);
   const [brk, setBrk] = useState<Break | null>(null);
   const [now, setNow] = useState(() => Date.now());
@@ -46,9 +48,12 @@ export function MyWorkingStatus() {
   }, [user?.id]);
 
   if (!user) return null;
-  if (!shift) {
-    // Even off-shift, surface DND so users see their own status.
+  // DND overrides every other status — when active, only show the DND pill.
+  if (dnd?.active) {
     return <DndBadge userId={user.id} />;
+  }
+  if (!shift) {
+    return null;
   }
 
   const shiftSec = (now - new Date(shift.clock_in).getTime()) / 1000;

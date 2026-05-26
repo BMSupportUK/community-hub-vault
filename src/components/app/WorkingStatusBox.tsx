@@ -3,6 +3,8 @@ import { Coffee, UtensilsCrossed, CircleDot, Briefcase } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
+import { useDndStatus } from "@/hooks/use-dnd";
+import { Moon } from "lucide-react";
 
 type Shift = { id: string; clock_in: string };
 type Break = { id: string; kind: "break" | "lunch"; started_at: string };
@@ -10,6 +12,7 @@ const LIMITS = { break: 15 * 60, lunch: 30 * 60 } as const;
 
 export function WorkingStatusBox() {
   const { user } = useAuth();
+  const dnd = useDndStatus(user?.id);
   const [shift, setShift] = useState<Shift | null>(null);
   const [brk, setBrk] = useState<Break | null>(null);
   const [now, setNow] = useState(() => Date.now());
@@ -44,7 +47,37 @@ export function WorkingStatusBox() {
     return () => { supabase.removeChannel(ch); };
   }, [user?.id]);
 
-  if (!user || !shift) return null;
+  if (!user) return null;
+
+  // DND overrides all other status — show a dedicated DND card.
+  if (dnd?.active) {
+    const until = dnd.endsAt
+      ? dnd.endsAt.toLocaleString([], { weekday: "short", hour: "2-digit", minute: "2-digit" })
+      : null;
+    return (
+      <section className="px-2 pt-4">
+        <div className="rounded-lg bg-surface-2/60 border border-violet-500/40 overflow-hidden">
+          <div className="flex items-center justify-between px-3 py-2 border-b border-violet-500/30 bg-gradient-to-r from-violet-600/20 to-fuchsia-600/10">
+            <div className="flex items-center gap-2">
+              <Moon className="size-3.5 text-violet-300" />
+              <h2 className="font-display text-[11px] font-bold tracking-wider uppercase text-violet-200">Do Not Disturb</h2>
+            </div>
+          </div>
+          <div className="px-3 py-3 space-y-1 text-xs">
+            {dnd.note && <p className="text-foreground/90">{dnd.note}</p>}
+            {until && (
+              <p className="text-muted-foreground">
+                Until <span className="tabular-nums text-foreground/80">{until}</span>
+              </p>
+            )}
+            {!dnd.note && !until && <p className="text-muted-foreground">Notifications muted.</p>}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (!shift) return null;
 
   const shiftSec = (now - new Date(shift.clock_in).getTime()) / 1000;
   const brSec = brk ? (now - new Date(brk.started_at).getTime()) / 1000 : 0;
