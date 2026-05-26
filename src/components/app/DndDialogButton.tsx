@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { format } from "date-fns";
-import { CalendarIcon, Clock, Moon, Save, X } from "lucide-react";
+import { Clock, Moon, Save, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useDndStatus } from "@/hooks/use-dnd";
@@ -13,7 +13,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
@@ -175,134 +174,125 @@ export function DndDialogButton() {
           )}
         </button>
       </DialogTrigger>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Moon className="size-4 text-violet-300" /> Do Not Disturb
+      <DialogContent className="max-w-2xl sm:max-w-2xl p-0 overflow-hidden">
+        <DialogHeader className="px-6 pt-5 pb-3 border-b border-border bg-gradient-to-r from-violet-600/15 via-fuchsia-600/10 to-violet-600/15">
+          <DialogTitle className="flex items-center gap-2 text-base">
+            <Moon className="size-5 text-violet-300" /> Do Not Disturb
           </DialogTitle>
-          <DialogDescription>
-            Mute pings during a window. Pick the date and time it starts and ends.
+          <DialogDescription className="text-sm">
+            Pick the date range on the calendar, then set the start and end time.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 text-sm">
-          <div className="flex items-center justify-between rounded-md border border-border bg-surface-2/50 px-3 py-2">
-            <div className="flex items-center gap-2">
-              <span className="font-medium">Enabled</span>
-              {active && remainingLabel && (
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-violet-500/15 text-violet-300 ring-1 ring-violet-500/40 px-2 py-0.5 text-[11px] font-semibold">
-                  <Clock className="size-3" /> {remainingLabel}
-                </span>
-              )}
-            </div>
-            <Switch
-              checked={!!info?.enabled}
-              onCheckedChange={handleToggle}
-              disabled={saving}
-              aria-label="Toggle Do Not Disturb"
+        <div className="grid sm:grid-cols-[auto,1fr] gap-0 max-h-[70vh] overflow-y-auto">
+          {/* Calendar — left column on desktop, top on mobile */}
+          <div className="p-3 border-b sm:border-b-0 sm:border-r border-border bg-surface-2/30 flex items-center justify-center">
+            <Calendar
+              mode="range"
+              selected={{ from: startDate, to: endDate }}
+              onSelect={(range) => {
+                if (range?.from) setStartDate(range.from);
+                if (range?.to) setEndDate(range.to);
+                else if (range?.from) setEndDate(range.from);
+              }}
+              numberOfMonths={1}
+              initialFocus
+              className={cn("p-2 pointer-events-auto")}
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <label className="text-xs text-muted-foreground">Start date</label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn("w-full justify-start text-left font-normal h-9")}
-                  >
-                    <CalendarIcon className="mr-2 size-4 opacity-60" />
-                    {format(startDate, "PP")}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={startDate}
-                    onSelect={(d) => d && setStartDate(d)}
-                    initialFocus
-                    className={cn("p-3 pointer-events-auto")}
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-            <div className="space-y-1">
-              <label className="text-xs text-muted-foreground">Start time</label>
-              <Input
-                type="time"
-                value={startTime}
-                onChange={(e) => setStartTime(e.target.value)}
-                className="h-9"
+          {/* Right column — controls */}
+          <div className="p-5 space-y-4">
+            <div className="flex items-center justify-between rounded-lg border border-border bg-surface-2/50 px-3 py-2.5">
+              <div className="flex flex-col">
+                <span className="text-sm font-semibold">Enabled</span>
+                {active && remainingLabel ? (
+                  <span className="inline-flex items-center gap-1 text-xs text-violet-300 mt-0.5">
+                    <Clock className="size-3" /> {remainingLabel}
+                  </span>
+                ) : (
+                  <span className="text-xs text-muted-foreground mt-0.5">
+                    Toggle to start
+                  </span>
+                )}
+              </div>
+              <Switch
+                checked={!!info?.enabled}
+                onCheckedChange={handleToggle}
+                disabled={saving}
+                aria-label="Toggle Do Not Disturb"
               />
             </div>
 
-            <div className="space-y-1">
-              <label className="text-xs text-muted-foreground">End date</label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn("w-full justify-start text-left font-normal h-9")}
-                  >
-                    <CalendarIcon className="mr-2 size-4 opacity-60" />
-                    {format(endDate, "PP")}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={endDate}
-                    onSelect={(d) => d && setEndDate(d)}
-                    disabled={(d) => d < new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate())}
-                    initialFocus
-                    className={cn("p-3 pointer-events-auto")}
+            <div className="space-y-2">
+              <div className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
+                Window
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-xs text-muted-foreground">
+                    From · {format(startDate, "EEE d MMM")}
+                  </label>
+                  <Input
+                    type="time"
+                    value={startTime}
+                    onChange={(e) => setStartTime(e.target.value)}
+                    className="h-10 text-sm"
                   />
-                </PopoverContent>
-              </Popover>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs text-muted-foreground">
+                    To · {format(endDate, "EEE d MMM")}
+                  </label>
+                  <Input
+                    type="time"
+                    value={endTime}
+                    onChange={(e) => setEndTime(e.target.value)}
+                    className="h-10 text-sm"
+                  />
+                </div>
+              </div>
             </div>
+
+            <div className="space-y-2">
+              <div className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
+                Quick presets
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {[
+                  { label: "30m", v: 30 as const },
+                  { label: "1h", v: 60 as const },
+                  { label: "2h", v: 120 as const },
+                  { label: "End of day", v: "eod" as const },
+                ].map((p) => (
+                  <button
+                    key={p.label}
+                    type="button"
+                    onClick={() => applyPreset(p.v)}
+                    className="px-3 py-1.5 rounded-md border border-border hover:bg-muted text-xs font-medium"
+                  >
+                    {p.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <div className="space-y-1">
-              <label className="text-xs text-muted-foreground">End time</label>
+              <label className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
+                Note (optional)
+              </label>
               <Input
-                type="time"
-                value={endTime}
-                onChange={(e) => setEndTime(e.target.value)}
-                className="h-9"
+                value={note}
+                onChange={(e) => setNote(e.target.value.slice(0, 140))}
+                placeholder="e.g. In a meeting"
+                maxLength={140}
+                className="h-10 text-sm"
               />
             </div>
-          </div>
-
-          <div className="flex flex-wrap gap-1">
-            {[
-              { label: "30m", v: 30 as const },
-              { label: "1h", v: 60 as const },
-              { label: "2h", v: 120 as const },
-              { label: "End of day", v: "eod" as const },
-            ].map((p) => (
-              <button
-                key={p.label}
-                type="button"
-                onClick={() => applyPreset(p.v)}
-                className="px-2 py-1 rounded border border-border hover:bg-muted text-xs"
-              >
-                {p.label}
-              </button>
-            ))}
-          </div>
-
-          <div className="space-y-1">
-            <label className="text-xs text-muted-foreground">Note (optional)</label>
-            <Input
-              value={note}
-              onChange={(e) => setNote(e.target.value.slice(0, 140))}
-              placeholder="e.g. In a meeting"
-              maxLength={140}
-              className="h-9"
-            />
           </div>
         </div>
 
-        <DialogFooter className="gap-2 sm:gap-2">
+        <DialogFooter className="gap-2 sm:gap-2 px-6 py-4 border-t border-border bg-surface-2/40">
           {info?.enabled && (
             <Button
               variant="outline"
