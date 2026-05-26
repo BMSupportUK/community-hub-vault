@@ -4,11 +4,19 @@ import { supabase } from "@/integrations/supabase/client";
 import { LandingHeader } from "@/components/LandingHeader";
 import welcomeHero from "@/assets/welcome-hero.jpg";
 
+function isAndroidAppShell() {
+  if (typeof window === "undefined") return false;
+  const hasCapacitorBridge = Boolean((window as any).Capacitor?.isNativePlatform?.());
+  const ua = window.navigator.userAgent.toLowerCase();
+  const isAndroidWebView = ua.includes("android") && (ua.includes("; wv") || ua.includes(" version/4.0"));
+  return hasCapacitorBridge || isAndroidWebView;
+}
+
 export const Route = createFileRoute("/")({
   beforeLoad: async () => {
     // On the native Android (Capacitor) app, skip the marketing landing page
     // entirely and send users straight to the login screen.
-    if (typeof window !== "undefined" && (window as any).Capacitor?.isNativePlatform?.()) {
+    if (isAndroidAppShell()) {
       throw redirect({ to: "/login" });
     }
     const { data: { session } } = await supabase.auth.getSession();
@@ -27,13 +35,19 @@ interface HeroBox {
 }
 
 function Landing() {
+  const [redirectingToLogin, setRedirectingToLogin] = useState(() => isAndroidAppShell());
   const [boxes, setBoxes] = useState<HeroBox[]>([]);
 
   useEffect(() => {
-    if (typeof window !== "undefined" && (window as any).Capacitor?.isNativePlatform?.()) {
+    if (isAndroidAppShell()) {
+      setRedirectingToLogin(true);
       window.location.replace("/login");
     }
   }, []);
+
+  if (redirectingToLogin) {
+    return <div className="min-h-screen bg-background" />;
+  }
 
   useEffect(() => {
     (async () => {
