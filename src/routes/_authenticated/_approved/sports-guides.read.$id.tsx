@@ -157,12 +157,6 @@ function ReadPage() {
             {blog.excerpt && <p className="text-lg text-purple-100/80 italic">{blog.excerpt}</p>}
             {blog.body && (
               <div className="space-y-2">
-                <div className="text-[10px] uppercase tracking-[0.18em] text-purple-200/50 font-semibold px-1 pb-2 flex flex-wrap gap-x-4 gap-y-1">
-                  <span>Source ({sourceLabel})</span>
-                  <span className="text-fuchsia-300 normal-case tracking-wide">
-                    Local ({viewerTzLabel})
-                  </span>
-                </div>
                 <div
                   ref={bodyRef}
                   className="prose prose-invert max-w-none text-purple-50/90 leading-relaxed grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3"
