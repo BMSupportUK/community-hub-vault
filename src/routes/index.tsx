@@ -95,6 +95,11 @@ function Landing() {
                 <img
                   src={welcomeHero}
                   alt="BM Support hero"
+                  width={1040}
+                  height={780}
+                  loading="eager"
+                  fetchPriority="high"
+                  decoding="async"
                   className="block w-full h-auto max-h-[38vh] object-cover"
                 />
               </div>
