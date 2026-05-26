@@ -2571,6 +2571,33 @@ export type Database = {
         }
         Relationships: []
       }
+      user_dnd_status: {
+        Row: {
+          enabled: boolean
+          ends_at: string | null
+          note: string | null
+          starts_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          enabled?: boolean
+          ends_at?: string | null
+          note?: string | null
+          starts_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          enabled?: boolean
+          ends_at?: string | null
+          note?: string | null
+          starts_at?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_ignores: {
         Row: {
           created_at: string
@@ -3118,6 +3145,7 @@ export type Database = {
         Args: { _category_id: string }
         Returns: boolean
       }
+      is_user_dnd: { Args: { _user_id: string }; Returns: boolean }
       mark_order_paid: { Args: { p_order_id: string }; Returns: Json }
       move_to_dlq: {
         Args: {

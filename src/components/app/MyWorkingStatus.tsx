@@ -3,6 +3,7 @@ import { Coffee, UtensilsCrossed, CircleDot } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
+import { DndBadge } from "@/components/app/DndBadge";
 
 type Shift = { id: string; clock_in: string };
 type Break = { id: string; kind: "break" | "lunch"; started_at: string };
@@ -44,7 +45,11 @@ export function MyWorkingStatus() {
     return () => { supabase.removeChannel(ch); };
   }, [user?.id]);
 
-  if (!user || !shift) return null;
+  if (!user) return null;
+  if (!shift) {
+    // Even off-shift, surface DND so users see their own status.
+    return <DndBadge userId={user.id} />;
+  }
 
   const shiftSec = (now - new Date(shift.clock_in).getTime()) / 1000;
   const brSec = brk ? (now - new Date(brk.started_at).getTime()) / 1000 : 0;
@@ -63,6 +68,7 @@ export function MyWorkingStatus() {
   };
 
   return (
+    <div className="inline-flex items-center gap-1.5">
     <div
       className={cn(
         "inline-flex items-center gap-1 sm:gap-1.5 rounded-full px-2 sm:px-3 py-1 sm:py-1.5 text-[11px] sm:text-xs font-semibold ring-1 shadow-soft shrink-0",
@@ -83,6 +89,8 @@ export function MyWorkingStatus() {
       <span className="tabular-nums opacity-90">
         {brk ? (over ? `+${fmtMS(-brRemain)}` : fmtMS(brRemain)) : fmtHM(shiftSec)}
       </span>
+    </div>
+      <DndBadge userId={user.id} />
     </div>
   );
 }

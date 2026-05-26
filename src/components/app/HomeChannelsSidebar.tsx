@@ -5,6 +5,7 @@ import { ServiceStatusBox } from "@/components/app/ServiceStatusBox";
 import { MembershipBox } from "@/components/app/MembershipBox";
 import { SecurityBox } from "@/components/app/SecurityBox";
 import { WorkingStatusBox } from "@/components/app/WorkingStatusBox";
+import { DndStatusBox } from "@/components/app/DndStatusBox";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { getIcon } from "@/components/app/IconPicker";
@@ -120,6 +121,7 @@ export function HomeChannelsSidebar() {
           <ServiceStatusBox />
           <SecurityBox />
           <WorkingStatusBox />
+          <DndStatusBox />
         </>
       }
     />
