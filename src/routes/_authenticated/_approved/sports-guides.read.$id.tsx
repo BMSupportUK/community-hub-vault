@@ -31,11 +31,6 @@ function ReadPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  // Local pill uses the viewer's browser-detected timezone. The source pill is
-  // always labeled "GMT" (handled by annotateTimesInEl's defaultZone).
-  const viewerTz =
-    (typeof Intl !== "undefined" && Intl.DateTimeFormat().resolvedOptions().timeZone) || "UTC";
-  const viewerTzLabel = viewerTz.replace(/_/g, " ");
   const bodyRef = useRef<HTMLDivElement | null>(null);
   const [blog, setBlog] = useState<Blog | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -45,7 +40,8 @@ function ReadPage() {
   // without a zone are interpreted in ET.
   const defaultSourceZone =
     blog && /^\s*flosports\b/i.test(blog.title) ? "ET" : "GMT";
-  const sourceLabel = defaultSourceZone === "ET" ? "ET" : "GMT";
+  const viewerTz =
+    (typeof Intl !== "undefined" && Intl.DateTimeFormat().resolvedOptions().timeZone) || "UTC";
 
   useEffect(() => {
     (async () => {
