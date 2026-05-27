@@ -3571,6 +3571,7 @@ export type Database = {
         | "subscriber"
         | "nonsubscriber"
         | "rejected"
+        | "boro_fan_zone_moderator"
       blacklist_kind: "email" | "ip"
       break_kind: "break" | "lunch"
       fan_zone_status: "pending" | "approved" | "rejected" | "revoked"
@@ -3732,6 +3733,7 @@ export const Constants = {
         "subscriber",
         "nonsubscriber",
         "rejected",
+        "boro_fan_zone_moderator",
       ],
       blacklist_kind: ["email", "ip"],
       break_kind: ["break", "lunch"],
