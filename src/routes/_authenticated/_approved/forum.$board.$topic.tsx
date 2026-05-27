@@ -228,22 +228,7 @@ function TopicPage() {
         const safePage = Math.min(page, totalPages);
         const start = (safePage - 1) * REPLIES_PER_PAGE;
         const pageReplies = replies.slice(start, start + REPLIES_PER_PAGE);
-        const orderedForRender: { post: Post; index: number }[] = [];
-        if (opPost) orderedForRender.push({ post: opPost, index: 0 });
-        pageReplies.forEach((p) => {
-          const idx = posts.findIndex((x) => x.id === p.id);
-          orderedForRender.push({ post: p, index: idx });
-        });
-
-        return (
-          <Tabs value={tab} onValueChange={(v) => setTab(v as "posts" | "reply")} className="w-full">
-            <TabsList>
-              <TabsTrigger value="posts">Posts ({replies.length + (opPost ? 1 : 0)})</TabsTrigger>
-              <TabsTrigger value="reply" disabled={!canPost}>Reply</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="posts" className="space-y-3 mt-3">
-              {orderedForRender.map(({ post: p, index: i }) => {
+        const renderPost = (p: Post, i: number) => {
                 const author = profiles[p.author_id];
                 const name = author?.display_name || author?.username || "Someone";
                 const canEdit = user && (p.author_id === user.id || isBoardMod);
@@ -306,7 +291,27 @@ function TopicPage() {
                     />
                   </article>
                 );
-              })}
+        };
+
+        return (
+          <Tabs value={tab} onValueChange={(v) => setTab(v as "posts" | "reply")} className="w-full">
+            <TabsList>
+              <TabsTrigger value="posts">Original Post</TabsTrigger>
+              <TabsTrigger value="reply">Replies ({replies.length})</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="posts" className="space-y-3 mt-3">
+              {opPost ? renderPost(opPost, 0) : (
+                <div className="text-sm text-muted-foreground text-center py-6">No original post.</div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="reply" className="space-y-3 mt-3">
+              {pageReplies.length === 0 ? (
+                <div className="text-sm text-muted-foreground text-center py-6">No replies yet.</div>
+              ) : (
+                pageReplies.map((p) => renderPost(p, posts.findIndex((x) => x.id === p.id)))
+              )}
 
               {totalPages > 1 && (
                 <div className="flex items-center justify-center gap-2 pt-2">
@@ -319,9 +324,7 @@ function TopicPage() {
                   </Button>
                 </div>
               )}
-            </TabsContent>
 
-            <TabsContent value="reply" className="mt-3">
               {canPost ? (
                 <div id="forum-reply-box" className="rounded-xl border border-[#E11B22]/30 bg-surface-1 p-3 space-y-2">
                   <HtmlEditor
