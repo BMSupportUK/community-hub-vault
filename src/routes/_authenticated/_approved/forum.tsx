@@ -33,30 +33,17 @@ type Board = {
 function ForumLayout() {
   const matches = useMatches();
   const isNested = matches.some((m) => m.routeId.startsWith("/_authenticated/_approved/forum/"));
+  useEffect(() => {
+    const html = document.documentElement;
+    html.style.setProperty("--boro-bg-image", `url(${boroBg})`);
+    html.classList.add("boro-bg-active");
+    return () => {
+      html.classList.remove("boro-bg-active");
+      html.style.removeProperty("--boro-bg-image");
+    };
+  }, []);
   return (
     <div className="boro-theme relative mx-auto w-full max-w-5xl px-4 py-6">
-      {/* Full-page background — scoped to the forum via .boro-theme */}
-      <div
-        className="fixed inset-0 -z-10 bg-cover bg-center bg-no-repeat md:bg-fixed"
-        style={{ backgroundImage: `url(${boroBg})` }}
-        aria-hidden
-      />
-      <div
-        className="fixed inset-0 -z-10"
-        style={{
-          background:
-            "linear-gradient(180deg, rgba(11,26,43,0.82) 0%, rgba(20,8,12,0.78) 50%, rgba(11,26,43,0.88) 100%)",
-        }}
-        aria-hidden
-      />
-      <div
-        className="fixed inset-0 -z-10 opacity-[0.05] mix-blend-overlay"
-        style={{
-          backgroundImage:
-            "repeating-linear-gradient(135deg, #fff 0 2px, transparent 2px 14px)",
-        }}
-        aria-hidden
-      />
       <header className="relative mb-6 overflow-hidden rounded-2xl border border-[#E11B22]/40 shadow-[0_10px_40px_-10px_rgba(225,27,34,0.55)]">
         <div
           className="absolute inset-0 bg-cover bg-center"
