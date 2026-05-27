@@ -129,7 +129,7 @@ function TopicPage() {
     if (error) { toast.error("Couldn't post", { description: error.message }); return; }
     setReply("");
     setReplySuccessOpen(true);
-    setTab("posts");
+    setTab("reply");
     void load();
   };
 
