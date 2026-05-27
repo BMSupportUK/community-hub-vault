@@ -14,6 +14,7 @@ import { ForumPostReactions } from "@/components/app/ForumPostReactions";
 import { embedSocialUrls } from "@/lib/forum-embeds";
 import { useMentionCandidates } from "@/hooks/use-mention-candidates";
 import { toast } from "sonner";
+import advertiseLeaderboard from "@/assets/advertise-leaderboard.png";
 
 export const Route = createFileRoute("/_authenticated/_approved/forum/$board/$topic")({
   component: TopicPage,
@@ -29,7 +30,14 @@ type Topic = {
   view_count: number;
   reply_count: number;
 };
-type Board = { id: string; name: string; slug: string };
+type Board = {
+  id: string;
+  name: string;
+  slug: string;
+  affiliate_banner_url: string | null;
+  affiliate_banner_link: string | null;
+  affiliate_banner_alt: string | null;
+};
 type Post = {
   id: string;
   topic_id: string;
@@ -81,7 +89,11 @@ function TopicPage() {
       .maybeSingle();
     if (!t) { setTopic(null); setPosts([]); return; }
     setTopic(t as Topic);
-    const { data: b } = await supabase.from("forum_boards").select("id, name, slug").eq("id", (t as Topic).board_id).maybeSingle();
+    const { data: b } = await supabase
+      .from("forum_boards")
+      .select("id, name, slug, affiliate_banner_url, affiliate_banner_link, affiliate_banner_alt")
+      .eq("id", (t as Topic).board_id)
+      .maybeSingle();
     setBoard((b as Board | null) ?? null);
     const { data: mods } = await supabase.from("forum_board_moderators").select("user_id").eq("board_id", (t as Topic).board_id);
     setModeratorIds(new Set(((mods ?? []) as { user_id: string }[]).map((m) => m.user_id)));
@@ -205,6 +217,24 @@ function TopicPage() {
     return <div className="text-center text-sm text-muted-foreground">Topic not found. <Link to="/forum/$board" params={{ board: slug }} className="underline">Back to board</Link></div>;
   }
   if (!topic || !posts) return <div className="grid place-items-center py-20 text-muted-foreground"><Loader2 className="size-5 animate-spin" /></div>;
+  const renderSponsorAdvert = () => (
+    <a
+      href={board?.affiliate_banner_link || board?.affiliate_banner_url || "mailto:advertise@bmsupport.uk"}
+      target="_blank"
+      rel="noopener noreferrer sponsored"
+      className="block w-full max-w-[256px] mx-auto rounded-xl border border-border bg-surface-1/85 overflow-hidden hover:border-[#E11B22]/70 hover:shadow-[0_8px_30px_-12px_rgba(225,27,34,0.55)] transition-all"
+      aria-label={board?.affiliate_banner_alt || "Advertise here"}
+    >
+      <img
+        src={board?.affiliate_banner_url || advertiseLeaderboard}
+        alt={board?.affiliate_banner_alt || `${board?.name ?? "Forum"} sponsor`}
+        width={512}
+        height={1536}
+        className="w-full h-auto block"
+        loading="lazy"
+      />
+    </a>
+  );
 
   return (
     <div className="space-y-4">
@@ -228,6 +258,8 @@ function TopicPage() {
         </div>
       </div>
 
+      <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_180px] lg:grid-cols-[minmax(0,1fr)_256px] md:items-start">
+        <div className="min-w-0">
       {(() => {
         const opPost = posts.find((p) => p.is_op) ?? null;
         const replies = posts.filter((p) => !p.is_op);
@@ -363,6 +395,11 @@ function TopicPage() {
           </Tabs>
         );
       })()}
+        </div>
+        <aside className="hidden md:block md:sticky md:top-4" aria-label="Sponsored advert">
+          {renderSponsorAdvert()}
+        </aside>
+      </div>
 
       <Dialog open={!!historyFor} onOpenChange={(o) => !o && setHistoryFor(null)}>
         <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">

@@ -227,6 +227,24 @@ function BoardPage() {
 
   const canPost = !board.is_locked && (isStaff || info?.status === "approved");
   const isBoardMod = isStaff || (user ? moderatorIds.has(user.id) : false);
+  const renderSponsorAdvert = () => (
+    <a
+      href={board.affiliate_banner_link || board.affiliate_banner_url || "mailto:advertise@bmsupport.uk"}
+      target="_blank"
+      rel="noopener noreferrer sponsored"
+      className="block w-full max-w-[256px] mx-auto rounded-xl border border-border bg-surface-1/85 overflow-hidden hover:border-[#E11B22]/70 hover:shadow-[0_8px_30px_-12px_rgba(225,27,34,0.55)] transition-all"
+      aria-label={board.affiliate_banner_alt || "Advertise here"}
+    >
+      <img
+        src={board.affiliate_banner_url || advertiseLeaderboard}
+        alt={board.affiliate_banner_alt || `${board.name} sponsor`}
+        width={512}
+        height={1536}
+        className="w-full h-auto block"
+        loading="lazy"
+      />
+    </a>
+  );
 
   return (
     <div className="space-y-4">
@@ -248,30 +266,15 @@ function BoardPage() {
         )}
       </div>
 
-      <a
-        href={board.affiliate_banner_link || board.affiliate_banner_url || "mailto:advertise@bmsupport.uk"}
-        target="_blank"
-        rel="noopener noreferrer sponsored"
-        className="mx-auto block rounded-xl border border-border bg-surface-1/85 overflow-hidden hover:border-[#E11B22]/70 hover:shadow-[0_8px_30px_-12px_rgba(225,27,34,0.55)] transition-all w-[256px]"
-        aria-label={board.affiliate_banner_alt || "Advertise here"}
-      >
-        <img
-          src={board.affiliate_banner_url || advertiseLeaderboard}
-          alt={board.affiliate_banner_alt || `${board.name} sponsor`}
-          width={512}
-          height={1536}
-          className="w-full h-auto block"
-          loading="lazy"
-        />
-      </a>
-
-      {topics.length === 0 ? (
-        <div className="rounded-2xl border border-[#E11B22]/20 bg-surface-1 px-4 py-10 text-center text-sm text-muted-foreground shadow-soft">
-          No topics yet. {canPost ? "Be first — start one!" : ""}
-        </div>
-      ) : (
-        <div className="space-y-2.5">
-          {topics.map((t) => {
+      <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_180px] lg:grid-cols-[minmax(0,1fr)_256px] md:items-start">
+        <div className="min-w-0 space-y-4">
+          {topics.length === 0 ? (
+            <div className="rounded-2xl border border-[#E11B22]/20 bg-surface-1 px-4 py-10 text-center text-sm text-muted-foreground shadow-soft">
+              No topics yet. {canPost ? "Be first — start one!" : ""}
+            </div>
+          ) : (
+            <div className="space-y-2.5">
+              {topics.map((t) => {
             const author = profiles[t.author_id];
             const last = t.last_post_by ? profiles[t.last_post_by] : null;
             const authorName = author?.display_name || author?.username || "Someone";
@@ -336,21 +339,26 @@ function BoardPage() {
                 </div>
               </article>
             );
-          })}
-        </div>
-      )}
+              })}
+            </div>
+          )}
 
-      {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-2 pt-2">
-          <Button size="sm" variant="outline" disabled={page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>
-            Previous
-          </Button>
-          <span className="text-xs text-muted-foreground">Page {page} of {totalPages}</span>
-          <Button size="sm" variant="outline" disabled={page >= totalPages} onClick={() => setPage((p) => Math.min(totalPages, p + 1))}>
-            Next
-          </Button>
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-2 pt-2">
+              <Button size="sm" variant="outline" disabled={page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>
+                Previous
+              </Button>
+              <span className="text-xs text-muted-foreground">Page {page} of {totalPages}</span>
+              <Button size="sm" variant="outline" disabled={page >= totalPages} onClick={() => setPage((p) => Math.min(totalPages, p + 1))}>
+                Next
+              </Button>
+            </div>
+          )}
         </div>
-      )}
+        <aside className="hidden md:block md:sticky md:top-4" aria-label="Sponsored advert">
+          {renderSponsorAdvert()}
+        </aside>
+      </div>
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-lg">
