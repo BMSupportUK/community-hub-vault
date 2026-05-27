@@ -180,7 +180,7 @@ function AdminForumPage() {
                       <label className="flex items-center gap-1"><input type="checkbox" checked={!!draft.is_locked} onChange={(e) => setDraft({ ...draft, is_locked: e.target.checked })} />Locked</label>
                     </div>
                     <div className="space-y-2 rounded-lg border border-border/60 bg-background/60 p-3">
-                      <div className="text-[11px] uppercase tracking-wide text-muted-foreground">Affiliate banner (right side)</div>
+                      <div className="text-[11px] uppercase tracking-wide text-muted-foreground">Affiliate banner (right side) — 512×1536 (1:3), centered</div>
                       <Input
                         value={draft.affiliate_banner_url ?? ""}
                         onChange={(e) => setDraft({ ...draft, affiliate_banner_url: e.target.value })}
