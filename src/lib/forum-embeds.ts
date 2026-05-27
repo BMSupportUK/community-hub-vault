@@ -61,7 +61,11 @@ export function embedSocialUrls(html: string): string {
     const text = (el.textContent ?? "").trim();
     const replacement = tryEmbedUrl(text);
     if (!replacement) return;
-    el.replaceWith(...makeReplacementNodes(replacement));
+    let target: Element = el;
+    while (target.parentElement && target.parentElement !== root && (target.parentElement.textContent ?? "").trim() === text) {
+      target = target.parentElement;
+    }
+    target.replaceWith(...makeReplacementNodes(replacement));
   });
 
   const rootText = root.textContent?.trim() ?? "";
