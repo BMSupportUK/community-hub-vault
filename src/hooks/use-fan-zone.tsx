@@ -8,6 +8,8 @@ export type FanZoneInfo = {
   note: string | null;
   reason: string | null;
   decidedAt: Date | null;
+  fanAlias: string | null;
+  fanAvatarUrl: string | null;
 };
 
 /** Subscribe to the current user's Boro Fan Zone membership row. */
@@ -24,7 +26,7 @@ export function useFanZoneMembership(userId: string | null | undefined): FanZone
     const load = async () => {
       const { data } = await supabase
         .from("fan_zone_members")
-        .select("status, note, reason, decided_at")
+        .select("status, note, reason, decided_at, fan_alias, fan_avatar_url")
         .eq("user_id", userId)
         .maybeSingle();
       if (cancelled) return;
@@ -33,6 +35,8 @@ export function useFanZoneMembership(userId: string | null | undefined): FanZone
         note: data?.note ?? null,
         reason: data?.reason ?? null,
         decidedAt: data?.decided_at ? new Date(data.decided_at) : null,
+        fanAlias: (data?.fan_alias as string | null) ?? null,
+        fanAvatarUrl: (data?.fan_avatar_url as string | null) ?? null,
       });
     };
     void load();

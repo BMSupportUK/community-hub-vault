@@ -7,6 +7,7 @@ import { useFanZoneMembership } from "@/hooks/use-fan-zone";
 import { getIcon } from "@/components/app/IconPicker";
 import { formatLastSeen } from "@/lib/relative-time";
 import { Button } from "@/components/ui/button";
+import { FanZoneAliasSettings } from "@/components/app/FanZoneAliasSettings";
 import boroHero from "@/assets/boro-hero.jpg";
 import boroBadge from "@/assets/boro-fan-zone-badge.png";
 import boroBg from "@/assets/boro-bg.jpg";
@@ -121,6 +122,10 @@ function BoardsIndex() {
         const { data: ps } = await supabase.from("profiles").select("id, display_name, username").in("id", ids);
         const map: Record<string, { display_name: string | null; username: string | null }> = {};
         (ps ?? []).forEach((p) => { map[p.id as string] = { display_name: p.display_name as string | null, username: p.username as string | null }; });
+        const { data: aliases } = await supabase.rpc("fan_zone_aliases", { _ids: ids });
+        (aliases ?? []).forEach((a: { user_id: string; fan_alias: string | null }) => {
+          if (a.fan_alias && map[a.user_id]) map[a.user_id].display_name = a.fan_alias;
+        });
         setPosters(map);
       }
     })();
@@ -170,6 +175,7 @@ function BoardsIndex() {
 
   return (
     <div className="space-y-3">
+      <FanZoneAliasSettings />
       {boards.map((b) => {
         const Icon = getIcon(b.icon);
         const poster = b.last_post_by ? posters[b.last_post_by] : null;
