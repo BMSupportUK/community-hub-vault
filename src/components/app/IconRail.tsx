@@ -21,7 +21,8 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
   const isStaffOrMod = hasAny(["admin", "management", "staff", "moderator"]);
   const fanZone = useFanZoneMembership(user?.id ?? null);
   const fanZoneApproved = fanZone?.status === "approved";
-  const fanZoneGated = !isStaffOrMod && !fanZoneApproved;
+  const fanZonePending = fanZone?.status === "pending";
+  const fanZoneGated = !isStaffOrMod && !fanZoneApproved && !fanZonePending;
   const path = useRouterState({ select: (r) => r.location.pathname });
   const [activeIncidents, setActiveIncidents] = useState(0);
   const [unreadNewContent, setUnreadNewContent] = useState(0);

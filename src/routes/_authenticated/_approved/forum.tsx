@@ -104,6 +104,7 @@ function BoardsIndex() {
   const [posters, setPosters] = useState<Record<string, { display_name: string | null; username: string | null }>>({});
 
   const canEnter = isStaff || info?.status === "approved";
+  const isPending = info?.status === "pending";
 
   useEffect(() => {
     if (!canEnter) return;
@@ -125,14 +126,39 @@ function BoardsIndex() {
     })();
   }, [canEnter]);
 
+  if (!canEnter && isPending) {
+    return (
+      <div className="rounded-2xl border border-amber-500/30 bg-surface-1/90 backdrop-blur-sm p-10 text-center shadow-soft">
+        <div className="mx-auto mb-5 size-16 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
+          <Loader2 className="size-7 text-amber-400 animate-spin" />
+        </div>
+        <h2 className="font-display text-xl font-bold mb-2">Membership Pending Approval</h2>
+        <p className="text-sm text-muted-foreground max-w-md mx-auto mb-1">
+          Your request to join the Boro Fan Zone is being reviewed by the moderation team.
+        </p>
+        <p className="text-sm text-muted-foreground max-w-md mx-auto mb-5">
+          You will be notified as soon as your access is approved.
+        </p>
+        {info?.reason ? (
+          <div className="rounded-lg border border-border bg-surface-2 p-3 max-w-md mx-auto mb-5 text-left">
+            <div className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold mb-1">Your request</div>
+            <p className="text-sm text-foreground italic">"{info.reason}"</p>
+          </div>
+        ) : null}
+        <Button asChild variant="ghost" size="sm">
+          <Link to="/home">Back to channels</Link>
+        </Button>
+      </div>
+    );
+  }
+
   if (!canEnter) {
     return (
       <div className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-8 text-center">
         <Lock className="size-8 mx-auto mb-3 text-amber-400" />
         <h2 className="font-display text-lg font-bold mb-1">Members only</h2>
         <p className="text-sm text-muted-foreground mb-4">
-          The Boro Fan Zone forum is open to approved supporters only.{" "}
-          {info?.status === "pending" ? "Your request is waiting on a mod." : "Request access from the sidebar."}
+          The Boro Fan Zone forum is open to approved supporters only. Request access from the sidebar.
         </p>
       </div>
     );
