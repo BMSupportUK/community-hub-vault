@@ -23,6 +23,9 @@ type Board = {
   is_locked: boolean;
   topic_count: number;
   post_count: number;
+  affiliate_banner_url: string | null;
+  affiliate_banner_link: string | null;
+  affiliate_banner_alt: string | null;
 };
 type Mod = { board_id: string; user_id: string };
 type Profile = { id: string; display_name: string | null; username: string | null };
@@ -50,7 +53,7 @@ function AdminForumPage() {
   const load = async () => {
     const { data: bs } = await supabase
       .from("forum_boards")
-      .select("id, name, slug, description, icon, sort_order, is_pinned, is_locked, topic_count, post_count")
+      .select("id, name, slug, description, icon, sort_order, is_pinned, is_locked, topic_count, post_count, affiliate_banner_url, affiliate_banner_link, affiliate_banner_alt")
       .order("is_pinned", { ascending: false })
       .order("sort_order");
     setBoards((bs ?? []) as Board[]);
@@ -80,6 +83,9 @@ function AdminForumPage() {
     const { error } = await supabase.from("forum_boards").update({
       name: draft.name, description: draft.description, icon: draft.icon,
       sort_order: draft.sort_order, is_pinned: draft.is_pinned, is_locked: draft.is_locked,
+      affiliate_banner_url: draft.affiliate_banner_url || null,
+      affiliate_banner_link: draft.affiliate_banner_link || null,
+      affiliate_banner_alt: draft.affiliate_banner_alt || null,
     }).eq("id", editing.id);
     if (error) { toast.error("Save failed", { description: error.message }); return; }
     setEditing(null); void load();
