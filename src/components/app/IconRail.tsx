@@ -4,6 +4,8 @@ import { useAuth, type AppRole } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useFanZoneMembership } from "@/hooks/use-fan-zone";
+import { FAN_ZONE_OPEN_EVENT } from "@/components/app/FanZoneAccessCard";
 
 interface RailItem {
   to: string;
@@ -14,8 +16,12 @@ interface RailItem {
 }
 
 export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
-  const { isStaff, isPending, signOut, hasAny, roles, hasRole } = useAuth();
+  const { user, isStaff, isPending, signOut, hasAny, roles, hasRole } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
+  const isStaffOrMod = hasAny(["admin", "management", "staff", "moderator"]);
+  const fanZone = useFanZoneMembership(user?.id ?? null);
+  const fanZoneApproved = fanZone?.status === "approved";
+  const fanZoneGated = !isStaffOrMod && !fanZoneApproved;
   const path = useRouterState({ select: (r) => r.location.pathname });
   const [activeIncidents, setActiveIncidents] = useState(0);
   const [unreadNewContent, setUnreadNewContent] = useState(0);
@@ -199,7 +205,15 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
           onDrop={() => reorder(i.to)}
           className={isAdmin ? "cursor-grab active:cursor-grabbing" : undefined}
         >
-          <RailIcon to={i.to} label={i.label} Icon={i.icon} active={path.startsWith(i.to)} badge={i.badge} />
+          {i.to === "/forum" && fanZoneGated ? (
+            <RailButton
+              label={i.label}
+              Icon={i.icon}
+              onClick={() => window.dispatchEvent(new CustomEvent(FAN_ZONE_OPEN_EVENT))}
+            />
+          ) : (
+            <RailIcon to={i.to} label={i.label} Icon={i.icon} active={path.startsWith(i.to)} badge={i.badge} />
+          )}
         </div>
       ))}
       <div className="mt-auto" />
@@ -248,5 +262,32 @@ function RailIcon({
       </span>
       {active && <span className="absolute -left-1 top-1/2 -translate-y-1/2 h-8 w-1 bg-primary-glow rounded-r" />}
     </Link>
+  );
+}
+
+function RailButton({
+  label,
+  Icon,
+  onClick,
+}: {
+  label: string;
+  Icon: React.ComponentType<{ className?: string }>;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title={label}
+      className={cn(
+        "group relative size-12 rounded-2xl flex items-center justify-center transition-all",
+        "bg-surface-2 text-muted-foreground hover:bg-primary hover:text-primary-foreground hover:rounded-xl",
+      )}
+    >
+      <Icon className="size-5" />
+      <span className="absolute left-full ml-3 px-2 py-1 rounded bg-popover text-popover-foreground text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 shadow-soft">
+        {label}
+      </span>
+    </button>
   );
 }
