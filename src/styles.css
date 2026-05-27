@@ -1060,3 +1060,30 @@
 .nameplate-panda .nameplate-panda-sparkle.s1 { right: 56px; top: 22%; animation-delay: 0s; }
 .nameplate-panda .nameplate-panda-sparkle.s2 { right: 70px; bottom: 18%; animation-delay: 0.7s; font-size: 10px; }
 .nameplate-panda .nameplate-panda-sparkle.s3 { right: 100px; top: 45%; animation-delay: 1.4s; font-size: 14px; }
+
+/* Boro Fan Zone full-page background — scoped to /forum/* via JS-toggled class */
+html.boro-bg-active body {
+  background-image: var(--boro-bg-image);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+}
+@media (max-width: 768px) {
+  html.boro-bg-active body {
+    background-attachment: scroll;
+  }
+}
+/* Punch a hole through the auth wrapper's solid bg so the body image shows */
+html.boro-bg-active .min-h-screen.bg-background {
+  background-color: transparent !important;
+}
+/* Dark gradient overlay for legibility */
+html.boro-bg-active body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background: linear-gradient(180deg, rgba(11,26,43,0.82) 0%, rgba(20,8,12,0.78) 50%, rgba(11,26,43,0.88) 100%);
+}
