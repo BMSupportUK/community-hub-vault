@@ -175,6 +175,7 @@ function BoardsIndex() {
 
   return (
     <div className="space-y-3">
+      <FanZoneAliasSettings />
       {boards.map((b) => {
         const Icon = getIcon(b.icon);
         const poster = b.last_post_by ? posters[b.last_post_by] : null;
