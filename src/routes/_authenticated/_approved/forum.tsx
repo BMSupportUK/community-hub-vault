@@ -8,6 +8,7 @@ import { getIcon } from "@/components/app/IconPicker";
 import { formatLastSeen } from "@/lib/relative-time";
 import { Button } from "@/components/ui/button";
 import boroHero from "@/assets/boro-hero.jpg";
+import boroBadge from "@/assets/boro-fan-zone-badge.png";
 
 export const Route = createFileRoute("/_authenticated/_approved/forum")({
   component: ForumLayout,
@@ -57,8 +58,15 @@ function ForumLayout() {
           aria-hidden
         />
         <div className="relative px-5 py-7 sm:px-8 sm:py-9 flex items-center gap-5">
-          <div className="hidden sm:flex size-14 rounded-xl bg-white text-[#E11B22] items-center justify-center font-display text-2xl font-black shadow-lg ring-2 ring-white/40">
-            B
+          <div className="hidden sm:flex size-20 rounded-full bg-white items-center justify-center shadow-lg ring-2 ring-white/50 shrink-0">
+            <img
+              src={boroBadge}
+              alt="Boro Fan Zone badge"
+              width={1024}
+              height={1024}
+              className="size-[72px] object-contain"
+              loading="lazy"
+            />
           </div>
           <div className="flex-1 min-w-0">
             <div className="text-[10px] tracking-[0.3em] font-bold text-white/80 uppercase mb-1">
