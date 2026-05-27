@@ -4,6 +4,8 @@ import { useAuth, type AppRole } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useFanZoneMembership } from "@/hooks/use-fan-zone";
+import { FAN_ZONE_OPEN_EVENT } from "@/components/app/FanZoneAccessCard";
 
 interface RailItem {
   to: string;
@@ -14,8 +16,12 @@ interface RailItem {
 }
 
 export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
-  const { isStaff, isPending, signOut, hasAny, roles, hasRole } = useAuth();
+  const { user, isStaff, isPending, signOut, hasAny, roles, hasRole } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
+  const isStaffOrMod = hasAny(["admin", "management", "staff", "moderator"]);
+  const fanZone = useFanZoneMembership(user?.id ?? null);
+  const fanZoneApproved = fanZone?.status === "approved";
+  const fanZoneGated = !isStaffOrMod && !fanZoneApproved;
   const path = useRouterState({ select: (r) => r.location.pathname });
   const [activeIncidents, setActiveIncidents] = useState(0);
   const [unreadNewContent, setUnreadNewContent] = useState(0);
