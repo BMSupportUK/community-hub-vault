@@ -1,0 +1,123 @@
+import { useEffect, useState } from "react";
+import { Link } from "@tanstack/react-router";
+import { Shield, Star } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+
+type StaffMember = {
+  user_id: string;
+  role: "admin" | "boro_fan_zone_moderator";
+  display_name: string | null;
+  username: string | null;
+  avatar_url: string | null;
+};
+
+/** Side box listing Admins and Boro Fan Zone Moderators with mini cards. */
+export function FanZoneStaffBox() {
+  const [members, setMembers] = useState<StaffMember[] | null>(null);
+
+  useEffect(() => {
+    void (async () => {
+      const { data: roles } = await supabase
+        .from("user_roles")
+        .select("user_id, role")
+        .in("role", ["admin", "boro_fan_zone_moderator"]);
+      const list = (roles ?? []) as { user_id: string; role: StaffMember["role"] }[];
+      const ids = Array.from(new Set(list.map((r) => r.user_id)));
+      if (!ids.length) {
+        setMembers([]);
+        return;
+      }
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, display_name, username, avatar_url")
+        .in("id", ids);
+      const pmap: Record<string, { display_name: string | null; username: string | null; avatar_url: string | null }> = {};
+      (profiles ?? []).forEach((p) => {
+        pmap[p.id as string] = {
+          display_name: p.display_name as string | null,
+          username: p.username as string | null,
+          avatar_url: p.avatar_url as string | null,
+        };
+      });
+      const { data: aliases } = await supabase.rpc("fan_zone_aliases", { _ids: ids });
+      (aliases ?? []).forEach((a: { user_id: string; fan_alias: string | null; fan_avatar_url: string | null }) => {
+        if (!pmap[a.user_id]) return;
+        if (a.fan_alias) pmap[a.user_id].display_name = a.fan_alias;
+        if (a.fan_avatar_url) pmap[a.user_id].avatar_url = a.fan_avatar_url;
+      });
+      const out: StaffMember[] = list.map((r) => ({
+        user_id: r.user_id,
+        role: r.role,
+        display_name: pmap[r.user_id]?.display_name ?? null,
+        username: pmap[r.user_id]?.username ?? null,
+        avatar_url: pmap[r.user_id]?.avatar_url ?? null,
+      }));
+      // Admins first, then moderators; alphabetical within each
+      out.sort((a, b) => {
+        if (a.role !== b.role) return a.role === "admin" ? -1 : 1;
+        const an = (a.display_name || a.username || "").toLowerCase();
+        const bn = (b.display_name || b.username || "").toLowerCase();
+        return an.localeCompare(bn);
+      });
+      setMembers(out);
+    })();
+  }, []);
+
+  if (!members || members.length === 0) return null;
+
+  return (
+    <aside className="rounded-xl border border-[#E11B22]/40 bg-surface-1/85 backdrop-blur-sm overflow-hidden shadow-[0_8px_30px_-12px_rgba(225,27,34,0.45)]">
+      <div className="px-4 py-3 bg-gradient-to-r from-[#E11B22] to-[#8B0F14] text-white">
+        <h3 className="font-display text-sm font-bold uppercase tracking-wider flex items-center gap-2">
+          <Shield className="size-4" /> Fan Zone Staff
+        </h3>
+      </div>
+      <ul className="p-2 space-y-1.5">
+        {members.map((m) => {
+          const name = m.display_name || m.username || "Unknown";
+          const isAdmin = m.role === "admin";
+          const initials = name.slice(0, 2).toUpperCase();
+          const inner = (
+            <div className="flex items-center gap-2.5 rounded-lg border border-border bg-surface-2/70 px-2.5 py-2 hover:border-[#E11B22]/60 hover:bg-surface-2 transition-colors">
+              <div className="relative shrink-0">
+                {m.avatar_url ? (
+                  <img
+                    src={m.avatar_url}
+                    alt=""
+                    className="size-9 rounded-full object-cover ring-2 ring-[#E11B22]/40"
+                  />
+                ) : (
+                  <div className="size-9 rounded-full bg-gradient-to-br from-[#E11B22] to-[#8B0F14] grid place-items-center text-white text-xs font-bold ring-2 ring-[#E11B22]/40">
+                    {initials}
+                  </div>
+                )}
+                {isAdmin && (
+                  <span className="absolute -bottom-0.5 -right-0.5 size-4 rounded-full bg-amber-400 grid place-items-center ring-2 ring-surface-1">
+                    <Star className="size-2.5 text-amber-900" fill="currentColor" />
+                  </span>
+                )}
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="text-sm font-semibold truncate leading-tight">{name}</div>
+                <div className={`text-[10px] uppercase tracking-wider font-bold ${isAdmin ? "text-amber-400" : "text-[#E11B22]"}`}>
+                  {isAdmin ? "Admin" : "Fan Zone Mod"}
+                </div>
+              </div>
+            </div>
+          );
+          return (
+            <li key={`${m.user_id}-${m.role}`}>
+              {m.username ? (
+                <Link to="/u/$username" params={{ username: m.username }} className="block">
+                  {inner}
+                </Link>
+              ) : (
+                inner
+              )}
+            </li>
+          );
+        })}
+      </ul>
+    </aside>
+  );
+}
