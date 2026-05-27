@@ -240,7 +240,7 @@ function BoardPage() {
         alt={board.affiliate_banner_alt || `${board.name} sponsor`}
         width={512}
         height={1536}
-        className="w-full h-auto block"
+        className="w-full aspect-[1/3] object-cover object-center block"
         loading="lazy"
       />
     </a>
