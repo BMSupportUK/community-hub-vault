@@ -14,6 +14,7 @@ import { ForumPostReactions } from "@/components/app/ForumPostReactions";
 import { embedSocialUrls } from "@/lib/forum-embeds";
 import { useMentionCandidates } from "@/hooks/use-mention-candidates";
 import { toast } from "sonner";
+import advertiseLeaderboard from "@/assets/advertise-leaderboard.png";
 
 export const Route = createFileRoute("/_authenticated/_approved/forum/$board/$topic")({
   component: TopicPage,
@@ -29,7 +30,14 @@ type Topic = {
   view_count: number;
   reply_count: number;
 };
-type Board = { id: string; name: string; slug: string };
+type Board = {
+  id: string;
+  name: string;
+  slug: string;
+  affiliate_banner_url: string | null;
+  affiliate_banner_link: string | null;
+  affiliate_banner_alt: string | null;
+};
 type Post = {
   id: string;
   topic_id: string;
@@ -81,7 +89,11 @@ function TopicPage() {
       .maybeSingle();
     if (!t) { setTopic(null); setPosts([]); return; }
     setTopic(t as Topic);
-    const { data: b } = await supabase.from("forum_boards").select("id, name, slug").eq("id", (t as Topic).board_id).maybeSingle();
+    const { data: b } = await supabase
+      .from("forum_boards")
+      .select("id, name, slug, affiliate_banner_url, affiliate_banner_link, affiliate_banner_alt")
+      .eq("id", (t as Topic).board_id)
+      .maybeSingle();
     setBoard((b as Board | null) ?? null);
     const { data: mods } = await supabase.from("forum_board_moderators").select("user_id").eq("board_id", (t as Topic).board_id);
     setModeratorIds(new Set(((mods ?? []) as { user_id: string }[]).map((m) => m.user_id)));
