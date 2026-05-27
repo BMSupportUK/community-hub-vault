@@ -5,6 +5,7 @@ import { OutstandingTicketsAlert } from "@/components/app/OutstandingTicketsAler
 import { TicketAssignedAlert } from "@/components/app/TicketAssignedAlert";
 import { TicketHelpRequestedAlert } from "@/components/app/TicketHelpRequestedAlert";
 import { HomeChannelsSidebar } from "@/components/app/HomeChannelsSidebar";
+import { FanZoneAccessCard } from "@/components/app/FanZoneAccessCard";
 import { usePushRegister } from "@/hooks/use-push-register";
 
 export const Route = createFileRoute("/_authenticated/_approved")({
@@ -39,6 +40,7 @@ function ApprovedLayout() {
       <OutstandingTicketsAlert />
       <TicketAssignedAlert />
       <TicketHelpRequestedAlert />
+      <FanZoneAccessCard />
     </>
   );
 }
