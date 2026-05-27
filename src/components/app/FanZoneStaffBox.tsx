@@ -1,14 +1,12 @@
 import { useEffect, useState } from "react";
-import { Link } from "@tanstack/react-router";
 import { Shield, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 type StaffMember = {
   user_id: string;
   role: "admin" | "boro_fan_zone_moderator";
-  display_name: string | null;
-  username: string | null;
-  avatar_url: string | null;
+  fan_alias: string;
+  fan_avatar_url: string;
 };
 
 /** Side box listing Admins and Boro Fan Zone Moderators with mini cards. */
@@ -21,22 +19,18 @@ export function FanZoneStaffBox() {
       const out: StaffMember[] = ((data ?? []) as Array<{
         user_id: string;
         role: StaffMember["role"];
-        display_name: string | null;
-        username: string | null;
-        avatar_url: string | null;
+        fan_alias: string;
+        fan_avatar_url: string;
       }>).map((r) => ({
         user_id: r.user_id,
         role: r.role,
-        display_name: r.display_name,
-        username: r.username,
-        avatar_url: r.avatar_url,
+        fan_alias: r.fan_alias,
+        fan_avatar_url: r.fan_avatar_url,
       }));
       // Admins first, then moderators; alphabetical within each
       out.sort((a, b) => {
         if (a.role !== b.role) return a.role === "admin" ? -1 : 1;
-        const an = (a.display_name || a.username || "").toLowerCase();
-        const bn = (b.display_name || b.username || "").toLowerCase();
-        return an.localeCompare(bn);
+        return a.fan_alias.toLowerCase().localeCompare(b.fan_alias.toLowerCase());
       });
       setMembers(out);
     })();
@@ -53,15 +47,15 @@ export function FanZoneStaffBox() {
       </div>
       <ul className="p-2 space-y-1.5">
         {members.map((m) => {
-          const name = m.display_name || m.username || "Unknown";
+          const name = m.fan_alias;
           const isAdmin = m.role === "admin";
           const initials = name.slice(0, 2).toUpperCase();
           const inner = (
             <div className="flex items-center gap-2.5 rounded-lg border border-border bg-surface-2/70 px-2.5 py-2 hover:border-[#E11B22]/60 hover:bg-surface-2 transition-colors">
               <div className="relative shrink-0">
-                {m.avatar_url ? (
+                {m.fan_avatar_url ? (
                   <img
-                    src={m.avatar_url}
+                    src={m.fan_avatar_url}
                     alt=""
                     className="size-9 rounded-full object-cover ring-2 ring-[#E11B22]/40"
                   />
@@ -85,15 +79,7 @@ export function FanZoneStaffBox() {
             </div>
           );
           return (
-            <li key={`${m.user_id}-${m.role}`}>
-              {m.username ? (
-                <Link to="/u/$username" params={{ username: m.username }} className="block">
-                  {inner}
-                </Link>
-              ) : (
-                inner
-              )}
-            </li>
+            <li key={`${m.user_id}-${m.role}`}>{inner}</li>
           );
         })}
       </ul>
