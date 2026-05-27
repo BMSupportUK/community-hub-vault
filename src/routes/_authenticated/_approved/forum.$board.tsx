@@ -113,6 +113,26 @@ function BoardPage() {
     })();
   }, [slug, canEnter, page]);
 
+  // Live updates: refresh the topic list when topics or posts change in this board.
+  useEffect(() => {
+    if (!canEnter || !board) return;
+    const ch = supabase
+      .channel(`forum-board-${board.id}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "forum_topics", filter: `board_id=eq.${board.id}` },
+        () => { void reloadTopics(); },
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "forum_posts" },
+        () => { void reloadTopics(); },
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [canEnter, board?.id, page]);
+
   const reloadTopics = async () => {
     if (!board) return;
     const from = (page - 1) * PAGE_SIZE;
