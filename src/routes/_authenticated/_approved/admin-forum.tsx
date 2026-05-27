@@ -179,6 +179,24 @@ function AdminForumPage() {
                       <label className="flex items-center gap-1"><input type="checkbox" checked={!!draft.is_pinned} onChange={(e) => setDraft({ ...draft, is_pinned: e.target.checked })} />Pinned</label>
                       <label className="flex items-center gap-1"><input type="checkbox" checked={!!draft.is_locked} onChange={(e) => setDraft({ ...draft, is_locked: e.target.checked })} />Locked</label>
                     </div>
+                    <div className="space-y-2 rounded-lg border border-border/60 bg-background/60 p-3">
+                      <div className="text-[11px] uppercase tracking-wide text-muted-foreground">Affiliate banner (right side)</div>
+                      <Input
+                        value={draft.affiliate_banner_url ?? ""}
+                        onChange={(e) => setDraft({ ...draft, affiliate_banner_url: e.target.value })}
+                        placeholder="Banner image URL (https://...)"
+                      />
+                      <Input
+                        value={draft.affiliate_banner_link ?? ""}
+                        onChange={(e) => setDraft({ ...draft, affiliate_banner_link: e.target.value })}
+                        placeholder="Click-through link URL (optional)"
+                      />
+                      <Input
+                        value={draft.affiliate_banner_alt ?? ""}
+                        onChange={(e) => setDraft({ ...draft, affiliate_banner_alt: e.target.value })}
+                        placeholder="Alt text (optional)"
+                      />
+                    </div>
                     <div className="flex justify-end gap-2">
                       <Button size="sm" variant="outline" onClick={() => setEditing(null)}><X className="size-3.5 mr-1" />Cancel</Button>
                       <Button size="sm" onClick={() => void saveEdit()}><Save className="size-3.5 mr-1" />Save</Button>
