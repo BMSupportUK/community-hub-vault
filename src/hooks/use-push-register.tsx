@@ -31,18 +31,17 @@ export function usePushRegister() {
         if (!granted || removed) return;
 
         await PushNotifications.createChannel({
-          id: "bm_support_alerts_v2",
+          id: "bm_support_alerts_v3",
           name: "BM Support alerts",
           description: "Signups, tickets, orders and staff alerts",
           importance: 4,
           visibility: 1,
           lights: true,
           vibration: true,
-          // Use the device's default notification sound. Without this some
-          // OEMs play no audio for FCM-triggered notifications even at
-          // IMPORTANCE_HIGH, which is why alerts only played with the app
-          // in the foreground (in-app new Audio()).
-          sound: "default",
+          // Do NOT pass `sound`. Capacitor treats `sound: "default"` as a
+          // custom raw resource lookup (res/raw/default.*) and, when the
+          // file is missing, creates a silent channel. Omitting `sound`
+          // lets Android use the system default notification ringtone.
         });
 
         const reg = await PushNotifications.addListener("registration", async (t) => {
