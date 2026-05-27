@@ -10,7 +10,8 @@ import { toast } from "sonner";
 /** Top-of-board card letting an approved fan zone member set an alias + avatar
  * used only inside the Boro Fan Zone. */
 export function FanZoneAliasSettings() {
-  const { user } = useAuth();
+  const { user, hasAny } = useAuth();
+  const isStaff = hasAny(["admin", "management", "moderator", "boro_fan_zone_moderator"]);
   const info = useFanZoneMembership(user?.id ?? null);
   const [open, setOpen] = useState(false);
   const [alias, setAlias] = useState("");
@@ -24,7 +25,8 @@ export function FanZoneAliasSettings() {
     setAvatarUrl(info?.fanAvatarUrl ?? "");
   }, [info?.fanAlias, info?.fanAvatarUrl]);
 
-  if (!user || info?.status !== "approved") return null;
+  if (!user) return null;
+  if (!isStaff && info?.status !== "approved") return null;
 
   const hasAlias = !!(info?.fanAlias || info?.fanAvatarUrl);
 
