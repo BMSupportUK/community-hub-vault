@@ -266,7 +266,7 @@ function BoardPage() {
         )}
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_256px] xl:items-start">
+      <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_180px] lg:grid-cols-[minmax(0,1fr)_256px] md:items-start">
         <div className="min-w-0 space-y-4">
           {topics.length === 0 ? (
             <div className="rounded-2xl border border-[#E11B22]/20 bg-surface-1 px-4 py-10 text-center text-sm text-muted-foreground shadow-soft">
@@ -355,7 +355,7 @@ function BoardPage() {
             </div>
           )}
         </div>
-        <aside className="hidden xl:block xl:sticky xl:top-4" aria-label="Sponsored advert">
+        <aside className="hidden md:block md:sticky md:top-4" aria-label="Sponsored advert">
           {renderSponsorAdvert()}
         </aside>
       </div>
