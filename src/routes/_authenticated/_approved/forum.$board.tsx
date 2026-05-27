@@ -44,7 +44,7 @@ function BoardPage() {
   const { board: slug } = Route.useParams();
   const navigate = useNavigate();
   const { user, hasAny } = useAuth();
-  const isStaff = hasAny(["admin", "management", "moderator", "boro_fan_zone_moderator"]);
+  const isStaff = hasAny(["admin", "boro_fan_zone_moderator"]);
   const canUseSpecialMentions = hasAny(["admin", "management", "staff", "moderator"]);
   const info = useFanZoneMembership(user?.id ?? null);
   const canEnter = isStaff || info?.status === "approved";
