@@ -1,8 +1,8 @@
 import { useEffect } from "react";
 
-const TWEET_RE = /^https?:\/\/(?:www\.|mobile\.)?(?:twitter|x)\.com\/[A-Za-z0-9_]+\/status\/(\d+)(?:\/\S*)?$/i;
+const TWEET_RE = /^https?:\/\/(?:www\.|mobile\.)?(?:twitter|x)\.com\/[A-Za-z0-9_]+\/status\/(\d+)(?:[/?#]\S*)?$/i;
 const FB_RE = /^https?:\/\/(?:www\.|m\.|web\.)?facebook\.com\/[^\s<>"']+$/i;
-const FB_WATCH_RE = /^https?:\/\/fb\.watch\/[A-Za-z0-9_-]+\/?$/i;
+const FB_WATCH_RE = /^https?:\/\/fb\.watch\/[A-Za-z0-9_-]+\/?(?:[?#]\S*)?$/i;
 
 function tweetEmbed(url: string, id: string) {
   return `<blockquote class="twitter-tweet" data-tweet-id="${id}" data-lang="en"><a href="${url}"></a></blockquote>`;
