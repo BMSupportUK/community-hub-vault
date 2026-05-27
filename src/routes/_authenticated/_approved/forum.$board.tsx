@@ -7,8 +7,9 @@ import { useFanZoneMembership } from "@/hooks/use-fan-zone";
 import { formatLastSeen } from "@/lib/relative-time";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { HtmlEditor } from "@/components/ui/html-editor";
+import { embedSocialUrls } from "@/lib/forum-embeds";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/_approved/forum/$board")({
@@ -81,9 +82,10 @@ function BoardPage() {
   const submit = async () => {
     if (!user || !board) return;
     const t = title.trim();
-    const b = body.trim();
+    const bRaw = body.trim();
     if (t.length < 3) { toast.error("Title too short"); return; }
-    if (b.length < 1) { toast.error("Add some body text"); return; }
+    if (bRaw.length < 1 || bRaw === "<p><br></p>") { toast.error("Add some body text"); return; }
+    const b = embedSocialUrls(bRaw);
     setSubmitting(true);
     const { data: topic, error } = await supabase
       .from("forum_topics")
@@ -185,7 +187,11 @@ function BoardPage() {
           <DialogHeader><DialogTitle>New topic in {board.name}</DialogTitle></DialogHeader>
           <div className="space-y-3">
             <Input placeholder="Topic title" value={title} onChange={(e) => setTitle(e.target.value.slice(0, 200))} maxLength={200} />
-            <Textarea placeholder="What's on your mind? You can quote replies once the topic is live." value={body} onChange={(e) => setBody(e.target.value)} rows={6} />
+            <HtmlEditor
+              value={body}
+              onChange={setBody}
+              placeholder="What's on your mind? Paste an X or Facebook URL on its own line to embed it."
+            />
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)} disabled={submitting}>Cancel</Button>

@@ -1,13 +1,15 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { ArrowLeft, Loader2, Pin, Lock, Quote, Pencil, Trash2, Send, History, Check, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useFanZoneMembership } from "@/hooks/use-fan-zone";
 import { formatLastSeen } from "@/lib/relative-time";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { HtmlEditor } from "@/components/ui/html-editor";
+import { ForumPostBody } from "@/components/app/ForumPostBody";
+import { embedSocialUrls } from "@/lib/forum-embeds";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/_approved/forum/$board/$topic")({
@@ -38,41 +40,6 @@ type Post = {
 type Profile = { id: string; display_name: string | null; username: string | null; avatar_url: string | null };
 type EditEntry = { id: string; previous_body: string; edited_at: string; edited_by: string };
 
-function PostBody({ text }: { text: string }) {
-  // Render basic quote blocks: lines starting with `> ` collapse into a quoted box
-  const blocks = useMemo(() => {
-    const lines = text.split(/\n/);
-    const out: { kind: "text" | "quote"; content: string }[] = [];
-    let cur: { kind: "text" | "quote"; content: string } | null = null;
-    for (const ln of lines) {
-      const isQ = ln.startsWith("> ");
-      const k = isQ ? "quote" : "text";
-      const content = isQ ? ln.slice(2) : ln;
-      if (!cur || cur.kind !== k) {
-        if (cur) out.push(cur);
-        cur = { kind: k, content };
-      } else {
-        cur.content += "\n" + content;
-      }
-    }
-    if (cur) out.push(cur);
-    return out;
-  }, [text]);
-  return (
-    <div className="space-y-2 text-sm whitespace-pre-wrap break-words">
-      {blocks.map((b, i) =>
-        b.kind === "quote" ? (
-          <blockquote key={i} className="border-l-2 border-amber-500/60 pl-3 py-1 bg-amber-500/5 rounded-sm text-muted-foreground italic whitespace-pre-wrap">
-            {b.content}
-          </blockquote>
-        ) : (
-          <p key={i} className="whitespace-pre-wrap">{b.content}</p>
-        ),
-      )}
-    </div>
-  );
-}
-
 function TopicPage() {
   const { board: slug, topic: topicId } = Route.useParams();
   const navigate = useNavigate();
@@ -92,7 +59,6 @@ function TopicPage() {
   const [editText, setEditText] = useState("");
   const [historyFor, setHistoryFor] = useState<Post | null>(null);
   const [history, setHistory] = useState<EditEntry[]>([]);
-  const replyRef = useRef<HTMLTextAreaElement | null>(null);
 
   const isBoardMod = isStaff || (user ? moderatorIds.has(user.id) : false);
   const canPost = canEnter && !!topic && !topic.is_locked;
@@ -141,8 +107,9 @@ function TopicPage() {
 
   const submitReply = async () => {
     if (!user || !topic) return;
-    const body = reply.trim();
-    if (body.length < 1) return;
+    const raw = reply.trim();
+    if (raw.length < 1 || raw === "<p><br></p>") return;
+    const body = embedSocialUrls(raw);
     setSubmitting(true);
     const { error } = await supabase.from("forum_posts").insert({ topic_id: topic.id, author_id: user.id, body, is_op: false });
     setSubmitting(false);
@@ -153,16 +120,19 @@ function TopicPage() {
   const quotePost = (p: Post) => {
     const author = profiles[p.author_id];
     const name = author?.display_name || author?.username || "someone";
-    const quoted = p.body.split("\n").map((l) => `> ${l}`).join("\n");
-    setReply((cur) => (cur ? cur + "\n\n" : "") + `> **${name}** wrote:\n${quoted}\n\n`);
-    setTimeout(() => replyRef.current?.focus(), 50);
+    const safeName = name.replace(/</g, "&lt;");
+    // Use the original body as-is if it's HTML; otherwise wrap as paragraph.
+    const inner = /<[a-z][\s\S]*>/i.test(p.body) ? p.body : `<p>${p.body.replace(/</g, "&lt;").replace(/\n/g, "<br/>")}</p>`;
+    const block = `<blockquote><p><strong>${safeName}</strong> wrote:</p>${inner}</blockquote><p><br/></p>`;
+    setReply((cur) => (cur || "") + block);
   };
 
   const startEdit = (p: Post) => { setEditingId(p.id); setEditText(p.body); };
   const saveEdit = async () => {
     if (!editingId) return;
-    const body = editText.trim();
-    if (!body) return;
+    const raw = editText.trim();
+    if (!raw || raw === "<p><br></p>") return;
+    const body = embedSocialUrls(raw);
     const { error } = await supabase.from("forum_posts").update({ body }).eq("id", editingId);
     if (error) { toast.error("Couldn't save", { description: error.message }); return; }
     setEditingId(null); setEditText("");
@@ -257,14 +227,14 @@ function TopicPage() {
               <div className="px-4 py-3">
                 {editingId === p.id ? (
                   <div className="space-y-2">
-                    <Textarea value={editText} onChange={(e) => setEditText(e.target.value)} rows={5} />
+                    <HtmlEditor value={editText} onChange={setEditText} />
                     <div className="flex gap-2 justify-end">
                       <Button size="sm" variant="outline" onClick={() => setEditingId(null)}><X className="size-3.5 mr-1" />Cancel</Button>
                       <Button size="sm" onClick={() => void saveEdit()}><Check className="size-3.5 mr-1" />Save</Button>
                     </div>
                   </div>
                 ) : (
-                  <PostBody text={p.body} />
+                  <ForumPostBody html={p.body} />
                 )}
               </div>
             </article>
@@ -274,7 +244,11 @@ function TopicPage() {
 
       {canPost ? (
         <div className="rounded-xl border border-border bg-surface-1 p-3 space-y-2">
-          <Textarea ref={replyRef} value={reply} onChange={(e) => setReply(e.target.value)} placeholder="Write a reply… use the quote button on any post to quote it." rows={4} />
+          <HtmlEditor
+            value={reply}
+            onChange={setReply}
+            placeholder="Write a reply… paste an X or Facebook URL on its own line to embed it."
+          />
           <div className="flex justify-end">
             <Button onClick={() => void submitReply()} disabled={submitting || !reply.trim()}>
               {submitting ? <><Loader2 className="size-4 mr-1 animate-spin" />Posting…</> : <><Send className="size-4 mr-1" />Reply</>}
@@ -297,7 +271,7 @@ function TopicPage() {
               {history.map((h) => (
                 <li key={h.id} className="rounded border border-border p-3 text-sm">
                   <div className="text-[11px] text-muted-foreground mb-1">{formatLastSeen(h.edited_at)}</div>
-                  <pre className="whitespace-pre-wrap font-sans">{h.previous_body}</pre>
+                  <ForumPostBody html={h.previous_body} />
                 </li>
               ))}
             </ol>
