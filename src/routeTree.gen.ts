@@ -59,6 +59,7 @@ import { Route as AuthenticatedApprovedAdminDnsRouteImport } from './routes/_aut
 import { Route as AuthenticatedApprovedAdminCredentialsRouteImport } from './routes/_authenticated/_approved/admin-credentials'
 import { Route as AuthenticatedApprovedAdminBusinessHoursRouteImport } from './routes/_authenticated/_approved/admin-business-hours'
 import { Route as AuthenticatedApprovedAdminBlacklistRouteImport } from './routes/_authenticated/_approved/admin-blacklist'
+import { Route as AuthenticatedApprovedAdminAffiliateBannersRouteImport } from './routes/_authenticated/_approved/admin-affiliate-banners'
 import { Route as AuthenticatedApprovedAdminRouteImport } from './routes/_authenticated/_approved/admin'
 import { Route as AuthenticatedApprovedAccountSecurityRouteImport } from './routes/_authenticated/_approved/account-security'
 import { Route as AuthenticatedApprovedHomeIndexRouteImport } from './routes/_authenticated/_approved/home.index'
@@ -362,6 +363,12 @@ const AuthenticatedApprovedAdminBlacklistRoute =
     path: '/admin-blacklist',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
+const AuthenticatedApprovedAdminAffiliateBannersRoute =
+  AuthenticatedApprovedAdminAffiliateBannersRouteImport.update({
+    id: '/admin-affiliate-banners',
+    path: '/admin-affiliate-banners',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
 const AuthenticatedApprovedAdminRoute =
   AuthenticatedApprovedAdminRouteImport.update({
     id: '/admin',
@@ -506,6 +513,7 @@ export interface FileRoutesByFullPath {
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/account-security': typeof AuthenticatedApprovedAccountSecurityRoute
   '/admin': typeof AuthenticatedApprovedAdminRoute
+  '/admin-affiliate-banners': typeof AuthenticatedApprovedAdminAffiliateBannersRoute
   '/admin-blacklist': typeof AuthenticatedApprovedAdminBlacklistRoute
   '/admin-business-hours': typeof AuthenticatedApprovedAdminBusinessHoursRoute
   '/admin-credentials': typeof AuthenticatedApprovedAdminCredentialsRoute
@@ -577,6 +585,7 @@ export interface FileRoutesByTo {
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/account-security': typeof AuthenticatedApprovedAccountSecurityRoute
   '/admin': typeof AuthenticatedApprovedAdminRoute
+  '/admin-affiliate-banners': typeof AuthenticatedApprovedAdminAffiliateBannersRoute
   '/admin-blacklist': typeof AuthenticatedApprovedAdminBlacklistRoute
   '/admin-business-hours': typeof AuthenticatedApprovedAdminBusinessHoursRoute
   '/admin-credentials': typeof AuthenticatedApprovedAdminCredentialsRoute
@@ -650,6 +659,7 @@ export interface FileRoutesById {
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/_authenticated/_approved/account-security': typeof AuthenticatedApprovedAccountSecurityRoute
   '/_authenticated/_approved/admin': typeof AuthenticatedApprovedAdminRoute
+  '/_authenticated/_approved/admin-affiliate-banners': typeof AuthenticatedApprovedAdminAffiliateBannersRoute
   '/_authenticated/_approved/admin-blacklist': typeof AuthenticatedApprovedAdminBlacklistRoute
   '/_authenticated/_approved/admin-business-hours': typeof AuthenticatedApprovedAdminBusinessHoursRoute
   '/_authenticated/_approved/admin-credentials': typeof AuthenticatedApprovedAdminCredentialsRoute
@@ -723,6 +733,7 @@ export interface FileRouteTypes {
     | '/email/unsubscribe'
     | '/account-security'
     | '/admin'
+    | '/admin-affiliate-banners'
     | '/admin-blacklist'
     | '/admin-business-hours'
     | '/admin-credentials'
@@ -794,6 +805,7 @@ export interface FileRouteTypes {
     | '/email/unsubscribe'
     | '/account-security'
     | '/admin'
+    | '/admin-affiliate-banners'
     | '/admin-blacklist'
     | '/admin-business-hours'
     | '/admin-credentials'
@@ -866,6 +878,7 @@ export interface FileRouteTypes {
     | '/email/unsubscribe'
     | '/_authenticated/_approved/account-security'
     | '/_authenticated/_approved/admin'
+    | '/_authenticated/_approved/admin-affiliate-banners'
     | '/_authenticated/_approved/admin-blacklist'
     | '/_authenticated/_approved/admin-business-hours'
     | '/_authenticated/_approved/admin-credentials'
@@ -1300,6 +1313,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedApprovedAdminBlacklistRouteImport
       parentRoute: typeof AuthenticatedApprovedRoute
     }
+    '/_authenticated/_approved/admin-affiliate-banners': {
+      id: '/_authenticated/_approved/admin-affiliate-banners'
+      path: '/admin-affiliate-banners'
+      fullPath: '/admin-affiliate-banners'
+      preLoaderRoute: typeof AuthenticatedApprovedAdminAffiliateBannersRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
     '/_authenticated/_approved/admin': {
       id: '/_authenticated/_approved/admin'
       path: '/admin'
@@ -1521,6 +1541,7 @@ const AuthenticatedApprovedSportsGuidesRouteWithChildren =
 interface AuthenticatedApprovedRouteChildren {
   AuthenticatedApprovedAccountSecurityRoute: typeof AuthenticatedApprovedAccountSecurityRoute
   AuthenticatedApprovedAdminRoute: typeof AuthenticatedApprovedAdminRoute
+  AuthenticatedApprovedAdminAffiliateBannersRoute: typeof AuthenticatedApprovedAdminAffiliateBannersRoute
   AuthenticatedApprovedAdminBlacklistRoute: typeof AuthenticatedApprovedAdminBlacklistRoute
   AuthenticatedApprovedAdminBusinessHoursRoute: typeof AuthenticatedApprovedAdminBusinessHoursRoute
   AuthenticatedApprovedAdminCredentialsRoute: typeof AuthenticatedApprovedAdminCredentialsRoute
@@ -1560,6 +1581,8 @@ const AuthenticatedApprovedRouteChildren: AuthenticatedApprovedRouteChildren = {
   AuthenticatedApprovedAccountSecurityRoute:
     AuthenticatedApprovedAccountSecurityRoute,
   AuthenticatedApprovedAdminRoute: AuthenticatedApprovedAdminRoute,
+  AuthenticatedApprovedAdminAffiliateBannersRoute:
+    AuthenticatedApprovedAdminAffiliateBannersRoute,
   AuthenticatedApprovedAdminBlacklistRoute:
     AuthenticatedApprovedAdminBlacklistRoute,
   AuthenticatedApprovedAdminBusinessHoursRoute:
