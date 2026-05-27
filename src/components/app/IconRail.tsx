@@ -18,7 +18,7 @@ interface RailItem {
 export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
   const { user, isStaff, isPending, signOut, hasAny, roles, hasRole } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
-  const isStaffOrMod = hasAny(["admin", "management", "staff", "moderator"]);
+  const isStaffOrMod = hasAny(["admin", "management", "staff", "moderator", "boro_fan_zone_moderator"]);
   const fanZone = useFanZoneMembership(user?.id ?? null);
   const fanZoneApproved = fanZone?.status === "approved";
   const fanZonePending = fanZone?.status === "pending";
