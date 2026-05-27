@@ -104,6 +104,10 @@ function BoardPage() {
         const { data: ps } = await supabase.from("profiles").select("id, display_name, username").in("id", ids);
         const map: Record<string, Profile> = {};
         (ps ?? []).forEach((p) => { map[p.id as string] = p as Profile; });
+        const { data: aliases } = await supabase.rpc("fan_zone_aliases", { _ids: ids });
+        (aliases ?? []).forEach((a: { user_id: string; fan_alias: string | null }) => {
+          if (a.fan_alias && map[a.user_id]) map[a.user_id].display_name = a.fan_alias;
+        });
         setProfiles(map);
       }
     })();
