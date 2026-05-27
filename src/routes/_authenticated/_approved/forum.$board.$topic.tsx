@@ -49,7 +49,10 @@ function TopicPage() {
   const isStaff = hasAny(["admin", "management", "moderator"]);
   const canUseSpecialMentions = hasAny(["admin", "management", "staff", "moderator"]);
   const info = useFanZoneMembership(user?.id ?? null);
-  const canEnter = isStaff || info?.status === "approved";
+  const canEnter =
+    isStaff ||
+    info?.status === "approved" ||
+    hasAny(["staff", "member", "subscriber"]);
   const mentionCandidates = useMentionCandidates(canUseSpecialMentions);
 
   const [board, setBoard] = useState<Board | null>(null);
