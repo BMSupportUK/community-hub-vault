@@ -3410,6 +3410,16 @@ export type Database = {
           user_id: string
         }[]
       }
+      fan_zone_staff_directory: {
+        Args: never
+        Returns: {
+          avatar_url: string
+          display_name: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+          username: string
+        }[]
+      }
       forum_board_allows: {
         Args: { _action: string; _board: string; _user: string }
         Returns: boolean
