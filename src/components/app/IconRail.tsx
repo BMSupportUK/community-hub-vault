@@ -19,10 +19,12 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
   const { user, isStaff, isPending, signOut, hasAny, roles, hasRole } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
   const isStaffOrMod = hasAny(["admin", "management", "staff", "moderator", "boro_fan_zone_moderator"]);
+  // Boro Fan Zone access is restricted to admins and the dedicated Boro Fan Zone moderator role only.
+  const isFanZoneStaff = hasAny(["admin", "boro_fan_zone_moderator"]);
   const fanZone = useFanZoneMembership(user?.id ?? null);
   const fanZoneApproved = fanZone?.status === "approved";
   const fanZonePending = fanZone?.status === "pending";
-  const fanZoneGated = !isStaffOrMod && !fanZoneApproved && !fanZonePending;
+  const fanZoneGated = !isFanZoneStaff && !fanZoneApproved && !fanZonePending;
   const path = useRouterState({ select: (r) => r.location.pathname });
   const [activeIncidents, setActiveIncidents] = useState(0);
   const [unreadNewContent, setUnreadNewContent] = useState(0);
