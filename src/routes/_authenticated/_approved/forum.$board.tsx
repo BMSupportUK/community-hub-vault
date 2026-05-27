@@ -52,6 +52,8 @@ function BoardPage() {
 
   const [board, setBoard] = useState<Board | null>(null);
   const [topics, setTopics] = useState<Topic[] | null>(null);
+  const [totalTopics, setTotalTopics] = useState(0);
+  const [page, setPage] = useState(1);
   const [profiles, setProfiles] = useState<Record<string, Profile>>({});
   const [moderatorIds, setModeratorIds] = useState<Set<string>>(new Set());
   const [open, setOpen] = useState(false);
@@ -63,6 +65,9 @@ function BoardPage() {
   const [editingTopic, setEditingTopic] = useState<Topic | null>(null);
   const [editTitle, setEditTitle] = useState("");
   const [savingEdit, setSavingEdit] = useState(false);
+
+  const PAGE_SIZE = 20;
+  const totalPages = Math.max(1, Math.ceil(totalTopics / PAGE_SIZE));
 
   useEffect(() => {
     if (!canEnter) return;
@@ -79,14 +84,17 @@ function BoardPage() {
         .select("user_id")
         .eq("board_id", (b as Board).id);
       setModeratorIds(new Set(((mods ?? []) as { user_id: string }[]).map((m) => m.user_id)));
-      const { data: ts } = await supabase
+      const from = (page - 1) * PAGE_SIZE;
+      const to = from + PAGE_SIZE - 1;
+      const { data: ts, count } = await supabase
         .from("forum_topics")
-        .select("id, title, author_id, is_sticky, is_locked, view_count, reply_count, last_post_at, last_post_by, created_at")
+        .select("id, title, author_id, is_sticky, is_locked, view_count, reply_count, last_post_at, last_post_by, created_at", { count: "exact" })
         .eq("board_id", (b as Board).id)
         .order("is_sticky", { ascending: false })
         .order("last_post_at", { ascending: false })
-        .limit(100);
+        .range(from, to);
       const list = (ts ?? []) as Topic[];
+      setTotalTopics(count ?? list.length);
       setTopics(list);
       const ids = Array.from(new Set([
         ...list.map((t) => t.author_id),
@@ -99,17 +107,20 @@ function BoardPage() {
         setProfiles(map);
       }
     })();
-  }, [slug, canEnter]);
+  }, [slug, canEnter, page]);
 
   const reloadTopics = async () => {
     if (!board) return;
-    const { data: ts } = await supabase
+    const from = (page - 1) * PAGE_SIZE;
+    const to = from + PAGE_SIZE - 1;
+    const { data: ts, count } = await supabase
       .from("forum_topics")
-      .select("id, title, author_id, is_sticky, is_locked, view_count, reply_count, last_post_at, last_post_by, created_at")
+      .select("id, title, author_id, is_sticky, is_locked, view_count, reply_count, last_post_at, last_post_by, created_at", { count: "exact" })
       .eq("board_id", board.id)
       .order("is_sticky", { ascending: false })
       .order("last_post_at", { ascending: false })
-      .limit(100);
+      .range(from, to);
+    setTotalTopics(count ?? (ts?.length ?? 0));
     setTopics((ts ?? []) as Topic[]);
   };
 
