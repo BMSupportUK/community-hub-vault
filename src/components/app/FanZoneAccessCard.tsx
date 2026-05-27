@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Trophy, Loader2, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -16,13 +16,13 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
 /**
- * Auto-popping dialog that invites regular users to request Boro Fan Zone access.
+ * Dialog that invites regular users to request Boro Fan Zone access.
  * - Hidden for staff/mod roles entirely.
  * - Hidden for approved or pending members.
- * - Opens once per browser session for users who haven't requested yet
- *   (status: none / rejected / revoked).
+ * - Opens when the global `fan-zone:open-request` window event fires
+ *   (dispatched from the IconRail Boro Fan Zone button).
  */
-const SESSION_KEY = "fan-zone-dialog-shown";
+export const FAN_ZONE_OPEN_EVENT = "fan-zone:open-request";
 
 export function FanZoneAccessCard() {
   const { user, hasAny } = useAuth();
@@ -31,7 +31,6 @@ export function FanZoneAccessCard() {
   const [open, setOpen] = useState(false);
   const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const autoOpenedRef = useRef(false);
 
   const eligible =
     !!user &&
@@ -40,12 +39,10 @@ export function FanZoneAccessCard() {
     (info.status === "none" || info.status === "rejected" || info.status === "revoked");
 
   useEffect(() => {
-    if (!eligible || autoOpenedRef.current) return;
-    if (typeof window === "undefined") return;
-    if (window.sessionStorage.getItem(SESSION_KEY)) return;
-    autoOpenedRef.current = true;
-    window.sessionStorage.setItem(SESSION_KEY, "1");
-    setOpen(true);
+    if (!eligible) return;
+    const handler = () => setOpen(true);
+    window.addEventListener(FAN_ZONE_OPEN_EVENT, handler);
+    return () => window.removeEventListener(FAN_ZONE_OPEN_EVENT, handler);
   }, [eligible]);
 
   if (!eligible) return null;
