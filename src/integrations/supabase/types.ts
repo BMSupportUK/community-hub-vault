@@ -3359,6 +3359,17 @@ export type Database = {
         }[]
       }
       forum_increment_view: { Args: { _topic: string }; Returns: undefined }
+      forum_mention_candidates: {
+        Args: never
+        Returns: {
+          avatar_url: string
+          display_name: string
+          is_staff: boolean
+          staff_role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+          username: string
+        }[]
+      }
       get_active_mute: { Args: { _user_id: string }; Returns: string }
       get_invite_leaderboard: {
         Args: never

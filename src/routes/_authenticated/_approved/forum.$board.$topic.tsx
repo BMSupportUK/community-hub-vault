@@ -11,6 +11,7 @@ import { HtmlEditor } from "@/components/ui/html-editor";
 import { ForumPostBody } from "@/components/app/ForumPostBody";
 import { ForumPostReactions } from "@/components/app/ForumPostReactions";
 import { embedSocialUrls } from "@/lib/forum-embeds";
+import { useMentionCandidates } from "@/hooks/use-mention-candidates";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/_approved/forum/$board/$topic")({
@@ -46,8 +47,10 @@ function TopicPage() {
   const navigate = useNavigate();
   const { user, hasAny } = useAuth();
   const isStaff = hasAny(["admin", "management", "moderator"]);
+  const canUseSpecialMentions = hasAny(["admin", "management", "staff", "moderator"]);
   const info = useFanZoneMembership(user?.id ?? null);
   const canEnter = isStaff || info?.status === "approved";
+  const mentionCandidates = useMentionCandidates(canUseSpecialMentions);
 
   const [board, setBoard] = useState<Board | null>(null);
   const [topic, setTopic] = useState<Topic | null>(null);
@@ -252,7 +255,7 @@ function TopicPage() {
               <div className="px-4 py-3">
                 {editingId === p.id ? (
                   <div className="space-y-2">
-                    <HtmlEditor value={editText} onChange={setEditText} />
+                    <HtmlEditor value={editText} onChange={setEditText} mentions={mentionCandidates} />
                     <div className="flex gap-2 justify-end">
                       <Button size="sm" variant="outline" onClick={() => setEditingId(null)}><X className="size-3.5 mr-1" />Cancel</Button>
                       <Button size="sm" onClick={() => void saveEdit()}><Check className="size-3.5 mr-1" />Save</Button>
@@ -278,6 +281,7 @@ function TopicPage() {
             value={reply}
             onChange={setReply}
             placeholder="Write a reply… paste an X or Facebook URL on its own line to embed it."
+            mentions={mentionCandidates}
           />
           <div className="flex justify-end">
             <Button
