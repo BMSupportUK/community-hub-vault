@@ -832,6 +832,9 @@ export type Database = {
       }
       forum_boards: {
         Row: {
+          affiliate_banner_alt: string | null
+          affiliate_banner_link: string | null
+          affiliate_banner_url: string | null
           created_at: string
           description: string
           icon: string
@@ -849,6 +852,9 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          affiliate_banner_alt?: string | null
+          affiliate_banner_link?: string | null
+          affiliate_banner_url?: string | null
           created_at?: string
           description?: string
           icon?: string
@@ -866,6 +872,9 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          affiliate_banner_alt?: string | null
+          affiliate_banner_link?: string | null
+          affiliate_banner_url?: string | null
           created_at?: string
           description?: string
           icon?: string

@@ -30,6 +30,9 @@ type Board = {
   post_count: number;
   last_post_at: string | null;
   last_post_by: string | null;
+  affiliate_banner_url: string | null;
+  affiliate_banner_link: string | null;
+  affiliate_banner_alt: string | null;
 };
 
 function ForumLayout() {
@@ -113,7 +116,7 @@ function BoardsIndex() {
     void (async () => {
       const { data } = await supabase
         .from("forum_boards")
-        .select("id, name, slug, description, icon, sort_order, is_pinned, is_locked, topic_count, post_count, last_post_at, last_post_by")
+        .select("id, name, slug, description, icon, sort_order, is_pinned, is_locked, topic_count, post_count, last_post_at, last_post_by, affiliate_banner_url, affiliate_banner_link, affiliate_banner_alt")
         .order("is_pinned", { ascending: false })
         .order("sort_order");
       const list = (data ?? []) as Board[];
@@ -183,17 +186,20 @@ function BoardsIndex() {
         const poster = b.last_post_by ? posters[b.last_post_by] : null;
         const posterName = poster?.display_name || poster?.username || (b.last_post_by ? "someone" : null);
         return (
-          <Link
+          <div
             key={b.id}
-            to="/forum/$board"
-            params={{ board: b.slug }}
-            className="group block rounded-xl border border-border bg-surface-1/85 backdrop-blur-sm hover:border-[#E11B22]/70 hover:shadow-[0_8px_30px_-12px_rgba(225,27,34,0.55)] hover:-translate-y-[1px] transition-all overflow-hidden relative"
+            className="grid gap-3 sm:grid-cols-[1fr_auto] items-stretch"
           >
-            <span
-              className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-[#E11B22] to-[#8B0F14]"
-              aria-hidden
-            />
-            <div className="grid grid-cols-[auto_1fr_auto] gap-4 p-4 pl-5 items-center">
+            <Link
+              to="/forum/$board"
+              params={{ board: b.slug }}
+              className="group block rounded-xl border border-border bg-surface-1/85 backdrop-blur-sm hover:border-[#E11B22]/70 hover:shadow-[0_8px_30px_-12px_rgba(225,27,34,0.55)] hover:-translate-y-[1px] transition-all overflow-hidden relative"
+            >
+              <span
+                className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-[#E11B22] to-[#8B0F14]"
+                aria-hidden
+              />
+              <div className="grid grid-cols-[auto_1fr_auto] gap-4 p-4 pl-5 items-center">
               <div className="size-11 rounded-lg bg-gradient-to-br from-[#E11B22] to-[#8B0F14] grid place-items-center text-white shadow-md ring-1 ring-white/10">
                 <Icon className="size-5" />
               </div>
@@ -220,8 +226,24 @@ function BoardsIndex() {
                   <div className="mt-1 italic">No posts yet</div>
                 )}
               </div>
-            </div>
-          </Link>
+              </div>
+            </Link>
+            {b.affiliate_banner_url ? (
+              <a
+                href={b.affiliate_banner_link || b.affiliate_banner_url}
+                target="_blank"
+                rel="noopener noreferrer sponsored"
+                className="hidden sm:flex shrink-0 w-[200px] rounded-xl border border-border bg-surface-1/85 backdrop-blur-sm overflow-hidden items-center justify-center hover:border-[#E11B22]/70 hover:shadow-[0_8px_30px_-12px_rgba(225,27,34,0.55)] transition-all"
+              >
+                <img
+                  src={b.affiliate_banner_url}
+                  alt={b.affiliate_banner_alt || `${b.name} sponsor`}
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                />
+              </a>
+            ) : null}
+          </div>
         );
         })}
         <div className="pt-2 text-center">

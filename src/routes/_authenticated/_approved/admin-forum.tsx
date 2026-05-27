@@ -23,6 +23,9 @@ type Board = {
   is_locked: boolean;
   topic_count: number;
   post_count: number;
+  affiliate_banner_url: string | null;
+  affiliate_banner_link: string | null;
+  affiliate_banner_alt: string | null;
 };
 type Mod = { board_id: string; user_id: string };
 type Profile = { id: string; display_name: string | null; username: string | null };
@@ -50,7 +53,7 @@ function AdminForumPage() {
   const load = async () => {
     const { data: bs } = await supabase
       .from("forum_boards")
-      .select("id, name, slug, description, icon, sort_order, is_pinned, is_locked, topic_count, post_count")
+      .select("id, name, slug, description, icon, sort_order, is_pinned, is_locked, topic_count, post_count, affiliate_banner_url, affiliate_banner_link, affiliate_banner_alt")
       .order("is_pinned", { ascending: false })
       .order("sort_order");
     setBoards((bs ?? []) as Board[]);
@@ -80,6 +83,9 @@ function AdminForumPage() {
     const { error } = await supabase.from("forum_boards").update({
       name: draft.name, description: draft.description, icon: draft.icon,
       sort_order: draft.sort_order, is_pinned: draft.is_pinned, is_locked: draft.is_locked,
+      affiliate_banner_url: draft.affiliate_banner_url || null,
+      affiliate_banner_link: draft.affiliate_banner_link || null,
+      affiliate_banner_alt: draft.affiliate_banner_alt || null,
     }).eq("id", editing.id);
     if (error) { toast.error("Save failed", { description: error.message }); return; }
     setEditing(null); void load();
@@ -172,6 +178,24 @@ function AdminForumPage() {
                     <div className="flex gap-3 text-sm">
                       <label className="flex items-center gap-1"><input type="checkbox" checked={!!draft.is_pinned} onChange={(e) => setDraft({ ...draft, is_pinned: e.target.checked })} />Pinned</label>
                       <label className="flex items-center gap-1"><input type="checkbox" checked={!!draft.is_locked} onChange={(e) => setDraft({ ...draft, is_locked: e.target.checked })} />Locked</label>
+                    </div>
+                    <div className="space-y-2 rounded-lg border border-border/60 bg-background/60 p-3">
+                      <div className="text-[11px] uppercase tracking-wide text-muted-foreground">Affiliate banner (right side)</div>
+                      <Input
+                        value={draft.affiliate_banner_url ?? ""}
+                        onChange={(e) => setDraft({ ...draft, affiliate_banner_url: e.target.value })}
+                        placeholder="Banner image URL (https://...)"
+                      />
+                      <Input
+                        value={draft.affiliate_banner_link ?? ""}
+                        onChange={(e) => setDraft({ ...draft, affiliate_banner_link: e.target.value })}
+                        placeholder="Click-through link URL (optional)"
+                      />
+                      <Input
+                        value={draft.affiliate_banner_alt ?? ""}
+                        onChange={(e) => setDraft({ ...draft, affiliate_banner_alt: e.target.value })}
+                        placeholder="Alt text (optional)"
+                      />
                     </div>
                     <div className="flex justify-end gap-2">
                       <Button size="sm" variant="outline" onClick={() => setEditing(null)}><X className="size-3.5 mr-1" />Cancel</Button>
