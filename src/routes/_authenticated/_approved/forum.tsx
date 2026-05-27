@@ -166,7 +166,7 @@ function BoardsIndex() {
             key={b.id}
             to="/forum/$board"
             params={{ board: b.slug }}
-            className="group block rounded-xl border border-border bg-surface-1 hover:border-[#E11B22]/70 hover:shadow-[0_8px_30px_-12px_rgba(225,27,34,0.55)] hover:-translate-y-[1px] transition-all overflow-hidden relative"
+            className="group block rounded-xl border border-border bg-surface-1/85 backdrop-blur-sm hover:border-[#E11B22]/70 hover:shadow-[0_8px_30px_-12px_rgba(225,27,34,0.55)] hover:-translate-y-[1px] transition-all overflow-hidden relative"
           >
             <span
               className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-[#E11B22] to-[#8B0F14]"
