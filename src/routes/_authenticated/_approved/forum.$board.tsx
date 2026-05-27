@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { Pin, Lock, Loader2, Plus, ArrowLeft, Eye, MessageSquare, CheckCircle2 } from "lucide-react";
+import { Pin, Lock, Loader2, Plus, ArrowLeft, Eye, MessageSquare, CheckCircle2, Pencil, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useFanZoneMembership } from "@/hooks/use-fan-zone";
@@ -45,12 +45,16 @@ function BoardPage() {
   const [board, setBoard] = useState<Board | null>(null);
   const [topics, setTopics] = useState<Topic[] | null>(null);
   const [profiles, setProfiles] = useState<Record<string, Profile>>({});
+  const [moderatorIds, setModeratorIds] = useState<Set<string>>(new Set());
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const submittingRef = useRef(false);
   const [createdTopicId, setCreatedTopicId] = useState<string | null>(null);
+  const [editingTopic, setEditingTopic] = useState<Topic | null>(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [savingEdit, setSavingEdit] = useState(false);
 
   useEffect(() => {
     if (!canEnter) return;
@@ -62,6 +66,11 @@ function BoardPage() {
         .maybeSingle();
       if (!b) { setBoard(null); setTopics([]); return; }
       setBoard(b as Board);
+      const { data: mods } = await supabase
+        .from("forum_board_moderators")
+        .select("user_id")
+        .eq("board_id", (b as Board).id);
+      setModeratorIds(new Set(((mods ?? []) as { user_id: string }[]).map((m) => m.user_id)));
       const { data: ts } = await supabase
         .from("forum_topics")
         .select("id, title, author_id, is_sticky, is_locked, view_count, reply_count, last_post_at, last_post_by, created_at")
@@ -83,6 +92,43 @@ function BoardPage() {
       }
     })();
   }, [slug, canEnter]);
+
+  const reloadTopics = async () => {
+    if (!board) return;
+    const { data: ts } = await supabase
+      .from("forum_topics")
+      .select("id, title, author_id, is_sticky, is_locked, view_count, reply_count, last_post_at, last_post_by, created_at")
+      .eq("board_id", board.id)
+      .order("is_sticky", { ascending: false })
+      .order("last_post_at", { ascending: false })
+      .limit(100);
+    setTopics((ts ?? []) as Topic[]);
+  };
+
+  const saveTopicEdit = async () => {
+    if (!editingTopic) return;
+    const newTitle = editTitle.trim().slice(0, 200);
+    if (newTitle.length < 3) { toast.error("Title too short"); return; }
+    setSavingEdit(true);
+    const { error } = await supabase
+      .from("forum_topics")
+      .update({ title: newTitle })
+      .eq("id", editingTopic.id);
+    setSavingEdit(false);
+    if (error) { toast.error("Couldn't update", { description: error.message }); return; }
+    setEditingTopic(null);
+    setEditTitle("");
+    await reloadTopics();
+    toast.success("Topic renamed");
+  };
+
+  const deleteTopic = async (t: Topic) => {
+    if (!confirm(`Delete topic "${t.title}" and all replies?`)) return;
+    const { error } = await supabase.from("forum_topics").delete().eq("id", t.id);
+    if (error) { toast.error("Couldn't delete", { description: error.message }); return; }
+    await reloadTopics();
+    toast.success("Topic deleted");
+  };
 
   const submit = async () => {
     if (!user || !board) return;
@@ -129,6 +175,7 @@ function BoardPage() {
   }
 
   const canPost = !board.is_locked && (isStaff || info?.status === "approved");
+  const isBoardMod = isStaff || (user ? moderatorIds.has(user.id) : false);
 
   return (
     <div className="space-y-4">
@@ -163,14 +210,20 @@ function BoardPage() {
           const last = t.last_post_by ? profiles[t.last_post_by] : null;
           const authorName = author?.display_name || author?.username || "Someone";
           const lastName = last?.display_name || last?.username || authorName;
+          const canEdit = !!user && (t.author_id === user.id || isBoardMod);
+          const canDelete = !!user && (t.author_id === user.id || isBoardMod);
           return (
-            <Link
+            <div
               key={t.id}
-              to="/forum/$board/$topic"
-              params={{ board: slug, topic: t.id }}
-              className="grid md:grid-cols-[1fr_80px_80px_180px] gap-3 px-4 py-3 items-center border-b last:border-b-0 hover:bg-[#E11B22]/5 hover:border-l-2 hover:border-l-[#E11B22] transition-all"
+              className="group relative grid md:grid-cols-[1fr_80px_80px_180px] gap-3 px-4 py-3 items-center border-b last:border-b-0 hover:bg-[#E11B22]/5 hover:border-l-2 hover:border-l-[#E11B22] transition-all"
             >
-              <div className="min-w-0">
+              <Link
+                to="/forum/$board/$topic"
+                params={{ board: slug, topic: t.id }}
+                className="absolute inset-0 z-0"
+                aria-label={t.title}
+              />
+              <div className="min-w-0 relative z-10 pointer-events-none">
                 <div className="flex items-center gap-2">
                   {t.is_sticky && (
                     <span className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 bg-[#F4B400]/15 text-[#F4B400] text-[9px] font-bold uppercase tracking-wider shrink-0">
@@ -184,13 +237,39 @@ function BoardPage() {
                   by <span className="text-foreground">{authorName}</span> · {formatLastSeen(t.created_at)}
                 </div>
               </div>
-              <div className="md:text-right text-xs"><MessageSquare className="size-3 inline md:hidden mr-1" />{t.reply_count}</div>
-              <div className="md:text-right text-xs"><Eye className="size-3 inline md:hidden mr-1" />{t.view_count}</div>
-              <div className="md:text-right text-[11px] text-muted-foreground">
+              <div className="md:text-right text-xs relative z-10 pointer-events-none"><MessageSquare className="size-3 inline md:hidden mr-1" />{t.reply_count}</div>
+              <div className="md:text-right text-xs relative z-10 pointer-events-none"><Eye className="size-3 inline md:hidden mr-1" />{t.view_count}</div>
+              <div className="md:text-right text-[11px] text-muted-foreground relative z-10 pointer-events-none">
                 {formatLastSeen(t.last_post_at)}
                 <div className="truncate">by <span className="text-foreground">{lastName}</span></div>
               </div>
-            </Link>
+              {(canEdit || canDelete) && (
+                <div className="absolute right-2 top-2 z-20 flex gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
+                  {canEdit && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 px-2"
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); setEditingTopic(t); setEditTitle(t.title); }}
+                      title="Rename topic"
+                    >
+                      <Pencil className="size-3.5" />
+                    </Button>
+                  )}
+                  {canDelete && (
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      className="h-7 px-2"
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); void deleteTopic(t); }}
+                      title="Delete topic"
+                    >
+                      <Trash2 className="size-3.5" />
+                    </Button>
+                  )}
+                </div>
+              )}
+            </div>
           );
         })}
       </div>
@@ -211,6 +290,24 @@ function BoardPage() {
             <Button variant="outline" onClick={() => setOpen(false)} disabled={submitting}>Cancel</Button>
             <Button onClick={submit} disabled={submitting}>
               {submitting ? <><Loader2 className="size-4 mr-1 animate-spin" />Posting…</> : "Post topic"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!editingTopic} onOpenChange={(o) => { if (!o) { setEditingTopic(null); setEditTitle(""); } }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader><DialogTitle>Rename topic</DialogTitle></DialogHeader>
+          <Input
+            value={editTitle}
+            onChange={(e) => setEditTitle(e.target.value.slice(0, 200))}
+            maxLength={200}
+            placeholder="Topic title"
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setEditingTopic(null); setEditTitle(""); }} disabled={savingEdit}>Cancel</Button>
+            <Button onClick={() => void saveTopicEdit()} disabled={savingEdit}>
+              {savingEdit ? <><Loader2 className="size-4 mr-1 animate-spin" />Saving…</> : "Save"}
             </Button>
           </DialogFooter>
         </DialogContent>
