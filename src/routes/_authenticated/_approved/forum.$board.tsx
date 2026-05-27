@@ -217,7 +217,7 @@ function BoardPage() {
       </div>
 
       {topics.length === 0 ? (
-        <div className="rounded-xl border border-[#E11B22]/20 px-4 py-10 text-center text-sm text-muted-foreground">
+        <div className="rounded-2xl border border-[#E11B22]/20 bg-surface-1 px-4 py-10 text-center text-sm text-muted-foreground shadow-soft">
           No topics yet. {canPost ? "Be first — start one!" : ""}
         </div>
       ) : (
