@@ -8,6 +8,7 @@ import { formatLastSeen } from "@/lib/relative-time";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { HtmlEditor } from "@/components/ui/html-editor";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ForumPostBody } from "@/components/app/ForumPostBody";
 import { ForumPostReactions } from "@/components/app/ForumPostReactions";
 import { embedSocialUrls } from "@/lib/forum-embeds";
@@ -65,6 +66,9 @@ function TopicPage() {
   const [editText, setEditText] = useState("");
   const [historyFor, setHistoryFor] = useState<Post | null>(null);
   const [history, setHistory] = useState<EditEntry[]>([]);
+  const [tab, setTab] = useState<"posts" | "reply">("posts");
+  const [page, setPage] = useState(1);
+  const REPLIES_PER_PAGE = 20;
 
   const isBoardMod = isStaff || (user ? moderatorIds.has(user.id) : false);
   const canPost = canEnter && !!topic && !topic.is_locked;
@@ -125,6 +129,7 @@ function TopicPage() {
     if (error) { toast.error("Couldn't post", { description: error.message }); return; }
     setReply("");
     setReplySuccessOpen(true);
+    setTab("posts");
     void load();
   };
 
@@ -140,6 +145,7 @@ function TopicPage() {
 
   const replyToPost = (p: Post) => {
     quotePost(p);
+    setTab("reply");
     setTimeout(() => {
       document.getElementById("forum-reply-box")?.scrollIntoView({ behavior: "smooth", block: "center" });
     }, 50);
