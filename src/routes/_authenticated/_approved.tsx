@@ -24,7 +24,8 @@ function ApprovedLayout() {
   const ownsSidebar =
     path.startsWith("/home") ||
     path.startsWith("/shop") ||
-    path.startsWith("/moderation");
+    path.startsWith("/moderation") ||
+    path.startsWith("/forum");
   return (
     <>
       <TwoFactorBanner />
