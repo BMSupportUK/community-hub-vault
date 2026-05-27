@@ -98,6 +98,39 @@ export type Database = {
         }
         Relationships: []
       }
+      affiliate_banners: {
+        Row: {
+          alt_text: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          image_url: string
+          link_url: string | null
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          alt_text?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          image_url: string
+          link_url?: string | null
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          alt_text?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          image_url?: string
+          link_url?: string | null
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       app_settings: {
         Row: {
           key: string
@@ -833,6 +866,7 @@ export type Database = {
       forum_boards: {
         Row: {
           affiliate_banner_alt: string | null
+          affiliate_banner_id: string | null
           affiliate_banner_link: string | null
           affiliate_banner_url: string | null
           created_at: string
@@ -853,6 +887,7 @@ export type Database = {
         }
         Insert: {
           affiliate_banner_alt?: string | null
+          affiliate_banner_id?: string | null
           affiliate_banner_link?: string | null
           affiliate_banner_url?: string | null
           created_at?: string
@@ -873,6 +908,7 @@ export type Database = {
         }
         Update: {
           affiliate_banner_alt?: string | null
+          affiliate_banner_id?: string | null
           affiliate_banner_link?: string | null
           affiliate_banner_url?: string | null
           created_at?: string
@@ -891,7 +927,15 @@ export type Database = {
           topic_count?: number
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "forum_boards_affiliate_banner_id_fkey"
+            columns: ["affiliate_banner_id"]
+            isOneToOne: false
+            referencedRelation: "affiliate_banners"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       forum_post_edits: {
         Row: {
