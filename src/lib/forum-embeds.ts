@@ -23,6 +23,12 @@ export function embedSocialUrls(html: string): string {
   const root = doc.getElementById("__root");
   if (!root) return html;
 
+  const makeReplacementNodes = (markup: string) => {
+    const tpl = doc.createElement("template");
+    tpl.innerHTML = markup;
+    return Array.from(tpl.content.childNodes);
+  };
+
   const tryEmbedUrl = (raw: string): string | null => {
     const url = raw.trim();
     const t = url.match(TWEET_RE);
@@ -41,26 +47,32 @@ export function embedSocialUrls(html: string): string {
     const parent = a.parentElement;
     // If the link sits alone in a paragraph, replace the whole paragraph.
     if (parent && parent.tagName === "P" && (parent.textContent ?? "").trim() === text) {
-      const tpl = doc.createElement("template");
-      tpl.innerHTML = replacement;
-      parent.replaceWith(...Array.from(tpl.content.childNodes));
+      parent.replaceWith(...makeReplacementNodes(replacement));
     } else {
-      const tpl = doc.createElement("template");
-      tpl.innerHTML = replacement;
-      a.replaceWith(...Array.from(tpl.content.childNodes));
+      a.replaceWith(...makeReplacementNodes(replacement));
     }
   });
 
-  // Replace bare-URL paragraphs (no <a>).
-  root.querySelectorAll("p").forEach((p) => {
-    if (p.querySelector("a, img, iframe, video, blockquote, div")) return;
-    const text = (p.textContent ?? "").trim();
+  // Replace standalone bare URLs, including pasted rich-text wrappers like
+  // <span style="...">https://x.com/...?... </span> from mobile/browser shares.
+  root.querySelectorAll("p, span, div").forEach((el) => {
+    if (el.id === "__root") return;
+    if (el.querySelector("a, img, iframe, video, blockquote, .twitter-tweet, .fb-post")) return;
+    const text = (el.textContent ?? "").trim();
     const replacement = tryEmbedUrl(text);
     if (!replacement) return;
-    const tpl = doc.createElement("template");
-    tpl.innerHTML = replacement;
-    p.replaceWith(...Array.from(tpl.content.childNodes));
+    let target: Element = el;
+    while (target.parentElement && target.parentElement !== root && (target.parentElement.textContent ?? "").trim() === text) {
+      target = target.parentElement;
+    }
+    target.replaceWith(...makeReplacementNodes(replacement));
   });
+
+  const rootText = root.textContent?.trim() ?? "";
+  if (root.children.length === 0 && rootText) {
+    const replacement = tryEmbedUrl(rootText);
+    if (replacement) root.replaceChildren(...makeReplacementNodes(replacement));
+  }
 
   return root.innerHTML;
 }
