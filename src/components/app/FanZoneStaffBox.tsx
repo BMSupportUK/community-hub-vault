@@ -17,40 +17,19 @@ export function FanZoneStaffBox() {
 
   useEffect(() => {
     void (async () => {
-      const { data: roles } = await supabase
-        .from("user_roles")
-        .select("user_id, role")
-        .in("role", ["admin", "boro_fan_zone_moderator"]);
-      const list = (roles ?? []) as { user_id: string; role: StaffMember["role"] }[];
-      const ids = Array.from(new Set(list.map((r) => r.user_id)));
-      if (!ids.length) {
-        setMembers([]);
-        return;
-      }
-      const { data: profiles } = await supabase
-        .from("profiles")
-        .select("id, display_name, username, avatar_url")
-        .in("id", ids);
-      const pmap: Record<string, { display_name: string | null; username: string | null; avatar_url: string | null }> = {};
-      (profiles ?? []).forEach((p) => {
-        pmap[p.id as string] = {
-          display_name: p.display_name as string | null,
-          username: p.username as string | null,
-          avatar_url: p.avatar_url as string | null,
-        };
-      });
-      const { data: aliases } = await supabase.rpc("fan_zone_aliases", { _ids: ids });
-      (aliases ?? []).forEach((a: { user_id: string; fan_alias: string | null; fan_avatar_url: string | null }) => {
-        if (!pmap[a.user_id]) return;
-        if (a.fan_alias) pmap[a.user_id].display_name = a.fan_alias;
-        if (a.fan_avatar_url) pmap[a.user_id].avatar_url = a.fan_avatar_url;
-      });
-      const out: StaffMember[] = list.map((r) => ({
+      const { data } = await supabase.rpc("fan_zone_staff_directory");
+      const out: StaffMember[] = ((data ?? []) as Array<{
+        user_id: string;
+        role: StaffMember["role"];
+        display_name: string | null;
+        username: string | null;
+        avatar_url: string | null;
+      }>).map((r) => ({
         user_id: r.user_id,
         role: r.role,
-        display_name: pmap[r.user_id]?.display_name ?? null,
-        username: pmap[r.user_id]?.username ?? null,
-        avatar_url: pmap[r.user_id]?.avatar_url ?? null,
+        display_name: r.display_name,
+        username: r.username,
+        avatar_url: r.avatar_url,
       }));
       // Admins first, then moderators; alphabetical within each
       out.sort((a, b) => {
