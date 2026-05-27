@@ -219,6 +219,7 @@ function TopicPage() {
   if (!topic || !posts) return <div className="grid place-items-center py-20 text-muted-foreground"><Loader2 className="size-5 animate-spin" /></div>;
   const renderSponsorAdvert = () => (
     <RotatingAffiliateBanner
+      boardId={board?.id ?? null}
       fallback={{
         image_url: board?.affiliate_banner_url ?? null,
         link_url: board?.affiliate_banner_link ?? null,

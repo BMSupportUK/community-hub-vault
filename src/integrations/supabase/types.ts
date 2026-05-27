@@ -799,6 +799,39 @@ export type Database = {
         }
         Relationships: []
       }
+      forum_board_affiliate_banners: {
+        Row: {
+          banner_id: string
+          board_id: string
+          created_at: string
+        }
+        Insert: {
+          banner_id: string
+          board_id: string
+          created_at?: string
+        }
+        Update: {
+          banner_id?: string
+          board_id?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "forum_board_affiliate_banners_banner_id_fkey"
+            columns: ["banner_id"]
+            isOneToOne: false
+            referencedRelation: "affiliate_banners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "forum_board_affiliate_banners_board_id_fkey"
+            columns: ["board_id"]
+            isOneToOne: false
+            referencedRelation: "forum_boards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       forum_board_moderators: {
         Row: {
           board_id: string
