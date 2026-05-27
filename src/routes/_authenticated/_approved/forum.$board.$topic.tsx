@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ArrowLeft, Loader2, Pin, Lock, Quote, Pencil, Trash2, Send, History, Check, X } from "lucide-react";
+import { ArrowLeft, Loader2, Pin, Lock, Quote, Reply as ReplyIcon, Pencil, Trash2, Send, History, Check, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useFanZoneMembership } from "@/hooks/use-fan-zone";
@@ -128,6 +128,13 @@ function TopicPage() {
     setReply((cur) => (cur || "") + block);
   };
 
+  const replyToPost = (p: Post) => {
+    quotePost(p);
+    setTimeout(() => {
+      document.getElementById("forum-reply-box")?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 50);
+  };
+
   const startEdit = (p: Post) => { setEditingId(p.id); setEditText(p.body); };
   const saveEdit = async () => {
     if (!editingId) return;
@@ -236,6 +243,7 @@ function TopicPage() {
                   )}
                 </div>
                 <div className="flex items-center gap-1">
+                  {canPost && <Button size="sm" variant="ghost" onClick={() => replyToPost(p)} title="Reply with quote"><ReplyIcon className="size-3.5" /></Button>}
                   {canPost && <Button size="sm" variant="ghost" onClick={() => quotePost(p)} title="Quote"><Quote className="size-3.5" /></Button>}
                   {canEdit && editingId !== p.id && <Button size="sm" variant="ghost" onClick={() => startEdit(p)} title="Edit"><Pencil className="size-3.5" /></Button>}
                   {canDelete && <Button size="sm" variant="ghost" onClick={() => void deletePost(p)} title="Delete"><Trash2 className="size-3.5" /></Button>}
@@ -265,7 +273,7 @@ function TopicPage() {
       </div>
 
       {canPost ? (
-        <div className="rounded-xl border border-[#E11B22]/30 bg-surface-1 p-3 space-y-2">
+        <div id="forum-reply-box" className="rounded-xl border border-[#E11B22]/30 bg-surface-1 p-3 space-y-2">
           <HtmlEditor
             value={reply}
             onChange={setReply}
