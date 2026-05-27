@@ -8,6 +8,7 @@ import { formatLastSeen } from "@/lib/relative-time";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { HtmlEditor } from "@/components/ui/html-editor";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ForumPostBody } from "@/components/app/ForumPostBody";
 import { ForumPostReactions } from "@/components/app/ForumPostReactions";
 import { embedSocialUrls } from "@/lib/forum-embeds";
@@ -65,6 +66,9 @@ function TopicPage() {
   const [editText, setEditText] = useState("");
   const [historyFor, setHistoryFor] = useState<Post | null>(null);
   const [history, setHistory] = useState<EditEntry[]>([]);
+  const [tab, setTab] = useState<"posts" | "reply">("posts");
+  const [page, setPage] = useState(1);
+  const REPLIES_PER_PAGE = 20;
 
   const isBoardMod = isStaff || (user ? moderatorIds.has(user.id) : false);
   const canPost = canEnter && !!topic && !topic.is_locked;
@@ -125,6 +129,7 @@ function TopicPage() {
     if (error) { toast.error("Couldn't post", { description: error.message }); return; }
     setReply("");
     setReplySuccessOpen(true);
+    setTab("posts");
     void load();
   };
 
@@ -140,6 +145,7 @@ function TopicPage() {
 
   const replyToPost = (p: Post) => {
     quotePost(p);
+    setTab("reply");
     setTimeout(() => {
       document.getElementById("forum-reply-box")?.scrollIntoView({ behavior: "smooth", block: "center" });
     }, 50);
@@ -215,96 +221,134 @@ function TopicPage() {
         </div>
       </div>
 
-      <div className="space-y-3">
-        {posts.map((p, i) => {
-          const author = profiles[p.author_id];
-          const name = author?.display_name || author?.username || "Someone";
-          const canEdit = user && (p.author_id === user.id || isBoardMod);
-          const canDelete = user && ((p.author_id === user.id && !p.is_op) || isBoardMod);
-          return (
-            <article
-              key={p.id}
-              className={`rounded-xl border bg-surface-1 overflow-hidden ${
-                p.is_op
-                  ? "border-[#E11B22]/40 shadow-[0_4px_20px_-12px_rgba(225,27,34,0.5)]"
-                  : "border-border"
-              }`}
-            >
-              <header
-                className={`grid grid-cols-[auto_1fr_auto] gap-3 px-4 py-2 items-center border-b text-xs ${
-                  p.is_op ? "bg-gradient-to-r from-[#E11B22]/10 to-transparent" : ""
-                }`}
-              >
-                <div className="size-7 rounded-full bg-gradient-to-br from-[#E11B22] to-[#8B0F14] grid place-items-center text-[10px] font-bold text-white overflow-hidden ring-1 ring-white/10">
-                  {author?.avatar_url ? <img src={author.avatar_url} alt="" className="size-7 object-cover" /> : name.slice(0, 1).toUpperCase()}
-                </div>
-                <div className="min-w-0">
-                  <span className="font-semibold">{name}</span>
-                  {p.is_op && (
-                    <span className="ml-1.5 inline-block rounded bg-[#E11B22] text-white text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 align-middle">
-                      OP
-                    </span>
-                  )}
-                  <span className="text-muted-foreground"> · #{i + 1} · {formatLastSeen(p.created_at)}</span>
-                  {p.edited_at && (
-                    <button onClick={() => void openHistory(p)} className="ml-2 inline-flex items-center gap-1 text-[10px] text-[#F4B400] hover:underline">
-                      <History className="size-3" />edited {formatLastSeen(p.edited_at)}
-                    </button>
-                  )}
-                </div>
-                <div className="flex items-center gap-1">
-                  {canPost && <Button size="sm" variant="ghost" onClick={() => replyToPost(p)} title="Reply with quote"><ReplyIcon className="size-3.5" /></Button>}
-                  {canPost && <Button size="sm" variant="ghost" onClick={() => quotePost(p)} title="Quote"><Quote className="size-3.5" /></Button>}
-                  {canEdit && editingId !== p.id && <Button size="sm" variant="ghost" onClick={() => startEdit(p)} title="Edit"><Pencil className="size-3.5" /></Button>}
-                  {canDelete && <Button size="sm" variant="ghost" onClick={() => void deletePost(p)} title="Delete"><Trash2 className="size-3.5" /></Button>}
-                </div>
-              </header>
-              <div className="px-4 py-3">
-                {editingId === p.id ? (
-                  <div className="space-y-2">
-                    <HtmlEditor value={editText} onChange={setEditText} mentions={mentionCandidates} />
-                    <div className="flex gap-2 justify-end">
-                      <Button size="sm" variant="outline" onClick={() => setEditingId(null)}><X className="size-3.5 mr-1" />Cancel</Button>
-                      <Button size="sm" onClick={() => void saveEdit()}><Check className="size-3.5 mr-1" />Save</Button>
-                    </div>
-                  </div>
-                ) : (
-                  <ForumPostBody html={p.body} />
-                )}
-              </div>
-              <ForumPostReactions
-                postId={p.id}
-                userId={user?.id ?? null}
-                canReact={canEnter}
-              />
-            </article>
-          );
-        })}
-      </div>
+      {(() => {
+        const opPost = posts.find((p) => p.is_op) ?? null;
+        const replies = posts.filter((p) => !p.is_op);
+        const totalPages = Math.max(1, Math.ceil(replies.length / REPLIES_PER_PAGE));
+        const safePage = Math.min(page, totalPages);
+        const start = (safePage - 1) * REPLIES_PER_PAGE;
+        const pageReplies = replies.slice(start, start + REPLIES_PER_PAGE);
+        const orderedForRender: { post: Post; index: number }[] = [];
+        if (opPost) orderedForRender.push({ post: opPost, index: 0 });
+        pageReplies.forEach((p) => {
+          const idx = posts.findIndex((x) => x.id === p.id);
+          orderedForRender.push({ post: p, index: idx });
+        });
 
-      {canPost ? (
-        <div id="forum-reply-box" className="rounded-xl border border-[#E11B22]/30 bg-surface-1 p-3 space-y-2">
-          <HtmlEditor
-            value={reply}
-            onChange={setReply}
-            placeholder="Write a reply… paste an X or Facebook URL on its own line to embed it."
-            mentions={mentionCandidates}
-          />
-          <div className="flex justify-end">
-            <Button
-              onClick={() => void submitReply()}
-              disabled={submitting || !reply.trim()}
-              className="bg-gradient-to-r from-[#E11B22] to-[#8B0F14] hover:from-[#F02B30] hover:to-[#9B1118] border-0 text-white shadow-[0_4px_20px_-6px_rgba(225,27,34,0.6)]"
-            >
-              {submitting ? <><Loader2 className="size-4 mr-1 animate-spin" />Posting…</> : <><Send className="size-4 mr-1" />Reply</>}
-            </Button>
-          </div>
-        </div>
-      ) : topic.is_locked ? (
-        <div className="rounded-xl border border-muted-foreground/20 bg-muted/20 p-4 text-sm text-center text-muted-foreground">
-          <Lock className="size-4 inline mr-1" /> This topic is locked.
-        </div>
-      ) : null}
+        return (
+          <Tabs value={tab} onValueChange={(v) => setTab(v as "posts" | "reply")} className="w-full">
+            <TabsList>
+              <TabsTrigger value="posts">Posts ({replies.length + (opPost ? 1 : 0)})</TabsTrigger>
+              <TabsTrigger value="reply" disabled={!canPost}>Reply</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="posts" className="space-y-3 mt-3">
+              {orderedForRender.map(({ post: p, index: i }) => {
+                const author = profiles[p.author_id];
+                const name = author?.display_name || author?.username || "Someone";
+                const canEdit = user && (p.author_id === user.id || isBoardMod);
+                const canDelete = user && ((p.author_id === user.id && !p.is_op) || isBoardMod);
+                return (
+                  <article
+                    key={p.id}
+                    className={`rounded-xl border bg-surface-1 overflow-hidden ${
+                      p.is_op
+                        ? "border-[#E11B22]/40 shadow-[0_4px_20px_-12px_rgba(225,27,34,0.5)]"
+                        : "border-border"
+                    }`}
+                  >
+                    <header
+                      className={`grid grid-cols-[auto_1fr_auto] gap-3 px-4 py-2 items-center border-b text-xs ${
+                        p.is_op ? "bg-gradient-to-r from-[#E11B22]/10 to-transparent" : ""
+                      }`}
+                    >
+                      <div className="size-7 rounded-full bg-gradient-to-br from-[#E11B22] to-[#8B0F14] grid place-items-center text-[10px] font-bold text-white overflow-hidden ring-1 ring-white/10">
+                        {author?.avatar_url ? <img src={author.avatar_url} alt="" className="size-7 object-cover" /> : name.slice(0, 1).toUpperCase()}
+                      </div>
+                      <div className="min-w-0">
+                        <span className="font-semibold">{name}</span>
+                        {p.is_op && (
+                          <span className="ml-1.5 inline-block rounded bg-[#E11B22] text-white text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 align-middle">
+                            OP
+                          </span>
+                        )}
+                        <span className="text-muted-foreground"> · #{i + 1} · {formatLastSeen(p.created_at)}</span>
+                        {p.edited_at && (
+                          <button onClick={() => void openHistory(p)} className="ml-2 inline-flex items-center gap-1 text-[10px] text-[#F4B400] hover:underline">
+                            <History className="size-3" />edited {formatLastSeen(p.edited_at)}
+                          </button>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        {canPost && <Button size="sm" variant="ghost" onClick={() => replyToPost(p)} title="Reply with quote"><ReplyIcon className="size-3.5" /></Button>}
+                        {canPost && <Button size="sm" variant="ghost" onClick={() => quotePost(p)} title="Quote"><Quote className="size-3.5" /></Button>}
+                        {canEdit && editingId !== p.id && <Button size="sm" variant="ghost" onClick={() => startEdit(p)} title="Edit"><Pencil className="size-3.5" /></Button>}
+                        {canDelete && <Button size="sm" variant="ghost" onClick={() => void deletePost(p)} title="Delete"><Trash2 className="size-3.5" /></Button>}
+                      </div>
+                    </header>
+                    <div className="px-4 py-3">
+                      {editingId === p.id ? (
+                        <div className="space-y-2">
+                          <HtmlEditor value={editText} onChange={setEditText} mentions={mentionCandidates} />
+                          <div className="flex gap-2 justify-end">
+                            <Button size="sm" variant="outline" onClick={() => setEditingId(null)}><X className="size-3.5 mr-1" />Cancel</Button>
+                            <Button size="sm" onClick={() => void saveEdit()}><Check className="size-3.5 mr-1" />Save</Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <ForumPostBody html={p.body} />
+                      )}
+                    </div>
+                    <ForumPostReactions
+                      postId={p.id}
+                      userId={user?.id ?? null}
+                      canReact={canEnter}
+                    />
+                  </article>
+                );
+              })}
+
+              {totalPages > 1 && (
+                <div className="flex items-center justify-center gap-2 pt-2">
+                  <Button size="sm" variant="outline" disabled={safePage <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>
+                    Previous
+                  </Button>
+                  <span className="text-xs text-muted-foreground">Page {safePage} of {totalPages}</span>
+                  <Button size="sm" variant="outline" disabled={safePage >= totalPages} onClick={() => setPage((p) => Math.min(totalPages, p + 1))}>
+                    Next
+                  </Button>
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="reply" className="mt-3">
+              {canPost ? (
+                <div id="forum-reply-box" className="rounded-xl border border-[#E11B22]/30 bg-surface-1 p-3 space-y-2">
+                  <HtmlEditor
+                    value={reply}
+                    onChange={setReply}
+                    placeholder="Write a reply… paste an X or Facebook URL on its own line to embed it."
+                    mentions={mentionCandidates}
+                  />
+                  <div className="flex justify-end">
+                    <Button
+                      onClick={() => void submitReply()}
+                      disabled={submitting || !reply.trim()}
+                      className="bg-gradient-to-r from-[#E11B22] to-[#8B0F14] hover:from-[#F02B30] hover:to-[#9B1118] border-0 text-white shadow-[0_4px_20px_-6px_rgba(225,27,34,0.6)]"
+                    >
+                      {submitting ? <><Loader2 className="size-4 mr-1 animate-spin" />Posting…</> : <><Send className="size-4 mr-1" />Reply</>}
+                    </Button>
+                  </div>
+                </div>
+              ) : topic.is_locked ? (
+                <div className="rounded-xl border border-muted-foreground/20 bg-muted/20 p-4 text-sm text-center text-muted-foreground">
+                  <Lock className="size-4 inline mr-1" /> This topic is locked.
+                </div>
+              ) : null}
+            </TabsContent>
+          </Tabs>
+        );
+      })()}
 
       <Dialog open={!!historyFor} onOpenChange={(o) => !o && setHistoryFor(null)}>
         <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
