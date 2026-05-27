@@ -60,6 +60,7 @@ function TopicPage() {
   const [reply, setReply] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const submittingRef = useRef(false);
+  const [replySuccessOpen, setReplySuccessOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editText, setEditText] = useState("");
   const [historyFor, setHistoryFor] = useState<Post | null>(null);
@@ -123,7 +124,8 @@ function TopicPage() {
     setSubmitting(false);
     if (error) { toast.error("Couldn't post", { description: error.message }); return; }
     setReply("");
-    toast.success("Reply posted");
+    setReplySuccessOpen(true);
+    void load();
   };
 
   const quotePost = (p: Post) => {
@@ -319,6 +321,20 @@ function TopicPage() {
               ))}
             </ol>
           )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={replySuccessOpen} onOpenChange={setReplySuccessOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Check className="size-5 text-emerald-500" /> Reply posted
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">Your reply has been added to the topic.</p>
+          <div className="flex justify-end">
+            <Button onClick={() => setReplySuccessOpen(false)}>OK</Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
