@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useMatches, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { Pin, Lock, Loader2, Plus, ArrowLeft, Eye, MessageSquare, CheckCircle2, Pencil, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,8 +14,16 @@ import { useMentionCandidates } from "@/hooks/use-mention-candidates";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/_approved/forum/$board")({
-  component: BoardPage,
+  component: BoardRoute,
 });
+
+function BoardRoute() {
+  const matches = useMatches();
+  const isNested = matches.some((m) =>
+    m.routeId.startsWith("/_authenticated/_approved/forum/$board/"),
+  );
+  return isNested ? <Outlet /> : <BoardPage />;
+}
 
 type Board = { id: string; name: string; slug: string; description: string; is_locked: boolean };
 type Topic = {
