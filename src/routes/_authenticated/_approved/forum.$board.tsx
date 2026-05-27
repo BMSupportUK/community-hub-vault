@@ -284,9 +284,16 @@ function BoardPage() {
             return (
               <article
                 key={t.id}
-                className="rounded-2xl border border-border/80 bg-surface-1 hover:border-[#E11B22]/40 hover:shadow-[0_8px_30px_-12px_rgba(225,27,34,0.4)] transition-all overflow-hidden shadow-soft"
+                className="group relative rounded-xl border border-border/80 bg-gradient-to-br from-surface-1 via-surface-1 to-surface-2/60 hover:border-[#E11B22]/60 hover:shadow-[0_10px_36px_-14px_rgba(225,27,34,0.55)] hover:-translate-y-[1px] transition-all overflow-hidden shadow-soft"
               >
-                <div className="flex items-start gap-3 p-4">
+                <span
+                  aria-hidden
+                  className={`absolute left-0 top-0 bottom-0 w-[3px] ${t.is_sticky ? "bg-gradient-to-b from-[#F4B400] to-[#B8860B]" : "bg-gradient-to-b from-[#E11B22] to-[#8B0F14]"} opacity-70 group-hover:opacity-100 transition-opacity`}
+                />
+                <div className="flex items-start gap-3 p-4 pl-5">
+                  <div className="hidden sm:flex shrink-0 size-10 rounded-lg bg-gradient-to-br from-[#E11B22]/15 to-[#8B0F14]/10 border border-[#E11B22]/25 items-center justify-center text-[#E11B22] shadow-inner">
+                    <MessageSquare className="size-4" />
+                  </div>
                   <Link
                     to="/forum/$board/$topic"
                     params={{ board: slug, topic: t.id }}
@@ -294,20 +301,41 @@ function BoardPage() {
                   >
                     <div className="flex items-center gap-2 flex-wrap">
                       {t.is_sticky && (
-                        <span className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 bg-[#F4B400]/15 text-[#F4B400] text-[10px] font-bold uppercase tracking-wider shrink-0 shadow-sm">
+                        <span className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 bg-[#F4B400]/15 text-[#F4B400] border border-[#F4B400]/30 text-[10px] font-bold uppercase tracking-wider shrink-0">
                           <Pin className="size-2.5" />Pinned
                         </span>
                       )}
-                      {t.is_locked && <Lock className="size-3.5 text-muted-foreground shrink-0" />}
-                      <span className="font-semibold leading-snug text-foreground">{t.title}</span>
+                      {t.is_locked && (
+                        <span className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 bg-muted/40 text-muted-foreground border border-border text-[10px] font-bold uppercase tracking-wider shrink-0">
+                          <Lock className="size-2.5" />Locked
+                        </span>
+                      )}
+                      <span className="font-display font-semibold leading-snug text-foreground text-[15px] group-hover:text-[#E11B22] transition-colors">
+                        {t.title}
+                      </span>
                     </div>
-                    <div className="text-[11px] text-muted-foreground mt-1.5">
-                      by <span className="text-foreground font-medium">{authorName}</span> · {formatLastSeen(t.created_at)}
+                    <div className="text-[11px] text-muted-foreground mt-1.5 flex items-center gap-1.5">
+                      <span className="inline-flex items-center justify-center size-4 rounded-full bg-[#E11B22]/20 text-[#E11B22] text-[9px] font-bold uppercase">
+                        {authorName.charAt(0)}
+                      </span>
+                      by <span className="text-foreground font-medium">{authorName}</span>
+                      <span className="text-border">•</span>
+                      <span>{formatLastSeen(t.created_at)}</span>
                     </div>
-                    <div className="mt-2.5 flex items-center gap-3 text-[11px] text-muted-foreground">
-                      <span className="inline-flex items-center gap-1"><MessageSquare className="size-3" />{t.reply_count}</span>
-                      <span className="inline-flex items-center gap-1"><Eye className="size-3" />{t.view_count}</span>
-                      <span className="truncate">last by <span className="text-foreground font-medium">{lastName}</span> · {formatLastSeen(t.last_post_at)}</span>
+                    <div className="mt-3 flex items-center gap-2 text-[11px] text-muted-foreground flex-wrap">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-surface-2/80 border border-border/60 font-medium tabular-nums">
+                        <MessageSquare className="size-3 text-[#E11B22]" />
+                        {t.reply_count}
+                      </span>
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-surface-2/80 border border-border/60 font-medium tabular-nums">
+                        <Eye className="size-3 text-muted-foreground" />
+                        {t.view_count}
+                      </span>
+                      <span className="truncate ml-0.5">
+                        last by <span className="text-foreground font-medium">{lastName}</span>
+                        <span className="text-border mx-1">•</span>
+                        {formatLastSeen(t.last_post_at)}
+                      </span>
                     </div>
                   </Link>
                   {(canEdit || canDelete) && (
