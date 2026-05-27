@@ -183,7 +183,7 @@ function TopicPage() {
         </Button>
         <div className="flex items-start justify-between gap-3 flex-wrap">
           <h2 className="font-display text-xl font-bold flex items-center gap-2 min-w-0">
-            {topic.is_sticky && <Pin className="size-4 text-amber-400" />}
+            {topic.is_sticky && <Pin className="size-4 text-[#F4B400]" />}
             {topic.is_locked && <Lock className="size-4 text-muted-foreground" />}
             <span className="truncate">{topic.title}</span>
           </h2>
@@ -204,16 +204,32 @@ function TopicPage() {
           const canEdit = user && (p.author_id === user.id || isBoardMod);
           const canDelete = user && ((p.author_id === user.id && !p.is_op) || isBoardMod);
           return (
-            <article key={p.id} className="rounded-xl border border-border bg-surface-1 overflow-hidden">
-              <header className="grid grid-cols-[auto_1fr_auto] gap-3 px-4 py-2 items-center border-b text-xs">
-                <div className="size-7 rounded-full bg-gradient-to-br from-rose-600 to-amber-500 grid place-items-center text-[10px] font-bold text-white overflow-hidden">
+            <article
+              key={p.id}
+              className={`rounded-xl border bg-surface-1 overflow-hidden ${
+                p.is_op
+                  ? "border-[#E11B22]/40 shadow-[0_4px_20px_-12px_rgba(225,27,34,0.5)]"
+                  : "border-border"
+              }`}
+            >
+              <header
+                className={`grid grid-cols-[auto_1fr_auto] gap-3 px-4 py-2 items-center border-b text-xs ${
+                  p.is_op ? "bg-gradient-to-r from-[#E11B22]/10 to-transparent" : ""
+                }`}
+              >
+                <div className="size-7 rounded-full bg-gradient-to-br from-[#E11B22] to-[#8B0F14] grid place-items-center text-[10px] font-bold text-white overflow-hidden ring-1 ring-white/10">
                   {author?.avatar_url ? <img src={author.avatar_url} alt="" className="size-7 object-cover" /> : name.slice(0, 1).toUpperCase()}
                 </div>
                 <div className="min-w-0">
                   <span className="font-semibold">{name}</span>
+                  {p.is_op && (
+                    <span className="ml-1.5 inline-block rounded bg-[#E11B22] text-white text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 align-middle">
+                      OP
+                    </span>
+                  )}
                   <span className="text-muted-foreground"> · #{i + 1} · {formatLastSeen(p.created_at)}</span>
                   {p.edited_at && (
-                    <button onClick={() => void openHistory(p)} className="ml-2 inline-flex items-center gap-1 text-[10px] text-amber-400 hover:underline">
+                    <button onClick={() => void openHistory(p)} className="ml-2 inline-flex items-center gap-1 text-[10px] text-[#F4B400] hover:underline">
                       <History className="size-3" />edited {formatLastSeen(p.edited_at)}
                     </button>
                   )}
@@ -243,14 +259,18 @@ function TopicPage() {
       </div>
 
       {canPost ? (
-        <div className="rounded-xl border border-border bg-surface-1 p-3 space-y-2">
+        <div className="rounded-xl border border-[#E11B22]/30 bg-surface-1 p-3 space-y-2">
           <HtmlEditor
             value={reply}
             onChange={setReply}
             placeholder="Write a reply… paste an X or Facebook URL on its own line to embed it."
           />
           <div className="flex justify-end">
-            <Button onClick={() => void submitReply()} disabled={submitting || !reply.trim()}>
+            <Button
+              onClick={() => void submitReply()}
+              disabled={submitting || !reply.trim()}
+              className="bg-gradient-to-r from-[#E11B22] to-[#8B0F14] hover:from-[#F02B30] hover:to-[#9B1118] border-0 text-white shadow-[0_4px_20px_-6px_rgba(225,27,34,0.6)]"
+            >
               {submitting ? <><Loader2 className="size-4 mr-1 animate-spin" />Posting…</> : <><Send className="size-4 mr-1" />Reply</>}
             </Button>
           </div>
