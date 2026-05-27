@@ -69,7 +69,7 @@ export function embedSocialUrls(html: string): string {
   });
 
   const rootText = root.textContent?.trim() ?? "";
-  if (rootText === root.innerHTML.trim()) {
+  if (root.children.length === 0 && rootText) {
     const replacement = tryEmbedUrl(rootText);
     if (replacement) root.replaceChildren(...makeReplacementNodes(replacement));
   }
