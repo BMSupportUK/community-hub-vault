@@ -30,6 +30,9 @@ type Board = {
   post_count: number;
   last_post_at: string | null;
   last_post_by: string | null;
+  affiliate_banner_url: string | null;
+  affiliate_banner_link: string | null;
+  affiliate_banner_alt: string | null;
 };
 
 function ForumLayout() {
@@ -113,7 +116,7 @@ function BoardsIndex() {
     void (async () => {
       const { data } = await supabase
         .from("forum_boards")
-        .select("id, name, slug, description, icon, sort_order, is_pinned, is_locked, topic_count, post_count, last_post_at, last_post_by")
+        .select("id, name, slug, description, icon, sort_order, is_pinned, is_locked, topic_count, post_count, last_post_at, last_post_by, affiliate_banner_url, affiliate_banner_link, affiliate_banner_alt")
         .order("is_pinned", { ascending: false })
         .order("sort_order");
       const list = (data ?? []) as Board[];
