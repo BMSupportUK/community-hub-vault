@@ -229,6 +229,7 @@ function BoardPage() {
   const isBoardMod = isStaff || (user ? moderatorIds.has(user.id) : false);
   const renderSponsorAdvert = () => (
     <RotatingAffiliateBanner
+      boardId={board.id}
       fallback={{
         image_url: board.affiliate_banner_url,
         link_url: board.affiliate_banner_link,
