@@ -14,7 +14,7 @@ import { ForumPostReactions } from "@/components/app/ForumPostReactions";
 import { embedSocialUrls } from "@/lib/forum-embeds";
 import { useMentionCandidates } from "@/hooks/use-mention-candidates";
 import { toast } from "sonner";
-import advertiseLeaderboard from "@/assets/advertise-leaderboard.png";
+import { RotatingAffiliateBanner } from "@/components/app/RotatingAffiliateBanner";
 
 export const Route = createFileRoute("/_authenticated/_approved/forum/$board/$topic")({
   component: TopicPage,
@@ -218,22 +218,13 @@ function TopicPage() {
   }
   if (!topic || !posts) return <div className="grid place-items-center py-20 text-muted-foreground"><Loader2 className="size-5 animate-spin" /></div>;
   const renderSponsorAdvert = () => (
-    <a
-      href={board?.affiliate_banner_link || board?.affiliate_banner_url || "mailto:bmsupport2022@protonmail.com"}
-      target="_blank"
-      rel="noopener noreferrer sponsored"
-      className="block w-full max-w-[256px] mx-auto rounded-xl border border-border bg-surface-1/85 overflow-hidden hover:border-[#E11B22]/70 hover:shadow-[0_8px_30px_-12px_rgba(225,27,34,0.55)] transition-all"
-      aria-label={board?.affiliate_banner_alt || "Advertise here"}
-    >
-      <img
-        src={board?.affiliate_banner_url || advertiseLeaderboard}
-        alt={board?.affiliate_banner_alt || `${board?.name ?? "Forum"} sponsor`}
-        width={512}
-        height={1536}
-        className="w-full aspect-[1/3] object-cover object-center block"
-        loading="lazy"
-      />
-    </a>
+    <RotatingAffiliateBanner
+      fallback={{
+        image_url: board?.affiliate_banner_url ?? null,
+        link_url: board?.affiliate_banner_link ?? null,
+        alt_text: board?.affiliate_banner_alt || `${board?.name ?? "Forum"} sponsor`,
+      }}
+    />
   );
 
   return (
