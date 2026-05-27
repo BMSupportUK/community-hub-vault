@@ -323,6 +323,20 @@ function TopicPage() {
           )}
         </DialogContent>
       </Dialog>
+
+      <Dialog open={replySuccessOpen} onOpenChange={setReplySuccessOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Check className="size-5 text-emerald-500" /> Reply posted
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">Your reply has been added to the topic.</p>
+          <div className="flex justify-end">
+            <Button onClick={() => setReplySuccessOpen(false)}>OK</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
