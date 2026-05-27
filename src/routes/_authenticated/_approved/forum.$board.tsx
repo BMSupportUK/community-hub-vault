@@ -197,82 +197,80 @@ function BoardPage() {
         )}
       </div>
 
-      <div className="rounded-xl border border-[#E11B22]/20 overflow-hidden">
-        <div className="hidden md:grid grid-cols-[1fr_80px_80px_180px] gap-3 px-4 py-2 text-[11px] uppercase tracking-wide text-muted-foreground border-b bg-surface-1">
-          <div>Topic</div><div className="text-right">Replies</div><div className="text-right">Views</div><div className="text-right">Last post</div>
+      {topics.length === 0 ? (
+        <div className="rounded-xl border border-[#E11B22]/20 px-4 py-10 text-center text-sm text-muted-foreground">
+          No topics yet. {canPost ? "Be first — start one!" : ""}
         </div>
-        {topics.length === 0 ? (
-          <div className="px-4 py-10 text-center text-sm text-muted-foreground">
-            No topics yet. {canPost ? "Be first — start one!" : ""}
-          </div>
-        ) : topics.map((t) => {
-          const author = profiles[t.author_id];
-          const last = t.last_post_by ? profiles[t.last_post_by] : null;
-          const authorName = author?.display_name || author?.username || "Someone";
-          const lastName = last?.display_name || last?.username || authorName;
-          const canEdit = !!user && (t.author_id === user.id || isBoardMod);
-          const canDelete = !!user && (t.author_id === user.id || isBoardMod);
-          return (
-            <div
-              key={t.id}
-              className="group relative grid md:grid-cols-[1fr_80px_80px_180px] gap-3 px-4 py-3 items-center border-b last:border-b-0 hover:bg-[#E11B22]/5 hover:border-l-2 hover:border-l-[#E11B22] transition-all"
-            >
-              <Link
-                to="/forum/$board/$topic"
-                params={{ board: slug, topic: t.id }}
-                className="absolute inset-0 z-0"
-                aria-label={t.title}
-              />
-              <div className="min-w-0 relative z-10 pointer-events-none">
-                <div className="flex items-center gap-2">
-                  {t.is_sticky && (
-                    <span className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 bg-[#F4B400]/15 text-[#F4B400] text-[9px] font-bold uppercase tracking-wider shrink-0">
-                      <Pin className="size-2.5" />Pinned
-                    </span>
-                  )}
-                  {t.is_locked && <Lock className="size-3.5 text-muted-foreground shrink-0" />}
-                  <span className="font-medium truncate">{t.title}</span>
-                </div>
-                <div className="text-[11px] text-muted-foreground mt-0.5">
-                  by <span className="text-foreground">{authorName}</span> · {formatLastSeen(t.created_at)}
-                </div>
-              </div>
-              <div className="md:text-right text-xs relative z-10 pointer-events-none"><MessageSquare className="size-3 inline md:hidden mr-1" />{t.reply_count}</div>
-              <div className="md:text-right text-xs relative z-10 pointer-events-none"><Eye className="size-3 inline md:hidden mr-1" />{t.view_count}</div>
-              <div className="md:text-right text-[11px] text-muted-foreground relative z-10 pointer-events-none">
-                {formatLastSeen(t.last_post_at)}
-                <div className="truncate">by <span className="text-foreground">{lastName}</span></div>
-              </div>
-              {(canEdit || canDelete) && (
-                <div className="absolute right-2 top-2 z-20 flex gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
-                  {canEdit && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="h-7 px-2"
-                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); setEditingTopic(t); setEditTitle(t.title); }}
-                      title="Rename topic"
-                    >
-                      <Pencil className="size-3.5" />
-                    </Button>
-                  )}
-                  {canDelete && (
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      className="h-7 px-2"
-                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); void deleteTopic(t); }}
-                      title="Delete topic"
-                    >
-                      <Trash2 className="size-3.5" />
-                    </Button>
+      ) : (
+        <div className="space-y-2.5">
+          {topics.map((t) => {
+            const author = profiles[t.author_id];
+            const last = t.last_post_by ? profiles[t.last_post_by] : null;
+            const authorName = author?.display_name || author?.username || "Someone";
+            const lastName = last?.display_name || last?.username || authorName;
+            const canEdit = !!user && (t.author_id === user.id || isBoardMod);
+            const canDelete = !!user && (t.author_id === user.id || isBoardMod);
+            return (
+              <article
+                key={t.id}
+                className="rounded-xl border border-border bg-surface-1 hover:border-[#E11B22]/50 hover:shadow-[0_4px_20px_-12px_rgba(225,27,34,0.4)] transition-all overflow-hidden"
+              >
+                <div className="flex items-start gap-3 p-3">
+                  <Link
+                    to="/forum/$board/$topic"
+                    params={{ board: slug, topic: t.id }}
+                    className="flex-1 min-w-0 block focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E11B22] rounded"
+                  >
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {t.is_sticky && (
+                        <span className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 bg-[#F4B400]/15 text-[#F4B400] text-[9px] font-bold uppercase tracking-wider shrink-0">
+                          <Pin className="size-2.5" />Pinned
+                        </span>
+                      )}
+                      {t.is_locked && <Lock className="size-3.5 text-muted-foreground shrink-0" />}
+                      <span className="font-semibold leading-snug">{t.title}</span>
+                    </div>
+                    <div className="text-[11px] text-muted-foreground mt-1">
+                      by <span className="text-foreground">{authorName}</span> · {formatLastSeen(t.created_at)}
+                    </div>
+                    <div className="mt-2 flex items-center gap-3 text-[11px] text-muted-foreground">
+                      <span className="inline-flex items-center gap-1"><MessageSquare className="size-3" />{t.reply_count}</span>
+                      <span className="inline-flex items-center gap-1"><Eye className="size-3" />{t.view_count}</span>
+                      <span className="truncate">last by <span className="text-foreground">{lastName}</span> · {formatLastSeen(t.last_post_at)}</span>
+                    </div>
+                  </Link>
+                  {(canEdit || canDelete) && (
+                    <div className="flex gap-1 shrink-0">
+                      {canEdit && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 px-2"
+                          onClick={() => { setEditingTopic(t); setEditTitle(t.title); }}
+                          title="Rename topic"
+                        >
+                          <Pencil className="size-3.5" />
+                        </Button>
+                      )}
+                      {canDelete && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-7 px-2 text-destructive hover:text-destructive"
+                          onClick={() => void deleteTopic(t)}
+                          title="Delete topic"
+                        >
+                          <Trash2 className="size-3.5" />
+                        </Button>
+                      )}
+                    </div>
                   )}
                 </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
+              </article>
+            );
+          })}
+        </div>
+      )}
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-lg">
