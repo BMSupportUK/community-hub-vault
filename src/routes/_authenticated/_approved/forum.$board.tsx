@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { HtmlEditor } from "@/components/ui/html-editor";
 import { embedSocialUrls } from "@/lib/forum-embeds";
+import { useMentionCandidates } from "@/hooks/use-mention-candidates";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/_approved/forum/$board")({
@@ -36,8 +37,10 @@ function BoardPage() {
   const navigate = useNavigate();
   const { user, hasAny } = useAuth();
   const isStaff = hasAny(["admin", "management", "moderator"]);
+  const canUseSpecialMentions = hasAny(["admin", "management", "staff", "moderator"]);
   const info = useFanZoneMembership(user?.id ?? null);
   const canEnter = isStaff || info?.status === "approved";
+  const mentionCandidates = useMentionCandidates(canUseSpecialMentions);
 
   const [board, setBoard] = useState<Board | null>(null);
   const [topics, setTopics] = useState<Topic[] | null>(null);
@@ -195,6 +198,7 @@ function BoardPage() {
               value={body}
               onChange={setBody}
               placeholder="What's on your mind? Paste an X or Facebook URL on its own line to embed it."
+              mentions={mentionCandidates}
             />
           </div>
           <DialogFooter>
