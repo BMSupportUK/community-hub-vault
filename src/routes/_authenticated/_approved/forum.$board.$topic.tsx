@@ -236,44 +236,44 @@ function TopicPage() {
                 return (
                   <article
                     key={p.id}
-                    className={`rounded-xl border bg-surface-1 overflow-hidden ${
+                    className={`rounded-2xl border bg-surface-1 overflow-hidden shadow-soft transition-shadow hover:shadow-[0_8px_30px_-12px_rgba(225,27,34,0.45)] ${
                       p.is_op
-                        ? "border-[#E11B22]/40 shadow-[0_4px_20px_-12px_rgba(225,27,34,0.5)]"
-                        : "border-border"
+                        ? "border-[#E11B22]/50 ring-1 ring-[#E11B22]/20"
+                        : "border-border/80 hover:border-[#E11B22]/30"
                     }`}
                   >
                     <header
-                      className={`grid grid-cols-[auto_1fr_auto] gap-3 px-4 py-2 items-center border-b text-xs ${
-                        p.is_op ? "bg-gradient-to-r from-[#E11B22]/10 to-transparent" : ""
+                      className={`grid grid-cols-[auto_1fr_auto] gap-3 px-5 py-3 items-center border-b border-border/60 ${
+                        p.is_op ? "bg-gradient-to-r from-[#E11B22]/10 via-[#E11B22]/5 to-transparent" : "bg-surface-2/40"
                       }`}
                     >
-                      <div className="size-7 rounded-full bg-gradient-to-br from-[#E11B22] to-[#8B0F14] grid place-items-center text-[10px] font-bold text-white overflow-hidden ring-1 ring-white/10">
-                        {author?.avatar_url ? <img src={author.avatar_url} alt="" className="size-7 object-cover" /> : name.slice(0, 1).toUpperCase()}
+                      <div className="size-8 rounded-full bg-gradient-to-br from-[#E11B22] to-[#8B0F14] grid place-items-center text-[11px] font-bold text-white overflow-hidden ring-2 ring-white/10 shadow-sm">
+                        {author?.avatar_url ? <img src={author.avatar_url} alt="" className="size-8 object-cover" /> : name.slice(0, 1).toUpperCase()}
                       </div>
                       <div className="min-w-0">
-                        <span className="font-semibold">{name}</span>
+                        <span className="font-semibold text-sm text-foreground">{name}</span>
                         {p.is_op && (
-                          <span className="ml-1.5 inline-block rounded bg-[#E11B22] text-white text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 align-middle">
+                          <span className="ml-2 inline-block rounded-md bg-[#E11B22] text-white text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 align-middle shadow-sm">
                             OP
                           </span>
                         )}
-                        <span className="text-muted-foreground"> · #{i + 1} · {formatLastSeen(p.created_at)}</span>
+                        <span className="text-muted-foreground text-[11px] ml-1.5"> · #{i + 1} · {formatLastSeen(p.created_at)}</span>
                         {p.edited_at && (
                           <button onClick={() => void openHistory(p)} className="ml-2 inline-flex items-center gap-1 text-[10px] text-[#F4B400] hover:underline">
                             <History className="size-3" />edited {formatLastSeen(p.edited_at)}
                           </button>
                         )}
                       </div>
-                      <div className="flex items-center gap-1">
-                        {canPost && <Button size="sm" variant="ghost" onClick={() => replyToPost(p)} title="Reply with quote"><ReplyIcon className="size-3.5" /></Button>}
-                        {canPost && <Button size="sm" variant="ghost" onClick={() => quotePost(p)} title="Quote"><Quote className="size-3.5" /></Button>}
-                        {canEdit && editingId !== p.id && <Button size="sm" variant="ghost" onClick={() => startEdit(p)} title="Edit"><Pencil className="size-3.5" /></Button>}
-                        {canDelete && <Button size="sm" variant="ghost" onClick={() => void deletePost(p)} title="Delete"><Trash2 className="size-3.5" /></Button>}
+                      <div className="flex items-center gap-0.5">
+                        {canPost && <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => replyToPost(p)} title="Reply with quote"><ReplyIcon className="size-3.5" /></Button>}
+                        {canPost && <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => quotePost(p)} title="Quote"><Quote className="size-3.5" /></Button>}
+                        {canEdit && editingId !== p.id && <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => startEdit(p)} title="Edit"><Pencil className="size-3.5" /></Button>}
+                        {canDelete && <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-destructive/80 hover:text-destructive" onClick={() => void deletePost(p)} title="Delete"><Trash2 className="size-3.5" /></Button>}
                       </div>
                     </header>
-                    <div className="px-4 py-3">
+                    <div className="px-5 py-4">
                       {editingId === p.id ? (
-                        <div className="space-y-2">
+                        <div className="space-y-3">
                           <HtmlEditor value={editText} onChange={setEditText} mentions={mentionCandidates} />
                           <div className="flex gap-2 justify-end">
                             <Button size="sm" variant="outline" onClick={() => setEditingId(null)}><X className="size-3.5 mr-1" />Cancel</Button>
@@ -326,25 +326,29 @@ function TopicPage() {
               )}
 
               {canPost ? (
-                <div id="forum-reply-box" className="rounded-xl border border-[#E11B22]/30 bg-surface-1 p-3 space-y-2">
+                <div id="forum-reply-box" className="rounded-2xl border border-[#E11B22]/40 bg-surface-1 shadow-glow p-5 space-y-3 mt-4">
+                  <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                    <ReplyIcon className="size-4 text-[#E11B22]" />
+                    <span>Write a reply</span>
+                  </div>
                   <HtmlEditor
                     value={reply}
                     onChange={setReply}
-                    placeholder="Write a reply… paste an X or Facebook URL on its own line to embed it."
+                    placeholder="What's on your mind? Paste an X or Facebook URL on its own line to embed it."
                     mentions={mentionCandidates}
                   />
-                  <div className="flex justify-end">
+                  <div className="flex justify-end pt-1">
                     <Button
                       onClick={() => void submitReply()}
                       disabled={submitting || !reply.trim()}
-                      className="bg-gradient-to-r from-[#E11B22] to-[#8B0F14] hover:from-[#F02B30] hover:to-[#9B1118] border-0 text-white shadow-[0_4px_20px_-6px_rgba(225,27,34,0.6)]"
+                      className="bg-gradient-to-r from-[#E11B22] to-[#8B0F14] hover:from-[#F02B30] hover:to-[#9B1118] border-0 text-white shadow-[0_4px_20px_-6px_rgba(225,27,34,0.6)] font-semibold"
                     >
-                      {submitting ? <><Loader2 className="size-4 mr-1 animate-spin" />Posting…</> : <><Send className="size-4 mr-1" />Reply</>}
+                      {submitting ? <><Loader2 className="size-4 mr-1.5 animate-spin" />Posting…</> : <><Send className="size-4 mr-1.5" />Post reply</>}
                     </Button>
                   </div>
                 </div>
               ) : topic.is_locked ? (
-                <div className="rounded-xl border border-muted-foreground/20 bg-muted/20 p-4 text-sm text-center text-muted-foreground">
+                <div className="rounded-2xl border border-muted-foreground/20 bg-muted/20 p-4 text-sm text-center text-muted-foreground">
                   <Lock className="size-4 inline mr-1" /> This topic is locked.
                 </div>
               ) : null}

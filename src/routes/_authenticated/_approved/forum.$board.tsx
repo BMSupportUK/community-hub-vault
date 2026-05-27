@@ -217,7 +217,7 @@ function BoardPage() {
       </div>
 
       {topics.length === 0 ? (
-        <div className="rounded-xl border border-[#E11B22]/20 px-4 py-10 text-center text-sm text-muted-foreground">
+        <div className="rounded-2xl border border-[#E11B22]/20 bg-surface-1 px-4 py-10 text-center text-sm text-muted-foreground shadow-soft">
           No topics yet. {canPost ? "Be first — start one!" : ""}
         </div>
       ) : (
@@ -232,30 +232,30 @@ function BoardPage() {
             return (
               <article
                 key={t.id}
-                className="rounded-xl border border-border bg-surface-1 hover:border-[#E11B22]/50 hover:shadow-[0_4px_20px_-12px_rgba(225,27,34,0.4)] transition-all overflow-hidden"
+                className="rounded-2xl border border-border/80 bg-surface-1 hover:border-[#E11B22]/40 hover:shadow-[0_8px_30px_-12px_rgba(225,27,34,0.4)] transition-all overflow-hidden shadow-soft"
               >
-                <div className="flex items-start gap-3 p-3">
+                <div className="flex items-start gap-3 p-4">
                   <Link
                     to="/forum/$board/$topic"
                     params={{ board: slug, topic: t.id }}
-                    className="flex-1 min-w-0 block focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E11B22] rounded"
+                    className="flex-1 min-w-0 block focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E11B22] rounded-lg"
                   >
                     <div className="flex items-center gap-2 flex-wrap">
                       {t.is_sticky && (
-                        <span className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 bg-[#F4B400]/15 text-[#F4B400] text-[9px] font-bold uppercase tracking-wider shrink-0">
+                        <span className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 bg-[#F4B400]/15 text-[#F4B400] text-[10px] font-bold uppercase tracking-wider shrink-0 shadow-sm">
                           <Pin className="size-2.5" />Pinned
                         </span>
                       )}
                       {t.is_locked && <Lock className="size-3.5 text-muted-foreground shrink-0" />}
-                      <span className="font-semibold leading-snug">{t.title}</span>
+                      <span className="font-semibold leading-snug text-foreground">{t.title}</span>
                     </div>
-                    <div className="text-[11px] text-muted-foreground mt-1">
-                      by <span className="text-foreground">{authorName}</span> · {formatLastSeen(t.created_at)}
+                    <div className="text-[11px] text-muted-foreground mt-1.5">
+                      by <span className="text-foreground font-medium">{authorName}</span> · {formatLastSeen(t.created_at)}
                     </div>
-                    <div className="mt-2 flex items-center gap-3 text-[11px] text-muted-foreground">
+                    <div className="mt-2.5 flex items-center gap-3 text-[11px] text-muted-foreground">
                       <span className="inline-flex items-center gap-1"><MessageSquare className="size-3" />{t.reply_count}</span>
                       <span className="inline-flex items-center gap-1"><Eye className="size-3" />{t.view_count}</span>
-                      <span className="truncate">last by <span className="text-foreground">{lastName}</span> · {formatLastSeen(t.last_post_at)}</span>
+                      <span className="truncate">last by <span className="text-foreground font-medium">{lastName}</span> · {formatLastSeen(t.last_post_at)}</span>
                     </div>
                   </Link>
                   {(canEdit || canDelete) && (
@@ -264,7 +264,7 @@ function BoardPage() {
                         <Button
                           size="sm"
                           variant="ghost"
-                          className="h-7 px-2"
+                          className="h-7 w-7 p-0"
                           onClick={() => { setEditingTopic(t); setEditTitle(t.title); }}
                           title="Rename topic"
                         >
@@ -275,7 +275,7 @@ function BoardPage() {
                         <Button
                           size="sm"
                           variant="ghost"
-                          className="h-7 px-2 text-destructive hover:text-destructive"
+                          className="h-7 w-7 p-0 text-destructive/80 hover:text-destructive"
                           onClick={() => void deleteTopic(t)}
                           title="Delete topic"
                         >
