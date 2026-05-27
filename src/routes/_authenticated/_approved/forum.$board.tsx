@@ -12,6 +12,7 @@ import { HtmlEditor } from "@/components/ui/html-editor";
 import { embedSocialUrls } from "@/lib/forum-embeds";
 import { useMentionCandidates } from "@/hooks/use-mention-candidates";
 import { toast } from "sonner";
+import advertiseLeaderboard from "@/assets/advertise-leaderboard.png";
 
 export const Route = createFileRoute("/_authenticated/_approved/forum/$board")({
   component: BoardRoute,
@@ -25,7 +26,16 @@ function BoardRoute() {
   return isNested ? <Outlet /> : <BoardPage />;
 }
 
-type Board = { id: string; name: string; slug: string; description: string; is_locked: boolean };
+type Board = {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  is_locked: boolean;
+  affiliate_banner_url: string | null;
+  affiliate_banner_link: string | null;
+  affiliate_banner_alt: string | null;
+};
 type Topic = {
   id: string;
   title: string;
@@ -74,7 +84,7 @@ function BoardPage() {
     void (async () => {
       const { data: b } = await supabase
         .from("forum_boards")
-        .select("id, name, slug, description, is_locked")
+        .select("id, name, slug, description, is_locked, affiliate_banner_url, affiliate_banner_link, affiliate_banner_alt")
         .eq("slug", slug)
         .maybeSingle();
       if (!b) { setBoard(null); setTopics([]); return; }
@@ -237,6 +247,21 @@ function BoardPage() {
           </Button>
         )}
       </div>
+
+      <a
+        href={board.affiliate_banner_link || board.affiliate_banner_url || "mailto:advertise@bmsupport.uk"}
+        target="_blank"
+        rel="noopener noreferrer sponsored"
+        className="block rounded-xl border border-border bg-surface-1/85 overflow-hidden hover:border-[#E11B22]/70 hover:shadow-[0_8px_30px_-12px_rgba(225,27,34,0.55)] transition-all"
+        aria-label={board.affiliate_banner_alt || "Advertise here"}
+      >
+        <img
+          src={board.affiliate_banner_url || advertiseLeaderboard}
+          alt={board.affiliate_banner_alt || `${board.name} sponsor`}
+          className="w-full h-auto block max-h-[120px] object-cover"
+          loading="lazy"
+        />
+      </a>
 
       {topics.length === 0 ? (
         <div className="rounded-2xl border border-[#E11B22]/20 bg-surface-1 px-4 py-10 text-center text-sm text-muted-foreground shadow-soft">
