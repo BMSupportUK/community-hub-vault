@@ -2,7 +2,7 @@ import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { ArrowLeft, Plus, Trash2, Pencil, Save, X, Pin, Lock, Loader2, UserPlus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth, type AppRole } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -28,7 +28,7 @@ type Mod = { board_id: string; user_id: string };
 type Profile = { id: string; display_name: string | null; username: string | null };
 type Perm = { board_id: string; role: string; can_view: boolean; can_create_topic: boolean; can_reply: boolean };
 
-const ROLES: { value: string; label: string }[] = [
+const ROLES: { value: AppRole; label: string }[] = [
   { value: "member", label: "Member" },
   { value: "subscriber", label: "Subscriber" },
   { value: "nonsubscriber", label: "Non-subscriber" },
@@ -116,7 +116,7 @@ function AdminForumPage() {
 
   const togglePerm = async (
     boardId: string,
-    role: string,
+    role: AppRole,
     field: "can_view" | "can_create_topic" | "can_reply",
     next: boolean,
   ) => {
@@ -140,7 +140,7 @@ function AdminForumPage() {
     if (error) { toast.error("Couldn't save permission", { description: error.message }); void load(); }
   };
 
-  const permFor = (boardId: string, role: string) =>
+  const permFor = (boardId: string, role: AppRole) =>
     perms.find((p) => p.board_id === boardId && p.role === role);
 
   return (
