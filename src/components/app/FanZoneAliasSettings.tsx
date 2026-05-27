@@ -53,8 +53,8 @@ export function FanZoneAliasSettings() {
     if (a.length > 64) return toast.error("Alias too long (max 64)");
     setSaving(true);
     const { error } = await supabase.rpc("set_my_fan_alias", {
-      _alias: a || null,
-      _avatar: avatarUrl.trim() || null,
+      _alias: a,
+      _avatar: avatarUrl.trim(),
     });
     setSaving(false);
     if (error) return toast.error("Couldn't save", { description: error.message });
@@ -64,7 +64,7 @@ export function FanZoneAliasSettings() {
 
   const clear = async () => {
     setSaving(true);
-    const { error } = await supabase.rpc("set_my_fan_alias", { _alias: null, _avatar: null });
+    const { error } = await supabase.rpc("set_my_fan_alias", { _alias: "", _avatar: "" });
     setSaving(false);
     if (error) return toast.error("Couldn't clear", { description: error.message });
     setAlias("");
