@@ -252,13 +252,15 @@ function BoardPage() {
         href={board.affiliate_banner_link || board.affiliate_banner_url || "mailto:advertise@bmsupport.uk"}
         target="_blank"
         rel="noopener noreferrer sponsored"
-        className="block rounded-xl border border-border bg-surface-1/85 overflow-hidden hover:border-[#E11B22]/70 hover:shadow-[0_8px_30px_-12px_rgba(225,27,34,0.55)] transition-all"
+        className="mx-auto block rounded-xl border border-border bg-surface-1/85 overflow-hidden hover:border-[#E11B22]/70 hover:shadow-[0_8px_30px_-12px_rgba(225,27,34,0.55)] transition-all w-[256px]"
         aria-label={board.affiliate_banner_alt || "Advertise here"}
       >
         <img
           src={board.affiliate_banner_url || advertiseLeaderboard}
           alt={board.affiliate_banner_alt || `${board.name} sponsor`}
-          className="w-full h-auto block max-h-[120px] object-cover"
+          width={512}
+          height={1536}
+          className="w-full h-auto block"
           loading="lazy"
         />
       </a>
