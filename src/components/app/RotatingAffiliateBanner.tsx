@@ -32,9 +32,11 @@ function shuffle<T>(arr: T[]): T[] {
  */
 export function RotatingAffiliateBanner({
   fallback,
+  boardId,
   intervalMs = 8000,
 }: {
   fallback?: Fallback;
+  boardId?: string | null;
   intervalMs?: number;
 }) {
   const [banners, setBanners] = useState<Banner[] | null>(null);
@@ -44,16 +46,29 @@ export function RotatingAffiliateBanner({
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const { data } = await supabase
-        .from("affiliate_banners")
-        .select("id, name, image_url, link_url, alt_text");
+      let list: Banner[] = [];
+      if (boardId) {
+        const { data } = await supabase
+          .from("forum_board_affiliate_banners")
+          .select("affiliate_banners(id, name, image_url, link_url, alt_text)")
+          .eq("board_id", boardId);
+        list = (data ?? [])
+          .map((r: any) => r.affiliate_banners)
+          .filter(Boolean) as Banner[];
+      }
+      if (list.length === 0) {
+        const { data } = await supabase
+          .from("affiliate_banners")
+          .select("id, name, image_url, link_url, alt_text");
+        list = (data ?? []) as Banner[];
+      }
       if (cancelled) return;
-      setBanners(shuffle(data ?? []));
+      setBanners(shuffle(list));
     })();
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [boardId]);
 
   const list = useMemo<Banner[]>(() => {
     if (banners && banners.length > 0) return banners;
