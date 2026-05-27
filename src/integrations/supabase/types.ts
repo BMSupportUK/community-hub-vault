@@ -731,6 +731,8 @@ export type Database = {
         Row: {
           decided_at: string | null
           decided_by: string | null
+          fan_alias: string | null
+          fan_avatar_url: string | null
           note: string | null
           reason: string | null
           requested_at: string
@@ -741,6 +743,8 @@ export type Database = {
         Insert: {
           decided_at?: string | null
           decided_by?: string | null
+          fan_alias?: string | null
+          fan_avatar_url?: string | null
           note?: string | null
           reason?: string | null
           requested_at?: string
@@ -751,6 +755,8 @@ export type Database = {
         Update: {
           decided_at?: string | null
           decided_by?: string | null
+          fan_alias?: string | null
+          fan_avatar_url?: string | null
           note?: string | null
           reason?: string | null
           requested_at?: string
@@ -3396,6 +3402,14 @@ export type Database = {
           updated_at: string
         }[]
       }
+      fan_zone_aliases: {
+        Args: { _ids: string[] }
+        Returns: {
+          fan_alias: string
+          fan_avatar_url: string
+          user_id: string
+        }[]
+      }
       forum_board_allows: {
         Args: { _action: string; _board: string; _user: string }
         Returns: boolean
@@ -3522,6 +3536,10 @@ export type Database = {
       revoke_expired_subscriber_role: {
         Args: { _user_id: string }
         Returns: boolean
+      }
+      set_my_fan_alias: {
+        Args: { _alias: string; _avatar: string }
+        Returns: undefined
       }
       sports_blogs_clear_expired: { Args: never; Returns: undefined }
       submit_appeal: { Args: { p_reason: string }; Returns: Json }
