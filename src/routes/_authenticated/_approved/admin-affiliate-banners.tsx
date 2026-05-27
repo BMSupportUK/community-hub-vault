@@ -19,7 +19,8 @@ type Banner = {
   alt_text: string | null;
   created_at: string;
 };
-type Board = { id: string; name: string; slug: string; affiliate_banner_id: string | null };
+type Board = { id: string; name: string; slug: string };
+type Assignment = { board_id: string; banner_id: string };
 
 const BUCKET = "affiliate-banners";
 
@@ -28,17 +29,20 @@ function AdminAffiliateBannersPage() {
   const isAdmin = hasAny(["admin", "management"]);
   const [banners, setBanners] = useState<Banner[] | null>(null);
   const [boards, setBoards] = useState<Board[]>([]);
+  const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [uploading, setUploading] = useState(false);
   const [newName, setNewName] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
 
   const load = async () => {
-    const [{ data: bs }, { data: brds }] = await Promise.all([
+    const [{ data: bs }, { data: brds }, { data: asg }] = await Promise.all([
       supabase.from("affiliate_banners").select("id, name, image_url, link_url, alt_text, created_at").order("created_at", { ascending: false }),
-      supabase.from("forum_boards").select("id, name, slug, affiliate_banner_id").order("sort_order"),
+      supabase.from("forum_boards").select("id, name, slug").order("sort_order"),
+      supabase.from("forum_board_affiliate_banners").select("board_id, banner_id"),
     ]);
     setBanners((bs ?? []) as Banner[]);
     setBoards((brds ?? []) as Board[]);
+    setAssignments((asg ?? []) as Assignment[]);
   };
 
   useEffect(() => { if (isAdmin) void load(); }, [isAdmin]);
@@ -101,12 +105,21 @@ function AdminAffiliateBannersPage() {
   };
 
   const toggleBoard = async (banner: Banner, boardId: string, assign: boolean) => {
-    const { error } = await supabase
-      .from("forum_boards")
-      .update({ affiliate_banner_id: assign ? banner.id : null })
-      .eq("id", boardId);
-    if (error) { toast.error("Couldn't update board", { description: error.message }); return; }
-    setBoards((cur) => cur.map((br) => br.id === boardId ? { ...br, affiliate_banner_id: assign ? banner.id : null } : br));
+    if (assign) {
+      const { error } = await supabase
+        .from("forum_board_affiliate_banners")
+        .insert({ board_id: boardId, banner_id: banner.id });
+      if (error) { toast.error("Couldn't assign banner", { description: error.message }); return; }
+      setAssignments((cur) => [...cur, { board_id: boardId, banner_id: banner.id }]);
+    } else {
+      const { error } = await supabase
+        .from("forum_board_affiliate_banners")
+        .delete()
+        .eq("board_id", boardId)
+        .eq("banner_id", banner.id);
+      if (error) { toast.error("Couldn't remove banner", { description: error.message }); return; }
+      setAssignments((cur) => cur.filter((a) => !(a.board_id === boardId && a.banner_id === banner.id)));
+    }
   };
 
   return (
@@ -187,8 +200,7 @@ function AdminAffiliateBannersPage() {
                 ) : (
                   <div className="grid grid-cols-2 gap-1.5">
                     {boards.map((br) => {
-                      const checked = br.affiliate_banner_id === b.id;
-                      const usedByOther = !!br.affiliate_banner_id && !checked;
+                      const checked = assignments.some((a) => a.board_id === br.id && a.banner_id === b.id);
                       return (
                         <label key={br.id} className={`flex items-center gap-2 text-xs px-2 py-1.5 rounded-md border ${checked ? "border-primary/50 bg-primary/10" : "border-border bg-surface-2/60"}`}>
                           <input
@@ -197,7 +209,6 @@ function AdminAffiliateBannersPage() {
                             onChange={(e) => void toggleBoard(b, br.id, e.target.checked)}
                           />
                           <span className="truncate">{br.name}</span>
-                          {usedByOther && <span className="ml-auto text-[10px] text-amber-400" title="Currently using a different banner">other</span>}
                         </label>
                       );
                     })}
