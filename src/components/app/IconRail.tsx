@@ -25,6 +25,13 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
   const fanZoneApproved = fanZone?.status === "approved";
   const fanZonePending = fanZone?.status === "pending";
   const fanZoneGated = !isFanZoneStaff && !fanZoneApproved && !fanZonePending;
+  // Hide the Boro Fan Zone entirely from management/staff/original-moderator roles
+  // unless they're also an admin, fan-zone moderator, or already an approved/pending member.
+  const hideFanZone =
+    !isFanZoneStaff &&
+    !fanZoneApproved &&
+    !fanZonePending &&
+    hasAny(["management", "staff", "moderator"]);
   const path = useRouterState({ select: (r) => r.location.pathname });
   const [activeIncidents, setActiveIncidents] = useState(0);
   const [unreadNewContent, setUnreadNewContent] = useState(0);
@@ -156,7 +163,7 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
     { to: "/new-content", label: "New content", icon: Tv, show: true, badge: unreadNewContent },
     { to: "/members", label: "Members", icon: Users, show: true },
     { to: "/staff", label: "Staff", icon: Briefcase, show: true },
-    { to: "/forum", label: "Boro Fan Zone forum", icon: MessagesSquare, show: true },
+    { to: "/forum", label: "Boro Fan Zone forum", icon: MessagesSquare, show: !hideFanZone },
     { to: "/shifts", label: "Shifts", icon: Calendar, show: isStaff },
   ];
 
