@@ -11,6 +11,35 @@ function fbEmbed(url: string) {
   return `<div class="fb-post" data-href="${url}" data-width="500" data-show-text="true"></div>`;
 }
 
+function tryEmbedUrl(raw: string): string | null {
+  const url = raw.trim();
+  const t = url.match(TWEET_RE);
+  if (t) return tweetEmbed(url.replace(/^http:/, "https:"), t[1]);
+  if (FB_RE.test(url) || FB_WATCH_RE.test(url)) return fbEmbed(url.replace(/^http:/, "https:"));
+  return null;
+}
+
+function decodeBasicEntities(text: string): string {
+  return text
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;|&apos;/gi, "'")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">");
+}
+
+function htmlTextContent(html: string): string {
+  return decodeBasicEntities(
+    html
+      .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "")
+      .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, "")
+      .replace(/<br\s*\/?>/gi, "\n")
+      .replace(/<[^>]+>/g, "")
+      .trim(),
+  );
+}
+
 /**
  * Walks editor HTML and replaces any standalone X / Facebook URL with the
  * platform's official embed markup. Operates on:
@@ -18,7 +47,15 @@ function fbEmbed(url: string) {
  *  - <a> elements whose text equals the href (typical browser auto-link paste)
  */
 export function embedSocialUrls(html: string): string {
-  if (typeof window === "undefined" || !html) return html;
+  if (!html) return html;
+
+  // Important: this must work during SSR too. React may not patch a
+  // dangerouslySetInnerHTML mismatch during hydration, so returning raw HTML on
+  // the server and embed HTML in the browser leaves old posts visibly unembedded.
+  const wholePostReplacement = tryEmbedUrl(htmlTextContent(html));
+  if (wholePostReplacement) return wholePostReplacement;
+
+  if (typeof window === "undefined") return html;
   const doc = new DOMParser().parseFromString(`<div id="__root">${html}</div>`, "text/html");
   const root = doc.getElementById("__root");
   if (!root) return html;
@@ -27,14 +64,6 @@ export function embedSocialUrls(html: string): string {
     const tpl = doc.createElement("template");
     tpl.innerHTML = markup;
     return Array.from(tpl.content.childNodes);
-  };
-
-  const tryEmbedUrl = (raw: string): string | null => {
-    const url = raw.trim();
-    const t = url.match(TWEET_RE);
-    if (t) return tweetEmbed(url.replace(/^http:/, "https:"), t[1]);
-    if (FB_RE.test(url) || FB_WATCH_RE.test(url)) return fbEmbed(url.replace(/^http:/, "https:"));
-    return null;
   };
 
   // Replace <a href="X">X</a> when nothing else is in the parent paragraph.
