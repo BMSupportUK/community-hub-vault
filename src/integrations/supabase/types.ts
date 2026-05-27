@@ -3410,6 +3410,7 @@ export type Database = {
           user_id: string
         }[]
       }
+      fan_zone_default_avatar_url: { Args: never; Returns: string }
       fan_zone_staff_directory: {
         Args: never
         Returns: {

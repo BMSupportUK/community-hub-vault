@@ -6,6 +6,7 @@ import { useFanZoneMembership } from "@/hooks/use-fan-zone";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import boroDefaultAvatar from "@/assets/boro-default-avatar.png";
 
 /** Top-of-board card letting an approved fan zone member set an alias + avatar
  * used only inside the Boro Fan Zone. */
@@ -29,6 +30,8 @@ export function FanZoneAliasSettings() {
   if (!isStaff && info?.status !== "approved") return null;
 
   const hasAlias = !!(info?.fanAlias || info?.fanAvatarUrl);
+  const previewAvatar = info?.fanAvatarUrl || boroDefaultAvatar;
+  const editPreviewAvatar = avatarUrl || boroDefaultAvatar;
 
   const onPickFile = async (file: File) => {
     if (!user) return;
@@ -78,11 +81,7 @@ export function FanZoneAliasSettings() {
     <div className="rounded-2xl border border-[#E11B22]/30 bg-surface-1/85 backdrop-blur-sm shadow-soft overflow-hidden">
       <div className="flex items-center gap-3 px-4 py-3">
         <div className="size-10 rounded-full overflow-hidden bg-gradient-to-br from-[#E11B22] to-[#8B0F14] grid place-items-center text-white text-sm font-bold ring-2 ring-white/10 shrink-0">
-          {info?.fanAvatarUrl ? (
-            <img src={info.fanAvatarUrl} alt="" className="size-10 object-cover" />
-          ) : (
-            (info?.fanAlias || "B").slice(0, 1).toUpperCase()
-          )}
+          <img src={previewAvatar} alt="" className="size-10 object-cover" />
         </div>
         <div className="flex-1 min-w-0">
           <div className="text-[10px] uppercase tracking-[0.2em] font-bold text-[#E11B22]/90">
@@ -108,11 +107,7 @@ export function FanZoneAliasSettings() {
         <div className="border-t border-border/60 bg-surface-2/40 px-4 py-4 space-y-3">
           <div className="flex items-center gap-3">
             <div className="size-14 rounded-full overflow-hidden bg-gradient-to-br from-[#E11B22] to-[#8B0F14] grid place-items-center text-white text-lg font-bold ring-2 ring-white/10 shrink-0">
-              {avatarUrl ? (
-                <img src={avatarUrl} alt="" className="size-14 object-cover" />
-              ) : (
-                (alias || "B").slice(0, 1).toUpperCase()
-              )}
+              <img src={editPreviewAvatar} alt="" className="size-14 object-cover" />
             </div>
             <div className="flex-1 flex flex-wrap gap-2">
               <Button
