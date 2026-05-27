@@ -3414,11 +3414,10 @@ export type Database = {
       fan_zone_staff_directory: {
         Args: never
         Returns: {
-          avatar_url: string
-          display_name: string
+          fan_alias: string
+          fan_avatar_url: string
           role: Database["public"]["Enums"]["app_role"]
           user_id: string
-          username: string
         }[]
       }
       forum_board_allows: {
