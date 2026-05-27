@@ -8,6 +8,7 @@ import { getIcon } from "@/components/app/IconPicker";
 import { formatLastSeen } from "@/lib/relative-time";
 import { Button } from "@/components/ui/button";
 import { FanZoneAliasSettings } from "@/components/app/FanZoneAliasSettings";
+import { FanZoneStaffBox } from "@/components/app/FanZoneStaffBox";
 import boroHero from "@/assets/boro-hero.jpg";
 import boroBadge from "@/assets/boro-fan-zone-badge.png";
 import boroBg from "@/assets/boro-bg.jpg";
@@ -174,9 +175,10 @@ function BoardsIndex() {
   }
 
   return (
-    <div className="space-y-3">
-      <FanZoneAliasSettings />
-      {boards.map((b) => {
+    <div className="grid gap-4 lg:grid-cols-[1fr_280px]">
+      <div className="space-y-3 min-w-0">
+        <FanZoneAliasSettings />
+        {boards.map((b) => {
         const Icon = getIcon(b.icon);
         const poster = b.last_post_by ? posters[b.last_post_by] : null;
         const posterName = poster?.display_name || poster?.username || (b.last_post_by ? "someone" : null);
@@ -221,11 +223,15 @@ function BoardsIndex() {
             </div>
           </Link>
         );
-      })}
-      <div className="pt-2 text-center">
-        <Button asChild variant="ghost" size="sm">
-          <Link to="/home">← Back to channels</Link>
-        </Button>
+        })}
+        <div className="pt-2 text-center">
+          <Button asChild variant="ghost" size="sm">
+            <Link to="/home">← Back to channels</Link>
+          </Button>
+        </div>
+      </div>
+      <div className="lg:sticky lg:top-4 lg:self-start">
+        <FanZoneStaffBox />
       </div>
     </div>
   );
