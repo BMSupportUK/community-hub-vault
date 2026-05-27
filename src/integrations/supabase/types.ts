@@ -786,6 +786,44 @@ export type Database = {
           },
         ]
       }
+      forum_board_permissions: {
+        Row: {
+          board_id: string
+          can_create_topic: boolean
+          can_reply: boolean
+          can_view: boolean
+          created_at: string
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at: string
+        }
+        Insert: {
+          board_id: string
+          can_create_topic?: boolean
+          can_reply?: boolean
+          can_view?: boolean
+          created_at?: string
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+        }
+        Update: {
+          board_id?: string
+          can_create_topic?: boolean
+          can_reply?: boolean
+          can_view?: boolean
+          created_at?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "forum_board_permissions_board_id_fkey"
+            columns: ["board_id"]
+            isOneToOne: false
+            referencedRelation: "forum_boards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       forum_boards: {
         Row: {
           created_at: string
@@ -3357,6 +3395,10 @@ export type Database = {
           password: string
           updated_at: string
         }[]
+      }
+      forum_board_allows: {
+        Args: { _action: string; _board: string; _user: string }
+        Returns: boolean
       }
       forum_increment_view: { Args: { _topic: string }; Returns: undefined }
       forum_mention_candidates: {
