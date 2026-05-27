@@ -135,13 +135,13 @@ function BoardPage() {
           <p className="text-xs text-muted-foreground mt-0.5">{board.description}</p>
         </div>
         {canPost && (
-          <Button onClick={() => setOpen(true)} className="bg-gradient-to-r from-rose-600 to-amber-600 border-0">
+          <Button onClick={() => setOpen(true)} className="bg-gradient-to-r from-[#E11B22] to-[#8B0F14] hover:from-[#F02B30] hover:to-[#9B1118] border-0 text-white shadow-[0_4px_20px_-6px_rgba(225,27,34,0.6)]">
             <Plus className="size-4 mr-1" /> New topic
           </Button>
         )}
       </div>
 
-      <div className="rounded-xl border border-border overflow-hidden">
+      <div className="rounded-xl border border-[#E11B22]/20 overflow-hidden">
         <div className="hidden md:grid grid-cols-[1fr_80px_80px_180px] gap-3 px-4 py-2 text-[11px] uppercase tracking-wide text-muted-foreground border-b bg-surface-1">
           <div>Topic</div><div className="text-right">Replies</div><div className="text-right">Views</div><div className="text-right">Last post</div>
         </div>
@@ -159,11 +159,15 @@ function BoardPage() {
               key={t.id}
               to="/forum/$board/$topic"
               params={{ board: slug, topic: t.id }}
-              className="grid md:grid-cols-[1fr_80px_80px_180px] gap-3 px-4 py-3 items-center border-b last:border-b-0 hover:bg-surface-1 transition-colors"
+              className="grid md:grid-cols-[1fr_80px_80px_180px] gap-3 px-4 py-3 items-center border-b last:border-b-0 hover:bg-[#E11B22]/5 hover:border-l-2 hover:border-l-[#E11B22] transition-all"
             >
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
-                  {t.is_sticky && <Pin className="size-3.5 text-amber-400 shrink-0" />}
+                  {t.is_sticky && (
+                    <span className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 bg-[#F4B400]/15 text-[#F4B400] text-[9px] font-bold uppercase tracking-wider shrink-0">
+                      <Pin className="size-2.5" />Pinned
+                    </span>
+                  )}
                   {t.is_locked && <Lock className="size-3.5 text-muted-foreground shrink-0" />}
                   <span className="font-medium truncate">{t.title}</span>
                 </div>
