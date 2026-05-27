@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Bold, Italic, Underline, Heading1, Heading2, List, ListOrdered, Link2, Quote, Code, Undo2, Redo2, Eraser, Youtube, Minus, Film, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import type { MentionCandidate } from "@/hooks/use-mention-candidates";
 
 type Props = {
   value: string;
@@ -18,17 +19,27 @@ type Props = {
    * block layout (e.g. sports guides: one event per block).
    */
   pasteTransform?: (plainText: string) => string;
+  /** Optional @mention autocomplete. Provide the candidate list. */
+  mentions?: MentionCandidate[];
 };
 
 function exec(cmd: string, arg?: string) {
   document.execCommand(cmd, false, arg);
 }
 
-export function HtmlEditor({ value, onChange, className, placeholder, videoUpload, pasteTransform }: Props) {
+export function HtmlEditor({ value, onChange, className, placeholder, videoUpload, pasteTransform, mentions }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
   const [uploadingVideo, setUploadingVideo] = useState(false);
   const [active, setActive] = useState<Record<string, boolean>>({});
+  const [mention, setMention] = useState<{
+    query: string;
+    rect: { top: number; left: number };
+    range: Range;
+    triggerNode: Text;
+    triggerOffset: number;
+  } | null>(null);
+  const [mentionIndex, setMentionIndex] = useState(0);
 
   const refreshActive = () => {
     if (typeof document === "undefined") return;
@@ -63,6 +74,81 @@ export function HtmlEditor({ value, onChange, className, placeholder, videoUploa
   const handleInput = () => {
     if (ref.current) onChange(ref.current.innerHTML);
     refreshActive();
+    updateMentionState();
+  };
+
+  const closeMention = () => setMention(null);
+
+  const updateMentionState = () => {
+    if (!mentions || mentions.length === 0) { setMention(null); return; }
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0 || !sel.isCollapsed) { setMention(null); return; }
+    const range = sel.getRangeAt(0);
+    const node = range.startContainer;
+    if (node.nodeType !== Node.TEXT_NODE) { setMention(null); return; }
+    if (!ref.current?.contains(node)) { setMention(null); return; }
+    const text = (node as Text).data.slice(0, range.startOffset);
+    const m = text.match(/(?:^|\s)@([\w-]{0,30})$/);
+    if (!m) { setMention(null); return; }
+    const query = m[1];
+    const triggerOffset = range.startOffset - query.length - 1;
+    const probe = document.createRange();
+    probe.setStart(node, triggerOffset);
+    probe.setEnd(node, triggerOffset);
+    const rect = probe.getBoundingClientRect();
+    const editorRect = ref.current.getBoundingClientRect();
+    setMention({
+      query,
+      rect: { top: rect.bottom - editorRect.top + 4, left: rect.left - editorRect.left },
+      range,
+      triggerNode: node as Text,
+      triggerOffset,
+    });
+    setMentionIndex(0);
+  };
+
+  const filteredMentions = (() => {
+    if (!mention || !mentions) return [];
+    const q = mention.query.toLowerCase();
+    const matches = mentions.filter((c) => {
+      if (!q) return true;
+      return c.label.toLowerCase().includes(q) || (c.sublabel ?? "").toLowerCase().includes(q) || c.key.toLowerCase().includes(q);
+    });
+    return matches.slice(0, 8);
+  })();
+
+  const insertMention = (c: MentionCandidate) => {
+    if (!mention || !ref.current) return;
+    const node = mention.triggerNode;
+    // Delete the "@query" trigger text
+    const deleteRange = document.createRange();
+    deleteRange.setStart(node, mention.triggerOffset);
+    deleteRange.setEnd(node, mention.triggerOffset + mention.query.length + 1);
+    deleteRange.deleteContents();
+    const sel = window.getSelection();
+    if (sel) { sel.removeAllRanges(); sel.addRange(deleteRange); }
+    ref.current.focus();
+    const safeLabel = c.label.replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch]!);
+    const attrs = c.type === "user"
+      ? `data-mention-type="user" data-mention-id="${c.key}"`
+      : `data-mention-type="special" data-mention-key="${c.key}"`;
+    const html = `<span class="mention" ${attrs}>@${safeLabel}</span>&nbsp;`;
+    exec("insertHTML", html);
+    setMention(null);
+    if (ref.current) onChange(ref.current.innerHTML);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (!mention || filteredMentions.length === 0) return;
+    if (e.key === "ArrowDown") { e.preventDefault(); setMentionIndex((i) => (i + 1) % filteredMentions.length); }
+    else if (e.key === "ArrowUp") { e.preventDefault(); setMentionIndex((i) => (i - 1 + filteredMentions.length) % filteredMentions.length); }
+    else if (e.key === "Enter" || e.key === "Tab") {
+      e.preventDefault();
+      insertMention(filteredMentions[mentionIndex] ?? filteredMentions[0]);
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      closeMention();
+    }
   };
 
   const handlePaste = (e: React.ClipboardEvent<HTMLDivElement>) => {
@@ -199,12 +285,42 @@ export function HtmlEditor({ value, onChange, className, placeholder, videoUploa
         suppressContentEditableWarning
         onInput={handleInput}
         onPaste={handlePaste}
-        onKeyUp={refreshActive}
-        onMouseUp={refreshActive}
+        onKeyUp={() => { refreshActive(); updateMentionState(); }}
+        onKeyDown={handleKeyDown}
+        onMouseUp={() => { refreshActive(); updateMentionState(); }}
+        onBlur={() => { setTimeout(closeMention, 150); }}
         onFocus={refreshActive}
         data-placeholder={placeholder}
         className="prose prose-sm dark:prose-invert max-w-none min-h-[180px] px-3 py-2 focus:outline-none [&[data-placeholder]:empty::before]:content-[attr(data-placeholder)] [&[data-placeholder]:empty::before]:text-muted-foreground [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:my-1 [&_blockquote]:border-l-4 [&_blockquote]:border-border [&_blockquote]:pl-3 [&_blockquote]:italic [&_h1]:text-2xl [&_h1]:font-bold [&_h2]:text-xl [&_h2]:font-semibold [&_pre]:bg-muted [&_pre]:p-2 [&_pre]:rounded [&_a]:text-primary [&_a]:underline"
       />
+      {mention && filteredMentions.length > 0 && (
+        <div
+          className="absolute z-50 min-w-[220px] max-w-[300px] rounded-md border border-border bg-popover shadow-lg overflow-hidden text-sm"
+          style={{ top: mention.rect.top, left: Math.max(8, mention.rect.left) }}
+        >
+          {filteredMentions.map((c, i) => (
+            <button
+              key={`${c.type}:${c.key}`}
+              type="button"
+              onMouseDown={(e) => { e.preventDefault(); insertMention(c); }}
+              onMouseEnter={() => setMentionIndex(i)}
+              className={`w-full text-left flex items-center gap-2 px-2.5 py-1.5 ${i === mentionIndex ? "bg-accent" : ""}`}
+            >
+              {c.type === "user" ? (
+                <span className="size-6 rounded-full bg-gradient-to-br from-[#E11B22] to-[#8B0F14] grid place-items-center text-[10px] font-bold text-white overflow-hidden shrink-0">
+                  {c.avatarUrl ? <img src={c.avatarUrl} alt="" className="size-6 object-cover" /> : c.label.slice(0, 1).toUpperCase()}
+                </span>
+              ) : (
+                <span className="size-6 rounded-full bg-[#F4B400]/20 text-[#F4B400] grid place-items-center text-[10px] font-bold shrink-0">@</span>
+              )}
+              <span className="min-w-0 flex-1">
+                <span className="block truncate font-medium">@{c.label}{c.isStaff && <span className="ml-1 text-[9px] uppercase tracking-wider text-[#F4B400]">staff</span>}</span>
+                {c.sublabel && <span className="block truncate text-[11px] text-muted-foreground">{c.sublabel}</span>}
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
