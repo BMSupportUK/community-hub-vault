@@ -97,6 +97,12 @@ function TopicPage() {
       const { data: profs } = await supabase.from("profiles").select("id, display_name, username, avatar_url").in("id", ids);
       const map: Record<string, Profile> = {};
       (profs ?? []).forEach((p) => { map[p.id as string] = p as Profile; });
+      const { data: aliases } = await supabase.rpc("fan_zone_aliases", { _ids: ids });
+      (aliases ?? []).forEach((a: { user_id: string; fan_alias: string | null; fan_avatar_url: string | null }) => {
+        if (!map[a.user_id]) return;
+        if (a.fan_alias) map[a.user_id].display_name = a.fan_alias;
+        if (a.fan_avatar_url) map[a.user_id].avatar_url = a.fan_avatar_url;
+      });
       setProfiles(map);
     }
   };
