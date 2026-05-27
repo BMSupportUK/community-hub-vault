@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { Pin, Lock, Loader2, Plus, ArrowLeft, Eye, MessageSquare } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Pin, Lock, Loader2, Plus, ArrowLeft, Eye, MessageSquare, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useFanZoneMembership } from "@/hooks/use-fan-zone";
@@ -49,6 +49,8 @@ function BoardPage() {
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const submittingRef = useRef(false);
+  const [createdTopicId, setCreatedTopicId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!canEnter) return;
@@ -84,11 +86,13 @@ function BoardPage() {
 
   const submit = async () => {
     if (!user || !board) return;
+    if (submittingRef.current) return;
     const t = title.trim();
     const bRaw = body.trim();
     if (t.length < 3) { toast.error("Title too short"); return; }
     if (bRaw.length < 1 || bRaw === "<p><br></p>") { toast.error("Add some body text"); return; }
     const b = embedSocialUrls(bRaw);
+    submittingRef.current = true;
     setSubmitting(true);
     const { data: topic, error } = await supabase
       .from("forum_topics")
@@ -96,6 +100,7 @@ function BoardPage() {
       .select("id")
       .single();
     if (error || !topic) {
+      submittingRef.current = false;
       setSubmitting(false);
       toast.error("Couldn't create topic", { description: error?.message });
       return;
@@ -103,13 +108,14 @@ function BoardPage() {
     const { error: postErr } = await supabase
       .from("forum_posts")
       .insert({ topic_id: (topic as { id: string }).id, author_id: user.id, body: b, is_op: true });
+    submittingRef.current = false;
     setSubmitting(false);
     if (postErr) {
       toast.error("Couldn't post first message", { description: postErr.message });
       return;
     }
     setOpen(false); setTitle(""); setBody("");
-    void navigate({ to: "/forum/$board/$topic", params: { board: slug, topic: (topic as { id: string }).id } });
+    setCreatedTopicId((topic as { id: string }).id);
   };
 
   if (!canEnter) {
@@ -205,6 +211,30 @@ function BoardPage() {
             <Button variant="outline" onClick={() => setOpen(false)} disabled={submitting}>Cancel</Button>
             <Button onClick={submit} disabled={submitting}>
               {submitting ? <><Loader2 className="size-4 mr-1 animate-spin" />Posting…</> : "Post topic"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!createdTopicId} onOpenChange={(o) => { if (!o) setCreatedTopicId(null); }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CheckCircle2 className="size-5 text-emerald-500" /> Topic posted
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">Your topic is live in {board.name}.</p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCreatedTopicId(null)}>Stay here</Button>
+            <Button
+              onClick={() => {
+                const id = createdTopicId;
+                setCreatedTopicId(null);
+                if (id) void navigate({ to: "/forum/$board/$topic", params: { board: slug, topic: id } });
+              }}
+              className="bg-gradient-to-r from-[#E11B22] to-[#8B0F14] hover:from-[#F02B30] hover:to-[#9B1118] border-0 text-white"
+            >
+              View post
             </Button>
           </DialogFooter>
         </DialogContent>
