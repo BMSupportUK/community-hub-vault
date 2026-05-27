@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { HtmlEditor } from "@/components/ui/html-editor";
 import { ForumPostBody } from "@/components/app/ForumPostBody";
+import { ForumPostReactions } from "@/components/app/ForumPostReactions";
 import { embedSocialUrls } from "@/lib/forum-embeds";
 import { toast } from "sonner";
 
@@ -253,6 +254,11 @@ function TopicPage() {
                   <ForumPostBody html={p.body} />
                 )}
               </div>
+              <ForumPostReactions
+                postId={p.id}
+                userId={user?.id ?? null}
+                canReact={canEnter}
+              />
             </article>
           );
         })}
