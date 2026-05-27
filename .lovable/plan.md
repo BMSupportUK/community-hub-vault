@@ -1,84 +1,61 @@
-## Boro Fan Zone — gated community area
+## Goal
+Upgrade Boro Fan Zone forum posting from plain text to a proper rich HTML editor (like big-forum software), and auto-embed any X (Twitter) or Facebook post URL someone drops in.
 
-A dedicated section in the sidebar for Middlesbrough F.C. supporters. Members request access; admins/management approve. Approved fans get a small set of themed channels.
+## Scope
+Only the forum surface (`forum.$board.tsx` new-topic dialog, `forum.$board.$topic.tsx` reply + edit). Boards data model is unchanged; we change how a post `body` is composed, stored, and rendered.
 
-### Channels in the zone
-Grouped under a new category **"Boro Fan Zone"** (Trophy / shield icon):
-- **#boro-general** — banter & general chat
-- **#match-day** — live match thread channel
-- **#transfers-rumours** — gossip / news
-- **#highlights** — clips, photos, memes
-- **#fixtures-results** — pinned upcoming fixtures + results recap
+## 1. Rich editor for posts
 
-These reuse the existing `chat_channels` table and channel UI — no new chat code.
+Reuse the existing `src/components/ui/html-editor.tsx` (already used for the Knowledge Base / Sports Guides). It already supports: bold/italic/underline, H1/H2, quote, code, bullet/numbered lists, links, YouTube embed, horizontal rule, undo/redo, clear formatting.
 
-### Access model
+Where it replaces today's `<Textarea>`:
+- **New topic dialog** in `forum.$board.tsx` — body field.
+- **Reply composer** at the bottom of `forum.$board.$topic.tsx`.
+- **Inline edit** of a post in `forum.$board.$topic.tsx`.
 
-A new lightweight membership table gates visibility — independent of the existing role system so non-staff fans can join without being elevated to `staff`.
+Posts will now be stored as HTML strings in `forum_posts.body` (same column, same length — no migration required; we currently treat it as text). Rendering switches from the custom `PostBody` plain-text quote parser to a sanitized HTML render using `sanitizeRichHtml` (already in `src/lib/sanitize-html.ts`).
 
-```text
-fan_zone_members
-  user_id      uuid pk → auth user
-  status       enum('pending','approved','rejected','revoked')
-  requested_at timestamptz
-  decided_at   timestamptz null
-  decided_by   uuid null
-  reason       text null       -- optional message from requester
-  note         text null       -- admin note on decision
-```
+Quote button behaviour: instead of inserting `> ` lines, it inserts a real `<blockquote>` with an attribution line containing the original author's name and a link back to the post anchor. The "quoted" pill rendering is provided naturally by the editor's blockquote styling + sanitizer.
 
-A SECURITY DEFINER helper `is_fan_zone_member(uuid)` returns true when `status = 'approved'`. The fan-zone channels get a new `requires_fan_zone boolean` flag on `chat_channels`; `can_in_channel()` is extended so visibility/send checks also require `is_fan_zone_member(auth.uid())` when that flag is set. Admins/management bypass as today.
+## 2. Auto-embed X (Twitter) and Facebook URLs
 
-### Request flow
-1. Any approved user sees a **"Boro Fan Zone"** card in the sidebar with a Trophy icon and a "Request access" button (if not yet a member).
-2. Clicking it opens a dialog: short optional message → inserts a `pending` row.
-3. State chips reflect status: **Pending review**, **Approved** (channels appear), **Rejected** (with optional reason), **Revoked**.
-4. Admins/management get a new admin page **"Fan Zone Requests"** (under existing admin area) listing pending requests with Approve / Reject / Revoke actions. Realtime updates so the sidebar flips to showing the channels as soon as approval lands.
+When a post is submitted (new topic, reply, or edit), pre-process the HTML on the client:
+- Find any standalone link or bare URL matching:
+  - X / Twitter: `https://(x|twitter).com/<user>/status/<id>` (and `mobile.` / `www.`)
+  - Facebook: `https://(www\.)?facebook\.com/.+/(posts|videos|photos)/...` and `https://fb.watch/<id>`
+- Replace them with the platform's official embed markup:
+  - X → `<blockquote class="twitter-tweet"><a href="<url>"></a></blockquote>`
+  - Facebook → `<div class="fb-post" data-href="<url>" data-width="500"></div>`
+- Save the resulting HTML.
 
-### Sidebar behaviour
-- Non-member: shows a single locked card with the request CTA.
-- Pending: shows a muted "Awaiting approval" card.
-- Approved: the **Boro Fan Zone** group renders in the channel list with its 5 channels, same as any other category.
-- Admin/management: always sees the zone (bypass) plus a small badge on the admin nav when pending requests exist.
+Then add a small `SocialEmbeds` runtime helper:
+- On any rendered post page, if the rendered HTML contains a `.twitter-tweet` node, lazy-load `https://platform.twitter.com/widgets.js` once and call `window.twttr.widgets.load(container)`.
+- If it contains `.fb-post`, lazy-load Facebook SDK `https://connect.facebook.net/en_US/sdk.js` (xfbml=1) and call `FB.XFBML.parse(container)`.
+- Re-run on mount and whenever posts change (already re-rendered by the realtime subscription).
 
-### Optional polish (in scope)
-- Welcome embed seeded on **#boro-general** ("Up the Boro 🦁 — be civil, no spoilers in match-day until full time").
-- Slow-mode tuned per channel (match-day → 5s; others → 30s default).
-- Fixture/result pinning is just a normal pinned message — no new infra.
+`src/lib/sanitize-html.ts` is extended to allow the embed shells:
+- Keep iframe allow-list (already covers YouTube).
+- Add `blockquote.class="twitter-tweet"`, `div.class="fb-post"`, `data-href`, `data-width`, `data-tweet-id` to the allow-list.
+- X and FB will themselves swap the placeholder nodes for iframes pointing at their own domains, which are not subject to our iframe host check because those iframes are injected by their scripts after sanitization.
 
-### Out of scope
-- Pulling live fixtures from an external API.
-- A separate "fan profile" with kit numbers, etc.
-- Notifications routing changes beyond the existing mention/notify pipeline.
+## 3. Behaviour around the quote and edit-history features
 
-### Implementation outline (technical)
+- `quotePost` builds an HTML blockquote attributed to the author and inserts it at the end of the current editor value.
+- Edit history (`forum_post_edits`) keeps storing the previous `body` HTML; the history dialog will render with `sanitizeRichHtml` so older plain-text posts still display unchanged.
+- Old posts already saved as plain text continue to render correctly because sanitized rendering of plain text is just the text wrapped in a `<p>` — we'll detect "looks like plain text" (no `<` in body) and fall back to a `whitespace-pre-wrap` `<div>` so legacy `>` quote lines still look like quotes.
 
-1. **Migration**
-   - Add `fan_zone_members` table + grants + RLS (user reads own row; admin/management read/write all; user inserts own pending row).
-   - Add `requires_fan_zone boolean default false` to `chat_channels`.
-   - Create `is_fan_zone_member(uuid)` SECURITY DEFINER, listed in the SECURITY DEFINER allowlist memory.
-   - Replace `can_in_channel()` body to AND in the fan-zone check when the flag is set.
-   - Seed the category + 5 channels with `requires_fan_zone = true`, `group_label = 'Boro Fan Zone'`.
-   - Add fan-zone channels & members table to `supabase_realtime` publication.
+## Technical details
 
-2. **Frontend**
-   - New `useFanZoneMembership()` hook (realtime on own row).
-   - New `FanZoneAccessCard.tsx` in `HomeChannelsSidebar` footer (states: locked / pending / approved-hidden).
-   - New `FanZoneRequestDialog.tsx` (textarea + submit).
-   - Group rendering already works via `group_label`; just ensure category icon mapping picks a Trophy/shield for "Boro Fan Zone".
-   - New admin page `src/routes/_authenticated/_approved/admin/fan-zone.tsx` listing requests with Approve / Reject / Revoke and small filter tabs.
-   - Add a nav entry under existing admin section with a count badge of pending requests.
+Files changed:
+- `src/lib/sanitize-html.ts` — allow `class`, `data-href`, `data-width`, `data-tweet-id`, `data-lang` on `blockquote`/`div`; ensure scripts stay forbidden.
+- `src/lib/forum-embeds.ts` *(new)* — `embedSocialUrls(html: string): string` and `useLoadSocialEmbeds(ref)` hook that injects `widgets.js` / Facebook SDK once and parses the container.
+- `src/components/app/ForumPostBody.tsx` *(new)* — renders sanitized HTML (or legacy plain-text fallback) and runs `useLoadSocialEmbeds`.
+- `src/routes/_authenticated/_approved/forum.$board.tsx` — swap new-topic body `<Textarea>` for `<HtmlEditor>`; run `embedSocialUrls` before insert.
+- `src/routes/_authenticated/_approved/forum.$board.$topic.tsx` — swap reply + edit `<Textarea>` for `<HtmlEditor>`; replace `PostBody` with `ForumPostBody`; update `quotePost` to insert an HTML blockquote; run `embedSocialUrls` on submit/save; render edit history with `ForumPostBody` too.
 
-3. **Permission wiring**
-   - `chat_channels` SELECT policy already calls `can_in_channel(... 'view')` — updating that function is enough to hide the channels from non-members.
-   - Same for `chat_messages` SELECT/INSERT — flows through `can_in_channel`.
+No database migration needed. No new dependencies — `dompurify` and `HtmlEditor` already exist.
 
-### Files touched
-- `supabase/migrations/<new>.sql` (table, function update, channel seed)
-- `src/hooks/use-fan-zone.tsx` (new)
-- `src/components/app/FanZoneAccessCard.tsx` (new)
-- `src/components/app/FanZoneRequestDialog.tsx` (new)
-- `src/components/app/HomeChannelsSidebar.tsx` (mount the card)
-- `src/routes/_authenticated/_approved/admin/fan-zone.tsx` (new admin page)
-- Admin nav component (add link + pending badge)
-- `src/integrations/supabase/types.ts` (auto-regenerated)
+## Out of scope
+- Server-side oEmbed fetching (no API keys, no server fn). We rely on X's and Facebook's official client embed scripts, which is what most forums use.
+- BBCode parity.
+- Image uploads inside posts (the editor's video upload stays available; image-paste is not added).
