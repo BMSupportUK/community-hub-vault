@@ -100,7 +100,7 @@ function ForumLayout() {
 
 function BoardsIndex() {
   const { user, hasAny } = useAuth();
-  const isStaff = hasAny(["admin", "management", "moderator", "boro_fan_zone_moderator"]);
+  const isStaff = hasAny(["admin", "boro_fan_zone_moderator"]);
   const info = useFanZoneMembership(user?.id ?? null);
   const [boards, setBoards] = useState<Board[] | null>(null);
   const [posters, setPosters] = useState<Record<string, { display_name: string | null; username: string | null }>>({});
