@@ -229,21 +229,19 @@ function BoardsIndex() {
               </div>
               </div>
             </Link>
-            {b.affiliate_banner_url ? (
-              <a
-                href={b.affiliate_banner_link || b.affiliate_banner_url}
-                target="_blank"
-                rel="noopener noreferrer sponsored"
-                className="hidden sm:flex shrink-0 w-[200px] rounded-xl border border-border bg-surface-1/85 backdrop-blur-sm overflow-hidden items-center justify-center hover:border-[#E11B22]/70 hover:shadow-[0_8px_30px_-12px_rgba(225,27,34,0.55)] transition-all"
-              >
-                <img
-                  src={b.affiliate_banner_url}
-                  alt={b.affiliate_banner_alt || `${b.name} sponsor`}
-                  className="w-full h-full object-cover"
-                  loading="lazy"
-                />
-              </a>
-            ) : null}
+            <a
+              href={b.affiliate_banner_link || b.affiliate_banner_url || "mailto:advertise@bmsupport.uk"}
+              target="_blank"
+              rel="noopener noreferrer sponsored"
+              className="hidden sm:flex shrink-0 w-[200px] rounded-xl border border-border bg-surface-1/85 backdrop-blur-sm overflow-hidden items-center justify-center hover:border-[#E11B22]/70 hover:shadow-[0_8px_30px_-12px_rgba(225,27,34,0.55)] transition-all"
+            >
+              <img
+                src={b.affiliate_banner_url || advertiseHereBanner}
+                alt={b.affiliate_banner_alt || `${b.name} sponsor`}
+                className="w-full h-full object-cover"
+                loading="lazy"
+              />
+            </a>
           </div>
         );
         })}
