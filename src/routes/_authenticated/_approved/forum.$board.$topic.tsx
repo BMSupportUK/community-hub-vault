@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, Loader2, Pin, Lock, Quote, Reply as ReplyIcon, Pencil, Trash2, Send, History, Check, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -59,6 +59,7 @@ function TopicPage() {
   const [moderatorIds, setModeratorIds] = useState<Set<string>>(new Set());
   const [reply, setReply] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const submittingRef = useRef(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editText, setEditText] = useState("");
   const [historyFor, setHistoryFor] = useState<Post | null>(null);
@@ -111,14 +112,18 @@ function TopicPage() {
 
   const submitReply = async () => {
     if (!user || !topic) return;
+    if (submittingRef.current) return;
     const raw = reply.trim();
     if (raw.length < 1 || raw === "<p><br></p>") return;
     const body = embedSocialUrls(raw);
+    submittingRef.current = true;
     setSubmitting(true);
     const { error } = await supabase.from("forum_posts").insert({ topic_id: topic.id, author_id: user.id, body, is_op: false });
+    submittingRef.current = false;
     setSubmitting(false);
     if (error) { toast.error("Couldn't post", { description: error.message }); return; }
     setReply("");
+    toast.success("Reply posted");
   };
 
   const quotePost = (p: Post) => {
