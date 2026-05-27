@@ -60,6 +60,7 @@ function TopicPage() {
   const [reply, setReply] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const submittingRef = useRef(false);
+  const [replySuccessOpen, setReplySuccessOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editText, setEditText] = useState("");
   const [historyFor, setHistoryFor] = useState<Post | null>(null);
@@ -123,7 +124,8 @@ function TopicPage() {
     setSubmitting(false);
     if (error) { toast.error("Couldn't post", { description: error.message }); return; }
     setReply("");
-    toast.success("Reply posted");
+    setReplySuccessOpen(true);
+    void load();
   };
 
   const quotePost = (p: Post) => {
