@@ -5,7 +5,7 @@ const FB_RE = /^https?:\/\/(?:www\.|m\.|web\.)?facebook\.com\/[^\s<>"']+$/i;
 const FB_WATCH_RE = /^https?:\/\/fb\.watch\/[A-Za-z0-9_-]+\/?(?:[?#]\S*)?$/i;
 
 function tweetEmbed(url: string, id: string) {
-  return `<blockquote class="twitter-tweet" data-tweet-id="${id}" data-lang="en"><a href="${url}"></a></blockquote>`;
+  return `<div class="social-embed social-embed-x" data-social-embed="x"><blockquote class="twitter-tweet" data-tweet-id="${id}" data-lang="en"><a href="${url}">View post on X</a></blockquote><a class="social-embed-fallback" href="${url}" target="_blank" rel="noopener noreferrer">Open this post on X</a></div>`;
 }
 function fbEmbed(url: string) {
   return `<div class="fb-post" data-href="${url}" data-width="500" data-show-text="true"></div>`;
@@ -163,6 +163,13 @@ export function useLoadSocialEmbeds(ref: React.RefObject<HTMLElement | null>, de
       void loadTwitter().then(() => {
         const w = window as unknown as { twttr?: { widgets: { load: (el?: Element) => void } } };
         w.twttr?.widgets.load(el);
+        window.setTimeout(() => {
+          el.querySelectorAll<HTMLElement>(".social-embed-x").forEach((embed) => {
+            const iframe = embed.querySelector("iframe");
+            const fallback = embed.querySelector<HTMLElement>(".social-embed-fallback");
+            if (!iframe) fallback?.classList.add("is-visible");
+          });
+        }, 2500);
       });
     }
     if (hasFb) {
