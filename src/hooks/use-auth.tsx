@@ -8,6 +8,7 @@ export type AppRole =
   | "management"
   | "staff"
   | "moderator"
+  | "boro_fan_zone_moderator"
   | "subscriber"
   | "nonsubscriber"
   | "member"
