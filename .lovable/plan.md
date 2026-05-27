@@ -1,53 +1,35 @@
-## Theme the Boro Fan Zone in Middlesbrough FC colours
+## Add a full-page background to the Boro Fan Zone forum
 
-Replace the generic rose/amber palette across all forum pages with Middlesbrough FC's official red-and-white identity, and inject vibrant match-day imagery so the section feels unmistakably "Boro" the moment a member lands in it.
+Give every `/forum/*` page a full-bleed, fixed background that evokes Middlesbrough FC — red terraces, stadium floodlights, Riverside-style atmosphere — layered behind the existing hero and board cards.
 
-### Visual direction
+### Trademark note (important)
 
-- **Primary**: Boro red `#E11B22` (the club's official Pantone 186-equivalent)
-- **Secondary**: crisp white, deep navy `#0B1A2B` for surfaces
-- **Accent**: amber/gold `#F4B400` for pinned/sticky highlights (badges, pins)
-- **Mood**: vibrant, stadium-energy, terrace-banter — bold typographic header, dramatic gradient washes, photographic hero strip
+I can't use the **official Middlesbrough FC crest, kit photography, or copyrighted stadium photos** as a background — that's club IP and would expose you to a takedown. What I *can* do is generate an original, evocative image in Boro's red/white/navy palette (terrace crowd silhouette, floodlit pitch, red-smoke atmosphere) that reads unmistakably as "Boro" without using protected marks. This is the same approach used for the current hero strip and the BFZ badge.
 
-### Files touched (presentation only, no logic / DB changes)
+If you have a licensed/official image you'd like to upload instead, say so and I'll wire an upload slot in admin rather than generating one.
 
-**1. `src/routes/_authenticated/_approved/forum.tsx`** — forum index/layout
-- Replace the small `Trophy` chip header with a full-bleed hero banner: red-to-navy gradient, generated stadium/terrace background image at low opacity, bold display heading "BORO FAN ZONE" with "Up the Boro" tagline
-- Re-skin board cards: red left-border accent stripe, navy surface, red icon tile (`from-[#E11B22] to-[#8B0F14]`), white-on-red hover glow
-- Pinned/locked icons in amber gold
+### What I'll change (presentation only)
 
-**2. `src/routes/_authenticated/_approved/forum.$board.tsx`** — board (topics list)
-- Smaller red-themed sub-hero with breadcrumb back-link
-- Topic rows: red sticky badge, red hover ring
-- "New topic" CTA in Boro red
+**1. `src/assets/boro-bg.jpg`** (new) — generate a tall, atmospheric portrait-oriented background: floodlit stadium / red terrace crowd silhouette in Boro red, deep navy sky, subtle red smoke. No crest, no players, no kit detail. Tuned dark enough that foreground content stays readable.
 
-**3. `src/routes/_authenticated/_approved/forum.$board.$topic.tsx`** — topic (posts thread)
-- Post cards: subtle navy surface, red author-strip on the OP, red reply button
-- Quote blockquotes: red left-border instead of amber
+**2. `src/routes/_authenticated/_approved/forum.tsx`** — on the `.boro-theme` wrapper:
+- Add a `fixed inset-0 -z-10` background layer using `boro-bg.jpg` with `bg-cover bg-center bg-no-repeat bg-fixed`
+- Overlay a dark gradient (navy → red-tinted black, ~75% opacity) so cards and text keep contrast
+- Add a subtle diagonal red-stripe pattern layer (matches the hero) at very low opacity for texture
+- Switch the forum container's surface colours to slightly translucent (`bg-surface-1/85 backdrop-blur-sm`) on board cards and topic rows so the background subtly shows through without hurting legibility
 
-**4. `src/styles.css`**
-- Add scoped CSS custom properties under a `.boro-theme` wrapper class:
-  ```
-  --boro-red: #E11B22;
-  --boro-red-deep: #8B0F14;
-  --boro-navy: #0B1A2B;
-  --boro-gold: #F4B400;
-  --boro-gradient: linear-gradient(135deg, #E11B22 0%, #8B0F14 60%, #0B1A2B 100%);
-  ```
-- Apply `.boro-theme` to the forum layout root so the palette only affects fan-zone pages (doesn't leak into the rest of the app).
+**3. Mobile behaviour** — `bg-fixed` is unreliable on iOS Safari; fall back to `bg-scroll` on small viewports via a media query (the page is already viewed at 411px wide in your preview, so this matters).
 
-**5. Generated imagery** (saved to `src/assets/`)
-- `boro-hero.jpg` — abstract stadium floodlight / red terrace crowd silhouette (NO club crest, NO player likenesses — avoids trademark issues). Used as the hero background.
-- `boro-pattern.svg` — subtle diagonal red stripe pattern for card backgrounds (procedurally written, not generated).
+### Scope guard
 
-Both produced via `imagegen` with prompts focused on generic football-stadium atmosphere in red/white/navy palette.
+- Background only applies to `/forum`, `/forum/$board`, and `/forum/$board/$topic` (scoped via the existing `.boro-theme` wrapper). It will NOT leak into Home, Members, Admin, etc.
+- No changes to data, RLS, auth, or any business logic.
+- No changes to the hero banner, badge, or board card structure — just a new layer behind them and a touch of translucency on top.
 
-### Out of scope
+### Quick question before I build
 
-- No changes to forum data model, RLS, or admin tools
-- No use of the official Middlesbrough FC crest, badge, or kit photography (trademark)
-- No changes to other approved-only pages (home, members, staff, etc.) — theme is scoped to `/forum/*`
+Two options for the background mood — pick one:
+- **A. Terrace crowd silhouette** — sea of red shirts/scarves under stadium lights, very "match-day"
+- **B. Empty floodlit Riverside-style pitch** — dramatic, cinematic, calmer behind text
 
-### Heads up
-
-Because the club crest is trademarked, the visual identity will be evocative rather than literal — Boro red as the dominant colour, stadium-floodlight imagery, terrace typography. If you want the actual crest used (you'd need rights or an admin-uploaded asset), say so and I'll wire an image upload slot in admin instead of generating one.
+Reply "A" or "B" (or describe your own) and I'll generate + wire it in.

@@ -9,6 +9,7 @@ import { formatLastSeen } from "@/lib/relative-time";
 import { Button } from "@/components/ui/button";
 import boroHero from "@/assets/boro-hero.jpg";
 import boroBadge from "@/assets/boro-fan-zone-badge.png";
+import boroBg from "@/assets/boro-bg.jpg";
 
 export const Route = createFileRoute("/_authenticated/_approved/forum")({
   component: ForumLayout,
@@ -33,7 +34,29 @@ function ForumLayout() {
   const matches = useMatches();
   const isNested = matches.some((m) => m.routeId.startsWith("/_authenticated/_approved/forum/"));
   return (
-    <div className="boro-theme mx-auto w-full max-w-5xl px-4 py-6">
+    <div className="boro-theme relative mx-auto w-full max-w-5xl px-4 py-6">
+      {/* Full-page background — scoped to the forum via .boro-theme */}
+      <div
+        className="fixed inset-0 -z-10 bg-cover bg-center bg-no-repeat md:bg-fixed"
+        style={{ backgroundImage: `url(${boroBg})` }}
+        aria-hidden
+      />
+      <div
+        className="fixed inset-0 -z-10"
+        style={{
+          background:
+            "linear-gradient(180deg, rgba(11,26,43,0.82) 0%, rgba(20,8,12,0.78) 50%, rgba(11,26,43,0.88) 100%)",
+        }}
+        aria-hidden
+      />
+      <div
+        className="fixed inset-0 -z-10 opacity-[0.05] mix-blend-overlay"
+        style={{
+          backgroundImage:
+            "repeating-linear-gradient(135deg, #fff 0 2px, transparent 2px 14px)",
+        }}
+        aria-hidden
+      />
       <header className="relative mb-6 overflow-hidden rounded-2xl border border-[#E11B22]/40 shadow-[0_10px_40px_-10px_rgba(225,27,34,0.55)]">
         <div
           className="absolute inset-0 bg-cover bg-center"
@@ -143,7 +166,7 @@ function BoardsIndex() {
             key={b.id}
             to="/forum/$board"
             params={{ board: b.slug }}
-            className="group block rounded-xl border border-border bg-surface-1 hover:border-[#E11B22]/70 hover:shadow-[0_8px_30px_-12px_rgba(225,27,34,0.55)] hover:-translate-y-[1px] transition-all overflow-hidden relative"
+            className="group block rounded-xl border border-border bg-surface-1/85 backdrop-blur-sm hover:border-[#E11B22]/70 hover:shadow-[0_8px_30px_-12px_rgba(225,27,34,0.55)] hover:-translate-y-[1px] transition-all overflow-hidden relative"
           >
             <span
               className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-[#E11B22] to-[#8B0F14]"
