@@ -12,6 +12,7 @@ import { FanZoneStaffBox } from "@/components/app/FanZoneStaffBox";
 import boroHero from "@/assets/boro-hero.jpg";
 import boroBadge from "@/assets/boro-fan-zone-badge.png";
 import boroBg from "@/assets/boro-bg.jpg";
+import advertiseHereBanner from "@/assets/advertise-here-banner.png";
 
 export const Route = createFileRoute("/_authenticated/_approved/forum")({
   component: ForumLayout,
