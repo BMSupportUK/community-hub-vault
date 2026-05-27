@@ -31,7 +31,7 @@ export function ForumPostBody({ html, className }: { html: string; className?: s
   return (
     <div
       ref={ref}
-      className={`prose prose-sm dark:prose-invert max-w-none break-words [&_blockquote]:border-l-4 [&_blockquote]:border-[#E11B22]/70 [&_blockquote]:pl-3 [&_blockquote]:italic [&_blockquote]:text-muted-foreground [&_blockquote]:bg-[#E11B22]/5 [&_blockquote]:py-2 [&_blockquote]:rounded-r [&_a]:text-[#E11B22] [&_a]:underline [&_pre]:bg-muted [&_pre]:p-2 [&_pre]:rounded [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 ${className ?? ""}`}
+      className={`prose prose-sm dark:prose-invert max-w-none break-words [&_.video-embed]:!w-full [&_.video-embed]:!max-w-none [&_.video-embed]:!my-3 [&_.video-embed]:!mx-0 [&_blockquote]:border-l-4 [&_blockquote]:border-[#E11B22]/70 [&_blockquote]:pl-3 [&_blockquote]:italic [&_blockquote]:text-muted-foreground [&_blockquote]:bg-[#E11B22]/5 [&_blockquote]:py-2 [&_blockquote]:rounded-r [&_a]:text-[#E11B22] [&_a]:underline [&_pre]:bg-muted [&_pre]:p-2 [&_pre]:rounded [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 ${className ?? ""}`}
       dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(html) }}
     />
   );
