@@ -264,3 +264,30 @@ function RailIcon({
     </Link>
   );
 }
+
+function RailButton({
+  label,
+  Icon,
+  onClick,
+}: {
+  label: string;
+  Icon: React.ComponentType<{ className?: string }>;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title={label}
+      className={cn(
+        "group relative size-12 rounded-2xl flex items-center justify-center transition-all",
+        "bg-surface-2 text-muted-foreground hover:bg-primary hover:text-primary-foreground hover:rounded-xl",
+      )}
+    >
+      <Icon className="size-5" />
+      <span className="absolute left-full ml-3 px-2 py-1 rounded bg-popover text-popover-foreground text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 shadow-soft">
+        {label}
+      </span>
+    </button>
+  );
+}
