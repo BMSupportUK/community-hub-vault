@@ -326,25 +326,29 @@ function TopicPage() {
               )}
 
               {canPost ? (
-                <div id="forum-reply-box" className="rounded-xl border border-[#E11B22]/30 bg-surface-1 p-3 space-y-2">
+                <div id="forum-reply-box" className="rounded-2xl border border-[#E11B22]/40 bg-surface-1 shadow-glow p-5 space-y-3 mt-4">
+                  <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                    <ReplyIcon className="size-4 text-[#E11B22]" />
+                    <span>Write a reply</span>
+                  </div>
                   <HtmlEditor
                     value={reply}
                     onChange={setReply}
-                    placeholder="Write a reply… paste an X or Facebook URL on its own line to embed it."
+                    placeholder="What's on your mind? Paste an X or Facebook URL on its own line to embed it."
                     mentions={mentionCandidates}
                   />
-                  <div className="flex justify-end">
+                  <div className="flex justify-end pt-1">
                     <Button
                       onClick={() => void submitReply()}
                       disabled={submitting || !reply.trim()}
-                      className="bg-gradient-to-r from-[#E11B22] to-[#8B0F14] hover:from-[#F02B30] hover:to-[#9B1118] border-0 text-white shadow-[0_4px_20px_-6px_rgba(225,27,34,0.6)]"
+                      className="bg-gradient-to-r from-[#E11B22] to-[#8B0F14] hover:from-[#F02B30] hover:to-[#9B1118] border-0 text-white shadow-[0_4px_20px_-6px_rgba(225,27,34,0.6)] font-semibold"
                     >
-                      {submitting ? <><Loader2 className="size-4 mr-1 animate-spin" />Posting…</> : <><Send className="size-4 mr-1" />Reply</>}
+                      {submitting ? <><Loader2 className="size-4 mr-1.5 animate-spin" />Posting…</> : <><Send className="size-4 mr-1.5" />Post reply</>}
                     </Button>
                   </div>
                 </div>
               ) : topic.is_locked ? (
-                <div className="rounded-xl border border-muted-foreground/20 bg-muted/20 p-4 text-sm text-center text-muted-foreground">
+                <div className="rounded-2xl border border-muted-foreground/20 bg-muted/20 p-4 text-sm text-center text-muted-foreground">
                   <Lock className="size-4 inline mr-1" /> This topic is locked.
                 </div>
               ) : null}
