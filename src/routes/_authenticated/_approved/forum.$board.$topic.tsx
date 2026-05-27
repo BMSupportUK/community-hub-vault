@@ -123,7 +123,7 @@ function TopicPage() {
     const safeName = name.replace(/</g, "&lt;");
     // Use the original body as-is if it's HTML; otherwise wrap as paragraph.
     const inner = /<[a-z][\s\S]*>/i.test(p.body) ? p.body : `<p>${p.body.replace(/</g, "&lt;").replace(/\n/g, "<br/>")}</p>`;
-    const block = `<blockquote><p><strong>${safeName}</strong> wrote:</strong></p>${inner}</blockquote><p><br/></p>`;
+    const block = `<blockquote><p><strong>${safeName}</strong> wrote:</p>${inner}</blockquote><p><br/></p>`;
     setReply((cur) => (cur || "") + block);
   };
 
