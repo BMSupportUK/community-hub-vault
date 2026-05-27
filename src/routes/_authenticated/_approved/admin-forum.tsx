@@ -121,14 +121,14 @@ function AdminForumPage() {
     next: boolean,
   ) => {
     const existing = perms.find((p) => p.board_id === boardId && p.role === role);
-    const row = {
+    const row: { board_id: string; role: AppRole; can_view: boolean; can_create_topic: boolean; can_reply: boolean } = {
       board_id: boardId,
       role,
       can_view: existing?.can_view ?? false,
       can_create_topic: existing?.can_create_topic ?? false,
       can_reply: existing?.can_reply ?? false,
-      [field]: next,
     };
+    row[field] = next;
     // Optimistic update
     setPerms((cur) => {
       const others = cur.filter((p) => !(p.board_id === boardId && p.role === role));
