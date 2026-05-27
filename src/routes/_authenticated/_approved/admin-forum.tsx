@@ -26,6 +26,15 @@ type Board = {
 };
 type Mod = { board_id: string; user_id: string };
 type Profile = { id: string; display_name: string | null; username: string | null };
+type Perm = { board_id: string; role: string; can_view: boolean; can_create_topic: boolean; can_reply: boolean };
+
+const ROLES: { value: string; label: string }[] = [
+  { value: "member", label: "Member" },
+  { value: "subscriber", label: "Subscriber" },
+  { value: "nonsubscriber", label: "Non-subscriber" },
+  { value: "staff", label: "Staff" },
+  { value: "moderator", label: "Moderator" },
+];
 
 function AdminForumPage() {
   const { hasAny } = useAuth();
@@ -33,6 +42,7 @@ function AdminForumPage() {
   const [boards, setBoards] = useState<Board[] | null>(null);
   const [mods, setMods] = useState<Mod[]>([]);
   const [profiles, setProfiles] = useState<Record<string, Profile>>({});
+  const [perms, setPerms] = useState<Perm[]>([]);
   const [editing, setEditing] = useState<Board | null>(null);
   const [draft, setDraft] = useState<Partial<Board>>({});
   const [newMod, setNewMod] = useState<Record<string, string>>({});
@@ -54,6 +64,10 @@ function AdminForumPage() {
       (ps ?? []).forEach((p) => { map[p.id as string] = p as Profile; });
       setProfiles(map);
     }
+    const { data: pps } = await supabase
+      .from("forum_board_permissions")
+      .select("board_id, role, can_view, can_create_topic, can_reply");
+    setPerms((pps ?? []) as Perm[]);
   };
 
   useEffect(() => { if (isAdmin) void load(); }, [isAdmin]);
@@ -99,6 +113,35 @@ function AdminForumPage() {
     if (error) { toast.error("Couldn't remove", { description: error.message }); return; }
     void load();
   };
+
+  const togglePerm = async (
+    boardId: string,
+    role: string,
+    field: "can_view" | "can_create_topic" | "can_reply",
+    next: boolean,
+  ) => {
+    const existing = perms.find((p) => p.board_id === boardId && p.role === role);
+    const row = {
+      board_id: boardId,
+      role,
+      can_view: existing?.can_view ?? false,
+      can_create_topic: existing?.can_create_topic ?? false,
+      can_reply: existing?.can_reply ?? false,
+      [field]: next,
+    };
+    // Optimistic update
+    setPerms((cur) => {
+      const others = cur.filter((p) => !(p.board_id === boardId && p.role === role));
+      return [...others, row as Perm];
+    });
+    const { error } = await supabase
+      .from("forum_board_permissions")
+      .upsert(row, { onConflict: "board_id,role" });
+    if (error) { toast.error("Couldn't save permission", { description: error.message }); void load(); }
+  };
+
+  const permFor = (boardId: string, role: string) =>
+    perms.find((p) => p.board_id === boardId && p.role === role);
 
   return (
     <div className="mx-auto w-full max-w-4xl px-4 py-6 space-y-4">
@@ -179,6 +222,56 @@ function AdminForumPage() {
                       className="h-8 text-xs"
                     />
                     <Button size="sm" variant="outline" onClick={() => void addMod(b.id)}><UserPlus className="size-3.5" /></Button>
+                  </div>
+                </div>
+
+                <div className="rounded-lg bg-background/60 border border-border/60 p-3">
+                  <div className="text-[11px] uppercase tracking-wide text-muted-foreground mb-2">Permissions per role</div>
+                  <p className="text-[11px] text-muted-foreground mb-2">
+                    Admin, management and moderator roles always have full access. If no rows are toggled below, the default falls back to approved Fan Zone members.
+                  </p>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-xs">
+                      <thead className="text-muted-foreground">
+                        <tr>
+                          <th className="text-left font-medium pb-1.5 pr-2">Role</th>
+                          <th className="font-medium pb-1.5 px-2">View</th>
+                          <th className="font-medium pb-1.5 px-2">Create topic</th>
+                          <th className="font-medium pb-1.5 pl-2">Reply</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {ROLES.map((r) => {
+                          const p = permFor(b.id, r.value);
+                          return (
+                            <tr key={r.value} className="border-t border-border/40">
+                              <td className="py-1.5 pr-2">{r.label}</td>
+                              <td className="py-1.5 px-2 text-center">
+                                <input
+                                  type="checkbox"
+                                  checked={!!p?.can_view}
+                                  onChange={(e) => void togglePerm(b.id, r.value, "can_view", e.target.checked)}
+                                />
+                              </td>
+                              <td className="py-1.5 px-2 text-center">
+                                <input
+                                  type="checkbox"
+                                  checked={!!p?.can_create_topic}
+                                  onChange={(e) => void togglePerm(b.id, r.value, "can_create_topic", e.target.checked)}
+                                />
+                              </td>
+                              <td className="py-1.5 pl-2 text-center">
+                                <input
+                                  type="checkbox"
+                                  checked={!!p?.can_reply}
+                                  onChange={(e) => void togglePerm(b.id, r.value, "can_reply", e.target.checked)}
+                                />
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
                   </div>
                 </div>
               </div>
