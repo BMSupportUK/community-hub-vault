@@ -205,7 +205,15 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
           onDrop={() => reorder(i.to)}
           className={isAdmin ? "cursor-grab active:cursor-grabbing" : undefined}
         >
-          <RailIcon to={i.to} label={i.label} Icon={i.icon} active={path.startsWith(i.to)} badge={i.badge} />
+          {i.to === "/forum" && fanZoneGated ? (
+            <RailButton
+              label={i.label}
+              Icon={i.icon}
+              onClick={() => window.dispatchEvent(new CustomEvent(FAN_ZONE_OPEN_EVENT))}
+            />
+          ) : (
+            <RailIcon to={i.to} label={i.label} Icon={i.icon} active={path.startsWith(i.to)} badge={i.badge} />
+          )}
         </div>
       ))}
       <div className="mt-auto" />
