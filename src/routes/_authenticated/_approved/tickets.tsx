@@ -280,10 +280,12 @@ function TicketsPage() {
     if (!user) return;
     loadTickets();
     const ch = supabase
-      .channel("tickets-list")
+      .channel(`tickets-list-${user.id}-${Math.random().toString(36).slice(2)}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "tickets" }, () => loadTickets())
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "ticket_messages" }, () => loadTickets())
       .subscribe();
-    return () => { supabase.removeChannel(ch); };
+    const interval = window.setInterval(loadTickets, 30_000);
+    return () => { window.clearInterval(interval); supabase.removeChannel(ch); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id, view]);
 
