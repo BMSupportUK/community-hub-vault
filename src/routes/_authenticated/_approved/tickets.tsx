@@ -1164,57 +1164,76 @@ function TicketDetail({
             ) : linkedOrder.paid_at ? (
               <div className="text-emerald-200">✓ Payment received — thank you!</div>
             ) : null}
-            {isAdmin && !linkedOrder.completed_at && linkedOrder.status !== "cancelled" && (
+            {!linkedOrder.completed_at && linkedOrder.status !== "cancelled" && (
               <div className="flex flex-wrap gap-2 pt-1">
-                {linkedOrder.customer_type === "existing" ? (
+                {/* Cancel — available to admin or the order owner while unpaid */}
+                {!linkedOrder.paid_at && (
                   <button
-                    onClick={orderExtendSubscription}
-                    disabled={orderBusy || !linkedOrder.paid_at || extendSubMessageExists}
+                    onClick={orderCancel}
+                    disabled={orderBusy}
                     title={
-                      !linkedOrder.paid_at
-                        ? "Waiting for payment confirmation"
-                        : extendSubMessageExists
-                          ? "Subscription extension already sent"
-                          : undefined
+                      linkedOrder.user_id === currentUserId
+                        ? "Cancel your order"
+                        : "Cancel this order"
                     }
-                    className="px-2.5 py-1 rounded-md bg-violet-500/20 text-violet-50 text-xs font-medium hover:bg-violet-500/30 disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="px-2.5 py-1 rounded-md bg-red-500/20 text-red-50 text-xs font-medium flex items-center gap-1 hover:bg-red-500/30 disabled:opacity-40 disabled:cursor-not-allowed"
                   >
-                    🔄 Extend Subscription
-                  </button>
-                ) : (
-                  <button
-                    onClick={orderSettingUpAccount}
-                    disabled={orderBusy || !linkedOrder.paid_at || accountSetupMessageExists}
-                    title={
-                      !linkedOrder.paid_at
-                        ? "Waiting for payment confirmation"
-                        : accountSetupMessageExists
-                          ? "Account setup already sent"
-                          : undefined
-                    }
-                    className="px-2.5 py-1 rounded-md bg-blue-500/20 text-blue-50 text-xs font-medium hover:bg-blue-500/30 disabled:opacity-40 disabled:cursor-not-allowed"
-                  >
-                    🛠️ Setting Up Account
+                    <Ban className="size-3.5" /> Cancel Order
                   </button>
                 )}
-                <button
-                  onClick={orderCompleteSale}
-                  disabled={orderBusy || !linkedOrder.paid_at || !accountSetupStarted || !!linkedOrder.completed_at}
-                  title={
-                    !linkedOrder.paid_at
-                      ? "Waiting for payment confirmation"
-                      : !accountSetupStarted
-                        ? (linkedOrder.customer_type === "existing"
-                            ? "Extend subscription first"
-                            : "Set up account first")
-                        : !!linkedOrder.completed_at
-                          ? "Sale already completed"
-                          : undefined
-                  }
-                  className="px-2.5 py-1 rounded-md bg-emerald-500/25 text-emerald-50 text-xs font-medium hover:bg-emerald-500/35 disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  ✅ Sale Complete
-                </button>
+                {isAdmin && (
+                  <>
+                    {linkedOrder.customer_type === "existing" ? (
+                      <button
+                        onClick={orderExtendSubscription}
+                        disabled={orderBusy || !linkedOrder.paid_at || extendSubMessageExists}
+                        title={
+                          !linkedOrder.paid_at
+                            ? "Waiting for payment confirmation"
+                            : extendSubMessageExists
+                              ? "Subscription extension already sent"
+                              : undefined
+                        }
+                        className="px-2.5 py-1 rounded-md bg-violet-500/20 text-violet-50 text-xs font-medium hover:bg-violet-500/30 disabled:opacity-40 disabled:cursor-not-allowed"
+                      >
+                        🔄 Extend Subscription
+                      </button>
+                    ) : (
+                      <button
+                        onClick={orderSettingUpAccount}
+                        disabled={orderBusy || !linkedOrder.paid_at || accountSetupMessageExists}
+                        title={
+                          !linkedOrder.paid_at
+                            ? "Waiting for payment confirmation"
+                            : accountSetupMessageExists
+                              ? "Account setup already sent"
+                              : undefined
+                        }
+                        className="px-2.5 py-1 rounded-md bg-blue-500/20 text-blue-50 text-xs font-medium hover:bg-blue-500/30 disabled:opacity-40 disabled:cursor-not-allowed"
+                      >
+                        🛠️ Setting Up Account
+                      </button>
+                    )}
+                    <button
+                      onClick={orderCompleteSale}
+                      disabled={orderBusy || !linkedOrder.paid_at || !accountSetupStarted || !!linkedOrder.completed_at}
+                      title={
+                        !linkedOrder.paid_at
+                          ? "Waiting for payment confirmation"
+                          : !accountSetupStarted
+                            ? (linkedOrder.customer_type === "existing"
+                                ? "Extend subscription first"
+                                : "Set up account first")
+                            : !!linkedOrder.completed_at
+                              ? "Sale already completed"
+                              : undefined
+                      }
+                      className="px-2.5 py-1 rounded-md bg-emerald-500/25 text-emerald-50 text-xs font-medium hover:bg-emerald-500/35 disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      ✅ Sale Complete
+                    </button>
+                  </>
+                )}
               </div>
             )}
           </div>
