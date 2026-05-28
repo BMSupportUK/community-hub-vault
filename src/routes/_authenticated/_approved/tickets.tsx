@@ -722,7 +722,7 @@ function NewTicketForm({
           <aside className="lg:sticky lg:top-0 lg:self-start">
             <Field label="Category">
               <div className="flex flex-col gap-2">
-                {categories.map((c) => {
+                {categories.filter((c) => c.slug !== "orders").map((c) => {
                   const Icon = ICONS[c.icon] ?? LifeBuoy;
                   const active = c.id === categoryId;
                   return (
