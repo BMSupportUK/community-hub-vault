@@ -22,6 +22,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Button } from "@/components/ui/button";
 import { useRoleFlashMap, resolveAvatarUrl, roleFlashClass } from "@/lib/role-flash";
 import { ServiceStatusBox } from "@/components/app/ServiceStatusBox";
+import { PayOrderDialog } from "@/routes/_authenticated/_approved/shop";
 
 export const Route = createFileRoute("/_authenticated/_approved/tickets")({
   validateSearch: (s: Record<string, unknown>) => ({
@@ -58,7 +59,7 @@ interface Category { id: string; name: string; slug: string; description: string
 interface Ticket {
   id: string; user_id: string; category_id: string; subject: string;
   status: Status; priority: Priority; assigned_to: string | null;
-  created_at: string; updated_at: string;
+  created_at: string; updated_at: string; order_id?: string | null;
 }
 interface Message { id: string; ticket_id: string; sender_id: string; content: string; is_internal: boolean; created_at: string; attachments?: Attachment[]; }
 interface Attachment { name: string; path: string; size: number; type: string; }
