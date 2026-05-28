@@ -138,18 +138,7 @@ export function useMentionAutocomplete({
             ] as MentionUser[]
           ).filter((b) => !q || b.username.startsWith(q.toLowerCase()))
         : [];
-      // Role mentions — anyone can tag a role to notify everyone with that role
-      const ROLES: Array<{ name: string; label: string }> = [
-        { name: "admin", label: "Notify all admins" },
-        { name: "management", label: "Notify all management" },
-        { name: "moderator", label: "Notify all moderators" },
-        { name: "staff", label: "Notify all staff" },
-        { name: "member", label: "Notify all members" },
-      ];
-      const roles: MentionUser[] = ROLES
-        .filter((r) => !q || r.name.startsWith(q.toLowerCase()))
-        .map((r) => ({ id: `__role_${r.name}`, username: r.name, display_name: r.label }));
-      setResults([...broadcast, ...roles, ...users]);
+      setResults([...broadcast, ...users]);
     })();
     return () => {
       cancelled = true;
