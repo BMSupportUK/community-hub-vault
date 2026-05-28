@@ -17,7 +17,6 @@ import { GpsCapture } from "@/components/app/GpsCapture";
 import { DndDialogButton } from "@/components/app/DndDialogButton";
 import { useOnlineUsers } from "@/hooks/use-online-users";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 export const Route = createFileRoute("/_authenticated")({
   beforeLoad: async ({ location }) => {
