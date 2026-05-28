@@ -958,7 +958,7 @@ function Storefront() {
           .insert({
             user_id: user.id,
             category_id: ordersCat.id,
-            subject: `New order #${order.id.slice(0, 8)}`,
+            subject: `New order #${String(order.id).slice(0, 8)}`,
             priority: "normal",
           } as never)
           .select()
