@@ -849,7 +849,7 @@ function TicketDetail({
     value: draft,
     onChange: setDraft,
     textareaRef: taRef,
-    canBroadcast: isAdmin,
+    canBroadcast: false,
   });
   const [myUsername, setMyUsername] = useState<string | null>(null);
   useEffect(() => {
