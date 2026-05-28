@@ -200,7 +200,10 @@ export const capturePaypalOrder = createServerFn({ method: "POST" })
         .select("id")
         .eq("order_id", orderRowId);
       if (linkedTickets && linkedTickets.length > 0) {
-        const content = `✅ PayPal payment captured for order #${orderRowId.slice(0, 8)} (${who}).`;
+        const txRef = capture?.id ?? data.paypalOrderId;
+        const content =
+          `✅ PayPal payment captured for order #${orderRowId.slice(0, 8)} (${who}).` +
+          (txRef ? `\nTransaction ref: ${txRef}` : "");
         await supabase.from("ticket_messages").insert(
           linkedTickets.map((t: { id: string }) => ({
             ticket_id: t.id,
