@@ -1128,7 +1128,7 @@ function TicketDetail({
             </div>
             <OrderProgressStrip order={linkedOrder} />
             {orderIsUnpaid ? (
-              <div className="[&>*]:!text-rose-700">
+              <div className="[&>button]:!bg-gradient-to-r [&>button]:!from-emerald-400 [&>button]:!via-emerald-500 [&>button]:!to-emerald-600 [&>button]:!text-white [&>button]:!font-bold [&>button]:!text-base [&>button]:!py-3.5 [&>button]:!rounded-xl [&>button]:!shadow-[0_10px_30px_-8px_rgba(16,185,129,0.7),0_0_0_1px_rgba(255,255,255,0.15)_inset] [&>button]:!ring-2 [&>button]:!ring-emerald-300/60 [&>button]:hover:!brightness-110 [&>button]:hover:!shadow-[0_14px_40px_-8px_rgba(16,185,129,0.9),0_0_0_1px_rgba(255,255,255,0.2)_inset] [&>button]:!transition-all [&>button]:!tracking-wide [&>button]:animate-[pulse_2.4s_ease-in-out_infinite] [&>button>svg]:!size-5">
                 <PayOrderDialog
                   orderId={linkedOrder.id}
                   amountCents={linkedOrder.total_cents}
