@@ -923,26 +923,10 @@ function Storefront() {
     }));
     const { error: ie } = await supabase.from("order_items").insert(items as never);
     if (ie) { toast.error(ie.message); return; }
-    const summaryLines = [
-      `🧾 New order details`,
-      `• Customer: ${info.customer_type === "existing" ? `Existing — upgrading @${info.existing_username.trim()}` : "New customer"}`,
-      `• Adult content access: ${info.wants_adult_content ? "Yes" : "No"}`,
-    ];
-    await supabase.from("order_messages").insert({
-      order_id: order.id,
-      sender_id: user.id,
-      content: summaryLines.join("\n"),
-    } as never);
-    const oohMsg = await getOutOfHoursMessage();
-    if (oohMsg) {
-      await supabase.from("order_messages").insert({
-        order_id: order.id,
-        sender_id: user.id,
-        content: oohMsg,
-      } as never);
-    }
-    // Also open a support ticket in the admin/management-only "Orders"
-    // category so ownership can manage the order via the tickets workflow.
+    // Open a support ticket in the admin/management-only "Orders" category.
+    // The ticket replaces the old order chat as the primary communication
+    // channel; the order record itself still drives the payment lifecycle.
+    let newTicketId: string | null = null;
     try {
       const { data: ordersCat } = await supabase
         .from("ticket_categories")
@@ -964,6 +948,7 @@ function Storefront() {
           .select()
           .single();
         if (ticket?.id) {
+          newTicketId = ticket.id;
           const ticketBody = [
             `🧾 New order placed`,
             `Order ID: ${order.id}`,
@@ -980,6 +965,14 @@ function Storefront() {
             sender_id: user.id,
             content: ticketBody,
           } as never);
+          const oohMsg = await getOutOfHoursMessage();
+          if (oohMsg) {
+            await supabase.from("ticket_messages").insert({
+              ticket_id: ticket.id,
+              sender_id: user.id,
+              content: oohMsg,
+            } as never);
+          }
         }
       }
     } catch (e) {
@@ -988,7 +981,11 @@ function Storefront() {
     setCart({}); setShowCheckout(false);
     toast.success("Order placed!");
     reloadLatestOrder();
-    navigate({ to: "/shop", search: { view: "orders", id: order.id } });
+    if (newTicketId) {
+      navigate({ to: "/tickets", search: { id: newTicketId } });
+    } else {
+      navigate({ to: "/shop", search: { view: "orders", id: order.id } });
+    }
   };
 
   return (
