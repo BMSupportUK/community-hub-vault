@@ -120,6 +120,28 @@ export const Route = createFileRoute("/api/public/hooks/nowpayments")({
               content: `✅ USDT payment received (${networkLabel}${txHash ? `, tx ${txHash.slice(0, 10)}…` : ""}).`,
             });
           }
+
+          // Mirror confirmation into any linked support ticket(s)
+          try {
+            const { data: linkedTickets } = await supabaseAdmin
+              .from("tickets")
+              .select("id,user_id")
+              .eq("order_id", orderId);
+            if (linkedTickets && linkedTickets.length > 0) {
+              const content =
+                `✅ USDT payment received for order #${orderId.slice(0, 8)} (${networkLabel}` +
+                `${txHash ? `, tx ${txHash.slice(0, 10)}…` : ""}).`;
+              await supabaseAdmin.from("ticket_messages").insert(
+                linkedTickets.map((t: { id: string; user_id: string }) => ({
+                  ticket_id: t.id,
+                  sender_id: t.user_id,
+                  content,
+                })),
+              );
+            }
+          } catch (e) {
+            console.error("Failed to post USDT payment message to ticket:", e);
+          }
         }
 
         return new Response("ok");
