@@ -57,8 +57,9 @@ function extractStandalonePreviewUrl(fragment: string): string | null {
   if (anchors.length > 0) return null;
 
   const text = htmlTextContent(fragment);
-  const url = firstPreviewUrlInText(text);
-  return url && text.replace(/[)\].,!?;:]+$/g, "") === url ? url : null;
+  const raw = text.match(HTTP_URL_RE)?.[0] ?? null;
+  const url = raw ? normalizePreviewUrl(raw) : null;
+  return raw && url && text.replace(/[)\].,!?;:]+$/g, "") === raw.replace(/[)\].,!?;:]+$/g, "") ? url : null;
 }
 
 function firstAnchorPreviewUrl(fragment: string): string | null {
