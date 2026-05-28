@@ -5,7 +5,7 @@ const FB_RE = /^https?:\/\/(?:www\.|m\.|web\.)?facebook\.com\/[^\s<>"']+$/i;
 const FB_WATCH_RE = /^https?:\/\/fb\.watch\/[A-Za-z0-9_-]+\/?(?:[?#]\S*)?$/i;
 
 function tweetEmbed(url: string, id: string) {
-  // Marker consumed by ForumPostBody; rendered via react-tweet (no widgets.js).
+  // Marker consumed by ForumPostBody; rendered by the app (no widgets.js iframe).
   return `<div data-tweet-embed="${id}" data-tweet-url="${url}"></div>`;
 }
 function fbEmbed(url: string) {
@@ -51,7 +51,7 @@ export function embedSocialUrls(html: string): string {
   if (!html) return html;
 
   // Migrate legacy embed markup (old blockquote.twitter-tweet shells, including
-  // the previous social-embed-x wrapper) to the new marker so react-tweet
+  // the previous social-embed-x wrapper) to the app marker so X posts
   // renders them without requiring posts to be re-saved.
   html = html.replace(
     /<div\b[^>]*class=["'][^"']*social-embed-x[^"']*["'][\s\S]*?<\/div>/gi,

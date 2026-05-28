@@ -1,15 +1,6 @@
-import { useMemo, useRef, Fragment, lazy, Suspense } from "react";
+import { useEffect, useMemo, useRef, useState, Fragment } from "react";
 import { sanitizeRichHtml } from "@/lib/sanitize-html";
 import { useLoadSocialEmbeds, embedSocialUrls } from "@/lib/forum-embeds";
-
-// Lazy-load react-tweet on the client only. Its package "react-server"
-// export condition resolves to an RSC build on some SSR runtimes (e.g.
-// the Cloudflare Worker the app SSRs in), which throws "n is not iterable"
-// at module init and takes down the whole page — even on routes that don't
-// render any tweets.
-const Tweet = lazy(() =>
-  import("react-tweet").then((m) => ({ default: m.Tweet })),
-);
 
 /**
  * Renders forum post HTML safely. Legacy plain-text posts (no `<` in the body)
@@ -22,9 +13,9 @@ export function ForumPostBody({ html, className }: { html: string; className?: s
   // URL detector was fixed (e.g. URLs ending in `?s=20`) still hydrate into
   // proper embeds without requiring the author to edit & re-save.
   const processed = useMemo(() => embedSocialUrls(html), [html]);
-  // Split processed HTML around tweet markers so we can render <Tweet/> via
-  // react-tweet (server-rendered via X's syndication API — no widgets.js,
-  // no disappearing iframe).
+  // Split processed HTML around tweet markers so we can render X posts via
+  // a local, defensive renderer — no widgets.js, no SSR package import, no
+  // disappearing iframe.
   const segments = useMemo(() => splitTweetSegments(processed), [processed]);
   useLoadSocialEmbeds(ref, [processed]);
 
@@ -51,11 +42,7 @@ export function ForumPostBody({ html, className }: { html: string; className?: s
     <div ref={ref} className={wrapperClass}>
       {segments.map((seg, i) =>
         seg.type === "tweet" ? (
-          <div key={`t-${i}-${seg.id}`} className="my-3 flex justify-center [&_.react-tweet-theme]:!my-0" data-theme="dark">
-            <Suspense fallback={<div className="text-xs text-muted-foreground">Loading tweet…</div>}>
-              <Tweet id={seg.id} />
-            </Suspense>
-          </div>
+          <XPostEmbed key={`t-${i}-${seg.id}`} id={seg.id} url={seg.url} />
         ) : (
           <Fragment key={`h-${i}`}>
             <div dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(seg.html) }} />
@@ -66,18 +53,162 @@ export function ForumPostBody({ html, className }: { html: string; className?: s
   );
 }
 
-type Segment = { type: "html"; html: string } | { type: "tweet"; id: string };
+type Segment = { type: "html"; html: string } | { type: "tweet"; id: string; url: string };
 
 function splitTweetSegments(html: string): Segment[] {
-  const re = /<div\b[^>]*\bdata-tweet-embed=["']([^"']+)["'][^>]*>\s*<\/div>/gi;
+  const re = /<div\b([^>]*)\bdata-tweet-embed=["']([^"']+)["'][^>]*>\s*<\/div>/gi;
   const out: Segment[] = [];
   let last = 0;
   let m: RegExpExecArray | null;
   while ((m = re.exec(html)) !== null) {
     if (m.index > last) out.push({ type: "html", html: html.slice(last, m.index) });
-    out.push({ type: "tweet", id: m[1] });
+    const attrs = m[0];
+    const url = attrs.match(/\bdata-tweet-url=["']([^"']+)["']/i)?.[1] ?? `https://x.com/i/status/${m[2]}`;
+    out.push({ type: "tweet", id: m[2], url });
     last = m.index + m[0].length;
   }
   if (last < html.length) out.push({ type: "html", html: html.slice(last) });
   return out.length ? out : [{ type: "html", html }];
+}
+
+type TweetApiUser = {
+  name?: string;
+  screen_name?: string;
+  profile_image_url_https?: string;
+  is_blue_verified?: boolean;
+  verified?: boolean;
+};
+
+type TweetApiData = {
+  text?: string;
+  created_at?: string;
+  favorite_count?: number;
+  conversation_count?: number;
+  user?: TweetApiUser;
+  photos?: { url?: string; expandedUrl?: string }[];
+  mediaDetails?: { media_url_https?: string; type?: string; expanded_url?: string }[];
+  entities?: { urls?: { url?: string; expanded_url?: string; display_url?: string }[] };
+};
+
+function XPostEmbed({ id, url }: { id: string; url: string }) {
+  const [tweet, setTweet] = useState<TweetApiData | null>(null);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    setTweet(null);
+    setFailed(false);
+
+    fetch(`/api/public/tweet?id=${encodeURIComponent(id)}`)
+      .then(async (res) => {
+        const json = (await res.json().catch(() => null)) as { data?: TweetApiData | null } | null;
+        if (!cancelled) {
+          if (res.ok && json?.data) setTweet(json.data);
+          else setFailed(true);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setFailed(true);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
+
+  const href = normalizeXUrl(url, id);
+  const user = tweet?.user;
+  const handle = user?.screen_name ? `@${user.screen_name}` : "X post";
+  const media = tweet ? getTweetMedia(tweet) : [];
+
+  return (
+    <article className="my-3 max-w-[540px] rounded-lg border border-border bg-card p-4 text-card-foreground shadow-sm">
+      <a href={href} target="_blank" rel="noopener noreferrer" className="not-prose block no-underline">
+        <div className="flex items-start gap-3">
+          {user?.profile_image_url_https ? (
+            <img
+              src={user.profile_image_url_https}
+              alt=""
+              className="size-10 shrink-0 rounded-full border border-border"
+              loading="lazy"
+              referrerPolicy="no-referrer"
+            />
+          ) : (
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-full border border-border bg-muted text-sm font-bold text-muted-foreground">
+              X
+            </div>
+          )}
+          <div className="min-w-0 flex-1">
+            <div className="flex min-w-0 items-center gap-1.5">
+              <span className="truncate font-semibold text-foreground">{user?.name ?? "View post on X"}</span>
+              {(user?.is_blue_verified || user?.verified) && <span className="text-primary">✓</span>}
+            </div>
+            <div className="truncate text-sm text-muted-foreground">{handle}</div>
+          </div>
+          <span className="shrink-0 text-lg font-bold text-foreground">𝕏</span>
+        </div>
+
+        {tweet?.text ? (
+          <p className="mt-3 whitespace-pre-wrap text-[15px] leading-relaxed text-foreground">{formatTweetText(tweet)}</p>
+        ) : (
+          <div className="mt-3 rounded-md border border-border bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
+            {failed ? "X could not provide a preview for this post." : "Loading X post preview…"}
+          </div>
+        )}
+
+        {media.length > 0 && (
+          <div className={`mt-3 grid gap-1 overflow-hidden rounded-md border border-border ${media.length > 1 ? "grid-cols-2" : "grid-cols-1"}`}>
+            {media.slice(0, 4).map((item, index) => (
+              <img
+                key={`${item}-${index}`}
+                src={item}
+                alt="X post media"
+                className="aspect-video h-full w-full object-cover"
+                loading="lazy"
+                referrerPolicy="no-referrer"
+              />
+            ))}
+          </div>
+        )}
+
+        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+          {tweet?.created_at && <span>{formatTweetDate(tweet.created_at)}</span>}
+          {typeof tweet?.favorite_count === "number" && <span>{compactNumber(tweet.favorite_count)} likes</span>}
+          {typeof tweet?.conversation_count === "number" && <span>{compactNumber(tweet.conversation_count)} replies</span>}
+          <span className="font-medium text-primary">Open on X</span>
+        </div>
+      </a>
+    </article>
+  );
+}
+
+function normalizeXUrl(url: string, id: string) {
+  const safeUrl = url || `https://x.com/i/status/${id}`;
+  return safeUrl.replace(/^http:/i, "https:").replace(/^https:\/\/twitter\.com/i, "https://x.com");
+}
+
+function getTweetMedia(tweet: TweetApiData): string[] {
+  const photos = tweet.photos?.map((p) => p.url).filter(Boolean) as string[] | undefined;
+  const media = tweet.mediaDetails
+    ?.filter((m) => m.type === "photo" && m.media_url_https)
+    .map((m) => m.media_url_https as string);
+  return Array.from(new Set([...(photos ?? []), ...(media ?? [])]));
+}
+
+function formatTweetText(tweet: TweetApiData): string {
+  let text = tweet.text ?? "";
+  for (const entity of tweet.entities?.urls ?? []) {
+    if (entity.url && entity.display_url) text = text.replace(entity.url, entity.display_url);
+  }
+  return text;
+}
+
+function formatTweetDate(value: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "X post";
+  return new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" }).format(date);
+}
+
+function compactNumber(value: number): string {
+  return new Intl.NumberFormat(undefined, { notation: "compact", maximumFractionDigits: 1 }).format(value);
 }
