@@ -2501,7 +2501,7 @@ function AdminProducts() {
   return <AdminProductsInner />;
 }
 
-function PayOrderDialog({ orderId, amountCents, onChange }: { orderId: string; amountCents: number; onChange?: () => void | Promise<void> }) {
+export function PayOrderDialog({ orderId, amountCents, onChange }: { orderId: string; amountCents: number; onChange?: () => void | Promise<void> }) {
   const [open, setOpen] = useState(false);
   const handleChange = async () => {
     await onChange?.();
