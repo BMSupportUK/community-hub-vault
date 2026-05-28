@@ -91,6 +91,7 @@ type TweetApiData = {
 };
 
 function XPostEmbed({ id, url }: { id: string; url: string }) {
+  const fallbackRef = useRef<HTMLDivElement>(null);
   const [tweet, setTweet] = useState<TweetApiData | null>(null);
   const [failed, setFailed] = useState(false);
 
@@ -116,6 +117,14 @@ function XPostEmbed({ id, url }: { id: string; url: string }) {
     };
   }, [id]);
 
+  useEffect(() => {
+    if (!failed || !fallbackRef.current) return;
+    void loadXWidgets().then(() => {
+      const w = window as unknown as { twttr?: { widgets: { load: (el?: Element) => void } } };
+      w.twttr?.widgets.load(fallbackRef.current ?? undefined);
+    });
+  }, [failed]);
+
   const href = normalizeXUrl(url, id);
   const user = tweet?.user;
   const handle = user?.screen_name ? `@${user.screen_name}` : "X post";
@@ -123,6 +132,16 @@ function XPostEmbed({ id, url }: { id: string; url: string }) {
 
   return (
     <article className="my-3 max-w-[540px] rounded-lg border border-border bg-card p-4 text-card-foreground shadow-sm">
+      {failed && !tweet ? (
+        <div ref={fallbackRef} className="not-prose">
+          <blockquote className="twitter-tweet" data-dnt="true" data-theme="dark" data-lang="en">
+            <a href={href}>View post on X</a>
+          </blockquote>
+          <a href={href} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-primary underline">
+            Open on X
+          </a>
+        </div>
+      ) : (
       <a href={href} target="_blank" rel="noopener noreferrer" className="not-prose block no-underline">
         <div className="flex items-start gap-3">
           {user?.profile_image_url_https ? (
@@ -178,8 +197,26 @@ function XPostEmbed({ id, url }: { id: string; url: string }) {
           <span className="font-medium text-primary">Open on X</span>
         </div>
       </a>
+      )}
     </article>
   );
+}
+
+let xWidgetsPromise: Promise<void> | null = null;
+function loadXWidgets(): Promise<void> {
+  if (typeof window === "undefined") return Promise.resolve();
+  if ((window as unknown as { twttr?: unknown }).twttr) return Promise.resolve();
+  if (xWidgetsPromise) return xWidgetsPromise;
+  xWidgetsPromise = new Promise<void>((resolve) => {
+    const script = document.createElement("script");
+    script.src = "https://platform.twitter.com/widgets.js";
+    script.async = true;
+    script.charset = "utf-8";
+    script.onload = () => resolve();
+    script.onerror = () => resolve();
+    document.head.appendChild(script);
+  });
+  return xWidgetsPromise;
 }
 
 function normalizeXUrl(url: string, id: string) {
