@@ -10,7 +10,7 @@ type Meta = {
 
 const cache = new Map<string, Meta>();
 
-export function LinkPreviewCard({ url }: { url: string }) {
+export function LinkPreviewCard({ url, title }: { url: string; title?: string }) {
   const [meta, setMeta] = useState<Meta | null>(() => cache.get(url) ?? null);
   const [failed, setFailed] = useState(false);
 
@@ -59,7 +59,7 @@ export function LinkPreviewCard({ url }: { url: string }) {
           <span className="truncate">{m?.host ?? host}</span>
         </div>
         <div className="mt-1 font-semibold leading-snug text-foreground line-clamp-2">
-          {m?.title ?? (failed ? host : "Loading preview…")}
+          {title || m?.title || (failed ? host : "Loading preview…")}
         </div>
         {m?.description && (
           <p className="mt-1 text-sm text-muted-foreground line-clamp-2">{m.description}</p>
