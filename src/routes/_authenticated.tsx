@@ -15,7 +15,6 @@ import { ModerationPendingBadge } from "@/components/app/ModerationPendingBadge"
 import { PendingOrdersBadge } from "@/components/app/PendingOrdersBadge";
 import { logMyIp } from "@/lib/ip-log.functions";
 import { GpsCapture } from "@/components/app/GpsCapture";
-import { GpsCapture } from "@/components/app/GpsCapture";
 import { DndDialogButton } from "@/components/app/DndDialogButton";
 import { useOnlineUsers } from "@/hooks/use-online-users";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
