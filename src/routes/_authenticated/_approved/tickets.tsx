@@ -22,7 +22,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Button } from "@/components/ui/button";
 import { useRoleFlashMap, resolveAvatarUrl, roleFlashClass } from "@/lib/role-flash";
 import { ServiceStatusBox } from "@/components/app/ServiceStatusBox";
-import { PayOrderDialog } from "@/routes/_authenticated/_approved/shop";
+import { PayOrderDialog, OrderProgressStrip } from "@/routes/_authenticated/_approved/shop";
 
 export const Route = createFileRoute("/_authenticated/_approved/tickets")({
   validateSearch: (s: Record<string, unknown>) => ({
@@ -823,15 +823,15 @@ function TicketDetail({
 
   // Linked order (for Orders-category tickets) — lets the customer pay
   // for the order directly from inside the ticket.
-  const [linkedOrder, setLinkedOrder] = useState<{ id: string; total_cents: number; status: string; paid_at: string | null } | null>(null);
+  const [linkedOrder, setLinkedOrder] = useState<{ id: string; total_cents: number; status: string; paid_at: string | null; completed_at: string | null } | null>(null);
   const loadLinkedOrder = async () => {
     if (!ticket.order_id) { setLinkedOrder(null); return; }
     const { data } = await supabase
       .from("orders")
-      .select("id,total_cents,status,paid_at")
+      .select("id,total_cents,status,paid_at,completed_at")
       .eq("id", ticket.order_id)
       .maybeSingle();
-    setLinkedOrder(data ? (data as { id: string; total_cents: number; status: string; paid_at: string | null }) : null);
+    setLinkedOrder(data ? (data as { id: string; total_cents: number; status: string; paid_at: string | null; completed_at: string | null }) : null);
   };
   useEffect(() => { loadLinkedOrder(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [ticket.order_id]);
   const orderIsUnpaid = !!linkedOrder && !linkedOrder.paid_at && linkedOrder.status !== "cancelled" && linkedOrder.status !== "refunded" && linkedOrder.status !== "completed";
