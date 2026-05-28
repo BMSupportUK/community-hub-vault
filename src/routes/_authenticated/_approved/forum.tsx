@@ -88,7 +88,7 @@ function ForumLayout() {
               BORO FAN ZONE
             </h1>
             <p className="mt-2 text-sm text-white/85 italic">
-              Up the Boro — boards, banter & match-day brawls.
+              Up the Boro — boards, banter & match-day debate.
             </p>
           </div>
         </div>
