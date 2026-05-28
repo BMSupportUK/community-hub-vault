@@ -1146,8 +1146,14 @@ function TicketDetail({
                 {linkedOrder.customer_type === "existing" ? (
                   <button
                     onClick={orderExtendSubscription}
-                    disabled={orderBusy || !linkedOrder.paid_at}
-                    title={!linkedOrder.paid_at ? "Waiting for payment confirmation" : undefined}
+                    disabled={orderBusy || !linkedOrder.paid_at || extendSubMessageExists}
+                    title={
+                      !linkedOrder.paid_at
+                        ? "Waiting for payment confirmation"
+                        : extendSubMessageExists
+                          ? "Subscription extension already sent"
+                          : undefined
+                    }
                     className="px-2.5 py-1 rounded-md bg-violet-500/20 text-violet-50 text-xs font-medium hover:bg-violet-500/30 disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     🔄 Extend Subscription
@@ -1155,8 +1161,14 @@ function TicketDetail({
                 ) : (
                   <button
                     onClick={orderSettingUpAccount}
-                    disabled={orderBusy || !linkedOrder.paid_at}
-                    title={!linkedOrder.paid_at ? "Waiting for payment confirmation" : undefined}
+                    disabled={orderBusy || !linkedOrder.paid_at || accountSetupMessageExists}
+                    title={
+                      !linkedOrder.paid_at
+                        ? "Waiting for payment confirmation"
+                        : accountSetupMessageExists
+                          ? "Account setup already sent"
+                          : undefined
+                    }
                     className="px-2.5 py-1 rounded-md bg-blue-500/20 text-blue-50 text-xs font-medium hover:bg-blue-500/30 disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     🛠️ Setting Up Account
@@ -1164,7 +1176,7 @@ function TicketDetail({
                 )}
                 <button
                   onClick={orderCompleteSale}
-                  disabled={orderBusy || !linkedOrder.paid_at || !accountSetupStarted}
+                  disabled={orderBusy || !linkedOrder.paid_at || !accountSetupStarted || !!linkedOrder.completed_at}
                   title={
                     !linkedOrder.paid_at
                       ? "Waiting for payment confirmation"
@@ -1172,7 +1184,9 @@ function TicketDetail({
                         ? (linkedOrder.customer_type === "existing"
                             ? "Extend subscription first"
                             : "Set up account first")
-                        : undefined
+                        : !!linkedOrder.completed_at
+                          ? "Sale already completed"
+                          : undefined
                   }
                   className="px-2.5 py-1 rounded-md bg-emerald-500/25 text-emerald-50 text-xs font-medium hover:bg-emerald-500/35 disabled:opacity-40 disabled:cursor-not-allowed"
                 >
