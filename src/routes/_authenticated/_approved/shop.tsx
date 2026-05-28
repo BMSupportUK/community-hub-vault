@@ -1839,6 +1839,7 @@ function OrdersView({ selectedId, isAdmin, adminUnlocked, initialScope }: { sele
 
 function OrderDetail({ orderId, isAdmin, onBack }: { orderId: string; isAdmin: boolean; onBack?: () => void }) {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [order, setOrder] = useState<Order | null>(null);
   const [items, setItems] = useState<OrderItem[]>([]);
   const [msgs, setMsgs] = useState<OrderMessage[]>([]);
@@ -1852,6 +1853,25 @@ function OrderDetail({ orderId, isAdmin, onBack }: { orderId: string; isAdmin: b
   const typingChannelReadyRef = useRef(false);
   const textRef = useRef("");
   const [credsOpen, setCredsOpen] = useState(false);
+  const [linkedTicketId, setLinkedTicketId] = useState<string | null>(null);
+
+  // Look up the support ticket that was opened for this order so we can
+  // redirect customers/staff there instead of using the legacy chat.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const subject = `New order #${String(orderId).slice(0, 8)}`;
+      const { data } = await supabase
+        .from("tickets")
+        .select("id")
+        .eq("subject", subject)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (!cancelled) setLinkedTicketId((data as { id: string } | null)?.id ?? null);
+    })();
+    return () => { cancelled = true; };
+  }, [orderId]);
 
   const load = async () => {
     const [{ data: o }, { data: it }, { data: m }] = await Promise.all([
