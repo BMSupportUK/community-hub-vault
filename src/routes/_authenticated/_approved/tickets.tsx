@@ -597,7 +597,8 @@ function TicketsPage() {
     </main>
   );
 }
-}
+
+function NewTicketForm({
 
 function NewTicketForm({
   categories, onCancel, onCreated, preset,
