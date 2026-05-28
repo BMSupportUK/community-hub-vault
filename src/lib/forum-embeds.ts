@@ -4,6 +4,7 @@ const TWEET_RE = /^https?:\/\/(?:www\.|mobile\.)?(?:twitter|x)\.com\/[A-Za-z0-9_
 const FB_RE = /^https?:\/\/(?:www\.|m\.|web\.)?facebook\.com\/[^\s<>"']+$/i;
 const FB_WATCH_RE = /^https?:\/\/fb\.watch\/[A-Za-z0-9_-]+\/?(?:[?#]\S*)?$/i;
 const SKIP_PREVIEW_RE = /^https?:\/\/(?:www\.|m\.|mobile\.|web\.)?(?:twitter\.com|x\.com|facebook\.com|fb\.watch|youtube\.com|youtu\.be)\//i;
+const HTTP_URL_RE = /https?:\/\/[^\s<>"']+/i;
 
 /**
  * Walk processed HTML and replace any standalone link (a paragraph that
@@ -13,38 +14,84 @@ const SKIP_PREVIEW_RE = /^https?:\/\/(?:www\.|m\.|mobile\.|web\.)?(?:twitter\.co
  * URLs keep their first-class embed.
  */
 export function markLinkPreviews(html: string): string {
-  if (!html || typeof window === "undefined") return html;
-  const doc = new DOMParser().parseFromString(`<div id="__root">${html}</div>`, "text/html");
-  const root = doc.getElementById("__root");
-  if (!root) return html;
+  if (!html) return html;
 
-  Array.from(root.querySelectorAll("p")).forEach((p) => {
-    if (
-      p.querySelector(
-        "img,iframe,video,blockquote,[data-tweet-embed],[data-link-preview],a.link-card,.twitter-tweet,.fb-post,.mention,.video-embed",
-      )
-    ) {
-      return;
-    }
-    const text = (p.textContent ?? "").trim();
-    if (!text) return;
-    const links = p.querySelectorAll("a[href]");
-    let url: string | null = null;
-    if (links.length === 1) {
-      const a = links[0] as HTMLAnchorElement;
-      const href = a.getAttribute("href") ?? "";
-      const aText = (a.textContent ?? "").trim();
-      if (/^https?:\/\//i.test(href) && text === aText) url = href;
-    } else if (links.length === 0 && /^https?:\/\/\S+$/i.test(text)) {
-      url = text;
-    }
-    if (!url || SKIP_PREVIEW_RE.test(url)) return;
-    const marker = doc.createElement("div");
-    marker.setAttribute("data-link-preview", url);
-    p.replaceWith(marker);
+  const standalone = extractStandalonePreviewUrl(html);
+  if (standalone) return linkPreviewMarker(standalone);
+
+  const hasHtml = /<[a-z][\s\S]*>/i.test(html);
+  if (!hasHtml) {
+    const url = firstPreviewUrlInText(html);
+    return url ? `<p>${escapeHtml(html).replace(/\n/g, "<br/>")}</p>${linkPreviewMarker(url)}` : html;
+  }
+
+  return html.replace(/<(p|div)\b([^>]*)>([\s\S]*?)<\/\1>/gi, (match, tag: string, attrs: string, inner: string) => {
+    if (/data-link-preview|data-tweet-embed|link-card|twitter-tweet|fb-post|video-embed/i.test(match)) return match;
+    if (/(?:^|\s)class=["'][^"']*(?:mention|video-embed)[^"']*["']/i.test(match)) return match;
+    if (/<(?:img|iframe|video|blockquote)\b/i.test(inner)) return match;
+    if (tag.toLowerCase() === "div" && /<(?:p|div|ul|ol|li|h[1-6]|table|section|article)\b/i.test(inner)) return match;
+
+    const blockUrl = extractStandalonePreviewUrl(inner);
+    if (blockUrl) return linkPreviewMarker(blockUrl);
+
+    const inlineUrl = firstAnchorPreviewUrl(inner) ?? firstPreviewUrlInText(htmlTextContent(inner));
+    return inlineUrl ? `${match}${linkPreviewMarker(inlineUrl)}` : match;
   });
+}
 
-  return root.innerHTML;
+function linkPreviewMarker(url: string, title?: string | null): string {
+  const titleAttr = title ? ` data-link-title="${escapeAttr(title)}"` : "";
+  return `<div data-link-preview="${escapeAttr(url)}"${titleAttr}></div>`;
+}
+
+function extractStandalonePreviewUrl(fragment: string): string | null {
+  if (!fragment || /data-link-preview|data-tweet-embed|link-card|twitter-tweet|fb-post|video-embed/i.test(fragment)) return null;
+  if (/<(?:img|iframe|video|blockquote)\b/i.test(fragment)) return null;
+
+  const anchors = Array.from(fragment.matchAll(/<a\b[^>]*href=["']([^"']+)["'][^>]*>[\s\S]*?<\/a>/gi));
+  if (anchors.length === 1) {
+    const outside = htmlTextContent(fragment.replace(anchors[0][0], ""));
+    const href = normalizePreviewUrl(decodeBasicEntities(anchors[0][1] ?? ""));
+    if (!outside && href) return href;
+  }
+  if (anchors.length > 0) return null;
+
+  const text = htmlTextContent(fragment);
+  const raw = text.match(HTTP_URL_RE)?.[0] ?? null;
+  const url = raw ? normalizePreviewUrl(raw) : null;
+  return raw && url && text.replace(/[)\].,!?;:]+$/g, "") === raw.replace(/[)\].,!?;:]+$/g, "") ? url : null;
+}
+
+function firstAnchorPreviewUrl(fragment: string): string | null {
+  for (const match of fragment.matchAll(/<a\b[^>]*href=["']([^"']+)["'][^>]*>/gi)) {
+    const url = normalizePreviewUrl(decodeBasicEntities(match[1] ?? ""));
+    if (url) return url;
+  }
+  return null;
+}
+
+function firstPreviewUrlInText(text: string): string | null {
+  const raw = text.match(HTTP_URL_RE)?.[0];
+  return raw ? normalizePreviewUrl(raw) : null;
+}
+
+function normalizePreviewUrl(raw: string): string | null {
+  const cleaned = raw.trim().replace(/[)\].,!?;:]+$/g, "");
+  try {
+    const url = new URL(cleaned);
+    if (!/^https?:$/i.test(url.protocol) || SKIP_PREVIEW_RE.test(url.toString())) return null;
+    return url.toString();
+  } catch {
+    return null;
+  }
+}
+
+function escapeAttr(s: string): string {
+  return s.replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch]!);
+}
+
+function escapeHtml(s: string): string {
+  return s.replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch]!);
 }
 
 function tweetEmbed(url: string, id: string) {

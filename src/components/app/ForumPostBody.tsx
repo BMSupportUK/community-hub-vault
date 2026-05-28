@@ -45,7 +45,7 @@ export function ForumPostBody({ html, className }: { html: string; className?: s
         seg.type === "tweet" ? (
           <XPostEmbed key={`t-${i}-${seg.id}`} id={seg.id} url={seg.url} />
         ) : seg.type === "link" ? (
-          <LinkPreviewCard key={`l-${i}-${seg.url}`} url={seg.url} />
+          <LinkPreviewCard key={`l-${i}-${seg.url}`} url={seg.url} title={seg.title} />
         ) : (
           <Fragment key={`h-${i}`}>
             <div dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(seg.html) }} />
@@ -59,10 +59,10 @@ export function ForumPostBody({ html, className }: { html: string; className?: s
 type Segment =
   | { type: "html"; html: string }
   | { type: "tweet"; id: string; url: string }
-  | { type: "link"; url: string };
+  | { type: "link"; url: string; title?: string };
 
 function splitTweetSegments(html: string): Segment[] {
-  const re = /<div\b[^>]*\b(?:data-tweet-embed=["']([^"']+)["']|data-link-preview=["']([^"']+)["'])[^>]*>\s*<\/div>/gi;
+  const re = /<div\b[^>]*\b(?:data-tweet-embed=["']([^"']+)["']|data-link-preview=["']([^"']+)["'])[^>]*>(?:\s|<br\s*\/?>|&nbsp;)*<\/div>/gi;
   const out: Segment[] = [];
   let last = 0;
   let m: RegExpExecArray | null;
@@ -73,7 +73,9 @@ function splitTweetSegments(html: string): Segment[] {
       const url = attrs.match(/\bdata-tweet-url=["']([^"']+)["']/i)?.[1] ?? `https://x.com/i/status/${m[1]}`;
       out.push({ type: "tweet", id: m[1], url });
     } else if (m[2]) {
-      out.push({ type: "link", url: decodeAttr(m[2]) });
+      const attrs = m[0];
+      const title = attrs.match(/\bdata-link-title=["']([^"']+)["']/i)?.[1];
+      out.push({ type: "link", url: decodeAttr(m[2]), title: title ? decodeAttr(title) : undefined });
     }
     last = m.index + m[0].length;
   }
