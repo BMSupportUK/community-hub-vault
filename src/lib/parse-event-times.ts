@@ -718,11 +718,13 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
     // names, not descriptive captions. Collected here and merged into the
     // channel chip list below so they render with bordered chip styling.
     const extraChannelLines: string[] = [];
+    const splitChannelLine = (s: string) =>
+      s.split(/\s*(?:[·•|]|\s[-–—]\s)\s*/).map((part) => part.trim()).filter(Boolean);
     if (!groupedChannels && extraLines.length) {
       const looksLikeChannel = (s: string) =>
-        s.length > 0 && s.length <= 60 && !/[.!?]\s|,\s/.test(s);
+        s.length > 0 && s.length <= 180 && !/[.!?]\s/.test(s);
       if (extraLines.every(looksLikeChannel)) {
-        extraChannelLines.push(...extraLines);
+        extraChannelLines.push(...extraLines.flatMap(splitChannelLine));
       } else {
         const extras = extraLines.join(" · ");
         if (extras) caption = caption ? `${caption} · ${extras}` : extras;
@@ -792,15 +794,9 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
         "mt-2 min-w-0 flex flex-wrap items-center gap-x-2 gap-y-1.5 text-xs md:text-sm font-semibold tracking-wide text-fuchsia-100";
       const chanParts = channel.split(/\s*\|\s*/).filter(Boolean);
       chanParts.forEach((part, idx) => {
-        if (idx > 0) {
-          const divider = document.createElement("span");
-          divider.className = "inline-block h-3 w-px bg-fuchsia-300/40";
-          divider.setAttribute("aria-hidden", "true");
-          chanWrap.appendChild(divider);
-        }
         const chip = document.createElement("span");
         chip.className =
-          "break-words px-2 py-0.5 rounded-md border border-fuchsia-300/40 bg-fuchsia-950/40 text-fuchsia-200/90";
+          "break-words rounded-full border border-fuchsia-300/45 bg-fuchsia-950/55 px-2.5 py-1 text-fuchsia-100 shadow-[0_0_12px_rgba(217,70,239,0.16)]";
         chip.textContent = part;
         chanWrap.appendChild(chip);
       });
