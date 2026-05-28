@@ -1043,6 +1043,7 @@ function TicketDetail({
                 {(linkedOrder.total_cents / 100).toLocaleString(undefined, { style: "currency", currency: "GBP" })}
               </div>
             </div>
+            <OrderProgressStrip order={linkedOrder} />
             {orderIsUnpaid ? (
               <div className="[&>*]:!text-rose-700">
                 <PayOrderDialog
