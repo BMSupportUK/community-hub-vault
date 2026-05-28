@@ -254,9 +254,8 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
       {user && (
         <div className="flex flex-col items-center gap-1 pb-1 pt-2 border-t border-border w-full">
           <UserAvatarMenu variant="bar" />
-            <MentionsBadge />
-            <NotificationBell />
-          </div>
+          <MentionsBadge />
+          <NotificationBell />
         </div>
       )}
       <button
