@@ -922,6 +922,29 @@ function TicketDetail({
     } finally { setOrderBusy(false); }
   };
 
+  const orderCancel = async () => {
+    if (!linkedOrder || orderBusy) return;
+    if (linkedOrder.status === "completed" || !!linkedOrder.completed_at || !!linkedOrder.paid_at) {
+      toast.error("This order can no longer be cancelled.");
+      return;
+    }
+    if (linkedOrder.status === "cancelled") return;
+    if (!confirm("Cancel this order? This cannot be undone.")) return;
+    setOrderBusy(true);
+    try {
+      const { error } = await supabase
+        .from("orders")
+        .update({ status: "cancelled" } as never)
+        .eq("id", linkedOrder.id);
+      if (error) { toast.error(error.message); return; }
+      await postTicketSystem(
+        `🚫 Order cancelled by ${linkedOrder.user_id === currentUserId ? "customer" : "staff"}.`
+      );
+      toast.success("Order cancelled");
+      await loadLinkedOrder();
+    } finally { setOrderBusy(false); }
+  };
+
   const load = async () => {
     const { data } = await supabase
       .from("ticket_messages").select("*")
