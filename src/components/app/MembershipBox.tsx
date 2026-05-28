@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useUserTimezone } from "@/hooks/use-user-timezone";
 import { cn } from "@/lib/utils";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 type Cred = { app_login_name: string | null; expiry_at: string | null };
 
@@ -69,50 +70,71 @@ export function MembershipBox() {
   const now = Date.now();
   const anyExpired = items.some((c) => new Date(c.expiry_at!).getTime() < now);
 
+  const renderItem = (c: Cred, i: number) => {
+    const d = new Date(c.expiry_at!);
+    const ms = d.getTime() - now;
+    const expired = ms < 0;
+    const soon = !expired && ms < 7 * 86400000;
+    const dotClass = expired
+      ? "bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.9)]"
+      : soon
+        ? "bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.9)]"
+        : "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.9)]";
+    const textClass = expired
+      ? "text-red-300"
+      : soon
+        ? "text-amber-300"
+        : "text-emerald-300";
+    return (
+      <li key={i} className="flex items-start gap-2 text-xs">
+        <span className={cn("mt-1 size-2 rounded-full shrink-0", dotClass)} />
+        <div className="min-w-0 flex-1">
+          {c.app_login_name && (
+            <div className="font-semibold text-foreground truncate flex items-center gap-1">
+              <CalendarClock className="size-3 text-muted-foreground shrink-0" />
+              <span className="truncate">{c.app_login_name}</span>
+            </div>
+          )}
+          <div className={cn("text-[11px] font-medium", textClass)}>
+            {expired ? "Expired " : "Expires "}
+            <span className="font-semibold">{fmt(d)}</span>
+          </div>
+        </div>
+      </li>
+    );
+  };
+
   return (
     <section className="px-2 pt-4">
       <div className={cn("rounded-lg bg-surface-2/60 border border-border overflow-hidden", anyExpired && "membership-expired-flash")}>
         <div className="flex items-center justify-between px-3 py-2 border-b border-border bg-gradient-to-r from-violet-600/10 via-fuchsia-600/10 to-blue-600/10">
           <div className="flex items-center gap-2">
             <BadgeCheck className="size-3.5 text-violet-300" />
-            <h2 className="font-display text-[11px] font-bold tracking-wider uppercase">Membership</h2>
+            <h2 className="font-display text-[11px] font-bold tracking-wider uppercase">Your Subscription Details</h2>
           </div>
         </div>
-        <ul className="px-3 py-3 space-y-2">
-          {items.map((c, i) => {
-            const d = new Date(c.expiry_at!);
-            const ms = d.getTime() - now;
-            const expired = ms < 0;
-            const soon = !expired && ms < 7 * 86400000;
-            const dotClass = expired
-              ? "bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.9)]"
-              : soon
-                ? "bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.9)]"
-                : "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.9)]";
-            const textClass = expired
-              ? "text-red-300"
-              : soon
-                ? "text-amber-300"
-                : "text-emerald-300";
-            return (
-              <li key={i} className="flex items-start gap-2 text-xs">
-                <span className={cn("mt-1 size-2 rounded-full shrink-0", dotClass)} />
-                <div className="min-w-0 flex-1">
-                  {c.app_login_name && (
-                    <div className="font-semibold text-foreground truncate flex items-center gap-1">
-                      <CalendarClock className="size-3 text-muted-foreground shrink-0" />
-                      <span className="truncate">{c.app_login_name}</span>
-                    </div>
-                  )}
-                  <div className={cn("text-[11px] font-medium", textClass)}>
-                    {expired ? "Expired " : "Expires "}
-                    <span className="font-semibold">{fmt(d)}</span>
-                  </div>
-                </div>
-              </li>
-            );
-          })}
-        </ul>
+        {items.length > 1 ? (
+          <Tabs defaultValue="0" className="w-full">
+            <TabsList className="w-full justify-start rounded-none border-b border-border bg-transparent px-2 h-auto flex-wrap gap-1 py-1">
+              {items.map((_, i) => (
+                <TabsTrigger
+                  key={i}
+                  value={String(i)}
+                  className="text-[10px] px-2 py-1 h-auto data-[state=active]:bg-violet-600/20 data-[state=active]:text-violet-200"
+                >
+                  Subscription {i + 1}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+            {items.map((c, i) => (
+              <TabsContent key={i} value={String(i)} className="mt-0">
+                <ul className="px-3 py-3 space-y-2">{renderItem(c, i)}</ul>
+              </TabsContent>
+            ))}
+          </Tabs>
+        ) : (
+          <ul className="px-3 py-3 space-y-2">{items.map((c, i) => renderItem(c, i))}</ul>
+        )}
       </div>
     </section>
   );
