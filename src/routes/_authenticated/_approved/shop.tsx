@@ -941,6 +941,50 @@ function Storefront() {
         content: oohMsg,
       } as never);
     }
+    // Also open a support ticket in the admin/management-only "Orders"
+    // category so ownership can manage the order via the tickets workflow.
+    try {
+      const { data: ordersCat } = await supabase
+        .from("ticket_categories")
+        .select("id")
+        .eq("slug", "orders")
+        .maybeSingle();
+      if (ordersCat?.id) {
+        const itemLines = cartItems
+          .map((p) => `• ${p.name} × ${cart[p.id]}`)
+          .join("\n");
+        const { data: ticket } = await supabase
+          .from("tickets")
+          .insert({
+            user_id: user.id,
+            category_id: ordersCat.id,
+            subject: `New order #${String(order.id).slice(0, 8)}`,
+            priority: "normal",
+          } as never)
+          .select()
+          .single();
+        if (ticket?.id) {
+          const ticketBody = [
+            `🧾 New order placed`,
+            `Order ID: ${order.id}`,
+            `Customer: ${info.customer_type === "existing"
+              ? `Existing — upgrading @${info.existing_username.trim()}`
+              : "New customer"}`,
+            `Adult content access: ${info.wants_adult_content ? "Yes" : "No"}`,
+            ``,
+            `Items:`,
+            itemLines,
+          ].join("\n");
+          await supabase.from("ticket_messages").insert({
+            ticket_id: ticket.id,
+            sender_id: user.id,
+            content: ticketBody,
+          } as never);
+        }
+      }
+    } catch (e) {
+      console.warn("[shop] failed to open order ticket", e);
+    }
     setCart({}); setShowCheckout(false);
     toast.success("Order placed!");
     reloadLatestOrder();
