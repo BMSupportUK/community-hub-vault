@@ -49,12 +49,12 @@ export function MentionText({
           <span
             key={i}
             className={cn(
-              "inline-block rounded px-1 font-semibold transition-colors",
+              "inline-block rounded px-1.5 py-0.5 font-semibold transition-colors ring-1",
               isMe
-                ? "bg-amber-300/90 text-amber-950 ring-1 ring-amber-400"
+                ? "bg-amber-300 text-amber-950 ring-amber-500"
                 : isBroadcast
-                  ? "bg-rose-500/25 text-rose-200"
-                  : "bg-indigo-500/25 text-indigo-200 hover:bg-indigo-500/40",
+                  ? "bg-rose-600 text-white ring-rose-700"
+                  : "bg-indigo-600 text-white ring-indigo-700 hover:bg-indigo-500",
             )}
           >
             {part}
