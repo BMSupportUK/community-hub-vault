@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import Cropper, { type Area } from "react-easy-crop";
 import { ServiceStatusPill } from "@/components/app/ServiceStatusPill";
+import { MembershipBox } from "@/components/app/MembershipBox";
 
 export const Route = createFileRoute("/_authenticated/_approved/home/")({
   component: WelcomePage,
@@ -319,6 +320,9 @@ function WelcomePage() {
                 </Link>
               )}
               <ServiceStatusPill />
+            </div>
+            <div className="mt-4 w-full max-w-[280px]">
+              <MembershipBox />
             </div>
           </div>
 
