@@ -63,7 +63,7 @@ interface Ticket {
 }
 interface Message { id: string; ticket_id: string; sender_id: string; content: string; is_internal: boolean; created_at: string; attachments?: Attachment[]; }
 interface Attachment { name: string; path: string; size: number; type: string; }
-interface Profile { id: string; display_name: string | null; username: string | null; }
+interface Profile { id: string; display_name: string | null; username: string | null; avatar_url?: string | null; role?: "admin" | "management" | "staff" | "moderator" | null; }
 
 const newTicketSchema = z.object({
   subject: z.string().trim().min(3, "Subject must be at least 3 characters").max(120),
@@ -297,12 +297,19 @@ function TicketsPage() {
     (async () => {
       const { data: roles } = await supabase
         .from("user_roles")
-        .select("user_id")
+        .select("user_id, role")
         .in("role", ["admin", "management", "staff", "moderator"]);
-      const ids = [...new Set((roles ?? []).map((r) => r.user_id))];
+      const rolesRows = (roles ?? []) as { user_id: string; role: "admin" | "management" | "staff" | "moderator" }[];
+      const ids = [...new Set(rolesRows.map((r) => r.user_id))];
       if (!ids.length) return;
-      const { data: profs } = await supabase.from("profiles").select("id, display_name, username").in("id", ids);
-      setStaff(profs ?? []);
+      const rank: Record<string, number> = { admin: 4, management: 3, staff: 2, moderator: 1 };
+      const topRole = new Map<string, "admin" | "management" | "staff" | "moderator">();
+      for (const r of rolesRows) {
+        const cur = topRole.get(r.user_id);
+        if (!cur || rank[r.role] > rank[cur]) topRole.set(r.user_id, r.role);
+      }
+      const { data: profs } = await supabase.from("profiles").select("id, display_name, username, avatar_url").in("id", ids);
+      setStaff(((profs ?? []) as Profile[]).map((p) => ({ ...p, role: topRole.get(p.id) ?? null })));
     })();
   }, [isStaff]);
 
@@ -1288,6 +1295,11 @@ function TicketDetail({
               options={[{ value: "", label: "Unassigned" }, ...staff.map((s) => ({ value: s.id, label: s.display_name || s.username || "Staff" }))]}
               onChange={(v) => updateField({ assigned_to: v || null })}
             />
+            {ticket.assigned_to && (() => {
+              const a = staff.find((s) => s.id === ticket.assigned_to);
+              if (!a) return null;
+              return <StaffIdCard profile={a} />;
+            })()}
             <span className={cn("ml-auto px-2 py-1 rounded text-xs capitalize", PRI_CLS[ticket.priority])}>{ticket.priority}</span>
             <RequestAdminHelpButton ticketId={ticket.id} />
           </div>
@@ -1654,5 +1666,39 @@ function RequestAdminHelpButton({ ticketId }: { ticketId: string }) {
       <HelpCircle className="size-3.5" />
       {busy ? "Notifying…" : "Request admin help"}
     </button>
+  );
+}
+
+const ROLE_BADGE: Record<string, string> = {
+  admin: "bg-rose-500/30 text-rose-50 border-rose-300/40",
+  management: "bg-amber-400/30 text-amber-50 border-amber-300/40",
+  staff: "bg-sky-500/30 text-sky-50 border-sky-300/40",
+  moderator: "bg-violet-500/30 text-violet-50 border-violet-300/40",
+};
+
+function StaffIdCard({ profile }: { profile: Profile }) {
+  const roleFlashMap = useRoleFlashMap();
+  const name = profile.display_name || profile.username || "Staff";
+  const role = profile.role ?? "staff";
+  return (
+    <div
+      className={cn(
+        "inline-flex items-center gap-2 pl-1 pr-2 py-1 rounded-full bg-white/10 border border-white/20 shadow-sm backdrop-blur",
+        roleFlashClass(role),
+      )}
+      title={`Assigned to ${name}`}
+    >
+      <img
+        src={resolveAvatarUrl(profile.id, profile.avatar_url ?? null, roleFlashMap)}
+        alt={name}
+        className="size-6 rounded-full object-cover ring-1 ring-white/40"
+      />
+      <div className="flex flex-col leading-tight">
+        <span className="text-[11px] font-semibold text-white">{name}</span>
+        <span className={cn("text-[9px] uppercase tracking-wider px-1 rounded border self-start", ROLE_BADGE[role] ?? ROLE_BADGE.staff)}>
+          {role}
+        </span>
+      </div>
+    </div>
   );
 }
