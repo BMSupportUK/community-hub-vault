@@ -56,6 +56,8 @@ export function sanitizeRichHtml(html: string): string {
       "data-tweet-id",
       "data-tweet-embed",
       "data-tweet-url",
+      "data-link-preview",
+      "data-link-title",
       "data-lang",
       "data-show-text",
       "data-mention-type",
