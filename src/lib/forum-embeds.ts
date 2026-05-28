@@ -3,6 +3,49 @@ import { useEffect } from "react";
 const TWEET_RE = /^https?:\/\/(?:www\.|mobile\.)?(?:twitter|x)\.com\/[A-Za-z0-9_]+\/status\/(\d+)(?:[/?#]\S*)?$/i;
 const FB_RE = /^https?:\/\/(?:www\.|m\.|web\.)?facebook\.com\/[^\s<>"']+$/i;
 const FB_WATCH_RE = /^https?:\/\/fb\.watch\/[A-Za-z0-9_-]+\/?(?:[?#]\S*)?$/i;
+const SKIP_PREVIEW_RE = /^https?:\/\/(?:www\.|m\.|mobile\.|web\.)?(?:twitter\.com|x\.com|facebook\.com|fb\.watch|youtube\.com|youtu\.be)\//i;
+
+/**
+ * Walk processed HTML and replace any standalone link (a paragraph that
+ * contains only a bare URL or a single self-text anchor) with a
+ * `<div data-link-preview="URL"></div>` marker so the renderer can swap in
+ * a rich preview card. Runs after social-embed conversion so X/FB/YouTube
+ * URLs keep their first-class embed.
+ */
+export function markLinkPreviews(html: string): string {
+  if (!html || typeof window === "undefined") return html;
+  const doc = new DOMParser().parseFromString(`<div id="__root">${html}</div>`, "text/html");
+  const root = doc.getElementById("__root");
+  if (!root) return html;
+
+  Array.from(root.querySelectorAll("p")).forEach((p) => {
+    if (
+      p.querySelector(
+        "img,iframe,video,blockquote,[data-tweet-embed],[data-link-preview],a.link-card,.twitter-tweet,.fb-post,.mention,.video-embed",
+      )
+    ) {
+      return;
+    }
+    const text = (p.textContent ?? "").trim();
+    if (!text) return;
+    const links = p.querySelectorAll("a[href]");
+    let url: string | null = null;
+    if (links.length === 1) {
+      const a = links[0] as HTMLAnchorElement;
+      const href = a.getAttribute("href") ?? "";
+      const aText = (a.textContent ?? "").trim();
+      if (/^https?:\/\//i.test(href) && text === aText) url = href;
+    } else if (links.length === 0 && /^https?:\/\/\S+$/i.test(text)) {
+      url = text;
+    }
+    if (!url || SKIP_PREVIEW_RE.test(url)) return;
+    const marker = doc.createElement("div");
+    marker.setAttribute("data-link-preview", url);
+    p.replaceWith(marker);
+  });
+
+  return root.innerHTML;
+}
 
 function tweetEmbed(url: string, id: string) {
   // Marker consumed by ForumPostBody; rendered by the app (no widgets.js iframe).

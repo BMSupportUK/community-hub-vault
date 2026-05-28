@@ -28,6 +28,7 @@ import { Route as AuthenticatedAccountRejectedRouteImport } from './routes/_auth
 import { Route as AuthenticatedApprovedRouteImport } from './routes/_authenticated/_approved'
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
 import { Route as ApiPublicTweetRouteImport } from './routes/api/public/tweet'
+import { Route as ApiPublicLinkPreviewRouteImport } from './routes/api/public/link-preview'
 import { Route as AuthenticatedApprovedTicketsRouteImport } from './routes/_authenticated/_approved/tickets'
 import { Route as AuthenticatedApprovedStatusRouteImport } from './routes/_authenticated/_approved/status'
 import { Route as AuthenticatedApprovedStaffRouteImport } from './routes/_authenticated/_approved/staff'
@@ -175,6 +176,11 @@ const LovableEmailSuppressionRoute = LovableEmailSuppressionRouteImport.update({
 const ApiPublicTweetRoute = ApiPublicTweetRouteImport.update({
   id: '/api/public/tweet',
   path: '/api/public/tweet',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicLinkPreviewRoute = ApiPublicLinkPreviewRouteImport.update({
+  id: '/api/public/link-preview',
+  path: '/api/public/link-preview',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedApprovedTicketsRoute =
@@ -552,6 +558,7 @@ export interface FileRoutesByFullPath {
   '/staff': typeof AuthenticatedApprovedStaffRoute
   '/status': typeof AuthenticatedApprovedStatusRoute
   '/tickets': typeof AuthenticatedApprovedTicketsRoute
+  '/api/public/link-preview': typeof ApiPublicLinkPreviewRoute
   '/api/public/tweet': typeof ApiPublicTweetRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/forum/$board': typeof AuthenticatedApprovedForumBoardRouteWithChildren
@@ -624,6 +631,7 @@ export interface FileRoutesByTo {
   '/staff': typeof AuthenticatedApprovedStaffRoute
   '/status': typeof AuthenticatedApprovedStatusRoute
   '/tickets': typeof AuthenticatedApprovedTicketsRoute
+  '/api/public/link-preview': typeof ApiPublicLinkPreviewRoute
   '/api/public/tweet': typeof ApiPublicTweetRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/forum/$board': typeof AuthenticatedApprovedForumBoardRouteWithChildren
@@ -700,6 +708,7 @@ export interface FileRoutesById {
   '/_authenticated/_approved/staff': typeof AuthenticatedApprovedStaffRoute
   '/_authenticated/_approved/status': typeof AuthenticatedApprovedStatusRoute
   '/_authenticated/_approved/tickets': typeof AuthenticatedApprovedTicketsRoute
+  '/api/public/link-preview': typeof ApiPublicLinkPreviewRoute
   '/api/public/tweet': typeof ApiPublicTweetRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/_authenticated/_approved/forum/$board': typeof AuthenticatedApprovedForumBoardRouteWithChildren
@@ -775,6 +784,7 @@ export interface FileRouteTypes {
     | '/staff'
     | '/status'
     | '/tickets'
+    | '/api/public/link-preview'
     | '/api/public/tweet'
     | '/lovable/email/suppression'
     | '/forum/$board'
@@ -847,6 +857,7 @@ export interface FileRouteTypes {
     | '/staff'
     | '/status'
     | '/tickets'
+    | '/api/public/link-preview'
     | '/api/public/tweet'
     | '/lovable/email/suppression'
     | '/forum/$board'
@@ -922,6 +933,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/staff'
     | '/_authenticated/_approved/status'
     | '/_authenticated/_approved/tickets'
+    | '/api/public/link-preview'
     | '/api/public/tweet'
     | '/lovable/email/suppression'
     | '/_authenticated/_approved/forum/$board'
@@ -959,6 +971,7 @@ export interface RootRouteChildren {
   SignupRoute: typeof SignupRoute
   UnsubscribeRoute: typeof UnsubscribeRoute
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
+  ApiPublicLinkPreviewRoute: typeof ApiPublicLinkPreviewRoute
   ApiPublicTweetRoute: typeof ApiPublicTweetRoute
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
   ApiPublicHooksBackupCredentialsRoute: typeof ApiPublicHooksBackupCredentialsRoute
@@ -1107,6 +1120,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/tweet'
       fullPath: '/api/public/tweet'
       preLoaderRoute: typeof ApiPublicTweetRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/link-preview': {
+      id: '/api/public/link-preview'
+      path: '/api/public/link-preview'
+      fullPath: '/api/public/link-preview'
+      preLoaderRoute: typeof ApiPublicLinkPreviewRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/_approved/tickets': {
@@ -1690,6 +1710,7 @@ const rootRouteChildren: RootRouteChildren = {
   SignupRoute: SignupRoute,
   UnsubscribeRoute: UnsubscribeRoute,
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,
+  ApiPublicLinkPreviewRoute: ApiPublicLinkPreviewRoute,
   ApiPublicTweetRoute: ApiPublicTweetRoute,
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
   ApiPublicHooksBackupCredentialsRoute: ApiPublicHooksBackupCredentialsRoute,
