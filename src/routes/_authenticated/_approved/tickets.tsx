@@ -596,8 +596,7 @@ function TicketsPage() {
       </div>
     </main>
   );
-    </main>
-  );
+}
 }
 
 function NewTicketForm({
