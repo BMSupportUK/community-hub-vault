@@ -54,7 +54,7 @@ export function embedSocialUrls(html: string): string {
   // the previous social-embed-x wrapper) to the new marker so react-tweet
   // renders them without requiring posts to be re-saved.
   html = html.replace(
-    /<div\b[^>]*class=["'][^"']*social-embed-x[^"']*["'][\s\S]*?<\/div>\s*<\/div>/gi,
+    /<div\b[^>]*class=["'][^"']*social-embed-x[^"']*["'][\s\S]*?<\/div>/gi,
     (match) => {
       const id = match.match(/data-tweet-id=["'](\d+)["']/i)?.[1];
       const url = match.match(/href=["']([^"']+)["']/i)?.[1] ?? "";
