@@ -599,8 +599,7 @@ function TicketsPage() {
 }
 
 function NewTicketForm({
-
-function NewTicketForm({
+  categories, onCancel, onCreated, preset,
   categories, onCancel, onCreated, preset,
 }: { categories: Category[]; onCancel: () => void; onCreated: (id: string) => void; preset?: "2fa-reset" }) {
   const { user } = useAuth();
