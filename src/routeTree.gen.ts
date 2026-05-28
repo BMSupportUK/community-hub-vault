@@ -27,6 +27,7 @@ import { Route as AuthenticatedBannedRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedAccountRejectedRouteImport } from './routes/_authenticated/account-rejected'
 import { Route as AuthenticatedApprovedRouteImport } from './routes/_authenticated/_approved'
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
+import { Route as ApiPublicTweetRouteImport } from './routes/api/public/tweet'
 import { Route as AuthenticatedApprovedTicketsRouteImport } from './routes/_authenticated/_approved/tickets'
 import { Route as AuthenticatedApprovedStatusRouteImport } from './routes/_authenticated/_approved/status'
 import { Route as AuthenticatedApprovedStaffRouteImport } from './routes/_authenticated/_approved/staff'
@@ -169,6 +170,11 @@ const AuthenticatedApprovedRoute = AuthenticatedApprovedRouteImport.update({
 const LovableEmailSuppressionRoute = LovableEmailSuppressionRouteImport.update({
   id: '/lovable/email/suppression',
   path: '/lovable/email/suppression',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicTweetRoute = ApiPublicTweetRouteImport.update({
+  id: '/api/public/tweet',
+  path: '/api/public/tweet',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedApprovedTicketsRoute =
@@ -546,6 +552,7 @@ export interface FileRoutesByFullPath {
   '/staff': typeof AuthenticatedApprovedStaffRoute
   '/status': typeof AuthenticatedApprovedStatusRoute
   '/tickets': typeof AuthenticatedApprovedTicketsRoute
+  '/api/public/tweet': typeof ApiPublicTweetRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/forum/$board': typeof AuthenticatedApprovedForumBoardRouteWithChildren
   '/home/$channel': typeof AuthenticatedApprovedHomeChannelRoute
@@ -617,6 +624,7 @@ export interface FileRoutesByTo {
   '/staff': typeof AuthenticatedApprovedStaffRoute
   '/status': typeof AuthenticatedApprovedStatusRoute
   '/tickets': typeof AuthenticatedApprovedTicketsRoute
+  '/api/public/tweet': typeof ApiPublicTweetRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/forum/$board': typeof AuthenticatedApprovedForumBoardRouteWithChildren
   '/home/$channel': typeof AuthenticatedApprovedHomeChannelRoute
@@ -692,6 +700,7 @@ export interface FileRoutesById {
   '/_authenticated/_approved/staff': typeof AuthenticatedApprovedStaffRoute
   '/_authenticated/_approved/status': typeof AuthenticatedApprovedStatusRoute
   '/_authenticated/_approved/tickets': typeof AuthenticatedApprovedTicketsRoute
+  '/api/public/tweet': typeof ApiPublicTweetRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/_authenticated/_approved/forum/$board': typeof AuthenticatedApprovedForumBoardRouteWithChildren
   '/_authenticated/_approved/home/$channel': typeof AuthenticatedApprovedHomeChannelRoute
@@ -766,6 +775,7 @@ export interface FileRouteTypes {
     | '/staff'
     | '/status'
     | '/tickets'
+    | '/api/public/tweet'
     | '/lovable/email/suppression'
     | '/forum/$board'
     | '/home/$channel'
@@ -837,6 +847,7 @@ export interface FileRouteTypes {
     | '/staff'
     | '/status'
     | '/tickets'
+    | '/api/public/tweet'
     | '/lovable/email/suppression'
     | '/forum/$board'
     | '/home/$channel'
@@ -911,6 +922,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/staff'
     | '/_authenticated/_approved/status'
     | '/_authenticated/_approved/tickets'
+    | '/api/public/tweet'
     | '/lovable/email/suppression'
     | '/_authenticated/_approved/forum/$board'
     | '/_authenticated/_approved/home/$channel'
@@ -947,6 +959,7 @@ export interface RootRouteChildren {
   SignupRoute: typeof SignupRoute
   UnsubscribeRoute: typeof UnsubscribeRoute
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
+  ApiPublicTweetRoute: typeof ApiPublicTweetRoute
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
   ApiPublicHooksBackupCredentialsRoute: typeof ApiPublicHooksBackupCredentialsRoute
   ApiPublicHooksBackupOrdersRoute: typeof ApiPublicHooksBackupOrdersRoute
@@ -1087,6 +1100,13 @@ declare module '@tanstack/react-router' {
       path: '/lovable/email/suppression'
       fullPath: '/lovable/email/suppression'
       preLoaderRoute: typeof LovableEmailSuppressionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/tweet': {
+      id: '/api/public/tweet'
+      path: '/api/public/tweet'
+      fullPath: '/api/public/tweet'
+      preLoaderRoute: typeof ApiPublicTweetRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/_approved/tickets': {
@@ -1670,6 +1690,7 @@ const rootRouteChildren: RootRouteChildren = {
   SignupRoute: SignupRoute,
   UnsubscribeRoute: UnsubscribeRoute,
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,
+  ApiPublicTweetRoute: ApiPublicTweetRoute,
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
   ApiPublicHooksBackupCredentialsRoute: ApiPublicHooksBackupCredentialsRoute,
   ApiPublicHooksBackupOrdersRoute: ApiPublicHooksBackupOrdersRoute,
