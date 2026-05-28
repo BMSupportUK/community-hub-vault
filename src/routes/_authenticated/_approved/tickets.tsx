@@ -337,74 +337,87 @@ function TicketsPage() {
     }
   }, [search.new2fa, creating, search.id]);
 
-  return (
-    <main className="flex-1 overflow-y-auto bg-gradient-to-br from-rose-950 via-fuchsia-950/60 to-slate-950 text-white">
-      {/* Hero — image + gradient + welcome text, with rating blended in */}
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0">
-          <img src={ticketsHero} alt="" aria-hidden className="w-full h-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-br from-rose-700/85 via-fuchsia-700/75 to-violet-800/85" />
-          <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-b from-transparent to-rose-950" />
-        </div>
-        <div className="relative px-6 md:px-10 pt-10 md:pt-14 pb-20 md:pb-24 flex flex-col md:flex-row md:items-center md:gap-8">
-         <div className="max-w-3xl flex-1">
-          <div className="text-xs uppercase tracking-[0.2em] text-rose-100/90 mb-3">BM Support · Help Desk</div>
-          <h1 className="font-display text-4xl md:text-5xl font-bold leading-tight drop-shadow">
-            Support Tickets
-          </h1>
-          <p className="mt-4 text-rose-100/90 max-w-xl text-base md:text-lg">
-            Open a ticket and our team will get back to you fast. Rate every conversation
-            to help us keep our support world-class.
-          </p>
-          <div className="mt-6 inline-flex items-center gap-3 rounded-2xl bg-white/10 backdrop-blur border border-white/25 px-4 py-2.5 shadow-lg">
-            <div className="flex">
-              {[1, 2, 3, 4, 5].map((n) => (
-                <Star
-                  key={n}
-                  className={cn(
-                    "size-4",
-                    n <= Math.round(avgRating)
-                      ? "text-amber-300 fill-amber-300"
-                      : "text-white/40",
-                  )}
-                />
-              ))}
-            </div>
-            <div className="text-sm">
-              <span className="font-bold tabular-nums">
-                {ratingCount > 0 ? avgRating.toFixed(1) : "—"}
-              </span>
-              <span className="text-rose-100/85 ml-1.5">
-                {ratingCount > 0
-                  ? `from ${ratingCount} customer rating${ratingCount === 1 ? "" : "s"}`
-                  : "No ratings yet"}
-              </span>
-            </div>
-          </div>
-         </div>
-         <div className="mt-6 md:mt-0 md:w-[340px] md:shrink-0 [&>div]:px-0 [&>div]:pt-0">
-           <StaffOnDutyStrip />
-         </div>
-        </div>
-      </section>
+  const isChatting = selected && tab === "tickets";
 
-      {/* Tabs */}
-      <div className="px-6 md:px-10 pb-10 mt-6 relative">
+  return (
+    <main className={cn(
+      "flex-1 overflow-y-auto bg-gradient-to-br from-rose-950 via-fuchsia-950/60 to-slate-950 text-white",
+      isChatting && "overflow-hidden"
+    )}>
+      {/* Hero — hidden when actively chatting on a ticket */}
+      {!isChatting && (
+        <section className="relative overflow-hidden">
+          <div className="absolute inset-0">
+            <img src={ticketsHero} alt="" aria-hidden className="w-full h-full object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-br from-rose-700/85 via-fuchsia-700/75 to-violet-800/85" />
+            <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-b from-transparent to-rose-950" />
+          </div>
+          <div className="relative px-6 md:px-10 pt-10 md:pt-14 pb-20 md:pb-24 flex flex-col md:flex-row md:items-center md:gap-8">
+           <div className="max-w-3xl flex-1">
+            <div className="text-xs uppercase tracking-[0.2em] text-rose-100/90 mb-3">BM Support · Help Desk</div>
+            <h1 className="font-display text-4xl md:text-5xl font-bold leading-tight drop-shadow">
+              Support Tickets
+            </h1>
+            <p className="mt-4 text-rose-100/90 max-w-xl text-base md:text-lg">
+              Open a ticket and our team will get back to you fast. Rate every conversation
+              to help us keep our support world-class.
+            </p>
+            <div className="mt-6 inline-flex items-center gap-3 rounded-2xl bg-white/10 backdrop-blur border border-white/25 px-4 py-2.5 shadow-lg">
+              <div className="flex">
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <Star
+                    key={n}
+                    className={cn(
+                      "size-4",
+                      n <= Math.round(avgRating)
+                        ? "text-amber-300 fill-amber-300"
+                        : "text-white/40",
+                    )}
+                  />
+                ))}
+              </div>
+              <div className="text-sm">
+                <span className="font-bold tabular-nums">
+                  {ratingCount > 0 ? avgRating.toFixed(1) : "—"}
+                </span>
+                <span className="text-rose-100/85 ml-1.5">
+                  {ratingCount > 0
+                    ? `from ${ratingCount} customer rating${ratingCount === 1 ? "" : "s"}`
+                    : "No ratings yet"}
+                </span>
+              </div>
+            </div>
+           </div>
+           <div className="mt-6 md:mt-0 md:w-[340px] md:shrink-0 [&>div]:px-0 [&>div]:pt-0">
+             <StaffOnDutyStrip />
+           </div>
+          </div>
+        </section>
+      )}
+
+      {/* Tabs — hidden when actively chatting on a ticket */}
+      <div className={cn(
+        "px-6 md:px-10 pb-10 relative",
+        !isChatting && "mt-6",
+        isChatting && "px-0 md:px-0 pb-0 h-full"
+      )}>
         <Tabs value={tab} onValueChange={(v) => setTab(v as "welcome" | "tickets")}>
-          <TabsList className="bg-rose-950/60 border border-rose-500/30">
-            <TabsTrigger
-              value="welcome"
-              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-rose-500 data-[state=active]:to-fuchsia-500 data-[state=active]:text-white"
-            >
-              Welcome
-            </TabsTrigger>
-            <TabsTrigger
-              value="tickets"
-              className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-rose-500 data-[state=active]:to-fuchsia-500 data-[state=active]:text-white"
-            >
-              Tickets
-            </TabsTrigger>
-          </TabsList>
+          {!isChatting && (
+            <TabsList className="bg-rose-950/60 border border-rose-500/30">
+              <TabsTrigger
+                value="welcome"
+                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-rose-500 data-[state=active]:to-fuchsia-500 data-[state=active]:text-white"
+              >
+                Welcome
+              </TabsTrigger>
+              <TabsTrigger
+                value="tickets"
+                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-rose-500 data-[state=active]:to-fuchsia-500 data-[state=active]:text-white"
+              >
+                Tickets
+              </TabsTrigger>
+            </TabsList>
+          )}
 
           <TabsContent value="welcome" className="mt-6">
             <div className="rounded-2xl bg-gradient-to-br from-rose-600/30 via-fuchsia-600/20 to-violet-700/30 border border-rose-500/30 p-8 md:p-10 shadow-[0_0_60px_-15px_rgba(244,63,94,0.4)]">
@@ -440,16 +453,32 @@ function TicketsPage() {
             </div>
           </TabsContent>
 
-          <TabsContent value="tickets" className="mt-6">
-            <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-4">
+          <TabsContent value="tickets" className={cn("mt-6", isChatting && "mt-0 h-full")}>
+            <div className={cn(
+              "grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-4",
+              isChatting && "h-[calc(100vh-4rem)] gap-0 lg:grid-cols-[280px_1fr]"
+            )}>
               {/* Left list */}
-              <aside className="rounded-2xl bg-rose-950/50 border border-rose-500/30 p-4 h-fit backdrop-blur space-y-3">
-                <button
-                  onClick={() => { setCreating(true); navigate({ to: "/tickets", search: { id: undefined, view } }); }}
-                  className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-white text-rose-600 text-sm font-semibold hover:bg-white/90 shadow"
-                >
-                  <Plus className="size-4" /> New ticket
-                </button>
+              <aside className={cn(
+                "rounded-2xl bg-rose-950/50 border border-rose-500/30 p-4 h-fit backdrop-blur space-y-3",
+                isChatting && "rounded-none border-y-0 border-l-0 h-full overflow-y-auto"
+              )}>
+                {!isChatting && (
+                  <button
+                    onClick={() => { setCreating(true); navigate({ to: "/tickets", search: { id: undefined, view } }); }}
+                    className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-white text-rose-600 text-sm font-semibold hover:bg-white/90 shadow"
+                  >
+                    <Plus className="size-4" /> New ticket
+                  </button>
+                )}
+                {isChatting && (
+                  <button
+                    onClick={() => { navigate({ to: "/tickets", search: { id: undefined, view } }); }}
+                    className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-white/10 text-white text-sm font-semibold hover:bg-white/20 border border-white/20"
+                  >
+                    <X className="size-4" /> Close ticket
+                  </button>
+                )}
                 {isStaff && (
                   <div className="flex gap-1 bg-white/10 p-1 rounded-lg text-xs">
                     {(["mine", "assigned", "all"] as const).map((v) => (
@@ -518,7 +547,10 @@ function TicketsPage() {
               {/* Right panel */}
               <div
                 ref={detailPanelRef}
-                className="rounded-2xl bg-gradient-to-br from-violet-600 via-fuchsia-600 to-rose-600 text-white relative overflow-hidden h-[calc(100vh-8rem)] min-h-[600px] flex flex-col scroll-mt-16"
+                className={cn(
+                  "rounded-2xl bg-gradient-to-br from-violet-600 via-fuchsia-600 to-rose-600 text-white relative overflow-hidden min-h-[600px] flex flex-col scroll-mt-16",
+                  isChatting ? "h-full rounded-none border-y-0 border-r-0" : "h-[calc(100vh-8rem)]"
+                )}
               >
                 <div className="pointer-events-none absolute inset-0 opacity-60" style={{
                   background:
