@@ -144,6 +144,30 @@ export const chargeOrderWithSquare = createServerFn({ method: "POST" })
       content: `✅ Card payment captured${cardBrand && last4 ? ` (${cardBrand} •••• ${last4})` : ""}.`,
     });
 
+    // Mirror payment confirmation into any linked support ticket(s)
+    try {
+      const { data: linkedTickets } = await supabase
+        .from("tickets")
+        .select("id,user_id")
+        .eq("order_id", orderId);
+      if (linkedTickets && linkedTickets.length > 0) {
+        const content =
+          `✅ Card payment captured for order #${orderId.slice(0, 8)}` +
+          `${cardBrand && last4 ? ` (${cardBrand} •••• ${last4})` : ""}` +
+          ` — £${(order.total_cents / 100).toFixed(2)}.` +
+          (receiptUrl ? `\nReceipt: ${receiptUrl}` : "");
+        await supabase.from("ticket_messages").insert(
+          linkedTickets.map((t: { id: string; user_id: string }) => ({
+            ticket_id: t.id,
+            sender_id: userId,
+            content,
+          })),
+        );
+      }
+    } catch (e) {
+      console.error("Failed to post payment message to ticket:", e);
+    }
+
     return {
       status,
       receiptUrl,

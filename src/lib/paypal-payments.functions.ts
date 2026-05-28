@@ -193,5 +193,25 @@ export const capturePaypalOrder = createServerFn({ method: "POST" })
       content: `✅ PayPal payment captured (${who}).`,
     });
 
+    // Mirror payment confirmation into any linked support ticket(s)
+    try {
+      const { data: linkedTickets } = await supabase
+        .from("tickets")
+        .select("id")
+        .eq("order_id", orderRowId);
+      if (linkedTickets && linkedTickets.length > 0) {
+        const content = `✅ PayPal payment captured for order #${orderRowId.slice(0, 8)} (${who}).`;
+        await supabase.from("ticket_messages").insert(
+          linkedTickets.map((t: { id: string }) => ({
+            ticket_id: t.id,
+            sender_id: userId,
+            content,
+          })),
+        );
+      }
+    } catch (e) {
+      console.error("Failed to post PayPal payment message to ticket:", e);
+    }
+
     return { status, paypalOrderId: data.paypalOrderId, captureId: capture?.id ?? null, payerEmail, payerName };
   });
