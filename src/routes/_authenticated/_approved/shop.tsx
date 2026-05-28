@@ -2053,7 +2053,18 @@ function OrderDetail({ orderId, isAdmin, onBack }: { orderId: string; isAdmin: b
 
   const sendSystem = async (content: string) => {
     if (!user) return;
-    await supabase.from("order_messages").insert({ order_id: orderId, sender_id: user.id, content });
+    // Order communication now lives in the linked support ticket. Post the
+    // system message there so the customer + admin/management see it in one
+    // place. Fall back to legacy order_messages only if no ticket is linked.
+    if (linkedTicketId) {
+      await supabase.from("ticket_messages").insert({
+        ticket_id: linkedTicketId,
+        sender_id: user.id,
+        content,
+      } as never);
+    } else {
+      await supabase.from("order_messages").insert({ order_id: orderId, sender_id: user.id, content });
+    }
   };
 
   const acceptOrder = async () => {
