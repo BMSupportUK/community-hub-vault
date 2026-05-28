@@ -500,6 +500,19 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
     }
   });
 
+  // Rich-text saves can leave the guide date as a loose root text node
+  // before the first <div>. Wrap that text so the date context is not lost
+  // when event rows are parsed and converted.
+  Array.from(root.childNodes).forEach((node) => {
+    if (node.nodeType !== Node.TEXT_NODE) return;
+    const text = (node.textContent ?? "").replace(/\s+/g, " ").trim();
+    if (!text) return;
+    if (!parseGuideDate(text) && !parseMatches(text, viewerTz, defaultZone).length) return;
+    const line = document.createElement("div");
+    line.textContent = text;
+    root.replaceChild(line, node);
+  });
+
   // Some editors paste one event as a nested wrapper:
   //   <div><div>May 26 7:00 PM ET</div><div>Team A vs Team B</div></div><div>Channel</div>
   // The card parser expects those as sibling lines. Flatten only obvious
@@ -640,6 +653,32 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
     // Derive event name = text with the matched time substring removed.
     let eventName = cleanEventTitleText(text.slice(0, m.start) + " " + text.slice(m.end));
     if (isWeekdayOnly(eventName)) eventName = "";
+    let previousTitleBlock: HTMLElement | null = null;
+    if (!eventName) {
+      for (let i = blockIndex - 1; i >= 0; i -= 1) {
+        const candidate = blocks[i];
+        const sText = (candidate.textContent ?? "").trim();
+        if (!sText) continue;
+        if (candidate.closest("[data-tz-row]")) {
+          if (candidate.dataset.tzUtc) break;
+          continue;
+        }
+        if (parseGuideDate(sText)) break;
+        if (
+          startsWithScheduleTime(
+            sText,
+            viewerTz,
+            defaultZone,
+            currentSourceDate ?? undefined,
+            currentSourceDateLabel ?? undefined,
+          )
+        )
+          break;
+        previousTitleBlock = candidate;
+        eventName = cleanEventTitleText(sText);
+        break;
+      }
+    }
     // If subsequent matches exist, their text becomes a caption.
     let caption = "";
     if (matches.length > 1) {
@@ -681,14 +720,15 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
       absorbed.push(candidate);
       if (absorbed.length >= 40) break;
     }
-    if (absorbed[0]) {
+    if (absorbed[0] && !previousTitleBlock) {
       eventName = cleanEventTitleText(absorbed[0].textContent ?? "") || eventName;
     }
     // Detect channel-group headers (Premier League guides). When present,
     // render each group as a bold label on its own line with its channels
     // listed underneath, instead of one flat dot-separated caption.
+    const channelLineStart = previousTitleBlock ? 0 : 1;
     const extraLines = absorbed
-      .slice(1)
+      .slice(channelLineStart)
       .map((a) => (a.textContent ?? "").trim())
       .filter(Boolean);
     const GROUP_HEADERS = [
@@ -737,6 +777,14 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
       }
       a.setAttribute("data-tz-row", "1");
       a.className = "hidden";
+    }
+    if (previousTitleBlock) {
+      if (previousTitleBlock.dataset.tzOriginal == null) {
+        previousTitleBlock.dataset.tzOriginal = previousTitleBlock.innerHTML;
+        previousTitleBlock.dataset.tzPrevClass = previousTitleBlock.className;
+      }
+      previousTitleBlock.setAttribute("data-tz-row", "1");
+      previousTitleBlock.className = "hidden";
     }
 
     if (!eventName) eventName = "Event";
