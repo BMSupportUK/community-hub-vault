@@ -1029,6 +1029,33 @@ function TicketDetail({
             </button>
           )}
         </div>
+        {linkedOrder && (
+          <div className="rounded-lg border border-white/25 bg-white/10 backdrop-blur p-3 text-white text-xs space-y-2">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <div className="font-semibold">Order #{linkedOrder.id.slice(0, 8)}</div>
+                <div className="opacity-80">
+                  Status: {linkedOrder.status}
+                  {linkedOrder.paid_at ? " · Paid" : ""}
+                </div>
+              </div>
+              <div className="text-right font-semibold">
+                {(linkedOrder.total_cents / 100).toLocaleString(undefined, { style: "currency", currency: "GBP" })}
+              </div>
+            </div>
+            {orderIsUnpaid ? (
+              <div className="[&>*]:!text-rose-700">
+                <PayOrderDialog
+                  orderId={linkedOrder.id}
+                  amountCents={linkedOrder.total_cents}
+                  onChange={loadLinkedOrder}
+                />
+              </div>
+            ) : linkedOrder.paid_at ? (
+              <div className="text-emerald-200">✓ Payment received — thank you!</div>
+            ) : null}
+          </div>
+        )}
         {isStaff && (
           <div className="flex flex-wrap items-center gap-2 text-xs">
             <Select
