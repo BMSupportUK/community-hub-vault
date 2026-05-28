@@ -350,45 +350,6 @@ export function ChannelColumn({
         )}
         {footer}
       </div>
-      {user && (
-        <div
-          className={cn(
-            "relative z-10 h-14 border-t border-border bg-rail flex items-center",
-            inSheet ? "" : "lg:-ml-[72px]",
-          )}
-        >
-          {!inSheet && (
-            <div className="hidden lg:flex w-[72px] shrink-0 items-center justify-center">
-              <UserAvatarMenu variant="bar" />
-            </div>
-          )}
-          <div className={cn("flex items-center gap-2 flex-1 min-w-0", inSheet ? "px-3" : "lg:pl-0 pl-3 pr-2")}>
-            <div className={cn("shrink-0", !inSheet && "lg:hidden")}>
-              <UserAvatarMenu variant="bar" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className={cn("text-xs font-medium truncate", roleFlashClass(roleFlashMap.get(user.id)))}>
-                <span className="inline-flex items-center gap-1">
-                  {profile?.display_name ?? profile?.username ?? "User"}
-                  <VpnBadge userId={user.id} size={11} showInactive />
-                </span>
-              </div>
-            </div>
-            <div className="ml-auto flex items-center gap-0.5 shrink-0 text-muted-foreground">
-              <MentionsBadge />
-              <DndDialogButton />
-              <NotificationBell />
-              <button
-                onClick={handleSignOut}
-                className="p-2 rounded-lg hover:bg-surface-2 hover:text-destructive transition-colors"
-                title="Sign out"
-              >
-                <LogOut className="size-4" />
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </nav>
     {settings && (() => {
       const isGroup = settings.type === "group";
