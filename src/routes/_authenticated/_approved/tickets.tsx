@@ -1668,3 +1668,37 @@ function RequestAdminHelpButton({ ticketId }: { ticketId: string }) {
     </button>
   );
 }
+
+const ROLE_BADGE: Record<string, string> = {
+  admin: "bg-rose-500/30 text-rose-50 border-rose-300/40",
+  management: "bg-amber-400/30 text-amber-50 border-amber-300/40",
+  staff: "bg-sky-500/30 text-sky-50 border-sky-300/40",
+  moderator: "bg-violet-500/30 text-violet-50 border-violet-300/40",
+};
+
+function StaffIdCard({ profile }: { profile: Profile }) {
+  const roleFlashMap = useRoleFlashMap();
+  const name = profile.display_name || profile.username || "Staff";
+  const role = profile.role ?? "staff";
+  return (
+    <div
+      className={cn(
+        "inline-flex items-center gap-2 pl-1 pr-2 py-1 rounded-full bg-white/10 border border-white/20 shadow-sm backdrop-blur",
+        roleFlashClass(role, roleFlashMap),
+      )}
+      title={`Assigned to ${name}`}
+    >
+      <img
+        src={resolveAvatarUrl(profile.id, profile.avatar_url ?? null, roleFlashMap)}
+        alt={name}
+        className="size-6 rounded-full object-cover ring-1 ring-white/40"
+      />
+      <div className="flex flex-col leading-tight">
+        <span className="text-[11px] font-semibold text-white">{name}</span>
+        <span className={cn("text-[9px] uppercase tracking-wider px-1 rounded border self-start", ROLE_BADGE[role] ?? ROLE_BADGE.staff)}>
+          {role}
+        </span>
+      </div>
+    </div>
+  );
+}
