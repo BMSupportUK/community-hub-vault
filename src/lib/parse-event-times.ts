@@ -726,8 +726,9 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
     // Detect channel-group headers (Premier League guides). When present,
     // render each group as a bold label on its own line with its channels
     // listed underneath, instead of one flat dot-separated caption.
+    const channelLineStart = previousTitleBlock ? 0 : 1;
     const extraLines = absorbed
-      .slice(1)
+      .slice(channelLineStart)
       .map((a) => (a.textContent ?? "").trim())
       .filter(Boolean);
     const GROUP_HEADERS = [
