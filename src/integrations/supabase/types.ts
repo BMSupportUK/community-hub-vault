@@ -2915,6 +2915,7 @@ export type Database = {
           closed_at: string | null
           created_at: string
           id: string
+          order_id: string | null
           priority: Database["public"]["Enums"]["ticket_priority"]
           status: Database["public"]["Enums"]["ticket_status"]
           subject: string
@@ -2927,6 +2928,7 @@ export type Database = {
           closed_at?: string | null
           created_at?: string
           id?: string
+          order_id?: string | null
           priority?: Database["public"]["Enums"]["ticket_priority"]
           status?: Database["public"]["Enums"]["ticket_status"]
           subject: string
@@ -2939,6 +2941,7 @@ export type Database = {
           closed_at?: string | null
           created_at?: string
           id?: string
+          order_id?: string | null
           priority?: Database["public"]["Enums"]["ticket_priority"]
           status?: Database["public"]["Enums"]["ticket_status"]
           subject?: string

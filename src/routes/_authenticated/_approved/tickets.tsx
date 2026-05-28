@@ -22,6 +22,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Button } from "@/components/ui/button";
 import { useRoleFlashMap, resolveAvatarUrl, roleFlashClass } from "@/lib/role-flash";
 import { ServiceStatusBox } from "@/components/app/ServiceStatusBox";
+import { PayOrderDialog } from "@/routes/_authenticated/_approved/shop";
 
 export const Route = createFileRoute("/_authenticated/_approved/tickets")({
   validateSearch: (s: Record<string, unknown>) => ({
@@ -58,7 +59,7 @@ interface Category { id: string; name: string; slug: string; description: string
 interface Ticket {
   id: string; user_id: string; category_id: string; subject: string;
   status: Status; priority: Priority; assigned_to: string | null;
-  created_at: string; updated_at: string;
+  created_at: string; updated_at: string; order_id?: string | null;
 }
 interface Message { id: string; ticket_id: string; sender_id: string; content: string; is_internal: boolean; created_at: string; attachments?: Attachment[]; }
 interface Attachment { name: string; path: string; size: number; type: string; }
@@ -820,6 +821,21 @@ function TicketDetail({
       .then(({ data }) => setMyUsername(data?.username ?? null));
   }, [currentUserId]);
 
+  // Linked order (for Orders-category tickets) — lets the customer pay
+  // for the order directly from inside the ticket.
+  const [linkedOrder, setLinkedOrder] = useState<{ id: string; total_cents: number; status: string; paid_at: string | null } | null>(null);
+  const loadLinkedOrder = async () => {
+    if (!ticket.order_id) { setLinkedOrder(null); return; }
+    const { data } = await supabase
+      .from("orders")
+      .select("id,total_cents,status,paid_at")
+      .eq("id", ticket.order_id)
+      .maybeSingle();
+    setLinkedOrder(data ? (data as { id: string; total_cents: number; status: string; paid_at: string | null }) : null);
+  };
+  useEffect(() => { loadLinkedOrder(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [ticket.order_id]);
+  const orderIsUnpaid = !!linkedOrder && !linkedOrder.paid_at && linkedOrder.status !== "cancelled" && linkedOrder.status !== "refunded" && linkedOrder.status !== "completed";
+
   const load = async () => {
     const { data } = await supabase
       .from("ticket_messages").select("*")
@@ -1013,6 +1029,33 @@ function TicketDetail({
             </button>
           )}
         </div>
+        {linkedOrder && (
+          <div className="rounded-lg border border-white/25 bg-white/10 backdrop-blur p-3 text-white text-xs space-y-2">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <div className="font-semibold">Order #{linkedOrder.id.slice(0, 8)}</div>
+                <div className="opacity-80">
+                  Status: {linkedOrder.status}
+                  {linkedOrder.paid_at ? " · Paid" : ""}
+                </div>
+              </div>
+              <div className="text-right font-semibold">
+                {(linkedOrder.total_cents / 100).toLocaleString(undefined, { style: "currency", currency: "GBP" })}
+              </div>
+            </div>
+            {orderIsUnpaid ? (
+              <div className="[&>*]:!text-rose-700">
+                <PayOrderDialog
+                  orderId={linkedOrder.id}
+                  amountCents={linkedOrder.total_cents}
+                  onChange={loadLinkedOrder}
+                />
+              </div>
+            ) : linkedOrder.paid_at ? (
+              <div className="text-emerald-200">✓ Payment received — thank you!</div>
+            ) : null}
+          </div>
+        )}
         {isStaff && (
           <div className="flex flex-wrap items-center gap-2 text-xs">
             <Select
