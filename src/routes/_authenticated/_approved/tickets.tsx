@@ -345,14 +345,15 @@ function TicketsPage() {
   }, [search.new2fa, creating, search.id]);
 
   const isChatting = selected && tab === "tickets";
+  const hideHero = tab === "tickets";
 
   return (
     <main className={cn(
       "flex-1 overflow-y-auto bg-gradient-to-br from-rose-950 via-fuchsia-950/60 to-slate-950 text-white",
       isChatting && "overflow-hidden"
     )}>
-      {/* Hero — hidden when actively chatting on a ticket */}
-      {!isChatting && (
+      {/* Hero — hidden on the Tickets tab (list + chat view) */}
+      {!hideHero && (
         <section className="relative overflow-hidden">
           <div className="absolute inset-0">
             <img src={ticketsHero} alt="" aria-hidden className="w-full h-full object-cover" />
