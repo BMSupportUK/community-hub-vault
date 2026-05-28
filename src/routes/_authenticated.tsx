@@ -13,7 +13,8 @@ import { BreakEndingAlert } from "@/components/app/BreakEndingAlert";
 import { ShiftStartEndAlert } from "@/components/app/ShiftStartEndAlert";
 import { ModerationPendingBadge } from "@/components/app/ModerationPendingBadge";
 import { PendingOrdersBadge } from "@/components/app/PendingOrdersBadge";
-import { logMyIp } from "@/lib/ip-log.functions";
+import { GpsCapture } from "@/components/app/GpsCapture";
+import { DndDialogButton } from "@/components/app/DndDialogButton";
 import { useOnlineUsers } from "@/hooks/use-online-users";
 import { GpsCapture } from "@/components/app/GpsCapture";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -151,10 +152,9 @@ function AuthLayout() {
             )}
           </div>
           <div className="hidden xl:flex flex-1 min-w-0 px-3" />
-          <div className="flex items-center gap-1.5 lg:gap-3 shrink-0">
             <TwoFactorPill />
+            <DndDialogButton />
             <div className="hidden lg:flex"><Clocks /></div>
-          </div>
         </header>
         <div className="flex-1 flex min-h-0">
           <Outlet />

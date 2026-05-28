@@ -8,7 +8,7 @@ import { useFanZoneMembership } from "@/hooks/use-fan-zone";
 import { FAN_ZONE_OPEN_EVENT } from "@/components/app/FanZoneAccessCard";
 import { UserAvatarMenu } from "@/components/app/UserAvatarMenu";
 import { MentionsBadge } from "@/components/app/MentionsBadge";
-import { DndDialogButton } from "@/components/app/DndDialogButton";
+import { NotificationBell } from "@/components/app/NotificationBell";
 import { NotificationBell } from "@/components/app/NotificationBell";
 
 function SoccerPlayer({ className }: { className?: string }) {
@@ -254,9 +254,7 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
       {user && (
         <div className="flex flex-col items-center gap-1 pb-1 pt-2 border-t border-border w-full">
           <UserAvatarMenu variant="bar" />
-          <div className="flex flex-col items-center text-muted-foreground">
             <MentionsBadge />
-            <DndDialogButton />
             <NotificationBell />
           </div>
         </div>
