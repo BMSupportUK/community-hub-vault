@@ -187,7 +187,21 @@ export function HtmlEditor({ value, onChange, className, placeholder, videoUploa
   const promptLink = () => {
     const url = window.prompt("Link URL");
     if (!url) return;
-    exec("createLink", url);
+    const trimmed = url.trim();
+    if (!trimmed) return;
+    const title = window.prompt("Link title (shown on the preview card)", "")?.trim();
+    ref.current?.focus();
+    if (!title) {
+      // No title provided — fall back to a plain inline link.
+      exec("createLink", trimmed);
+      handleInput();
+      return;
+    }
+    let host = trimmed;
+    try { host = new URL(trimmed).hostname.replace(/^www\./, ""); } catch { /* keep raw */ }
+    const esc = (s: string) => s.replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch]!);
+    const html = `<p><a href="${esc(trimmed)}" target="_blank" rel="noopener noreferrer" class="link-card" data-link-card="1"><span class="link-card-title">${esc(title)}</span><span class="link-card-host">${esc(host)}</span></a></p><p><br/></p>`;
+    exec("insertHTML", html);
     handleInput();
   };
 
