@@ -1144,7 +1144,6 @@ function TicketDetail({
             ) : null}
             {isAdmin && !linkedOrder.completed_at && linkedOrder.status !== "cancelled" && (
               <div className="flex flex-wrap gap-2 pt-1">
-                {(() => null)()}
                 {linkedOrder.customer_type === "existing" ? (
                   <button
                     onClick={orderExtendSubscription}
