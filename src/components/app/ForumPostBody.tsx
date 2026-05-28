@@ -13,7 +13,7 @@ export function ForumPostBody({ html, className }: { html: string; className?: s
   // URL detector was fixed (e.g. URLs ending in `?s=20`) still hydrate into
   // proper embeds without requiring the author to edit & re-save.
   const processed = useMemo(() => embedSocialUrls(html), [html]);
-  // Split processed HTML around tweet markers so we can render <Tweet/> via
+  // Split processed HTML around tweet markers so we can render X posts via
   // a local, defensive renderer — no widgets.js, no SSR package import, no
   // disappearing iframe.
   const segments = useMemo(() => splitTweetSegments(processed), [processed]);
@@ -99,7 +99,7 @@ function XPostEmbed({ id, url }: { id: string; url: string }) {
     setTweet(null);
     setFailed(false);
 
-    fetch(`https://react-tweet.vercel.app/api/tweet/${encodeURIComponent(id)}`)
+    fetch(`/api/public/tweet?id=${encodeURIComponent(id)}`)
       .then(async (res) => {
         const json = (await res.json().catch(() => null)) as { data?: TweetApiData | null } | null;
         if (!cancelled) {
