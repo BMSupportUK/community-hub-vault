@@ -858,6 +858,10 @@ function TicketDetail({
   };
   useEffect(() => { loadLinkedOrder(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [ticket.order_id]);
   const orderIsUnpaid = !!linkedOrder && !linkedOrder.paid_at && linkedOrder.status !== "cancelled" && linkedOrder.status !== "refunded" && linkedOrder.status !== "completed";
+  const accountSetupStarted = messages.some((m) => {
+    const c = m.content ?? "";
+    return c.startsWith("🛠️") || c.startsWith("🔄");
+  });
 
   const postTicketSystem = async (content: string) => {
     if (!currentUserId) return;
