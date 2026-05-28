@@ -35,6 +35,7 @@ export function LinkPreviewCard({ url, title }: { url: string; title?: string })
   let host = "";
   try { host = new URL(url).hostname.replace(/^www\./, ""); } catch { host = url; }
   const m = meta;
+  const fallbackTitle = title || m?.title || titleFromUrl(url) || host;
 
   return (
     <a
@@ -59,12 +60,25 @@ export function LinkPreviewCard({ url, title }: { url: string; title?: string })
           <span className="truncate">{m?.host ?? host}</span>
         </div>
         <div className="mt-1 font-semibold leading-snug text-foreground line-clamp-2">
-          {title || m?.title || (failed ? host : "Loading preview…")}
+          {fallbackTitle}
         </div>
-        {m?.description && (
+        {m?.description ? (
           <p className="mt-1 text-sm text-muted-foreground line-clamp-2">{m.description}</p>
-        )}
+        ) : !failed && !m ? (
+          <p className="mt-1 text-sm text-muted-foreground line-clamp-2">Loading link details…</p>
+        ) : null}
       </div>
     </a>
   );
+}
+
+function titleFromUrl(raw: string): string | null {
+  try {
+    const url = new URL(raw);
+    const last = url.pathname.split("/").filter(Boolean).pop();
+    if (!last) return null;
+    return last.replace(/[-_]+/g, " ").replace(/\b\w/g, (ch) => ch.toUpperCase()).slice(0, 120);
+  } catch {
+    return null;
+  }
 }

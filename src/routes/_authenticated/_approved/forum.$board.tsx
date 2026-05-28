@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { HtmlEditor } from "@/components/ui/html-editor";
-import { embedSocialUrls } from "@/lib/forum-embeds";
+import { prepareForumPostBody } from "@/lib/forum-embeds";
 import { useMentionCandidates } from "@/hooks/use-mention-candidates";
 import { toast } from "sonner";
 import { RotatingAffiliateBanner } from "@/components/app/RotatingAffiliateBanner";
@@ -188,7 +188,7 @@ function BoardPage() {
     const bRaw = body.trim();
     if (t.length < 3) { toast.error("Title too short"); return; }
     if (bRaw.length < 1 || bRaw === "<p><br></p>") { toast.error("Add some body text"); return; }
-    const b = embedSocialUrls(bRaw);
+    const b = prepareForumPostBody(bRaw);
     submittingRef.current = true;
     setSubmitting(true);
     const { data: topic, error } = await supabase

@@ -39,6 +39,10 @@ export function markLinkPreviews(html: string): string {
   });
 }
 
+export function prepareForumPostBody(html: string): string {
+  return markLinkPreviews(embedSocialUrls(html));
+}
+
 function linkPreviewMarker(url: string, title?: string | null): string {
   const titleAttr = title ? ` data-link-title="${escapeAttr(title)}"` : "";
   return `<div data-link-preview="${escapeAttr(url)}"${titleAttr}></div>`;

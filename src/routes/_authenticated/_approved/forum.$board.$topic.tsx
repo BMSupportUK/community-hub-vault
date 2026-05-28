@@ -11,7 +11,7 @@ import { HtmlEditor } from "@/components/ui/html-editor";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ForumPostBody } from "@/components/app/ForumPostBody";
 import { ForumPostReactions } from "@/components/app/ForumPostReactions";
-import { embedSocialUrls } from "@/lib/forum-embeds";
+import { prepareForumPostBody } from "@/lib/forum-embeds";
 import { useMentionCandidates } from "@/hooks/use-mention-candidates";
 import { toast } from "sonner";
 import { RotatingAffiliateBanner } from "@/components/app/RotatingAffiliateBanner";
@@ -139,7 +139,7 @@ function TopicPage() {
     if (submittingRef.current) return;
     const raw = reply.trim();
     if (raw.length < 1 || raw === "<p><br></p>") return;
-    const body = embedSocialUrls(raw);
+    const body = prepareForumPostBody(raw);
     submittingRef.current = true;
     setSubmitting(true);
     const { error } = await supabase.from("forum_posts").insert({ topic_id: topic.id, author_id: user.id, body, is_op: false });
@@ -175,7 +175,7 @@ function TopicPage() {
     if (!editingId) return;
     const raw = editText.trim();
     if (!raw || raw === "<p><br></p>") return;
-    const body = embedSocialUrls(raw);
+    const body = prepareForumPostBody(raw);
     const { error } = await supabase.from("forum_posts").update({ body }).eq("id", editingId);
     if (error) { toast.error("Couldn't save", { description: error.message }); return; }
     setEditingId(null); setEditText("");
