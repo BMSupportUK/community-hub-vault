@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useRouterState } from "@tanstack/react-router";
 import { ChannelColumn, type ChannelGroup } from "@/components/app/ChannelColumn";
-import { ServiceStatusBox } from "@/components/app/ServiceStatusBox";
 import { MembershipBox } from "@/components/app/MembershipBox";
 import { SecurityBox } from "@/components/app/SecurityBox";
 import { WorkingStatusBox } from "@/components/app/WorkingStatusBox";
@@ -118,7 +117,6 @@ export function HomeChannelsSidebar() {
       footer={
         <>
           <MembershipBox />
-          <ServiceStatusBox />
           <SecurityBox />
           <WorkingStatusBox />
         </>
