@@ -2,7 +2,6 @@ import { createFileRoute, Outlet, useNavigate, useRouterState } from "@tanstack/
 import { useEffect, useState } from "react";
 import { Hash, Menu } from "lucide-react";
 import { ChannelColumn, type ChannelGroup } from "@/components/app/ChannelColumn";
-import { MembershipBox } from "@/components/app/MembershipBox";
 import { SecurityBox } from "@/components/app/SecurityBox";
 import { WorkingStatusBox } from "@/components/app/WorkingStatusBox";
 import { supabase } from "@/integrations/supabase/client";
