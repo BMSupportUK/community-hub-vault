@@ -87,7 +87,6 @@ async function getOembedFallback(id: string) {
         __typename: "Tweet",
         id_str: id,
         text: htmlToTweetText(html),
-        created_at: htmlToTweetDate(html),
         user: {
           name: embed.author_name,
           screen_name: handle,
