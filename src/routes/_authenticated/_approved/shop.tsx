@@ -944,6 +944,7 @@ function Storefront() {
             category_id: ordersCat.id,
             subject: `New order #${String(order.id).slice(0, 8)}`,
             priority: "normal",
+            order_id: order.id,
           } as never)
           .select()
           .single();
@@ -964,6 +965,11 @@ function Storefront() {
             ticket_id: ticket.id,
             sender_id: user.id,
             content: ticketBody,
+          } as never);
+          await supabase.from("ticket_messages").insert({
+            ticket_id: ticket.id,
+            sender_id: user.id,
+            content: `💳 How would you like to pay for this order (${fmt(finalTotal)})?\n\nUse the "Pay" button at the top of this ticket to choose your payment method — Square (card / Apple Pay / Google Pay), PayPal, or USDT.`,
           } as never);
           const oohMsg = await getOutOfHoursMessage();
           if (oohMsg) {
