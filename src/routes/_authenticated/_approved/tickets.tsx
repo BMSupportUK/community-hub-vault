@@ -212,10 +212,11 @@ function FilePicker({
 }
 
 function TicketsPage() {
-  const { user, isStaff } = useAuth();
+  const { user, isStaff, hasAny } = useAuth();
   const search = Route.useSearch();
   const navigate = useNavigate();
-  const view = search.view ?? (isStaff ? "all" : "mine");
+  const canBeAssigned = hasAny(["admin", "management", "staff"]);
+  const view = search.view ?? (canBeAssigned ? "assigned" : isStaff ? "all" : "mine");
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [tickets, setTickets] = useState<Ticket[]>([]);
