@@ -600,7 +600,6 @@ function TicketsPage() {
 
 function NewTicketForm({
   categories, onCancel, onCreated, preset,
-  categories, onCancel, onCreated, preset,
 }: { categories: Category[]; onCancel: () => void; onCreated: (id: string) => void; preset?: "2fa-reset" }) {
   const { user } = useAuth();
   const resetCat = categories.find((c) => c.slug === "account-2fa-reset");
