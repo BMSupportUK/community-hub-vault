@@ -1295,6 +1295,11 @@ function TicketDetail({
               options={[{ value: "", label: "Unassigned" }, ...staff.map((s) => ({ value: s.id, label: s.display_name || s.username || "Staff" }))]}
               onChange={(v) => updateField({ assigned_to: v || null })}
             />
+            {ticket.assigned_to && (() => {
+              const a = staff.find((s) => s.id === ticket.assigned_to);
+              if (!a) return null;
+              return <StaffIdCard profile={a} />;
+            })()}
             <span className={cn("ml-auto px-2 py-1 rounded text-xs capitalize", PRI_CLS[ticket.priority])}>{ticket.priority}</span>
             <RequestAdminHelpButton ticketId={ticket.id} />
           </div>
