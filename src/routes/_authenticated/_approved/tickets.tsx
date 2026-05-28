@@ -858,6 +858,10 @@ function TicketDetail({
   };
   useEffect(() => { loadLinkedOrder(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [ticket.order_id]);
   const orderIsUnpaid = !!linkedOrder && !linkedOrder.paid_at && linkedOrder.status !== "cancelled" && linkedOrder.status !== "refunded" && linkedOrder.status !== "completed";
+  const accountSetupStarted = messages.some((m) => {
+    const c = m.content ?? "";
+    return c.startsWith("🛠️") || c.startsWith("🔄");
+  });
 
   const postTicketSystem = async (content: string) => {
     if (!currentUserId) return;
@@ -1143,24 +1147,35 @@ function TicketDetail({
                 {linkedOrder.customer_type === "existing" ? (
                   <button
                     onClick={orderExtendSubscription}
-                    disabled={orderBusy}
-                    className="px-2.5 py-1 rounded-md bg-violet-500/20 text-violet-50 text-xs font-medium hover:bg-violet-500/30 disabled:opacity-50"
+                    disabled={orderBusy || !linkedOrder.paid_at}
+                    title={!linkedOrder.paid_at ? "Waiting for payment confirmation" : undefined}
+                    className="px-2.5 py-1 rounded-md bg-violet-500/20 text-violet-50 text-xs font-medium hover:bg-violet-500/30 disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     🔄 Extend Subscription
                   </button>
                 ) : (
                   <button
                     onClick={orderSettingUpAccount}
-                    disabled={orderBusy}
-                    className="px-2.5 py-1 rounded-md bg-blue-500/20 text-blue-50 text-xs font-medium hover:bg-blue-500/30 disabled:opacity-50"
+                    disabled={orderBusy || !linkedOrder.paid_at}
+                    title={!linkedOrder.paid_at ? "Waiting for payment confirmation" : undefined}
+                    className="px-2.5 py-1 rounded-md bg-blue-500/20 text-blue-50 text-xs font-medium hover:bg-blue-500/30 disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     🛠️ Setting Up Account
                   </button>
                 )}
                 <button
                   onClick={orderCompleteSale}
-                  disabled={orderBusy}
-                  className="px-2.5 py-1 rounded-md bg-emerald-500/25 text-emerald-50 text-xs font-medium hover:bg-emerald-500/35 disabled:opacity-50"
+                  disabled={orderBusy || !linkedOrder.paid_at || !accountSetupStarted}
+                  title={
+                    !linkedOrder.paid_at
+                      ? "Waiting for payment confirmation"
+                      : !accountSetupStarted
+                        ? (linkedOrder.customer_type === "existing"
+                            ? "Extend subscription first"
+                            : "Set up account first")
+                        : undefined
+                  }
+                  className="px-2.5 py-1 rounded-md bg-emerald-500/25 text-emerald-50 text-xs font-medium hover:bg-emerald-500/35 disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   ✅ Sale Complete
                 </button>
