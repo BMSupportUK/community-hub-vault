@@ -50,6 +50,27 @@ function htmlTextContent(html: string): string {
 export function embedSocialUrls(html: string): string {
   if (!html) return html;
 
+  // Migrate legacy embed markup (old blockquote.twitter-tweet shells, including
+  // the previous social-embed-x wrapper) to the new marker so react-tweet
+  // renders them without requiring posts to be re-saved.
+  html = html.replace(
+    /<div\b[^>]*class=["'][^"']*social-embed-x[^"']*["'][\s\S]*?<\/div>\s*<\/div>/gi,
+    (match) => {
+      const id = match.match(/data-tweet-id=["'](\d+)["']/i)?.[1];
+      const url = match.match(/href=["']([^"']+)["']/i)?.[1] ?? "";
+      return id ? `<div data-tweet-embed="${id}" data-tweet-url="${url}"></div>` : match;
+    },
+  );
+  html = html.replace(
+    /<blockquote\b[^>]*class=["'][^"']*twitter-tweet[^"']*["'][\s\S]*?<\/blockquote>/gi,
+    (match) => {
+      const id = match.match(/data-tweet-id=["'](\d+)["']/i)?.[1]
+        ?? match.match(/\/status\/(\d+)/)?.[1];
+      const url = match.match(/href=["'](https?:\/\/[^"']*(?:twitter|x)\.com\/[^"']+)["']/i)?.[1] ?? "";
+      return id ? `<div data-tweet-embed="${id}" data-tweet-url="${url}"></div>` : match;
+    },
+  );
+
   // Important: this must work during SSR too. React may not patch a
   // dangerouslySetInnerHTML mismatch during hydration, so returning raw HTML on
   // the server and embed HTML in the browser leaves old posts visibly unembedded.
