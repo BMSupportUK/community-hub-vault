@@ -80,7 +80,32 @@ function splitTweetSegments(html: string): Segment[] {
     last = m.index + m[0].length;
   }
   if (last < html.length) out.push({ type: "html", html: html.slice(last) });
-  return out.length ? out : [{ type: "html", html }];
+  const initial = out.length ? out : [{ type: "html", html } as Segment];
+  // Second pass: any html segment that is just a single standalone anchor
+  // (optionally wrapped in <p>) becomes a link preview card. This is a
+  // belt-and-braces fallback in case the upstream marker insertion in
+  // markLinkPreviews missed something (e.g. cached HTML, odd wrapping).
+  return initial.flatMap((seg): Segment[] => {
+    if (seg.type !== "html") return [seg];
+    const stripped = seg.html.trim();
+    if (!stripped) return [seg];
+    const standalone = stripped.match(
+      /^(?:<p\b[^>]*>\s*)?<a\b[^>]*\bhref=["'](https?:\/\/[^"']+)["'][^>]*>([\s\S]*?)<\/a>(?:\s*<\/p>)?$/i,
+    );
+    if (!standalone) return [seg];
+    const href = decodeAttr(standalone[1]);
+    const text = standalone[2].replace(/<[^>]+>/g, "").trim();
+    // Only swap when the anchor text is empty or equals the href (i.e. a
+    // bare auto-linked URL), not when the user wrote real link text.
+    if (text && text.replace(/\/$/, "") !== href.replace(/\/$/, "") && !/^https?:\/\//i.test(text)) {
+      return [seg];
+    }
+    // Skip social URLs that have their own embeds.
+    if (/^https?:\/\/(?:www\.|m\.|mobile\.|web\.)?(?:twitter\.com|x\.com|facebook\.com|fb\.watch|youtube\.com|youtu\.be)\//i.test(href)) {
+      return [seg];
+    }
+    return [{ type: "link", url: href }];
+  });
 }
 
 function decodeAttr(s: string): string {
