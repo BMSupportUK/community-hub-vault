@@ -108,12 +108,6 @@ function htmlToTweetText(html: string) {
     .trim());
 }
 
-function htmlToTweetDate(html: string) {
-  const linkText = html.match(/<\/blockquote>\s*\n*\s*$/i) ? html.match(/<a\b[^>]*>([^<]+)<\/a>\s*<\/blockquote>/i)?.[1] : undefined;
-  const date = linkText ? new Date(decodeHtml(linkText)) : null;
-  return date && !Number.isNaN(date.getTime()) ? date.toISOString() : undefined;
-}
-
 function decodeHtml(text: string) {
   return text
     .replace(/&amp;/gi, "&")
