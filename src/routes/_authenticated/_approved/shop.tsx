@@ -502,7 +502,7 @@ function SidebarLatestOrderProgress() {
   );
 }
 
-function OrderProgressStrip({ order }: { order: Order }) {
+export function OrderProgressStrip({ order }: { order: { status: string; paid_at?: string | null; completed_at?: string | null } }) {
   const placed = true;
   const paid = !!order.paid_at;
   const setup = order.status === "completed" || !!order.completed_at;
