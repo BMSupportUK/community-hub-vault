@@ -5,7 +5,8 @@ const FB_RE = /^https?:\/\/(?:www\.|m\.|web\.)?facebook\.com\/[^\s<>"']+$/i;
 const FB_WATCH_RE = /^https?:\/\/fb\.watch\/[A-Za-z0-9_-]+\/?(?:[?#]\S*)?$/i;
 
 function tweetEmbed(url: string, id: string) {
-  return `<div class="social-embed social-embed-x" data-social-embed="x"><blockquote class="twitter-tweet" data-tweet-id="${id}" data-lang="en"><a href="${url}">View post on X</a></blockquote><a class="social-embed-fallback" href="${url}" target="_blank" rel="noopener noreferrer">Open this post on X</a></div>`;
+  // Marker consumed by ForumPostBody; rendered via react-tweet (no widgets.js).
+  return `<div data-tweet-embed="${id}" data-tweet-url="${url}"></div>`;
 }
 function fbEmbed(url: string) {
   return `<div class="fb-post" data-href="${url}" data-width="500" data-show-text="true"></div>`;
