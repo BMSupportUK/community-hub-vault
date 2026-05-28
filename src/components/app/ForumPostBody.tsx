@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, Fragment } from "react";
 import { sanitizeRichHtml } from "@/lib/sanitize-html";
-import { useLoadSocialEmbeds, embedSocialUrls } from "@/lib/forum-embeds";
+import { useLoadSocialEmbeds, embedSocialUrls, markLinkPreviews } from "@/lib/forum-embeds";
+import { LinkPreviewCard } from "@/components/app/LinkPreviewCard";
 
 /**
  * Renders forum post HTML safely. Legacy plain-text posts (no `<` in the body)
@@ -12,7 +13,7 @@ export function ForumPostBody({ html, className }: { html: string; className?: s
   // Re-run embed conversion at render time so posts saved before the X/FB
   // URL detector was fixed (e.g. URLs ending in `?s=20`) still hydrate into
   // proper embeds without requiring the author to edit & re-save.
-  const processed = useMemo(() => embedSocialUrls(html), [html]);
+  const processed = useMemo(() => markLinkPreviews(embedSocialUrls(html)), [html]);
   // Split processed HTML around tweet markers so we can render X posts via
   // a local, defensive renderer — no widgets.js, no SSR package import, no
   // disappearing iframe.
@@ -43,6 +44,8 @@ export function ForumPostBody({ html, className }: { html: string; className?: s
       {segments.map((seg, i) =>
         seg.type === "tweet" ? (
           <XPostEmbed key={`t-${i}-${seg.id}`} id={seg.id} url={seg.url} />
+        ) : seg.type === "link" ? (
+          <LinkPreviewCard key={`l-${i}-${seg.url}`} url={seg.url} />
         ) : (
           <Fragment key={`h-${i}`}>
             <div dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(seg.html) }} />
@@ -53,22 +56,38 @@ export function ForumPostBody({ html, className }: { html: string; className?: s
   );
 }
 
-type Segment = { type: "html"; html: string } | { type: "tweet"; id: string; url: string };
+type Segment =
+  | { type: "html"; html: string }
+  | { type: "tweet"; id: string; url: string }
+  | { type: "link"; url: string };
 
 function splitTweetSegments(html: string): Segment[] {
-  const re = /<div\b([^>]*)\bdata-tweet-embed=["']([^"']+)["'][^>]*>\s*<\/div>/gi;
+  const re = /<div\b[^>]*\b(?:data-tweet-embed=["']([^"']+)["']|data-link-preview=["']([^"']+)["'])[^>]*>\s*<\/div>/gi;
   const out: Segment[] = [];
   let last = 0;
   let m: RegExpExecArray | null;
   while ((m = re.exec(html)) !== null) {
     if (m.index > last) out.push({ type: "html", html: html.slice(last, m.index) });
-    const attrs = m[0];
-    const url = attrs.match(/\bdata-tweet-url=["']([^"']+)["']/i)?.[1] ?? `https://x.com/i/status/${m[2]}`;
-    out.push({ type: "tweet", id: m[2], url });
+    if (m[1]) {
+      const attrs = m[0];
+      const url = attrs.match(/\bdata-tweet-url=["']([^"']+)["']/i)?.[1] ?? `https://x.com/i/status/${m[1]}`;
+      out.push({ type: "tweet", id: m[1], url });
+    } else if (m[2]) {
+      out.push({ type: "link", url: decodeAttr(m[2]) });
+    }
     last = m.index + m[0].length;
   }
   if (last < html.length) out.push({ type: "html", html: html.slice(last) });
   return out.length ? out : [{ type: "html", html }];
+}
+
+function decodeAttr(s: string): string {
+  return s
+    .replace(/&amp;/gi, "&")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;|&apos;/gi, "'")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">");
 }
 
 type TweetApiUser = {
