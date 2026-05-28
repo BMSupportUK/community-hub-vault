@@ -1684,7 +1684,7 @@ function StaffIdCard({ profile }: { profile: Profile }) {
     <div
       className={cn(
         "inline-flex items-center gap-2 pl-1 pr-2 py-1 rounded-full bg-white/10 border border-white/20 shadow-sm backdrop-blur",
-        roleFlashClass(role, roleFlashMap),
+        roleFlashClass(role),
       )}
       title={`Assigned to ${name}`}
     >
