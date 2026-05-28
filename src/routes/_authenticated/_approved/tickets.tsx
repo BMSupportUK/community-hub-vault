@@ -821,6 +821,21 @@ function TicketDetail({
       .then(({ data }) => setMyUsername(data?.username ?? null));
   }, [currentUserId]);
 
+  // Linked order (for Orders-category tickets) — lets the customer pay
+  // for the order directly from inside the ticket.
+  const [linkedOrder, setLinkedOrder] = useState<{ id: string; total_cents: number; status: string; paid_at: string | null } | null>(null);
+  const loadLinkedOrder = async () => {
+    if (!ticket.order_id) { setLinkedOrder(null); return; }
+    const { data } = await supabase
+      .from("orders")
+      .select("id,total_cents,status,paid_at")
+      .eq("id", ticket.order_id)
+      .maybeSingle();
+    setLinkedOrder(data ? (data as { id: string; total_cents: number; status: string; paid_at: string | null }) : null);
+  };
+  useEffect(() => { loadLinkedOrder(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [ticket.order_id]);
+  const orderIsUnpaid = !!linkedOrder && !linkedOrder.paid_at && linkedOrder.status !== "cancelled" && linkedOrder.status !== "refunded" && linkedOrder.status !== "completed";
+
   const load = async () => {
     const { data } = await supabase
       .from("ticket_messages").select("*")
