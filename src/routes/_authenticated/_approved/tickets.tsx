@@ -63,7 +63,7 @@ interface Ticket {
 }
 interface Message { id: string; ticket_id: string; sender_id: string; content: string; is_internal: boolean; created_at: string; attachments?: Attachment[]; }
 interface Attachment { name: string; path: string; size: number; type: string; }
-interface Profile { id: string; display_name: string | null; username: string | null; }
+interface Profile { id: string; display_name: string | null; username: string | null; avatar_url?: string | null; role?: "admin" | "management" | "staff" | "moderator" | null; }
 
 const newTicketSchema = z.object({
   subject: z.string().trim().min(3, "Subject must be at least 3 characters").max(120),
@@ -297,12 +297,19 @@ function TicketsPage() {
     (async () => {
       const { data: roles } = await supabase
         .from("user_roles")
-        .select("user_id")
+        .select("user_id, role")
         .in("role", ["admin", "management", "staff", "moderator"]);
-      const ids = [...new Set((roles ?? []).map((r) => r.user_id))];
+      const rolesRows = (roles ?? []) as { user_id: string; role: "admin" | "management" | "staff" | "moderator" }[];
+      const ids = [...new Set(rolesRows.map((r) => r.user_id))];
       if (!ids.length) return;
-      const { data: profs } = await supabase.from("profiles").select("id, display_name, username").in("id", ids);
-      setStaff(profs ?? []);
+      const rank: Record<string, number> = { admin: 4, management: 3, staff: 2, moderator: 1 };
+      const topRole = new Map<string, "admin" | "management" | "staff" | "moderator">();
+      for (const r of rolesRows) {
+        const cur = topRole.get(r.user_id);
+        if (!cur || rank[r.role] > rank[cur]) topRole.set(r.user_id, r.role);
+      }
+      const { data: profs } = await supabase.from("profiles").select("id, display_name, username, avatar_url").in("id", ids);
+      setStaff(((profs ?? []) as Profile[]).map((p) => ({ ...p, role: topRole.get(p.id) ?? null })));
     })();
   }, [isStaff]);
 
