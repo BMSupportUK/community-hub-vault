@@ -251,7 +251,6 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
       <div className="mt-auto" />
       {user && (
         <div className="flex flex-col items-center gap-1 pb-1 pt-2 border-t border-border w-full">
-          <UserAvatarMenu variant="bar" />
           <MentionsBadge />
           <NotificationBell />
         </div>
@@ -263,6 +262,11 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
       >
         <LogOut className="size-5" />
       </button>
+      {user && (
+        <div className="flex flex-col items-center pt-1">
+          <UserAvatarMenu variant="bar" />
+        </div>
+      )}
     </aside>
   );
 }
