@@ -873,10 +873,12 @@ function TicketDetail({
         if (status === "SUBSCRIBED" && draftRef.current.trim()) sendTyping(false);
       });
     channelRef.current = ch;
+    const reconcile = window.setInterval(load, 30_000);
     return () => {
       typingChannelReadyRef.current = false;
       channelRef.current = null;
       if (typingTimerRef.current) { window.clearTimeout(typingTimerRef.current); typingTimerRef.current = null; }
+      window.clearInterval(reconcile);
       void ch.untrack();
       supabase.removeChannel(ch);
       setOthersTyping({});
