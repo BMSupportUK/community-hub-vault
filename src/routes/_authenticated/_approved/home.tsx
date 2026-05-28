@@ -38,6 +38,8 @@ function HomeLayout() {
   const { hasAny, user } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
   const navigate = useNavigate();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const isHomeIndex = pathname === "/home" || pathname === "/home/";
   const path = useRouterState({ select: (r) => r.location.pathname });
   const [channels, setChannels] = useState<ChannelRow[] | null>(null);
   const [chanNavOpen, setChanNavOpen] = useState(false);
@@ -424,15 +426,18 @@ function HomeLayout() {
 
   return (
     <>
-      <ChannelColumn
-        title="Support Community"
-        groups={groups}
-        onAddGroup={isAdmin ? () => setShowAddGroup(true) : undefined}
-        onReorderChannels={isAdmin ? reorderChannels : undefined}
-        onReorderGroups={isAdmin ? reorderGroups : undefined}
-        footer={<><SecurityBox /><WorkingStatusBox /></>}
-      />
+      {!isHomeIndex && (
+        <ChannelColumn
+          title="Support Community"
+          groups={groups}
+          onAddGroup={isAdmin ? () => setShowAddGroup(true) : undefined}
+          onReorderChannels={isAdmin ? reorderChannels : undefined}
+          onReorderGroups={isAdmin ? reorderGroups : undefined}
+          footer={<><SecurityBox /><WorkingStatusBox /></>}
+        />
+      )}
       <div className="flex-1 flex flex-col min-w-0">
+        {!isHomeIndex && (
         <div className="md:hidden h-10 shrink-0 flex items-center px-3 border-b border-border bg-rail/30">
           <Sheet open={chanNavOpen} onOpenChange={setChanNavOpen}>
             <SheetTrigger className="inline-flex items-center gap-2 text-xs font-medium text-muted-foreground hover:text-foreground">
@@ -452,6 +457,7 @@ function HomeLayout() {
             </SheetContent>
           </Sheet>
         </div>
+        )}
         <div className="flex-1 flex min-h-0 min-w-0">
           <Outlet />
         </div>
