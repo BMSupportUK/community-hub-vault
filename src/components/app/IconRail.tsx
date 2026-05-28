@@ -9,7 +9,6 @@ import { FAN_ZONE_OPEN_EVENT } from "@/components/app/FanZoneAccessCard";
 import { UserAvatarMenu } from "@/components/app/UserAvatarMenu";
 import { MentionsBadge } from "@/components/app/MentionsBadge";
 import { NotificationBell } from "@/components/app/NotificationBell";
-import { NotificationBell } from "@/components/app/NotificationBell";
 
 function SoccerPlayer({ className }: { className?: string }) {
   return (
