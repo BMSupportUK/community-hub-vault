@@ -5,7 +5,8 @@ const FB_RE = /^https?:\/\/(?:www\.|m\.|web\.)?facebook\.com\/[^\s<>"']+$/i;
 const FB_WATCH_RE = /^https?:\/\/fb\.watch\/[A-Za-z0-9_-]+\/?(?:[?#]\S*)?$/i;
 
 function tweetEmbed(url: string, id: string) {
-  return `<div class="social-embed social-embed-x" data-social-embed="x"><blockquote class="twitter-tweet" data-tweet-id="${id}" data-lang="en"><a href="${url}">View post on X</a></blockquote><a class="social-embed-fallback" href="${url}" target="_blank" rel="noopener noreferrer">Open this post on X</a></div>`;
+  // Marker consumed by ForumPostBody; rendered via react-tweet (no widgets.js).
+  return `<div data-tweet-embed="${id}" data-tweet-url="${url}"></div>`;
 }
 function fbEmbed(url: string) {
   return `<div class="fb-post" data-href="${url}" data-width="500" data-show-text="true"></div>`;
@@ -48,6 +49,27 @@ function htmlTextContent(html: string): string {
  */
 export function embedSocialUrls(html: string): string {
   if (!html) return html;
+
+  // Migrate legacy embed markup (old blockquote.twitter-tweet shells, including
+  // the previous social-embed-x wrapper) to the new marker so react-tweet
+  // renders them without requiring posts to be re-saved.
+  html = html.replace(
+    /<div\b[^>]*class=["'][^"']*social-embed-x[^"']*["'][\s\S]*?<\/div>/gi,
+    (match) => {
+      const id = match.match(/data-tweet-id=["'](\d+)["']/i)?.[1];
+      const url = match.match(/href=["']([^"']+)["']/i)?.[1] ?? "";
+      return id ? `<div data-tweet-embed="${id}" data-tweet-url="${url}"></div>` : match;
+    },
+  );
+  html = html.replace(
+    /<blockquote\b[^>]*class=["'][^"']*twitter-tweet[^"']*["'][\s\S]*?<\/blockquote>/gi,
+    (match) => {
+      const id = match.match(/data-tweet-id=["'](\d+)["']/i)?.[1]
+        ?? match.match(/\/status\/(\d+)/)?.[1];
+      const url = match.match(/href=["'](https?:\/\/[^"']*(?:twitter|x)\.com\/[^"']+)["']/i)?.[1] ?? "";
+      return id ? `<div data-tweet-embed="${id}" data-tweet-url="${url}"></div>` : match;
+    },
+  );
 
   // Important: this must work during SSR too. React may not patch a
   // dangerouslySetInnerHTML mismatch during hydration, so returning raw HTML on
