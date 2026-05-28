@@ -1,7 +1,15 @@
-import { useMemo, useRef, Fragment } from "react";
-import { Tweet } from "react-tweet";
+import { useMemo, useRef, Fragment, lazy, Suspense } from "react";
 import { sanitizeRichHtml } from "@/lib/sanitize-html";
 import { useLoadSocialEmbeds, embedSocialUrls } from "@/lib/forum-embeds";
+
+// Lazy-load react-tweet on the client only. Its package "react-server"
+// export condition resolves to an RSC build on some SSR runtimes (e.g.
+// the Cloudflare Worker the app SSRs in), which throws "n is not iterable"
+// at module init and takes down the whole page — even on routes that don't
+// render any tweets.
+const Tweet = lazy(() =>
+  import("react-tweet").then((m) => ({ default: m.Tweet })),
+);
 
 /**
  * Renders forum post HTML safely. Legacy plain-text posts (no `<` in the body)
@@ -44,7 +52,9 @@ export function ForumPostBody({ html, className }: { html: string; className?: s
       {segments.map((seg, i) =>
         seg.type === "tweet" ? (
           <div key={`t-${i}-${seg.id}`} className="my-3 flex justify-center [&_.react-tweet-theme]:!my-0" data-theme="dark">
-            <Tweet id={seg.id} />
+            <Suspense fallback={<div className="text-xs text-muted-foreground">Loading tweet…</div>}>
+              <Tweet id={seg.id} />
+            </Suspense>
           </div>
         ) : (
           <Fragment key={`h-${i}`}>
