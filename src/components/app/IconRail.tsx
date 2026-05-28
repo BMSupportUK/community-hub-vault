@@ -6,6 +6,10 @@ import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useFanZoneMembership } from "@/hooks/use-fan-zone";
 import { FAN_ZONE_OPEN_EVENT } from "@/components/app/FanZoneAccessCard";
+import { UserAvatarMenu } from "@/components/app/UserAvatarMenu";
+import { MentionsBadge } from "@/components/app/MentionsBadge";
+import { DndDialogButton } from "@/components/app/DndDialogButton";
+import { NotificationBell } from "@/components/app/NotificationBell";
 
 function SoccerPlayer({ className }: { className?: string }) {
   return (
@@ -247,7 +251,21 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
         </div>
       ))}
       <div className="mt-auto" />
-      <button onClick={handleSignOut} className="text-muted-foreground hover:text-destructive p-3 rounded-xl hover:bg-surface-2 transition-colors" title="Sign out">
+      {user && (
+        <div className="flex flex-col items-center gap-1 pb-1 pt-2 border-t border-border w-full">
+          <UserAvatarMenu variant="bar" />
+          <div className="flex flex-col items-center text-muted-foreground">
+            <MentionsBadge />
+            <DndDialogButton />
+            <NotificationBell />
+          </div>
+        </div>
+      )}
+      <button
+        onClick={handleSignOut}
+        className="text-muted-foreground hover:text-destructive p-3 rounded-xl hover:bg-surface-2 transition-colors"
+        title="Sign out"
+      >
         <LogOut className="size-5" />
       </button>
     </aside>
