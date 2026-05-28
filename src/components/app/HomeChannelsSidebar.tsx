@@ -116,7 +116,6 @@ export function HomeChannelsSidebar() {
       groups={groups}
       footer={
         <>
-          <MembershipBox />
           <SecurityBox />
           <WorkingStatusBox />
         </>
