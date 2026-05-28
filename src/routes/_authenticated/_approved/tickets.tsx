@@ -514,7 +514,7 @@ function TicketsPage() {
               {/* Right panel */}
               <div
                 ref={detailPanelRef}
-                className="rounded-2xl bg-gradient-to-br from-violet-600 via-fuchsia-600 to-rose-600 text-white relative overflow-hidden min-h-[600px] flex flex-col scroll-mt-16"
+                className="rounded-2xl bg-gradient-to-br from-violet-600 via-fuchsia-600 to-rose-600 text-white relative overflow-hidden h-[calc(100vh-8rem)] min-h-[600px] flex flex-col scroll-mt-16"
               >
                 <div className="pointer-events-none absolute inset-0 opacity-60" style={{
                   background:
