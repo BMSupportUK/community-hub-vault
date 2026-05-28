@@ -823,18 +823,101 @@ function TicketDetail({
 
   // Linked order (for Orders-category tickets) — lets the customer pay
   // for the order directly from inside the ticket.
-  const [linkedOrder, setLinkedOrder] = useState<{ id: string; total_cents: number; status: string; paid_at: string | null; completed_at: string | null } | null>(null);
+  type LinkedOrder = {
+    id: string;
+    user_id: string | null;
+    total_cents: number;
+    status: string;
+    paid_at: string | null;
+    completed_at: string | null;
+    customer_type: string | null;
+    existing_username: string | null;
+  };
+  const [linkedOrder, setLinkedOrder] = useState<LinkedOrder | null>(null);
+  const [linkedOrderUsername, setLinkedOrderUsername] = useState<string | null>(null);
+  const [orderBusy, setOrderBusy] = useState(false);
   const loadLinkedOrder = async () => {
-    if (!ticket.order_id) { setLinkedOrder(null); return; }
+    if (!ticket.order_id) { setLinkedOrder(null); setLinkedOrderUsername(null); return; }
     const { data } = await supabase
       .from("orders")
-      .select("id,total_cents,status,paid_at,completed_at")
+      .select("id,user_id,total_cents,status,paid_at,completed_at,customer_type,existing_username")
       .eq("id", ticket.order_id)
       .maybeSingle();
-    setLinkedOrder(data ? (data as { id: string; total_cents: number; status: string; paid_at: string | null; completed_at: string | null }) : null);
+    const ord = data ? (data as LinkedOrder) : null;
+    setLinkedOrder(ord);
+    if (ord?.user_id) {
+      const { data: prof } = await supabase
+        .from("profiles")
+        .select("username")
+        .eq("id", ord.user_id)
+        .maybeSingle();
+      setLinkedOrderUsername((prof as { username?: string | null } | null)?.username ?? null);
+    } else {
+      setLinkedOrderUsername(null);
+    }
   };
   useEffect(() => { loadLinkedOrder(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [ticket.order_id]);
   const orderIsUnpaid = !!linkedOrder && !linkedOrder.paid_at && linkedOrder.status !== "cancelled" && linkedOrder.status !== "refunded" && linkedOrder.status !== "completed";
+
+  const postTicketSystem = async (content: string) => {
+    if (!currentUserId) return;
+    await supabase.from("ticket_messages").insert({
+      ticket_id: ticket.id,
+      sender_id: currentUserId,
+      content,
+    });
+  };
+
+  const orderSettingUpAccount = async () => {
+    if (!linkedOrder || orderBusy) return;
+    if (linkedOrder.status === "completed" || linkedOrder.completed_at) {
+      toast.error("This order is completed and cannot be changed.");
+      return;
+    }
+    setOrderBusy(true);
+    try {
+      const profileLink = linkedOrderUsername
+        ? ` ${window.location.origin}/u/${linkedOrderUsername}?tab=creds`
+        : "";
+      await postTicketSystem(
+        `🛠️ We are currently setting up your account. Your login details will appear in the Credentials section of your profile soon.${profileLink}`,
+      );
+      toast.success("Customer notified");
+    } finally { setOrderBusy(false); }
+  };
+
+  const orderExtendSubscription = async () => {
+    if (!linkedOrder || orderBusy) return;
+    if (linkedOrder.status === "completed" || linkedOrder.completed_at) {
+      toast.error("This order is completed and cannot be changed.");
+      return;
+    }
+    setOrderBusy(true);
+    try {
+      const handle = linkedOrder.existing_username ? ` for @${linkedOrder.existing_username}` : "";
+      await postTicketSystem(
+        `🔄 Your subscription${handle} is being updated. You'll receive confirmation once the extension is complete.`,
+      );
+      toast.success("Customer notified");
+    } finally { setOrderBusy(false); }
+  };
+
+  const orderCompleteSale = async () => {
+    if (!linkedOrder || orderBusy) return;
+    if (linkedOrder.status === "completed" || linkedOrder.completed_at) return;
+    setOrderBusy(true);
+    try {
+      const { error } = await supabase.from("orders").update({
+        completed_at: new Date().toISOString(),
+        completed_by: currentUserId ?? null,
+        status: "completed",
+      } as never).eq("id", linkedOrder.id);
+      if (error) { toast.error(error.message); return; }
+      await postTicketSystem(`🎉 Order complete — thank you for your business!`);
+      toast.success("Sale completed");
+      await loadLinkedOrder();
+    } finally { setOrderBusy(false); }
+  };
 
   const load = async () => {
     const { data } = await supabase
@@ -1055,6 +1138,34 @@ function TicketDetail({
             ) : linkedOrder.paid_at ? (
               <div className="text-emerald-200">✓ Payment received — thank you!</div>
             ) : null}
+            {isAdmin && !linkedOrder.completed_at && linkedOrder.status !== "cancelled" && (
+              <div className="flex flex-wrap gap-2 pt-1">
+                {linkedOrder.customer_type === "existing" ? (
+                  <button
+                    onClick={orderExtendSubscription}
+                    disabled={orderBusy}
+                    className="px-2.5 py-1 rounded-md bg-violet-500/20 text-violet-50 text-xs font-medium hover:bg-violet-500/30 disabled:opacity-50"
+                  >
+                    🔄 Extend Subscription
+                  </button>
+                ) : (
+                  <button
+                    onClick={orderSettingUpAccount}
+                    disabled={orderBusy}
+                    className="px-2.5 py-1 rounded-md bg-blue-500/20 text-blue-50 text-xs font-medium hover:bg-blue-500/30 disabled:opacity-50"
+                  >
+                    🛠️ Setting Up Account
+                  </button>
+                )}
+                <button
+                  onClick={orderCompleteSale}
+                  disabled={orderBusy}
+                  className="px-2.5 py-1 rounded-md bg-emerald-500/25 text-emerald-50 text-xs font-medium hover:bg-emerald-500/35 disabled:opacity-50"
+                >
+                  ✅ Sale Complete
+                </button>
+              </div>
+            )}
           </div>
         )}
         {isStaff && (
