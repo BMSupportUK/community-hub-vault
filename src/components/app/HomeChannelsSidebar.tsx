@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useRouterState } from "@tanstack/react-router";
 import { ChannelColumn, type ChannelGroup } from "@/components/app/ChannelColumn";
+import { ServiceStatusBox } from "@/components/app/ServiceStatusBox";
+import { WorkingStatusBox } from "@/components/app/WorkingStatusBox";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -111,6 +113,7 @@ export function HomeChannelsSidebar() {
     <ChannelColumn
       title="Support Community"
       groups={groups}
+      footer={<><ServiceStatusBox /><WorkingStatusBox /></>}
     />
   );
 }
