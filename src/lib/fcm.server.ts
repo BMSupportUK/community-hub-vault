@@ -1,8 +1,8 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 async function getFcmAccessToken(): Promise<{ token: string; projectId: string }> {
-  const raw = process.env.FCM_SERVICE_ACCOUNT_JSON;
-  if (!raw) throw new Error("FCM_SERVICE_ACCOUNT_JSON is not configured");
+  const raw = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
+  if (!raw) throw new Error("FIREBASE_SERVICE_ACCOUNT_JSON is not configured");
   const sa = JSON.parse(raw) as {
     client_email: string;
     private_key: string;
@@ -67,8 +67,8 @@ export async function pushToAdmins(args: {
   body: string;
   data?: Record<string, string>;
 }): Promise<{ sent: number; failed: number; skipped?: string }> {
-  if (!process.env.FCM_SERVICE_ACCOUNT_JSON) {
-    return { sent: 0, failed: 0, skipped: "FCM_SERVICE_ACCOUNT_JSON not configured" };
+  if (!process.env.FIREBASE_SERVICE_ACCOUNT_JSON) {
+    return { sent: 0, failed: 0, skipped: "FIREBASE_SERVICE_ACCOUNT_JSON not configured" };
   }
 
   const { data: roles, error: rolesErr } = await supabaseAdmin
@@ -95,8 +95,8 @@ export async function pushToAllDevices(args: {
   body: string;
   data?: Record<string, string>;
 }): Promise<{ sent: number; failed: number; skipped?: string }> {
-  if (!process.env.FCM_SERVICE_ACCOUNT_JSON) {
-    return { sent: 0, failed: 0, skipped: "FCM_SERVICE_ACCOUNT_JSON not configured" };
+  if (!process.env.FIREBASE_SERVICE_ACCOUNT_JSON) {
+    return { sent: 0, failed: 0, skipped: "FIREBASE_SERVICE_ACCOUNT_JSON not configured" };
   }
   const { data: tokens, error } = await supabaseAdmin
     .from("device_push_tokens")
@@ -111,8 +111,8 @@ export async function pushToRoles(
   roles: ("admin" | "management" | "staff" | "moderator")[],
   args: { title: string; body: string; data?: Record<string, string> },
 ): Promise<{ sent: number; failed: number; skipped?: string }> {
-  if (!process.env.FCM_SERVICE_ACCOUNT_JSON) {
-    return { sent: 0, failed: 0, skipped: "FCM_SERVICE_ACCOUNT_JSON not configured" };
+  if (!process.env.FIREBASE_SERVICE_ACCOUNT_JSON) {
+    return { sent: 0, failed: 0, skipped: "FIREBASE_SERVICE_ACCOUNT_JSON not configured" };
   }
   const { data: roleRows, error: rolesErr } = await supabaseAdmin
     .from("user_roles")
@@ -136,8 +136,8 @@ export async function pushToUser(
   userId: string,
   args: { title: string; body: string; data?: Record<string, string> },
 ): Promise<{ sent: number; failed: number; skipped?: string }> {
-  if (!process.env.FCM_SERVICE_ACCOUNT_JSON) {
-    return { sent: 0, failed: 0, skipped: "FCM_SERVICE_ACCOUNT_JSON not configured" };
+  if (!process.env.FIREBASE_SERVICE_ACCOUNT_JSON) {
+    return { sent: 0, failed: 0, skipped: "FIREBASE_SERVICE_ACCOUNT_JSON not configured" };
   }
   const { data: tokens, error } = await supabaseAdmin
     .from("device_push_tokens")
