@@ -1,4 +1,5 @@
-import { useMemo, useRef } from "react";
+import { useMemo, useRef, Fragment } from "react";
+import { Tweet } from "react-tweet";
 import { sanitizeRichHtml } from "@/lib/sanitize-html";
 import { useLoadSocialEmbeds, embedSocialUrls } from "@/lib/forum-embeds";
 
@@ -13,6 +14,10 @@ export function ForumPostBody({ html, className }: { html: string; className?: s
   // URL detector was fixed (e.g. URLs ending in `?s=20`) still hydrate into
   // proper embeds without requiring the author to edit & re-save.
   const processed = useMemo(() => embedSocialUrls(html), [html]);
+  // Split processed HTML around tweet markers so we can render <Tweet/> via
+  // react-tweet (server-rendered via X's syndication API — no widgets.js,
+  // no disappearing iframe).
+  const segments = useMemo(() => splitTweetSegments(processed), [processed]);
   useLoadSocialEmbeds(ref, [processed]);
 
   const looksLikeHtml = /<[a-z][\s\S]*>/i.test(processed);
@@ -32,11 +37,37 @@ export function ForumPostBody({ html, className }: { html: string; className?: s
     );
   }
 
+  const wrapperClass = `prose dark:prose-invert max-w-none break-words text-[15px] leading-relaxed text-foreground/90 [&_.video-embed]:!w-full [&_.video-embed]:!max-w-none [&_.video-embed]:!my-3 [&_.video-embed]:!mx-0 [&_blockquote]:border-l-4 [&_blockquote]:border-primary/70 [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:text-muted-foreground [&_blockquote]:bg-primary/5 [&_blockquote]:py-2.5 [&_blockquote]:rounded-r [&_blockquote]:my-2 [&_a]:text-primary [&_a]:underline [&_a]:font-medium [&_pre]:bg-muted [&_pre]:p-3 [&_pre]:rounded-md [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:my-1 [&_p]:my-2 [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:my-3 [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:my-2.5 [&_.mention]:inline-flex [&_.mention]:items-center [&_.mention]:rounded-md [&_.mention]:px-1.5 [&_.mention]:py-0.5 [&_.mention]:font-semibold [&_.mention]:text-[#E11B22] [&_.mention]:bg-[#E11B22]/10 [&_.mention]:no-underline [&_.mention[data-mention-type=special]]:text-[#F4B400] [&_.mention[data-mention-type=special]]:bg-[#F4B400]/15 ${className ?? ""}`;
+
   return (
-    <div
-      ref={ref}
-      className={`prose dark:prose-invert max-w-none break-words text-[15px] leading-relaxed text-foreground/90 [&_.video-embed]:!w-full [&_.video-embed]:!max-w-none [&_.video-embed]:!my-3 [&_.video-embed]:!mx-0 [&_blockquote:not(.twitter-tweet)]:border-l-4 [&_blockquote:not(.twitter-tweet)]:border-primary/70 [&_blockquote:not(.twitter-tweet)]:pl-4 [&_blockquote:not(.twitter-tweet)]:italic [&_blockquote:not(.twitter-tweet)]:text-muted-foreground [&_blockquote:not(.twitter-tweet)]:bg-primary/5 [&_blockquote:not(.twitter-tweet)]:py-2.5 [&_blockquote:not(.twitter-tweet)]:rounded-r [&_blockquote:not(.twitter-tweet)]:my-2 [&_.twitter-tweet]:!not-italic [&_.twitter-tweet]:!my-0 [&_.social-embed]:my-3 [&_.social-embed]:min-h-[72px] [&_.social-embed-fallback]:hidden [&_.social-embed-fallback.is-visible]:flex [&_.social-embed-fallback]:items-center [&_.social-embed-fallback]:justify-center [&_.social-embed-fallback]:rounded-lg [&_.social-embed-fallback]:border [&_.social-embed-fallback]:border-border [&_.social-embed-fallback]:bg-surface-2/70 [&_.social-embed-fallback]:px-4 [&_.social-embed-fallback]:py-3 [&_.social-embed-fallback]:text-sm [&_.social-embed-fallback]:font-semibold [&_a]:text-primary [&_a]:underline [&_a]:font-medium [&_pre]:bg-muted [&_pre]:p-3 [&_pre]:rounded-md [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:my-1 [&_p]:my-2 [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:my-3 [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:my-2.5 [&_.mention]:inline-flex [&_.mention]:items-center [&_.mention]:rounded-md [&_.mention]:px-1.5 [&_.mention]:py-0.5 [&_.mention]:font-semibold [&_.mention]:text-[#E11B22] [&_.mention]:bg-[#E11B22]/10 [&_.mention]:no-underline [&_.mention[data-mention-type=special]]:text-[#F4B400] [&_.mention[data-mention-type=special]]:bg-[#F4B400]/15 ${className ?? ""}`}
-      dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(processed) }}
-    />
+    <div ref={ref} className={wrapperClass}>
+      {segments.map((seg, i) =>
+        seg.type === "tweet" ? (
+          <div key={`t-${i}-${seg.id}`} className="my-3 flex justify-center [&_.react-tweet-theme]:!my-0" data-theme="dark">
+            <Tweet id={seg.id} />
+          </div>
+        ) : (
+          <Fragment key={`h-${i}`}>
+            <div dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(seg.html) }} />
+          </Fragment>
+        ),
+      )}
+    </div>
   );
+}
+
+type Segment = { type: "html"; html: string } | { type: "tweet"; id: string };
+
+function splitTweetSegments(html: string): Segment[] {
+  const re = /<div\b[^>]*\bdata-tweet-embed=["']([^"']+)["'][^>]*>\s*<\/div>/gi;
+  const out: Segment[] = [];
+  let last = 0;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(html)) !== null) {
+    if (m.index > last) out.push({ type: "html", html: html.slice(last, m.index) });
+    out.push({ type: "tweet", id: m[1] });
+    last = m.index + m[0].length;
+  }
+  if (last < html.length) out.push({ type: "html", html: html.slice(last) });
+  return out.length ? out : [{ type: "html", html }];
 }
