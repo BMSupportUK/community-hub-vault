@@ -1,0 +1,1 @@
+GRANT SELECT ON private.orders TO authenticated;
