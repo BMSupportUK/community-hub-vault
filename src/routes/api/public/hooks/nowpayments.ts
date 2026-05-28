@@ -130,7 +130,8 @@ export const Route = createFileRoute("/api/public/hooks/nowpayments")({
             if (linkedTickets && linkedTickets.length > 0) {
               const content =
                 `✅ USDT payment received for order #${orderId.slice(0, 8)} (${networkLabel}` +
-                `${txHash ? `, tx ${txHash.slice(0, 10)}…` : ""}).`;
+                `).` +
+                (txHash ? `\nTransaction ref: ${txHash}` : "");
               await supabaseAdmin.from("ticket_messages").insert(
                 linkedTickets.map((t: { id: string; user_id: string }) => ({
                   ticket_id: t.id,
