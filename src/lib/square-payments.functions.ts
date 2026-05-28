@@ -155,6 +155,7 @@ export const chargeOrderWithSquare = createServerFn({ method: "POST" })
           `✅ Card payment captured for order #${orderId.slice(0, 8)}` +
           `${cardBrand && last4 ? ` (${cardBrand} •••• ${last4})` : ""}` +
           ` — £${(order.total_cents / 100).toFixed(2)}.` +
+          `\nTransaction ref: ${payment.id}` +
           (receiptUrl ? `\nReceipt: ${receiptUrl}` : "");
         await supabase.from("ticket_messages").insert(
           linkedTickets.map((t: { id: string; user_id: string }) => ({
