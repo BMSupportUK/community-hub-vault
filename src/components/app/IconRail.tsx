@@ -7,6 +7,26 @@ import { supabase } from "@/integrations/supabase/client";
 import { useFanZoneMembership } from "@/hooks/use-fan-zone";
 import { FAN_ZONE_OPEN_EVENT } from "@/components/app/FanZoneAccessCard";
 
+function SoccerPlayer({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <circle cx="12" cy="5" r="3" />
+      <path d="M6 22l2-5 4-2 4 2 2 5" />
+      <path d="M10 15l-2-3 4-2 4 2-2 3" />
+      <circle cx="18" cy="8" r="2" />
+      <path d="M16 9l-2-1" />
+    </svg>
+  );
+}
+
 interface RailItem {
   to: string;
   label: string;
@@ -163,7 +183,7 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
     { to: "/new-content", label: "New content", icon: Tv, show: true, badge: unreadNewContent },
     { to: "/members", label: "Members", icon: Users, show: true },
     { to: "/staff", label: "Staff", icon: Briefcase, show: true },
-    { to: "/forum", label: "Boro Fan Zone forum", icon: MessagesSquare, show: !hideFanZone },
+    { to: "/forum", label: "Boro Fan Zone forum", icon: SoccerPlayer, show: !hideFanZone },
     { to: "/shifts", label: "Shifts", icon: Calendar, show: isStaff },
   ];
 
