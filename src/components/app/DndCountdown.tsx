@@ -35,14 +35,17 @@ export function DndCountdown({
     return () => clearInterval(id);
   }, [info?.active, info?.endsAt?.getTime()]);
 
-  if (!info?.active || !info.endsAt) return null;
+  if (!info?.active) return null;
 
-  const remaining = info.endsAt.getTime() - Date.now();
-  if (remaining <= 0) return null;
+  const remaining = info.endsAt ? info.endsAt.getTime() - Date.now() : null;
+  if (remaining !== null && remaining <= 0) return null;
 
+  const endsLabel = info.endsAt
+    ? `until ${info.endsAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`
+    : "";
   const title = info.note
-    ? `Do Not Disturb — ${info.note} (until ${info.endsAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })})`
-    : `Do Not Disturb until ${info.endsAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
+    ? `Do Not Disturb — ${info.note}${endsLabel ? ` (${endsLabel})` : ""}`
+    : `Do Not Disturb${endsLabel ? ` ${endsLabel}` : ""}`;
 
   return (
     <span
@@ -54,7 +57,7 @@ export function DndCountdown({
       title={title}
     >
       <Moon className={compact ? "size-2.5" : "size-3"} />
-      <span>DND • {formatRemaining(remaining)}</span>
+      <span>DND{remaining !== null ? ` • ${formatRemaining(remaining)}` : ""}</span>
     </span>
   );
 }
