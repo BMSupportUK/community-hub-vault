@@ -51,12 +51,7 @@ export function MyWorkingStatus() {
   if (!user) return null;
   // DND overrides every other status — when active, only show the DND pill.
   if (dnd?.active) {
-    return (
-      <span className="inline-flex items-center gap-1.5">
-        <DndCountdown userId={user.id} />
-        <DndBadge userId={user.id} />
-      </span>
-    );
+    return <DndCountdown userId={user.id} />;
   }
   if (!shift) {
     return null;
@@ -102,7 +97,6 @@ export function MyWorkingStatus() {
       </span>
     </div>
       <DndCountdown userId={user.id} />
-      <DndBadge userId={user.id} />
     </div>
   );
 }
