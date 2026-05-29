@@ -37,14 +37,20 @@ export function useUserTimezone(): string {
       .then(({ data }) => {
         const saved = (data as { timezone?: string | null } | null)?.timezone;
         if (saved !== detected) {
-          supabase.from("profiles").update({ timezone: detected }).eq("id", user.id).then(() => undefined);
+          supabase
+            .from("profiles")
+            .update({ timezone: detected })
+            .eq("id", user.id)
+            .then(() => undefined);
         }
       });
     const ch = supabase
       .channel(`profile-tz-${user.id}-${Math.random().toString(36).slice(2)}`)
-      .on("postgres_changes",
+      .on(
+        "postgres_changes",
         { event: "UPDATE", schema: "public", table: "profiles", filter: `id=eq.${user.id}` },
-        () => apply(browserTimezone()))
+        () => apply(browserTimezone()),
+      )
       .subscribe();
     return () => {
       active = false;
@@ -58,17 +64,43 @@ export function useUserTimezone(): string {
 export function listTimeZones(): string[] {
   const anyIntl = Intl as unknown as { supportedValuesOf?: (k: string) => string[] };
   if (typeof anyIntl.supportedValuesOf === "function") {
-    try { return anyIntl.supportedValuesOf("timeZone"); } catch { /* noop */ }
+    try {
+      return anyIntl.supportedValuesOf("timeZone");
+    } catch {
+      /* noop */
+    }
   }
   return [
-    "UTC", "Europe/London", "Europe/Dublin", "Europe/Paris", "Europe/Berlin",
-    "Europe/Madrid", "Europe/Rome", "Europe/Amsterdam", "Europe/Stockholm",
-    "Europe/Athens", "Europe/Moscow", "Africa/Cairo", "Africa/Johannesburg",
-    "Asia/Dubai", "Asia/Kolkata", "Asia/Bangkok", "Asia/Singapore",
-    "Asia/Hong_Kong", "Asia/Shanghai", "Asia/Tokyo", "Asia/Seoul",
-    "Australia/Perth", "Australia/Sydney", "Pacific/Auckland",
-    "America/Anchorage", "America/Los_Angeles", "America/Denver",
-    "America/Chicago", "America/New_York", "America/Toronto",
+    "UTC",
+    "Europe/London",
+    "Europe/Dublin",
+    "Europe/Paris",
+    "Europe/Berlin",
+    "Europe/Madrid",
+    "Europe/Rome",
+    "Europe/Amsterdam",
+    "Europe/Stockholm",
+    "Europe/Athens",
+    "Europe/Moscow",
+    "Africa/Cairo",
+    "Africa/Johannesburg",
+    "Asia/Dubai",
+    "Asia/Kolkata",
+    "Asia/Bangkok",
+    "Asia/Singapore",
+    "Asia/Hong_Kong",
+    "Asia/Shanghai",
+    "Asia/Tokyo",
+    "Asia/Seoul",
+    "Australia/Perth",
+    "Australia/Sydney",
+    "Pacific/Auckland",
+    "America/Anchorage",
+    "America/Los_Angeles",
+    "America/Denver",
+    "America/Chicago",
+    "America/New_York",
+    "America/Toronto",
     "America/Sao_Paulo", "America/Mexico_City",
   ];
 }
