@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
-import { format } from "date-fns";
 import { Clock, Moon, Save, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useDndStatus } from "@/hooks/use-dnd";
+import { dateInTimeZone, zonedWallTimeToUtcMs } from "@/hooks/use-timezone";
+import { useUserTimezone } from "@/hooks/use-user-timezone";
 import {
   Dialog,
   DialogContent,
@@ -20,15 +21,22 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
-function toHHMM(d: Date): string {
-  return `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
+function toHHMMInTimeZone(d: Date, timeZone: string): string {
+  return new Intl.DateTimeFormat("en-GB", {
+    timeZone,
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(d);
 }
 
-function combine(date: Date, hhmm: string): Date {
-  const [h, m] = hhmm.split(":").map((n) => parseInt(n, 10));
-  const d = new Date(date);
-  d.setHours(h || 0, m || 0, 0, 0);
-  return d;
+function displayDate(date: Date, timeZone: string): string {
+  return new Intl.DateTimeFormat("en-GB", {
+    timeZone,
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+  }).format(date);
 }
 
 function fmtRemaining(ms: number): string {
@@ -42,32 +50,35 @@ function fmtRemaining(ms: number): string {
 
 export function DndDialogButton() {
   const { user, hasAny } = useAuth();
+  const userTimezone = useUserTimezone();
   const canUse = !!user && hasAny(["admin", "management"]);
   const info = useDndStatus(canUse ? user?.id : null);
 
   const [open, setOpen] = useState(false);
   const [startDate, setStartDate] = useState<Date>(() => new Date());
   const [endDate, setEndDate] = useState<Date>(() => new Date(Date.now() + 60 * 60 * 1000));
-  const [startTime, setStartTime] = useState(() => toHHMM(new Date()));
-  const [endTime, setEndTime] = useState(() => toHHMM(new Date(Date.now() + 60 * 60 * 1000)));
+  const [startTime, setStartTime] = useState(() => toHHMMInTimeZone(new Date(), userTimezone));
+  const [endTime, setEndTime] = useState(() =>
+    toHHMMInTimeZone(new Date(Date.now() + 60 * 60 * 1000), userTimezone),
+  );
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
   const [now, setNow] = useState(() => Date.now());
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    if (!info || hydrated) return;
+    if (!info || (open && hydrated)) return;
     if (info.startsAt) {
       setStartDate(info.startsAt);
-      setStartTime(toHHMM(info.startsAt));
+      setStartTime(toHHMMInTimeZone(info.startsAt, userTimezone));
     }
     if (info.endsAt) {
       setEndDate(info.endsAt);
-      setEndTime(toHHMM(info.endsAt));
+      setEndTime(toHHMMInTimeZone(info.endsAt, userTimezone));
     }
     setNote(info.note ?? "");
     setHydrated(true);
-  }, [info, hydrated]);
+  }, [info, open, hydrated, userTimezone]);
 
   useEffect(() => {
     if (!info?.active || !info.endsAt) return;
@@ -84,10 +95,14 @@ export function DndDialogButton() {
   if (!canUse) return null;
 
   const buildRange = () => {
-    const start = combine(startDate, startTime);
-    let end = combine(endDate, endTime);
+    const startDateStr = dateInTimeZone(startDate, userTimezone);
+    const endDateStr = dateInTimeZone(endDate, userTimezone);
+    const start = new Date(zonedWallTimeToUtcMs(startDateStr, startTime, userTimezone));
+    let end = new Date(zonedWallTimeToUtcMs(endDateStr, endTime, userTimezone));
     if (end.getTime() <= start.getTime()) {
       end = new Date(start.getTime() + 60 * 60 * 1000);
+      setEndDate(end);
+      setEndTime(toHHMMInTimeZone(end, userTimezone));
     }
     return { start, end };
   };
@@ -143,16 +158,19 @@ export function DndDialogButton() {
 
   const applyPreset = (minutes: number | "eod") => {
     const start = new Date();
-    const end = new Date();
+    let end: Date;
     if (minutes === "eod") {
-      end.setHours(23, 59, 0, 0);
+      end = new Date(
+        zonedWallTimeToUtcMs(dateInTimeZone(start, userTimezone), "23:59", userTimezone),
+      );
     } else {
+      end = new Date();
       end.setTime(start.getTime() + minutes * 60 * 1000);
     }
     setStartDate(start);
     setEndDate(end);
-    setStartTime(toHHMM(start));
-    setEndTime(toHHMM(end));
+    setStartTime(toHHMMInTimeZone(start, userTimezone));
+    setEndTime(toHHMMInTimeZone(end, userTimezone));
   };
 
   const active = !!info?.active;
@@ -211,9 +229,7 @@ export function DndDialogButton() {
                     <Clock className="size-3" /> {remainingLabel}
                   </span>
                 ) : (
-                  <span className="text-xs text-muted-foreground mt-0.5">
-                    Toggle to start
-                  </span>
+                  <span className="text-xs text-muted-foreground mt-0.5">Toggle to start</span>
                 )}
               </div>
               <Switch
@@ -231,7 +247,7 @@ export function DndDialogButton() {
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <label className="text-xs text-muted-foreground">
-                    From · {format(startDate, "EEE d MMM")}
+                    From · {displayDate(startDate, userTimezone)}
                   </label>
                   <Input
                     type="time"
@@ -242,7 +258,7 @@ export function DndDialogButton() {
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs text-muted-foreground">
-                    To · {format(endDate, "EEE d MMM")}
+                    To · {displayDate(endDate, userTimezone)}
                   </label>
                   <Input
                     type="time"
@@ -294,11 +310,7 @@ export function DndDialogButton() {
 
         <DialogFooter className="gap-2 sm:gap-2 px-6 py-4 border-t border-border bg-surface-2/40">
           {info?.enabled && (
-            <Button
-              variant="outline"
-              onClick={() => upsert({ enabled: false })}
-              disabled={saving}
-            >
+            <Button variant="outline" onClick={() => upsert({ enabled: false })} disabled={saving}>
               <X className="size-4 mr-1" /> Turn off
             </Button>
           )}

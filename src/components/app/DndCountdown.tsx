@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { useDndStatus } from "@/hooks/use-dnd";
 
 function formatRemaining(ms: number): string {
-  const total = Math.max(0, Math.floor(ms / 1000));
+  const total = Math.max(0, Math.ceil(ms / 1000));
   const h = Math.floor(total / 3600);
   const m = Math.floor((total % 3600) / 60);
   const s = total % 60;
@@ -27,13 +27,14 @@ export function DndCountdown({
   compact?: boolean;
 }) {
   const info = useDndStatus(userId);
+  const endsAtTime = info?.endsAt?.getTime();
   const [, setTick] = useState(0);
 
   useEffect(() => {
     if (!info?.active || !info.endsAt) return;
     const id = setInterval(() => setTick((n) => n + 1), 1000);
     return () => clearInterval(id);
-  }, [info?.active, info?.endsAt?.getTime()]);
+  }, [info?.active, info?.endsAt, endsAtTime]);
 
   if (!info?.active) return null;
 
