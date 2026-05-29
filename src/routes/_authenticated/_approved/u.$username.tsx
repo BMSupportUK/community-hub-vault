@@ -18,7 +18,7 @@ import profileHeaderModerator from "@/assets/profile-header-moderator.jpg";
 import tvLoginIllustration from "@/assets/tv-login-illustration.jpg";
 import referralsBg from "@/assets/referrals-bg.jpg";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { listTimeZones } from "@/hooks/use-user-timezone";
+import { browserTimezone, listTimeZones } from "@/hooks/use-user-timezone";
 import { Nameplate } from "@/components/app/Nameplate";
 import { NameplatePicker } from "@/components/app/NameplatePicker";
 import { useRoleFlashMap, resolveAvatarUrl, roleFlashClass } from "@/lib/role-flash";
@@ -1503,11 +1503,8 @@ function EditProfileModal({ profile, onClose, onSaved }: { profile: ProfileRow; 
   const [bio, setBio] = useState(profile.bio ?? "");
   const [avatarUrl, setAvatarUrl] = useState(profile.avatar_url);
   const [isPrivate, setIsPrivate] = useState<boolean>(!!profile.is_private);
-  const [timezone, setTimezone] = useState<string>(
-    profile.timezone ?? (() => {
-      try { return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC"; } catch { return "UTC"; }
-    })(),
-  );
+  const detectedTimezone = browserTimezone();
+  const [timezone, setTimezone] = useState<string>(profile.timezone ?? detectedTimezone);
   const tzOptions = useMemo(() => listTimeZones(), []);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -1580,6 +1577,15 @@ function EditProfileModal({ profile, onClose, onSaved }: { profile: ProfileRow; 
           <HtmlEditor value={bio} onChange={setBio} placeholder="Tell us about yourself…" />
         </Field>
         <Field label="Timezone">
+          {profile.timezone !== detectedTimezone && (
+            <button
+              type="button"
+              onClick={() => setTimezone(detectedTimezone)}
+              className="mb-2 text-xs font-medium text-primary hover:text-primary/80"
+            >
+              Use detected timezone: {detectedTimezone.replace(/_/g, " ")}
+            </button>
+          )}
           <select
             value={timezone}
             onChange={(e) => setTimezone(e.target.value)}
@@ -1590,7 +1596,7 @@ function EditProfileModal({ profile, onClose, onSaved }: { profile: ProfileRow; 
             ))}
           </select>
           <span className="block text-[11px] text-muted-foreground mt-1">
-            Used to display expiry dates and times in your local zone.
+            Detected from your browser and used for expiry dates, DND, and local times.
           </span>
         </Field>
         <label className="flex items-start gap-3 mb-3 p-3 rounded-lg bg-surface-2 border border-border cursor-pointer">
