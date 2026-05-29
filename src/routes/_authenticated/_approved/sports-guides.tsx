@@ -440,13 +440,15 @@ function SportsGuidesPage() {
                       <article
                         key={b.id}
                         draggable={isMod}
-                        onDragStart={() => { dragBlogId.current = b.id; }}
+                        onDragStart={() => { dragBlogId.current = b.id; setDraggingBlog(true); }}
+                        onDragEnd={() => { dragBlogId.current = null; setDraggingBlog(false); }}
                         onDragOver={(e) => { if (isMod) e.preventDefault(); }}
                         onDrop={(e) => {
                           if (!isMod) return;
                           e.preventDefault();
                           if (dragBlogId.current) reorderBlogs(dragBlogId.current, b.id);
                           dragBlogId.current = null;
+                          setDraggingBlog(false);
                         }}
                         className={`rounded-2xl bg-purple-950/50 border overflow-hidden flex flex-col group hover:shadow-[0_0_30px_-10px_rgba(217,70,239,0.6)] transition-all ${isUnread(b) ? "border-fuchsia-500/70 shadow-[0_0_20px_-10px_rgba(232,121,249,0.8)]" : "border-purple-500/30 hover:border-fuchsia-500/60"}`}
                       >
