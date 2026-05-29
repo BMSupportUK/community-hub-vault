@@ -82,6 +82,7 @@ function SportsGuidesPage() {
   const dragBlogId = useRef<string | null>(null);
   const [listPage, setListPage] = useState(0);
   const [listPageCount, setListPageCount] = useState(1);
+  const [draggingBlog, setDraggingBlog] = useState(false);
 
   // Reset paging when the visible set changes.
   useEffect(() => {
@@ -274,15 +275,16 @@ function SportsGuidesPage() {
 
   const reorderBlogs = async (fromId: string, toId: string) => {
     if (fromId === toId || !activeCat) return;
-    // Reorder only within the active category
+    // Swap two blogs within the active category — swap their sort_order so
+    // dragging from page 2 onto a card on page 1 exchanges their positions.
     const inCat = blogs.filter((b) => b.category_id === activeCat);
     const others = blogs.filter((b) => b.category_id !== activeCat);
     const fromIdx = inCat.findIndex((b) => b.id === fromId);
     const toIdx = inCat.findIndex((b) => b.id === toId);
     if (fromIdx < 0 || toIdx < 0) return;
-    const [moved] = inCat.splice(fromIdx, 1);
-    inCat.splice(toIdx, 0, moved);
-    const updated = inCat.map((b, i) => ({ ...b, sort_order: (i + 1) * 10 }));
+    const swapped = [...inCat];
+    [swapped[fromIdx], swapped[toIdx]] = [swapped[toIdx], swapped[fromIdx]];
+    const updated = swapped.map((b, i) => ({ ...b, sort_order: (i + 1) * 10 }));
     queryClient.setQueryData<typeof dataQuery.data>(queryKey, (prev) => prev ? { ...prev, blogs: [...others, ...updated] } : prev);
     await Promise.all(
       updated.map((b) => supabase.from("sports_blogs").update({ sort_order: b.sort_order }).eq("id", b.id))
@@ -426,6 +428,22 @@ function SportsGuidesPage() {
                   </div>
                 ) : (
                   <>
+                  {isMod && draggingBlog && !search.trim() && listPageCount > 1 && (
+                    <div className="mb-3 flex flex-wrap items-center gap-2 rounded-xl border border-dashed border-fuchsia-400/60 bg-purple-950/60 px-3 py-2 text-xs text-purple-100">
+                      <span className="font-semibold text-fuchsia-200">Hover a page to switch, then drop on a card to swap:</span>
+                      {Array.from({ length: listPageCount }, (_, i) => (
+                        <button
+                          key={i}
+                          type="button"
+                          onDragOver={(e) => { e.preventDefault(); if (listPage !== i) setListPage(i); }}
+                          onClick={() => setListPage(i)}
+                          className={`px-2.5 py-1 rounded-md border transition-colors ${listPage === i ? "bg-fuchsia-600 border-fuchsia-400 text-white" : "border-purple-500/40 hover:border-fuchsia-400 hover:bg-purple-900/60"}`}
+                        >
+                          Page {i + 1}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                   <div>
                   <PagedGrid
                     items={filtered}
@@ -438,13 +456,15 @@ function SportsGuidesPage() {
                       <article
                         key={b.id}
                         draggable={isMod}
-                        onDragStart={() => { dragBlogId.current = b.id; }}
+                        onDragStart={() => { dragBlogId.current = b.id; setDraggingBlog(true); }}
+                        onDragEnd={() => { dragBlogId.current = null; setDraggingBlog(false); }}
                         onDragOver={(e) => { if (isMod) e.preventDefault(); }}
                         onDrop={(e) => {
                           if (!isMod) return;
                           e.preventDefault();
                           if (dragBlogId.current) reorderBlogs(dragBlogId.current, b.id);
                           dragBlogId.current = null;
+                          setDraggingBlog(false);
                         }}
                         className={`rounded-2xl bg-purple-950/50 border overflow-hidden flex flex-col group hover:shadow-[0_0_30px_-10px_rgba(217,70,239,0.6)] transition-all ${isUnread(b) ? "border-fuchsia-500/70 shadow-[0_0_20px_-10px_rgba(232,121,249,0.8)]" : "border-purple-500/30 hover:border-fuchsia-500/60"}`}
                       >
