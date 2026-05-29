@@ -176,31 +176,40 @@ function ShopPage() {
   return (
     <>
       <div className="flex-1 flex flex-col min-w-0">
-        <nav className="shrink-0 border-b border-border bg-surface/60 backdrop-blur px-3 md:px-6 py-2 flex items-center gap-4 overflow-x-auto">
-          {groups.map((g) => (
-            <div key={g.label} className="flex items-center gap-1 shrink-0">
-              <span className="text-[10px] uppercase tracking-wider text-muted-foreground/70 mr-1 hidden md:inline">{g.label}</span>
-              {g.items.map((it) => {
-                const Icon = it.icon;
-                return (
-                  <button
-                    key={it.label}
-                    onClick={it.onClick}
-                    className={cn(
-                      "inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition whitespace-nowrap",
-                      it.active
-                        ? "bg-primary text-primary-foreground"
-                        : "text-muted-foreground hover:text-foreground hover:bg-surface-2",
-                    )}
-                  >
-                    {Icon && <Icon className="size-3.5" />}
-                    {it.label}
-                  </button>
-                );
-              })}
-            </div>
-          ))}
-        </nav>
+        {/* Admin-only quick nav: regular users navigate via Storefront tabs */}
+        {isAdmin && adminUnlocked && (
+          <nav className="shrink-0 border-b border-border bg-surface/60 backdrop-blur px-3 md:px-6 py-2 flex items-center gap-4 overflow-x-auto">
+            {groups.filter((g) => g.label === "Admin").map((g) => (
+              <div key={g.label} className="flex items-center gap-1 shrink-0">
+                <span className="text-[10px] uppercase tracking-wider text-muted-foreground/70 mr-1 hidden md:inline">{g.label}</span>
+                {g.items.map((it) => {
+                  const Icon = it.icon;
+                  return (
+                    <button
+                      key={it.label}
+                      onClick={it.onClick}
+                      className={cn(
+                        "inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition whitespace-nowrap",
+                        it.active
+                          ? "bg-primary text-primary-foreground"
+                          : "text-muted-foreground hover:text-foreground hover:bg-surface-2",
+                      )}
+                    >
+                      {Icon && <Icon className="size-3.5" />}
+                      {it.label}
+                    </button>
+                  );
+                })}
+              </div>
+            ))}
+            <button
+              onClick={() => go({ view: "store" })}
+              className="ml-auto inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-surface-2 whitespace-nowrap"
+            >
+              <ArrowLeft className="size-3.5" /> Back to Shop
+            </button>
+          </nav>
+        )}
         <div className="flex-1 flex min-h-0 min-w-0">
           {view === "store" && <Storefront />}
           {view === "orders" && <OrdersView selectedId={id} isAdmin={isAdmin} adminUnlocked={adminUnlocked} initialScope={scope === "all" ? "all" : "mine"} />}
@@ -1003,6 +1012,7 @@ function Storefront() {
             <TabsList className="bg-surface-2 border border-border flex flex-wrap h-auto">
               <TabsTrigger value="welcome" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-sky-400 data-[state=active]:text-white">Welcome</TabsTrigger>
               <TabsTrigger value="shop" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-sky-400 data-[state=active]:text-white">Shop</TabsTrigger>
+              <TabsTrigger value="orders" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-sky-400 data-[state=active]:text-white">My Orders</TabsTrigger>
               <TabsTrigger value="refund" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-sky-400 data-[state=active]:text-white">Refund Policy</TabsTrigger>
               <TabsTrigger value="multi_room" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-sky-400 data-[state=active]:text-white">Multi-room Rules</TabsTrigger>
               <TabsTrigger value="triple_room" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-sky-400 data-[state=active]:text-white">Triple-room Rules</TabsTrigger>
@@ -1147,6 +1157,11 @@ function Storefront() {
             <TabsContent value="refund" className="mt-4"><InlinePolicy policyKey="refund" /></TabsContent>
             <TabsContent value="multi_room" className="mt-4"><InlinePolicy policyKey="multi_room" /></TabsContent>
             <TabsContent value="triple_room" className="mt-4"><InlinePolicy policyKey="triple_room" /></TabsContent>
+            <TabsContent value="orders" className="mt-4">
+              <MyOrdersTab
+                onOpenOrder={(id) => navigate({ to: "/shop", search: { view: "orders", id } })}
+              />
+            </TabsContent>
           </Tabs>
         </div>
       </div>
@@ -1845,6 +1860,101 @@ function OrdersView({ selectedId, isAdmin, adminUnlocked, initialScope }: { sele
 }
 
 function OrderDetail({ orderId, isAdmin, onBack }: { orderId: string; isAdmin: boolean; onBack?: () => void }) {
+  // see component below
+  return <OrderDetailImpl orderId={orderId} isAdmin={isAdmin} onBack={onBack} />;
+}
+
+function MyOrdersTab({ onOpenOrder }: { onOpenOrder: (id: string) => void }) {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [tickets, setTickets] = useState<Record<string, string>>({});
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!user) { setLoading(false); return; }
+    let cancel = false;
+    (async () => {
+      const { data } = await supabase
+        .from("orders")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+      if (cancel) return;
+      const rows = (data ?? []) as Order[];
+      setOrders(rows);
+      if (rows.length > 0) {
+        const { data: ts } = await supabase
+          .from("tickets")
+          .select("id,order_id")
+          .in("order_id", rows.map((o) => o.id));
+        if (!cancel) {
+          const map: Record<string, string> = {};
+          for (const t of (ts ?? []) as { id: string; order_id: string }[]) {
+            if (t.order_id) map[t.order_id] = t.id;
+          }
+          setTickets(map);
+        }
+      }
+      setLoading(false);
+    })();
+    return () => { cancel = true; };
+  }, [user?.id]);
+
+  if (loading) {
+    return <div className="grid place-items-center py-16 text-muted-foreground"><Loader2 className="size-5 animate-spin" /></div>;
+  }
+  if (orders.length === 0) {
+    return (
+      <div className="rounded-2xl border border-dashed border-border p-10 text-center text-sm text-muted-foreground">
+        You haven't placed any orders yet.
+      </div>
+    );
+  }
+  return (
+    <div className="space-y-3">
+      {orders.map((o) => {
+        const ticketId = tickets[o.id];
+        return (
+          <div
+            key={o.id}
+            className="bg-surface border border-border rounded-xl p-4 flex flex-col md:flex-row md:items-center gap-3"
+          >
+            <button
+              onClick={() => onOpenOrder(o.id)}
+              className="flex-1 min-w-0 text-left"
+            >
+              <div className="flex items-center gap-2 mb-1">
+                <span className="font-mono text-[10px] text-muted-foreground">#{o.id.slice(0, 8)}</span>
+                <span className={cn("text-[10px] px-1.5 py-0.5 rounded font-medium", STATUS_COLOR[o.status] ?? "bg-surface-2")}>{o.status}</span>
+              </div>
+              <div className="font-display font-bold text-base">{fmt(o.total_cents)}</div>
+              <div className="text-[11px] text-muted-foreground mt-0.5">{new Date(o.created_at).toLocaleString()}</div>
+            </button>
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                onClick={() => onOpenOrder(o.id)}
+                className="px-3 py-1.5 rounded-md bg-surface-2 text-xs font-medium hover:bg-surface-2/80 inline-flex items-center gap-1"
+              >
+                <Package className="size-3.5" /> View order
+              </button>
+              {ticketId && (
+                <button
+                  onClick={() => navigate({ to: "/tickets", search: { id: ticketId } })}
+                  className="px-3 py-1.5 rounded-md bg-primary text-primary-foreground text-xs font-medium hover:opacity-90 inline-flex items-center gap-1"
+                >
+                  <Receipt className="size-3.5" /> Support ticket
+                </button>
+              )}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function OrderDetailImpl({ orderId, isAdmin, onBack }: { orderId: string; isAdmin: boolean; onBack?: () => void }) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [order, setOrder] = useState<Order | null>(null);
@@ -1867,11 +1977,10 @@ function OrderDetail({ orderId, isAdmin, onBack }: { orderId: string; isAdmin: b
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const subject = `New order #${String(orderId).slice(0, 8)}`;
       const { data } = await supabase
         .from("tickets")
         .select("id")
-        .eq("subject", subject)
+        .eq("order_id", orderId)
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle();
@@ -2224,6 +2333,14 @@ function OrderDetail({ orderId, isAdmin, onBack }: { orderId: string; isAdmin: b
             className="px-2.5 py-1 rounded-md bg-surface-2 text-xs font-medium flex items-center gap-1 hover:bg-surface-2/80">
             <Download className="size-3.5" /> {order.paid_at ? "Receipt" : "Invoice"} PDF
           </button>
+          {linkedTicketId && (
+            <button
+              onClick={() => navigate({ to: "/tickets", search: { id: linkedTicketId } })}
+              className="px-2.5 py-1 rounded-md bg-primary text-primary-foreground text-xs font-medium flex items-center gap-1 hover:opacity-90"
+            >
+              <Receipt className="size-3.5" /> Support ticket
+            </button>
+          )}
           {isAdmin ? (
             <>
               <button onClick={acceptOrder} disabled={busy || order.status !== "pending" || !!order.completed_at}
