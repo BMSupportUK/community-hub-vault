@@ -482,7 +482,7 @@ function SidebarLatestOrderProgress() {
     };
     void load();
     const ch = supabase
-      .channel(`sidebar-latest-order-${user.id}`)
+      .channel(`sidebar-latest-order-${user.id}-${Math.random().toString(36).slice(2)}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "orders", filter: `user_id=eq.${user.id}` },
