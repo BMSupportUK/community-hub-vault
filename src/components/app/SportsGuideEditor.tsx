@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { HtmlEditor } from "@/components/ui/html-editor";
 import { toast } from "sonner";
+import { findEarliestEventUtcMs } from "@/lib/parse-event-times";
 
 type Category = { id: string; name: string };
 type Blog = {
@@ -270,6 +271,7 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
       published: boolean;
       not_guaranteed: boolean;
       sort_order?: number;
+      auto_clear_at?: string;
     } = {
       category_id: editing.category_id,
       title: editing.title.trim(),
@@ -281,6 +283,17 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
       published: editing.published,
       not_guaranteed: editing.not_guaranteed,
     };
+    // Auto-clear the body 6 hours after the earliest event time listed
+    // inside the body. When no event time can be parsed, leave auto_clear_at
+    // off the payload so the trigger falls back to updated_at + 24h.
+    const bodyForParse = editing.body?.trim() || "";
+    if (bodyForParse) {
+      const earliestMs = findEarliestEventUtcMs(bodyForParse);
+      if (earliestMs !== null) {
+        const clearAt = new Date(earliestMs + 6 * 60 * 60 * 1000).toISOString();
+        payload.auto_clear_at = clearAt;
+      }
+    }
     if (!editing.id) {
       // Append to the end of the chosen category so the admin-defined order is preserved.
       const { data: maxRow } = await supabase
