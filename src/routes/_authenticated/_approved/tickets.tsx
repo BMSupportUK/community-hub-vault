@@ -1154,10 +1154,10 @@ function TicketDetail({
   return (
     <>
       <header className="border-b border-white/20 px-5 py-3 space-y-3 bg-white/5 backdrop-blur">
-        <div className="flex items-center gap-3">
-          <div className="size-9 rounded-lg bg-white/25 grid place-items-center"><CatIcon className="size-4 text-white" /></div>
+        <div className="flex flex-wrap sm:flex-nowrap items-start sm:items-center gap-3">
+          <div className="size-9 shrink-0 rounded-lg bg-white/25 grid place-items-center"><CatIcon className="size-4 text-white" /></div>
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2 text-xs text-white/80">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-white/80">
               <span>{cat?.name ?? "—"}</span>
               <span>·</span>
               <span>Opened by {senderName(ticket.user_id)}</span>
@@ -1166,18 +1166,20 @@ function TicketDetail({
             </div>
             <h1 className="font-display font-semibold text-lg truncate text-white drop-shadow">{ticket.subject}</h1>
           </div>
-          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-white/25 text-xs text-white">
-            <StatusIcon className="size-3" /> {STATUS_META[ticket.status].label}
-          </span>
-          {isAdmin && (
-            <button
-              onClick={deleteTicket}
-              title="Delete ticket"
-              className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-white text-rose-600 hover:bg-white/90 text-xs font-semibold shadow"
-            >
-              <Trash2 className="size-3" /> Delete
-            </button>
-          )}
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-white/25 text-xs text-white">
+              <StatusIcon className="size-3" /> {STATUS_META[ticket.status].label}
+            </span>
+            {isAdmin && (
+              <button
+                onClick={deleteTicket}
+                title="Delete ticket"
+                className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-white text-rose-600 hover:bg-white/90 text-xs font-semibold shadow"
+              >
+                <Trash2 className="size-3" /> Delete
+              </button>
+            )}
+          </div>
         </div>
         {linkedOrder && (
           <div className="rounded-lg border border-white/25 bg-white/10 backdrop-blur p-3 text-white text-xs space-y-2">
