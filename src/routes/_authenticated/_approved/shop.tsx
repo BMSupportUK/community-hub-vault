@@ -1763,8 +1763,20 @@ function OrdersView({ selectedId, isAdmin, adminUnlocked, initialScope }: { sele
   const [scope, setScope] = useState<"mine" | "all">(isAdmin && adminUnlocked ? initialScope : "mine");
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [ordersTab, setOrdersTab] = useState<"welcome" | "orders">(selectedId ? "orders" : "welcome");
-  useEffect(() => { if (selectedId) setOrdersTab("orders"); }, [selectedId]);
+
+  const tabForStatus = (status: OrderStatus) => {
+    if (status === "completed") return "completed";
+    if (status === "cancelled") return "cancelled";
+    return "processing";
+  };
+
+  const [ordersTab, setOrdersTab] = useState<"processing" | "completed" | "cancelled">("processing");
+  useEffect(() => {
+    if (selectedId) {
+      const o = orders.find((x) => x.id === selectedId);
+      if (o) setOrdersTab(tabForStatus(o.status));
+    }
+  }, [selectedId, orders]);
 
   const load = async () => {
     let q = supabase.from("orders").select("*").order("created_at", { ascending: false });
@@ -1798,18 +1810,74 @@ function OrdersView({ selectedId, isAdmin, adminUnlocked, initialScope }: { sele
   useEffect(() => {
     const ch = supabase
       .channel("orders-list")
-      // orders is a security view over private.orders; subscribe to the base
-      // table so realtime actually delivers insert/update/delete events.
       .on("postgres_changes", { event: "*", schema: "private", table: "orders" }, load)
-      // New messages should bump/refresh the sales chat list too.
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "order_messages" }, load)
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, [scope, user?.id, adminUnlocked]);
 
-  const inProgressCount = orders.filter((o) => ["pending", "processing"].includes(o.status)).length;
-  const completedCount = orders.filter((o) => ["paid", "completed", "shipped"].includes(o.status)).length;
-  const totalSpend = orders.filter((o) => ["paid", "completed", "shipped"].includes(o.status)).reduce((s, o) => s + (o.total_cents || 0), 0);
+  const processingOrders = orders.filter((o) => ["pending", "processing", "paid", "shipped"].includes(o.status));
+  const completedOrders = orders.filter((o) => o.status === "completed");
+  const cancelledOrders = orders.filter((o) => o.status === "cancelled");
+
+  const renderOrderList = (list: Order[]) => (
+    <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-4 min-h-[60vh]">
+      <aside className={cn(
+        "rounded-2xl bg-purple-950/50 border border-purple-500/30 backdrop-blur flex-col overflow-hidden",
+        selectedId ? "hidden lg:flex" : "flex",
+      )}>
+        <div className="px-4 py-3 border-b border-purple-500/30 flex items-center justify-between">
+          <h3 className="font-display font-semibold text-purple-100 text-sm">Order history</h3>
+          <span className="text-[10px] text-purple-200/70">{list.length} total</span>
+        </div>
+        <div className="flex-1 overflow-y-auto p-2 space-y-1 max-h-[70vh]">
+          {list.length === 0 && <div className="text-xs text-purple-200/70 p-6 text-center">No orders in this section.</div>}
+          {list.map((o) => (
+            <button key={o.id} onClick={() => navigate({ to: "/shop", search: { view: "orders", id: o.id, scope: scope === "all" ? "all" : undefined } })}
+              className={cn(
+                "w-full text-left p-3 rounded-lg transition border",
+                selectedId === o.id
+                  ? "bg-fuchsia-600/20 border-fuchsia-400/60 shadow-[0_0_18px_-6px_rgba(232,121,249,0.7)]"
+                  : "border-transparent hover:bg-purple-900/40 hover:border-purple-500/30",
+              )}>
+              <div className="flex items-center justify-between mb-1">
+                <span className="font-mono text-[10px] text-purple-200/70">#{o.id.slice(0, 8)}</span>
+                <div className="flex items-center gap-1">
+                  {cryptoOrderIds.has(o.id) && (
+                    <span
+                      title={cryptoPendingIds.has(o.id) ? "Crypto invoice created (awaiting payment)" : "Paid via crypto"}
+                      className={cn(
+                        "text-[10px] px-1.5 py-0.5 rounded font-medium",
+                        cryptoPendingIds.has(o.id)
+                          ? "bg-amber-500/20 text-amber-300"
+                          : "bg-emerald-500/20 text-emerald-300",
+                      )}
+                    >₿</span>
+                  )}
+                  <span className={cn("text-[10px] px-1.5 py-0.5 rounded font-medium capitalize", STATUS_COLOR[o.status] ?? "bg-purple-900/60 text-purple-100")}>{o.status}</span>
+                </div>
+              </div>
+              <div className="font-display font-bold text-sm text-purple-50">{fmt(o.total_cents)}</div>
+              <div className="text-[10px] text-purple-200/60 mt-0.5">{new Date(o.created_at).toLocaleString()}</div>
+            </button>
+          ))}
+        </div>
+      </aside>
+      <div className={cn("rounded-2xl bg-purple-950/40 border border-purple-500/30 backdrop-blur overflow-hidden min-h-[60vh] flex", selectedId ? "flex" : "hidden lg:flex")}>
+        {selectedId ? (
+          <OrderDetail
+            orderId={selectedId}
+            isAdmin={isAdmin && adminUnlocked}
+            onBack={() => navigate({ to: "/shop", search: { view: "orders", scope: scope === "all" ? "all" : undefined } })}
+          />
+        ) : (
+          <div className="flex-1 grid place-items-center text-purple-200/70 text-sm p-10 text-center">
+            Select an order from the list to see all the details and status.
+          </div>
+        )}
+      </div>
+    </div>
+  );
 
   return (
     <div
@@ -1825,11 +1893,12 @@ function OrdersView({ selectedId, isAdmin, adminUnlocked, initialScope }: { sele
       </header>
 
       <div className="relative px-4 md:px-8 py-6">
-        <Tabs value={ordersTab} onValueChange={(v) => setOrdersTab(v as "welcome" | "orders")} className="w-full">
+        <Tabs value={ordersTab} onValueChange={(v) => setOrdersTab(v as "processing" | "completed" | "cancelled")} className="w-full">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <TabsList className="grid grid-cols-2 w-full max-w-md bg-purple-950/60 border border-purple-500/30">
-              <TabsTrigger value="welcome" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white">Welcome</TabsTrigger>
-              <TabsTrigger value="orders" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white">Orders ({orders.length})</TabsTrigger>
+            <TabsList className="grid grid-cols-3 w-full max-w-lg bg-purple-950/60 border border-purple-500/30">
+              <TabsTrigger value="processing" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white">Processing ({processingOrders.length})</TabsTrigger>
+              <TabsTrigger value="completed" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white">Completed ({completedOrders.length})</TabsTrigger>
+              <TabsTrigger value="cancelled" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white">Cancelled ({cancelledOrders.length})</TabsTrigger>
             </TabsList>
             {isAdmin && adminUnlocked && (
               <div className="flex bg-purple-950/60 border border-purple-500/30 rounded-md p-0.5 text-[11px]">
@@ -1839,96 +1908,16 @@ function OrdersView({ selectedId, isAdmin, adminUnlocked, initialScope }: { sele
             )}
           </div>
 
-          <TabsContent value="welcome" className="mt-6">
-            <div className="rounded-2xl bg-gradient-to-br from-fuchsia-600/30 via-purple-600/30 to-violet-700/30 border border-purple-500/40 p-8 md:p-10 shadow-[0_0_60px_-15px_rgba(168,85,247,0.5)]">
-              <h2 className="font-display text-3xl font-bold bg-gradient-to-r from-violet-600 to-blue-600 bg-clip-text text-transparent">Welcome to your Orders</h2>
-              <p className="mt-3 text-lg text-purple-100/90 max-w-2xl">
-                Every order you've placed lives here. Open one to see the full breakdown, live status, payment details, and chat with our team if you need anything.
-              </p>
-              <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-3 max-w-3xl">
-                <div className="rounded-xl bg-purple-950/60 border border-purple-500/30 p-4">
-                  <div className="text-2xl font-bold text-fuchsia-300">{orders.length}</div>
-                  <div className="text-[11px] text-purple-200/70 uppercase tracking-wide mt-0.5">Total orders</div>
-                </div>
-                <div className="rounded-xl bg-purple-950/60 border border-purple-500/30 p-4">
-                  <div className="text-2xl font-bold text-amber-300">{inProgressCount}</div>
-                  <div className="text-[11px] text-purple-200/70 uppercase tracking-wide mt-0.5">In progress</div>
-                </div>
-                <div className="rounded-xl bg-purple-950/60 border border-purple-500/30 p-4">
-                  <div className="text-2xl font-bold text-emerald-300">{completedCount}</div>
-                  <div className="text-[11px] text-purple-200/70 uppercase tracking-wide mt-0.5">Completed</div>
-                </div>
-                <div className="rounded-xl bg-purple-950/60 border border-purple-500/30 p-4">
-                  <div className="text-2xl font-bold text-sky-300">{fmt(totalSpend)}</div>
-                  <div className="text-[11px] text-purple-200/70 uppercase tracking-wide mt-0.5">Total spend</div>
-                </div>
-              </div>
-              <button
-                onClick={() => setOrdersTab("orders")}
-                className="mt-6 inline-flex items-center gap-2 bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white border-0 shadow-lg shadow-purple-900/50 rounded-md px-4 py-2 text-sm font-medium"
-              >
-                <Package className="size-4" /> View orders
-              </button>
-            </div>
+          <TabsContent value="processing" className="mt-6">
+            {renderOrderList(processingOrders)}
           </TabsContent>
 
-          <TabsContent value="orders" className="mt-6">
-            <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-4 min-h-[60vh]">
-              <aside className={cn(
-                "rounded-2xl bg-purple-950/50 border border-purple-500/30 backdrop-blur flex-col overflow-hidden",
-                selectedId ? "hidden lg:flex" : "flex",
-              )}>
-                <div className="px-4 py-3 border-b border-purple-500/30 flex items-center justify-between">
-                  <h3 className="font-display font-semibold text-purple-100 text-sm">Order history</h3>
-                  <span className="text-[10px] text-purple-200/70">{orders.length} total</span>
-                </div>
-                <div className="flex-1 overflow-y-auto p-2 space-y-1 max-h-[70vh]">
-                  {orders.length === 0 && <div className="text-xs text-purple-200/70 p-6 text-center">No orders yet.</div>}
-                  {orders.map((o) => (
-                    <button key={o.id} onClick={() => navigate({ to: "/shop", search: { view: "orders", id: o.id, scope: scope === "all" ? "all" : undefined } })}
-                      className={cn(
-                        "w-full text-left p-3 rounded-lg transition border",
-                        selectedId === o.id
-                          ? "bg-fuchsia-600/20 border-fuchsia-400/60 shadow-[0_0_18px_-6px_rgba(232,121,249,0.7)]"
-                          : "border-transparent hover:bg-purple-900/40 hover:border-purple-500/30",
-                      )}>
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="font-mono text-[10px] text-purple-200/70">#{o.id.slice(0, 8)}</span>
-                        <div className="flex items-center gap-1">
-                          {cryptoOrderIds.has(o.id) && (
-                            <span
-                              title={cryptoPendingIds.has(o.id) ? "Crypto invoice created (awaiting payment)" : "Paid via crypto"}
-                              className={cn(
-                                "text-[10px] px-1.5 py-0.5 rounded font-medium",
-                                cryptoPendingIds.has(o.id)
-                                  ? "bg-amber-500/20 text-amber-300"
-                                  : "bg-emerald-500/20 text-emerald-300",
-                              )}
-                            >₿</span>
-                          )}
-                          <span className={cn("text-[10px] px-1.5 py-0.5 rounded font-medium capitalize", STATUS_COLOR[o.status] ?? "bg-purple-900/60 text-purple-100")}>{o.status}</span>
-                        </div>
-                      </div>
-                      <div className="font-display font-bold text-sm text-purple-50">{fmt(o.total_cents)}</div>
-                      <div className="text-[10px] text-purple-200/60 mt-0.5">{new Date(o.created_at).toLocaleString()}</div>
-                    </button>
-                  ))}
-                </div>
-              </aside>
-              <div className={cn("rounded-2xl bg-purple-950/40 border border-purple-500/30 backdrop-blur overflow-hidden min-h-[60vh] flex", selectedId ? "flex" : "hidden lg:flex")}>
-                {selectedId ? (
-                  <OrderDetail
-                    orderId={selectedId}
-                    isAdmin={isAdmin && adminUnlocked}
-                    onBack={() => navigate({ to: "/shop", search: { view: "orders", scope: scope === "all" ? "all" : undefined } })}
-                  />
-                ) : (
-                  <div className="flex-1 grid place-items-center text-purple-200/70 text-sm p-10 text-center">
-                    Select an order from the list to see all the details and status.
-                  </div>
-                )}
-              </div>
-            </div>
+          <TabsContent value="completed" className="mt-6">
+            {renderOrderList(completedOrders)}
+          </TabsContent>
+
+          <TabsContent value="cancelled" className="mt-6">
+            {renderOrderList(cancelledOrders)}
           </TabsContent>
         </Tabs>
       </div>
@@ -1947,7 +1936,7 @@ function MyOrdersTab({ onOpenOrder }: { onOpenOrder: (id: string) => void }) {
   const [orders, setOrders] = useState<Order[]>([]);
   const [tickets, setTickets] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<"welcome" | "orders">("welcome");
+  const [tab, setTab] = useState<"processing" | "completed" | "cancelled">("processing");
 
   useEffect(() => {
     if (!user) { setLoading(false); return; }
@@ -1979,11 +1968,59 @@ function MyOrdersTab({ onOpenOrder }: { onOpenOrder: (id: string) => void }) {
     return () => { cancel = true; };
   }, [user?.id]);
 
-  const inProgressCount = orders.filter((o) => ["pending", "processing"].includes(o.status)).length;
-  const completedCount = orders.filter((o) => ["paid", "completed", "shipped"].includes(o.status)).length;
-  const totalSpend = orders
-    .filter((o) => ["paid", "completed", "shipped"].includes(o.status))
-    .reduce((s, o) => s + (o.total_cents || 0), 0);
+  const processingOrders = orders.filter((o) => ["pending", "processing", "paid", "shipped"].includes(o.status));
+  const completedOrders = orders.filter((o) => o.status === "completed");
+  const cancelledOrders = orders.filter((o) => o.status === "cancelled");
+
+  const renderOrderCards = (list: Order[]) => (
+    loading ? (
+      <div className="grid place-items-center py-16 text-purple-200/70"><Loader2 className="size-5 animate-spin" /></div>
+    ) : list.length === 0 ? (
+      <div className="rounded-2xl border border-dashed border-purple-500/40 bg-purple-950/40 p-10 text-center text-sm text-purple-100/80">
+        No orders in this section.
+      </div>
+    ) : (
+      <div className="space-y-3">
+        {list.map((o) => {
+          const ticketId = tickets[o.id];
+          return (
+            <div
+              key={o.id}
+              className="bg-purple-950/50 border border-purple-500/30 backdrop-blur rounded-xl p-4 flex flex-col md:flex-row md:items-center gap-3 hover:border-fuchsia-400/60 transition"
+            >
+              <button
+                onClick={() => onOpenOrder(o.id)}
+                className="flex-1 min-w-0 text-left"
+              >
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="font-mono text-[10px] text-purple-200/70">#{o.id.slice(0, 8)}</span>
+                  <span className={cn("text-[10px] px-1.5 py-0.5 rounded font-medium capitalize", STATUS_COLOR[o.status] ?? "bg-purple-900/60 text-purple-100")}>{o.status}</span>
+                </div>
+                <div className="font-display font-bold text-base text-purple-50">{fmt(o.total_cents)}</div>
+                <div className="text-[11px] text-purple-200/60 mt-0.5">{new Date(o.created_at).toLocaleString()}</div>
+              </button>
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  onClick={() => onOpenOrder(o.id)}
+                  className="px-3 py-1.5 rounded-md bg-gradient-to-r from-violet-600 to-blue-600 text-white text-xs font-medium hover:from-violet-500 hover:to-blue-500 inline-flex items-center gap-1"
+                >
+                  <Package className="size-3.5" /> View order
+                </button>
+                {ticketId && (
+                  <button
+                    onClick={() => navigate({ to: "/tickets", search: { id: ticketId } })}
+                    className="px-3 py-1.5 rounded-md bg-purple-900/70 border border-purple-500/40 text-purple-50 text-xs font-medium hover:bg-purple-900 inline-flex items-center gap-1"
+                  >
+                    <Receipt className="size-3.5" /> Support ticket
+                  </button>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    )
+  );
 
   return (
     <div
@@ -1999,93 +2036,23 @@ function MyOrdersTab({ onOpenOrder }: { onOpenOrder: (id: string) => void }) {
       </header>
 
       <div className="relative px-4 md:px-6 py-6">
-        <Tabs value={tab} onValueChange={(v) => setTab(v as "welcome" | "orders")} className="w-full">
-          <TabsList className="grid grid-cols-2 w-full max-w-md bg-purple-950/60 border border-purple-500/30">
-            <TabsTrigger value="welcome" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white">Welcome</TabsTrigger>
-            <TabsTrigger value="orders" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white">Orders ({orders.length})</TabsTrigger>
+        <Tabs value={tab} onValueChange={(v) => setTab(v as "processing" | "completed" | "cancelled")} className="w-full">
+          <TabsList className="grid grid-cols-3 w-full max-w-lg bg-purple-950/60 border border-purple-500/30">
+            <TabsTrigger value="processing" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white">Processing ({processingOrders.length})</TabsTrigger>
+            <TabsTrigger value="completed" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white">Completed ({completedOrders.length})</TabsTrigger>
+            <TabsTrigger value="cancelled" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white">Cancelled ({cancelledOrders.length})</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="welcome" className="mt-6">
-            <div className="rounded-2xl bg-gradient-to-br from-fuchsia-600/30 via-purple-600/30 to-violet-700/30 border border-purple-500/40 p-8 md:p-10 shadow-[0_0_60px_-15px_rgba(168,85,247,0.5)]">
-              <h2 className="font-display text-3xl font-bold bg-gradient-to-r from-violet-600 to-blue-600 bg-clip-text text-transparent">Welcome to your Orders</h2>
-              <p className="mt-3 text-lg text-purple-100/90 max-w-2xl">
-                Every order you've placed lives here. Open one to see the full breakdown, live status, payment details, and chat with our team if you need anything.
-              </p>
-              <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-3 max-w-3xl">
-                <div className="rounded-xl bg-purple-950/60 border border-purple-500/30 p-4">
-                  <div className="text-2xl font-bold text-fuchsia-300">{orders.length}</div>
-                  <div className="text-[11px] text-purple-200/70 uppercase tracking-wide mt-0.5">Total orders</div>
-                </div>
-                <div className="rounded-xl bg-purple-950/60 border border-purple-500/30 p-4">
-                  <div className="text-2xl font-bold text-amber-300">{inProgressCount}</div>
-                  <div className="text-[11px] text-purple-200/70 uppercase tracking-wide mt-0.5">In progress</div>
-                </div>
-                <div className="rounded-xl bg-purple-950/60 border border-purple-500/30 p-4">
-                  <div className="text-2xl font-bold text-emerald-300">{completedCount}</div>
-                  <div className="text-[11px] text-purple-200/70 uppercase tracking-wide mt-0.5">Completed</div>
-                </div>
-                <div className="rounded-xl bg-purple-950/60 border border-purple-500/30 p-4">
-                  <div className="text-2xl font-bold text-sky-300">{fmt(totalSpend)}</div>
-                  <div className="text-[11px] text-purple-200/70 uppercase tracking-wide mt-0.5">Total spend</div>
-                </div>
-              </div>
-              <button
-                onClick={() => setTab("orders")}
-                className="mt-6 inline-flex items-center gap-2 bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white border-0 shadow-lg shadow-purple-900/50 rounded-md px-4 py-2 text-sm font-medium"
-              >
-                <Package className="size-4" /> View orders
-              </button>
-            </div>
+          <TabsContent value="processing" className="mt-6">
+            {renderOrderCards(processingOrders)}
           </TabsContent>
 
-          <TabsContent value="orders" className="mt-6">
-            {loading ? (
-              <div className="grid place-items-center py-16 text-purple-200/70"><Loader2 className="size-5 animate-spin" /></div>
-            ) : orders.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-purple-500/40 bg-purple-950/40 p-10 text-center text-sm text-purple-100/80">
-                You haven't placed any orders yet.
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {orders.map((o) => {
-        const ticketId = tickets[o.id];
-        return (
-          <div
-            key={o.id}
-            className="bg-purple-950/50 border border-purple-500/30 backdrop-blur rounded-xl p-4 flex flex-col md:flex-row md:items-center gap-3 hover:border-fuchsia-400/60 transition"
-          >
-            <button
-              onClick={() => onOpenOrder(o.id)}
-              className="flex-1 min-w-0 text-left"
-            >
-              <div className="flex items-center gap-2 mb-1">
-                <span className="font-mono text-[10px] text-purple-200/70">#{o.id.slice(0, 8)}</span>
-                <span className={cn("text-[10px] px-1.5 py-0.5 rounded font-medium capitalize", STATUS_COLOR[o.status] ?? "bg-purple-900/60 text-purple-100")}>{o.status}</span>
-              </div>
-              <div className="font-display font-bold text-base text-purple-50">{fmt(o.total_cents)}</div>
-              <div className="text-[11px] text-purple-200/60 mt-0.5">{new Date(o.created_at).toLocaleString()}</div>
-            </button>
-            <div className="flex items-center gap-2 shrink-0">
-              <button
-                onClick={() => onOpenOrder(o.id)}
-                className="px-3 py-1.5 rounded-md bg-gradient-to-r from-violet-600 to-blue-600 text-white text-xs font-medium hover:from-violet-500 hover:to-blue-500 inline-flex items-center gap-1"
-              >
-                <Package className="size-3.5" /> View order
-              </button>
-              {ticketId && (
-                <button
-                  onClick={() => navigate({ to: "/tickets", search: { id: ticketId } })}
-                  className="px-3 py-1.5 rounded-md bg-purple-900/70 border border-purple-500/40 text-purple-50 text-xs font-medium hover:bg-purple-900 inline-flex items-center gap-1"
-                >
-                  <Receipt className="size-3.5" /> Support ticket
-                </button>
-              )}
-            </div>
-          </div>
-        );
-                })}
-              </div>
-            )}
+          <TabsContent value="completed" className="mt-6">
+            {renderOrderCards(completedOrders)}
+          </TabsContent>
+
+          <TabsContent value="cancelled" className="mt-6">
+            {renderOrderCards(cancelledOrders)}
           </TabsContent>
         </Tabs>
       </div>
