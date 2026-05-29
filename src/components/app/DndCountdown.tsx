@@ -27,13 +27,14 @@ export function DndCountdown({
   compact?: boolean;
 }) {
   const info = useDndStatus(userId);
+  const endsAtTime = info?.endsAt?.getTime();
   const [, setTick] = useState(0);
 
   useEffect(() => {
     if (!info?.active || !info.endsAt) return;
     const id = setInterval(() => setTick((n) => n + 1), 1000);
     return () => clearInterval(id);
-  }, [info?.active, info?.endsAt?.getTime()]);
+  }, [info?.active, info?.endsAt, endsAtTime]);
 
   if (!info?.active) return null;
 
