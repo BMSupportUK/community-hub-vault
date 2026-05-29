@@ -123,6 +123,7 @@ export function StaffOnDutyStrip() {
                       )}
                     </div>
                     <div className="text-[10px] text-white/80">On {fmtHMS(shiftElapsed)}</div>
+                    <DndCountdown userId={s.user_id} compact className="mt-1" />
                   </div>
                 </div>
                 <div className="mt-2 flex items-center gap-1.5 text-[11px] font-medium text-white">
