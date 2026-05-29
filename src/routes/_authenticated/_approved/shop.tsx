@@ -1967,7 +1967,7 @@ function MyOrdersTab({ onOpenOrder }: { onOpenOrder: (id: string) => void }) {
     return () => { cancel = true; };
   }, [user?.id]);
 
-  const processingOrders = orders.filter((o) => ["pending", "processing", "paid", "shipped"].includes(o.status));
+  const processingOrders = orders.filter((o) => ["pending", "processing", "paid"].includes(o.status));
   const completedOrders = orders.filter((o) => o.status === "completed");
   const cancelledOrders = orders.filter((o) => o.status === "cancelled");
 
