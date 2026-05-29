@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-import { format } from "date-fns";
 import { Clock, Moon, Save, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -99,12 +98,11 @@ export function DndDialogButton() {
 
   const buildRange = () => {
     const startDateStr = dateInTimeZone(startDate, userTimezone);
-    let endDateStr = dateInTimeZone(endDate, userTimezone);
+    const endDateStr = dateInTimeZone(endDate, userTimezone);
     const start = new Date(zonedWallTimeToUtcMs(startDateStr, startTime, userTimezone));
     let end = new Date(zonedWallTimeToUtcMs(endDateStr, endTime, userTimezone));
     if (end.getTime() <= start.getTime()) {
       end = new Date(start.getTime() + 60 * 60 * 1000);
-      endDateStr = dateInTimeZone(end, userTimezone);
       setEndDate(end);
       setEndTime(toHHMMInTimeZone(end, userTimezone));
     }
@@ -162,16 +160,17 @@ export function DndDialogButton() {
 
   const applyPreset = (minutes: number | "eod") => {
     const start = new Date();
-    const end = new Date();
+    let end: Date;
     if (minutes === "eod") {
-      end.setHours(23, 59, 0, 0);
+      end = new Date(zonedWallTimeToUtcMs(dateInTimeZone(start, userTimezone), "23:59", userTimezone));
     } else {
+      end = new Date();
       end.setTime(start.getTime() + minutes * 60 * 1000);
     }
     setStartDate(start);
     setEndDate(end);
-    setStartTime(toHHMM(start));
-    setEndTime(toHHMM(end));
+    setStartTime(toHHMMInTimeZone(start, userTimezone));
+    setEndTime(toHHMMInTimeZone(end, userTimezone));
   };
 
   const active = !!info?.active;
