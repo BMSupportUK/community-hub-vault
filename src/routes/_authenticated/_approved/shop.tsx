@@ -136,9 +136,6 @@ function ShopPage() {
   const { format, symbol } = useCurrency();
   _currentFmt = format;
   _currentSymbol = symbol;
-  const [navOpen, setNavOpen] = useState(false);
-  useEffect(() => { setNavOpen(false); }, [view, id]);
-
   const go = (next: Partial<{ view: View | "discounts"; id: string; scope: string }>) =>
     navigate({ to: "/shop", search: next as never });
 
