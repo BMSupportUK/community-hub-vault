@@ -90,10 +90,10 @@ interface Product {
   image_url: string | null; category: string | null; stock: number | null;
   is_active: boolean; sort_order: number; is_recommended?: boolean;
 }
-type OrderStatus = "pending" | "processing" | "paid" | "shipped" | "completed" | "cancelled";
+type OrderStatus = "pending" | "processing" | "paid" | "completed" | "cancelled";
 interface Order {
   id: string; user_id: string; status: OrderStatus; total_cents: number;
-  shipping_name: string | null; shipping_address: string | null; notes: string | null;
+  shipping_name: string | null; notes: string | null;
   created_at: string;
   email?: string | null;
   customer_type?: string | null;
@@ -1751,7 +1751,6 @@ const STATUS_COLOR: Record<string, string> = {
   pending: "text-warning bg-warning/10",
   processing: "text-primary bg-primary/10",
   paid: "text-success bg-success/10",
-  shipped: "text-primary bg-primary/10",
   completed: "text-success bg-success/10",
   cancelled: "text-destructive bg-destructive/10",
 };
@@ -1816,7 +1815,7 @@ function OrdersView({ selectedId, isAdmin, adminUnlocked, initialScope }: { sele
     return () => { supabase.removeChannel(ch); };
   }, [scope, user?.id, adminUnlocked]);
 
-  const processingOrders = orders.filter((o) => ["pending", "processing", "paid", "shipped"].includes(o.status));
+  const processingOrders = orders.filter((o) => ["pending", "processing", "paid"].includes(o.status));
   const completedOrders = orders.filter((o) => o.status === "completed");
   const cancelledOrders = orders.filter((o) => o.status === "cancelled");
 
@@ -1968,7 +1967,7 @@ function MyOrdersTab({ onOpenOrder }: { onOpenOrder: (id: string) => void }) {
     return () => { cancel = true; };
   }, [user?.id]);
 
-  const processingOrders = orders.filter((o) => ["pending", "processing", "paid", "shipped"].includes(o.status));
+  const processingOrders = orders.filter((o) => ["pending", "processing", "paid"].includes(o.status));
   const completedOrders = orders.filter((o) => o.status === "completed");
   const cancelledOrders = orders.filter((o) => o.status === "cancelled");
 
