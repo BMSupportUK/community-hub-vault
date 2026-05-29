@@ -1157,6 +1157,11 @@ function Storefront() {
             <TabsContent value="refund" className="mt-4"><InlinePolicy policyKey="refund" /></TabsContent>
             <TabsContent value="multi_room" className="mt-4"><InlinePolicy policyKey="multi_room" /></TabsContent>
             <TabsContent value="triple_room" className="mt-4"><InlinePolicy policyKey="triple_room" /></TabsContent>
+            <TabsContent value="orders" className="mt-4">
+              <MyOrdersTab
+                onOpenOrder={(id) => navigate({ to: "/shop", search: { view: "orders", id } })}
+              />
+            </TabsContent>
           </Tabs>
         </div>
       </div>
