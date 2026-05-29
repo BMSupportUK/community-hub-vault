@@ -1820,48 +1820,54 @@ function OrdersView({ selectedId, isAdmin, adminUnlocked, initialScope }: { sele
   const cancelledOrders = orders.filter((o) => o.status === "cancelled");
 
   const renderOrderList = (list: Order[]) => (
-    <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-4 min-h-[60vh]">
-      <aside className={cn(
-        "rounded-2xl bg-purple-950/50 border border-purple-500/30 backdrop-blur flex-col overflow-hidden",
-        selectedId ? "hidden lg:flex" : "flex",
+    <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-4 min-h-[60vh]">
+      <div className={cn(
+        "grid grid-cols-1 sm:grid-cols-2 gap-3 content-start",
+        selectedId ? "hidden lg:grid" : "",
       )}>
-        <div className="px-4 py-3 border-b border-purple-500/30 flex items-center justify-between">
-          <h3 className="font-display font-semibold text-purple-100 text-sm">Order history</h3>
-          <span className="text-[10px] text-purple-200/70">{list.length} total</span>
-        </div>
-        <div className="flex-1 overflow-y-auto p-2 space-y-1 max-h-[70vh]">
-          {list.length === 0 && <div className="text-xs text-purple-200/70 p-6 text-center">No orders in this section.</div>}
-          {list.map((o) => (
-            <button key={o.id} onClick={() => navigate({ to: "/shop", search: { view: "orders", id: o.id, scope: scope === "all" ? "all" : undefined } })}
-              className={cn(
-                "w-full text-left p-3 rounded-lg transition border",
-                selectedId === o.id
-                  ? "bg-fuchsia-600/20 border-fuchsia-400/60 shadow-[0_0_18px_-6px_rgba(232,121,249,0.7)]"
-                  : "border-transparent hover:bg-purple-900/40 hover:border-purple-500/30",
-              )}>
-              <div className="flex items-center justify-between mb-1">
-                <span className="font-mono text-[10px] text-purple-200/70">#{o.id.slice(0, 8)}</span>
-                <div className="flex items-center gap-1">
-                  {cryptoOrderIds.has(o.id) && (
-                    <span
-                      title={cryptoPendingIds.has(o.id) ? "Crypto invoice created (awaiting payment)" : "Paid via crypto"}
-                      className={cn(
-                        "text-[10px] px-1.5 py-0.5 rounded font-medium",
-                        cryptoPendingIds.has(o.id)
-                          ? "bg-amber-500/20 text-amber-300"
-                          : "bg-emerald-500/20 text-emerald-300",
-                      )}
-                    >₿</span>
-                  )}
-                  <span className={cn("text-[10px] px-1.5 py-0.5 rounded font-medium capitalize", STATUS_COLOR[o.status] ?? "bg-purple-900/60 text-purple-100")}>{o.status}</span>
-                </div>
+        {list.length === 0 && (
+          <div className="col-span-full rounded-2xl border border-dashed border-purple-500/40 bg-purple-950/40 p-10 text-center text-sm text-purple-100/80">
+            No orders in this section.
+          </div>
+        )}
+        {list.map((o) => (
+          <button
+            key={o.id}
+            onClick={() => navigate({ to: "/shop", search: { view: "orders", id: o.id, scope: scope === "all" ? "all" : undefined } })}
+            className={cn(
+              "text-left rounded-xl border p-4 transition backdrop-blur flex flex-col gap-2",
+              selectedId === o.id
+                ? "bg-fuchsia-600/15 border-fuchsia-400/60 shadow-[0_0_20px_-6px_rgba(232,121,249,0.5)]"
+                : "bg-purple-950/50 border-purple-500/30 hover:border-fuchsia-400/40 hover:bg-purple-900/40",
+            )}
+          >
+            <div className="flex items-center justify-between">
+              <span className="font-mono text-[10px] text-purple-200/70">#{o.id.slice(0, 8)}</span>
+              <div className="flex items-center gap-1">
+                {cryptoOrderIds.has(o.id) && (
+                  <span
+                    title={cryptoPendingIds.has(o.id) ? "Crypto invoice created (awaiting payment)" : "Paid via crypto"}
+                    className={cn(
+                      "text-[10px] px-1.5 py-0.5 rounded font-medium",
+                      cryptoPendingIds.has(o.id)
+                        ? "bg-amber-500/20 text-amber-300"
+                        : "bg-emerald-500/20 text-emerald-300",
+                    )}
+                  >₿</span>
+                )}
+                <span className={cn("text-[10px] px-1.5 py-0.5 rounded font-medium capitalize", STATUS_COLOR[o.status] ?? "bg-purple-900/60 text-purple-100")}>{o.status}</span>
               </div>
-              <div className="font-display font-bold text-sm text-purple-50">{fmt(o.total_cents)}</div>
-              <div className="text-[10px] text-purple-200/60 mt-0.5">{new Date(o.created_at).toLocaleString()}</div>
-            </button>
-          ))}
-        </div>
-      </aside>
+            </div>
+            <div className="font-display font-bold text-lg text-purple-50">{fmt(o.total_cents)}</div>
+            <div className="text-[11px] text-purple-200/60">{new Date(o.created_at).toLocaleString()}</div>
+            <div className="mt-auto pt-2 flex items-center gap-2">
+              <span className="inline-flex items-center gap-1 text-[11px] text-fuchsia-300 font-medium">
+                <Package className="size-3" /> View details
+              </span>
+            </div>
+          </button>
+        ))}
+      </div>
       <div className={cn("rounded-2xl bg-purple-950/40 border border-purple-500/30 backdrop-blur overflow-hidden min-h-[60vh] flex", selectedId ? "flex" : "hidden lg:flex")}>
         {selectedId ? (
           <OrderDetail
@@ -1871,7 +1877,7 @@ function OrdersView({ selectedId, isAdmin, adminUnlocked, initialScope }: { sele
           />
         ) : (
           <div className="flex-1 grid place-items-center text-purple-200/70 text-sm p-10 text-center">
-            Select an order from the list to see all the details and status.
+            Select an order card to see all the details and status.
           </div>
         )}
       </div>
@@ -1979,26 +1985,21 @@ function MyOrdersTab({ onOpenOrder }: { onOpenOrder: (id: string) => void }) {
         No orders in this section.
       </div>
     ) : (
-      <div className="space-y-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
         {list.map((o) => {
           const ticketId = tickets[o.id];
           return (
             <div
               key={o.id}
-              className="bg-purple-950/50 border border-purple-500/30 backdrop-blur rounded-xl p-4 flex flex-col md:flex-row md:items-center gap-3 hover:border-fuchsia-400/60 transition"
+              className="bg-purple-950/50 border border-purple-500/30 backdrop-blur rounded-xl p-4 flex flex-col gap-2 hover:border-fuchsia-400/40 hover:bg-purple-900/40 transition"
             >
-              <button
-                onClick={() => onOpenOrder(o.id)}
-                className="flex-1 min-w-0 text-left"
-              >
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="font-mono text-[10px] text-purple-200/70">#{o.id.slice(0, 8)}</span>
-                  <span className={cn("text-[10px] px-1.5 py-0.5 rounded font-medium capitalize", STATUS_COLOR[o.status] ?? "bg-purple-900/60 text-purple-100")}>{o.status}</span>
-                </div>
-                <div className="font-display font-bold text-base text-purple-50">{fmt(o.total_cents)}</div>
-                <div className="text-[11px] text-purple-200/60 mt-0.5">{new Date(o.created_at).toLocaleString()}</div>
-              </button>
-              <div className="flex items-center gap-2 shrink-0">
+              <div className="flex items-center justify-between">
+                <span className="font-mono text-[10px] text-purple-200/70">#{o.id.slice(0, 8)}</span>
+                <span className={cn("text-[10px] px-1.5 py-0.5 rounded font-medium capitalize", STATUS_COLOR[o.status] ?? "bg-purple-900/60 text-purple-100")}>{o.status}</span>
+              </div>
+              <div className="font-display font-bold text-lg text-purple-50">{fmt(o.total_cents)}</div>
+              <div className="text-[11px] text-purple-200/60">{new Date(o.created_at).toLocaleString()}</div>
+              <div className="mt-auto pt-2 flex flex-wrap items-center gap-2">
                 <button
                   onClick={() => onOpenOrder(o.id)}
                   className="px-3 py-1.5 rounded-md bg-gradient-to-r from-violet-600 to-blue-600 text-white text-xs font-medium hover:from-violet-500 hover:to-blue-500 inline-flex items-center gap-1"
