@@ -176,31 +176,40 @@ function ShopPage() {
   return (
     <>
       <div className="flex-1 flex flex-col min-w-0">
-        <nav className="shrink-0 border-b border-border bg-surface/60 backdrop-blur px-3 md:px-6 py-2 flex items-center gap-4 overflow-x-auto">
-          {groups.map((g) => (
-            <div key={g.label} className="flex items-center gap-1 shrink-0">
-              <span className="text-[10px] uppercase tracking-wider text-muted-foreground/70 mr-1 hidden md:inline">{g.label}</span>
-              {g.items.map((it) => {
-                const Icon = it.icon;
-                return (
-                  <button
-                    key={it.label}
-                    onClick={it.onClick}
-                    className={cn(
-                      "inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition whitespace-nowrap",
-                      it.active
-                        ? "bg-primary text-primary-foreground"
-                        : "text-muted-foreground hover:text-foreground hover:bg-surface-2",
-                    )}
-                  >
-                    {Icon && <Icon className="size-3.5" />}
-                    {it.label}
-                  </button>
-                );
-              })}
-            </div>
-          ))}
-        </nav>
+        {/* Admin-only quick nav: regular users navigate via Storefront tabs */}
+        {isAdmin && adminUnlocked && (
+          <nav className="shrink-0 border-b border-border bg-surface/60 backdrop-blur px-3 md:px-6 py-2 flex items-center gap-4 overflow-x-auto">
+            {groups.filter((g) => g.label === "Admin").map((g) => (
+              <div key={g.label} className="flex items-center gap-1 shrink-0">
+                <span className="text-[10px] uppercase tracking-wider text-muted-foreground/70 mr-1 hidden md:inline">{g.label}</span>
+                {g.items.map((it) => {
+                  const Icon = it.icon;
+                  return (
+                    <button
+                      key={it.label}
+                      onClick={it.onClick}
+                      className={cn(
+                        "inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition whitespace-nowrap",
+                        it.active
+                          ? "bg-primary text-primary-foreground"
+                          : "text-muted-foreground hover:text-foreground hover:bg-surface-2",
+                      )}
+                    >
+                      {Icon && <Icon className="size-3.5" />}
+                      {it.label}
+                    </button>
+                  );
+                })}
+              </div>
+            ))}
+            <button
+              onClick={() => go({ view: "store" })}
+              className="ml-auto inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-surface-2 whitespace-nowrap"
+            >
+              <ArrowLeft className="size-3.5" /> Back to Shop
+            </button>
+          </nav>
+        )}
         <div className="flex-1 flex min-h-0 min-w-0">
           {view === "store" && <Storefront />}
           {view === "orders" && <OrdersView selectedId={id} isAdmin={isAdmin} adminUnlocked={adminUnlocked} initialScope={scope === "all" ? "all" : "mine"} />}
