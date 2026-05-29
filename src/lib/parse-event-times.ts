@@ -360,6 +360,54 @@ export function findEventTimes(html: string, viewerTz: string): EventTime[] {
   }));
 }
 
+/**
+ * Walk the (HTML) body of a sports guide and return the earliest event
+ * instant (UTC ms) it can parse, or null if no recognisable event time is
+ * found. Used to schedule auto-clear relative to the first listed event
+ * rather than the edit time.
+ */
+export function findEarliestEventUtcMs(html: string, defaultZone = "GMT"): number | null {
+  const normalized = html
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/(div|p|li|tr|h[1-6]|section|article)>/gi, "\n")
+    .replace(/<[^>]+>/g, " ");
+  const decoded = normalized
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'");
+  const lines = decoded
+    .split(/\n+/)
+    .map((line) => line.replace(/\s+/g, " ").trim())
+    .filter(Boolean);
+  const viewerTz = "Etc/UTC";
+  let earliest: number | null = null;
+  let currentDate: string | null = null;
+  let currentDateLabel: string | null = null;
+  for (const line of lines) {
+    const parsedDate = parseGuideDate(line);
+    if (parsedDate) {
+      currentDate = parsedDate;
+      currentDateLabel = sourceDateLabelFromHeading(line, parsedDate);
+      continue;
+    }
+    const matches = parseMatches(
+      line,
+      viewerTz,
+      defaultZone,
+      currentDate ?? undefined,
+      currentDateLabel ?? undefined,
+    );
+    for (const m of matches) {
+      if (!Number.isFinite(m.utcMs)) continue;
+      if (earliest === null || m.utcMs < earliest) earliest = m.utcMs;
+    }
+  }
+  return earliest;
+}
+
 function parseGuideDate(text: string): string | null {
   // Strip leading/trailing timezone abbreviations (e.g. "ET 25 May 2026",
   // "25 May 2026 ET") so the date itself can still be parsed when guides
