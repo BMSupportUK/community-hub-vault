@@ -271,6 +271,7 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
       published: boolean;
       not_guaranteed: boolean;
       sort_order?: number;
+      auto_clear_at?: string;
     } = {
       category_id: editing.category_id,
       title: editing.title.trim(),
@@ -290,7 +291,7 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
       const earliestMs = findEarliestEventUtcMs(bodyForParse);
       if (earliestMs !== null) {
         const clearAt = new Date(earliestMs + 6 * 60 * 60 * 1000).toISOString();
-        (payload as typeof payload & { auto_clear_at: string }).auto_clear_at = clearAt;
+        payload.auto_clear_at = clearAt;
       }
     }
     if (!editing.id) {
