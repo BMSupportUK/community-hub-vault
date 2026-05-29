@@ -1,0 +1,1 @@
+DELETE FROM private.orders WHERE id::text LIKE '499dfd6e%';
