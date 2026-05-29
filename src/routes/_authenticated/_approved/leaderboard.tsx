@@ -383,6 +383,97 @@ function LeaderboardPage() {
           </TabsContent>
 
           {isAdmin && (
+            <TabsContent value="referrals" className="mt-6">
+              <div className="mb-4">
+                <h3 className="font-display text-xl font-semibold text-purple-50">Who invited who</h3>
+                <p className="text-sm text-purple-300/70">Every invite grouped by inviter. Shows pending codes and successful joins.</p>
+              </div>
+              {adminInvites.length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-purple-500/40 p-12 text-center text-purple-200/70 bg-purple-950/30">
+                  <Users className="size-10 mx-auto mb-3 text-purple-300/60" />
+                  No invites yet.
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {Object.values(
+                    adminInvites.reduce<Record<string, { inviter: string; username: string | null; invites: AdminInvite[] }>>((acc, inv) => {
+                      const key = inv.created_by;
+                      if (!acc[key]) {
+                        acc[key] = {
+                          inviter: inv.inviter_name ?? inv.inviter_username ?? "Member",
+                          username: inv.inviter_username,
+                          invites: [],
+                        };
+                      }
+                      acc[key].invites.push(inv);
+                      return acc;
+                    }, {}),
+                  )
+                    .sort((a, b) => b.invites.filter((i) => i.used_by).length - a.invites.filter((i) => i.used_by).length)
+                    .map((group) => {
+                      const joined = group.invites.filter((i) => i.used_by);
+                      return (
+                        <div key={group.inviter + (group.username ?? "")} className="rounded-2xl bg-purple-950/50 border border-purple-500/30 overflow-hidden backdrop-blur">
+                          <div className="px-6 py-4 border-b border-purple-500/30 flex items-center justify-between flex-wrap gap-2">
+                            <div>
+                              <div className="font-display font-semibold text-purple-50">
+                                {group.inviter}
+                                {group.username && <span className="text-purple-300/60 text-xs ml-2">@{group.username}</span>}
+                              </div>
+                              <div className="text-xs text-purple-300/70 mt-0.5">
+                                {joined.length} joined · {group.invites.length} sent
+                              </div>
+                            </div>
+                          </div>
+                          <ul className="divide-y divide-purple-500/20">
+                            {group.invites.map((inv) => {
+                              const used = !!inv.used_by;
+                              return (
+                                <li key={inv.id} className="px-6 py-3 flex flex-wrap items-center gap-3">
+                                  <div className="font-mono text-sm font-bold tracking-widest bg-gradient-to-r from-fuchsia-400 to-violet-400 bg-clip-text text-transparent shrink-0 w-24">
+                                    {inv.code}
+                                  </div>
+                                  <div className="flex-1 min-w-[160px]">
+                                    {used ? (
+                                      <>
+                                        <div className="text-xs text-purple-300/70">Joined</div>
+                                        <div className="text-purple-50 truncate">
+                                          {inv.used_by_name ?? inv.used_by_username ?? "Member"}
+                                          {inv.used_by_username && <span className="text-purple-300/60 text-xs ml-1">@{inv.used_by_username}</span>}
+                                          {inv.used_at && <span className="text-purple-300/60 text-xs ml-2">{new Date(inv.used_at).toLocaleDateString()}</span>}
+                                        </div>
+                                      </>
+                                    ) : (
+                                      <span className="text-xs text-purple-300/70">Created {new Date(inv.created_at).toLocaleDateString()}</span>
+                                    )}
+                                  </div>
+                                  <span className={`text-xs px-2 py-1 rounded-md font-medium border shrink-0 ${used ? "bg-purple-800/40 text-purple-200 border-purple-500/30" : "bg-emerald-500/15 text-emerald-200 border-emerald-500/30"}`}>
+                                    {used ? "Used" : "Active"}
+                                  </span>
+                                  {used && (
+                                    inv.referral_bonus_paid ? (
+                                      <span className="inline-flex items-center gap-1 text-emerald-300 text-xs font-medium px-2 py-1 rounded-md border border-emerald-500/30 bg-emerald-500/10 shrink-0">
+                                        <Check className="size-3.5" /> Bonus added
+                                      </span>
+                                    ) : (
+                                      <span className="inline-flex items-center gap-1 text-rose-300 text-xs font-medium px-2 py-1 rounded-md border border-rose-500/30 bg-rose-500/10 shrink-0">
+                                        <X className="size-3.5" /> Bonus pending
+                                      </span>
+                                    )
+                                  )}
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        </div>
+                      );
+                    })}
+                </div>
+              )}
+            </TabsContent>
+          )}
+
+          {isAdmin && (
             <TabsContent value="bonuses" className="mt-6">
               <div className="mb-4">
                 <h3 className="font-display text-xl font-semibold text-purple-50">Referral bonuses</h3>
