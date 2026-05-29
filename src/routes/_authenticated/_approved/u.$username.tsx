@@ -1577,6 +1577,15 @@ function EditProfileModal({ profile, onClose, onSaved }: { profile: ProfileRow; 
           <HtmlEditor value={bio} onChange={setBio} placeholder="Tell us about yourself…" />
         </Field>
         <Field label="Timezone">
+          {profile.timezone !== detectedTimezone && (
+            <button
+              type="button"
+              onClick={() => setTimezone(detectedTimezone)}
+              className="mb-2 text-xs font-medium text-primary hover:text-primary/80"
+            >
+              Use detected timezone: {detectedTimezone.replace(/_/g, " ")}
+            </button>
+          )}
           <select
             value={timezone}
             onChange={(e) => setTimezone(e.target.value)}
@@ -1587,7 +1596,7 @@ function EditProfileModal({ profile, onClose, onSaved }: { profile: ProfileRow; 
             ))}
           </select>
           <span className="block text-[11px] text-muted-foreground mt-1">
-            Used to display expiry dates and times in your local zone.
+            Detected from your browser and used for expiry dates, DND, and local times.
           </span>
         </Field>
         <label className="flex items-start gap-3 mb-3 p-3 rounded-lg bg-surface-2 border border-border cursor-pointer">
