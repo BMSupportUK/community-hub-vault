@@ -126,7 +126,7 @@ function AuthLayout() {
                 onClick={openSalesChats}
               >
                 <Receipt className="size-4" />
-                <span className="hidden xl:inline">Sales chats</span>
+                <span className="hidden xl:inline">Shop Admin</span>
                 <PendingOrdersBadge />
               </button>
             )}
