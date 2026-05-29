@@ -388,7 +388,7 @@ function LeaderboardPage() {
                 <h3 className="font-display text-xl font-semibold text-purple-50">Referral bonuses</h3>
                 <p className="text-sm text-purple-300/70">Mark whether the inviter has received their referral bonus. Inviters see this status on their invites.</p>
               </div>
-              {adminInvites.length === 0 ? (
+              {adminInvites.filter((i) => i.used_by).length === 0 ? (
                 <div className="rounded-2xl border border-dashed border-purple-500/40 p-12 text-center text-purple-200/70 bg-purple-950/30">
                   <Gift className="size-10 mx-auto mb-3 text-purple-300/60" />
                   No used invites yet.
@@ -396,7 +396,7 @@ function LeaderboardPage() {
               ) : (
                 <div className="rounded-2xl bg-purple-950/50 border border-purple-500/30 overflow-hidden backdrop-blur">
                   <ul className="divide-y divide-purple-500/20">
-                    {adminInvites.map((inv) => (
+                    {adminInvites.filter((i) => i.used_by).map((inv) => (
                       <li key={inv.id} className="px-6 py-4 flex flex-wrap items-center gap-4">
                         <div className="font-mono text-sm font-bold tracking-widest bg-gradient-to-r from-fuchsia-400 to-violet-400 bg-clip-text text-transparent shrink-0">
                           {inv.code}
