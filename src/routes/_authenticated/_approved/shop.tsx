@@ -1437,7 +1437,7 @@ function RoomPolicyView({ roomKey, isAdmin }: { roomKey: "multi_room" | "triple_
 
 function PolicyCard({
   tone, title, updatedAt, body, isAdmin, editing, draft, setDraft,
-  onEdit, onCancel, onSave, saving, disabled,
+  onEdit, onCancel, onSave, saving, disabled, bare = false,
 }: {
   tone: "rules" | "punishment";
   title: string;
@@ -1452,13 +1452,15 @@ function PolicyCard({
   onSave: () => void;
   saving: boolean;
   disabled: boolean;
+  bare?: boolean;
 }) {
   const isPunishment = tone === "punishment";
   return (
     <article
       className={cn(
-        "relative overflow-hidden rounded-2xl border border-border shadow-soft",
-        isPunishment ? "text-white" : "bg-surface-1",
+        "relative overflow-hidden",
+        bare ? "" : "rounded-2xl border border-border shadow-soft",
+        isPunishment ? "text-white" : (bare ? "" : "bg-surface-1"),
       )}
     >
       {isPunishment && (
