@@ -14,6 +14,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 import { VpnBadge } from "@/lib/vpn-flags";
 import { PresenceDot, PresenceInline } from "@/components/app/PresenceIndicators";
+import { DndCountdown } from "@/components/app/DndCountdown";
 
 export const Route = createFileRoute("/_authenticated/_approved/staff")({
   component: StaffPage,
@@ -260,6 +261,7 @@ function StaffPage() {
                                   offlineTextClass="text-purple-300/70"
                                 />
                               </div>
+                              <DndCountdown userId={p.id} compact className="mt-1" />
                               {p.username && (
                                 <div className="text-[11px] text-purple-300/70">@{p.username}</div>
                               )}
