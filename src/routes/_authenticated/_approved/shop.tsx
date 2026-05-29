@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { type ChannelGroup } from "@/components/app/ChannelColumn";
 import { ShoppingBag, Package, Settings, Plus, Minus, X, Send, Trash2, Pencil, Image as ImageIcon, Tag, CheckCircle2, BadgeCheck, Check, Wrench, FileText, BedDouble, Users, Loader2, Save, Star, Sparkles, GripVertical, Receipt, UserCog, ArrowRight, ArrowLeft } from "lucide-react";
+import { Monitor, Smartphone } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import shopHero from "@/assets/shop-hero.jpg";
@@ -1268,60 +1269,68 @@ function InlinePolicy({ policyKey }: { policyKey: PolicyKey }) {
 
 // ============ ROOM POLICY VIEW (multi_room / triple_room) ============
 function RoomPolicyView({ roomKey, isAdmin }: { roomKey: "multi_room" | "triple_room"; isAdmin: boolean }) {
-  const rulesKey = roomKey;
+  const deviceKey = `${roomKey}_device_usage`;
+  const mobileKey = `${roomKey}_mobile_usage`;
   const punishmentKey = `${roomKey}_punishment`;
-  const [rules, setRules] = useState<PolicyRow | null>(null);
-  const [punishment, setPunishment] = useState<PolicyRow | null>(null);
+  const allKeys = [deviceKey, mobileKey, punishmentKey];
+  const fallbackTitle: Record<string, string> = {
+    [deviceKey]: "Device Usage",
+    [mobileKey]: "Mobile Usage",
+    [punishmentKey]: "Punishment",
+  };
+  const [policies, setPolicies] = useState<Record<string, PolicyRow>>({});
   const [loading, setLoading] = useState(true);
-  const [editing, setEditing] = useState<null | "rules" | "punishment">(null);
+  const [editingKey, setEditingKey] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
   const [saving, setSaving] = useState(false);
+  const [rulesTab, setRulesTab] = useState<"device" | "mobile">("device");
   const title = roomKey === "multi_room" ? "Multi-room Rules" : "Triple-room Rules";
 
   useEffect(() => {
     let cancel = false;
     setLoading(true);
-    setEditing(null);
+    setEditingKey(null);
     supabase
       .from("shop_policies")
       .select("*")
-      .in("key", [rulesKey, punishmentKey])
+      .in("key", allKeys)
       .then(({ data }) => {
         if (cancel) return;
         const rows = (data ?? []) as PolicyRow[];
-        const r = rows.find((x) => x.key === rulesKey) ?? { key: rulesKey, title: "Usage Rules", body: "", updated_at: new Date().toISOString() };
-        const p = rows.find((x) => x.key === punishmentKey) ?? { key: punishmentKey, title: "Punishment", body: "", updated_at: new Date().toISOString() };
-        setRules(r);
-        setPunishment(p);
+        const map: Record<string, PolicyRow> = {};
+        for (const k of allKeys) {
+          map[k] = rows.find((x) => x.key === k) ?? { key: k, title: fallbackTitle[k], body: "", updated_at: new Date().toISOString() };
+        }
+        setPolicies(map);
         setLoading(false);
       });
     return () => { cancel = true; };
-  }, [rulesKey, punishmentKey]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [roomKey]);
 
-  const beginEdit = (which: "rules" | "punishment") => {
-    setDraft((which === "rules" ? rules?.body : punishment?.body) ?? "");
-    setEditing(which);
+  const beginEdit = (key: string) => {
+    setDraft(policies[key]?.body ?? "");
+    setEditingKey(key);
   };
 
   const save = async () => {
-    if (!editing) return;
-    const key = editing === "rules" ? rulesKey : punishmentKey;
-    const existing = editing === "rules" ? rules : punishment;
-    const fallbackTitle = editing === "rules" ? "Usage Rules" : "Punishment";
+    if (!editingKey) return;
+    const key = editingKey;
+    const existing = policies[key];
     setSaving(true);
     const { data: { user } } = await supabase.auth.getUser();
     const { error } = await supabase.from("shop_policies").upsert({
       key,
-      title: existing?.title ?? fallbackTitle,
+      title: existing?.title ?? fallbackTitle[key],
       body: draft,
       updated_by: user?.id ?? null,
       updated_at: new Date().toISOString(),
     });
     setSaving(false);
     if (error) { toast.error(error.message); return; }
-    const updated = { ...(existing ?? { key, title: fallbackTitle }), body: draft, updated_at: new Date().toISOString() } as PolicyRow;
-    if (editing === "rules") setRules(updated); else setPunishment(updated);
-    setEditing(null);
+    const updated = { ...(existing ?? { key, title: fallbackTitle[key] }), body: draft, updated_at: new Date().toISOString() } as PolicyRow;
+    setPolicies((p) => ({ ...p, [key]: updated }));
+    setEditingKey(null);
     toast.success("Saved");
   };
 
@@ -1351,38 +1360,73 @@ function RoomPolicyView({ roomKey, isAdmin }: { roomKey: "multi_room" | "triple_
           <div className="grid place-items-center py-16 text-muted-foreground"><Loader2 className="size-5 animate-spin" /></div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Usage rules */}
-            <PolicyCard
-              tone="rules"
-              title="Usage Rules"
-              updatedAt={rules?.updated_at}
-              body={rules?.body ?? ""}
-              isAdmin={isAdmin}
-              editing={editing === "rules"}
-              draft={draft}
-              setDraft={setDraft}
-              onEdit={() => beginEdit("rules")}
-              onCancel={() => setEditing(null)}
-              onSave={save}
-              saving={saving}
-              disabled={editing !== null && editing !== "rules"}
-            />
+            {/* Usage rules — tabbed */}
+            <div className="relative overflow-hidden rounded-2xl border border-border shadow-soft bg-surface-1">
+              <Tabs value={rulesTab} onValueChange={(v) => setRulesTab(v as "device" | "mobile")}>
+                <div className="px-6 pt-6">
+                  <TabsList className="grid grid-cols-2 w-full h-auto p-1 bg-surface-2">
+                    <TabsTrigger value="device" className="gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/70 data-[state=active]:text-primary-foreground">
+                      <Monitor className="size-4" /> Device Usage
+                    </TabsTrigger>
+                    <TabsTrigger value="mobile" className="gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary data-[state=active]:to-primary/70 data-[state=active]:text-primary-foreground">
+                      <Smartphone className="size-4" /> Mobile Usage
+                    </TabsTrigger>
+                  </TabsList>
+                </div>
+                <TabsContent value="device" className="mt-0">
+                  <PolicyCard
+                    tone="rules"
+                    title="Device Usage"
+                    updatedAt={policies[deviceKey]?.updated_at}
+                    body={policies[deviceKey]?.body ?? ""}
+                    isAdmin={isAdmin}
+                    editing={editingKey === deviceKey}
+                    draft={draft}
+                    setDraft={setDraft}
+                    onEdit={() => beginEdit(deviceKey)}
+                    onCancel={() => setEditingKey(null)}
+                    onSave={save}
+                    saving={saving}
+                    disabled={editingKey !== null && editingKey !== deviceKey}
+                    bare
+                  />
+                </TabsContent>
+                <TabsContent value="mobile" className="mt-0">
+                  <PolicyCard
+                    tone="rules"
+                    title="Mobile Usage"
+                    updatedAt={policies[mobileKey]?.updated_at}
+                    body={policies[mobileKey]?.body ?? ""}
+                    isAdmin={isAdmin}
+                    editing={editingKey === mobileKey}
+                    draft={draft}
+                    setDraft={setDraft}
+                    onEdit={() => beginEdit(mobileKey)}
+                    onCancel={() => setEditingKey(null)}
+                    onSave={save}
+                    saving={saving}
+                    disabled={editingKey !== null && editingKey !== mobileKey}
+                    bare
+                  />
+                </TabsContent>
+              </Tabs>
+            </div>
 
             {/* Punishment with judge bg */}
             <PolicyCard
               tone="punishment"
               title="Punishment"
-              updatedAt={punishment?.updated_at}
-              body={punishment?.body ?? ""}
+              updatedAt={policies[punishmentKey]?.updated_at}
+              body={policies[punishmentKey]?.body ?? ""}
               isAdmin={isAdmin}
-              editing={editing === "punishment"}
+              editing={editingKey === punishmentKey}
               draft={draft}
               setDraft={setDraft}
-              onEdit={() => beginEdit("punishment")}
-              onCancel={() => setEditing(null)}
+              onEdit={() => beginEdit(punishmentKey)}
+              onCancel={() => setEditingKey(null)}
               onSave={save}
               saving={saving}
-              disabled={editing !== null && editing !== "punishment"}
+              disabled={editingKey !== null && editingKey !== punishmentKey}
             />
           </div>
         )}
@@ -1393,7 +1437,7 @@ function RoomPolicyView({ roomKey, isAdmin }: { roomKey: "multi_room" | "triple_
 
 function PolicyCard({
   tone, title, updatedAt, body, isAdmin, editing, draft, setDraft,
-  onEdit, onCancel, onSave, saving, disabled,
+  onEdit, onCancel, onSave, saving, disabled, bare = false,
 }: {
   tone: "rules" | "punishment";
   title: string;
@@ -1408,13 +1452,15 @@ function PolicyCard({
   onSave: () => void;
   saving: boolean;
   disabled: boolean;
+  bare?: boolean;
 }) {
   const isPunishment = tone === "punishment";
   return (
     <article
       className={cn(
-        "relative overflow-hidden rounded-2xl border border-border shadow-soft",
-        isPunishment ? "text-white" : "bg-surface-1",
+        "relative overflow-hidden",
+        bare ? "" : "rounded-2xl border border-border shadow-soft",
+        isPunishment ? "text-white" : (bare ? "" : "bg-surface-1"),
       )}
     >
       {isPunishment && (
