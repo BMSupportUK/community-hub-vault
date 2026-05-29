@@ -166,7 +166,7 @@ function ShopPage() {
                     { to: "/shop", label: "Discount Codes", icon: Tag, active: (view as string) === "discounts", onClick: () => go({ view: "discounts" }) },
                   ]
                 : []),
-              { to: "/shop", label: "Sales Chats", icon: Receipt, active: view === "orders" && scope === "all", onClick: () => go({ view: "orders", scope: "all" }) },
+              { to: "/shop", label: "Shop Admin", icon: Receipt, active: view === "orders" && scope === "all", onClick: () => go({ view: "orders", scope: "all" }) },
             ],
           } as ChannelGroup,
         ]
