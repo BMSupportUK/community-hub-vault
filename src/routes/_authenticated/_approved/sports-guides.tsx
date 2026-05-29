@@ -291,6 +291,116 @@ function SportsGuidesPage() {
     );
   };
 
+  const renderBlogCard = (b: Blog) => (
+    <article
+      key={b.id}
+      draggable={isMod}
+      onDragStart={() => { dragBlogId.current = b.id; setDraggingBlog(true); }}
+      onDragEnd={() => { dragBlogId.current = null; setDraggingBlog(false); }}
+      onDragOver={(e) => { if (isMod) e.preventDefault(); }}
+      onDrop={(e) => {
+        if (!isMod) return;
+        e.preventDefault();
+        if (dragBlogId.current) reorderBlogs(dragBlogId.current, b.id);
+        dragBlogId.current = null;
+        setDraggingBlog(false);
+      }}
+      className={`rounded-2xl bg-purple-950/50 border overflow-hidden flex flex-col group hover:shadow-[0_0_30px_-10px_rgba(217,70,239,0.6)] transition-all ${isUnread(b) ? "border-fuchsia-500/70 shadow-[0_0_20px_-10px_rgba(232,121,249,0.8)]" : "border-purple-500/30 hover:border-fuchsia-500/60"}`}
+    >
+      <div className="aspect-[16/10] bg-purple-900/50 relative overflow-hidden">
+        {b.image_url ? (
+          <img src={b.image_url} alt={b.title} className="w-full h-full object-contain group-hover:scale-105 transition-transform" />
+        ) : (
+          <div className="w-full h-full grid place-items-center text-purple-300/60">
+            <ImageIcon className="size-10" />
+          </div>
+        )}
+        {isMod && (
+          <div className="absolute top-2 left-2 size-8 rounded-md bg-black/60 backdrop-blur grid place-items-center text-white cursor-grab">
+            <GripVertical className="size-4" />
+          </div>
+        )}
+        {isUnread(b) && (
+          <div className="absolute top-2 right-2 px-2 py-1 rounded-md bg-fuchsia-500 text-white text-[10px] font-bold uppercase tracking-wide shadow-lg">
+            New
+          </div>
+        )}
+      </div>
+      <div className="p-4 flex-1 flex flex-col gap-2">
+        <div className="flex flex-wrap gap-2">
+          <span className="text-xs px-2 py-1 rounded-md bg-fuchsia-500/30 text-white font-semibold border border-fuchsia-400/50">
+            {categories.find((c) => c.id === b.category_id)?.name}
+          </span>
+          {b.badge && (
+            <span className="text-xs px-2 py-1 rounded-md bg-violet-500/20 text-violet-200 font-medium border border-violet-500/30">{b.badge}</span>
+          )}
+        </div>
+        <h3 className="font-display font-semibold text-lg leading-snug text-purple-50 flex items-center gap-2">
+          {isUnread(b) && (
+            <span className="size-2 rounded-full bg-fuchsia-400 shadow-[0_0_8px_rgba(232,121,249,0.9)] shrink-0 animate-pulse" title="Unread" />
+          )}
+          <span>{b.title}</span>
+        </h3>
+        <div className="text-[11px] text-purple-300/70">
+          Last edited:{" "}
+          <time dateTime={b.updated_at ?? b.created_at}>
+            {new Date(b.updated_at ?? b.created_at).toLocaleString(undefined, {
+              day: "2-digit",
+              month: "short",
+              year: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
+          </time>
+        </div>
+        {b.refresh_notice && (
+          <div className="rounded-md border border-amber-400/50 bg-amber-500/15 text-amber-100 px-3 py-2 text-xs leading-snug">
+            {b.refresh_notice}
+          </div>
+        )}
+        {b.not_guaranteed && (
+          <div className="rounded-md border border-red-400/50 bg-red-500/15 text-red-100 px-3 py-2 text-xs leading-snug">
+            These are not guaranteed and no reports allowed to source.
+          </div>
+        )}
+        {b.excerpt && <p className="text-sm text-purple-200/70 line-clamp-2">{b.excerpt}</p>}
+        <div className="mt-auto pt-3 flex items-center gap-2">
+          <Button size="sm" className="flex-1 bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white border-0" onClick={() => navigate({ to: "/sports-guides/read/$id", params: { id: b.id }, search: { cat: b.category_id } })}>Click to Read</Button>
+          <span
+            aria-label={isUnread(b) ? "Unread" : "Read"}
+            title={isUnread(b) ? "Unread" : "Read"}
+            className={
+              "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold uppercase tracking-wide border " +
+              (isUnread(b)
+                ? "border-fuchsia-400/60 bg-fuchsia-500/20 text-fuchsia-100 animate-pulse shadow-[0_0_12px_rgba(232,121,249,0.55)]"
+                : "border-purple-500/40 bg-purple-900/40 text-purple-200/80")
+            }
+          >
+            <span
+              className={
+                "size-2 rounded-full " +
+                (isUnread(b)
+                  ? "bg-fuchsia-400 shadow-[0_0_8px_rgba(232,121,249,0.9)]"
+                  : "bg-purple-400/60")
+              }
+            />
+            {isUnread(b) ? "Unread" : "Read"}
+          </span>
+          {isMod && (
+            <>
+              <Button size="icon" variant="ghost" className="text-purple-200 hover:text-white hover:bg-purple-800/60" onClick={() => openEdit(b.id)}>
+                <Pencil className="size-4" />
+              </Button>
+              <Button size="icon" variant="ghost" className="text-purple-200 hover:text-white hover:bg-purple-800/60" onClick={() => deleteBlog(b.id)}>
+                <Trash2 className="size-4" />
+              </Button>
+            </>
+          )}
+        </div>
+      </div>
+    </article>
+  );
+
   return (
     <div
       className="flex-1 overflow-y-auto relative bg-cover bg-center bg-fixed"
