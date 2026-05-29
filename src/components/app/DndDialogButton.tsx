@@ -21,10 +21,6 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
-function toHHMM(d: Date): string {
-  return `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
-}
-
 function toHHMMInTimeZone(d: Date, timeZone: string): string {
   return new Intl.DateTimeFormat("en-GB", {
     timeZone,
@@ -61,15 +57,15 @@ export function DndDialogButton() {
   const [open, setOpen] = useState(false);
   const [startDate, setStartDate] = useState<Date>(() => new Date());
   const [endDate, setEndDate] = useState<Date>(() => new Date(Date.now() + 60 * 60 * 1000));
-  const [startTime, setStartTime] = useState(() => toHHMM(new Date()));
-  const [endTime, setEndTime] = useState(() => toHHMM(new Date(Date.now() + 60 * 60 * 1000)));
+  const [startTime, setStartTime] = useState(() => toHHMMInTimeZone(new Date(), userTimezone));
+  const [endTime, setEndTime] = useState(() => toHHMMInTimeZone(new Date(Date.now() + 60 * 60 * 1000), userTimezone));
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
   const [now, setNow] = useState(() => Date.now());
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    if (!info || hydrated) return;
+    if (!info || (open && hydrated)) return;
     if (info.startsAt) {
       setStartDate(info.startsAt);
       setStartTime(toHHMMInTimeZone(info.startsAt, userTimezone));
@@ -80,7 +76,7 @@ export function DndDialogButton() {
     }
     setNote(info.note ?? "");
     setHydrated(true);
-  }, [info, hydrated, userTimezone]);
+  }, [info, open, hydrated, userTimezone]);
 
   useEffect(() => {
     if (!info?.active || !info.endsAt) return;
