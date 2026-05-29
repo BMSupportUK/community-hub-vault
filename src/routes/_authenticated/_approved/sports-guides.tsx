@@ -428,6 +428,22 @@ function SportsGuidesPage() {
                   </div>
                 ) : (
                   <>
+                  {isMod && draggingBlog && !search.trim() && listPageCount > 1 && (
+                    <div className="mb-3 flex flex-wrap items-center gap-2 rounded-xl border border-dashed border-fuchsia-400/60 bg-purple-950/60 px-3 py-2 text-xs text-purple-100">
+                      <span className="font-semibold text-fuchsia-200">Hover a page to switch, then drop on a card to swap:</span>
+                      {Array.from({ length: listPageCount }, (_, i) => (
+                        <button
+                          key={i}
+                          type="button"
+                          onDragOver={(e) => { e.preventDefault(); if (listPage !== i) setListPage(i); }}
+                          onClick={() => setListPage(i)}
+                          className={`px-2.5 py-1 rounded-md border transition-colors ${listPage === i ? "bg-fuchsia-600 border-fuchsia-400 text-white" : "border-purple-500/40 hover:border-fuchsia-400 hover:bg-purple-900/60"}`}
+                        >
+                          Page {i + 1}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                   <div>
                   <PagedGrid
                     items={filtered}
