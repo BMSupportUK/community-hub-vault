@@ -1977,11 +1977,10 @@ function OrderDetailImpl({ orderId, isAdmin, onBack }: { orderId: string; isAdmi
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const subject = `New order #${String(orderId).slice(0, 8)}`;
       const { data } = await supabase
         .from("tickets")
         .select("id")
-        .eq("subject", subject)
+        .eq("order_id", orderId)
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle();
@@ -2334,6 +2333,14 @@ function OrderDetailImpl({ orderId, isAdmin, onBack }: { orderId: string; isAdmi
             className="px-2.5 py-1 rounded-md bg-surface-2 text-xs font-medium flex items-center gap-1 hover:bg-surface-2/80">
             <Download className="size-3.5" /> {order.paid_at ? "Receipt" : "Invoice"} PDF
           </button>
+          {linkedTicketId && (
+            <button
+              onClick={() => navigate({ to: "/tickets", search: { id: linkedTicketId } })}
+              className="px-2.5 py-1 rounded-md bg-primary text-primary-foreground text-xs font-medium flex items-center gap-1 hover:opacity-90"
+            >
+              <Receipt className="size-3.5" /> Support ticket
+            </button>
+          )}
           {isAdmin ? (
             <>
               <button onClick={acceptOrder} disabled={busy || order.status !== "pending" || !!order.completed_at}
