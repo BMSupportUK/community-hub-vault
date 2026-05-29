@@ -394,7 +394,7 @@ function LeaderboardPage() {
                   No invites yet.
                 </div>
               ) : (
-                <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                   {Object.values(
                     adminInvites.reduce<Record<string, { inviter: string; username: string | null; invites: AdminInvite[] }>>((acc, inv) => {
                       const key = inv.created_by;
@@ -413,50 +413,59 @@ function LeaderboardPage() {
                     .map((group) => {
                       const joined = group.invites.filter((i) => i.used_by);
                       return (
-                        <div key={group.inviter + (group.username ?? "")} className="rounded-2xl bg-purple-950/50 border border-purple-500/30 overflow-hidden backdrop-blur">
-                          <div className="px-6 py-4 border-b border-purple-500/30 flex items-center justify-between flex-wrap gap-2">
-                            <div>
-                              <div className="font-display font-semibold text-purple-50">
+                        <div key={group.inviter + (group.username ?? "")} className="rounded-2xl bg-purple-950/50 border border-purple-500/30 overflow-hidden backdrop-blur hover:border-fuchsia-500/50 transition-colors flex flex-col">
+                          <div className="px-5 py-4 border-b border-purple-500/30 bg-gradient-to-br from-fuchsia-600/15 via-purple-600/10 to-transparent">
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="min-w-0">
+                                <div className="font-display font-semibold text-purple-50 truncate">
                                 {group.inviter}
-                                {group.username && <span className="text-purple-300/60 text-xs ml-2">@{group.username}</span>}
+                                </div>
+                                {group.username && <div className="text-purple-300/60 text-xs truncate">@{group.username}</div>}
                               </div>
-                              <div className="text-xs text-purple-300/70 mt-0.5">
-                                {joined.length} joined · {group.invites.length} sent
+                              <div className="text-right shrink-0">
+                                <div className="font-display text-xl font-bold bg-gradient-to-r from-fuchsia-400 to-violet-400 bg-clip-text text-transparent leading-none">
+                                  {joined.length}
+                                </div>
+                                <div className="text-[10px] uppercase tracking-wider text-purple-300/70 mt-1">
+                                  of {group.invites.length}
+                                </div>
                               </div>
                             </div>
                           </div>
-                          <ul className="divide-y divide-purple-500/20">
+                          <ul className="divide-y divide-purple-500/20 flex-1">
                             {group.invites.map((inv) => {
                               const used = !!inv.used_by;
                               return (
-                                <li key={inv.id} className="px-6 py-3 flex flex-wrap items-center gap-3">
-                                  <div className="font-mono text-sm font-bold tracking-widest bg-gradient-to-r from-fuchsia-400 to-violet-400 bg-clip-text text-transparent shrink-0 w-24">
+                                <li key={inv.id} className="px-5 py-3 space-y-2">
+                                  <div className="flex items-center justify-between gap-2">
+                                    <div className="font-mono text-xs font-bold tracking-widest bg-gradient-to-r from-fuchsia-400 to-violet-400 bg-clip-text text-transparent">
                                     {inv.code}
+                                    </div>
+                                    <span className={`text-[10px] px-2 py-0.5 rounded-md font-medium border ${used ? "bg-purple-800/40 text-purple-200 border-purple-500/30" : "bg-emerald-500/15 text-emerald-200 border-emerald-500/30"}`}>
+                                      {used ? "Used" : "Active"}
+                                    </span>
                                   </div>
-                                  <div className="flex-1 min-w-[160px]">
+                                  <div>
                                     {used ? (
                                       <>
-                                        <div className="text-xs text-purple-300/70">Joined</div>
-                                        <div className="text-purple-50 truncate">
+                                        <div className="text-[10px] uppercase tracking-wider text-purple-300/70">Joined</div>
+                                        <div className="text-purple-50 text-sm truncate">
                                           {inv.used_by_name ?? inv.used_by_username ?? "Member"}
                                           {inv.used_by_username && <span className="text-purple-300/60 text-xs ml-1">@{inv.used_by_username}</span>}
-                                          {inv.used_at && <span className="text-purple-300/60 text-xs ml-2">{new Date(inv.used_at).toLocaleDateString()}</span>}
                                         </div>
+                                        {inv.used_at && <div className="text-purple-300/60 text-[11px]">{new Date(inv.used_at).toLocaleDateString()}</div>}
                                       </>
                                     ) : (
                                       <span className="text-xs text-purple-300/70">Created {new Date(inv.created_at).toLocaleDateString()}</span>
                                     )}
                                   </div>
-                                  <span className={`text-xs px-2 py-1 rounded-md font-medium border shrink-0 ${used ? "bg-purple-800/40 text-purple-200 border-purple-500/30" : "bg-emerald-500/15 text-emerald-200 border-emerald-500/30"}`}>
-                                    {used ? "Used" : "Active"}
-                                  </span>
                                   {used && (
                                     inv.referral_bonus_paid ? (
-                                      <span className="inline-flex items-center gap-1 text-emerald-300 text-xs font-medium px-2 py-1 rounded-md border border-emerald-500/30 bg-emerald-500/10 shrink-0">
+                                      <span className="inline-flex items-center gap-1 text-emerald-300 text-[11px] font-medium px-2 py-0.5 rounded-md border border-emerald-500/30 bg-emerald-500/10">
                                         <Check className="size-3.5" /> Bonus added
                                       </span>
                                     ) : (
-                                      <span className="inline-flex items-center gap-1 text-rose-300 text-xs font-medium px-2 py-1 rounded-md border border-rose-500/30 bg-rose-500/10 shrink-0">
+                                      <span className="inline-flex items-center gap-1 text-rose-300 text-[11px] font-medium px-2 py-0.5 rounded-md border border-rose-500/30 bg-rose-500/10">
                                         <X className="size-3.5" /> Bonus pending
                                       </span>
                                     )
