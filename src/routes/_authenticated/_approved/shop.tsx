@@ -3,8 +3,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { ChannelColumn, type ChannelGroup } from "@/components/app/ChannelColumn";
-import { ShoppingBag, Package, Settings, Plus, Minus, X, Send, Trash2, Pencil, Image as ImageIcon, Tag, CheckCircle2, BadgeCheck, Check, Wrench, FileText, BedDouble, Users, Loader2, Save, Star, Sparkles, GripVertical, Receipt, UserCog, ArrowRight, Menu, ArrowLeft } from "lucide-react";
+import { type ChannelGroup } from "@/components/app/ChannelColumn";
+import { ShoppingBag, Package, Settings, Plus, Minus, X, Send, Trash2, Pencil, Image as ImageIcon, Tag, CheckCircle2, BadgeCheck, Check, Wrench, FileText, BedDouble, Users, Loader2, Save, Star, Sparkles, GripVertical, Receipt, UserCog, ArrowRight, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import shopHero from "@/assets/shop-hero.jpg";
@@ -15,7 +15,6 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useCurrency } from "@/hooks/use-currency";
 import { downloadReceipt } from "@/lib/receipt";
 import { Download } from "lucide-react";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { chargeOrderWithSquare, getSquareWebConfig } from "@/lib/square-payments.functions";
 import { capturePaypalOrder, createPaypalOrder, getPaypalWebConfig } from "@/lib/paypal-payments.functions";
@@ -137,9 +136,6 @@ function ShopPage() {
   const { format, symbol } = useCurrency();
   _currentFmt = format;
   _currentSymbol = symbol;
-  const [navOpen, setNavOpen] = useState(false);
-  useEffect(() => { setNavOpen(false); }, [view, id]);
-
   const go = (next: Partial<{ view: View | "discounts"; id: string; scope: string }>) =>
     navigate({ to: "/shop", search: next as never });
 
@@ -179,27 +175,32 @@ function ShopPage() {
 
   return (
     <>
-      <ChannelColumn
-        title="Shop"
-        groups={groups}
-        footer={view === "orders" && id ? <SidebarOrderProgress orderId={id} /> : <SidebarLatestOrderProgress />}
-      />
       <div className="flex-1 flex flex-col min-w-0">
-        <div className="md:hidden h-10 shrink-0 flex items-center px-3 border-b border-border bg-rail/30">
-          <Sheet open={navOpen} onOpenChange={setNavOpen}>
-            <SheetTrigger className="inline-flex items-center gap-2 text-xs font-medium text-muted-foreground hover:text-foreground">
-              <Menu className="size-4" /> Shop menu
-            </SheetTrigger>
-            <SheetContent side="left" className="p-0 w-72 bg-surface border-r border-border">
-              <ChannelColumn
-                inSheet
-                title="Shop"
-                groups={groups}
-                footer={view === "orders" && id ? <SidebarOrderProgress orderId={id} /> : <SidebarLatestOrderProgress />}
-              />
-            </SheetContent>
-          </Sheet>
-        </div>
+        <nav className="shrink-0 border-b border-border bg-surface/60 backdrop-blur px-3 md:px-6 py-2 flex items-center gap-4 overflow-x-auto">
+          {groups.map((g) => (
+            <div key={g.label} className="flex items-center gap-1 shrink-0">
+              <span className="text-[10px] uppercase tracking-wider text-muted-foreground/70 mr-1 hidden md:inline">{g.label}</span>
+              {g.items.map((it) => {
+                const Icon = it.icon;
+                return (
+                  <button
+                    key={it.label}
+                    onClick={it.onClick}
+                    className={cn(
+                      "inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition whitespace-nowrap",
+                      it.active
+                        ? "bg-primary text-primary-foreground"
+                        : "text-muted-foreground hover:text-foreground hover:bg-surface-2",
+                    )}
+                  >
+                    {Icon && <Icon className="size-3.5" />}
+                    {it.label}
+                  </button>
+                );
+              })}
+            </div>
+          ))}
+        </nav>
         <div className="flex-1 flex min-h-0 min-w-0">
           {view === "store" && <Storefront />}
           {view === "orders" && <OrdersView selectedId={id} isAdmin={isAdmin} adminUnlocked={adminUnlocked} initialScope={scope === "all" ? "all" : "mine"} />}
@@ -2257,7 +2258,7 @@ function OrderDetail({ orderId, isAdmin, onBack }: { orderId: string; isAdmin: b
         </div>
       </header>
       <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
-        <div className="w-full md:w-72 md:shrink-0 border-b md:border-b-0 md:border-r border-border bg-surface/50 p-4 overflow-y-auto space-y-4 text-sm max-h-[40vh] md:max-h-none">
+        <div className="w-full flex-1 bg-surface/50 p-4 md:p-6 overflow-y-auto space-y-4 text-sm">
           <div>
             <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Items</div>
             <div className="space-y-1">
@@ -2345,34 +2346,6 @@ function OrderDetail({ orderId, isAdmin, onBack }: { orderId: string; isAdmin: b
               )}
             </div>
           )}
-        </div>
-        <div className="flex-1 flex flex-col">
-          <div className="flex-1 flex flex-col items-center justify-center text-center p-6 gap-4">
-            <div className="size-12 rounded-full bg-primary/10 grid place-items-center">
-              <Send className="size-5 text-primary" />
-            </div>
-            <div>
-              <div className="font-display font-semibold text-sm">Conversation moved to a support ticket</div>
-              <p className="text-xs text-muted-foreground mt-1 max-w-sm">
-                All messages for this order now live in your support ticket. Open the ticket to message admin & management about this order.
-              </p>
-            </div>
-            {linkedTicketId ? (
-              <button
-                onClick={() => navigate({ to: "/tickets", search: { id: linkedTicketId } })}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90"
-              >
-                Open support ticket
-              </button>
-            ) : (
-              <button
-                onClick={() => navigate({ to: "/tickets" })}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-border text-sm hover:bg-surface-2"
-              >
-                Go to tickets
-              </button>
-            )}
-          </div>
         </div>
       </div>
       {credsOpen && order.user_id && (
