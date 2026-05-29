@@ -18,7 +18,7 @@ import profileHeaderModerator from "@/assets/profile-header-moderator.jpg";
 import tvLoginIllustration from "@/assets/tv-login-illustration.jpg";
 import referralsBg from "@/assets/referrals-bg.jpg";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { listTimeZones } from "@/hooks/use-user-timezone";
+import { browserTimezone, listTimeZones } from "@/hooks/use-user-timezone";
 import { Nameplate } from "@/components/app/Nameplate";
 import { NameplatePicker } from "@/components/app/NameplatePicker";
 import { useRoleFlashMap, resolveAvatarUrl, roleFlashClass } from "@/lib/role-flash";
@@ -1503,11 +1503,8 @@ function EditProfileModal({ profile, onClose, onSaved }: { profile: ProfileRow; 
   const [bio, setBio] = useState(profile.bio ?? "");
   const [avatarUrl, setAvatarUrl] = useState(profile.avatar_url);
   const [isPrivate, setIsPrivate] = useState<boolean>(!!profile.is_private);
-  const [timezone, setTimezone] = useState<string>(
-    profile.timezone ?? (() => {
-      try { return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC"; } catch { return "UTC"; }
-    })(),
-  );
+  const detectedTimezone = browserTimezone();
+  const [timezone, setTimezone] = useState<string>(profile.timezone ?? detectedTimezone);
   const tzOptions = useMemo(() => listTimeZones(), []);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
