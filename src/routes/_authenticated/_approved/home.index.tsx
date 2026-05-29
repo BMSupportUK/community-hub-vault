@@ -335,7 +335,7 @@ function WelcomePage() {
               )}
               <ServiceStatusPill />
             </div>
-            <div className="mt-4 w-full max-w-[280px]">
+            <div className="mt-4 w-full max-w-[280px] self-center">
               <MembershipBox />
             </div>
           </div>
