@@ -2261,7 +2261,7 @@ function OrderDetail({ orderId, isAdmin, onBack }: { orderId: string; isAdmin: b
         </div>
       </header>
       <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
-        <div className="w-full md:w-72 md:shrink-0 border-b md:border-b-0 md:border-r border-border bg-surface/50 p-4 overflow-y-auto space-y-4 text-sm max-h-[40vh] md:max-h-none">
+        <div className="w-full flex-1 bg-surface/50 p-4 md:p-6 overflow-y-auto space-y-4 text-sm">
           <div>
             <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Items</div>
             <div className="space-y-1">
@@ -2349,34 +2349,6 @@ function OrderDetail({ orderId, isAdmin, onBack }: { orderId: string; isAdmin: b
               )}
             </div>
           )}
-        </div>
-        <div className="flex-1 flex flex-col">
-          <div className="flex-1 flex flex-col items-center justify-center text-center p-6 gap-4">
-            <div className="size-12 rounded-full bg-primary/10 grid place-items-center">
-              <Send className="size-5 text-primary" />
-            </div>
-            <div>
-              <div className="font-display font-semibold text-sm">Conversation moved to a support ticket</div>
-              <p className="text-xs text-muted-foreground mt-1 max-w-sm">
-                All messages for this order now live in your support ticket. Open the ticket to message admin & management about this order.
-              </p>
-            </div>
-            {linkedTicketId ? (
-              <button
-                onClick={() => navigate({ to: "/tickets", search: { id: linkedTicketId } })}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90"
-              >
-                Open support ticket
-              </button>
-            ) : (
-              <button
-                onClick={() => navigate({ to: "/tickets" })}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-border text-sm hover:bg-surface-2"
-              >
-                Go to tickets
-              </button>
-            )}
-          </div>
         </div>
       </div>
       {credsOpen && order.user_id && (
