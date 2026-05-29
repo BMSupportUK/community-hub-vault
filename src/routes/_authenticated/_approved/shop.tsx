@@ -178,27 +178,32 @@ function ShopPage() {
 
   return (
     <>
-      <ChannelColumn
-        title="Shop"
-        groups={groups}
-        footer={view === "orders" && id ? <SidebarOrderProgress orderId={id} /> : <SidebarLatestOrderProgress />}
-      />
       <div className="flex-1 flex flex-col min-w-0">
-        <div className="md:hidden h-10 shrink-0 flex items-center px-3 border-b border-border bg-rail/30">
-          <Sheet open={navOpen} onOpenChange={setNavOpen}>
-            <SheetTrigger className="inline-flex items-center gap-2 text-xs font-medium text-muted-foreground hover:text-foreground">
-              <Menu className="size-4" /> Shop menu
-            </SheetTrigger>
-            <SheetContent side="left" className="p-0 w-72 bg-surface border-r border-border">
-              <ChannelColumn
-                inSheet
-                title="Shop"
-                groups={groups}
-                footer={view === "orders" && id ? <SidebarOrderProgress orderId={id} /> : <SidebarLatestOrderProgress />}
-              />
-            </SheetContent>
-          </Sheet>
-        </div>
+        <nav className="shrink-0 border-b border-border bg-surface/60 backdrop-blur px-3 md:px-6 py-2 flex items-center gap-4 overflow-x-auto">
+          {groups.map((g) => (
+            <div key={g.label} className="flex items-center gap-1 shrink-0">
+              <span className="text-[10px] uppercase tracking-wider text-muted-foreground/70 mr-1 hidden md:inline">{g.label}</span>
+              {g.items.map((it) => {
+                const Icon = it.icon;
+                return (
+                  <button
+                    key={it.label}
+                    onClick={it.onClick}
+                    className={cn(
+                      "inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition whitespace-nowrap",
+                      it.active
+                        ? "bg-primary text-primary-foreground"
+                        : "text-muted-foreground hover:text-foreground hover:bg-surface-2",
+                    )}
+                  >
+                    {Icon && <Icon className="size-3.5" />}
+                    {it.label}
+                  </button>
+                );
+              })}
+            </div>
+          ))}
+        </nav>
         <div className="flex-1 flex min-h-0 min-w-0">
           {view === "store" && <Storefront />}
           {view === "orders" && <OrdersView selectedId={id} isAdmin={isAdmin} adminUnlocked={adminUnlocked} initialScope={scope === "all" ? "all" : "mine"} />}
