@@ -1347,9 +1347,6 @@ function RoomPolicyView({ roomKey, isAdmin }: { roomKey: "multi_room" | "triple_
           <div className="absolute inset-x-0 bottom-0 p-6 md:p-8">
             <div className="text-xs uppercase tracking-[0.25em] text-primary-foreground/80 mb-2">House policies</div>
             <h1 className="font-display text-3xl md:text-4xl font-bold text-white drop-shadow">{title}</h1>
-            <p className="mt-2 text-sm md:text-base text-white/80 max-w-xl">
-              How shared rooms work in our community — and what happens when the rules are broken.
-            </p>
           </div>
         </section>
 
