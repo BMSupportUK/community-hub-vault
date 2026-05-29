@@ -3,7 +3,7 @@ import { Coffee, UtensilsCrossed, CircleDot } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
-import { DndBadge } from "@/components/app/DndBadge";
+import { DndCountdown } from "@/components/app/DndCountdown";
 import { useDndStatus } from "@/hooks/use-dnd";
 
 type Shift = { id: string; clock_in: string };
@@ -50,7 +50,7 @@ export function MyWorkingStatus() {
   if (!user) return null;
   // DND overrides every other status — when active, only show the DND pill.
   if (dnd?.active) {
-    return <DndBadge userId={user.id} />;
+    return <DndCountdown userId={user.id} />;
   }
   if (!shift) {
     return null;
@@ -95,7 +95,7 @@ export function MyWorkingStatus() {
         {brk ? (over ? `+${fmtMS(-brRemain)}` : fmtMS(brRemain)) : fmtHM(shiftSec)}
       </span>
     </div>
-      <DndBadge userId={user.id} />
+      <DndCountdown userId={user.id} />
     </div>
   );
 }
