@@ -1860,6 +1860,101 @@ function OrdersView({ selectedId, isAdmin, adminUnlocked, initialScope }: { sele
 }
 
 function OrderDetail({ orderId, isAdmin, onBack }: { orderId: string; isAdmin: boolean; onBack?: () => void }) {
+  // see component below
+  return <OrderDetailImpl orderId={orderId} isAdmin={isAdmin} onBack={onBack} />;
+}
+
+function MyOrdersTab({ onOpenOrder }: { onOpenOrder: (id: string) => void }) {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [tickets, setTickets] = useState<Record<string, string>>({});
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!user) { setLoading(false); return; }
+    let cancel = false;
+    (async () => {
+      const { data } = await supabase
+        .from("orders")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+      if (cancel) return;
+      const rows = (data ?? []) as Order[];
+      setOrders(rows);
+      if (rows.length > 0) {
+        const { data: ts } = await supabase
+          .from("tickets")
+          .select("id,order_id")
+          .in("order_id", rows.map((o) => o.id));
+        if (!cancel) {
+          const map: Record<string, string> = {};
+          for (const t of (ts ?? []) as { id: string; order_id: string }[]) {
+            if (t.order_id) map[t.order_id] = t.id;
+          }
+          setTickets(map);
+        }
+      }
+      setLoading(false);
+    })();
+    return () => { cancel = true; };
+  }, [user?.id]);
+
+  if (loading) {
+    return <div className="grid place-items-center py-16 text-muted-foreground"><Loader2 className="size-5 animate-spin" /></div>;
+  }
+  if (orders.length === 0) {
+    return (
+      <div className="rounded-2xl border border-dashed border-border p-10 text-center text-sm text-muted-foreground">
+        You haven't placed any orders yet.
+      </div>
+    );
+  }
+  return (
+    <div className="space-y-3">
+      {orders.map((o) => {
+        const ticketId = tickets[o.id];
+        return (
+          <div
+            key={o.id}
+            className="bg-surface border border-border rounded-xl p-4 flex flex-col md:flex-row md:items-center gap-3"
+          >
+            <button
+              onClick={() => onOpenOrder(o.id)}
+              className="flex-1 min-w-0 text-left"
+            >
+              <div className="flex items-center gap-2 mb-1">
+                <span className="font-mono text-[10px] text-muted-foreground">#{o.id.slice(0, 8)}</span>
+                <span className={cn("text-[10px] px-1.5 py-0.5 rounded font-medium", STATUS_COLOR[o.status] ?? "bg-surface-2")}>{o.status}</span>
+              </div>
+              <div className="font-display font-bold text-base">{fmt(o.total_cents)}</div>
+              <div className="text-[11px] text-muted-foreground mt-0.5">{new Date(o.created_at).toLocaleString()}</div>
+            </button>
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                onClick={() => onOpenOrder(o.id)}
+                className="px-3 py-1.5 rounded-md bg-surface-2 text-xs font-medium hover:bg-surface-2/80 inline-flex items-center gap-1"
+              >
+                <Package className="size-3.5" /> View order
+              </button>
+              {ticketId && (
+                <button
+                  onClick={() => navigate({ to: "/tickets", search: { id: ticketId } })}
+                  className="px-3 py-1.5 rounded-md bg-primary text-primary-foreground text-xs font-medium hover:opacity-90 inline-flex items-center gap-1"
+                >
+                  <Receipt className="size-3.5" /> Support ticket
+                </button>
+              )}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function OrderDetailImpl({ orderId, isAdmin, onBack }: { orderId: string; isAdmin: boolean; onBack?: () => void }) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [order, setOrder] = useState<Order | null>(null);
