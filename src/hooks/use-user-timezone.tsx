@@ -101,6 +101,8 @@ export function listTimeZones(): string[] {
     "America/Chicago",
     "America/New_York",
     "America/Toronto",
-    "America/Sao_Paulo", "America/Mexico_City",
+    "America/Sao_Paulo",
+    "America/Mexico_City",
   ];
 }
+
