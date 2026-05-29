@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Shield, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { DndCountdown } from "@/components/app/DndCountdown";
 
 type StaffMember = {
   user_id: string;
@@ -75,6 +76,7 @@ export function FanZoneStaffBox() {
                 <div className={`text-[10px] uppercase tracking-wider font-bold ${isAdmin ? "text-amber-400" : "text-[#E11B22]"}`}>
                   {isAdmin ? "Admin" : "Fan Zone Mod"}
                 </div>
+                <DndCountdown userId={m.user_id} compact className="mt-1" />
               </div>
             </div>
           );
