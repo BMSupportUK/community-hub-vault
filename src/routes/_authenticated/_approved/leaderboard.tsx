@@ -230,59 +230,58 @@ function LeaderboardPage() {
           </TabsContent>
 
           <TabsContent value="leaderboard" className="mt-6">
-            <div className="rounded-2xl bg-purple-950/50 border border-purple-500/30 overflow-hidden backdrop-blur">
-              <div className="px-6 py-4 border-b border-purple-500/30 flex items-center justify-between">
-                <h3 className="font-display font-semibold text-purple-50">Top inviters</h3>
-                <span className="text-xs text-purple-300/70">Ranked by successful joins</span>
-              </div>
-              {loading ? (
-                <div className="p-12 text-center text-purple-200/70">Loading…</div>
-              ) : rows.length === 0 ? (
-                <div className="p-12 text-center text-purple-200/70">
-                  No invites yet — be the first to put yourself on the board!
-                </div>
-              ) : (
-                <ul className="divide-y divide-purple-500/20">
-                  {rows.map((r, idx) => {
-                    const isMe = r.user_id === user?.id;
-                    return (
-                      <li
-                        key={r.user_id}
-                        className={`px-6 py-4 flex items-center gap-4 ${isMe ? "bg-fuchsia-500/10" : ""}`}
-                      >
-                        <div className="w-8 grid place-items-center shrink-0">{rankIcon(idx)}</div>
-                        <div className="size-10 rounded-full bg-gradient-to-br from-violet-600 to-blue-600 grid place-items-center overflow-hidden shrink-0">
-                          {r.avatar_url ? (
-                            <img src={r.avatar_url} alt="" className="size-full object-cover" />
-                          ) : (
-                            <span className="text-white font-semibold text-sm">
-                              {(r.display_name ?? r.username ?? "?").slice(0, 1).toUpperCase()}
-                            </span>
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="font-medium text-purple-50 truncate">
-                            {r.display_name ?? r.username ?? "Member"}
-                            {isMe && <span className="ml-2 text-xs text-fuchsia-300">(you)</span>}
-                          </div>
-                          {r.username && (
-                            <div className="text-xs text-purple-300/70 truncate">@{r.username}</div>
-                          )}
-                        </div>
-                        <div className="text-right shrink-0">
-                          <div className="font-display text-xl font-bold bg-gradient-to-r from-fuchsia-400 to-violet-400 bg-clip-text text-transparent">
-                            {r.used_count}
-                          </div>
-                          <div className="text-[11px] uppercase tracking-wider text-purple-300/70">
-                            of {r.total_count} sent
-                          </div>
-                        </div>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="font-display text-xl font-semibold text-purple-50">Top inviters</h3>
+              <span className="text-xs text-purple-300/70">Ranked by successful joins</span>
             </div>
+            {loading ? (
+              <div className="rounded-2xl border border-purple-500/30 bg-purple-950/40 p-12 text-center text-purple-200/70">Loading…</div>
+            ) : rows.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-purple-500/40 p-12 text-center text-purple-200/70 bg-purple-950/30">
+                <Trophy className="size-10 mx-auto mb-3 text-purple-300/60" />
+                No invites yet — be the first to put yourself on the board!
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                {rows.map((r, idx) => {
+                  const isMe = r.user_id === user?.id;
+                  return (
+                    <div
+                      key={r.user_id}
+                      className={`rounded-2xl border p-5 backdrop-blur transition-colors flex items-center gap-4 ${isMe ? "bg-fuchsia-500/10 border-fuchsia-500/50" : "bg-purple-950/50 border-purple-500/30 hover:border-fuchsia-500/50"}`}
+                    >
+                      <div className="w-8 grid place-items-center shrink-0">{rankIcon(idx)}</div>
+                      <div className="size-12 rounded-full bg-gradient-to-br from-violet-600 to-blue-600 grid place-items-center overflow-hidden shrink-0">
+                        {r.avatar_url ? (
+                          <img src={r.avatar_url} alt="" className="size-full object-cover" />
+                        ) : (
+                          <span className="text-white font-semibold">
+                            {(r.display_name ?? r.username ?? "?").slice(0, 1).toUpperCase()}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium text-purple-50 truncate">
+                          {r.display_name ?? r.username ?? "Member"}
+                          {isMe && <span className="ml-2 text-xs text-fuchsia-300">(you)</span>}
+                        </div>
+                        {r.username && (
+                          <div className="text-xs text-purple-300/70 truncate">@{r.username}</div>
+                        )}
+                      </div>
+                      <div className="text-right shrink-0">
+                        <div className="font-display text-2xl font-bold bg-gradient-to-r from-fuchsia-400 to-violet-400 bg-clip-text text-transparent leading-none">
+                          {r.used_count}
+                        </div>
+                        <div className="text-[10px] uppercase tracking-wider text-purple-300/70 mt-1">
+                          of {r.total_count} sent
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </TabsContent>
 
           <TabsContent value="invites" className="mt-6">
@@ -494,48 +493,48 @@ function LeaderboardPage() {
                   No used invites yet.
                 </div>
               ) : (
-                <div className="rounded-2xl bg-purple-950/50 border border-purple-500/30 overflow-hidden backdrop-blur">
-                  <ul className="divide-y divide-purple-500/20">
-                    {adminInvites.filter((i) => i.used_by).map((inv) => (
-                      <li key={inv.id} className="px-6 py-4 flex flex-wrap items-center gap-4">
-                        <div className="font-mono text-sm font-bold tracking-widest bg-gradient-to-r from-fuchsia-400 to-violet-400 bg-clip-text text-transparent shrink-0">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                  {adminInvites.filter((i) => i.used_by).map((inv) => (
+                    <div key={inv.id} className="rounded-2xl bg-purple-950/50 border border-purple-500/30 p-5 backdrop-blur hover:border-fuchsia-500/50 transition-colors flex flex-col gap-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="font-mono text-lg font-bold tracking-widest bg-gradient-to-r from-fuchsia-400 to-violet-400 bg-clip-text text-transparent">
                           {inv.code}
                         </div>
-                        <div className="flex-1 min-w-[180px]">
-                          <div className="text-xs text-purple-300/70">Inviter</div>
-                          <div className="text-purple-50 font-medium truncate">
+                        {inv.referral_bonus_paid ? (
+                          <span className="inline-flex items-center gap-1 text-emerald-300 text-xs font-medium px-2 py-1 rounded-md border border-emerald-500/30 bg-emerald-500/10 shrink-0">
+                            <Check className="size-3.5" /> Added
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 text-rose-300 text-xs font-medium px-2 py-1 rounded-md border border-rose-500/30 bg-rose-500/10 shrink-0">
+                            <X className="size-3.5" /> Not added
+                          </span>
+                        )}
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="min-w-0">
+                          <div className="text-[10px] uppercase tracking-wider text-purple-300/70">Inviter</div>
+                          <div className="text-purple-50 font-medium truncate text-sm">
                             {inv.inviter_name ?? inv.inviter_username ?? "Member"}
-                            {inv.inviter_username && <span className="text-purple-300/60 text-xs ml-1">@{inv.inviter_username}</span>}
                           </div>
+                          {inv.inviter_username && <div className="text-purple-300/60 text-xs truncate">@{inv.inviter_username}</div>}
                         </div>
-                        <div className="flex-1 min-w-[180px]">
-                          <div className="text-xs text-purple-300/70">Joined</div>
-                          <div className="text-purple-50 truncate">
+                        <div className="min-w-0">
+                          <div className="text-[10px] uppercase tracking-wider text-purple-300/70">Joined</div>
+                          <div className="text-purple-50 font-medium truncate text-sm">
                             {inv.used_by_name ?? inv.used_by_username ?? "Member"}
-                            {inv.used_at && <span className="text-purple-300/60 text-xs ml-2">{new Date(inv.used_at).toLocaleDateString()}</span>}
                           </div>
+                          {inv.used_at && <div className="text-purple-300/60 text-xs">{new Date(inv.used_at).toLocaleDateString()}</div>}
                         </div>
-                        <div className="flex items-center gap-2 shrink-0">
-                          {inv.referral_bonus_paid ? (
-                            <span className="inline-flex items-center gap-1 text-emerald-300 text-sm font-medium px-2 py-1 rounded-md border border-emerald-500/30 bg-emerald-500/10">
-                              <Check className="size-4" /> Added
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-1 text-rose-300 text-sm font-medium px-2 py-1 rounded-md border border-rose-500/30 bg-rose-500/10">
-                              <X className="size-4" /> Not added
-                            </span>
-                          )}
-                          <Button
-                            size="sm"
-                            onClick={() => toggleBonus(inv)}
-                            className="bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white border-0"
-                          >
-                            {inv.referral_bonus_paid ? "Unmark" : "Mark added"}
-                          </Button>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
+                      </div>
+                      <Button
+                        size="sm"
+                        onClick={() => toggleBonus(inv)}
+                        className="bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white border-0 w-full"
+                      >
+                        {inv.referral_bonus_paid ? "Unmark bonus" : "Mark bonus added"}
+                      </Button>
+                    </div>
+                  ))}
                 </div>
               )}
             </TabsContent>
