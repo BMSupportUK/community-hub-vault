@@ -82,6 +82,7 @@ function SportsGuidesPage() {
   const dragBlogId = useRef<string | null>(null);
   const [listPage, setListPage] = useState(0);
   const [listPageCount, setListPageCount] = useState(1);
+  const [draggingBlog, setDraggingBlog] = useState(false);
 
   // Reset paging when the visible set changes.
   useEffect(() => {
@@ -274,15 +275,16 @@ function SportsGuidesPage() {
 
   const reorderBlogs = async (fromId: string, toId: string) => {
     if (fromId === toId || !activeCat) return;
-    // Reorder only within the active category
+    // Swap two blogs within the active category — swap their sort_order so
+    // dragging from page 2 onto a card on page 1 exchanges their positions.
     const inCat = blogs.filter((b) => b.category_id === activeCat);
     const others = blogs.filter((b) => b.category_id !== activeCat);
     const fromIdx = inCat.findIndex((b) => b.id === fromId);
     const toIdx = inCat.findIndex((b) => b.id === toId);
     if (fromIdx < 0 || toIdx < 0) return;
-    const [moved] = inCat.splice(fromIdx, 1);
-    inCat.splice(toIdx, 0, moved);
-    const updated = inCat.map((b, i) => ({ ...b, sort_order: (i + 1) * 10 }));
+    const swapped = [...inCat];
+    [swapped[fromIdx], swapped[toIdx]] = [swapped[toIdx], swapped[fromIdx]];
+    const updated = swapped.map((b, i) => ({ ...b, sort_order: (i + 1) * 10 }));
     queryClient.setQueryData<typeof dataQuery.data>(queryKey, (prev) => prev ? { ...prev, blogs: [...others, ...updated] } : prev);
     await Promise.all(
       updated.map((b) => supabase.from("sports_blogs").update({ sort_order: b.sort_order }).eq("id", b.id))
