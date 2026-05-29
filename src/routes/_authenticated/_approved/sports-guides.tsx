@@ -429,22 +429,16 @@ function SportsGuidesPage() {
                 ) : (
                   <>
                   {isMod && draggingBlog && !search.trim() && listPageCount > 1 && (
-                    <div className="mb-3 flex flex-wrap items-center gap-2 rounded-xl border border-dashed border-fuchsia-400/60 bg-purple-950/60 px-3 py-2 text-xs text-purple-100">
-                      <span className="font-semibold text-fuchsia-200">Hover a page to switch, then drop on a card to swap:</span>
-                      {Array.from({ length: listPageCount }, (_, i) => (
-                        <button
-                          key={i}
-                          type="button"
-                          onDragOver={(e) => { e.preventDefault(); if (listPage !== i) setListPage(i); }}
-                          onClick={() => setListPage(i)}
-                          className={`px-2.5 py-1 rounded-md border transition-colors ${listPage === i ? "bg-fuchsia-600 border-fuchsia-400 text-white" : "border-purple-500/40 hover:border-fuchsia-400 hover:bg-purple-900/60"}`}
-                        >
-                          Page {i + 1}
-                        </button>
-                      ))}
+                    <div className="mb-3 rounded-xl border border-dashed border-fuchsia-400/60 bg-purple-950/60 px-3 py-2 text-xs font-semibold text-fuchsia-200">
+                      Drop on any card to swap positions — all pages shown while dragging.
                     </div>
                   )}
                   <div>
+                  {draggingBlog ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+                      {filtered.map((b) => renderBlogCard(b))}
+                    </div>
+                  ) : (
                   <PagedGrid
                     items={filtered}
                     page={listPage}
@@ -452,7 +446,18 @@ function SportsGuidesPage() {
                     availableHeight={0}
                     maxRows={2}
                     className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5"
-                    renderItem={(b) => (
+                    renderItem={(b) => renderBlogCard(b)}
+                  />
+                  )}
+                  </div>
+                  {listPageCount > 1 && !draggingBlog && (
+                    <div className="mt-3">
+                      <PaginationBar page={listPage} pageCount={listPageCount} onPageChange={setListPage} />
+                    </div>
+                  )}
+                  </>
+                )}
+              </section>
                       <article
                         key={b.id}
                         draggable={isMod}
