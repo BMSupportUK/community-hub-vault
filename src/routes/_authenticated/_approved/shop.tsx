@@ -284,9 +284,6 @@ function PolicyView({ policyKey, isAdmin }: { policyKey: PolicyKey; isAdmin: boo
             <div className="absolute inset-x-0 bottom-0 p-6 md:p-8">
               <div className="text-xs uppercase tracking-[0.25em] text-primary-foreground/80 mb-2">Store policies</div>
               <h1 className="font-display text-3xl md:text-4xl font-bold text-white drop-shadow">Refund Policy</h1>
-              <p className="mt-2 text-sm md:text-base text-white/80 max-w-xl">
-                Everything you need to know about returns, exchanges and getting your money back.
-              </p>
             </div>
           </section>
         )}
