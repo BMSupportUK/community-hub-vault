@@ -58,7 +58,9 @@ export function DndDialogButton() {
   const [startDate, setStartDate] = useState<Date>(() => new Date());
   const [endDate, setEndDate] = useState<Date>(() => new Date(Date.now() + 60 * 60 * 1000));
   const [startTime, setStartTime] = useState(() => toHHMMInTimeZone(new Date(), userTimezone));
-  const [endTime, setEndTime] = useState(() => toHHMMInTimeZone(new Date(Date.now() + 60 * 60 * 1000), userTimezone));
+  const [endTime, setEndTime] = useState(() =>
+    toHHMMInTimeZone(new Date(Date.now() + 60 * 60 * 1000), userTimezone),
+  );
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
   const [now, setNow] = useState(() => Date.now());
@@ -158,7 +160,9 @@ export function DndDialogButton() {
     const start = new Date();
     let end: Date;
     if (minutes === "eod") {
-      end = new Date(zonedWallTimeToUtcMs(dateInTimeZone(start, userTimezone), "23:59", userTimezone));
+      end = new Date(
+        zonedWallTimeToUtcMs(dateInTimeZone(start, userTimezone), "23:59", userTimezone),
+      );
     } else {
       end = new Date();
       end.setTime(start.getTime() + minutes * 60 * 1000);
@@ -225,9 +229,7 @@ export function DndDialogButton() {
                     <Clock className="size-3" /> {remainingLabel}
                   </span>
                 ) : (
-                  <span className="text-xs text-muted-foreground mt-0.5">
-                    Toggle to start
-                  </span>
+                  <span className="text-xs text-muted-foreground mt-0.5">Toggle to start</span>
                 )}
               </div>
               <Switch
@@ -308,11 +310,7 @@ export function DndDialogButton() {
 
         <DialogFooter className="gap-2 sm:gap-2 px-6 py-4 border-t border-border bg-surface-2/40">
           {info?.enabled && (
-            <Button
-              variant="outline"
-              onClick={() => upsert({ enabled: false })}
-              disabled={saving}
-            >
+            <Button variant="outline" onClick={() => upsert({ enabled: false })} disabled={saving}>
               <X className="size-4 mr-1" /> Turn off
             </Button>
           )}
