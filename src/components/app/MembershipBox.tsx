@@ -86,11 +86,11 @@ export function MembershipBox() {
         ? "text-amber-300"
         : "text-emerald-300";
     return (
-      <li key={i} className="flex items-start gap-2 text-xs">
-        <span className={cn("mt-1 size-2 rounded-full shrink-0", dotClass)} />
-        <div className="min-w-0 flex-1">
+      <li key={i} className="flex items-center justify-center gap-2 text-xs text-center">
+        <span className={cn("size-2 rounded-full shrink-0", dotClass)} />
+        <div className="min-w-0">
           {c.app_login_name && (
-            <div className="font-semibold text-foreground truncate flex items-center gap-1">
+            <div className="font-semibold text-foreground truncate flex items-center justify-center gap-1">
               <CalendarClock className="size-3 text-muted-foreground shrink-0" />
               <span className="truncate">{c.app_login_name}</span>
             </div>
@@ -115,7 +115,7 @@ export function MembershipBox() {
         </div>
         {items.length > 1 ? (
           <Tabs defaultValue="0" className="w-full">
-            <TabsList className="w-full justify-start rounded-none border-b border-border bg-transparent px-2 h-auto flex-wrap gap-1 py-1">
+            <TabsList className="w-full justify-center rounded-none border-b border-border bg-transparent px-2 h-auto flex-wrap gap-1 py-1">
               {items.map((_, i) => (
                 <TabsTrigger
                   key={i}
