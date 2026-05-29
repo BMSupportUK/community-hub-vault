@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { Headphones, MessageSquare, Activity, Ticket, ShoppingBag, BookOpen, UserPlus, ArrowUp, ArrowDown, Pencil, Upload, Sparkles, Image as ImageIcon, Plus, Trash2, ChevronLeft, ChevronRight, Trophy } from "lucide-react";
+import { Headphones, MessageSquare, Activity, Ticket, ShoppingBag, BookOpen, UserPlus, ArrowUp, ArrowDown, Pencil, Upload, Sparkles, Image as ImageIcon, Plus, Trash2, ChevronLeft, ChevronRight, Trophy, KeyRound } from "lucide-react";
 import heroImg from "@/assets/member-hero.jpg";
 import eventPlaceholder from "@/assets/event-placeholder.jpg";
 import { useAuth } from "@/hooks/use-auth";
@@ -220,6 +220,20 @@ function WelcomePage() {
     navigate({ to: "/u/$username", params: { username: data.username }, search: { tab: "referrals" } });
   };
 
+  const goToCredentials = async () => {
+    if (!user) return;
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("username")
+      .eq("id", user.id)
+      .maybeSingle();
+    if (error || !data?.username) {
+      toast.error("Set up your profile username first");
+      return;
+    }
+    navigate({ to: "/u/$username", params: { username: data.username }, search: { tab: "creds" } });
+  };
+
   type CardDef = {
     key: string;
     icon: React.ComponentType<{ className?: string }>;
@@ -233,7 +247,7 @@ function WelcomePage() {
   const CARDS: Record<string, CardDef> = {
     community: { key: "community", icon: Trophy, title: "Boro Fan Zone", desc: "Join the conversation with fellow Middlesbrough supporters.", to: "/forum" },
     tickets: { key: "tickets", icon: Ticket, title: "Support tickets", desc: "Open or follow your support requests.", to: "/tickets" },
-    status: { key: "status", icon: Activity, title: "System status", desc: "Live infrastructure and incident updates.", to: "/status" },
+    status: { key: "status", icon: KeyRound, title: "Your details", desc: "View your saved credentials and account details.", onClick: goToCredentials },
     shop: { key: "shop", icon: ShoppingBag, title: "Shop", desc: "Browse plans, add-ons and gear.", to: "/shop" },
     "install-guides": { key: "install-guides", icon: BookOpen, title: "Install guides", desc: "Step-by-step setup walkthroughs.", to: "/install-guides" },
     invite: { key: "invite", icon: UserPlus, title: "Create an invite", desc: "Invite a friend and earn a referral bonus.", onClick: goToInvite },
