@@ -187,12 +187,15 @@ function LeaderboardPage() {
 
       <div className="px-8 py-6">
         <Tabs value={tab} onValueChange={setTab} className="w-full">
-          <TabsList className={`grid ${isAdmin ? "grid-cols-4 max-w-3xl" : "grid-cols-3 max-w-2xl"} bg-purple-950/60 border border-purple-500/30`}>
+          <TabsList className={`grid ${isAdmin ? "grid-cols-5 max-w-4xl" : "grid-cols-3 max-w-2xl"} bg-purple-950/60 border border-purple-500/30`}>
             <TabsTrigger value="welcome" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white">Welcome</TabsTrigger>
             <TabsTrigger value="leaderboard" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white">Leaderboard</TabsTrigger>
             <TabsTrigger value="invites" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white">My Invites</TabsTrigger>
             {isAdmin && (
-              <TabsTrigger value="bonuses" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white">Bonuses</TabsTrigger>
+              <>
+                <TabsTrigger value="referrals" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white">Referrals</TabsTrigger>
+                <TabsTrigger value="bonuses" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white">Bonuses</TabsTrigger>
+              </>
             )}
           </TabsList>
 
