@@ -1763,6 +1763,8 @@ function OrdersView({ selectedId, isAdmin, adminUnlocked, initialScope }: { sele
   const [scope, setScope] = useState<"mine" | "all">(isAdmin && adminUnlocked ? initialScope : "mine");
   const navigate = useNavigate();
   const { user } = useAuth();
+  const [ordersTab, setOrdersTab] = useState<"welcome" | "orders">(selectedId ? "orders" : "welcome");
+  useEffect(() => { if (selectedId) setOrdersTab("orders"); }, [selectedId]);
 
   const load = async () => {
     let q = supabase.from("orders").select("*").order("created_at", { ascending: false });
@@ -1805,57 +1807,132 @@ function OrdersView({ selectedId, isAdmin, adminUnlocked, initialScope }: { sele
     return () => { supabase.removeChannel(ch); };
   }, [scope, user?.id, adminUnlocked]);
 
+  const inProgressCount = orders.filter((o) => ["pending", "processing"].includes(o.status)).length;
+  const completedCount = orders.filter((o) => ["paid", "completed", "shipped"].includes(o.status)).length;
+  const totalSpend = orders.filter((o) => ["paid", "completed", "shipped"].includes(o.status)).reduce((s, o) => s + (o.total_cents || 0), 0);
+
   return (
-    <>
-      <aside className={cn(
-        "w-full md:w-72 shrink-0 bg-surface border-r border-border flex-col",
-        selectedId ? "hidden md:flex" : "flex"
-      )}>
-        <div className="h-14 px-4 border-b border-border flex items-center justify-between">
-          <h2 className="font-display font-semibold text-sm">Orders</h2>
-          {isAdmin && adminUnlocked && (
-            <div className="flex bg-surface-2 rounded-md p-0.5 text-[11px]">
-              <button onClick={() => setScope("mine")} className={cn("px-2 py-0.5 rounded", scope === "mine" && "bg-primary text-primary-foreground")}>Mine</button>
-              <button onClick={() => setScope("all")} className={cn("px-2 py-0.5 rounded", scope === "all" && "bg-primary text-primary-foreground")}>All</button>
-            </div>
-          )}
-        </div>
-        <div className="flex-1 overflow-y-auto p-2 space-y-1">
-          {orders.length === 0 && <div className="text-xs text-muted-foreground p-4 text-center">No orders yet.</div>}
-          {orders.map((o) => (
-            <button key={o.id} onClick={() => navigate({ to: "/shop", search: { view: "orders", id: o.id, scope: scope === "all" ? "all" : undefined } })}
-              className={cn("w-full text-left p-3 rounded-lg transition", selectedId === o.id ? "bg-surface-2" : "hover:bg-surface-2/60")}>
-              <div className="flex items-center justify-between mb-1">
-                <span className="font-mono text-[10px] text-muted-foreground">#{o.id.slice(0, 8)}</span>
-                <div className="flex items-center gap-1">
-                  {cryptoOrderIds.has(o.id) && (
-                    <span
-                      title={cryptoPendingIds.has(o.id) ? "Crypto invoice created (awaiting payment)" : "Paid via crypto"}
-                      className={cn(
-                        "text-[10px] px-1.5 py-0.5 rounded font-medium",
-                        cryptoPendingIds.has(o.id)
-                          ? "bg-amber-500/15 text-amber-500"
-                          : "bg-success/10 text-success",
-                      )}
-                    >
-                      ₿
-                    </span>
-                  )}
-                  <span className={cn("text-[10px] px-1.5 py-0.5 rounded font-medium", STATUS_COLOR[o.status] ?? "bg-surface-2")}>{o.status}</span>
+    <div
+      className="flex-1 overflow-y-auto relative bg-cover bg-center bg-fixed"
+      style={{ backgroundImage: `url(${shopHero})` }}
+    >
+      <div className="absolute inset-0 bg-[#1a0b2e]/80 backdrop-blur-[2px] pointer-events-none" aria-hidden />
+      <header className="relative px-6 md:px-8 pt-8 pb-6 border-b border-purple-500/30 bg-purple-950/40 backdrop-blur">
+        <h1 className="font-display text-3xl font-bold bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 bg-clip-text text-transparent">
+          {scope === "all" ? "Shop Admin · Orders" : "Your Orders"}
+        </h1>
+        <p className="text-purple-200/80 mt-1">Every order in one place — full details, live status, and direct chat with our team.</p>
+      </header>
+
+      <div className="relative px-4 md:px-8 py-6">
+        <Tabs value={ordersTab} onValueChange={(v) => setOrdersTab(v as "welcome" | "orders")} className="w-full">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <TabsList className="grid grid-cols-2 w-full max-w-md bg-purple-950/60 border border-purple-500/30">
+              <TabsTrigger value="welcome" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white">Welcome</TabsTrigger>
+              <TabsTrigger value="orders" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white">Orders ({orders.length})</TabsTrigger>
+            </TabsList>
+            {isAdmin && adminUnlocked && (
+              <div className="flex bg-purple-950/60 border border-purple-500/30 rounded-md p-0.5 text-[11px]">
+                <button onClick={() => setScope("mine")} className={cn("px-3 py-1 rounded text-purple-100", scope === "mine" && "bg-gradient-to-r from-fuchsia-600 to-purple-600 text-white")}>Mine</button>
+                <button onClick={() => setScope("all")} className={cn("px-3 py-1 rounded text-purple-100", scope === "all" && "bg-gradient-to-r from-fuchsia-600 to-purple-600 text-white")}>All</button>
+              </div>
+            )}
+          </div>
+
+          <TabsContent value="welcome" className="mt-6">
+            <div className="rounded-2xl bg-gradient-to-br from-fuchsia-600/30 via-purple-600/30 to-violet-700/30 border border-purple-500/40 p-8 md:p-10 shadow-[0_0_60px_-15px_rgba(168,85,247,0.5)]">
+              <h2 className="font-display text-3xl font-bold bg-gradient-to-r from-violet-600 to-blue-600 bg-clip-text text-transparent">Welcome to your Orders</h2>
+              <p className="mt-3 text-lg text-purple-100/90 max-w-2xl">
+                Every order you've placed lives here. Open one to see the full breakdown, live status, payment details, and chat with our team if you need anything.
+              </p>
+              <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-3 max-w-3xl">
+                <div className="rounded-xl bg-purple-950/60 border border-purple-500/30 p-4">
+                  <div className="text-2xl font-bold text-fuchsia-300">{orders.length}</div>
+                  <div className="text-[11px] text-purple-200/70 uppercase tracking-wide mt-0.5">Total orders</div>
+                </div>
+                <div className="rounded-xl bg-purple-950/60 border border-purple-500/30 p-4">
+                  <div className="text-2xl font-bold text-amber-300">{inProgressCount}</div>
+                  <div className="text-[11px] text-purple-200/70 uppercase tracking-wide mt-0.5">In progress</div>
+                </div>
+                <div className="rounded-xl bg-purple-950/60 border border-purple-500/30 p-4">
+                  <div className="text-2xl font-bold text-emerald-300">{completedCount}</div>
+                  <div className="text-[11px] text-purple-200/70 uppercase tracking-wide mt-0.5">Completed</div>
+                </div>
+                <div className="rounded-xl bg-purple-950/60 border border-purple-500/30 p-4">
+                  <div className="text-2xl font-bold text-sky-300">{fmt(totalSpend)}</div>
+                  <div className="text-[11px] text-purple-200/70 uppercase tracking-wide mt-0.5">Total spend</div>
                 </div>
               </div>
-              <div className="font-display font-bold text-sm">{fmt(o.total_cents)}</div>
-              <div className="text-[10px] text-muted-foreground mt-0.5">{new Date(o.created_at).toLocaleDateString()}</div>
-            </button>
-          ))}
-        </div>
-      </aside>
-      {selectedId ? (
-        <OrderDetail orderId={selectedId} isAdmin={isAdmin && adminUnlocked} onBack={() => navigate({ to: "/shop", search: { view: "orders", scope: scope === "all" ? "all" : undefined } })} />
-      ) : (
-        <main className="hidden md:grid flex-1 place-items-center text-muted-foreground text-sm">Select an order</main>
-      )}
-    </>
+              <button
+                onClick={() => setOrdersTab("orders")}
+                className="mt-6 inline-flex items-center gap-2 bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white border-0 shadow-lg shadow-purple-900/50 rounded-md px-4 py-2 text-sm font-medium"
+              >
+                <Package className="size-4" /> View orders
+              </button>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="orders" className="mt-6">
+            <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-4 min-h-[60vh]">
+              <aside className={cn(
+                "rounded-2xl bg-purple-950/50 border border-purple-500/30 backdrop-blur flex-col overflow-hidden",
+                selectedId ? "hidden lg:flex" : "flex",
+              )}>
+                <div className="px-4 py-3 border-b border-purple-500/30 flex items-center justify-between">
+                  <h3 className="font-display font-semibold text-purple-100 text-sm">Order history</h3>
+                  <span className="text-[10px] text-purple-200/70">{orders.length} total</span>
+                </div>
+                <div className="flex-1 overflow-y-auto p-2 space-y-1 max-h-[70vh]">
+                  {orders.length === 0 && <div className="text-xs text-purple-200/70 p-6 text-center">No orders yet.</div>}
+                  {orders.map((o) => (
+                    <button key={o.id} onClick={() => navigate({ to: "/shop", search: { view: "orders", id: o.id, scope: scope === "all" ? "all" : undefined } })}
+                      className={cn(
+                        "w-full text-left p-3 rounded-lg transition border",
+                        selectedId === o.id
+                          ? "bg-fuchsia-600/20 border-fuchsia-400/60 shadow-[0_0_18px_-6px_rgba(232,121,249,0.7)]"
+                          : "border-transparent hover:bg-purple-900/40 hover:border-purple-500/30",
+                      )}>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="font-mono text-[10px] text-purple-200/70">#{o.id.slice(0, 8)}</span>
+                        <div className="flex items-center gap-1">
+                          {cryptoOrderIds.has(o.id) && (
+                            <span
+                              title={cryptoPendingIds.has(o.id) ? "Crypto invoice created (awaiting payment)" : "Paid via crypto"}
+                              className={cn(
+                                "text-[10px] px-1.5 py-0.5 rounded font-medium",
+                                cryptoPendingIds.has(o.id)
+                                  ? "bg-amber-500/20 text-amber-300"
+                                  : "bg-emerald-500/20 text-emerald-300",
+                              )}
+                            >₿</span>
+                          )}
+                          <span className={cn("text-[10px] px-1.5 py-0.5 rounded font-medium capitalize", STATUS_COLOR[o.status] ?? "bg-purple-900/60 text-purple-100")}>{o.status}</span>
+                        </div>
+                      </div>
+                      <div className="font-display font-bold text-sm text-purple-50">{fmt(o.total_cents)}</div>
+                      <div className="text-[10px] text-purple-200/60 mt-0.5">{new Date(o.created_at).toLocaleString()}</div>
+                    </button>
+                  ))}
+                </div>
+              </aside>
+              <div className={cn("rounded-2xl bg-purple-950/40 border border-purple-500/30 backdrop-blur overflow-hidden min-h-[60vh] flex", selectedId ? "flex" : "hidden lg:flex")}>
+                {selectedId ? (
+                  <OrderDetail
+                    orderId={selectedId}
+                    isAdmin={isAdmin && adminUnlocked}
+                    onBack={() => navigate({ to: "/shop", search: { view: "orders", scope: scope === "all" ? "all" : undefined } })}
+                  />
+                ) : (
+                  <div className="flex-1 grid place-items-center text-purple-200/70 text-sm p-10 text-center">
+                    Select an order from the list to see all the details and status.
+                  </div>
+                )}
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
+      </div>
+    </div>
   );
 }
 
