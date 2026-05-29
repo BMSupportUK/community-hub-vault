@@ -1985,26 +1985,21 @@ function MyOrdersTab({ onOpenOrder }: { onOpenOrder: (id: string) => void }) {
         No orders in this section.
       </div>
     ) : (
-      <div className="space-y-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
         {list.map((o) => {
           const ticketId = tickets[o.id];
           return (
             <div
               key={o.id}
-              className="bg-purple-950/50 border border-purple-500/30 backdrop-blur rounded-xl p-4 flex flex-col md:flex-row md:items-center gap-3 hover:border-fuchsia-400/60 transition"
+              className="bg-purple-950/50 border border-purple-500/30 backdrop-blur rounded-xl p-4 flex flex-col gap-2 hover:border-fuchsia-400/40 hover:bg-purple-900/40 transition"
             >
-              <button
-                onClick={() => onOpenOrder(o.id)}
-                className="flex-1 min-w-0 text-left"
-              >
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="font-mono text-[10px] text-purple-200/70">#{o.id.slice(0, 8)}</span>
-                  <span className={cn("text-[10px] px-1.5 py-0.5 rounded font-medium capitalize", STATUS_COLOR[o.status] ?? "bg-purple-900/60 text-purple-100")}>{o.status}</span>
-                </div>
-                <div className="font-display font-bold text-base text-purple-50">{fmt(o.total_cents)}</div>
-                <div className="text-[11px] text-purple-200/60 mt-0.5">{new Date(o.created_at).toLocaleString()}</div>
-              </button>
-              <div className="flex items-center gap-2 shrink-0">
+              <div className="flex items-center justify-between">
+                <span className="font-mono text-[10px] text-purple-200/70">#{o.id.slice(0, 8)}</span>
+                <span className={cn("text-[10px] px-1.5 py-0.5 rounded font-medium capitalize", STATUS_COLOR[o.status] ?? "bg-purple-900/60 text-purple-100")}>{o.status}</span>
+              </div>
+              <div className="font-display font-bold text-lg text-purple-50">{fmt(o.total_cents)}</div>
+              <div className="text-[11px] text-purple-200/60">{new Date(o.created_at).toLocaleString()}</div>
+              <div className="mt-auto pt-2 flex flex-wrap items-center gap-2">
                 <button
                   onClick={() => onOpenOrder(o.id)}
                   className="px-3 py-1.5 rounded-md bg-gradient-to-r from-violet-600 to-blue-600 text-white text-xs font-medium hover:from-violet-500 hover:to-blue-500 inline-flex items-center gap-1"
