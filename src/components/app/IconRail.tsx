@@ -9,6 +9,7 @@ import { FAN_ZONE_OPEN_EVENT } from "@/components/app/FanZoneAccessCard";
 import { UserAvatarMenu } from "@/components/app/UserAvatarMenu";
 import { MentionsBadge } from "@/components/app/MentionsBadge";
 import { NotificationBell } from "@/components/app/NotificationBell";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 function SoccerPlayer({ className }: { className?: string }) {
   return (
@@ -287,28 +288,34 @@ function RailIcon({
   badge?: number;
 }) {
   return (
-    <Link
-      to={to}
-      aria-label={label}
-      className={cn(
-        "group relative size-12 rounded-2xl flex items-center justify-center transition-all",
-        active
-          ? "bg-primary text-primary-foreground rounded-xl shadow-glow"
-          : "bg-surface-2 text-muted-foreground hover:bg-primary hover:text-primary-foreground hover:rounded-xl",
-        accent && !active && "ring-1 ring-primary/40",
-      )}
-    >
-      <Icon className="size-5" />
-      {badge && badge > 0 ? (
-        <span className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1 rounded-full bg-red-500 text-white text-[11px] font-bold flex items-center justify-center shadow-lg ring-2 ring-rail animate-pulse">
-          {badge > 99 ? "99+" : badge}
-        </span>
-      ) : null}
-      <span className="absolute left-full ml-3 px-2 py-1 rounded bg-popover text-popover-foreground text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 shadow-soft">
-        {label}
-      </span>
-      {active && <span className="absolute -left-1 top-1/2 -translate-y-1/2 h-8 w-1 bg-primary-glow rounded-r" />}
-    </Link>
+    <TooltipProvider delayDuration={150}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Link
+            to={to}
+            aria-label={label}
+            className={cn(
+              "group relative size-12 rounded-2xl flex items-center justify-center transition-all",
+              active
+                ? "bg-primary text-primary-foreground rounded-xl shadow-glow"
+                : "bg-surface-2 text-muted-foreground hover:bg-primary hover:text-primary-foreground hover:rounded-xl",
+              accent && !active && "ring-1 ring-primary/40",
+            )}
+          >
+            <Icon className="size-5" />
+            {badge && badge > 0 ? (
+              <span className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1 rounded-full bg-red-500 text-white text-[11px] font-bold flex items-center justify-center shadow-lg ring-2 ring-rail animate-pulse">
+                {badge > 99 ? "99+" : badge}
+              </span>
+            ) : null}
+            {active && <span className="absolute -left-1 top-1/2 -translate-y-1/2 h-8 w-1 bg-primary-glow rounded-r" />}
+          </Link>
+        </TooltipTrigger>
+        <TooltipContent side="right" sideOffset={8} className="z-[1000] whitespace-nowrap text-xs font-medium">
+          {label}
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 }
 
@@ -322,19 +329,25 @@ function RailButton({
   onClick: () => void;
 }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label={label}
-      className={cn(
-        "group relative size-12 rounded-2xl flex items-center justify-center transition-all",
-        "bg-surface-2 text-muted-foreground hover:bg-primary hover:text-primary-foreground hover:rounded-xl",
-      )}
-    >
-      <Icon className="size-5" />
-      <span className="absolute left-full ml-3 px-2 py-1 rounded bg-popover text-popover-foreground text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 shadow-soft">
-        {label}
-      </span>
-    </button>
+    <TooltipProvider delayDuration={150}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            type="button"
+            onClick={onClick}
+            aria-label={label}
+            className={cn(
+              "group relative size-12 rounded-2xl flex items-center justify-center transition-all",
+              "bg-surface-2 text-muted-foreground hover:bg-primary hover:text-primary-foreground hover:rounded-xl",
+            )}
+          >
+            <Icon className="size-5" />
+          </button>
+        </TooltipTrigger>
+        <TooltipContent side="right" sideOffset={8} className="z-[1000] whitespace-nowrap text-xs font-medium">
+          {label}
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 }
