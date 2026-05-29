@@ -289,7 +289,7 @@ function RailIcon({
   return (
     <Link
       to={to}
-      title={label}
+      aria-label={label}
       className={cn(
         "group relative size-12 rounded-2xl flex items-center justify-center transition-all",
         active
@@ -325,7 +325,7 @@ function RailButton({
     <button
       type="button"
       onClick={onClick}
-      title={label}
+      aria-label={label}
       className={cn(
         "group relative size-12 rounded-2xl flex items-center justify-center transition-all",
         "bg-surface-2 text-muted-foreground hover:bg-primary hover:text-primary-foreground hover:rounded-xl",
