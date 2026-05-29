@@ -48,9 +48,10 @@ export function MyWorkingStatus() {
   }, [user?.id]);
 
   if (!user) return null;
-  // DND overrides every other status — when active, only show the DND pill.
+  // DND overrides every other status — the pill is rendered next to the
+  // "Do Not Disturb" label in WorkingStatusBox, so hide here.
   if (dnd?.active) {
-    return <DndCountdown userId={user.id} />;
+    return null;
   }
   if (!shift) {
     return null;
@@ -95,7 +96,6 @@ export function MyWorkingStatus() {
         {brk ? (over ? `+${fmtMS(-brRemain)}` : fmtMS(brRemain)) : fmtHM(shiftSec)}
       </span>
     </div>
-      <DndCountdown userId={user.id} />
     </div>
   );
 }

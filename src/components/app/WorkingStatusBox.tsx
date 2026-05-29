@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 import { useDndStatus } from "@/hooks/use-dnd";
 import { Moon } from "lucide-react";
+import { DndCountdown } from "@/components/app/DndCountdown";
 
 type Shift = { id: string; clock_in: string };
 type Break = { id: string; kind: "break" | "lunch"; started_at: string };
@@ -61,6 +62,7 @@ export function WorkingStatusBox() {
             <div className="flex items-center gap-2">
               <Moon className="size-3.5 text-violet-300" />
               <h2 className="font-display text-[11px] font-bold tracking-wider uppercase text-violet-200">Do Not Disturb</h2>
+              <DndCountdown userId={user.id} compact />
             </div>
           </div>
           <div className="px-3 py-3 space-y-1 text-xs">
