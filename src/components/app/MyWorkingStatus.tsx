@@ -3,7 +3,6 @@ import { Coffee, UtensilsCrossed, CircleDot } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
-import { DndBadge } from "@/components/app/DndBadge";
 import { DndCountdown } from "@/components/app/DndCountdown";
 import { useDndStatus } from "@/hooks/use-dnd";
 
