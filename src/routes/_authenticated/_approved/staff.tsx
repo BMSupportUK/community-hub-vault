@@ -260,8 +260,8 @@ function StaffPage() {
                                   offlineText={`Last seen ${formatLastSeen(p.last_seen_at)}`}
                                   offlineTextClass="text-purple-300/70"
                                 />
+                                <DndCountdown userId={p.id} compact />
                               </div>
-                              <DndCountdown userId={p.id} compact className="mt-1" />
                               {p.username && (
                                 <div className="text-[11px] text-purple-300/70">@{p.username}</div>
                               )}
