@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Trophy, Plus, Copy, Check, Trash2, Ticket, Crown, Medal, Award, X, Gift } from "lucide-react";
+import { Trophy, Plus, Copy, Check, Trash2, Ticket, Crown, Medal, Award, X, Gift, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -80,8 +80,7 @@ function LeaderboardPage() {
     const { data, error } = await supabase
       .from("invites")
       .select("id, code, used_by, used_at, created_at, referral_bonus_paid, referral_bonus_paid_at, created_by")
-      .not("used_by", "is", null)
-      .order("used_at", { ascending: false });
+      .order("created_at", { ascending: false });
     if (error) return toast.error(error.message);
     const rows = (data ?? []) as (Invite & { created_by: string })[];
     const ids = Array.from(new Set(rows.flatMap((r) => [r.created_by, r.used_by].filter(Boolean) as string[])));
