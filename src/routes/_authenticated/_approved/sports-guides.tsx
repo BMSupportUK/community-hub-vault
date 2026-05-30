@@ -93,10 +93,7 @@ function SportsGuidesPage() {
     setListPage(0);
   }, [activeCat, search, subFilter]);
 
-  // Clear the subcategory filter whenever we change category.
-  useEffect(() => {
-    setSubFilter(null);
-  }, [activeCat]);
+  // (sub-filter default effect moved below subsByCat declaration)
 
   // Persist UI state across screen swaps (route remounts).
   useEffect(() => { try { sessionStorage.setItem("sports-guides-active-tab", tab); } catch { /* ignore */ } }, [tab]);
@@ -200,6 +197,14 @@ function SportsGuidesPage() {
     }
     return m;
   }, [subcategories]);
+
+  // When switching category, default to that category's default sub-category
+  // (falling back to "All" only when no default is set).
+  useEffect(() => {
+    if (!activeCat) { setSubFilter(null); return; }
+    const def = (subsByCat[activeCat] ?? []).find((s) => s.is_default);
+    setSubFilter(def?.name ?? null);
+  }, [activeCat, subsByCat]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
