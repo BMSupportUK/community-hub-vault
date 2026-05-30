@@ -46,6 +46,7 @@ function Highlight({ text, query }: { text: string; query: string }) {
 }
 
 type Category = { id: string; name: string; slug: string; sort_order: number };
+type Subcategory = { id: string; category_id: string; name: string; sort_order: number; is_default: boolean };
 type Blog = {
   id: string;
   category_id: string;
@@ -61,12 +62,6 @@ type Blog = {
   refresh_notice?: string | null;
   not_guaranteed?: boolean | null;
   subcategory?: string | null;
-};
-
-// Categories that support a second-level filter (pills) under the main category.
-const SUBCATEGORY_MAP: Record<string, string[]> = {
-  // Rugby Union
-  "74f3782c-fbee-4cf7-8773-fd419849c7cd": ["League", "Tournament", "Sports Pass"],
 };
 
 function SportsGuidesPage() {
@@ -86,6 +81,7 @@ function SportsGuidesPage() {
   const [subFilter, setSubFilter] = useState<string | null>(null);
   const [newCatName, setNewCatName] = useState("");
   const [addingCat, setAddingCat] = useState(false);
+  const [newSubName, setNewSubName] = useState<Record<string, string>>({});
   const dragCatId = useRef<string | null>(null);
   const dragBlogId = useRef<string | null>(null);
   const [listPage, setListPage] = useState(0);
@@ -115,9 +111,13 @@ function SportsGuidesPage() {
   const dataQuery = useQuery({
     queryKey,
     queryFn: async () => {
-      const [{ data: cats }, { data: bs }, { data: rs }, { data: prof }] = await Promise.all([
+      const [{ data: cats }, { data: bs }, { data: subs }, { data: rs }, { data: prof }] = await Promise.all([
         supabase.from("sports_categories").select("*").order("sort_order"),
         supabase.from("sports_blogs").select("*").order("sort_order").order("created_at", { ascending: false }),
+        supabase
+          .from("sports_subcategories")
+          .select("id, category_id, name, sort_order, is_default")
+          .order("sort_order"),
         user?.id
           ? supabase.from("sports_blog_reads").select("blog_id, read_at").eq("user_id", user.id)
           : Promise.resolve({ data: [] as { blog_id: string; read_at: string }[] }),
@@ -139,6 +139,7 @@ function SportsGuidesPage() {
       return {
         categories: (cats ?? []) as Category[],
         blogs: (bs ?? []) as Blog[],
+        subcategories: (subs ?? []) as Subcategory[],
         reads: map,
         baselineAt: baseline,
       };
@@ -152,6 +153,7 @@ function SportsGuidesPage() {
 
   const categories = dataQuery.data?.categories ?? [];
   const blogs = dataQuery.data?.blogs ?? [];
+  const subcategories = dataQuery.data?.subcategories ?? [];
   const reads = dataQuery.data?.reads ?? {};
   const baselineAt = dataQuery.data?.baselineAt ?? null;
   const load = () => queryClient.invalidateQueries({ queryKey });
@@ -190,11 +192,20 @@ function SportsGuidesPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [blogs, reads, baselineAt]);
 
+  const subsByCat = useMemo(() => {
+    const m: Record<string, Subcategory[]> = {};
+    for (const s of subcategories) {
+      if (!m[s.category_id]) m[s.category_id] = [];
+      m[s.category_id].push(s);
+    }
+    return m;
+  }, [subcategories]);
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return blogs.filter((b) => {
       if (!q && activeCat && b.category_id !== activeCat) return false;
-      if (!q && activeCat && SUBCATEGORY_MAP[activeCat] && subFilter && b.subcategory !== subFilter) return false;
+      if (!q && activeCat && subsByCat[activeCat]?.length && subFilter && b.subcategory !== subFilter) return false;
       if (!q) return true;
       return (
         b.title.toLowerCase().includes(q) ||
@@ -202,7 +213,7 @@ function SportsGuidesPage() {
         (b.body ?? "").toLowerCase().includes(q)
       );
     });
-  }, [blogs, activeCat, search, subFilter]);
+  }, [blogs, activeCat, search, subFilter, subsByCat]);
 
   // Global search results (across ALL categories) shown in the right panel,
   // Discord-style. Includes a snippet of where the term was matched.
@@ -269,6 +280,45 @@ function SportsGuidesPage() {
     if (error) return toast.error(error.message);
     if (activeCat === id) setActiveCat(null);
     toast.success("Category deleted");
+    load();
+  };
+
+  const addSubcategory = async (categoryId: string) => {
+    const name = (newSubName[categoryId] ?? "").trim();
+    if (!name) return;
+    const existing = subsByCat[categoryId] ?? [];
+    const nextOrder = ((existing[existing.length - 1]?.sort_order ?? 0) as number) + 10;
+    const { error } = await supabase
+      .from("sports_subcategories")
+      .insert({ category_id: categoryId, name, sort_order: nextOrder, is_default: existing.length === 0 });
+    if (error) return toast.error(error.message);
+    setNewSubName((m) => ({ ...m, [categoryId]: "" }));
+    toast.success("Sub-category added");
+    load();
+  };
+
+  const deleteSubcategory = async (id: string) => {
+    if (!confirm("Delete this sub-category?")) return;
+    const { error } = await supabase.from("sports_subcategories").delete().eq("id", id);
+    if (error) return toast.error(error.message);
+    toast.success("Sub-category deleted");
+    load();
+  };
+
+  const setDefaultSubcategory = async (categoryId: string, subId: string) => {
+    // Clear any existing default first (unique partial index allows only one).
+    const { error: clearErr } = await supabase
+      .from("sports_subcategories")
+      .update({ is_default: false })
+      .eq("category_id", categoryId)
+      .eq("is_default", true);
+    if (clearErr) return toast.error(clearErr.message);
+    const { error } = await supabase
+      .from("sports_subcategories")
+      .update({ is_default: true })
+      .eq("id", subId);
+    if (error) return toast.error(error.message);
+    toast.success("Default sub-category updated");
     load();
   };
 
