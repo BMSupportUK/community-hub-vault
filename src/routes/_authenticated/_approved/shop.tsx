@@ -3958,21 +3958,12 @@ export function PayOrderDialog({
             <div className="text-sm text-muted-foreground">Total {fmt(amountCents)}</div>
           </DialogHeader>
           <Tabs defaultValue="square" className="pt-2">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="square">Square</TabsTrigger>
-              <TabsTrigger value="stripe">Stripe</TabsTrigger>
               <TabsTrigger value="usdt">USDT</TabsTrigger>
             </TabsList>
             <TabsContent value="square" className="mt-3">
               <SquareCardPanel
-                orderId={orderId}
-                amountCents={amountCents}
-                canPay={true}
-                onChange={handleChange}
-              />
-            </TabsContent>
-            <TabsContent value="stripe" className="mt-3">
-              <StripePanel
                 orderId={orderId}
                 amountCents={amountCents}
                 canPay={true}
