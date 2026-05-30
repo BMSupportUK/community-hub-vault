@@ -362,6 +362,22 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
                 ))}
               </select>
             </div>
+            {SUBCATEGORY_MAP[editing.category_id] && (
+              <div>
+                <Label className="text-purple-100">Sub-category</Label>
+                <select
+                  className="mt-1 w-full bg-purple-950/50 border border-purple-500/30 text-purple-50 rounded-md px-3 py-2 text-sm"
+                  value={editing.subcategory ?? ""}
+                  onChange={(e) => setEditing({ ...editing, subcategory: e.target.value || null })}
+                >
+                  <option value="">— None —</option>
+                  {SUBCATEGORY_MAP[editing.category_id].map((sub) => (
+                    <option key={sub} value={sub}>{sub}</option>
+                  ))}
+                </select>
+                <p className="text-[11px] text-purple-300/70 mt-1">Used to filter this guide under the category pills.</p>
+              </div>
+            )}
             <div>
               <Label className="text-purple-100">Title</Label>
               <Input value={editing.title} onChange={(e) => setEditing({ ...editing, title: e.target.value })} className="bg-purple-950/50 border-purple-500/30 text-purple-50" />
