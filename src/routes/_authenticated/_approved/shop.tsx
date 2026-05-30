@@ -19,6 +19,7 @@ import { downloadReceipt } from "@/lib/receipt";
 import { Download } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { chargeOrderWithSquare, getSquareWebConfig, reconcileSquareOrder } from "@/lib/square-payments.functions";
+import { createStripePaymentIntent, confirmStripePayment, getStripeWebConfig } from "@/lib/stripe-payments.functions";
 import { capturePaypalOrder, createPaypalOrder, getPaypalWebConfig, reconcilePaypalOrder } from "@/lib/paypal-payments.functions";
 import { createCryptoInvoice, getCryptoConfig, getCryptoInvoiceStatus } from "@/lib/nowpayments.functions";
 import { CreditCard, Ban } from "lucide-react";
