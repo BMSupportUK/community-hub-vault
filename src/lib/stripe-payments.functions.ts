@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 const STRIPE_API = "https://api.stripe.com/v1";
 
@@ -147,7 +148,7 @@ export const confirmStripePayment = createServerFn({ method: "POST" })
       receiptUrl = ch?.receipt_url ?? undefined;
     } catch {}
 
-    const { error: upErr } = await supabase.from("order_payments").upsert(
+    const { error: upErr } = await supabaseAdmin.from("order_payments").upsert(
       {
         order_id: String(order.id),
         provider: "stripe",
@@ -164,20 +165,24 @@ export const confirmStripePayment = createServerFn({ method: "POST" })
     );
     if (upErr) throw new Error(upErr.message);
 
-    const { error: paidErr } = await supabase
+    const { error: paidErr } = await supabaseAdmin
       .from("orders")
       .update({ paid_at: new Date().toISOString(), paid_by: userId })
       .eq("id", String(order.id));
-    if (paidErr) console.error("Failed to set paid_at on order:", paidErr.message);
-
-    await supabase.from("order_messages").insert({
-      order_id: String(order.id),
-      sender_id: userId,
-      content: `✅ Card payment captured via Stripe${cardBrand && last4 ? ` (${cardBrand} •••• ${last4})` : ""}.`,
-    });
+    if (paidErr) throw new Error(paidErr.message);
 
     try {
-      const { data: linkedTickets } = await supabase
+      await supabaseAdmin.from("order_messages").insert({
+        order_id: String(order.id),
+        sender_id: userId,
+        content: `✅ Card payment captured via Stripe${cardBrand && last4 ? ` (${cardBrand} •••• ${last4})` : ""}.`,
+      });
+    } catch (e) {
+      console.error("Failed to post Stripe payment message to order:", e);
+    }
+
+    try {
+      const { data: linkedTickets } = await supabaseAdmin
         .from("tickets")
         .select("id,user_id")
         .eq("order_id", String(order.id));
@@ -188,7 +193,7 @@ export const confirmStripePayment = createServerFn({ method: "POST" })
           ` — £${(totalCents / 100).toFixed(2)}.` +
           `\nTransaction ref: ${pi.id}` +
           (receiptUrl ? `\nReceipt: ${receiptUrl}` : "");
-        await supabase.from("ticket_messages").insert(
+        await supabaseAdmin.from("ticket_messages").insert(
           linkedTickets.map((t: { id: string }) => ({
             ticket_id: t.id,
             sender_id: userId,
