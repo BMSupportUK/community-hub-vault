@@ -3720,7 +3720,12 @@ export type Database = {
         Returns: boolean
       }
       is_user_dnd: { Args: { _user_id: string }; Returns: boolean }
-      mark_order_paid: { Args: { p_order_id: string }; Returns: Json }
+      mark_order_paid:
+        | { Args: { p_order_id: string }; Returns: Json }
+        | {
+            Args: { p_order_id: string; p_transaction_id?: string }
+            Returns: Json
+          }
       move_to_dlq: {
         Args: {
           dlq_name: string
