@@ -88,10 +88,7 @@ export const Route = createFileRoute("/_authenticated/_approved/shop")({
     links: [
       { rel: "preconnect", href: "https://web.squarecdn.com", crossOrigin: "anonymous" },
       { rel: "preconnect", href: "https://sandbox.web.squarecdn.com", crossOrigin: "anonymous" },
-      { rel: "preconnect", href: "https://www.paypal.com", crossOrigin: "anonymous" },
-      { rel: "preconnect", href: "https://www.paypalobjects.com", crossOrigin: "anonymous" },
       { rel: "dns-prefetch", href: "https://web.squarecdn.com" },
-      { rel: "dns-prefetch", href: "https://www.paypal.com" },
     ],
   }),
   component: ShopPage,
