@@ -93,6 +93,10 @@ export function BreakEndingAlert() {
     } else if (remaining > 0 && remaining <= WARN_AT && !seen.has("warn") && !seen.has("over")) {
       seen.add("warn");
       setStage("warn");
+      playSound(active.kind === "lunch" ? endLunchSfx : endBreakSfx, {
+        label: `break-warn-${active.kind}`,
+        gain: 2.2,
+      });
     }
   }, [active, now]);
 
