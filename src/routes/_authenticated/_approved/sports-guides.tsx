@@ -93,10 +93,14 @@ function SportsGuidesPage() {
     setListPage(0);
   }, [activeCat, search, subFilter]);
 
-  // Clear the subcategory filter whenever we change category.
+  // When switching category, default to that category's default sub-category
+  // (falling back to "All" only when no default is set).
   useEffect(() => {
-    setSubFilter(null);
-  }, [activeCat]);
+    if (!activeCat) { setSubFilter(null); return; }
+    const subs = dataQuery.data?.subcategories ?? [];
+    const def = subs.find((s) => s.category_id === activeCat && s.is_default);
+    setSubFilter(def?.name ?? null);
+  }, [activeCat, dataQuery.data?.subcategories]);
 
   // Persist UI state across screen swaps (route remounts).
   useEffect(() => { try { sessionStorage.setItem("sports-guides-active-tab", tab); } catch { /* ignore */ } }, [tab]);
