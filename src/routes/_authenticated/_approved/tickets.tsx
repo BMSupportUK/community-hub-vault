@@ -1152,7 +1152,8 @@ function TicketDetail({
   };
 
   return (
-    <>
+    <div className="flex-1 flex flex-col lg:flex-row min-h-0">
+      <div className="flex-1 flex flex-col min-h-0">
       <header className="border-b border-white/20 px-5 py-3 space-y-3 bg-white/5 backdrop-blur">
         <div className="flex flex-wrap sm:flex-nowrap items-start sm:items-center gap-3">
           <div className="size-9 shrink-0 rounded-lg bg-white/25 grid place-items-center"><CatIcon className="size-4 text-white" /></div>
@@ -1182,7 +1183,7 @@ function TicketDetail({
           </div>
         </div>
         {linkedOrder && (
-          <div className="rounded-lg border border-white/25 bg-white/10 backdrop-blur p-3 text-white text-xs space-y-2">
+          <div className="lg:hidden rounded-lg border border-white/25 bg-white/10 backdrop-blur p-3 text-white text-xs space-y-2">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <div className="font-semibold">Order #{linkedOrder.id.slice(0, 8)}</div>
