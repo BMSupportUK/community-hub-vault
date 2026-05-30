@@ -1927,7 +1927,7 @@ function OrdersView({ selectedId, isAdmin, adminUnlocked, initialScope }: { sele
 
   return (
     <div
-      className="flex-1 overflow-y-auto relative bg-cover bg-center bg-fixed"
+      className="flex-1 overflow-y-auto relative bg-cover bg-center bg-fixed min-h-screen"
       style={{ backgroundImage: `url(${shopOrdersBg})` }}
     >
       <div className="absolute inset-0 bg-gradient-to-b from-[#1a0b2e]/85 via-[#1a0b2e]/65 to-[#1a0b2e]/90 backdrop-blur-[2px] pointer-events-none" aria-hidden />
