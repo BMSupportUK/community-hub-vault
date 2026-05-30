@@ -19,7 +19,7 @@ import { downloadReceipt } from "@/lib/receipt";
 import { Download } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { chargeOrderWithSquare, getSquareWebConfig } from "@/lib/square-payments.functions";
-import { capturePaypalOrder, createPaypalOrder, getPaypalWebConfig } from "@/lib/paypal-payments.functions";
+import { capturePaypalOrder, createPaypalOrder, getPaypalWebConfig, reconcilePaypalOrder } from "@/lib/paypal-payments.functions";
 import { createCryptoInvoice, getCryptoConfig, getCryptoInvoiceStatus } from "@/lib/nowpayments.functions";
 import { CreditCard, Ban } from "lucide-react";
 import { getOutOfHoursMessage } from "@/lib/business-hours";
@@ -3039,12 +3039,35 @@ function PaypalPanel({ orderId, amountCents, canPay, onChange }: { orderId: stri
   const getConfig = useServerFn(getPaypalWebConfig);
   const createFn = useServerFn(createPaypalOrder);
   const captureFn = useServerFn(capturePaypalOrder);
+  const reconcileFn = useServerFn(reconcilePaypalOrder);
 
   const loadPayment = async () => {
     const { data } = await supabase.from("order_payments").select("*").eq("order_id", orderId).maybeSingle();
     setPaid(data);
   };
   useEffect(() => { loadPayment(); }, [orderId]);
+
+  // Auto-reconcile with PayPal in case the buyer approved but the capture
+  // call never completed (closed tab, network drop). Runs on mount and
+  // every 15s while the panel is visible and the order isn't already paid.
+  useEffect(() => {
+    let cancelled = false;
+    const tick = async () => {
+      try {
+        const res = await reconcileFn({ data: { orderId } });
+        if (cancelled) return;
+        if (res.paid) {
+          await loadPayment();
+          await onChange?.();
+        }
+      } catch {/* ignore */}
+    };
+    tick();
+    const h = window.setInterval(() => {
+      if (!paid?.status || String(paid.status).toUpperCase() !== "COMPLETED") tick();
+    }, 15000);
+    return () => { cancelled = true; window.clearInterval(h); };
+  }, [orderId, paid?.status]);
 
   useEffect(() => {
     let cancelled = false;
