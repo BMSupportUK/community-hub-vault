@@ -932,7 +932,7 @@ function TicketDetail({
     setOrderBusy(true);
     try {
       const profileLink = linkedOrderUsername
-        ? ` ${window.location.origin}/u/${linkedOrderUsername}?tab=creds`
+        ? `\n\n🔗 [Click here to view your Credentials](${window.location.origin}/u/${linkedOrderUsername}?tab=creds)`
         : "";
       await postTicketSystem(
         `🛠️ We are currently setting up your account. Your login details will appear in the Credentials section of your profile soon.${profileLink}`,
