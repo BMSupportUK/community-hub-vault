@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 const baseUrl = () =>
   (process.env.SQUARE_ENVIRONMENT ?? "production").toLowerCase() === "sandbox"
@@ -176,4 +177,99 @@ export const chargeOrderWithSquare = createServerFn({ method: "POST" })
       last4,
       paymentId: payment.id,
     };
+  });
+
+/**
+ * Admin-only reconciliation: scans recent Square payments and matches them
+ * against an internal order by `reference_id`. If a COMPLETED payment is
+ * found for an unpaid order, upserts `order_payments` and marks paid.
+ * Safety net for the rare case where Square charged but our follow-up DB
+ * writes failed.
+ */
+export const reconcileSquareOrder = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => z.object({ orderId: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    // Admin-only
+    const { data: roles } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId)
+      .in("role", ["admin", "management"]);
+    if (!roles || roles.length === 0) throw new Error("Admin access required");
+
+    const { data: order } = await supabaseAdmin
+      .from("orders")
+      .select("id,total_cents,paid_at,user_id")
+      .eq("id", data.orderId)
+      .maybeSingle();
+    if (!order) throw new Error("Order not found");
+    if (order.paid_at) return { paid: true, status: "already_paid" as const };
+
+    // Look back 30 days to catch anything reasonable.
+    const begin = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+    let cursor: string | undefined;
+    let match: any = null;
+    for (let page = 0; page < 5 && !match; page++) {
+      const qs = new URLSearchParams({
+        begin_time: begin,
+        sort_order: "DESC",
+        limit: "100",
+        ...(cursor ? { cursor } : {}),
+      });
+      const res: any = await sqFetch(`/v2/payments?${qs.toString()}`);
+      const payments: any[] = Array.isArray(res?.payments) ? res.payments : [];
+      match = payments.find(
+        (p) => p.reference_id === order.id && (p.status === "COMPLETED" || p.status === "APPROVED"),
+      );
+      cursor = res?.cursor;
+      if (!cursor) break;
+    }
+    if (!match) return { paid: false, status: "no_match" as const };
+
+    const amountOk = Number(match?.amount_money?.amount ?? 0) === Number(order.total_cents ?? 0);
+    if (!amountOk) return { paid: false, status: "amount_mismatch" as const };
+
+    const cardBrand: string | undefined = match?.card_details?.card?.card_brand ?? undefined;
+    const last4: string | undefined = match?.card_details?.card?.last_4 ?? undefined;
+    const receiptUrl: string | undefined = match?.receipt_url ?? undefined;
+
+    await supabaseAdmin.from("order_payments").upsert(
+      {
+        order_id: order.id,
+        provider: "square",
+        provider_payment_id: match.id,
+        square_payment_id: match.id,
+        status: match.status,
+        amount_cents: order.total_cents ?? 0,
+        currency: match?.amount_money?.currency ?? "GBP",
+        card_brand: cardBrand,
+        last_4: last4,
+        receipt_url: receiptUrl,
+        created_by: userId,
+      },
+      { onConflict: "order_id" },
+    );
+
+    const { error: paidErr } = await supabaseAdmin.rpc(
+      "mark_order_paid" as never,
+      { p_order_id: order.id } as never,
+    );
+    if (paidErr) {
+      await supabaseAdmin
+        .from("orders")
+        .update({ paid_at: new Date().toISOString(), paid_by: userId })
+        .eq("id", order.id);
+    }
+
+    if (order.user_id) {
+      await supabaseAdmin.from("order_messages").insert({
+        order_id: order.id,
+        sender_id: order.user_id,
+        content: `✅ Card payment reconciled with Square${cardBrand && last4 ? ` (${cardBrand} •••• ${last4})` : ""}.`,
+      });
+    }
+
+    return { paid: true, status: "paid" as const, cardBrand, last4 };
   });
