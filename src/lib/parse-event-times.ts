@@ -361,12 +361,12 @@ export function findEventTimes(html: string, viewerTz: string): EventTime[] {
 }
 
 /**
- * Walk the (HTML) body of a sports guide and return the earliest event
- * instant (UTC ms) it can parse, or null if no recognisable event time is
- * found. Used to schedule auto-clear relative to the first listed event
- * rather than the edit time.
+ * Walk the (HTML) body of a sports guide and return either the earliest
+ * or latest event instant (UTC ms) it can parse, or null if no recognisable
+ * event time is found. Used to schedule auto-clear relative to a listed
+ * event rather than the edit time.
  */
-export function findEarliestEventUtcMs(html: string, defaultZone = "GMT"): number | null {
+function findEventUtcMs(html: string, mode: "earliest" | "latest", defaultZone = "GMT"): number | null {
   const normalized = html
     .replace(/<br\s*\/?>/gi, "\n")
     .replace(/<\/(div|p|li|tr|h[1-6]|section|article)>/gi, "\n")
@@ -383,7 +383,7 @@ export function findEarliestEventUtcMs(html: string, defaultZone = "GMT"): numbe
     .map((line) => line.replace(/\s+/g, " ").trim())
     .filter(Boolean);
   const viewerTz = "Etc/UTC";
-  let earliest: number | null = null;
+  let best: number | null = null;
   let currentDate: string | null = null;
   let currentDateLabel: string | null = null;
   for (const line of lines) {
@@ -402,10 +402,19 @@ export function findEarliestEventUtcMs(html: string, defaultZone = "GMT"): numbe
     );
     for (const m of matches) {
       if (!Number.isFinite(m.utcMs)) continue;
-      if (earliest === null || m.utcMs < earliest) earliest = m.utcMs;
+      if (best === null) best = m.utcMs;
+      else if (mode === "earliest" ? m.utcMs < best : m.utcMs > best) best = m.utcMs;
     }
   }
-  return earliest;
+  return best;
+}
+
+export function findEarliestEventUtcMs(html: string, defaultZone = "GMT"): number | null {
+  return findEventUtcMs(html, "earliest", defaultZone);
+}
+
+export function findLatestEventUtcMs(html: string, defaultZone = "GMT"): number | null {
+  return findEventUtcMs(html, "latest", defaultZone);
 }
 
 function parseGuideDate(text: string): string | null {
