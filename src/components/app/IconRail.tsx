@@ -297,8 +297,8 @@ function RailIcon({
             className={cn(
               "group relative size-12 rounded-2xl flex items-center justify-center transition-all",
               active
-                ? "bg-primary text-primary-foreground rounded-xl shadow-glow"
-                : "bg-surface-2 text-muted-foreground hover:bg-primary hover:text-primary-foreground hover:rounded-xl",
+                ? "bg-gradient-to-br from-primary to-primary-glow text-primary-foreground rounded-xl shadow-glow ring-1 ring-primary-glow/60"
+                : "bg-primary/15 text-primary-glow hover:bg-gradient-to-br hover:from-primary hover:to-primary-glow hover:text-primary-foreground hover:rounded-xl hover:shadow-glow",
               accent && !active && "ring-1 ring-primary/40",
             )}
           >
@@ -338,7 +338,7 @@ function RailButton({
             aria-label={label}
             className={cn(
               "group relative size-12 rounded-2xl flex items-center justify-center transition-all",
-              "bg-surface-2 text-muted-foreground hover:bg-primary hover:text-primary-foreground hover:rounded-xl",
+            "bg-primary/15 text-primary-glow hover:bg-gradient-to-br hover:from-primary hover:to-primary-glow hover:text-primary-foreground hover:rounded-xl hover:shadow-glow",
             )}
           >
             <Icon className="size-5" />
