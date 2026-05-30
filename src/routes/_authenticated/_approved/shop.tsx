@@ -1370,7 +1370,7 @@ function Storefront() {
           await supabase.from("ticket_messages").insert({
             ticket_id: ticket.id,
             sender_id: user.id,
-            content: `💳 How would you like to pay for this order (${fmt(finalTotal)})?\n\nStep 1 — Select your payment method using the "Pay" button at the top of this ticket: Square (card / Apple Pay / Google Pay), Stripe (card), or USDT.\n\nStep 2 — Once you've sent payment, reply here with your transaction reference / ID so our team can match it against our payment records and mark the order as paid.`,
+            content: `💳 How would you like to pay for this order (${fmt(finalTotal)})?\n\nStep 1 — Select your payment method using the "Pay" button at the top of this ticket: Square (card / Apple Pay / Google Pay) or USDT.\n\nStep 2 — Once you've sent payment, reply here with your transaction reference / ID so our team can match it against our payment records and mark the order as paid.`,
           } as never);
           const oohMsg = await getOutOfHoursMessage();
           if (oohMsg) {
@@ -3958,21 +3958,12 @@ export function PayOrderDialog({
             <div className="text-sm text-muted-foreground">Total {fmt(amountCents)}</div>
           </DialogHeader>
           <Tabs defaultValue="square" className="pt-2">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="square">Square</TabsTrigger>
-              <TabsTrigger value="stripe">Stripe</TabsTrigger>
               <TabsTrigger value="usdt">USDT</TabsTrigger>
             </TabsList>
             <TabsContent value="square" className="mt-3">
               <SquareCardPanel
-                orderId={orderId}
-                amountCents={amountCents}
-                canPay={true}
-                onChange={handleChange}
-              />
-            </TabsContent>
-            <TabsContent value="stripe" className="mt-3">
-              <StripePanel
                 orderId={orderId}
                 amountCents={amountCents}
                 canPay={true}
