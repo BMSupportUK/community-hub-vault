@@ -213,7 +213,9 @@ export const confirmStripePayment = createServerFn({ method: "POST" })
     const existingPayment = await getOrderPayment(String(order.id));
     if (existingPayment) {
       if (FINAL_PAYMENT_STATUSES.has(String(existingPayment.status ?? ""))) {
-        return { status: "already_paid" as const };
+        if (existingPayment.provider_payment_id !== data.paymentIntentId) {
+          throw new Error("Payment is already recorded for this order. Refresh the order status.");
+        }
       }
       if (existingPayment.provider && existingPayment.provider !== "stripe") {
         throw new Error(`This order already has a ${existingPayment.provider} payment in progress`);
