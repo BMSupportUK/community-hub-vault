@@ -2774,6 +2774,7 @@ export function PayOrderDialog({ orderId, amountCents, onChange }: { orderId: st
   // so by the time the user clicks Pay the SDK is already cached.
   const prewarmSquare = useServerFn(getSquareWebConfig);
   const prewarmPaypal = useServerFn(getPaypalWebConfig);
+  const prewarmStripe = useServerFn(getStripeWebConfig);
   useEffect(() => {
     const idle = (cb: () => void) =>
       (window as any).requestIdleCallback?.(cb, { timeout: 1500 }) ?? window.setTimeout(cb, 200);
@@ -2783,6 +2784,9 @@ export function PayOrderDialog({ orderId, amountCents, onChange }: { orderId: st
       });
       prewarmPaypalConfig(prewarmPaypal).then((cfg) => {
         if (cfg) loadPaypalSdk(cfg.clientId, cfg.currency).catch(() => {});
+      });
+      prewarmStripeConfig(prewarmStripe).then(() => {
+        loadStripeSdk().catch(() => {});
       });
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -2804,12 +2808,16 @@ export function PayOrderDialog({ orderId, amountCents, onChange }: { orderId: st
             <div className="text-sm text-muted-foreground">Total {fmt(amountCents)}</div>
           </DialogHeader>
           <Tabs defaultValue="square" className="pt-2">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="square">Square</TabsTrigger>
+              <TabsTrigger value="stripe">Stripe</TabsTrigger>
               <TabsTrigger value="usdt">USDT</TabsTrigger>
             </TabsList>
             <TabsContent value="square" className="mt-3">
               <SquareCardPanel orderId={orderId} amountCents={amountCents} canPay={true} onChange={handleChange} />
+            </TabsContent>
+            <TabsContent value="stripe" className="mt-3">
+              <StripePanel orderId={orderId} amountCents={amountCents} canPay={true} onChange={handleChange} />
             </TabsContent>
             <TabsContent value="usdt" className="mt-3">
               <CryptoPanel orderId={orderId} amountCents={amountCents} canPay={true} onChange={handleChange} />
