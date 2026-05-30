@@ -1151,6 +1151,102 @@ function TicketDetail({
     return p?.display_name || p?.username || (id === currentUserId ? "You" : "User");
   };
 
+  const orderPanelInner = linkedOrder ? (
+    <div className="space-y-2 text-white text-xs">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <div className="font-semibold">Order #{linkedOrder.id.slice(0, 8)}</div>
+          <div className="opacity-80">
+            Status: {linkedOrder.status}
+            {linkedOrder.paid_at ? " · Paid" : ""}
+          </div>
+        </div>
+        <div className="text-right font-semibold">
+          {(linkedOrder.total_cents / 100).toLocaleString(undefined, { style: "currency", currency: "GBP" })}
+        </div>
+      </div>
+      <OrderProgressStrip order={linkedOrder} />
+      {orderIsUnpaid && linkedOrder.user_id === currentUserId ? (
+        <div className="[&>button]:!bg-gradient-to-r [&>button]:!from-emerald-400 [&>button]:!via-emerald-500 [&>button]:!to-emerald-600 [&>button]:!text-white [&>button]:!font-bold [&>button]:!text-base [&>button]:!py-3.5 [&>button]:!rounded-xl [&>button]:!shadow-[0_10px_30px_-8px_rgba(16,185,129,0.7),0_0_0_1px_rgba(255,255,255,0.15)_inset] [&>button]:!ring-2 [&>button]:!ring-emerald-300/60 [&>button]:hover:!brightness-110 [&>button]:hover:!shadow-[0_14px_40px_-8px_rgba(16,185,129,0.9),0_0_0_1px_rgba(255,255,255,0.2)_inset] [&>button]:!transition-all [&>button]:!tracking-wide [&>button]:animate-[pulse_2.4s_ease-in-out_infinite] [&>button>svg]:!size-5">
+          <PayOrderDialog
+            orderId={linkedOrder.id}
+            amountCents={linkedOrder.total_cents}
+            onChange={loadLinkedOrder}
+          />
+        </div>
+      ) : linkedOrder.paid_at ? (
+        <div className="text-emerald-200">✓ Payment received — thank you!</div>
+      ) : null}
+      {!linkedOrder.completed_at && linkedOrder.status !== "cancelled" && (
+        <div className="flex flex-wrap gap-2 pt-1">
+          {!linkedOrder.paid_at && linkedOrder.user_id === currentUserId && (
+            <button
+              onClick={orderCancel}
+              disabled={orderBusy}
+              title="Cancel your order"
+              className="px-2.5 py-1 rounded-md bg-red-500/20 text-red-50 text-xs font-medium flex items-center gap-1 hover:bg-red-500/30 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <Ban className="size-3.5" /> Cancel Order
+            </button>
+          )}
+          {isAdmin && (
+            <>
+              {linkedOrder.customer_type === "existing" ? (
+                <button
+                  onClick={orderExtendSubscription}
+                  disabled={orderBusy || !linkedOrder.paid_at || extendSubMessageExists}
+                  title={
+                    !linkedOrder.paid_at
+                      ? "Waiting for payment confirmation"
+                      : extendSubMessageExists
+                        ? "Subscription extension already sent"
+                        : undefined
+                  }
+                  className="px-2.5 py-1 rounded-md bg-violet-500/20 text-violet-50 text-xs font-medium hover:bg-violet-500/30 disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  🔄 Extend Subscription
+                </button>
+              ) : (
+                <button
+                  onClick={orderSettingUpAccount}
+                  disabled={orderBusy || !linkedOrder.paid_at || accountSetupMessageExists}
+                  title={
+                    !linkedOrder.paid_at
+                      ? "Waiting for payment confirmation"
+                      : accountSetupMessageExists
+                        ? "Account setup already sent"
+                        : undefined
+                  }
+                  className="px-2.5 py-1 rounded-md bg-blue-500/20 text-blue-50 text-xs font-medium hover:bg-blue-500/30 disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  🛠️ Setting Up Account
+                </button>
+              )}
+              <button
+                onClick={orderCompleteSale}
+                disabled={orderBusy || !linkedOrder.paid_at || !accountSetupStarted || !!linkedOrder.completed_at}
+                title={
+                  !linkedOrder.paid_at
+                    ? "Waiting for payment confirmation"
+                    : !accountSetupStarted
+                      ? (linkedOrder.customer_type === "existing"
+                          ? "Extend subscription first"
+                          : "Set up account first")
+                      : !!linkedOrder.completed_at
+                        ? "Sale already completed"
+                        : undefined
+                }
+                className="px-2.5 py-1 rounded-md bg-emerald-500/25 text-emerald-50 text-xs font-medium hover:bg-emerald-500/35 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                ✅ Sale Complete
+              </button>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  ) : null;
+
   return (
     <div className="flex-1 flex flex-col lg:flex-row min-h-0">
       <div className="flex-1 flex flex-col min-h-0">
