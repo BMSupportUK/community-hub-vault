@@ -27,13 +27,14 @@ function toForm(obj: Record<string, any>, prefix = ""): string {
 
 async function stripeFetch(
   path: string,
-  init: { method?: string; body?: Record<string, any> } = {},
+  init: { method?: string; body?: Record<string, any>; idempotencyKey?: string } = {},
 ) {
   const res = await fetch(`${STRIPE_API}${path}`, {
     method: init.method ?? "GET",
     headers: {
       Authorization: `Bearer ${stripeKey()}`,
       "Content-Type": "application/x-www-form-urlencoded",
+      ...(init.idempotencyKey ? { "Idempotency-Key": init.idempotencyKey } : {}),
     },
     body: init.body ? toForm(init.body) : undefined,
   });
@@ -61,6 +62,19 @@ async function assertAdminOrOrderOwner(supabase: any, userId: string, orderId: s
   if (!order || order.user_id !== userId) throw new Error("Not authorized");
 }
 
+const FINAL_PAYMENT_STATUSES = new Set(["COMPLETED", "completed", "finished"]);
+
+async function getOrderPayment(orderId: string) {
+  const { data } = await supabaseAdmin
+    .from("order_payments")
+    .select(
+      "provider,provider_payment_id,status,amount_cents,currency,card_brand,last_4,receipt_url",
+    )
+    .eq("order_id", orderId)
+    .maybeSingle();
+  return data as any | null;
+}
+
 export const getStripeWebConfig = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async () => {
@@ -86,6 +100,35 @@ export const createStripePaymentIntent = createServerFn({ method: "POST" })
     if (!order.total_cents || order.total_cents <= 0)
       throw new Error("Order total must be greater than zero");
 
+    const existingPayment = await getOrderPayment(String(order.id));
+    if (existingPayment) {
+      if (FINAL_PAYMENT_STATUSES.has(String(existingPayment.status ?? ""))) {
+        throw new Error("Order is already paid");
+      }
+      if (existingPayment.provider && existingPayment.provider !== "stripe") {
+        throw new Error(`This order already has a ${existingPayment.provider} payment in progress`);
+      }
+      if (existingPayment.provider_payment_id) {
+        const existingPi: any = await stripeFetch(
+          `/payment_intents/${encodeURIComponent(existingPayment.provider_payment_id)}`,
+        );
+        if (existingPi?.status === "succeeded") {
+          throw new Error("Payment has already completed. Refresh the order status.");
+        }
+        if (
+          existingPi?.client_secret &&
+          existingPi?.status !== "canceled" &&
+          Number(existingPi?.amount) === Number(order.total_cents) &&
+          String(existingPi?.currency).toLowerCase() === "gbp"
+        ) {
+          return {
+            clientSecret: existingPi.client_secret as string,
+            paymentIntentId: existingPi.id as string,
+          };
+        }
+      }
+    }
+
     // Lookup customer email + name for fraud detection (Stripe flags missing values)
     let customerEmail: string | undefined;
     let customerName: string | undefined;
@@ -93,8 +136,7 @@ export const createStripePaymentIntent = createServerFn({ method: "POST" })
       const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(userId);
       customerEmail = authUser?.user?.email ?? undefined;
       const meta = (authUser?.user?.user_metadata ?? {}) as Record<string, any>;
-      customerName =
-        meta.full_name || meta.name || meta.display_name || undefined;
+      customerName = meta.full_name || meta.name || meta.display_name || undefined;
     } catch {}
     if (!customerName) {
       try {
@@ -113,6 +155,7 @@ export const createStripePaymentIntent = createServerFn({ method: "POST" })
 
     const pi = await stripeFetch("/payment_intents", {
       method: "POST",
+      idempotencyKey: `order-${String(order.id)}-${Number(order.total_cents)}`,
       body: {
         amount: order.total_cents,
         currency: "gbp",
@@ -127,6 +170,20 @@ export const createStripePaymentIntent = createServerFn({ method: "POST" })
       },
     });
     if (!pi?.client_secret) throw new Error("Stripe did not return a client_secret");
+    const { error: paymentTrackErr } = await supabaseAdmin.from("order_payments").upsert(
+      {
+        order_id: String(order.id),
+        provider: "stripe",
+        provider_payment_id: pi.id,
+        square_payment_id: pi.id,
+        status: "PENDING",
+        amount_cents: order.total_cents,
+        currency: "GBP",
+        created_by: userId,
+      },
+      { onConflict: "order_id" },
+    );
+    if (paymentTrackErr) throw new Error(paymentTrackErr.message);
     return { clientSecret: pi.client_secret as string, paymentIntentId: pi.id as string };
   });
 
@@ -153,6 +210,26 @@ export const confirmStripePayment = createServerFn({ method: "POST" })
     if (order.paid_at) return { status: "already_paid" as const };
     const totalCents = order.total_cents ?? 0;
     if (totalCents <= 0) throw new Error("Order total must be greater than zero");
+
+    const existingPayment = await getOrderPayment(String(order.id));
+    if (existingPayment) {
+      if (FINAL_PAYMENT_STATUSES.has(String(existingPayment.status ?? ""))) {
+        if (existingPayment.provider_payment_id !== data.paymentIntentId) {
+          throw new Error("Payment is already recorded for this order. Refresh the order status.");
+        }
+      }
+      if (existingPayment.provider && existingPayment.provider !== "stripe") {
+        throw new Error(`This order already has a ${existingPayment.provider} payment in progress`);
+      }
+      if (
+        existingPayment.provider_payment_id &&
+        existingPayment.provider_payment_id !== data.paymentIntentId
+      ) {
+        throw new Error(
+          "A different card payment is already in progress for this order. Refresh and try again.",
+        );
+      }
+    }
 
     const pi: any = await stripeFetch(
       `/payment_intents/${encodeURIComponent(data.paymentIntentId)}`,
@@ -183,6 +260,7 @@ export const confirmStripePayment = createServerFn({ method: "POST" })
         order_id: String(order.id),
         provider: "stripe",
         provider_payment_id: pi.id,
+        square_payment_id: pi.id,
         status: "COMPLETED",
         amount_cents: totalCents,
         currency: "GBP",
@@ -195,9 +273,13 @@ export const confirmStripePayment = createServerFn({ method: "POST" })
     );
     if (upErr) throw new Error(upErr.message);
 
-    const { error: paidErr } = await supabaseAdmin.rpc("mark_order_paid" as never, {
-      p_order_id: String(order.id),
-    } as never);
+    const { error: paidErr } = await supabaseAdmin.rpc(
+      "mark_order_paid" as never,
+      {
+        p_order_id: String(order.id),
+        p_transaction_id: pi.id,
+      } as never,
+    );
     if (paidErr) {
       const { error: fallbackPaidErr } = await supabaseAdmin
         .from("orders")
