@@ -1179,7 +1179,7 @@ function TicketDetail({
       ) : null}
       {!linkedOrder.completed_at && linkedOrder.status !== "cancelled" && (
         <div className="flex flex-wrap gap-2 pt-1">
-          {linkedOrder.user_id === currentUserId && (
+          {!linkedOrder.paid_at && linkedOrder.user_id === currentUserId && (
             <button
               onClick={orderCancel}
               disabled={orderBusy}
