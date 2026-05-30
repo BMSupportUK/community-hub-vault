@@ -677,20 +677,6 @@ function SportsGuidesPage() {
 
                 {activeCat && (subsByCat[activeCat]?.length ?? 0) > 0 && !search.trim() && (
                   <div className="flex flex-wrap gap-2 mb-5">
-                    <button
-                      onClick={() => setSubFilter(null)}
-                      className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition-colors ${subFilter === null ? "bg-gradient-to-r from-violet-600 to-blue-600 text-white border-transparent shadow-md shadow-purple-900/40" : "bg-purple-950/50 text-purple-100/80 border-purple-500/30 hover:bg-purple-800/60"}`}
-                    >
-                      <span className="inline-flex items-center gap-1.5">
-                        {(unreadCounts[activeCat] ?? 0) > 0 && (
-                          <span className="size-1.5 rounded-full bg-fuchsia-400 shadow-[0_0_6px_rgba(232,121,249,0.9)]" />
-                        )}
-                        All
-                      </span>
-                      <span className="ml-1.5 opacity-70">
-                        {blogs.filter((b) => b.category_id === activeCat).length}
-                      </span>
-                    </button>
                     {(subsByCat[activeCat] ?? []).map((sub) => {
                       const count = blogs.filter((b) => b.category_id === activeCat && b.subcategory === sub.name).length;
                       const active = subFilter === sub.name;
