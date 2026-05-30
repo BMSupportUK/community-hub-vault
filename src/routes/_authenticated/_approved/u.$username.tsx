@@ -948,7 +948,7 @@ function InviteCard({
         <div className="grid grid-cols-3 gap-2">
           <InviteStat label="Sent" value={info.sent} />
           <InviteStat label="Joined" value={info.used} />
-          <InviteStat label="Bonuses" value={info.bonusPaid} />
+          {isAdmin && <InviteStat label="Bonuses" value={info.bonusPaid} />}
         </div>
       )}
 
