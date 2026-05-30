@@ -2363,6 +2363,28 @@ function OrderDetailImpl({ orderId, isAdmin, onBack }: { orderId: string; isAdmi
     } finally { setBusy(false); }
   };
 
+  const reconcileSquare = useServerFn(reconcileSquareOrder);
+  const reconcileWithSquare = async () => {
+    if (!order || order.paid_at) return;
+    if (busy) return;
+    setBusy(true);
+    try {
+      const res = await reconcileSquare({ data: { orderId } });
+      if (res.paid) {
+        toast.success("Matched a Square payment — order marked paid");
+        await load();
+      } else if (res.status === "no_match") {
+        toast.message("No matching Square payment found in the last 30 days");
+      } else if (res.status === "amount_mismatch") {
+        toast.error("Found a Square payment, but the amount didn't match");
+      } else {
+        toast.message(String(res.status));
+      }
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally { setBusy(false); }
+  };
+
   const settingUpAccount = async () => {
     if (!order || order.status === "completed" || !!order.completed_at) {
       toast.error("This order is completed and cannot be changed.");
