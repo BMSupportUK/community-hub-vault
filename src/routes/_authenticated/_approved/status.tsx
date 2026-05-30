@@ -21,6 +21,8 @@ import statusHero from "@/assets/status-hero.webp";
 import statusBg from "@/assets/status-bg.jpg";
 import { PushNotificationsToggle } from "@/components/app/PushNotificationsToggle";
 import { useServerFn } from "@tanstack/react-start";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   createIncidentWithPush,
   postIncidentUpdateWithPush,
@@ -390,8 +392,9 @@ function IncidentCard({ incident, canManage, onEdit }: { incident: Incident; can
   };
 
   return (
-    <div className={`rounded-2xl border border-purple-500/30 bg-purple-950/60 backdrop-blur-md overflow-hidden shadow-[0_8px_30px_-12px_rgba(168,85,247,0.5)] hover:border-fuchsia-500/60 hover:shadow-[0_10px_40px_-12px_rgba(217,70,239,0.55)] transition-all flex flex-col ${open ? "ring-1 ring-fuchsia-500/40" : ""}`}>
-      <button onClick={() => setOpen((v) => !v)} className="w-full p-4 flex items-start gap-3 text-left hover:bg-purple-900/40 transition-colors">
+    <>
+    <div className={`rounded-2xl border border-purple-500/30 bg-purple-950/60 backdrop-blur-md overflow-hidden shadow-[0_8px_30px_-12px_rgba(168,85,247,0.5)] hover:border-fuchsia-500/60 hover:shadow-[0_10px_40px_-12px_rgba(217,70,239,0.55)] transition-all flex flex-col`}>
+      <button onClick={() => setOpen(true)} className="w-full p-4 flex items-start gap-3 text-left hover:bg-purple-900/40 transition-colors">
         <div className={`size-11 rounded-xl border grid place-items-center shrink-0 ${meta.classes}`}>
           <Icon className="size-5" />
         </div>
@@ -408,16 +411,56 @@ function IncidentCard({ incident, canManage, onEdit }: { incident: Incident; can
           </div>
         </div>
       </button>
+    </div>
 
-      {open && (
-        <div className="px-4 pb-4 border-t border-border space-y-4">
-          {incident.description && (
-            <p className="text-sm text-muted-foreground pt-3 whitespace-pre-wrap">{incident.description}</p>
-          )}
-          <AttachmentList items={incident.attachments ?? []} />
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogContent className="max-w-2xl w-[95vw] max-h-[90vh] overflow-y-auto bg-purple-950/95 border-purple-500/40 backdrop-blur-xl">
+        <DialogHeader>
+          <div className="flex items-start gap-3">
+            <div className={`size-11 rounded-xl border grid place-items-center shrink-0 ${meta.classes}`}>
+              <Icon className="size-5" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <DialogTitle className="font-display text-lg leading-snug text-left">{incident.title}</DialogTitle>
+              <span className={`mt-1.5 inline-flex text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded border ${meta.classes}`}>{meta.label}</span>
+              <div className="text-[11px] text-purple-200/70 mt-1.5">
+                Opened {new Date(incident.created_at).toLocaleString()}
+                {incident.resolved_at && (
+                  <span className="block">Resolved {new Date(incident.resolved_at).toLocaleString()}</span>
+                )}
+              </div>
+            </div>
+          </div>
+        </DialogHeader>
 
-          <div>
-            <h3 className="text-xs uppercase tracking-wider text-muted-foreground mb-2">Updates</h3>
+        <Tabs defaultValue="details" className="mt-2">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="details">Details</TabsTrigger>
+            <TabsTrigger value="updates">
+              Updates{updates && updates.length > 0 ? ` (${updates.length})` : ""}
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="details" className="space-y-4 mt-4">
+            {incident.description ? (
+              <p className="text-sm text-foreground/90 whitespace-pre-wrap">{incident.description}</p>
+            ) : (
+              <p className="text-sm text-muted-foreground italic">No description provided.</p>
+            )}
+            <AttachmentList items={incident.attachments ?? []} />
+            {canManage && (
+              <div className="flex justify-between pt-3 border-t border-border">
+                <button onClick={onEdit} className="text-xs text-muted-foreground hover:text-foreground">
+                  Edit issue details
+                </button>
+                <button onClick={remove} className="text-xs px-3 py-1.5 rounded-lg border border-border text-muted-foreground hover:text-destructive hover:border-destructive flex items-center gap-1">
+                  <Trash2 className="size-3" /> Delete
+                </button>
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="updates" className="space-y-4 mt-4">
             {updates === null ? (
               <div className="text-sm text-muted-foreground"><Loader2 className="size-4 animate-spin inline" /></div>
             ) : updates.length === 0 ? (
@@ -440,40 +483,32 @@ function IncidentCard({ incident, canManage, onEdit }: { incident: Incident; can
                 })}
               </ol>
             )}
-          </div>
 
-          {canManage && (
-            <div className="space-y-2 pt-2 border-t border-border">
-              <h3 className="text-xs uppercase tracking-wider text-muted-foreground">Post update</h3>
-              <div className="flex gap-2 flex-wrap">
-                {(Object.keys(STATUS_META) as IncidentStatus[]).map((s) => (
-                  <button
-                    key={s}
-                    onClick={() => setStatus(s)}
-                    className={`text-xs px-2.5 py-1 rounded border transition-colors ${
-                      status === s ? STATUS_META[s].classes : "border-border text-muted-foreground hover:text-foreground"
-                    }`}
-                  >
-                    {STATUS_META[s].label}
-                  </button>
-                ))}
-              </div>
-              <textarea
-                value={msg}
-                onChange={(e) => setMsg(e.target.value)}
-                rows={2}
-                placeholder="What's the latest?"
-                className="w-full rounded-lg bg-surface-2 border border-border px-3 py-2 text-sm outline-none focus:border-primary resize-none"
-              />
-              <FilePicker files={updateFiles} setFiles={setUpdateFiles} disabled={posting} />
-              <div className="flex justify-between">
-                <button onClick={onEdit} className="text-xs text-muted-foreground hover:text-foreground">
-                  Edit issue details
-                </button>
-                <div className="flex gap-2">
-                  <button onClick={remove} className="text-xs px-3 py-1.5 rounded-lg border border-border text-muted-foreground hover:text-destructive hover:border-destructive flex items-center gap-1">
-                    <Trash2 className="size-3" /> Delete
-                  </button>
+            {canManage && (
+              <div className="space-y-2 pt-3 border-t border-border">
+                <h3 className="text-xs uppercase tracking-wider text-muted-foreground">Post update</h3>
+                <div className="flex gap-2 flex-wrap">
+                  {(Object.keys(STATUS_META) as IncidentStatus[]).map((s) => (
+                    <button
+                      key={s}
+                      onClick={() => setStatus(s)}
+                      className={`text-xs px-2.5 py-1 rounded border transition-colors ${
+                        status === s ? STATUS_META[s].classes : "border-border text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      {STATUS_META[s].label}
+                    </button>
+                  ))}
+                </div>
+                <textarea
+                  value={msg}
+                  onChange={(e) => setMsg(e.target.value)}
+                  rows={3}
+                  placeholder="What's the latest?"
+                  className="w-full rounded-lg bg-surface-2 border border-border px-3 py-2 text-sm outline-none focus:border-primary resize-none"
+                />
+                <FilePicker files={updateFiles} setFiles={setUpdateFiles} disabled={posting} />
+                <div className="flex justify-end">
                   <button
                     onClick={post}
                     disabled={posting || (!msg.trim() && updateFiles.length === 0)}
@@ -483,11 +518,12 @@ function IncidentCard({ incident, canManage, onEdit }: { incident: Incident; can
                   </button>
                 </div>
               </div>
-            </div>
-          )}
-        </div>
-      )}
-    </div>
+            )}
+          </TabsContent>
+        </Tabs>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }
 
