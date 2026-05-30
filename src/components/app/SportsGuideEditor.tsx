@@ -23,6 +23,13 @@ type Blog = {
   refresh_notice: string | null;
   published: boolean;
   not_guaranteed: boolean;
+  subcategory: string | null;
+};
+
+// Categories that expose a sub-category select in the editor.
+const SUBCATEGORY_MAP: Record<string, string[]> = {
+  // Rugby Union
+  "74f3782c-fbee-4cf7-8773-fd419849c7cd": ["League", "Tournament", "Sports Pass"],
 };
 
 const DRAFT_KEY = "sports-guide-new-draft";
