@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Activity, CheckCircle2, Clock, MessageSquare } from "lucide-react";
+import { Activity, CheckCircle2, Clock, MessageSquare, Info } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { formatLastSeen } from "@/lib/relative-time";
+
 
 interface ServiceStatusBoxProps {
   hideButtons?: boolean;
@@ -140,6 +141,13 @@ export function ServiceStatusBox({ hideButtons }: ServiceStatusBoxProps = {}) {
                         {i.description && (
                           <div className="text-xs text-muted-foreground mt-1 line-clamp-2">{i.description}</div>
                         )}
+                        <Link
+                          to="/status"
+                          className="inline-flex items-center gap-1 mt-2 text-[10px] font-medium px-2 py-1 rounded-md bg-surface border border-border hover:border-fuchsia-400 hover:text-fuchsia-300 transition"
+                        >
+                          <Info className="size-3" />
+                          More info
+                        </Link>
                       </div>
                     </div>
 
