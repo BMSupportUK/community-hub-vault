@@ -2964,13 +2964,23 @@ function StripePanel({ orderId, amountCents, canPay, onChange }: { orderId: stri
     if (!stripeRef.current || !elementsRef.current || !paymentIntentIdRef.current) return;
     setLoading(true);
     try {
-      const { error } = await stripeRef.current.confirmPayment({
+      const { error, paymentIntent } = await stripeRef.current.confirmPayment({
         elements: elementsRef.current,
         confirmParams: { return_url: window.location.href },
         redirect: "if_required",
       });
-      if (error) throw new Error(error.message || "Card declined");
-      const res = await confirmPI({ data: { orderId, paymentIntentId: paymentIntentIdRef.current } });
+      let confirmedPaymentIntentId = paymentIntent?.id ?? paymentIntentIdRef.current;
+      if (error) {
+        const clientSecret = clientSecretRef.current;
+        if (!clientSecret) throw new Error(error.message || "Card declined");
+        const { paymentIntent: retrievedPaymentIntent, error: retrieveError } =
+          await stripeRef.current.retrievePaymentIntent(clientSecret);
+        if (retrievedPaymentIntent?.status !== "succeeded") {
+          throw new Error(error.message || retrieveError?.message || "Card declined");
+        }
+        confirmedPaymentIntentId = retrievedPaymentIntent.id;
+      }
+      const res = await confirmPI({ data: { orderId, paymentIntentId: confirmedPaymentIntentId } });
       toast.success(`Paid ${format(amountCents)}`);
       setPaid({
         status: res.status,
