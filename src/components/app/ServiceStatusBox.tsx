@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Activity, CheckCircle2, Clock, MessageSquare } from "lucide-react";
+import { Activity, CheckCircle2, Clock, MessageSquare, Info } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { formatLastSeen } from "@/lib/relative-time";
+
 
 interface ServiceStatusBoxProps {
   hideButtons?: boolean;
