@@ -765,6 +765,10 @@ function ProfilePage() {
                 onCreate={createInvite}
                 onCopy={copyInviteLink}
                 onDelete={deleteInvite}
+                isAdmin={isAdmin}
+                targetUserId={profile?.id ?? null}
+                inviterLabel={inviteInfo?.invitedBy?.display_name ?? inviteInfo?.invitedBy?.username ?? null}
+                onAssigned={load}
               />
             </TabsContent>
           )}
