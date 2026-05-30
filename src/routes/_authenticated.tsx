@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { isAdminUnlocked } from "@/lib/admin-unlock";
 import { IconRail } from "@/components/app/IconRail";
 import { Clocks } from "@/components/app/Clocks";
+import { MyWorkingStatus } from "@/components/app/MyWorkingStatus";
 import { TwoFactorPill } from "@/components/app/TwoFactorBanner";
 import { BreakEndingAlert } from "@/components/app/BreakEndingAlert";
 import { ShiftStartEndAlert } from "@/components/app/ShiftStartEndAlert";
@@ -154,7 +155,10 @@ function AuthLayout() {
           <div className="hidden xl:flex flex-1 min-w-0 px-3" />
             <TwoFactorPill />
             <DndDialogButton />
-            <div className="hidden lg:flex"><Clocks /></div>
+            <div className="hidden lg:flex items-center gap-2">
+              <Clocks />
+              <MyWorkingStatus />
+            </div>
         </header>
         <div className="flex-1 flex min-h-0">
           <Outlet />
