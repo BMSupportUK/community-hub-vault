@@ -46,6 +46,7 @@ function Highlight({ text, query }: { text: string; query: string }) {
 }
 
 type Category = { id: string; name: string; slug: string; sort_order: number };
+type Subcategory = { id: string; category_id: string; name: string; sort_order: number; is_default: boolean };
 type Blog = {
   id: string;
   category_id: string;
@@ -61,12 +62,6 @@ type Blog = {
   refresh_notice?: string | null;
   not_guaranteed?: boolean | null;
   subcategory?: string | null;
-};
-
-// Categories that support a second-level filter (pills) under the main category.
-const SUBCATEGORY_MAP: Record<string, string[]> = {
-  // Rugby Union
-  "74f3782c-fbee-4cf7-8773-fd419849c7cd": ["League", "Tournament", "Sports Pass"],
 };
 
 function SportsGuidesPage() {
@@ -86,6 +81,7 @@ function SportsGuidesPage() {
   const [subFilter, setSubFilter] = useState<string | null>(null);
   const [newCatName, setNewCatName] = useState("");
   const [addingCat, setAddingCat] = useState(false);
+  const [newSubName, setNewSubName] = useState<Record<string, string>>({});
   const dragCatId = useRef<string | null>(null);
   const dragBlogId = useRef<string | null>(null);
   const [listPage, setListPage] = useState(0);
@@ -115,9 +111,13 @@ function SportsGuidesPage() {
   const dataQuery = useQuery({
     queryKey,
     queryFn: async () => {
-      const [{ data: cats }, { data: bs }, { data: rs }, { data: prof }] = await Promise.all([
+      const [{ data: cats }, { data: bs }, { data: subs }, { data: rs }, { data: prof }] = await Promise.all([
         supabase.from("sports_categories").select("*").order("sort_order"),
         supabase.from("sports_blogs").select("*").order("sort_order").order("created_at", { ascending: false }),
+        supabase
+          .from("sports_subcategories")
+          .select("id, category_id, name, sort_order, is_default")
+          .order("sort_order"),
         user?.id
           ? supabase.from("sports_blog_reads").select("blog_id, read_at").eq("user_id", user.id)
           : Promise.resolve({ data: [] as { blog_id: string; read_at: string }[] }),
@@ -139,6 +139,7 @@ function SportsGuidesPage() {
       return {
         categories: (cats ?? []) as Category[],
         blogs: (bs ?? []) as Blog[],
+        subcategories: (subs ?? []) as Subcategory[],
         reads: map,
         baselineAt: baseline,
       };
@@ -152,6 +153,7 @@ function SportsGuidesPage() {
 
   const categories = dataQuery.data?.categories ?? [];
   const blogs = dataQuery.data?.blogs ?? [];
+  const subcategories = dataQuery.data?.subcategories ?? [];
   const reads = dataQuery.data?.reads ?? {};
   const baselineAt = dataQuery.data?.baselineAt ?? null;
   const load = () => queryClient.invalidateQueries({ queryKey });
@@ -190,11 +192,20 @@ function SportsGuidesPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [blogs, reads, baselineAt]);
 
+  const subsByCat = useMemo(() => {
+    const m: Record<string, Subcategory[]> = {};
+    for (const s of subcategories) {
+      if (!m[s.category_id]) m[s.category_id] = [];
+      m[s.category_id].push(s);
+    }
+    return m;
+  }, [subcategories]);
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return blogs.filter((b) => {
       if (!q && activeCat && b.category_id !== activeCat) return false;
-      if (!q && activeCat && SUBCATEGORY_MAP[activeCat] && subFilter && b.subcategory !== subFilter) return false;
+      if (!q && activeCat && subsByCat[activeCat]?.length && subFilter && b.subcategory !== subFilter) return false;
       if (!q) return true;
       return (
         b.title.toLowerCase().includes(q) ||
@@ -202,7 +213,7 @@ function SportsGuidesPage() {
         (b.body ?? "").toLowerCase().includes(q)
       );
     });
-  }, [blogs, activeCat, search, subFilter]);
+  }, [blogs, activeCat, search, subFilter, subsByCat]);
 
   // Global search results (across ALL categories) shown in the right panel,
   // Discord-style. Includes a snippet of where the term was matched.
@@ -269,6 +280,45 @@ function SportsGuidesPage() {
     if (error) return toast.error(error.message);
     if (activeCat === id) setActiveCat(null);
     toast.success("Category deleted");
+    load();
+  };
+
+  const addSubcategory = async (categoryId: string) => {
+    const name = (newSubName[categoryId] ?? "").trim();
+    if (!name) return;
+    const existing = subsByCat[categoryId] ?? [];
+    const nextOrder = ((existing[existing.length - 1]?.sort_order ?? 0) as number) + 10;
+    const { error } = await supabase
+      .from("sports_subcategories")
+      .insert({ category_id: categoryId, name, sort_order: nextOrder, is_default: existing.length === 0 });
+    if (error) return toast.error(error.message);
+    setNewSubName((m) => ({ ...m, [categoryId]: "" }));
+    toast.success("Sub-category added");
+    load();
+  };
+
+  const deleteSubcategory = async (id: string) => {
+    if (!confirm("Delete this sub-category?")) return;
+    const { error } = await supabase.from("sports_subcategories").delete().eq("id", id);
+    if (error) return toast.error(error.message);
+    toast.success("Sub-category deleted");
+    load();
+  };
+
+  const setDefaultSubcategory = async (categoryId: string, subId: string) => {
+    // Clear any existing default first (unique partial index allows only one).
+    const { error: clearErr } = await supabase
+      .from("sports_subcategories")
+      .update({ is_default: false })
+      .eq("category_id", categoryId)
+      .eq("is_default", true);
+    if (clearErr) return toast.error(clearErr.message);
+    const { error } = await supabase
+      .from("sports_subcategories")
+      .update({ is_default: true })
+      .eq("id", subId);
+    if (error) return toast.error(error.message);
+    toast.success("Default sub-category updated");
     load();
   };
 
@@ -546,7 +596,7 @@ function SportsGuidesPage() {
                   <h2 className="font-display text-2xl font-bold mb-4 bg-gradient-to-r from-violet-600 to-blue-600 bg-clip-text text-transparent">{activeCategory.name} Guides</h2>
                 )}
 
-                {activeCat && SUBCATEGORY_MAP[activeCat] && !search.trim() && (
+                {activeCat && (subsByCat[activeCat]?.length ?? 0) > 0 && !search.trim() && (
                   <div className="flex flex-wrap gap-2 mb-5">
                     <button
                       onClick={() => setSubFilter(null)}
@@ -557,16 +607,16 @@ function SportsGuidesPage() {
                         {blogs.filter((b) => b.category_id === activeCat).length}
                       </span>
                     </button>
-                    {SUBCATEGORY_MAP[activeCat].map((sub) => {
-                      const count = blogs.filter((b) => b.category_id === activeCat && b.subcategory === sub).length;
-                      const active = subFilter === sub;
+                    {(subsByCat[activeCat] ?? []).map((sub) => {
+                      const count = blogs.filter((b) => b.category_id === activeCat && b.subcategory === sub.name).length;
+                      const active = subFilter === sub.name;
                       return (
                         <button
-                          key={sub}
-                          onClick={() => setSubFilter(sub)}
+                          key={sub.id}
+                          onClick={() => setSubFilter(sub.name)}
                           className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition-colors ${active ? "bg-gradient-to-r from-fuchsia-600 to-purple-600 text-white border-transparent shadow-md shadow-purple-900/40" : "bg-purple-950/50 text-purple-100/80 border-purple-500/30 hover:bg-purple-800/60"}`}
                         >
-                          {sub}
+                          {sub.name}
                           <span className="ml-1.5 opacity-70">{count}</span>
                         </button>
                       );
@@ -718,6 +768,67 @@ function SportsGuidesPage() {
                     <div className="font-display font-semibold text-lg text-purple-50">{c.name}</div>
                     <div className="text-sm text-purple-200/70 mt-1">{counts[c.id] ?? 0} guide{(counts[c.id] ?? 0) === 1 ? "" : "s"}</div>
                   </button>
+                  {canManageCategories && (
+                    <div className="mt-4 pt-4 border-t border-purple-500/20">
+                      <div className="text-[11px] uppercase tracking-wider font-semibold text-fuchsia-300/80 mb-2">
+                        Sub-categories
+                      </div>
+                      <div className="space-y-1.5">
+                        {(subsByCat[c.id] ?? []).length === 0 && (
+                          <div className="text-xs text-purple-200/60 italic">None yet.</div>
+                        )}
+                        {(subsByCat[c.id] ?? []).map((sub) => (
+                          <div
+                            key={sub.id}
+                            className="flex items-center justify-between gap-2 rounded-md bg-purple-900/40 border border-purple-500/20 px-2 py-1.5"
+                          >
+                            <span className="text-sm text-purple-50 flex items-center gap-2 min-w-0">
+                              <span className="truncate">{sub.name}</span>
+                              {sub.is_default && (
+                                <span className="shrink-0 text-[9px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded bg-fuchsia-500/30 text-fuchsia-100 border border-fuchsia-400/40">
+                                  Default
+                                </span>
+                              )}
+                            </span>
+                            <div className="flex items-center gap-1 shrink-0">
+                              {!sub.is_default && (
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); setDefaultSubcategory(c.id, sub.id); }}
+                                  className="text-[10px] font-semibold px-2 py-1 rounded-md bg-purple-800/60 hover:bg-fuchsia-600 text-purple-100 hover:text-white transition"
+                                  title="Make default"
+                                >
+                                  Set default
+                                </button>
+                              )}
+                              <button
+                                onClick={(e) => { e.stopPropagation(); deleteSubcategory(sub.id); }}
+                                className="text-purple-300/70 hover:text-destructive p-1 rounded-md"
+                                title="Delete sub-category"
+                              >
+                                <Trash2 className="size-3.5" />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="mt-2 flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                        <Input
+                          value={newSubName[c.id] ?? ""}
+                          onChange={(e) => setNewSubName((m) => ({ ...m, [c.id]: e.target.value }))}
+                          onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addSubcategory(c.id); } }}
+                          placeholder="Add sub-category…"
+                          className="h-8 text-xs bg-purple-950/60 border-purple-500/30 text-purple-50 placeholder:text-purple-300/50"
+                        />
+                        <Button
+                          size="sm"
+                          onClick={(e) => { e.stopPropagation(); addSubcategory(c.id); }}
+                          className="h-8 px-2 bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white border-0"
+                        >
+                          <Plus className="size-3.5" />
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

@@ -2629,6 +2629,41 @@ export type Database = {
         }
         Relationships: []
       }
+      sports_subcategories: {
+        Row: {
+          category_id: string
+          created_at: string
+          id: string
+          is_default: boolean
+          name: string
+          sort_order: number
+        }
+        Insert: {
+          category_id: string
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          name: string
+          sort_order?: number
+        }
+        Update: {
+          category_id?: string
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          name?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sports_subcategories_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "sports_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       staff_notification_reads: {
         Row: {
           notification_id: string
