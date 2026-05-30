@@ -345,6 +345,24 @@ function SportsGuidesPage() {
     load();
   };
 
+  const moveSubcategory = async (categoryId: string, subId: string, dir: -1 | 1) => {
+    const list = [...(subsByCat[categoryId] ?? [])];
+    const idx = list.findIndex((s) => s.id === subId);
+    const next = idx + dir;
+    if (idx < 0 || next < 0 || next >= list.length) return;
+    [list[idx], list[next]] = [list[next], list[idx]];
+    const updated = list.map((s, i) => ({ ...s, sort_order: (i + 1) * 10 }));
+    queryClient.setQueryData<typeof dataQuery.data>(queryKey, (prev) => {
+      if (!prev) return prev;
+      const otherSubs = prev.subcategories.filter((s) => s.category_id !== categoryId);
+      return { ...prev, subcategories: [...otherSubs, ...updated] };
+    });
+    const { error } = await supabase
+      .from("sports_subcategories")
+      .upsert(updated.map((s) => ({ id: s.id, category_id: s.category_id, name: s.name, sort_order: s.sort_order, is_default: s.is_default })));
+    if (error) toast.error(error.message);
+  };
+
   const reorderCategories = async (fromId: string, toId: string) => {
     if (fromId === toId) return;
     const list = [...categories];
