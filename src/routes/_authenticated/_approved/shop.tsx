@@ -2348,7 +2348,7 @@ function OrderDetailImpl({ orderId, isAdmin, onBack }: { orderId: string; isAdmi
   };
 
   const markPaid = async () => {
-    if (!order || order.paid_at || order.status === "completed" || !!order.completed_at) return;
+    if (!order || order.paid_at || order.status === "completed" || !!order.completed_at || order.status !== "processing") return;
     if (busy) return;
     setBusy(true);
     try {
