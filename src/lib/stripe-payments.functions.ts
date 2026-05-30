@@ -100,10 +100,12 @@ export const confirmStripePayment = createServerFn({ method: "POST" })
       .from("orders").select("id,total_cents,paid_at").eq("id", data.orderId).single();
     if (orderErr || !order) throw new Error(orderErr?.message || "Order not found");
     if (order.paid_at) return { status: "already_paid" as const };
+    const totalCents = order.total_cents ?? 0;
+    if (totalCents <= 0) throw new Error("Order total must be greater than zero");
 
     const pi: any = await stripeFetch(`/payment_intents/${encodeURIComponent(data.paymentIntentId)}`);
     if (pi?.status !== "succeeded") throw new Error(`Stripe payment status: ${pi?.status ?? "unknown"}`);
-    if (Number(pi?.amount) !== Number(order.total_cents)) throw new Error("Stripe amount mismatch");
+    if (Number(pi?.amount) !== totalCents) throw new Error("Stripe amount mismatch");
     if (pi?.metadata?.order_id && pi.metadata.order_id !== String(order.id)) {
       throw new Error("Stripe order metadata mismatch");
     }
@@ -127,7 +129,7 @@ export const confirmStripePayment = createServerFn({ method: "POST" })
         provider: "stripe",
         provider_payment_id: pi.id,
         status: "COMPLETED",
-        amount_cents: order.total_cents,
+        amount_cents: totalCents,
         currency: "GBP",
         card_brand: cardBrand,
         last_4: last4,
@@ -155,7 +157,7 @@ export const confirmStripePayment = createServerFn({ method: "POST" })
         const content =
           `✅ Card payment captured via Stripe for order #${String(order.id).slice(0, 8)}` +
           `${cardBrand && last4 ? ` (${cardBrand} •••• ${last4})` : ""}` +
-          ` — £${(order.total_cents / 100).toFixed(2)}.` +
+          ` — £${(totalCents / 100).toFixed(2)}.` +
           `\nTransaction ref: ${pi.id}` +
           (receiptUrl ? `\nReceipt: ${receiptUrl}` : "");
         await supabase.from("ticket_messages").insert(
