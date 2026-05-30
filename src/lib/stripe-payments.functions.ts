@@ -165,11 +165,16 @@ export const confirmStripePayment = createServerFn({ method: "POST" })
     );
     if (upErr) throw new Error(upErr.message);
 
-    const { error: paidErr } = await supabaseAdmin
-      .from("orders")
-      .update({ paid_at: new Date().toISOString(), paid_by: userId })
-      .eq("id", String(order.id));
-    if (paidErr) throw new Error(paidErr.message);
+    const { error: paidErr } = await supabaseAdmin.rpc("mark_order_paid" as never, {
+      p_order_id: String(order.id),
+    } as never);
+    if (paidErr) {
+      const { error: fallbackPaidErr } = await supabaseAdmin
+        .from("orders")
+        .update({ paid_at: new Date().toISOString(), paid_by: userId })
+        .eq("id", String(order.id));
+      if (fallbackPaidErr) throw new Error(fallbackPaidErr.message);
+    }
 
     try {
       await supabaseAdmin.from("order_messages").insert({
