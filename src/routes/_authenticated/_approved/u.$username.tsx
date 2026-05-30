@@ -948,7 +948,7 @@ function InviteCard({
         <div className="grid grid-cols-3 gap-2">
           <InviteStat label="Sent" value={info.sent} />
           <InviteStat label="Joined" value={info.used} />
-          <InviteStat label="Bonuses" value={info.bonusPaid} />
+          {isAdmin && <InviteStat label="Bonuses" value={info.bonusPaid} />}
         </div>
       )}
 
@@ -1007,7 +1007,7 @@ function InviteCard({
           </div>
         )}
 
-        {(isOwner || showStats) && inviterLabel && (
+        {isAdmin && inviterLabel && (
           <div className="mt-2 flex items-center gap-1.5 text-xs">
             <Gift className="size-3.5 text-fuchsia-200" />
             <span className="text-white/80">Referral bonus</span>
@@ -1207,7 +1207,7 @@ function ReferralsPanel({
                     )}
                   </div>
 
-                  {used && (
+                  {used && isAdmin && (
                     <div
                       className={cn(
                         "inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-md border self-start",
