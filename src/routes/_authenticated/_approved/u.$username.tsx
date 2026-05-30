@@ -915,20 +915,24 @@ function InviteCard({
   if (!info) return null;
   const inviterLabel = info.invitedBy?.display_name ?? info.invitedBy?.username ?? null;
   const canAssign = !!isAdmin && !inviterLabel && !!targetUserId;
-  const [assignUsername, setAssignUsername] = useState("");
+  const [assignCode, setAssignCode] = useState("");
   const [assigning, setAssigning] = useState(false);
   const assignFn = useServerFn(assignReferrer);
   const submitAssign = async () => {
-    const uname = assignUsername.trim().replace(/^@/, "");
-    if (!uname || !targetUserId) return;
+    const code = assignCode.trim().toUpperCase();
+    if (!code || !targetUserId) return;
     setAssigning(true);
     try {
-      const res = await assignFn({ data: { userId: targetUserId, referrerUsername: uname } });
-      toast.success(`Referrer set to @${res.referrer.username ?? uname}`);
-      setAssignUsername("");
+      const res = await assignFn({ data: { userId: targetUserId, code } });
+      toast.success(
+        res.referrer.username
+          ? `Code ${res.code} redeemed — referrer @${res.referrer.username}`
+          : `Code ${res.code} redeemed`,
+      );
+      setAssignCode("");
       onAssigned?.();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Failed to assign referrer");
+      toast.error(e instanceof Error ? e.message : "Failed to redeem code");
     } finally {
       setAssigning(false);
     }
@@ -978,23 +982,23 @@ function InviteCard({
         {canAssign && (
           <div className="mt-3 pt-3 border-t border-white/15 space-y-2">
             <div className="text-[11px] uppercase tracking-wider text-amber-100/80">
-              Admin · Assign referrer
+              Admin · Redeem referral code
             </div>
             <div className="flex items-center gap-2">
               <input
-                value={assignUsername}
-                onChange={(e) => setAssignUsername(e.target.value)}
+                value={assignCode}
+                onChange={(e) => setAssignCode(e.target.value.toUpperCase())}
                 onKeyDown={(e) => { if (e.key === "Enter") submitAssign(); }}
-                placeholder="@username"
+                placeholder="Invite code"
                 disabled={assigning}
-                className="flex-1 min-w-0 px-2.5 py-1.5 rounded-md bg-black/30 border border-white/20 text-white text-sm placeholder:text-white/40 focus:outline-none focus:border-amber-200/60"
+                className="flex-1 min-w-0 px-2.5 py-1.5 rounded-md bg-black/30 border border-white/20 text-white text-sm font-mono tracking-widest placeholder:text-white/40 focus:outline-none focus:border-amber-200/60"
               />
               <button
                 onClick={submitAssign}
-                disabled={assigning || !assignUsername.trim()}
+                disabled={assigning || !assignCode.trim()}
                 className="px-3 py-1.5 rounded-md bg-white text-rose-600 text-xs font-semibold hover:bg-amber-50 disabled:opacity-60"
               >
-                {assigning ? "Saving…" : "Assign"}
+                {assigning ? "Saving…" : "Redeem"}
               </button>
             </div>
             <p className="text-[11px] text-white/60">
@@ -1067,20 +1071,24 @@ function ReferralsPanel({
   onAssigned?: () => void;
 }) {
   const canAssign = !!isAdmin && !inviterLabel && !!targetUserId;
-  const [assignUsername, setAssignUsername] = useState("");
+  const [assignCode, setAssignCode] = useState("");
   const [assigning, setAssigning] = useState(false);
   const assignFn = useServerFn(assignReferrer);
   const submitAssign = async () => {
-    const uname = assignUsername.trim().replace(/^@/, "");
-    if (!uname || !targetUserId) return;
+    const code = assignCode.trim().toUpperCase();
+    if (!code || !targetUserId) return;
     setAssigning(true);
     try {
-      const res = await assignFn({ data: { userId: targetUserId, referrerUsername: uname } });
-      toast.success(`Referrer set to @${res.referrer.username ?? uname}`);
-      setAssignUsername("");
+      const res = await assignFn({ data: { userId: targetUserId, code } });
+      toast.success(
+        res.referrer.username
+          ? `Code ${res.code} redeemed — referrer @${res.referrer.username}`
+          : `Code ${res.code} redeemed`,
+      );
+      setAssignCode("");
       onAssigned?.();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Failed to assign referrer");
+      toast.error(e instanceof Error ? e.message : "Failed to redeem code");
     } finally {
       setAssigning(false);
     }
@@ -1092,26 +1100,26 @@ function ReferralsPanel({
           <div className="mb-6 rounded-2xl border border-amber-300/40 bg-amber-500/10 backdrop-blur-xl p-5 text-white">
             <div className="flex items-center gap-2 mb-2">
               <UserPlus className="size-4 text-amber-200" />
-              <p className="text-xs uppercase tracking-wider text-amber-100">Admin · Assign referrer</p>
+              <p className="text-xs uppercase tracking-wider text-amber-100">Admin · Redeem referral code</p>
             </div>
             <p className="text-sm text-white/80 mb-3">
-              This user has no referrer on record. Enter the username of the member who referred them.
+              This user has no referrer on record. Enter the referral code the referrer gave them — we'll check it's still active and mark it used.
             </p>
             <div className="flex items-center gap-2 max-w-md">
               <input
-                value={assignUsername}
-                onChange={(e) => setAssignUsername(e.target.value)}
+                value={assignCode}
+                onChange={(e) => setAssignCode(e.target.value.toUpperCase())}
                 onKeyDown={(e) => { if (e.key === "Enter") submitAssign(); }}
-                placeholder="@username"
+                placeholder="Invite code"
                 disabled={assigning}
-                className="flex-1 min-w-0 px-3 py-2 rounded-md bg-black/30 border border-white/20 text-white text-sm placeholder:text-white/40 focus:outline-none focus:border-amber-200/60"
+                className="flex-1 min-w-0 px-3 py-2 rounded-md bg-black/30 border border-white/20 text-white text-sm font-mono tracking-widest placeholder:text-white/40 focus:outline-none focus:border-amber-200/60"
               />
               <button
                 onClick={submitAssign}
-                disabled={assigning || !assignUsername.trim()}
+                disabled={assigning || !assignCode.trim()}
                 className="px-4 py-2 rounded-md bg-white text-rose-600 text-sm font-semibold hover:bg-amber-50 disabled:opacity-60"
               >
-                {assigning ? "Saving…" : "Assign"}
+                {assigning ? "Saving…" : "Redeem"}
               </button>
             </div>
           </div>
