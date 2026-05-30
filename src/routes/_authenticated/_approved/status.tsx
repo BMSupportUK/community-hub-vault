@@ -409,6 +409,9 @@ function IncidentCard({ incident, canManage, onEdit }: { incident: Incident; can
               <span className="block">Resolved {new Date(incident.resolved_at).toLocaleString()}</span>
             )}
           </div>
+          <span className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-md bg-fuchsia-500/20 border border-fuchsia-400/40 text-fuchsia-100 hover:bg-fuchsia-500/30 transition-colors">
+            <Info className="size-3.5" /> More info
+          </span>
         </div>
       </button>
     </div>
