@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { isAdminUnlocked } from "@/lib/admin-unlock";
 import { IconRail } from "@/components/app/IconRail";
 import { Clocks } from "@/components/app/Clocks";
+import { MyWorkingStatus } from "@/components/app/MyWorkingStatus";
 import { TwoFactorPill } from "@/components/app/TwoFactorBanner";
 import { BreakEndingAlert } from "@/components/app/BreakEndingAlert";
 import { ShiftStartEndAlert } from "@/components/app/ShiftStartEndAlert";
