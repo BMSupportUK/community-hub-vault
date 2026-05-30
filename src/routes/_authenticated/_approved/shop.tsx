@@ -2369,7 +2369,7 @@ function OrderDetailImpl({ orderId, isAdmin, onBack }: { orderId: string; isAdmi
     if (busy) return;
     setBusy(true);
     try {
-      const res = await reconcileSquare({ data: { orderId } });
+      const res = await reconcileSquare({ data: { orderId } }) as { paid: boolean; status: string };
       if (res.paid) {
         toast.success("Matched a Square payment — order marked paid");
         await load();
