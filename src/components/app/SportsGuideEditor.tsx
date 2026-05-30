@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { findLatestEventUtcMs } from "@/lib/parse-event-times";
 
 type Category = { id: string; name: string };
+type Subcategory = { id: string; category_id: string; name: string; sort_order: number; is_default: boolean };
 type Blog = {
   id: string;
   category_id: string;
@@ -24,12 +25,6 @@ type Blog = {
   published: boolean;
   not_guaranteed: boolean;
   subcategory: string | null;
-};
-
-// Categories that expose a sub-category select in the editor.
-const SUBCATEGORY_MAP: Record<string, string[]> = {
-  // Rugby Union
-  "74f3782c-fbee-4cf7-8773-fd419849c7cd": ["League", "Tournament", "Sports Pass"],
 };
 
 const DRAFT_KEY = "sports-guide-new-draft";
@@ -163,6 +158,7 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [categories, setCategories] = useState<Category[]>([]);
+  const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
   const [editing, setEditing] = useState<Blog | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -196,11 +192,15 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
 
   useEffect(() => {
     (async () => {
-      const { data: cats } = await supabase
-        .from("sports_categories")
-        .select("id, name")
-        .order("sort_order");
+      const [{ data: cats }, { data: subs }] = await Promise.all([
+        supabase.from("sports_categories").select("id, name").order("sort_order"),
+        supabase
+          .from("sports_subcategories")
+          .select("id, category_id, name, sort_order, is_default")
+          .order("sort_order"),
+      ]);
       setCategories((cats ?? []) as Category[]);
+      setSubcategories((subs ?? []) as Subcategory[]);
       if (blogId) {
         const { data, error } = await supabase
           .from("sports_blogs")
@@ -223,9 +223,14 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
         } catch {
           draft = null;
         }
+        const initialCatId = draft?.category_id || cats?.[0]?.id || "";
+        const defaultSubForCat =
+          (subs ?? []).find(
+            (s) => s.category_id === initialCatId && s.is_default,
+          )?.name ?? null;
         setEditing({
           id: "",
-          category_id: draft?.category_id || cats?.[0]?.id || "",
+          category_id: initialCatId,
           title: draft?.title ?? "",
           excerpt: draft?.excerpt ?? "",
           body: draft?.body ?? DEFAULT_BODY_TEMPLATE,
@@ -234,7 +239,7 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
           refresh_notice: draft?.refresh_notice ?? "",
           published: draft?.published ?? true,
           not_guaranteed: draft?.not_guaranteed ?? false,
-          subcategory: draft?.subcategory ?? null,
+          subcategory: draft?.subcategory ?? defaultSubForCat,
         });
         if (draft && (draft.title || draft.body || draft.excerpt || draft.image_url)) {
           toast.message("Draft restored");
@@ -268,6 +273,7 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
       return;
     }
     setSaving(true);
+    const subsForCat = subcategories.filter((s) => s.category_id === editing.category_id);
     const payload: {
       category_id: string;
       title: string;
@@ -292,7 +298,7 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
       published: editing.published,
       not_guaranteed: editing.not_guaranteed,
       subcategory:
-        SUBCATEGORY_MAP[editing.category_id] && editing.subcategory
+        subsForCat.length > 0 && editing.subcategory
           ? editing.subcategory
           : null,
     };
@@ -330,6 +336,10 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
     close();
   };
 
+  const subsForEditing = editing
+    ? subcategories.filter((s) => s.category_id === editing.category_id)
+    : [];
+
   return (
     <div className="flex-1 flex flex-col overflow-hidden bg-gradient-to-br from-[#1a0b2e] via-[#2d1b4e] to-[#1a0b2e]">
       <header className="flex items-center justify-between gap-4 px-8 py-5 border-b border-purple-500/30 bg-purple-950/60 backdrop-blur shrink-0">
@@ -355,14 +365,20 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
               <select
                 className="mt-1 w-full bg-purple-950/50 border border-purple-500/30 text-purple-50 rounded-md px-3 py-2 text-sm"
                 value={editing.category_id}
-                onChange={(e) => setEditing({ ...editing, category_id: e.target.value })}
+                onChange={(e) => {
+                  const newCatId = e.target.value;
+                  const def =
+                    subcategories.find((s) => s.category_id === newCatId && s.is_default)
+                      ?.name ?? null;
+                  setEditing({ ...editing, category_id: newCatId, subcategory: def });
+                }}
               >
                 {categories.map((c) => (
                   <option key={c.id} value={c.id}>{c.name}</option>
                 ))}
               </select>
             </div>
-            {SUBCATEGORY_MAP[editing.category_id] && (
+            {subsForEditing.length > 0 && (
               <div>
                 <Label className="text-purple-100">Sub-category</Label>
                 <select
@@ -371,11 +387,13 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
                   onChange={(e) => setEditing({ ...editing, subcategory: e.target.value || null })}
                 >
                   <option value="">— None —</option>
-                  {SUBCATEGORY_MAP[editing.category_id].map((sub) => (
-                    <option key={sub} value={sub}>{sub}</option>
+                  {subsForEditing.map((sub) => (
+                    <option key={sub.id} value={sub.name}>
+                      {sub.name}{sub.is_default ? " (default)" : ""}
+                    </option>
                   ))}
                 </select>
-                <p className="text-[11px] text-purple-300/70 mt-1">Used to filter this guide under the category pills.</p>
+                <p className="text-[11px] text-purple-300/70 mt-1">Used to filter this guide under the category pills. Manage sub-categories in the Categories tab.</p>
               </div>
             )}
             <div>
