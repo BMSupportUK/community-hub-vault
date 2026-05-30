@@ -80,8 +80,6 @@ export function MentionText({
         <a
           key={key++}
           href={mdUrl}
-          target="_blank"
-          rel="noopener noreferrer"
           className="underline text-blue-600 hover:opacity-80"
         >
           {mdText}
@@ -93,8 +91,6 @@ export function MentionText({
         <a
           key={key++}
           href={href}
-          target="_blank"
-          rel="noopener noreferrer"
           className="underline text-blue-600 hover:opacity-80"
         >
           {bareUrl}
