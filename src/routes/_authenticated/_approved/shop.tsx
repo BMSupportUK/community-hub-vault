@@ -2401,7 +2401,7 @@ function OrderDetailImpl({ orderId, isAdmin, onBack }: { orderId: string; isAdmi
           .eq("id", order.user_id)
           .maybeSingle();
         const uname = (prof as { username?: string | null } | null)?.username;
-        if (uname) profileLink = ` ${window.location.origin}/u/${uname}?tab=creds`;
+        if (uname) profileLink = `\n\n🔗 [Click here to view your Credentials](${window.location.origin}/u/${uname}?tab=creds)`;
       }
       await sendSystem(`🛠️ We are currently setting up your account. Your login details will appear in the Credentials section of your profile soon.${profileLink}`);
       toast.success("Customer notified");
