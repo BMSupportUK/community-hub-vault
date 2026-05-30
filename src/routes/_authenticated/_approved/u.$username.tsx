@@ -664,7 +664,14 @@ function ProfilePage() {
                 </div>
                 <InfoCard label="Member since" value={new Date(profile.created_at).toLocaleDateString()} />
                 <InfoCard label="Roles" value={sortedRoles.join(", ") || "—"} />
-                <InviteCard info={inviteInfo} showStats={isOwner || isAdmin} isOwner={isOwner} />
+                <InviteCard
+                  info={inviteInfo}
+                  showStats={isOwner || isAdmin}
+                  isOwner={isOwner}
+                  isAdmin={isAdmin}
+                  targetUserId={profile?.id ?? null}
+                  onAssigned={load}
+                />
               </aside>
             </div>
           </TabsContent>
