@@ -72,6 +72,7 @@ import { Route as ApiPublicHooksUserNotificationPushRouteImport } from './routes
 import { Route as ApiPublicHooksSubscriptionExpiryRemindersRouteImport } from './routes/api/public/hooks/subscription-expiry-reminders'
 import { Route as ApiPublicHooksSquareInvoiceRouteImport } from './routes/api/public/hooks/square-invoice'
 import { Route as ApiPublicHooksScheduledRemindersRouteImport } from './routes/api/public/hooks/scheduled-reminders'
+import { Route as ApiPublicHooksRefreshStreamingPricesRouteImport } from './routes/api/public/hooks/refresh-streaming-prices'
 import { Route as ApiPublicHooksNowpaymentsRouteImport } from './routes/api/public/hooks/nowpayments'
 import { Route as ApiPublicHooksNotifyRouteImport } from './routes/api/public/hooks/notify'
 import { Route as ApiPublicHooksBackupOrdersRouteImport } from './routes/api/public/hooks/backup-orders'
@@ -441,6 +442,12 @@ const ApiPublicHooksScheduledRemindersRoute =
     path: '/api/public/hooks/scheduled-reminders',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksRefreshStreamingPricesRoute =
+  ApiPublicHooksRefreshStreamingPricesRouteImport.update({
+    id: '/api/public/hooks/refresh-streaming-prices',
+    path: '/api/public/hooks/refresh-streaming-prices',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksNowpaymentsRoute =
   ApiPublicHooksNowpaymentsRouteImport.update({
     id: '/api/public/hooks/nowpayments',
@@ -569,6 +576,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/backup-orders': typeof ApiPublicHooksBackupOrdersRoute
   '/api/public/hooks/notify': typeof ApiPublicHooksNotifyRoute
   '/api/public/hooks/nowpayments': typeof ApiPublicHooksNowpaymentsRoute
+  '/api/public/hooks/refresh-streaming-prices': typeof ApiPublicHooksRefreshStreamingPricesRoute
   '/api/public/hooks/scheduled-reminders': typeof ApiPublicHooksScheduledRemindersRoute
   '/api/public/hooks/square-invoice': typeof ApiPublicHooksSquareInvoiceRoute
   '/api/public/hooks/subscription-expiry-reminders': typeof ApiPublicHooksSubscriptionExpiryRemindersRoute
@@ -642,6 +650,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/backup-orders': typeof ApiPublicHooksBackupOrdersRoute
   '/api/public/hooks/notify': typeof ApiPublicHooksNotifyRoute
   '/api/public/hooks/nowpayments': typeof ApiPublicHooksNowpaymentsRoute
+  '/api/public/hooks/refresh-streaming-prices': typeof ApiPublicHooksRefreshStreamingPricesRoute
   '/api/public/hooks/scheduled-reminders': typeof ApiPublicHooksScheduledRemindersRoute
   '/api/public/hooks/square-invoice': typeof ApiPublicHooksSquareInvoiceRoute
   '/api/public/hooks/subscription-expiry-reminders': typeof ApiPublicHooksSubscriptionExpiryRemindersRoute
@@ -719,6 +728,7 @@ export interface FileRoutesById {
   '/api/public/hooks/backup-orders': typeof ApiPublicHooksBackupOrdersRoute
   '/api/public/hooks/notify': typeof ApiPublicHooksNotifyRoute
   '/api/public/hooks/nowpayments': typeof ApiPublicHooksNowpaymentsRoute
+  '/api/public/hooks/refresh-streaming-prices': typeof ApiPublicHooksRefreshStreamingPricesRoute
   '/api/public/hooks/scheduled-reminders': typeof ApiPublicHooksScheduledRemindersRoute
   '/api/public/hooks/square-invoice': typeof ApiPublicHooksSquareInvoiceRoute
   '/api/public/hooks/subscription-expiry-reminders': typeof ApiPublicHooksSubscriptionExpiryRemindersRoute
@@ -795,6 +805,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/backup-orders'
     | '/api/public/hooks/notify'
     | '/api/public/hooks/nowpayments'
+    | '/api/public/hooks/refresh-streaming-prices'
     | '/api/public/hooks/scheduled-reminders'
     | '/api/public/hooks/square-invoice'
     | '/api/public/hooks/subscription-expiry-reminders'
@@ -868,6 +879,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/backup-orders'
     | '/api/public/hooks/notify'
     | '/api/public/hooks/nowpayments'
+    | '/api/public/hooks/refresh-streaming-prices'
     | '/api/public/hooks/scheduled-reminders'
     | '/api/public/hooks/square-invoice'
     | '/api/public/hooks/subscription-expiry-reminders'
@@ -944,6 +956,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/backup-orders'
     | '/api/public/hooks/notify'
     | '/api/public/hooks/nowpayments'
+    | '/api/public/hooks/refresh-streaming-prices'
     | '/api/public/hooks/scheduled-reminders'
     | '/api/public/hooks/square-invoice'
     | '/api/public/hooks/subscription-expiry-reminders'
@@ -978,6 +991,7 @@ export interface RootRouteChildren {
   ApiPublicHooksBackupOrdersRoute: typeof ApiPublicHooksBackupOrdersRoute
   ApiPublicHooksNotifyRoute: typeof ApiPublicHooksNotifyRoute
   ApiPublicHooksNowpaymentsRoute: typeof ApiPublicHooksNowpaymentsRoute
+  ApiPublicHooksRefreshStreamingPricesRoute: typeof ApiPublicHooksRefreshStreamingPricesRoute
   ApiPublicHooksScheduledRemindersRoute: typeof ApiPublicHooksScheduledRemindersRoute
   ApiPublicHooksSquareInvoiceRoute: typeof ApiPublicHooksSquareInvoiceRoute
   ApiPublicHooksSubscriptionExpiryRemindersRoute: typeof ApiPublicHooksSubscriptionExpiryRemindersRoute
@@ -1430,6 +1444,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksScheduledRemindersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/refresh-streaming-prices': {
+      id: '/api/public/hooks/refresh-streaming-prices'
+      path: '/api/public/hooks/refresh-streaming-prices'
+      fullPath: '/api/public/hooks/refresh-streaming-prices'
+      preLoaderRoute: typeof ApiPublicHooksRefreshStreamingPricesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/nowpayments': {
       id: '/api/public/hooks/nowpayments'
       path: '/api/public/hooks/nowpayments'
@@ -1717,6 +1738,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksBackupOrdersRoute: ApiPublicHooksBackupOrdersRoute,
   ApiPublicHooksNotifyRoute: ApiPublicHooksNotifyRoute,
   ApiPublicHooksNowpaymentsRoute: ApiPublicHooksNowpaymentsRoute,
+  ApiPublicHooksRefreshStreamingPricesRoute:
+    ApiPublicHooksRefreshStreamingPricesRoute,
   ApiPublicHooksScheduledRemindersRoute: ApiPublicHooksScheduledRemindersRoute,
   ApiPublicHooksSquareInvoiceRoute: ApiPublicHooksSquareInvoiceRoute,
   ApiPublicHooksSubscriptionExpiryRemindersRoute:
