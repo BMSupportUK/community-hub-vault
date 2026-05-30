@@ -596,7 +596,7 @@ function SportsGuidesPage() {
                   <h2 className="font-display text-2xl font-bold mb-4 bg-gradient-to-r from-violet-600 to-blue-600 bg-clip-text text-transparent">{activeCategory.name} Guides</h2>
                 )}
 
-                {activeCat && SUBCATEGORY_MAP[activeCat] && !search.trim() && (
+                {activeCat && (subsByCat[activeCat]?.length ?? 0) > 0 && !search.trim() && (
                   <div className="flex flex-wrap gap-2 mb-5">
                     <button
                       onClick={() => setSubFilter(null)}
@@ -607,16 +607,16 @@ function SportsGuidesPage() {
                         {blogs.filter((b) => b.category_id === activeCat).length}
                       </span>
                     </button>
-                    {SUBCATEGORY_MAP[activeCat].map((sub) => {
-                      const count = blogs.filter((b) => b.category_id === activeCat && b.subcategory === sub).length;
-                      const active = subFilter === sub;
+                    {(subsByCat[activeCat] ?? []).map((sub) => {
+                      const count = blogs.filter((b) => b.category_id === activeCat && b.subcategory === sub.name).length;
+                      const active = subFilter === sub.name;
                       return (
                         <button
-                          key={sub}
-                          onClick={() => setSubFilter(sub)}
+                          key={sub.id}
+                          onClick={() => setSubFilter(sub.name)}
                           className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition-colors ${active ? "bg-gradient-to-r from-fuchsia-600 to-purple-600 text-white border-transparent shadow-md shadow-purple-900/40" : "bg-purple-950/50 text-purple-100/80 border-purple-500/30 hover:bg-purple-800/60"}`}
                         >
-                          {sub}
+                          {sub.name}
                           <span className="ml-1.5 opacity-70">{count}</span>
                         </button>
                       );
