@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 const baseUrl = () =>
   (process.env.PAYPAL_ENVIRONMENT ?? "live").toLowerCase() === "sandbox"
@@ -102,6 +103,39 @@ export const createPaypalOrder = createServerFn({ method: "POST" })
     });
 
     if (!res?.id) throw new Error("PayPal did not return an order ID");
+
+    // Track the PayPal order ID immediately so reconcilePaypalOrder can
+    // auto-capture later if the buyer approves but the browser never
+    // completes the capture call (closed tab, network drop, etc.). Don't
+    // downgrade an already-completed payment row.
+    try {
+      const { data: existingPay } = await supabaseAdmin
+        .from("order_payments")
+        .select("status")
+        .eq("order_id", String(order.id))
+        .maybeSingle();
+      const finalStatuses = new Set(["COMPLETED", "completed"]);
+      if (!existingPay || !finalStatuses.has(String(existingPay.status ?? ""))) {
+        await supabaseAdmin.from("order_payments").upsert(
+          {
+            order_id: String(order.id),
+            provider: "paypal",
+            provider_payment_id: String(res.id),
+            square_payment_id: String(res.id),
+            status: "CREATED",
+            amount_cents: order.total_cents ?? 0,
+            currency: "GBP",
+            card_brand: "PayPal",
+            last_4: null,
+            receipt_url: null,
+          },
+          { onConflict: "order_id" },
+        );
+      }
+    } catch (e) {
+      console.warn("[paypal] failed to track created order", e);
+    }
+
     return { paypalOrderId: res.id as string };
   });
 
@@ -217,4 +251,119 @@ export const capturePaypalOrder = createServerFn({ method: "POST" })
     }
 
     return { status, paypalOrderId: data.paypalOrderId, captureId: capture?.id ?? null, payerEmail, payerName };
+  });
+
+/**
+ * Actively asks PayPal for the latest status of a previously-created order
+ * and auto-captures it if the buyer approved but never completed capture.
+ * Safe to call repeatedly — no-ops once the internal order is marked paid.
+ */
+export const reconcilePaypalOrder = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => z.object({ orderId: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await assertAdminOrOrderOwner(supabase, userId, data.orderId);
+
+    const { data: order } = await supabase
+      .from("orders")
+      .select("id,total_cents,paid_at,user_id")
+      .eq("id", data.orderId)
+      .maybeSingle();
+    if (!order) return { paid: false, status: "not_found" as const };
+    if (order.paid_at) return { paid: true, status: "paid" as const };
+
+    const { data: pay } = await supabaseAdmin
+      .from("order_payments")
+      .select("provider,status,provider_payment_id")
+      .eq("order_id", data.orderId)
+      .maybeSingle();
+    if (!pay || pay.provider !== "paypal" || !pay.provider_payment_id) {
+      return { paid: false, status: pay?.status ?? "no_paypal_order" };
+    }
+
+    let token: string;
+    try { token = await getPaypalAccessToken(); }
+    catch (e) { console.warn("[paypal] reconcile auth failed", e); return { paid: false, status: pay.status }; }
+
+    const paypalOrderId = String(pay.provider_payment_id);
+    let res: any;
+    try { res = await ppFetch(`/v2/checkout/orders/${encodeURIComponent(paypalOrderId)}`, token); }
+    catch (e) { console.warn("[paypal] reconcile lookup failed", e); return { paid: false, status: pay.status }; }
+
+    let status: string = res?.status ?? "UNKNOWN";
+
+    // If buyer approved but capture never ran, capture now.
+    if (status === "APPROVED") {
+      try {
+        res = await ppFetch(
+          `/v2/checkout/orders/${encodeURIComponent(paypalOrderId)}/capture`,
+          token,
+          { method: "POST", body: "{}" },
+        );
+        status = res?.status ?? status;
+      } catch (e) {
+        console.warn("[paypal] reconcile capture failed", e);
+        return { paid: false, status };
+      }
+    }
+
+    if (status !== "COMPLETED") {
+      await supabaseAdmin
+        .from("order_payments")
+        .update({ status })
+        .eq("order_id", data.orderId);
+      return { paid: false, status };
+    }
+
+    // Validate captured amount, then mark paid via the same RPC path.
+    const pu = res?.purchase_units?.[0];
+    const capture = pu?.payments?.captures?.[0];
+    const capturedAmount = capture?.amount?.value;
+    const expected = ((order.total_cents ?? 0) / 100).toFixed(2);
+    if (capturedAmount && capturedAmount !== expected) {
+      console.warn(`[paypal] reconcile amount mismatch: ${capturedAmount} vs ${expected}`);
+      return { paid: false, status: "amount_mismatch" };
+    }
+    const payerEmail: string | undefined = res?.payer?.email_address ?? undefined;
+    const payerName: string | undefined = [res?.payer?.name?.given_name, res?.payer?.name?.surname]
+      .filter(Boolean).join(" ").trim() || undefined;
+
+    await supabaseAdmin.from("order_payments").upsert(
+      {
+        order_id: data.orderId,
+        provider: "paypal",
+        provider_payment_id: capture?.id ?? paypalOrderId,
+        square_payment_id: capture?.id ?? paypalOrderId,
+        status,
+        amount_cents: order.total_cents ?? 0,
+        currency: "GBP",
+        card_brand: "PayPal",
+        last_4: payerEmail ? payerEmail.slice(0, 24) : null,
+        receipt_url: null,
+      },
+      { onConflict: "order_id" },
+    );
+
+    const { error: paidErr } = await supabaseAdmin.rpc(
+      "mark_order_paid" as never,
+      { p_order_id: data.orderId } as never,
+    );
+    if (paidErr) {
+      await supabaseAdmin
+        .from("orders")
+        .update({ paid_at: new Date().toISOString() })
+        .eq("id", data.orderId);
+    }
+
+    if (order.user_id) {
+      const who = payerName || payerEmail || "PayPal";
+      await supabaseAdmin.from("order_messages").insert({
+        order_id: data.orderId,
+        sender_id: order.user_id,
+        content: `✅ PayPal payment captured (${who}).`,
+      });
+    }
+
+    return { paid: true, status: "paid" as const };
   });
