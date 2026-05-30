@@ -3,7 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { Activity, CheckCircle2, Clock, MessageSquare } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
-import { relativeTime } from "@/lib/relative-time";
+import { formatLastSeen } from "@/lib/relative-time";
 
 interface ServiceStatusBoxProps {
   hideButtons?: boolean;
