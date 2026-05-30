@@ -29,6 +29,8 @@ import { VpnBadge } from "@/lib/vpn-flags";
 import { HtmlEditor } from "@/components/ui/html-editor";
 import { sanitizeRichHtml } from "@/lib/sanitize-html";
 import { SoundSettings } from "@/components/app/SoundSettings";
+import { useServerFn } from "@tanstack/react-start";
+import { assignReferrer } from "@/lib/referrals.functions";
 
 export const Route = createFileRoute("/_authenticated/_approved/u/$username")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -662,7 +664,14 @@ function ProfilePage() {
                 </div>
                 <InfoCard label="Member since" value={new Date(profile.created_at).toLocaleDateString()} />
                 <InfoCard label="Roles" value={sortedRoles.join(", ") || "—"} />
-                <InviteCard info={inviteInfo} showStats={isOwner || isAdmin} isOwner={isOwner} />
+                <InviteCard
+                  info={inviteInfo}
+                  showStats={isOwner || isAdmin}
+                  isOwner={isOwner}
+                  isAdmin={isAdmin}
+                  targetUserId={profile?.id ?? null}
+                  onAssigned={load}
+                />
               </aside>
             </div>
           </TabsContent>
@@ -888,13 +897,38 @@ function InviteCard({
   info,
   showStats,
   isOwner,
+  isAdmin,
+  targetUserId,
+  onAssigned,
 }: {
   info: InviteSummary | null;
   showStats: boolean;
   isOwner: boolean;
+  isAdmin?: boolean;
+  targetUserId?: string | null;
+  onAssigned?: () => void;
 }) {
   if (!info) return null;
   const inviterLabel = info.invitedBy?.display_name ?? info.invitedBy?.username ?? null;
+  const canAssign = !!isAdmin && !inviterLabel && !!targetUserId;
+  const [assignUsername, setAssignUsername] = useState("");
+  const [assigning, setAssigning] = useState(false);
+  const assignFn = useServerFn(assignReferrer);
+  const submitAssign = async () => {
+    const uname = assignUsername.trim().replace(/^@/, "");
+    if (!uname || !targetUserId) return;
+    setAssigning(true);
+    try {
+      const res = await assignFn({ data: { userId: targetUserId, referrerUsername: uname } });
+      toast.success(`Referrer set to @${res.referrer.username ?? uname}`);
+      setAssignUsername("");
+      onAssigned?.();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to assign referrer");
+    } finally {
+      setAssigning(false);
+    }
+  };
   return (
     <div className="rounded-2xl border border-white/25 bg-white/10 backdrop-blur-xl p-5 shadow-[0_10px_40px_-15px_rgba(0,0,0,0.4)] text-white space-y-4">
       <div className="flex items-center gap-2">
@@ -935,6 +969,34 @@ function InviteCard({
           </>
         ) : (
           <p className="text-white/60 italic text-sm">Joined through the gate</p>
+        )}
+
+        {canAssign && (
+          <div className="mt-3 pt-3 border-t border-white/15 space-y-2">
+            <div className="text-[11px] uppercase tracking-wider text-amber-100/80">
+              Admin · Assign referrer
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                value={assignUsername}
+                onChange={(e) => setAssignUsername(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") submitAssign(); }}
+                placeholder="@username"
+                disabled={assigning}
+                className="flex-1 min-w-0 px-2.5 py-1.5 rounded-md bg-black/30 border border-white/20 text-white text-sm placeholder:text-white/40 focus:outline-none focus:border-amber-200/60"
+              />
+              <button
+                onClick={submitAssign}
+                disabled={assigning || !assignUsername.trim()}
+                className="px-3 py-1.5 rounded-md bg-white text-rose-600 text-xs font-semibold hover:bg-amber-50 disabled:opacity-60"
+              >
+                {assigning ? "Saving…" : "Assign"}
+              </button>
+            </div>
+            <p className="text-[11px] text-white/60">
+              Use this if the user forgot to enter a referral code at signup.
+            </p>
+          </div>
         )}
 
         {(isOwner || showStats) && inviterLabel && (
