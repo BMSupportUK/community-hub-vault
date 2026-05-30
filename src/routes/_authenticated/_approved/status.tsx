@@ -9,6 +9,7 @@ import {
   Plus,
   Paperclip,
   FileText,
+  Info,
   Search,
   ShieldAlert,
   Trash2,
