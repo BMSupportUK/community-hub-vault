@@ -3149,7 +3149,7 @@ function PaypalPanel({ orderId, amountCents, canPay, onChange }: { orderId: stri
     if (!canPay || paid) return;
     (async () => {
       try {
-        const cfg = await getConfig();
+        const cfg = await prewarmPaypalConfig(getConfig);
         const paypal = await loadPaypalSdk(cfg.clientId, cfg.currency);
         if (cancelled || !containerRef.current) return;
         containerRef.current.innerHTML = "";
