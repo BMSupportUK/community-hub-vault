@@ -130,6 +130,7 @@ export function NotificationBell() {
         .on("postgres_changes", { event: "INSERT", schema: "public", table: "staff_notifications" }, (payload) => {
           const n = { ...(payload.new as Notif), source: "staff" as const };
           setItems((prev) => [n, ...prev].slice(0, 80));
+          console.log("[notif] staff insert", { kind: n.kind, canApproveSignups, canManageOrders, canHandleTickets });
           if (n.kind === "order_placed" && canManageOrders) {
             playSound(orderAudio, { label: "order", gain: 1.8 });
           }
@@ -142,7 +143,7 @@ export function NotificationBell() {
             });
             return;
           }
-          if (n.kind === "gate_application" && canApproveSignups) {
+          if (n.kind === "gate_application") {
             playSound(newSignupAudio, { label: "signup", gain: 1.8 });
             toast(`👋 ${n.title}`, {
               description: n.body ?? "A new user is requesting access.",
