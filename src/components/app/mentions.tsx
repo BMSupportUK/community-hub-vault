@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import { censorText, useProfanityWords } from "@/lib/profanity";
 
 const MENTION_RE = /(@[a-zA-Z0-9_.\-]+)/g;
+const TOKEN_RE = /(@[a-zA-Z0-9_.\-]+)|\[([^\]]+)\]\(([^)]+)\)|(https?:\/\/[^\s<>"{}|\\^`\[\]]+|www\.[^\s<>"{}|\\^`\[\]]+)/g;
 
 /**
  * Returns true if the message content mentions the current user
@@ -22,7 +23,8 @@ export function mentionsCurrentUser(content: string, currentUsername?: string | 
 }
 
 /**
- * Render message text with @username / @all / @here highlighted Discord-style.
+ * Render message text with @username / @all / @here highlighted Discord-style,
+ * markdown links [text](url), and bare URLs auto-linked.
  * `currentUsername` (lowercase) makes mentions of self glow stronger.
  */
 export function MentionText({
@@ -37,30 +39,79 @@ export function MentionText({
   // Subscribe so updates to the custom word list re-render messages.
   useProfanityWords();
   const me = currentUsername?.toLowerCase() ?? null;
-  const parts = content.split(MENTION_RE);
+
+  const nodes = [] as React.ReactNode[];
+  let lastIndex = 0;
+  let key = 0;
+
+  for (const match of content.matchAll(TOKEN_RE)) {
+    const index = match.index!;
+    const full = match[0];
+    const mention = match[1];
+    const mdText = match[2];
+    const mdUrl = match[3];
+    const bareUrl = match[4];
+
+    if (index > lastIndex) {
+      nodes.push(<span key={key++}>{censorText(content.slice(lastIndex, index))}</span>);
+    }
+
+    if (mention) {
+      const tag = mention.slice(1).toLowerCase();
+      const isBroadcast = tag === "all" || tag === "here";
+      const isMe = !!me && tag === me;
+      nodes.push(
+        <span
+          key={key++}
+          className={cn(
+            "inline-block rounded px-1.5 py-0.5 font-semibold transition-colors ring-1",
+            isMe
+              ? "bg-amber-300 text-amber-950 ring-amber-500"
+              : isBroadcast
+                ? "bg-rose-600 text-white ring-rose-700"
+                : "bg-indigo-600 text-white ring-indigo-700 hover:bg-indigo-500",
+          )}
+        >
+          {mention}
+        </span>,
+      );
+    } else if (mdText && mdUrl) {
+      nodes.push(
+        <a
+          key={key++}
+          href={mdUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline text-blue-600 hover:opacity-80"
+        >
+          {mdText}
+        </a>,
+      );
+    } else if (bareUrl) {
+      const href = bareUrl.startsWith("www.") ? `https://${bareUrl}` : bareUrl;
+      nodes.push(
+        <a
+          key={key++}
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline text-blue-600 hover:opacity-80"
+        >
+          {bareUrl}
+        </a>,
+      );
+    }
+
+    lastIndex = index + full.length;
+  }
+
+  if (lastIndex < content.length) {
+    nodes.push(<span key={key++}>{censorText(content.slice(lastIndex))}</span>);
+  }
+
   return (
     <span className={cn("whitespace-pre-wrap break-words", className)}>
-      {parts.map((part, i) => {
-        if (!part.startsWith("@")) return <span key={i}>{censorText(part)}</span>;
-        const tag = part.slice(1).toLowerCase();
-        const isBroadcast = tag === "all" || tag === "here";
-        const isMe = !!me && tag === me;
-        return (
-          <span
-            key={i}
-            className={cn(
-              "inline-block rounded px-1.5 py-0.5 font-semibold transition-colors ring-1",
-              isMe
-                ? "bg-amber-300 text-amber-950 ring-amber-500"
-                : isBroadcast
-                  ? "bg-rose-600 text-white ring-rose-700"
-                  : "bg-indigo-600 text-white ring-indigo-700 hover:bg-indigo-500",
-            )}
-          >
-            {part}
-          </span>
-        );
-      })}
+      {nodes}
     </span>
   );
 }
