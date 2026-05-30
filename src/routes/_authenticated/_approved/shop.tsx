@@ -2848,6 +2848,205 @@ function prewarmPaypalConfig(fn: (...args: any[]) => Promise<any>): Promise<any>
   return _paypalConfigPromise;
 }
 
+let _stripeConfigPromise: Promise<any> | null = null;
+function prewarmStripeConfig(fn: (...args: any[]) => Promise<any>): Promise<any> {
+  if (!_stripeConfigPromise) {
+    _stripeConfigPromise = fn().catch((e) => { _stripeConfigPromise = null; throw e; });
+  }
+  return _stripeConfigPromise;
+}
+
+let _stripeSdkPromise: Promise<any> | null = null;
+function loadStripeSdk(): Promise<any> {
+  if (typeof window === "undefined") return Promise.reject(new Error("No window"));
+  const w = window as any;
+  if (w.Stripe) return Promise.resolve(w.Stripe);
+  if (_stripeSdkPromise) return _stripeSdkPromise;
+  _stripeSdkPromise = new Promise((resolve, reject) => {
+    const id = "stripe-js-sdk";
+    const existing = document.getElementById(id) as HTMLScriptElement | null;
+    if (existing) {
+      existing.addEventListener("load", () => resolve((window as any).Stripe));
+      existing.addEventListener("error", () => reject(new Error("Failed to load Stripe SDK")));
+      if ((window as any).Stripe) resolve((window as any).Stripe);
+      return;
+    }
+    const s = document.createElement("script");
+    s.id = id; s.src = "https://js.stripe.com/v3/"; s.async = true;
+    s.onload = () => resolve((window as any).Stripe);
+    s.onerror = () => { _stripeSdkPromise = null; reject(new Error("Failed to load Stripe SDK")); };
+    document.head.appendChild(s);
+  });
+  return _stripeSdkPromise;
+}
+
+function StripeLogo({ className = "" }: { className?: string }) {
+  return (
+    <span className={`inline-flex items-center gap-1.5 ${className}`} aria-label="Stripe">
+      <svg viewBox="0 0 32 32" className="h-4 w-4" aria-hidden="true">
+        <rect x="1" y="1" width="30" height="30" rx="6" ry="6" fill="#635BFF" />
+        <path d="M14.7 12.4c0-.6.5-.9 1.4-.9 1.2 0 2.8.4 4 1.1V9c-1.3-.5-2.6-.7-4-.7-3.2 0-5.4 1.7-5.4 4.5 0 4.4 6 3.7 6 5.6 0 .7-.6 1-1.6 1-1.4 0-3.2-.6-4.5-1.4v3.7c1.5.6 3 .9 4.5.9 3.3 0 5.6-1.6 5.6-4.5 0-4.7-6-3.9-6-5.7z" fill="#fff"/>
+      </svg>
+      <span className="text-[13px] font-semibold tracking-tight text-foreground leading-none">Stripe</span>
+    </span>
+  );
+}
+
+function StripePanel({ orderId, amountCents, canPay, onChange }: { orderId: string; amountCents: number; canPay: boolean; onChange?: () => void | Promise<void> }) {
+  const [paid, setPaid] = useState<any | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [bootError, setBootError] = useState<string | null>(null);
+  const [ready, setReady] = useState(false);
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const stripeRef = useRef<any>(null);
+  const elementsRef = useRef<any>(null);
+  const paymentElementRef = useRef<any>(null);
+  const clientSecretRef = useRef<string | null>(null);
+  const paymentIntentIdRef = useRef<string | null>(null);
+  const { format } = useCurrency();
+  const getConfig = useServerFn(getStripeWebConfig);
+  const createPI = useServerFn(createStripePaymentIntent);
+  const confirmPI = useServerFn(confirmStripePayment);
+
+  const loadPayment = async () => {
+    const { data } = await supabase.from("order_payments").select("*").eq("order_id", orderId).maybeSingle();
+    setPaid(data);
+  };
+  useEffect(() => { loadPayment(); }, [orderId]);
+  useEffect(() => {
+    const ch = supabase.channel(`op-stripe-${orderId}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "order_payments", filter: `order_id=eq.${orderId}` },
+        () => loadPayment())
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, [orderId]);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!canPay || paid || !open) return;
+    (async () => {
+      try {
+        const [cfg, StripeCtor] = await Promise.all([
+          prewarmStripeConfig(getConfig),
+          loadStripeSdk(),
+        ]);
+        if (cancelled) return;
+        const { clientSecret, paymentIntentId } = await createPI({ data: { orderId } });
+        if (cancelled) return;
+        clientSecretRef.current = clientSecret;
+        paymentIntentIdRef.current = paymentIntentId;
+        const stripe = StripeCtor(cfg.publishableKey);
+        stripeRef.current = stripe;
+        const elements = stripe.elements({ clientSecret, appearance: { theme: "night" as const } });
+        elementsRef.current = elements;
+        const pe = elements.create("payment", { layout: "tabs" });
+        if (cancelled) return;
+        if (containerRef.current) {
+          pe.mount(containerRef.current);
+          paymentElementRef.current = pe;
+          pe.on("ready", () => { if (!cancelled) setReady(true); });
+        }
+      } catch (e) {
+        if (!cancelled) setBootError((e as Error).message);
+      }
+    })();
+    return () => {
+      cancelled = true;
+      try { paymentElementRef.current?.unmount(); } catch {}
+      paymentElementRef.current = null;
+      elementsRef.current = null;
+      setReady(false);
+    };
+  }, [canPay, paid, orderId, open]);
+
+  const handlePay = async () => {
+    if (!stripeRef.current || !elementsRef.current || !paymentIntentIdRef.current) return;
+    setLoading(true);
+    try {
+      const { error } = await stripeRef.current.confirmPayment({
+        elements: elementsRef.current,
+        confirmParams: { return_url: window.location.href },
+        redirect: "if_required",
+      });
+      if (error) throw new Error(error.message || "Card declined");
+      const res = await confirmPI({ data: { orderId, paymentIntentId: paymentIntentIdRef.current } });
+      toast.success(`Paid ${format(amountCents)}`);
+      setPaid({
+        status: res.status,
+        provider: "stripe",
+        card_brand: (res as any).cardBrand,
+        last_4: (res as any).last4,
+        receipt_url: (res as any).receiptUrl,
+        amount_cents: amountCents,
+      });
+      setOpen(false);
+      await onChange?.();
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (paid) {
+    if (paid.provider !== "stripe") return null;
+    return (
+      <div>
+        <StripeLogo className="mb-1.5" />
+        <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Card Payment via Stripe</div>
+        <div className="rounded-md bg-success/10 border border-success/20 px-2.5 py-2 space-y-1">
+          <div className="flex items-center gap-2 text-success text-xs font-medium">
+            <CreditCard className="size-3.5" /> Paid
+            {paid.card_brand && paid.last_4 && (
+              <span className="font-mono text-muted-foreground">{paid.card_brand} •••• {paid.last_4}</span>
+            )}
+          </div>
+          {paid.receipt_url && (
+            <a href={paid.receipt_url} target="_blank" rel="noreferrer"
+              className="text-[11px] text-primary hover:underline">View receipt</a>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  if (!canPay) return null;
+
+  return (
+    <div>
+      <StripeLogo className="mb-1.5" />
+      <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Pay by card</div>
+      <button
+        onClick={() => setOpen(true)}
+        className="w-full px-2.5 py-2 rounded-md bg-primary text-primary-foreground text-xs font-medium flex items-center justify-center gap-1.5 hover:bg-primary/90"
+      >
+        <CreditCard className="size-3.5" />
+        Pay {format(amountCents)} by card
+      </button>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><StripeLogo /> Card Payment</DialogTitle>
+          </DialogHeader>
+          {bootError ? (
+            <div className="text-xs text-destructive">{bootError}</div>
+          ) : (
+            <div className="space-y-3">
+              <div ref={containerRef} className="min-h-[120px]" />
+              <button onClick={handlePay} disabled={!ready || loading}
+                className="w-full px-2.5 py-2 rounded-md bg-primary text-primary-foreground text-xs font-medium flex items-center justify-center gap-1.5 hover:bg-primary/90 disabled:opacity-50">
+                <CreditCard className="size-3.5" />
+                {loading ? "Processing…" : ready ? `Pay ${format(amountCents)}` : "Loading…"}
+              </button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
 function loadSquareSdk(env: "sandbox" | "production"): Promise<any> {
   if (typeof window === "undefined") return Promise.reject(new Error("No window"));
   if (window.Square) return Promise.resolve(window.Square);
