@@ -86,14 +86,44 @@ export const createStripePaymentIntent = createServerFn({ method: "POST" })
     if (!order.total_cents || order.total_cents <= 0)
       throw new Error("Order total must be greater than zero");
 
+    // Lookup customer email + name for fraud detection (Stripe flags missing values)
+    let customerEmail: string | undefined;
+    let customerName: string | undefined;
+    try {
+      const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(userId);
+      customerEmail = authUser?.user?.email ?? undefined;
+      const meta = (authUser?.user?.user_metadata ?? {}) as Record<string, any>;
+      customerName =
+        meta.full_name || meta.name || meta.display_name || undefined;
+    } catch {}
+    if (!customerName) {
+      try {
+        const { data: profile } = await supabaseAdmin
+          .from("profiles")
+          .select("display_name,full_name,username")
+          .eq("id", userId)
+          .maybeSingle();
+        customerName =
+          (profile as any)?.display_name ||
+          (profile as any)?.full_name ||
+          (profile as any)?.username ||
+          undefined;
+      } catch {}
+    }
+
     const pi = await stripeFetch("/payment_intents", {
       method: "POST",
       body: {
         amount: order.total_cents,
         currency: "gbp",
         "payment_method_types[]": "card",
-        metadata: { order_id: String(order.id), user_id: userId },
+        metadata: {
+          order_id: String(order.id),
+          user_id: userId,
+          ...(customerName ? { customer_name: customerName } : {}),
+        },
         description: `Order #${String(order.id).slice(0, 8)}`,
+        ...(customerEmail ? { receipt_email: customerEmail } : {}),
       },
     });
     if (!pi?.client_secret) throw new Error("Stripe did not return a client_secret");
