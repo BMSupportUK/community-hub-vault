@@ -2827,6 +2827,22 @@ declare global {
   interface Window { Square?: any }
 }
 
+// Module-level caches so config + SDK are fetched at most once per page load.
+let _squareConfigPromise: Promise<any> | null = null;
+let _paypalConfigPromise: Promise<any> | null = null;
+function prewarmSquareConfig(fn: (...args: any[]) => Promise<any>): Promise<any> {
+  if (!_squareConfigPromise) {
+    _squareConfigPromise = fn().catch((e) => { _squareConfigPromise = null; throw e; });
+  }
+  return _squareConfigPromise;
+}
+function prewarmPaypalConfig(fn: (...args: any[]) => Promise<any>): Promise<any> {
+  if (!_paypalConfigPromise) {
+    _paypalConfigPromise = fn().catch((e) => { _paypalConfigPromise = null; throw e; });
+  }
+  return _paypalConfigPromise;
+}
+
 function loadSquareSdk(env: "sandbox" | "production"): Promise<any> {
   if (typeof window === "undefined") return Promise.reject(new Error("No window"));
   if (window.Square) return Promise.resolve(window.Square);
