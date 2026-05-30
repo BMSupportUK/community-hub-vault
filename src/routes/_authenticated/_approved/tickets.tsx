@@ -1209,8 +1209,8 @@ function TicketDetail({
             ) : null}
             {!linkedOrder.completed_at && linkedOrder.status !== "cancelled" && (
               <div className="flex flex-wrap gap-2 pt-1">
-                {/* Cancel — available to admin or the order owner while unpaid */}
-                {!linkedOrder.paid_at && (
+                {/* Cancel — only the buyer can cancel their own unpaid order */}
+                {!linkedOrder.paid_at && linkedOrder.user_id === currentUserId && (
                   <button
                     onClick={orderCancel}
                     disabled={orderBusy}
