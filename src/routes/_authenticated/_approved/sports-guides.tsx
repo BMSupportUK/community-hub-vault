@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate, Outlet, useChildMatches } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, Search, Pencil, Trash2, ImageIcon, GripVertical, X, ChevronDown, ChevronRight } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, ImageIcon, GripVertical, X, ChevronDown, ChevronRight, ArrowUp, ArrowDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -343,6 +343,24 @@ function SportsGuidesPage() {
     if (error) return toast.error(error.message);
     toast.success("Default sub-category updated");
     load();
+  };
+
+  const moveSubcategory = async (categoryId: string, subId: string, dir: -1 | 1) => {
+    const list = [...(subsByCat[categoryId] ?? [])];
+    const idx = list.findIndex((s) => s.id === subId);
+    const next = idx + dir;
+    if (idx < 0 || next < 0 || next >= list.length) return;
+    [list[idx], list[next]] = [list[next], list[idx]];
+    const updated = list.map((s, i) => ({ ...s, sort_order: (i + 1) * 10 }));
+    queryClient.setQueryData<typeof dataQuery.data>(queryKey, (prev) => {
+      if (!prev) return prev;
+      const otherSubs = prev.subcategories.filter((s) => s.category_id !== categoryId);
+      return { ...prev, subcategories: [...otherSubs, ...updated] };
+    });
+    const { error } = await supabase
+      .from("sports_subcategories")
+      .upsert(updated.map((s) => ({ id: s.id, category_id: s.category_id, name: s.name, sort_order: s.sort_order, is_default: s.is_default })));
+    if (error) toast.error(error.message);
   };
 
   const reorderCategories = async (fromId: string, toId: string) => {
@@ -800,7 +818,7 @@ function SportsGuidesPage() {
                         {(subsByCat[c.id] ?? []).length === 0 && (
                           <div className="text-xs text-purple-200/60 italic">None yet.</div>
                         )}
-                        {(subsByCat[c.id] ?? []).map((sub) => (
+                        {(subsByCat[c.id] ?? []).map((sub, idx, arr) => (
                           <div
                             key={sub.id}
                             className="flex items-center justify-between gap-2 rounded-md bg-purple-900/40 border border-purple-500/20 px-2 py-1.5"
@@ -814,6 +832,22 @@ function SportsGuidesPage() {
                               )}
                             </span>
                             <div className="flex items-center gap-1 shrink-0">
+                              <button
+                                onClick={(e) => { e.stopPropagation(); moveSubcategory(c.id, sub.id, -1); }}
+                                disabled={idx === 0}
+                                className="text-purple-300/70 hover:text-fuchsia-200 disabled:opacity-30 disabled:hover:text-purple-300/70 p-1 rounded-md"
+                                title="Move up"
+                              >
+                                <ArrowUp className="size-3.5" />
+                              </button>
+                              <button
+                                onClick={(e) => { e.stopPropagation(); moveSubcategory(c.id, sub.id, 1); }}
+                                disabled={idx === arr.length - 1}
+                                className="text-purple-300/70 hover:text-fuchsia-200 disabled:opacity-30 disabled:hover:text-purple-300/70 p-1 rounded-md"
+                                title="Move down"
+                              >
+                                <ArrowDown className="size-3.5" />
+                              </button>
                               {!sub.is_default && (
                                 <button
                                   onClick={(e) => { e.stopPropagation(); setDefaultSubcategory(c.id, sub.id); }}
