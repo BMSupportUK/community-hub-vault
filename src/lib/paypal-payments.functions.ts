@@ -112,13 +112,13 @@ export const createPaypalOrder = createServerFn({ method: "POST" })
       const { data: existingPay } = await supabaseAdmin
         .from("order_payments")
         .select("status")
-        .eq("order_id", order.id)
+        .eq("order_id", String(order.id))
         .maybeSingle();
       const finalStatuses = new Set(["COMPLETED", "completed"]);
       if (!existingPay || !finalStatuses.has(String(existingPay.status ?? ""))) {
         await supabaseAdmin.from("order_payments").upsert(
           {
-            order_id: order.id,
+            order_id: String(order.id),
             provider: "paypal",
             provider_payment_id: String(res.id),
             square_payment_id: String(res.id),
