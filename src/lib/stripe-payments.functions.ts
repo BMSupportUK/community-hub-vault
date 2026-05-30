@@ -210,6 +210,22 @@ export const confirmStripePayment = createServerFn({ method: "POST" })
     const totalCents = order.total_cents ?? 0;
     if (totalCents <= 0) throw new Error("Order total must be greater than zero");
 
+    const existingPayment = await getOrderPayment(String(order.id));
+    if (existingPayment) {
+      if (FINAL_PAYMENT_STATUSES.has(String(existingPayment.status ?? ""))) {
+        return { status: "already_paid" as const };
+      }
+      if (existingPayment.provider && existingPayment.provider !== "stripe") {
+        throw new Error(`This order already has a ${existingPayment.provider} payment in progress`);
+      }
+      if (
+        existingPayment.provider_payment_id &&
+        existingPayment.provider_payment_id !== data.paymentIntentId
+      ) {
+        throw new Error("A different card payment is already in progress for this order. Refresh and try again.");
+      }
+    }
+
     const pi: any = await stripeFetch(
       `/payment_intents/${encodeURIComponent(data.paymentIntentId)}`,
     );
@@ -253,6 +269,7 @@ export const confirmStripePayment = createServerFn({ method: "POST" })
 
     const { error: paidErr } = await supabaseAdmin.rpc("mark_order_paid" as never, {
       p_order_id: String(order.id),
+      p_transaction_id: pi.id,
     } as never);
     if (paidErr) {
       const { error: fallbackPaidErr } = await supabaseAdmin
