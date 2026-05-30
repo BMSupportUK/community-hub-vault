@@ -1492,7 +1492,14 @@ function TicketDetail({
           </div>
         )}
       </div>
-    </>
+      </div>
+      {linkedOrder && (
+        <aside className="hidden lg:flex flex-col w-80 shrink-0 border-l border-white/20 bg-white/5 backdrop-blur overflow-y-auto p-4">
+          <div className="text-[10px] uppercase tracking-wider text-white/70 mb-2">Order</div>
+          {orderPanelInner}
+        </aside>
+      )}
+    </div>
   );
 }
 
