@@ -77,7 +77,7 @@ export const createStripePaymentIntent = createServerFn({ method: "POST" })
       body: {
         amount: order.total_cents,
         currency: "gbp",
-        automatic_payment_methods: { enabled: true },
+        "payment_method_types[]": "card",
         metadata: { order_id: String(order.id), user_id: userId },
         description: `Order #${String(order.id).slice(0, 8)}`,
       },
