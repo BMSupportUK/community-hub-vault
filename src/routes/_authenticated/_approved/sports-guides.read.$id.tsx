@@ -24,6 +24,7 @@ type Blog = {
   badge: string | null;
   refresh_notice: string | null;
   not_guaranteed: boolean | null;
+  subcategory: string | null;
 };
 type Category = { id: string; name: string };
 
@@ -152,7 +153,13 @@ function ReadPage() {
           variant="ghost"
           className="text-purple-200 hover:text-white hover:bg-purple-800/60"
           onClick={() =>
-            navigate({ to: "/sports-guides", search: { cat: blog?.category_id || undefined } })
+            navigate({
+              to: "/sports-guides",
+              search: {
+                cat: blog?.category_id || undefined,
+                sub: blog?.subcategory || undefined,
+              },
+            })
           }
         >
           <ArrowLeft className="size-4 mr-1" /> Back to guides
