@@ -18,6 +18,7 @@ import profileHeaderModerator from "@/assets/profile-header-moderator.jpg";
 import tvLoginIllustration from "@/assets/tv-login-illustration.jpg";
 import referralsBg from "@/assets/referrals-bg.jpg";
 import friendsBg from "@/assets/friends-bg.jpg";
+import ticketsBg from "@/assets/tickets-bg.jpg";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { browserTimezone, listTimeZones } from "@/hooks/use-user-timezone";
 import { Nameplate } from "@/components/app/Nameplate";
