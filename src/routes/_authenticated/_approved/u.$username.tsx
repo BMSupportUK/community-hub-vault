@@ -480,11 +480,9 @@ function ProfilePage() {
   return (
     <div className={cn(
       "relative flex-1 overflow-y-auto",
-      mainTab === "referrals"
+      mainTab === "referrals" || mainTab === "friends" || mainTab === "tickets"
         ? "bg-[#1a0b2e]"
-        : mainTab === "friends"
-          ? "bg-[#1a0b2e]"
-          : "bg-gradient-to-br from-[#1a0b2e] via-[#2d1b4e] to-[#1a0b2e]",
+        : "bg-gradient-to-br from-[#1a0b2e] via-[#2d1b4e] to-[#1a0b2e]",
     )}>
       {mainTab === "referrals" && (
         <div className="pointer-events-none absolute inset-0 z-0">
@@ -508,6 +506,18 @@ function ProfilePage() {
           />
           <div className="absolute inset-0 bg-gradient-to-b from-[#1a0b2e]/85 via-[#1a0b2e]/55 to-[#1a0b2e]/90" />
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom,rgba(217,70,239,0.18),transparent_65%)]" />
+        </div>
+      )}
+      {mainTab === "tickets" && (
+        <div className="pointer-events-none absolute inset-0 z-0">
+          <img
+            src={ticketsBg}
+            alt=""
+            aria-hidden
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#1a0b2e]/85 via-[#1a0b2e]/55 to-[#1a0b2e]/90" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom,rgba(59,130,246,0.18),transparent_65%)]" />
         </div>
       )}
       <div className="relative z-10">
