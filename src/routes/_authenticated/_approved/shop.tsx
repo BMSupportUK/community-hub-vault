@@ -2495,10 +2495,6 @@ function OrderDetailImpl({ orderId, isAdmin, onBack }: { orderId: string; isAdmi
           )}
           {isAdmin ? (
             <>
-              <button onClick={acceptOrder} disabled={busy || order.status !== "pending" || !!order.completed_at}
-                className="px-2.5 py-1 rounded-md bg-amber-500/15 text-amber-500 text-xs font-medium flex items-center gap-1 hover:bg-amber-500/25 disabled:opacity-50">
-                <Check className="size-3.5" /> {order.status === "pending" ? "Accept Order" : "Accepted"}
-              </button>
               <button onClick={markPaid} disabled={busy || !!order.paid_at || !!order.completed_at || order.status === "cancelled"}
                 className="px-2.5 py-1 rounded-md bg-success/15 text-success text-xs font-medium flex items-center gap-1 hover:bg-success/25 disabled:opacity-50">
                 <BadgeCheck className="size-3.5" /> {order.paid_at ? "Paid" : "Mark As Paid"}
@@ -2517,12 +2513,6 @@ function OrderDetailImpl({ orderId, isAdmin, onBack }: { orderId: string; isAdmi
                 </button>
               )}
             </>
-          )}
-          {isAdmin && order.status !== "cancelled" && !order.completed_at && (
-            <button onClick={cancelOrder} disabled={busy}
-              className="px-2.5 py-1 rounded-md bg-destructive/15 text-destructive text-xs font-medium flex items-center gap-1 hover:bg-destructive/25 disabled:opacity-50">
-              <Ban className="size-3.5" /> Cancel Order
-            </button>
           )}
         </div>
       </header>
@@ -2583,7 +2573,7 @@ function OrderDetailImpl({ orderId, isAdmin, onBack }: { orderId: string; isAdmi
               <div className="text-muted-foreground text-xs whitespace-pre-line">{order.notes}</div>
             </div>
           )}
-          {(isAdmin || order.user_id === user?.id) && (
+          {order.user_id === user?.id && (
             <div className="space-y-3">
               {pendingCrypto ? (
                 <>
