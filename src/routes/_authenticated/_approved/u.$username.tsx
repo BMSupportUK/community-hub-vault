@@ -19,6 +19,7 @@ import tvLoginIllustration from "@/assets/tv-login-illustration.jpg";
 import referralsBg from "@/assets/referrals-bg.jpg";
 import friendsBg from "@/assets/friends-bg.jpg";
 import ticketsBg from "@/assets/tickets-bg.jpg";
+import ordersBg from "@/assets/orders-bg.jpg";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { browserTimezone, listTimeZones } from "@/hooks/use-user-timezone";
 import { Nameplate } from "@/components/app/Nameplate";
@@ -480,7 +481,7 @@ function ProfilePage() {
   return (
     <div className={cn(
       "relative flex-1 overflow-y-auto",
-      mainTab === "referrals" || mainTab === "friends" || mainTab === "tickets"
+      mainTab === "referrals" || mainTab === "friends" || mainTab === "tickets" || mainTab === "orders"
         ? "bg-[#1a0b2e]"
         : "bg-gradient-to-br from-[#1a0b2e] via-[#2d1b4e] to-[#1a0b2e]",
     )}>
@@ -518,6 +519,18 @@ function ProfilePage() {
           />
           <div className="absolute inset-0 bg-gradient-to-b from-[#1a0b2e]/85 via-[#1a0b2e]/55 to-[#1a0b2e]/90" />
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom,rgba(59,130,246,0.18),transparent_65%)]" />
+        </div>
+      )}
+      {mainTab === "orders" && (
+        <div className="pointer-events-none absolute inset-0 z-0">
+          <img
+            src={ordersBg}
+            alt=""
+            aria-hidden
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#1a0b2e]/85 via-[#1a0b2e]/55 to-[#1a0b2e]/90" />
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom,rgba(16,185,129,0.18),transparent_65%)]" />
         </div>
       )}
       <div className="relative z-10">
