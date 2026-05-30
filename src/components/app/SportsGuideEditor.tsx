@@ -234,6 +234,7 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
           refresh_notice: draft?.refresh_notice ?? "",
           published: draft?.published ?? true,
           not_guaranteed: draft?.not_guaranteed ?? false,
+          subcategory: draft?.subcategory ?? null,
         });
         if (draft && (draft.title || draft.body || draft.excerpt || draft.image_url)) {
           toast.message("Draft restored");
