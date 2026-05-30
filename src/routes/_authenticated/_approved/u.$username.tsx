@@ -971,6 +971,34 @@ function InviteCard({
           <p className="text-white/60 italic text-sm">Joined through the gate</p>
         )}
 
+        {canAssign && (
+          <div className="mt-3 pt-3 border-t border-white/15 space-y-2">
+            <div className="text-[11px] uppercase tracking-wider text-amber-100/80">
+              Admin · Assign referrer
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                value={assignUsername}
+                onChange={(e) => setAssignUsername(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") submitAssign(); }}
+                placeholder="@username"
+                disabled={assigning}
+                className="flex-1 min-w-0 px-2.5 py-1.5 rounded-md bg-black/30 border border-white/20 text-white text-sm placeholder:text-white/40 focus:outline-none focus:border-amber-200/60"
+              />
+              <button
+                onClick={submitAssign}
+                disabled={assigning || !assignUsername.trim()}
+                className="px-3 py-1.5 rounded-md bg-white text-rose-600 text-xs font-semibold hover:bg-amber-50 disabled:opacity-60"
+              >
+                {assigning ? "Saving…" : "Assign"}
+              </button>
+            </div>
+            <p className="text-[11px] text-white/60">
+              Use this if the user forgot to enter a referral code at signup.
+            </p>
+          </div>
+        )}
+
         {(isOwner || showStats) && inviterLabel && (
           <div className="mt-2 flex items-center gap-1.5 text-xs">
             <Gift className="size-3.5 text-fuchsia-200" />
