@@ -1,0 +1,2 @@
+ALTER TABLE public.tickets REPLICA IDENTITY FULL;
+ALTER TABLE public.ticket_messages REPLICA IDENTITY FULL;
