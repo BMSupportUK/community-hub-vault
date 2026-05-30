@@ -219,12 +219,13 @@ function SportsGuidesPage() {
   }, [subcategories]);
 
   // When switching category, default to that category's default sub-category
-  // (falling back to "All" only when no default is set).
+  // (falling back to the first sub-category only when no default is set).
   useEffect(() => {
     if (!activeCat) { setSubFilter(null); return; }
     if (skipDefaultSubOnce.current) { skipDefaultSubOnce.current = false; return; }
-    const def = (subsByCat[activeCat] ?? []).find((s) => s.is_default);
-    setSubFilter(def?.name ?? null);
+    const list = subsByCat[activeCat] ?? [];
+    const def = list.find((s) => s.is_default);
+    setSubFilter(def?.name ?? list[0]?.name ?? null);
   }, [activeCat, subsByCat]);
 
   const filtered = useMemo(() => {
