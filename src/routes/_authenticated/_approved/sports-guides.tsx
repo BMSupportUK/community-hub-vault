@@ -60,6 +60,13 @@ type Blog = {
   updated_at?: string;
   refresh_notice?: string | null;
   not_guaranteed?: boolean | null;
+  subcategory?: string | null;
+};
+
+// Categories that support a second-level filter (pills) under the main category.
+const SUBCATEGORY_MAP: Record<string, string[]> = {
+  // Rugby Union
+  "74f3782c-fbee-4cf7-8773-fd419849c7cd": ["League", "Tournament", "Sports Pass"],
 };
 
 function SportsGuidesPage() {
