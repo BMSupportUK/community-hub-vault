@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 const NP_BASE = "https://api.nowpayments.io/v1";
 
@@ -186,7 +187,7 @@ export const getCryptoInvoiceStatus = createServerFn({ method: "POST" })
 
     const { data: order } = await supabase
       .from("orders")
-      .select("paid_at")
+      .select("paid_at,total_cents,user_id")
       .eq("id", data.orderId)
       .maybeSingle();
     if (order?.paid_at) return { paid: true, status: "paid" as const };
@@ -199,5 +200,77 @@ export const getCryptoInvoiceStatus = createServerFn({ method: "POST" })
     if (pay?.provider === "nowpayments" && pay.status === "finished") {
       return { paid: true, status: "paid" as const };
     }
+
+    // Actively query NOWPayments API to confirm status — don't rely solely on
+    // the IPN webhook, which can be delayed or missed. If we find a finished
+    // payment, upsert the latest status and mark the order paid here.
+    try {
+      if (!process.env.NOWPAYMENTS_API_KEY) {
+        return { paid: false, status: pay?.status ?? "waiting" };
+      }
+      const list = await npFetch(
+        `/payment/?limit=20&order_id=${encodeURIComponent(data.orderId)}`,
+      );
+      const payments: any[] = Array.isArray(list?.data) ? list.data : [];
+      const priority = (s: string) =>
+        ({ finished: 5, confirming: 4, partially_paid: 3, waiting: 2, failed: 1, expired: 1, refunded: 1 } as any)[s] ?? 0;
+      payments.sort((a, b) => priority(b.payment_status) - priority(a.payment_status));
+      const best = payments[0];
+      if (best) {
+        const status: string = String(best.payment_status ?? "waiting");
+        const payCurrency = String(best.pay_currency ?? "").toUpperCase();
+        const networkLabel = payCurrency.startsWith("USDT")
+          ? `USDT-${payCurrency.replace(/^USDT/, "") || "ERC20"}`
+          : payCurrency || "USDT";
+        const txHash: string | undefined = best.payin_hash || best.outcome?.hash;
+
+        await supabaseAdmin
+          .from("order_payments")
+          .upsert(
+            {
+              order_id: data.orderId,
+              provider: "nowpayments",
+              provider_payment_id: String(best.payment_id ?? best.invoice_id ?? ""),
+              square_payment_id: String(best.payment_id ?? best.invoice_id ?? "nowpayments"),
+              status,
+              amount_cents: order?.total_cents ?? 0,
+              currency: "GBP",
+              card_brand: networkLabel,
+              last_4: txHash ? txHash.slice(-8) : null,
+              receipt_url: null,
+            },
+            { onConflict: "order_id" },
+          );
+
+        if (status === "finished" && !order?.paid_at) {
+          const actuallyPaid = Number(best.actually_paid ?? 0);
+          const priceAmount = Number(best.price_amount ?? 0);
+          if (!(priceAmount > 0 && actuallyPaid > 0 && actuallyPaid < priceAmount * 0.99)) {
+            const { error: paidErr } = await supabaseAdmin.rpc(
+              "mark_order_paid" as never,
+              { p_order_id: data.orderId } as never,
+            );
+            if (paidErr) {
+              await supabaseAdmin
+                .from("orders")
+                .update({ paid_at: new Date().toISOString() })
+                .eq("id", data.orderId);
+            }
+            if (order?.user_id) {
+              await supabaseAdmin.from("order_messages").insert({
+                order_id: data.orderId,
+                sender_id: order.user_id,
+                content: `✅ USDT payment received (${networkLabel}${txHash ? `, tx ${txHash.slice(0, 10)}…` : ""}).`,
+              });
+            }
+            return { paid: true, status: "paid" as const };
+          }
+        }
+        return { paid: false, status };
+      }
+    } catch (e) {
+      console.warn("[nowpayments] active status check failed", e);
+    }
+
     return { paid: false, status: pay?.status ?? "waiting" };
   });
