@@ -897,13 +897,38 @@ function InviteCard({
   info,
   showStats,
   isOwner,
+  isAdmin,
+  targetUserId,
+  onAssigned,
 }: {
   info: InviteSummary | null;
   showStats: boolean;
   isOwner: boolean;
+  isAdmin?: boolean;
+  targetUserId?: string | null;
+  onAssigned?: () => void;
 }) {
   if (!info) return null;
   const inviterLabel = info.invitedBy?.display_name ?? info.invitedBy?.username ?? null;
+  const canAssign = !!isAdmin && !inviterLabel && !!targetUserId;
+  const [assignUsername, setAssignUsername] = useState("");
+  const [assigning, setAssigning] = useState(false);
+  const assignFn = useServerFn(assignReferrer);
+  const submitAssign = async () => {
+    const uname = assignUsername.trim().replace(/^@/, "");
+    if (!uname || !targetUserId) return;
+    setAssigning(true);
+    try {
+      const res = await assignFn({ data: { userId: targetUserId, referrerUsername: uname } });
+      toast.success(`Referrer set to @${res.referrer.username ?? uname}`);
+      setAssignUsername("");
+      onAssigned?.();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to assign referrer");
+    } finally {
+      setAssigning(false);
+    }
+  };
   return (
     <div className="rounded-2xl border border-white/25 bg-white/10 backdrop-blur-xl p-5 shadow-[0_10px_40px_-15px_rgba(0,0,0,0.4)] text-white space-y-4">
       <div className="flex items-center gap-2">
