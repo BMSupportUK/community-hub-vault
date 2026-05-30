@@ -1007,7 +1007,7 @@ function InviteCard({
           </div>
         )}
 
-        {(isOwner || showStats) && inviterLabel && (
+        {isAdmin && inviterLabel && (
           <div className="mt-2 flex items-center gap-1.5 text-xs">
             <Gift className="size-3.5 text-fuchsia-200" />
             <span className="text-white/80">Referral bonus</span>
