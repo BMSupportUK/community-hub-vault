@@ -2940,7 +2940,10 @@ function StripePanel({ orderId, amountCents, canPay, onChange }: { orderId: stri
         stripeRef.current = stripe;
         const elements = stripe.elements({ clientSecret, appearance: { theme: "night" as const } });
         elementsRef.current = elements;
-        const pe = elements.create("payment", { layout: "tabs" });
+        const pe = elements.create("payment", {
+          layout: "tabs",
+          fields: { billingDetails: { name: "auto", email: "auto" } },
+        });
         if (cancelled) return;
         if (containerRef.current) {
           pe.mount(containerRef.current);
