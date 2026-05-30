@@ -2350,9 +2350,13 @@ function OrderDetailImpl({ orderId, isAdmin, onBack }: { orderId: string; isAdmi
   const markPaid = async () => {
     if (!order || order.paid_at || order.status === "completed" || !!order.completed_at || order.status !== "processing") return;
     if (busy) return;
+    const txn = window.prompt("Enter the payment transaction ID to verify against payment records:");
+    if (txn === null) return;
+    const trimmed = txn.trim();
+    if (!trimmed) { toast.error("Transaction ID is required"); return; }
     setBusy(true);
     try {
-      const { error } = await supabase.rpc("mark_order_paid" as never, { p_order_id: orderId } as never);
+      const { error } = await supabase.rpc("mark_order_paid" as never, { p_order_id: orderId, p_transaction_id: trimmed } as never);
       if (error) { toast.error(error.message); return; }
       await load();
       toast.success("Marked as paid");
