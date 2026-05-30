@@ -4,13 +4,14 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 // Daily user-credentials backup. Called by pg_cron. Dumps all app credentials
 // (with decrypted passwords/notes) into a JSON file in the private
 // `credentials-backups` storage bucket. Bucket is admin/management read-only.
-// Auth: requires the Supabase anon key in the `apikey` header (sent by pg_cron).
+// Auth: requires CRON_SECRET in the `x-cron-secret` header (sent by pg_cron).
 export const Route = createFileRoute("/api/public/hooks/backup-credentials")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const apikey = request.headers.get("apikey");
-        if (!apikey || apikey !== process.env.SUPABASE_PUBLISHABLE_KEY) {
+        const expected = process.env.CRON_SECRET;
+        const provided = request.headers.get("x-cron-secret");
+        if (!expected || !provided || provided !== expected) {
           return new Response("Unauthorized", { status: 401 });
         }
 

@@ -3,13 +3,14 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 // Daily order-history backup. Called by pg_cron. Dumps all orders + order_items
 // into a JSON file in the private `order-backups` storage bucket.
-// Auth: requires the Supabase anon key in the `apikey` header (sent by pg_cron).
+// Auth: requires CRON_SECRET in the `x-cron-secret` header (sent by pg_cron).
 export const Route = createFileRoute("/api/public/hooks/backup-orders")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const apikey = request.headers.get("apikey");
-        if (!apikey || apikey !== process.env.SUPABASE_PUBLISHABLE_KEY) {
+        const expected = process.env.CRON_SECRET;
+        const provided = request.headers.get("x-cron-secret");
+        if (!expected || !provided || provided !== expected) {
           return new Response("Unauthorized", { status: 401 });
         }
 

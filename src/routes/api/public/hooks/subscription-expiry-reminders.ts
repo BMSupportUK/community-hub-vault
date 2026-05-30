@@ -143,12 +143,12 @@ export const Route = createFileRoute('/api/public/hooks/subscription-expiry-remi
       POST: async ({ request }) => {
         const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
         const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-        const anonKey = process.env.SUPABASE_PUBLISHABLE_KEY || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY
         if (!supabaseUrl || !serviceKey) {
           return Response.json({ error: 'Server misconfigured' }, { status: 500 })
         }
-        const apikey = request.headers.get('apikey')
-        if (!anonKey || apikey !== anonKey) {
+        const expected = process.env.CRON_SECRET
+        const provided = request.headers.get('x-cron-secret')
+        if (!expected || !provided || provided !== expected) {
           return Response.json({ error: 'Unauthorized' }, { status: 401 })
         }
         const supabase = createClient(supabaseUrl, serviceKey, {
