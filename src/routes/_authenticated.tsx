@@ -154,7 +154,10 @@ function AuthLayout() {
           <div className="hidden xl:flex flex-1 min-w-0 px-3" />
             <TwoFactorPill />
             <DndDialogButton />
-            <div className="hidden lg:flex"><Clocks /></div>
+            <div className="hidden lg:flex items-center gap-2">
+              <Clocks />
+              <MyWorkingStatus />
+            </div>
         </header>
         <div className="flex-1 flex min-h-0">
           <Outlet />
