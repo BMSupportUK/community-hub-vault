@@ -2794,6 +2794,89 @@ export type Database = {
         }
         Relationships: []
       }
+      streaming_device_prices: {
+        Row: {
+          availability: string | null
+          currency: string
+          device_id: string
+          price_cents: number | null
+          scraped_at: string
+          source_url: string | null
+        }
+        Insert: {
+          availability?: string | null
+          currency?: string
+          device_id: string
+          price_cents?: number | null
+          scraped_at?: string
+          source_url?: string | null
+        }
+        Update: {
+          availability?: string | null
+          currency?: string
+          device_id?: string
+          price_cents?: number | null
+          scraped_at?: string
+          source_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "streaming_device_prices_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: true
+            referencedRelation: "streaming_devices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      streaming_devices: {
+        Row: {
+          amazon_url: string
+          brand: string | null
+          created_at: string
+          id: string
+          image_url: string | null
+          is_active: boolean
+          name: string
+          sideload_notes: string | null
+          sort_order: number
+          specs: Json
+          summary: string | null
+          tier: string
+          updated_at: string
+        }
+        Insert: {
+          amazon_url: string
+          brand?: string | null
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          name: string
+          sideload_notes?: string | null
+          sort_order?: number
+          specs?: Json
+          summary?: string | null
+          tier: string
+          updated_at?: string
+        }
+        Update: {
+          amazon_url?: string
+          brand?: string | null
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          name?: string
+          sideload_notes?: string | null
+          sort_order?: number
+          specs?: Json
+          summary?: string | null
+          tier?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       subscription_expiry_reminders: {
         Row: {
           credential_id: string

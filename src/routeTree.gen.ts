@@ -30,6 +30,7 @@ import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/em
 import { Route as ApiPublicTweetRouteImport } from './routes/api/public/tweet'
 import { Route as ApiPublicLinkPreviewRouteImport } from './routes/api/public/link-preview'
 import { Route as AuthenticatedApprovedTicketsRouteImport } from './routes/_authenticated/_approved/tickets'
+import { Route as AuthenticatedApprovedStreamingDevicesRouteImport } from './routes/_authenticated/_approved/streaming-devices'
 import { Route as AuthenticatedApprovedStatusRouteImport } from './routes/_authenticated/_approved/status'
 import { Route as AuthenticatedApprovedStaffRouteImport } from './routes/_authenticated/_approved/staff'
 import { Route as AuthenticatedApprovedSportsGuidesRouteImport } from './routes/_authenticated/_approved/sports-guides'
@@ -48,6 +49,7 @@ import { Route as AuthenticatedApprovedHomeRouteImport } from './routes/_authent
 import { Route as AuthenticatedApprovedForumRouteImport } from './routes/_authenticated/_approved/forum'
 import { Route as AuthenticatedApprovedClockRouteImport } from './routes/_authenticated/_approved/clock'
 import { Route as AuthenticatedApprovedAdminTicketCategoriesRouteImport } from './routes/_authenticated/_approved/admin-ticket-categories'
+import { Route as AuthenticatedApprovedAdminStreamingDevicesRouteImport } from './routes/_authenticated/_approved/admin-streaming-devices'
 import { Route as AuthenticatedApprovedAdminRolesRouteImport } from './routes/_authenticated/_approved/admin-roles'
 import { Route as AuthenticatedApprovedAdminReviewsRouteImport } from './routes/_authenticated/_approved/admin-reviews'
 import { Route as AuthenticatedApprovedAdminProfanityRouteImport } from './routes/_authenticated/_approved/admin-profanity'
@@ -72,6 +74,7 @@ import { Route as ApiPublicHooksUserNotificationPushRouteImport } from './routes
 import { Route as ApiPublicHooksSubscriptionExpiryRemindersRouteImport } from './routes/api/public/hooks/subscription-expiry-reminders'
 import { Route as ApiPublicHooksSquareInvoiceRouteImport } from './routes/api/public/hooks/square-invoice'
 import { Route as ApiPublicHooksScheduledRemindersRouteImport } from './routes/api/public/hooks/scheduled-reminders'
+import { Route as ApiPublicHooksRefreshStreamingPricesRouteImport } from './routes/api/public/hooks/refresh-streaming-prices'
 import { Route as ApiPublicHooksNowpaymentsRouteImport } from './routes/api/public/hooks/nowpayments'
 import { Route as ApiPublicHooksNotifyRouteImport } from './routes/api/public/hooks/notify'
 import { Route as ApiPublicHooksBackupOrdersRouteImport } from './routes/api/public/hooks/backup-orders'
@@ -189,6 +192,12 @@ const AuthenticatedApprovedTicketsRoute =
     path: '/tickets',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
+const AuthenticatedApprovedStreamingDevicesRoute =
+  AuthenticatedApprovedStreamingDevicesRouteImport.update({
+    id: '/streaming-devices',
+    path: '/streaming-devices',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
 const AuthenticatedApprovedStatusRoute =
   AuthenticatedApprovedStatusRouteImport.update({
     id: '/status',
@@ -295,6 +304,12 @@ const AuthenticatedApprovedAdminTicketCategoriesRoute =
   AuthenticatedApprovedAdminTicketCategoriesRouteImport.update({
     id: '/admin-ticket-categories',
     path: '/admin-ticket-categories',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
+const AuthenticatedApprovedAdminStreamingDevicesRoute =
+  AuthenticatedApprovedAdminStreamingDevicesRouteImport.update({
+    id: '/admin-streaming-devices',
+    path: '/admin-streaming-devices',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
 const AuthenticatedApprovedAdminRolesRoute =
@@ -441,6 +456,12 @@ const ApiPublicHooksScheduledRemindersRoute =
     path: '/api/public/hooks/scheduled-reminders',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksRefreshStreamingPricesRoute =
+  ApiPublicHooksRefreshStreamingPricesRouteImport.update({
+    id: '/api/public/hooks/refresh-streaming-prices',
+    path: '/api/public/hooks/refresh-streaming-prices',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksNowpaymentsRoute =
   ApiPublicHooksNowpaymentsRouteImport.update({
     id: '/api/public/hooks/nowpayments',
@@ -539,6 +560,7 @@ export interface FileRoutesByFullPath {
   '/admin-profanity': typeof AuthenticatedApprovedAdminProfanityRoute
   '/admin-reviews': typeof AuthenticatedApprovedAdminReviewsRoute
   '/admin-roles': typeof AuthenticatedApprovedAdminRolesRoute
+  '/admin-streaming-devices': typeof AuthenticatedApprovedAdminStreamingDevicesRoute
   '/admin-ticket-categories': typeof AuthenticatedApprovedAdminTicketCategoriesRoute
   '/clock': typeof AuthenticatedApprovedClockRoute
   '/forum': typeof AuthenticatedApprovedForumRouteWithChildren
@@ -557,6 +579,7 @@ export interface FileRoutesByFullPath {
   '/sports-guides': typeof AuthenticatedApprovedSportsGuidesRouteWithChildren
   '/staff': typeof AuthenticatedApprovedStaffRoute
   '/status': typeof AuthenticatedApprovedStatusRoute
+  '/streaming-devices': typeof AuthenticatedApprovedStreamingDevicesRoute
   '/tickets': typeof AuthenticatedApprovedTicketsRoute
   '/api/public/link-preview': typeof ApiPublicLinkPreviewRoute
   '/api/public/tweet': typeof ApiPublicTweetRoute
@@ -569,6 +592,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/backup-orders': typeof ApiPublicHooksBackupOrdersRoute
   '/api/public/hooks/notify': typeof ApiPublicHooksNotifyRoute
   '/api/public/hooks/nowpayments': typeof ApiPublicHooksNowpaymentsRoute
+  '/api/public/hooks/refresh-streaming-prices': typeof ApiPublicHooksRefreshStreamingPricesRoute
   '/api/public/hooks/scheduled-reminders': typeof ApiPublicHooksScheduledRemindersRoute
   '/api/public/hooks/square-invoice': typeof ApiPublicHooksSquareInvoiceRoute
   '/api/public/hooks/subscription-expiry-reminders': typeof ApiPublicHooksSubscriptionExpiryRemindersRoute
@@ -613,6 +637,7 @@ export interface FileRoutesByTo {
   '/admin-profanity': typeof AuthenticatedApprovedAdminProfanityRoute
   '/admin-reviews': typeof AuthenticatedApprovedAdminReviewsRoute
   '/admin-roles': typeof AuthenticatedApprovedAdminRolesRoute
+  '/admin-streaming-devices': typeof AuthenticatedApprovedAdminStreamingDevicesRoute
   '/admin-ticket-categories': typeof AuthenticatedApprovedAdminTicketCategoriesRoute
   '/clock': typeof AuthenticatedApprovedClockRoute
   '/forum': typeof AuthenticatedApprovedForumRouteWithChildren
@@ -630,6 +655,7 @@ export interface FileRoutesByTo {
   '/sports-guides': typeof AuthenticatedApprovedSportsGuidesRouteWithChildren
   '/staff': typeof AuthenticatedApprovedStaffRoute
   '/status': typeof AuthenticatedApprovedStatusRoute
+  '/streaming-devices': typeof AuthenticatedApprovedStreamingDevicesRoute
   '/tickets': typeof AuthenticatedApprovedTicketsRoute
   '/api/public/link-preview': typeof ApiPublicLinkPreviewRoute
   '/api/public/tweet': typeof ApiPublicTweetRoute
@@ -642,6 +668,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/backup-orders': typeof ApiPublicHooksBackupOrdersRoute
   '/api/public/hooks/notify': typeof ApiPublicHooksNotifyRoute
   '/api/public/hooks/nowpayments': typeof ApiPublicHooksNowpaymentsRoute
+  '/api/public/hooks/refresh-streaming-prices': typeof ApiPublicHooksRefreshStreamingPricesRoute
   '/api/public/hooks/scheduled-reminders': typeof ApiPublicHooksScheduledRemindersRoute
   '/api/public/hooks/square-invoice': typeof ApiPublicHooksSquareInvoiceRoute
   '/api/public/hooks/subscription-expiry-reminders': typeof ApiPublicHooksSubscriptionExpiryRemindersRoute
@@ -689,6 +716,7 @@ export interface FileRoutesById {
   '/_authenticated/_approved/admin-profanity': typeof AuthenticatedApprovedAdminProfanityRoute
   '/_authenticated/_approved/admin-reviews': typeof AuthenticatedApprovedAdminReviewsRoute
   '/_authenticated/_approved/admin-roles': typeof AuthenticatedApprovedAdminRolesRoute
+  '/_authenticated/_approved/admin-streaming-devices': typeof AuthenticatedApprovedAdminStreamingDevicesRoute
   '/_authenticated/_approved/admin-ticket-categories': typeof AuthenticatedApprovedAdminTicketCategoriesRoute
   '/_authenticated/_approved/clock': typeof AuthenticatedApprovedClockRoute
   '/_authenticated/_approved/forum': typeof AuthenticatedApprovedForumRouteWithChildren
@@ -707,6 +735,7 @@ export interface FileRoutesById {
   '/_authenticated/_approved/sports-guides': typeof AuthenticatedApprovedSportsGuidesRouteWithChildren
   '/_authenticated/_approved/staff': typeof AuthenticatedApprovedStaffRoute
   '/_authenticated/_approved/status': typeof AuthenticatedApprovedStatusRoute
+  '/_authenticated/_approved/streaming-devices': typeof AuthenticatedApprovedStreamingDevicesRoute
   '/_authenticated/_approved/tickets': typeof AuthenticatedApprovedTicketsRoute
   '/api/public/link-preview': typeof ApiPublicLinkPreviewRoute
   '/api/public/tweet': typeof ApiPublicTweetRoute
@@ -719,6 +748,7 @@ export interface FileRoutesById {
   '/api/public/hooks/backup-orders': typeof ApiPublicHooksBackupOrdersRoute
   '/api/public/hooks/notify': typeof ApiPublicHooksNotifyRoute
   '/api/public/hooks/nowpayments': typeof ApiPublicHooksNowpaymentsRoute
+  '/api/public/hooks/refresh-streaming-prices': typeof ApiPublicHooksRefreshStreamingPricesRoute
   '/api/public/hooks/scheduled-reminders': typeof ApiPublicHooksScheduledRemindersRoute
   '/api/public/hooks/square-invoice': typeof ApiPublicHooksSquareInvoiceRoute
   '/api/public/hooks/subscription-expiry-reminders': typeof ApiPublicHooksSubscriptionExpiryRemindersRoute
@@ -765,6 +795,7 @@ export interface FileRouteTypes {
     | '/admin-profanity'
     | '/admin-reviews'
     | '/admin-roles'
+    | '/admin-streaming-devices'
     | '/admin-ticket-categories'
     | '/clock'
     | '/forum'
@@ -783,6 +814,7 @@ export interface FileRouteTypes {
     | '/sports-guides'
     | '/staff'
     | '/status'
+    | '/streaming-devices'
     | '/tickets'
     | '/api/public/link-preview'
     | '/api/public/tweet'
@@ -795,6 +827,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/backup-orders'
     | '/api/public/hooks/notify'
     | '/api/public/hooks/nowpayments'
+    | '/api/public/hooks/refresh-streaming-prices'
     | '/api/public/hooks/scheduled-reminders'
     | '/api/public/hooks/square-invoice'
     | '/api/public/hooks/subscription-expiry-reminders'
@@ -839,6 +872,7 @@ export interface FileRouteTypes {
     | '/admin-profanity'
     | '/admin-reviews'
     | '/admin-roles'
+    | '/admin-streaming-devices'
     | '/admin-ticket-categories'
     | '/clock'
     | '/forum'
@@ -856,6 +890,7 @@ export interface FileRouteTypes {
     | '/sports-guides'
     | '/staff'
     | '/status'
+    | '/streaming-devices'
     | '/tickets'
     | '/api/public/link-preview'
     | '/api/public/tweet'
@@ -868,6 +903,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/backup-orders'
     | '/api/public/hooks/notify'
     | '/api/public/hooks/nowpayments'
+    | '/api/public/hooks/refresh-streaming-prices'
     | '/api/public/hooks/scheduled-reminders'
     | '/api/public/hooks/square-invoice'
     | '/api/public/hooks/subscription-expiry-reminders'
@@ -914,6 +950,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/admin-profanity'
     | '/_authenticated/_approved/admin-reviews'
     | '/_authenticated/_approved/admin-roles'
+    | '/_authenticated/_approved/admin-streaming-devices'
     | '/_authenticated/_approved/admin-ticket-categories'
     | '/_authenticated/_approved/clock'
     | '/_authenticated/_approved/forum'
@@ -932,6 +969,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/sports-guides'
     | '/_authenticated/_approved/staff'
     | '/_authenticated/_approved/status'
+    | '/_authenticated/_approved/streaming-devices'
     | '/_authenticated/_approved/tickets'
     | '/api/public/link-preview'
     | '/api/public/tweet'
@@ -944,6 +982,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/backup-orders'
     | '/api/public/hooks/notify'
     | '/api/public/hooks/nowpayments'
+    | '/api/public/hooks/refresh-streaming-prices'
     | '/api/public/hooks/scheduled-reminders'
     | '/api/public/hooks/square-invoice'
     | '/api/public/hooks/subscription-expiry-reminders'
@@ -978,6 +1017,7 @@ export interface RootRouteChildren {
   ApiPublicHooksBackupOrdersRoute: typeof ApiPublicHooksBackupOrdersRoute
   ApiPublicHooksNotifyRoute: typeof ApiPublicHooksNotifyRoute
   ApiPublicHooksNowpaymentsRoute: typeof ApiPublicHooksNowpaymentsRoute
+  ApiPublicHooksRefreshStreamingPricesRoute: typeof ApiPublicHooksRefreshStreamingPricesRoute
   ApiPublicHooksScheduledRemindersRoute: typeof ApiPublicHooksScheduledRemindersRoute
   ApiPublicHooksSquareInvoiceRoute: typeof ApiPublicHooksSquareInvoiceRoute
   ApiPublicHooksSubscriptionExpiryRemindersRoute: typeof ApiPublicHooksSubscriptionExpiryRemindersRoute
@@ -1136,6 +1176,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedApprovedTicketsRouteImport
       parentRoute: typeof AuthenticatedApprovedRoute
     }
+    '/_authenticated/_approved/streaming-devices': {
+      id: '/_authenticated/_approved/streaming-devices'
+      path: '/streaming-devices'
+      fullPath: '/streaming-devices'
+      preLoaderRoute: typeof AuthenticatedApprovedStreamingDevicesRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
     '/_authenticated/_approved/status': {
       id: '/_authenticated/_approved/status'
       path: '/status'
@@ -1260,6 +1307,13 @@ declare module '@tanstack/react-router' {
       path: '/admin-ticket-categories'
       fullPath: '/admin-ticket-categories'
       preLoaderRoute: typeof AuthenticatedApprovedAdminTicketCategoriesRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
+    '/_authenticated/_approved/admin-streaming-devices': {
+      id: '/_authenticated/_approved/admin-streaming-devices'
+      path: '/admin-streaming-devices'
+      fullPath: '/admin-streaming-devices'
+      preLoaderRoute: typeof AuthenticatedApprovedAdminStreamingDevicesRouteImport
       parentRoute: typeof AuthenticatedApprovedRoute
     }
     '/_authenticated/_approved/admin-roles': {
@@ -1430,6 +1484,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksScheduledRemindersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/refresh-streaming-prices': {
+      id: '/api/public/hooks/refresh-streaming-prices'
+      path: '/api/public/hooks/refresh-streaming-prices'
+      fullPath: '/api/public/hooks/refresh-streaming-prices'
+      preLoaderRoute: typeof ApiPublicHooksRefreshStreamingPricesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/nowpayments': {
       id: '/api/public/hooks/nowpayments'
       path: '/api/public/hooks/nowpayments'
@@ -1595,6 +1656,7 @@ interface AuthenticatedApprovedRouteChildren {
   AuthenticatedApprovedAdminProfanityRoute: typeof AuthenticatedApprovedAdminProfanityRoute
   AuthenticatedApprovedAdminReviewsRoute: typeof AuthenticatedApprovedAdminReviewsRoute
   AuthenticatedApprovedAdminRolesRoute: typeof AuthenticatedApprovedAdminRolesRoute
+  AuthenticatedApprovedAdminStreamingDevicesRoute: typeof AuthenticatedApprovedAdminStreamingDevicesRoute
   AuthenticatedApprovedAdminTicketCategoriesRoute: typeof AuthenticatedApprovedAdminTicketCategoriesRoute
   AuthenticatedApprovedClockRoute: typeof AuthenticatedApprovedClockRoute
   AuthenticatedApprovedForumRoute: typeof AuthenticatedApprovedForumRouteWithChildren
@@ -1613,6 +1675,7 @@ interface AuthenticatedApprovedRouteChildren {
   AuthenticatedApprovedSportsGuidesRoute: typeof AuthenticatedApprovedSportsGuidesRouteWithChildren
   AuthenticatedApprovedStaffRoute: typeof AuthenticatedApprovedStaffRoute
   AuthenticatedApprovedStatusRoute: typeof AuthenticatedApprovedStatusRoute
+  AuthenticatedApprovedStreamingDevicesRoute: typeof AuthenticatedApprovedStreamingDevicesRoute
   AuthenticatedApprovedTicketsRoute: typeof AuthenticatedApprovedTicketsRoute
   AuthenticatedApprovedUUsernameRoute: typeof AuthenticatedApprovedUUsernameRoute
 }
@@ -1646,6 +1709,8 @@ const AuthenticatedApprovedRouteChildren: AuthenticatedApprovedRouteChildren = {
   AuthenticatedApprovedAdminReviewsRoute:
     AuthenticatedApprovedAdminReviewsRoute,
   AuthenticatedApprovedAdminRolesRoute: AuthenticatedApprovedAdminRolesRoute,
+  AuthenticatedApprovedAdminStreamingDevicesRoute:
+    AuthenticatedApprovedAdminStreamingDevicesRoute,
   AuthenticatedApprovedAdminTicketCategoriesRoute:
     AuthenticatedApprovedAdminTicketCategoriesRoute,
   AuthenticatedApprovedClockRoute: AuthenticatedApprovedClockRoute,
@@ -1669,6 +1734,8 @@ const AuthenticatedApprovedRouteChildren: AuthenticatedApprovedRouteChildren = {
     AuthenticatedApprovedSportsGuidesRouteWithChildren,
   AuthenticatedApprovedStaffRoute: AuthenticatedApprovedStaffRoute,
   AuthenticatedApprovedStatusRoute: AuthenticatedApprovedStatusRoute,
+  AuthenticatedApprovedStreamingDevicesRoute:
+    AuthenticatedApprovedStreamingDevicesRoute,
   AuthenticatedApprovedTicketsRoute: AuthenticatedApprovedTicketsRoute,
   AuthenticatedApprovedUUsernameRoute: AuthenticatedApprovedUUsernameRoute,
 }
@@ -1717,6 +1784,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksBackupOrdersRoute: ApiPublicHooksBackupOrdersRoute,
   ApiPublicHooksNotifyRoute: ApiPublicHooksNotifyRoute,
   ApiPublicHooksNowpaymentsRoute: ApiPublicHooksNowpaymentsRoute,
+  ApiPublicHooksRefreshStreamingPricesRoute:
+    ApiPublicHooksRefreshStreamingPricesRoute,
   ApiPublicHooksScheduledRemindersRoute: ApiPublicHooksScheduledRemindersRoute,
   ApiPublicHooksSquareInvoiceRoute: ApiPublicHooksSquareInvoiceRoute,
   ApiPublicHooksSubscriptionExpiryRemindersRoute:
