@@ -2555,6 +2555,7 @@ export type Database = {
           published: boolean
           refresh_notice: string | null
           sort_order: number
+          subcategory: string | null
           title: string
           updated_at: string
         }
@@ -2572,6 +2573,7 @@ export type Database = {
           published?: boolean
           refresh_notice?: string | null
           sort_order?: number
+          subcategory?: string | null
           title: string
           updated_at?: string
         }
@@ -2589,6 +2591,7 @@ export type Database = {
           published?: boolean
           refresh_notice?: string | null
           sort_order?: number
+          subcategory?: string | null
           title?: string
           updated_at?: string
         }
