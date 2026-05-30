@@ -12,6 +12,9 @@ import { VpnBlockedDialog } from "@/components/VpnBlockedDialog";
 import { ShieldAlert } from "lucide-react";
 
 export const Route = createFileRoute("/signup")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    invite: typeof search.invite === "string" ? search.invite : undefined,
+  }),
   beforeLoad: async () => {
     const { data: { session } } = await supabase.auth.getSession();
     if (session) throw redirect({ to: "/home" });
@@ -21,10 +24,11 @@ export const Route = createFileRoute("/signup")({
 
 function SignupPage() {
   const navigate = useNavigate();
+  const { invite: inviteFromUrl } = Route.useSearch();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
-  const [inviteCode, setInviteCode] = useState("");
+  const [inviteCode, setInviteCode] = useState(inviteFromUrl ?? "");
   const [busy, setBusy] = useState(false);
   const [captchaToken, setCaptchaToken] = useState("");
   const isVpn = useVisitorVpn();
