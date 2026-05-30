@@ -285,9 +285,19 @@ function TicketsPage() {
       .channel(`tickets-list-${user.id}-${Math.random().toString(36).slice(2)}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "tickets" }, () => loadTickets())
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "ticket_messages" }, () => loadTickets())
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "ticket_messages" }, () => loadTickets())
       .subscribe();
-    const interval = window.setInterval(loadTickets, 30_000);
-    return () => { window.clearInterval(interval); supabase.removeChannel(ch); };
+    const interval = window.setInterval(loadTickets, 10_000);
+    const onFocus = () => loadTickets();
+    const onVis = () => { if (document.visibilityState === "visible") loadTickets(); };
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVis);
+    return () => {
+      window.clearInterval(interval);
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVis);
+      supabase.removeChannel(ch);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id, view]);
 
@@ -1011,6 +1021,16 @@ function TicketDetail({
             const next = { ...s }; delete next[nm.sender_id]; return next;
           });
         })
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "ticket_messages", filter: `ticket_id=eq.${ticket.id}` },
+        (p) => {
+          const nm = p.new as unknown as Message;
+          setMessages((m) => m.map((x) => (x.id === nm.id ? { ...x, ...nm } : x)));
+        })
+      .on("postgres_changes", { event: "DELETE", schema: "public", table: "ticket_messages", filter: `ticket_id=eq.${ticket.id}` },
+        (p) => {
+          const oldId = (p.old as { id?: string } | undefined)?.id;
+          if (oldId) setMessages((m) => m.filter((x) => x.id !== oldId));
+        })
       .on("broadcast", { event: "typing" }, (payload) => {
         const d = (payload?.payload ?? {}) as { userId?: string; isStaff?: boolean; internal?: boolean; stopped?: boolean };
         if (!d.userId || d.userId === currentUserId) return;
@@ -1037,14 +1057,21 @@ function TicketDetail({
       .subscribe((status) => {
         typingChannelReadyRef.current = status === "SUBSCRIBED";
         if (status === "SUBSCRIBED" && draftRef.current.trim()) sendTyping(false);
+        if (status === "SUBSCRIBED") load();
       });
     channelRef.current = ch;
-    const reconcile = window.setInterval(load, 30_000);
+    const reconcile = window.setInterval(load, 10_000);
+    const onFocus = () => load();
+    const onVis = () => { if (document.visibilityState === "visible") load(); };
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVis);
     return () => {
       typingChannelReadyRef.current = false;
       channelRef.current = null;
       if (typingTimerRef.current) { window.clearTimeout(typingTimerRef.current); typingTimerRef.current = null; }
       window.clearInterval(reconcile);
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVis);
       void ch.untrack();
       supabase.removeChannel(ch);
       setOthersTyping({});
