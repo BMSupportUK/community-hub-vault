@@ -818,7 +818,7 @@ function SportsGuidesPage() {
                         {(subsByCat[c.id] ?? []).length === 0 && (
                           <div className="text-xs text-purple-200/60 italic">None yet.</div>
                         )}
-                        {(subsByCat[c.id] ?? []).map((sub) => (
+                        {(subsByCat[c.id] ?? []).map((sub, idx, arr) => (
                           <div
                             key={sub.id}
                             className="flex items-center justify-between gap-2 rounded-md bg-purple-900/40 border border-purple-500/20 px-2 py-1.5"
@@ -832,6 +832,22 @@ function SportsGuidesPage() {
                               )}
                             </span>
                             <div className="flex items-center gap-1 shrink-0">
+                              <button
+                                onClick={(e) => { e.stopPropagation(); moveSubcategory(c.id, sub.id, -1); }}
+                                disabled={idx === 0}
+                                className="text-purple-300/70 hover:text-fuchsia-200 disabled:opacity-30 disabled:hover:text-purple-300/70 p-1 rounded-md"
+                                title="Move up"
+                              >
+                                <ArrowUp className="size-3.5" />
+                              </button>
+                              <button
+                                onClick={(e) => { e.stopPropagation(); moveSubcategory(c.id, sub.id, 1); }}
+                                disabled={idx === arr.length - 1}
+                                className="text-purple-300/70 hover:text-fuchsia-200 disabled:opacity-30 disabled:hover:text-purple-300/70 p-1 rounded-md"
+                                title="Move down"
+                              >
+                                <ArrowDown className="size-3.5" />
+                              </button>
                               {!sub.is_default && (
                                 <button
                                   onClick={(e) => { e.stopPropagation(); setDefaultSubcategory(c.id, sub.id); }}
