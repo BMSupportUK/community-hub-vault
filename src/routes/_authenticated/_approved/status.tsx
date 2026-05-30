@@ -211,7 +211,8 @@ function StatusPage() {
       style={{ backgroundImage: `url(${statusBg})` }}
     >
       <div className="absolute inset-0 bg-gradient-to-b from-[#1a0b2e]/75 via-[#1a0b2e]/65 to-[#1a0b2e]/85 pointer-events-none" aria-hidden />
-      <div className="relative z-10 max-w-5xl mx-auto px-6 py-8 space-y-6">
+      <div className="relative z-10 max-w-7xl mx-auto px-6 py-8 grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 items-start">
+        <div className="space-y-6 min-w-0">
         {/* Hero illustration */}
         <div className="relative rounded-3xl overflow-hidden border border-primary/30 shadow-glow bg-gradient-primary">
           <img
@@ -273,15 +274,6 @@ function StatusPage() {
           </div>
         </div>
 
-        {/* Push notifications */}
-        <div className="rounded-2xl border border-border bg-surface-1/60 p-4 flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <div className="font-display text-sm font-semibold">Get notified about outages</div>
-            <div className="text-xs text-muted-foreground">Push alerts when an outage is created or updated. Works on Android Chrome (add to home screen for app-like alerts).</div>
-          </div>
-          <PushNotificationsToggle />
-        </div>
-
         {/* Tabs */}
         <div className="flex gap-2 border-b border-border">
           {(["active", "completed"] as const).map((t) => (
@@ -320,6 +312,18 @@ function StatusPage() {
             ))}
           </div>
         )}
+        </div>
+
+        {/* Sidebar */}
+        <aside className="lg:sticky lg:top-6 space-y-4">
+          <div className="rounded-2xl border border-border bg-surface-1/60 p-4 space-y-3">
+            <div>
+              <div className="font-display text-sm font-semibold">Get notified about outages</div>
+              <div className="text-xs text-muted-foreground mt-1">Push alerts when an outage is created or updated. Works on Android Chrome (add to home screen for app-like alerts).</div>
+            </div>
+            <PushNotificationsToggle />
+          </div>
+        </aside>
       </div>
 
       {editor.open && (
