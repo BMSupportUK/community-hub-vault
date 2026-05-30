@@ -768,6 +768,67 @@ function SportsGuidesPage() {
                     <div className="font-display font-semibold text-lg text-purple-50">{c.name}</div>
                     <div className="text-sm text-purple-200/70 mt-1">{counts[c.id] ?? 0} guide{(counts[c.id] ?? 0) === 1 ? "" : "s"}</div>
                   </button>
+                  {canManageCategories && (
+                    <div className="mt-4 pt-4 border-t border-purple-500/20">
+                      <div className="text-[11px] uppercase tracking-wider font-semibold text-fuchsia-300/80 mb-2">
+                        Sub-categories
+                      </div>
+                      <div className="space-y-1.5">
+                        {(subsByCat[c.id] ?? []).length === 0 && (
+                          <div className="text-xs text-purple-200/60 italic">None yet.</div>
+                        )}
+                        {(subsByCat[c.id] ?? []).map((sub) => (
+                          <div
+                            key={sub.id}
+                            className="flex items-center justify-between gap-2 rounded-md bg-purple-900/40 border border-purple-500/20 px-2 py-1.5"
+                          >
+                            <span className="text-sm text-purple-50 flex items-center gap-2 min-w-0">
+                              <span className="truncate">{sub.name}</span>
+                              {sub.is_default && (
+                                <span className="shrink-0 text-[9px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded bg-fuchsia-500/30 text-fuchsia-100 border border-fuchsia-400/40">
+                                  Default
+                                </span>
+                              )}
+                            </span>
+                            <div className="flex items-center gap-1 shrink-0">
+                              {!sub.is_default && (
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); setDefaultSubcategory(c.id, sub.id); }}
+                                  className="text-[10px] font-semibold px-2 py-1 rounded-md bg-purple-800/60 hover:bg-fuchsia-600 text-purple-100 hover:text-white transition"
+                                  title="Make default"
+                                >
+                                  Set default
+                                </button>
+                              )}
+                              <button
+                                onClick={(e) => { e.stopPropagation(); deleteSubcategory(sub.id); }}
+                                className="text-purple-300/70 hover:text-destructive p-1 rounded-md"
+                                title="Delete sub-category"
+                              >
+                                <Trash2 className="size-3.5" />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="mt-2 flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                        <Input
+                          value={newSubName[c.id] ?? ""}
+                          onChange={(e) => setNewSubName((m) => ({ ...m, [c.id]: e.target.value }))}
+                          onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addSubcategory(c.id); } }}
+                          placeholder="Add sub-category…"
+                          className="h-8 text-xs bg-purple-950/60 border-purple-500/30 text-purple-50 placeholder:text-purple-300/50"
+                        />
+                        <Button
+                          size="sm"
+                          onClick={(e) => { e.stopPropagation(); addSubcategory(c.id); }}
+                          className="h-8 px-2 bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white border-0"
+                        >
+                          <Plus className="size-3.5" />
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
