@@ -255,6 +255,7 @@ export const confirmStripePayment = createServerFn({ method: "POST" })
         order_id: String(order.id),
         provider: "stripe",
         provider_payment_id: pi.id,
+        square_payment_id: pi.id,
         status: "COMPLETED",
         amount_cents: totalCents,
         currency: "GBP",
