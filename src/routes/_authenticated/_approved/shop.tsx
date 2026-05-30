@@ -9,6 +9,7 @@ import { Monitor, Smartphone } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import shopHero from "@/assets/shop-hero.jpg";
+import shopOrdersBg from "@/assets/shop-orders-bg.jpg";
 import houseCutaway from "@/assets/house-cutaway.jpg";
 import judgeCourtroom from "@/assets/judge-courtroom.jpg";
 import refundPolicyHero from "@/assets/refund-policy-hero.jpg";
