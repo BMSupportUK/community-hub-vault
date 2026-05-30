@@ -813,6 +813,13 @@ function SportsGuidesPage() {
                     <div className="absolute top-2 right-2 flex items-center gap-1">
                       <GripVertical className="size-4 text-purple-300/70 cursor-grab" />
                       <button
+                        onClick={(e) => { e.stopPropagation(); renameCategory(c.id, c.name); }}
+                        className="text-purple-300/70 hover:text-fuchsia-200 p-1 rounded-md"
+                        title="Rename category"
+                      >
+                        <Pencil className="size-4" />
+                      </button>
+                      <button
                         onClick={(e) => { e.stopPropagation(); deleteCategory(c.id); }}
                         className="text-purple-300/70 hover:text-destructive p-1 rounded-md"
                         title="Delete category"
