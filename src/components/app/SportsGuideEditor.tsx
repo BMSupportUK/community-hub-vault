@@ -23,6 +23,13 @@ type Blog = {
   refresh_notice: string | null;
   published: boolean;
   not_guaranteed: boolean;
+  subcategory: string | null;
+};
+
+// Categories that expose a sub-category select in the editor.
+const SUBCATEGORY_MAP: Record<string, string[]> = {
+  // Rugby Union
+  "74f3782c-fbee-4cf7-8773-fd419849c7cd": ["League", "Tournament", "Sports Pass"],
 };
 
 const DRAFT_KEY = "sports-guide-new-draft";
@@ -227,6 +234,7 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
           refresh_notice: draft?.refresh_notice ?? "",
           published: draft?.published ?? true,
           not_guaranteed: draft?.not_guaranteed ?? false,
+          subcategory: draft?.subcategory ?? null,
         });
         if (draft && (draft.title || draft.body || draft.excerpt || draft.image_url)) {
           toast.message("Draft restored");
@@ -270,6 +278,7 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
       refresh_notice: string | null;
       published: boolean;
       not_guaranteed: boolean;
+      subcategory: string | null;
       sort_order?: number;
       auto_clear_at?: string;
     } = {
@@ -282,6 +291,10 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
       refresh_notice: editing.refresh_notice?.trim() || null,
       published: editing.published,
       not_guaranteed: editing.not_guaranteed,
+      subcategory:
+        SUBCATEGORY_MAP[editing.category_id] && editing.subcategory
+          ? editing.subcategory
+          : null,
     };
     // Auto-clear the body 6 hours after the latest event time listed
     // inside the body. When no event time can be parsed, leave auto_clear_at
@@ -349,6 +362,22 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
                 ))}
               </select>
             </div>
+            {SUBCATEGORY_MAP[editing.category_id] && (
+              <div>
+                <Label className="text-purple-100">Sub-category</Label>
+                <select
+                  className="mt-1 w-full bg-purple-950/50 border border-purple-500/30 text-purple-50 rounded-md px-3 py-2 text-sm"
+                  value={editing.subcategory ?? ""}
+                  onChange={(e) => setEditing({ ...editing, subcategory: e.target.value || null })}
+                >
+                  <option value="">— None —</option>
+                  {SUBCATEGORY_MAP[editing.category_id].map((sub) => (
+                    <option key={sub} value={sub}>{sub}</option>
+                  ))}
+                </select>
+                <p className="text-[11px] text-purple-300/70 mt-1">Used to filter this guide under the category pills.</p>
+              </div>
+            )}
             <div>
               <Label className="text-purple-100">Title</Label>
               <Input value={editing.title} onChange={(e) => setEditing({ ...editing, title: e.target.value })} className="bg-purple-950/50 border-purple-500/30 text-purple-50" />

@@ -60,6 +60,13 @@ type Blog = {
   updated_at?: string;
   refresh_notice?: string | null;
   not_guaranteed?: boolean | null;
+  subcategory?: string | null;
+};
+
+// Categories that support a second-level filter (pills) under the main category.
+const SUBCATEGORY_MAP: Record<string, string[]> = {
+  // Rugby Union
+  "74f3782c-fbee-4cf7-8773-fd419849c7cd": ["League", "Tournament", "Sports Pass"],
 };
 
 function SportsGuidesPage() {
@@ -76,6 +83,7 @@ function SportsGuidesPage() {
   });
   const [search, setSearch] = useState("");
   const [resultsOpen, setResultsOpen] = useState(true);
+  const [subFilter, setSubFilter] = useState<string | null>(null);
   const [newCatName, setNewCatName] = useState("");
   const [addingCat, setAddingCat] = useState(false);
   const dragCatId = useRef<string | null>(null);
@@ -87,7 +95,12 @@ function SportsGuidesPage() {
   // Reset paging when the visible set changes.
   useEffect(() => {
     setListPage(0);
-  }, [activeCat, search]);
+  }, [activeCat, search, subFilter]);
+
+  // Clear the subcategory filter whenever we change category.
+  useEffect(() => {
+    setSubFilter(null);
+  }, [activeCat]);
 
   // Persist UI state across screen swaps (route remounts).
   useEffect(() => { try { sessionStorage.setItem("sports-guides-active-tab", tab); } catch { /* ignore */ } }, [tab]);
@@ -181,6 +194,7 @@ function SportsGuidesPage() {
     const q = search.trim().toLowerCase();
     return blogs.filter((b) => {
       if (!q && activeCat && b.category_id !== activeCat) return false;
+      if (!q && activeCat && SUBCATEGORY_MAP[activeCat] && subFilter && b.subcategory !== subFilter) return false;
       if (!q) return true;
       return (
         b.title.toLowerCase().includes(q) ||
@@ -188,7 +202,7 @@ function SportsGuidesPage() {
         (b.body ?? "").toLowerCase().includes(q)
       );
     });
-  }, [blogs, activeCat, search]);
+  }, [blogs, activeCat, search, subFilter]);
 
   // Global search results (across ALL categories) shown in the right panel,
   // Discord-style. Includes a snippet of where the term was matched.
@@ -530,6 +544,34 @@ function SportsGuidesPage() {
 
                 {activeCategory && (
                   <h2 className="font-display text-2xl font-bold mb-4 bg-gradient-to-r from-violet-600 to-blue-600 bg-clip-text text-transparent">{activeCategory.name} Guides</h2>
+                )}
+
+                {activeCat && SUBCATEGORY_MAP[activeCat] && !search.trim() && (
+                  <div className="flex flex-wrap gap-2 mb-5">
+                    <button
+                      onClick={() => setSubFilter(null)}
+                      className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition-colors ${subFilter === null ? "bg-gradient-to-r from-violet-600 to-blue-600 text-white border-transparent shadow-md shadow-purple-900/40" : "bg-purple-950/50 text-purple-100/80 border-purple-500/30 hover:bg-purple-800/60"}`}
+                    >
+                      All
+                      <span className="ml-1.5 opacity-70">
+                        {blogs.filter((b) => b.category_id === activeCat).length}
+                      </span>
+                    </button>
+                    {SUBCATEGORY_MAP[activeCat].map((sub) => {
+                      const count = blogs.filter((b) => b.category_id === activeCat && b.subcategory === sub).length;
+                      const active = subFilter === sub;
+                      return (
+                        <button
+                          key={sub}
+                          onClick={() => setSubFilter(sub)}
+                          className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition-colors ${active ? "bg-gradient-to-r from-fuchsia-600 to-purple-600 text-white border-transparent shadow-md shadow-purple-900/40" : "bg-purple-950/50 text-purple-100/80 border-purple-500/30 hover:bg-purple-800/60"}`}
+                        >
+                          {sub}
+                          <span className="ml-1.5 opacity-70">{count}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
                 )}
 
                 {filtered.length === 0 ? (
