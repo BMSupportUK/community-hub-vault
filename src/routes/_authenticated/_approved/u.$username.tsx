@@ -1207,7 +1207,7 @@ function ReferralsPanel({
                     )}
                   </div>
 
-                  {used && (
+                  {used && isAdmin && (
                     <div
                       className={cn(
                         "inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-md border self-start",
