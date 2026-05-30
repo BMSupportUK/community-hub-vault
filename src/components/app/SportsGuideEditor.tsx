@@ -274,6 +274,8 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
     }
     setSaving(true);
     const subsForCat = subcategories.filter((s) => s.category_id === editing.category_id);
+    const defaultSubName =
+      subsForCat.find((s) => s.is_default)?.name ?? null;
     const payload: {
       category_id: string;
       title: string;
@@ -300,7 +302,7 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
       subcategory:
         subsForCat.length > 0 && editing.subcategory
           ? editing.subcategory
-          : null,
+          : defaultSubName,
     };
     // Auto-clear the body 6 hours after the latest event time listed
     // inside the body. When no event time can be parsed, leave auto_clear_at
