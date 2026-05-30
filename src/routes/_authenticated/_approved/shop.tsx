@@ -3201,6 +3201,8 @@ function SquareCardPanel({ orderId, amountCents, canPay, onChange }: { orderId: 
     // already shows the paid method and the CryptoPanel renders its own
     // confirmation.
     if (paid.provider === "nowpayments") return null;
+    // Paid via Stripe — StripePanel renders its own confirmation.
+    if (paid.provider === "stripe") return null;
     return (
       <div>
         <SquareLogo className="mb-1.5" />
