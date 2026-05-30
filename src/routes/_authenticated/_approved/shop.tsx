@@ -1005,8 +1005,17 @@ function Storefront() {
 
   return (
     <main className="flex-1 flex flex-col overflow-hidden">
-      <div className="flex-1 overflow-y-auto">
-        <div className="px-6 pt-6">
+      <div
+        className={cn(
+          "flex-1 overflow-y-auto",
+          tab === "orders" && "relative bg-cover bg-center bg-fixed min-h-screen",
+        )}
+        style={tab === "orders" ? { backgroundImage: `url(${shopOrdersBg})` } : undefined}
+      >
+        {tab === "orders" && (
+          <div className="absolute inset-0 min-h-screen bg-gradient-to-b from-[#1a0b2e]/85 via-[#1a0b2e]/65 to-[#1a0b2e]/90 backdrop-blur-[2px] pointer-events-none" aria-hidden />
+        )}
+        <div className="relative z-10 px-6 pt-6 min-h-screen">
           <Tabs value={tab} onValueChange={setTab} className="w-full">
             <TabsList className="bg-surface-2 border border-border flex flex-wrap h-auto">
               <TabsTrigger value="welcome" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-sky-400 data-[state=active]:text-white">Welcome</TabsTrigger>
@@ -2064,11 +2073,7 @@ function MyOrdersTab({ onOpenOrder }: { onOpenOrder: (id: string) => void }) {
   );
 
   return (
-    <div
-      className="relative rounded-2xl overflow-hidden bg-cover bg-center"
-      style={{ backgroundImage: `url(${shopOrdersBg})` }}
-    >
-      <div className="absolute inset-0 bg-gradient-to-b from-[#1a0b2e]/85 via-[#1a0b2e]/65 to-[#1a0b2e]/90 backdrop-blur-[2px] pointer-events-none" aria-hidden />
+    <div className="relative -mx-6 overflow-hidden">
       <header className="relative px-6 md:px-8 pt-8 pb-6 border-b border-purple-500/30 bg-purple-950/40 backdrop-blur">
         <h1 className="font-display text-3xl font-bold bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 bg-clip-text text-transparent">
           Your Orders
