@@ -9,6 +9,7 @@ import { Monitor, Smartphone } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import shopHero from "@/assets/shop-hero.jpg";
+import shopOrdersBg from "@/assets/shop-orders-bg.jpg";
 import houseCutaway from "@/assets/house-cutaway.jpg";
 import judgeCourtroom from "@/assets/judge-courtroom.jpg";
 import refundPolicyHero from "@/assets/refund-policy-hero.jpg";
@@ -1927,9 +1928,9 @@ function OrdersView({ selectedId, isAdmin, adminUnlocked, initialScope }: { sele
   return (
     <div
       className="flex-1 overflow-y-auto relative bg-cover bg-center bg-fixed"
-      style={{ backgroundImage: `url(${shopHero})` }}
+      style={{ backgroundImage: `url(${shopOrdersBg})` }}
     >
-      <div className="absolute inset-0 bg-[#1a0b2e]/80 backdrop-blur-[2px] pointer-events-none" aria-hidden />
+      <div className="absolute inset-0 bg-gradient-to-b from-[#1a0b2e]/85 via-[#1a0b2e]/65 to-[#1a0b2e]/90 backdrop-blur-[2px] pointer-events-none" aria-hidden />
       <header className="relative px-6 md:px-8 pt-8 pb-6 border-b border-purple-500/30 bg-purple-950/40 backdrop-blur">
         <h1 className="font-display text-3xl font-bold bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 bg-clip-text text-transparent">
           {scope === "all" ? "Shop Admin · Orders" : "Your Orders"}
