@@ -305,6 +305,29 @@ function SportsGuidesPage() {
     load();
   };
 
+  const renameSubcategory = async (categoryId: string, subId: string, currentName: string) => {
+    const next = prompt("Rename sub-category", currentName)?.trim();
+    if (!next || next === currentName) return;
+    const dupe = (subsByCat[categoryId] ?? []).some(
+      (s) => s.id !== subId && s.name.toLowerCase() === next.toLowerCase(),
+    );
+    if (dupe) return toast.error("A sub-category with that name already exists");
+    const { error } = await supabase
+      .from("sports_subcategories")
+      .update({ name: next })
+      .eq("id", subId);
+    if (error) return toast.error(error.message);
+    // Keep existing blogs in sync so the filter pills still match.
+    const { error: updErr } = await supabase
+      .from("sports_blogs")
+      .update({ subcategory: next })
+      .eq("category_id", categoryId)
+      .eq("subcategory", currentName);
+    if (updErr) return toast.error(updErr.message);
+    toast.success("Sub-category renamed");
+    load();
+  };
+
   const setDefaultSubcategory = async (categoryId: string, subId: string) => {
     // Clear any existing default first (unique partial index allows only one).
     const { error: clearErr } = await supabase
@@ -800,6 +823,13 @@ function SportsGuidesPage() {
                                   Set default
                                 </button>
                               )}
+                              <button
+                                onClick={(e) => { e.stopPropagation(); renameSubcategory(c.id, sub.id, sub.name); }}
+                                className="text-purple-300/70 hover:text-fuchsia-200 p-1 rounded-md"
+                                title="Rename sub-category"
+                              >
+                                <Pencil className="size-3.5" />
+                              </button>
                               <button
                                 onClick={(e) => { e.stopPropagation(); deleteSubcategory(sub.id); }}
                                 className="text-purple-300/70 hover:text-destructive p-1 rounded-md"
