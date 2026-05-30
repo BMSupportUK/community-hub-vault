@@ -30,6 +30,7 @@ import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/em
 import { Route as ApiPublicTweetRouteImport } from './routes/api/public/tweet'
 import { Route as ApiPublicLinkPreviewRouteImport } from './routes/api/public/link-preview'
 import { Route as AuthenticatedApprovedTicketsRouteImport } from './routes/_authenticated/_approved/tickets'
+import { Route as AuthenticatedApprovedStreamingDevicesRouteImport } from './routes/_authenticated/_approved/streaming-devices'
 import { Route as AuthenticatedApprovedStatusRouteImport } from './routes/_authenticated/_approved/status'
 import { Route as AuthenticatedApprovedStaffRouteImport } from './routes/_authenticated/_approved/staff'
 import { Route as AuthenticatedApprovedSportsGuidesRouteImport } from './routes/_authenticated/_approved/sports-guides'
@@ -188,6 +189,12 @@ const AuthenticatedApprovedTicketsRoute =
   AuthenticatedApprovedTicketsRouteImport.update({
     id: '/tickets',
     path: '/tickets',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
+const AuthenticatedApprovedStreamingDevicesRoute =
+  AuthenticatedApprovedStreamingDevicesRouteImport.update({
+    id: '/streaming-devices',
+    path: '/streaming-devices',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
 const AuthenticatedApprovedStatusRoute =
@@ -564,6 +571,7 @@ export interface FileRoutesByFullPath {
   '/sports-guides': typeof AuthenticatedApprovedSportsGuidesRouteWithChildren
   '/staff': typeof AuthenticatedApprovedStaffRoute
   '/status': typeof AuthenticatedApprovedStatusRoute
+  '/streaming-devices': typeof AuthenticatedApprovedStreamingDevicesRoute
   '/tickets': typeof AuthenticatedApprovedTicketsRoute
   '/api/public/link-preview': typeof ApiPublicLinkPreviewRoute
   '/api/public/tweet': typeof ApiPublicTweetRoute
@@ -638,6 +646,7 @@ export interface FileRoutesByTo {
   '/sports-guides': typeof AuthenticatedApprovedSportsGuidesRouteWithChildren
   '/staff': typeof AuthenticatedApprovedStaffRoute
   '/status': typeof AuthenticatedApprovedStatusRoute
+  '/streaming-devices': typeof AuthenticatedApprovedStreamingDevicesRoute
   '/tickets': typeof AuthenticatedApprovedTicketsRoute
   '/api/public/link-preview': typeof ApiPublicLinkPreviewRoute
   '/api/public/tweet': typeof ApiPublicTweetRoute
@@ -716,6 +725,7 @@ export interface FileRoutesById {
   '/_authenticated/_approved/sports-guides': typeof AuthenticatedApprovedSportsGuidesRouteWithChildren
   '/_authenticated/_approved/staff': typeof AuthenticatedApprovedStaffRoute
   '/_authenticated/_approved/status': typeof AuthenticatedApprovedStatusRoute
+  '/_authenticated/_approved/streaming-devices': typeof AuthenticatedApprovedStreamingDevicesRoute
   '/_authenticated/_approved/tickets': typeof AuthenticatedApprovedTicketsRoute
   '/api/public/link-preview': typeof ApiPublicLinkPreviewRoute
   '/api/public/tweet': typeof ApiPublicTweetRoute
@@ -793,6 +803,7 @@ export interface FileRouteTypes {
     | '/sports-guides'
     | '/staff'
     | '/status'
+    | '/streaming-devices'
     | '/tickets'
     | '/api/public/link-preview'
     | '/api/public/tweet'
@@ -867,6 +878,7 @@ export interface FileRouteTypes {
     | '/sports-guides'
     | '/staff'
     | '/status'
+    | '/streaming-devices'
     | '/tickets'
     | '/api/public/link-preview'
     | '/api/public/tweet'
@@ -944,6 +956,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/sports-guides'
     | '/_authenticated/_approved/staff'
     | '/_authenticated/_approved/status'
+    | '/_authenticated/_approved/streaming-devices'
     | '/_authenticated/_approved/tickets'
     | '/api/public/link-preview'
     | '/api/public/tweet'
@@ -1148,6 +1161,13 @@ declare module '@tanstack/react-router' {
       path: '/tickets'
       fullPath: '/tickets'
       preLoaderRoute: typeof AuthenticatedApprovedTicketsRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
+    '/_authenticated/_approved/streaming-devices': {
+      id: '/_authenticated/_approved/streaming-devices'
+      path: '/streaming-devices'
+      fullPath: '/streaming-devices'
+      preLoaderRoute: typeof AuthenticatedApprovedStreamingDevicesRouteImport
       parentRoute: typeof AuthenticatedApprovedRoute
     }
     '/_authenticated/_approved/status': {
@@ -1634,6 +1654,7 @@ interface AuthenticatedApprovedRouteChildren {
   AuthenticatedApprovedSportsGuidesRoute: typeof AuthenticatedApprovedSportsGuidesRouteWithChildren
   AuthenticatedApprovedStaffRoute: typeof AuthenticatedApprovedStaffRoute
   AuthenticatedApprovedStatusRoute: typeof AuthenticatedApprovedStatusRoute
+  AuthenticatedApprovedStreamingDevicesRoute: typeof AuthenticatedApprovedStreamingDevicesRoute
   AuthenticatedApprovedTicketsRoute: typeof AuthenticatedApprovedTicketsRoute
   AuthenticatedApprovedUUsernameRoute: typeof AuthenticatedApprovedUUsernameRoute
 }
@@ -1690,6 +1711,8 @@ const AuthenticatedApprovedRouteChildren: AuthenticatedApprovedRouteChildren = {
     AuthenticatedApprovedSportsGuidesRouteWithChildren,
   AuthenticatedApprovedStaffRoute: AuthenticatedApprovedStaffRoute,
   AuthenticatedApprovedStatusRoute: AuthenticatedApprovedStatusRoute,
+  AuthenticatedApprovedStreamingDevicesRoute:
+    AuthenticatedApprovedStreamingDevicesRoute,
   AuthenticatedApprovedTicketsRoute: AuthenticatedApprovedTicketsRoute,
   AuthenticatedApprovedUUsernameRoute: AuthenticatedApprovedUUsernameRoute,
 }
