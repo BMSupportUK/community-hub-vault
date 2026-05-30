@@ -2913,7 +2913,7 @@ function SquareCardPanel({ orderId, amountCents, canPay, onChange }: { orderId: 
     if (!canPay || paid || !open) return;
     (async () => {
       try {
-        const cfg = await getConfig();
+        const cfg = await prewarmSquareConfig(getConfig);
         const Square = await loadSquareSdk(cfg.environment);
         if (cancelled) return;
         const payments = Square.payments(cfg.applicationId, cfg.locationId);
