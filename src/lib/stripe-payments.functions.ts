@@ -67,7 +67,9 @@ const FINAL_PAYMENT_STATUSES = new Set(["COMPLETED", "completed", "finished"]);
 async function getOrderPayment(orderId: string) {
   const { data } = await supabaseAdmin
     .from("order_payments")
-    .select("provider,provider_payment_id,status,amount_cents,currency,card_brand,last_4,receipt_url")
+    .select(
+      "provider,provider_payment_id,status,amount_cents,currency,card_brand,last_4,receipt_url",
+    )
     .eq("order_id", orderId)
     .maybeSingle();
   return data as any | null;
@@ -134,8 +136,7 @@ export const createStripePaymentIntent = createServerFn({ method: "POST" })
       const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(userId);
       customerEmail = authUser?.user?.email ?? undefined;
       const meta = (authUser?.user?.user_metadata ?? {}) as Record<string, any>;
-      customerName =
-        meta.full_name || meta.name || meta.display_name || undefined;
+      customerName = meta.full_name || meta.name || meta.display_name || undefined;
     } catch {}
     if (!customerName) {
       try {
@@ -224,7 +225,9 @@ export const confirmStripePayment = createServerFn({ method: "POST" })
         existingPayment.provider_payment_id &&
         existingPayment.provider_payment_id !== data.paymentIntentId
       ) {
-        throw new Error("A different card payment is already in progress for this order. Refresh and try again.");
+        throw new Error(
+          "A different card payment is already in progress for this order. Refresh and try again.",
+        );
       }
     }
 
@@ -270,10 +273,13 @@ export const confirmStripePayment = createServerFn({ method: "POST" })
     );
     if (upErr) throw new Error(upErr.message);
 
-    const { error: paidErr } = await supabaseAdmin.rpc("mark_order_paid" as never, {
-      p_order_id: String(order.id),
-      p_transaction_id: pi.id,
-    } as never);
+    const { error: paidErr } = await supabaseAdmin.rpc(
+      "mark_order_paid" as never,
+      {
+        p_order_id: String(order.id),
+        p_transaction_id: pi.id,
+      } as never,
+    );
     if (paidErr) {
       const { error: fallbackPaidErr } = await supabaseAdmin
         .from("orders")
