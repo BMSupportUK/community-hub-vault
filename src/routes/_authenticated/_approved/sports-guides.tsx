@@ -278,6 +278,17 @@ function SportsGuidesPage() {
     load();
   };
 
+  const renameCategory = async (id: string, currentName: string) => {
+    const next = prompt("Rename category", currentName)?.trim();
+    if (!next || next === currentName) return;
+    const dupe = categories.some((c) => c.id !== id && c.name.toLowerCase() === next.toLowerCase());
+    if (dupe) return toast.error("A category with that name already exists");
+    const { error } = await supabase.from("sports_categories").update({ name: next }).eq("id", id);
+    if (error) return toast.error(error.message);
+    toast.success("Category renamed");
+    load();
+  };
+
   const deleteCategory = async (id: string) => {
     if ((counts[id] ?? 0) > 0) return toast.error("Move or delete blogs in this category first");
     if (!confirm("Delete this category?")) return;
