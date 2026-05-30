@@ -1008,14 +1008,14 @@ function Storefront() {
       <div
         className={cn(
           "flex-1 overflow-y-auto",
-          tab === "orders" && "relative bg-cover bg-center bg-fixed min-h-full",
+          tab === "orders" && "relative bg-cover bg-center bg-fixed min-h-screen",
         )}
         style={tab === "orders" ? { backgroundImage: `url(${shopOrdersBg})` } : undefined}
       >
         {tab === "orders" && (
-          <div className="absolute inset-0 min-h-full bg-gradient-to-b from-[#1a0b2e]/85 via-[#1a0b2e]/65 to-[#1a0b2e]/90 backdrop-blur-[2px] pointer-events-none" aria-hidden />
+          <div className="absolute inset-0 min-h-screen bg-gradient-to-b from-[#1a0b2e]/85 via-[#1a0b2e]/65 to-[#1a0b2e]/90 backdrop-blur-[2px] pointer-events-none" aria-hidden />
         )}
-        <div className="relative z-10 px-6 pt-6 min-h-full">
+        <div className="relative z-10 px-6 pt-6 min-h-screen">
           <Tabs value={tab} onValueChange={setTab} className="w-full">
             <TabsList className="bg-surface-2 border border-border flex flex-wrap h-auto">
               <TabsTrigger value="welcome" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-sky-400 data-[state=active]:text-white">Welcome</TabsTrigger>
