@@ -2528,6 +2528,16 @@ function OrderDetailImpl({ orderId, isAdmin, onBack }: { orderId: string; isAdmi
                   <span className="ml-1 font-mono text-[11px] opacity-80">· {paidMethodLabel}</span>
                 )}
               </button>
+              {!order.paid_at && order.status !== "cancelled" && !order.completed_at && (
+                <button
+                  onClick={reconcileWithSquare}
+                  disabled={busy}
+                  title="Scan recent Square payments and mark paid if a matching transaction is found"
+                  className="px-2.5 py-1 rounded-md bg-surface-2 text-xs font-medium flex items-center gap-1 hover:bg-surface-2/80 disabled:opacity-50"
+                >
+                  <BadgeCheck className="size-3.5" /> Reconcile with Square
+                </button>
+              )}
             </>
           ) : (
             <>
