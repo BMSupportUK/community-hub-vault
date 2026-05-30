@@ -237,7 +237,7 @@ export const reconcileSquareOrder = createServerFn({ method: "POST" })
 
     await supabaseAdmin.from("order_payments").upsert(
       {
-        order_id: order.id,
+        order_id: String(order.id),
         provider: "square",
         provider_payment_id: match.id,
         square_payment_id: match.id,
@@ -254,18 +254,18 @@ export const reconcileSquareOrder = createServerFn({ method: "POST" })
 
     const { error: paidErr } = await supabaseAdmin.rpc(
       "mark_order_paid" as never,
-      { p_order_id: order.id } as never,
+      { p_order_id: String(order.id) } as never,
     );
     if (paidErr) {
       await supabaseAdmin
         .from("orders")
         .update({ paid_at: new Date().toISOString(), paid_by: userId })
-        .eq("id", order.id);
+        .eq("id", String(order.id));
     }
 
     if (order.user_id) {
       await supabaseAdmin.from("order_messages").insert({
-        order_id: order.id,
+        order_id: String(order.id),
         sender_id: order.user_id,
         content: `✅ Card payment reconciled with Square${cardBrand && last4 ? ` (${cardBrand} •••• ${last4})` : ""}.`,
       });
