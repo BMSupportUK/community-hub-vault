@@ -2904,6 +2904,7 @@ function StripePanel({ orderId, amountCents, canPay, onChange }: { orderId: stri
   const paymentElementRef = useRef<any>(null);
   const clientSecretRef = useRef<string | null>(null);
   const paymentIntentIdRef = useRef<string | null>(null);
+  const submittingRef = useRef(false);
   const { format } = useCurrency();
   const getConfig = useServerFn(getStripeWebConfig);
   const createPI = useServerFn(createStripePaymentIntent);
@@ -2965,6 +2966,8 @@ function StripePanel({ orderId, amountCents, canPay, onChange }: { orderId: stri
 
   const handlePay = async () => {
     if (!stripeRef.current || !elementsRef.current || !paymentIntentIdRef.current) return;
+    if (submittingRef.current) return;
+    submittingRef.current = true;
     setLoading(true);
     try {
       const { error, paymentIntent } = await stripeRef.current.confirmPayment({
@@ -2998,6 +3001,7 @@ function StripePanel({ orderId, amountCents, canPay, onChange }: { orderId: stri
     } catch (e) {
       toast.error((e as Error).message);
     } finally {
+      submittingRef.current = false;
       setLoading(false);
     }
   };
@@ -3032,6 +3036,7 @@ function StripePanel({ orderId, amountCents, canPay, onChange }: { orderId: stri
       <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Pay by card</div>
       <button
         onClick={() => setOpen(true)}
+        disabled={loading}
         className="w-full px-2.5 py-2 rounded-md bg-primary text-primary-foreground text-xs font-medium flex items-center justify-center gap-1.5 hover:bg-primary/90"
       >
         <CreditCard className="size-3.5" />
