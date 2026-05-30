@@ -29,6 +29,8 @@ import { VpnBadge } from "@/lib/vpn-flags";
 import { HtmlEditor } from "@/components/ui/html-editor";
 import { sanitizeRichHtml } from "@/lib/sanitize-html";
 import { SoundSettings } from "@/components/app/SoundSettings";
+import { useServerFn } from "@tanstack/react-start";
+import { assignReferrer } from "@/lib/referrals.functions";
 
 export const Route = createFileRoute("/_authenticated/_approved/u/$username")({
   validateSearch: (search: Record<string, unknown>) => ({
