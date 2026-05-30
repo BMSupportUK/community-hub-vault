@@ -1049,6 +1049,10 @@ function ReferralsPanel({
   onCreate,
   onCopy,
   onDelete,
+  isAdmin,
+  targetUserId,
+  inviterLabel,
+  onAssigned,
 }: {
   referrals: ReferralRow[];
   isOwner: boolean;
@@ -1057,10 +1061,61 @@ function ReferralsPanel({
   onCreate: () => void;
   onCopy: (code: string) => void;
   onDelete: (id: string) => void;
+  isAdmin?: boolean;
+  targetUserId?: string | null;
+  inviterLabel?: string | null;
+  onAssigned?: () => void;
 }) {
+  const canAssign = !!isAdmin && !inviterLabel && !!targetUserId;
+  const [assignUsername, setAssignUsername] = useState("");
+  const [assigning, setAssigning] = useState(false);
+  const assignFn = useServerFn(assignReferrer);
+  const submitAssign = async () => {
+    const uname = assignUsername.trim().replace(/^@/, "");
+    if (!uname || !targetUserId) return;
+    setAssigning(true);
+    try {
+      const res = await assignFn({ data: { userId: targetUserId, referrerUsername: uname } });
+      toast.success(`Referrer set to @${res.referrer.username ?? uname}`);
+      setAssignUsername("");
+      onAssigned?.();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to assign referrer");
+    } finally {
+      setAssigning(false);
+    }
+  };
   return (
     <section className="relative text-white">
       <div className="relative p-6 sm:p-8">
+        {canAssign && (
+          <div className="mb-6 rounded-2xl border border-amber-300/40 bg-amber-500/10 backdrop-blur-xl p-5 text-white">
+            <div className="flex items-center gap-2 mb-2">
+              <UserPlus className="size-4 text-amber-200" />
+              <p className="text-xs uppercase tracking-wider text-amber-100">Admin · Assign referrer</p>
+            </div>
+            <p className="text-sm text-white/80 mb-3">
+              This user has no referrer on record. Enter the username of the member who referred them.
+            </p>
+            <div className="flex items-center gap-2 max-w-md">
+              <input
+                value={assignUsername}
+                onChange={(e) => setAssignUsername(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") submitAssign(); }}
+                placeholder="@username"
+                disabled={assigning}
+                className="flex-1 min-w-0 px-3 py-2 rounded-md bg-black/30 border border-white/20 text-white text-sm placeholder:text-white/40 focus:outline-none focus:border-amber-200/60"
+              />
+              <button
+                onClick={submitAssign}
+                disabled={assigning || !assignUsername.trim()}
+                className="px-4 py-2 rounded-md bg-white text-rose-600 text-sm font-semibold hover:bg-amber-50 disabled:opacity-60"
+              >
+                {assigning ? "Saving…" : "Assign"}
+              </button>
+            </div>
+          </div>
+        )}
         <div className="flex items-end justify-between gap-4 flex-wrap mb-6">
           <div>
             <h2 className="flex items-center gap-2 font-display text-2xl sm:text-3xl font-bold drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)]">
