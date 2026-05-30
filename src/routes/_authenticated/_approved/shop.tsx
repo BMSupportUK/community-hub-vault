@@ -18,7 +18,7 @@ import { useCurrency } from "@/hooks/use-currency";
 import { downloadReceipt } from "@/lib/receipt";
 import { Download } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { chargeOrderWithSquare, getSquareWebConfig } from "@/lib/square-payments.functions";
+import { chargeOrderWithSquare, getSquareWebConfig, reconcileSquareOrder } from "@/lib/square-payments.functions";
 import { capturePaypalOrder, createPaypalOrder, getPaypalWebConfig, reconcilePaypalOrder } from "@/lib/paypal-payments.functions";
 import { createCryptoInvoice, getCryptoConfig, getCryptoInvoiceStatus } from "@/lib/nowpayments.functions";
 import { CreditCard, Ban } from "lucide-react";
@@ -2363,6 +2363,28 @@ function OrderDetailImpl({ orderId, isAdmin, onBack }: { orderId: string; isAdmi
     } finally { setBusy(false); }
   };
 
+  const reconcileSquare = useServerFn(reconcileSquareOrder);
+  const reconcileWithSquare = async () => {
+    if (!order || order.paid_at) return;
+    if (busy) return;
+    setBusy(true);
+    try {
+      const res = await reconcileSquare({ data: { orderId } }) as { paid: boolean; status: string };
+      if (res.paid) {
+        toast.success("Matched a Square payment — order marked paid");
+        await load();
+      } else if (res.status === "no_match") {
+        toast.message("No matching Square payment found in the last 30 days");
+      } else if (res.status === "amount_mismatch") {
+        toast.error("Found a Square payment, but the amount didn't match");
+      } else {
+        toast.message(String(res.status));
+      }
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally { setBusy(false); }
+  };
+
   const settingUpAccount = async () => {
     if (!order || order.status === "completed" || !!order.completed_at) {
       toast.error("This order is completed and cannot be changed.");
@@ -2506,6 +2528,16 @@ function OrderDetailImpl({ orderId, isAdmin, onBack }: { orderId: string; isAdmi
                   <span className="ml-1 font-mono text-[11px] opacity-80">· {paidMethodLabel}</span>
                 )}
               </button>
+              {!order.paid_at && order.status !== "cancelled" && !order.completed_at && (
+                <button
+                  onClick={reconcileWithSquare}
+                  disabled={busy}
+                  title="Scan recent Square payments and mark paid if a matching transaction is found"
+                  className="px-2.5 py-1 rounded-md bg-surface-2 text-xs font-medium flex items-center gap-1 hover:bg-surface-2/80 disabled:opacity-50"
+                >
+                  <BadgeCheck className="size-3.5" /> Reconcile with Square
+                </button>
+              )}
             </>
           ) : (
             <>
