@@ -4105,6 +4105,9 @@ function StripePanel({
   const getConfig = useServerFn(getStripeWebConfig);
   const createPI = useServerFn(createStripePaymentIntent);
   const confirmPI = useServerFn(confirmStripePayment);
+  const isFinalPaid = Boolean(
+    paid && ["COMPLETED", "completed", "finished"].includes(String(paid.status ?? "")),
+  );
 
   const loadPayment = async () => {
     const { data } = await supabase
@@ -4133,7 +4136,7 @@ function StripePanel({
 
   useEffect(() => {
     let cancelled = false;
-    if (!canPay || paid || !open) return;
+    if (!canPay || isFinalPaid || !open) return;
     (async () => {
       try {
         const [cfg, StripeCtor] = await Promise.all([
@@ -4174,7 +4177,7 @@ function StripePanel({
       elementsRef.current = null;
       setReady(false);
     };
-  }, [canPay, paid, orderId, open]);
+  }, [canPay, isFinalPaid, orderId, open]);
 
   const handlePay = async () => {
     if (!stripeRef.current || !elementsRef.current || !paymentIntentIdRef.current) return;
@@ -4218,7 +4221,7 @@ function StripePanel({
     }
   };
 
-  if (paid) {
+  if (isFinalPaid) {
     if (paid.provider !== "stripe") return null;
     return (
       <div>
