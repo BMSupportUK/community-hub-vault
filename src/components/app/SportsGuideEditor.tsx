@@ -278,6 +278,7 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
       refresh_notice: string | null;
       published: boolean;
       not_guaranteed: boolean;
+      subcategory: string | null;
       sort_order?: number;
       auto_clear_at?: string;
     } = {
@@ -290,6 +291,10 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
       refresh_notice: editing.refresh_notice?.trim() || null,
       published: editing.published,
       not_guaranteed: editing.not_guaranteed,
+      subcategory:
+        SUBCATEGORY_MAP[editing.category_id] && editing.subcategory
+          ? editing.subcategory
+          : null,
     };
     // Auto-clear the body 6 hours after the latest event time listed
     // inside the body. When no event time can be parsed, leave auto_clear_at
