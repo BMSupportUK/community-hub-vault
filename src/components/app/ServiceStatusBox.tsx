@@ -133,7 +133,7 @@ export function ServiceStatusBox({ hideButtons }: ServiceStatusBoxProps = {}) {
                           </span>
                           <span className="text-[10px] text-muted-foreground flex items-center gap-1">
                             <Clock className="size-3" />
-                            {relativeTime(new Date(i.created_at))}
+                            {formatLastSeen(i.created_at)}
                           </span>
                         </div>
                         <div className="text-sm font-semibold text-foreground mt-1 leading-snug">{i.title}</div>
@@ -148,7 +148,7 @@ export function ServiceStatusBox({ hideButtons }: ServiceStatusBoxProps = {}) {
                         <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
                           <MessageSquare className="size-3" />
                           <span className="uppercase tracking-wider font-medium">Latest update</span>
-                          <span>· {relativeTime(new Date(i.latest_update.created_at))}</span>
+                          <span>· {formatLastSeen(i.latest_update.created_at)}</span>
                         </div>
                         <div className="text-xs text-foreground/90 line-clamp-2 whitespace-pre-wrap">{i.latest_update.message}</div>
                       </div>
