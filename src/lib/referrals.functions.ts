@@ -14,7 +14,7 @@ export const assignReferrer = createServerFn({ method: "POST" })
     z
       .object({
         userId: z.string().uuid(),
-        referrerUsername: z.string().min(1).max(64),
+        code: z.string().min(1).max(32),
       })
       .parse(input),
   )
@@ -31,21 +31,6 @@ export const assignReferrer = createServerFn({ method: "POST" })
     if (!callerRoles.some((r) => r === "admin" || r === "management")) {
       throw new Error("Forbidden: admin or management only");
     }
-
-    if (data.userId === userId) {
-      // Theoretically harmless but avoid self-assignment confusion
-      throw new Error("You can't assign a referrer to yourself.");
-    }
-
-    // Look up referrer profile
-    const { data: ref, error: refErr } = await supabaseAdmin
-      .from("profiles")
-      .select("id, username")
-      .ilike("username", data.referrerUsername)
-      .maybeSingle();
-    if (refErr) throw new Error(refErr.message);
-    if (!ref) throw new Error(`No user found with username "${data.referrerUsername}".`);
-    if (ref.id === data.userId) throw new Error("A user cannot refer themselves.");
 
     // Ensure target user exists
     const { data: target, error: tgtErr } = await supabaseAdmin
@@ -64,32 +49,37 @@ export const assignReferrer = createServerFn({ method: "POST" })
       .maybeSingle();
     if (existing) throw new Error("This user already has a referrer assigned.");
 
-    // Generate a unique invite code
-    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-    const makeCode = () => {
-      let c = "";
-      for (let i = 0; i < 8; i++) c += chars[Math.floor(Math.random() * chars.length)];
-      return c;
-    };
-    const nowIso = new Date().toISOString();
-    let lastError: string | null = null;
-    for (let attempt = 0; attempt < 6; attempt++) {
-      const code = makeCode();
-      const { error } = await supabaseAdmin.from("invites").insert({
-        code,
-        created_by: ref.id,
-        used_by: data.userId,
-        used_at: nowIso,
-      });
-      if (!error) {
-        return {
-          success: true,
-          code,
-          referrer: { id: ref.id, username: ref.username },
-        };
-      }
-      lastError = error.message;
-      if (!error.message.toLowerCase().includes("unique")) break;
+    // Look up the invite by code
+    const normalizedCode = data.code.trim().toUpperCase();
+    const { data: invite, error: invErr } = await supabaseAdmin
+      .from("invites")
+      .select("id, code, created_by, used_by")
+      .ilike("code", normalizedCode)
+      .maybeSingle();
+    if (invErr) throw new Error(invErr.message);
+    if (!invite) throw new Error(`No invite found with code "${normalizedCode}".`);
+    if (invite.used_by) throw new Error("That invite code has already been used.");
+    if (invite.created_by === data.userId) {
+      throw new Error("A user cannot redeem their own invite code.");
     }
-    throw new Error(lastError ?? "Could not create invite.");
+
+    // Resolve referrer profile for the response
+    const { data: ref } = await supabaseAdmin
+      .from("profiles")
+      .select("id, username")
+      .eq("id", invite.created_by)
+      .maybeSingle();
+
+    // Mark the invite used by the target user
+    const { error: updErr } = await supabaseAdmin
+      .from("invites")
+      .update({ used_by: data.userId, used_at: new Date().toISOString() })
+      .eq("id", invite.id);
+    if (updErr) throw new Error(updErr.message);
+
+    return {
+      success: true,
+      code: invite.code,
+      referrer: { id: invite.created_by, username: ref?.username ?? null },
+    };
   });
