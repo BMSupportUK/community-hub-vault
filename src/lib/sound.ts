@@ -155,18 +155,32 @@ export function playSound(
   const prefs = getSoundPrefs();
   if (prefs.muted) return;
   const { volume = 1.0, gain = 1.8, label } = opts;
-  const c = getCtx();
-  if (c && c.state === "suspended") c.resume().catch(() => {});
-  const e = getEntry(src, volume, gain * prefs.volume);
-  try {
-    e.el.currentTime = 0;
-    const p = e.el.play();
-    if (p && typeof p.catch === "function") {
-      p.catch((err) => {
-        console.warn(`[sound] play blocked${label ? ` (${label})` : ""}:`, err?.message ?? err);
-      });
+  void (async () => {
+    const c = getCtx();
+    if (c && c.state === "suspended") {
+      try { await c.resume(); } catch { /* noop */ }
     }
-  } catch (err) {
-    console.warn(`[sound] play threw${label ? ` (${label})` : ""}:`, err);
-  }
+    const e = getEntry(src, volume, gain * prefs.volume);
+    const tryPlay = async (el: HTMLAudioElement) => {
+      try { el.currentTime = 0; } catch { /* noop */ }
+      const p = el.play();
+      if (p && typeof p.then === "function") await p;
+    };
+    try {
+      await tryPlay(e.el);
+      return;
+    } catch (err) {
+      console.warn(`[sound] primary play failed${label ? ` (${label})` : ""}:`, (err as Error)?.message ?? err);
+    }
+    // Fallback: plain HTMLAudio with no WebAudio routing — bypasses any
+    // stale MediaElementSource state after long-backgrounded tabs.
+    try {
+      const fallback = new Audio(src);
+      (fallback as HTMLAudioElement & { playsInline?: boolean }).playsInline = true;
+      fallback.volume = Math.max(0, Math.min(1, volume * Math.min(1, prefs.volume)));
+      await tryPlay(fallback);
+    } catch (err) {
+      console.warn(`[sound] fallback play failed${label ? ` (${label})` : ""}:`, (err as Error)?.message ?? err);
+    }
+  })();
 }
