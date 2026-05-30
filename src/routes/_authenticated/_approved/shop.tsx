@@ -985,7 +985,7 @@ function Storefront() {
           await supabase.from("ticket_messages").insert({
             ticket_id: ticket.id,
             sender_id: user.id,
-            content: `💳 How would you like to pay for this order (${fmt(finalTotal)})?\n\nStep 1 — Select your payment method using the "Pay" button at the top of this ticket: Square (card / Apple Pay / Google Pay), PayPal, or USDT.\n\nStep 2 — Once you've sent payment, reply here with your transaction reference / ID so our team can match it against our payment records and mark the order as paid.`,
+            content: `💳 How would you like to pay for this order (${fmt(finalTotal)})?\n\nStep 1 — Select your payment method using the "Pay" button at the top of this ticket: Square (card / Apple Pay / Google Pay) or USDT.\n\nStep 2 — Once you've sent payment, reply here with your transaction reference / ID so our team can match it against our payment records and mark the order as paid.`,
           } as never);
           const oohMsg = await getOutOfHoursMessage();
           if (oohMsg) {
