@@ -84,6 +84,16 @@ export const Route = createFileRoute("/_authenticated/_approved/shop")({
     id: typeof s.id === "string" ? s.id : undefined,
     scope: s.scope === "all" ? "all" : undefined,
   }),
+  head: () => ({
+    links: [
+      { rel: "preconnect", href: "https://web.squarecdn.com", crossOrigin: "anonymous" },
+      { rel: "preconnect", href: "https://sandbox.web.squarecdn.com", crossOrigin: "anonymous" },
+      { rel: "preconnect", href: "https://www.paypal.com", crossOrigin: "anonymous" },
+      { rel: "preconnect", href: "https://www.paypalobjects.com", crossOrigin: "anonymous" },
+      { rel: "dns-prefetch", href: "https://web.squarecdn.com" },
+      { rel: "dns-prefetch", href: "https://www.paypal.com" },
+    ],
+  }),
   component: ShopPage,
 });
 
@@ -2759,6 +2769,23 @@ export function PayOrderDialog({ orderId, amountCents, onChange }: { orderId: st
   const handleChange = async () => {
     await onChange?.();
   };
+  // Prewarm payment SDKs (config + script) as soon as the Pay button mounts,
+  // so by the time the user clicks Pay the SDK is already cached.
+  const prewarmSquare = useServerFn(getSquareWebConfig);
+  const prewarmPaypal = useServerFn(getPaypalWebConfig);
+  useEffect(() => {
+    const idle = (cb: () => void) =>
+      (window as any).requestIdleCallback?.(cb, { timeout: 1500 }) ?? window.setTimeout(cb, 200);
+    idle(() => {
+      prewarmSquareConfig(prewarmSquare).then((cfg) => {
+        if (cfg) loadSquareSdk(cfg.environment).catch(() => {});
+      });
+      prewarmPaypalConfig(prewarmPaypal).then((cfg) => {
+        if (cfg) loadPaypalSdk(cfg.clientId, cfg.currency).catch(() => {});
+      });
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   return (
     <>
       <button
@@ -2798,6 +2825,22 @@ export function PayOrderDialog({ orderId, amountCents, onChange }: { orderId: st
 }
 declare global {
   interface Window { Square?: any }
+}
+
+// Module-level caches so config + SDK are fetched at most once per page load.
+let _squareConfigPromise: Promise<any> | null = null;
+let _paypalConfigPromise: Promise<any> | null = null;
+function prewarmSquareConfig(fn: (...args: any[]) => Promise<any>): Promise<any> {
+  if (!_squareConfigPromise) {
+    _squareConfigPromise = fn().catch((e) => { _squareConfigPromise = null; throw e; });
+  }
+  return _squareConfigPromise;
+}
+function prewarmPaypalConfig(fn: (...args: any[]) => Promise<any>): Promise<any> {
+  if (!_paypalConfigPromise) {
+    _paypalConfigPromise = fn().catch((e) => { _paypalConfigPromise = null; throw e; });
+  }
+  return _paypalConfigPromise;
 }
 
 function loadSquareSdk(env: "sandbox" | "production"): Promise<any> {
@@ -2870,7 +2913,7 @@ function SquareCardPanel({ orderId, amountCents, canPay, onChange }: { orderId: 
     if (!canPay || paid || !open) return;
     (async () => {
       try {
-        const cfg = await getConfig();
+        const cfg = await prewarmSquareConfig(getConfig);
         const Square = await loadSquareSdk(cfg.environment);
         if (cancelled) return;
         const payments = Square.payments(cfg.applicationId, cfg.locationId);
@@ -3106,7 +3149,7 @@ function PaypalPanel({ orderId, amountCents, canPay, onChange }: { orderId: stri
     if (!canPay || paid) return;
     (async () => {
       try {
-        const cfg = await getConfig();
+        const cfg = await prewarmPaypalConfig(getConfig);
         const paypal = await loadPaypalSdk(cfg.clientId, cfg.currency);
         if (cancelled || !containerRef.current) return;
         containerRef.current.innerHTML = "";
