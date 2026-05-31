@@ -3923,16 +3923,12 @@ export function PayOrderDialog({
   };
   // Prewarm payment SDKs (config + script) as soon as the Pay button mounts,
   // so by the time the user clicks Pay the SDK is already cached.
-  const prewarmSquare = useServerFn(getSquareWebConfig);
   const prewarmPaypal = useServerFn(getPaypalWebConfig);
   const prewarmStripe = useServerFn(getStripeWebConfig);
   useEffect(() => {
     const idle = (cb: () => void) =>
       (window as any).requestIdleCallback?.(cb, { timeout: 1500 }) ?? window.setTimeout(cb, 200);
     idle(() => {
-      prewarmSquareConfig(prewarmSquare).then((cfg) => {
-        if (cfg) loadSquareSdk(cfg.environment).catch(() => {});
-      });
       prewarmPaypalConfig(prewarmPaypal).then((cfg) => {
         if (cfg) loadPaypalSdk(cfg.clientId, cfg.currency).catch(() => {});
       });
