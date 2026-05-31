@@ -51,7 +51,7 @@ import {
   getSquareWebConfig,
   reconcileSquareOrder,
 } from "@/lib/square-payments.functions";
-import { createSquareInvoiceForOrder } from "@/lib/square-invoices.functions";
+import { createSquareInvoiceForOrder, refreshSquareInvoiceStatus } from "@/lib/square-invoices.functions";
 import {
   createStripePaymentIntent,
   confirmStripePayment,
@@ -4001,6 +4001,7 @@ function SquareInvoicePanel({
   const [status, setStatus] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const createInvoice = useServerFn(createSquareInvoiceForOrder);
+  const refreshInvoice = useServerFn(refreshSquareInvoiceStatus);
 
   useEffect(() => {
     let cancelled = false;
@@ -4042,6 +4043,21 @@ function SquareInvoicePanel({
     }
   };
 
+  const refresh = async () => {
+    setBusy(true);
+    setErr(null);
+    try {
+      const res: any = await refreshInvoice({ data: { orderId } });
+      if (res?.status) setStatus(res.status);
+      if (res?.public_url) setUrl(res.public_url);
+      await onChange?.();
+    } catch (e: any) {
+      setErr(e?.message || "Failed to refresh status");
+    } finally {
+      setBusy(false);
+    }
+  };
+
   if (loading) {
     return <div className="text-xs text-muted-foreground">Loading…</div>;
   }
@@ -4068,6 +4084,14 @@ function SquareInvoicePanel({
               Status: {status}
             </div>
           )}
+          <button
+            type="button"
+            onClick={refresh}
+            disabled={busy}
+            className="w-full text-xs font-medium underline disabled:opacity-50"
+          >
+            {busy ? "Checking…" : "I've paid — refresh status"}
+          </button>
           <button
             type="button"
             onClick={generate}

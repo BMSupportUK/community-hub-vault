@@ -193,7 +193,7 @@ export const refreshSquareInvoiceStatus = createServerFn({ method: "POST" })
   .inputValidator((input) => z.object({ orderId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    await assertAdmin(supabase, userId);
+    await assertAdminOrOrderOwner(supabase, userId, data.orderId);
 
     const { data: row } = await supabase
       .from("order_invoices")
@@ -218,6 +218,22 @@ export const refreshSquareInvoiceStatus = createServerFn({ method: "POST" })
       .select()
       .single();
     if (error) throw new Error(error.message);
+
+    // If Square reports the invoice as PAID, mark the order paid too.
+    if (invoice.status === "PAID") {
+      const { data: order } = await supabase
+        .from("orders")
+        .select("id,paid_at")
+        .eq("id", data.orderId)
+        .maybeSingle();
+      if (order && !order.paid_at) {
+        await supabase
+          .from("orders")
+          .update({ paid_at: new Date().toISOString() })
+          .eq("id", data.orderId);
+      }
+    }
+
     return updated;
   });
 
