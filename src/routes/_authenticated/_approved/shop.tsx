@@ -3372,6 +3372,7 @@ function OrderDetailImpl({
   };
 
   const reconcileSquare = useServerFn(reconcileSquareOrder);
+  const refreshSquareInvoice = useServerFn(refreshSquareInvoiceStatus);
   const reconcileWithSquare = async () => {
     if (!order || order.paid_at) return;
     if (busy) return;
@@ -3393,6 +3394,25 @@ function OrderDetailImpl({
       }
     } catch (e) {
       toast.error((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const refreshCustomerSquareInvoice = async () => {
+    if (!order || order.paid_at || order.completed_at || order.status === "cancelled") return;
+    if (busy) return;
+    setBusy(true);
+    try {
+      const res = (await refreshSquareInvoice({ data: { orderId } })) as { status?: string };
+      await load();
+      if (res.status === "PAID") {
+        toast.success("Payment confirmed — your order is now marked paid");
+      } else {
+        toast.message(`Square still shows this invoice as ${res.status ?? "unpaid"}`);
+      }
+    } catch (e) {
+      toast.error((e as Error).message || "Failed to refresh payment status");
     } finally {
       setBusy(false);
     }
@@ -3747,11 +3767,22 @@ function OrderDetailImpl({
                   />
                 </>
               ) : (
-                <PayOrderDialog
-                  orderId={orderId}
-                  amountCents={order.total_cents ?? 0}
-                  onChange={load}
-                />
+                <>
+                  <PayOrderDialog
+                    orderId={orderId}
+                    amountCents={order.total_cents ?? 0}
+                    onChange={load}
+                  />
+                  <button
+                    type="button"
+                    onClick={refreshCustomerSquareInvoice}
+                    disabled={busy}
+                    className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-border bg-surface-2 text-sm font-medium hover:bg-surface-2/80 transition disabled:opacity-50"
+                  >
+                    <BadgeCheck className="size-4" />
+                    {busy ? "Checking payment…" : "I've paid — refresh status"}
+                  </button>
+                </>
               )}
             </div>
           )}
