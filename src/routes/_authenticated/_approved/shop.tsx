@@ -3990,6 +3990,113 @@ declare global {
   }
 }
 
+function SquareInvoicePanel({
+  orderId,
+  amountCents,
+  onChange,
+}: {
+  orderId: string;
+  amountCents: number;
+  onChange?: () => void | Promise<void>;
+}) {
+  const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const [url, setUrl] = useState<string | null>(null);
+  const [status, setStatus] = useState<string | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+  const createInvoice = useServerFn(createSquareInvoiceForOrder);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("order_invoices")
+        .select("public_url,status")
+        .eq("order_id", orderId)
+        .maybeSingle();
+      if (cancelled) return;
+      if (data?.public_url) setUrl(data.public_url);
+      if (data?.status) setStatus(data.status);
+      setLoading(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [orderId]);
+
+  const generate = async () => {
+    setBusy(true);
+    setErr(null);
+    try {
+      const res: any = await createInvoice({ data: { orderId } });
+      if (res?.public_url) {
+        setUrl(res.public_url);
+        setStatus(res.status ?? "UNPAID");
+        try {
+          window.open(res.public_url, "_blank", "noopener,noreferrer");
+        } catch {}
+        await onChange?.();
+      } else {
+        setErr("Invoice created but no link was returned. Please refresh.");
+      }
+    } catch (e: any) {
+      setErr(e?.message || "Failed to create invoice");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  if (loading) {
+    return <div className="text-xs text-muted-foreground">Loading…</div>;
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="text-xs text-muted-foreground leading-relaxed">
+        Pay securely via a hosted Square invoice. Card, Apple Pay, and Google Pay are
+        supported on the invoice page. Total {fmt(amountCents)}.
+      </div>
+      {url ? (
+        <div className="space-y-2">
+          <a
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-primary text-primary-foreground font-medium hover:opacity-90 transition"
+          >
+            <CreditCard className="size-4" />
+            Open Square invoice
+          </a>
+          {status && (
+            <div className="text-[11px] text-muted-foreground text-center">
+              Status: {status}
+            </div>
+          )}
+          <button
+            type="button"
+            onClick={generate}
+            disabled={busy}
+            className="w-full text-[11px] text-muted-foreground underline disabled:opacity-50"
+          >
+            {busy ? "Generating…" : "Generate a fresh link"}
+          </button>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={generate}
+          disabled={busy}
+          className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-primary text-primary-foreground font-medium hover:opacity-90 transition disabled:opacity-50"
+        >
+          <CreditCard className="size-4" />
+          {busy ? "Creating invoice…" : `Pay ${fmt(amountCents)} via Square`}
+        </button>
+      )}
+      {err && <div className="text-xs text-destructive">{err}</div>}
+    </div>
+  );
+}
+
 // Module-level caches so config + SDK are fetched at most once per page load.
 let _squareConfigPromise: Promise<any> | null = null;
 let _paypalConfigPromise: Promise<any> | null = null;
