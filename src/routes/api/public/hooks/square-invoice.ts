@@ -72,7 +72,6 @@ export const Route = createFileRoute("/api/public/hooks/square-invoice")({
               .from("orders")
               .update({
                 paid_at: new Date().toISOString(),
-                status: order.status === "cancelled" ? order.status : "paid",
               })
               .eq("id", row.order_id);
           }
