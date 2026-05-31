@@ -23,6 +23,7 @@ import { Button } from "@/components/ui/button";
 import { useRoleFlashMap, resolveAvatarUrl, roleFlashClass } from "@/lib/role-flash";
 import { ServiceStatusBox } from "@/components/app/ServiceStatusBox";
 import { PayOrderDialog, OrderProgressStrip } from "@/routes/_authenticated/_approved/shop";
+import { refreshSquareInvoiceStatus } from "@/lib/square-invoices.functions";
 
 export const Route = createFileRoute("/_authenticated/_approved/tickets")({
   validateSearch: (s: Record<string, unknown>) => ({
@@ -888,6 +889,7 @@ function TicketDetail({
   const [linkedOrder, setLinkedOrder] = useState<LinkedOrder | null>(null);
   const [linkedOrderUsername, setLinkedOrderUsername] = useState<string | null>(null);
   const [orderBusy, setOrderBusy] = useState(false);
+  const refreshSquareInvoice = useServerFn(refreshSquareInvoiceStatus);
   const loadLinkedOrder = async () => {
     if (!ticket.order_id) { setLinkedOrder(null); setLinkedOrderUsername(null); return; }
     const { data } = await supabase
@@ -994,6 +996,22 @@ function TicketDetail({
       );
       toast.success("Order cancelled");
       await loadLinkedOrder();
+    } finally { setOrderBusy(false); }
+  };
+
+  const orderRefreshSquareStatus = async () => {
+    if (!linkedOrder || orderBusy || linkedOrder.paid_at) return;
+    setOrderBusy(true);
+    try {
+      const res = (await refreshSquareInvoice({ data: { orderId: linkedOrder.id } })) as { status?: string };
+      await loadLinkedOrder();
+      if (res.status === "PAID") {
+        toast.success("Payment confirmed — order marked paid");
+      } else {
+        toast.message(`Square still shows this invoice as ${res.status ?? "unpaid"}`);
+      }
+    } catch (e) {
+      toast.error((e as Error).message || "Failed to refresh payment status");
     } finally { setOrderBusy(false); }
   };
 
@@ -1201,6 +1219,15 @@ function TicketDetail({
             amountCents={linkedOrder.total_cents}
             onChange={loadLinkedOrder}
           />
+          <button
+            type="button"
+            onClick={orderRefreshSquareStatus}
+            disabled={orderBusy}
+            className="mt-2 w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white/15 border border-white/25 text-white text-sm font-bold hover:bg-white/25 disabled:opacity-50 disabled:cursor-not-allowed transition"
+          >
+            <CheckCircle2 className="size-4" />
+            {orderBusy ? "Checking payment…" : "I've paid — refresh status"}
+          </button>
         </div>
       ) : linkedOrder.paid_at ? (
         <div className="text-emerald-200">✓ Payment received — thank you!</div>
