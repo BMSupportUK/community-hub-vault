@@ -1006,6 +1006,7 @@ function TicketDetail({
       const res = (await refreshSquareInvoice({ data: { orderId: linkedOrder.id } })) as { status?: string };
       await loadLinkedOrder();
       if (res.status === "PAID") {
+        await postTicketSystem(`✅ Payment received — thank you! Your order is now marked as paid.`);
         toast.success("Payment confirmed — order marked paid");
       } else {
         toast.message(`Square still shows this invoice as ${res.status ?? "unpaid"}`);
