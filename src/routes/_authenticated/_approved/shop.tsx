@@ -3964,10 +3964,9 @@ export function PayOrderDialog({
               <TabsTrigger value="usdt">USDT</TabsTrigger>
             </TabsList>
             <TabsContent value="square" className="mt-3">
-              <SquareCardPanel
+              <SquareInvoicePanel
                 orderId={orderId}
                 amountCents={amountCents}
-                canPay={true}
                 onChange={handleChange}
               />
             </TabsContent>
