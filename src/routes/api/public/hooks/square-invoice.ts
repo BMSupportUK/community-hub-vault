@@ -60,6 +60,24 @@ export const Route = createFileRoute("/api/public/hooks/square-invoice")({
           })
           .eq("square_invoice_id", invoice.id);
 
+        // If the invoice is paid, mark the underlying order as paid too.
+        if (newStatus === "PAID" && row.order_id) {
+          const { data: order } = await supabaseAdmin
+            .from("orders")
+            .select("id,paid_at,status")
+            .eq("id", row.order_id)
+            .maybeSingle();
+          if (order && !order.paid_at) {
+            await supabaseAdmin
+              .from("orders")
+              .update({
+                paid_at: new Date().toISOString(),
+                status: order.status === "cancelled" ? order.status : "paid",
+              })
+              .eq("id", row.order_id);
+          }
+        }
+
         return new Response("ok");
       },
     },
