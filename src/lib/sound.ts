@@ -112,8 +112,8 @@ function ensureUnlockListeners() {
 }
 
 function primeAudio(a: HTMLAudioElement) {
+  const previousVolume = a.volume;
   try {
-    const previousVolume = a.volume;
     a.muted = false;
     a.volume = 0;
     const p = a.play();
@@ -123,9 +123,14 @@ function primeAudio(a: HTMLAudioElement) {
         a.currentTime = 0;
         a.volume = previousVolume;
       }).catch(() => { a.volume = previousVolume; });
+    } else {
+      a.pause();
+      a.currentTime = 0;
+      a.volume = previousVolume;
     }
   } catch {
     a.muted = false;
+    a.volume = previousVolume;
   }
 }
 
