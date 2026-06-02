@@ -9,6 +9,7 @@ const cache = new Map<string, Entry>();
 let unlocked = false;
 let listenersAttached = false;
 let ctx: AudioContext | null = null;
+const registeredSources = new Set<string>();
 
 // ---------- User preferences (per-device, localStorage) ----------
 
@@ -71,6 +72,15 @@ function getCtx(): AudioContext | null {
   return ctx;
 }
 
+export function ensureSoundUnlocked(sources: string[] = []) {
+  if (typeof window === "undefined") return;
+  sources.forEach((src) => {
+    registeredSources.add(src);
+    getEntry(src, 1, 1);
+  });
+  ensureUnlockListeners();
+}
+
 function ensureUnlockListeners() {
   if (listenersAttached || typeof window === "undefined") return;
   listenersAttached = true;
@@ -79,14 +89,15 @@ function ensureUnlockListeners() {
     unlocked = true;
     const c = getCtx();
     if (c && c.state === "suspended") c.resume().catch(() => {});
+    registeredSources.forEach((src) => getEntry(src, 1, 1));
     cache.forEach((e) => primeAudio(e.el));
     window.removeEventListener("pointerdown", unlock);
     window.removeEventListener("keydown", unlock);
     window.removeEventListener("touchstart", unlock);
   };
-  window.addEventListener("pointerdown", unlock);
-  window.addEventListener("keydown", unlock);
-  window.addEventListener("touchstart", unlock);
+  window.addEventListener("pointerdown", unlock, { capture: true, passive: true });
+  window.addEventListener("keydown", unlock, { capture: true });
+  window.addEventListener("touchstart", unlock, { capture: true, passive: true });
 
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState !== "visible") return;
