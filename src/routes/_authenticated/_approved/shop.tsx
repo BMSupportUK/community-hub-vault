@@ -51,7 +51,7 @@ import {
   getSquareWebConfig,
   reconcileSquareOrder,
 } from "@/lib/square-payments.functions";
-import { createSquareInvoiceForOrder, refreshSquareInvoiceStatus, cancelSquareInvoice as cancelSquareInvoiceFn } from "@/lib/square-invoices.functions";
+import { createSquareInvoiceForOrder, refreshSquareInvoiceStatus, cancelOrderAndSquareInvoice } from "@/lib/square-invoices.functions";
 import {
   createStripePaymentIntent,
   confirmStripePayment,
@@ -3373,7 +3373,7 @@ function OrderDetailImpl({
 
   const reconcileSquare = useServerFn(reconcileSquareOrder);
   const refreshSquareInvoice = useServerFn(refreshSquareInvoiceStatus);
-  const cancelSquareInvoiceRpc = useServerFn(cancelSquareInvoiceFn);
+  const cancelOrderAndSquareInvoiceRpc = useServerFn(cancelOrderAndSquareInvoice);
   const reconcileWithSquare = async () => {
     if (!order || order.paid_at) return;
     if (busy) return;
@@ -3501,28 +3501,15 @@ function OrderDetailImpl({
     if (busy) return;
     setBusy(true);
     try {
-      const { error } = await supabase
-        .from("orders")
-        .update({ status: "cancelled" } as never)
-        .eq("id", orderId);
-      if (error) {
-        toast.error(error.message);
-        return;
-      }
+      const result = await cancelOrderAndSquareInvoiceRpc({ data: { orderId } });
       await sendSystem(
         `🚫 Order cancelled by ${order.user_id === user?.id ? "customer" : "staff"}.`,
       );
       toast.success("Order cancelled");
-      // Best-effort: also cancel the Square invoice if one exists and isn't already finalised.
-      try {
-        await cancelSquareInvoiceRpc({ data: { orderId } });
+      if (result.invoiceCancelled) {
         await sendSystem(`🚫 Square invoice cancelled.`);
-      } catch (e) {
-        const msg = e instanceof Error ? e.message : String(e);
-        if (!/No Square invoice|already|CANCELED|PAID/i.test(msg)) {
-          toast.warning("Order cancelled, but the Square invoice could not be cancelled automatically.");
-        }
-        console.warn("[shop] cancelSquareInvoice:", msg);
+      } else if (result.invoiceError && !/No Square invoice|PAID/i.test(result.invoiceError)) {
+        toast.warning("Order cancelled, but the Square invoice could not be cancelled automatically.");
       }
       await load();
     } finally {
