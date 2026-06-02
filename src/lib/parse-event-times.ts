@@ -990,6 +990,18 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
   const eventRows = Array.from(
     root.querySelectorAll<HTMLElement>("[data-tz-row][data-tz-utc]"),
   );
+  // Drop events whose start time is more than 10 hours in the past so old
+  // listings auto-disappear from the guide without an editor needing to
+  // manually prune them.
+  const STALE_MS = 10 * 60 * 60 * 1000;
+  const nowMs = Date.now();
+  for (let i = eventRows.length - 1; i >= 0; i -= 1) {
+    const utc = Number(eventRows[i].dataset.tzUtc);
+    if (Number.isFinite(utc) && nowMs - utc > STALE_MS) {
+      eventRows[i].remove();
+      eventRows.splice(i, 1);
+    }
+  }
   if (eventRows.length >= 1) {
     // Anchor at the first row's top-level ancestor within root, then reparent
     // every row to be a direct child of `root`. This bypasses editor wrappers
