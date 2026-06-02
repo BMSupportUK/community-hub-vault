@@ -4,7 +4,7 @@
     <string name="title_activity_main">BM Support</string>
     <string name="package_name">uk.bmsupport.app</string>
     <string name="custom_url_scheme">uk.bmsupport.app</string>
-    <string name="default_notification_channel_id">bm_support_alerts_v3</string>
+    <string name="default_notification_channel_id">bm_support_alerts_v4</string>
     <string name="default_notification_channel_name">BM Support alerts</string>
     <string name="default_notification_channel_description">Signups, tickets, orders and staff alerts</string>
 </resources>
