@@ -3373,6 +3373,7 @@ function OrderDetailImpl({
 
   const reconcileSquare = useServerFn(reconcileSquareOrder);
   const refreshSquareInvoice = useServerFn(refreshSquareInvoiceStatus);
+  const cancelSquareInvoiceRpc = useServerFn(cancelSquareInvoiceFn);
   const reconcileWithSquare = async () => {
     if (!order || order.paid_at) return;
     if (busy) return;
