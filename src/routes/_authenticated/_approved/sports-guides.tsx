@@ -772,6 +772,7 @@ function SportsGuidesPage() {
                     items={filtered}
                     page={listPage}
                     onPagesChange={setListPageCount}
+                    onPageSlicesChange={setListPageSlices}
                     availableHeight={0}
                     maxRows={2}
                     className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5"
