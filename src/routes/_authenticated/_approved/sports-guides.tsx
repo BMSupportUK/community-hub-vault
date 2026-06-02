@@ -88,6 +88,7 @@ function SportsGuidesPage() {
   const skipDefaultSubOnce = useRef(false);
   const [listPage, setListPage] = useState(0);
   const [listPageCount, setListPageCount] = useState(1);
+  const [listPageSlices, setListPageSlices] = useState<number[][]>([]);
   const [draggingBlog, setDraggingBlog] = useState(false);
 
   // Reset paging when the visible set changes.
@@ -218,24 +219,6 @@ function SportsGuidesPage() {
     return m;
   }, [subcategories]);
 
-  // A–Z jump map: first category whose name starts with each letter.
-  const azMap = useMemo(() => {
-    const m: Record<string, string> = {};
-    for (const c of categories) {
-      const letter = (c.name?.[0] ?? "").toUpperCase();
-      if (letter >= "A" && letter <= "Z" && !m[letter]) m[letter] = c.id;
-    }
-    return m;
-  }, [categories]);
-  const catBtnRefs = useRef<Record<string, HTMLButtonElement | null>>({});
-  const jumpToLetter = (letter: string) => {
-    const id = azMap[letter];
-    if (!id) return;
-    setActiveCat(id);
-    const el = catBtnRefs.current[id];
-    el?.scrollIntoView({ behavior: "smooth", block: "nearest" });
-  };
-
   // When switching category, default to that category's default sub-category
   // (falling back to the first sub-category only when no default is set).
   useEffect(() => {
@@ -259,6 +242,30 @@ function SportsGuidesPage() {
       );
     });
   }, [blogs, activeCat, search, subFilter, subsByCat]);
+
+  // A–Z jump map: first visible guide whose title starts with each letter.
+  const azMap = useMemo(() => {
+    const m: Record<string, string> = {};
+    for (const b of filtered) {
+      const letter = (b.title?.trim()[0] ?? "").toUpperCase();
+      if (letter >= "A" && letter <= "Z" && !m[letter]) m[letter] = b.id;
+    }
+    return m;
+  }, [filtered]);
+
+  const jumpToLetter = (letter: string) => {
+    const id = azMap[letter];
+    if (!id) return;
+    const targetIndex = filtered.findIndex((b) => b.id === id);
+    if (targetIndex < 0) return;
+    const targetPage = listPageSlices.findIndex((slice) => slice.includes(targetIndex));
+    if (targetPage >= 0) setListPage(targetPage);
+    window.setTimeout(() => {
+      document
+        .querySelector<HTMLElement>(`[data-guide-id="${id}"]`)
+        ?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 80);
+  };
 
   // Global search results (across ALL categories) shown in the right panel,
   // Discord-style. Includes a snippet of where the term was matched.
@@ -455,6 +462,7 @@ function SportsGuidesPage() {
   const renderBlogCard = (b: Blog) => (
     <article
       key={b.id}
+      data-guide-id={b.id}
       draggable={isMod}
       onDragStart={() => { dragBlogId.current = b.id; setDraggingBlog(true); }}
       onDragEnd={() => { dragBlogId.current = null; setDraggingBlog(false); }}
@@ -628,28 +636,6 @@ function SportsGuidesPage() {
                     </button>
                   )}
                 </div>
-                <div className="mb-3 px-1">
-                  <div className="flex flex-wrap gap-0.5" aria-label="Jump to category by letter">
-                    {Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i)).map((letter) => {
-                      const has = !!azMap[letter];
-                      return (
-                        <button
-                          key={letter}
-                          onClick={() => jumpToLetter(letter)}
-                          disabled={!has}
-                          title={has ? `Jump to ${letter}` : `No category starting with ${letter}`}
-                          className={`w-6 h-6 grid place-items-center rounded text-[10px] font-bold transition-colors ${
-                            has
-                              ? "text-purple-100 hover:bg-fuchsia-600 hover:text-white cursor-pointer"
-                              : "text-purple-400/30 cursor-not-allowed"
-                          }`}
-                        >
-                          {letter}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
                 <div className="space-y-1">
                   {categories.map((c) => {
                     const active = c.id === activeCat;
@@ -673,7 +659,6 @@ function SportsGuidesPage() {
                         )}
                         <button
                           onClick={() => setActiveCat(c.id)}
-                          ref={(el) => { catBtnRefs.current[c.id] = el; }}
                           className="flex-1 flex items-center justify-between px-2 py-2 text-sm text-left"
                         >
                           <span className="flex items-center gap-2">
@@ -710,6 +695,30 @@ function SportsGuidesPage() {
                       <Plus className="size-4 mr-1" /> Add Blog
                     </Button>
                   )}
+                </div>
+
+                <div className="mb-5 rounded-2xl bg-purple-950/50 border border-purple-500/30 p-3 backdrop-blur">
+                  <div className="mb-2 text-[11px] uppercase tracking-wider font-semibold text-fuchsia-300/80">Guide title A-Z</div>
+                  <div className="flex flex-wrap gap-1" aria-label="Jump to guide title by letter">
+                    {Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i)).map((letter) => {
+                      const has = !!azMap[letter];
+                      return (
+                        <button
+                          key={letter}
+                          onClick={() => jumpToLetter(letter)}
+                          disabled={!has}
+                          title={has ? `Jump to first guide title starting with ${letter}` : `No guide title starting with ${letter}`}
+                          className={`w-7 h-7 grid place-items-center rounded-md text-[11px] font-bold transition-colors ${
+                            has
+                              ? "text-purple-100 hover:bg-fuchsia-600 hover:text-white cursor-pointer"
+                              : "text-purple-400/30 cursor-not-allowed"
+                          }`}
+                        >
+                          {letter}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
 
                 {activeCategory && (
@@ -765,6 +774,7 @@ function SportsGuidesPage() {
                     items={filtered}
                     page={listPage}
                     onPagesChange={setListPageCount}
+                    onPageSlicesChange={setListPageSlices}
                     availableHeight={0}
                     maxRows={2}
                     className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5"
