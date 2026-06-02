@@ -51,7 +51,7 @@ import {
   getSquareWebConfig,
   reconcileSquareOrder,
 } from "@/lib/square-payments.functions";
-import { createSquareInvoiceForOrder, refreshSquareInvoiceStatus } from "@/lib/square-invoices.functions";
+import { createSquareInvoiceForOrder, refreshSquareInvoiceStatus, cancelSquareInvoice as cancelSquareInvoiceFn } from "@/lib/square-invoices.functions";
 import {
   createStripePaymentIntent,
   confirmStripePayment,
