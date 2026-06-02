@@ -2569,6 +2569,38 @@ export type Database = {
         }
         Relationships: []
       }
+      sport_cover_cache: {
+        Row: {
+          category_id: string
+          created_at: string
+          id: string
+          image_url: string
+          subcategory: string
+        }
+        Insert: {
+          category_id: string
+          created_at?: string
+          id?: string
+          image_url: string
+          subcategory?: string
+        }
+        Update: {
+          category_id?: string
+          created_at?: string
+          id?: string
+          image_url?: string
+          subcategory?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sport_cover_cache_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "sports_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sports_blog_reads: {
         Row: {
           blog_id: string
