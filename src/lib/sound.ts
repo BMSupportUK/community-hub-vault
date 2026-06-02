@@ -156,29 +156,52 @@ export function playSound(
   if (prefs.muted) return;
   const { volume = 1.0, gain = 1.8, label } = opts;
   void (async () => {
-    const c = getCtx();
-    if (c && c.state === "suspended") {
-      try { await c.resume(); } catch { /* noop */ }
-    }
-    const e = getEntry(src, volume, gain * prefs.volume);
     const tryPlay = async (el: HTMLAudioElement) => {
       try { el.currentTime = 0; } catch { /* noop */ }
       const p = el.play();
       if (p && typeof p.then === "function") await p;
     };
+
+    // Backgrounded tabs: Chrome suspends AudioContext and won't resume it
+    // until the tab is visible again — resume() resolves but the graph stays
+    // silent. Plain HTMLAudio keeps playing in the background once unlocked,
+    // so skip the WebAudio path entirely while hidden.
+    const isHidden =
+      typeof document !== "undefined" && document.visibilityState === "hidden";
+
+    const c = getCtx();
+    if (!isHidden && c && c.state === "suspended") {
+      try { await c.resume(); } catch { /* noop */ }
+    }
+
+    const useFallbackFirst = isHidden || (c ? c.state !== "running" : false);
+
+    const playFallback = async () => {
+      const fallback = new Audio(src);
+      (fallback as HTMLAudioElement & { playsInline?: boolean }).playsInline = true;
+      fallback.volume = Math.max(0, Math.min(1, volume * Math.min(1, gain * prefs.volume)));
+      await tryPlay(fallback);
+    };
+
+    if (useFallbackFirst) {
+      try {
+        await playFallback();
+        return;
+      } catch (err) {
+        console.warn(`[sound] background play failed${label ? ` (${label})` : ""}:`, (err as Error)?.message ?? err);
+      }
+    }
+
+    const e = getEntry(src, volume, gain * prefs.volume);
     try {
       await tryPlay(e.el);
       return;
     } catch (err) {
       console.warn(`[sound] primary play failed${label ? ` (${label})` : ""}:`, (err as Error)?.message ?? err);
     }
-    // Fallback: plain HTMLAudio with no WebAudio routing — bypasses any
-    // stale MediaElementSource state after long-backgrounded tabs.
+    // Final fallback: plain HTMLAudio with no WebAudio routing.
     try {
-      const fallback = new Audio(src);
-      (fallback as HTMLAudioElement & { playsInline?: boolean }).playsInline = true;
-      fallback.volume = Math.max(0, Math.min(1, volume * Math.min(1, prefs.volume)));
-      await tryPlay(fallback);
+      await playFallback();
     } catch (err) {
       console.warn(`[sound] fallback play failed${label ? ` (${label})` : ""}:`, (err as Error)?.message ?? err);
     }
