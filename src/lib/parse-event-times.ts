@@ -84,11 +84,33 @@ function tzOffsetMinutes(instantMs: number, tz: string): number {
 }
 
 function tzAbbrev(instantMs: number, tz: string): string {
-  const parts = new Intl.DateTimeFormat("en-GB", {
-    timeZone: tz,
-    timeZoneName: "short",
-  }).formatToParts(new Date(instantMs));
-  return parts.find((p) => p.type === "timeZoneName")?.value ?? "";
+  // Prefer a named abbreviation (e.g. "EDT", "CET", "AEST") over the
+  // offset-style "GMT-4" / "GMT+1" that Intl returns for many zones.
+  const tryFormat = (opts: Intl.DateTimeFormatOptions) =>
+    new Intl.DateTimeFormat("en-GB", { timeZone: tz, ...opts })
+      .formatToParts(new Date(instantMs))
+      .find((p) => p.type === "timeZoneName")?.value ?? "";
+
+  const isOffset = (s: string) => /^(GMT|UTC)([+-]|$)/i.test(s.trim());
+
+  const short = tryFormat({ timeZoneName: "short" });
+  if (short && !isOffset(short)) return short;
+
+  const shortGeneric = tryFormat({ timeZoneName: "shortGeneric" });
+  if (shortGeneric && !isOffset(shortGeneric)) return shortGeneric;
+
+  const longGeneric = tryFormat({ timeZoneName: "longGeneric" });
+  if (longGeneric && !isOffset(longGeneric)) {
+    // Abbreviate "Eastern Time" → "ET", "Central European Time" → "CET".
+    const abbr = longGeneric
+      .split(/\s+/)
+      .filter((w) => /^[A-Z]/.test(w))
+      .map((w) => w[0])
+      .join("");
+    if (abbr.length >= 2) return abbr;
+  }
+
+  return short;
 }
 
 function sourceDateLabelFromHeading(text: string, dateStr: string): string {
