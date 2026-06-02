@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 const baseUrl = () =>
   (process.env.SQUARE_ENVIRONMENT ?? "production").toLowerCase() === "sandbox"
@@ -263,38 +264,93 @@ export const refreshSquareInvoiceStatus = createServerFn({ method: "POST" })
     return updated;
   });
 
+async function cancelSquareInvoiceForOrder(orderId: string) {
+  const { data: row, error: rowError } = await supabaseAdmin
+    .from("order_invoices")
+    .select("*")
+    .eq("order_id", orderId)
+    .maybeSingle();
+  if (rowError) throw new Error(rowError.message);
+  if (!row) throw new Error("No Square invoice for this order");
+
+  const invoiceId = String(row.square_invoice_id);
+  const cur = await sqFetch(`/v2/invoices/${encodeURIComponent(invoiceId)}`);
+  const currentInvoice = cur?.invoice;
+  const currentStatus = String(currentInvoice?.status ?? row.status ?? "").toUpperCase();
+
+  let invoice = currentInvoice;
+  if (currentStatus !== "CANCELED" && currentStatus !== "PAID") {
+    if (currentInvoice?.version == null) throw new Error("Square invoice version missing");
+    const cancelled = await sqFetch(`/v2/invoices/${encodeURIComponent(invoiceId)}/cancel`, {
+      method: "POST",
+      body: JSON.stringify({ version: currentInvoice.version }),
+    });
+    invoice = cancelled?.invoice ?? currentInvoice;
+  }
+
+  const { data: updated, error } = await supabaseAdmin
+    .from("order_invoices")
+    .update({
+      status: invoice?.status ?? (currentStatus === "PAID" ? "PAID" : "CANCELED"),
+      public_url: invoice?.public_url ?? row.public_url,
+      invoice_number: invoice?.invoice_number ?? row.invoice_number,
+      last_synced_at: new Date().toISOString(),
+    })
+    .eq("order_id", orderId)
+    .select()
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return updated ?? row;
+}
+
 export const cancelSquareInvoice = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => z.object({ orderId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     await assertAdminOrOrderOwner(supabase, userId, data.orderId);
+    return cancelSquareInvoiceForOrder(data.orderId);
+  });
 
-    const { data: row } = await supabase
-      .from("order_invoices")
-      .select("*")
-      .eq("order_id", data.orderId)
-      .single();
-    if (!row) throw new Error("No Square invoice for this order");
+export const cancelOrderAndSquareInvoice = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => z.object({ orderId: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await assertAdminOrOrderOwner(supabase, userId, data.orderId);
 
-    const cur = await sqFetch(`/v2/invoices/${row.square_invoice_id}`);
-    const version = cur?.invoice?.version ?? 0;
+    const { data: order, error: orderError } = await supabase
+      .from("orders")
+      .select("id,user_id,status,paid_at,completed_at")
+      .eq("id", data.orderId)
+      .maybeSingle();
+    if (orderError || !order) throw new Error(orderError?.message || "Order not found");
+    if (order.paid_at || order.completed_at || order.status === "completed") {
+      throw new Error("This order can no longer be cancelled.");
+    }
 
-    const cancelled = await sqFetch(`/v2/invoices/${row.square_invoice_id}/cancel`, {
-      method: "POST",
-      body: JSON.stringify({ version }),
-    });
-    const invoice = cancelled?.invoice;
+    if (order.status !== "cancelled") {
+      const { error } = await supabase
+        .from("orders")
+        .update({ status: "cancelled" } as never)
+        .eq("id", data.orderId);
+      if (error) throw new Error(error.message);
+    }
 
-    const { data: updated, error } = await supabase
-      .from("order_invoices")
-      .update({
-        status: invoice?.status ?? "CANCELED",
-        last_synced_at: new Date().toISOString(),
-      })
-      .eq("order_id", data.orderId)
-      .select()
-      .single();
-    if (error) throw new Error(error.message);
-    return updated;
+    try {
+      const invoice = await cancelSquareInvoiceForOrder(data.orderId);
+      return {
+        orderCancelled: true,
+        invoiceCancelled: String(invoice?.status ?? "").toUpperCase() === "CANCELED",
+        invoiceStatus: invoice?.status ?? null,
+        invoiceError: null,
+      };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (/No Square invoice|PAID/i.test(message)) {
+        return { orderCancelled: true, invoiceCancelled: false, invoiceStatus: null, invoiceError: message };
+      }
+      console.error("[square-invoices] failed to cancel invoice", { orderId: data.orderId, message });
+      return { orderCancelled: true, invoiceCancelled: false, invoiceStatus: null, invoiceError: message };
+    }
   });
