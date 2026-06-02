@@ -541,6 +541,53 @@ export type Database = {
         }
         Relationships: []
       }
+      discord_import_queue: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          parsed_event: Json
+          raw_text: string
+          resolved_at: string | null
+          resolved_by: string | null
+          status: string
+          suggested_category_id: string | null
+          suggested_subcategory: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          parsed_event: Json
+          raw_text: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          suggested_category_id?: string | null
+          suggested_subcategory?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          parsed_event?: Json
+          raw_text?: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          suggested_category_id?: string | null
+          suggested_subcategory?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "discord_import_queue_suggested_category_id_fkey"
+            columns: ["suggested_category_id"]
+            isOneToOne: false
+            referencedRelation: "sports_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       discount_code_products: {
         Row: {
           created_at: string

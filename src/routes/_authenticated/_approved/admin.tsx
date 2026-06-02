@@ -484,6 +484,7 @@ function DashboardBody() {
     { to: "/moderation", label: "Moderation queue", desc: "Approve gate requests and manage members.", icon: ShieldAlert },
     { to: "/shifts", label: "Shifts overview", desc: "Review staff shifts and break history.", icon: Clock },
     { to: "/sports-guides", label: "Sports content", desc: "Publish blogs and manage categories.", icon: FileText },
+    { to: "/admin-sports-import", label: "Sports import", desc: "Paste Discord listings — AI splits them into events and routes them to the right category.", icon: Sparkles },
     { to: "/admin-reviews", label: "Customer reviews", desc: "Approve, reject or delete customer feedback.", icon: Star },
     { to: "/admin-profanity", label: "Chat word filter", desc: "Manage the UK swear list and add custom blocked words.", icon: Filter },
     { to: "/admin-hero-boxes", label: "Landing hero boxes", desc: "Edit the three boxes shown on the public landing page.", icon: Sparkles },
