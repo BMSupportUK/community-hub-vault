@@ -50,6 +50,7 @@ import { Route as AuthenticatedApprovedForumRouteImport } from './routes/_authen
 import { Route as AuthenticatedApprovedClockRouteImport } from './routes/_authenticated/_approved/clock'
 import { Route as AuthenticatedApprovedAdminTicketCategoriesRouteImport } from './routes/_authenticated/_approved/admin-ticket-categories'
 import { Route as AuthenticatedApprovedAdminStreamingDevicesRouteImport } from './routes/_authenticated/_approved/admin-streaming-devices'
+import { Route as AuthenticatedApprovedAdminSportsImportRouteImport } from './routes/_authenticated/_approved/admin-sports-import'
 import { Route as AuthenticatedApprovedAdminRolesRouteImport } from './routes/_authenticated/_approved/admin-roles'
 import { Route as AuthenticatedApprovedAdminReviewsRouteImport } from './routes/_authenticated/_approved/admin-reviews'
 import { Route as AuthenticatedApprovedAdminProfanityRouteImport } from './routes/_authenticated/_approved/admin-profanity'
@@ -312,6 +313,12 @@ const AuthenticatedApprovedAdminStreamingDevicesRoute =
     path: '/admin-streaming-devices',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
+const AuthenticatedApprovedAdminSportsImportRoute =
+  AuthenticatedApprovedAdminSportsImportRouteImport.update({
+    id: '/admin-sports-import',
+    path: '/admin-sports-import',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
 const AuthenticatedApprovedAdminRolesRoute =
   AuthenticatedApprovedAdminRolesRouteImport.update({
     id: '/admin-roles',
@@ -560,6 +567,7 @@ export interface FileRoutesByFullPath {
   '/admin-profanity': typeof AuthenticatedApprovedAdminProfanityRoute
   '/admin-reviews': typeof AuthenticatedApprovedAdminReviewsRoute
   '/admin-roles': typeof AuthenticatedApprovedAdminRolesRoute
+  '/admin-sports-import': typeof AuthenticatedApprovedAdminSportsImportRoute
   '/admin-streaming-devices': typeof AuthenticatedApprovedAdminStreamingDevicesRoute
   '/admin-ticket-categories': typeof AuthenticatedApprovedAdminTicketCategoriesRoute
   '/clock': typeof AuthenticatedApprovedClockRoute
@@ -637,6 +645,7 @@ export interface FileRoutesByTo {
   '/admin-profanity': typeof AuthenticatedApprovedAdminProfanityRoute
   '/admin-reviews': typeof AuthenticatedApprovedAdminReviewsRoute
   '/admin-roles': typeof AuthenticatedApprovedAdminRolesRoute
+  '/admin-sports-import': typeof AuthenticatedApprovedAdminSportsImportRoute
   '/admin-streaming-devices': typeof AuthenticatedApprovedAdminStreamingDevicesRoute
   '/admin-ticket-categories': typeof AuthenticatedApprovedAdminTicketCategoriesRoute
   '/clock': typeof AuthenticatedApprovedClockRoute
@@ -716,6 +725,7 @@ export interface FileRoutesById {
   '/_authenticated/_approved/admin-profanity': typeof AuthenticatedApprovedAdminProfanityRoute
   '/_authenticated/_approved/admin-reviews': typeof AuthenticatedApprovedAdminReviewsRoute
   '/_authenticated/_approved/admin-roles': typeof AuthenticatedApprovedAdminRolesRoute
+  '/_authenticated/_approved/admin-sports-import': typeof AuthenticatedApprovedAdminSportsImportRoute
   '/_authenticated/_approved/admin-streaming-devices': typeof AuthenticatedApprovedAdminStreamingDevicesRoute
   '/_authenticated/_approved/admin-ticket-categories': typeof AuthenticatedApprovedAdminTicketCategoriesRoute
   '/_authenticated/_approved/clock': typeof AuthenticatedApprovedClockRoute
@@ -795,6 +805,7 @@ export interface FileRouteTypes {
     | '/admin-profanity'
     | '/admin-reviews'
     | '/admin-roles'
+    | '/admin-sports-import'
     | '/admin-streaming-devices'
     | '/admin-ticket-categories'
     | '/clock'
@@ -872,6 +883,7 @@ export interface FileRouteTypes {
     | '/admin-profanity'
     | '/admin-reviews'
     | '/admin-roles'
+    | '/admin-sports-import'
     | '/admin-streaming-devices'
     | '/admin-ticket-categories'
     | '/clock'
@@ -950,6 +962,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/admin-profanity'
     | '/_authenticated/_approved/admin-reviews'
     | '/_authenticated/_approved/admin-roles'
+    | '/_authenticated/_approved/admin-sports-import'
     | '/_authenticated/_approved/admin-streaming-devices'
     | '/_authenticated/_approved/admin-ticket-categories'
     | '/_authenticated/_approved/clock'
@@ -1316,6 +1329,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedApprovedAdminStreamingDevicesRouteImport
       parentRoute: typeof AuthenticatedApprovedRoute
     }
+    '/_authenticated/_approved/admin-sports-import': {
+      id: '/_authenticated/_approved/admin-sports-import'
+      path: '/admin-sports-import'
+      fullPath: '/admin-sports-import'
+      preLoaderRoute: typeof AuthenticatedApprovedAdminSportsImportRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
     '/_authenticated/_approved/admin-roles': {
       id: '/_authenticated/_approved/admin-roles'
       path: '/admin-roles'
@@ -1656,6 +1676,7 @@ interface AuthenticatedApprovedRouteChildren {
   AuthenticatedApprovedAdminProfanityRoute: typeof AuthenticatedApprovedAdminProfanityRoute
   AuthenticatedApprovedAdminReviewsRoute: typeof AuthenticatedApprovedAdminReviewsRoute
   AuthenticatedApprovedAdminRolesRoute: typeof AuthenticatedApprovedAdminRolesRoute
+  AuthenticatedApprovedAdminSportsImportRoute: typeof AuthenticatedApprovedAdminSportsImportRoute
   AuthenticatedApprovedAdminStreamingDevicesRoute: typeof AuthenticatedApprovedAdminStreamingDevicesRoute
   AuthenticatedApprovedAdminTicketCategoriesRoute: typeof AuthenticatedApprovedAdminTicketCategoriesRoute
   AuthenticatedApprovedClockRoute: typeof AuthenticatedApprovedClockRoute
@@ -1709,6 +1730,8 @@ const AuthenticatedApprovedRouteChildren: AuthenticatedApprovedRouteChildren = {
   AuthenticatedApprovedAdminReviewsRoute:
     AuthenticatedApprovedAdminReviewsRoute,
   AuthenticatedApprovedAdminRolesRoute: AuthenticatedApprovedAdminRolesRoute,
+  AuthenticatedApprovedAdminSportsImportRoute:
+    AuthenticatedApprovedAdminSportsImportRoute,
   AuthenticatedApprovedAdminStreamingDevicesRoute:
     AuthenticatedApprovedAdminStreamingDevicesRoute,
   AuthenticatedApprovedAdminTicketCategoriesRoute:
