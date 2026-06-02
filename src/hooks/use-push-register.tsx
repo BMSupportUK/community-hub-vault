@@ -31,7 +31,7 @@ export function usePushRegister() {
         if (!granted || removed) return;
 
         await PushNotifications.createChannel({
-          id: "bm_support_alerts_v3",
+          id: "bm_support_alerts_v4",
           name: "BM Support alerts",
           description: "Signups, tickets, orders and staff alerts",
           importance: 4,

@@ -12,6 +12,7 @@ import { useEffect, useState } from "react";
 
 import appCss from "../styles.css?url";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
+import { SoundUnlocker } from "@/components/app/SoundUnlocker";
 
 function NotFoundComponent() {
   return (
@@ -105,6 +106,7 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
+        <SoundUnlocker />
         <RightClickGuard />
         <Outlet />
         <Toaster theme="dark" position="bottom-right" />

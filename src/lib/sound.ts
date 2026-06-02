@@ -3,12 +3,18 @@
 // so we can boost output above the HTMLAudio 1.0 ceiling. Plays reliably
 // while the tab is backgrounded once it has been unlocked.
 
-type Entry = { el: HTMLAudioElement; source?: MediaElementAudioSourceNode; gainNode?: GainNode };
+type Entry = {
+  el: HTMLAudioElement;
+  direct: HTMLAudioElement;
+  source?: MediaElementAudioSourceNode;
+  gainNode?: GainNode;
+};
 
 const cache = new Map<string, Entry>();
 let unlocked = false;
 let listenersAttached = false;
 let ctx: AudioContext | null = null;
+const registeredSources = new Set<string>();
 
 // ---------- User preferences (per-device, localStorage) ----------
 
@@ -71,6 +77,15 @@ function getCtx(): AudioContext | null {
   return ctx;
 }
 
+export function ensureSoundUnlocked(sources: string[] = []) {
+  if (typeof window === "undefined") return;
+  sources.forEach((src) => {
+    registeredSources.add(src);
+    getEntry(src, 1, 1);
+  });
+  ensureUnlockListeners();
+}
+
 function ensureUnlockListeners() {
   if (listenersAttached || typeof window === "undefined") return;
   listenersAttached = true;
@@ -79,14 +94,18 @@ function ensureUnlockListeners() {
     unlocked = true;
     const c = getCtx();
     if (c && c.state === "suspended") c.resume().catch(() => {});
-    cache.forEach((e) => primeAudio(e.el));
-    window.removeEventListener("pointerdown", unlock);
-    window.removeEventListener("keydown", unlock);
-    window.removeEventListener("touchstart", unlock);
+    registeredSources.forEach((src) => getEntry(src, 1, 1));
+    cache.forEach((e) => {
+      primeAudio(e.el);
+      primeAudio(e.direct);
+    });
+    window.removeEventListener("pointerdown", unlock, { capture: true });
+    window.removeEventListener("keydown", unlock, { capture: true });
+    window.removeEventListener("touchstart", unlock, { capture: true });
   };
-  window.addEventListener("pointerdown", unlock);
-  window.addEventListener("keydown", unlock);
-  window.addEventListener("touchstart", unlock);
+  window.addEventListener("pointerdown", unlock, { capture: true, passive: true });
+  window.addEventListener("keydown", unlock, { capture: true });
+  window.addEventListener("touchstart", unlock, { capture: true, passive: true });
 
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState !== "visible") return;
@@ -96,18 +115,25 @@ function ensureUnlockListeners() {
 }
 
 function primeAudio(a: HTMLAudioElement) {
+  const previousVolume = a.volume;
   try {
-    a.muted = true;
+    a.muted = false;
+    a.volume = 0;
     const p = a.play();
     if (p && typeof p.then === "function") {
       p.then(() => {
         a.pause();
         a.currentTime = 0;
-        a.muted = false;
-      }).catch(() => { a.muted = false; });
+        a.volume = previousVolume;
+      }).catch(() => { a.volume = previousVolume; });
+    } else {
+      a.pause();
+      a.currentTime = 0;
+      a.volume = previousVolume;
     }
   } catch {
     a.muted = false;
+    a.volume = previousVolume;
   }
 }
 
@@ -118,7 +144,10 @@ function getEntry(src: string, volume: number, gain: number): Entry {
     el.preload = "auto";
     el.crossOrigin = "anonymous";
     (el as HTMLAudioElement & { playsInline?: boolean }).playsInline = true;
-    e = { el };
+    const direct = new Audio(src);
+    direct.preload = "auto";
+    (direct as HTMLAudioElement & { playsInline?: boolean }).playsInline = true;
+    e = { el, direct };
     const c = getCtx();
     if (c) {
       try {
@@ -132,9 +161,13 @@ function getEntry(src: string, volume: number, gain: number): Entry {
       }
     }
     cache.set(src, e);
-    if (unlocked) primeAudio(el);
+    if (unlocked) {
+      primeAudio(el);
+      primeAudio(direct);
+    }
   }
   e.el.volume = Math.max(0, Math.min(1, volume));
+  e.direct.volume = Math.max(0, Math.min(1, volume * Math.min(1, gain)));
   if (e.gainNode) {
     try { e.gainNode.gain.value = Math.max(0, gain); } catch { /* noop */ }
   }
@@ -176,16 +209,15 @@ export function playSound(
 
     const useFallbackFirst = isHidden || (c ? c.state !== "running" : false);
 
-    const playFallback = async () => {
-      const fallback = new Audio(src);
-      (fallback as HTMLAudioElement & { playsInline?: boolean }).playsInline = true;
-      fallback.volume = Math.max(0, Math.min(1, volume * Math.min(1, gain * prefs.volume)));
-      await tryPlay(fallback);
+    const playDirect = async () => {
+      const e = getEntry(src, volume, gain * prefs.volume);
+      e.direct.volume = Math.max(0, Math.min(1, volume * Math.min(1, gain * prefs.volume)));
+      await tryPlay(e.direct);
     };
 
     if (useFallbackFirst) {
       try {
-        await playFallback();
+        await playDirect();
         return;
       } catch (err) {
         console.warn(`[sound] background play failed${label ? ` (${label})` : ""}:`, (err as Error)?.message ?? err);
@@ -201,7 +233,7 @@ export function playSound(
     }
     // Final fallback: plain HTMLAudio with no WebAudio routing.
     try {
-      await playFallback();
+      await playDirect();
     } catch (err) {
       console.warn(`[sound] fallback play failed${label ? ` (${label})` : ""}:`, (err as Error)?.message ?? err);
     }
