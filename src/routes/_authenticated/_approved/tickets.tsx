@@ -996,6 +996,21 @@ function TicketDetail({
         `🚫 Order cancelled by ${linkedOrder.user_id === currentUserId ? "customer" : "staff"}.`
       );
       toast.success("Order cancelled");
+      // Best-effort: also cancel the Square invoice if one exists and isn't already finalised.
+      try {
+        const { data: inv } = await supabase
+          .from("order_invoices")
+          .select("status")
+          .eq("order_id", linkedOrder.id)
+          .maybeSingle();
+        if (inv && inv.status !== "CANCELED" && inv.status !== "PAID") {
+          await cancelSquareInvoiceRpc({ data: { orderId: linkedOrder.id } });
+          await postTicketSystem(`🚫 Square invoice cancelled.`);
+        }
+      } catch (e) {
+        toast.warning("Order cancelled, but the Square invoice could not be cancelled automatically.");
+        console.warn("[tickets] cancelSquareInvoice failed:", e);
+      }
       await loadLinkedOrder();
     } finally { setOrderBusy(false); }
   };
