@@ -9,7 +9,7 @@ import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { ArrowLeft, Loader2, Sparkles, Send, Trash2, CheckCircle2, AlertCircle, Inbox } from "lucide-react";
+import { ArrowLeft, Loader2, Sparkles, Send, Trash2, Inbox, Wand2 } from "lucide-react";
 import {
   parseDiscordPaste,
   importParsedEvents,
@@ -55,6 +55,8 @@ function AdminSportsImportPage() {
   const [subs, setSubs] = useState<Sub[]>([]);
   const [queue, setQueue] = useState<QueueItem[]>([]);
   const [loadingQueue, setLoadingQueue] = useState(true);
+  const [bulkCategory, setBulkCategory] = useState<string>("");
+  const [bulkSubcategory, setBulkSubcategory] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isStaff) return;
@@ -85,6 +87,8 @@ function AdminSportsImportPage() {
     return map;
   }, [cats, subs]);
 
+  const bulkSubs = bulkCategory ? subsByCatName.get(bulkCategory) ?? [] : [];
+
   if (!isStaff) return <Navigate to="/home" />;
 
   const onParse = async () => {
@@ -95,11 +99,18 @@ function AdminSportsImportPage() {
     setUnmatched([]);
     try {
       const res = await parseFn({ data: { text: t } });
-      setMatched(res.matched as RoutedEvent[]);
-      setUnmatched(res.unmatched as RoutedEvent[]);
-      const total = res.matched.length + res.unmatched.length;
+      // Ignore AI category routing — strip suggestions and merge into one list.
+      // If a bulk default is set, pre-fill every row with it.
+      const all = [...(res.matched as RoutedEvent[]), ...(res.unmatched as RoutedEvent[])].map((e) => ({
+        ...e,
+        category: bulkCategory || null,
+        subcategory: bulkCategory ? bulkSubcategory : null,
+      }));
+      setMatched([]);
+      setUnmatched(all);
+      const total = all.length;
       if (total === 0) toast.error("No events found in the pasted text");
-      else toast.success(`Found ${total} event(s) — ${res.matched.length} matched, ${res.unmatched.length} need review`);
+      else toast.success(`Found ${total} event(s) — pick a category for each (or use the bulk picker)`);
     } catch (e: any) {
       toast.error(e.message ?? "Parse failed");
     } finally {
@@ -115,6 +126,13 @@ function AdminSportsImportPage() {
 
   const removeMatched = (idx: number) => setMatched((prev) => prev.filter((_, i) => i !== idx));
   const removeUnmatched = (idx: number) => setUnmatched((prev) => prev.filter((_, i) => i !== idx));
+
+  const applyBulkToAll = () => {
+    if (!bulkCategory) return toast.error("Pick a category first");
+    setMatched((prev) => prev.map((e) => ({ ...e, category: bulkCategory, subcategory: bulkSubcategory })));
+    setUnmatched((prev) => prev.map((e) => ({ ...e, category: bulkCategory, subcategory: bulkSubcategory })));
+    toast.success(`Applied ${bulkCategory}${bulkSubcategory ? ` › ${bulkSubcategory}` : ""} to all events`);
+  };
 
   const onImportAll = async () => {
     setImporting(true);
