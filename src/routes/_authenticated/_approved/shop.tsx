@@ -2619,8 +2619,11 @@ function OrdersView({
       .on("postgres_changes", { event: "*", schema: "private", table: "orders" }, load)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "order_messages" }, load)
       .subscribe();
+    const onLocal = () => load();
+    window.addEventListener("orders:changed", onLocal);
     return () => {
       supabase.removeChannel(ch);
+      window.removeEventListener("orders:changed", onLocal);
     };
   }, [scope, user?.id, adminUnlocked]);
 
