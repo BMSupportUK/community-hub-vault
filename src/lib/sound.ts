@@ -99,9 +99,9 @@ function ensureUnlockListeners() {
       primeAudio(e.el);
       primeAudio(e.direct);
     });
-    window.removeEventListener("pointerdown", unlock);
-    window.removeEventListener("keydown", unlock);
-    window.removeEventListener("touchstart", unlock);
+    window.removeEventListener("pointerdown", unlock, { capture: true });
+    window.removeEventListener("keydown", unlock, { capture: true });
+    window.removeEventListener("touchstart", unlock, { capture: true });
   };
   window.addEventListener("pointerdown", unlock, { capture: true, passive: true });
   window.addEventListener("keydown", unlock, { capture: true });
