@@ -282,11 +282,13 @@ export function NotificationBell() {
       } else {
         toast.success(result.invoiceCancelled ? "Order and Square invoice cancelled" : "Order cancelled");
       }
+      window.dispatchEvent(new CustomEvent("orders:changed", { detail: { orderId, status: "cancelled" } }));
       return;
     }
     const { error } = await supabase.from("orders").update({ status } as never).eq("id", orderId);
     if (error) return toast.error(error.message);
     toast.success(`Order ${status}`);
+    window.dispatchEvent(new CustomEvent("orders:changed", { detail: { orderId, status } }));
   };
 
   const iconFor = (kind: string) =>

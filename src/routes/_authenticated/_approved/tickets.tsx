@@ -998,6 +998,7 @@ function TicketDetail({
         toast.warning("Order cancelled, but the Square invoice could not be cancelled automatically.");
       }
       await loadLinkedOrder();
+      window.dispatchEvent(new CustomEvent("orders:changed", { detail: { orderId: linkedOrder.id, status: "cancelled" } }));
     } finally { setOrderBusy(false); }
   };
 
