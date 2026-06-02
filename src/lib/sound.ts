@@ -95,7 +95,10 @@ function ensureUnlockListeners() {
     const c = getCtx();
     if (c && c.state === "suspended") c.resume().catch(() => {});
     registeredSources.forEach((src) => getEntry(src, 1, 1));
-    cache.forEach((e) => primeAudio(e.el));
+    cache.forEach((e) => {
+      primeAudio(e.el);
+      primeAudio(e.direct);
+    });
     window.removeEventListener("pointerdown", unlock);
     window.removeEventListener("keydown", unlock);
     window.removeEventListener("touchstart", unlock);
