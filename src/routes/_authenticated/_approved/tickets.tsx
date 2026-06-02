@@ -987,7 +987,7 @@ function TicketDetail({
             .from("user_roles")
             .delete()
             .eq("user_id", linkedOrder.user_id)
-            .in("role", toRemove);
+            .in("role", toRemove as never[]);
           if (delErr) toast.error(`Couldn't clean up roles: ${delErr.message}`);
         }
         if (!roles.includes("subscriber")) {
