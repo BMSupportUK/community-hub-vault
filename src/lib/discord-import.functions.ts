@@ -157,6 +157,74 @@ function buildBody(ev: { time?: string | null; date?: string | null; channels?: 
   return parts.join("\n");
 }
 
+// ── Auto cover illustration ───────────────────────────────────────
+// Generates ONE digital illustration per (category, subcategory) and
+// caches the public URL so subsequent imports reuse the same cover.
+
+async function generateCoverImage(prompt: string): Promise<Uint8Array | null> {
+  const key = process.env.LOVABLE_API_KEY;
+  if (!key) return null;
+  try {
+    const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash-image",
+        messages: [
+          {
+            role: "user",
+            content: `Wide 1600x600 digital illustration cover header for a sports guide about ${prompt}. Modern flat vector illustration style, bold dynamic composition, energetic colors, clean shapes, no text, no logos, no watermarks.`,
+          },
+        ],
+        modalities: ["image", "text"],
+      }),
+    });
+    if (!res.ok) return null;
+    const json = await res.json();
+    const dataUrl: string | undefined = json?.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+    if (!dataUrl) return null;
+    const b64 = dataUrl.split(",")[1];
+    if (!b64) return null;
+    return Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+  } catch {
+    return null;
+  }
+}
+
+async function ensureSportCover(categoryId: string, categoryName: string, subcategory: string | null): Promise<string | null> {
+  const subKey = subcategory ?? "";
+  // 1. Cache lookup
+  const { data: cached } = await supabaseAdmin
+    .from("sport_cover_cache")
+    .select("image_url")
+    .eq("category_id", categoryId)
+    .eq("subcategory", subKey)
+    .maybeSingle();
+  if (cached?.image_url) return cached.image_url;
+
+  // 2. Generate
+  const prompt = subcategory ? `${categoryName} — ${subcategory}` : categoryName;
+  const bytes = await generateCoverImage(prompt);
+  if (!bytes) return null;
+
+  // 3. Upload to public bucket
+  const slug = `${categoryId}/${(subKey || "default").toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 40)}-${Date.now()}.png`;
+  const path = `auto/${slug}`;
+  const { error: upErr } = await supabaseAdmin.storage
+    .from("sports-guide-covers")
+    .upload(path, bytes, { contentType: "image/png", upsert: false });
+  if (upErr) return null;
+  const { data: pub } = supabaseAdmin.storage.from("sports-guide-covers").getPublicUrl(path);
+  const url = pub.publicUrl;
+
+  // 4. Cache
+  await supabaseAdmin
+    .from("sport_cover_cache")
+    .insert({ category_id: categoryId, subcategory: subKey, image_url: url });
+
+  return url;
+}
+
 export const importParsedEvents = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => ImportInput.parse(input))
@@ -173,16 +241,35 @@ export const importParsedEvents = createServerFn({ method: "POST" })
     if (catErr) throw new Error(catErr.message);
     const catMap = new Map<string, string>((cats ?? []).map((c: any) => [c.name, c.id]));
 
+    // Resolve / generate one cover per unique (category, subcategory) pair
+    const coverKeys = new Map<string, { catId: string; catName: string; sub: string | null }>();
+    for (const e of data.events) {
+      const catId = catMap.get(e.category);
+      if (!catId) continue;
+      const sub = e.subcategory ?? null;
+      const key = `${catId}::${sub ?? ""}`;
+      if (!coverKeys.has(key)) coverKeys.set(key, { catId, catName: e.category, sub });
+    }
+    const coverEntries = await Promise.all(
+      Array.from(coverKeys.entries()).map(async ([key, v]) => {
+        const url = await ensureSportCover(v.catId, v.catName, v.sub);
+        return [key, url] as const;
+      }),
+    );
+    const coverMap = new Map(coverEntries);
+
     const rows = data.events
       .map((e) => {
         const category_id = catMap.get(e.category);
         if (!category_id) return null;
+        const coverKey = `${category_id}::${e.subcategory ?? ""}`;
         return {
           category_id,
           subcategory: e.subcategory ?? null,
           title: e.title,
           excerpt: e.time ? `${e.date ? e.date + " · " : ""}${e.time}` : (e.date ?? null),
           body: buildBody(e),
+          image_url: coverMap.get(coverKey) ?? null,
           published: false,
           created_by: userId,
         };
@@ -278,12 +365,14 @@ export const resolveQueueItem = createServerFn({ method: "POST" })
       if (!cat) throw new Error("Category not found");
       const ev: any = item.parsed_event ?? {};
       const title = data.title ?? ev.title ?? "Untitled";
+      const coverUrl = await ensureSportCover((cat as any).id, data.category, data.subcategory ?? null);
       const { error: insErr } = await supabaseAdmin.from("sports_blogs").insert({
         category_id: (cat as any).id,
         subcategory: data.subcategory ?? null,
         title,
         excerpt: ev.time ? `${ev.date ? ev.date + " · " : ""}${ev.time}` : (ev.date ?? null),
         body: buildBody(ev),
+        image_url: coverUrl,
         published: false,
         created_by: userId,
       });
