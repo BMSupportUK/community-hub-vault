@@ -88,6 +88,7 @@ function SportsGuidesPage() {
   const skipDefaultSubOnce = useRef(false);
   const [listPage, setListPage] = useState(0);
   const [listPageCount, setListPageCount] = useState(1);
+  const [listPageSlices, setListPageSlices] = useState<number[][]>([]);
   const [draggingBlog, setDraggingBlog] = useState(false);
 
   // Reset paging when the visible set changes.
@@ -217,24 +218,6 @@ function SportsGuidesPage() {
     }
     return m;
   }, [subcategories]);
-
-  // A–Z jump map: first category whose name starts with each letter.
-  const azMap = useMemo(() => {
-    const m: Record<string, string> = {};
-    for (const c of categories) {
-      const letter = (c.name?.[0] ?? "").toUpperCase();
-      if (letter >= "A" && letter <= "Z" && !m[letter]) m[letter] = c.id;
-    }
-    return m;
-  }, [categories]);
-  const catBtnRefs = useRef<Record<string, HTMLButtonElement | null>>({});
-  const jumpToLetter = (letter: string) => {
-    const id = azMap[letter];
-    if (!id) return;
-    setActiveCat(id);
-    const el = catBtnRefs.current[id];
-    el?.scrollIntoView({ behavior: "smooth", block: "nearest" });
-  };
 
   // When switching category, default to that category's default sub-category
   // (falling back to the first sub-category only when no default is set).
