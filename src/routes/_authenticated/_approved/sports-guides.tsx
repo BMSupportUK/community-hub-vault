@@ -253,6 +253,18 @@ function SportsGuidesPage() {
     return m;
   }, [filtered]);
 
+  // Letters that have at least one UNREAD guide in the current filtered view.
+  const azUnread = useMemo(() => {
+    const s = new Set<string>();
+    for (const b of filtered) {
+      if (!isUnread(b)) continue;
+      const letter = (b.title?.trim()[0] ?? "").toUpperCase();
+      if (letter >= "A" && letter <= "Z") s.add(letter);
+    }
+    return s;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filtered, reads, baselineAt]);
+
   const jumpToLetter = (letter: string) => {
     const id = azMap[letter];
     if (!id) return;
@@ -703,14 +715,23 @@ function SportsGuidesPage() {
                     <div className="flex flex-wrap gap-0.5" aria-label="Jump to guide title by letter">
                       {Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i)).map((letter) => {
                         const has = !!azMap[letter];
+                        const unread = azUnread.has(letter);
                         return (
                           <button
                             key={letter}
                             onClick={() => jumpToLetter(letter)}
                             disabled={!has}
-                            title={has ? `Jump to first guide title starting with ${letter}` : `No guide title starting with ${letter}`}
+                            title={
+                              unread
+                                ? `Unread guide starting with ${letter}`
+                                : has
+                                  ? `Jump to first guide title starting with ${letter}`
+                                  : `No guide title starting with ${letter}`
+                            }
                             className={`w-5 h-5 grid place-items-center rounded text-[10px] font-bold transition-colors ${
-                              has
+                              unread
+                                ? "bg-fuchsia-500 text-white animate-pulse ring-1 ring-fuchsia-300 cursor-pointer"
+                                : has
                                 ? "text-purple-100 hover:bg-fuchsia-600 hover:text-white cursor-pointer"
                                 : "text-purple-400/30 cursor-not-allowed"
                             }`}
