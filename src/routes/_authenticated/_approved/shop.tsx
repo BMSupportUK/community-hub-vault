@@ -3513,6 +3513,21 @@ function OrderDetailImpl({
         `🚫 Order cancelled by ${order.user_id === user?.id ? "customer" : "staff"}.`,
       );
       toast.success("Order cancelled");
+      // Best-effort: also cancel the Square invoice if one exists and isn't already finalised.
+      try {
+        const { data: inv } = await supabase
+          .from("order_invoices")
+          .select("status")
+          .eq("order_id", orderId)
+          .maybeSingle();
+        if (inv && inv.status !== "CANCELED" && inv.status !== "PAID") {
+          await cancelSquareInvoiceRpc({ data: { orderId } });
+          await sendSystem(`🚫 Square invoice cancelled.`);
+        }
+      } catch (e) {
+        toast.warning("Order cancelled, but the Square invoice could not be cancelled automatically.");
+        console.warn("[shop] cancelSquareInvoice failed:", e);
+      }
       await load();
     } finally {
       setBusy(false);
