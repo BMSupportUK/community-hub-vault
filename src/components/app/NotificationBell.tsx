@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { AtSign, Bell, Check, ShieldCheck, ShoppingBag, UserPlus, X } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -17,6 +18,7 @@ import orderAudio from "@/assets/order-notify.mp3";
 import ticketAudio from "@/assets/ticket-notify.mp3";
 import newSignupAudio from "@/assets/new-signup-notify.mp3";
 import { playSound } from "@/lib/sound";
+import { cancelOrderAndSquareInvoice } from "@/lib/square-invoices.functions";
 
 type Notif = {
   id: string;
@@ -41,6 +43,7 @@ export function NotificationBell() {
   const canManageOrders = hasAny(["admin", "management"]);
   const canHandleTickets = hasAny(["admin", "management", "staff"]);
   const canApproveSignups = hasAny(["admin", "management"]);
+  const cancelOrderAndSquareInvoiceRpc = useServerFn(cancelOrderAndSquareInvoice);
 
   useEffect(() => {
     if (!user || isPending) return;
@@ -272,6 +275,15 @@ export function NotificationBell() {
 
   const updateOrderStatus = async (orderId: string, status: "processing" | "completed" | "cancelled") => {
     if (!canManageOrders) return;
+    if (status === "cancelled") {
+      const result = await cancelOrderAndSquareInvoiceRpc({ data: { orderId } });
+      if (result.invoiceError && !/No Square invoice|PAID/i.test(result.invoiceError)) {
+        toast.warning("Order cancelled, but the Square invoice could not be cancelled automatically.");
+      } else {
+        toast.success(result.invoiceCancelled ? "Order and Square invoice cancelled" : "Order cancelled");
+      }
+      return;
+    }
     const { error } = await supabase.from("orders").update({ status } as never).eq("id", orderId);
     if (error) return toast.error(error.message);
     toast.success(`Order ${status}`);
