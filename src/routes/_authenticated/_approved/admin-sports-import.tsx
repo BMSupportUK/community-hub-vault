@@ -235,50 +235,63 @@ function AdminSportsImportPage() {
 
             {(matched.length > 0 || unmatched.length > 0) && (
               <>
-                <div className="grid gap-4 lg:grid-cols-2">
-                  <Card className="p-4 space-y-3">
-                    <h2 className="font-display text-lg flex items-center gap-2">
-                      <CheckCircle2 className="size-5 text-green-500" />
-                      Matched ({matched.length})
-                    </h2>
-                    {matched.length === 0 ? (
-                      <p className="text-sm text-muted-foreground">No auto-matches.</p>
-                    ) : matched.map((e, i) => (
-                      <EventRow
-                        key={i}
-                        event={e}
-                        cats={cats}
-                        subsByCatName={subsByCatName}
-                        onChange={(p) => updateMatched(i, p)}
-                        onRemove={() => removeMatched(i)}
-                      />
-                    ))}
-                  </Card>
+                <Card className="p-4 space-y-3">
+                  <div className="flex flex-wrap items-end gap-2">
+                    <div className="flex-1 min-w-[180px]">
+                      <label className="text-xs text-muted-foreground">Default category</label>
+                      <Select value={bulkCategory} onValueChange={(v) => { setBulkCategory(v); setBulkSubcategory(null); }}>
+                        <SelectTrigger><SelectValue placeholder="Pick a category" /></SelectTrigger>
+                        <SelectContent>
+                          {cats.map((c) => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="flex-1 min-w-[180px]">
+                      <label className="text-xs text-muted-foreground">Default subcategory</label>
+                      <Select
+                        value={bulkSubcategory ?? "__none"}
+                        onValueChange={(v) => setBulkSubcategory(v === "__none" ? null : v)}
+                        disabled={bulkSubs.length === 0}
+                      >
+                        <SelectTrigger><SelectValue placeholder={bulkSubs.length === 0 ? "—" : "Pick a subcategory"} /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="__none">— None —</SelectItem>
+                          {bulkSubs.map((s) => <SelectItem key={s.name} value={s.name}>{s.name}{s.is_default ? " ★" : ""}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <Button variant="secondary" onClick={applyBulkToAll} disabled={!bulkCategory}>
+                      <Wand2 className="size-4" />
+                      Apply to all
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Pick once and hit “Apply to all”, or set per-event below. AI category suggestions are ignored.
+                  </p>
+                </Card>
 
-                  <Card className="p-4 space-y-3">
-                    <h2 className="font-display text-lg flex items-center gap-2">
-                      <AlertCircle className="size-5 text-amber-500" />
-                      Needs Routing ({unmatched.length})
-                    </h2>
-                    {unmatched.length === 0 ? (
-                      <p className="text-sm text-muted-foreground">Everything matched — nothing to route.</p>
-                    ) : unmatched.map((e, i) => (
+                <Card className="p-4 space-y-3">
+                  <h2 className="font-display text-lg">Events ({matched.length + unmatched.length})</h2>
+                  {[...matched, ...unmatched].map((e, i) => {
+                    const inMatched = i < matched.length;
+                    const localIdx = inMatched ? i : i - matched.length;
+                    return (
                       <EventRow
                         key={i}
                         event={e}
                         cats={cats}
                         subsByCatName={subsByCatName}
-                        onChange={(p) => updateUnmatched(i, p)}
-                        onRemove={() => removeUnmatched(i)}
+                        onChange={(p) => (inMatched ? updateMatched(localIdx, p) : updateUnmatched(localIdx, p))}
+                        onRemove={() => (inMatched ? removeMatched(localIdx) : removeUnmatched(localIdx))}
                       />
-                    ))}
-                  </Card>
-                </div>
+                    );
+                  })}
+                </Card>
 
                 <div className="flex justify-end">
                   <Button size="lg" onClick={onImportAll} disabled={importing}>
                     {importing ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
-                    Import all (unrouted will queue)
+                    Import all
                   </Button>
                 </div>
               </>
