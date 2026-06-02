@@ -971,15 +971,25 @@ function TicketDetail({
         status: "completed",
       } as never).eq("id", linkedOrder.id);
       if (error) { toast.error(error.message); return; }
-      // Ensure the customer has the `subscriber` role. Staff roles
-      // (admin/management/staff/moderator) are left untouched — subscriber
-      // is added as an additional role rather than replacing anything.
+      // Ensure the customer ends up with the `subscriber` role only.
+      // Staff roles (admin/management/staff/moderator) are protected and
+      // kept alongside subscriber; everything else is removed.
       if (linkedOrder.user_id) {
+        const PROTECTED = ["admin", "management", "staff", "moderator"];
         const { data: existingRoles } = await supabase
           .from("user_roles")
           .select("role")
           .eq("user_id", linkedOrder.user_id);
         const roles = (existingRoles ?? []).map((r) => String((r as { role: string }).role));
+        const toRemove = roles.filter((r) => r !== "subscriber" && !PROTECTED.includes(r));
+        if (toRemove.length > 0) {
+          const { error: delErr } = await supabase
+            .from("user_roles")
+            .delete()
+            .eq("user_id", linkedOrder.user_id)
+            .in("role", toRemove as never[]);
+          if (delErr) toast.error(`Couldn't clean up roles: ${delErr.message}`);
+        }
         if (!roles.includes("subscriber")) {
           const { error: roleErr } = await supabase
             .from("user_roles")
