@@ -971,7 +971,27 @@ function TicketDetail({
         status: "completed",
       } as never).eq("id", linkedOrder.id);
       if (error) { toast.error(error.message); return; }
-      await postTicketSystem(`🎉 Order complete — thank you for your business!`);
+      // Ensure the customer has the `subscriber` role. Staff roles
+      // (admin/management/staff/moderator) are left untouched — subscriber
+      // is added as an additional role rather than replacing anything.
+      if (linkedOrder.user_id) {
+        const { data: existingRoles } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", linkedOrder.user_id);
+        const roles = (existingRoles ?? []).map((r) => String((r as { role: string }).role));
+        if (!roles.includes("subscriber")) {
+          const { error: roleErr } = await supabase
+            .from("user_roles")
+            .insert({ user_id: linkedOrder.user_id, role: "subscriber" } as never);
+          if (roleErr && !/duplicate|unique/i.test(roleErr.message)) {
+            toast.error(`Couldn't grant subscriber role: ${roleErr.message}`);
+          }
+        }
+      }
+      await postTicketSystem(
+        `🎉 Your account has been upgraded to **Subscriber** — thank you for your business! We really appreciate it.`,
+      );
       toast.success("Sale completed");
       await loadLinkedOrder();
     } finally { setOrderBusy(false); }
