@@ -78,6 +78,36 @@ export const createSquareInvoiceForOrder = createServerFn({ method: "POST" })
 
     const currency = "GBP";
     const idemBase = `order-${orderId}-${Date.now()}`;
+    const shortRef = orderId.slice(0, 8);
+
+    // Load items so the invoice shows what was purchased, not just an order ref.
+    const { data: items } = await supabase
+      .from("order_items")
+      .select("product_name,quantity,unit_price_cents")
+      .eq("order_id", orderId);
+
+    const itemsTotal = (items ?? []).reduce(
+      (sum, it) => sum + (it.unit_price_cents ?? 0) * (it.quantity ?? 0),
+      0,
+    );
+
+    const lineItems =
+      items && items.length > 0 && itemsTotal === order.total_cents
+        ? items.map((it) => ({
+            name: `Order #${shortRef} — ${it.product_name}`,
+            quantity: String(it.quantity),
+            base_price_money: { amount: it.unit_price_cents, currency },
+          }))
+        : [
+            {
+              name:
+                items && items.length > 0
+                  ? `Order #${shortRef} — ${items.map((i) => i.product_name).join(", ")}`
+                  : `Order #${shortRef}`,
+              quantity: "1",
+              base_price_money: { amount: order.total_cents, currency },
+            },
+          ];
 
     // 1. Create or find Square customer
     let customerId: string | undefined;
@@ -115,11 +145,7 @@ export const createSquareInvoiceForOrder = createServerFn({ method: "POST" })
         order: {
           location_id: locationId,
           customer_id: customerId,
-          line_items: [{
-            name: `Order #${orderId.slice(0, 8)}`,
-            quantity: "1",
-            base_price_money: { amount: order.total_cents, currency },
-          }],
+          line_items: lineItems,
         },
       }),
     });
