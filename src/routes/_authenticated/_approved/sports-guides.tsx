@@ -628,6 +628,28 @@ function SportsGuidesPage() {
                     </button>
                   )}
                 </div>
+                <div className="mb-3 px-1">
+                  <div className="flex flex-wrap gap-0.5" aria-label="Jump to category by letter">
+                    {Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i)).map((letter) => {
+                      const has = !!azMap[letter];
+                      return (
+                        <button
+                          key={letter}
+                          onClick={() => jumpToLetter(letter)}
+                          disabled={!has}
+                          title={has ? `Jump to ${letter}` : `No category starting with ${letter}`}
+                          className={`w-6 h-6 grid place-items-center rounded text-[10px] font-bold transition-colors ${
+                            has
+                              ? "text-purple-100 hover:bg-fuchsia-600 hover:text-white cursor-pointer"
+                              : "text-purple-400/30 cursor-not-allowed"
+                          }`}
+                        >
+                          {letter}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
                 <div className="space-y-1">
                   {categories.map((c) => {
                     const active = c.id === activeCat;
