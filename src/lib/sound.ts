@@ -199,16 +199,15 @@ export function playSound(
 
     const useFallbackFirst = isHidden || (c ? c.state !== "running" : false);
 
-    const playFallback = async () => {
-      const fallback = new Audio(src);
-      (fallback as HTMLAudioElement & { playsInline?: boolean }).playsInline = true;
-      fallback.volume = Math.max(0, Math.min(1, volume * Math.min(1, gain * prefs.volume)));
-      await tryPlay(fallback);
+    const playDirect = async () => {
+      const e = getEntry(src, volume, gain * prefs.volume);
+      e.direct.volume = Math.max(0, Math.min(1, volume * Math.min(1, gain * prefs.volume)));
+      await tryPlay(e.direct);
     };
 
     if (useFallbackFirst) {
       try {
-        await playFallback();
+        await playDirect();
         return;
       } catch (err) {
         console.warn(`[sound] background play failed${label ? ` (${label})` : ""}:`, (err as Error)?.message ?? err);
@@ -224,7 +223,7 @@ export function playSound(
     }
     // Final fallback: plain HTMLAudio with no WebAudio routing.
     try {
-      await playFallback();
+      await playDirect();
     } catch (err) {
       console.warn(`[sound] fallback play failed${label ? ` (${label})` : ""}:`, (err as Error)?.message ?? err);
     }
