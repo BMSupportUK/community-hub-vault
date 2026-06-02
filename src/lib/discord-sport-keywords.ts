@@ -97,11 +97,19 @@ export const ROUTE_RULES: RouteRule[] = [
   { keywords: ["mls usa", "usa mls"], category: "USA Sports", subcategory: "Soccer" },
   { keywords: ["peacock"], category: "USA Sports", subcategory: "Baseball" },
 
+  // ── Cycling (subcategories) ───────────────────────────────────
+  { keywords: ["giro d'italia", "giro ditalia", "tour de france", "vuelta a espana", "vuelta"], category: "Cycling", subcategory: "Grand Tours" },
+  { keywords: ["paris-roubaix", "milan-san remo", "milan san remo", "liege-bastogne", "tour of flanders", "il lombardia", "strade bianche"], category: "Cycling", subcategory: "Classics & One-Day" },
+  { keywords: ["tirreno-adriatico", "paris-nice", "criterium du dauphine", "tour de suisse", "volta a catalunya"], category: "Cycling", subcategory: "Stage Races" },
+  { keywords: ["womens tour", "women's tour", "giro donne", "tour de france femmes", "uci women"], category: "Cycling", subcategory: "Womens" },
+  { keywords: ["track cycling", "uci track", "velodrome"], category: "Cycling", subcategory: "Track & Other" },
+  { keywords: ["uci", "cycling", "tour de", "giro "], category: "Cycling", subcategory: "Grand Tours" },
+
   // ── Daily Sports & PPV ────────────────────────────────────────
   { keywords: ["ppv", "pay-per-view", "pay per view"], category: "Daily Sports & PPV" },
 
   // ── Other Sports (catch-all hints) ────────────────────────────
-  { keywords: ["greyhound", "horse racing", "cycling", "tour de", "snooker", "volleyball", "handball"], category: "Other Sports" },
+  { keywords: ["greyhound", "horse racing", "snooker", "volleyball", "handball"], category: "Other Sports" },
 ];
 
 /**
