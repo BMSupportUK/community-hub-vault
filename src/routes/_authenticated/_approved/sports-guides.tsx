@@ -462,6 +462,7 @@ function SportsGuidesPage() {
   const renderBlogCard = (b: Blog) => (
     <article
       key={b.id}
+      data-guide-id={b.id}
       draggable={isMod}
       onDragStart={() => { dragBlogId.current = b.id; setDraggingBlog(true); }}
       onDragEnd={() => { dragBlogId.current = null; setDraggingBlog(false); }}
@@ -636,7 +637,7 @@ function SportsGuidesPage() {
                   )}
                 </div>
                 <div className="mb-3 px-1">
-                  <div className="flex flex-wrap gap-0.5" aria-label="Jump to category by letter">
+                  <div className="flex flex-wrap gap-0.5" aria-label="Jump to guide title by letter">
                     {Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i)).map((letter) => {
                       const has = !!azMap[letter];
                       return (
@@ -644,7 +645,7 @@ function SportsGuidesPage() {
                           key={letter}
                           onClick={() => jumpToLetter(letter)}
                           disabled={!has}
-                          title={has ? `Jump to ${letter}` : `No category starting with ${letter}`}
+                          title={has ? `Jump to first guide title starting with ${letter}` : `No guide title starting with ${letter}`}
                           className={`w-6 h-6 grid place-items-center rounded text-[10px] font-bold transition-colors ${
                             has
                               ? "text-purple-100 hover:bg-fuchsia-600 hover:text-white cursor-pointer"
@@ -680,7 +681,6 @@ function SportsGuidesPage() {
                         )}
                         <button
                           onClick={() => setActiveCat(c.id)}
-                          ref={(el) => { catBtnRefs.current[c.id] = el; }}
                           className="flex-1 flex items-center justify-between px-2 py-2 text-sm text-left"
                         >
                           <span className="flex items-center gap-2">
