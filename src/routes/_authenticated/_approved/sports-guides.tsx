@@ -243,6 +243,30 @@ function SportsGuidesPage() {
     });
   }, [blogs, activeCat, search, subFilter, subsByCat]);
 
+  // A–Z jump map: first visible guide whose title starts with each letter.
+  const azMap = useMemo(() => {
+    const m: Record<string, string> = {};
+    for (const b of filtered) {
+      const letter = (b.title?.trim()[0] ?? "").toUpperCase();
+      if (letter >= "A" && letter <= "Z" && !m[letter]) m[letter] = b.id;
+    }
+    return m;
+  }, [filtered]);
+
+  const jumpToLetter = (letter: string) => {
+    const id = azMap[letter];
+    if (!id) return;
+    const targetIndex = filtered.findIndex((b) => b.id === id);
+    if (targetIndex < 0) return;
+    const targetPage = listPageSlices.findIndex((slice) => slice.includes(targetIndex));
+    if (targetPage >= 0) setListPage(targetPage);
+    window.setTimeout(() => {
+      document
+        .querySelector<HTMLElement>(`[data-guide-id="${id}"]`)
+        ?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 80);
+  };
+
   // Global search results (across ALL categories) shown in the right panel,
   // Discord-style. Includes a snippet of where the term was matched.
   const searchResults = useMemo(() => {
