@@ -3,7 +3,12 @@
 // so we can boost output above the HTMLAudio 1.0 ceiling. Plays reliably
 // while the tab is backgrounded once it has been unlocked.
 
-type Entry = { el: HTMLAudioElement; source?: MediaElementAudioSourceNode; gainNode?: GainNode };
+type Entry = {
+  el: HTMLAudioElement;
+  direct: HTMLAudioElement;
+  source?: MediaElementAudioSourceNode;
+  gainNode?: GainNode;
+};
 
 const cache = new Map<string, Entry>();
 let unlocked = false;
@@ -129,7 +134,10 @@ function getEntry(src: string, volume: number, gain: number): Entry {
     el.preload = "auto";
     el.crossOrigin = "anonymous";
     (el as HTMLAudioElement & { playsInline?: boolean }).playsInline = true;
-    e = { el };
+    const direct = new Audio(src);
+    direct.preload = "auto";
+    (direct as HTMLAudioElement & { playsInline?: boolean }).playsInline = true;
+    e = { el, direct };
     const c = getCtx();
     if (c) {
       try {
@@ -143,9 +151,13 @@ function getEntry(src: string, volume: number, gain: number): Entry {
       }
     }
     cache.set(src, e);
-    if (unlocked) primeAudio(el);
+    if (unlocked) {
+      primeAudio(el);
+      primeAudio(direct);
+    }
   }
   e.el.volume = Math.max(0, Math.min(1, volume));
+  e.direct.volume = Math.max(0, Math.min(1, volume * Math.min(1, gain)));
   if (e.gainNode) {
     try { e.gainNode.gain.value = Math.max(0, gain); } catch { /* noop */ }
   }
