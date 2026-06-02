@@ -22,6 +22,7 @@ export function PagedGrid<T>({
   availableHeight,
   page,
   onPagesChange,
+  onPageSlicesChange,
   emptyState,
   maxRows,
 }: {
@@ -31,6 +32,7 @@ export function PagedGrid<T>({
   availableHeight: number;
   page: number;
   onPagesChange: (count: number) => void;
+  onPageSlicesChange?: (pages: number[][]) => void;
   emptyState?: ReactNode;
   /** If set, cap each page to this many grid rows (in addition to height fit). */
   maxRows?: number;
@@ -120,7 +122,8 @@ export function PagedGrid<T>({
 
   useEffect(() => {
     onPagesChange(Math.max(pages.length, 1));
-  }, [pages.length, onPagesChange]);
+    onPageSlicesChange?.(pages.length ? pages : []);
+  }, [pages, onPagesChange, onPageSlicesChange]);
 
   const safePage = pages.length ? Math.min(Math.max(page, 0), pages.length - 1) : 0;
   const rawSlice = pages[safePage] ?? items.map((_, i) => i);
