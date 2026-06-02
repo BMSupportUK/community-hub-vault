@@ -113,14 +113,16 @@ function ensureUnlockListeners() {
 
 function primeAudio(a: HTMLAudioElement) {
   try {
-    a.muted = true;
+    const previousVolume = a.volume;
+    a.muted = false;
+    a.volume = 0;
     const p = a.play();
     if (p && typeof p.then === "function") {
       p.then(() => {
         a.pause();
         a.currentTime = 0;
-        a.muted = false;
-      }).catch(() => { a.muted = false; });
+        a.volume = previousVolume;
+      }).catch(() => { a.volume = previousVolume; });
     }
   } catch {
     a.muted = false;
