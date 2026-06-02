@@ -890,6 +890,7 @@ function TicketDetail({
   const [linkedOrderUsername, setLinkedOrderUsername] = useState<string | null>(null);
   const [orderBusy, setOrderBusy] = useState(false);
   const refreshSquareInvoice = useServerFn(refreshSquareInvoiceStatus);
+  const cancelSquareInvoiceRpc = useServerFn(cancelSquareInvoiceFn);
   const loadLinkedOrder = async () => {
     if (!ticket.order_id) { setLinkedOrder(null); setLinkedOrderUsername(null); return; }
     const { data } = await supabase
