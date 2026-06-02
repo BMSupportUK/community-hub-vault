@@ -23,7 +23,7 @@ import { Button } from "@/components/ui/button";
 import { useRoleFlashMap, resolveAvatarUrl, roleFlashClass } from "@/lib/role-flash";
 import { ServiceStatusBox } from "@/components/app/ServiceStatusBox";
 import { PayOrderDialog, OrderProgressStrip } from "@/routes/_authenticated/_approved/shop";
-import { refreshSquareInvoiceStatus } from "@/lib/square-invoices.functions";
+import { refreshSquareInvoiceStatus, cancelSquareInvoice as cancelSquareInvoiceFn } from "@/lib/square-invoices.functions";
 
 export const Route = createFileRoute("/_authenticated/_approved/tickets")({
   validateSearch: (s: Record<string, unknown>) => ({
