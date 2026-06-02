@@ -9,7 +9,7 @@ import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { ArrowLeft, Loader2, Sparkles, Send, Trash2, CheckCircle2, AlertCircle, Inbox } from "lucide-react";
+import { ArrowLeft, Loader2, Sparkles, Send, Trash2, Inbox, Wand2 } from "lucide-react";
 import {
   parseDiscordPaste,
   importParsedEvents,
@@ -55,6 +55,8 @@ function AdminSportsImportPage() {
   const [subs, setSubs] = useState<Sub[]>([]);
   const [queue, setQueue] = useState<QueueItem[]>([]);
   const [loadingQueue, setLoadingQueue] = useState(true);
+  const [bulkCategory, setBulkCategory] = useState<string>("");
+  const [bulkSubcategory, setBulkSubcategory] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isStaff) return;
@@ -85,6 +87,8 @@ function AdminSportsImportPage() {
     return map;
   }, [cats, subs]);
 
+  const bulkSubs = bulkCategory ? subsByCatName.get(bulkCategory) ?? [] : [];
+
   if (!isStaff) return <Navigate to="/home" />;
 
   const onParse = async () => {
@@ -95,11 +99,18 @@ function AdminSportsImportPage() {
     setUnmatched([]);
     try {
       const res = await parseFn({ data: { text: t } });
-      setMatched(res.matched as RoutedEvent[]);
-      setUnmatched(res.unmatched as RoutedEvent[]);
-      const total = res.matched.length + res.unmatched.length;
+      // Ignore AI category routing — strip suggestions and merge into one list.
+      // If a bulk default is set, pre-fill every row with it.
+      const all = [...(res.matched as RoutedEvent[]), ...(res.unmatched as RoutedEvent[])].map((e) => ({
+        ...e,
+        category: bulkCategory || null,
+        subcategory: bulkCategory ? bulkSubcategory : null,
+      }));
+      setMatched([]);
+      setUnmatched(all);
+      const total = all.length;
       if (total === 0) toast.error("No events found in the pasted text");
-      else toast.success(`Found ${total} event(s) — ${res.matched.length} matched, ${res.unmatched.length} need review`);
+      else toast.success(`Found ${total} event(s) — pick a category for each (or use the bulk picker)`);
     } catch (e: any) {
       toast.error(e.message ?? "Parse failed");
     } finally {
@@ -115,6 +126,13 @@ function AdminSportsImportPage() {
 
   const removeMatched = (idx: number) => setMatched((prev) => prev.filter((_, i) => i !== idx));
   const removeUnmatched = (idx: number) => setUnmatched((prev) => prev.filter((_, i) => i !== idx));
+
+  const applyBulkToAll = () => {
+    if (!bulkCategory) return toast.error("Pick a category first");
+    setMatched((prev) => prev.map((e) => ({ ...e, category: bulkCategory, subcategory: bulkSubcategory })));
+    setUnmatched((prev) => prev.map((e) => ({ ...e, category: bulkCategory, subcategory: bulkSubcategory })));
+    toast.success(`Applied ${bulkCategory}${bulkSubcategory ? ` › ${bulkSubcategory}` : ""} to all events`);
+  };
 
   const onImportAll = async () => {
     setImporting(true);
@@ -217,50 +235,63 @@ function AdminSportsImportPage() {
 
             {(matched.length > 0 || unmatched.length > 0) && (
               <>
-                <div className="grid gap-4 lg:grid-cols-2">
-                  <Card className="p-4 space-y-3">
-                    <h2 className="font-display text-lg flex items-center gap-2">
-                      <CheckCircle2 className="size-5 text-green-500" />
-                      Matched ({matched.length})
-                    </h2>
-                    {matched.length === 0 ? (
-                      <p className="text-sm text-muted-foreground">No auto-matches.</p>
-                    ) : matched.map((e, i) => (
-                      <EventRow
-                        key={i}
-                        event={e}
-                        cats={cats}
-                        subsByCatName={subsByCatName}
-                        onChange={(p) => updateMatched(i, p)}
-                        onRemove={() => removeMatched(i)}
-                      />
-                    ))}
-                  </Card>
+                <Card className="p-4 space-y-3">
+                  <div className="flex flex-wrap items-end gap-2">
+                    <div className="flex-1 min-w-[180px]">
+                      <label className="text-xs text-muted-foreground">Default category</label>
+                      <Select value={bulkCategory} onValueChange={(v) => { setBulkCategory(v); setBulkSubcategory(null); }}>
+                        <SelectTrigger><SelectValue placeholder="Pick a category" /></SelectTrigger>
+                        <SelectContent>
+                          {cats.map((c) => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="flex-1 min-w-[180px]">
+                      <label className="text-xs text-muted-foreground">Default subcategory</label>
+                      <Select
+                        value={bulkSubcategory ?? "__none"}
+                        onValueChange={(v) => setBulkSubcategory(v === "__none" ? null : v)}
+                        disabled={bulkSubs.length === 0}
+                      >
+                        <SelectTrigger><SelectValue placeholder={bulkSubs.length === 0 ? "—" : "Pick a subcategory"} /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="__none">— None —</SelectItem>
+                          {bulkSubs.map((s) => <SelectItem key={s.name} value={s.name}>{s.name}{s.is_default ? " ★" : ""}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <Button variant="secondary" onClick={applyBulkToAll} disabled={!bulkCategory}>
+                      <Wand2 className="size-4" />
+                      Apply to all
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Pick once and hit “Apply to all”, or set per-event below. AI category suggestions are ignored.
+                  </p>
+                </Card>
 
-                  <Card className="p-4 space-y-3">
-                    <h2 className="font-display text-lg flex items-center gap-2">
-                      <AlertCircle className="size-5 text-amber-500" />
-                      Needs Routing ({unmatched.length})
-                    </h2>
-                    {unmatched.length === 0 ? (
-                      <p className="text-sm text-muted-foreground">Everything matched — nothing to route.</p>
-                    ) : unmatched.map((e, i) => (
+                <Card className="p-4 space-y-3">
+                  <h2 className="font-display text-lg">Events ({matched.length + unmatched.length})</h2>
+                  {[...matched, ...unmatched].map((e, i) => {
+                    const inMatched = i < matched.length;
+                    const localIdx = inMatched ? i : i - matched.length;
+                    return (
                       <EventRow
                         key={i}
                         event={e}
                         cats={cats}
                         subsByCatName={subsByCatName}
-                        onChange={(p) => updateUnmatched(i, p)}
-                        onRemove={() => removeUnmatched(i)}
+                        onChange={(p) => (inMatched ? updateMatched(localIdx, p) : updateUnmatched(localIdx, p))}
+                        onRemove={() => (inMatched ? removeMatched(localIdx) : removeUnmatched(localIdx))}
                       />
-                    ))}
-                  </Card>
-                </div>
+                    );
+                  })}
+                </Card>
 
                 <div className="flex justify-end">
                   <Button size="lg" onClick={onImportAll} disabled={importing}>
                     {importing ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
-                    Import all (unrouted will queue)
+                    Import all
                   </Button>
                 </div>
               </>
