@@ -697,32 +697,30 @@ function SportsGuidesPage() {
                   )}
                 </div>
 
-                <div className="mb-5 rounded-2xl bg-purple-950/50 border border-purple-500/30 p-3 backdrop-blur">
-                  <div className="mb-2 text-[11px] uppercase tracking-wider font-semibold text-fuchsia-300/80">Guide title A-Z</div>
-                  <div className="flex flex-wrap gap-1" aria-label="Jump to guide title by letter">
-                    {Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i)).map((letter) => {
-                      const has = !!azMap[letter];
-                      return (
-                        <button
-                          key={letter}
-                          onClick={() => jumpToLetter(letter)}
-                          disabled={!has}
-                          title={has ? `Jump to first guide title starting with ${letter}` : `No guide title starting with ${letter}`}
-                          className={`w-7 h-7 grid place-items-center rounded-md text-[11px] font-bold transition-colors ${
-                            has
-                              ? "text-purple-100 hover:bg-fuchsia-600 hover:text-white cursor-pointer"
-                              : "text-purple-400/30 cursor-not-allowed"
-                          }`}
-                        >
-                          {letter}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
                 {activeCategory && (
-                  <h2 className="font-display text-2xl font-bold mb-4 bg-gradient-to-r from-violet-600 to-blue-600 bg-clip-text text-transparent">{activeCategory.name} Guides</h2>
+                  <div className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-2">
+                    <h2 className="font-display text-2xl font-bold bg-gradient-to-r from-violet-600 to-blue-600 bg-clip-text text-transparent">{activeCategory.name} Guides</h2>
+                    <div className="flex flex-wrap gap-0.5" aria-label="Jump to guide title by letter">
+                      {Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i)).map((letter) => {
+                        const has = !!azMap[letter];
+                        return (
+                          <button
+                            key={letter}
+                            onClick={() => jumpToLetter(letter)}
+                            disabled={!has}
+                            title={has ? `Jump to first guide title starting with ${letter}` : `No guide title starting with ${letter}`}
+                            className={`w-5 h-5 grid place-items-center rounded text-[10px] font-bold transition-colors ${
+                              has
+                                ? "text-purple-100 hover:bg-fuchsia-600 hover:text-white cursor-pointer"
+                                : "text-purple-400/30 cursor-not-allowed"
+                            }`}
+                          >
+                            {letter}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
                 )}
 
                 {activeCat && (subsByCat[activeCat]?.length ?? 0) > 0 && !search.trim() && (
