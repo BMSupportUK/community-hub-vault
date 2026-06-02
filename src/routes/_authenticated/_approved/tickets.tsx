@@ -23,7 +23,7 @@ import { Button } from "@/components/ui/button";
 import { useRoleFlashMap, resolveAvatarUrl, roleFlashClass } from "@/lib/role-flash";
 import { ServiceStatusBox } from "@/components/app/ServiceStatusBox";
 import { PayOrderDialog, OrderProgressStrip } from "@/routes/_authenticated/_approved/shop";
-import { refreshSquareInvoiceStatus, cancelSquareInvoice as cancelSquareInvoiceFn } from "@/lib/square-invoices.functions";
+import { refreshSquareInvoiceStatus, cancelOrderAndSquareInvoice } from "@/lib/square-invoices.functions";
 
 export const Route = createFileRoute("/_authenticated/_approved/tickets")({
   validateSearch: (s: Record<string, unknown>) => ({
@@ -890,7 +890,7 @@ function TicketDetail({
   const [linkedOrderUsername, setLinkedOrderUsername] = useState<string | null>(null);
   const [orderBusy, setOrderBusy] = useState(false);
   const refreshSquareInvoice = useServerFn(refreshSquareInvoiceStatus);
-  const cancelSquareInvoiceRpc = useServerFn(cancelSquareInvoiceFn);
+  const cancelOrderAndSquareInvoiceRpc = useServerFn(cancelOrderAndSquareInvoice);
   const loadLinkedOrder = async () => {
     if (!ticket.order_id) { setLinkedOrder(null); setLinkedOrderUsername(null); return; }
     const { data } = await supabase
@@ -987,26 +987,15 @@ function TicketDetail({
     if (!confirm("Cancel this order? This cannot be undone.")) return;
     setOrderBusy(true);
     try {
-      const { error } = await supabase
-        .from("orders")
-        .update({ status: "cancelled" } as never)
-        .eq("id", linkedOrder.id);
-      if (error) { toast.error(error.message); return; }
+      const result = await cancelOrderAndSquareInvoiceRpc({ data: { orderId: linkedOrder.id } });
       await postTicketSystem(
         `🚫 Order cancelled by ${linkedOrder.user_id === currentUserId ? "customer" : "staff"}.`
       );
       toast.success("Order cancelled");
-      // Best-effort: also cancel the Square invoice if one exists and isn't already finalised.
-      try {
-        await cancelSquareInvoiceRpc({ data: { orderId: linkedOrder.id } });
+      if (result.invoiceCancelled) {
         await postTicketSystem(`🚫 Square invoice cancelled.`);
-      } catch (e) {
-        const msg = e instanceof Error ? e.message : String(e);
-        // No invoice / already finalised — silent. Otherwise warn.
-        if (!/No Square invoice|already|CANCELED|PAID/i.test(msg)) {
-          toast.warning("Order cancelled, but the Square invoice could not be cancelled automatically.");
-        }
-        console.warn("[tickets] cancelSquareInvoice:", msg);
+      } else if (result.invoiceError && !/No Square invoice|PAID/i.test(result.invoiceError)) {
+        toast.warning("Order cancelled, but the Square invoice could not be cancelled automatically.");
       }
       await loadLinkedOrder();
     } finally { setOrderBusy(false); }
