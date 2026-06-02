@@ -2845,25 +2845,22 @@ function MyOrdersTab({ onOpenOrder }: { onOpenOrder: (id: string) => void }) {
       setLoading(false);
       return;
     }
-    let cancel = false;
-    (async () => {
+    let cancelled = false;
+    const load = async () => {
       const { data } = await supabase
         .from("orders")
         .select("*")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
-      if (cancel) return;
+      if (cancelled) return;
       const rows = (data ?? []) as Order[];
       setOrders(rows);
       if (rows.length > 0) {
         const { data: ts } = await supabase
           .from("tickets")
           .select("id,order_id")
-          .in(
-            "order_id",
-            rows.map((o) => o.id),
-          );
-        if (!cancel) {
+          .in("order_id", rows.map((o) => o.id));
+        if (!cancelled) {
           const map: Record<string, string> = {};
           for (const t of (ts ?? []) as { id: string; order_id: string }[]) {
             if (t.order_id) map[t.order_id] = t.id;
@@ -2872,9 +2869,13 @@ function MyOrdersTab({ onOpenOrder }: { onOpenOrder: (id: string) => void }) {
         }
       }
       setLoading(false);
-    })();
+    };
+    load();
+    const onLocal = () => load();
+    window.addEventListener("orders:changed", onLocal);
     return () => {
-      cancel = true;
+      cancelled = true;
+      window.removeEventListener("orders:changed", onLocal);
     };
   }, [user?.id]);
 
