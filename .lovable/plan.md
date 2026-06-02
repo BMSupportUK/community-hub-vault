@@ -1,22 +1,26 @@
 ## Goal
 
-When a Square invoice is created for an order, show each purchased item next to the order reference instead of a single generic `Order #xxxx` line.
+When an order is cancelled (by customer or staff, from either the Shop page or the Ticket sidebar), also cancel the linked Square invoice so the customer can no longer pay it.
 
 ## Change
 
-In `src/lib/square-invoices.functions.ts` (`createSquareInvoiceForOrder` handler):
+There are two cancel sites and one existing server fn that already does the Square work:
 
-1. After loading the order, also fetch its rows from `order_items` (`product_name`, `quantity`, `unit_price_cents`).
-2. Build the Square order `line_items` array from those rows:
-   - `name`: `Order #{shortId} — {product_name}` so the order ref stays visible next to the item description
-   - `quantity`: `String(quantity)`
-   - `base_price_money`: `{ amount: unit_price_cents, currency: "GBP" }`
-3. Fallback: if no items are found (legacy orders), keep the existing single `Order #{shortId}` line at `order.total_cents` so invoicing never breaks.
-4. Sanity check: sum of `unit_price_cents * quantity` should equal `order.total_cents`. If they differ (e.g. discount applied), append a `Discount` line item with a negative-equivalent adjustment, or fall back to the single-line behaviour, to keep the Square total aligned with `order.total_cents`.
+- `src/routes/_authenticated/_approved/shop.tsx` → `cancelOrder` (around line 3492)
+- `src/routes/_authenticated/_approved/tickets.tsx` → `orderCancel` (around line 979)
+- `src/lib/square-invoices.functions.ts` → `cancelSquareInvoice` (already implemented; RLS-checked via `assertAdminOrOrderOwner`)
 
-No changes to webhook, refresh, cancel flows, RLS, or the PDF receipt — only the line items sent to Square at invoice creation time.
+In both cancel handlers, after the `orders.update({ status: "cancelled" })` succeeds:
+
+1. Check `order_invoices` for a row matching the order id whose `status` is not already `CANCELED`/`PAID`.
+2. If one exists, call `cancelSquareInvoice({ data: { orderId } })` via `useServerFn`.
+3. On success, post a system message in the order/ticket chat: `🚫 Square invoice cancelled.`
+4. On failure, swallow the error and show a non-blocking `toast.warning("Order cancelled, but the Square invoice could not be cancelled automatically.")` — the order cancellation must still stand.
+
+Webhook (`/api/public/hooks/square-invoice`) already updates `order_invoices.status` on `invoice.canceled` events, so the local row will sync naturally; the immediate optimistic-style call above just makes the cancel happen now instead of waiting for the customer to try to pay.
 
 ## Out of scope
 
-- Existing already-published Square invoices (cannot be edited; only new invoices get itemised lines).
-- Any UI changes.
+- Refunds for already-paid orders (Square invoice cancel is not allowed once `PAID`; we skip it).
+- Admin-side bulk cancellations (none exist).
+- UI changes — only behavioural.

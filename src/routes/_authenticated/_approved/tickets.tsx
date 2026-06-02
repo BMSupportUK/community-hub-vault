@@ -23,7 +23,7 @@ import { Button } from "@/components/ui/button";
 import { useRoleFlashMap, resolveAvatarUrl, roleFlashClass } from "@/lib/role-flash";
 import { ServiceStatusBox } from "@/components/app/ServiceStatusBox";
 import { PayOrderDialog, OrderProgressStrip } from "@/routes/_authenticated/_approved/shop";
-import { refreshSquareInvoiceStatus } from "@/lib/square-invoices.functions";
+import { refreshSquareInvoiceStatus, cancelSquareInvoice as cancelSquareInvoiceFn } from "@/lib/square-invoices.functions";
 
 export const Route = createFileRoute("/_authenticated/_approved/tickets")({
   validateSearch: (s: Record<string, unknown>) => ({
@@ -890,6 +890,7 @@ function TicketDetail({
   const [linkedOrderUsername, setLinkedOrderUsername] = useState<string | null>(null);
   const [orderBusy, setOrderBusy] = useState(false);
   const refreshSquareInvoice = useServerFn(refreshSquareInvoiceStatus);
+  const cancelSquareInvoiceRpc = useServerFn(cancelSquareInvoiceFn);
   const loadLinkedOrder = async () => {
     if (!ticket.order_id) { setLinkedOrder(null); setLinkedOrderUsername(null); return; }
     const { data } = await supabase
@@ -995,6 +996,21 @@ function TicketDetail({
         `🚫 Order cancelled by ${linkedOrder.user_id === currentUserId ? "customer" : "staff"}.`
       );
       toast.success("Order cancelled");
+      // Best-effort: also cancel the Square invoice if one exists and isn't already finalised.
+      try {
+        const { data: inv } = await supabase
+          .from("order_invoices")
+          .select("status")
+          .eq("order_id", linkedOrder.id)
+          .maybeSingle();
+        if (inv && inv.status !== "CANCELED" && inv.status !== "PAID") {
+          await cancelSquareInvoiceRpc({ data: { orderId: linkedOrder.id } });
+          await postTicketSystem(`🚫 Square invoice cancelled.`);
+        }
+      } catch (e) {
+        toast.warning("Order cancelled, but the Square invoice could not be cancelled automatically.");
+        console.warn("[tickets] cancelSquareInvoice failed:", e);
+      }
       await loadLinkedOrder();
     } finally { setOrderBusy(false); }
   };
