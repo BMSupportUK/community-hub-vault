@@ -82,12 +82,12 @@ function DeviceCard({ device, price }: { device: Device; price: Price | undefine
   const specs = device.specs ?? {};
   return (
     <article className="rounded-xl border border-border bg-card overflow-hidden flex flex-col">
-      <div className="aspect-video bg-surface-2 flex items-center justify-center overflow-hidden p-4">
+      <div className="aspect-video bg-surface-2 flex items-center justify-center overflow-hidden">
         {device.image_url ? (
           <img
             src={device.image_url}
             alt={device.name}
-            className="max-w-full max-h-full object-contain"
+            className="w-full h-full object-contain"
             loading="lazy"
           />
         ) : (
