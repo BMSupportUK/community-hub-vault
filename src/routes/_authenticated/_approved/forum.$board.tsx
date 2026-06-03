@@ -252,14 +252,46 @@ function BoardPage() {
           <p className="text-xs text-muted-foreground mt-0.5">{board.description}</p>
         </div>
         {canPost && (
-          <Button onClick={() => setOpen(true)} className="bg-gradient-to-r from-[#E11B22] to-[#8B0F14] hover:from-[#F02B30] hover:to-[#9B1118] border-0 text-white shadow-[0_4px_20px_-6px_rgba(225,27,34,0.6)]">
-            <Plus className="size-4 mr-1" /> New topic
+          <Button onClick={() => setOpen((v) => !v)} className="bg-gradient-to-r from-[#E11B22] to-[#8B0F14] hover:from-[#F02B30] hover:to-[#9B1118] border-0 text-white shadow-[0_4px_20px_-6px_rgba(225,27,34,0.6)]">
+            <Plus className="size-4 mr-1" /> {open ? "Close" : "New topic"}
           </Button>
         )}
       </div>
 
       <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_180px] lg:grid-cols-[minmax(0,1fr)_256px] md:items-start">
         <div className="min-w-0 space-y-4">
+          {canPost && open && (
+            <section
+              aria-label={`New topic in ${board.name}`}
+              className="rounded-2xl border border-[#E11B22]/30 bg-surface-1 p-4 sm:p-5 shadow-soft min-w-0"
+            >
+              <div className="flex items-center justify-between gap-3 mb-3">
+                <h3 className="font-display text-base font-bold">New topic in {board.name}</h3>
+                <Button variant="ghost" size="sm" onClick={() => setOpen(false)} disabled={submitting}>Cancel</Button>
+              </div>
+              <div className="space-y-3 min-w-0 [&_*]:break-words">
+                <Input
+                  placeholder="Topic title"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value.slice(0, 200))}
+                  maxLength={200}
+                />
+                <div className="min-w-0 overflow-hidden">
+                  <HtmlEditor
+                    value={body}
+                    onChange={setBody}
+                    placeholder="What's on your mind? Paste an X or Facebook URL on its own line to embed it."
+                    mentions={mentionCandidates}
+                  />
+                </div>
+                <div className="flex justify-end">
+                  <Button onClick={submit} disabled={submitting} className="bg-gradient-to-r from-[#E11B22] to-[#8B0F14] hover:from-[#F02B30] hover:to-[#9B1118] border-0 text-white">
+                    {submitting ? <><Loader2 className="size-4 mr-1 animate-spin" />Posting…</> : "Post topic"}
+                  </Button>
+                </div>
+              </div>
+            </section>
+          )}
           {topics.length === 0 ? (
             <div className="rounded-2xl border border-[#E11B22]/20 bg-surface-1 px-4 py-10 text-center text-sm text-muted-foreground shadow-soft">
               No topics yet. {canPost ? "Be first — start one!" : ""}
@@ -379,27 +411,6 @@ function BoardPage() {
           {renderSponsorAdvert()}
         </aside>
       </div>
-
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader><DialogTitle>New topic in {board.name}</DialogTitle></DialogHeader>
-          <div className="space-y-3">
-            <Input placeholder="Topic title" value={title} onChange={(e) => setTitle(e.target.value.slice(0, 200))} maxLength={200} />
-            <HtmlEditor
-              value={body}
-              onChange={setBody}
-              placeholder="What's on your mind? Paste an X or Facebook URL on its own line to embed it."
-              mentions={mentionCandidates}
-            />
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)} disabled={submitting}>Cancel</Button>
-            <Button onClick={submit} disabled={submitting}>
-              {submitting ? <><Loader2 className="size-4 mr-1 animate-spin" />Posting…</> : "Post topic"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       <Dialog open={!!editingTopic} onOpenChange={(o) => { if (!o) { setEditingTopic(null); setEditTitle(""); } }}>
         <DialogContent className="max-w-md">
