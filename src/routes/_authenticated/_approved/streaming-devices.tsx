@@ -21,6 +21,9 @@ type Device = {
   sideload_notes: string | null;
   amazon_url: string;
   sort_order: number;
+  price_range_low_cents: number | null;
+  price_range_high_cents: number | null;
+  price_range_currency: string | null;
 };
 
 type Price = {
@@ -48,6 +51,19 @@ function formatPrice(cents: number | null, currency: string) {
   }
 }
 
+function formatRange(
+  low: number | null,
+  high: number | null,
+  currency: string | null,
+): string | null {
+  if (low == null && high == null) return null;
+  const ccy = currency || "GBP";
+  const lo = formatPrice(low, ccy);
+  const hi = formatPrice(high, ccy);
+  if (lo && hi && low !== high) return `${lo} – ${hi}`;
+  return lo || hi;
+}
+
 function relTime(iso: string) {
   const days = Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000);
   if (days <= 0) return "Updated today";
@@ -58,6 +74,11 @@ function relTime(iso: string) {
 
 function DeviceCard({ device, price }: { device: Device; price: Price | undefined }) {
   const priceLabel = price ? formatPrice(price.price_cents, price.currency) : null;
+  const rangeLabel = formatRange(
+    device.price_range_low_cents,
+    device.price_range_high_cents,
+    device.price_range_currency,
+  );
   const specs = device.specs ?? {};
   return (
     <article className="rounded-xl border border-border bg-card overflow-hidden flex flex-col">
@@ -83,6 +104,13 @@ function DeviceCard({ device, price }: { device: Device; price: Price | undefine
             <Badge variant="secondary" className="shrink-0 text-[10px]">{relTime(price.scraped_at)}</Badge>
           )}
         </div>
+
+        {rangeLabel && (
+          <div className="flex items-baseline gap-2">
+            <span className="text-lg font-semibold tracking-tight">{rangeLabel}</span>
+            <span className="text-[11px] uppercase tracking-wide text-muted-foreground">Typical price</span>
+          </div>
+        )}
 
         {device.summary && <p className="text-sm text-muted-foreground">{device.summary}</p>}
 
@@ -126,7 +154,7 @@ function StreamingDevicesPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("streaming_devices")
-        .select("id, name, brand, tier, image_url, summary, specs, sideload_notes, amazon_url, sort_order")
+        .select("id, name, brand, tier, image_url, summary, specs, sideload_notes, amazon_url, sort_order, price_range_low_cents, price_range_high_cents, price_range_currency")
         .eq("is_active", true)
         .order("sort_order");
       if (error) throw error;
