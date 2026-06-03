@@ -1,6 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getRequestHeader, getRequestIP } from "@tanstack/react-start/server";
 
+type VpnCheckInput = { ip?: string };
+
 function normalizeIp(value: string | null | undefined): string | null {
   if (!value) return null;
   const raw = value.split(",")[0]?.trim().replace(/^\[|\]$/g, "") ?? "";
@@ -40,6 +42,26 @@ async function probe(ip: string): Promise<{ is_vpn: boolean; is_proxy: boolean }
   }
 }
 
+async function probeIpwhois(ip: string): Promise<{ is_vpn: boolean; is_proxy: boolean } | null> {
+  try {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 3500);
+    const res = await fetch(`https://ipwho.is/${encodeURIComponent(ip)}?security=1`, {
+      signal: ctrl.signal,
+      headers: { Accept: "application/json" },
+    });
+    clearTimeout(t);
+    if (!res.ok) return null;
+    const entry = (await res.json()) as Record<string, unknown>;
+    const security = (entry.security ?? {}) as Record<string, unknown>;
+    const isVpn = security.vpn === true;
+    const isProxy = security.proxy === true || security.tor === true || isVpn;
+    return { is_vpn: isVpn, is_proxy: isProxy };
+  } catch {
+    return null;
+  }
+}
+
 async function probeIpapi(ip: string): Promise<{ is_vpn: boolean; is_proxy: boolean } | null> {
   try {
     const ctrl = new AbortController();
@@ -60,18 +82,26 @@ async function probeIpapi(ip: string): Promise<{ is_vpn: boolean; is_proxy: bool
   }
 }
 
-export const checkVisitorVpn = createServerFn({ method: "GET" }).handler(async () => {
-  const candidate =
+export const checkVisitorVpn = createServerFn({ method: "GET" })
+  .inputValidator((raw: unknown): VpnCheckInput => {
+    const input = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : {};
+    return { ip: typeof input.ip === "string" ? input.ip : undefined };
+  })
+  .handler(async ({ data }) => {
+  const headerCandidate =
     getRequestHeader("cf-connecting-ip") ??
     getRequestHeader("x-real-ip") ??
     getRequestHeader("x-forwarded-for") ??
     getRequestIP({ xForwardedFor: true });
-  const ip = normalizeIp(candidate) ?? "unknown";
+  const clientIp = normalizeIp(data.ip);
+  const ip = clientIp ?? normalizeIp(headerCandidate) ?? "unknown";
   if (isPrivateIp(ip)) return { is_vpn: false, is_proxy: false, skipped: true };
   const primary = await probe(ip);
   if (primary && (primary.is_vpn || primary.is_proxy)) return { ...primary, skipped: false };
   const fallback = await probeIpapi(ip);
   if (fallback) return { ...fallback, skipped: false };
+  const secondary = await probeIpwhois(ip);
+  if (secondary) return { ...secondary, skipped: false };
   if (primary) return { ...primary, skipped: false };
   return { is_vpn: false, is_proxy: false, skipped: true };
 });
