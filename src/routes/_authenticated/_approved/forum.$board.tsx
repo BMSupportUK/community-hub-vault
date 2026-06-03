@@ -412,27 +412,6 @@ function BoardPage() {
         </aside>
       </div>
 
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader><DialogTitle>New topic in {board.name}</DialogTitle></DialogHeader>
-          <div className="space-y-3">
-            <Input placeholder="Topic title" value={title} onChange={(e) => setTitle(e.target.value.slice(0, 200))} maxLength={200} />
-            <HtmlEditor
-              value={body}
-              onChange={setBody}
-              placeholder="What's on your mind? Paste an X or Facebook URL on its own line to embed it."
-              mentions={mentionCandidates}
-            />
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)} disabled={submitting}>Cancel</Button>
-            <Button onClick={submit} disabled={submitting}>
-              {submitting ? <><Loader2 className="size-4 mr-1 animate-spin" />Posting…</> : "Post topic"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
       <Dialog open={!!editingTopic} onOpenChange={(o) => { if (!o) { setEditingTopic(null); setEditTitle(""); } }}>
         <DialogContent className="max-w-md">
           <DialogHeader><DialogTitle>Rename topic</DialogTitle></DialogHeader>
