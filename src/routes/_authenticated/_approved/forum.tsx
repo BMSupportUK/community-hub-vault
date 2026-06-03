@@ -9,6 +9,7 @@ import { formatLastSeen } from "@/lib/relative-time";
 import { Button } from "@/components/ui/button";
 import { FanZoneAliasSettings } from "@/components/app/FanZoneAliasSettings";
 import { FanZoneStaffBox } from "@/components/app/FanZoneStaffBox";
+import { BoroMatchCentreBox } from "@/components/app/BoroMatchCentreBox";
 import boroHero from "@/assets/boro-hero.jpg";
 import boroBadge from "@/assets/boro-fan-zone-badge.png";
 import boroBg from "@/assets/boro-bg.jpg";
@@ -231,7 +232,10 @@ function BoardsIndex() {
         </div>
       </div>
       <div className="lg:sticky lg:top-4 lg:self-start">
-        <FanZoneStaffBox />
+        <div className="space-y-4">
+          <BoroMatchCentreBox />
+          <FanZoneStaffBox />
+        </div>
       </div>
     </div>
   );
