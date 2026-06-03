@@ -1,0 +1,2 @@
+INSERT INTO public.forum_boards (name, slug, description, icon, sort_order)
+VALUES ('All Other Football Talk', 'other-football', 'Everything beyond the Boro — Premier League, Europe, internationals and more.', 'Globe', 45);
