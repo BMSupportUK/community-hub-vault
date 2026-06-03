@@ -5,6 +5,7 @@ import { ExternalLink, Tv, Cpu, MemoryStick, HardDrive, Wifi, Settings } from "l
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import firestickCompatibility from "@/assets/firestick-compatibility.png.asset.json";
 
 export const Route = createFileRoute("/_authenticated/_approved/streaming-devices")({
@@ -199,55 +200,66 @@ function StreamingDevicesPage() {
 
         {devicesQuery.isLoading && <div className="text-muted-foreground">Loading devices…</div>}
 
-        {high.length > 0 && (
-          <section className="space-y-4">
-            <div className="flex items-baseline justify-between">
-              <h2 className="text-xl font-semibold">High spec</h2>
-              <span className="text-xs text-muted-foreground">Best performance, top-end hardware</span>
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {high.map((d) => (
-                <DeviceCard key={d.id} device={d} price={priceMap.get(d.id)} />
-              ))}
-            </div>
-          </section>
-        )}
+        <Tabs defaultValue="android" className="space-y-6">
+          <TabsList>
+            <TabsTrigger value="android">Android</TabsTrigger>
+            <TabsTrigger value="amazon">Amazon</TabsTrigger>
+          </TabsList>
 
-        {medium.length > 0 && (
-          <section className="space-y-4">
-            <div className="flex items-baseline justify-between">
-              <h2 className="text-xl font-semibold">Medium spec</h2>
-              <span className="text-xs text-muted-foreground">Great value, solid for most users</span>
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {medium.map((d) => (
-                <DeviceCard key={d.id} device={d} price={priceMap.get(d.id)} />
-              ))}
-            </div>
-          </section>
-        )}
+          <TabsContent value="android" className="space-y-8">
+            {high.length > 0 && (
+              <section className="space-y-4">
+                <div className="flex items-baseline justify-between">
+                  <h2 className="text-xl font-semibold">High spec</h2>
+                  <span className="text-xs text-muted-foreground">Best performance, top-end hardware</span>
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {high.map((d) => (
+                    <DeviceCard key={d.id} device={d} price={priceMap.get(d.id)} />
+                  ))}
+                </div>
+              </section>
+            )}
 
-        <section className="space-y-3">
-          <h2 className="text-xl font-semibold">Fire TV Stick compatibility</h2>
-          <p className="text-sm text-muted-foreground max-w-2xl">
-            Quick reference for which Amazon Fire TV Sticks still allow sideloading.
-          </p>
-          <div className="rounded-xl overflow-hidden border border-border bg-surface-2">
-            <img
-              src={firestickCompatibility.url}
-              alt="Fire TV Stick compatibility chart: HD 2026 and 4K Select do not allow sideloading; 4K Plus and 4K Max do."
-              className="w-full h-auto"
-              loading="lazy"
-            />
-          </div>
-          {fireSticks.length > 0 && (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 pt-2">
-              {fireSticks.map((d) => (
-                <DeviceCard key={d.id} device={d} price={priceMap.get(d.id)} />
-              ))}
-            </div>
-          )}
-        </section>
+            {medium.length > 0 && (
+              <section className="space-y-4">
+                <div className="flex items-baseline justify-between">
+                  <h2 className="text-xl font-semibold">Medium spec</h2>
+                  <span className="text-xs text-muted-foreground">Great value, solid for most users</span>
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {medium.map((d) => (
+                    <DeviceCard key={d.id} device={d} price={priceMap.get(d.id)} />
+                  ))}
+                </div>
+              </section>
+            )}
+          </TabsContent>
+
+          <TabsContent value="amazon" className="space-y-4">
+            <section className="space-y-3">
+              <h2 className="text-xl font-semibold">Fire TV Stick compatibility</h2>
+              <p className="text-sm text-muted-foreground max-w-2xl">
+                Quick reference for which Amazon Fire TV Sticks still allow sideloading.
+              </p>
+              <div className="rounded-xl overflow-hidden border border-border bg-surface-2">
+                <img
+                  src={firestickCompatibility.url}
+                  alt="Fire TV Stick compatibility chart: HD 2026 and 4K Select do not allow sideloading; 4K Plus and 4K Max do."
+                  className="w-full h-auto"
+                  loading="lazy"
+                />
+              </div>
+              {fireSticks.length > 0 && (
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 pt-2">
+                  {fireSticks.map((d) => (
+                    <DeviceCard key={d.id} device={d} price={priceMap.get(d.id)} />
+                  ))}
+                </div>
+              )}
+            </section>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
