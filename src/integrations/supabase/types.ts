@@ -179,6 +179,42 @@ export type Database = {
         }
         Relationships: []
       }
+      boro_match_centre: {
+        Row: {
+          fetched_at: string | null
+          id: string
+          last_result: Json | null
+          last_result_manual: boolean
+          league_position: Json | null
+          league_position_manual: boolean
+          next_fixture: Json | null
+          next_fixture_manual: boolean
+          updated_at: string
+        }
+        Insert: {
+          fetched_at?: string | null
+          id?: string
+          last_result?: Json | null
+          last_result_manual?: boolean
+          league_position?: Json | null
+          league_position_manual?: boolean
+          next_fixture?: Json | null
+          next_fixture_manual?: boolean
+          updated_at?: string
+        }
+        Update: {
+          fetched_at?: string | null
+          id?: string
+          last_result?: Json | null
+          last_result_manual?: boolean
+          league_position?: Json | null
+          league_position_manual?: boolean
+          next_fixture?: Json | null
+          next_fixture_manual?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       breaks: {
         Row: {
           ended_at: string | null
