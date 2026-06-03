@@ -229,32 +229,6 @@ function StreamingDevicesPage() {
           <p className="text-sm text-muted-foreground max-w-2xl">
             Quick reference for which Amazon Fire TV Sticks still allow sideloading.
           </p>
-          <div className="grid gap-3 sm:grid-cols-2">
-            {[
-              {
-                name: "Fire TV Stick 4K Max",
-                desc: "Recommended — fastest, Wi-Fi 6E, sideloading supported.",
-                url: "https://www.amazon.co.uk/dp/B0BP9SNVH9",
-              },
-              {
-                name: "Fire TV Stick 4K (Plus)",
-                desc: "Solid 4K performance, sideloading supported.",
-                url: "https://www.amazon.co.uk/dp/B0BP9MXCFB",
-              },
-            ].map((s) => (
-              <a
-                key={s.name}
-                href={s.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="rounded-xl border border-border bg-surface-2 p-4 hover:border-primary transition-colors"
-              >
-                <div className="font-medium">{s.name}</div>
-                <p className="text-sm text-muted-foreground mt-1">{s.desc}</p>
-                <span className="text-sm text-primary mt-2 inline-block">Buy on Amazon →</span>
-              </a>
-            ))}
-          </div>
           <div className="rounded-xl overflow-hidden border border-border bg-surface-2">
             <img
               src={firestickCompatibility.url}
