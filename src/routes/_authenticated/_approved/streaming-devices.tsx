@@ -242,18 +242,18 @@ function StreamingDevicesPage() {
               <p className="text-sm text-muted-foreground max-w-2xl">
                 Quick reference for which Amazon Fire TV Sticks still allow sideloading.
               </p>
-              <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
+              <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 items-start">
                 {fireSticks.map((d) => (
                   <DeviceCard key={d.id} device={d} price={priceMap.get(d.id)} />
                 ))}
-              </div>
-              <div className="rounded-xl overflow-hidden border border-border bg-surface-2">
-                <img
-                  src={firestickCompatibility.url}
-                  alt="Fire TV Stick compatibility chart"
-                  className="w-full h-auto"
-                  loading="lazy"
-                />
+                <div className="rounded-xl overflow-hidden border border-border bg-surface-2">
+                  <img
+                    src={firestickCompatibility.url}
+                    alt="Fire TV Stick compatibility chart"
+                    className="w-full h-auto"
+                    loading="lazy"
+                  />
+                </div>
               </div>
             </section>
           </TabsContent>
