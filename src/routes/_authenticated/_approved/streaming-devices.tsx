@@ -180,8 +180,11 @@ function StreamingDevicesPage() {
     return m;
   }, [pricesQuery.data]);
 
-  const high = (devicesQuery.data ?? []).filter((d) => d.tier === "high");
-  const medium = (devicesQuery.data ?? []).filter((d) => d.tier === "medium");
+  const allDevices = devicesQuery.data ?? [];
+  const isFireStick = (d: Device) => d.brand?.toLowerCase() === "amazon" || /fire tv/i.test(d.name);
+  const high = allDevices.filter((d) => d.tier === "high" && !isFireStick(d));
+  const medium = allDevices.filter((d) => d.tier === "medium" && !isFireStick(d));
+  const fireSticks = allDevices.filter(isFireStick);
 
   return (
     <div className="flex-1 overflow-y-auto">
@@ -237,6 +240,13 @@ function StreamingDevicesPage() {
               loading="lazy"
             />
           </div>
+          {fireSticks.length > 0 && (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 pt-2">
+              {fireSticks.map((d) => (
+                <DeviceCard key={d.id} device={d} price={priceMap.get(d.id)} />
+              ))}
+            </div>
+          )}
         </section>
       </div>
     </div>
