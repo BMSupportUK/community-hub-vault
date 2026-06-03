@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { ShieldCheck, ShieldAlert } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { useVisitorVpn } from "@/hooks/use-visitor-vpn";
 
 export function TwoFactorBanner() {
   return null;
@@ -55,5 +56,29 @@ export function TwoFactorPill() {
       <ShieldAlert className="size-3.5" />
       <span className="hidden xl:inline">Enable 2FA</span>
     </Link>
+  );
+}
+
+export function VpnPill() {
+  const isVpn = useVisitorVpn();
+  if (isVpn) {
+    return (
+      <span
+        title="VPN or proxy detected on your connection"
+        className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 bg-emerald-500/15 border border-emerald-500/40 text-emerald-400 text-[11px] font-semibold"
+      >
+        <ShieldCheck className="size-3.5" />
+        <span className="hidden xl:inline">VPN on</span>
+      </span>
+    );
+  }
+  return (
+    <span
+      title="No VPN detected — your connection is not protected"
+      className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 bg-red-500/15 border border-red-500/50 text-red-400 text-[11px] font-semibold"
+    >
+      <ShieldAlert className="size-3.5" />
+      <span className="hidden xl:inline">VPN off</span>
+    </span>
   );
 }
