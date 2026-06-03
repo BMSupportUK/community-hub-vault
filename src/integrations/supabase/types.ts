@@ -2953,6 +2953,9 @@ export type Database = {
           image_url: string | null
           is_active: boolean
           name: string
+          price_range_currency: string
+          price_range_high_cents: number | null
+          price_range_low_cents: number | null
           sideload_notes: string | null
           sort_order: number
           specs: Json
@@ -2968,6 +2971,9 @@ export type Database = {
           image_url?: string | null
           is_active?: boolean
           name: string
+          price_range_currency?: string
+          price_range_high_cents?: number | null
+          price_range_low_cents?: number | null
           sideload_notes?: string | null
           sort_order?: number
           specs?: Json
@@ -2983,6 +2989,9 @@ export type Database = {
           image_url?: string | null
           is_active?: boolean
           name?: string
+          price_range_currency?: string
+          price_range_high_cents?: number | null
+          price_range_low_cents?: number | null
           sideload_notes?: string | null
           sort_order?: number
           specs?: Json
