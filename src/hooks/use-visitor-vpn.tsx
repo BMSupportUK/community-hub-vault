@@ -7,6 +7,9 @@ let cachedIp: string | null = null;
 let inflight: Promise<boolean> | null = null;
 const listeners = new Set<(v: boolean) => void>();
 const TTL_MS = 10_000;
+type NavigatorWithConnection = Navigator & {
+  connection?: EventTarget;
+};
 
 async function getPublicIp(): Promise<string | null> {
   const urls = [
@@ -64,7 +67,7 @@ export function useVisitorVpn() {
       if (document.visibilityState === "visible") refresh(true);
     };
     const onOnline = () => refresh(true);
-    const connection = navigator.connection as (EventTarget & { addEventListener?: typeof window.addEventListener; removeEventListener?: typeof window.removeEventListener }) | undefined;
+    const connection = (navigator as NavigatorWithConnection).connection;
     window.addEventListener("focus", onFocus);
     window.addEventListener("online", onOnline);
     connection?.addEventListener?.("change", onOnline);
