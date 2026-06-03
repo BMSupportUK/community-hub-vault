@@ -5,6 +5,7 @@ import { ExternalLink, Tv, Cpu, MemoryStick, HardDrive, Wifi, Settings } from "l
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import firestickCompatibility from "@/assets/firestick-compatibility.png.asset.json";
 
 export const Route = createFileRoute("/_authenticated/_approved/streaming-devices")({
   component: StreamingDevicesPage,
@@ -222,6 +223,21 @@ function StreamingDevicesPage() {
             </div>
           </section>
         )}
+
+        <section className="space-y-3">
+          <h2 className="text-xl font-semibold">Fire TV Stick compatibility</h2>
+          <p className="text-sm text-muted-foreground max-w-2xl">
+            Quick reference for which Amazon Fire TV Sticks still allow sideloading.
+          </p>
+          <div className="rounded-xl overflow-hidden border border-border bg-surface-2">
+            <img
+              src={firestickCompatibility.url}
+              alt="Fire TV Stick compatibility chart: HD 2026 and 4K Select do not allow sideloading; 4K Plus and 4K Max do."
+              className="w-full h-auto"
+              loading="lazy"
+            />
+          </div>
+        </section>
       </div>
     </div>
   );
