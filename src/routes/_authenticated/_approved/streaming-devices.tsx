@@ -247,14 +247,29 @@ function StreamingDevicesPage() {
                 {fireSticks.map((d) => (
                   <DeviceCard key={d.id} device={d} price={priceMap.get(d.id)} />
                 ))}
-                <div className="rounded-xl overflow-hidden border border-border bg-surface-2">
-                  <img
-                    src={firestickCompatibility.url}
-                    alt="Fire TV Stick compatibility chart"
-                    className="w-full h-auto"
-                    loading="lazy"
-                  />
-                </div>
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <button
+                      type="button"
+                      className="rounded-xl overflow-hidden border border-border bg-surface-2 cursor-zoom-in transition hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-ring"
+                      aria-label="Open compatibility chart"
+                    >
+                      <img
+                        src={firestickCompatibility.url}
+                        alt="Fire TV Stick compatibility chart"
+                        className="w-full h-auto"
+                        loading="lazy"
+                      />
+                    </button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-[95vw] w-fit p-2 sm:p-4">
+                    <img
+                      src={firestickCompatibility.url}
+                      alt="Fire TV Stick compatibility chart"
+                      className="w-auto max-h-[85vh] h-auto rounded-md"
+                    />
+                  </DialogContent>
+                </Dialog>
               </div>
             </section>
           </TabsContent>
