@@ -6,7 +6,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import firestickCompatibility from "@/assets/firestick-compatibility.png.asset.json";
+import firestickCompatibilityLeft from "@/assets/firestick-compatibility-left.png.asset.json";
+import firestickCompatibilityRight from "@/assets/firestick-compatibility-right.png.asset.json";
 
 export const Route = createFileRoute("/_authenticated/_approved/streaming-devices")({
   component: StreamingDevicesPage,
@@ -242,21 +243,38 @@ function StreamingDevicesPage() {
               <p className="text-sm text-muted-foreground max-w-2xl">
                 Quick reference for which Amazon Fire TV Sticks still allow sideloading.
               </p>
-              <div className="rounded-xl overflow-hidden border border-border bg-surface-2">
-                <img
-                  src={firestickCompatibility.url}
-                  alt="Fire TV Stick compatibility chart: HD 2026 and 4K Select do not allow sideloading; 4K Plus and 4K Max do."
-                  className="w-full h-auto"
-                  loading="lazy"
-                />
-              </div>
-              {fireSticks.length > 0 && (
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 pt-2">
-                  {fireSticks.map((d) => (
-                    <DeviceCard key={d.id} device={d} price={priceMap.get(d.id)} />
-                  ))}
+              <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
+                <div>
+                  {fireSticks.length > 0 && (
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      {fireSticks.map((d) => (
+                        <DeviceCard key={d.id} device={d} price={priceMap.get(d.id)} />
+                      ))}
+                    </div>
+                  )}
                 </div>
-              )}
+                <aside className="space-y-4 lg:sticky lg:top-4 lg:self-start">
+                  <div className="text-xs uppercase tracking-wide text-muted-foreground">
+                    Compatibility chart
+                  </div>
+                  <div className="rounded-xl overflow-hidden border border-border bg-surface-2">
+                    <img
+                      src={firestickCompatibilityLeft.url}
+                      alt="Fire TV Stick compatibility chart — part 1"
+                      className="w-full h-auto"
+                      loading="lazy"
+                    />
+                  </div>
+                  <div className="rounded-xl overflow-hidden border border-border bg-surface-2">
+                    <img
+                      src={firestickCompatibilityRight.url}
+                      alt="Fire TV Stick compatibility chart — part 2"
+                      className="w-full h-auto"
+                      loading="lazy"
+                    />
+                  </div>
+                </aside>
+              </div>
             </section>
           </TabsContent>
         </Tabs>
