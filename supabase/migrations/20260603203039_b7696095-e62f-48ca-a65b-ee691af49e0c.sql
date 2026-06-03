@@ -1,0 +1,1 @@
+UPDATE public.streaming_devices SET amazon_url = 'https://www.amazon.co.uk/dp/B0DBLWTQCT' WHERE id = 'f98da963-36fb-4496-8127-c3815a8b82de';
