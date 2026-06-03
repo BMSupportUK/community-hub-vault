@@ -119,7 +119,15 @@ export const saveBoroMatchCentre = createServerFn({ method: "POST" })
     }
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
+    const patch: {
+      updated_at: string;
+      last_result?: LastResult | null;
+      last_result_manual?: boolean;
+      next_fixture?: NextFixture | null;
+      next_fixture_manual?: boolean;
+      league_position?: LeaguePosition | null;
+      league_position_manual?: boolean;
+    } = { updated_at: new Date().toISOString() };
     if (data.lastResult !== undefined) {
       patch.last_result = data.lastResult;
       patch.last_result_manual = data.lastResult !== null;
@@ -134,7 +142,7 @@ export const saveBoroMatchCentre = createServerFn({ method: "POST" })
     }
     const { error } = await supabaseAdmin
       .from("boro_match_centre")
-      .update(patch)
+      .update(patch as never)
       .eq("id", "singleton");
     if (error) throw new Error(error.message);
     return { ok: true };
