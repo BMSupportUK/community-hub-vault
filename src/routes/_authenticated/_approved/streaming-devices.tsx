@@ -243,7 +243,7 @@ function StreamingDevicesPage() {
               <p className="text-sm text-muted-foreground max-w-2xl">
                 Quick reference for which Amazon Fire TV Sticks still allow sideloading.
               </p>
-              <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 items-start">
+              <div className="grid gap-4 grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,2.2fr)] items-start">
                 {fireSticks.map((d) => (
                   <DeviceCard key={d.id} device={d} price={priceMap.get(d.id)} />
                 ))}
