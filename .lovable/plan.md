@@ -1,101 +1,45 @@
+## Boro Match Centre widget (Fan Zone)
 
-# Discord Paste → Sports Guide Importer
+Add a compact "Match Centre" widget above the Fan Zone Staff box on the Boro Fan Zone, showing:
+- **Last result** (date, opponent, home/away, score, competition)
+- **Next game** (date, kick-off in user timezone, opponent, home/away, competition)
+- **League position** (Championship rank, P/W/D/L, GD, points)
 
-You paste messages copied from Discord into an admin page. The app splits them into individual events, routes each to the right Category + Subcategory using a fixed keyword map, and queues anything unmatched for review.
+Styled to match the existing red Fan Zone aesthetic (Hull-yellow / Boro-red shirts, club crests, kicker pill for competition, FT/KO badges).
 
-## 1. Database changes
+### Data source
 
-One new subcategory + one review queue table.
+Scrape **www.mfc.co.uk** (fixtures/results pages) and the EFL Championship table via a TanStack server function. Cache results in a new `boro_match_centre` table (single row) so we don't hammer mfc.co.uk on every page view. A cron refreshes it.
 
-```sql
--- New subcategory under USA Sports
-INSERT INTO sports_subcategories (category_id, name, sort_order)
-SELECT id, 'American Football', 10
-FROM sports_categories WHERE name = 'USA Sports';
+If scraping mfc.co.uk fails (markup change / blocked), the widget falls back to the last-cached snapshot and an admin can override values manually from the existing admin area.
 
--- Review queue for unmatched events
-CREATE TABLE public.discord_import_queue (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  raw_text text NOT NULL,
-  parsed_event jsonb NOT NULL,            -- { title, time, channels[], date }
-  suggested_category_id uuid REFERENCES sports_categories(id),
-  suggested_subcategory text,
-  status text NOT NULL DEFAULT 'pending', -- pending | imported | discarded
-  created_at timestamptz NOT NULL DEFAULT now(),
-  resolved_at timestamptz,
-  resolved_by uuid
-);
--- + GRANT + RLS: admin / management / moderator only
-```
+### Build steps
 
-No bot, no tokens, no Discord API.
+1. **Migration — `boro_match_centre` cache table**
+   - One row keyed by `id = 'singleton'`
+   - Columns: `last_result jsonb`, `next_fixture jsonb`, `league_position jsonb`, `manual_override boolean`, `fetched_at timestamptz`, `updated_at`
+   - RLS: `SELECT` for `authenticated` (everyone in Fan Zone can read); `UPDATE/INSERT` for admin/management only via `has_role`.
+   - Grants for `authenticated` + `service_role`.
 
-## 2. Keyword routing map (locked)
+2. **Server function — `src/lib/boro-match-centre.functions.ts`**
+   - `getBoroMatchCentre()` — returns the cached row (DTO).
+   - `refreshBoroMatchCentre()` — admin/management only. Fetches mfc.co.uk fixtures, results, and the Championship table page, parses HTML with a tiny regex/cheerio-free parser, writes to the cache. Skips fields where `manual_override` is true.
+   - `setBoroMatchCentreOverride({ field, value, manual })` — admin manual editor.
 
-Compiled into `src/lib/discord-sport-keywords.ts`. Top-to-bottom, first match wins, case-insensitive.
+3. **Cron route — `src/routes/api/public/hooks/refresh-boro-match-centre.ts`**
+   - Calls the refresh logic. Wire a pg_cron job (every 30 min) via `supabase--insert` after migration approval.
 
-- **Sports Passes** (top priority): sky sports pass, tnt sports pass, peacock pass, dazn pass, season pass, sports pass
-- **UFC**: ufc, mma, bellator, pfl
-- **Boxing**: boxing, matchroom, queensberry, fight night
-- **Darts**: darts, pdc
-- **Tennis**: tennis, atp, wta, wimbledon, roland garros
-- **Golf**: liv→Liv Golf • lpga→LPGA Tour • let/ladies european→LET Tour • dp world tour/european tour→DP World Tour • fallback→PGA Tour
-- **Football | Women**: nwsl/uswnt→USA • womens euro/world cup/champions league→Tournament • fallback→England
-- **Football | Mens**: champions league/europa/conference/club world cup→Tournaments | Clubs • world cup/euros/nations league/international→International • la liga→Spain • serie a→Italy • bundesliga→Germany • ligue 1→France • eredivisie→Holland • scottish/spfl→Scotland • mls/liga mx/brasileirao/a-league/j-league→All Other Leagues • fallback (premier league/epl/fa cup/efl/football/soccer)→England
-- **Rugby League**: rugby league pass→Sports Passes • fallback→League
-- **Rugby Union**: rugby union pass→Sports Pass • six nations/world cup/internationals→International • champions cup/challenge cup rugby→Tournament • fallback→League
-- **Cricket**: anything cricket-related → **League** (title carries the league name like IPL, The Hundred, etc.)
-- **Motorcar Racing**: dtm→DTM • wrc/rally→Rally • f1/f2/f3/grand prix/indycar/nascar/le mans/wec→F1 | F2 | F1 Academy
-- **Motorbike Racing**: motogp pass→Sport Passes • speedway→Speedway • superbike/wsbk/bsb→Superbike • fallback→Moto GP
-- **Irish Sports**: gaa, hurling, gaelic, all-ireland
-- **Australian Sports**: afl/aussie rules→Aussie Rules • aus rugby league→Rugby League • a-league→Soccer • netball→Netball • supercars→Motorsports
-- **USA Sports**: nba/wnba/basketball→Basketball • nhl/ice hockey→Ice Hockey • mlb/baseball/world series→Baseball • **nfl/college football/ncaa/super bowl→American Football (new)** • mlr→Rugby Union • mls usa→Soccer • peacock→Baseball
-- **Daily Sports & PPV**: ppv, pay-per-view
-- **Other Sports**: greyhound, horse racing, cycling, tour de, snooker, volleyball, handball
+4. **Widget — `src/components/app/BoroMatchCentreBox.tsx`**
+   - Three stacked sections: Last Result, Next Game, League Position.
+   - Mirrors `FanZoneStaffBox` styling (red gradient header, surface-1 body, club crests as small icons; "FT" pill for results, countdown for next kick-off using existing timezone hook).
+   - Loading skeleton + graceful empty state.
 
-Unmatched events → review queue (no silent drop).
+5. **Place above staff** — find where `<FanZoneStaffBox />` renders on the Boro Fan Zone page and insert `<BoroMatchCentreBox />` immediately above it (same side column).
 
-## 3. Server functions
+6. **Admin editor (lightweight)** — add an "Edit" pencil visible only to admin/management on the widget that opens a small inline form to override any of the three sections (sets `manual_override=true` for that section so cron won't clobber it).
 
-`src/lib/discord-import.functions.ts` — all protected by `requireSupabaseAuth` + admin/management/moderator role check:
+### Notes / risks
 
-- `parseDiscordPaste({ text })` — runs raw paste through:
-  1. **Splitter** — Lovable AI (free, no key needed) breaks the paste into individual events. Handles both human-typed multi-sport listings and bot-card format. Returns `{ title, time, date, channels[] }[]`.
-  2. **Router** — runs keyword map against each event.
-  3. **Preview** — returns `{ matched: [...], unmatched: [...] }` so you see what'll happen before confirming.
-- `importParsedEvents({ events })` — inserts matched events into `sports_blogs` as drafts (`published=false`).
-- `queueUnmatched({ events })` — inserts unmatched into `discord_import_queue`.
-- `listImportQueue()` — pending review items.
-- `resolveQueueItem({ id, action, category_id?, subcategory? })` — import / re-route / discard.
-
-## 4. Admin UI
-
-New page **`/admin/sports-import`** (admin-only, role-gated like other admin pages, added to admin nav):
-
-- **Paste box**: big textarea + "Parse" button
-- **Preview step**: side-by-side
-  - Left: matched events with detected Category → Subcategory (editable dropdowns per row)
-  - Right: unmatched events with manual Category + Subcategory dropdowns
-  - "Import all" or per-row import/skip
-- **Review queue panel**: pending items from past imports, same edit + import / discard controls, bulk actions
-- Imported rows are **drafts** — you publish from the existing sports guide admin (sports-guide file stays frozen).
-
-## 5. Files
-
-- New: `src/lib/discord-sport-keywords.ts`
-- New: `src/lib/discord-import.functions.ts`
-- New: `src/lib/discord-import.server.ts` (AI splitter via Lovable AI)
-- New: `src/routes/_authenticated/_approved/admin.sports-import.tsx`
-- New: `src/components/admin/SportsImportPaste.tsx`
-- New: `src/components/admin/SportsImportQueue.tsx`
-- New admin nav link
-- One migration (subcategory + queue table)
-- Sports guide file NOT touched
-
-## 6. Future upgrade path
-
-If the Discord server owner ever agrees to add a read-only bot, we swap the paste box for an automatic fetcher — **same parser, same router, same queue, same UI panels**. No throwaway work.
-
----
-
-Approve and I'll build it.
+- Cloudflare Workers runtime: parse HTML with regex / lightweight string ops (no `jsdom`/`cheerio` native deps). Keep parser defensive — if a section can't be parsed, keep previous cached value.
+- mfc.co.uk may block or change markup; manual override + last-good cache keeps the widget useful.
+- No external API key needed.
