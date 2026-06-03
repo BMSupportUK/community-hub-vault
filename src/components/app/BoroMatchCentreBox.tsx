@@ -398,7 +398,7 @@ function EditDialog({
             </button>
           </div>
         </div>
-        <style>{`.input{width:100%;padding:0.4rem 0.6rem;border-radius:6px;border:1px solid hsl(var(--border));background:hsl(var(--surface-2));color:inherit;font-size:0.875rem}`}</style>
+        <style>{`.input{width:100%;padding:0.4rem 0.6rem;border-radius:6px;border:1px solid var(--border);background:var(--surface-2);color:inherit;font-size:0.875rem}`}</style>
       </div>
     </div>
   );
