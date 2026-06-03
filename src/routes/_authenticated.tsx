@@ -9,7 +9,7 @@ import { isAdminUnlocked } from "@/lib/admin-unlock";
 import { IconRail } from "@/components/app/IconRail";
 import { Clocks } from "@/components/app/Clocks";
 import { MyWorkingStatus } from "@/components/app/MyWorkingStatus";
-import { TwoFactorPill } from "@/components/app/TwoFactorBanner";
+import { TwoFactorPill, VpnPill } from "@/components/app/TwoFactorBanner";
 import { BreakEndingAlert } from "@/components/app/BreakEndingAlert";
 import { ShiftStartEndAlert } from "@/components/app/ShiftStartEndAlert";
 import { ModerationPendingBadge } from "@/components/app/ModerationPendingBadge";
@@ -154,6 +154,7 @@ function AuthLayout() {
           </div>
           <div className="hidden xl:flex flex-1 min-w-0 px-3" />
             <TwoFactorPill />
+            <VpnPill />
             <DndDialogButton />
             <div className="hidden lg:flex items-center gap-2">
               <Clocks />
