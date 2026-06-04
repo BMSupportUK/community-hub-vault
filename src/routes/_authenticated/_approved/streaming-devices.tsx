@@ -34,6 +34,7 @@ type Price = {
   price_cents: number | null;
   currency: string;
   availability: string | null;
+  source_url: string | null;
   scraped_at: string;
 };
 
@@ -75,8 +76,19 @@ function relTime(iso: string) {
   return `Updated ${Math.floor(days / 7)} weeks ago`;
 }
 
+function retailerFromUrl(raw: string | null | undefined) {
+  if (!raw) return null;
+  try {
+    return new URL(raw).hostname.replace(/^www\./, "").split(".")[0].replace(/[-_]+/g, " ");
+  } catch {
+    return null;
+  }
+}
+
 function DeviceCard({ device, price }: { device: Device; price: Price | undefined }) {
   const priceLabel = price ? formatPrice(price.price_cents, price.currency) : null;
+  const listingUrl = price?.source_url || device.amazon_url;
+  const retailer = retailerFromUrl(price?.source_url);
   const rangeLabel = formatRange(
     device.price_range_low_cents,
     device.price_range_high_cents,
@@ -140,9 +152,9 @@ function DeviceCard({ device, price }: { device: Device; price: Price | undefine
 
         <div className="mt-auto pt-2">
           <Button asChild className="w-full">
-            <a href={device.amazon_url} target="_blank" rel="sponsored noopener noreferrer">
+            <a href={listingUrl} target="_blank" rel="sponsored noopener noreferrer">
               <ExternalLink className="size-4" />
-              {priceLabel ? `Best price on Amazon — ${priceLabel}` : "View on Amazon"}
+              {priceLabel ? `Best found${retailer ? ` at ${retailer}` : ""} — ${priceLabel}` : "View listing"}
             </a>
           </Button>
         </div>
@@ -170,7 +182,7 @@ function StreamingDevicesPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("streaming_device_prices")
-        .select("device_id, price_cents, currency, availability, scraped_at");
+        .select("device_id, price_cents, currency, availability, source_url, scraped_at");
       if (error) throw error;
       return (data ?? []) as Price[];
     },
@@ -195,7 +207,7 @@ function StreamingDevicesPage() {
           <h1 className="text-3xl font-bold tracking-tight">Streaming device reviews</h1>
           <p className="text-muted-foreground max-w-2xl">
             Hand-picked Android TV / Google TV boxes that all support sideloading. Prices refresh
-            weekly from Amazon UK.
+            weekly from UK retailers.
           </p>
         </header>
 
@@ -204,7 +216,7 @@ function StreamingDevicesPage() {
         <Tabs defaultValue="android" className="space-y-6">
           <TabsList>
             <TabsTrigger value="android">Android</TabsTrigger>
-            <TabsTrigger value="amazon">Amazon</TabsTrigger>
+            <TabsTrigger value="amazon">Fire TV</TabsTrigger>
           </TabsList>
 
           <TabsContent value="android" className="space-y-8">

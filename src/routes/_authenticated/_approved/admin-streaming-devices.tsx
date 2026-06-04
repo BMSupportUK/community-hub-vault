@@ -85,7 +85,7 @@ function AdminStreamingDevicesPage() {
   const onSave = async () => {
     if (!draft) return;
     if (!draft.name || !draft.amazon_url || !draft.tier) {
-      toast.error("Name, tier and Amazon URL are required");
+      toast.error("Name, tier and fallback listing URL are required");
       return;
     }
     try {
@@ -228,7 +228,7 @@ function AdminStreamingDevicesPage() {
                 <Input value={draft.image_url ?? ""} onChange={(e) => setDraft({ ...draft, image_url: e.target.value })} />
               </div>
               <div>
-                <Label>Amazon URL</Label>
+                <Label>Fallback listing URL</Label>
                 <Input value={draft.amazon_url ?? ""} onChange={(e) => setDraft({ ...draft, amazon_url: e.target.value })} />
               </div>
               <div>
