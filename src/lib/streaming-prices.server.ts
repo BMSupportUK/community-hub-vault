@@ -207,7 +207,7 @@ async function findBestUkPrice(
   }
 
   if (hits.length === 0) {
-    return { price_cents: null, currency: "GBP", availability: null, source_url: "" };
+    return { price_cents: null, currency: "GBP", availability: null, source_url: fallbackUrl };
   }
 
   hits.sort((a, b) => (a.price ?? Infinity) - (b.price ?? Infinity));
