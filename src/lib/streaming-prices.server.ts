@@ -144,7 +144,7 @@ async function findBestUkPrice(
           {
             type: "json",
             prompt:
-              "You are extracting a single product's current sale price from a UK retailer page. Return price as a NUMBER in GBP only (e.g. 49.99). Only return a price if the page clearly sells this exact product NEW and IN STOCK, with the price shown in British Pounds (£/GBP). If the page is a category list, review, comparison, out of stock, used/refurbished, or in any other currency, return null for price. Also return a short availability string like 'In stock' if obvious, otherwise null.",
+              "You are extracting a price from a UK RETAILER product page where a customer can ADD TO BASKET / BUY NOW the exact product right now. Return price as a NUMBER in GBP (e.g. 49.99) ONLY IF the page has a clear Add to Basket / Add to Cart / Buy Now button, the product is NEW and IN STOCK, and the price is in British Pounds (£/GBP). Return null for price if the page is a news article, blog post, review, buying guide, deals roundup, comparison, forum post, category listing, out of stock, used/refurbished, or in any other currency. Also return a short availability string like 'In stock' if obvious, otherwise null.",
             schema: {
               type: "object",
               properties: {
