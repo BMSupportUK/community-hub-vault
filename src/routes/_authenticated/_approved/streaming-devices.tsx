@@ -85,9 +85,13 @@ function retailerFromUrl(raw: string | null | undefined) {
   }
 }
 
+function isFireDevice(device: Device) {
+  return device.brand?.toLowerCase() === "amazon" || /fire\s*tv|fire\s*stick|firestick/i.test(device.name);
+}
+
 function DeviceCard({ device, price }: { device: Device; price: Price | undefined }) {
   const priceLabel = price ? formatPrice(price.price_cents, price.currency) : null;
-  const listingUrl = price?.source_url || device.amazon_url;
+  const listingUrl = price?.source_url || (isFireDevice(device) ? device.amazon_url : null);
   const retailer = retailerFromUrl(price?.source_url);
   const rangeLabel = formatRange(
     device.price_range_low_cents,
@@ -151,12 +155,18 @@ function DeviceCard({ device, price }: { device: Device; price: Price | undefine
         )}
 
         <div className="mt-auto pt-2">
-          <Button asChild className="w-full">
-            <a href={listingUrl} target="_blank" rel="sponsored noopener noreferrer">
-              <ExternalLink className="size-4" />
-              {priceLabel ? `Best found${retailer ? ` at ${retailer}` : ""} — ${priceLabel}` : "View listing"}
-            </a>
-          </Button>
+          {listingUrl ? (
+            <Button asChild className="w-full">
+              <a href={listingUrl} target="_blank" rel="sponsored noopener noreferrer">
+                <ExternalLink className="size-4" />
+                {priceLabel ? `Best found${retailer ? ` at ${retailer}` : ""} — ${priceLabel}` : "View listing"}
+              </a>
+            </Button>
+          ) : (
+            <Button className="w-full" disabled>
+              Price unavailable
+            </Button>
+          )}
         </div>
       </div>
     </article>
@@ -195,10 +205,9 @@ function StreamingDevicesPage() {
   }, [pricesQuery.data]);
 
   const allDevices = devicesQuery.data ?? [];
-  const isFireStick = (d: Device) => d.brand?.toLowerCase() === "amazon" || /fire tv/i.test(d.name);
-  const high = allDevices.filter((d) => d.tier === "high" && !isFireStick(d));
-  const medium = allDevices.filter((d) => d.tier === "medium" && !isFireStick(d));
-  const fireSticks = allDevices.filter(isFireStick);
+  const high = allDevices.filter((d) => d.tier === "high" && !isFireDevice(d));
+  const medium = allDevices.filter((d) => d.tier === "medium" && !isFireDevice(d));
+  const fireSticks = allDevices.filter(isFireDevice);
 
   return (
     <div className="flex-1 overflow-y-auto">
