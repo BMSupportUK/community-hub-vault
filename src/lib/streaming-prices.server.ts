@@ -43,6 +43,12 @@ const PRODUCT_PATH_HINTS = [
   "/store/", "/sku/", "-p-", "/pd/", "/itm/",
 ];
 
+const TRUSTED_RETAILER_DOMAINS = [
+  "amazon.co.uk", "argos.co.uk", "currys.co.uk", "johnlewis.com", "very.co.uk",
+  "ao.com", "box.co.uk", "ebuyer.com", "scan.co.uk", "overclockers.co.uk",
+  "world-of-satellite.co.uk", "sat25.com", "mecool.com", "formuler.tv",
+];
+
 function hostOf(url: string): string {
   try { return new URL(url).hostname.replace(/^www\./, "").toLowerCase(); }
   catch { return ""; }
@@ -52,15 +58,15 @@ function isRetailerUrl(url: string): boolean {
   const host = hostOf(url);
   if (!host) return false;
   if (NON_RETAILER_DOMAINS.some((d) => host === d || host.endsWith("." + d))) return false;
+  if (TRUSTED_RETAILER_DOMAINS.some((d) => host === d || host.endsWith("." + d))) return true;
   // Reject obvious editorial sub-paths.
   const path = (() => { try { return new URL(url).pathname.toLowerCase(); } catch { return ""; } })();
-  if (/\/(news|blog|article|review|reviews|guide|guides|deals|best-|how-to|vs-|comparison)\b/.test(path)) return false;
+  if (/\/(news|blog|article|review|reviews|guide|guides|deals|deal|best-|how-to|vs-|comparison)\b/.test(path)) return false;
   // Accept if path looks like a product page, or host is a known shop TLD pattern.
   if (PRODUCT_PATH_HINTS.some((h) => path.includes(h))) return true;
   // Common shop signals in host name.
   if (/(shop|store|buy|cart|checkout)/.test(host)) return true;
-  // Otherwise allow — but the LLM extractor still has to confirm it's a buy page.
-  return true;
+  return false;
 }
 
 // Scrape a single Amazon UK product page for the current GBP price.
@@ -124,7 +130,7 @@ async function findBestUkPrice(
   const apiKey = process.env.FIRECRAWL_API_KEY;
   if (!apiKey) throw new Error("FIRECRAWL_API_KEY not configured");
 
-  const query = `buy ${brand ? brand + " " : ""}${name} UK in stock site:co.uk OR site:com -review -news -blog -deals`.trim();
+  const query = `buy ${brand ? brand + " " : ""}${name} UK in stock product page add to basket -amazon -review -news -blog -deals -guide -comparison`.trim();
 
   const res = await fetch("https://api.firecrawl.dev/v2/search", {
     method: "POST",
@@ -201,7 +207,7 @@ async function findBestUkPrice(
   }
 
   if (hits.length === 0) {
-    return { price_cents: null, currency: "GBP", availability: null, source_url: fallbackUrl };
+    return { price_cents: null, currency: "GBP", availability: null, source_url: "" };
   }
 
   hits.sort((a, b) => (a.price ?? Infinity) - (b.price ?? Infinity));
