@@ -1,6 +1,6 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
-type DeviceRow = { id: string; amazon_url: string; name: string };
+type DeviceRow = { id: string; amazon_url: string; name: string; brand: string | null };
 
 type ScrapeResult = {
   price_cents: number | null;
@@ -9,35 +9,55 @@ type ScrapeResult = {
   source_url: string;
 };
 
-async function firecrawlScrape(url: string): Promise<ScrapeResult> {
+type PriceHit = {
+  price: number | null;
+  currency: string | null;
+  availability: string | null;
+  url: string;
+  title?: string;
+};
+
+// Search the open UK web for the lowest in-stock GBP price for a product.
+async function findBestUkPrice(
+  name: string,
+  brand: string | null,
+  fallbackUrl: string,
+): Promise<ScrapeResult> {
   const apiKey = process.env.FIRECRAWL_API_KEY;
   if (!apiKey) throw new Error("FIRECRAWL_API_KEY not configured");
 
-  const res = await fetch("https://api.firecrawl.dev/v2/scrape", {
+  const query = `${brand ? brand + " " : ""}${name} price UK buy`.trim();
+
+  const res = await fetch("https://api.firecrawl.dev/v2/search", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${apiKey}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      url,
-      onlyMainContent: true,
-      location: { country: "GB", languages: ["en-GB"] },
-      formats: [
-        {
-          type: "json",
-          prompt:
-            "Extract the current product price in British Pounds (GBP, £) from this Amazon UK page. Return the price as a number (e.g. 49.99), the currency code as 'GBP', and a short availability string (e.g. 'In stock'). ONLY return a price if it is shown in GBP/£. If the price is in any other currency (USD/$, EUR/€, etc.) or unavailable, return null for price and currency.",
-          schema: {
-            type: "object",
-            properties: {
-              price: { type: ["number", "null"] },
-              currency: { type: ["string", "null"] },
-              availability: { type: ["string", "null"] },
+      query,
+      limit: 6,
+      lang: "en",
+      country: "gb",
+      scrapeOptions: {
+        onlyMainContent: true,
+        location: { country: "GB", languages: ["en-GB"] },
+        formats: [
+          {
+            type: "json",
+            prompt:
+              "You are extracting a single product's current sale price from a UK retailer page. Return price as a NUMBER in GBP only (e.g. 49.99). Only return a price if the page clearly sells this exact product NEW and IN STOCK, with the price shown in British Pounds (£/GBP). If the page is a category list, review, comparison, out of stock, used/refurbished, or in any other currency, return null for price. Also return a short availability string like 'In stock' if obvious, otherwise null.",
+            schema: {
+              type: "object",
+              properties: {
+                price: { type: ["number", "null"] },
+                currency: { type: ["string", "null"] },
+                availability: { type: ["string", "null"] },
+              },
             },
           },
-        },
-      ],
+        ],
+      },
     }),
   });
 
@@ -45,21 +65,52 @@ async function firecrawlScrape(url: string): Promise<ScrapeResult> {
     const text = await res.text().catch(() => "");
     throw new Error(`Firecrawl ${res.status}: ${text.slice(0, 200)}`);
   }
+
   const body = (await res.json()) as {
-    data?: { json?: { price?: number | null; currency?: string | null; availability?: string | null } };
-    json?: { price?: number | null; currency?: string | null; availability?: string | null };
+    data?: {
+      web?: Array<{
+        url?: string;
+        title?: string;
+        json?: { price?: number | null; currency?: string | null; availability?: string | null };
+      }>;
+    };
+    web?: Array<{
+      url?: string;
+      title?: string;
+      json?: { price?: number | null; currency?: string | null; availability?: string | null };
+    }>;
   };
-  const json = body.data?.json ?? body.json ?? {};
-  const rawCurrency = (json.currency || "").toUpperCase();
-  // Reject anything that isn't GBP — we only want UK prices.
-  const isGbp = rawCurrency === "GBP" || rawCurrency === "£" || rawCurrency === "";
-  const price =
-    isGbp && typeof json.price === "number" && json.price > 0 ? json.price : null;
+
+  const results = body.data?.web ?? body.web ?? [];
+  const hits: PriceHit[] = [];
+  for (const r of results) {
+    const j = r.json ?? {};
+    const rawCurrency = (j.currency || "").toUpperCase();
+    const isGbp = rawCurrency === "GBP" || rawCurrency === "£" || rawCurrency === "";
+    if (!isGbp) continue;
+    if (typeof j.price !== "number" || !(j.price > 0)) continue;
+    // Sanity bounds: reject obvious noise (accessories, shipping fees, etc.)
+    if (j.price < 5 || j.price > 2000) continue;
+    hits.push({
+      price: j.price,
+      currency: "GBP",
+      availability: j.availability ?? null,
+      url: r.url || fallbackUrl,
+      title: r.title,
+    });
+  }
+
+  if (hits.length === 0) {
+    return { price_cents: null, currency: "GBP", availability: null, source_url: fallbackUrl };
+  }
+
+  hits.sort((a, b) => (a.price ?? Infinity) - (b.price ?? Infinity));
+  const best = hits[0];
   return {
-    price_cents: price ? Math.round(price * 100) : null,
+    price_cents: Math.round((best.price ?? 0) * 100),
     currency: "GBP",
-    availability: json.availability ?? null,
-    source_url: url,
+    availability: best.availability,
+    source_url: best.url,
   };
 }
 
@@ -70,7 +121,7 @@ export async function refreshAllStreamingPrices(): Promise<{
 }> {
   const { data: devices, error } = await supabaseAdmin
     .from("streaming_devices")
-    .select("id, amazon_url, name")
+    .select("id, amazon_url, name, brand")
     .eq("is_active", true);
   if (error) throw new Error(error.message);
 
@@ -80,7 +131,7 @@ export async function refreshAllStreamingPrices(): Promise<{
 
   for (const d of (devices ?? []) as DeviceRow[]) {
     try {
-      const r = await firecrawlScrape(d.amazon_url);
+      const r = await findBestUkPrice(d.name, d.brand, d.amazon_url);
       const { error: upErr } = await supabaseAdmin
         .from("streaming_device_prices")
         .upsert({
