@@ -22,11 +22,12 @@ async function firecrawlScrape(url: string): Promise<ScrapeResult> {
     body: JSON.stringify({
       url,
       onlyMainContent: true,
+      location: { country: "GB", languages: ["en-GB"] },
       formats: [
         {
           type: "json",
           prompt:
-            "Extract the current product price as a number (e.g. 49.99), the currency code (e.g. GBP), and a short availability string (e.g. 'In stock'). If unavailable, return nulls.",
+            "Extract the current product price in British Pounds (GBP, £) from this Amazon UK page. Return the price as a number (e.g. 49.99), the currency code as 'GBP', and a short availability string (e.g. 'In stock'). ONLY return a price if it is shown in GBP/£. If the price is in any other currency (USD/$, EUR/€, etc.) or unavailable, return null for price and currency.",
           schema: {
             type: "object",
             properties: {
@@ -49,10 +50,14 @@ async function firecrawlScrape(url: string): Promise<ScrapeResult> {
     json?: { price?: number | null; currency?: string | null; availability?: string | null };
   };
   const json = body.data?.json ?? body.json ?? {};
-  const price = typeof json.price === "number" && json.price > 0 ? json.price : null;
+  const rawCurrency = (json.currency || "").toUpperCase();
+  // Reject anything that isn't GBP — we only want UK prices.
+  const isGbp = rawCurrency === "GBP" || rawCurrency === "£" || rawCurrency === "";
+  const price =
+    isGbp && typeof json.price === "number" && json.price > 0 ? json.price : null;
   return {
     price_cents: price ? Math.round(price * 100) : null,
-    currency: (json.currency || "GBP").toUpperCase(),
+    currency: "GBP",
     availability: json.availability ?? null,
     source_url: url,
   };
