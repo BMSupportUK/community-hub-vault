@@ -1,0 +1,2 @@
+UPDATE public.streaming_device_prices SET price_cents = NULL, availability = NULL WHERE currency <> 'GBP' OR currency IS NULL;
+UPDATE public.streaming_device_prices SET currency = 'GBP' WHERE currency IS NULL OR currency <> 'GBP';
