@@ -176,7 +176,6 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
 
   const items: RailItem[] = [
     { to: "/home", label: "Home", icon: Home, show: true },
-    { to: "/profile", label: "My profile", icon: UserCircle2, show: true },
     { to: "/tickets", label: "Tickets", icon: Ticket, show: !hasRole("moderator") },
     { to: "/shop", label: "Shop", icon: ShoppingBag, show: true },
     { to: "/install-guides", label: "Install guides", icon: Wrench, show: true },
