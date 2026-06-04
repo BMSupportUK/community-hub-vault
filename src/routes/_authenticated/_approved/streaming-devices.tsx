@@ -76,9 +76,19 @@ function relTime(iso: string) {
   return `Updated ${Math.floor(days / 7)} weeks ago`;
 }
 
+function retailerFromUrl(raw: string | null | undefined) {
+  if (!raw) return null;
+  try {
+    return new URL(raw).hostname.replace(/^www\./, "").split(".")[0].replace(/[-_]+/g, " ");
+  } catch {
+    return null;
+  }
+}
+
 function DeviceCard({ device, price }: { device: Device; price: Price | undefined }) {
   const priceLabel = price ? formatPrice(price.price_cents, price.currency) : null;
   const listingUrl = price?.source_url || device.amazon_url;
+  const retailer = retailerFromUrl(price?.source_url);
   const rangeLabel = formatRange(
     device.price_range_low_cents,
     device.price_range_high_cents,
@@ -144,7 +154,7 @@ function DeviceCard({ device, price }: { device: Device; price: Price | undefine
           <Button asChild className="w-full">
             <a href={listingUrl} target="_blank" rel="sponsored noopener noreferrer">
               <ExternalLink className="size-4" />
-              {priceLabel ? `Best found price — ${priceLabel}` : "View listing"}
+              {priceLabel ? `Best found${retailer ? ` at ${retailer}` : ""} — ${priceLabel}` : "View listing"}
             </a>
           </Button>
         </div>
