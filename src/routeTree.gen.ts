@@ -29,6 +29,7 @@ import { Route as AuthenticatedApprovedRouteImport } from './routes/_authenticat
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
 import { Route as ApiPublicTweetRouteImport } from './routes/api/public/tweet'
 import { Route as ApiPublicLinkPreviewRouteImport } from './routes/api/public/link-preview'
+import { Route as AuthenticatedApprovedVpnRouteImport } from './routes/_authenticated/_approved/vpn'
 import { Route as AuthenticatedApprovedTicketsRouteImport } from './routes/_authenticated/_approved/tickets'
 import { Route as AuthenticatedApprovedStreamingDevicesRouteImport } from './routes/_authenticated/_approved/streaming-devices'
 import { Route as AuthenticatedApprovedStatusRouteImport } from './routes/_authenticated/_approved/status'
@@ -187,6 +188,12 @@ const ApiPublicLinkPreviewRoute = ApiPublicLinkPreviewRouteImport.update({
   path: '/api/public/link-preview',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedApprovedVpnRoute =
+  AuthenticatedApprovedVpnRouteImport.update({
+    id: '/vpn',
+    path: '/vpn',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
 const AuthenticatedApprovedTicketsRoute =
   AuthenticatedApprovedTicketsRouteImport.update({
     id: '/tickets',
@@ -589,6 +596,7 @@ export interface FileRoutesByFullPath {
   '/status': typeof AuthenticatedApprovedStatusRoute
   '/streaming-devices': typeof AuthenticatedApprovedStreamingDevicesRoute
   '/tickets': typeof AuthenticatedApprovedTicketsRoute
+  '/vpn': typeof AuthenticatedApprovedVpnRoute
   '/api/public/link-preview': typeof ApiPublicLinkPreviewRoute
   '/api/public/tweet': typeof ApiPublicTweetRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
@@ -666,6 +674,7 @@ export interface FileRoutesByTo {
   '/status': typeof AuthenticatedApprovedStatusRoute
   '/streaming-devices': typeof AuthenticatedApprovedStreamingDevicesRoute
   '/tickets': typeof AuthenticatedApprovedTicketsRoute
+  '/vpn': typeof AuthenticatedApprovedVpnRoute
   '/api/public/link-preview': typeof ApiPublicLinkPreviewRoute
   '/api/public/tweet': typeof ApiPublicTweetRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
@@ -747,6 +756,7 @@ export interface FileRoutesById {
   '/_authenticated/_approved/status': typeof AuthenticatedApprovedStatusRoute
   '/_authenticated/_approved/streaming-devices': typeof AuthenticatedApprovedStreamingDevicesRoute
   '/_authenticated/_approved/tickets': typeof AuthenticatedApprovedTicketsRoute
+  '/_authenticated/_approved/vpn': typeof AuthenticatedApprovedVpnRoute
   '/api/public/link-preview': typeof ApiPublicLinkPreviewRoute
   '/api/public/tweet': typeof ApiPublicTweetRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
@@ -827,6 +837,7 @@ export interface FileRouteTypes {
     | '/status'
     | '/streaming-devices'
     | '/tickets'
+    | '/vpn'
     | '/api/public/link-preview'
     | '/api/public/tweet'
     | '/lovable/email/suppression'
@@ -904,6 +915,7 @@ export interface FileRouteTypes {
     | '/status'
     | '/streaming-devices'
     | '/tickets'
+    | '/vpn'
     | '/api/public/link-preview'
     | '/api/public/tweet'
     | '/lovable/email/suppression'
@@ -984,6 +996,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/status'
     | '/_authenticated/_approved/streaming-devices'
     | '/_authenticated/_approved/tickets'
+    | '/_authenticated/_approved/vpn'
     | '/api/public/link-preview'
     | '/api/public/tweet'
     | '/lovable/email/suppression'
@@ -1181,6 +1194,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/public/link-preview'
       preLoaderRoute: typeof ApiPublicLinkPreviewRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/_approved/vpn': {
+      id: '/_authenticated/_approved/vpn'
+      path: '/vpn'
+      fullPath: '/vpn'
+      preLoaderRoute: typeof AuthenticatedApprovedVpnRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
     }
     '/_authenticated/_approved/tickets': {
       id: '/_authenticated/_approved/tickets'
@@ -1698,6 +1718,7 @@ interface AuthenticatedApprovedRouteChildren {
   AuthenticatedApprovedStatusRoute: typeof AuthenticatedApprovedStatusRoute
   AuthenticatedApprovedStreamingDevicesRoute: typeof AuthenticatedApprovedStreamingDevicesRoute
   AuthenticatedApprovedTicketsRoute: typeof AuthenticatedApprovedTicketsRoute
+  AuthenticatedApprovedVpnRoute: typeof AuthenticatedApprovedVpnRoute
   AuthenticatedApprovedUUsernameRoute: typeof AuthenticatedApprovedUUsernameRoute
 }
 
@@ -1760,6 +1781,7 @@ const AuthenticatedApprovedRouteChildren: AuthenticatedApprovedRouteChildren = {
   AuthenticatedApprovedStreamingDevicesRoute:
     AuthenticatedApprovedStreamingDevicesRoute,
   AuthenticatedApprovedTicketsRoute: AuthenticatedApprovedTicketsRoute,
+  AuthenticatedApprovedVpnRoute: AuthenticatedApprovedVpnRoute,
   AuthenticatedApprovedUUsernameRoute: AuthenticatedApprovedUUsernameRoute,
 }
 
