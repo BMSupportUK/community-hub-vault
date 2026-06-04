@@ -273,6 +273,7 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
       return;
     }
     setSaving(true);
+    try {
     const subsForCat = subcategories.filter((s) => s.category_id === editing.category_id);
     const defaultSubName =
       subsForCat.find((s) => s.is_default)?.name ?? null;
@@ -309,10 +310,14 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
     // off the payload so the trigger falls back to updated_at + 24h.
     const bodyForParse = editing.body?.trim() || "";
     if (bodyForParse) {
-      const latestMs = findLatestEventUtcMs(bodyForParse);
-      if (latestMs !== null) {
-        const clearAt = new Date(latestMs + 6 * 60 * 60 * 1000).toISOString();
-        payload.auto_clear_at = clearAt;
+      try {
+        const latestMs = findLatestEventUtcMs(bodyForParse);
+        if (latestMs !== null) {
+          const clearAt = new Date(latestMs + 6 * 60 * 60 * 1000).toISOString();
+          payload.auto_clear_at = clearAt;
+        }
+      } catch (e) {
+        console.error("[SportsGuideEditor] findLatestEventUtcMs failed", e);
       }
     }
     if (!editing.id) {
@@ -329,13 +334,22 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
     const { error } = editing.id
       ? await supabase.from("sports_blogs").update(payload).eq("id", editing.id)
       : await supabase.from("sports_blogs").insert({ ...payload, created_by: user?.id ?? null });
-    setSaving(false);
-    if (error) return toast.error(error.message);
+    if (error) {
+      console.error("[SportsGuideEditor] save error", error);
+      toast.error(error.message || "Failed to save blog");
+      return;
+    }
     if (!editing.id) {
       try { localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
     }
     toast.success(editing.id ? "Blog updated" : "Blog added");
     close();
+    } catch (e: any) {
+      console.error("[SportsGuideEditor] unexpected save error", e);
+      toast.error(e?.message || "Unexpected error while saving");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const subsForEditing = editing
