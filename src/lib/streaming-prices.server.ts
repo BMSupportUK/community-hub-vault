@@ -69,6 +69,54 @@ function isRetailerUrl(url: string): boolean {
   return false;
 }
 
+async function scrapeConfiguredRetailerPrice(url: string): Promise<ScrapeResult | null> {
+  const host = hostOf(url);
+  if (!isRetailerUrl(url) || host === "amazon.co.uk") return null;
+  const pageUrl = host === "sat25.com" && !/[?&]currency=GBP\b/i.test(url)
+    ? `${url}${url.includes("?") ? "&" : "?"}currency=GBP`
+    : url;
+  const res = await fetch(pageUrl, {
+    headers: {
+      "User-Agent": "Mozilla/5.0 (compatible; BM Support price checker)",
+      "Accept-Language": "en-GB,en;q=0.9",
+    },
+  });
+  if (!res.ok) return null;
+  const html = await res.text();
+  const price = host.endsWith("world-of-satellite.co.uk")
+    ? extractWorldOfSatellitePrice(html)
+    : extractFirstGbpPrice(html);
+  if (price === null) return null;
+  return {
+    price_cents: Math.round(price * 100),
+    currency: "GBP",
+    availability: /out\s+of\s+stock/i.test(html) ? "Out of stock" : /in\s+stock/i.test(html) ? "In stock" : null,
+    source_url: pageUrl,
+  };
+}
+
+function extractFirstGbpPrice(html: string): number | null {
+  const matches = [...html.matchAll(/£\s*([0-9]{1,4}(?:,[0-9]{3})?(?:\.[0-9]{2})?)/g)]
+    .map((m) => Number(m[1].replace(/,/g, "")))
+    .filter((n) => Number.isFinite(n) && n >= 5 && n <= 2000);
+  return matches[0] ?? null;
+}
+
+function extractWorldOfSatellitePrice(html: string): number | null {
+  const productStart = html.search(/Product Code:|Price Match|Availability:/i);
+  const productEnd = html.indexOf("id=\"button-cart\"", Math.max(productStart, 0));
+  const productBlock = html.slice(
+    productStart >= 0 ? productStart : 0,
+    productEnd > productStart ? productEnd : Math.min(html.length, (productStart >= 0 ? productStart : 0) + 5000),
+  );
+  const beforeTax = productBlock.split(/Ex\s+Tax:/i)[0] || productBlock;
+  const prices = [...beforeTax.matchAll(/£\s*([0-9]{1,4}(?:,[0-9]{3})?(?:\.[0-9]{2})?)/g)]
+    .map((m) => Number(m[1].replace(/,/g, "")))
+    .filter((n) => Number.isFinite(n) && n >= 5 && n <= 2000);
+  if (prices.length === 0) return null;
+  return Math.min(...prices);
+}
+
 // Scrape a single Amazon UK product page for the current GBP price.
 async function scrapeAmazonPrice(url: string): Promise<ScrapeResult> {
   const apiKey = process.env.FIRECRAWL_API_KEY;
