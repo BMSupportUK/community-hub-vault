@@ -96,7 +96,12 @@ function ReadPage() {
     if (typeof document === "undefined") return [];
     const wrap = document.createElement("div");
     wrap.innerHTML = sanitizeRichHtml(blog.body);
-    annotateTimesInEl(wrap, viewerTz, defaultSourceZone);
+    try {
+      annotateTimesInEl(wrap, viewerTz, defaultSourceZone);
+    } catch (e) {
+      // Never let a bad date/time in guide content crash the reader.
+      console.error("[sports-guides/read] annotateTimesInEl failed", e);
+    }
     const eventRows = Array.from(
       wrap.querySelectorAll<HTMLElement>("[data-tz-row][data-tz-utc]"),
     );
