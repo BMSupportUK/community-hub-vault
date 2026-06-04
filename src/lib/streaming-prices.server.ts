@@ -17,6 +17,52 @@ type PriceHit = {
   title?: string;
 };
 
+// Domains that publish news, reviews, deals, guides or comparisons rather than
+// selling the product directly. We never trust a price coming from these.
+const NON_RETAILER_DOMAINS = [
+  "reddit.com", "youtube.com", "youtu.be", "facebook.com", "twitter.com", "x.com",
+  "instagram.com", "tiktok.com", "pinterest.com", "medium.com", "quora.com",
+  "wikipedia.org", "wikia.com", "linkedin.com",
+  "techradar.com", "tomsguide.com", "trustedreviews.com", "whathifi.com",
+  "which.co.uk", "expertreviews.co.uk", "pocket-lint.com", "stuff.tv",
+  "theverge.com", "engadget.com", "cnet.com", "wired.com", "wired.co.uk",
+  "pcmag.com", "androidcentral.com", "androidauthority.com", "9to5google.com",
+  "9to5mac.com", "arstechnica.com", "gizmodo.com", "lifehacker.com",
+  "thesun.co.uk", "dailymail.co.uk", "mirror.co.uk", "express.co.uk",
+  "telegraph.co.uk", "theguardian.com", "bbc.co.uk", "bbc.com", "metro.co.uk",
+  "independent.co.uk", "standard.co.uk", "huffingtonpost.co.uk", "huffpost.com",
+  "cordbusters.co.uk", "wonderprice.co.uk", "hotukdeals.com", "latestdeals.co.uk",
+  "moneysavingexpert.com", "idealo.co.uk", "pricerunner.com", "kelkoo.co.uk",
+  "google.com", "shopping.google.com", "bing.com",
+  "trustpilot.com", "reviews.io",
+];
+
+// URL path fragments that strongly suggest a real product / buy page.
+const PRODUCT_PATH_HINTS = [
+  "/product/", "/products/", "/p/", "/dp/", "/shop/", "/buy/", "/item/",
+  "/store/", "/sku/", "-p-", "/pd/", "/itm/",
+];
+
+function hostOf(url: string): string {
+  try { return new URL(url).hostname.replace(/^www\./, "").toLowerCase(); }
+  catch { return ""; }
+}
+
+function isRetailerUrl(url: string): boolean {
+  const host = hostOf(url);
+  if (!host) return false;
+  if (NON_RETAILER_DOMAINS.some((d) => host === d || host.endsWith("." + d))) return false;
+  // Reject obvious editorial sub-paths.
+  const path = (() => { try { return new URL(url).pathname.toLowerCase(); } catch { return ""; } })();
+  if (/\/(news|blog|article|review|reviews|guide|guides|deals|best-|how-to|vs-|comparison)\b/.test(path)) return false;
+  // Accept if path looks like a product page, or host is a known shop TLD pattern.
+  if (PRODUCT_PATH_HINTS.some((h) => path.includes(h))) return true;
+  // Common shop signals in host name.
+  if (/(shop|store|buy|cart|checkout)/.test(host)) return true;
+  // Otherwise allow — but the LLM extractor still has to confirm it's a buy page.
+  return true;
+}
+
 // Scrape a single Amazon UK product page for the current GBP price.
 async function scrapeAmazonPrice(url: string): Promise<ScrapeResult> {
   const apiKey = process.env.FIRECRAWL_API_KEY;
@@ -78,7 +124,7 @@ async function findBestUkPrice(
   const apiKey = process.env.FIRECRAWL_API_KEY;
   if (!apiKey) throw new Error("FIRECRAWL_API_KEY not configured");
 
-  const query = `${brand ? brand + " " : ""}${name} price UK buy`.trim();
+  const query = `buy ${brand ? brand + " " : ""}${name} UK in stock site:co.uk OR site:com -review -news -blog -deals`.trim();
 
   const res = await fetch("https://api.firecrawl.dev/v2/search", {
     method: "POST",
@@ -98,7 +144,7 @@ async function findBestUkPrice(
           {
             type: "json",
             prompt:
-              "You are extracting a single product's current sale price from a UK retailer page. Return price as a NUMBER in GBP only (e.g. 49.99). Only return a price if the page clearly sells this exact product NEW and IN STOCK, with the price shown in British Pounds (£/GBP). If the page is a category list, review, comparison, out of stock, used/refurbished, or in any other currency, return null for price. Also return a short availability string like 'In stock' if obvious, otherwise null.",
+              "You are extracting a price from a UK RETAILER product page where a customer can ADD TO BASKET / BUY NOW the exact product right now. Return price as a NUMBER in GBP (e.g. 49.99) ONLY IF the page has a clear Add to Basket / Add to Cart / Buy Now button, the product is NEW and IN STOCK, and the price is in British Pounds (£/GBP). Return null for price if the page is a news article, blog post, review, buying guide, deals roundup, comparison, forum post, category listing, out of stock, used/refurbished, or in any other currency. Also return a short availability string like 'In stock' if obvious, otherwise null.",
             schema: {
               type: "object",
               properties: {
@@ -136,6 +182,8 @@ async function findBestUkPrice(
   const results = body.data?.web ?? body.web ?? [];
   const hits: PriceHit[] = [];
   for (const r of results) {
+    const url = r.url || "";
+    if (!isRetailerUrl(url)) continue;
     const j = r.json ?? {};
     const rawCurrency = (j.currency || "").toUpperCase();
     const isGbp = rawCurrency === "GBP" || rawCurrency === "£" || rawCurrency === "";
@@ -147,7 +195,7 @@ async function findBestUkPrice(
       price: j.price,
       currency: "GBP",
       availability: j.availability ?? null,
-      url: r.url || fallbackUrl,
+      url: url || fallbackUrl,
       title: r.title,
     });
   }
