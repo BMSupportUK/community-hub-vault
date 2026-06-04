@@ -288,9 +288,10 @@ export async function refreshAllStreamingPrices(): Promise<{
       const isAmazonOwn =
         (d.brand ?? "").toLowerCase() === "amazon" ||
         /fire\s*tv|fire\s*stick|firestick/i.test(d.name);
+      const configuredRetailerPrice = isAmazonOwn ? null : await scrapeConfiguredRetailerPrice(d.amazon_url);
       const r = isAmazonOwn
         ? await scrapeAmazonPrice(d.amazon_url)
-        : await findBestUkPrice(d.name, d.brand, d.amazon_url);
+        : configuredRetailerPrice ?? await findBestUkPrice(d.name, d.brand, d.amazon_url);
       const { error: upErr } = await supabaseAdmin
         .from("streaming_device_prices")
         .upsert({
