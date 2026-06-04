@@ -2,7 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Shield, Lock, Eye, Globe2, Wifi, Zap, CheckCircle2, ExternalLink } from "lucide-react";
 import protonBanner from "@/assets/proton-vpn-banner.jpg";
 
-const PROTON_REF_URL = "https://pr.tn/ref/W8YWYK64";
+const PROTON_REF_URL =
+  "https://account.proton.me/refer-a-friend?referrer=W8YWYK64&plan=vpn2024";
 
 export const Route = createFileRoute("/_authenticated/_approved/vpn")({
   head: () => ({
@@ -71,29 +72,20 @@ function VpnPage() {
             </div>
           </section>
 
-          {/* What to look for */}
-          <section className="rounded-2xl border border-border bg-card p-6 lg:p-8">
-            <h2 className="font-display text-2xl font-bold">What to look for in a streaming VPN</h2>
-            <ul className="mt-4 space-y-3">
-              {CHECKLIST.map((item) => (
-                <li key={item} className="flex items-start gap-3 text-sm">
-                  <CheckCircle2 className="size-5 text-primary-glow shrink-0 mt-0.5" />
-                  <span className="text-muted-foreground">{item}</span>
-                </li>
-              ))}
-            </ul>
-          </section>
-
-          {/* Mobile banner (visible only when sidebar hidden) */}
-          <div className="xl:hidden">
+          {/* Mobile-only: banner + checklist (sidebar takes over on xl) */}
+          <div className="xl:hidden space-y-6">
             <ProtonBanner />
+            <ChecklistCard />
           </div>
         </div>
       </main>
 
       {/* Right sidebar */}
-      <aside className="hidden xl:flex w-[340px] shrink-0 border-l border-border bg-rail/40 p-5 sticky top-0 self-start h-[calc(100vh-3rem)] overflow-y-auto">
-        <ProtonBanner />
+      <aside className="hidden xl:block w-[340px] shrink-0 border-l border-border bg-rail/40 p-5 sticky top-0 self-start h-[calc(100vh-3rem)] overflow-y-auto">
+        <div className="space-y-5">
+          <ProtonBanner />
+          <ChecklistCard />
+        </div>
       </aside>
     </div>
   );
@@ -115,6 +107,22 @@ const CHECKLIST = [
   "Unlimited bandwidth — streaming eats data.",
   "Reliable kill switch so your real IP never leaks.",
 ];
+
+function ChecklistCard() {
+  return (
+    <div className="rounded-2xl border border-border bg-card p-5">
+      <h3 className="font-display text-base font-bold">What to look for in a streaming VPN</h3>
+      <ul className="mt-3 space-y-2.5">
+        {CHECKLIST.map((item) => (
+          <li key={item} className="flex items-start gap-2.5 text-xs">
+            <CheckCircle2 className="size-4 text-primary-glow shrink-0 mt-0.5" />
+            <span className="text-muted-foreground leading-relaxed">{item}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
 
 function ProtonBanner() {
   return (
