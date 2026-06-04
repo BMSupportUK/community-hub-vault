@@ -91,8 +91,8 @@ function isFireDevice(device: Device) {
 
 function DeviceCard({ device, price }: { device: Device; price: Price | undefined }) {
   const priceLabel = price ? formatPrice(price.price_cents, price.currency) : null;
-  const listingUrl = price?.source_url || (isFireDevice(device) ? device.amazon_url : null);
-  const retailer = retailerFromUrl(price?.source_url);
+  const listingUrl = price?.source_url || device.amazon_url;
+  const retailer = retailerFromUrl(listingUrl);
   const rangeLabel = formatRange(
     device.price_range_low_cents,
     device.price_range_high_cents,
@@ -159,7 +159,7 @@ function DeviceCard({ device, price }: { device: Device; price: Price | undefine
             <Button asChild className="w-full">
               <a href={listingUrl} target="_blank" rel="sponsored noopener noreferrer">
                 <ExternalLink className="size-4" />
-                {priceLabel ? `Best found${retailer ? ` at ${retailer}` : ""} — ${priceLabel}` : "View listing"}
+                {priceLabel ? `Best found${retailer ? ` at ${retailer}` : ""} — ${priceLabel}` : `View${retailer ? ` ${retailer}` : " retailer"} listing`}
               </a>
             </Button>
           ) : (
