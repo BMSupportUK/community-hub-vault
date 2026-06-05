@@ -1,0 +1,1 @@
+ALTER TABLE public.streaming_devices DROP CONSTRAINT IF EXISTS streaming_devices_tier_check; ALTER TABLE public.streaming_devices ADD CONSTRAINT streaming_devices_tier_check CHECK (tier = ANY (ARRAY['high'::text, 'medium'::text, 'low'::text]));
