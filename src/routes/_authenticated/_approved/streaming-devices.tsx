@@ -1,8 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
-import { useMemo } from "react";
-import { ExternalLink, Tv, Cpu, MemoryStick, HardDrive, Wifi, Settings } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMemo, useState } from "react";
+import { ExternalLink, Tv, Cpu, MemoryStick, HardDrive, Wifi, Settings, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -37,6 +39,14 @@ type Price = {
   source_url: string | null;
   scraped_at: string;
 };
+
+type RatingRow = {
+  device_id: string;
+  user_id: string;
+  rating: number;
+};
+
+type RatingSummary = { average: number; count: number; mine: number | null };
 
 const SPEC_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   cpu: Cpu,
@@ -93,7 +103,59 @@ function isStick(device: Device) {
   return /stick|dongle/i.test(device.name) || /stick|dongle/i.test(device.summary ?? "");
 }
 
-function DeviceCard({ device, price }: { device: Device; price: Price | undefined }) {
+function StarRating({
+  summary,
+  onRate,
+  disabled,
+}: {
+  summary: RatingSummary;
+  onRate: (n: number) => void;
+  disabled?: boolean;
+}) {
+  const [hover, setHover] = useState(0);
+  const display = hover || summary.mine || Math.round(summary.average);
+  return (
+    <div className="flex items-center gap-2">
+      <div className="flex" onMouseLeave={() => setHover(0)}>
+        {[1, 2, 3, 4, 5].map((n) => {
+          const filled = n <= display;
+          return (
+            <button
+              key={n}
+              type="button"
+              disabled={disabled}
+              onMouseEnter={() => setHover(n)}
+              onClick={() => onRate(n)}
+              className="p-0.5 disabled:cursor-not-allowed"
+              aria-label={`Rate ${n} star${n > 1 ? "s" : ""}`}
+            >
+              <Star
+                className={`size-4 transition-colors ${filled ? "fill-amber-400 text-amber-400" : "text-muted-foreground"}`}
+              />
+            </button>
+          );
+        })}
+      </div>
+      <span className="text-xs text-muted-foreground">
+        {summary.count > 0 ? `${summary.average.toFixed(1)} (${summary.count})` : "No ratings yet"}
+      </span>
+    </div>
+  );
+}
+
+function DeviceCard({
+  device,
+  price,
+  ratingSummary,
+  onRate,
+  rateDisabled,
+}: {
+  device: Device;
+  price: Price | undefined;
+  ratingSummary: RatingSummary;
+  onRate: (deviceId: string, rating: number) => void;
+  rateDisabled?: boolean;
+}) {
   const priceLabel = price ? formatPrice(price.price_cents, price.currency) : null;
   const listingUrl = price?.source_url || device.amazon_url;
   const retailer = retailerFromUrl(listingUrl);
@@ -137,6 +199,12 @@ function DeviceCard({ device, price }: { device: Device; price: Price | undefine
 
         {device.summary && <p className="text-sm text-muted-foreground">{device.summary}</p>}
 
+        <StarRating
+          summary={ratingSummary}
+          onRate={(n) => onRate(device.id, n)}
+          disabled={rateDisabled}
+        />
+
         {Object.keys(specs).length > 0 && (
           <div className="flex flex-wrap gap-1.5">
             {Object.entries(specs).slice(0, 8).map(([k, v]) => {
@@ -178,6 +246,8 @@ function DeviceCard({ device, price }: { device: Device; price: Price | undefine
 }
 
 function StreamingDevicesPage() {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
   const devicesQuery = useQuery({
     queryKey: ["streaming-devices"],
     queryFn: async () => {
@@ -201,6 +271,72 @@ function StreamingDevicesPage() {
       return (data ?? []) as Price[];
     },
   });
+
+  const ratingsQuery = useQuery({
+    queryKey: ["streaming-device-ratings"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("streaming_device_ratings")
+        .select("device_id, user_id, rating");
+      if (error) throw error;
+      return (data ?? []) as RatingRow[];
+    },
+  });
+
+  const ratingSummaryMap = useMemo(() => {
+    const m = new Map<string, RatingSummary>();
+    const rows = ratingsQuery.data ?? [];
+    const byDevice = new Map<string, RatingRow[]>();
+    rows.forEach((r) => {
+      const arr = byDevice.get(r.device_id) ?? [];
+      arr.push(r);
+      byDevice.set(r.device_id, arr);
+    });
+    byDevice.forEach((arr, deviceId) => {
+      const count = arr.length;
+      const average = count ? arr.reduce((s, r) => s + r.rating, 0) / count : 0;
+      const mine = user ? arr.find((r) => r.user_id === user.id)?.rating ?? null : null;
+      m.set(deviceId, { average, count, mine });
+    });
+    return m;
+  }, [ratingsQuery.data, user]);
+
+  const rateMutation = useMutation({
+    mutationFn: async ({ deviceId, rating }: { deviceId: string; rating: number }) => {
+      if (!user) throw new Error("Sign in to rate");
+      const { error } = await supabase
+        .from("streaming_device_ratings")
+        .upsert({ device_id: deviceId, user_id: user.id, rating }, { onConflict: "device_id,user_id" });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["streaming-device-ratings"] });
+      toast.success("Rating saved");
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Could not save rating"),
+  });
+
+  const handleRate = (deviceId: string, rating: number) => {
+    if (!user) {
+      toast.error("Sign in to rate");
+      return;
+    }
+    rateMutation.mutate({ deviceId, rating });
+  };
+
+  const summaryFor = (id: string): RatingSummary =>
+    ratingSummaryMap.get(id) ?? { average: 0, count: 0, mine: null };
+
+  const renderCard = (d: Device) => (
+    <DeviceCard
+      key={d.id}
+      device={d}
+      price={priceMap.get(d.id)}
+      ratingSummary={summaryFor(d.id)}
+      onRate={handleRate}
+      rateDisabled={rateMutation.isPending}
+    />
+  );
 
   const priceMap = useMemo(() => {
     const m = new Map<string, Price>();
