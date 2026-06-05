@@ -224,8 +224,8 @@ function StreamingDevicesPage() {
 
         <Tabs defaultValue="android" className="space-y-6">
           <TabsList>
-            <TabsTrigger value="android">Android</TabsTrigger>
-            <TabsTrigger value="amazon">Fire TV</TabsTrigger>
+            <TabsTrigger value="android">Boxes</TabsTrigger>
+            <TabsTrigger value="amazon">Sticks</TabsTrigger>
           </TabsList>
 
           <TabsContent value="android" className="space-y-8">
