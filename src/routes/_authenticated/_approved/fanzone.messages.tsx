@@ -58,7 +58,7 @@ function MessagesLayout() {
           <Link to="/forum"><ArrowLeft className="size-4 mr-1" />Forum</Link>
         </Button>
         <Button asChild variant="outline" size="sm">
-          <Link to="/fanzone/blocks"><Ban className="size-4 mr-1" />Blocked members</Link>
+          <Link to="/fanzone/blocks"><Ban className="size-4 mr-1" />Ignore list</Link>
         </Button>
       </div>
 
