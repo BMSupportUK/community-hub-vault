@@ -89,6 +89,7 @@ import { Route as AuthenticatedApprovedForumBoardRouteImport } from './routes/_a
 import { Route as AuthenticatedApprovedSportsGuidesReadIdRouteImport } from './routes/_authenticated/_approved/sports-guides.read.$id'
 import { Route as AuthenticatedApprovedSportsGuidesIdEditRouteImport } from './routes/_authenticated/_approved/sports-guides.$id.edit'
 import { Route as AuthenticatedApprovedForumBoardTopicRouteImport } from './routes/_authenticated/_approved/forum.$board.$topic'
+import { Route as AuthenticatedApprovedFanzoneUUserIdRouteImport } from './routes/_authenticated/_approved/fanzone.u.$userId'
 
 const UnsubscribeRoute = UnsubscribeRouteImport.update({
   id: '/unsubscribe',
@@ -548,6 +549,12 @@ const AuthenticatedApprovedForumBoardTopicRoute =
     path: '/$topic',
     getParentRoute: () => AuthenticatedApprovedForumBoardRoute,
   } as any)
+const AuthenticatedApprovedFanzoneUUserIdRoute =
+  AuthenticatedApprovedFanzoneUUserIdRouteImport.update({
+    id: '/fanzone/u/$userId',
+    path: '/fanzone/u/$userId',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -625,6 +632,7 @@ export interface FileRoutesByFullPath {
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
   '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
   '/home/': typeof AuthenticatedApprovedHomeIndexRoute
+  '/fanzone/u/$userId': typeof AuthenticatedApprovedFanzoneUUserIdRoute
   '/forum/$board/$topic': typeof AuthenticatedApprovedForumBoardTopicRoute
   '/sports-guides/$id/edit': typeof AuthenticatedApprovedSportsGuidesIdEditRoute
   '/sports-guides/read/$id': typeof AuthenticatedApprovedSportsGuidesReadIdRoute
@@ -704,6 +712,7 @@ export interface FileRoutesByTo {
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
   '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
   '/home': typeof AuthenticatedApprovedHomeIndexRoute
+  '/fanzone/u/$userId': typeof AuthenticatedApprovedFanzoneUUserIdRoute
   '/forum/$board/$topic': typeof AuthenticatedApprovedForumBoardTopicRoute
   '/sports-guides/$id/edit': typeof AuthenticatedApprovedSportsGuidesIdEditRoute
   '/sports-guides/read/$id': typeof AuthenticatedApprovedSportsGuidesReadIdRoute
@@ -787,6 +796,7 @@ export interface FileRoutesById {
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
   '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
   '/_authenticated/_approved/home/': typeof AuthenticatedApprovedHomeIndexRoute
+  '/_authenticated/_approved/fanzone/u/$userId': typeof AuthenticatedApprovedFanzoneUUserIdRoute
   '/_authenticated/_approved/forum/$board/$topic': typeof AuthenticatedApprovedForumBoardTopicRoute
   '/_authenticated/_approved/sports-guides/$id/edit': typeof AuthenticatedApprovedSportsGuidesIdEditRoute
   '/_authenticated/_approved/sports-guides/read/$id': typeof AuthenticatedApprovedSportsGuidesReadIdRoute
@@ -869,6 +879,7 @@ export interface FileRouteTypes {
     | '/lovable/email/transactional/preview'
     | '/lovable/email/transactional/send'
     | '/home/'
+    | '/fanzone/u/$userId'
     | '/forum/$board/$topic'
     | '/sports-guides/$id/edit'
     | '/sports-guides/read/$id'
@@ -948,6 +959,7 @@ export interface FileRouteTypes {
     | '/lovable/email/transactional/preview'
     | '/lovable/email/transactional/send'
     | '/home'
+    | '/fanzone/u/$userId'
     | '/forum/$board/$topic'
     | '/sports-guides/$id/edit'
     | '/sports-guides/read/$id'
@@ -1030,6 +1042,7 @@ export interface FileRouteTypes {
     | '/lovable/email/transactional/preview'
     | '/lovable/email/transactional/send'
     | '/_authenticated/_approved/home/'
+    | '/_authenticated/_approved/fanzone/u/$userId'
     | '/_authenticated/_approved/forum/$board/$topic'
     | '/_authenticated/_approved/sports-guides/$id/edit'
     | '/_authenticated/_approved/sports-guides/read/$id'
@@ -1628,6 +1641,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedApprovedForumBoardTopicRouteImport
       parentRoute: typeof AuthenticatedApprovedForumBoardRoute
     }
+    '/_authenticated/_approved/fanzone/u/$userId': {
+      id: '/_authenticated/_approved/fanzone/u/$userId'
+      path: '/fanzone/u/$userId'
+      fullPath: '/fanzone/u/$userId'
+      preLoaderRoute: typeof AuthenticatedApprovedFanzoneUUserIdRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
   }
 }
 
@@ -1741,6 +1761,7 @@ interface AuthenticatedApprovedRouteChildren {
   AuthenticatedApprovedVpnRoute: typeof AuthenticatedApprovedVpnRoute
   AuthenticatedApprovedWhatToWatchRoute: typeof AuthenticatedApprovedWhatToWatchRoute
   AuthenticatedApprovedUUsernameRoute: typeof AuthenticatedApprovedUUsernameRoute
+  AuthenticatedApprovedFanzoneUUserIdRoute: typeof AuthenticatedApprovedFanzoneUUserIdRoute
 }
 
 const AuthenticatedApprovedRouteChildren: AuthenticatedApprovedRouteChildren = {
@@ -1805,6 +1826,8 @@ const AuthenticatedApprovedRouteChildren: AuthenticatedApprovedRouteChildren = {
   AuthenticatedApprovedVpnRoute: AuthenticatedApprovedVpnRoute,
   AuthenticatedApprovedWhatToWatchRoute: AuthenticatedApprovedWhatToWatchRoute,
   AuthenticatedApprovedUUsernameRoute: AuthenticatedApprovedUUsernameRoute,
+  AuthenticatedApprovedFanzoneUUserIdRoute:
+    AuthenticatedApprovedFanzoneUUserIdRoute,
 }
 
 const AuthenticatedApprovedRouteWithChildren =
