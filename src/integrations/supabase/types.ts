@@ -2944,6 +2944,38 @@ export type Database = {
           },
         ]
       }
+      streaming_device_ratings: {
+        Row: {
+          created_at: string
+          device_id: string
+          rating: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          device_id: string
+          rating: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          device_id?: string
+          rating?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "streaming_device_ratings_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "streaming_devices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       streaming_devices: {
         Row: {
           amazon_url: string
