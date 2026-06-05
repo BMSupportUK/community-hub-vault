@@ -190,13 +190,6 @@ function DeviceCard({
           )}
         </div>
 
-        {rangeLabel && (
-          <div className="flex items-baseline gap-2">
-            <span className="text-lg font-semibold tracking-tight">{rangeLabel}</span>
-            <span className="text-[11px] uppercase tracking-wide text-muted-foreground">Typical price</span>
-          </div>
-        )}
-
         {device.summary && <p className="text-sm text-muted-foreground">{device.summary}</p>}
 
         <StarRating
