@@ -209,16 +209,24 @@ function StreamingDevicesPage() {
   }, [pricesQuery.data]);
 
   const allDevices = devicesQuery.data ?? [];
+  const priceFor = (d: Device): number => {
+    const live = priceMap.get(d.id)?.price_cents;
+    if (live != null) return live;
+    if (d.price_range_low_cents != null) return d.price_range_low_cents;
+    if (d.price_range_high_cents != null) return d.price_range_high_cents;
+    return Number.POSITIVE_INFINITY;
+  };
+  const byPrice = (a: Device, b: Device) => priceFor(a) - priceFor(b);
   const androidNonFire = allDevices.filter((d) => !isFireDevice(d));
   const boxes = androidNonFire.filter((d) => !isStick(d));
-  const boxHigh = boxes.filter((d) => d.tier === "high");
-  const boxMedium = boxes.filter((d) => d.tier === "medium");
-  const boxLow = boxes.filter((d) => d.tier === "low");
+  const boxHigh = boxes.filter((d) => d.tier === "high").sort(byPrice);
+  const boxMedium = boxes.filter((d) => d.tier === "medium").sort(byPrice);
+  const boxLow = boxes.filter((d) => d.tier === "low").sort(byPrice);
   const androidSticks = androidNonFire.filter(isStick);
-  const stickHigh = androidSticks.filter((d) => d.tier === "high");
-  const stickMedium = androidSticks.filter((d) => d.tier === "medium");
-  const stickLow = androidSticks.filter((d) => d.tier === "low");
-  const fireSticks = allDevices.filter(isFireDevice);
+  const stickHigh = androidSticks.filter((d) => d.tier === "high").sort(byPrice);
+  const stickMedium = androidSticks.filter((d) => d.tier === "medium").sort(byPrice);
+  const stickLow = androidSticks.filter((d) => d.tier === "low").sort(byPrice);
+  const fireSticks = [...allDevices.filter(isFireDevice)].sort(byPrice);
 
   return (
     <div className="flex-1 overflow-y-auto">
