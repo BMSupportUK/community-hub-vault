@@ -392,9 +392,7 @@ function StreamingDevicesPage() {
                   <span className="text-xs text-muted-foreground">Budget picks that still stream well</span>
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {boxLow.map((d) => (
-                    {renderCard(d)}
-                  ))}
+                  {boxLow.map(renderCard)}
                 </div>
               </section>
             )}
@@ -406,9 +404,7 @@ function StreamingDevicesPage() {
                   <span className="text-xs text-muted-foreground">Great value, solid for most users</span>
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {boxMedium.map((d) => (
-                    {renderCard(d)}
-                  ))}
+                  {boxMedium.map(renderCard)}
                 </div>
               </section>
             )}
@@ -420,9 +416,7 @@ function StreamingDevicesPage() {
                   <span className="text-xs text-muted-foreground">Best performance, top-end hardware</span>
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {boxHigh.map((d) => (
-                    {renderCard(d)}
-                  ))}
+                  {boxHigh.map(renderCard)}
                 </div>
               </section>
             )}
@@ -437,9 +431,7 @@ function StreamingDevicesPage() {
                   <span className="text-xs text-muted-foreground">Budget dongles that still stream well</span>
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {stickLow.map((d) => (
-                    {renderCard(d)}
-                  ))}
+                  {stickLow.map(renderCard)}
                 </div>
               </section>
             )}
@@ -450,9 +442,7 @@ function StreamingDevicesPage() {
                   <span className="text-xs text-muted-foreground">Reliable 4K HDR sticks for most users</span>
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {stickMedium.map((d) => (
-                    {renderCard(d)}
-                  ))}
+                  {stickMedium.map(renderCard)}
                 </div>
               </section>
             )}
@@ -463,9 +453,7 @@ function StreamingDevicesPage() {
                   <span className="text-xs text-muted-foreground">Top-tier dongles for serious streaming</span>
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {stickHigh.map((d) => (
-                    {renderCard(d)}
-                  ))}
+                  {stickHigh.map(renderCard)}
                 </div>
               </section>
             )}
@@ -481,9 +469,7 @@ function StreamingDevicesPage() {
                 Quick reference for which Amazon Fire TV Sticks still allow sideloading.
               </p>
               <div className="grid gap-4 grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,2.2fr)] items-start">
-                {fireSticks.map((d) => (
-                  {renderCard(d)}
-                ))}
+                {fireSticks.map(renderCard)}
                 <Dialog>
                   <DialogTrigger asChild>
                     <button
