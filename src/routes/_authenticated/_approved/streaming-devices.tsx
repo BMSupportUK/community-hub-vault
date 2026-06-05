@@ -238,6 +238,20 @@ function StreamingDevicesPage() {
           </TabsList>
 
           <TabsContent value="android" className="space-y-8">
+            {boxLow.length > 0 && (
+              <section className="space-y-4">
+                <div className="flex items-baseline justify-between">
+                  <h2 className="text-xl font-semibold">Low spec</h2>
+                  <span className="text-xs text-muted-foreground">Budget picks that still stream well</span>
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {boxLow.map((d) => (
+                    <DeviceCard key={d.id} device={d} price={priceMap.get(d.id)} />
+                  ))}
+                </div>
+              </section>
+            )}
+
             {boxMedium.length > 0 && (
               <section className="space-y-4">
                 <div className="flex items-baseline justify-between">
