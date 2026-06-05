@@ -1,6 +1,6 @@
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ArrowLeft, Plus, Trash2, Pencil, Save, X, Pin, Lock, Loader2, UserPlus, ArrowUp, ArrowDown } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Pencil, Save, X, Pin, Lock, Loader2, UserPlus, ArrowUp, ArrowDown, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, type AppRole } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
@@ -308,27 +308,9 @@ function AdminForumPage() {
                           return (
                             <tr key={r.value} className="border-t border-border/40">
                               <td className="py-1.5 pr-2">{r.label}</td>
-                              <td className="py-1.5 px-2 text-center">
-                                <input
-                                  type="checkbox"
-                                  checked={!!p?.can_view}
-                                  onChange={(e) => void togglePerm(b.id, r.value, "can_view", e.target.checked)}
-                                />
-                              </td>
-                              <td className="py-1.5 px-2 text-center">
-                                <input
-                                  type="checkbox"
-                                  checked={!!p?.can_create_topic}
-                                  onChange={(e) => void togglePerm(b.id, r.value, "can_create_topic", e.target.checked)}
-                                />
-                              </td>
-                              <td className="py-1.5 pl-2 text-center">
-                                <input
-                                  type="checkbox"
-                                  checked={!!p?.can_reply}
-                                  onChange={(e) => void togglePerm(b.id, r.value, "can_reply", e.target.checked)}
-                                />
-                              </td>
+                              <PermCell on={!!p?.can_view} onClick={() => void togglePerm(b.id, r.value, "can_view", !p?.can_view)} />
+                              <PermCell on={!!p?.can_create_topic} onClick={() => void togglePerm(b.id, r.value, "can_create_topic", !p?.can_create_topic)} />
+                              <PermCell on={!!p?.can_reply} onClick={() => void togglePerm(b.id, r.value, "can_reply", !p?.can_reply)} last />
                             </tr>
                           );
                         })}
@@ -342,5 +324,25 @@ function AdminForumPage() {
         </div>
       )}
     </div>
+  );
+}
+
+function PermCell({ on, onClick, last }: { on: boolean; onClick: () => void; last?: boolean }) {
+  return (
+    <td className={`py-1.5 ${last ? "pl-2" : "px-2"} text-center`}>
+      <button
+        type="button"
+        onClick={onClick}
+        aria-pressed={on}
+        title={on ? "Allowed — click to deny" : "Denied — click to allow"}
+        className={`inline-grid place-items-center size-6 rounded-md border transition-colors ${
+          on
+            ? "bg-emerald-500/15 border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/25"
+            : "bg-rose-500/10 border-rose-500/30 text-rose-400 hover:bg-rose-500/20"
+        }`}
+      >
+        {on ? <Check className="size-3.5" /> : <X className="size-3.5" />}
+      </button>
+    </td>
   );
 }
