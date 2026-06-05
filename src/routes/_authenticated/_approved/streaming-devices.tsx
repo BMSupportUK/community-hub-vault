@@ -89,6 +89,10 @@ function isFireDevice(device: Device) {
   return device.brand?.toLowerCase() === "amazon" || /fire\s*tv|fire\s*stick|firestick/i.test(device.name);
 }
 
+function isStick(device: Device) {
+  return /stick|dongle/i.test(device.name) || /stick|dongle/i.test(device.summary ?? "");
+}
+
 function DeviceCard({ device, price }: { device: Device; price: Price | undefined }) {
   const priceLabel = price ? formatPrice(price.price_cents, price.currency) : null;
   const listingUrl = price?.source_url || device.amazon_url;
@@ -205,8 +209,11 @@ function StreamingDevicesPage() {
   }, [pricesQuery.data]);
 
   const allDevices = devicesQuery.data ?? [];
-  const high = allDevices.filter((d) => d.tier === "high" && !isFireDevice(d));
-  const medium = allDevices.filter((d) => d.tier === "medium" && !isFireDevice(d));
+  const androidNonFire = allDevices.filter((d) => !isFireDevice(d));
+  const boxes = androidNonFire.filter((d) => !isStick(d));
+  const boxHigh = boxes.filter((d) => d.tier === "high");
+  const boxMedium = boxes.filter((d) => d.tier === "medium");
+  const androidSticks = androidNonFire.filter(isStick);
   const fireSticks = allDevices.filter(isFireDevice);
 
   return (
@@ -225,37 +232,56 @@ function StreamingDevicesPage() {
         <Tabs defaultValue="android" className="space-y-6">
           <TabsList>
             <TabsTrigger value="android">Boxes</TabsTrigger>
-            <TabsTrigger value="amazon">Sticks</TabsTrigger>
+            <TabsTrigger value="android-sticks">Android Sticks</TabsTrigger>
+            <TabsTrigger value="amazon">Fire Sticks</TabsTrigger>
           </TabsList>
 
           <TabsContent value="android" className="space-y-8">
-            {high.length > 0 && (
+            {boxHigh.length > 0 && (
               <section className="space-y-4">
                 <div className="flex items-baseline justify-between">
                   <h2 className="text-xl font-semibold">High spec</h2>
                   <span className="text-xs text-muted-foreground">Best performance, top-end hardware</span>
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {high.map((d) => (
+                  {boxHigh.map((d) => (
                     <DeviceCard key={d.id} device={d} price={priceMap.get(d.id)} />
                   ))}
                 </div>
               </section>
             )}
 
-            {medium.length > 0 && (
+            {boxMedium.length > 0 && (
               <section className="space-y-4">
                 <div className="flex items-baseline justify-between">
                   <h2 className="text-xl font-semibold">Medium spec</h2>
                   <span className="text-xs text-muted-foreground">Great value, solid for most users</span>
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {medium.map((d) => (
+                  {boxMedium.map((d) => (
                     <DeviceCard key={d.id} device={d} price={priceMap.get(d.id)} />
                   ))}
                 </div>
               </section>
             )}
+          </TabsContent>
+
+          <TabsContent value="android-sticks" className="space-y-6">
+            <section className="space-y-4">
+              <div className="flex items-baseline justify-between">
+                <h2 className="text-xl font-semibold">Android sticks</h2>
+                <span className="text-xs text-muted-foreground">Compact Android / Google TV dongles</span>
+              </div>
+              {androidSticks.length > 0 ? (
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {androidSticks.map((d) => (
+                    <DeviceCard key={d.id} device={d} price={priceMap.get(d.id)} />
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">No Android sticks listed yet.</p>
+              )}
+            </section>
           </TabsContent>
 
           <TabsContent value="amazon" className="space-y-6">
