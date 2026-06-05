@@ -34,7 +34,7 @@ type Perm = { board_id: string; role: string; can_view: boolean; can_create_topi
 const ROLES: { value: AppRole; label: string }[] = [
   { value: "admin", label: "Admin" },
   { value: "boro_fan_zone_moderator", label: "Boro Fan Zone Moderator" },
-  { value: "member", label: "Boro Fan Zone Member" },
+  { value: "boro_fan_zone_member", label: "Boro Fan Zone Member" },
 ];
 
 function AdminForumPage() {
