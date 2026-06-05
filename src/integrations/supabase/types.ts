@@ -843,40 +843,132 @@ export type Database = {
         }
         Relationships: []
       }
+      fan_zone_blocks: {
+        Row: {
+          blocked_id: string
+          blocker_id: string
+          created_at: string
+        }
+        Insert: {
+          blocked_id: string
+          blocker_id: string
+          created_at?: string
+        }
+        Update: {
+          blocked_id?: string
+          blocker_id?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
+      fan_zone_dm_messages: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          sender_id: string
+          thread_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          sender_id: string
+          thread_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          sender_id?: string
+          thread_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fan_zone_dm_messages_thread_id_fkey"
+            columns: ["thread_id"]
+            isOneToOne: false
+            referencedRelation: "fan_zone_dm_threads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fan_zone_dm_threads: {
+        Row: {
+          created_at: string
+          id: string
+          last_message_at: string | null
+          last_read_high: string | null
+          last_read_low: string | null
+          user_high: string
+          user_low: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_message_at?: string | null
+          last_read_high?: string | null
+          last_read_low?: string | null
+          user_high: string
+          user_low: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_message_at?: string | null
+          last_read_high?: string | null
+          last_read_low?: string | null
+          user_high?: string
+          user_low?: string
+        }
+        Relationships: []
+      }
       fan_zone_members: {
         Row: {
+          bio: string | null
           decided_at: string | null
           decided_by: string | null
           fan_alias: string | null
           fan_avatar_url: string | null
+          fav_player: string | null
+          matchday_memory: string | null
           note: string | null
           reason: string | null
           requested_at: string
           status: Database["public"]["Enums"]["fan_zone_status"]
+          supporter_since: number | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          bio?: string | null
           decided_at?: string | null
           decided_by?: string | null
           fan_alias?: string | null
           fan_avatar_url?: string | null
+          fav_player?: string | null
+          matchday_memory?: string | null
           note?: string | null
           reason?: string | null
           requested_at?: string
           status?: Database["public"]["Enums"]["fan_zone_status"]
+          supporter_since?: number | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          bio?: string | null
           decided_at?: string | null
           decided_by?: string | null
           fan_alias?: string | null
           fan_avatar_url?: string | null
+          fav_player?: string | null
+          matchday_memory?: string | null
           note?: string | null
           reason?: string | null
           requested_at?: string
           status?: Database["public"]["Enums"]["fan_zone_status"]
+          supporter_since?: number | null
           updated_at?: string
           user_id?: string
         }
@@ -3885,6 +3977,7 @@ export type Database = {
           user_id: string
         }[]
       }
+      fan_zone_block: { Args: { _other: string }; Returns: undefined }
       fan_zone_default_avatar_url: { Args: never; Returns: string }
       fan_zone_staff_directory: {
         Args: never
@@ -3895,6 +3988,7 @@ export type Database = {
           user_id: string
         }[]
       }
+      fan_zone_unblock: { Args: { _other: string }; Returns: undefined }
       forum_board_allows: {
         Args: { _action: string; _board: string; _user: string }
         Returns: boolean
@@ -3912,6 +4006,21 @@ export type Database = {
         }[]
       }
       get_active_mute: { Args: { _user_id: string }; Returns: string }
+      get_fan_zone_profile: {
+        Args: { _user_id: string }
+        Returns: {
+          bio: string
+          fan_alias: string
+          fan_avatar_url: string
+          fav_player: string
+          has_blocked_me: boolean
+          is_blocked_by_me: boolean
+          joined_at: string
+          matchday_memory: string
+          supporter_since: number
+          user_id: string
+        }[]
+      }
       get_invite_leaderboard: {
         Args: never
         Returns: {
@@ -3923,6 +4032,7 @@ export type Database = {
           username: string
         }[]
       }
+      get_or_create_fan_dm_thread: { Args: { _other: string }; Returns: string }
       get_pending_expiry_reminders: {
         Args: { _kind: string }
         Returns: {
@@ -3985,6 +4095,29 @@ export type Database = {
         Returns: boolean
       }
       is_user_dnd: { Args: { _user_id: string }; Returns: boolean }
+      list_my_fan_blocks: {
+        Args: never
+        Returns: {
+          blocked_id: string
+          created_at: string
+          fan_alias: string
+          fan_avatar_url: string
+        }[]
+      }
+      list_my_fan_dm_threads: {
+        Args: never
+        Returns: {
+          last_body: string
+          last_message_at: string
+          last_sender_id: string
+          other_alias: string
+          other_avatar: string
+          other_user_id: string
+          thread_id: string
+          unread: boolean
+        }[]
+      }
+      mark_fan_dm_thread_read: { Args: { _thread: string }; Returns: undefined }
       mark_order_paid:
         | { Args: { p_order_id: string }; Returns: Json }
         | {
@@ -4029,6 +4162,17 @@ export type Database = {
       }
       set_my_fan_alias: {
         Args: { _alias: string; _avatar: string }
+        Returns: undefined
+      }
+      set_my_fan_profile: {
+        Args: {
+          _alias: string
+          _avatar: string
+          _bio: string
+          _fav_player: string
+          _matchday_memory: string
+          _supporter_since: number
+        }
         Returns: undefined
       }
       sports_blogs_clear_expired: { Args: never; Returns: undefined }
