@@ -1053,6 +1053,115 @@ export type Database = {
           },
         ]
       }
+      forum_poll_options: {
+        Row: {
+          created_at: string
+          id: string
+          label: string
+          poll_id: string
+          sort_order: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          label: string
+          poll_id: string
+          sort_order?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          label?: string
+          poll_id?: string
+          sort_order?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "forum_poll_options_poll_id_fkey"
+            columns: ["poll_id"]
+            isOneToOne: false
+            referencedRelation: "forum_polls"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      forum_poll_votes: {
+        Row: {
+          created_at: string
+          option_id: string
+          poll_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          option_id: string
+          poll_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          option_id?: string
+          poll_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "forum_poll_votes_option_id_fkey"
+            columns: ["option_id"]
+            isOneToOne: false
+            referencedRelation: "forum_poll_options"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "forum_poll_votes_poll_id_fkey"
+            columns: ["poll_id"]
+            isOneToOne: false
+            referencedRelation: "forum_polls"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      forum_polls: {
+        Row: {
+          allow_multiple: boolean
+          closes_at: string | null
+          created_at: string
+          created_by: string
+          id: string
+          question: string
+          topic_id: string
+          updated_at: string
+        }
+        Insert: {
+          allow_multiple?: boolean
+          closes_at?: string | null
+          created_at?: string
+          created_by: string
+          id?: string
+          question: string
+          topic_id: string
+          updated_at?: string
+        }
+        Update: {
+          allow_multiple?: boolean
+          closes_at?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          question?: string
+          topic_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "forum_polls_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: true
+            referencedRelation: "forum_topics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       forum_post_edits: {
         Row: {
           edited_at: string
