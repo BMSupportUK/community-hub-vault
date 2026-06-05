@@ -98,6 +98,7 @@ const ROLE_STYLES: Record<AppRole, string> = {
   management: "bg-primary/15 text-primary border-primary/30",
   moderator: "bg-amber-500/15 text-amber-500 border-amber-500/30",
   boro_fan_zone_moderator: "bg-[#E11B22]/15 text-[#E11B22] border-[#E11B22]/30",
+  boro_fan_zone_member: "bg-[#E11B22]/10 text-[#E11B22] border-[#E11B22]/20",
   staff: "bg-emerald-500/15 text-emerald-500 border-emerald-500/30",
   subscriber: "bg-sky-500/15 text-sky-500 border-sky-500/30",
   nonsubscriber: "bg-surface-2 text-muted-foreground border-border",
