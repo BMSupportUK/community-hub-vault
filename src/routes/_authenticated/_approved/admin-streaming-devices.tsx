@@ -29,7 +29,7 @@ type DeviceRow = {
   id: string;
   name: string;
   brand: string | null;
-  tier: "high" | "medium";
+  tier: "high" | "medium" | "low";
   image_url: string | null;
   summary: string | null;
   specs: Record<string, string> | null;
@@ -94,7 +94,7 @@ function AdminStreamingDevicesPage() {
           id: draft.id,
           name: draft.name!,
           brand: draft.brand || null,
-          tier: draft.tier as "high" | "medium",
+          tier: draft.tier as "high" | "medium" | "low",
           image_url: draft.image_url || null,
           summary: draft.summary || null,
           specs: draft.specs ?? {},
@@ -210,11 +210,12 @@ function AdminStreamingDevicesPage() {
                 </div>
                 <div>
                   <Label>Tier</Label>
-                  <Select value={draft.tier} onValueChange={(v) => setDraft({ ...draft, tier: v as "high" | "medium" })}>
+                  <Select value={draft.tier} onValueChange={(v) => setDraft({ ...draft, tier: v as "high" | "medium" | "low" })}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="high">High spec</SelectItem>
                       <SelectItem value="medium">Medium spec</SelectItem>
+                      <SelectItem value="low">Low spec</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

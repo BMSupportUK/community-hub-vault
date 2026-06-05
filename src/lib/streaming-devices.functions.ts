@@ -15,7 +15,7 @@ const DeviceInput = z.object({
   id: z.string().uuid().optional(),
   name: z.string().min(1).max(120),
   brand: z.string().max(80).nullable().optional(),
-  tier: z.enum(["high", "medium"]),
+  tier: z.enum(["high", "medium", "low"]),
   image_url: z.string().url().max(2048).nullable().optional(),
   summary: z.string().max(2000).nullable().optional(),
   specs: z.record(z.string(), z.string().max(200)).default({}),
