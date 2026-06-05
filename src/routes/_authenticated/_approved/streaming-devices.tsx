@@ -17,7 +17,7 @@ type Device = {
   id: string;
   name: string;
   brand: string | null;
-  tier: "high" | "medium";
+  tier: "high" | "medium" | "low";
   image_url: string | null;
   summary: string | null;
   specs: Record<string, string> | null;
