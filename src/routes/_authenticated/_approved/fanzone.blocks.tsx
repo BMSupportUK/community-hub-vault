@@ -44,8 +44,8 @@ function BlocksPage() {
         <Link to="/fanzone/messages"><ArrowLeft className="size-4 mr-1" />Back to inbox</Link>
       </Button>
       <header>
-        <h1 className="font-display text-2xl font-bold">Blocked fan zone members</h1>
-        <p className="text-sm text-muted-foreground">Their posts and topics are hidden from you, and you can't message each other.</p>
+        <h1 className="font-display text-2xl font-bold">Ignore list</h1>
+        <p className="text-sm text-muted-foreground">Members you've blocked. Their posts and topics are hidden from you, and you can't message each other. Unblock here or from their mini profile.</p>
       </header>
 
       {rows === null ? (
