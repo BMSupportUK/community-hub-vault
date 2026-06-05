@@ -180,6 +180,14 @@ function BoardsIndex() {
     <div className="grid gap-4 lg:grid-cols-[1fr_280px]">
       <div className="space-y-3 min-w-0">
         <FanZoneAliasSettings />
+        <div className="flex flex-wrap gap-2">
+          <Button asChild size="sm" className="bg-gradient-to-r from-[#E11B22] to-[#8B0F14] hover:from-[#F02B30] hover:to-[#9B1118] border-0 text-white">
+            <Link to="/fanzone/messages"><MessageSquareText className="size-4 mr-2" />Fan zone inbox</Link>
+          </Button>
+          <Button asChild variant="outline" size="sm">
+            <Link to="/fanzone/blocks"><Ban className="size-4 mr-2" />Ignore list</Link>
+          </Button>
+        </div>
         {boards.map((b) => {
         const Icon = getIcon(b.icon);
         const poster = b.last_post_by ? posters[b.last_post_by] : null;
@@ -234,14 +242,6 @@ function BoardsIndex() {
       </div>
       <div className="lg:sticky lg:top-4 lg:self-start">
         <div className="space-y-4">
-          <div className="rounded-2xl border border-[#E11B22]/30 bg-surface-1/85 backdrop-blur-sm shadow-soft p-3 space-y-2">
-            <Button asChild className="w-full justify-start bg-gradient-to-r from-[#E11B22] to-[#8B0F14] hover:from-[#F02B30] hover:to-[#9B1118] border-0 text-white">
-              <Link to="/fanzone/messages"><MessageSquareText className="size-4 mr-2" />Fan zone inbox</Link>
-            </Button>
-            <Button asChild variant="outline" size="sm" className="w-full justify-start">
-              <Link to="/fanzone/blocks"><Ban className="size-4 mr-2" />Ignore list</Link>
-            </Button>
-          </div>
           <BoroMatchCentreBox />
           <FanZoneStaffBox />
         </div>
