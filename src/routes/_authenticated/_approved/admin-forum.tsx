@@ -192,7 +192,7 @@ function AdminForumPage() {
         <p className="text-sm text-muted-foreground">No boards yet.</p>
       ) : (
         <div className="space-y-3">
-          {boards.map((b, i) => {
+          {boards.map((b) => {
             const boardMods = mods.filter((m) => m.board_id === b.id);
             const isEditing = editing?.id === b.id;
             const group = boards.filter((x) => x.is_pinned === b.is_pinned);
