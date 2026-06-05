@@ -1,5 +1,5 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
-import { Home, Ticket, ShoppingBag, BookOpen, FileText, Calendar, LogOut, MessageSquare, MessagesSquare, UserCircle2, Star, Trophy, Tv, Volleyball, Wrench, Goal, Users, Briefcase, MonitorPlay, ShieldCheck } from "lucide-react";
+import { Home, Ticket, ShoppingBag, BookOpen, FileText, Calendar, LogOut, MessageSquare, MessagesSquare, UserCircle2, Star, Trophy, Tv, Volleyball, Wrench, Goal, Users, Briefcase, MonitorPlay, ShieldCheck, Popcorn } from "lucide-react";
 import { useAuth, type AppRole } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 import { useEffect, useRef, useState } from "react";
@@ -183,6 +183,7 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
     { to: "/knowledge-base", label: "Knowledge base", icon: BookOpen, show: true },
     { to: "/streaming-devices", label: "Streaming devices", icon: MonitorPlay, show: true },
     { to: "/vpn", label: "VPN guide", icon: ShieldCheck, show: true },
+    { to: "/what-to-watch", label: "What to Watch", icon: Popcorn, show: true },
     { to: "/reviews", label: "Customer reviews", icon: Star, show: true },
     { to: "/leaderboard", label: "Leaderboard", icon: Trophy, show: true },
     { to: "/new-content", label: "New content", icon: Tv, show: true, badge: unreadNewContent },
