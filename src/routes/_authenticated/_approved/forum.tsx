@@ -239,7 +239,7 @@ function BoardsIndex() {
               <Link to="/fanzone/messages"><MessageSquareText className="size-4 mr-2" />Fan zone inbox</Link>
             </Button>
             <Button asChild variant="outline" size="sm" className="w-full justify-start">
-              <Link to="/fanzone/blocks"><Ban className="size-4 mr-2" />Blocked members</Link>
+              <Link to="/fanzone/blocks"><Ban className="size-4 mr-2" />Ignore list</Link>
             </Button>
           </div>
           <BoroMatchCentreBox />
