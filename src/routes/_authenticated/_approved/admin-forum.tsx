@@ -32,11 +32,9 @@ type Profile = { id: string; display_name: string | null; username: string | nul
 type Perm = { board_id: string; role: string; can_view: boolean; can_create_topic: boolean; can_reply: boolean };
 
 const ROLES: { value: AppRole; label: string }[] = [
-  { value: "member", label: "Member" },
-  { value: "subscriber", label: "Subscriber" },
-  { value: "nonsubscriber", label: "Non-subscriber" },
-  { value: "staff", label: "Staff" },
-  { value: "moderator", label: "Moderator" },
+  { value: "admin", label: "Admin" },
+  { value: "boro_fan_zone_moderator", label: "Boro Fan Zone Moderator" },
+  { value: "member", label: "Boro Fan Zone Member" },
 ];
 
 function AdminForumPage() {
