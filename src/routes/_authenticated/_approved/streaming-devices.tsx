@@ -213,6 +213,7 @@ function StreamingDevicesPage() {
   const boxes = androidNonFire.filter((d) => !isStick(d));
   const boxHigh = boxes.filter((d) => d.tier === "high");
   const boxMedium = boxes.filter((d) => d.tier === "medium");
+  const boxLow = boxes.filter((d) => d.tier === "low");
   const androidSticks = androidNonFire.filter(isStick);
   const fireSticks = allDevices.filter(isFireDevice);
 
@@ -231,12 +232,26 @@ function StreamingDevicesPage() {
 
         <Tabs defaultValue="android" className="space-y-6">
           <TabsList>
-            <TabsTrigger value="android">Boxes</TabsTrigger>
+            <TabsTrigger value="android">Android Boxes</TabsTrigger>
             <TabsTrigger value="android-sticks">Android Sticks</TabsTrigger>
             <TabsTrigger value="amazon">Fire Sticks</TabsTrigger>
           </TabsList>
 
           <TabsContent value="android" className="space-y-8">
+            {boxMedium.length > 0 && (
+              <section className="space-y-4">
+                <div className="flex items-baseline justify-between">
+                  <h2 className="text-xl font-semibold">Medium spec</h2>
+                  <span className="text-xs text-muted-foreground">Great value, solid for most users</span>
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {boxMedium.map((d) => (
+                    <DeviceCard key={d.id} device={d} price={priceMap.get(d.id)} />
+                  ))}
+                </div>
+              </section>
+            )}
+
             {boxHigh.length > 0 && (
               <section className="space-y-4">
                 <div className="flex items-baseline justify-between">
@@ -251,14 +266,14 @@ function StreamingDevicesPage() {
               </section>
             )}
 
-            {boxMedium.length > 0 && (
+            {boxLow.length > 0 && (
               <section className="space-y-4">
                 <div className="flex items-baseline justify-between">
-                  <h2 className="text-xl font-semibold">Medium spec</h2>
-                  <span className="text-xs text-muted-foreground">Great value, solid for most users</span>
+                  <h2 className="text-xl font-semibold">Low spec</h2>
+                  <span className="text-xs text-muted-foreground">Budget picks that still stream well</span>
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {boxMedium.map((d) => (
+                  {boxLow.map((d) => (
                     <DeviceCard key={d.id} device={d} price={priceMap.get(d.id)} />
                   ))}
                 </div>
