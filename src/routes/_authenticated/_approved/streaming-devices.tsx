@@ -393,7 +393,7 @@ function StreamingDevicesPage() {
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   {boxLow.map((d) => (
-                    <DeviceCard key={d.id} device={d} price={priceMap.get(d.id)} />
+                    {renderCard(d)}
                   ))}
                 </div>
               </section>
@@ -407,7 +407,7 @@ function StreamingDevicesPage() {
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   {boxMedium.map((d) => (
-                    <DeviceCard key={d.id} device={d} price={priceMap.get(d.id)} />
+                    {renderCard(d)}
                   ))}
                 </div>
               </section>
@@ -421,7 +421,7 @@ function StreamingDevicesPage() {
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   {boxHigh.map((d) => (
-                    <DeviceCard key={d.id} device={d} price={priceMap.get(d.id)} />
+                    {renderCard(d)}
                   ))}
                 </div>
               </section>
@@ -438,7 +438,7 @@ function StreamingDevicesPage() {
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   {stickLow.map((d) => (
-                    <DeviceCard key={d.id} device={d} price={priceMap.get(d.id)} />
+                    {renderCard(d)}
                   ))}
                 </div>
               </section>
@@ -451,7 +451,7 @@ function StreamingDevicesPage() {
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   {stickMedium.map((d) => (
-                    <DeviceCard key={d.id} device={d} price={priceMap.get(d.id)} />
+                    {renderCard(d)}
                   ))}
                 </div>
               </section>
@@ -464,7 +464,7 @@ function StreamingDevicesPage() {
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   {stickHigh.map((d) => (
-                    <DeviceCard key={d.id} device={d} price={priceMap.get(d.id)} />
+                    {renderCard(d)}
                   ))}
                 </div>
               </section>
@@ -482,7 +482,7 @@ function StreamingDevicesPage() {
               </p>
               <div className="grid gap-4 grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,2.2fr)] items-start">
                 {fireSticks.map((d) => (
-                  <DeviceCard key={d.id} device={d} price={priceMap.get(d.id)} />
+                  {renderCard(d)}
                 ))}
                 <Dialog>
                   <DialogTrigger asChild>
