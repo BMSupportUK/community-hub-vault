@@ -1,6 +1,6 @@
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ArrowLeft, Plus, Trash2, Pencil, Save, X, Pin, Lock, Loader2, UserPlus } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Pencil, Save, X, Pin, Lock, Loader2, UserPlus, ArrowUp, ArrowDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, type AppRole } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
@@ -120,6 +120,36 @@ function AdminForumPage() {
     void load();
   };
 
+  const move = async (b: Board, dir: -1 | 1) => {
+    if (!boards) return;
+    // Operate within same pinned group, matching the on-screen order.
+    const group = boards.filter((x) => x.is_pinned === b.is_pinned);
+    const idx = group.findIndex((x) => x.id === b.id);
+    const swapIdx = idx + dir;
+    if (idx < 0 || swapIdx < 0 || swapIdx >= group.length) return;
+    const other = group[swapIdx];
+    const a = b.sort_order;
+    const c = other.sort_order;
+    // If equal, nudge to guarantee a swap.
+    const newA = a === c ? c - dir : c;
+    const newC = a === c ? a + dir : a;
+    // Optimistic update
+    setBoards((cur) => {
+      if (!cur) return cur;
+      return cur
+        .map((x) => x.id === b.id ? { ...x, sort_order: newA } : x.id === other.id ? { ...x, sort_order: newC } : x)
+        .sort((x, y) => (Number(y.is_pinned) - Number(x.is_pinned)) || (x.sort_order - y.sort_order));
+    });
+    const [r1, r2] = await Promise.all([
+      supabase.from("forum_boards").update({ sort_order: newA }).eq("id", b.id),
+      supabase.from("forum_boards").update({ sort_order: newC }).eq("id", other.id),
+    ]);
+    if (r1.error || r2.error) {
+      toast.error("Reorder failed", { description: r1.error?.message || r2.error?.message });
+      void load();
+    }
+  };
+
   const togglePerm = async (
     boardId: string,
     role: AppRole,
@@ -165,6 +195,10 @@ function AdminForumPage() {
           {boards.map((b) => {
             const boardMods = mods.filter((m) => m.board_id === b.id);
             const isEditing = editing?.id === b.id;
+            const group = boards.filter((x) => x.is_pinned === b.is_pinned);
+            const groupIdx = group.findIndex((x) => x.id === b.id);
+            const canUp = groupIdx > 0;
+            const canDown = groupIdx < group.length - 1;
             return (
               <div key={b.id} className="rounded-xl border border-border bg-surface-1 p-4 space-y-3">
                 {isEditing ? (
@@ -214,6 +248,10 @@ function AdminForumPage() {
                       <p className="text-xs text-muted-foreground mt-0.5">{b.description || <em>No description</em>}</p>
                     </div>
                     <div className="flex gap-1.5">
+                      <div className="flex flex-col gap-1">
+                        <Button size="sm" variant="outline" disabled={!canUp} onClick={() => void move(b, -1)} aria-label="Move up" className="h-6 px-1.5"><ArrowUp className="size-3.5" /></Button>
+                        <Button size="sm" variant="outline" disabled={!canDown} onClick={() => void move(b, 1)} aria-label="Move down" className="h-6 px-1.5"><ArrowDown className="size-3.5" /></Button>
+                      </div>
                       <Button size="sm" variant="outline" onClick={() => startEdit(b)}><Pencil className="size-3.5" /></Button>
                       <Button size="sm" variant="destructive" onClick={() => void remove(b)}><Trash2 className="size-3.5" /></Button>
                     </div>
