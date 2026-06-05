@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useFanZoneMembership } from "@/hooks/use-fan-zone";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import boroDefaultAvatar from "@/assets/boro-default-avatar.png";
 
@@ -17,6 +18,10 @@ export function FanZoneAliasSettings() {
   const [open, setOpen] = useState(false);
   const [alias, setAlias] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
+  const [bio, setBio] = useState("");
+  const [supporterSince, setSupporterSince] = useState<string>("");
+  const [favPlayer, setFavPlayer] = useState("");
+  const [memory, setMemory] = useState("");
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -24,7 +29,11 @@ export function FanZoneAliasSettings() {
   useEffect(() => {
     setAlias(info?.fanAlias ?? "");
     setAvatarUrl(info?.fanAvatarUrl ?? "");
-  }, [info?.fanAlias, info?.fanAvatarUrl]);
+    setBio(info?.bio ?? "");
+    setSupporterSince(info?.supporterSince ? String(info.supporterSince) : "");
+    setFavPlayer(info?.favPlayer ?? "");
+    setMemory(info?.matchdayMemory ?? "");
+  }, [info?.fanAlias, info?.fanAvatarUrl, info?.bio, info?.supporterSince, info?.favPlayer, info?.matchdayMemory]);
 
   if (!user) return null;
   if (!isStaff && info?.status !== "approved") return null;
@@ -56,11 +65,19 @@ export function FanZoneAliasSettings() {
   const save = async () => {
     const a = alias.trim();
     if (a.length > 64) return toast.error("Alias too long (max 64)");
+    const sinceNum = supporterSince.trim() ? parseInt(supporterSince.trim(), 10) : null;
+    if (sinceNum !== null && (Number.isNaN(sinceNum) || sinceNum < 1876 || sinceNum > new Date().getFullYear())) {
+      return toast.error("Supporter-since year looks wrong");
+    }
     setSaving(true);
-    const { error } = await supabase.rpc("set_my_fan_alias", {
+    const { error } = await supabase.rpc("set_my_fan_profile", {
       _alias: a,
       _avatar: avatarUrl.trim(),
-    });
+      _bio: bio.trim(),
+      _supporter_since: sinceNum as number,
+      _fav_player: favPlayer.trim(),
+      _matchday_memory: memory.trim(),
+    } as never);
     setSaving(false);
     if (error) return toast.error("Couldn't save", { description: error.message });
     toast.success("Fan zone identity updated");
@@ -69,11 +86,14 @@ export function FanZoneAliasSettings() {
 
   const clear = async () => {
     setSaving(true);
-    const { error } = await supabase.rpc("set_my_fan_alias", { _alias: "", _avatar: "" });
+    const { error } = await supabase.rpc("set_my_fan_profile", {
+      _alias: "", _avatar: "", _bio: "", _supporter_since: null as unknown as number, _fav_player: "", _matchday_memory: "",
+    } as never);
     setSaving(false);
     if (error) return toast.error("Couldn't clear", { description: error.message });
     setAlias("");
     setAvatarUrl("");
+    setBio(""); setSupporterSince(""); setFavPlayer(""); setMemory("");
     toast.success("Reverted to your main profile");
   };
 
@@ -151,6 +171,24 @@ export function FanZoneAliasSettings() {
             <p className="text-[11px] text-muted-foreground mt-1.5">
               Shown on your posts and topics inside the fan zone. Leave blank to use your normal profile name.
             </p>
+          </div>
+          <div className="grid sm:grid-cols-2 gap-3">
+            <div>
+              <label className="text-[11px] uppercase tracking-wider font-semibold text-muted-foreground">Supporter since</label>
+              <Input value={supporterSince} onChange={(e) => setSupporterSince(e.target.value.replace(/[^0-9]/g, "").slice(0, 4))} placeholder="e.g. 1986" inputMode="numeric" maxLength={4} className="mt-1" />
+            </div>
+            <div>
+              <label className="text-[11px] uppercase tracking-wider font-semibold text-muted-foreground">Favourite player</label>
+              <Input value={favPlayer} onChange={(e) => setFavPlayer(e.target.value.slice(0, 80))} placeholder="e.g. Juninho" maxLength={80} className="mt-1" />
+            </div>
+          </div>
+          <div>
+            <label className="text-[11px] uppercase tracking-wider font-semibold text-muted-foreground">Bio</label>
+            <Textarea value={bio} onChange={(e) => setBio(e.target.value.slice(0, 500))} placeholder="Tell other Boro fans a bit about yourself" maxLength={500} rows={3} className="mt-1" />
+          </div>
+          <div>
+            <label className="text-[11px] uppercase tracking-wider font-semibold text-muted-foreground">Favourite matchday memory</label>
+            <Textarea value={memory} onChange={(e) => setMemory(e.target.value.slice(0, 280))} placeholder="e.g. The night we beat Steaua" maxLength={280} rows={2} className="mt-1" />
           </div>
           <div className="flex flex-wrap gap-2 justify-end">
             {hasAlias && (

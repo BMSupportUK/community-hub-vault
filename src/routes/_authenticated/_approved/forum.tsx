@@ -7,6 +7,7 @@ import { useFanZoneMembership } from "@/hooks/use-fan-zone";
 import { getIcon } from "@/components/app/IconPicker";
 import { formatLastSeen } from "@/lib/relative-time";
 import { Button } from "@/components/ui/button";
+import { MessageSquareText, Ban } from "lucide-react";
 import { FanZoneAliasSettings } from "@/components/app/FanZoneAliasSettings";
 import { FanZoneStaffBox } from "@/components/app/FanZoneStaffBox";
 import { BoroMatchCentreBox } from "@/components/app/BoroMatchCentreBox";
@@ -233,6 +234,14 @@ function BoardsIndex() {
       </div>
       <div className="lg:sticky lg:top-4 lg:self-start">
         <div className="space-y-4">
+          <div className="rounded-2xl border border-[#E11B22]/30 bg-surface-1/85 backdrop-blur-sm shadow-soft p-3 space-y-2">
+            <Button asChild className="w-full justify-start bg-gradient-to-r from-[#E11B22] to-[#8B0F14] hover:from-[#F02B30] hover:to-[#9B1118] border-0 text-white">
+              <Link to="/fanzone/messages"><MessageSquareText className="size-4 mr-2" />Fan zone inbox</Link>
+            </Button>
+            <Button asChild variant="outline" size="sm" className="w-full justify-start">
+              <Link to="/fanzone/blocks"><Ban className="size-4 mr-2" />Blocked members</Link>
+            </Button>
+          </div>
           <BoroMatchCentreBox />
           <FanZoneStaffBox />
         </div>

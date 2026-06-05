@@ -86,9 +86,13 @@ import { Route as AuthenticatedApprovedUUsernameRouteImport } from './routes/_au
 import { Route as AuthenticatedApprovedSportsGuidesNewRouteImport } from './routes/_authenticated/_approved/sports-guides.new'
 import { Route as AuthenticatedApprovedHomeChannelRouteImport } from './routes/_authenticated/_approved/home.$channel'
 import { Route as AuthenticatedApprovedForumBoardRouteImport } from './routes/_authenticated/_approved/forum.$board'
+import { Route as AuthenticatedApprovedFanzoneMessagesRouteImport } from './routes/_authenticated/_approved/fanzone.messages'
+import { Route as AuthenticatedApprovedFanzoneBlocksRouteImport } from './routes/_authenticated/_approved/fanzone.blocks'
 import { Route as AuthenticatedApprovedSportsGuidesReadIdRouteImport } from './routes/_authenticated/_approved/sports-guides.read.$id'
 import { Route as AuthenticatedApprovedSportsGuidesIdEditRouteImport } from './routes/_authenticated/_approved/sports-guides.$id.edit'
 import { Route as AuthenticatedApprovedForumBoardTopicRouteImport } from './routes/_authenticated/_approved/forum.$board.$topic'
+import { Route as AuthenticatedApprovedFanzoneUUserIdRouteImport } from './routes/_authenticated/_approved/fanzone.u.$userId'
+import { Route as AuthenticatedApprovedFanzoneMessagesThreadRouteImport } from './routes/_authenticated/_approved/fanzone.messages.$thread'
 
 const UnsubscribeRoute = UnsubscribeRouteImport.update({
   id: '/unsubscribe',
@@ -530,6 +534,18 @@ const AuthenticatedApprovedForumBoardRoute =
     path: '/$board',
     getParentRoute: () => AuthenticatedApprovedForumRoute,
   } as any)
+const AuthenticatedApprovedFanzoneMessagesRoute =
+  AuthenticatedApprovedFanzoneMessagesRouteImport.update({
+    id: '/fanzone/messages',
+    path: '/fanzone/messages',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
+const AuthenticatedApprovedFanzoneBlocksRoute =
+  AuthenticatedApprovedFanzoneBlocksRouteImport.update({
+    id: '/fanzone/blocks',
+    path: '/fanzone/blocks',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
 const AuthenticatedApprovedSportsGuidesReadIdRoute =
   AuthenticatedApprovedSportsGuidesReadIdRouteImport.update({
     id: '/read/$id',
@@ -547,6 +563,18 @@ const AuthenticatedApprovedForumBoardTopicRoute =
     id: '/$topic',
     path: '/$topic',
     getParentRoute: () => AuthenticatedApprovedForumBoardRoute,
+  } as any)
+const AuthenticatedApprovedFanzoneUUserIdRoute =
+  AuthenticatedApprovedFanzoneUUserIdRouteImport.update({
+    id: '/fanzone/u/$userId',
+    path: '/fanzone/u/$userId',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
+const AuthenticatedApprovedFanzoneMessagesThreadRoute =
+  AuthenticatedApprovedFanzoneMessagesThreadRouteImport.update({
+    id: '/$thread',
+    path: '/$thread',
+    getParentRoute: () => AuthenticatedApprovedFanzoneMessagesRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -608,6 +636,8 @@ export interface FileRoutesByFullPath {
   '/api/public/link-preview': typeof ApiPublicLinkPreviewRoute
   '/api/public/tweet': typeof ApiPublicTweetRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
+  '/fanzone/blocks': typeof AuthenticatedApprovedFanzoneBlocksRoute
+  '/fanzone/messages': typeof AuthenticatedApprovedFanzoneMessagesRouteWithChildren
   '/forum/$board': typeof AuthenticatedApprovedForumBoardRouteWithChildren
   '/home/$channel': typeof AuthenticatedApprovedHomeChannelRoute
   '/sports-guides/new': typeof AuthenticatedApprovedSportsGuidesNewRoute
@@ -625,6 +655,8 @@ export interface FileRoutesByFullPath {
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
   '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
   '/home/': typeof AuthenticatedApprovedHomeIndexRoute
+  '/fanzone/messages/$thread': typeof AuthenticatedApprovedFanzoneMessagesThreadRoute
+  '/fanzone/u/$userId': typeof AuthenticatedApprovedFanzoneUUserIdRoute
   '/forum/$board/$topic': typeof AuthenticatedApprovedForumBoardTopicRoute
   '/sports-guides/$id/edit': typeof AuthenticatedApprovedSportsGuidesIdEditRoute
   '/sports-guides/read/$id': typeof AuthenticatedApprovedSportsGuidesReadIdRoute
@@ -687,6 +719,8 @@ export interface FileRoutesByTo {
   '/api/public/link-preview': typeof ApiPublicLinkPreviewRoute
   '/api/public/tweet': typeof ApiPublicTweetRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
+  '/fanzone/blocks': typeof AuthenticatedApprovedFanzoneBlocksRoute
+  '/fanzone/messages': typeof AuthenticatedApprovedFanzoneMessagesRouteWithChildren
   '/forum/$board': typeof AuthenticatedApprovedForumBoardRouteWithChildren
   '/home/$channel': typeof AuthenticatedApprovedHomeChannelRoute
   '/sports-guides/new': typeof AuthenticatedApprovedSportsGuidesNewRoute
@@ -704,6 +738,8 @@ export interface FileRoutesByTo {
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
   '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
   '/home': typeof AuthenticatedApprovedHomeIndexRoute
+  '/fanzone/messages/$thread': typeof AuthenticatedApprovedFanzoneMessagesThreadRoute
+  '/fanzone/u/$userId': typeof AuthenticatedApprovedFanzoneUUserIdRoute
   '/forum/$board/$topic': typeof AuthenticatedApprovedForumBoardTopicRoute
   '/sports-guides/$id/edit': typeof AuthenticatedApprovedSportsGuidesIdEditRoute
   '/sports-guides/read/$id': typeof AuthenticatedApprovedSportsGuidesReadIdRoute
@@ -770,6 +806,8 @@ export interface FileRoutesById {
   '/api/public/link-preview': typeof ApiPublicLinkPreviewRoute
   '/api/public/tweet': typeof ApiPublicTweetRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
+  '/_authenticated/_approved/fanzone/blocks': typeof AuthenticatedApprovedFanzoneBlocksRoute
+  '/_authenticated/_approved/fanzone/messages': typeof AuthenticatedApprovedFanzoneMessagesRouteWithChildren
   '/_authenticated/_approved/forum/$board': typeof AuthenticatedApprovedForumBoardRouteWithChildren
   '/_authenticated/_approved/home/$channel': typeof AuthenticatedApprovedHomeChannelRoute
   '/_authenticated/_approved/sports-guides/new': typeof AuthenticatedApprovedSportsGuidesNewRoute
@@ -787,6 +825,8 @@ export interface FileRoutesById {
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
   '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
   '/_authenticated/_approved/home/': typeof AuthenticatedApprovedHomeIndexRoute
+  '/_authenticated/_approved/fanzone/messages/$thread': typeof AuthenticatedApprovedFanzoneMessagesThreadRoute
+  '/_authenticated/_approved/fanzone/u/$userId': typeof AuthenticatedApprovedFanzoneUUserIdRoute
   '/_authenticated/_approved/forum/$board/$topic': typeof AuthenticatedApprovedForumBoardTopicRoute
   '/_authenticated/_approved/sports-guides/$id/edit': typeof AuthenticatedApprovedSportsGuidesIdEditRoute
   '/_authenticated/_approved/sports-guides/read/$id': typeof AuthenticatedApprovedSportsGuidesReadIdRoute
@@ -852,6 +892,8 @@ export interface FileRouteTypes {
     | '/api/public/link-preview'
     | '/api/public/tweet'
     | '/lovable/email/suppression'
+    | '/fanzone/blocks'
+    | '/fanzone/messages'
     | '/forum/$board'
     | '/home/$channel'
     | '/sports-guides/new'
@@ -869,6 +911,8 @@ export interface FileRouteTypes {
     | '/lovable/email/transactional/preview'
     | '/lovable/email/transactional/send'
     | '/home/'
+    | '/fanzone/messages/$thread'
+    | '/fanzone/u/$userId'
     | '/forum/$board/$topic'
     | '/sports-guides/$id/edit'
     | '/sports-guides/read/$id'
@@ -931,6 +975,8 @@ export interface FileRouteTypes {
     | '/api/public/link-preview'
     | '/api/public/tweet'
     | '/lovable/email/suppression'
+    | '/fanzone/blocks'
+    | '/fanzone/messages'
     | '/forum/$board'
     | '/home/$channel'
     | '/sports-guides/new'
@@ -948,6 +994,8 @@ export interface FileRouteTypes {
     | '/lovable/email/transactional/preview'
     | '/lovable/email/transactional/send'
     | '/home'
+    | '/fanzone/messages/$thread'
+    | '/fanzone/u/$userId'
     | '/forum/$board/$topic'
     | '/sports-guides/$id/edit'
     | '/sports-guides/read/$id'
@@ -1013,6 +1061,8 @@ export interface FileRouteTypes {
     | '/api/public/link-preview'
     | '/api/public/tweet'
     | '/lovable/email/suppression'
+    | '/_authenticated/_approved/fanzone/blocks'
+    | '/_authenticated/_approved/fanzone/messages'
     | '/_authenticated/_approved/forum/$board'
     | '/_authenticated/_approved/home/$channel'
     | '/_authenticated/_approved/sports-guides/new'
@@ -1030,6 +1080,8 @@ export interface FileRouteTypes {
     | '/lovable/email/transactional/preview'
     | '/lovable/email/transactional/send'
     | '/_authenticated/_approved/home/'
+    | '/_authenticated/_approved/fanzone/messages/$thread'
+    | '/_authenticated/_approved/fanzone/u/$userId'
     | '/_authenticated/_approved/forum/$board/$topic'
     | '/_authenticated/_approved/sports-guides/$id/edit'
     | '/_authenticated/_approved/sports-guides/read/$id'
@@ -1607,6 +1659,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedApprovedForumBoardRouteImport
       parentRoute: typeof AuthenticatedApprovedForumRoute
     }
+    '/_authenticated/_approved/fanzone/messages': {
+      id: '/_authenticated/_approved/fanzone/messages'
+      path: '/fanzone/messages'
+      fullPath: '/fanzone/messages'
+      preLoaderRoute: typeof AuthenticatedApprovedFanzoneMessagesRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
+    '/_authenticated/_approved/fanzone/blocks': {
+      id: '/_authenticated/_approved/fanzone/blocks'
+      path: '/fanzone/blocks'
+      fullPath: '/fanzone/blocks'
+      preLoaderRoute: typeof AuthenticatedApprovedFanzoneBlocksRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
     '/_authenticated/_approved/sports-guides/read/$id': {
       id: '/_authenticated/_approved/sports-guides/read/$id'
       path: '/read/$id'
@@ -1627,6 +1693,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/forum/$board/$topic'
       preLoaderRoute: typeof AuthenticatedApprovedForumBoardTopicRouteImport
       parentRoute: typeof AuthenticatedApprovedForumBoardRoute
+    }
+    '/_authenticated/_approved/fanzone/u/$userId': {
+      id: '/_authenticated/_approved/fanzone/u/$userId'
+      path: '/fanzone/u/$userId'
+      fullPath: '/fanzone/u/$userId'
+      preLoaderRoute: typeof AuthenticatedApprovedFanzoneUUserIdRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
+    '/_authenticated/_approved/fanzone/messages/$thread': {
+      id: '/_authenticated/_approved/fanzone/messages/$thread'
+      path: '/$thread'
+      fullPath: '/fanzone/messages/$thread'
+      preLoaderRoute: typeof AuthenticatedApprovedFanzoneMessagesThreadRouteImport
+      parentRoute: typeof AuthenticatedApprovedFanzoneMessagesRoute
     }
   }
 }
@@ -1699,6 +1779,21 @@ const AuthenticatedApprovedSportsGuidesRouteWithChildren =
     AuthenticatedApprovedSportsGuidesRouteChildren,
   )
 
+interface AuthenticatedApprovedFanzoneMessagesRouteChildren {
+  AuthenticatedApprovedFanzoneMessagesThreadRoute: typeof AuthenticatedApprovedFanzoneMessagesThreadRoute
+}
+
+const AuthenticatedApprovedFanzoneMessagesRouteChildren: AuthenticatedApprovedFanzoneMessagesRouteChildren =
+  {
+    AuthenticatedApprovedFanzoneMessagesThreadRoute:
+      AuthenticatedApprovedFanzoneMessagesThreadRoute,
+  }
+
+const AuthenticatedApprovedFanzoneMessagesRouteWithChildren =
+  AuthenticatedApprovedFanzoneMessagesRoute._addFileChildren(
+    AuthenticatedApprovedFanzoneMessagesRouteChildren,
+  )
+
 interface AuthenticatedApprovedRouteChildren {
   AuthenticatedApprovedAccountSecurityRoute: typeof AuthenticatedApprovedAccountSecurityRoute
   AuthenticatedApprovedAdminRoute: typeof AuthenticatedApprovedAdminRoute
@@ -1740,7 +1835,10 @@ interface AuthenticatedApprovedRouteChildren {
   AuthenticatedApprovedTicketsRoute: typeof AuthenticatedApprovedTicketsRoute
   AuthenticatedApprovedVpnRoute: typeof AuthenticatedApprovedVpnRoute
   AuthenticatedApprovedWhatToWatchRoute: typeof AuthenticatedApprovedWhatToWatchRoute
+  AuthenticatedApprovedFanzoneBlocksRoute: typeof AuthenticatedApprovedFanzoneBlocksRoute
+  AuthenticatedApprovedFanzoneMessagesRoute: typeof AuthenticatedApprovedFanzoneMessagesRouteWithChildren
   AuthenticatedApprovedUUsernameRoute: typeof AuthenticatedApprovedUUsernameRoute
+  AuthenticatedApprovedFanzoneUUserIdRoute: typeof AuthenticatedApprovedFanzoneUUserIdRoute
 }
 
 const AuthenticatedApprovedRouteChildren: AuthenticatedApprovedRouteChildren = {
@@ -1804,7 +1902,13 @@ const AuthenticatedApprovedRouteChildren: AuthenticatedApprovedRouteChildren = {
   AuthenticatedApprovedTicketsRoute: AuthenticatedApprovedTicketsRoute,
   AuthenticatedApprovedVpnRoute: AuthenticatedApprovedVpnRoute,
   AuthenticatedApprovedWhatToWatchRoute: AuthenticatedApprovedWhatToWatchRoute,
+  AuthenticatedApprovedFanzoneBlocksRoute:
+    AuthenticatedApprovedFanzoneBlocksRoute,
+  AuthenticatedApprovedFanzoneMessagesRoute:
+    AuthenticatedApprovedFanzoneMessagesRouteWithChildren,
   AuthenticatedApprovedUUsernameRoute: AuthenticatedApprovedUUsernameRoute,
+  AuthenticatedApprovedFanzoneUUserIdRoute:
+    AuthenticatedApprovedFanzoneUUserIdRoute,
 }
 
 const AuthenticatedApprovedRouteWithChildren =

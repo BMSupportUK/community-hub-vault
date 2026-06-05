@@ -13,6 +13,7 @@ import { ForumPostBody } from "@/components/app/ForumPostBody";
 import { ForumPostReactions } from "@/components/app/ForumPostReactions";
 import { prepareForumPostBody } from "@/lib/forum-embeds";
 import { useMentionCandidates } from "@/hooks/use-mention-candidates";
+import { useFanBlocks } from "@/hooks/use-fan-blocks";
 import { toast } from "sonner";
 import { RotatingAffiliateBanner } from "@/components/app/RotatingAffiliateBanner";
 import { ForumPoll } from "@/components/app/ForumPoll";
@@ -61,6 +62,7 @@ function TopicPage() {
   const info = useFanZoneMembership(user?.id ?? null);
   const canEnter = isStaff || hasAny(["staff"]) || info?.status === "approved";
   const mentionCandidates = useMentionCandidates(canUseSpecialMentions);
+  const { blocked } = useFanBlocks();
 
   const [board, setBoard] = useState<Board | null>(null);
   const [topic, setTopic] = useState<Topic | null>(null);
@@ -255,7 +257,7 @@ function TopicPage() {
         <div className="min-w-0">
       {(() => {
         const opPost = posts.find((p) => p.is_op) ?? null;
-        const replies = posts.filter((p) => !p.is_op);
+        const replies = posts.filter((p) => !p.is_op && !blocked.has(p.author_id));
         const totalPages = Math.max(1, Math.ceil(replies.length / REPLIES_PER_PAGE));
         const safePage = Math.min(page, totalPages);
         const start = (safePage - 1) * REPLIES_PER_PAGE;

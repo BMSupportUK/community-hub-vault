@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { HtmlEditor } from "@/components/ui/html-editor";
 import { prepareForumPostBody } from "@/lib/forum-embeds";
 import { useMentionCandidates } from "@/hooks/use-mention-candidates";
+import { useFanBlocks } from "@/hooks/use-fan-blocks";
 import { toast } from "sonner";
 import { RotatingAffiliateBanner } from "@/components/app/RotatingAffiliateBanner";
 import { PollDraftEditor, persistDraftPoll, type DraftPoll } from "@/components/app/ForumPoll";
@@ -61,6 +62,7 @@ function BoardPage() {
   const info = useFanZoneMembership(user?.id ?? null);
   const canEnter = isStaff || info?.status === "approved";
   const mentionCandidates = useMentionCandidates(canUseSpecialMentions);
+  const { blocked } = useFanBlocks();
 
   const [board, setBoard] = useState<Board | null>(null);
   const [topics, setTopics] = useState<Topic[] | null>(null);
@@ -314,7 +316,7 @@ function BoardPage() {
             </div>
           ) : (
             <div className="space-y-2.5">
-              {topics.map((t) => {
+              {topics.filter((t) => !blocked.has(t.author_id)).map((t) => {
             const author = profiles[t.author_id];
             const last = t.last_post_by ? profiles[t.last_post_by] : null;
             const authorName = author?.display_name || author?.username || "Someone";
