@@ -215,6 +215,9 @@ function StreamingDevicesPage() {
   const boxMedium = boxes.filter((d) => d.tier === "medium");
   const boxLow = boxes.filter((d) => d.tier === "low");
   const androidSticks = androidNonFire.filter(isStick);
+  const stickHigh = androidSticks.filter((d) => d.tier === "high");
+  const stickMedium = androidSticks.filter((d) => d.tier === "medium");
+  const stickLow = androidSticks.filter((d) => d.tier === "low");
   const fireSticks = allDevices.filter(isFireDevice);
 
   return (
@@ -282,22 +285,49 @@ function StreamingDevicesPage() {
 
           </TabsContent>
 
-          <TabsContent value="android-sticks" className="space-y-6">
-            <section className="space-y-4">
-              <div className="flex items-baseline justify-between">
-                <h2 className="text-xl font-semibold">Android sticks</h2>
-                <span className="text-xs text-muted-foreground">Compact Android / Google TV dongles</span>
-              </div>
-              {androidSticks.length > 0 ? (
+          <TabsContent value="android-sticks" className="space-y-8">
+            {stickHigh.length > 0 && (
+              <section className="space-y-4">
+                <div className="flex items-baseline justify-between">
+                  <h2 className="text-xl font-semibold">High spec</h2>
+                  <span className="text-xs text-muted-foreground">Top-tier dongles for serious streaming</span>
+                </div>
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {androidSticks.map((d) => (
+                  {stickHigh.map((d) => (
                     <DeviceCard key={d.id} device={d} price={priceMap.get(d.id)} />
                   ))}
                 </div>
-              ) : (
-                <p className="text-sm text-muted-foreground">No Android sticks listed yet.</p>
-              )}
-            </section>
+              </section>
+            )}
+            {stickMedium.length > 0 && (
+              <section className="space-y-4">
+                <div className="flex items-baseline justify-between">
+                  <h2 className="text-xl font-semibold">Medium spec</h2>
+                  <span className="text-xs text-muted-foreground">Reliable 4K HDR sticks for most users</span>
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {stickMedium.map((d) => (
+                    <DeviceCard key={d.id} device={d} price={priceMap.get(d.id)} />
+                  ))}
+                </div>
+              </section>
+            )}
+            {stickLow.length > 0 && (
+              <section className="space-y-4">
+                <div className="flex items-baseline justify-between">
+                  <h2 className="text-xl font-semibold">Low spec</h2>
+                  <span className="text-xs text-muted-foreground">Budget dongles that still stream well</span>
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {stickLow.map((d) => (
+                    <DeviceCard key={d.id} device={d} price={priceMap.get(d.id)} />
+                  ))}
+                </div>
+              </section>
+            )}
+            {androidSticks.length === 0 && (
+              <p className="text-sm text-muted-foreground">No Android sticks listed yet.</p>
+            )}
           </TabsContent>
 
           <TabsContent value="amazon" className="space-y-6">
