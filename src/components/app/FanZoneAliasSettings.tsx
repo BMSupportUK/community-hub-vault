@@ -74,10 +74,10 @@ export function FanZoneAliasSettings() {
       _alias: a,
       _avatar: avatarUrl.trim(),
       _bio: bio.trim(),
-      _supporter_since: sinceNum,
+      _supporter_since: sinceNum as number,
       _fav_player: favPlayer.trim(),
       _matchday_memory: memory.trim(),
-    });
+    } as never);
     setSaving(false);
     if (error) return toast.error("Couldn't save", { description: error.message });
     toast.success("Fan zone identity updated");
@@ -87,8 +87,8 @@ export function FanZoneAliasSettings() {
   const clear = async () => {
     setSaving(true);
     const { error } = await supabase.rpc("set_my_fan_profile", {
-      _alias: "", _avatar: "", _bio: "", _supporter_since: null, _fav_player: "", _matchday_memory: "",
-    });
+      _alias: "", _avatar: "", _bio: "", _supporter_since: null as unknown as number, _fav_player: "", _matchday_memory: "",
+    } as never);
     setSaving(false);
     if (error) return toast.error("Couldn't clear", { description: error.message });
     setAlias("");
