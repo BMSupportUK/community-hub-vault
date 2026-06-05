@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, Loader2, Pin, Lock, Quote, Reply as ReplyIcon, Pencil, Trash2, Send, History, Check, X } from "lucide-react";
+import { ArrowLeft, Loader2, Pin, Lock, Quote, Reply as ReplyIcon, Pencil, Trash2, Send, History, Check, X, Ban } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useFanZoneMembership } from "@/hooks/use-fan-zone";
@@ -62,7 +62,7 @@ function TopicPage() {
   const info = useFanZoneMembership(user?.id ?? null);
   const canEnter = isStaff || hasAny(["staff"]) || info?.status === "approved";
   const mentionCandidates = useMentionCandidates(canUseSpecialMentions);
-  const { blocked } = useFanBlocks();
+  const { blocked, reload: reloadBlocks } = useFanBlocks();
 
   const [board, setBoard] = useState<Board | null>(null);
   const [topic, setTopic] = useState<Topic | null>(null);
@@ -266,7 +266,8 @@ function TopicPage() {
                 const author = profiles[p.author_id];
                 const name = author?.display_name || author?.username || "Someone";
                 const canEdit = user && (p.author_id === user.id || isBoardMod);
-                const canDelete = user && ((p.author_id === user.id && !p.is_op) || isBoardMod);
+                 const canDelete = user && ((p.author_id === user.id && !p.is_op) || isBoardMod);
+                 const canBlock = !!user && p.author_id !== user.id;
                 return (
                   <article
                     key={p.id}
@@ -303,6 +304,23 @@ function TopicPage() {
                         {canPost && <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => quotePost(p)} title="Quote"><Quote className="size-3.5" /></Button>}
                         {canEdit && editingId !== p.id && <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => startEdit(p)} title="Edit"><Pencil className="size-3.5" /></Button>}
                         {canDelete && <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-destructive/80 hover:text-destructive" onClick={() => void deletePost(p)} title="Delete"><Trash2 className="size-3.5" /></Button>}
+                        {canBlock && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-7 w-7 p-0 text-muted-foreground hover:text-[#E11B22]"
+                            title="Block this member"
+                            onClick={async () => {
+                              if (!confirm(`Block ${name}? Their posts will be hidden and you won't be able to message each other.`)) return;
+                              const { error } = await supabase.rpc("fan_zone_block", { _other: p.author_id });
+                              if (error) return toast.error("Couldn't block", { description: error.message });
+                              toast.success(`${name} blocked`);
+                              void reloadBlocks();
+                            }}
+                          >
+                            <Ban className="size-3.5" />
+                          </Button>
+                        )}
                       </div>
                     </header>
                     <div className="px-5 py-4">
