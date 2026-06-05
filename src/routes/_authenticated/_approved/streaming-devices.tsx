@@ -231,7 +231,7 @@ function DeviceCard({
             <Button asChild className="w-full">
               <a href={listingUrl} target="_blank" rel="sponsored noopener noreferrer">
                 <ExternalLink className="size-4" />
-                {priceLabel ? `Best found${retailer ? ` at ${retailer}` : ""} — ${priceLabel}` : `View${retailer ? ` ${retailer}` : " retailer"} listing`}
+                {priceLabel ? `Buying from our streaming partner — ${priceLabel}` : `Buying from our streaming partner${retailer ? ` (${retailer})` : ""}`}
               </a>
             </Button>
           ) : (
