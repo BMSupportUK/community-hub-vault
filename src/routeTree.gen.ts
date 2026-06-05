@@ -87,6 +87,7 @@ import { Route as AuthenticatedApprovedSportsGuidesNewRouteImport } from './rout
 import { Route as AuthenticatedApprovedHomeChannelRouteImport } from './routes/_authenticated/_approved/home.$channel'
 import { Route as AuthenticatedApprovedForumBoardRouteImport } from './routes/_authenticated/_approved/forum.$board'
 import { Route as AuthenticatedApprovedFanzoneMessagesRouteImport } from './routes/_authenticated/_approved/fanzone.messages'
+import { Route as AuthenticatedApprovedFanzoneBlocksRouteImport } from './routes/_authenticated/_approved/fanzone.blocks'
 import { Route as AuthenticatedApprovedSportsGuidesReadIdRouteImport } from './routes/_authenticated/_approved/sports-guides.read.$id'
 import { Route as AuthenticatedApprovedSportsGuidesIdEditRouteImport } from './routes/_authenticated/_approved/sports-guides.$id.edit'
 import { Route as AuthenticatedApprovedForumBoardTopicRouteImport } from './routes/_authenticated/_approved/forum.$board.$topic'
@@ -539,6 +540,12 @@ const AuthenticatedApprovedFanzoneMessagesRoute =
     path: '/fanzone/messages',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
+const AuthenticatedApprovedFanzoneBlocksRoute =
+  AuthenticatedApprovedFanzoneBlocksRouteImport.update({
+    id: '/fanzone/blocks',
+    path: '/fanzone/blocks',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
 const AuthenticatedApprovedSportsGuidesReadIdRoute =
   AuthenticatedApprovedSportsGuidesReadIdRouteImport.update({
     id: '/read/$id',
@@ -629,6 +636,7 @@ export interface FileRoutesByFullPath {
   '/api/public/link-preview': typeof ApiPublicLinkPreviewRoute
   '/api/public/tweet': typeof ApiPublicTweetRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
+  '/fanzone/blocks': typeof AuthenticatedApprovedFanzoneBlocksRoute
   '/fanzone/messages': typeof AuthenticatedApprovedFanzoneMessagesRouteWithChildren
   '/forum/$board': typeof AuthenticatedApprovedForumBoardRouteWithChildren
   '/home/$channel': typeof AuthenticatedApprovedHomeChannelRoute
@@ -711,6 +719,7 @@ export interface FileRoutesByTo {
   '/api/public/link-preview': typeof ApiPublicLinkPreviewRoute
   '/api/public/tweet': typeof ApiPublicTweetRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
+  '/fanzone/blocks': typeof AuthenticatedApprovedFanzoneBlocksRoute
   '/fanzone/messages': typeof AuthenticatedApprovedFanzoneMessagesRouteWithChildren
   '/forum/$board': typeof AuthenticatedApprovedForumBoardRouteWithChildren
   '/home/$channel': typeof AuthenticatedApprovedHomeChannelRoute
@@ -797,6 +806,7 @@ export interface FileRoutesById {
   '/api/public/link-preview': typeof ApiPublicLinkPreviewRoute
   '/api/public/tweet': typeof ApiPublicTweetRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
+  '/_authenticated/_approved/fanzone/blocks': typeof AuthenticatedApprovedFanzoneBlocksRoute
   '/_authenticated/_approved/fanzone/messages': typeof AuthenticatedApprovedFanzoneMessagesRouteWithChildren
   '/_authenticated/_approved/forum/$board': typeof AuthenticatedApprovedForumBoardRouteWithChildren
   '/_authenticated/_approved/home/$channel': typeof AuthenticatedApprovedHomeChannelRoute
@@ -882,6 +892,7 @@ export interface FileRouteTypes {
     | '/api/public/link-preview'
     | '/api/public/tweet'
     | '/lovable/email/suppression'
+    | '/fanzone/blocks'
     | '/fanzone/messages'
     | '/forum/$board'
     | '/home/$channel'
@@ -964,6 +975,7 @@ export interface FileRouteTypes {
     | '/api/public/link-preview'
     | '/api/public/tweet'
     | '/lovable/email/suppression'
+    | '/fanzone/blocks'
     | '/fanzone/messages'
     | '/forum/$board'
     | '/home/$channel'
@@ -1049,6 +1061,7 @@ export interface FileRouteTypes {
     | '/api/public/link-preview'
     | '/api/public/tweet'
     | '/lovable/email/suppression'
+    | '/_authenticated/_approved/fanzone/blocks'
     | '/_authenticated/_approved/fanzone/messages'
     | '/_authenticated/_approved/forum/$board'
     | '/_authenticated/_approved/home/$channel'
@@ -1653,6 +1666,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedApprovedFanzoneMessagesRouteImport
       parentRoute: typeof AuthenticatedApprovedRoute
     }
+    '/_authenticated/_approved/fanzone/blocks': {
+      id: '/_authenticated/_approved/fanzone/blocks'
+      path: '/fanzone/blocks'
+      fullPath: '/fanzone/blocks'
+      preLoaderRoute: typeof AuthenticatedApprovedFanzoneBlocksRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
     '/_authenticated/_approved/sports-guides/read/$id': {
       id: '/_authenticated/_approved/sports-guides/read/$id'
       path: '/read/$id'
@@ -1815,6 +1835,7 @@ interface AuthenticatedApprovedRouteChildren {
   AuthenticatedApprovedTicketsRoute: typeof AuthenticatedApprovedTicketsRoute
   AuthenticatedApprovedVpnRoute: typeof AuthenticatedApprovedVpnRoute
   AuthenticatedApprovedWhatToWatchRoute: typeof AuthenticatedApprovedWhatToWatchRoute
+  AuthenticatedApprovedFanzoneBlocksRoute: typeof AuthenticatedApprovedFanzoneBlocksRoute
   AuthenticatedApprovedFanzoneMessagesRoute: typeof AuthenticatedApprovedFanzoneMessagesRouteWithChildren
   AuthenticatedApprovedUUsernameRoute: typeof AuthenticatedApprovedUUsernameRoute
   AuthenticatedApprovedFanzoneUUserIdRoute: typeof AuthenticatedApprovedFanzoneUUserIdRoute
@@ -1881,6 +1902,8 @@ const AuthenticatedApprovedRouteChildren: AuthenticatedApprovedRouteChildren = {
   AuthenticatedApprovedTicketsRoute: AuthenticatedApprovedTicketsRoute,
   AuthenticatedApprovedVpnRoute: AuthenticatedApprovedVpnRoute,
   AuthenticatedApprovedWhatToWatchRoute: AuthenticatedApprovedWhatToWatchRoute,
+  AuthenticatedApprovedFanzoneBlocksRoute:
+    AuthenticatedApprovedFanzoneBlocksRoute,
   AuthenticatedApprovedFanzoneMessagesRoute:
     AuthenticatedApprovedFanzoneMessagesRouteWithChildren,
   AuthenticatedApprovedUUsernameRoute: AuthenticatedApprovedUUsernameRoute,
