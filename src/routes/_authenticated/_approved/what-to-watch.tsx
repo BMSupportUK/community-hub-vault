@@ -8,6 +8,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import whatToWatchBg from "@/assets/what-to-watch-bg.jpg.asset.json";
 
 export const Route = createFileRoute("/_authenticated/_approved/what-to-watch")({
   head: () => ({
@@ -31,8 +32,12 @@ function WhatToWatchPage() {
   });
 
   return (
-    <div className="flex-1 flex min-w-0">
-      <main className="flex-1 overflow-y-auto">
+    <div
+      className="flex-1 flex min-w-0 overflow-y-auto bg-[#1a0b2e] bg-cover bg-center bg-no-repeat bg-fixed relative"
+      style={{ backgroundImage: `url(${whatToWatchBg.url})` }}
+    >
+      <div className="absolute inset-0 bg-gradient-to-b from-[#1a0b2e]/75 via-[#1a0b2e]/65 to-[#1a0b2e]/85 pointer-events-none" aria-hidden />
+      <main className="relative z-10 flex-1">
         <div className="max-w-7xl mx-auto px-4 lg:px-8 py-8 space-y-6">
           <header className="relative overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-primary/20 via-surface-2 to-background p-6 lg:p-10">
             <div className="absolute -top-16 -right-16 size-72 rounded-full bg-primary/20 blur-3xl pointer-events-none" />
