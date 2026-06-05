@@ -13,6 +13,8 @@ import { prepareForumPostBody } from "@/lib/forum-embeds";
 import { useMentionCandidates } from "@/hooks/use-mention-candidates";
 import { toast } from "sonner";
 import { RotatingAffiliateBanner } from "@/components/app/RotatingAffiliateBanner";
+import { PollDraftEditor, persistDraftPoll, type DraftPoll } from "@/components/app/ForumPoll";
+import { BarChart3 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/_approved/forum/$board")({
   component: BoardRoute,
@@ -75,6 +77,7 @@ function BoardPage() {
   const [editingTopic, setEditingTopic] = useState<Topic | null>(null);
   const [editTitle, setEditTitle] = useState("");
   const [savingEdit, setSavingEdit] = useState(false);
+  const [poll, setPoll] = useState<DraftPoll | null>(null);
 
   const PAGE_SIZE = 20;
   const totalPages = Math.max(1, Math.ceil(totalTopics / PAGE_SIZE));
@@ -211,7 +214,11 @@ function BoardPage() {
       toast.error("Couldn't post first message", { description: postErr.message });
       return;
     }
-    setOpen(false); setTitle(""); setBody("");
+    if (poll) {
+      const err = await persistDraftPoll((topic as { id: string }).id, user.id, poll);
+      if (err) toast.error("Poll not saved", { description: err });
+    }
+    setOpen(false); setTitle(""); setBody(""); setPoll(null);
     setCreatedTopicId((topic as { id: string }).id);
   };
 
@@ -284,7 +291,16 @@ function BoardPage() {
                     mentions={mentionCandidates}
                   />
                 </div>
-                <div className="flex justify-end">
+                  {poll ? (
+                    <PollDraftEditor value={poll} onChange={setPoll} onRemove={() => setPoll(null)} />
+                  ) : (
+                    <div>
+                      <Button type="button" variant="outline" size="sm" onClick={() => setPoll({ question: "", options: ["", ""], allow_multiple: false })}>
+                        <BarChart3 className="size-4 mr-1" /> Add poll
+                      </Button>
+                    </div>
+                  )}
+                  <div className="flex justify-end">
                   <Button onClick={submit} disabled={submitting} className="bg-gradient-to-r from-[#E11B22] to-[#8B0F14] hover:from-[#F02B30] hover:to-[#9B1118] border-0 text-white">
                     {submitting ? <><Loader2 className="size-4 mr-1 animate-spin" />Posting…</> : "Post topic"}
                   </Button>
