@@ -15,6 +15,7 @@ import { prepareForumPostBody } from "@/lib/forum-embeds";
 import { useMentionCandidates } from "@/hooks/use-mention-candidates";
 import { toast } from "sonner";
 import { RotatingAffiliateBanner } from "@/components/app/RotatingAffiliateBanner";
+import { ForumPoll } from "@/components/app/ForumPoll";
 
 export const Route = createFileRoute("/_authenticated/_approved/forum/$board/$topic")({
   component: TopicPage,
@@ -332,6 +333,12 @@ function TopicPage() {
             </TabsList>
 
             <TabsContent value="posts" className="space-y-3 mt-3">
+              <ForumPoll
+                topicId={topic.id}
+                userId={user?.id ?? null}
+                canManage={isBoardMod || (!!user && topic.author_id === user.id)}
+                canVote={canPost}
+              />
               {opPost ? renderPost(opPost, 0) : (
                 <div className="text-sm text-muted-foreground text-center py-6">No original post.</div>
               )}
