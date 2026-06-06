@@ -320,6 +320,21 @@ function TopicPage() {
                             size="sm"
                             variant="ghost"
                             className="h-7 w-7 p-0 text-muted-foreground hover:text-[#E11B22]"
+                            title={`Message ${name}`}
+                            onClick={async () => {
+                              const { data, error } = await supabase.rpc("get_or_create_fan_dm_thread", { _other: p.author_id });
+                              if (error) return toast.error("Can't message", { description: error.message });
+                              navigate({ to: "/fanzone/messages/$thread", params: { thread: data as string } });
+                            }}
+                          >
+                            <MessageSquare className="size-3.5" />
+                          </Button>
+                        )}
+                        {canBlock && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-7 w-7 p-0 text-muted-foreground hover:text-[#E11B22]"
                             title="Block this member"
                             onClick={async () => {
                               if (!confirm(`Block ${name}? Their posts will be hidden and you won't be able to message each other.`)) return;
