@@ -5,6 +5,7 @@ import { OutstandingTicketsAlert } from "@/components/app/OutstandingTicketsAler
 import { TicketAssignedAlert } from "@/components/app/TicketAssignedAlert";
 import { TicketHelpRequestedAlert } from "@/components/app/TicketHelpRequestedAlert";
 import { FanZoneAccessCard } from "@/components/app/FanZoneAccessCard";
+import { SoundUnlocker } from "@/components/app/SoundUnlocker";
 import { usePushRegister } from "@/hooks/use-push-register";
 
 export const Route = createFileRoute("/_authenticated/_approved")({
@@ -19,6 +20,7 @@ function ApprovedLayout() {
   usePushRegister();
   return (
     <>
+      <SoundUnlocker />
       <TwoFactorBanner />
       <Outlet />
       <FriendRequestsListener />
