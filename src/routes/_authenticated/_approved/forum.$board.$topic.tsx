@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, Loader2, Pin, Lock, Quote, Reply as ReplyIcon, Pencil, Trash2, Send, History, Check, X, Ban } from "lucide-react";
+import { ArrowLeft, Loader2, Pin, Lock, Quote, Reply as ReplyIcon, Pencil, Trash2, Send, History, Check, X, Ban, MessageSquare } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useFanZoneMembership } from "@/hooks/use-fan-zone";
@@ -315,6 +315,21 @@ function TopicPage() {
                         {canPost && <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => quotePost(p)} title="Quote"><Quote className="size-3.5" /></Button>}
                         {canEdit && editingId !== p.id && <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => startEdit(p)} title="Edit"><Pencil className="size-3.5" /></Button>}
                         {canDelete && <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-destructive/80 hover:text-destructive" onClick={() => void deletePost(p)} title="Delete"><Trash2 className="size-3.5" /></Button>}
+                        {canBlock && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-7 w-7 p-0 text-muted-foreground hover:text-[#E11B22]"
+                            title={`Message ${name}`}
+                            onClick={async () => {
+                              const { data, error } = await supabase.rpc("get_or_create_fan_dm_thread", { _other: p.author_id });
+                              if (error) return toast.error("Can't message", { description: error.message });
+                              navigate({ to: "/fanzone/messages/$thread", params: { thread: data as string } });
+                            }}
+                          >
+                            <MessageSquare className="size-3.5" />
+                          </Button>
+                        )}
                         {canBlock && (
                           <Button
                             size="sm"
