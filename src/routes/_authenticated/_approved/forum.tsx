@@ -7,7 +7,7 @@ import { useFanZoneMembership } from "@/hooks/use-fan-zone";
 import { getIcon } from "@/components/app/IconPicker";
 import { formatLastSeen } from "@/lib/relative-time";
 import { Button } from "@/components/ui/button";
-import { MessageSquareText, Ban, BarChart3 } from "lucide-react";
+import { MessageSquareText, Ban, BarChart3, UserCog } from "lucide-react";
 import { FanZoneStaffBox } from "@/components/app/FanZoneStaffBox";
 import { BoroMatchCentreBox } from "@/components/app/BoroMatchCentreBox";
 import boroHero from "@/assets/boro-hero.jpg";
@@ -73,6 +73,9 @@ function ForumLayout() {
         <div className="absolute top-3 right-3 z-10 flex flex-wrap gap-2 justify-end">
           <Button asChild size="sm" className="bg-gradient-to-r from-[#E11B22] to-[#8B0F14] hover:from-[#F02B30] hover:to-[#9B1118] border-0 text-white shadow-md">
             <Link to="/fanzone/messages"><MessageSquareText className="size-4 mr-1.5" />Fan zone inbox</Link>
+          </Button>
+          <Button asChild size="sm" variant="outline" className="bg-black/40 backdrop-blur border-white/30 text-white hover:bg-black/60 hover:text-white">
+            <Link to="/fanzone/profile"><UserCog className="size-4 mr-1.5" />Edit profile</Link>
           </Button>
           <Button asChild size="sm" variant="outline" className="bg-black/40 backdrop-blur border-white/30 text-white hover:bg-black/60 hover:text-white">
             <Link to="/fanzone/blocks"><Ban className="size-4 mr-1.5" />Ignore list</Link>
