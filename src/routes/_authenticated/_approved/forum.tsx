@@ -187,15 +187,6 @@ function BoardsIndex() {
   return (
     <div className="grid gap-4 xl:grid-cols-[1fr_280px]">
       <div className="space-y-3 min-w-0">
-        <FanZoneAliasSettings />
-        <div className="flex flex-wrap gap-2">
-          <Button asChild size="sm" className="bg-gradient-to-r from-[#E11B22] to-[#8B0F14] hover:from-[#F02B30] hover:to-[#9B1118] border-0 text-white">
-            <Link to="/fanzone/messages"><MessageSquareText className="size-4 mr-2" />Fan zone inbox</Link>
-          </Button>
-          <Button asChild variant="outline" size="sm">
-            <Link to="/fanzone/blocks"><Ban className="size-4 mr-2" />Ignore list</Link>
-          </Button>
-        </div>
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {boards.map((b) => {
         const Icon = getIcon(b.icon);
