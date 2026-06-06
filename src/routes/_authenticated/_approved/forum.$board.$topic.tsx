@@ -282,11 +282,22 @@ function TopicPage() {
                         p.is_op ? "bg-gradient-to-r from-[#E11B22]/10 via-[#E11B22]/5 to-transparent" : "bg-surface-2/40"
                       }`}
                     >
-                      <div className="size-8 rounded-full bg-gradient-to-br from-[#E11B22] to-[#8B0F14] grid place-items-center text-[11px] font-bold text-white overflow-hidden ring-2 ring-white/10 shadow-sm">
+                      <Link
+                        to="/fanzone/u/$userId"
+                        params={{ userId: p.author_id }}
+                        className="size-8 rounded-full bg-gradient-to-br from-[#E11B22] to-[#8B0F14] grid place-items-center text-[11px] font-bold text-white overflow-hidden ring-2 ring-white/10 shadow-sm hover:ring-[#E11B22]/60 transition"
+                        title={`View ${name}'s Fan Zone profile`}
+                      >
                         {author?.avatar_url ? <img src={author.avatar_url} alt="" className="size-8 object-cover" /> : name.slice(0, 1).toUpperCase()}
-                      </div>
+                      </Link>
                       <div className="min-w-0">
-                        <span className="font-semibold text-sm text-foreground">{name}</span>
+                        <Link
+                          to="/fanzone/u/$userId"
+                          params={{ userId: p.author_id }}
+                          className="font-semibold text-sm text-foreground hover:text-[#E11B22] transition-colors"
+                        >
+                          {name}
+                        </Link>
                         {p.is_op && (
                           <span className="ml-2 inline-block rounded-md bg-[#E11B22] text-white text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 align-middle shadow-sm">
                             OP
