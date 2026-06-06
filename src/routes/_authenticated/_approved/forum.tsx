@@ -8,7 +8,6 @@ import { getIcon } from "@/components/app/IconPicker";
 import { formatLastSeen } from "@/lib/relative-time";
 import { Button } from "@/components/ui/button";
 import { MessageSquareText, Ban, BarChart3 } from "lucide-react";
-import { FanZoneAliasSettings } from "@/components/app/FanZoneAliasSettings";
 import { FanZoneStaffBox } from "@/components/app/FanZoneStaffBox";
 import { BoroMatchCentreBox } from "@/components/app/BoroMatchCentreBox";
 import boroHero from "@/assets/boro-hero.jpg";
@@ -100,9 +99,6 @@ function ForumLayout() {
             <p className="mt-2 text-sm text-white/85 italic">
               Up the Boro — boards, banter & match-day debate.
             </p>
-            <div className="mt-3">
-              <FanZoneAliasSettings />
-            </div>
           </div>
         </div>
       </header>
