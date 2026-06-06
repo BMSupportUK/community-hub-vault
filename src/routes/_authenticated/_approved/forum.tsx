@@ -304,7 +304,7 @@ function ForumStats({ boards }: { boards: Board[] }) {
   const fmt = (n: number) => n.toLocaleString();
 
   return (
-    <div className="mt-4 rounded-xl border border-[#E11B22]/40 bg-surface-1/85 backdrop-blur-sm overflow-hidden shadow-[0_10px_30px_-10px_rgba(225,27,34,0.4)]">
+    <div className="rounded-xl border border-[#E11B22]/40 bg-surface-1/85 backdrop-blur-sm overflow-hidden shadow-[0_10px_30px_-10px_rgba(225,27,34,0.4)] h-full flex flex-col">
       <div className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-[#E11B22] to-[#8B0F14] text-white">
         <BarChart3 className="size-4" />
         <h3 className="font-display font-bold text-sm tracking-wide">Forum statistics</h3>
