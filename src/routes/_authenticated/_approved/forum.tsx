@@ -7,7 +7,7 @@ import { useFanZoneMembership } from "@/hooks/use-fan-zone";
 import { getIcon } from "@/components/app/IconPicker";
 import { formatLastSeen } from "@/lib/relative-time";
 import { Button } from "@/components/ui/button";
-import { MessageSquareText, Ban } from "lucide-react";
+import { MessageSquareText, Ban, BarChart3 } from "lucide-react";
 import { FanZoneAliasSettings } from "@/components/app/FanZoneAliasSettings";
 import { FanZoneStaffBox } from "@/components/app/FanZoneStaffBox";
 import { BoroMatchCentreBox } from "@/components/app/BoroMatchCentreBox";
@@ -252,6 +252,7 @@ function BoardsIndex() {
             <Link to="/home">← Back to channels</Link>
           </Button>
         </div>
+        <ForumStats boards={boards} />
       </div>
       <div className="lg:sticky lg:top-4 lg:self-start">
         <div className="space-y-4">
@@ -259,6 +260,85 @@ function BoardsIndex() {
           <FanZoneStaffBox />
         </div>
       </div>
+    </div>
+  );
+}
+
+function ForumStats({ boards }: { boards: Board[] }) {
+  const [memberCount, setMemberCount] = useState<number | null>(null);
+  const [latest, setLatest] = useState<{ name: string; username: string | null } | null>(null);
+
+  useEffect(() => {
+    void (async () => {
+      const { count } = await supabase
+        .from("fan_zone_members")
+        .select("user_id", { count: "exact", head: true })
+        .eq("status", "approved");
+      setMemberCount(count ?? 0);
+
+      const { data: latestRow } = await supabase
+        .from("fan_zone_members")
+        .select("user_id, fan_alias, decided_at")
+        .eq("status", "approved")
+        .order("decided_at", { ascending: false, nullsFirst: false })
+        .limit(1)
+        .maybeSingle();
+      if (latestRow?.user_id) {
+        const { data: prof } = await supabase
+          .from("profiles")
+          .select("display_name, username")
+          .eq("id", latestRow.user_id)
+          .maybeSingle();
+        const name =
+          (latestRow as { fan_alias: string | null }).fan_alias ||
+          prof?.display_name ||
+          prof?.username ||
+          "Member";
+        setLatest({ name, username: prof?.username ?? null });
+      }
+    })();
+  }, []);
+
+  const threads = boards.reduce((s, b) => s + (b.topic_count || 0), 0);
+  const messages = boards.reduce((s, b) => s + (b.post_count || 0), 0);
+  const fmt = (n: number) => n.toLocaleString();
+
+  return (
+    <div className="mt-4 rounded-xl border border-[#E11B22]/40 bg-surface-1/85 backdrop-blur-sm overflow-hidden shadow-[0_10px_30px_-10px_rgba(225,27,34,0.4)]">
+      <div className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-[#E11B22] to-[#8B0F14] text-white">
+        <BarChart3 className="size-4" />
+        <h3 className="font-display font-bold text-sm tracking-wide">Forum statistics</h3>
+      </div>
+      <dl className="divide-y divide-border/60">
+        <Row label="Threads" value={fmt(threads)} />
+        <Row label="Messages" value={fmt(messages)} />
+        <Row label="Members" value={memberCount === null ? "…" : fmt(memberCount)} />
+        <div className="flex items-center justify-between gap-3 px-4 py-2.5 text-sm">
+          <dt className="text-muted-foreground">Latest member:</dt>
+          <dd className="font-semibold text-[#E11B22] truncate">
+            {latest ? (
+              latest.username ? (
+                <Link to="/u/$username" params={{ username: latest.username }} className="hover:underline">
+                  {latest.name}
+                </Link>
+              ) : (
+                latest.name
+              )
+            ) : (
+              "—"
+            )}
+          </dd>
+        </div>
+      </dl>
+    </div>
+  );
+}
+
+function Row({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between gap-3 px-4 py-2.5 text-sm">
+      <dt className="text-muted-foreground">{label}:</dt>
+      <dd className="font-semibold tabular-nums">{value}</dd>
     </div>
   );
 }
