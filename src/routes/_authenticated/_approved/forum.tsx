@@ -100,6 +100,9 @@ function ForumLayout() {
             <p className="mt-2 text-sm text-white/85 italic">
               Up the Boro — boards, banter & match-day debate.
             </p>
+            <div className="mt-3">
+              <FanZoneAliasSettings />
+            </div>
           </div>
         </div>
       </header>
