@@ -196,6 +196,7 @@ function BoardsIndex() {
             <Link to="/fanzone/blocks"><Ban className="size-4 mr-2" />Ignore list</Link>
           </Button>
         </div>
+        <div className="grid gap-3 sm:grid-cols-2">
         {boards.map((b) => {
         const Icon = getIcon(b.icon);
         const poster = b.last_post_by ? posters[b.last_post_by] : null;
@@ -205,43 +206,47 @@ function BoardsIndex() {
               key={b.id}
               to="/forum/$board"
               params={{ board: b.slug }}
-              className="group block rounded-xl border border-border bg-surface-1/85 backdrop-blur-sm hover:border-[#E11B22]/70 hover:shadow-[0_8px_30px_-12px_rgba(225,27,34,0.55)] hover:-translate-y-[1px] transition-all overflow-hidden relative"
+              className="group flex flex-col rounded-xl border border-border bg-surface-1/85 backdrop-blur-sm hover:border-[#E11B22]/70 hover:shadow-[0_10px_30px_-10px_rgba(225,27,34,0.55)] hover:-translate-y-[2px] transition-all overflow-hidden relative h-full"
             >
               <span
-                className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-[#E11B22] to-[#8B0F14]"
+                className="absolute left-0 top-0 right-0 h-1 bg-gradient-to-r from-[#E11B22] to-[#8B0F14]"
                 aria-hidden
               />
-              <div className="grid grid-cols-[auto_1fr_auto] gap-4 p-4 pl-5 items-center">
-              <div className="size-11 rounded-lg bg-gradient-to-br from-[#E11B22] to-[#8B0F14] grid place-items-center text-white shadow-md ring-1 ring-white/10">
-                <Icon className="size-5" />
-              </div>
-              <div className="min-w-0">
-                <div className="flex items-center gap-2">
-                  {b.is_pinned && <Pin className="size-3.5 text-[#F4B400]" />}
-                  {b.is_locked && <Lock className="size-3.5 text-muted-foreground" />}
-                  <h3 className="font-display font-bold truncate group-hover:text-[#E11B22] transition-colors">{b.name}</h3>
-                  <ChevronRight className="size-4 ml-auto text-muted-foreground/40 group-hover:text-[#E11B22] group-hover:translate-x-0.5 transition-all shrink-0" />
-                </div>
-                <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">{b.description}</p>
-                <div className="sm:hidden mt-2 text-[11px] text-muted-foreground flex items-center gap-3">
-                  <span><MessageSquare className="size-3 inline mr-1" />{b.topic_count} topics · {b.post_count} posts</span>
-                </div>
-              </div>
-              <div className="hidden sm:block text-right text-[11px] text-muted-foreground min-w-[140px]">
-                <div><span className="font-semibold text-[#E11B22]">{b.topic_count}</span> topics · <span className="font-semibold text-[#E11B22]">{b.post_count}</span> posts</div>
-                {b.last_post_at ? (
-                  <div className="mt-1 truncate">
-                    Last: {formatLastSeen(b.last_post_at)}
-                    {posterName ? <> by <span className="text-foreground">{posterName}</span></> : null}
+              <div className="flex flex-col gap-3 p-4 pt-5 flex-1">
+                <div className="flex items-start gap-3">
+                  <div className="size-11 rounded-lg bg-gradient-to-br from-[#E11B22] to-[#8B0F14] grid place-items-center text-white shadow-md ring-1 ring-white/10 shrink-0">
+                    <Icon className="size-5" />
                   </div>
-                ) : (
-                  <div className="mt-1 italic">No posts yet</div>
-                )}
-              </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5">
+                      {b.is_pinned && <Pin className="size-3.5 text-[#F4B400] shrink-0" />}
+                      {b.is_locked && <Lock className="size-3.5 text-muted-foreground shrink-0" />}
+                      <h3 className="font-display font-bold truncate group-hover:text-[#E11B22] transition-colors">{b.name}</h3>
+                      <ChevronRight className="size-4 ml-auto text-muted-foreground/40 group-hover:text-[#E11B22] group-hover:translate-x-0.5 transition-all shrink-0" />
+                    </div>
+                    <p className="text-xs text-muted-foreground line-clamp-2 mt-1">{b.description}</p>
+                  </div>
+                </div>
+                <div className="mt-auto pt-3 border-t border-border/60 flex items-center justify-between gap-2 text-[11px] text-muted-foreground">
+                  <span className="inline-flex items-center gap-1">
+                    <MessageSquare className="size-3" />
+                    <span className="font-semibold text-[#E11B22]">{b.topic_count}</span> topics ·{" "}
+                    <span className="font-semibold text-[#E11B22]">{b.post_count}</span> posts
+                  </span>
+                  {b.last_post_at ? (
+                    <span className="truncate text-right">
+                      {formatLastSeen(b.last_post_at)}
+                      {posterName ? <> · <span className="text-foreground">{posterName}</span></> : null}
+                    </span>
+                  ) : (
+                    <span className="italic">No posts yet</span>
+                  )}
+                </div>
               </div>
             </Link>
         );
         })}
+        </div>
         <div className="pt-2 text-center">
           <Button asChild variant="ghost" size="sm">
             <Link to="/home">← Back to channels</Link>
