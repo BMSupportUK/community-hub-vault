@@ -185,7 +185,7 @@ function BoardsIndex() {
   }
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[1fr_280px]">
+    <div className="grid gap-4 xl:grid-cols-[1fr_280px]">
       <div className="space-y-3 min-w-0">
         <FanZoneAliasSettings />
         <div className="flex flex-wrap gap-2">
@@ -196,7 +196,7 @@ function BoardsIndex() {
             <Link to="/fanzone/blocks"><Ban className="size-4 mr-2" />Ignore list</Link>
           </Button>
         </div>
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {boards.map((b) => {
         const Icon = getIcon(b.icon);
         const poster = b.last_post_by ? posters[b.last_post_by] : null;
