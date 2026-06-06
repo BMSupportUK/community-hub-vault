@@ -8,7 +8,6 @@ import { getIcon } from "@/components/app/IconPicker";
 import { formatLastSeen } from "@/lib/relative-time";
 import { Button } from "@/components/ui/button";
 import { MessageSquareText, Ban, BarChart3 } from "lucide-react";
-import { FanZoneAliasSettings } from "@/components/app/FanZoneAliasSettings";
 import { FanZoneStaffBox } from "@/components/app/FanZoneStaffBox";
 import { BoroMatchCentreBox } from "@/components/app/BoroMatchCentreBox";
 import boroHero from "@/assets/boro-hero.jpg";
