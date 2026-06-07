@@ -876,6 +876,7 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
     block.dataset.tzPrevClass = block.className;
     block.setAttribute("data-tz-row", "1");
     block.dataset.tzUtc = String(m.utcMs);
+    if (rowSourceDate) block.dataset.tzSrcDate = rowSourceDate;
     block.className =
       "group not-prose list-none m-0 flex h-full min-h-[12.5rem] flex-col gap-3 overflow-hidden p-4 rounded-xl bg-purple-950/40 border border-purple-500/20 hover:border-fuchsia-500/60 transition-colors";
 
@@ -1018,9 +1019,24 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
   const STALE_MS = 10 * 60 * 60 * 1000;
   const nowMs = Date.now();
   for (let i = eventRows.length - 1; i >= 0; i -= 1) {
-    const utc = Number(eventRows[i].dataset.tzUtc);
-    if (Number.isFinite(utc) && nowMs - utc > STALE_MS) {
-      eventRows[i].remove();
+    const row = eventRows[i];
+    const utc = Number(row.dataset.tzUtc);
+    let stale = Number.isFinite(utc) && nowMs - utc > STALE_MS;
+    // Fallback: if the row's source date parsed correctly but the time was
+    // mis-attached (e.g. parser fell back to today), still prune when the
+    // entire source day ended more than STALE_MS ago. End-of-day is treated
+    // as srcDate + 24h UTC — close enough across viewer time zones for a
+    // 10-hour grace window.
+    if (!stale) {
+      const srcDate = row.dataset.tzSrcDate;
+      if (srcDate && /^\d{4}-\d{2}-\d{2}$/.test(srcDate)) {
+        const [y, mo, d] = srcDate.split("-").map(Number);
+        const endOfDayMs = Date.UTC(y, mo - 1, d) + 24 * 60 * 60 * 1000;
+        if (nowMs - endOfDayMs > STALE_MS) stale = true;
+      }
+    }
+    if (stale) {
+      row.remove();
       eventRows.splice(i, 1);
     }
   }
