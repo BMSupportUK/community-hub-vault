@@ -211,10 +211,15 @@ function AdminFanZonePage() {
   return (
     <main className="flex-1 overflow-y-auto bg-background">
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 py-6">
-        <div className="mb-4">
-          <Link to="/admin" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
-            <ArrowLeft className="size-4" /> Back to Admin Dashboard
+        <div className="mb-4 flex items-center gap-4 flex-wrap">
+          <Link to="/forum" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
+            <ArrowLeft className="size-4" /> Back to Boro Fan Zone
           </Link>
+          {isAdmin && (
+            <Link to="/admin" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
+              <ArrowLeft className="size-4" /> Back to Admin Dashboard
+            </Link>
+          )}
         </div>
 
         {/* Top tabs strip */}
