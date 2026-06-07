@@ -101,13 +101,11 @@ function NewContentPage() {
   const [posts, setPosts] = useState<Post[] | null>(null);
   const [reads, setReads] = useState<Record<string, string>>({});
   const [baselineAt, setBaselineAt] = useState<string | null>(null);
-  const [tab, setTab] = useState<"welcome" | "channel" | "category">(() => {
-    try { return (sessionStorage.getItem("new-content-tab") as any) || "welcome"; } catch { return "welcome"; }
-  });
+  const [tab, setTab] = useState<"welcome" | "channel" | "category">("welcome");
   const [editor, setEditor] = useState<{ open: boolean; kind: Kind; post?: Post } | null>(null);
   const [viewing, setViewing] = useState<Post | null>(null);
 
-  useEffect(() => { try { sessionStorage.setItem("new-content-tab", tab); } catch { /* noop */ } }, [tab]);
+
 
   const load = async () => {
     const { data } = await supabase
