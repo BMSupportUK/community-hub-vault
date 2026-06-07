@@ -13,6 +13,7 @@ import { formatLastSeen } from "@/lib/relative-time";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 import { VpnBadge } from "@/lib/vpn-flags";
+import { formatRoleLabel } from "@/lib/role-label";
 import { PresenceDot, PresenceInline } from "@/components/app/PresenceIndicators";
 import { DndCountdown } from "@/components/app/DndCountdown";
 
