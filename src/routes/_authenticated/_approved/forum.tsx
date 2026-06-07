@@ -7,7 +7,7 @@ import { useFanZoneMembership } from "@/hooks/use-fan-zone";
 import { getIcon } from "@/components/app/IconPicker";
 import { formatLastSeen } from "@/lib/relative-time";
 import { Button } from "@/components/ui/button";
-import { MessageSquareText, Ban, BarChart3, UserCog } from "lucide-react";
+import { MessageSquareText, Ban, BarChart3, UserCog, Users } from "lucide-react";
 import { FanZoneStaffBox } from "@/components/app/FanZoneStaffBox";
 import { BoroMatchCentreBox } from "@/components/app/BoroMatchCentreBox";
 import boroHero from "@/assets/boro-hero.jpg";
@@ -36,6 +36,8 @@ type Board = {
 function ForumLayout() {
   const matches = useMatches();
   const isNested = matches.some((m) => m.routeId.startsWith("/_authenticated/_approved/forum/"));
+  const { hasAny } = useAuth();
+  const canManageMembers = hasAny(["admin", "management", "boro_fan_zone_moderator"]);
   useEffect(() => {
     const html = document.documentElement;
     html.style.setProperty("--boro-bg-image", `url(${boroBg})`);
@@ -80,6 +82,11 @@ function ForumLayout() {
           <Button asChild size="sm" variant="outline" className="bg-black/40 backdrop-blur border-white/30 text-white hover:bg-black/60 hover:text-white">
             <Link to="/fanzone/blocks"><Ban className="size-4 mr-1.5" />Ignore list</Link>
           </Button>
+          {canManageMembers && (
+            <Button asChild size="sm" variant="outline" className="bg-black/40 backdrop-blur border-white/30 text-white hover:bg-black/60 hover:text-white">
+              <Link to="/admin-fan-zone"><Users className="size-4 mr-1.5" />Members</Link>
+            </Button>
+          )}
         </div>
         <div className="relative px-5 py-7 sm:px-8 sm:py-9 flex items-center gap-5">
           <div className="hidden sm:flex size-20 rounded-full bg-white items-center justify-center shadow-lg ring-2 ring-white/50 shrink-0">
