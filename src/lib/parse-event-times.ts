@@ -876,6 +876,7 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
     block.dataset.tzPrevClass = block.className;
     block.setAttribute("data-tz-row", "1");
     block.dataset.tzUtc = String(m.utcMs);
+    if (rowSourceDate) block.dataset.tzSrcDate = rowSourceDate;
     block.className =
       "group not-prose list-none m-0 flex h-full min-h-[12.5rem] flex-col gap-3 overflow-hidden p-4 rounded-xl bg-purple-950/40 border border-purple-500/20 hover:border-fuchsia-500/60 transition-colors";
 
