@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { useFanZoneMembership } from "@/hooks/use-fan-zone";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -51,8 +52,11 @@ type Profile = {
 function AdminFanZonePage() {
   const { user, hasAny } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
+  const info = useFanZoneMembership(user?.id ?? null);
+  const isMember = info?.status === "approved" || hasAny(["boro_fan_zone_member"]);
+  const canView = isAdmin || isMember;
   type Tab = "all" | Status;
-  const [tab, setTab] = useState<Tab>("all");
+  const [tab, setTab] = useState<Tab>(isAdmin ? "all" : "approved");
   const [rows, setRows] = useState<Row[]>([]);
   const [profiles, setProfiles] = useState<Record<string, Profile>>({});
   const [busy, setBusy] = useState<string | null>(null);
@@ -61,27 +65,61 @@ function AdminFanZonePage() {
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
   const load = async () => {
-    const { data } = await supabase
-      .from("fan_zone_members")
-      .select("user_id, status, requested_at, decided_at, reason, note")
-      .order("requested_at", { ascending: false });
-    const list = (data ?? []) as Row[];
-    setRows(list);
-    const ids = Array.from(new Set(list.map((r) => r.user_id)));
-    if (ids.length) {
-      const { data: ps } = await supabase
-        .from("profiles")
-        .select("id, display_name, username, avatar_url")
-        .in("id", ids);
+    if (isAdmin) {
+      const { data } = await supabase
+        .from("fan_zone_members")
+        .select("user_id, status, requested_at, decided_at, reason, note")
+        .order("requested_at", { ascending: false });
+      const list = (data ?? []) as Row[];
+      setRows(list);
+      const ids = Array.from(new Set(list.map((r) => r.user_id)));
+      if (ids.length) {
+        const { data: ps } = await supabase
+          .from("profiles")
+          .select("id, display_name, username, avatar_url")
+          .in("id", ids);
+        const map: Record<string, Profile> = {};
+        (ps ?? []).forEach((p) => (map[(p as Profile).id] = p as Profile));
+        setProfiles(map);
+      }
+    } else {
+      const { data } = await (supabase.rpc as unknown as (fn: string) => Promise<{ data: unknown }>)(
+        "list_fan_zone_approved_members",
+      );
+      const arr = (data ?? []) as Array<{
+        user_id: string;
+        status: Status;
+        requested_at: string;
+        decided_at: string | null;
+        display_name: string | null;
+        username: string | null;
+        avatar_url: string | null;
+      }>;
+      setRows(arr.map((r) => ({
+        user_id: r.user_id,
+        status: r.status,
+        requested_at: r.requested_at,
+        decided_at: r.decided_at,
+        reason: null,
+        note: null,
+      })));
       const map: Record<string, Profile> = {};
-      (ps ?? []).forEach((p) => (map[(p as Profile).id] = p as Profile));
+      arr.forEach((r) => {
+        map[r.user_id] = {
+          id: r.user_id,
+          display_name: r.display_name,
+          username: r.username,
+          avatar_url: r.avatar_url,
+        };
+      });
       setProfiles(map);
     }
   };
 
   useEffect(() => {
-    if (!isAdmin) return;
+    if (!canView) return;
     void load();
+    if (!isAdmin) return;
     const ch = supabase
       .channel("admin-fan-zone-feed")
       .on(
@@ -93,9 +131,9 @@ function AdminFanZonePage() {
     return () => {
       supabase.removeChannel(ch);
     };
-  }, [isAdmin]);
+  }, [canView, isAdmin]);
 
-  if (!isAdmin) return <Navigate to="/home" />;
+  if (!canView) return <Navigate to="/home" />;
 
   const decide = async (userId: string, status: "approved" | "rejected" | "revoked") => {
     setBusy(userId);
@@ -188,22 +226,24 @@ function AdminFanZonePage() {
               <span className="ml-1 size-2 rounded-full bg-rose-500" aria-label={`${counts.pending} pending`} />
             )}
           </div>
-          <Tabs value={tab} onValueChange={(v) => setTab(v as Tab)}>
-            <TabsList className="bg-transparent p-0 h-auto gap-1">
-              <TabsTrigger value="all" className="data-[state=active]:bg-surface-2 data-[state=active]:text-foreground rounded-md px-3 py-1.5 text-sm">
-                All Members
-              </TabsTrigger>
-              <TabsTrigger value="pending" className="data-[state=active]:bg-surface-2 data-[state=active]:text-foreground rounded-md px-3 py-1.5 text-sm">
-                Pending{counts.pending > 0 && <span className="ml-1.5 text-xs text-rose-400">{counts.pending}</span>}
-              </TabsTrigger>
-              <TabsTrigger value="rejected" className="data-[state=active]:bg-surface-2 data-[state=active]:text-foreground rounded-md px-3 py-1.5 text-sm">
-                Rejected
-              </TabsTrigger>
-              <TabsTrigger value="approved" className="data-[state=active]:bg-surface-2 data-[state=active]:text-foreground rounded-md px-3 py-1.5 text-sm">
-                Approved
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
+          {isAdmin && (
+            <Tabs value={tab} onValueChange={(v) => setTab(v as Tab)}>
+              <TabsList className="bg-transparent p-0 h-auto gap-1">
+                <TabsTrigger value="all" className="data-[state=active]:bg-surface-2 data-[state=active]:text-foreground rounded-md px-3 py-1.5 text-sm">
+                  All Members
+                </TabsTrigger>
+                <TabsTrigger value="pending" className="data-[state=active]:bg-surface-2 data-[state=active]:text-foreground rounded-md px-3 py-1.5 text-sm">
+                  Pending{counts.pending > 0 && <span className="ml-1.5 text-xs text-rose-400">{counts.pending}</span>}
+                </TabsTrigger>
+                <TabsTrigger value="rejected" className="data-[state=active]:bg-surface-2 data-[state=active]:text-foreground rounded-md px-3 py-1.5 text-sm">
+                  Rejected
+                </TabsTrigger>
+                <TabsTrigger value="approved" className="data-[state=active]:bg-surface-2 data-[state=active]:text-foreground rounded-md px-3 py-1.5 text-sm">
+                  Approved
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+          )}
         </div>
 
         {/* Toolbar */}
@@ -257,15 +297,15 @@ function AdminFanZonePage() {
                       Requested <ArrowUpDown className="size-3" />
                     </button>
                   </th>
-                  <th className="text-left font-semibold px-5 py-3">Reason</th>
-                  <th className="text-left font-semibold px-5 py-3">Status</th>
-                  <th className="w-12 px-3" />
+                  {isAdmin && <th className="text-left font-semibold px-5 py-3">Reason</th>}
+                  {isAdmin && <th className="text-left font-semibold px-5 py-3">Status</th>}
+                  {isAdmin && <th className="w-12 px-3" />}
                 </tr>
               </thead>
               <tbody>
                 {filtered.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="text-center text-muted-foreground py-16">
+                    <td colSpan={isAdmin ? 6 : 3} className="text-center text-muted-foreground py-16">
                       No members in this view.
                     </td>
                   </tr>
@@ -304,20 +344,25 @@ function AdminFanZonePage() {
                         <td className="px-5 py-3 text-muted-foreground">
                           {formatAgo(r.requested_at)}
                         </td>
-                        <td className="px-5 py-3 max-w-[280px]">
-                          {r.reason ? (
-                            <span className="text-xs text-muted-foreground line-clamp-2" title={r.reason}>
-                              {r.reason}
-                            </span>
-                          ) : (
-                            <span className="text-xs text-muted-foreground/60">—</span>
-                          )}
-                        </td>
-                        <td className="px-5 py-3">
-                          <StatusPill status={r.status} />
-                        </td>
-                        <td className="px-3 py-3 text-right">
-                          <DropdownMenu>
+                        {isAdmin && (
+                          <td className="px-5 py-3 max-w-[280px]">
+                            {r.reason ? (
+                              <span className="text-xs text-muted-foreground line-clamp-2" title={r.reason}>
+                                {r.reason}
+                              </span>
+                            ) : (
+                              <span className="text-xs text-muted-foreground/60">—</span>
+                            )}
+                          </td>
+                        )}
+                        {isAdmin && (
+                          <td className="px-5 py-3">
+                            <StatusPill status={r.status} />
+                          </td>
+                        )}
+                        {isAdmin && (
+                          <td className="px-3 py-3 text-right">
+                            <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button variant="ghost" size="icon" className="size-8" disabled={busy === r.user_id}>
                                 {busy === r.user_id ? (
@@ -348,8 +393,9 @@ function AdminFanZonePage() {
                                 </DropdownMenuItem>
                               )}
                             </DropdownMenuContent>
-                          </DropdownMenu>
-                        </td>
+                            </DropdownMenu>
+                          </td>
+                        )}
                       </tr>
                     );
                   })
