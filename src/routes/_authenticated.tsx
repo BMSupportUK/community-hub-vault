@@ -153,6 +153,18 @@ function AuthLayout() {
                 <span className="hidden xl:inline">Clock</span>
               </Link>
             )}
+            {isStaff && (
+              <Link
+                to="/shifts"
+                title="Shifts"
+                className="flex items-center justify-center size-9 rounded-full bg-surface-2 hover:bg-primary hover:text-primary-foreground text-muted-foreground transition-colors"
+                aria-label="Shifts"
+              >
+                <Calendar className="size-4" />
+              </Link>
+            )}
+            {user && <MentionsBadge />}
+            {user && <NotificationBell />}
           </div>
           <div className="hidden xl:flex flex-1 min-w-0 px-3" />
             <TwoFactorPill />
@@ -161,18 +173,6 @@ function AuthLayout() {
             <div className="hidden lg:flex items-center gap-2">
               <Clocks />
               <MyWorkingStatus />
-              {isStaff && (
-                <Link
-                  to="/shifts"
-                  title="Shifts"
-                  className="flex items-center justify-center size-9 rounded-full bg-surface-2 hover:bg-primary hover:text-primary-foreground text-muted-foreground transition-colors"
-                  aria-label="Shifts"
-                >
-                  <Calendar className="size-4" />
-                </Link>
-              )}
-              {user && <MentionsBadge />}
-              {user && <NotificationBell />}
             </div>
         </header>
         <div className="flex-1 flex min-h-0">
