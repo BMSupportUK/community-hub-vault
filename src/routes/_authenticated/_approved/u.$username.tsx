@@ -597,7 +597,7 @@ function ProfilePage() {
                       <VpnBadge userId={profile.id} size={18} />
                       {sortedRoles.map((r) => (
                         <span key={r} className={cn("text-xs px-2 py-0.5 rounded-full border font-medium", ROLE_STYLES[r])}>
-                          {r}
+                          {formatRoleLabel(r)}
                         </span>
                       ))}
                     </div>
@@ -654,7 +654,7 @@ function ProfilePage() {
                   <div className="mt-3 flex flex-wrap gap-2">
                     {sortedRoles.map((r) => (
                       <span key={r} className={cn("text-xs px-2 py-0.5 rounded-full border font-medium", ROLE_STYLES[r])}>
-                        {r}
+                        {formatRoleLabel(r)}
                       </span>
                     ))}
                     {breakRow ? (
@@ -671,7 +671,7 @@ function ProfilePage() {
                   </div>
                 </div>
                 <InfoCard label="Member since" value={new Date(profile.created_at).toLocaleDateString()} />
-                <InfoCard label="Roles" value={sortedRoles.join(", ") || "—"} />
+                <InfoCard label="Roles" value={sortedRoles.map(formatRoleLabel).join(", ") || "—"} />
                 <InviteCard
                   info={inviteInfo}
                   showStats={isOwner || isAdmin}
