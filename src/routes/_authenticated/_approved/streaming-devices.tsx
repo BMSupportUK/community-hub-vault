@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import firestickCompatibility from "@/assets/firestick-compatibility.png.asset.json";
+import tvLoginIllustration from "@/assets/tv-login-illustration.jpg";
 
 export const Route = createFileRoute("/_authenticated/_approved/streaming-devices")({
   component: StreamingDevicesPage,
@@ -358,8 +359,17 @@ function StreamingDevicesPage() {
   const fireSticks = [...allDevices.filter(isFireDevice)].sort(byPrice);
 
   return (
-    <div className="flex-1 overflow-y-auto">
-      <div className="w-full px-4 sm:px-6 lg:px-8 py-6 space-y-8">
+    <div className="relative flex-1 overflow-y-auto">
+      <div
+        aria-hidden
+        className="pointer-events-none fixed inset-0 -z-10 bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: `url(${tvLoginIllustration})` }}
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none fixed inset-0 -z-10 bg-background/80 backdrop-blur-sm"
+      />
+      <div className="relative w-full px-4 sm:px-6 lg:px-8 py-6 space-y-8">
         <header className="space-y-2">
           <h1 className="text-3xl font-bold tracking-tight">Streaming device reviews</h1>
           <p className="text-muted-foreground max-w-2xl">
