@@ -1,11 +1,31 @@
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { ArrowLeft, Check, X, RotateCcw, Trophy, Loader2 } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import {
+  ArrowLeft,
+  Check,
+  X,
+  RotateCcw,
+  Trophy,
+  Loader2,
+  Search,
+  ArrowUpDown,
+  MoreHorizontal,
+  UserCog,
+  Users,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/_approved/admin-fan-zone")({
@@ -31,11 +51,14 @@ type Profile = {
 function AdminFanZonePage() {
   const { user, hasAny } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
-  const [tab, setTab] = useState<Status>("pending");
+  type Tab = "all" | Status;
+  const [tab, setTab] = useState<Tab>("all");
   const [rows, setRows] = useState<Row[]>([]);
   const [profiles, setProfiles] = useState<Record<string, Profile>>({});
   const [busy, setBusy] = useState<string | null>(null);
-  const [notes, setNotes] = useState<Record<string, string>>({});
+  const [search, setSearch] = useState("");
+  const [sortKey, setSortKey] = useState<"name" | "since" | "requested">("requested");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
   const load = async () => {
     const { data } = await supabase
@@ -76,12 +99,10 @@ function AdminFanZonePage() {
 
   const decide = async (userId: string, status: "approved" | "rejected" | "revoked") => {
     setBusy(userId);
-    const note = notes[userId]?.trim() ? notes[userId].trim().slice(0, 280) : null;
     const { error } = await supabase
       .from("fan_zone_members")
       .update({
         status,
-        note,
         decided_at: new Date().toISOString(),
         decided_by: user?.id ?? null,
       })
@@ -98,140 +119,285 @@ function AdminFanZonePage() {
           ? "Request declined."
           : "Access revoked.",
     );
-    setNotes((n) => ({ ...n, [userId]: "" }));
     void load();
   };
 
-  const filtered = rows.filter((r) => r.status === tab);
-  const counts = {
-    pending: rows.filter((r) => r.status === "pending").length,
-    approved: rows.filter((r) => r.status === "approved").length,
-    rejected: rows.filter((r) => r.status === "rejected").length,
-    revoked: rows.filter((r) => r.status === "revoked").length,
+  const counts = useMemo(
+    () => ({
+      all: rows.length,
+      pending: rows.filter((r) => r.status === "pending").length,
+      approved: rows.filter((r) => r.status === "approved").length,
+      rejected: rows.filter((r) => r.status === "rejected").length,
+      revoked: rows.filter((r) => r.status === "revoked").length,
+    }),
+    [rows],
+  );
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    const dir = sortDir === "asc" ? 1 : -1;
+    return rows
+      .filter((r) => (tab === "all" ? true : r.status === tab))
+      .filter((r) => {
+        if (!q) return true;
+        const p = profiles[r.user_id];
+        return (
+          (p?.display_name ?? "").toLowerCase().includes(q) ||
+          (p?.username ?? "").toLowerCase().includes(q) ||
+          r.user_id.toLowerCase().includes(q)
+        );
+      })
+      .sort((a, b) => {
+        if (sortKey === "name") {
+          const an = (profiles[a.user_id]?.display_name || profiles[a.user_id]?.username || "").toLowerCase();
+          const bn = (profiles[b.user_id]?.display_name || profiles[b.user_id]?.username || "").toLowerCase();
+          return an < bn ? -dir : an > bn ? dir : 0;
+        }
+        if (sortKey === "since") {
+          const at = new Date(a.decided_at ?? a.requested_at).getTime();
+          const bt = new Date(b.decided_at ?? b.requested_at).getTime();
+          return (at - bt) * dir;
+        }
+        return (new Date(a.requested_at).getTime() - new Date(b.requested_at).getTime()) * dir;
+      });
+  }, [rows, profiles, tab, search, sortKey, sortDir]);
+
+  const toggleSort = (key: "name" | "since" | "requested") => {
+    if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    else {
+      setSortKey(key);
+      setSortDir(key === "name" ? "asc" : "desc");
+    }
   };
 
   return (
-    <main className="flex-1 overflow-y-auto">
-      <div className="max-w-5xl mx-auto px-6 py-8">
+    <main className="flex-1 overflow-y-auto bg-background">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 py-6">
         <div className="mb-4">
           <Link to="/admin" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
             <ArrowLeft className="size-4" /> Back to Admin Dashboard
           </Link>
         </div>
-        <header className="mb-6 flex items-start gap-3">
-          <div className="size-12 rounded-2xl bg-gradient-to-br from-rose-600 to-amber-600 grid place-items-center text-white shadow-glow">
-            <Trophy className="size-6" />
-          </div>
-          <div>
-            <h1 className="font-display text-3xl font-bold">Boro Fan Zone Requests</h1>
-            <p className="text-muted-foreground mt-1">Approve, reject or revoke Middlesbrough F.C. fan-zone access.</p>
-          </div>
-        </header>
 
-        <Tabs value={tab} onValueChange={(v) => setTab(v as Status)}>
-          <TabsList className="grid grid-cols-4 max-w-lg">
-            <TabsTrigger value="pending">
-              Pending{counts.pending > 0 && <span className="ml-1.5 px-1.5 rounded-full bg-amber-500 text-white text-[10px]">{counts.pending}</span>}
-            </TabsTrigger>
-            <TabsTrigger value="approved">Approved ({counts.approved})</TabsTrigger>
-            <TabsTrigger value="rejected">Rejected ({counts.rejected})</TabsTrigger>
-            <TabsTrigger value="revoked">Revoked ({counts.revoked})</TabsTrigger>
-          </TabsList>
+        {/* Top tabs strip */}
+        <div className="flex items-center gap-6 border-b border-border pb-3 mb-6 overflow-x-auto">
+          <div className="flex items-center gap-2 shrink-0 text-sm font-semibold">
+            <Users className="size-4 text-muted-foreground" />
+            <span>Members</span>
+            {counts.pending > 0 && (
+              <span className="ml-1 size-2 rounded-full bg-rose-500" aria-label={`${counts.pending} pending`} />
+            )}
+          </div>
+          <Tabs value={tab} onValueChange={(v) => setTab(v as Tab)}>
+            <TabsList className="bg-transparent p-0 h-auto gap-1">
+              <TabsTrigger value="all" className="data-[state=active]:bg-surface-2 data-[state=active]:text-foreground rounded-md px-3 py-1.5 text-sm">
+                All Members
+              </TabsTrigger>
+              <TabsTrigger value="pending" className="data-[state=active]:bg-surface-2 data-[state=active]:text-foreground rounded-md px-3 py-1.5 text-sm">
+                Pending{counts.pending > 0 && <span className="ml-1.5 text-xs text-rose-400">{counts.pending}</span>}
+              </TabsTrigger>
+              <TabsTrigger value="rejected" className="data-[state=active]:bg-surface-2 data-[state=active]:text-foreground rounded-md px-3 py-1.5 text-sm">
+                Rejected
+              </TabsTrigger>
+              <TabsTrigger value="approved" className="data-[state=active]:bg-surface-2 data-[state=active]:text-foreground rounded-md px-3 py-1.5 text-sm">
+                Approved
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
 
-          <TabsContent value={tab} className="mt-6">
-            {filtered.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-border p-12 text-center text-muted-foreground">
-                Nothing here.
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {filtered.map((r) => {
-                  const p = profiles[r.user_id];
-                  const name = p?.display_name || p?.username || "Member";
-                  return (
-                    <div key={r.user_id} className="rounded-2xl bg-surface-1 border border-border p-5">
-                      <div className="flex items-start gap-4">
-                        {p?.avatar_url ? (
-                          <img src={p.avatar_url} alt={name} className="size-10 rounded-full object-cover ring-2 ring-amber-500/40" />
-                        ) : (
-                          <div className="size-10 rounded-full bg-gradient-to-br from-rose-600 to-amber-600 grid place-items-center text-white text-xs font-bold">
-                            {name.slice(0, 1).toUpperCase()}
-                          </div>
-                        )}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between gap-3 flex-wrap">
-                            <div>
-                              <Link to="/u/$username" params={{ username: p?.username ?? "" }} className="font-semibold hover:underline">
+        {/* Toolbar */}
+        <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
+          <div className="flex items-center gap-2">
+            <Trophy className="size-5 text-amber-500" />
+            <h1 className="text-xl font-semibold">
+              {tab === "all" ? "Recent Members" : tab.charAt(0).toUpperCase() + tab.slice(1) + " Members"}
+            </h1>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="relative">
+              <Search className="size-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search by username or ID"
+                className="h-9 pl-8 w-[260px] bg-surface-1 border-border"
+              />
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-9"
+              onClick={() => toggleSort(sortKey)}
+              title={`Sort ${sortDir === "asc" ? "ascending" : "descending"}`}
+            >
+              <ArrowUpDown className="size-3.5 mr-1.5" /> Sort
+            </Button>
+          </div>
+        </div>
+
+        {/* Table */}
+        <div className="rounded-xl border border-border bg-surface-1 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-[11px] uppercase tracking-wider text-muted-foreground border-b border-border bg-surface-2/40">
+                  <th className="text-left font-semibold px-5 py-3">
+                    <button onClick={() => toggleSort("name")} className="inline-flex items-center gap-1 hover:text-foreground">
+                      Name <ArrowUpDown className="size-3" />
+                    </button>
+                  </th>
+                  <th className="text-left font-semibold px-5 py-3">
+                    <button onClick={() => toggleSort("since")} className="inline-flex items-center gap-1 hover:text-foreground">
+                      Member Since <ArrowUpDown className="size-3" />
+                    </button>
+                  </th>
+                  <th className="text-left font-semibold px-5 py-3">
+                    <button onClick={() => toggleSort("requested")} className="inline-flex items-center gap-1 hover:text-foreground">
+                      Requested <ArrowUpDown className="size-3" />
+                    </button>
+                  </th>
+                  <th className="text-left font-semibold px-5 py-3">Reason</th>
+                  <th className="text-left font-semibold px-5 py-3">Status</th>
+                  <th className="w-12 px-3" />
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="text-center text-muted-foreground py-16">
+                      No members in this view.
+                    </td>
+                  </tr>
+                ) : (
+                  filtered.map((r) => {
+                    const p = profiles[r.user_id];
+                    const name = p?.display_name || p?.username || "Member";
+                    return (
+                      <tr key={r.user_id} className="border-b border-border/60 last:border-0 hover:bg-surface-2/30">
+                        <td className="px-5 py-3">
+                          <div className="flex items-center gap-3 min-w-0">
+                            {p?.avatar_url ? (
+                              <img src={p.avatar_url} alt={name} className="size-9 rounded-full object-cover" />
+                            ) : (
+                              <div className="size-9 rounded-full bg-gradient-to-br from-rose-600 to-amber-600 grid place-items-center text-white text-xs font-bold">
+                                {name.slice(0, 1).toUpperCase()}
+                              </div>
+                            )}
+                            <div className="min-w-0">
+                              <Link
+                                to="/u/$username"
+                                params={{ username: p?.username ?? "" }}
+                                className="font-medium hover:underline truncate block max-w-[220px]"
+                              >
                                 {name}
                               </Link>
-                              <div className="text-xs text-muted-foreground">
-                                {tab === "pending" ? "Requested" : "Last decision"}:{" "}
-                                {new Date(r.decided_at ?? r.requested_at).toLocaleString()}
-                              </div>
+                              {p?.username && (
+                                <div className="text-xs text-muted-foreground truncate max-w-[220px]">@{p.username}</div>
+                              )}
                             </div>
                           </div>
-                          {r.reason && (
-                            <p className="mt-3 text-sm whitespace-pre-wrap bg-surface-2/60 border border-border rounded-md p-3">
+                        </td>
+                        <td className="px-5 py-3 text-muted-foreground">
+                          {formatAgo(r.decided_at ?? r.requested_at)}
+                        </td>
+                        <td className="px-5 py-3 text-muted-foreground">
+                          {formatAgo(r.requested_at)}
+                        </td>
+                        <td className="px-5 py-3 max-w-[280px]">
+                          {r.reason ? (
+                            <span className="text-xs text-muted-foreground line-clamp-2" title={r.reason}>
                               {r.reason}
-                            </p>
+                            </span>
+                          ) : (
+                            <span className="text-xs text-muted-foreground/60">—</span>
                           )}
-                          {r.note && r.status !== "pending" && (
-                            <p className="mt-2 text-xs text-muted-foreground">
-                              Admin note: <span className="italic">{r.note}</span>
-                            </p>
-                          )}
-                          {r.status === "pending" && (
-                            <Input
-                              value={notes[r.user_id] ?? ""}
-                              onChange={(e) => setNotes((n) => ({ ...n, [r.user_id]: e.target.value.slice(0, 280) }))}
-                              placeholder="Optional note shown on rejection (not on approval)"
-                              className="mt-3 h-9 text-xs"
-                            />
-                          )}
-                          <div className="mt-4 flex flex-wrap gap-2">
-                            {r.status !== "approved" && (
-                              <Button
-                                size="sm"
-                                disabled={busy === r.user_id}
-                                onClick={() => decide(r.user_id, "approved")}
-                                className="bg-emerald-600 hover:bg-emerald-500 text-white border-0"
-                              >
-                                {busy === r.user_id ? <Loader2 className="size-4 animate-spin mr-1" /> : <Check className="size-4 mr-1" />}
-                                Approve
+                        </td>
+                        <td className="px-5 py-3">
+                          <StatusPill status={r.status} />
+                        </td>
+                        <td className="px-3 py-3 text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="size-8" disabled={busy === r.user_id}>
+                                {busy === r.user_id ? (
+                                  <Loader2 className="size-4 animate-spin" />
+                                ) : (
+                                  <MoreHorizontal className="size-4" />
+                                )}
                               </Button>
-                            )}
-                            {r.status === "pending" && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                disabled={busy === r.user_id}
-                                onClick={() => decide(r.user_id, "rejected")}
-                              >
-                                <X className="size-4 mr-1" /> Reject
-                              </Button>
-                            )}
-                            {r.status === "approved" && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                disabled={busy === r.user_id}
-                                onClick={() => decide(r.user_id, "revoked")}
-                                className="border-rose-400/60 text-rose-200 hover:bg-rose-900/30"
-                              >
-                                <RotateCcw className="size-4 mr-1" /> Revoke
-                              </Button>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </TabsContent>
-        </Tabs>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuLabel className="text-xs flex items-center gap-1.5">
+                                <UserCog className="size-3.5" /> Manage access
+                              </DropdownMenuLabel>
+                              <DropdownMenuSeparator />
+                              {r.status !== "approved" && (
+                                <DropdownMenuItem onClick={() => decide(r.user_id, "approved")}>
+                                  <Check className="size-4 mr-2 text-emerald-500" /> Approve
+                                </DropdownMenuItem>
+                              )}
+                              {r.status !== "rejected" && r.status !== "approved" && (
+                                <DropdownMenuItem onClick={() => decide(r.user_id, "rejected")}>
+                                  <X className="size-4 mr-2 text-rose-500" /> Reject
+                                </DropdownMenuItem>
+                              )}
+                              {r.status === "approved" && (
+                                <DropdownMenuItem onClick={() => decide(r.user_id, "revoked")}>
+                                  <RotateCcw className="size-4 mr-2 text-rose-500" /> Revoke
+                                </DropdownMenuItem>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+          <div className="px-5 py-3 text-xs text-muted-foreground border-t border-border bg-surface-2/30">
+            Showing <span className="font-medium text-foreground">{filtered.length}</span> {filtered.length === 1 ? "member" : "members"}
+          </div>
+        </div>
       </div>
     </main>
   );
+}
+
+function StatusPill({ status }: { status: Status }) {
+  const map: Record<Status, { label: string; cls: string; dot: string }> = {
+    approved: { label: "Approved", cls: "bg-emerald-500/10 text-emerald-400 border-emerald-500/30", dot: "bg-emerald-500" },
+    pending: { label: "Pending", cls: "bg-amber-500/10 text-amber-400 border-amber-500/30", dot: "bg-amber-500" },
+    rejected: { label: "Rejected", cls: "bg-rose-500/10 text-rose-400 border-rose-500/30", dot: "bg-rose-500" },
+    revoked: { label: "Revoked", cls: "bg-muted/40 text-muted-foreground border-border", dot: "bg-muted-foreground" },
+  };
+  const m = map[status];
+  return (
+    <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-medium ${m.cls}`}>
+      <span className={`size-1.5 rounded-full ${m.dot}`} /> {m.label}
+    </span>
+  );
+}
+
+function formatAgo(iso: string | null | undefined): string {
+  if (!iso) return "—";
+  const then = new Date(iso).getTime();
+  if (Number.isNaN(then)) return "—";
+  const diff = Math.max(0, Date.now() - then);
+  const d = Math.floor(diff / 86400000);
+  if (d < 1) {
+    const h = Math.floor(diff / 3600000);
+    if (h < 1) {
+      const m = Math.floor(diff / 60000);
+      return m < 1 ? "just now" : `${m} minute${m === 1 ? "" : "s"} ago`;
+    }
+    return `${h} hour${h === 1 ? "" : "s"} ago`;
+  }
+  if (d < 30) return `${d} day${d === 1 ? "" : "s"} ago`;
+  const mo = Math.floor(d / 30);
+  if (mo < 12) return `${mo} month${mo === 1 ? "" : "s"} ago`;
+  const y = Math.floor(d / 365);
+  return `${y} year${y === 1 ? "" : "s"} ago`;
 }
