@@ -248,7 +248,7 @@ function WelcomePage() {
     community: { key: "community", icon: Trophy, title: "Boro Fan Zone", desc: "Join the conversation with fellow Middlesbrough supporters.", to: "/forum" },
     tickets: { key: "tickets", icon: Ticket, title: "Support tickets", desc: "Open or follow your support requests.", to: "/tickets" },
     status: { key: "status", icon: KeyRound, title: "View Your Service Login Details", desc: "View your username and password and any other revelant app login information.", onClick: goToCredentials },
-    shop: { key: "shop", icon: ShoppingBag, title: "Shop", desc: "Browse plans, add-ons and gear.", to: "/shop" },
+    shop: { key: "shop", icon: ShoppingBag, title: "Shop", desc: "Browse plans, Purchase or renew your subscription", to: "/shop" },
     "install-guides": { key: "install-guides", icon: BookOpen, title: "Install guides", desc: "Step-by-step setup walkthroughs.", to: "/install-guides" },
     invite: { key: "invite", icon: UserPlus, title: "Create an invite", desc: "Invite a friend and earn a referral bonus.", onClick: goToInvite },
   };
