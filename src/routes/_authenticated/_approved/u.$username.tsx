@@ -108,6 +108,13 @@ const ROLE_STYLES: Record<AppRole, string> = {
   rejected: "bg-rose-600/20 text-rose-300 border-rose-500/40",
 };
 
+function formatRoleLabel(role: string) {
+  return role
+    .split("_")
+    .map((w) => (w ? w[0].toUpperCase() + w.slice(1) : w))
+    .join(" ");
+}
+
 async function sha256Hex(input: string) {
   const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(input));
   return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, "0")).join("");
@@ -590,7 +597,7 @@ function ProfilePage() {
                       <VpnBadge userId={profile.id} size={18} />
                       {sortedRoles.map((r) => (
                         <span key={r} className={cn("text-xs px-2 py-0.5 rounded-full border font-medium", ROLE_STYLES[r])}>
-                          {r}
+                          {formatRoleLabel(r)}
                         </span>
                       ))}
                     </div>
@@ -647,7 +654,7 @@ function ProfilePage() {
                   <div className="mt-3 flex flex-wrap gap-2">
                     {sortedRoles.map((r) => (
                       <span key={r} className={cn("text-xs px-2 py-0.5 rounded-full border font-medium", ROLE_STYLES[r])}>
-                        {r}
+                        {formatRoleLabel(r)}
                       </span>
                     ))}
                     {breakRow ? (
@@ -664,7 +671,7 @@ function ProfilePage() {
                   </div>
                 </div>
                 <InfoCard label="Member since" value={new Date(profile.created_at).toLocaleDateString()} />
-                <InfoCard label="Roles" value={sortedRoles.join(", ") || "—"} />
+                <InfoCard label="Roles" value={sortedRoles.map(formatRoleLabel).join(", ") || "—"} />
                 <InviteCard
                   info={inviteInfo}
                   showStats={isOwner || isAdmin}
