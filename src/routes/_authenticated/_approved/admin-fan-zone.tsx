@@ -226,22 +226,24 @@ function AdminFanZonePage() {
               <span className="ml-1 size-2 rounded-full bg-rose-500" aria-label={`${counts.pending} pending`} />
             )}
           </div>
-          <Tabs value={tab} onValueChange={(v) => setTab(v as Tab)}>
-            <TabsList className="bg-transparent p-0 h-auto gap-1">
-              <TabsTrigger value="all" className="data-[state=active]:bg-surface-2 data-[state=active]:text-foreground rounded-md px-3 py-1.5 text-sm">
-                All Members
-              </TabsTrigger>
-              <TabsTrigger value="pending" className="data-[state=active]:bg-surface-2 data-[state=active]:text-foreground rounded-md px-3 py-1.5 text-sm">
-                Pending{counts.pending > 0 && <span className="ml-1.5 text-xs text-rose-400">{counts.pending}</span>}
-              </TabsTrigger>
-              <TabsTrigger value="rejected" className="data-[state=active]:bg-surface-2 data-[state=active]:text-foreground rounded-md px-3 py-1.5 text-sm">
-                Rejected
-              </TabsTrigger>
-              <TabsTrigger value="approved" className="data-[state=active]:bg-surface-2 data-[state=active]:text-foreground rounded-md px-3 py-1.5 text-sm">
-                Approved
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
+          {isAdmin && (
+            <Tabs value={tab} onValueChange={(v) => setTab(v as Tab)}>
+              <TabsList className="bg-transparent p-0 h-auto gap-1">
+                <TabsTrigger value="all" className="data-[state=active]:bg-surface-2 data-[state=active]:text-foreground rounded-md px-3 py-1.5 text-sm">
+                  All Members
+                </TabsTrigger>
+                <TabsTrigger value="pending" className="data-[state=active]:bg-surface-2 data-[state=active]:text-foreground rounded-md px-3 py-1.5 text-sm">
+                  Pending{counts.pending > 0 && <span className="ml-1.5 text-xs text-rose-400">{counts.pending}</span>}
+                </TabsTrigger>
+                <TabsTrigger value="rejected" className="data-[state=active]:bg-surface-2 data-[state=active]:text-foreground rounded-md px-3 py-1.5 text-sm">
+                  Rejected
+                </TabsTrigger>
+                <TabsTrigger value="approved" className="data-[state=active]:bg-surface-2 data-[state=active]:text-foreground rounded-md px-3 py-1.5 text-sm">
+                  Approved
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+          )}
         </div>
 
         {/* Toolbar */}
@@ -295,15 +297,15 @@ function AdminFanZonePage() {
                       Requested <ArrowUpDown className="size-3" />
                     </button>
                   </th>
-                  <th className="text-left font-semibold px-5 py-3">Reason</th>
-                  <th className="text-left font-semibold px-5 py-3">Status</th>
-                  <th className="w-12 px-3" />
+                  {isAdmin && <th className="text-left font-semibold px-5 py-3">Reason</th>}
+                  {isAdmin && <th className="text-left font-semibold px-5 py-3">Status</th>}
+                  {isAdmin && <th className="w-12 px-3" />}
                 </tr>
               </thead>
               <tbody>
                 {filtered.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="text-center text-muted-foreground py-16">
+                    <td colSpan={isAdmin ? 6 : 3} className="text-center text-muted-foreground py-16">
                       No members in this view.
                     </td>
                   </tr>
@@ -342,20 +344,25 @@ function AdminFanZonePage() {
                         <td className="px-5 py-3 text-muted-foreground">
                           {formatAgo(r.requested_at)}
                         </td>
-                        <td className="px-5 py-3 max-w-[280px]">
-                          {r.reason ? (
-                            <span className="text-xs text-muted-foreground line-clamp-2" title={r.reason}>
-                              {r.reason}
-                            </span>
-                          ) : (
-                            <span className="text-xs text-muted-foreground/60">—</span>
-                          )}
-                        </td>
-                        <td className="px-5 py-3">
-                          <StatusPill status={r.status} />
-                        </td>
-                        <td className="px-3 py-3 text-right">
-                          <DropdownMenu>
+                        {isAdmin && (
+                          <td className="px-5 py-3 max-w-[280px]">
+                            {r.reason ? (
+                              <span className="text-xs text-muted-foreground line-clamp-2" title={r.reason}>
+                                {r.reason}
+                              </span>
+                            ) : (
+                              <span className="text-xs text-muted-foreground/60">—</span>
+                            )}
+                          </td>
+                        )}
+                        {isAdmin && (
+                          <td className="px-5 py-3">
+                            <StatusPill status={r.status} />
+                          </td>
+                        )}
+                        {isAdmin && (
+                          <td className="px-3 py-3 text-right">
+                            <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button variant="ghost" size="icon" className="size-8" disabled={busy === r.user_id}>
                                 {busy === r.user_id ? (
@@ -386,8 +393,9 @@ function AdminFanZonePage() {
                                 </DropdownMenuItem>
                               )}
                             </DropdownMenuContent>
-                          </DropdownMenu>
-                        </td>
+                            </DropdownMenu>
+                          </td>
+                        )}
                       </tr>
                     );
                   })
