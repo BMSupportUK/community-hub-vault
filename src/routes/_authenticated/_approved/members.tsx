@@ -267,7 +267,7 @@ function MembersPage() {
                         ROLE_COLOR[r] ?? ROLE_COLOR.member
                       }`}
                     >
-                      {r}
+                      {formatRoleLabel(r)}
                     </span>
                   ))}
                 </div>
