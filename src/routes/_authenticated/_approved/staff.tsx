@@ -274,7 +274,7 @@ function StaffPage() {
                                     key={r}
                                     className="text-[10px] uppercase tracking-wider rounded-full ring-1 ring-fuchsia-400/40 bg-fuchsia-500/20 text-fuchsia-200 px-2 py-0.5"
                                   >
-                                    {r}
+                                    {formatRoleLabel(r)}
                                   </span>
                                 ))}
                             </div>
