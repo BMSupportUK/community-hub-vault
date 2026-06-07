@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { useFanZoneMembership } from "@/hooks/use-fan-zone";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -51,8 +52,11 @@ type Profile = {
 function AdminFanZonePage() {
   const { user, hasAny } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
+  const info = useFanZoneMembership(user?.id ?? null);
+  const isMember = info?.status === "approved" || hasAny(["boro_fan_zone_member"]);
+  const canView = isAdmin || isMember;
   type Tab = "all" | Status;
-  const [tab, setTab] = useState<Tab>("all");
+  const [tab, setTab] = useState<Tab>(isAdmin ? "all" : "approved");
   const [rows, setRows] = useState<Row[]>([]);
   const [profiles, setProfiles] = useState<Record<string, Profile>>({});
   const [busy, setBusy] = useState<string | null>(null);
@@ -61,27 +65,59 @@ function AdminFanZonePage() {
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
   const load = async () => {
-    const { data } = await supabase
-      .from("fan_zone_members")
-      .select("user_id, status, requested_at, decided_at, reason, note")
-      .order("requested_at", { ascending: false });
-    const list = (data ?? []) as Row[];
-    setRows(list);
-    const ids = Array.from(new Set(list.map((r) => r.user_id)));
-    if (ids.length) {
-      const { data: ps } = await supabase
-        .from("profiles")
-        .select("id, display_name, username, avatar_url")
-        .in("id", ids);
+    if (isAdmin) {
+      const { data } = await supabase
+        .from("fan_zone_members")
+        .select("user_id, status, requested_at, decided_at, reason, note")
+        .order("requested_at", { ascending: false });
+      const list = (data ?? []) as Row[];
+      setRows(list);
+      const ids = Array.from(new Set(list.map((r) => r.user_id)));
+      if (ids.length) {
+        const { data: ps } = await supabase
+          .from("profiles")
+          .select("id, display_name, username, avatar_url")
+          .in("id", ids);
+        const map: Record<string, Profile> = {};
+        (ps ?? []).forEach((p) => (map[(p as Profile).id] = p as Profile));
+        setProfiles(map);
+      }
+    } else {
+      const { data } = await supabase.rpc("list_fan_zone_approved_members");
+      const arr = (data ?? []) as Array<{
+        user_id: string;
+        status: Status;
+        requested_at: string;
+        decided_at: string | null;
+        display_name: string | null;
+        username: string | null;
+        avatar_url: string | null;
+      }>;
+      setRows(arr.map((r) => ({
+        user_id: r.user_id,
+        status: r.status,
+        requested_at: r.requested_at,
+        decided_at: r.decided_at,
+        reason: null,
+        note: null,
+      })));
       const map: Record<string, Profile> = {};
-      (ps ?? []).forEach((p) => (map[(p as Profile).id] = p as Profile));
+      arr.forEach((r) => {
+        map[r.user_id] = {
+          id: r.user_id,
+          display_name: r.display_name,
+          username: r.username,
+          avatar_url: r.avatar_url,
+        };
+      });
       setProfiles(map);
     }
   };
 
   useEffect(() => {
-    if (!isAdmin) return;
+    if (!canView) return;
     void load();
+    if (!isAdmin) return;
     const ch = supabase
       .channel("admin-fan-zone-feed")
       .on(
@@ -93,9 +129,9 @@ function AdminFanZonePage() {
     return () => {
       supabase.removeChannel(ch);
     };
-  }, [isAdmin]);
+  }, [canView, isAdmin]);
 
-  if (!isAdmin) return <Navigate to="/home" />;
+  if (!canView) return <Navigate to="/home" />;
 
   const decide = async (userId: string, status: "approved" | "rejected" | "revoked") => {
     setBusy(userId);
