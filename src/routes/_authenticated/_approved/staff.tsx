@@ -13,6 +13,7 @@ import { formatLastSeen } from "@/lib/relative-time";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 import { VpnBadge } from "@/lib/vpn-flags";
+import { formatRoleLabel } from "@/lib/role-label";
 import { PresenceDot, PresenceInline } from "@/components/app/PresenceIndicators";
 import { DndCountdown } from "@/components/app/DndCountdown";
 
@@ -274,7 +275,7 @@ function StaffPage() {
                                     key={r}
                                     className="text-[10px] uppercase tracking-wider rounded-full ring-1 ring-fuchsia-400/40 bg-fuchsia-500/20 text-fuchsia-200 px-2 py-0.5"
                                   >
-                                    {r}
+                                    {formatRoleLabel(r)}
                                   </span>
                                 ))}
                             </div>

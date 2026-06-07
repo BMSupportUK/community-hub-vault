@@ -108,12 +108,7 @@ const ROLE_STYLES: Record<AppRole, string> = {
   rejected: "bg-rose-600/20 text-rose-300 border-rose-500/40",
 };
 
-function formatRoleLabel(role: string) {
-  return role
-    .split("_")
-    .map((w) => (w ? w[0].toUpperCase() + w.slice(1) : w))
-    .join(" ");
-}
+import { formatRoleLabel } from "@/lib/role-label";
 
 async function sha256Hex(input: string) {
   const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(input));

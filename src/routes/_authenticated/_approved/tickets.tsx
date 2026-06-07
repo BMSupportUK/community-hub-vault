@@ -24,6 +24,7 @@ import { useRoleFlashMap, resolveAvatarUrl, roleFlashClass } from "@/lib/role-fl
 import { ServiceStatusBox } from "@/components/app/ServiceStatusBox";
 import { PayOrderDialog, OrderProgressStrip } from "@/routes/_authenticated/_approved/shop";
 import { refreshSquareInvoiceStatus, cancelOrderAndSquareInvoice } from "@/lib/square-invoices.functions";
+import { formatRoleLabel } from "@/lib/role-label";
 
 export const Route = createFileRoute("/_authenticated/_approved/tickets")({
   validateSearch: (s: Record<string, unknown>) => ({
@@ -1797,7 +1798,7 @@ function StaffIdCard({ profile }: { profile: Profile }) {
       <div className="flex flex-col leading-tight">
         <span className="text-[11px] font-semibold text-white">{name}</span>
         <span className={cn("text-[9px] uppercase tracking-wider px-1 rounded border self-start", ROLE_BADGE[role] ?? ROLE_BADGE.staff)}>
-          {role}
+          {formatRoleLabel(role)}
         </span>
       </div>
     </div>
