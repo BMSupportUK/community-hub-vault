@@ -1798,7 +1798,7 @@ function StaffIdCard({ profile }: { profile: Profile }) {
       <div className="flex flex-col leading-tight">
         <span className="text-[11px] font-semibold text-white">{name}</span>
         <span className={cn("text-[9px] uppercase tracking-wider px-1 rounded border self-start", ROLE_BADGE[role] ?? ROLE_BADGE.staff)}>
-          {role}
+          {formatRoleLabel(role)}
         </span>
       </div>
     </div>
