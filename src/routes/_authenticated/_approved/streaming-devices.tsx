@@ -385,9 +385,9 @@ function StreamingDevicesPage() {
           <TabsContent value="android" className="space-y-8">
             {boxLow.length > 0 && (
               <section className="space-y-4">
-                <div className="flex items-baseline justify-between">
+                <div className="space-y-0.5">
                   <h2 className="text-xl font-semibold">Low spec</h2>
-                  <span className="text-xs text-muted-foreground">Budget picks that still stream well</span>
+                  <p className="text-xs text-muted-foreground">Budget picks that still stream well</p>
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   {boxLow.map(renderCard)}
@@ -397,9 +397,9 @@ function StreamingDevicesPage() {
 
             {boxMedium.length > 0 && (
               <section className="space-y-4">
-                <div className="flex items-baseline justify-between">
+                <div className="space-y-0.5">
                   <h2 className="text-xl font-semibold">Medium spec</h2>
-                  <span className="text-xs text-muted-foreground">Great value, solid for most users</span>
+                  <p className="text-xs text-muted-foreground">Great value, solid for most users</p>
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   {boxMedium.map(renderCard)}
@@ -409,9 +409,9 @@ function StreamingDevicesPage() {
 
             {boxHigh.length > 0 && (
               <section className="space-y-4">
-                <div className="flex items-baseline justify-between">
+                <div className="space-y-0.5">
                   <h2 className="text-xl font-semibold">High spec</h2>
-                  <span className="text-xs text-muted-foreground">Best performance, top-end hardware</span>
+                  <p className="text-xs text-muted-foreground">Best performance, top-end hardware</p>
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   {boxHigh.map(renderCard)}
@@ -424,9 +424,9 @@ function StreamingDevicesPage() {
           <TabsContent value="android-sticks" className="space-y-8">
             {stickLow.length > 0 && (
               <section className="space-y-4">
-                <div className="flex items-baseline justify-between">
+                <div className="space-y-0.5">
                   <h2 className="text-xl font-semibold">Low spec</h2>
-                  <span className="text-xs text-muted-foreground">Budget dongles that still stream well</span>
+                  <p className="text-xs text-muted-foreground">Budget dongles that still stream well</p>
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   {stickLow.map(renderCard)}
@@ -435,9 +435,9 @@ function StreamingDevicesPage() {
             )}
             {stickMedium.length > 0 && (
               <section className="space-y-4">
-                <div className="flex items-baseline justify-between">
+                <div className="space-y-0.5">
                   <h2 className="text-xl font-semibold">Medium spec</h2>
-                  <span className="text-xs text-muted-foreground">Reliable 4K HDR sticks for most users</span>
+                  <p className="text-xs text-muted-foreground">Reliable 4K HDR sticks for most users</p>
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   {stickMedium.map(renderCard)}
@@ -446,9 +446,9 @@ function StreamingDevicesPage() {
             )}
             {stickHigh.length > 0 && (
               <section className="space-y-4">
-                <div className="flex items-baseline justify-between">
+                <div className="space-y-0.5">
                   <h2 className="text-xl font-semibold">High spec</h2>
-                  <span className="text-xs text-muted-foreground">Top-tier dongles for serious streaming</span>
+                  <p className="text-xs text-muted-foreground">Top-tier dongles for serious streaming</p>
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   {stickHigh.map(renderCard)}
