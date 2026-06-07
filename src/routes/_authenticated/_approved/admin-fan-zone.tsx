@@ -83,7 +83,9 @@ function AdminFanZonePage() {
         setProfiles(map);
       }
     } else {
-      const { data } = await supabase.rpc("list_fan_zone_approved_members");
+      const { data } = await (supabase.rpc as unknown as (fn: string) => Promise<{ data: unknown }>)(
+        "list_fan_zone_approved_members",
+      );
       const arr = (data ?? []) as Array<{
         user_id: string;
         status: Status;
