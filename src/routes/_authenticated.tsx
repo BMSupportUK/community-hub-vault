@@ -1,6 +1,6 @@
 import { createFileRoute, Outlet, redirect, useRouterState, Navigate, useNavigate } from "@tanstack/react-router";
 import { Link } from "@tanstack/react-router";
-import { LayoutDashboard, Shield, ShieldCheck, Menu, Receipt, Clock } from "lucide-react";
+import { LayoutDashboard, Shield, ShieldCheck, Menu, Receipt, Clock, Calendar } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,6 +9,8 @@ import { isAdminUnlocked } from "@/lib/admin-unlock";
 import { IconRail } from "@/components/app/IconRail";
 import { Clocks } from "@/components/app/Clocks";
 import { MyWorkingStatus } from "@/components/app/MyWorkingStatus";
+import { MentionsBadge } from "@/components/app/MentionsBadge";
+import { NotificationBell } from "@/components/app/NotificationBell";
 import { TwoFactorPill, VpnPill } from "@/components/app/TwoFactorBanner";
 import { BreakEndingAlert } from "@/components/app/BreakEndingAlert";
 import { ShiftStartEndAlert } from "@/components/app/ShiftStartEndAlert";
@@ -159,6 +161,18 @@ function AuthLayout() {
             <div className="hidden lg:flex items-center gap-2">
               <Clocks />
               <MyWorkingStatus />
+              {isStaff && (
+                <Link
+                  to="/shifts"
+                  title="Shifts"
+                  className="flex items-center justify-center size-9 rounded-full bg-surface-2 hover:bg-primary hover:text-primary-foreground text-muted-foreground transition-colors"
+                  aria-label="Shifts"
+                >
+                  <Calendar className="size-4" />
+                </Link>
+              )}
+              {user && <MentionsBadge />}
+              {user && <NotificationBell />}
             </div>
         </header>
         <div className="flex-1 flex min-h-0">

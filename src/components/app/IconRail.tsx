@@ -1,5 +1,5 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
-import { Home, Ticket, ShoppingBag, BookOpen, FileText, Calendar, LogOut, MessageSquare, MessagesSquare, UserCircle2, Star, Trophy, Tv, Volleyball, Wrench, Goal, Users, Briefcase, MonitorPlay, ShieldCheck, Popcorn } from "lucide-react";
+import { Home, Ticket, ShoppingBag, BookOpen, FileText, LogOut, MessageSquare, MessagesSquare, UserCircle2, Star, Trophy, Tv, Volleyball, Wrench, Goal, Users, Briefcase, MonitorPlay, ShieldCheck, Popcorn } from "lucide-react";
 import { useAuth, type AppRole } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 import { useEffect, useRef, useState } from "react";
@@ -7,8 +7,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useFanZoneMembership } from "@/hooks/use-fan-zone";
 import { FAN_ZONE_OPEN_EVENT } from "@/components/app/FanZoneAccessCard";
 import { UserAvatarMenu } from "@/components/app/UserAvatarMenu";
-import { MentionsBadge } from "@/components/app/MentionsBadge";
-import { NotificationBell } from "@/components/app/NotificationBell";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 function SoccerPlayer({ className }: { className?: string }) {
@@ -189,7 +187,6 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
     { to: "/new-content", label: "New content", icon: Tv, show: true, badge: unreadNewContent },
     { to: "/members", label: "Members", icon: Users, show: true },
     { to: "/staff", label: "Staff", icon: Briefcase, show: true },
-    { to: "/shifts", label: "Shifts", icon: Calendar, show: isStaff },
   ];
 
   const allowedByPerms = (to: string) => {
@@ -252,12 +249,6 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
         </div>
       ))}
       <div className="mt-auto" />
-      {user && (
-        <div className="flex flex-col items-center gap-1 pb-1 pt-2 border-t border-border w-full">
-          <MentionsBadge />
-          <NotificationBell />
-        </div>
-      )}
       <button
         onClick={handleSignOut}
         className="text-muted-foreground hover:text-destructive p-3 rounded-xl hover:bg-surface-2 transition-colors"
