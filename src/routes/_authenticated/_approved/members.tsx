@@ -11,6 +11,7 @@ import { useOnlineUsers } from "@/hooks/use-online-users";
 import { formatLastSeen } from "@/lib/relative-time";
 
 import { VpnBadge } from "@/lib/vpn-flags";
+import { formatRoleLabel } from "@/lib/role-label";
 import { PresenceDot, PresenceInline } from "@/components/app/PresenceIndicators";
 
 export const Route = createFileRoute("/_authenticated/_approved/members")({
