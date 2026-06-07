@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Shield, Lock, Eye, Globe2, Wifi, Zap, CheckCircle2, ExternalLink } from "lucide-react";
 import protonBanner from "@/assets/proton-vpn-banner.jpg";
+import hackerBg from "@/assets/vpn-hacker-bg.jpg";
 
 const PROTON_REF_URL =
   "https://account.proton.me/refer-a-friend?referrer=W8YWYK64&plan=vpn2024";
@@ -17,8 +18,12 @@ export const Route = createFileRoute("/_authenticated/_approved/vpn")({
 
 function VpnPage() {
   return (
-    <div className="flex-1 flex min-w-0">
-      <main className="flex-1 overflow-y-auto">
+    <div
+      className="flex-1 flex min-w-0 bg-cover bg-center bg-no-repeat bg-fixed relative"
+      style={{ backgroundImage: `url(${hackerBg})` }}
+    >
+      <div className="absolute inset-0 bg-background/70 backdrop-blur-sm pointer-events-none" aria-hidden />
+      <main className="relative flex-1 overflow-y-auto">
         <div className="max-w-5xl mx-auto px-4 lg:px-8 py-8 space-y-8">
           {/* Hero */}
           <header className="relative overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-primary/20 via-surface-2 to-background p-8 lg:p-12">
