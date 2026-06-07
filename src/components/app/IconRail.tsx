@@ -189,7 +189,6 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
     { to: "/new-content", label: "New content", icon: Tv, show: true, badge: unreadNewContent },
     { to: "/members", label: "Members", icon: Users, show: true },
     { to: "/staff", label: "Staff", icon: Briefcase, show: true },
-    { to: "/shifts", label: "Shifts", icon: Calendar, show: isStaff },
   ];
 
   const allowedByPerms = (to: string) => {
@@ -252,12 +251,6 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
         </div>
       ))}
       <div className="mt-auto" />
-      {user && (
-        <div className="flex flex-col items-center gap-1 pb-1 pt-2 border-t border-border w-full">
-          <MentionsBadge />
-          <NotificationBell />
-        </div>
-      )}
       <button
         onClick={handleSignOut}
         className="text-muted-foreground hover:text-destructive p-3 rounded-xl hover:bg-surface-2 transition-colors"
