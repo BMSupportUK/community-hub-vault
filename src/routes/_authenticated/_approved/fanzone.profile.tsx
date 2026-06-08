@@ -95,15 +95,13 @@ function FanZoneProfilePage() {
   };
 
   return (
-    <div className="boro-theme relative min-h-[calc(100vh-4rem)] w-full">
-      <div
-        className="fixed inset-0 -z-10 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: `url(${bgAsset.url})` }}
-        aria-hidden
-      />
-      <div className="fixed inset-0 -z-10 bg-gradient-to-b from-black/70 via-black/60 to-black/80" aria-hidden />
+    <div
+      className="boro-theme relative min-h-[calc(100vh-4rem)] w-full overflow-hidden bg-cover bg-center bg-no-repeat"
+      style={{ backgroundImage: `url(${bgAsset.url})` }}
+    >
+      <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/60 to-black/85" aria-hidden />
 
-      <div className="relative w-full max-w-3xl mx-auto px-4 sm:px-6 py-8">
+      <div className="relative z-10 w-full max-w-3xl mx-auto px-4 sm:px-6 py-8">
         <Button asChild variant="ghost" size="sm" className="text-white hover:text-white hover:bg-white/10 -ml-2 mb-4">
           <Link to="/forum"><ArrowLeft className="size-4 mr-1" />Back to forum</Link>
         </Button>
