@@ -28,8 +28,12 @@ type Profile = {
 type FanFriendRel =
   | { kind: "none" }
   | { kind: "outgoing"; id: string }
-  | { kind: "incoming"; id: string }
   | { kind: "friends"; id: string };
+
+type IncomingRel =
+  | { kind: "none" }
+  | { kind: "pending"; id: string }
+  | { kind: "accepted"; id: string };
 
 function FanProfilePage() {
   const { userId } = Route.useParams();
@@ -42,7 +46,9 @@ function FanProfilePage() {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [friendRel, setFriendRel] = useState<FanFriendRel>({ kind: "none" });
+  const [incomingRel, setIncomingRel] = useState<IncomingRel>({ kind: "none" });
   const [friendBusy, setFriendBusy] = useState(false);
+  const [incomingBusy, setIncomingBusy] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -53,22 +59,28 @@ function FanProfilePage() {
     setP(row ?? null);
     if (!user?.id || user.id === userId) {
       setFriendRel({ kind: "none" });
+      setIncomingRel({ kind: "none" });
       return;
     }
-    const { data: friendship } = await supabase
+    const { data: mine } = await supabase
       .from("fan_zone_friendships")
-      .select("id, requester_id, addressee_id, status")
-      .or(`and(requester_id.eq.${user.id},addressee_id.eq.${userId}),and(requester_id.eq.${userId},addressee_id.eq.${user.id})`)
+      .select("id, status")
+      .eq("requester_id", user.id)
+      .eq("addressee_id", userId)
       .maybeSingle();
-    if (!friendship) {
-      setFriendRel({ kind: "none" });
-    } else if (friendship.status === "accepted") {
-      setFriendRel({ kind: "friends", id: friendship.id });
-    } else if (friendship.requester_id === user.id) {
-      setFriendRel({ kind: "outgoing", id: friendship.id });
-    } else {
-      setFriendRel({ kind: "incoming", id: friendship.id });
-    }
+    if (!mine) setFriendRel({ kind: "none" });
+    else if (mine.status === "accepted") setFriendRel({ kind: "friends", id: mine.id });
+    else setFriendRel({ kind: "outgoing", id: mine.id });
+
+    const { data: theirs } = await supabase
+      .from("fan_zone_friendships")
+      .select("id, status")
+      .eq("requester_id", userId)
+      .eq("addressee_id", user.id)
+      .maybeSingle();
+    if (!theirs) setIncomingRel({ kind: "none" });
+    else if (theirs.status === "accepted") setIncomingRel({ kind: "accepted", id: theirs.id });
+    else setIncomingRel({ kind: "pending", id: theirs.id });
   };
 
   useEffect(() => { if (canEnter) void load(); }, [userId, canEnter]);
@@ -109,14 +121,14 @@ function FanProfilePage() {
   };
 
   const acceptFriendRequest = async () => {
-    if (friendRel.kind !== "incoming") return;
-    setFriendBusy(true);
+    if (incomingRel.kind !== "pending") return;
+    setIncomingBusy(true);
     const { error } = await supabase
       .from("fan_zone_friendships")
       .update({ status: "accepted" })
-      .eq("id", friendRel.id)
+      .eq("id", incomingRel.id)
       .eq("addressee_id", user?.id ?? "");
-    setFriendBusy(false);
+    setIncomingBusy(false);
     if (error) return toast.error(error.message);
     toast.success("Friend request accepted");
     void load();
@@ -197,8 +209,13 @@ function FanProfilePage() {
                   busy={friendBusy}
                   disabled={p.is_blocked_by_me || p.has_blocked_me}
                   onSend={sendFriendRequest}
-                  onAccept={acceptFriendRequest}
                 />
+                {incomingRel.kind === "pending" && (
+                  <Button onClick={() => void acceptFriendRequest()} disabled={incomingBusy || p.is_blocked_by_me || p.has_blocked_me} className="bg-emerald-600 hover:bg-emerald-500 text-white border-0">
+                    {incomingBusy ? <Loader2 className="size-4 mr-1 animate-spin" /> : <UserCheck className="size-4 mr-1" />}
+                    Accept their request
+                  </Button>
+                )}
                 <Button
                   onClick={() => void startDm()}
                   disabled={busy || p.is_blocked_by_me || p.has_blocked_me}
@@ -224,13 +241,11 @@ function FanFriendButton({
   busy,
   disabled,
   onSend,
-  onAccept,
 }: {
   rel: FanFriendRel;
   busy: boolean;
   disabled: boolean;
   onSend: () => void;
-  onAccept: () => void;
 }) {
   if (rel.kind === "friends") {
     return (
@@ -244,15 +259,6 @@ function FanFriendButton({
     return (
       <Button disabled variant="outline" className="bg-amber-500/15 border-amber-400/40 text-amber-100 opacity-100">
         <Clock className="size-4 mr-1" /> Request pending
-      </Button>
-    );
-  }
-
-  if (rel.kind === "incoming") {
-    return (
-      <Button onClick={() => void onAccept()} disabled={busy || disabled} className="bg-emerald-600 hover:bg-emerald-500 text-white border-0">
-        {busy ? <Loader2 className="size-4 mr-1 animate-spin" /> : <UserCheck className="size-4 mr-1" />}
-        Accept friend request
       </Button>
     );
   }
