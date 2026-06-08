@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useFanZoneMembership } from "@/hooks/use-fan-zone";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import bgAsset from "@/assets/boro-fan-zone-profile-bg.jpg.asset.json";
 
 export const Route = createFileRoute("/_authenticated/_approved/fanzone/u/$userId")({
   component: FanProfilePage,
@@ -72,17 +73,25 @@ function FanProfilePage() {
   const isSelf = user?.id === userId;
 
   return (
-    <div className="boro-theme max-w-3xl mx-auto px-4 sm:px-6 py-6 space-y-4">
-      <Button asChild variant="ghost" size="sm" className="-ml-2">
+    <div className="boro-theme relative min-h-[calc(100vh-4rem)] w-full">
+      <div
+        className="fixed inset-0 -z-10 bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: `url(${bgAsset.url})` }}
+        aria-hidden
+      />
+      <div className="fixed inset-0 -z-10 bg-gradient-to-b from-black/70 via-black/60 to-black/80" aria-hidden />
+
+      <div className="relative w-full max-w-3xl mx-auto px-4 sm:px-6 py-8 space-y-4">
+      <Button asChild variant="ghost" size="sm" className="text-white hover:text-white hover:bg-white/10 -ml-2">
         <Link to="/forum"><ArrowLeft className="size-4 mr-1" />Back to forum</Link>
       </Button>
 
       {loading ? (
-        <div className="grid place-items-center py-20 text-muted-foreground"><Loader2 className="size-5 animate-spin" /></div>
+        <div className="grid place-items-center py-20 text-white/80"><Loader2 className="size-5 animate-spin" /></div>
       ) : !p ? (
-        <div className="rounded-2xl border border-border bg-surface-1 p-10 text-center text-muted-foreground">This member's fan zone profile is not available.</div>
+        <div className="rounded-2xl border border-white/20 bg-black/50 backdrop-blur-md p-10 text-center text-white/80">This member's fan zone profile is not available.</div>
       ) : (
-        <div className="rounded-2xl border border-[#E11B22]/30 bg-surface-1/85 backdrop-blur-sm shadow-soft overflow-hidden">
+        <div className="rounded-2xl border border-[#E11B22]/40 bg-black/55 backdrop-blur-md shadow-2xl text-white overflow-hidden">
           <div className="relative bg-gradient-to-br from-[#E11B22] to-[#8B0F14] px-6 py-8 text-white">
             <div className="flex items-center gap-4">
               <img src={p.fan_avatar_url} alt={p.fan_alias} className="size-20 rounded-full object-cover ring-4 ring-white/20 shadow-lg" />
@@ -97,7 +106,7 @@ function FanProfilePage() {
             </div>
           </div>
 
-          <div className="p-6 space-y-5">
+          <div className="p-6 space-y-5 text-white">
             {p.has_blocked_me && (
               <div className="rounded-lg border border-amber-500/40 bg-amber-500/5 px-3 py-2 text-xs text-amber-300">
                 This member has blocked you. You can't message them.
@@ -105,7 +114,7 @@ function FanProfilePage() {
             )}
             {p.bio && (
               <div>
-                <div className="text-[11px] uppercase tracking-wider font-semibold text-muted-foreground mb-1">Bio</div>
+                <div className="text-[11px] uppercase tracking-wider font-semibold text-white/70 mb-1">Bio</div>
                 <p className="text-sm whitespace-pre-wrap leading-relaxed">{p.bio}</p>
               </div>
             )}
@@ -113,7 +122,7 @@ function FanProfilePage() {
               <div className="flex items-start gap-2">
                 <Heart className="size-4 text-[#E11B22] mt-0.5 shrink-0" />
                 <div>
-                  <div className="text-[11px] uppercase tracking-wider font-semibold text-muted-foreground">Favourite player</div>
+                  <div className="text-[11px] uppercase tracking-wider font-semibold text-white/70">Favourite player</div>
                   <p className="text-sm font-medium">{p.fav_player}</p>
                 </div>
               </div>
@@ -122,17 +131,17 @@ function FanProfilePage() {
               <div className="flex items-start gap-2">
                 <Quote className="size-4 text-[#E11B22] mt-0.5 shrink-0" />
                 <div>
-                  <div className="text-[11px] uppercase tracking-wider font-semibold text-muted-foreground">Matchday memory</div>
+                  <div className="text-[11px] uppercase tracking-wider font-semibold text-white/70">Matchday memory</div>
                   <p className="text-sm italic">"{p.matchday_memory}"</p>
                 </div>
               </div>
             )}
             {!p.bio && !p.fav_player && !p.matchday_memory && (
-              <p className="text-sm text-muted-foreground italic">No profile info yet.</p>
+              <p className="text-sm text-white/60 italic">No profile info yet.</p>
             )}
 
             {!isSelf && (
-              <div className="flex flex-wrap gap-2 pt-2 border-t border-border/60">
+              <div className="flex flex-wrap gap-2 pt-2 border-t border-white/10">
                 <Button
                   onClick={() => void startDm()}
                   disabled={busy || p.is_blocked_by_me || p.has_blocked_me}
@@ -140,7 +149,7 @@ function FanProfilePage() {
                 >
                   <MessageSquare className="size-4 mr-1" /> Send message
                 </Button>
-                <Button onClick={() => void toggleBlock()} variant="outline" disabled={busy}>
+                <Button onClick={() => void toggleBlock()} variant="outline" disabled={busy} className="bg-white/10 border-white/30 text-white hover:bg-white/20 hover:text-white">
                   {p.is_blocked_by_me ? <><ShieldOff className="size-4 mr-1" /> Unblock</> : <><Ban className="size-4 mr-1" /> Block</>}
                 </Button>
               </div>
@@ -148,6 +157,7 @@ function FanProfilePage() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }
