@@ -4,8 +4,6 @@ import { useAuth, type AppRole } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useFanZoneMembership } from "@/hooks/use-fan-zone";
-import { FAN_ZONE_OPEN_EVENT } from "@/components/app/FanZoneAccessCard";
 import { UserAvatarMenu } from "@/components/app/UserAvatarMenu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -63,14 +61,6 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
   const { user, isStaff, isPending, signOut, hasAny, roles, hasRole } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
   const isStaffOrMod = hasAny(["admin", "management", "staff", "moderator", "boro_fan_zone_moderator"]);
-  // Boro Fan Zone access is restricted to admins and the dedicated Boro Fan Zone moderator role only.
-  const isFanZoneStaff = hasAny(["admin", "boro_fan_zone_moderator"]);
-  const fanZone = useFanZoneMembership(user?.id ?? null);
-  const fanZoneApproved = fanZone?.status === "approved";
-  const fanZonePending = fanZone?.status === "pending";
-  const fanZoneGated = !isFanZoneStaff && !fanZoneApproved && !fanZonePending;
-  // Show the Boro Fan Zone icon to all users (non-members get the gated access card).
-  const hideFanZone = false;
   const path = useRouterState({ select: (r) => r.location.pathname });
   const [activeIncidents, setActiveIncidents] = useState(0);
   const [unreadNewContent, setUnreadNewContent] = useState(0);
@@ -205,11 +195,9 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
     { to: "/members", label: "Members", icon: Users, show: true },
     { to: "/staff", label: "Staff", icon: Briefcase, show: true },
   ];
-  if (!hideFanZone) {
-    items.push({ to: "/forum", label: "Boro Fan Zone", icon: SoccerBall, show: true });
-  }
 
   const allowedByPerms = (to: string) => {
+    if (to === "/forum") return true;
     if (isAdmin) return true;
     const key = to.replace(/^\//, "");
     const allowed = pagePerms[key];
@@ -247,6 +235,7 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
       <Link to="/home" className="size-12 rounded-2xl bg-gradient-primary flex items-center justify-center font-display font-bold text-[15px] text-primary-foreground shadow-glow mb-2">
         BM
       </Link>
+      <RailIcon to="/forum" label="Boro Fan Zone" Icon={SoccerBall} active={path.startsWith("/forum")} prominent />
       <div className="h-px w-8 bg-border my-1" />
       {sorted.map((i) => (
         <div
@@ -257,15 +246,7 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
           onDrop={() => reorder(i.to)}
           className={isAdmin ? "cursor-grab active:cursor-grabbing" : undefined}
         >
-          {i.to === "/forum" && fanZoneGated ? (
-            <RailButton
-              label={i.label}
-              Icon={i.icon}
-              onClick={() => window.dispatchEvent(new CustomEvent(FAN_ZONE_OPEN_EVENT))}
-            />
-          ) : (
-            <RailIcon to={i.to} label={i.label} Icon={i.icon} active={path.startsWith(i.to)} badge={i.badge} />
-          )}
+          <RailIcon to={i.to} label={i.label} Icon={i.icon} active={path.startsWith(i.to)} badge={i.badge} />
         </div>
       ))}
       <div className="mt-auto" />
@@ -292,6 +273,7 @@ function RailIcon({
   active,
   accent,
   badge,
+  prominent,
 }: {
   to: string;
   label: string;
@@ -299,6 +281,7 @@ function RailIcon({
   active?: boolean;
   accent?: boolean;
   badge?: number;
+  prominent?: boolean;
 }) {
   return (
     <TooltipProvider delayDuration={150}>
@@ -313,9 +296,11 @@ function RailIcon({
                 ? "bg-gradient-to-br from-primary to-primary-glow text-primary-foreground rounded-xl shadow-glow ring-1 ring-primary-glow/60"
                 : "bg-primary/15 text-primary-glow hover:bg-gradient-to-br hover:from-primary hover:to-primary-glow hover:text-primary-foreground hover:rounded-xl hover:shadow-glow",
               accent && !active && "ring-1 ring-primary/40",
+              prominent && !active && "ring-2 ring-red-500/70 text-red-100 bg-red-500/20",
             )}
           >
             <Icon className="size-5" />
+            {prominent && <span className="absolute -right-1 -bottom-1 rounded-full bg-red-600 px-1.5 py-0.5 text-[9px] font-black leading-none text-white ring-2 ring-rail">BZ</span>}
             {badge && badge > 0 ? (
               <span className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1 rounded-full bg-red-500 text-white text-[11px] font-bold flex items-center justify-center shadow-lg ring-2 ring-rail animate-pulse">
                 {badge > 99 ? "99+" : badge}
@@ -323,39 +308,6 @@ function RailIcon({
             ) : null}
             {active && <span className="absolute -left-1 top-1/2 -translate-y-1/2 h-8 w-1 bg-primary-glow rounded-r" />}
           </Link>
-        </TooltipTrigger>
-        <TooltipContent side="right" sideOffset={8} className="z-[1000] whitespace-nowrap text-xs font-medium">
-          {label}
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
-  );
-}
-
-function RailButton({
-  label,
-  Icon,
-  onClick,
-}: {
-  label: string;
-  Icon: React.ComponentType<{ className?: string }>;
-  onClick: () => void;
-}) {
-  return (
-    <TooltipProvider delayDuration={150}>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <button
-            type="button"
-            onClick={onClick}
-            aria-label={label}
-            className={cn(
-              "group relative size-12 rounded-2xl flex items-center justify-center transition-all",
-            "bg-primary/15 text-primary-glow hover:bg-gradient-to-br hover:from-primary hover:to-primary-glow hover:text-primary-foreground hover:rounded-xl hover:shadow-glow",
-            )}
-          >
-            <Icon className="size-5" />
-          </button>
         </TooltipTrigger>
         <TooltipContent side="right" sideOffset={8} className="z-[1000] whitespace-nowrap text-xs font-medium">
           {label}
