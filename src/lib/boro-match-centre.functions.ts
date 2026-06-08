@@ -90,7 +90,7 @@ export const getBoroMatchCentre = createServerFn({ method: "GET" }).handler(
     try {
       const [live, standings] = await Promise.all([
         fetchEspnBoro(),
-        fetchEspnStandings().catch((e) => {
+        fetchEspnStandings().catch((e: unknown) => {
           console.error("[boro-match-centre] standings fetch failed", e);
           return null;
         }),
