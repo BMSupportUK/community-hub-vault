@@ -93,9 +93,8 @@ function AdminFanZonePage() {
         status: Status;
         requested_at: string;
         decided_at: string | null;
-        display_name: string | null;
-        username: string | null;
-        avatar_url: string | null;
+        fan_alias: string | null;
+        fan_avatar_url: string | null;
       }>;
       setRows(arr.map((r) => ({
         user_id: r.user_id,
@@ -111,9 +110,9 @@ function AdminFanZonePage() {
       arr.forEach((r) => {
         map[r.user_id] = {
           id: r.user_id,
-          display_name: r.display_name,
-          username: r.username,
-          avatar_url: r.avatar_url,
+          display_name: r.fan_alias,
+          username: null,
+          avatar_url: r.fan_avatar_url,
         };
       });
       setProfiles(map);
@@ -320,7 +319,6 @@ function AdminFanZonePage() {
                   </tr>
                 ) : (
                   filtered.map((r) => {
-                    const p = profiles[r.user_id];
                     const name = r.fan_alias || "Boro Fan";
                     const avatar = r.fan_avatar_url;
                     return (
