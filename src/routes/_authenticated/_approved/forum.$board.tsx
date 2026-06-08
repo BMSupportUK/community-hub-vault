@@ -354,7 +354,7 @@ function BoardPage() {
                         </span>
                       )}
                       <span className="font-display font-semibold leading-snug text-foreground text-[15px] group-hover:text-[#E11B22] transition-colors">
-                        {t.title}
+                        {censorText(t.title)}
                       </span>
                     </div>
                     <div className="text-[11px] text-muted-foreground mt-1.5 flex items-center gap-1.5">
