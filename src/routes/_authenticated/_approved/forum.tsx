@@ -249,7 +249,10 @@ function BoardsIndex() {
             </Link>
         );
         })}
-        <ForumStats boards={boards} />
+        <div className="grid gap-4 md:grid-cols-2 items-start">
+          <ForumStats boards={boards} />
+          <FanZoneStaffBox />
+        </div>
         </div>
         <div className="pt-2 text-center">
           <Button asChild variant="ghost" size="sm">
@@ -260,7 +263,6 @@ function BoardsIndex() {
       <div className="lg:sticky lg:top-4 lg:self-start">
         <div className="space-y-4">
           <BoroMatchCentreBox />
-          <FanZoneStaffBox />
         </div>
       </div>
     </div>
