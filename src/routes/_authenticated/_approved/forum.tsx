@@ -77,6 +77,31 @@ function ForumLayout() {
         />
         <div className="relative px-4 py-5 sm:px-8 sm:py-9 flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-5">
           <div className="sm:absolute sm:top-3 sm:right-3 z-10 grid grid-cols-2 sm:flex sm:flex-wrap gap-2 sm:justify-end w-full sm:w-auto">
+            {(() => {
+              const fields = [
+                info?.fanAlias,
+                info?.fanAvatarUrl,
+                info?.bio,
+                info?.supporterSince ? String(info.supporterSince) : "",
+                info?.favPlayer,
+                info?.matchdayMemory,
+              ];
+              const filled = fields.filter((v) => !!(v && String(v).trim())).length;
+              const total = fields.length;
+              const missing = total - filled;
+              if (!info || missing === 0) return null;
+              return (
+                <Button asChild size="sm" variant="outline" className="bg-amber-500/20 backdrop-blur border-amber-300/50 text-white hover:bg-amber-500/30 hover:text-white justify-center col-span-2 sm:col-span-1">
+                  <Link to="/fanzone/profile">
+                    <UserCog className="size-4 mr-1.5" />
+                    Complete profile
+                    <span className="ml-1.5 inline-flex items-center justify-center rounded-full bg-[#E11B22] text-white text-[10px] font-bold px-1.5 min-w-[1.25rem] h-5">
+                      {filled}/{total}
+                    </span>
+                  </Link>
+                </Button>
+              );
+            })()}
             <Button asChild size="sm" className="bg-gradient-to-r from-[#E11B22] to-[#8B0F14] hover:from-[#F02B30] hover:to-[#9B1118] border-0 text-white shadow-md justify-center">
               <Link to="/fanzone/messages"><MessageSquareText className="size-4 mr-1.5" />Inbox</Link>
             </Button>
