@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ArrowLeft, Loader2, MessageSquare, Ban, ShieldOff, Heart, Clock, Quote } from "lucide-react";
+import { ArrowLeft, Loader2, MessageSquare, Ban, ShieldOff, Heart, Clock, Quote, UserCheck, UserPlus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useFanZoneMembership } from "@/hooks/use-fan-zone";
@@ -25,6 +25,12 @@ type Profile = {
   has_blocked_me: boolean;
 };
 
+type FanFriendRel =
+  | { kind: "none" }
+  | { kind: "outgoing"; id: string }
+  | { kind: "incoming"; id: string }
+  | { kind: "friends"; id: string };
+
 function FanProfilePage() {
   const { userId } = Route.useParams();
   const navigate = useNavigate();
@@ -35,6 +41,8 @@ function FanProfilePage() {
   const [p, setP] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [friendRel, setFriendRel] = useState<FanFriendRel>({ kind: "none" });
+  const [friendBusy, setFriendBusy] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -43,6 +51,24 @@ function FanProfilePage() {
     if (error) { toast.error("Couldn't load profile", { description: error.message }); return; }
     const row = (data ?? [])[0] as Profile | undefined;
     setP(row ?? null);
+    if (!user?.id || user.id === userId) {
+      setFriendRel({ kind: "none" });
+      return;
+    }
+    const { data: friendship } = await supabase
+      .from("fan_zone_friendships")
+      .select("id, requester_id, addressee_id, status")
+      .or(`and(requester_id.eq.${user.id},addressee_id.eq.${userId}),and(requester_id.eq.${userId},addressee_id.eq.${user.id})`)
+      .maybeSingle();
+    if (!friendship) {
+      setFriendRel({ kind: "none" });
+    } else if (friendship.status === "accepted") {
+      setFriendRel({ kind: "friends", id: friendship.id });
+    } else if (friendship.requester_id === user.id) {
+      setFriendRel({ kind: "outgoing", id: friendship.id });
+    } else {
+      setFriendRel({ kind: "incoming", id: friendship.id });
+    }
   };
 
   useEffect(() => { if (canEnter) void load(); }, [userId, canEnter]);
@@ -67,6 +93,32 @@ function FanProfilePage() {
     setBusy(false);
     if (error) return toast.error("Action failed", { description: error.message });
     toast.success(p.is_blocked_by_me ? "Unblocked" : "Blocked");
+    void load();
+  };
+
+  const sendFriendRequest = async () => {
+    if (!user?.id || friendRel.kind !== "none") return;
+    setFriendBusy(true);
+    const { error } = await supabase
+      .from("fan_zone_friendships")
+      .insert({ requester_id: user.id, addressee_id: userId });
+    setFriendBusy(false);
+    if (error) return toast.error(error.message);
+    toast.success("Friend request sent");
+    void load();
+  };
+
+  const acceptFriendRequest = async () => {
+    if (friendRel.kind !== "incoming") return;
+    setFriendBusy(true);
+    const { error } = await supabase
+      .from("fan_zone_friendships")
+      .update({ status: "accepted" })
+      .eq("id", friendRel.id)
+      .eq("addressee_id", user?.id ?? "");
+    setFriendBusy(false);
+    if (error) return toast.error(error.message);
+    toast.success("Friend request accepted");
     void load();
   };
 
@@ -140,6 +192,13 @@ function FanProfilePage() {
 
             {!isSelf && (
               <div className="flex flex-wrap gap-2 pt-2 border-t border-white/10">
+                <FanFriendButton
+                  rel={friendRel}
+                  busy={friendBusy}
+                  disabled={p.is_blocked_by_me || p.has_blocked_me}
+                  onSend={sendFriendRequest}
+                  onAccept={acceptFriendRequest}
+                />
                 <Button
                   onClick={() => void startDm()}
                   disabled={busy || p.is_blocked_by_me || p.has_blocked_me}
