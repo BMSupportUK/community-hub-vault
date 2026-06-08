@@ -196,7 +196,7 @@ export function HtmlEditor({ value, onChange, className, placeholder, videoUploa
     let host = trimmed;
     try { host = new URL(trimmed).hostname.replace(/^www\./, ""); } catch { /* keep raw */ }
     const displayTitle = title || trimmed;
-    const html = `<div data-link-preview="${esc(trimmed)}"${titleAttr} contenteditable="false" style="display:flex;gap:0.75rem;border:1px solid hsl(var(--border));border-radius:0.5rem;padding:0.75rem 0.875rem;margin:0.75rem 0;background:hsl(var(--card));color:hsl(var(--card-foreground));"><div style="flex:1;min-width:0;"><div style="font-size:11px;text-transform:uppercase;letter-spacing:0.05em;color:hsl(var(--muted-foreground));">🔗 ${esc(host)}</div><div style="font-weight:600;margin-top:0.25rem;line-height:1.3;word-break:break-word;">${esc(displayTitle)}</div></div></div><p><br/></p>`;
+    const html = `<div data-link-preview="${esc(trimmed)}"${titleAttr} contenteditable="false" style="border:1px solid hsl(var(--border));border-radius:0.5rem;padding:0.75rem 0.875rem;margin:0.75rem 0;background:hsl(var(--card));color:hsl(var(--card-foreground));"><span style="display:block;font-size:11px;text-transform:uppercase;letter-spacing:0.05em;color:hsl(var(--muted-foreground));">🔗 ${esc(host)}</span><span style="display:block;font-weight:600;margin-top:0.25rem;line-height:1.3;word-break:break-word;">${esc(displayTitle)}</span></div><p><br/></p>`;
     exec("insertHTML", html);
     handleInput();
   };
