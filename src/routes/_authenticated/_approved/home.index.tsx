@@ -493,7 +493,7 @@ function WelcomePage() {
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-display text-lg font-semibold">Jump back in</h2>
           <Link to="/home/$channel" params={{ channel: "welcome" }} className="text-sm text-sky-300 hover:text-sky-200">
-            Open channels →
+            Open BM Support Customer Chat-room →
           </Link>
         </div>
         <div className="grid sm:grid-cols-2 gap-3">
