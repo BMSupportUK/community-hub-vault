@@ -64,6 +64,7 @@ function BoardPage() {
   const canEnter = isStaff || info?.status === "approved";
   const mentionCandidates = useMentionCandidates(canUseSpecialMentions);
   const { blocked } = useFanBlocks();
+  useProfanityWords();
 
   const [board, setBoard] = useState<Board | null>(null);
   const [topics, setTopics] = useState<Topic[] | null>(null);
