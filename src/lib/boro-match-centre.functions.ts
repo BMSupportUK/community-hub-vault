@@ -84,16 +84,24 @@ export const getBoroMatchCentre = createServerFn({ method: "GET" }).handler(
       !dto.fetchedAt ||
       Date.now() - new Date(dto.fetchedAt).getTime() > 30 * 60 * 1000;
     const needsFetch =
-      stale && (!dto.lastResultManual || !dto.nextFixtureManual);
+      stale &&
+      (!dto.lastResultManual || !dto.nextFixtureManual || !dto.leaguePositionManual);
     if (!needsFetch) return dto;
     try {
-      const live = await fetchEspnBoro();
+      const [live, standings] = await Promise.all([
+        fetchEspnBoro(),
+        fetchEspnStandings().catch((e) => {
+          console.error("[boro-match-centre] standings fetch failed", e);
+          return null;
+        }),
+      ]);
       const patch: Record<string, unknown> = {
         fetched_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       };
       if (!dto.lastResultManual && live.lastResult) patch.last_result = live.lastResult;
       if (!dto.nextFixtureManual && live.nextFixture) patch.next_fixture = live.nextFixture;
+      if (!dto.leaguePositionManual && standings) patch.league_position = standings;
       await supabaseAdmin
         .from("boro_match_centre")
         .update(patch as never)
