@@ -181,6 +181,7 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
 
   const items: RailItem[] = [
     { to: "/home", label: "Home", icon: Home, show: true },
+    { to: "/forum", label: "Boro Fan Zone", icon: SoccerBall, show: true },
     { to: "/tickets", label: "Tickets", icon: Ticket, show: !hasRole("moderator") },
     { to: "/shop", label: "Shop", icon: ShoppingBag, show: true },
     { to: "/install-guides", label: "Install guides", icon: Wrench, show: true },
@@ -235,7 +236,6 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
       <Link to="/home" className="size-12 rounded-2xl bg-gradient-primary flex items-center justify-center font-display font-bold text-[15px] text-primary-foreground shadow-glow mb-2">
         BM
       </Link>
-      <RailIcon to="/forum" label="Boro Fan Zone" Icon={SoccerBall} active={path.startsWith("/forum")} prominent />
       <div className="h-px w-8 bg-border my-1" />
       {sorted.map((i) => (
         <div
@@ -273,7 +273,6 @@ function RailIcon({
   active,
   accent,
   badge,
-  prominent,
 }: {
   to: string;
   label: string;
@@ -281,7 +280,6 @@ function RailIcon({
   active?: boolean;
   accent?: boolean;
   badge?: number;
-  prominent?: boolean;
 }) {
   return (
     <TooltipProvider delayDuration={150}>
@@ -296,7 +294,6 @@ function RailIcon({
                 ? "bg-gradient-to-br from-primary to-primary-glow text-primary-foreground rounded-xl shadow-glow ring-1 ring-primary-glow/60"
                 : "bg-primary/15 text-primary-glow hover:bg-gradient-to-br hover:from-primary hover:to-primary-glow hover:text-primary-foreground hover:rounded-xl hover:shadow-glow",
               accent && !active && "ring-1 ring-primary/40",
-              prominent && !active && "ring-2 ring-red-500/70 text-red-100 bg-red-500/20",
             )}
           >
             <Icon className="size-5" />
