@@ -249,10 +249,10 @@ function BoardsIndex() {
             </Link>
         );
         })}
-        </div>
-        <div className="grid gap-4 md:grid-cols-2 items-start">
-          <ForumStats boards={boards} />
-          <FanZoneStaffBox />
+          <div className="grid gap-4 md:grid-cols-2 items-stretch sm:col-span-2">
+            <ForumStats boards={boards} />
+            <FanZoneStaffBox />
+          </div>
         </div>
         <div className="pt-2 text-center">
           <Button asChild variant="ghost" size="sm">
