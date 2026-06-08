@@ -29,6 +29,7 @@ function ThreadPage() {
   const [sending, setSending] = useState(false);
   const [viewers, setViewers] = useState<Viewer[]>([]);
   const endRef = useRef<HTMLDivElement>(null);
+  useProfanityWords();
 
   const otherId = info && user ? (info.user_low === user.id ? info.user_high : info.user_low) : null;
 
@@ -158,7 +159,7 @@ function ThreadPage() {
               {!mine && senderAlias && <img src={senderAlias.fan_avatar_url} alt="" className="size-7 rounded-full shrink-0" />}
               <div className="flex items-end gap-1 max-w-[75%]">
                 <div className={`rounded-2xl px-3 py-2 text-sm whitespace-pre-wrap break-words shadow-sm ${mine ? "bg-gradient-to-br from-[#E11B22] to-[#8B0F14] text-white" : "bg-surface-2 border border-border"}`}>
-                  <div>{m.body}</div>
+                  <div>{censorText(m.body)}</div>
                   <div className={`text-[10px] mt-1 ${mine ? "text-white/70" : "text-muted-foreground"}`}>{formatLastSeen(m.created_at)}</div>
                 </div>
                 {!mine && <ReportButton kind="dm_message" targetId={m.id} variant="icon" />}
