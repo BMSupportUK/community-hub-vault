@@ -56,6 +56,8 @@ export function ShiftStartEndAlert() {
   const [active, setActive] = useState<{ slot: Slot; stage: Stage } | null>(null);
   const dismissedRef = useRef<Set<string>>(new Set()); // `${slotId}:${stage}:${phase}`
   const autoClockedRef = useRef<Set<string>>(new Set());
+  const autoEndedRef = useRef<Set<string>>(new Set());
+  const [autoEndAt, setAutoEndAt] = useState<number | null>(null);
   const localDate = useMemo(() => dateInTimeZone(now), [dateInTimeZone, now]);
 
   // Tick every second
@@ -186,6 +188,36 @@ export function ShiftStartEndAlert() {
     playSound(src, { label: `shift-${active.stage}`, gain: 2.2 });
   }, [active]);
 
+  // Auto-end shift 30s after the "shift has ended" overdue dialog appears
+  useEffect(() => {
+    if (!active || active.stage !== "end") { setAutoEndAt(null); return; }
+    const { endsAt: e } = shiftWindowToUtcMs(active.slot.shift_date, active.slot.start_time, active.slot.end_time);
+    if (isNaN(e) || Date.now() < e) { setAutoEndAt(null); return; }
+    if (!openShift) { setAutoEndAt(null); return; }
+    const target = Date.now() + 30_000;
+    setAutoEndAt(target);
+    const t = setTimeout(async () => {
+      if (autoEndedRef.current.has(openShift.id)) return;
+      autoEndedRef.current.add(openShift.id);
+      const { data: stillOpen } = await supabase
+        .from("shifts")
+        .select("id")
+        .eq("id", openShift.id)
+        .is("clock_out", null)
+        .maybeSingle();
+      if (!stillOpen) { setActive(null); setAutoEndAt(null); return; }
+      await supabase
+        .from("shifts")
+        .update({ clock_out: new Date(e).toISOString() })
+        .eq("id", openShift.id);
+      dismissedRef.current.add(`${active.slot.id}:end:overdue`);
+      setActive(null);
+      setAutoEndAt(null);
+    }, 30_000);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [active, openShift?.id]);
+
   if (!active) return null;
 
   const { startsAt, endsAt } = shiftWindowToUtcMs(active.slot.shift_date, active.slot.start_time, active.slot.end_time);
@@ -193,6 +225,7 @@ export function ShiftStartEndAlert() {
   const target = isStart ? startsAt : endsAt;
   const remaining = target - now;
   const overdue = remaining <= 0;
+  const autoRemaining = autoEndAt != null ? Math.max(0, autoEndAt - now) : null;
 
   const dismiss = () => {
     const phase: Phase = remaining <= 0 ? "overdue" : "warn";
@@ -227,7 +260,14 @@ export function ShiftStartEndAlert() {
               )
             ) : (
               overdue ? (
-                <>Your shift has ended. Please clock out.</>
+                <>
+                  Your shift has ended. Please clock out.
+                  {autoRemaining != null && (
+                    <div className="mt-2 text-xs text-amber-500">
+                      Auto clock-out in {Math.ceil(autoRemaining / 1000)}s…
+                    </div>
+                  )}
+                </>
               ) : (
                 <>
                   Your shift ends in{" "}
