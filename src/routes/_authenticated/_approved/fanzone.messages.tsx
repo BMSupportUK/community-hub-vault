@@ -47,6 +47,7 @@ function MessagesLayout() {
   const [showResults, setShowResults] = useState(false);
   const [starting, setStarting] = useState<string | null>(null);
   const searchBoxRef = useRef<HTMLDivElement>(null);
+  useProfanityWords();
 
   const load = async () => {
     const { data } = await supabase.rpc("list_my_fan_dm_threads");
