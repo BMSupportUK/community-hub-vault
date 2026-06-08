@@ -7,6 +7,7 @@ import { useFanZoneMembership } from "@/hooks/use-fan-zone";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import bgAsset from "@/assets/boro-fan-zone-profile-bg.jpg.asset.json";
+import { FanStatsBox, FanReputationBox } from "@/components/app/FanZoneStatsBoxes";
 
 export const Route = createFileRoute("/_authenticated/_approved/fanzone/u/$userId")({
   component: FanProfilePage,
@@ -143,7 +144,7 @@ function FanProfilePage() {
     >
       <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/60 to-black/85" aria-hidden />
 
-      <div className="relative z-10 w-full max-w-3xl mx-auto px-4 sm:px-6 py-8 space-y-4">
+      <div className="relative z-10 w-full px-4 sm:px-6 lg:px-10 py-8 space-y-4">
       <Button asChild variant="ghost" size="sm" className="text-white hover:text-white hover:bg-white/10 -ml-2">
         <Link to="/forum"><ArrowLeft className="size-4 mr-1" />Back to forum</Link>
       </Button>
@@ -153,7 +154,8 @@ function FanProfilePage() {
       ) : !p ? (
         <div className="rounded-2xl border border-white/20 bg-black/50 backdrop-blur-md p-10 text-center text-white/80">This member's fan zone profile is not available.</div>
       ) : (
-        <div className="rounded-2xl border border-[#E11B22]/40 bg-black/55 backdrop-blur-md shadow-2xl text-white overflow-hidden">
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px] items-start">
+        <div className="rounded-2xl border border-[#E11B22]/40 bg-black/55 backdrop-blur-md shadow-2xl text-white overflow-hidden min-w-0">
           <div className="relative bg-gradient-to-br from-[#E11B22] to-[#8B0F14] px-6 py-8 text-white">
             <div className="flex items-center gap-4">
               <img src={p.fan_avatar_url} alt={p.fan_alias} className="size-20 rounded-full object-cover ring-4 ring-white/20 shadow-lg" />
@@ -229,6 +231,11 @@ function FanProfilePage() {
               </div>
             )}
           </div>
+        </div>
+        <aside className="space-y-4 lg:sticky lg:top-6 self-start">
+          <FanStatsBox userId={userId} />
+          <FanReputationBox userId={userId} />
+        </aside>
         </div>
       )}
       </div>
