@@ -410,33 +410,38 @@ function TopicPage() {
         };
 
         const ViewingBox = () => (
-          <div className="mt-3 rounded-2xl border border-border/60 bg-surface-2/40 px-4 py-3 flex items-center gap-3">
-            <Eye className="size-4 text-emerald-500 shrink-0" />
-            <div className="text-xs font-semibold text-foreground">
-              {viewers.length === 0 ? "No one viewing" : `${viewers.length} viewing now`}
+          <div className="mt-3 rounded-2xl border border-border/60 bg-surface-2/40 px-4 py-3 space-y-2">
+            <div className="flex items-center gap-2">
+              <Eye className="size-4 text-emerald-500 shrink-0" />
+              <div className="text-xs font-semibold text-foreground">
+                {viewers.length === 0 ? "No one viewing" : `${viewers.length} viewing now`}
+              </div>
             </div>
-            <div className="flex -space-x-2 ml-auto">
-              {viewers.slice(0, 8).map((v) => {
-                const isMe = user && v.user_id === user.id;
-                return (
-                  <div key={v.user_id} title={isMe ? `${v.alias} (you)` : v.alias} className="relative">
-                    {v.avatar ? (
-                      <img src={v.avatar} alt="" className="size-7 rounded-full object-cover ring-2 ring-background" />
-                    ) : (
-                      <div className="size-7 rounded-full bg-gradient-to-br from-[#E11B22] to-[#8B0F14] grid place-items-center text-white text-[10px] font-bold ring-2 ring-background">
-                        {(v.alias || "F").slice(0, 1).toUpperCase()}
-                      </div>
-                    )}
-                    <span className="absolute -bottom-0.5 -right-0.5 size-2 rounded-full bg-emerald-500 ring-1 ring-background" />
-                  </div>
-                );
-              })}
-              {viewers.length > 8 && (
-                <div className="size-7 rounded-full bg-surface-1 grid place-items-center text-[10px] font-semibold ring-2 ring-background">
-                  +{viewers.length - 8}
-                </div>
-              )}
-            </div>
+            {viewers.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {viewers.map((v) => {
+                  const isMe = user && v.user_id === user.id;
+                  return (
+                    <div
+                      key={v.user_id}
+                      className="flex items-center gap-1.5 rounded-full border border-border/60 bg-surface-1 pl-1 pr-2.5 py-0.5"
+                    >
+                      {v.avatar ? (
+                        <img src={v.avatar} alt="" className="size-6 rounded-full object-cover" />
+                      ) : (
+                        <div className="size-6 rounded-full bg-gradient-to-br from-[#E11B22] to-[#8B0F14] grid place-items-center text-white text-[10px] font-bold">
+                          {(v.alias || "F").slice(0, 1).toUpperCase()}
+                        </div>
+                      )}
+                      <span className="text-xs font-medium text-foreground">
+                        {v.alias}{isMe ? " (you)" : ""}
+                      </span>
+                      <span className="size-1.5 rounded-full bg-emerald-500" />
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         );
 
