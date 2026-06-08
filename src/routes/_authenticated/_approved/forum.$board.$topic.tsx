@@ -142,7 +142,6 @@ function TopicPage() {
   // Realtime presence: who is currently viewing this topic
   useEffect(() => {
     if (!user || !canEnter) return;
-    const myProfile = profiles[user.id];
     const presence = supabase.channel(`forum-topic-presence-${topicId}`, {
       config: { presence: { key: user.id } },
     });
@@ -154,7 +153,7 @@ function TopicPage() {
         metas.forEach((m) => {
           if (!m?.user_id || seen.has(m.user_id)) return;
           seen.add(m.user_id);
-          list.push({ user_id: m.user_id, alias: m.alias ?? "Boro Fan", avatar: m.avatar ?? "" });
+          list.push({ user_id: m.user_id, alias: m.alias || "Fan", avatar: m.avatar ?? "" });
         });
       });
       setViewers(list);
@@ -165,10 +164,26 @@ function TopicPage() {
       .on("presence", { event: "leave" }, sync)
       .subscribe(async (status) => {
         if (status === "SUBSCRIBED") {
+          let alias = profiles[user.id]?.display_name;
+          let avatar = profiles[user.id]?.avatar_url ?? "";
+          if (!alias || alias === "Boro Fan") {
+            const { data: aliasRows } = await supabase.rpc("fan_zone_aliases", { _ids: [user.id] });
+            const row = (aliasRows ?? [])[0] as { fan_alias: string | null; fan_avatar_url: string | null } | undefined;
+            if (row?.fan_alias) { alias = row.fan_alias; avatar = row.fan_avatar_url ?? avatar; }
+          }
+          if (!alias) {
+            const { data: prof } = await supabase
+              .from("profiles")
+              .select("display_name, username, avatar_url")
+              .eq("id", user.id)
+              .maybeSingle();
+            alias = prof?.display_name || prof?.username || (user.email ? user.email.split("@")[0] : "Fan");
+            avatar = avatar || prof?.avatar_url || "";
+          }
           await presence.track({
             user_id: user.id,
-            alias: myProfile?.display_name ?? "Boro Fan",
-            avatar: myProfile?.avatar_url ?? "",
+            alias,
+            avatar,
           });
         }
       });
