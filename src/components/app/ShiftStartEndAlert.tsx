@@ -56,6 +56,8 @@ export function ShiftStartEndAlert() {
   const [active, setActive] = useState<{ slot: Slot; stage: Stage } | null>(null);
   const dismissedRef = useRef<Set<string>>(new Set()); // `${slotId}:${stage}:${phase}`
   const autoClockedRef = useRef<Set<string>>(new Set());
+  const autoEndedRef = useRef<Set<string>>(new Set());
+  const [autoEndAt, setAutoEndAt] = useState<number | null>(null);
   const localDate = useMemo(() => dateInTimeZone(now), [dateInTimeZone, now]);
 
   // Tick every second
@@ -193,6 +195,7 @@ export function ShiftStartEndAlert() {
   const target = isStart ? startsAt : endsAt;
   const remaining = target - now;
   const overdue = remaining <= 0;
+  const autoRemaining = autoEndAt != null ? Math.max(0, autoEndAt - now) : null;
 
   const dismiss = () => {
     const phase: Phase = remaining <= 0 ? "overdue" : "warn";
