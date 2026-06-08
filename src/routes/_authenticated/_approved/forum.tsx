@@ -153,6 +153,7 @@ function BoardsIndex() {
   const [boards, setBoards] = useState<Board[] | null>(null);
   const [posters, setPosters] = useState<Record<string, { display_name: string | null; username: string | null }>>({});
   const [lastTopics, setLastTopics] = useState<Record<string, { id: string; title: string }>>({});
+  useProfanityWords();
 
   const canEnter = isStaff || info?.status === "approved";
   const isPending = info?.status === "pending";
@@ -287,7 +288,7 @@ function BoardsIndex() {
                 {lastTopic && (
                   <div className="-mt-1 flex items-center justify-between gap-2 text-[11px] text-muted-foreground">
                     <span className="truncate min-w-0">
-                      Latest: <span className="font-semibold text-foreground">{lastTopic.title}</span>
+                      Latest: <span className="font-semibold text-foreground">{censorText(lastTopic.title)}</span>
                     </span>
                     {b.last_post_at && (
                       <span className="shrink-0 text-right">
