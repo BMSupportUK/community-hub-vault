@@ -319,7 +319,7 @@ function ForumStats({ boards }: { boards: Board[] }) {
   }, []);
 
   const threads = boards.reduce((s, b) => s + (b.topic_count || 0), 0);
-  const messages = boards.reduce((s, b) => s + (b.post_count || 0), 0);
+  const messages = boards.reduce((s, b) => s + Math.max(0, (b.post_count || 0) - (b.topic_count || 0)), 0);
   const fmt = (n: number) => n.toLocaleString();
 
   return (
@@ -330,7 +330,7 @@ function ForumStats({ boards }: { boards: Board[] }) {
       </div>
       <dl className="divide-y divide-border/60">
         <Row label="Threads" value={fmt(threads)} />
-        <Row label="Messages" value={fmt(messages)} />
+        <Row label="Replies" value={fmt(messages)} />
         <Row label="Members" value={memberCount === null ? "…" : fmt(memberCount)} />
         <div className="flex items-center justify-between gap-3 px-4 py-2.5 text-sm">
           <dt className="text-muted-foreground">Latest member:</dt>
