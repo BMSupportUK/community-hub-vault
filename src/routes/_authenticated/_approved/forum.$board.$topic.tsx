@@ -17,6 +17,7 @@ import { useFanBlocks } from "@/hooks/use-fan-blocks";
 import { toast } from "sonner";
 import { RotatingAffiliateBanner } from "@/components/app/RotatingAffiliateBanner";
 import { ForumPoll } from "@/components/app/ForumPoll";
+import { censorText, useProfanityWords } from "@/lib/profanity";
 
 export const Route = createFileRoute("/_authenticated/_approved/forum/$board/$topic")({
   component: TopicPage,
@@ -64,6 +65,7 @@ function TopicPage() {
   const canEnter = isStaff || hasAny(["staff"]) || info?.status === "approved";
   const mentionCandidates = useMentionCandidates(canUseSpecialMentions);
   const { blocked, reload: reloadBlocks } = useFanBlocks();
+  useProfanityWords();
 
   const [board, setBoard] = useState<Board | null>(null);
   const [topic, setTopic] = useState<Topic | null>(null);
@@ -324,7 +326,7 @@ function TopicPage() {
           <h2 className="font-display text-xl font-bold flex items-center gap-2 min-w-0">
             {topic.is_sticky && <Pin className="size-4 text-[#F4B400]" />}
             {topic.is_locked && <Lock className="size-4 text-muted-foreground" />}
-            <span className="truncate">{topic.title}</span>
+            <span className="truncate">{censorText(topic.title)}</span>
           </h2>
           {isBoardMod && (
             <div className="flex gap-1.5">

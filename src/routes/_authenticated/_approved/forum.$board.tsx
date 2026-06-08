@@ -13,6 +13,7 @@ import { prepareForumPostBody } from "@/lib/forum-embeds";
 import { useMentionCandidates } from "@/hooks/use-mention-candidates";
 import { useFanBlocks } from "@/hooks/use-fan-blocks";
 import { toast } from "sonner";
+import { censorText, useProfanityWords } from "@/lib/profanity";
 import { RotatingAffiliateBanner } from "@/components/app/RotatingAffiliateBanner";
 import { PollDraftEditor, persistDraftPoll, type DraftPoll } from "@/components/app/ForumPoll";
 import { BarChart3 } from "lucide-react";
@@ -63,6 +64,7 @@ function BoardPage() {
   const canEnter = isStaff || info?.status === "approved";
   const mentionCandidates = useMentionCandidates(canUseSpecialMentions);
   const { blocked } = useFanBlocks();
+  useProfanityWords();
 
   const [board, setBoard] = useState<Board | null>(null);
   const [topics, setTopics] = useState<Topic[] | null>(null);
@@ -353,7 +355,7 @@ function BoardPage() {
                         </span>
                       )}
                       <span className="font-display font-semibold leading-snug text-foreground text-[15px] group-hover:text-[#E11B22] transition-colors">
-                        {t.title}
+                        {censorText(t.title)}
                       </span>
                     </div>
                     <div className="text-[11px] text-muted-foreground mt-1.5 flex items-center gap-1.5">

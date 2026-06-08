@@ -175,3 +175,17 @@ export function containsProfanity(input: string): boolean {
   if (!input) return false;
   return getCompiled().some((re) => { re.lastIndex = 0; return re.test(input); });
 }
+
+/**
+ * Censor profanity within HTML, only touching text nodes (text between tags
+ * and any leading text before the first tag). Attribute values, tag names,
+ * URLs in href, etc. are left untouched.
+ */
+export function censorHtml(html: string): string {
+  if (!html) return html;
+  const censored = html.replace(/>([^<]+)</g, (_m, t: string) => `>${censorText(t)}<`);
+  const firstLt = censored.indexOf("<");
+  if (firstLt === -1) return censorText(censored);
+  if (firstLt === 0) return censored;
+  return censorText(censored.slice(0, firstLt)) + censored.slice(firstLt);
+}
