@@ -477,7 +477,6 @@ function TopicPage() {
               {opPost ? renderPost(opPost, 0) : (
                 <div className="text-sm text-muted-foreground text-center py-6">No original post.</div>
               )}
-              <ViewingBox />
             </TabsContent>
 
             <TabsContent value="reply" className="space-y-3 mt-3">
@@ -486,7 +485,6 @@ function TopicPage() {
               ) : (
                 pageReplies.map((p) => renderPost(p, posts.findIndex((x) => x.id === p.id)))
               )}
-              <ViewingBox />
 
               {totalPages > 1 && (
                 <div className="flex items-center justify-center gap-2 pt-2">
@@ -527,6 +525,7 @@ function TopicPage() {
                   <Lock className="size-4 inline mr-1" /> This topic is locked.
                 </div>
               ) : null}
+              <ViewingBox />
             </TabsContent>
           </Tabs>
         );
