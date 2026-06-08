@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { Eye, Loader2, Send, User2 } from "lucide-react";
+import { Loader2, Send, User2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
@@ -142,38 +142,6 @@ function ThreadPage() {
             </div>
           </Link>
         ) : <div className="text-sm text-muted-foreground">Loading…</div>}
-        <div className="flex items-center gap-2 rounded-full border border-border/60 bg-surface-2/60 px-2.5 py-1 shrink-0">
-          <Eye className="size-3.5 text-emerald-500" />
-          <span className="text-[11px] text-muted-foreground hidden sm:inline">
-            {viewers.length === 0 ? "No viewers" : `${viewers.length} viewing`}
-          </span>
-          <div className="flex -space-x-2">
-            {viewers.slice(0, 4).map((v) => {
-              const isMe = user && v.user_id === user.id;
-              return (
-                <div
-                  key={v.user_id}
-                  title={isMe ? `${v.alias} (you)` : v.alias}
-                  className="relative"
-                >
-                  {v.avatar ? (
-                    <img src={v.avatar} alt="" className="size-6 rounded-full object-cover ring-2 ring-background" />
-                  ) : (
-                    <div className="size-6 rounded-full bg-gradient-to-br from-rose-600 to-amber-600 grid place-items-center text-white text-[9px] font-bold ring-2 ring-background">
-                      {(v.alias || "F").slice(0, 1).toUpperCase()}
-                    </div>
-                  )}
-                  <span className="absolute -bottom-0.5 -right-0.5 size-2 rounded-full bg-emerald-500 ring-1 ring-background" />
-                </div>
-              );
-            })}
-            {viewers.length > 4 && (
-              <div className="size-6 rounded-full bg-surface-1 grid place-items-center text-[9px] font-semibold ring-2 ring-background">
-                +{viewers.length - 4}
-              </div>
-            )}
-          </div>
-        </div>
       </header>
 
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-2">

@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, Loader2, Pin, Lock, Quote, Reply as ReplyIcon, Pencil, Trash2, Send, History, Check, X, Ban, MessageSquare } from "lucide-react";
+import { ArrowLeft, Loader2, Pin, Lock, Quote, Reply as ReplyIcon, Pencil, Trash2, Send, History, Check, X, Ban, MessageSquare, Eye } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useFanZoneMembership } from "@/hooks/use-fan-zone";
@@ -52,6 +52,7 @@ type Post = {
 };
 type Profile = { id: string; display_name: string | null; username: string | null; avatar_url: string | null };
 type EditEntry = { id: string; previous_body: string; edited_at: string; edited_by: string };
+type Viewer = { user_id: string; alias: string; avatar: string };
 
 function TopicPage() {
   const { board: slug, topic: topicId } = Route.useParams();
@@ -80,6 +81,7 @@ function TopicPage() {
   const [tab, setTab] = useState<"posts" | "reply">("posts");
   const [page, setPage] = useState(1);
   const REPLIES_PER_PAGE = 20;
+  const [viewers, setViewers] = useState<Viewer[]>([]);
 
   const isBoardMod = isStaff || (user ? moderatorIds.has(user.id) : false);
   const canPost = canEnter && !!topic && !topic.is_locked;
@@ -136,6 +138,42 @@ function TopicPage() {
     return () => { supabase.removeChannel(ch); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [topicId, canEnter]);
+
+  // Realtime presence: who is currently viewing this topic
+  useEffect(() => {
+    if (!user || !canEnter) return;
+    const myProfile = profiles[user.id];
+    const presence = supabase.channel(`forum-topic-presence-${topicId}`, {
+      config: { presence: { key: user.id } },
+    });
+    const sync = () => {
+      const state = presence.presenceState() as Record<string, Array<{ user_id: string; alias: string; avatar: string }>>;
+      const seen = new Set<string>();
+      const list: Viewer[] = [];
+      Object.values(state).forEach((metas) => {
+        metas.forEach((m) => {
+          if (!m?.user_id || seen.has(m.user_id)) return;
+          seen.add(m.user_id);
+          list.push({ user_id: m.user_id, alias: m.alias ?? "Boro Fan", avatar: m.avatar ?? "" });
+        });
+      });
+      setViewers(list);
+    };
+    presence
+      .on("presence", { event: "sync" }, sync)
+      .on("presence", { event: "join" }, sync)
+      .on("presence", { event: "leave" }, sync)
+      .subscribe(async (status) => {
+        if (status === "SUBSCRIBED") {
+          await presence.track({
+            user_id: user.id,
+            alias: myProfile?.display_name ?? "Boro Fan",
+            avatar: myProfile?.avatar_url ?? "",
+          });
+        }
+      });
+    return () => { supabase.removeChannel(presence); };
+  }, [topicId, user?.id, canEnter, profiles]);
 
   const submitReply = async () => {
     if (!user || !topic) return;
@@ -371,6 +409,37 @@ function TopicPage() {
                 );
         };
 
+        const ViewingBox = () => (
+          <div className="mt-3 rounded-2xl border border-border/60 bg-surface-2/40 px-4 py-3 flex items-center gap-3">
+            <Eye className="size-4 text-emerald-500 shrink-0" />
+            <div className="text-xs font-semibold text-foreground">
+              {viewers.length === 0 ? "No one viewing" : `${viewers.length} viewing now`}
+            </div>
+            <div className="flex -space-x-2 ml-auto">
+              {viewers.slice(0, 8).map((v) => {
+                const isMe = user && v.user_id === user.id;
+                return (
+                  <div key={v.user_id} title={isMe ? `${v.alias} (you)` : v.alias} className="relative">
+                    {v.avatar ? (
+                      <img src={v.avatar} alt="" className="size-7 rounded-full object-cover ring-2 ring-background" />
+                    ) : (
+                      <div className="size-7 rounded-full bg-gradient-to-br from-[#E11B22] to-[#8B0F14] grid place-items-center text-white text-[10px] font-bold ring-2 ring-background">
+                        {(v.alias || "F").slice(0, 1).toUpperCase()}
+                      </div>
+                    )}
+                    <span className="absolute -bottom-0.5 -right-0.5 size-2 rounded-full bg-emerald-500 ring-1 ring-background" />
+                  </div>
+                );
+              })}
+              {viewers.length > 8 && (
+                <div className="size-7 rounded-full bg-surface-1 grid place-items-center text-[10px] font-semibold ring-2 ring-background">
+                  +{viewers.length - 8}
+                </div>
+              )}
+            </div>
+          </div>
+        );
+
         return (
           <Tabs value={tab} onValueChange={(v) => setTab(v as "posts" | "reply")} className="w-full">
             <TabsList>
@@ -388,6 +457,7 @@ function TopicPage() {
               {opPost ? renderPost(opPost, 0) : (
                 <div className="text-sm text-muted-foreground text-center py-6">No original post.</div>
               )}
+              <ViewingBox />
             </TabsContent>
 
             <TabsContent value="reply" className="space-y-3 mt-3">
@@ -396,6 +466,7 @@ function TopicPage() {
               ) : (
                 pageReplies.map((p) => renderPost(p, posts.findIndex((x) => x.id === p.id)))
               )}
+              <ViewingBox />
 
               {totalPages > 1 && (
                 <div className="flex items-center justify-center gap-2 pt-2">
