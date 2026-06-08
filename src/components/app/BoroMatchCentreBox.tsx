@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Trophy, CalendarDays, BarChart3, Pencil, Loader2, X } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
@@ -88,7 +88,7 @@ function FixtureCard({
   rightLabel,
   meta,
 }: {
-  children: React.ReactNode;
+  children: ReactNode;
   rightLabel: string;
   meta?: string;
 }) {
