@@ -246,7 +246,7 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
           onDrop={() => reorder(i.to)}
           className={isAdmin ? "cursor-grab active:cursor-grabbing" : undefined}
         >
-          <RailIcon to={i.to} label={i.label} Icon={i.icon} active={path.startsWith(i.to)} badge={i.badge} />
+          <RailIcon to={i.to} label={i.label} Icon={i.icon} active={path.startsWith(i.to)} badge={i.badge} draggable={isAdmin} />
         </div>
       ))}
       <div className="mt-auto" />
@@ -273,6 +273,7 @@ function RailIcon({
   active,
   accent,
   badge,
+  draggable,
 }: {
   to: string;
   label: string;
@@ -280,6 +281,7 @@ function RailIcon({
   active?: boolean;
   accent?: boolean;
   badge?: number;
+  draggable?: boolean;
 }) {
   return (
     <TooltipProvider delayDuration={150}>
@@ -288,6 +290,8 @@ function RailIcon({
           <Link
             to={to}
             aria-label={label}
+            draggable={false}
+            onDragStart={draggable ? undefined : (e) => e.preventDefault()}
             className={cn(
               "group relative size-12 rounded-2xl flex items-center justify-center transition-all",
               active
