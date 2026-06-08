@@ -9,6 +9,7 @@ import {
   type LastResult,
   type NextFixture,
   type LeaguePosition,
+  type LeagueTableRow,
 } from "@/lib/boro-match-centre.functions";
 import { useAuth } from "@/hooks/use-auth";
 import { useUserTimezone } from "@/hooks/use-user-timezone";
@@ -209,7 +210,48 @@ export function BoroMatchCentreBox() {
               <span className="text-[10px] text-muted-foreground">{lp.competition}</span>
             )}
           </div>
-          {lp ? (
+          {lp?.table && lp.table.length > 0 ? (
+            <div className="overflow-hidden rounded border border-border/60">
+              <table className="w-full text-[11px] font-mono tabular-nums">
+                <thead className="bg-surface-1 text-muted-foreground">
+                  <tr>
+                    <th className="px-1.5 py-1 text-left w-6">#</th>
+                    <th className="px-1.5 py-1 text-left">Team</th>
+                    <th className="px-1 py-1 text-center">P</th>
+                    <th className="px-1 py-1 text-center">W</th>
+                    <th className="px-1 py-1 text-center">D</th>
+                    <th className="px-1 py-1 text-center">L</th>
+                    <th className="px-1 py-1 text-center">GD</th>
+                    <th className="px-1 py-1 text-center font-bold">Pts</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {lp.table.map((r) => {
+                    const boro = r.isBoro || isBoro(r.team);
+                    return (
+                      <tr
+                        key={`${r.position}-${r.team}`}
+                        className={
+                          boro
+                            ? "bg-[#E11B22]/15 text-foreground font-bold"
+                            : "text-muted-foreground"
+                        }
+                      >
+                        <td className="px-1.5 py-1">{r.position}</td>
+                        <td className="px-1.5 py-1 font-sans truncate max-w-[120px]">{r.team}</td>
+                        <td className="px-1 py-1 text-center">{r.played}</td>
+                        <td className="px-1 py-1 text-center">{r.won}</td>
+                        <td className="px-1 py-1 text-center">{r.drawn}</td>
+                        <td className="px-1 py-1 text-center">{r.lost}</td>
+                        <td className="px-1 py-1 text-center">{r.goalDifference > 0 ? `+${r.goalDifference}` : r.goalDifference}</td>
+                        <td className="px-1 py-1 text-center font-bold">{r.points}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          ) : lp ? (
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-2">
                 <span className="text-2xl font-display font-bold text-[#E11B22] leading-none">
