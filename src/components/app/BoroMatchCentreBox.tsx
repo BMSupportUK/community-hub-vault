@@ -166,6 +166,9 @@ export function BoroMatchCentreBox() {
 
       <div className="p-3 space-y-3">
         {/* Last result */}
+        <div className="text-[10px] uppercase tracking-wider font-bold text-[#E11B22] flex items-center gap-1 px-1">
+          <Trophy className="size-3" /> Last result
+        </div>
         {lr ? (
           <FixtureCard
             rightLabel="FT"
@@ -181,6 +184,9 @@ export function BoroMatchCentreBox() {
         <div className="border-t border-border/60" />
 
         {/* Next fixture */}
+        <div className="text-[10px] uppercase tracking-wider font-bold text-[#E11B22] flex items-center gap-1 px-1">
+          <CalendarDays className="size-3" /> Next fixture
+        </div>
         {nf ? (
           <FixtureCard
             rightLabel={`KO ${fmtTime(nf.kickoff, tz)}`}
