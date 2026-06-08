@@ -69,8 +69,8 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
   const fanZoneApproved = fanZone?.status === "approved";
   const fanZonePending = fanZone?.status === "pending";
   const fanZoneGated = !isFanZoneStaff && !fanZoneApproved && !fanZonePending;
-  // Only show the Boro Fan Zone icon to fan-zone staff or approved/pending members.
-  const hideFanZone = !isFanZoneStaff && !fanZoneApproved && !fanZonePending;
+  // Show the Boro Fan Zone icon to all users (non-members get the gated access card).
+  const hideFanZone = false;
   const path = useRouterState({ select: (r) => r.location.pathname });
   const [activeIncidents, setActiveIncidents] = useState(0);
   const [unreadNewContent, setUnreadNewContent] = useState(0);
