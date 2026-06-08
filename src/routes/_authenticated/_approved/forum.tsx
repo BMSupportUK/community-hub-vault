@@ -254,18 +254,21 @@ function BoardsIndex() {
                     <span className="font-extrabold text-sm text-[#E11B22]">{Math.max(0, b.post_count - b.topic_count)}</span>
                     <span className="font-bold text-foreground">replies</span>
                   </span>
-                  {b.last_post_at ? (
-                    <span className="truncate text-right">
-                      {formatLastSeen(b.last_post_at)}
-                      {posterName ? <> · <span className="text-foreground">{posterName}</span></> : null}
-                    </span>
-                  ) : (
+                  {!b.last_post_at && (
                     <span className="italic">No posts yet</span>
                   )}
                 </div>
                 {lastTopic && (
-                  <div className="-mt-1 text-[11px] text-muted-foreground truncate">
-                    Latest: <span className="font-semibold text-foreground">{lastTopic.title}</span>
+                  <div className="-mt-1 flex items-center justify-between gap-2 text-[11px] text-muted-foreground">
+                    <span className="truncate min-w-0">
+                      Latest: <span className="font-semibold text-foreground">{lastTopic.title}</span>
+                    </span>
+                    {b.last_post_at && (
+                      <span className="shrink-0 text-right">
+                        {formatLastSeen(b.last_post_at)}
+                        {posterName ? <> · <span className="text-foreground">{posterName}</span></> : null}
+                      </span>
+                    )}
                   </div>
                 )}
               </div>
