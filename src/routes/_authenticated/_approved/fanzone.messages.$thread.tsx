@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { formatLastSeen } from "@/lib/relative-time";
 import { toast } from "sonner";
 import { ReportButton } from "@/components/app/ReportButton";
+import { censorText, useProfanityWords } from "@/lib/profanity";
 
 export const Route = createFileRoute("/_authenticated/_approved/fanzone/messages/$thread")({
   component: ThreadPage,
