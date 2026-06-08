@@ -50,16 +50,24 @@ function MessagesLayout() {
     const { data } = await supabase.rpc("list_my_fan_dm_threads");
     setThreads((data ?? []) as Thread[]);
   };
+
+  const loadMembers = async () => {
+    if (!user) return;
+    const { data, error } = await (supabase.rpc as unknown as (fn: string) => Promise<{ data: unknown; error: { message: string } | null }>)(
+      "list_fan_zone_approved_members",
+    );
+    if (error) {
+      toast.error("Couldn't load Fan Zone members", { description: error.message });
+      return;
+    }
+    const arr = (data ?? []) as Member[];
+    setMembers(arr.filter((m) => m.user_id !== user.id));
+  };
+
   useEffect(() => {
     if (!canEnter || !user) return;
     void load();
-    void (async () => {
-      const { data } = await (supabase.rpc as unknown as (fn: string) => Promise<{ data: unknown }>)(
-        "list_fan_zone_approved_members",
-      );
-      const arr = (data ?? []) as Member[];
-      setMembers(arr.filter((m) => m.user_id !== user.id));
-    })();
+    void loadMembers();
     const ch = supabase
       .channel(`fz-inbox-${user.id}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "fan_zone_dm_messages" }, () => void load())
@@ -123,7 +131,7 @@ function MessagesLayout() {
             <Input
               value={search}
               onChange={(e) => { setSearch(e.target.value); setShowResults(true); }}
-              onFocus={() => setShowResults(true)}
+              onFocus={() => { setShowResults(true); void loadMembers(); }}
               placeholder="Search a fan to start a chat…"
               className="h-9 pl-8 pr-8 bg-surface-2/60 border-border text-sm"
             />
@@ -176,7 +184,7 @@ function MessagesLayout() {
           {threads === null ? (
             <div className="grid place-items-center py-12 text-muted-foreground"><Loader2 className="size-5 animate-spin" /></div>
           ) : threads.length === 0 ? (
-            <p className="p-6 text-xs text-muted-foreground text-center">No conversations yet. Visit a fan's profile to start one.</p>
+            <p className="p-6 text-xs text-muted-foreground text-center">No conversations yet. Search a fan above to start one.</p>
           ) : (
             <ul className="divide-y divide-border/60 max-h-[70vh] overflow-y-auto">
               {threads.map((t) => (
