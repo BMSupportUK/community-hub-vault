@@ -231,10 +231,13 @@ function BoardsIndex() {
                   </div>
                 </div>
                 <div className="mt-auto pt-3 border-t border-border/60 flex items-center justify-between gap-2 text-[11px] text-muted-foreground">
-                  <span className="inline-flex items-center gap-1">
-                    <MessageSquare className="size-3" />
-                    <span className="font-semibold text-[#E11B22]">{b.topic_count}</span> topics ·{" "}
-                    <span className="font-semibold text-[#E11B22]">{b.post_count}</span> posts
+                  <span className="inline-flex items-center gap-1.5 text-xs">
+                    <MessageSquare className="size-3.5 text-[#E11B22]" />
+                    <span className="font-extrabold text-sm text-[#E11B22]">{b.topic_count}</span>
+                    <span className="font-bold text-foreground">topics</span>
+                    <span className="text-muted-foreground">·</span>
+                    <span className="font-extrabold text-sm text-[#E11B22]">{b.post_count}</span>
+                    <span className="font-bold text-foreground">posts</span>
                   </span>
                   {b.last_post_at ? (
                     <span className="truncate text-right">
