@@ -1,11 +1,13 @@
-import { createFileRoute, Link, Outlet, useMatches } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { ArrowLeft, Loader2, MessageSquare, Ban } from "lucide-react";
+import { createFileRoute, Link, Outlet, useMatches, useNavigate } from "@tanstack/react-router";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { ArrowLeft, Loader2, MessageSquare, Ban, Search, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useFanZoneMembership } from "@/hooks/use-fan-zone";
 import { formatLastSeen } from "@/lib/relative-time";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/_approved/fanzone/messages")({
   component: MessagesLayout,
@@ -22,6 +24,13 @@ type Thread = {
   unread: boolean;
 };
 
+type Member = {
+  user_id: string;
+  display_name: string | null;
+  username: string | null;
+  avatar_url: string | null;
+};
+
 function MessagesLayout() {
   const matches = useMatches();
   const isNested = matches.some((m) => m.routeId.startsWith("/_authenticated/_approved/fanzone/messages/"));
@@ -29,8 +38,14 @@ function MessagesLayout() {
   const isStaff = hasAny(["admin", "boro_fan_zone_moderator"]);
   const info = useFanZoneMembership(user?.id ?? null);
   const canEnter = isStaff || info?.status === "approved";
+  const navigate = useNavigate();
 
   const [threads, setThreads] = useState<Thread[] | null>(null);
+  const [members, setMembers] = useState<Member[]>([]);
+  const [search, setSearch] = useState("");
+  const [showResults, setShowResults] = useState(false);
+  const [starting, setStarting] = useState<string | null>(null);
+  const searchBoxRef = useRef<HTMLDivElement>(null);
 
   const load = async () => {
     const { data } = await supabase.rpc("list_my_fan_dm_threads");
@@ -39,6 +54,13 @@ function MessagesLayout() {
   useEffect(() => {
     if (!canEnter || !user) return;
     void load();
+    void (async () => {
+      const { data } = await (supabase.rpc as unknown as (fn: string) => Promise<{ data: unknown }>)(
+        "list_fan_zone_approved_members",
+      );
+      const arr = (data ?? []) as Array<Member & { user_id: string }>;
+      setMembers(arr.filter((m) => m.user_id !== user.id));
+    })();
     const ch = supabase
       .channel(`fz-inbox-${user.id}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "fan_zone_dm_messages" }, () => void load())
@@ -46,6 +68,39 @@ function MessagesLayout() {
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, [canEnter, user?.id]);
+
+  useEffect(() => {
+    const onClick = (e: MouseEvent) => {
+      if (!searchBoxRef.current?.contains(e.target as Node)) setShowResults(false);
+    };
+    document.addEventListener("mousedown", onClick);
+    return () => document.removeEventListener("mousedown", onClick);
+  }, []);
+
+  const filteredMembers = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return [];
+    return members
+      .filter(
+        (m) =>
+          (m.display_name ?? "").toLowerCase().includes(q) ||
+          (m.username ?? "").toLowerCase().includes(q),
+      )
+      .slice(0, 8);
+  }, [members, search]);
+
+  const startChat = async (otherId: string) => {
+    setStarting(otherId);
+    const { data, error } = await supabase.rpc("get_or_create_fan_dm_thread", { _other: otherId });
+    setStarting(null);
+    if (error || !data) {
+      toast.error(error?.message ?? "Could not start chat");
+      return;
+    }
+    setSearch("");
+    setShowResults(false);
+    navigate({ to: "/fanzone/messages/$thread", params: { thread: data as string } });
+  };
 
   if (!canEnter) {
     return <div className="p-6 text-sm text-center">Boro Fan Zone members only.</div>;
@@ -67,6 +122,64 @@ function MessagesLayout() {
           <div className="px-4 py-3 border-b border-border/60 flex items-center gap-2">
             <MessageSquare className="size-4 text-[#E11B22]" />
             <h2 className="font-display font-bold text-sm">Fan zone inbox</h2>
+          </div>
+          <div ref={searchBoxRef} className="relative px-3 py-2 border-b border-border/60">
+            <Search className="size-4 absolute left-5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+            <Input
+              value={search}
+              onChange={(e) => { setSearch(e.target.value); setShowResults(true); }}
+              onFocus={() => setShowResults(true)}
+              placeholder="Search a fan to start a chat…"
+              className="h-9 pl-8 pr-8 bg-surface-2/60 border-border text-sm"
+            />
+            {search && (
+              <button
+                type="button"
+                onClick={() => { setSearch(""); setShowResults(false); }}
+                className="absolute right-5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                aria-label="Clear search"
+              >
+                <X className="size-3.5" />
+              </button>
+            )}
+            {showResults && search.trim() && (
+              <div className="absolute z-20 left-3 right-3 mt-1 rounded-lg border border-border bg-surface-1 shadow-lg max-h-72 overflow-y-auto">
+                {filteredMembers.length === 0 ? (
+                  <p className="px-3 py-3 text-xs text-muted-foreground text-center">No fans match.</p>
+                ) : (
+                  <ul className="divide-y divide-border/60">
+                    {filteredMembers.map((m) => {
+                      const name = m.display_name || m.username || "Member";
+                      return (
+                        <li key={m.user_id}>
+                          <button
+                            type="button"
+                            disabled={starting === m.user_id}
+                            onClick={() => void startChat(m.user_id)}
+                            className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-surface-2/60 disabled:opacity-60"
+                          >
+                            {m.avatar_url ? (
+                              <img src={m.avatar_url} alt="" className="size-7 rounded-full object-cover" />
+                            ) : (
+                              <div className="size-7 rounded-full bg-gradient-to-br from-rose-600 to-amber-600 grid place-items-center text-white text-[10px] font-bold">
+                                {name.slice(0, 1).toUpperCase()}
+                              </div>
+                            )}
+                            <div className="min-w-0 flex-1">
+                              <div className="text-xs font-semibold truncate">{name}</div>
+                              {m.username && (
+                                <div className="text-[10px] text-muted-foreground truncate">@{m.username}</div>
+                              )}
+                            </div>
+                            {starting === m.user_id && <Loader2 className="size-3.5 animate-spin text-muted-foreground" />}
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </div>
+            )}
           </div>
           {threads === null ? (
             <div className="grid place-items-center py-12 text-muted-foreground"><Loader2 className="size-5 animate-spin" /></div>
