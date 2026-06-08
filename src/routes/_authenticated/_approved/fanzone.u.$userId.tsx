@@ -218,3 +218,49 @@ function FanProfilePage() {
     </div>
   );
 }
+
+function FanFriendButton({
+  rel,
+  busy,
+  disabled,
+  onSend,
+  onAccept,
+}: {
+  rel: FanFriendRel;
+  busy: boolean;
+  disabled: boolean;
+  onSend: () => void;
+  onAccept: () => void;
+}) {
+  if (rel.kind === "friends") {
+    return (
+      <Button disabled variant="outline" className="bg-emerald-500/15 border-emerald-400/40 text-emerald-100 opacity-100">
+        <UserCheck className="size-4 mr-1" /> Friends
+      </Button>
+    );
+  }
+
+  if (rel.kind === "outgoing") {
+    return (
+      <Button disabled variant="outline" className="bg-amber-500/15 border-amber-400/40 text-amber-100 opacity-100">
+        <Clock className="size-4 mr-1" /> Request pending
+      </Button>
+    );
+  }
+
+  if (rel.kind === "incoming") {
+    return (
+      <Button onClick={() => void onAccept()} disabled={busy || disabled} className="bg-emerald-600 hover:bg-emerald-500 text-white border-0">
+        {busy ? <Loader2 className="size-4 mr-1 animate-spin" /> : <UserCheck className="size-4 mr-1" />}
+        Accept friend request
+      </Button>
+    );
+  }
+
+  return (
+    <Button onClick={() => void onSend()} disabled={busy || disabled} variant="outline" className="bg-white/10 border-white/30 text-white hover:bg-white/20 hover:text-white">
+      {busy ? <Loader2 className="size-4 mr-1 animate-spin" /> : <UserPlus className="size-4 mr-1" />}
+      Add friend
+    </Button>
+  );
+}
