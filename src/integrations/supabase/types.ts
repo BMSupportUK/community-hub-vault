@@ -4095,6 +4095,17 @@ export type Database = {
         Returns: boolean
       }
       is_user_dnd: { Args: { _user_id: string }; Returns: boolean }
+      list_fan_zone_approved_members: {
+        Args: never
+        Returns: {
+          decided_at: string
+          fan_alias: string
+          fan_avatar_url: string
+          requested_at: string
+          status: string
+          user_id: string
+        }[]
+      }
       list_my_fan_blocks: {
         Args: never
         Returns: {
