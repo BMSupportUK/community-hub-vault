@@ -369,13 +369,14 @@ function AdminFanZonePage() {
                   </th>
                   {isAdmin && <th className="text-left font-semibold px-5 py-3">Reason</th>}
                   {isAdmin && <th className="text-left font-semibold px-5 py-3">Status</th>}
+                  <th className="w-12 px-3 text-center font-semibold">Friend</th>
                   {isAdmin && <th className="w-12 px-3" />}
                 </tr>
               </thead>
               <tbody>
                 {filtered.length === 0 ? (
                   <tr>
-                    <td colSpan={isAdmin ? 6 : 3} className="text-center text-muted-foreground py-16">
+                    <td colSpan={isAdmin ? 7 : 4} className="text-center text-muted-foreground py-16">
                       No members in this view.
                     </td>
                   </tr>
@@ -383,6 +384,8 @@ function AdminFanZonePage() {
                   filtered.map((r) => {
                     const name = r.fan_alias || "Boro Fan";
                     const avatar = r.fan_avatar_url;
+                    const isSelf = user?.id === r.user_id;
+                    const fs = friendByUser[r.user_id];
                     return (
                       <tr key={r.user_id} className="border-b border-border/60 last:border-0 hover:bg-surface-2/30">
                         <td className="px-5 py-3">
@@ -427,6 +430,41 @@ function AdminFanZonePage() {
                             <StatusPill status={r.status} />
                           </td>
                         )}
+                        <td className="px-3 py-3 text-center">
+                          {isSelf ? (
+                            <span className="text-xs text-muted-foreground/60">—</span>
+                          ) : fs?.kind === "friends" ? (
+                            <span className="inline-flex items-center justify-center size-8 rounded-full bg-emerald-500/10 text-emerald-400" title="Friends">
+                              <UserCheck className="size-4" />
+                            </span>
+                          ) : fs?.kind === "outgoing" ? (
+                            <span className="inline-flex items-center justify-center size-8 rounded-full bg-amber-500/10 text-amber-400" title="Request pending">
+                              <Clock className="size-4" />
+                            </span>
+                          ) : fs?.kind === "incoming" ? (
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="size-8 text-emerald-400 hover:text-emerald-300"
+                              title="Accept friend request"
+                              disabled={friendBusy === fs.id}
+                              onClick={() => acceptFriendRequest(fs.id)}
+                            >
+                              {friendBusy === fs.id ? <Loader2 className="size-4 animate-spin" /> : <UserCheck className="size-4" />}
+                            </Button>
+                          ) : (
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="size-8 text-sky-400 hover:text-sky-300"
+                              title="Add friend"
+                              disabled={!user || friendBusy === r.user_id}
+                              onClick={() => sendFriendRequest(r.user_id)}
+                            >
+                              {friendBusy === r.user_id ? <Loader2 className="size-4 animate-spin" /> : <UserPlus className="size-4" />}
+                            </Button>
+                          )}
+                        </td>
                         {isAdmin && (
                           <td className="px-3 py-3 text-right">
                             <DropdownMenu>
