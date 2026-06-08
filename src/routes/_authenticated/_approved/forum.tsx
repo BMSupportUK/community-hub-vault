@@ -251,8 +251,8 @@ function BoardsIndex() {
                     <span className="font-extrabold text-sm text-[#E11B22]">{b.topic_count}</span>
                     <span className="font-bold text-foreground">topics</span>
                     <span className="text-muted-foreground">·</span>
-                    <span className="font-extrabold text-sm text-[#E11B22]">{b.post_count}</span>
-                    <span className="font-bold text-foreground">posts</span>
+                    <span className="font-extrabold text-sm text-[#E11B22]">{Math.max(0, b.post_count - b.topic_count)}</span>
+                    <span className="font-bold text-foreground">replies</span>
                   </span>
                   {b.last_post_at ? (
                     <span className="truncate text-right">
