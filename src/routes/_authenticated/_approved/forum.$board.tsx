@@ -13,6 +13,7 @@ import { prepareForumPostBody } from "@/lib/forum-embeds";
 import { useMentionCandidates } from "@/hooks/use-mention-candidates";
 import { useFanBlocks } from "@/hooks/use-fan-blocks";
 import { toast } from "sonner";
+import { censorText, useProfanityWords } from "@/lib/profanity";
 import { RotatingAffiliateBanner } from "@/components/app/RotatingAffiliateBanner";
 import { PollDraftEditor, persistDraftPoll, type DraftPoll } from "@/components/app/ForumPoll";
 import { BarChart3 } from "lucide-react";
