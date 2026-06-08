@@ -56,7 +56,7 @@ function AdminReportsPage() {
 
   const resolve = async (id: string, newStatus: "reviewed" | "dismissed") => {
     setBusyId(id);
-    const { error } = await supabase.rpc("resolve_content_report", { _id: id, _status: newStatus, _notes: null });
+    const { error } = await supabase.rpc("resolve_content_report", { _id: id, _status: newStatus });
     setBusyId(null);
     if (error) return toast.error("Couldn't update", { description: error.message });
     toast.success(newStatus === "reviewed" ? "Marked reviewed" : "Dismissed");

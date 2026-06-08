@@ -55,6 +55,7 @@ import { Route as AuthenticatedApprovedAdminStreamingDevicesRouteImport } from '
 import { Route as AuthenticatedApprovedAdminSportsImportRouteImport } from './routes/_authenticated/_approved/admin-sports-import'
 import { Route as AuthenticatedApprovedAdminRolesRouteImport } from './routes/_authenticated/_approved/admin-roles'
 import { Route as AuthenticatedApprovedAdminReviewsRouteImport } from './routes/_authenticated/_approved/admin-reviews'
+import { Route as AuthenticatedApprovedAdminReportsRouteImport } from './routes/_authenticated/_approved/admin-reports'
 import { Route as AuthenticatedApprovedAdminProfanityRouteImport } from './routes/_authenticated/_approved/admin-profanity'
 import { Route as AuthenticatedApprovedAdminPermissionsRouteImport } from './routes/_authenticated/_approved/admin-permissions'
 import { Route as AuthenticatedApprovedAdminNotificationsRouteImport } from './routes/_authenticated/_approved/admin-notifications'
@@ -350,6 +351,12 @@ const AuthenticatedApprovedAdminReviewsRoute =
     path: '/admin-reviews',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
+const AuthenticatedApprovedAdminReportsRoute =
+  AuthenticatedApprovedAdminReportsRouteImport.update({
+    id: '/admin-reports',
+    path: '/admin-reports',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
 const AuthenticatedApprovedAdminProfanityRoute =
   AuthenticatedApprovedAdminProfanityRouteImport.update({
     id: '/admin-profanity',
@@ -614,6 +621,7 @@ export interface FileRoutesByFullPath {
   '/admin-notifications': typeof AuthenticatedApprovedAdminNotificationsRoute
   '/admin-permissions': typeof AuthenticatedApprovedAdminPermissionsRoute
   '/admin-profanity': typeof AuthenticatedApprovedAdminProfanityRoute
+  '/admin-reports': typeof AuthenticatedApprovedAdminReportsRoute
   '/admin-reviews': typeof AuthenticatedApprovedAdminReviewsRoute
   '/admin-roles': typeof AuthenticatedApprovedAdminRolesRoute
   '/admin-sports-import': typeof AuthenticatedApprovedAdminSportsImportRoute
@@ -699,6 +707,7 @@ export interface FileRoutesByTo {
   '/admin-notifications': typeof AuthenticatedApprovedAdminNotificationsRoute
   '/admin-permissions': typeof AuthenticatedApprovedAdminPermissionsRoute
   '/admin-profanity': typeof AuthenticatedApprovedAdminProfanityRoute
+  '/admin-reports': typeof AuthenticatedApprovedAdminReportsRoute
   '/admin-reviews': typeof AuthenticatedApprovedAdminReviewsRoute
   '/admin-roles': typeof AuthenticatedApprovedAdminRolesRoute
   '/admin-sports-import': typeof AuthenticatedApprovedAdminSportsImportRoute
@@ -786,6 +795,7 @@ export interface FileRoutesById {
   '/_authenticated/_approved/admin-notifications': typeof AuthenticatedApprovedAdminNotificationsRoute
   '/_authenticated/_approved/admin-permissions': typeof AuthenticatedApprovedAdminPermissionsRoute
   '/_authenticated/_approved/admin-profanity': typeof AuthenticatedApprovedAdminProfanityRoute
+  '/_authenticated/_approved/admin-reports': typeof AuthenticatedApprovedAdminReportsRoute
   '/_authenticated/_approved/admin-reviews': typeof AuthenticatedApprovedAdminReviewsRoute
   '/_authenticated/_approved/admin-roles': typeof AuthenticatedApprovedAdminRolesRoute
   '/_authenticated/_approved/admin-sports-import': typeof AuthenticatedApprovedAdminSportsImportRoute
@@ -873,6 +883,7 @@ export interface FileRouteTypes {
     | '/admin-notifications'
     | '/admin-permissions'
     | '/admin-profanity'
+    | '/admin-reports'
     | '/admin-reviews'
     | '/admin-roles'
     | '/admin-sports-import'
@@ -958,6 +969,7 @@ export interface FileRouteTypes {
     | '/admin-notifications'
     | '/admin-permissions'
     | '/admin-profanity'
+    | '/admin-reports'
     | '/admin-reviews'
     | '/admin-roles'
     | '/admin-sports-import'
@@ -1044,6 +1056,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/admin-notifications'
     | '/_authenticated/_approved/admin-permissions'
     | '/_authenticated/_approved/admin-profanity'
+    | '/_authenticated/_approved/admin-reports'
     | '/_authenticated/_approved/admin-reviews'
     | '/_authenticated/_approved/admin-roles'
     | '/_authenticated/_approved/admin-sports-import'
@@ -1455,6 +1468,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedApprovedAdminReviewsRouteImport
       parentRoute: typeof AuthenticatedApprovedRoute
     }
+    '/_authenticated/_approved/admin-reports': {
+      id: '/_authenticated/_approved/admin-reports'
+      path: '/admin-reports'
+      fullPath: '/admin-reports'
+      preLoaderRoute: typeof AuthenticatedApprovedAdminReportsRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
     '/_authenticated/_approved/admin-profanity': {
       id: '/_authenticated/_approved/admin-profanity'
       path: '/admin-profanity'
@@ -1829,6 +1849,7 @@ interface AuthenticatedApprovedRouteChildren {
   AuthenticatedApprovedAdminNotificationsRoute: typeof AuthenticatedApprovedAdminNotificationsRoute
   AuthenticatedApprovedAdminPermissionsRoute: typeof AuthenticatedApprovedAdminPermissionsRoute
   AuthenticatedApprovedAdminProfanityRoute: typeof AuthenticatedApprovedAdminProfanityRoute
+  AuthenticatedApprovedAdminReportsRoute: typeof AuthenticatedApprovedAdminReportsRoute
   AuthenticatedApprovedAdminReviewsRoute: typeof AuthenticatedApprovedAdminReviewsRoute
   AuthenticatedApprovedAdminRolesRoute: typeof AuthenticatedApprovedAdminRolesRoute
   AuthenticatedApprovedAdminSportsImportRoute: typeof AuthenticatedApprovedAdminSportsImportRoute
@@ -1888,6 +1909,8 @@ const AuthenticatedApprovedRouteChildren: AuthenticatedApprovedRouteChildren = {
     AuthenticatedApprovedAdminPermissionsRoute,
   AuthenticatedApprovedAdminProfanityRoute:
     AuthenticatedApprovedAdminProfanityRoute,
+  AuthenticatedApprovedAdminReportsRoute:
+    AuthenticatedApprovedAdminReportsRoute,
   AuthenticatedApprovedAdminReviewsRoute:
     AuthenticatedApprovedAdminReviewsRoute,
   AuthenticatedApprovedAdminRolesRoute: AuthenticatedApprovedAdminRolesRoute,
