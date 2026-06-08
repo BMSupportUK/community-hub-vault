@@ -26,9 +26,8 @@ type Thread = {
 
 type Member = {
   user_id: string;
-  display_name: string | null;
-  username: string | null;
-  avatar_url: string | null;
+  fan_alias: string | null;
+  fan_avatar_url: string | null;
 };
 
 function MessagesLayout() {
@@ -58,7 +57,7 @@ function MessagesLayout() {
       const { data } = await (supabase.rpc as unknown as (fn: string) => Promise<{ data: unknown }>)(
         "list_fan_zone_approved_members",
       );
-      const arr = (data ?? []) as Array<Member & { user_id: string }>;
+      const arr = (data ?? []) as Member[];
       setMembers(arr.filter((m) => m.user_id !== user.id));
     })();
     const ch = supabase
@@ -81,11 +80,7 @@ function MessagesLayout() {
     const q = search.trim().toLowerCase();
     if (!q) return [];
     return members
-      .filter(
-        (m) =>
-          (m.display_name ?? "").toLowerCase().includes(q) ||
-          (m.username ?? "").toLowerCase().includes(q),
-      )
+      .filter((m) => (m.fan_alias ?? "").toLowerCase().includes(q))
       .slice(0, 8);
   }, [members, search]);
 
@@ -149,7 +144,7 @@ function MessagesLayout() {
                 ) : (
                   <ul className="divide-y divide-border/60">
                     {filteredMembers.map((m) => {
-                      const name = m.display_name || m.username || "Member";
+                      const name = m.fan_alias || "Boro Fan";
                       return (
                         <li key={m.user_id}>
                           <button
@@ -158,8 +153,8 @@ function MessagesLayout() {
                             onClick={() => void startChat(m.user_id)}
                             className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-surface-2/60 disabled:opacity-60"
                           >
-                            {m.avatar_url ? (
-                              <img src={m.avatar_url} alt="" className="size-7 rounded-full object-cover" />
+                            {m.fan_avatar_url ? (
+                              <img src={m.fan_avatar_url} alt="" className="size-7 rounded-full object-cover" />
                             ) : (
                               <div className="size-7 rounded-full bg-gradient-to-br from-rose-600 to-amber-600 grid place-items-center text-white text-[10px] font-bold">
                                 {name.slice(0, 1).toUpperCase()}
@@ -167,9 +162,6 @@ function MessagesLayout() {
                             )}
                             <div className="min-w-0 flex-1">
                               <div className="text-xs font-semibold truncate">{name}</div>
-                              {m.username && (
-                                <div className="text-[10px] text-muted-foreground truncate">@{m.username}</div>
-                              )}
                             </div>
                             {starting === m.user_id && <Loader2 className="size-3.5 animate-spin text-muted-foreground" />}
                           </button>
