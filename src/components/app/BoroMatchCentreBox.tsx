@@ -360,6 +360,56 @@ function EditDialog({
   const [lpGd, setLpGd] = useState(String(lp?.goalDifference ?? 0));
   const [lpPts, setLpPts] = useState(String(lp?.points ?? 0));
 
+  // Surrounding league table (2 above, Boro, 2 below)
+  const emptyRow = (pos: number, team = "", isBoro = false) => ({
+    position: String(pos),
+    team,
+    played: "0",
+    won: "0",
+    drawn: "0",
+    lost: "0",
+    goalDifference: "0",
+    points: "0",
+    isBoro,
+  });
+  const seedRows = () => {
+    const existing = lp?.table;
+    if (existing && existing.length > 0) {
+      return existing.map((r) => ({
+        position: String(r.position),
+        team: r.team,
+        played: String(r.played),
+        won: String(r.won),
+        drawn: String(r.drawn),
+        lost: String(r.lost),
+        goalDifference: String(r.goalDifference),
+        points: String(r.points),
+        isBoro: !!r.isBoro,
+      }));
+    }
+    const pos = lp?.position ?? 5;
+    return [
+      emptyRow(Math.max(1, pos - 2)),
+      emptyRow(Math.max(1, pos - 1)),
+      {
+        position: String(pos),
+        team: BORO,
+        played: String(lp?.played ?? 0),
+        won: String(lp?.won ?? 0),
+        drawn: String(lp?.drawn ?? 0),
+        lost: String(lp?.lost ?? 0),
+        goalDifference: String(lp?.goalDifference ?? 0),
+        points: String(lp?.points ?? 0),
+        isBoro: true,
+      },
+      emptyRow(pos + 1),
+      emptyRow(pos + 2),
+    ];
+  };
+  const [tableRows, setTableRows] = useState(seedRows);
+  const updateRow = (i: number, key: string, value: string) =>
+    setTableRows((rs) => rs.map((r, idx) => (idx === i ? { ...r, [key]: value } : r)));
+
   const submit = async () => {
     setBusy(true);
     try {
@@ -393,6 +443,19 @@ function EditDialog({
           lost: parseInt(lpL, 10) || 0,
           goalDifference: parseInt(lpGd, 10) || 0,
           points: parseInt(lpPts, 10) || 0,
+          table: tableRows
+            .filter((r) => r.team.trim().length > 0)
+            .map((r) => ({
+              position: parseInt(r.position, 10) || 0,
+              team: r.team.trim(),
+              played: parseInt(r.played, 10) || 0,
+              won: parseInt(r.won, 10) || 0,
+              drawn: parseInt(r.drawn, 10) || 0,
+              lost: parseInt(r.lost, 10) || 0,
+              goalDifference: parseInt(r.goalDifference, 10) || 0,
+              points: parseInt(r.points, 10) || 0,
+              isBoro: r.isBoro,
+            })),
         };
       }
       await save({ data: payload });
