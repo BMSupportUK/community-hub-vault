@@ -208,7 +208,7 @@ function MessagesLayout() {
                         {t.last_message_at && <span className="text-[10px] text-muted-foreground shrink-0">{formatLastSeen(t.last_message_at)}</span>}
                       </div>
                       <p className={`text-xs truncate ${t.unread ? "text-foreground font-medium" : "text-muted-foreground"}`}>
-                        {t.last_body ?? "No messages yet"}
+                        {t.last_body ? censorText(t.last_body) : "No messages yet"}
                       </p>
                     </div>
                     {t.unread && <span className="size-2 rounded-full bg-[#E11B22] shrink-0" />}
