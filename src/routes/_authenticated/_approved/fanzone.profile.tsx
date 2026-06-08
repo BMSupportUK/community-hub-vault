@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, ImagePlus, Loader2, Save, UserMinus, ShieldOff } from "lucide-react";
+import { ArrowLeft, ImagePlus, Loader2, Save, UserMinus, ShieldOff, ThumbsUp, ThumbsDown, MessageSquare, FileText, Users, Award } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -102,7 +102,7 @@ function FanZoneProfilePage() {
     >
       <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/60 to-black/85" aria-hidden />
 
-      <div className="relative z-10 w-full max-w-3xl mx-auto px-4 sm:px-6 py-8">
+      <div className="relative z-10 w-full px-4 sm:px-6 lg:px-10 py-8">
         <Button asChild variant="ghost" size="sm" className="text-white hover:text-white hover:bg-white/10 -ml-2 mb-4">
           <Link to="/forum"><ArrowLeft className="size-4 mr-1" />Back to forum</Link>
         </Button>
@@ -120,7 +120,8 @@ function FanZoneProfilePage() {
             Fan Zone membership required to edit your profile.
           </div>
         ) : (
-          <Tabs defaultValue="profile" className="w-full">
+          <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
+            <Tabs defaultValue="profile" className="w-full min-w-0">
             <TabsList className="bg-black/55 border border-white/20 backdrop-blur-md mb-4">
               <TabsTrigger value="profile" className="data-[state=active]:bg-[#E11B22] data-[state=active]:text-white text-white/70">Profile</TabsTrigger>
               <TabsTrigger value="friends" className="data-[state=active]:bg-[#E11B22] data-[state=active]:text-white text-white/70">Friends</TabsTrigger>
@@ -248,7 +249,12 @@ function FanZoneProfilePage() {
             <TabsContent value="ignored">
               <IgnoredPanel />
             </TabsContent>
-          </Tabs>
+            </Tabs>
+            <aside className="space-y-4 lg:sticky lg:top-6 self-start">
+              <StatsBox userId={user!.id} />
+              <ReputationBox userId={user!.id} />
+            </aside>
+          </div>
         )}
       </div>
     </div>
