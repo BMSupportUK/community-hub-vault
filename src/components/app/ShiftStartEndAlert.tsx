@@ -188,6 +188,36 @@ export function ShiftStartEndAlert() {
     playSound(src, { label: `shift-${active.stage}`, gain: 2.2 });
   }, [active]);
 
+  // Auto-end shift 30s after the "shift has ended" overdue dialog appears
+  useEffect(() => {
+    if (!active || active.stage !== "end") { setAutoEndAt(null); return; }
+    const { endsAt: e } = shiftWindowToUtcMs(active.slot.shift_date, active.slot.start_time, active.slot.end_time);
+    if (isNaN(e) || Date.now() < e) { setAutoEndAt(null); return; }
+    if (!openShift) { setAutoEndAt(null); return; }
+    const target = Date.now() + 30_000;
+    setAutoEndAt(target);
+    const t = setTimeout(async () => {
+      if (autoEndedRef.current.has(openShift.id)) return;
+      autoEndedRef.current.add(openShift.id);
+      const { data: stillOpen } = await supabase
+        .from("shifts")
+        .select("id")
+        .eq("id", openShift.id)
+        .is("clock_out", null)
+        .maybeSingle();
+      if (!stillOpen) { setActive(null); setAutoEndAt(null); return; }
+      await supabase
+        .from("shifts")
+        .update({ clock_out: new Date(e).toISOString() })
+        .eq("id", openShift.id);
+      dismissedRef.current.add(`${active.slot.id}:end:overdue`);
+      setActive(null);
+      setAutoEndAt(null);
+    }, 30_000);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [active, openShift?.id]);
+
   if (!active) return null;
 
   const { startsAt, endsAt } = shiftWindowToUtcMs(active.slot.shift_date, active.slot.start_time, active.slot.end_time);
