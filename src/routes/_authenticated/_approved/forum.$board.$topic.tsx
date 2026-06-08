@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, Loader2, Pin, Lock, Quote, Reply as ReplyIcon, Pencil, Trash2, Send, History, Check, X, Ban, MessageSquare, Eye } from "lucide-react";
+import { ArrowLeft, Loader2, Pin, Lock, Quote, Reply as ReplyIcon, Pencil, Trash2, Send, History, Check, X, Ban, MessageSquare, Eye, FolderInput } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useFanZoneMembership } from "@/hooks/use-fan-zone";
@@ -82,6 +82,10 @@ function TopicPage() {
   const [page, setPage] = useState(1);
   const REPLIES_PER_PAGE = 20;
   const [viewers, setViewers] = useState<Viewer[]>([]);
+  const [moveOpen, setMoveOpen] = useState(false);
+  const [boardList, setBoardList] = useState<{ id: string; name: string; slug: string }[]>([]);
+  const [moveTargetId, setMoveTargetId] = useState<string>("");
+  const [moving, setMoving] = useState(false);
 
   const isBoardMod = isStaff || (user ? moderatorIds.has(user.id) : false);
   const canPost = canEnter && !!topic && !topic.is_locked;
@@ -268,6 +272,32 @@ function TopicPage() {
     void navigate({ to: "/forum/$board", params: { board: slug } });
   };
 
+  const openMoveDialog = async () => {
+    if (!topic) return;
+    const { data } = await supabase
+      .from("forum_boards")
+      .select("id, name, slug, is_locked")
+      .order("is_pinned", { ascending: false })
+      .order("sort_order");
+    const list = ((data ?? []) as { id: string; name: string; slug: string; is_locked: boolean }[])
+      .filter((b) => !b.is_locked && b.id !== topic.board_id)
+      .map(({ id, name, slug }) => ({ id, name, slug }));
+    setBoardList(list);
+    setMoveTargetId(list[0]?.id ?? "");
+    setMoveOpen(true);
+  };
+  const confirmMove = async () => {
+    if (!topic || !moveTargetId) return;
+    setMoving(true);
+    const { error } = await supabase.rpc("forum_move_topic", { _topic_id: topic.id, _new_board_id: moveTargetId });
+    setMoving(false);
+    if (error) { toast.error("Couldn't move topic", { description: error.message }); return; }
+    const target = boardList.find((b) => b.id === moveTargetId);
+    setMoveOpen(false);
+    toast.success(`Moved to ${target?.name ?? "board"}`);
+    if (target) void navigate({ to: "/forum/$board/$topic", params: { board: target.slug, topic: topic.id } });
+  };
+
   if (!canEnter) return <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-6 text-sm text-center">Members only.</div>;
   if (topic === null && posts !== null) {
     return <div className="text-center text-sm text-muted-foreground">Topic not found. <Link to="/forum/$board" params={{ board: slug }} className="underline">Back to board</Link></div>;
@@ -300,6 +330,7 @@ function TopicPage() {
             <div className="flex gap-1.5">
               <Button size="sm" variant="outline" onClick={toggleSticky}>{topic.is_sticky ? "Unpin" : "Pin"}</Button>
               <Button size="sm" variant="outline" onClick={toggleLock}>{topic.is_locked ? "Unlock" : "Lock"}</Button>
+              <Button size="sm" variant="outline" onClick={() => void openMoveDialog()} title="Move to another board"><FolderInput className="size-3.5 mr-1" />Move</Button>
               <Button size="sm" variant="destructive" onClick={deleteTopic}><Trash2 className="size-3.5" /></Button>
             </div>
           )}
