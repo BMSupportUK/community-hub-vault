@@ -214,7 +214,7 @@ function AdminFanZonePage() {
 
   return (
     <main
-      className="flex-1 overflow-y-auto bg-cover bg-center bg-no-repeat bg-fixed"
+      className="flex-1 w-full min-w-0 min-h-full self-stretch overflow-y-auto bg-cover bg-center bg-no-repeat bg-fixed"
       style={{ backgroundImage: `linear-gradient(to bottom, rgba(10,8,16,0.78), rgba(10,8,16,0.9)), url(${bgAsset.url})` }}
     >
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 py-6">
