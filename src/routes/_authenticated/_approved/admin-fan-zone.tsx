@@ -28,6 +28,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
+import bgAsset from "@/assets/fanzone-chat-bg.png.asset.json";
 
 export const Route = createFileRoute("/_authenticated/_approved/admin-fan-zone")({
   component: AdminFanZonePage,
@@ -212,7 +213,10 @@ function AdminFanZonePage() {
   };
 
   return (
-    <main className="flex-1 overflow-y-auto bg-background">
+    <main
+      className="flex-1 overflow-y-auto bg-cover bg-center bg-no-repeat bg-fixed"
+      style={{ backgroundImage: `linear-gradient(to bottom, rgba(10,8,16,0.78), rgba(10,8,16,0.9)), url(${bgAsset.url})` }}
+    >
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 py-6">
         <div className="mb-4 flex items-center gap-4 flex-wrap">
           <Link to="/forum" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
