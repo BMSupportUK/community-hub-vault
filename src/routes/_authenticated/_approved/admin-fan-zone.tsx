@@ -41,6 +41,8 @@ type Row = {
   decided_at: string | null;
   reason: string | null;
   note: string | null;
+  fan_alias: string | null;
+  fan_avatar_url: string | null;
 };
 type Profile = {
   id: string;
@@ -68,7 +70,7 @@ function AdminFanZonePage() {
     if (isAdmin) {
       const { data } = await supabase
         .from("fan_zone_members")
-        .select("user_id, status, requested_at, decided_at, reason, note")
+          .select("user_id, status, requested_at, decided_at, reason, note, fan_alias, fan_avatar_url")
         .order("requested_at", { ascending: false });
       const list = (data ?? []) as Row[];
       setRows(list);
@@ -102,6 +104,8 @@ function AdminFanZonePage() {
         decided_at: r.decided_at,
         reason: null,
         note: null,
+        fan_alias: r.fan_alias,
+        fan_avatar_url: r.fan_avatar_url,
       })));
       const map: Record<string, Profile> = {};
       arr.forEach((r) => {
@@ -317,13 +321,14 @@ function AdminFanZonePage() {
                 ) : (
                   filtered.map((r) => {
                     const p = profiles[r.user_id];
-                    const name = p?.display_name || p?.username || "Member";
+                    const name = r.fan_alias || "Boro Fan";
+                    const avatar = r.fan_avatar_url;
                     return (
                       <tr key={r.user_id} className="border-b border-border/60 last:border-0 hover:bg-surface-2/30">
                         <td className="px-5 py-3">
                           <div className="flex items-center gap-3 min-w-0">
-                            {p?.avatar_url ? (
-                              <img src={p.avatar_url} alt={name} className="size-9 rounded-full object-cover" />
+                            {avatar ? (
+                              <img src={avatar} alt={name} className="size-9 rounded-full object-cover" />
                             ) : (
                               <div className="size-9 rounded-full bg-gradient-to-br from-rose-600 to-amber-600 grid place-items-center text-white text-xs font-bold">
                                 {name.slice(0, 1).toUpperCase()}
@@ -331,15 +336,12 @@ function AdminFanZonePage() {
                             )}
                             <div className="min-w-0">
                               <Link
-                                to="/u/$username"
-                                params={{ username: p?.username ?? "" }}
+                                to="/fanzone/u/$userId"
+                                params={{ userId: r.user_id }}
                                 className="font-medium hover:underline truncate block max-w-[220px]"
                               >
                                 {name}
                               </Link>
-                              {p?.username && (
-                                <div className="text-xs text-muted-foreground truncate max-w-[220px]">@{p.username}</div>
-                              )}
                             </div>
                           </div>
                         </td>
