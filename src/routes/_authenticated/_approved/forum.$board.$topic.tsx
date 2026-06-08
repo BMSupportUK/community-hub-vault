@@ -598,6 +598,31 @@ function TopicPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={moveOpen} onOpenChange={setMoveOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader><DialogTitle>Move topic to another board</DialogTitle></DialogHeader>
+          {boardList.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No other boards available.</p>
+          ) : (
+            <select
+              value={moveTargetId}
+              onChange={(e) => setMoveTargetId(e.target.value)}
+              className="w-full rounded-md border border-border bg-background px-2 py-2 text-sm"
+            >
+              {boardList.map((b) => (
+                <option key={b.id} value={b.id}>{b.name}</option>
+              ))}
+            </select>
+          )}
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setMoveOpen(false)} disabled={moving}>Cancel</Button>
+            <Button onClick={() => void confirmMove()} disabled={!moveTargetId || moving}>
+              {moving ? <Loader2 className="size-4 animate-spin" /> : "Move"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
