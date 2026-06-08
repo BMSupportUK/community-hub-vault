@@ -76,7 +76,7 @@ function AdminFanZonePage() {
   const loadFriends = async () => {
     if (!user) { setFriendByUser({}); return; }
     const { data } = await supabase
-      .from("friendships")
+      .from("fan_zone_friendships")
       .select("id, requester_id, addressee_id, status")
       .or(`requester_id.eq.${user.id},addressee_id.eq.${user.id}`);
     const fmap: Record<string, FriendState> = {};
@@ -98,7 +98,7 @@ function AdminFanZonePage() {
     void loadFriends();
     const ch = supabase
       .channel(`afz-friendships-${user?.id ?? "anon"}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "friendships" }, () => void loadFriends())
+      .on("postgres_changes", { event: "*", schema: "public", table: "fan_zone_friendships" }, () => void loadFriends())
       .subscribe();
     return () => { supabase.removeChannel(ch); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -108,7 +108,7 @@ function AdminFanZonePage() {
     if (!user) return;
     setFriendBusy(toId);
     const { error } = await supabase
-      .from("friendships")
+      .from("fan_zone_friendships")
       .insert({ requester_id: user.id, addressee_id: toId });
     setFriendBusy(null);
     if (error) { toast.error(error.message); return; }
@@ -118,7 +118,7 @@ function AdminFanZonePage() {
 
   const acceptFriendRequest = async (id: string) => {
     setFriendBusy(id);
-    const { error } = await supabase.from("friendships").update({ status: "accepted" }).eq("id", id);
+    const { error } = await supabase.from("fan_zone_friendships").update({ status: "accepted" }).eq("id", id);
     setFriendBusy(null);
     if (error) { toast.error(error.message); return; }
     toast.success("You are now friends");
