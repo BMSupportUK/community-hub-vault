@@ -20,7 +20,11 @@ export function FanStatsBox({ userId }: { userId: string }) {
       const postIds = (postIdsRes.data ?? []).map((p: any) => p.id);
       let total = 0;
       if (postIds.length) {
-        const { count } = await supabase.from("forum_post_reactions").select("post_id", { count: "exact", head: true }).in("post_id", postIds);
+        const { count } = await supabase
+          .from("forum_post_reactions")
+          .select("post_id", { count: "exact", head: true })
+          .in("post_id", postIds)
+          .neq("user_id", userId);
         total = count ?? 0;
       }
       if (cancelled) return;
