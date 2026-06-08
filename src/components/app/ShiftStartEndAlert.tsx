@@ -260,7 +260,14 @@ export function ShiftStartEndAlert() {
               )
             ) : (
               overdue ? (
-                <>Your shift has ended. Please clock out.</>
+                <>
+                  Your shift has ended. Please clock out.
+                  {autoRemaining != null && (
+                    <div className="mt-2 text-xs text-amber-500">
+                      Auto clock-out in {Math.ceil(autoRemaining / 1000)}s…
+                    </div>
+                  )}
+                </>
               ) : (
                 <>
                   Your shift ends in{" "}
