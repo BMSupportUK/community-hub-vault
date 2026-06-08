@@ -3,6 +3,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { SmilePlus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { ReportButton } from "@/components/app/ReportButton";
 
 const EMOJIS = ["👍", "❤️", "😂", "🔥", "🎉", "😮", "😢", "⚽", "🦁"];
 
@@ -80,7 +81,7 @@ export function ForumPostReactions({
 
   const entries = Object.entries(grouped);
 
-  if (entries.length === 0 && !canReact) return null;
+  if (entries.length === 0 && !canReact && !userId) return null;
 
   return (
     <div className="flex flex-wrap items-center gap-1.5 px-4 pb-3">
@@ -127,6 +128,7 @@ export function ForumPostReactions({
           </PopoverContent>
         </Popover>
       )}
+      {userId && <ReportButton kind="forum_post" targetId={postId} />}
     </div>
   );
 }
