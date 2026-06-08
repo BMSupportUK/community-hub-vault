@@ -300,7 +300,6 @@ function RailIcon({
             )}
           >
             <Icon className="size-5" />
-            {prominent && <span className="absolute -right-1 -bottom-1 rounded-full bg-red-600 px-1.5 py-0.5 text-[9px] font-black leading-none text-white ring-2 ring-rail">BZ</span>}
             {badge && badge > 0 ? (
               <span className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1 rounded-full bg-red-500 text-white text-[11px] font-bold flex items-center justify-center shadow-lg ring-2 ring-rail animate-pulse">
                 {badge > 99 ? "99+" : badge}
