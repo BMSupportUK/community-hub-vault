@@ -8,6 +8,7 @@ import { formatLastSeen } from "@/lib/relative-time";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import bgAsset from "@/assets/fanzone-chat-bg.png.asset.json";
 
 export const Route = createFileRoute("/_authenticated/_approved/fanzone/messages")({
   component: MessagesLayout,
@@ -110,7 +111,11 @@ function MessagesLayout() {
   }
 
   return (
-    <div className="boro-theme max-w-5xl mx-auto px-4 sm:px-6 py-6">
+    <div
+      className="boro-theme min-h-full bg-cover bg-center bg-no-repeat bg-fixed"
+      style={{ backgroundImage: `linear-gradient(to bottom, rgba(10,8,16,0.72), rgba(10,8,16,0.86)), url(${bgAsset.url})` }}
+    >
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6">
       <div className="flex items-center justify-between gap-3 mb-4">
         <Button asChild variant="ghost" size="sm" className="-ml-2">
           <Link to="/forum"><ArrowLeft className="size-4 mr-1" />Forum</Link>
@@ -222,6 +227,7 @@ function MessagesLayout() {
             </div>
           )}
         </section>
+      </div>
       </div>
     </div>
   );
