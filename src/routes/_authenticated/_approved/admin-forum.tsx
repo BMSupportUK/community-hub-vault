@@ -1,6 +1,6 @@
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { ArrowLeft, Plus, Trash2, Pencil, Save, X, Pin, Lock, Loader2, UserPlus, ArrowUp, ArrowDown, Check } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { ArrowLeft, Plus, Trash2, Pencil, Save, X, Pin, Lock, Loader2, UserPlus, GripVertical, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, type AppRole } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
@@ -47,6 +47,8 @@ function AdminForumPage() {
   const [editing, setEditing] = useState<Board | null>(null);
   const [draft, setDraft] = useState<Partial<Board>>({});
   const [newMod, setNewMod] = useState<Record<string, string>>({});
+  const dragId = useRef<string | null>(null);
+  const [dragOver, setDragOver] = useState<string | null>(null);
 
   const load = async () => {
     const { data: bs } = await supabase
@@ -118,32 +120,36 @@ function AdminForumPage() {
     void load();
   };
 
-  const move = async (b: Board, dir: -1 | 1) => {
-    if (!boards) return;
-    // Operate within same pinned group, matching the on-screen order.
-    const group = boards.filter((x) => x.is_pinned === b.is_pinned);
-    const idx = group.findIndex((x) => x.id === b.id);
-    const swapIdx = idx + dir;
-    if (idx < 0 || swapIdx < 0 || swapIdx >= group.length) return;
-    const other = group[swapIdx];
-    const a = b.sort_order;
-    const c = other.sort_order;
-    // If equal, nudge to guarantee a swap.
-    const newA = a === c ? c - dir : c;
-    const newC = a === c ? a + dir : a;
-    // Optimistic update
-    setBoards((cur) => {
-      if (!cur) return cur;
-      return cur
-        .map((x) => x.id === b.id ? { ...x, sort_order: newA } : x.id === other.id ? { ...x, sort_order: newC } : x)
-        .sort((x, y) => (Number(y.is_pinned) - Number(x.is_pinned)) || (x.sort_order - y.sort_order));
+  const reorderTo = async (targetId: string) => {
+    const srcId = dragId.current;
+    dragId.current = null;
+    setDragOver(null);
+    if (!boards || !srcId || srcId === targetId) return;
+    const src = boards.find((x) => x.id === srcId);
+    const tgt = boards.find((x) => x.id === targetId);
+    if (!src || !tgt || src.is_pinned !== tgt.is_pinned) return;
+    const group = boards.filter((x) => x.is_pinned === src.is_pinned);
+    const others = boards.filter((x) => x.is_pinned !== src.is_pinned);
+    const ids = group.map((x) => x.id);
+    const from = ids.indexOf(srcId);
+    const to = ids.indexOf(targetId);
+    ids.splice(to, 0, ids.splice(from, 1)[0]);
+    const newGroup = ids.map((id, i) => {
+      const b = group.find((g) => g.id === id)!;
+      return { ...b, sort_order: (i + 1) * 10 };
     });
-    const [r1, r2] = await Promise.all([
-      supabase.from("forum_boards").update({ sort_order: newA }).eq("id", b.id),
-      supabase.from("forum_boards").update({ sort_order: newC }).eq("id", other.id),
-    ]);
-    if (r1.error || r2.error) {
-      toast.error("Reorder failed", { description: r1.error?.message || r2.error?.message });
+    const merged = [...others, ...newGroup].sort(
+      (x, y) => (Number(y.is_pinned) - Number(x.is_pinned)) || (x.sort_order - y.sort_order),
+    );
+    setBoards(merged);
+    const results = await Promise.all(
+      newGroup.map((b) =>
+        supabase.from("forum_boards").update({ sort_order: b.sort_order }).eq("id", b.id),
+      ),
+    );
+    const err = results.find((r) => r.error);
+    if (err?.error) {
+      toast.error("Reorder failed", { description: err.error.message });
       void load();
     }
   };
@@ -193,12 +199,26 @@ function AdminForumPage() {
           {boards.map((b) => {
             const boardMods = mods.filter((m) => m.board_id === b.id);
             const isEditing = editing?.id === b.id;
-            const group = boards.filter((x) => x.is_pinned === b.is_pinned);
-            const groupIdx = group.findIndex((x) => x.id === b.id);
-            const canUp = groupIdx > 0;
-            const canDown = groupIdx < group.length - 1;
             return (
-              <div key={b.id} className="rounded-xl border border-border bg-surface-1 p-4 space-y-3">
+              <div
+                key={b.id}
+                draggable={!isEditing}
+                onDragStart={(e) => { dragId.current = b.id; e.dataTransfer.effectAllowed = "move"; }}
+                onDragOver={(e) => {
+                  if (!dragId.current || dragId.current === b.id) return;
+                  const src = boards?.find((x) => x.id === dragId.current);
+                  if (!src || src.is_pinned !== b.is_pinned) return;
+                  e.preventDefault();
+                  e.dataTransfer.dropEffect = "move";
+                  if (dragOver !== b.id) setDragOver(b.id);
+                }}
+                onDragLeave={() => { if (dragOver === b.id) setDragOver(null); }}
+                onDrop={(e) => { e.preventDefault(); void reorderTo(b.id); }}
+                onDragEnd={() => { dragId.current = null; setDragOver(null); }}
+                className={`rounded-xl border bg-surface-1 p-4 space-y-3 transition-colors ${
+                  dragOver === b.id ? "border-primary ring-2 ring-primary/40" : "border-border"
+                } ${!isEditing ? "cursor-grab active:cursor-grabbing" : ""}`}
+              >
                 {isEditing ? (
                   <div className="space-y-2">
                     <Input value={draft.name ?? ""} onChange={(e) => setDraft({ ...draft, name: e.target.value })} placeholder="Name" />
@@ -246,9 +266,8 @@ function AdminForumPage() {
                       <p className="text-xs text-muted-foreground mt-0.5">{b.description || <em>No description</em>}</p>
                     </div>
                     <div className="flex gap-1.5">
-                      <div className="flex flex-col gap-1">
-                        <Button size="sm" variant="outline" disabled={!canUp} onClick={() => void move(b, -1)} aria-label="Move up" className="h-6 px-1.5"><ArrowUp className="size-3.5" /></Button>
-                        <Button size="sm" variant="outline" disabled={!canDown} onClick={() => void move(b, 1)} aria-label="Move down" className="h-6 px-1.5"><ArrowDown className="size-3.5" /></Button>
+                      <div className="grid place-items-center text-muted-foreground px-1" title="Drag to reorder" aria-label="Drag handle">
+                        <GripVertical className="size-4" />
                       </div>
                       <Button size="sm" variant="outline" onClick={() => startEdit(b)}><Pencil className="size-3.5" /></Button>
                       <Button size="sm" variant="destructive" onClick={() => void remove(b)}><Trash2 className="size-3.5" /></Button>
