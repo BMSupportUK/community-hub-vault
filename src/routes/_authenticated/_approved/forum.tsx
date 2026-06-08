@@ -274,7 +274,7 @@ function BoardsIndex() {
 
 function ForumStats({ boards }: { boards: Board[] }) {
   const [memberCount, setMemberCount] = useState<number | null>(null);
-  const [latest, setLatest] = useState<{ name: string; username: string | null } | null>(null);
+  const [latest, setLatest] = useState<{ name: string; userId: string } | null>(null);
 
   useEffect(() => {
     void (async () => {
@@ -292,17 +292,8 @@ function ForumStats({ boards }: { boards: Board[] }) {
         .limit(1)
         .maybeSingle();
       if (latestRow?.user_id) {
-        const { data: prof } = await supabase
-          .from("profiles")
-          .select("display_name, username")
-          .eq("id", latestRow.user_id)
-          .maybeSingle();
-        const name =
-          (latestRow as { fan_alias: string | null }).fan_alias ||
-          prof?.display_name ||
-          prof?.username ||
-          "Member";
-        setLatest({ name, username: prof?.username ?? null });
+        const name = (latestRow as { fan_alias: string | null }).fan_alias || "Boro Fan";
+        setLatest({ name, userId: latestRow.user_id });
       }
     })();
   }, []);
@@ -325,13 +316,9 @@ function ForumStats({ boards }: { boards: Board[] }) {
           <dt className="text-muted-foreground">Latest member:</dt>
           <dd className="font-semibold text-[#E11B22] truncate">
             {latest ? (
-              latest.username ? (
-                <Link to="/u/$username" params={{ username: latest.username }} className="hover:underline">
-                  {latest.name}
-                </Link>
-              ) : (
-                latest.name
-              )
+              <Link to="/fanzone/u/$userId" params={{ userId: latest.userId }} className="hover:underline">
+                {latest.name}
+              </Link>
             ) : (
               "—"
             )}
