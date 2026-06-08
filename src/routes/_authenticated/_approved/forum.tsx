@@ -126,6 +126,7 @@ function BoardsIndex() {
   const info = useFanZoneMembership(user?.id ?? null);
   const [boards, setBoards] = useState<Board[] | null>(null);
   const [posters, setPosters] = useState<Record<string, { display_name: string | null; username: string | null }>>({});
+  const [lastTopics, setLastTopics] = useState<Record<string, { id: string; title: string }>>({});
 
   const canEnter = isStaff || info?.status === "approved";
   const isPending = info?.status === "pending";
@@ -140,6 +141,19 @@ function BoardsIndex() {
         .order("sort_order");
       const list = (data ?? []) as Board[];
       setBoards(list);
+      const boardIds = list.filter((b) => b.last_post_at).map((b) => b.id);
+      if (boardIds.length) {
+        const { data: topics } = await supabase
+          .from("forum_topics")
+          .select("id, title, board_id, last_post_at")
+          .in("board_id", boardIds)
+          .order("last_post_at", { ascending: false });
+        const byBoard: Record<string, { id: string; title: string }> = {};
+        (topics ?? []).forEach((t: any) => {
+          if (!byBoard[t.board_id]) byBoard[t.board_id] = { id: t.id, title: t.title };
+        });
+        setLastTopics(byBoard);
+      }
       const ids = Array.from(new Set(list.map((b) => b.last_post_by).filter((x): x is string => !!x)));
       if (ids.length) {
         const { data: ps } = await supabase.from("profiles").select("id, display_name, username").in("id", ids);
@@ -204,6 +218,7 @@ function BoardsIndex() {
         const Icon = getIcon(b.icon);
         const poster = b.last_post_by ? posters[b.last_post_by] : null;
         const posterName = poster?.display_name || poster?.username || (b.last_post_by ? "someone" : null);
+        const lastTopic = lastTopics[b.id];
         return (
           <Link
               key={b.id}
@@ -248,6 +263,11 @@ function BoardsIndex() {
                     <span className="italic">No posts yet</span>
                   )}
                 </div>
+                {lastTopic && (
+                  <div className="-mt-1 text-[11px] text-muted-foreground truncate">
+                    Latest: <span className="font-semibold text-foreground">{lastTopic.title}</span>
+                  </div>
+                )}
               </div>
             </Link>
         );
