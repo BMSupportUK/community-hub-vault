@@ -62,7 +62,7 @@ type Segment =
   | { type: "link"; url: string; title?: string };
 
 function splitTweetSegments(html: string): Segment[] {
-  const re = /<div\b[^>]*\b(?:data-tweet-embed=["']([^"']+)["']|data-link-preview=["']([^"']+)["'])[^>]*>(?:\s|<br\s*\/?>|&nbsp;)*<\/div>/gi;
+  const re = /<div\b[^>]*\b(?:data-tweet-embed=["']([^"']+)["']|data-link-preview=["']([^"']+)["'])[^>]*>[\s\S]*?<\/div>/gi;
   const out: Segment[] = [];
   let last = 0;
   let m: RegExpExecArray | null;
