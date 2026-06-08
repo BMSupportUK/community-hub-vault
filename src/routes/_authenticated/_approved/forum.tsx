@@ -13,6 +13,7 @@ import { BoroMatchCentreBox } from "@/components/app/BoroMatchCentreBox";
 import boroHero from "@/assets/boro-hero.jpg";
 import boroBadge from "@/assets/boro-fan-zone-badge.png";
 import boroBg from "@/assets/boro-bg.jpg";
+import { censorText, useProfanityWords } from "@/lib/profanity";
 
 export const Route = createFileRoute("/_authenticated/_approved/forum")({
   component: ForumLayout,
