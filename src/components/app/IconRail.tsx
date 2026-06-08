@@ -69,13 +69,8 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
   const fanZoneApproved = fanZone?.status === "approved";
   const fanZonePending = fanZone?.status === "pending";
   const fanZoneGated = !isFanZoneStaff && !fanZoneApproved && !fanZonePending;
-  // Hide the Boro Fan Zone entirely from management/staff/original-moderator roles
-  // unless they're also an admin, fan-zone moderator, or already an approved/pending member.
-  const hideFanZone =
-    !isFanZoneStaff &&
-    !fanZoneApproved &&
-    !fanZonePending &&
-    hasAny(["management", "staff", "moderator"]);
+  // Only show the Boro Fan Zone icon to fan-zone staff or approved/pending members.
+  const hideFanZone = !isFanZoneStaff && !fanZoneApproved && !fanZonePending;
   const path = useRouterState({ select: (r) => r.location.pathname });
   const [activeIncidents, setActiveIncidents] = useState(0);
   const [unreadNewContent, setUnreadNewContent] = useState(0);
