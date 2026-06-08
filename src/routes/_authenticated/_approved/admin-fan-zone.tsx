@@ -12,6 +12,9 @@ import {
   MoreHorizontal,
   UserCog,
   Users,
+  UserPlus,
+  UserCheck,
+  Clock,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -66,6 +69,61 @@ function AdminFanZonePage() {
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<"name" | "since" | "requested">("requested");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+  type FriendState = { kind: "friends" } | { kind: "outgoing" } | { kind: "incoming"; id: string };
+  const [friendByUser, setFriendByUser] = useState<Record<string, FriendState>>({});
+  const [friendBusy, setFriendBusy] = useState<string | null>(null);
+
+  const loadFriends = async () => {
+    if (!user) { setFriendByUser({}); return; }
+    const { data } = await supabase
+      .from("friendships")
+      .select("id, requester_id, addressee_id, status")
+      .or(`requester_id.eq.${user.id},addressee_id.eq.${user.id}`);
+    const fmap: Record<string, FriendState> = {};
+    for (const f of (data ?? []) as Array<{ id: string; requester_id: string; addressee_id: string; status: string }>) {
+      const otherId = f.requester_id === user.id ? f.addressee_id : f.requester_id;
+      if (f.status === "accepted") {
+        fmap[otherId] = { kind: "friends" };
+      } else if (f.requester_id === user.id) {
+        fmap[otherId] = { kind: "outgoing" };
+      } else {
+        fmap[otherId] = { kind: "incoming", id: f.id };
+      }
+    }
+    setFriendByUser(fmap);
+  };
+
+  useEffect(() => {
+    if (!canView) return;
+    void loadFriends();
+    const ch = supabase
+      .channel(`afz-friendships-${user?.id ?? "anon"}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "friendships" }, () => void loadFriends())
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [canView, user?.id]);
+
+  const sendFriendRequest = async (toId: string) => {
+    if (!user) return;
+    setFriendBusy(toId);
+    const { error } = await supabase
+      .from("friendships")
+      .insert({ requester_id: user.id, addressee_id: toId });
+    setFriendBusy(null);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Friend request sent");
+    void loadFriends();
+  };
+
+  const acceptFriendRequest = async (id: string) => {
+    setFriendBusy(id);
+    const { error } = await supabase.from("friendships").update({ status: "accepted" }).eq("id", id);
+    setFriendBusy(null);
+    if (error) { toast.error(error.message); return; }
+    toast.success("You are now friends");
+    void loadFriends();
+  };
 
   const load = async () => {
     if (isAdmin) {
