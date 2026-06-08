@@ -513,6 +513,32 @@ function EditDialog({
               <label className="text-[10px]">GD<input className="input" type="number" value={lpGd} onChange={(e) => setLpGd(e.target.value)} /></label>
               <label className="text-[10px]">Pts<input className="input" type="number" value={lpPts} onChange={(e) => setLpPts(e.target.value)} /></label>
             </div>
+
+            <div className="pt-2">
+              <div className="text-[10px] uppercase tracking-wider font-bold text-[#E11B22] mb-1">
+                Mini table (2 above · Boro · 2 below)
+              </div>
+              <div className="space-y-1">
+                {tableRows.map((r, i) => (
+                  <div
+                    key={i}
+                    className={`grid grid-cols-[40px_1fr_36px_36px_36px_36px_42px_42px] gap-1 items-center ${r.isBoro ? "bg-[#E11B22]/10 p-1 rounded" : ""}`}
+                  >
+                    <input className="input !p-1 text-center" type="number" placeholder="#" value={r.position} onChange={(e) => updateRow(i, "position", e.target.value)} />
+                    <input className="input !p-1" placeholder="Team" value={r.team} onChange={(e) => updateRow(i, "team", e.target.value)} />
+                    <input className="input !p-1 text-center" type="number" placeholder="P" value={r.played} onChange={(e) => updateRow(i, "played", e.target.value)} />
+                    <input className="input !p-1 text-center" type="number" placeholder="W" value={r.won} onChange={(e) => updateRow(i, "won", e.target.value)} />
+                    <input className="input !p-1 text-center" type="number" placeholder="D" value={r.drawn} onChange={(e) => updateRow(i, "drawn", e.target.value)} />
+                    <input className="input !p-1 text-center" type="number" placeholder="L" value={r.lost} onChange={(e) => updateRow(i, "lost", e.target.value)} />
+                    <input className="input !p-1 text-center" type="number" placeholder="GD" value={r.goalDifference} onChange={(e) => updateRow(i, "goalDifference", e.target.value)} />
+                    <input className="input !p-1 text-center" type="number" placeholder="Pts" value={r.points} onChange={(e) => updateRow(i, "points", e.target.value)} />
+                  </div>
+                ))}
+              </div>
+              <p className="text-[10px] text-muted-foreground mt-1">
+                Tip: keep 5 rows — two teams above Middlesbrough, Boro, then two below.
+              </p>
+            </div>
           </fieldset>
 
           <div className="flex justify-end gap-2 pt-2 border-t border-border">
