@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, Loader2, Pin, Lock, Quote, Reply as ReplyIcon, Pencil, Trash2, Send, History, Check, X, Ban, MessageSquare } from "lucide-react";
+import { ArrowLeft, Loader2, Pin, Lock, Quote, Reply as ReplyIcon, Pencil, Trash2, Send, History, Check, X, Ban, MessageSquare, Eye } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useFanZoneMembership } from "@/hooks/use-fan-zone";
@@ -52,6 +52,7 @@ type Post = {
 };
 type Profile = { id: string; display_name: string | null; username: string | null; avatar_url: string | null };
 type EditEntry = { id: string; previous_body: string; edited_at: string; edited_by: string };
+type Viewer = { user_id: string; alias: string; avatar: string };
 
 function TopicPage() {
   const { board: slug, topic: topicId } = Route.useParams();
@@ -80,6 +81,7 @@ function TopicPage() {
   const [tab, setTab] = useState<"posts" | "reply">("posts");
   const [page, setPage] = useState(1);
   const REPLIES_PER_PAGE = 20;
+  const [viewers, setViewers] = useState<Viewer[]>([]);
 
   const isBoardMod = isStaff || (user ? moderatorIds.has(user.id) : false);
   const canPost = canEnter && !!topic && !topic.is_locked;
@@ -136,6 +138,42 @@ function TopicPage() {
     return () => { supabase.removeChannel(ch); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [topicId, canEnter]);
+
+  // Realtime presence: who is currently viewing this topic
+  useEffect(() => {
+    if (!user || !canEnter) return;
+    const myProfile = profiles[user.id];
+    const presence = supabase.channel(`forum-topic-presence-${topicId}`, {
+      config: { presence: { key: user.id } },
+    });
+    const sync = () => {
+      const state = presence.presenceState() as Record<string, Array<{ user_id: string; alias: string; avatar: string }>>;
+      const seen = new Set<string>();
+      const list: Viewer[] = [];
+      Object.values(state).forEach((metas) => {
+        metas.forEach((m) => {
+          if (!m?.user_id || seen.has(m.user_id)) return;
+          seen.add(m.user_id);
+          list.push({ user_id: m.user_id, alias: m.alias ?? "Boro Fan", avatar: m.avatar ?? "" });
+        });
+      });
+      setViewers(list);
+    };
+    presence
+      .on("presence", { event: "sync" }, sync)
+      .on("presence", { event: "join" }, sync)
+      .on("presence", { event: "leave" }, sync)
+      .subscribe(async (status) => {
+        if (status === "SUBSCRIBED") {
+          await presence.track({
+            user_id: user.id,
+            alias: myProfile?.display_name ?? "Boro Fan",
+            avatar: myProfile?.avatar_url ?? "",
+          });
+        }
+      });
+    return () => { supabase.removeChannel(presence); };
+  }, [topicId, user?.id, canEnter, profiles]);
 
   const submitReply = async () => {
     if (!user || !topic) return;
