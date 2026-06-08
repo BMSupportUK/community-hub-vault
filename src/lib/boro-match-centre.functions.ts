@@ -149,7 +149,7 @@ async function fetchEspnStandings(): Promise<LeaguePosition | null> {
     const by = (t: string) => stats.find((s) => s.type === t || s.name === t);
     const name = e.team?.shortDisplayName || e.team?.displayName || "";
     return {
-      position: e.note?.rank ?? idx + 1,
+      position: idx + 1,
       team: name,
       played: statNum(by("gamesplayed") ?? by("gamesPlayed")),
       won: statNum(by("wins")),
@@ -160,9 +160,6 @@ async function fetchEspnStandings(): Promise<LeaguePosition | null> {
       isBoro: /middles?brough|boro/i.test(name),
     };
   });
-
-  // Ensure ordered by rank/position
-  rows.sort((a, b) => a.position - b.position);
 
   const boroIdx = rows.findIndex((r) => r.isBoro);
   if (boroIdx === -1) return null;
