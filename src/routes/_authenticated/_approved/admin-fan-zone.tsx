@@ -362,6 +362,58 @@ function AdminFanZonePage() {
           </div>
         </div>
 
+        {/* Pending friend requests */}
+        {incomingReqs.length > 0 && (
+          <div className="mb-4 rounded-xl border border-amber-500/30 bg-amber-500/5 p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <UserPlus className="size-4 text-amber-400" />
+              <h2 className="text-sm font-semibold">
+                Pending friend requests ({incomingReqs.length})
+              </h2>
+            </div>
+            <ul className="space-y-2">
+              {incomingReqs.map((req) => {
+                const p = profiles[req.requester_id] ?? reqProfiles[req.requester_id];
+                const name = p?.display_name || p?.username || "Boro Fan";
+                const avatar = p?.avatar_url;
+                return (
+                  <li key={req.id} className="flex items-center justify-between gap-3 rounded-lg bg-surface-1 px-3 py-2">
+                    <div className="flex items-center gap-3 min-w-0">
+                      {avatar ? (
+                        <img src={avatar} alt={name} className="size-9 rounded-full object-cover" />
+                      ) : (
+                        <div className="size-9 rounded-full bg-gradient-to-br from-rose-600 to-amber-600 grid place-items-center text-white text-xs font-bold">
+                          {name.slice(0, 1).toUpperCase()}
+                        </div>
+                      )}
+                      <Link
+                        to="/fanzone/u/$userId"
+                        params={{ userId: req.requester_id }}
+                        className="font-medium hover:underline truncate"
+                      >
+                        {name}
+                      </Link>
+                    </div>
+                    <Button
+                      size="sm"
+                      onClick={() => void acceptFriendRequest(req.id)}
+                      disabled={friendBusy === req.id}
+                      className="bg-emerald-600 hover:bg-emerald-500 text-white"
+                    >
+                      {friendBusy === req.id ? (
+                        <Loader2 className="size-4 animate-spin mr-1.5" />
+                      ) : (
+                        <UserCheck className="size-4 mr-1.5" />
+                      )}
+                      Accept
+                    </Button>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        )}
+
         {/* Table */}
         <div className="rounded-xl border border-border bg-surface-1 overflow-hidden">
           <div className="overflow-x-auto">
