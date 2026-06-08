@@ -72,6 +72,9 @@ function AdminFanZonePage() {
   type FriendState = { kind: "friends" } | { kind: "outgoing" } | { kind: "incoming"; id: string };
   const [friendByUser, setFriendByUser] = useState<Record<string, FriendState>>({});
   const [friendBusy, setFriendBusy] = useState<string | null>(null);
+  type IncomingReq = { id: string; requester_id: string };
+  const [incomingReqs, setIncomingReqs] = useState<IncomingReq[]>([]);
+  const [reqProfiles, setReqProfiles] = useState<Record<string, Profile>>({});
 
   const loadFriends = async () => {
     if (!user) { setFriendByUser({}); return; }
@@ -80,6 +83,7 @@ function AdminFanZonePage() {
       .select("id, requester_id, addressee_id, status")
       .or(`requester_id.eq.${user.id},addressee_id.eq.${user.id}`);
     const fmap: Record<string, FriendState> = {};
+    const incoming: IncomingReq[] = [];
     for (const f of (data ?? []) as Array<{ id: string; requester_id: string; addressee_id: string; status: string }>) {
       const otherId = f.requester_id === user.id ? f.addressee_id : f.requester_id;
       if (f.status === "accepted") {
@@ -88,9 +92,21 @@ function AdminFanZonePage() {
         fmap[otherId] = { kind: "outgoing" };
       } else {
         fmap[otherId] = { kind: "incoming", id: f.id };
+        if (f.status === "pending") incoming.push({ id: f.id, requester_id: f.requester_id });
       }
     }
     setFriendByUser(fmap);
+    setIncomingReqs(incoming);
+    const missing = incoming.map((i) => i.requester_id).filter((id) => !profiles[id] && !reqProfiles[id]);
+    if (missing.length) {
+      const { data: ps } = await supabase
+        .from("profiles")
+        .select("id, display_name, username, avatar_url")
+        .in("id", missing);
+      const map: Record<string, Profile> = {};
+      (ps ?? []).forEach((p) => (map[(p as Profile).id] = p as Profile));
+      setReqProfiles((prev) => ({ ...prev, ...map }));
+    }
   };
 
   useEffect(() => {
@@ -345,6 +361,58 @@ function AdminFanZonePage() {
             </Button>
           </div>
         </div>
+
+        {/* Pending friend requests */}
+        {incomingReqs.length > 0 && (
+          <div className="mb-4 rounded-xl border border-amber-500/30 bg-amber-500/5 p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <UserPlus className="size-4 text-amber-400" />
+              <h2 className="text-sm font-semibold">
+                Pending friend requests ({incomingReqs.length})
+              </h2>
+            </div>
+            <ul className="space-y-2">
+              {incomingReqs.map((req) => {
+                const p = profiles[req.requester_id] ?? reqProfiles[req.requester_id];
+                const name = p?.display_name || p?.username || "Boro Fan";
+                const avatar = p?.avatar_url;
+                return (
+                  <li key={req.id} className="flex items-center justify-between gap-3 rounded-lg bg-surface-1 px-3 py-2">
+                    <div className="flex items-center gap-3 min-w-0">
+                      {avatar ? (
+                        <img src={avatar} alt={name} className="size-9 rounded-full object-cover" />
+                      ) : (
+                        <div className="size-9 rounded-full bg-gradient-to-br from-rose-600 to-amber-600 grid place-items-center text-white text-xs font-bold">
+                          {name.slice(0, 1).toUpperCase()}
+                        </div>
+                      )}
+                      <Link
+                        to="/fanzone/u/$userId"
+                        params={{ userId: req.requester_id }}
+                        className="font-medium hover:underline truncate"
+                      >
+                        {name}
+                      </Link>
+                    </div>
+                    <Button
+                      size="sm"
+                      onClick={() => void acceptFriendRequest(req.id)}
+                      disabled={friendBusy === req.id}
+                      className="bg-emerald-600 hover:bg-emerald-500 text-white"
+                    >
+                      {friendBusy === req.id ? (
+                        <Loader2 className="size-4 animate-spin mr-1.5" />
+                      ) : (
+                        <UserCheck className="size-4 mr-1.5" />
+                      )}
+                      Accept
+                    </Button>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        )}
 
         {/* Table */}
         <div className="rounded-xl border border-border bg-surface-1 overflow-hidden">
