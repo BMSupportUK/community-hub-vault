@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Trophy, CalendarDays, BarChart3, Pencil, Loader2, X } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
@@ -45,23 +45,67 @@ function fmtTime(iso: string, tz: string) {
   }
 }
 
-function TeamRow({ name, score, kit }: { name: string; score?: number; kit?: "boro" | "away" }) {
-  const boro = isBoro(name);
+function TeamRow({
+  name,
+  score,
+  logo,
+}: {
+  name: string;
+  score?: number;
+  logo?: string | null;
+}) {
   return (
-    <div className="flex items-center justify-between gap-2 text-sm">
-      <div className="flex items-center gap-2 min-w-0">
-        <span
-          className={`inline-block size-3.5 rounded-full ring-1 ring-white/30 ${
-            boro ? "bg-[#E11B22]" : "bg-amber-300"
-          }`}
-          aria-hidden
-        />
-        <span className={`truncate ${boro ? "font-bold" : ""}`}>{name}</span>
+    <div className="flex items-center gap-3 py-1.5">
+      <div className="size-7 shrink-0 grid place-items-center">
+        {logo ? (
+          <img
+            src={logo}
+            alt=""
+            className="size-7 object-contain"
+            loading="lazy"
+          />
+        ) : (
+          <span
+            className={`inline-block size-5 rounded-full ring-1 ring-white/20 ${
+              isBoro(name) ? "bg-[#E11B22]" : "bg-amber-300"
+            }`}
+            aria-hidden
+          />
+        )}
       </div>
+      <span className="flex-1 truncate text-base font-medium">{name}</span>
       {typeof score === "number" && (
-        <span className="font-mono font-bold tabular-nums text-base">{score}</span>
+        <span className="font-mono font-bold tabular-nums text-lg w-6 text-right">
+          {score}
+        </span>
       )}
     </div>
+  );
+}
+
+function FixtureCard({
+  children,
+  rightLabel,
+  meta,
+}: {
+  children: ReactNode;
+  rightLabel: string;
+  meta?: string;
+}) {
+  return (
+    <section className="px-1">
+      {meta && (
+        <div className="text-[11px] text-muted-foreground mb-1 px-1">{meta}</div>
+      )}
+      <div className="flex items-stretch gap-3">
+        <div className="flex-1 divide-y divide-border/60">{children}</div>
+        <div className="flex items-center pl-3 border-l border-border/60">
+          <span className="text-xs font-bold text-muted-foreground tracking-wider">
+            {rightLabel}
+          </span>
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -122,59 +166,32 @@ export function BoroMatchCentreBox() {
 
       <div className="p-3 space-y-3">
         {/* Last result */}
-        <section className="rounded-lg border border-border bg-surface-2/70 p-3">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[10px] uppercase tracking-wider font-bold text-[#E11B22] flex items-center gap-1">
-              <BarChart3 className="size-3" /> Last result
-            </span>
-            {lr && (
-              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-foreground/10">
-                FT
-              </span>
-            )}
-          </div>
-          {lr ? (
-            <>
-              <div className="text-[11px] text-muted-foreground mb-1.5">
-                {fmtDate(lr.date, tz)} · {lr.competition}
-              </div>
-              <div className="space-y-1">
-                <TeamRow name={lr.home} score={lr.homeScore} />
-                <TeamRow name={lr.away} score={lr.awayScore} />
-              </div>
-            </>
-          ) : (
-            <div className="text-xs text-muted-foreground italic">No result yet.</div>
-          )}
-        </section>
+        {lr ? (
+          <FixtureCard
+            rightLabel="FT"
+            meta={`${fmtDate(lr.date, tz)} · ${lr.competition}`}
+          >
+            <TeamRow name={lr.home} score={lr.homeScore} logo={lr.homeLogo} />
+            <TeamRow name={lr.away} score={lr.awayScore} logo={lr.awayLogo} />
+          </FixtureCard>
+        ) : (
+          <div className="text-xs text-muted-foreground italic px-1">No result yet.</div>
+        )}
+
+        <div className="border-t border-border/60" />
 
         {/* Next fixture */}
-        <section className="rounded-lg border border-border bg-surface-2/70 p-3">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[10px] uppercase tracking-wider font-bold text-[#E11B22] flex items-center gap-1">
-              <CalendarDays className="size-3" /> Next game
-            </span>
-            {nf && (
-              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-400/20 text-amber-300">
-                KO {fmtTime(nf.kickoff, tz)}
-              </span>
-            )}
-          </div>
-          {nf ? (
-            <>
-              <div className="text-[11px] text-muted-foreground mb-1.5">
-                {fmtDate(nf.kickoff, tz)} · {nf.competition}
-                {nf.venue ? ` · ${nf.venue}` : ""}
-              </div>
-              <div className="space-y-1">
-                <TeamRow name={nf.home} />
-                <TeamRow name={nf.away} />
-              </div>
-            </>
-          ) : (
-            <div className="text-xs text-muted-foreground italic">No fixture scheduled.</div>
-          )}
-        </section>
+        {nf ? (
+          <FixtureCard
+            rightLabel={`KO ${fmtTime(nf.kickoff, tz)}`}
+            meta={`${fmtDate(nf.kickoff, tz)} · ${nf.competition}${nf.venue ? ` · ${nf.venue}` : ""}`}
+          >
+            <TeamRow name={nf.home} logo={nf.homeLogo} />
+            <TeamRow name={nf.away} logo={nf.awayLogo} />
+          </FixtureCard>
+        ) : (
+          <div className="text-xs text-muted-foreground italic px-1">No fixture scheduled.</div>
+        )}
 
         {/* League position */}
         <section className="rounded-lg border border-border bg-surface-2/70 p-3">
