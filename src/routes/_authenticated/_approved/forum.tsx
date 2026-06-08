@@ -75,23 +75,23 @@ function ForumLayout() {
           }}
           aria-hidden
         />
-        <div className="absolute top-3 right-3 z-10 flex flex-wrap gap-2 justify-end">
-          <Button asChild size="sm" className="bg-gradient-to-r from-[#E11B22] to-[#8B0F14] hover:from-[#F02B30] hover:to-[#9B1118] border-0 text-white shadow-md">
-            <Link to="/fanzone/messages"><MessageSquareText className="size-4 mr-1.5" />Fan zone inbox</Link>
-          </Button>
-          <Button asChild size="sm" variant="outline" className="bg-black/40 backdrop-blur border-white/30 text-white hover:bg-black/60 hover:text-white">
-            <Link to="/fanzone/profile"><UserCog className="size-4 mr-1.5" />Edit profile</Link>
-          </Button>
-          <Button asChild size="sm" variant="outline" className="bg-black/40 backdrop-blur border-white/30 text-white hover:bg-black/60 hover:text-white">
-            <Link to="/fanzone/blocks"><Ban className="size-4 mr-1.5" />Ignore list</Link>
-          </Button>
-          {canSeeMembers && (
-            <Button asChild size="sm" variant="outline" className="bg-black/40 backdrop-blur border-white/30 text-white hover:bg-black/60 hover:text-white">
-              <Link to="/admin-fan-zone"><Users className="size-4 mr-1.5" />Members</Link>
+        <div className="relative px-4 py-5 sm:px-8 sm:py-9 flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-5">
+          <div className="sm:absolute sm:top-3 sm:right-3 z-10 grid grid-cols-2 sm:flex sm:flex-wrap gap-2 sm:justify-end w-full sm:w-auto">
+            <Button asChild size="sm" className="bg-gradient-to-r from-[#E11B22] to-[#8B0F14] hover:from-[#F02B30] hover:to-[#9B1118] border-0 text-white shadow-md justify-center">
+              <Link to="/fanzone/messages"><MessageSquareText className="size-4 mr-1.5" />Inbox</Link>
             </Button>
-          )}
-        </div>
-        <div className="relative px-5 py-7 sm:px-8 sm:py-9 flex items-center gap-5">
+            <Button asChild size="sm" variant="outline" className="bg-black/40 backdrop-blur border-white/30 text-white hover:bg-black/60 hover:text-white justify-center">
+              <Link to="/fanzone/profile"><UserCog className="size-4 mr-1.5" />Profile</Link>
+            </Button>
+            <Button asChild size="sm" variant="outline" className="bg-black/40 backdrop-blur border-white/30 text-white hover:bg-black/60 hover:text-white justify-center">
+              <Link to="/fanzone/blocks"><Ban className="size-4 mr-1.5" />Ignore</Link>
+            </Button>
+            {canSeeMembers && (
+              <Button asChild size="sm" variant="outline" className="bg-black/40 backdrop-blur border-white/30 text-white hover:bg-black/60 hover:text-white justify-center">
+                <Link to="/admin-fan-zone"><Users className="size-4 mr-1.5" />Members</Link>
+              </Button>
+            )}
+          </div>
           <div className="hidden sm:flex size-20 rounded-full bg-white items-center justify-center shadow-lg ring-2 ring-white/50 shrink-0">
             <img
               src={boroBadge}
