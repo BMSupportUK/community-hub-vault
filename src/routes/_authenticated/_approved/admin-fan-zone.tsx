@@ -72,6 +72,9 @@ function AdminFanZonePage() {
   type FriendState = { kind: "friends" } | { kind: "outgoing" } | { kind: "incoming"; id: string };
   const [friendByUser, setFriendByUser] = useState<Record<string, FriendState>>({});
   const [friendBusy, setFriendBusy] = useState<string | null>(null);
+  type IncomingReq = { id: string; requester_id: string };
+  const [incomingReqs, setIncomingReqs] = useState<IncomingReq[]>([]);
+  const [reqProfiles, setReqProfiles] = useState<Record<string, Profile>>({});
 
   const loadFriends = async () => {
     if (!user) { setFriendByUser({}); return; }
@@ -80,6 +83,7 @@ function AdminFanZonePage() {
       .select("id, requester_id, addressee_id, status")
       .or(`requester_id.eq.${user.id},addressee_id.eq.${user.id}`);
     const fmap: Record<string, FriendState> = {};
+    const incoming: IncomingReq[] = [];
     for (const f of (data ?? []) as Array<{ id: string; requester_id: string; addressee_id: string; status: string }>) {
       const otherId = f.requester_id === user.id ? f.addressee_id : f.requester_id;
       if (f.status === "accepted") {
@@ -88,9 +92,21 @@ function AdminFanZonePage() {
         fmap[otherId] = { kind: "outgoing" };
       } else {
         fmap[otherId] = { kind: "incoming", id: f.id };
+        if (f.status === "pending") incoming.push({ id: f.id, requester_id: f.requester_id });
       }
     }
     setFriendByUser(fmap);
+    setIncomingReqs(incoming);
+    const missing = incoming.map((i) => i.requester_id).filter((id) => !profiles[id] && !reqProfiles[id]);
+    if (missing.length) {
+      const { data: ps } = await supabase
+        .from("profiles")
+        .select("id, display_name, username, avatar_url")
+        .in("id", missing);
+      const map: Record<string, Profile> = {};
+      (ps ?? []).forEach((p) => (map[(p as Profile).id] = p as Profile));
+      setReqProfiles((prev) => ({ ...prev, ...map }));
+    }
   };
 
   useEffect(() => {
