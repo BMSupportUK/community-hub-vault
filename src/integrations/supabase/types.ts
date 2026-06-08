@@ -511,6 +511,48 @@ export type Database = {
         }
         Relationships: []
       }
+      content_reports: {
+        Row: {
+          created_at: string
+          id: string
+          kind: string
+          notes: string | null
+          reason: string
+          reporter_id: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          target_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          kind: string
+          notes?: string | null
+          reason: string
+          reporter_id: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          target_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kind?: string
+          notes?: string | null
+          reason?: string
+          reporter_id?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          target_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       customer_reviews: {
         Row: {
           body: string
@@ -4095,6 +4137,25 @@ export type Database = {
         Returns: boolean
       }
       is_user_dnd: { Args: { _user_id: string }; Returns: boolean }
+      list_content_reports: {
+        Args: { _status?: string }
+        Returns: {
+          created_at: string
+          id: string
+          kind: string
+          notes: string
+          reason: string
+          reporter_id: string
+          reporter_name: string
+          reviewed_at: string
+          reviewed_by: string
+          status: string
+          target_author_id: string
+          target_author_name: string
+          target_id: string
+          target_preview: string
+        }[]
+      }
       list_fan_zone_approved_members: {
         Args: never
         Returns: {
@@ -4162,6 +4223,10 @@ export type Database = {
         Args: { _ticket_id: string }
         Returns: number
       }
+      resolve_content_report: {
+        Args: { _id: string; _notes?: string; _status: string }
+        Returns: undefined
+      }
       restore_app_credentials_from_backup: {
         Args: { p_mode?: string; p_snapshot: Json }
         Returns: Json
@@ -4188,6 +4253,10 @@ export type Database = {
       }
       sports_blogs_clear_expired: { Args: never; Returns: undefined }
       submit_appeal: { Args: { p_reason: string }; Returns: Json }
+      submit_content_report: {
+        Args: { _kind: string; _reason: string; _target: string }
+        Returns: string
+      }
       unmute_user: { Args: { _user_id: string }; Returns: boolean }
       upsert_my_signup_vpn: {
         Args: {
