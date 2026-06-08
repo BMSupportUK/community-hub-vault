@@ -166,24 +166,6 @@ export function BoroMatchCentreBox() {
       </div>
 
       <div className="p-3 space-y-3">
-        {/* Last result */}
-        <div className="text-[10px] uppercase tracking-wider font-bold text-[#E11B22] flex items-center gap-1 px-1">
-          <Trophy className="size-3" /> Last result
-        </div>
-        {lr ? (
-          <FixtureCard
-            rightLabel="FT"
-            meta={`${fmtDate(lr.date, tz)} · ${lr.competition}`}
-          >
-            <TeamRow name={lr.home} score={lr.homeScore} logo={lr.homeLogo} />
-            <TeamRow name={lr.away} score={lr.awayScore} logo={lr.awayLogo} />
-          </FixtureCard>
-        ) : (
-          <div className="text-xs text-muted-foreground italic px-1">No result yet.</div>
-        )}
-
-        <div className="border-t border-border/60" />
-
         {/* Next fixture */}
         <div className="text-[10px] uppercase tracking-wider font-bold text-[#E11B22] flex items-center gap-1 px-1">
           <CalendarDays className="size-3" /> Next fixture
@@ -198,6 +180,24 @@ export function BoroMatchCentreBox() {
           </FixtureCard>
         ) : (
           <div className="text-xs text-muted-foreground italic px-1">No fixture scheduled.</div>
+        )}
+
+        <div className="border-t border-border/60" />
+
+        {/* Last result */}
+        <div className="text-[10px] uppercase tracking-wider font-bold text-[#E11B22] flex items-center gap-1 px-1">
+          <Trophy className="size-3" /> Last result
+        </div>
+        {lr ? (
+          <FixtureCard
+            rightLabel="FT"
+            meta={`${fmtDate(lr.date, tz)} · ${lr.competition}`}
+          >
+            <TeamRow name={lr.home} score={lr.homeScore} logo={lr.homeLogo} />
+            <TeamRow name={lr.away} score={lr.awayScore} logo={lr.awayLogo} />
+          </FixtureCard>
+        ) : (
+          <div className="text-xs text-muted-foreground italic px-1">No result yet.</div>
         )}
 
         {/* League position */}
