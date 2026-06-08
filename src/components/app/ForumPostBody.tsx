@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState, Fragment } from "react";
 import { sanitizeRichHtml } from "@/lib/sanitize-html";
 import { useLoadSocialEmbeds, embedSocialUrls, markLinkPreviews } from "@/lib/forum-embeds";
 import { LinkPreviewCard } from "@/components/app/LinkPreviewCard";
+import { censorText, censorHtml, useProfanityWords } from "@/lib/profanity";
 
 /**
  * Renders forum post HTML safely. Legacy plain-text posts (no `<` in the body)
@@ -10,6 +11,8 @@ import { LinkPreviewCard } from "@/components/app/LinkPreviewCard";
  */
 export function ForumPostBody({ html, className }: { html: string; className?: string }) {
   const ref = useRef<HTMLDivElement>(null);
+  // Re-render when the profanity list finishes loading or is updated.
+  useProfanityWords();
   // Re-run embed conversion at render time so posts saved before the X/FB
   // URL detector was fixed (e.g. URLs ending in `?s=20`) still hydrate into
   // proper embeds without requiring the author to edit & re-save.
@@ -24,7 +27,7 @@ export function ForumPostBody({ html, className }: { html: string; className?: s
   if (!looksLikeHtml) {
     return (
       <div ref={ref} className={`text-[15px] leading-relaxed whitespace-pre-wrap break-words text-foreground/90 ${className ?? ""}`}>
-        {processed.split("\n").map((line, i) =>
+        {censorText(processed).split("\n").map((line, i) =>
           line.startsWith("> ") ? (
             <div key={i} className="border-l-3 border-primary/70 pl-4 italic text-muted-foreground my-1.5 bg-primary/5 py-1 pr-2 rounded-r">
               {line.slice(2)}
@@ -48,7 +51,7 @@ export function ForumPostBody({ html, className }: { html: string; className?: s
           <LinkPreviewCard key={`l-${i}-${seg.url}`} url={seg.url} title={seg.title} />
         ) : (
           <Fragment key={`h-${i}`}>
-            <div dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(seg.html) }} />
+            <div dangerouslySetInnerHTML={{ __html: censorHtml(sanitizeRichHtml(seg.html)) }} />
           </Fragment>
         ),
       )}
