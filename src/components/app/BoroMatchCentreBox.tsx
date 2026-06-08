@@ -9,6 +9,7 @@ import {
   type LastResult,
   type NextFixture,
   type LeaguePosition,
+  type LeagueTableRow,
 } from "@/lib/boro-match-centre.functions";
 import { useAuth } from "@/hooks/use-auth";
 import { useUserTimezone } from "@/hooks/use-user-timezone";
@@ -209,7 +210,48 @@ export function BoroMatchCentreBox() {
               <span className="text-[10px] text-muted-foreground">{lp.competition}</span>
             )}
           </div>
-          {lp ? (
+          {lp?.table && lp.table.length > 0 ? (
+            <div className="overflow-hidden rounded border border-border/60">
+              <table className="w-full text-[11px] font-mono tabular-nums">
+                <thead className="bg-surface-1 text-muted-foreground">
+                  <tr>
+                    <th className="px-1.5 py-1 text-left w-6">#</th>
+                    <th className="px-1.5 py-1 text-left">Team</th>
+                    <th className="px-1 py-1 text-center">P</th>
+                    <th className="px-1 py-1 text-center">W</th>
+                    <th className="px-1 py-1 text-center">D</th>
+                    <th className="px-1 py-1 text-center">L</th>
+                    <th className="px-1 py-1 text-center">GD</th>
+                    <th className="px-1 py-1 text-center font-bold">Pts</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {lp.table.map((r) => {
+                    const boro = r.isBoro || isBoro(r.team);
+                    return (
+                      <tr
+                        key={`${r.position}-${r.team}`}
+                        className={
+                          boro
+                            ? "bg-[#E11B22]/15 text-foreground font-bold"
+                            : "text-muted-foreground"
+                        }
+                      >
+                        <td className="px-1.5 py-1">{r.position}</td>
+                        <td className="px-1.5 py-1 font-sans truncate max-w-[120px]">{r.team}</td>
+                        <td className="px-1 py-1 text-center">{r.played}</td>
+                        <td className="px-1 py-1 text-center">{r.won}</td>
+                        <td className="px-1 py-1 text-center">{r.drawn}</td>
+                        <td className="px-1 py-1 text-center">{r.lost}</td>
+                        <td className="px-1 py-1 text-center">{r.goalDifference > 0 ? `+${r.goalDifference}` : r.goalDifference}</td>
+                        <td className="px-1 py-1 text-center font-bold">{r.points}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          ) : lp ? (
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-2">
                 <span className="text-2xl font-display font-bold text-[#E11B22] leading-none">
@@ -318,6 +360,56 @@ function EditDialog({
   const [lpGd, setLpGd] = useState(String(lp?.goalDifference ?? 0));
   const [lpPts, setLpPts] = useState(String(lp?.points ?? 0));
 
+  // Surrounding league table (2 above, Boro, 2 below)
+  const emptyRow = (pos: number, team = "", isBoro = false) => ({
+    position: String(pos),
+    team,
+    played: "0",
+    won: "0",
+    drawn: "0",
+    lost: "0",
+    goalDifference: "0",
+    points: "0",
+    isBoro,
+  });
+  const seedRows = () => {
+    const existing = lp?.table;
+    if (existing && existing.length > 0) {
+      return existing.map((r) => ({
+        position: String(r.position),
+        team: r.team,
+        played: String(r.played),
+        won: String(r.won),
+        drawn: String(r.drawn),
+        lost: String(r.lost),
+        goalDifference: String(r.goalDifference),
+        points: String(r.points),
+        isBoro: !!r.isBoro,
+      }));
+    }
+    const pos = lp?.position ?? 5;
+    return [
+      emptyRow(Math.max(1, pos - 2)),
+      emptyRow(Math.max(1, pos - 1)),
+      {
+        position: String(pos),
+        team: BORO,
+        played: String(lp?.played ?? 0),
+        won: String(lp?.won ?? 0),
+        drawn: String(lp?.drawn ?? 0),
+        lost: String(lp?.lost ?? 0),
+        goalDifference: String(lp?.goalDifference ?? 0),
+        points: String(lp?.points ?? 0),
+        isBoro: true,
+      },
+      emptyRow(pos + 1),
+      emptyRow(pos + 2),
+    ];
+  };
+  const [tableRows, setTableRows] = useState(seedRows);
+  const updateRow = (i: number, key: string, value: string) =>
+    setTableRows((rs) => rs.map((r, idx) => (idx === i ? { ...r, [key]: value } : r)));
+
   const submit = async () => {
     setBusy(true);
     try {
@@ -351,6 +443,19 @@ function EditDialog({
           lost: parseInt(lpL, 10) || 0,
           goalDifference: parseInt(lpGd, 10) || 0,
           points: parseInt(lpPts, 10) || 0,
+          table: tableRows
+            .filter((r) => r.team.trim().length > 0)
+            .map((r) => ({
+              position: parseInt(r.position, 10) || 0,
+              team: r.team.trim(),
+              played: parseInt(r.played, 10) || 0,
+              won: parseInt(r.won, 10) || 0,
+              drawn: parseInt(r.drawn, 10) || 0,
+              lost: parseInt(r.lost, 10) || 0,
+              goalDifference: parseInt(r.goalDifference, 10) || 0,
+              points: parseInt(r.points, 10) || 0,
+              isBoro: r.isBoro,
+            })),
         };
       }
       await save({ data: payload });
@@ -407,6 +512,32 @@ function EditDialog({
               <label className="text-[10px]">L<input className="input" type="number" value={lpL} onChange={(e) => setLpL(e.target.value)} /></label>
               <label className="text-[10px]">GD<input className="input" type="number" value={lpGd} onChange={(e) => setLpGd(e.target.value)} /></label>
               <label className="text-[10px]">Pts<input className="input" type="number" value={lpPts} onChange={(e) => setLpPts(e.target.value)} /></label>
+            </div>
+
+            <div className="pt-2">
+              <div className="text-[10px] uppercase tracking-wider font-bold text-[#E11B22] mb-1">
+                Mini table (2 above · Boro · 2 below)
+              </div>
+              <div className="space-y-1">
+                {tableRows.map((r, i) => (
+                  <div
+                    key={i}
+                    className={`grid grid-cols-[40px_1fr_36px_36px_36px_36px_42px_42px] gap-1 items-center ${r.isBoro ? "bg-[#E11B22]/10 p-1 rounded" : ""}`}
+                  >
+                    <input className="input !p-1 text-center" type="number" placeholder="#" value={r.position} onChange={(e) => updateRow(i, "position", e.target.value)} />
+                    <input className="input !p-1" placeholder="Team" value={r.team} onChange={(e) => updateRow(i, "team", e.target.value)} />
+                    <input className="input !p-1 text-center" type="number" placeholder="P" value={r.played} onChange={(e) => updateRow(i, "played", e.target.value)} />
+                    <input className="input !p-1 text-center" type="number" placeholder="W" value={r.won} onChange={(e) => updateRow(i, "won", e.target.value)} />
+                    <input className="input !p-1 text-center" type="number" placeholder="D" value={r.drawn} onChange={(e) => updateRow(i, "drawn", e.target.value)} />
+                    <input className="input !p-1 text-center" type="number" placeholder="L" value={r.lost} onChange={(e) => updateRow(i, "lost", e.target.value)} />
+                    <input className="input !p-1 text-center" type="number" placeholder="GD" value={r.goalDifference} onChange={(e) => updateRow(i, "goalDifference", e.target.value)} />
+                    <input className="input !p-1 text-center" type="number" placeholder="Pts" value={r.points} onChange={(e) => updateRow(i, "points", e.target.value)} />
+                  </div>
+                ))}
+              </div>
+              <p className="text-[10px] text-muted-foreground mt-1">
+                Tip: keep 5 rows — two teams above Middlesbrough, Boro, then two below.
+              </p>
             </div>
           </fieldset>
 

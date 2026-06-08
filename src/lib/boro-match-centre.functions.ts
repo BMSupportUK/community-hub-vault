@@ -31,6 +31,19 @@ export type LeaguePosition = {
   lost: number;
   goalDifference: number;
   points: number;
+  table?: LeagueTableRow[] | null;
+};
+
+export type LeagueTableRow = {
+  position: number;
+  team: string;
+  played: number;
+  won: number;
+  drawn: number;
+  lost: number;
+  goalDifference: number;
+  points: number;
+  isBoro?: boolean;
 };
 
 export type MatchCentreDTO = {
@@ -245,6 +258,23 @@ const overrideSchema = z.object({
       lost: z.number().int().min(0).max(100),
       goalDifference: z.number().int().min(-200).max(200),
       points: z.number().int().min(0).max(200),
+      table: z
+        .array(
+          z.object({
+            position: z.number().int().min(1).max(50),
+            team: z.string().min(1).max(80),
+            played: z.number().int().min(0).max(100),
+            won: z.number().int().min(0).max(100),
+            drawn: z.number().int().min(0).max(100),
+            lost: z.number().int().min(0).max(100),
+            goalDifference: z.number().int().min(-200).max(200),
+            points: z.number().int().min(0).max(200),
+            isBoro: z.boolean().optional(),
+          }),
+        )
+        .max(11)
+        .nullable()
+        .optional(),
     })
     .nullable()
     .optional(),
