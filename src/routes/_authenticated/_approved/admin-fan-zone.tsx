@@ -12,6 +12,9 @@ import {
   MoreHorizontal,
   UserCog,
   Users,
+  UserPlus,
+  UserCheck,
+  Clock,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -66,6 +69,61 @@ function AdminFanZonePage() {
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<"name" | "since" | "requested">("requested");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+  type FriendState = { kind: "friends" } | { kind: "outgoing" } | { kind: "incoming"; id: string };
+  const [friendByUser, setFriendByUser] = useState<Record<string, FriendState>>({});
+  const [friendBusy, setFriendBusy] = useState<string | null>(null);
+
+  const loadFriends = async () => {
+    if (!user) { setFriendByUser({}); return; }
+    const { data } = await supabase
+      .from("friendships")
+      .select("id, requester_id, addressee_id, status")
+      .or(`requester_id.eq.${user.id},addressee_id.eq.${user.id}`);
+    const fmap: Record<string, FriendState> = {};
+    for (const f of (data ?? []) as Array<{ id: string; requester_id: string; addressee_id: string; status: string }>) {
+      const otherId = f.requester_id === user.id ? f.addressee_id : f.requester_id;
+      if (f.status === "accepted") {
+        fmap[otherId] = { kind: "friends" };
+      } else if (f.requester_id === user.id) {
+        fmap[otherId] = { kind: "outgoing" };
+      } else {
+        fmap[otherId] = { kind: "incoming", id: f.id };
+      }
+    }
+    setFriendByUser(fmap);
+  };
+
+  useEffect(() => {
+    if (!canView) return;
+    void loadFriends();
+    const ch = supabase
+      .channel(`afz-friendships-${user?.id ?? "anon"}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "friendships" }, () => void loadFriends())
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [canView, user?.id]);
+
+  const sendFriendRequest = async (toId: string) => {
+    if (!user) return;
+    setFriendBusy(toId);
+    const { error } = await supabase
+      .from("friendships")
+      .insert({ requester_id: user.id, addressee_id: toId });
+    setFriendBusy(null);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Friend request sent");
+    void loadFriends();
+  };
+
+  const acceptFriendRequest = async (id: string) => {
+    setFriendBusy(id);
+    const { error } = await supabase.from("friendships").update({ status: "accepted" }).eq("id", id);
+    setFriendBusy(null);
+    if (error) { toast.error(error.message); return; }
+    toast.success("You are now friends");
+    void loadFriends();
+  };
 
   const load = async () => {
     if (isAdmin) {
@@ -311,13 +369,14 @@ function AdminFanZonePage() {
                   </th>
                   {isAdmin && <th className="text-left font-semibold px-5 py-3">Reason</th>}
                   {isAdmin && <th className="text-left font-semibold px-5 py-3">Status</th>}
+                  <th className="w-12 px-3 text-center font-semibold">Friend</th>
                   {isAdmin && <th className="w-12 px-3" />}
                 </tr>
               </thead>
               <tbody>
                 {filtered.length === 0 ? (
                   <tr>
-                    <td colSpan={isAdmin ? 6 : 3} className="text-center text-muted-foreground py-16">
+                    <td colSpan={isAdmin ? 7 : 4} className="text-center text-muted-foreground py-16">
                       No members in this view.
                     </td>
                   </tr>
@@ -325,6 +384,8 @@ function AdminFanZonePage() {
                   filtered.map((r) => {
                     const name = r.fan_alias || "Boro Fan";
                     const avatar = r.fan_avatar_url;
+                    const isSelf = user?.id === r.user_id;
+                    const fs = friendByUser[r.user_id];
                     return (
                       <tr key={r.user_id} className="border-b border-border/60 last:border-0 hover:bg-surface-2/30">
                         <td className="px-5 py-3">
@@ -369,6 +430,41 @@ function AdminFanZonePage() {
                             <StatusPill status={r.status} />
                           </td>
                         )}
+                        <td className="px-3 py-3 text-center">
+                          {isSelf ? (
+                            <span className="text-xs text-muted-foreground/60">—</span>
+                          ) : fs?.kind === "friends" ? (
+                            <span className="inline-flex items-center justify-center size-8 rounded-full bg-emerald-500/10 text-emerald-400" title="Friends">
+                              <UserCheck className="size-4" />
+                            </span>
+                          ) : fs?.kind === "outgoing" ? (
+                            <span className="inline-flex items-center justify-center size-8 rounded-full bg-amber-500/10 text-amber-400" title="Request pending">
+                              <Clock className="size-4" />
+                            </span>
+                          ) : fs?.kind === "incoming" ? (
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="size-8 text-emerald-400 hover:text-emerald-300"
+                              title="Accept friend request"
+                              disabled={friendBusy === fs.id}
+                              onClick={() => acceptFriendRequest(fs.id)}
+                            >
+                              {friendBusy === fs.id ? <Loader2 className="size-4 animate-spin" /> : <UserCheck className="size-4" />}
+                            </Button>
+                          ) : (
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="size-8 text-sky-400 hover:text-sky-300"
+                              title="Add friend"
+                              disabled={!user || friendBusy === r.user_id}
+                              onClick={() => sendFriendRequest(r.user_id)}
+                            >
+                              {friendBusy === r.user_id ? <Loader2 className="size-4 animate-spin" /> : <UserPlus className="size-4" />}
+                            </Button>
+                          )}
+                        </td>
                         {isAdmin && (
                           <td className="px-3 py-3 text-right">
                             <DropdownMenu>
