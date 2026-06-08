@@ -1,9 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, ImagePlus, Loader2, Save } from "lucide-react";
+import { ArrowLeft, ImagePlus, Loader2, Save, UserMinus, ShieldOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useFanZoneMembership } from "@/hooks/use-fan-zone";
@@ -119,7 +120,15 @@ function FanZoneProfilePage() {
             Fan Zone membership required to edit your profile.
           </div>
         ) : (
-          <div className="rounded-2xl border border-[#E11B22]/40 bg-black/55 backdrop-blur-md shadow-2xl text-white overflow-hidden">
+          <Tabs defaultValue="profile" className="w-full">
+            <TabsList className="bg-black/55 border border-white/20 backdrop-blur-md mb-4">
+              <TabsTrigger value="profile" className="data-[state=active]:bg-[#E11B22] data-[state=active]:text-white text-white/70">Profile</TabsTrigger>
+              <TabsTrigger value="friends" className="data-[state=active]:bg-[#E11B22] data-[state=active]:text-white text-white/70">Friends</TabsTrigger>
+              <TabsTrigger value="ignored" className="data-[state=active]:bg-[#E11B22] data-[state=active]:text-white text-white/70">Ignored</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="profile">
+              <div className="rounded-2xl border border-[#E11B22]/40 bg-black/55 backdrop-blur-md shadow-2xl text-white overflow-hidden">
             <div className="flex items-center gap-4 px-5 sm:px-6 py-5 bg-gradient-to-r from-[#E11B22]/30 to-transparent border-b border-white/10">
               <div className="size-20 rounded-full overflow-hidden bg-gradient-to-br from-[#E11B22] to-[#8B0F14] ring-4 ring-white/15 shrink-0">
                 <img src={editPreviewAvatar} alt="" className="size-20 object-cover" />
@@ -229,9 +238,134 @@ function FanZoneProfilePage() {
                 </Button>
               </div>
             </div>
-          </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="friends">
+              <FriendsPanel userId={user!.id} />
+            </TabsContent>
+
+            <TabsContent value="ignored">
+              <IgnoredPanel />
+            </TabsContent>
+          </Tabs>
         )}
       </div>
+    </div>
+  );
+}
+
+type FriendRow = { user_id: string; fan_alias: string | null; fan_avatar_url: string | null; friendship_id: string };
+
+function FriendsPanel({ userId }: { userId: string }) {
+  const [rows, setRows] = useState<FriendRow[] | null>(null);
+  const [busy, setBusy] = useState<string | null>(null);
+
+  const load = async () => {
+    const { data: friends } = await supabase
+      .from("fan_zone_friendships")
+      .select("id, requester_id, addressee_id")
+      .eq("status", "accepted")
+      .or(`requester_id.eq.${userId},addressee_id.eq.${userId}`);
+    const list = friends ?? [];
+    const ids = list.map((f: any) => (f.requester_id === userId ? f.addressee_id : f.requester_id));
+    if (ids.length === 0) { setRows([]); return; }
+    const { data: members } = await supabase
+      .from("fan_zone_members")
+      .select("user_id, fan_alias, fan_avatar_url")
+      .in("user_id", ids);
+    const byId = new Map((members ?? []).map((m: any) => [m.user_id, m]));
+    setRows(list.map((f: any) => {
+      const otherId = f.requester_id === userId ? f.addressee_id : f.requester_id;
+      const m = byId.get(otherId) as any;
+      return { user_id: otherId, fan_alias: m?.fan_alias ?? null, fan_avatar_url: m?.fan_avatar_url ?? null, friendship_id: f.id };
+    }));
+  };
+  useEffect(() => { void load(); /* eslint-disable-next-line */ }, [userId]);
+
+  const remove = async (friendshipId: string) => {
+    setBusy(friendshipId);
+    const { error } = await supabase.from("fan_zone_friendships").delete().eq("id", friendshipId);
+    setBusy(null);
+    if (error) return toast.error("Couldn't remove friend", { description: error.message });
+    toast.success("Friend removed");
+    void load();
+  };
+
+  return (
+    <div className="rounded-2xl border border-[#E11B22]/40 bg-black/55 backdrop-blur-md shadow-2xl text-white p-5 sm:p-6">
+      <h2 className="font-display text-xl font-bold mb-1">Friends</h2>
+      <p className="text-sm text-white/70 mb-4">Your Boro Fan Zone friends. Remove anyone you no longer want connected.</p>
+      {rows === null ? (
+        <div className="grid place-items-center py-12"><Loader2 className="size-5 animate-spin text-white/70" /></div>
+      ) : rows.length === 0 ? (
+        <div className="rounded-xl border border-dashed border-white/20 p-8 text-center text-sm text-white/60">You have no friends yet. Visit a fan's profile to add them.</div>
+      ) : (
+        <ul className="space-y-2">
+          {rows.map((r) => (
+            <li key={r.friendship_id} className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 p-3">
+              <img src={r.fan_avatar_url || boroDefaultAvatar} alt="" className="size-10 rounded-full object-cover ring-2 ring-white/10" />
+              <Link to="/fanzone/u/$userId" params={{ userId: r.user_id }} className="flex-1 min-w-0 font-semibold text-sm truncate hover:underline">
+                {r.fan_alias || "Boro fan"}
+              </Link>
+              <Button size="sm" variant="outline" disabled={busy === r.friendship_id} onClick={() => void remove(r.friendship_id)} className="bg-white/10 border-white/30 text-white hover:bg-white/20">
+                {busy === r.friendship_id ? <Loader2 className="size-4 mr-1 animate-spin" /> : <UserMinus className="size-4 mr-1" />}
+                Remove
+              </Button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+type IgnoreRow = { blocked_id: string; fan_alias: string; fan_avatar_url: string; created_at: string };
+
+function IgnoredPanel() {
+  const [rows, setRows] = useState<IgnoreRow[] | null>(null);
+  const [busy, setBusy] = useState<string | null>(null);
+
+  const load = async () => {
+    const { data } = await supabase.rpc("list_my_fan_blocks");
+    setRows((data ?? []) as IgnoreRow[]);
+  };
+  useEffect(() => { void load(); }, []);
+
+  const unblock = async (id: string) => {
+    setBusy(id);
+    const { error } = await supabase.rpc("fan_zone_unblock", { _other: id });
+    setBusy(null);
+    if (error) return toast.error("Couldn't unblock", { description: error.message });
+    toast.success("Unblocked");
+    void load();
+  };
+
+  return (
+    <div className="rounded-2xl border border-[#E11B22]/40 bg-black/55 backdrop-blur-md shadow-2xl text-white p-5 sm:p-6">
+      <h2 className="font-display text-xl font-bold mb-1">Ignored members</h2>
+      <p className="text-sm text-white/70 mb-4">Members you've blocked. Their posts and DMs are hidden from you.</p>
+      {rows === null ? (
+        <div className="grid place-items-center py-12"><Loader2 className="size-5 animate-spin text-white/70" /></div>
+      ) : rows.length === 0 ? (
+        <div className="rounded-xl border border-dashed border-white/20 p-8 text-center text-sm text-white/60">You haven't ignored anyone.</div>
+      ) : (
+        <ul className="space-y-2">
+          {rows.map((r) => (
+            <li key={r.blocked_id} className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 p-3">
+              <img src={r.fan_avatar_url || boroDefaultAvatar} alt="" className="size-10 rounded-full object-cover ring-2 ring-white/10" />
+              <div className="flex-1 min-w-0">
+                <div className="font-semibold text-sm truncate">{r.fan_alias || "Boro fan"}</div>
+                <div className="text-[11px] text-white/60">Ignored {new Date(r.created_at).toLocaleDateString()}</div>
+              </div>
+              <Button size="sm" variant="outline" disabled={busy === r.blocked_id} onClick={() => void unblock(r.blocked_id)} className="bg-white/10 border-white/30 text-white hover:bg-white/20">
+                {busy === r.blocked_id ? <Loader2 className="size-4 mr-1 animate-spin" /> : <ShieldOff className="size-4 mr-1" />}
+                Remove
+              </Button>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
