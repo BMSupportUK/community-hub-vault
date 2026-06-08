@@ -4074,6 +4074,10 @@ export type Database = {
           username: string
         }[]
       }
+      forum_move_topic: {
+        Args: { _new_board_id: string; _topic_id: string }
+        Returns: undefined
+      }
       get_active_mute: { Args: { _user_id: string }; Returns: string }
       get_fan_zone_profile: {
         Args: { _user_id: string }
