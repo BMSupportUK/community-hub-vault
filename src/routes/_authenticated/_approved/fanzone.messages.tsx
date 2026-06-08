@@ -8,6 +8,7 @@ import { formatLastSeen } from "@/lib/relative-time";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { censorText, useProfanityWords } from "@/lib/profanity";
 import bgAsset from "@/assets/fanzone-chat-bg.png.asset.json";
 
 export const Route = createFileRoute("/_authenticated/_approved/fanzone/messages")({
