@@ -121,6 +121,69 @@ export const getBoroMatchCentre = createServerFn({ method: "GET" }).handler(
 
 const ESPN_TEAM_ID = "369"; // Middlesbrough (eng.2)
 const ESPN_SCHEDULE_URL = `https://site.api.espn.com/apis/site/v2/sports/soccer/eng.2/teams/${ESPN_TEAM_ID}/schedule`;
+const ESPN_STANDINGS_URL = `https://site.api.espn.com/apis/v2/sports/soccer/eng.2/standings`;
+
+async function fetchEspnStandings(): Promise<LeaguePosition | null> {
+  const res = await fetch(ESPN_STANDINGS_URL, { headers: { accept: "application/json" } });
+  if (!res.ok) throw new Error(`ESPN standings ${res.status}`);
+  const json = (await res.json()) as {
+    name?: string;
+    children?: Array<{
+      standings?: {
+        entries?: Array<{
+          team?: { id?: string; displayName?: string; shortDisplayName?: string };
+          stats?: Array<{ name?: string; type?: string; value?: number; displayValue?: string }>;
+          note?: { rank?: number };
+        }>;
+      };
+    }>;
+  };
+  const entries = json.children?.[0]?.standings?.entries ?? [];
+  if (!entries.length) return null;
+
+  const statNum = (s: NonNullable<typeof entries[number]["stats"]>[number] | undefined) =>
+    typeof s?.value === "number" ? s.value : parseInt(s?.displayValue ?? "0", 10) || 0;
+
+  const rows = entries.map((e, idx) => {
+    const stats = e.stats ?? [];
+    const by = (t: string) => stats.find((s) => s.type === t || s.name === t);
+    const name = e.team?.shortDisplayName || e.team?.displayName || "";
+    return {
+      position: e.note?.rank ?? idx + 1,
+      team: name,
+      played: statNum(by("gamesplayed") ?? by("gamesPlayed")),
+      won: statNum(by("wins")),
+      drawn: statNum(by("ties")),
+      lost: statNum(by("losses")),
+      goalDifference: statNum(by("pointdifferential") ?? by("pointDifferential")),
+      points: statNum(by("points")),
+      isBoro: /middles?brough|boro/i.test(name),
+    };
+  });
+
+  // Ensure ordered by rank/position
+  rows.sort((a, b) => a.position - b.position);
+
+  const boroIdx = rows.findIndex((r) => r.isBoro);
+  if (boroIdx === -1) return null;
+
+  const boro = rows[boroIdx];
+  const start = Math.max(0, boroIdx - 2);
+  const end = Math.min(rows.length, boroIdx + 3);
+  const slice = rows.slice(start, end);
+
+  return {
+    competition: "EFL Championship",
+    position: boro.position,
+    played: boro.played,
+    won: boro.won,
+    drawn: boro.drawn,
+    lost: boro.lost,
+    goalDifference: boro.goalDifference,
+    points: boro.points,
+    table: slice,
+  };
+}
 
 function espnLogo(teamId: string | undefined | null) {
   if (!teamId) return null;
