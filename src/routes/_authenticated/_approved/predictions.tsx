@@ -357,10 +357,9 @@ function FixturesList({
   canPredict: boolean;
   onSave: (fixtureId: string, hp: number, ap: number) => Promise<void>;
 }) {
-  const [filter, setFilter] = useState<string>("all"); // "all" | "ko" | "A".."L"
+  const [filter, setFilter] = useState<string>("A"); // "A".."L" | "r32"…"final"
 
   const filtered = useMemo(() => {
-    if (filter === "all") return fixtures;
     if (["r32", "r16", "qf", "sf", "third", "final"].includes(filter)) {
       return fixtures.filter((f) => f.stage === filter);
     }
@@ -417,7 +416,6 @@ function FixturesList({
     <div className="space-y-6">
       <div className="space-y-2">
         <div className="-mx-1 px-1 flex gap-1.5 overflow-x-auto pb-1">
-          {chip("all", "All")}
           {groupLetters.map((g) => chip(g, `Group ${g}`))}
         </div>
         <div className="-mx-1 px-1 flex gap-1.5 overflow-x-auto pb-1">
