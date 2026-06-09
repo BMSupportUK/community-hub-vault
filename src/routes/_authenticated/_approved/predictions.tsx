@@ -440,7 +440,7 @@ function FixturesList({
       )}
       {[...byDate.entries()].map(([date, items]) => (
         <div key={date}>
-          <h2 className="text-xs uppercase tracking-wider text-muted-foreground mb-2 px-1">
+          <h2 className="text-sm font-bold uppercase tracking-wider text-foreground mb-2 px-2 py-1.5 rounded-md bg-surface-2 border-l-4 border-primary">
             {date}
           </h2>
           <div className="grid gap-3">
@@ -514,7 +514,9 @@ function FixtureCard({
         </span>
         <span className="inline-flex items-center gap-2">
           {!locked && !scored && <LockCountdownPill lockAtMs={lockAtMs} />}
-          {formatKickoff(fixture.kickoffAt)}
+          <span className="font-bold text-foreground tabular-nums">
+            {formatKickoff(fixture.kickoffAt)}
+          </span>
         </span>
       </div>
 
