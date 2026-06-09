@@ -44,6 +44,46 @@ function formatKickoff(iso: string) {
   });
 }
 
+function useNow(intervalMs = 1000) {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), intervalMs);
+    return () => clearInterval(id);
+  }, [intervalMs]);
+  return now;
+}
+
+function formatCountdown(ms: number) {
+  const total = Math.max(0, Math.floor(ms / 1000));
+  const d = Math.floor(total / 86400);
+  const h = Math.floor((total % 86400) / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const s = total % 60;
+  if (d > 0) return `${d}d ${h}h ${m}m`;
+  if (h > 0) return `${h}h ${m}m ${s.toString().padStart(2, "0")}s`;
+  return `${m}m ${s.toString().padStart(2, "0")}s`;
+}
+
+function LockCountdownPill({ lockAtMs }: { lockAtMs: number }) {
+  const now = useNow(1000);
+  const remaining = lockAtMs - now;
+  if (remaining <= 0) return null;
+  const urgent = remaining <= 60 * 60 * 1000; // < 1h
+  return (
+    <span
+      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium tabular-nums border ${
+        urgent
+          ? "bg-amber-500/15 text-amber-300 border-amber-500/30"
+          : "bg-primary/10 text-primary border-primary/20"
+      }`}
+      title="Time left to predict (locks 30 min before kick-off)"
+    >
+      <Lock className="size-3" />
+      {formatCountdown(remaining)} left
+    </span>
+  );
+}
+
 function PredictionsPage() {
   const { user } = useAuth();
   const [joined, setJoined] = useState<boolean>(false);
@@ -466,7 +506,10 @@ function FixtureCard({
             </span>
           )}
         </span>
-        <span>{formatKickoff(fixture.kickoffAt)}</span>
+        <span className="inline-flex items-center gap-2">
+          {!locked && !scored && <LockCountdownPill lockAtMs={lockAtMs} />}
+          {formatKickoff(fixture.kickoffAt)}
+        </span>
       </div>
 
       <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
