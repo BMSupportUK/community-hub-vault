@@ -286,7 +286,9 @@ function FixtureCard({
   onSave: (fixtureId: string, hp: number, ap: number) => Promise<void>;
 }) {
   const kickoffMs = new Date(fixture.kickoffAt).getTime();
-  const locked = Date.now() >= kickoffMs;
+  const LOCK_MS = 30 * 60 * 1000;
+  const lockAtMs = kickoffMs - LOCK_MS;
+  const locked = Date.now() >= lockAtMs;
   const scored = fixture.homeScore !== null && fixture.awayScore !== null;
   const [hp, setHp] = useState<string>(fixture.myPrediction?.homePred?.toString() ?? "");
   const [ap, setAp] = useState<string>(fixture.myPrediction?.awayPred?.toString() ?? "");
@@ -336,8 +338,11 @@ function FixtureCard({
             </div>
           </div>
         ) : locked ? (
-          <div className="text-center text-xs text-muted-foreground inline-flex items-center gap-1">
-            <Lock className="size-3.5" /> Locked
+          <div className="text-center text-xs text-muted-foreground inline-flex flex-col items-center gap-0.5">
+            <span className="inline-flex items-center gap-1">
+              <Lock className="size-3.5" /> Locked
+            </span>
+            <span className="text-[10px]">Closed 30 min before kick-off</span>
           </div>
         ) : (
           <div className="flex items-center gap-1.5">
