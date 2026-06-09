@@ -1709,6 +1709,9 @@ function Storefront() {
             <TabsContent value="streaming_devices" className="mt-4 -mx-6">
               <StreamingDevicesPage />
             </TabsContent>
+            <TabsContent value="reviews" className="mt-4 -mx-6">
+              <ReviewsPage />
+            </TabsContent>
           </Tabs>
         </div>
       </div>
