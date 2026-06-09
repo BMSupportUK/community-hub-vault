@@ -11,6 +11,8 @@ import {
   listWcFixtures,
   upsertWcPrediction,
   getWcLeaderboard,
+  getWcEntrantStatus,
+  joinWcPredictor,
   type WcFixtureDTO,
   type WcLeaderboardRowDTO,
 } from "@/lib/wc-predictions.functions";
@@ -41,8 +43,10 @@ function formatKickoff(iso: string) {
 }
 
 function PredictionsPage() {
-  const { user, hasAny, isStaff } = useAuth();
-  const canPredict = hasAny(["subscriber", "member"]);
+  const { user } = useAuth();
+  const [joined, setJoined] = useState<boolean>(false);
+  const [joining, setJoining] = useState(false);
+  const canPredict = joined;
   const [tab, setTab] = useState("fixtures");
   const [fixtures, setFixtures] = useState<WcFixtureDTO[] | null>(null);
   const [leaderboard, setLeaderboard] = useState<WcLeaderboardRowDTO[] | null>(null);
@@ -51,17 +55,33 @@ function PredictionsPage() {
   const listFixturesFn = useServerFn(listWcFixtures);
   const upsertFn = useServerFn(upsertWcPrediction);
   const leaderboardFn = useServerFn(getWcLeaderboard);
+  const statusFn = useServerFn(getWcEntrantStatus);
+  const joinFn = useServerFn(joinWcPredictor);
 
   const loadAll = async () => {
     setLoading(true);
     try {
-      const [fx, lb] = await Promise.all([listFixturesFn(), leaderboardFn()]);
+      const [fx, lb, st] = await Promise.all([listFixturesFn(), leaderboardFn(), statusFn()]);
       setFixtures(fx);
       setLeaderboard(lb);
+      setJoined(st.joined);
     } catch (e: any) {
       toast.error(e?.message ?? "Failed to load");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleJoin = async () => {
+    setJoining(true);
+    try {
+      await joinFn();
+      setJoined(true);
+      toast.success("You're in! Start predicting.");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Failed to join");
+    } finally {
+      setJoining(false);
     }
   };
 
@@ -103,11 +123,17 @@ function PredictionsPage() {
           </div>
         </header>
 
-        {!canPredict && !isStaff && (
-          <div className="mb-6 rounded-2xl border border-amber-500/40 bg-amber-500/10 text-amber-300 px-4 py-3 text-sm flex items-center gap-2">
-            <Lock className="size-4" />
-            Only subscribers can submit predictions. You can still view fixtures and the
-            leaderboard.
+        {!canPredict && (
+          <div className="mb-6 rounded-2xl border border-primary/40 bg-primary/10 px-4 py-3 flex flex-col sm:flex-row items-start sm:items-center gap-3">
+            <div className="flex-1 text-sm">
+              <div className="font-medium text-foreground">Join the predictor — it's free.</div>
+              <div className="text-muted-foreground">
+                Opt in to submit your scores and appear on the leaderboard. No payment, no commitment.
+              </div>
+            </div>
+            <Button onClick={handleJoin} disabled={joining}>
+              {joining ? <Loader2 className="size-4 animate-spin" /> : "Join the predictor"}
+            </Button>
           </div>
         )}
 
@@ -325,7 +351,7 @@ function FixtureCard({
           ) : canPredict ? (
             <span>Enter a score to predict</span>
           ) : (
-            <span>Subscribe to enter</span>
+            <span>Join the predictor to enter</span>
           )}
         </div>
         {!locked && canPredict && (
