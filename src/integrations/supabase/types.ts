@@ -3457,6 +3457,7 @@ export type Database = {
       }
       tickets: {
         Row: {
+          archived_at: string | null
           assigned_to: string | null
           category_id: string
           closed_at: string | null
@@ -3470,6 +3471,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          archived_at?: string | null
           assigned_to?: string | null
           category_id: string
           closed_at?: string | null
@@ -3483,6 +3485,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          archived_at?: string | null
           assigned_to?: string | null
           category_id?: string
           closed_at?: string | null
@@ -4121,6 +4124,7 @@ export type Database = {
       }
       app_encrypt: { Args: { p: string }; Returns: string }
       apply_blacklist_ban: { Args: { _user_id: string }; Returns: undefined }
+      archive_old_closed_tickets: { Args: never; Returns: number }
       assign_pending_tickets: { Args: never; Returns: number }
       can_in_channel: {
         Args: { _action: string; _channel: string; _user: string }

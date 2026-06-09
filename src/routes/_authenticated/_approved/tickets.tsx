@@ -265,7 +265,7 @@ function TicketsPage() {
 
   // Load tickets according to view
   const loadTickets = async () => {
-    let q = supabase.from("tickets").select("*").order("updated_at", { ascending: false });
+    let q = supabase.from("tickets").select("*").is("archived_at", null).order("updated_at", { ascending: false });
     if (view === "mine") q = q.eq("user_id", user!.id);
     else if (view === "assigned") q = q.eq("assigned_to", user!.id);
     const { data } = await q;
