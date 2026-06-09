@@ -98,28 +98,38 @@ const TEAM_TO_ISO: Record<string, string> = {
   "Fiji": "FJ",
 };
 
-// Sub-national flags (UK home nations etc.)
-const SPECIAL_FLAGS: Record<string, string> = {
-  "GB-ENG": "🏴󠁧󠁢󠁥󠁮󠁧󠁿",
-  "GB-SCT": "🏴󠁧󠁢󠁳󠁣󠁴󠁿",
-  "GB-WLS": "🏴󠁧󠁢󠁷󠁬󠁳󠁿",
-  "GB-NIR": "🇬🇧",
-  "XK": "🇽🇰",
-};
-
-function isoToFlag(iso: string): string {
-  if (SPECIAL_FLAGS[iso]) return SPECIAL_FLAGS[iso];
-  if (iso.length !== 2) return "";
-  const A = 0x1f1e6;
-  const codePoints = iso
-    .toUpperCase()
-    .split("")
-    .map((c) => A + (c.charCodeAt(0) - 65));
-  return String.fromCodePoint(...codePoints);
+// flagcdn.com supports ISO codes (lowercase) AND the UK home nations via
+// "gb-eng", "gb-sct", "gb-wls", "gb-nir". This is the standard way to render
+// reliable flags in a browser without depending on emoji fonts.
+export function teamFlagUrl(name: string | null | undefined): string | null {
+  if (!name) return null;
+  const iso = TEAM_TO_ISO[name.trim()];
+  if (!iso) return null;
+  return `https://flagcdn.com/w40/${iso.toLowerCase()}.png`;
 }
 
-export function teamFlag(name: string | null | undefined): string {
-  if (!name) return "";
+export function teamFlagSrcSet(name: string | null | undefined): string | null {
+  if (!name) return null;
   const iso = TEAM_TO_ISO[name.trim()];
-  return iso ? isoToFlag(iso) : "";
+  if (!iso) return null;
+  const slug = iso.toLowerCase();
+  return `https://flagcdn.com/w40/${slug}.png 1x, https://flagcdn.com/w80/${slug}.png 2x`;
+}
+
+import { createElement, type ReactElement } from "react";
+
+export function teamFlag(
+  name: string | null | undefined,
+  className = "inline-block h-3.5 w-5 rounded-[2px] object-cover align-[-2px] shadow-sm",
+): ReactElement | null {
+  const src = teamFlagUrl(name);
+  if (!src) return null;
+  return createElement("img", {
+    src,
+    srcSet: teamFlagSrcSet(name) ?? undefined,
+    alt: `${name} flag`,
+    loading: "lazy",
+    decoding: "async",
+    className,
+  });
 }
