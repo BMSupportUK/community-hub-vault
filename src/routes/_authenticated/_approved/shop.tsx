@@ -137,7 +137,8 @@ export const Route = createFileRoute("/_authenticated/_approved/shop")({
     s.view === "discounts" ||
     s.view === "refund" ||
     s.view === "multi_room" ||
-    s.view === "triple_room"
+    s.view === "triple_room" ||
+    s.view === "streaming_devices"
       ? s.view
       : "store") as View | "discounts",
     id: typeof s.id === "string" ? s.id : undefined,
