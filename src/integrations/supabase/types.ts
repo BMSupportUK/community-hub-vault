@@ -3816,37 +3816,46 @@ export type Database = {
       wc_fixtures: {
         Row: {
           away_score: number | null
+          away_seed: string | null
           away_team: string
           created_at: string
           group_label: string | null
           home_score: number | null
+          home_seed: string | null
           home_team: string
           id: string
           kickoff_at: string
+          match_no: number | null
           stage: string
           updated_at: string
         }
         Insert: {
           away_score?: number | null
+          away_seed?: string | null
           away_team: string
           created_at?: string
           group_label?: string | null
           home_score?: number | null
+          home_seed?: string | null
           home_team: string
           id?: string
           kickoff_at: string
+          match_no?: number | null
           stage: string
           updated_at?: string
         }
         Update: {
           away_score?: number | null
+          away_seed?: string | null
           away_team?: string
           created_at?: string
           group_label?: string | null
           home_score?: number | null
+          home_seed?: string | null
           home_team?: string
           id?: string
           kickoff_at?: string
+          match_no?: number | null
           stage?: string
           updated_at?: string
         }

@@ -202,10 +202,18 @@ function FixturesList({
   canPredict: boolean;
   onSave: (fixtureId: string, hp: number, ap: number) => Promise<void>;
 }) {
+  const [filter, setFilter] = useState<string>("all"); // "all" | "ko" | "A".."L"
+
+  const filtered = useMemo(() => {
+    if (filter === "all") return fixtures;
+    if (filter === "ko") return fixtures.filter((f) => f.stage !== "group");
+    return fixtures.filter((f) => f.stage === "group" && f.groupLabel === filter);
+  }, [fixtures, filter]);
+
   // group by date (YYYY-MM-DD)
   const byDate = useMemo(() => {
     const m = new Map<string, WcFixtureDTO[]>();
-    for (const f of fixtures) {
+    for (const f of filtered) {
       const d = new Date(f.kickoffAt).toLocaleDateString(undefined, {
         weekday: "long",
         day: "2-digit",
@@ -215,7 +223,7 @@ function FixturesList({
       m.get(d)!.push(f);
     }
     return m;
-  }, [fixtures]);
+  }, [filtered]);
 
   if (!fixtures.length) {
     return (
@@ -225,8 +233,33 @@ function FixturesList({
     );
   }
 
+  const groupLetters = ["A","B","C","D","E","F","G","H","I","J","K","L"];
+  const chip = (key: string, label: string) => (
+    <button
+      key={key}
+      onClick={() => setFilter(key)}
+      className={`shrink-0 px-3 h-8 rounded-full text-xs font-medium border transition ${
+        filter === key
+          ? "bg-primary text-primary-foreground border-primary shadow-glow"
+          : "bg-surface-1 text-muted-foreground border-border hover:text-foreground"
+      }`}
+    >
+      {label}
+    </button>
+  );
+
   return (
     <div className="space-y-6">
+      <div className="-mx-1 px-1 flex gap-1.5 overflow-x-auto pb-1">
+        {chip("all", "All")}
+        {groupLetters.map((g) => chip(g, `Group ${g}`))}
+        {chip("ko", "Knockout")}
+      </div>
+      {byDate.size === 0 && (
+        <div className="rounded-2xl border border-border bg-surface-1 p-8 text-center text-sm text-muted-foreground">
+          No fixtures in this view yet.
+        </div>
+      )}
       {[...byDate.entries()].map(([date, items]) => (
         <div key={date}>
           <h2 className="text-xs uppercase tracking-wider text-muted-foreground mb-2 px-1">
