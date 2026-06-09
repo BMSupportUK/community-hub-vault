@@ -11,6 +11,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { MapPin } from "lucide-react";
+import { toast } from "sonner";
 
 /**
  * Once per session, ask the browser for the user's precise GPS location and
@@ -29,7 +30,12 @@ export function GpsCapture() {
   const requestLocation = () => {
     if (!user?.id) return;
     const key = `gps-recorded:${user.id}`;
+    if (!("geolocation" in navigator)) {
+      toast.error("Your browser doesn't support location services.");
+      return;
+    }
     sessionStorage.setItem(key, "1");
+    const pending = toast.loading("Requesting your location…");
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         record({
@@ -38,12 +44,23 @@ export function GpsCapture() {
             longitude: pos.coords.longitude,
             accuracy: pos.coords.accuracy,
           },
-        }).catch(() => {
-          sessionStorage.removeItem(key);
-        });
+        })
+          .then(() => toast.success("Location confirmed.", { id: pending }))
+          .catch(() => {
+            sessionStorage.removeItem(key);
+            toast.error("Couldn't save your location. Please try again.", { id: pending });
+          });
       },
-      () => {
-        // permission denied or unavailable; do nothing
+      (err) => {
+        const msg =
+          err.code === err.PERMISSION_DENIED
+            ? "Location permission was blocked. Enable it in your browser settings and reload."
+            : err.code === err.POSITION_UNAVAILABLE
+              ? "Location is unavailable on this device."
+              : err.code === err.TIMEOUT
+                ? "Location request timed out. Please try again."
+                : "Couldn't get your location.";
+        toast.error(msg, { id: pending });
       },
       { enableHighAccuracy: true, timeout: 10_000, maximumAge: 5 * 60_000 },
     );
