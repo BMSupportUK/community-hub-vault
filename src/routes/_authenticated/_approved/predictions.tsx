@@ -176,14 +176,6 @@ function PredictionsPage() {
                 Predict every fixture. 5 pts exact score · 3 pts goal difference · 1 pt result.
               </p>
             </div>
-            {myStats && (
-              <div className="hidden sm:flex flex-col items-end text-white">
-                <div className="text-xs uppercase tracking-wider text-white/70">Your points</div>
-                <div className="font-display text-3xl font-bold leading-none">
-                  {myStats.totalPoints}
-                </div>
-              </div>
-            )}
           </div>
         </header>
 
@@ -246,12 +238,77 @@ function PredictionsPage() {
             </TabsContent>
           </Tabs>
 
-          <aside className="hidden lg:block">
+          <aside className="space-y-4 lg:sticky lg:top-6 lg:self-start">
+            <PointsSidebar stats={myStats} loading={loading} joined={joined} />
             <UpcomingFixtures fixtures={upcomingFixtures} loading={loading} />
           </aside>
         </div>
       </div>
     </main>
+  );
+}
+
+function PointsSidebar({
+  stats,
+  loading,
+  joined,
+}: {
+  stats: WcLeaderboardRowDTO | null;
+  loading: boolean;
+  joined: boolean;
+}) {
+  const totalPoints = stats?.totalPoints ?? 0;
+  const exactCount = stats?.exactCount ?? 0;
+  const resultCount = stats?.resultCount ?? 0;
+  const scoredCount = stats?.predictionsScored ?? 0;
+
+  return (
+    <section className="rounded-2xl border-2 border-primary bg-primary/15 shadow-lg shadow-primary/20 overflow-hidden">
+      <div className="flex items-center gap-2 px-4 py-3 border-b border-primary/40 bg-primary/25">
+        <Star className="size-5 text-primary fill-primary" />
+        <h2 className="font-display text-base font-black uppercase tracking-wide text-primary">
+          Your Points
+        </h2>
+      </div>
+      <div className="p-4">
+        {loading ? (
+          <div className="grid place-items-center py-8 text-primary">
+            <Loader2 className="size-5 animate-spin" />
+          </div>
+        ) : (
+          <>
+            <div className="rounded-xl border-2 border-primary bg-primary text-primary-foreground px-4 py-5 text-center shadow-glow">
+              <div className="text-xs font-black uppercase tracking-wider opacity-90">Total score</div>
+              <div className="font-display text-6xl font-black leading-none tabular-nums">
+                {totalPoints}
+              </div>
+              <div className="text-sm font-bold uppercase tracking-wide">
+                point{totalPoints === 1 ? "" : "s"}
+              </div>
+            </div>
+            <div className="mt-3 grid grid-cols-3 gap-2 text-center">
+              <div className="rounded-lg border border-primary/40 bg-surface-1 px-2 py-2">
+                <div className="text-lg font-black text-foreground tabular-nums">{exactCount}</div>
+                <div className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Exact</div>
+              </div>
+              <div className="rounded-lg border border-primary/40 bg-surface-1 px-2 py-2">
+                <div className="text-lg font-black text-foreground tabular-nums">{resultCount}</div>
+                <div className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Results</div>
+              </div>
+              <div className="rounded-lg border border-primary/40 bg-surface-1 px-2 py-2">
+                <div className="text-lg font-black text-foreground tabular-nums">{scoredCount}</div>
+                <div className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Scored</div>
+              </div>
+            </div>
+            {!joined && (
+              <div className="mt-3 rounded-lg border border-border bg-surface-1 px-3 py-2 text-xs font-semibold text-muted-foreground">
+                Join the predictor to start collecting points.
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </section>
   );
 }
 
@@ -263,7 +320,7 @@ function UpcomingFixtures({
   loading: boolean;
 }) {
   return (
-    <div className="sticky top-6 rounded-2xl border border-border bg-surface-1 overflow-hidden">
+    <div className="rounded-2xl border border-border bg-surface-1 overflow-hidden">
       <div className="flex items-center gap-2 px-4 py-3 border-b border-border bg-surface-2">
         <CalendarDays className="size-4 text-primary" />
         <h3 className="font-display text-sm font-semibold">Next 3 days</h3>
