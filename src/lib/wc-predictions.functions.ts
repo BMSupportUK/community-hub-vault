@@ -138,8 +138,8 @@ export const upsertWcPrediction = createServerFn({ method: "POST" })
       .maybeSingle();
     if (fxErr) throw new Error(fxErr.message);
     if (!fx) throw new Error("Fixture not found");
-    if (new Date((fx as any).kickoff_at).getTime() <= Date.now()) {
-      throw new Error("This match has already kicked off — predictions are locked.");
+    if (new Date((fx as any).kickoff_at).getTime() - 30 * 60 * 1000 <= Date.now()) {
+      throw new Error("Predictions lock 30 minutes before kick-off — this fixture is closed.");
     }
 
     const { error } = await supabase
