@@ -324,11 +324,19 @@ function UpcomingFixtures({
                   </span>
                 </div>
                 {f.myPrediction && (
-                  <div className="mt-1 text-[11px] text-muted-foreground">
-                    Your pick:{" "}
-                    <span className="font-mono text-foreground">
-                      {f.myPrediction.homePred}–{f.myPrediction.awayPred}
+                  <div className="mt-1 flex items-center justify-between gap-2 text-[11px] text-muted-foreground">
+                    <span>
+                      Your pick:{" "}
+                      <span className="font-mono text-foreground">
+                        {f.myPrediction.homePred}–{f.myPrediction.awayPred}
+                      </span>
                     </span>
+                    {scored && f.myPrediction.points !== null && (
+                      <span className="px-1.5 py-0.5 rounded-full bg-primary/20 text-primary border border-primary/40 font-bold tabular-nums uppercase tracking-wide">
+                        +{f.myPrediction.points} pt
+                        {f.myPrediction.points === 1 ? "" : "s"}
+                      </span>
+                    )}
                   </div>
                 )}
               </li>
