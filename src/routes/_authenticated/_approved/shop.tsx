@@ -1698,6 +1698,9 @@ function Storefront() {
                 onOpenOrder={(id) => navigate({ to: "/shop", search: { view: "orders", id } })}
               />
             </TabsContent>
+            <TabsContent value="streaming_devices" className="mt-4 -mx-6">
+              <StreamingDevicesPage />
+            </TabsContent>
           </Tabs>
         </div>
       </div>
