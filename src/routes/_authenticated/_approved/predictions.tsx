@@ -486,9 +486,9 @@ function FixtureCard({
         ) : locked ? (
           <div className="text-center text-xs text-muted-foreground inline-flex flex-col items-center gap-0.5">
             <span className="inline-flex items-center gap-1">
-              <Lock className="size-3.5" /> Locked
+              <Lock className="size-3.5" /> Awaiting game to finish
             </span>
-            <span className="text-[10px]">Closed 30 min before kick-off</span>
+            <span className="text-[10px]">Final score will appear here</span>
           </div>
         ) : showInputs ? (
           <div className="flex items-center gap-1.5">
