@@ -15,6 +15,12 @@ const isNativeLocationApp = () => {
   }
 };
 
+type LocationCoords = {
+  latitude: number;
+  longitude: number;
+  accuracy?: number | null;
+};
+
 /**
  * Once per session, ask the browser for the user's precise GPS location and
  * record it as a "gps" event in their location history. If permission is
@@ -45,7 +51,7 @@ export function GpsCapture() {
       });
     }, 12_000);
 
-    const savePosition = async (coords: GeolocationCoordinates) => {
+    const savePosition = async (coords: LocationCoords) => {
       await record({
         data: {
           latitude: coords.latitude,
@@ -74,7 +80,7 @@ export function GpsCapture() {
           maximumAge: 10 * 60_000,
           enableLocationFallback: true,
         });
-        await savePosition(pos.coords as GeolocationCoordinates);
+        await savePosition(pos.coords);
         window.clearTimeout(fallback);
         toast.success("Location confirmed.", { id: pending });
       } catch (err) {
@@ -123,7 +129,8 @@ export function GpsCapture() {
 
   useEffect(() => {
     if (loading || isPending || !user?.id) return;
-    if (typeof window === "undefined" || !("geolocation" in navigator)) return;
+    if (typeof window === "undefined") return;
+    if (!isNativeLocationApp() && !("geolocation" in navigator)) return;
 
     const key = `gps-recorded:${user.id}`;
     if (sessionStorage.getItem(key)) return;
