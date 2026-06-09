@@ -3798,6 +3798,21 @@ export type Database = {
         }
         Relationships: []
       }
+      wc_entrants: {
+        Row: {
+          created_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       wc_fixtures: {
         Row: {
           away_score: number | null
