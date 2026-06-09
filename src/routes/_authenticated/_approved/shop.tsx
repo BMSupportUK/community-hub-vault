@@ -1462,6 +1462,12 @@ function Storefront() {
               >
                 Triple-room Rules
               </TabsTrigger>
+              <TabsTrigger
+                value="streaming_devices"
+                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-sky-400 data-[state=active]:text-white"
+              >
+                Streaming Devices
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="welcome" className="mt-4">
