@@ -92,8 +92,7 @@ export function GpsCapture() {
 
   return (
     <div
-      role="dialog"
-      aria-modal="false"
+      role="status"
       aria-labelledby="gps-capture-title"
       className="fixed inset-x-3 bottom-4 z-[101] mx-auto max-w-lg rounded-lg border border-border bg-background p-5 shadow-2xl"
     >
