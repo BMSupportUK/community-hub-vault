@@ -33,22 +33,11 @@ export function GpsCapture() {
     sessionStorage.setItem(key, "1");
   };
 
-  const requestLocation = async () => {
+  const requestLocation = () => {
     if (!user?.id) return;
-    const key = `gps-recorded:${user.id}`;
     if (!("geolocation" in navigator)) {
       toast.error("Your browser doesn't support location services.");
       return;
-    }
-
-    try {
-      const permission = await navigator.permissions?.query({ name: "geolocation" as PermissionName });
-      if (permission?.state === "denied") {
-        toast.error("Location permission is blocked. Enable it in your browser settings if asked again.");
-        return;
-      }
-    } catch {
-      // Some Android browsers/WebViews don't support querying this permission.
     }
 
     markHandled();
@@ -134,7 +123,7 @@ export function GpsCapture() {
             type="button"
             onClick={() => {
               dismiss();
-              window.setTimeout(() => void requestLocation(), 0);
+              requestLocation();
             }}
             className="px-4 py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 text-sm font-medium"
           >
