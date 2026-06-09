@@ -502,7 +502,7 @@ function FixtureCard({
   };
 
   return (
-    <div className="rounded-2xl border border-border bg-surface-1 p-4">
+    <div className="rounded-2xl border-2 border-primary/60 bg-surface-1 p-4 shadow-md shadow-primary/10">
       <div className="flex items-center justify-between text-xs text-muted-foreground mb-3">
         <span className="inline-flex items-center gap-1.5">
           {STAGE_LABEL[fixture.stage]}
