@@ -77,6 +77,7 @@ import { Route as LovableEmailTransactionalSendRouteImport } from './routes/lova
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 import { Route as ApiPublicHooksUserNotificationPushRouteImport } from './routes/api/public/hooks/user-notification-push'
+import { Route as ApiPublicHooksSyncWcScoresRouteImport } from './routes/api/public/hooks/sync-wc-scores'
 import { Route as ApiPublicHooksSubscriptionExpiryRemindersRouteImport } from './routes/api/public/hooks/subscription-expiry-reminders'
 import { Route as ApiPublicHooksSquareInvoiceRouteImport } from './routes/api/public/hooks/square-invoice'
 import { Route as ApiPublicHooksScheduledRemindersRouteImport } from './routes/api/public/hooks/scheduled-reminders'
@@ -485,6 +486,12 @@ const ApiPublicHooksUserNotificationPushRoute =
     path: '/api/public/hooks/user-notification-push',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksSyncWcScoresRoute =
+  ApiPublicHooksSyncWcScoresRouteImport.update({
+    id: '/api/public/hooks/sync-wc-scores',
+    path: '/api/public/hooks/sync-wc-scores',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksSubscriptionExpiryRemindersRoute =
   ApiPublicHooksSubscriptionExpiryRemindersRouteImport.update({
     id: '/api/public/hooks/subscription-expiry-reminders',
@@ -682,6 +689,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/scheduled-reminders': typeof ApiPublicHooksScheduledRemindersRoute
   '/api/public/hooks/square-invoice': typeof ApiPublicHooksSquareInvoiceRoute
   '/api/public/hooks/subscription-expiry-reminders': typeof ApiPublicHooksSubscriptionExpiryRemindersRoute
+  '/api/public/hooks/sync-wc-scores': typeof ApiPublicHooksSyncWcScoresRoute
   '/api/public/hooks/user-notification-push': typeof ApiPublicHooksUserNotificationPushRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
@@ -769,6 +777,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/scheduled-reminders': typeof ApiPublicHooksScheduledRemindersRoute
   '/api/public/hooks/square-invoice': typeof ApiPublicHooksSquareInvoiceRoute
   '/api/public/hooks/subscription-expiry-reminders': typeof ApiPublicHooksSubscriptionExpiryRemindersRoute
+  '/api/public/hooks/sync-wc-scores': typeof ApiPublicHooksSyncWcScoresRoute
   '/api/public/hooks/user-notification-push': typeof ApiPublicHooksUserNotificationPushRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
@@ -860,6 +869,7 @@ export interface FileRoutesById {
   '/api/public/hooks/scheduled-reminders': typeof ApiPublicHooksScheduledRemindersRoute
   '/api/public/hooks/square-invoice': typeof ApiPublicHooksSquareInvoiceRoute
   '/api/public/hooks/subscription-expiry-reminders': typeof ApiPublicHooksSubscriptionExpiryRemindersRoute
+  '/api/public/hooks/sync-wc-scores': typeof ApiPublicHooksSyncWcScoresRoute
   '/api/public/hooks/user-notification-push': typeof ApiPublicHooksUserNotificationPushRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
@@ -950,6 +960,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/scheduled-reminders'
     | '/api/public/hooks/square-invoice'
     | '/api/public/hooks/subscription-expiry-reminders'
+    | '/api/public/hooks/sync-wc-scores'
     | '/api/public/hooks/user-notification-push'
     | '/lovable/email/queue/process'
     | '/lovable/email/transactional/preview'
@@ -1037,6 +1048,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/scheduled-reminders'
     | '/api/public/hooks/square-invoice'
     | '/api/public/hooks/subscription-expiry-reminders'
+    | '/api/public/hooks/sync-wc-scores'
     | '/api/public/hooks/user-notification-push'
     | '/lovable/email/queue/process'
     | '/lovable/email/transactional/preview'
@@ -1127,6 +1139,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/scheduled-reminders'
     | '/api/public/hooks/square-invoice'
     | '/api/public/hooks/subscription-expiry-reminders'
+    | '/api/public/hooks/sync-wc-scores'
     | '/api/public/hooks/user-notification-push'
     | '/lovable/email/queue/process'
     | '/lovable/email/transactional/preview'
@@ -1164,6 +1177,7 @@ export interface RootRouteChildren {
   ApiPublicHooksScheduledRemindersRoute: typeof ApiPublicHooksScheduledRemindersRoute
   ApiPublicHooksSquareInvoiceRoute: typeof ApiPublicHooksSquareInvoiceRoute
   ApiPublicHooksSubscriptionExpiryRemindersRoute: typeof ApiPublicHooksSubscriptionExpiryRemindersRoute
+  ApiPublicHooksSyncWcScoresRoute: typeof ApiPublicHooksSyncWcScoresRoute
   ApiPublicHooksUserNotificationPushRoute: typeof ApiPublicHooksUserNotificationPushRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
   LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
@@ -1648,6 +1662,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksUserNotificationPushRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/sync-wc-scores': {
+      id: '/api/public/hooks/sync-wc-scores'
+      path: '/api/public/hooks/sync-wc-scores'
+      fullPath: '/api/public/hooks/sync-wc-scores'
+      preLoaderRoute: typeof ApiPublicHooksSyncWcScoresRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/subscription-expiry-reminders': {
       id: '/api/public/hooks/subscription-expiry-reminders'
       path: '/api/public/hooks/subscription-expiry-reminders'
@@ -2052,6 +2073,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksSquareInvoiceRoute: ApiPublicHooksSquareInvoiceRoute,
   ApiPublicHooksSubscriptionExpiryRemindersRoute:
     ApiPublicHooksSubscriptionExpiryRemindersRoute,
+  ApiPublicHooksSyncWcScoresRoute: ApiPublicHooksSyncWcScoresRoute,
   ApiPublicHooksUserNotificationPushRoute:
     ApiPublicHooksUserNotificationPushRoute,
   LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
@@ -2061,3 +2083,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
