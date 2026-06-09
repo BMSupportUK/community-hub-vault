@@ -422,15 +422,22 @@ function FixturesList({
 
   return (
     <div className="space-y-6">
-      <div className="space-y-2">
-        <div className="-mx-1 px-1 flex gap-1.5 overflow-x-auto pb-1">
-          {groupLetters.map((g) => chip(g, `Group ${g}`))}
+      <div className="rounded-2xl border-2 border-primary/60 bg-surface-1 p-3 shadow-md shadow-primary/10 space-y-3">
+        <div>
+          <h3 className="text-[11px] font-bold uppercase tracking-wider text-primary mb-1.5 px-1">
+            Group Games
+          </h3>
+          <div className="-mx-1 px-1 flex gap-1.5 overflow-x-auto pb-1">
+            {groupLetters.map((g) => chip(g, `Group ${g}`))}
+          </div>
         </div>
-        <div className="-mx-1 px-1 flex gap-1.5 overflow-x-auto pb-1">
-          <span className="self-center text-[10px] uppercase tracking-wider text-muted-foreground shrink-0 pr-1">
-            Knockouts
-          </span>
-          {koRounds.map((r) => chip(r.key, r.label))}
+        <div className="border-t border-border/60 pt-2">
+          <h3 className="text-[11px] font-bold uppercase tracking-wider text-primary mb-1.5 px-1">
+            Knock-out Games
+          </h3>
+          <div className="-mx-1 px-1 flex gap-1.5 overflow-x-auto pb-1">
+            {koRounds.map((r) => chip(r.key, r.label))}
+          </div>
         </div>
       </div>
       {byDate.size === 0 && (
