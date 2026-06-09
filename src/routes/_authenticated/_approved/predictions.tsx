@@ -17,6 +17,7 @@ import {
   type WcLeaderboardRowDTO,
 } from "@/lib/wc-predictions.functions";
 import { teamFlag } from "@/lib/country-flags";
+import heroBg from "@/assets/england-world-cup-hero.jpg";
 
 export const Route = createFileRoute("/_authenticated/_approved/predictions")({
   component: PredictionsPage,
@@ -109,8 +110,18 @@ function PredictionsPage() {
   }, [fixtures]);
 
   return (
-    <main className="flex-1 overflow-y-auto">
-      <div className="w-full px-4 sm:px-8 lg:px-16 py-6">
+    <main className="relative flex-1 overflow-y-auto">
+      {/* Full-page hero background */}
+      <div
+        className="pointer-events-none fixed inset-0 -z-10 bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: `url(${heroBg})` }}
+        aria-hidden="true"
+      />
+      <div
+        className="pointer-events-none fixed inset-0 -z-10 bg-gradient-to-b from-background/80 via-background/70 to-background/90 backdrop-blur-[2px]"
+        aria-hidden="true"
+      />
+      <div className="relative w-full px-4 sm:px-8 lg:px-16 py-6">
         <header className="relative rounded-3xl overflow-hidden border border-primary/30 shadow-glow bg-gradient-primary p-6 mb-6">
           <div className="absolute inset-0 bg-gradient-to-tr from-background/40 via-transparent to-transparent pointer-events-none" />
           <div className="relative flex items-center gap-3">
