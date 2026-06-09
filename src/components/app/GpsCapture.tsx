@@ -2,15 +2,7 @@ import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useAuth } from "@/hooks/use-auth";
 import { recordMyGpsLocation } from "@/lib/gps-capture.functions";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { MapPin } from "lucide-react";
+import { MapPin, X } from "lucide-react";
 import { toast } from "sonner";
 
 /**
@@ -96,41 +88,52 @@ export function GpsCapture() {
     setExplainOpen(false);
   };
 
+  if (!explainOpen) return null;
+
   return (
-    <Dialog open={explainOpen} onOpenChange={(o) => (o ? setExplainOpen(true) : dismiss())}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <MapPin className="size-5 text-primary" /> Confirm your location
-          </DialogTitle>
-          <DialogDescription>
-            We need to check your approximate location to keep this community safe.
-            It helps us block users who aren't allowed access — including VPN/proxy
-            abuse and accounts from restricted regions. Your browser will now ask
-            for permission. We only record the coordinates, never track you in the
-            background.
-          </DialogDescription>
-        </DialogHeader>
-        <DialogFooter className="gap-2">
-          <button
-            type="button"
-            onClick={dismiss}
-            className="px-4 py-2 rounded-md border border-border hover:bg-muted text-sm font-medium"
-          >
-            Not now
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              dismiss();
-              requestLocation();
-            }}
-            className="px-4 py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 text-sm font-medium"
-          >
-            Continue
-          </button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    <div
+      role="dialog"
+      aria-modal="false"
+      aria-labelledby="gps-capture-title"
+      className="fixed inset-x-3 bottom-4 z-[101] mx-auto max-w-lg rounded-lg border border-border bg-background p-5 shadow-2xl"
+    >
+      <button
+        type="button"
+        onClick={dismiss}
+        className="absolute right-3 top-3 rounded-sm p-1 text-muted-foreground hover:text-foreground"
+        aria-label="Close location confirmation"
+      >
+        <X className="size-4" />
+      </button>
+      <div className="space-y-4 pr-6">
+        <h2 id="gps-capture-title" className="flex items-center gap-2 text-lg font-semibold leading-tight">
+          <MapPin className="size-5 text-primary" /> Confirm your location
+        </h2>
+        <p className="text-sm leading-6 text-muted-foreground">
+          We need to check your approximate location to keep this community safe. It helps us block users who aren't
+          allowed access — including VPN/proxy abuse and accounts from restricted regions. Your browser will now ask for
+          permission. We only record the coordinates, never track you in the background.
+        </p>
+      </div>
+      <div className="mt-5 grid gap-2">
+        <button
+          type="button"
+          onClick={() => {
+            dismiss();
+            requestLocation();
+          }}
+          className="rounded-md bg-primary px-4 py-3 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+        >
+          Continue
+        </button>
+        <button
+          type="button"
+          onClick={dismiss}
+          className="rounded-md border border-border px-4 py-3 text-sm font-medium hover:bg-muted"
+        >
+          Not now
+        </button>
+      </div>
+    </div>
   );
 }
