@@ -37,10 +37,40 @@ async function isAdminOrManagement(supabase: any, userId: string) {
 }
 
 async function userCanPredict(supabase: any, userId: string) {
-  const { data } = await supabase.from("user_roles").select("role").eq("user_id", userId);
-  const rs = new Set((data ?? []).map((r: any) => r.role));
-  return ROLES_ALLOWED_TO_PREDICT.some((r) => rs.has(r));
+  const { data } = await supabase
+    .from("wc_entrants")
+    .select("user_id")
+    .eq("user_id", userId)
+    .maybeSingle();
+  return !!data;
 }
+
+// ------------------------------------------------------------------
+// Free opt-in: join / leave / status
+// ------------------------------------------------------------------
+export const getWcEntrantStatus = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<{ joined: boolean }> => {
+    const { supabase, userId } = context;
+    const { data, error } = await supabase
+      .from("wc_entrants")
+      .select("user_id")
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    return { joined: !!data };
+  });
+
+export const joinWcPredictor = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    const { error } = await supabase
+      .from("wc_entrants")
+      .upsert({ user_id: userId }, { onConflict: "user_id" });
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
 
 // ------------------------------------------------------------------
 // User: list fixtures with my prediction merged in
