@@ -270,6 +270,13 @@ function ShopPage() {
           active: view === "orders" && scope !== "all",
           onClick: () => go({ view: "orders" }),
         },
+        {
+          to: "/shop",
+          label: "Streaming Devices",
+          icon: MonitorPlay,
+          active: view === "streaming_devices",
+          onClick: () => go({ view: "streaming_devices" }),
+        },
       ],
     },
     {
