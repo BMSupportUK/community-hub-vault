@@ -72,8 +72,10 @@ import { CreditCard, Ban } from "lucide-react";
 import { getOutOfHoursMessage } from "@/lib/business-hours";
 import { isAdminUnlocked } from "@/lib/admin-unlock";
 import { useRouter } from "@tanstack/react-router";
+import { MonitorPlay } from "lucide-react";
+import { StreamingDevicesPage } from "@/routes/_authenticated/_approved/streaming-devices";
 
-type View = "store" | "orders" | "admin" | "refund" | "multi_room" | "triple_room";
+type View = "store" | "orders" | "admin" | "refund" | "multi_room" | "triple_room" | "streaming_devices";
 
 function linkify(text: string): React.ReactNode[] {
   const re = /(https?:\/\/[^\s]+)/g;
