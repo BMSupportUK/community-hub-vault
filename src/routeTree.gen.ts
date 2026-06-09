@@ -58,6 +58,7 @@ import { Route as AuthenticatedApprovedAdminRolesRouteImport } from './routes/_a
 import { Route as AuthenticatedApprovedAdminReviewsRouteImport } from './routes/_authenticated/_approved/admin-reviews'
 import { Route as AuthenticatedApprovedAdminReportsRouteImport } from './routes/_authenticated/_approved/admin-reports'
 import { Route as AuthenticatedApprovedAdminProfanityRouteImport } from './routes/_authenticated/_approved/admin-profanity'
+import { Route as AuthenticatedApprovedAdminPredictionsRouteImport } from './routes/_authenticated/_approved/admin-predictions'
 import { Route as AuthenticatedApprovedAdminPermissionsRouteImport } from './routes/_authenticated/_approved/admin-permissions'
 import { Route as AuthenticatedApprovedAdminNotificationsRouteImport } from './routes/_authenticated/_approved/admin-notifications'
 import { Route as AuthenticatedApprovedAdminNameplatesRouteImport } from './routes/_authenticated/_approved/admin-nameplates'
@@ -370,6 +371,12 @@ const AuthenticatedApprovedAdminProfanityRoute =
     path: '/admin-profanity',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
+const AuthenticatedApprovedAdminPredictionsRoute =
+  AuthenticatedApprovedAdminPredictionsRouteImport.update({
+    id: '/admin-predictions',
+    path: '/admin-predictions',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
 const AuthenticatedApprovedAdminPermissionsRoute =
   AuthenticatedApprovedAdminPermissionsRouteImport.update({
     id: '/admin-permissions',
@@ -627,6 +634,7 @@ export interface FileRoutesByFullPath {
   '/admin-nameplates': typeof AuthenticatedApprovedAdminNameplatesRoute
   '/admin-notifications': typeof AuthenticatedApprovedAdminNotificationsRoute
   '/admin-permissions': typeof AuthenticatedApprovedAdminPermissionsRoute
+  '/admin-predictions': typeof AuthenticatedApprovedAdminPredictionsRoute
   '/admin-profanity': typeof AuthenticatedApprovedAdminProfanityRoute
   '/admin-reports': typeof AuthenticatedApprovedAdminReportsRoute
   '/admin-reviews': typeof AuthenticatedApprovedAdminReviewsRoute
@@ -714,6 +722,7 @@ export interface FileRoutesByTo {
   '/admin-nameplates': typeof AuthenticatedApprovedAdminNameplatesRoute
   '/admin-notifications': typeof AuthenticatedApprovedAdminNotificationsRoute
   '/admin-permissions': typeof AuthenticatedApprovedAdminPermissionsRoute
+  '/admin-predictions': typeof AuthenticatedApprovedAdminPredictionsRoute
   '/admin-profanity': typeof AuthenticatedApprovedAdminProfanityRoute
   '/admin-reports': typeof AuthenticatedApprovedAdminReportsRoute
   '/admin-reviews': typeof AuthenticatedApprovedAdminReviewsRoute
@@ -803,6 +812,7 @@ export interface FileRoutesById {
   '/_authenticated/_approved/admin-nameplates': typeof AuthenticatedApprovedAdminNameplatesRoute
   '/_authenticated/_approved/admin-notifications': typeof AuthenticatedApprovedAdminNotificationsRoute
   '/_authenticated/_approved/admin-permissions': typeof AuthenticatedApprovedAdminPermissionsRoute
+  '/_authenticated/_approved/admin-predictions': typeof AuthenticatedApprovedAdminPredictionsRoute
   '/_authenticated/_approved/admin-profanity': typeof AuthenticatedApprovedAdminProfanityRoute
   '/_authenticated/_approved/admin-reports': typeof AuthenticatedApprovedAdminReportsRoute
   '/_authenticated/_approved/admin-reviews': typeof AuthenticatedApprovedAdminReviewsRoute
@@ -892,6 +902,7 @@ export interface FileRouteTypes {
     | '/admin-nameplates'
     | '/admin-notifications'
     | '/admin-permissions'
+    | '/admin-predictions'
     | '/admin-profanity'
     | '/admin-reports'
     | '/admin-reviews'
@@ -979,6 +990,7 @@ export interface FileRouteTypes {
     | '/admin-nameplates'
     | '/admin-notifications'
     | '/admin-permissions'
+    | '/admin-predictions'
     | '/admin-profanity'
     | '/admin-reports'
     | '/admin-reviews'
@@ -1067,6 +1079,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/admin-nameplates'
     | '/_authenticated/_approved/admin-notifications'
     | '/_authenticated/_approved/admin-permissions'
+    | '/_authenticated/_approved/admin-predictions'
     | '/_authenticated/_approved/admin-profanity'
     | '/_authenticated/_approved/admin-reports'
     | '/_authenticated/_approved/admin-reviews'
@@ -1502,6 +1515,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedApprovedAdminProfanityRouteImport
       parentRoute: typeof AuthenticatedApprovedRoute
     }
+    '/_authenticated/_approved/admin-predictions': {
+      id: '/_authenticated/_approved/admin-predictions'
+      path: '/admin-predictions'
+      fullPath: '/admin-predictions'
+      preLoaderRoute: typeof AuthenticatedApprovedAdminPredictionsRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
     '/_authenticated/_approved/admin-permissions': {
       id: '/_authenticated/_approved/admin-permissions'
       path: '/admin-permissions'
@@ -1868,6 +1888,7 @@ interface AuthenticatedApprovedRouteChildren {
   AuthenticatedApprovedAdminNameplatesRoute: typeof AuthenticatedApprovedAdminNameplatesRoute
   AuthenticatedApprovedAdminNotificationsRoute: typeof AuthenticatedApprovedAdminNotificationsRoute
   AuthenticatedApprovedAdminPermissionsRoute: typeof AuthenticatedApprovedAdminPermissionsRoute
+  AuthenticatedApprovedAdminPredictionsRoute: typeof AuthenticatedApprovedAdminPredictionsRoute
   AuthenticatedApprovedAdminProfanityRoute: typeof AuthenticatedApprovedAdminProfanityRoute
   AuthenticatedApprovedAdminReportsRoute: typeof AuthenticatedApprovedAdminReportsRoute
   AuthenticatedApprovedAdminReviewsRoute: typeof AuthenticatedApprovedAdminReviewsRoute
@@ -1928,6 +1949,8 @@ const AuthenticatedApprovedRouteChildren: AuthenticatedApprovedRouteChildren = {
     AuthenticatedApprovedAdminNotificationsRoute,
   AuthenticatedApprovedAdminPermissionsRoute:
     AuthenticatedApprovedAdminPermissionsRoute,
+  AuthenticatedApprovedAdminPredictionsRoute:
+    AuthenticatedApprovedAdminPredictionsRoute,
   AuthenticatedApprovedAdminProfanityRoute:
     AuthenticatedApprovedAdminProfanityRoute,
   AuthenticatedApprovedAdminReportsRoute:
