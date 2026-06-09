@@ -206,7 +206,9 @@ function FixturesList({
 
   const filtered = useMemo(() => {
     if (filter === "all") return fixtures;
-    if (filter === "ko") return fixtures.filter((f) => f.stage !== "group");
+    if (["r32", "r16", "qf", "sf", "third", "final"].includes(filter)) {
+      return fixtures.filter((f) => f.stage === filter);
+    }
     return fixtures.filter((f) => f.stage === "group" && f.groupLabel === filter);
   }, [fixtures, filter]);
 
