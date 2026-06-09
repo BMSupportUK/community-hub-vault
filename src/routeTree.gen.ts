@@ -41,6 +41,7 @@ import { Route as AuthenticatedApprovedShiftsRouteImport } from './routes/_authe
 import { Route as AuthenticatedApprovedReviewsRouteImport } from './routes/_authenticated/_approved/reviews'
 import { Route as AuthenticatedApprovedResponsiveCheckRouteImport } from './routes/_authenticated/_approved/responsive-check'
 import { Route as AuthenticatedApprovedProfileRouteImport } from './routes/_authenticated/_approved/profile'
+import { Route as AuthenticatedApprovedPredictionsRouteImport } from './routes/_authenticated/_approved/predictions'
 import { Route as AuthenticatedApprovedNewContentRouteImport } from './routes/_authenticated/_approved/new-content'
 import { Route as AuthenticatedApprovedModerationRouteImport } from './routes/_authenticated/_approved/moderation'
 import { Route as AuthenticatedApprovedMembersRouteImport } from './routes/_authenticated/_approved/members'
@@ -265,6 +266,12 @@ const AuthenticatedApprovedProfileRoute =
   AuthenticatedApprovedProfileRouteImport.update({
     id: '/profile',
     path: '/profile',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
+const AuthenticatedApprovedPredictionsRoute =
+  AuthenticatedApprovedPredictionsRouteImport.update({
+    id: '/predictions',
+    path: '/predictions',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
 const AuthenticatedApprovedNewContentRoute =
@@ -636,6 +643,7 @@ export interface FileRoutesByFullPath {
   '/members': typeof AuthenticatedApprovedMembersRoute
   '/moderation': typeof AuthenticatedApprovedModerationRoute
   '/new-content': typeof AuthenticatedApprovedNewContentRoute
+  '/predictions': typeof AuthenticatedApprovedPredictionsRoute
   '/profile': typeof AuthenticatedApprovedProfileRoute
   '/responsive-check': typeof AuthenticatedApprovedResponsiveCheckRoute
   '/reviews': typeof AuthenticatedApprovedReviewsRoute
@@ -721,6 +729,7 @@ export interface FileRoutesByTo {
   '/members': typeof AuthenticatedApprovedMembersRoute
   '/moderation': typeof AuthenticatedApprovedModerationRoute
   '/new-content': typeof AuthenticatedApprovedNewContentRoute
+  '/predictions': typeof AuthenticatedApprovedPredictionsRoute
   '/profile': typeof AuthenticatedApprovedProfileRoute
   '/responsive-check': typeof AuthenticatedApprovedResponsiveCheckRoute
   '/reviews': typeof AuthenticatedApprovedReviewsRoute
@@ -810,6 +819,7 @@ export interface FileRoutesById {
   '/_authenticated/_approved/members': typeof AuthenticatedApprovedMembersRoute
   '/_authenticated/_approved/moderation': typeof AuthenticatedApprovedModerationRoute
   '/_authenticated/_approved/new-content': typeof AuthenticatedApprovedNewContentRoute
+  '/_authenticated/_approved/predictions': typeof AuthenticatedApprovedPredictionsRoute
   '/_authenticated/_approved/profile': typeof AuthenticatedApprovedProfileRoute
   '/_authenticated/_approved/responsive-check': typeof AuthenticatedApprovedResponsiveCheckRoute
   '/_authenticated/_approved/reviews': typeof AuthenticatedApprovedReviewsRoute
@@ -898,6 +908,7 @@ export interface FileRouteTypes {
     | '/members'
     | '/moderation'
     | '/new-content'
+    | '/predictions'
     | '/profile'
     | '/responsive-check'
     | '/reviews'
@@ -983,6 +994,7 @@ export interface FileRouteTypes {
     | '/members'
     | '/moderation'
     | '/new-content'
+    | '/predictions'
     | '/profile'
     | '/responsive-check'
     | '/reviews'
@@ -1071,6 +1083,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/members'
     | '/_authenticated/_approved/moderation'
     | '/_authenticated/_approved/new-content'
+    | '/_authenticated/_approved/predictions'
     | '/_authenticated/_approved/profile'
     | '/_authenticated/_approved/responsive-check'
     | '/_authenticated/_approved/reviews'
@@ -1368,6 +1381,13 @@ declare module '@tanstack/react-router' {
       path: '/profile'
       fullPath: '/profile'
       preLoaderRoute: typeof AuthenticatedApprovedProfileRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
+    '/_authenticated/_approved/predictions': {
+      id: '/_authenticated/_approved/predictions'
+      path: '/predictions'
+      fullPath: '/predictions'
+      preLoaderRoute: typeof AuthenticatedApprovedPredictionsRouteImport
       parentRoute: typeof AuthenticatedApprovedRoute
     }
     '/_authenticated/_approved/new-content': {
@@ -1864,6 +1884,7 @@ interface AuthenticatedApprovedRouteChildren {
   AuthenticatedApprovedMembersRoute: typeof AuthenticatedApprovedMembersRoute
   AuthenticatedApprovedModerationRoute: typeof AuthenticatedApprovedModerationRoute
   AuthenticatedApprovedNewContentRoute: typeof AuthenticatedApprovedNewContentRoute
+  AuthenticatedApprovedPredictionsRoute: typeof AuthenticatedApprovedPredictionsRoute
   AuthenticatedApprovedProfileRoute: typeof AuthenticatedApprovedProfileRoute
   AuthenticatedApprovedResponsiveCheckRoute: typeof AuthenticatedApprovedResponsiveCheckRoute
   AuthenticatedApprovedReviewsRoute: typeof AuthenticatedApprovedReviewsRoute
@@ -1931,6 +1952,7 @@ const AuthenticatedApprovedRouteChildren: AuthenticatedApprovedRouteChildren = {
   AuthenticatedApprovedMembersRoute: AuthenticatedApprovedMembersRoute,
   AuthenticatedApprovedModerationRoute: AuthenticatedApprovedModerationRoute,
   AuthenticatedApprovedNewContentRoute: AuthenticatedApprovedNewContentRoute,
+  AuthenticatedApprovedPredictionsRoute: AuthenticatedApprovedPredictionsRoute,
   AuthenticatedApprovedProfileRoute: AuthenticatedApprovedProfileRoute,
   AuthenticatedApprovedResponsiveCheckRoute:
     AuthenticatedApprovedResponsiveCheckRoute,
