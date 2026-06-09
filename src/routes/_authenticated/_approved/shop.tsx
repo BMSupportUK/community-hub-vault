@@ -74,8 +74,9 @@ import { isAdminUnlocked } from "@/lib/admin-unlock";
 import { useRouter } from "@tanstack/react-router";
 import { MonitorPlay } from "lucide-react";
 import { StreamingDevicesPage } from "@/routes/_authenticated/_approved/streaming-devices";
+import { ReviewsPage } from "@/routes/_authenticated/_approved/reviews";
 
-type View = "store" | "orders" | "admin" | "refund" | "multi_room" | "triple_room" | "streaming_devices";
+type View = "store" | "orders" | "admin" | "refund" | "multi_room" | "triple_room" | "streaming_devices" | "reviews";
 
 function linkify(text: string): React.ReactNode[] {
   const re = /(https?:\/\/[^\s]+)/g;
@@ -138,7 +139,8 @@ export const Route = createFileRoute("/_authenticated/_approved/shop")({
     s.view === "refund" ||
     s.view === "multi_room" ||
     s.view === "triple_room" ||
-    s.view === "streaming_devices"
+    s.view === "streaming_devices" ||
+    s.view === "reviews"
       ? s.view
       : "store") as View | "discounts",
     id: typeof s.id === "string" ? s.id : undefined,
