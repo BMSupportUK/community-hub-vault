@@ -16,6 +16,7 @@ import {
   type WcFixtureDTO,
   type WcLeaderboardRowDTO,
 } from "@/lib/wc-predictions.functions";
+import { teamFlag } from "@/lib/country-flags";
 
 export const Route = createFileRoute("/_authenticated/_approved/predictions")({
   component: PredictionsPage,
@@ -251,7 +252,10 @@ function TodaysFixtures({
                   <span className="font-mono tabular-nums">{kickoff}</span>
                 </div>
                 <div className="flex items-center justify-between gap-2">
-                  <span className="font-medium truncate">{f.homeTeam}</span>
+                  <span className="font-medium truncate">
+                    <span className="mr-1">{teamFlag(f.homeTeam)}</span>
+                    {f.homeTeam}
+                  </span>
                   <span className="text-xs tabular-nums text-muted-foreground shrink-0">
                     {scored ? (
                       <span className="font-bold text-foreground">
@@ -263,7 +267,10 @@ function TodaysFixtures({
                       "vs"
                     )}
                   </span>
-                  <span className="font-medium truncate text-right">{f.awayTeam}</span>
+                  <span className="font-medium truncate text-right">
+                    {f.awayTeam}
+                    <span className="ml-1">{teamFlag(f.awayTeam)}</span>
+                  </span>
                 </div>
                 {f.myPrediction && (
                   <div className="mt-1 text-[11px] text-muted-foreground">
@@ -452,7 +459,10 @@ function FixtureCard({
       </div>
 
       <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
-        <div className="text-right font-medium">{fixture.homeTeam}</div>
+        <div className="text-right font-medium">
+          <span className="mr-1.5">{teamFlag(fixture.homeTeam)}</span>
+          {fixture.homeTeam}
+        </div>
         {scored ? (
           <div className="text-center">
             <div className="px-3 py-1.5 rounded-lg bg-surface-2 border border-border font-display text-lg font-bold tabular-nums">
@@ -499,7 +509,10 @@ function FixtureCard({
             </div>
           </div>
         )}
-        <div className="font-medium">{fixture.awayTeam}</div>
+        <div className="font-medium">
+          {fixture.awayTeam}
+          <span className="ml-1.5">{teamFlag(fixture.awayTeam)}</span>
+        </div>
       </div>
 
       <div className="mt-3 flex items-center justify-between text-xs">
@@ -642,7 +655,9 @@ function MyPicks({ fixtures }: { fixtures: WcFixtureDTO[] }) {
         <div key={f.id} className="px-4 py-3 grid grid-cols-[1fr_auto_auto] items-center gap-3">
           <div className="min-w-0">
             <div className="text-sm font-medium truncate">
+              <span className="mr-1">{teamFlag(f.homeTeam)}</span>
               {f.homeTeam} <span className="text-muted-foreground">vs</span> {f.awayTeam}
+              <span className="ml-1">{teamFlag(f.awayTeam)}</span>
             </div>
             <div className="text-xs text-muted-foreground">
               {STAGE_LABEL[f.stage]}
