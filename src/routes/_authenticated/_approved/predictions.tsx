@@ -71,14 +71,14 @@ function LockCountdownPill({ lockAtMs }: { lockAtMs: number }) {
   const urgent = remaining <= 60 * 60 * 1000; // < 1h
   return (
     <span
-      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium tabular-nums border ${
+      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold tracking-wide tabular-nums border-2 shadow-md uppercase ${
         urgent
-          ? "bg-amber-500/15 text-amber-300 border-amber-500/30"
-          : "bg-primary/10 text-primary border-primary/20"
+          ? "bg-amber-500/25 text-amber-200 border-amber-400/70 shadow-amber-500/30 animate-pulse"
+          : "bg-primary/20 text-primary border-primary/50 shadow-primary/20"
       }`}
       title="Time left to predict (locks 30 min before kick-off)"
     >
-      <Lock className="size-3" />
+      <Lock className="size-3.5" />
       {formatCountdown(remaining)} left
     </span>
   );
