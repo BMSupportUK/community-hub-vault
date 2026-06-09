@@ -43,7 +43,7 @@ function formatKickoff(iso: string) {
 }
 
 function PredictionsPage() {
-  const { user, isStaff } = useAuth();
+  const { user } = useAuth();
   const [joined, setJoined] = useState<boolean>(false);
   const [joining, setJoining] = useState(false);
   const canPredict = joined;
@@ -351,7 +351,7 @@ function FixtureCard({
           ) : canPredict ? (
             <span>Enter a score to predict</span>
           ) : (
-            <span>Subscribe to enter</span>
+            <span>Join the predictor to enter</span>
           )}
         </div>
         {!locked && canPredict && (
