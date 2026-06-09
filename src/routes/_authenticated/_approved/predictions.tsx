@@ -172,9 +172,7 @@ function PredictionsPage() {
               <h1 className="font-display text-2xl sm:text-3xl font-bold text-white drop-shadow">
                 World Cup 2026 Predictor
               </h1>
-              <p className="text-sm text-white/85">
-                Predict every fixture. 5 pts exact score · 3 pts goal difference · 1 pt result.
-              </p>
+              <p className="text-sm text-white/85">Predict every fixture.</p>
             </div>
           </div>
         </header>
@@ -195,10 +193,11 @@ function PredictionsPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-6">
           <Tabs value={tab} onValueChange={setTab} className="min-w-0">
-            <TabsList className="grid grid-cols-3 w-full sm:w-auto">
+            <TabsList className="grid grid-cols-4 w-full sm:w-auto">
               <TabsTrigger value="fixtures">Fixtures</TabsTrigger>
               <TabsTrigger value="leaderboard">Leaderboard</TabsTrigger>
               <TabsTrigger value="mine">My picks</TabsTrigger>
+              <TabsTrigger value="scoring">Scoring</TabsTrigger>
             </TabsList>
 
             <TabsContent value="fixtures" className="mt-4">
@@ -235,6 +234,26 @@ function PredictionsPage() {
               ) : (
                 <MyPicks fixtures={fixtures.filter((f) => f.myPrediction)} />
               )}
+            </TabsContent>
+
+            <TabsContent value="scoring" className="mt-4">
+              <div className="rounded-2xl border-2 border-primary/60 bg-surface-1 shadow-md shadow-primary/10 p-5 space-y-4">
+                <h3 className="font-display text-lg font-bold">How points are scored</h3>
+                <ul className="space-y-2 text-sm">
+                  <li className="flex items-center gap-3">
+                    <span className="inline-flex min-w-12 justify-center px-2 py-1 rounded bg-primary text-primary-foreground text-xs font-bold">5 pts</span>
+                    <span>Exact score</span>
+                  </li>
+                  <li className="flex items-center gap-3">
+                    <span className="inline-flex min-w-12 justify-center px-2 py-1 rounded bg-primary/80 text-primary-foreground text-xs font-bold">3 pts</span>
+                    <span>Correct goal difference</span>
+                  </li>
+                  <li className="flex items-center gap-3">
+                    <span className="inline-flex min-w-12 justify-center px-2 py-1 rounded bg-primary/60 text-primary-foreground text-xs font-bold">1 pt</span>
+                    <span>Correct result (win / draw / loss)</span>
+                  </li>
+                </ul>
+              </div>
             </TabsContent>
           </Tabs>
 
