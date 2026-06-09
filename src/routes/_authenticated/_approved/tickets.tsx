@@ -292,11 +292,14 @@ function TicketsPage() {
     const interval = window.setInterval(loadTickets, 10_000);
     const onFocus = () => loadTickets();
     const onVis = () => { if (document.visibilityState === "visible") loadTickets(); };
+    const onTicketsChanged = () => loadTickets();
     window.addEventListener("focus", onFocus);
+    window.addEventListener("tickets:changed", onTicketsChanged);
     document.addEventListener("visibilitychange", onVis);
     return () => {
       window.clearInterval(interval);
       window.removeEventListener("focus", onFocus);
+      window.removeEventListener("tickets:changed", onTicketsChanged);
       document.removeEventListener("visibilitychange", onVis);
       supabase.removeChannel(ch);
     };
@@ -920,11 +923,15 @@ function TicketDetail({
 
   const postTicketSystem = async (content: string) => {
     if (!currentUserId) return;
-    await supabase.from("ticket_messages").insert({
+    const { error } = await supabase.from("ticket_messages").insert({
       ticket_id: ticket.id,
       sender_id: currentUserId,
       content,
     });
+    if (!error) {
+      await load();
+      notifyTicketChanged();
+    }
   };
 
   const orderSettingUpAccount = async () => {
@@ -1085,6 +1092,15 @@ function TicketDetail({
           const oldId = (p.old as { id?: string } | undefined)?.id;
           if (oldId) setMessages((m) => m.filter((x) => x.id !== oldId));
         })
+      .on("postgres_changes", { event: "*", schema: "public", table: "tickets", filter: `id=eq.${ticket.id}` }, () => {
+        void load();
+      })
+      .on("broadcast", { event: "message_changed" }, (payload) => {
+        const d = (payload?.payload ?? {}) as { ticketId?: string; senderId?: string };
+        if (d.ticketId !== ticket.id || d.senderId === currentUserId) return;
+        void load();
+        window.dispatchEvent(new CustomEvent("tickets:changed", { detail: { ticketId: ticket.id } }));
+      })
       .on("broadcast", { event: "typing" }, (payload) => {
         const d = (payload?.payload ?? {}) as { userId?: string; isStaff?: boolean; internal?: boolean; stopped?: boolean };
         if (!d.userId || d.userId === currentUserId) return;
@@ -1114,7 +1130,7 @@ function TicketDetail({
         if (status === "SUBSCRIBED") load();
       });
     channelRef.current = ch;
-    const reconcile = window.setInterval(load, 10_000);
+    const reconcile = window.setInterval(load, 2_000);
     const onFocus = () => load();
     const onVis = () => { if (document.visibilityState === "visible") load(); };
     window.addEventListener("focus", onFocus);
@@ -1161,6 +1177,16 @@ function TicketDetail({
     void channelRef.current.send({ type: "broadcast", event: "typing", payload });
   }
 
+  function notifyTicketChanged() {
+    window.dispatchEvent(new CustomEvent("tickets:changed", { detail: { ticketId: ticket.id } }));
+    if (!channelRef.current || !typingChannelReadyRef.current) return;
+    void channelRef.current.send({
+      type: "broadcast",
+      event: "message_changed",
+      payload: { ticketId: ticket.id, senderId: currentUserId, at: Date.now() },
+    });
+  }
+
   const onDraftChange = (v: string) => {
     draftRef.current = v;
     setDraft(v);
@@ -1203,6 +1229,8 @@ function TicketDetail({
     if (typingTimerRef.current) { window.clearTimeout(typingTimerRef.current); typingTimerRef.current = null; }
     sendTyping(true);
     setReplyFiles([]);
+    await load();
+    notifyTicketChanged();
     // Bump updated_at via status touch (only staff allowed) — skip for users
     if (isStaff && ticket.status === "open") {
       await supabase.from("tickets").update({ status: "in_progress" }).eq("id", ticket.id);
