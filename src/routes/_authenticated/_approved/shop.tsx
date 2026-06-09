@@ -74,8 +74,9 @@ import { isAdminUnlocked } from "@/lib/admin-unlock";
 import { useRouter } from "@tanstack/react-router";
 import { MonitorPlay } from "lucide-react";
 import { StreamingDevicesPage } from "@/routes/_authenticated/_approved/streaming-devices";
+import { ReviewsPage } from "@/routes/_authenticated/_approved/reviews";
 
-type View = "store" | "orders" | "admin" | "refund" | "multi_room" | "triple_room" | "streaming_devices";
+type View = "store" | "orders" | "admin" | "refund" | "multi_room" | "triple_room" | "streaming_devices" | "reviews";
 
 function linkify(text: string): React.ReactNode[] {
   const re = /(https?:\/\/[^\s]+)/g;
@@ -138,7 +139,8 @@ export const Route = createFileRoute("/_authenticated/_approved/shop")({
     s.view === "refund" ||
     s.view === "multi_room" ||
     s.view === "triple_room" ||
-    s.view === "streaming_devices"
+    s.view === "streaming_devices" ||
+    s.view === "reviews"
       ? s.view
       : "store") as View | "discounts",
     id: typeof s.id === "string" ? s.id : undefined,
@@ -1468,6 +1470,12 @@ function Storefront() {
               >
                 Streaming Devices
               </TabsTrigger>
+              <TabsTrigger
+                value="reviews"
+                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-sky-400 data-[state=active]:text-white"
+              >
+                Customer Reviews
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="welcome" className="mt-4">
@@ -1700,6 +1708,9 @@ function Storefront() {
             </TabsContent>
             <TabsContent value="streaming_devices" className="mt-4 -mx-6">
               <StreamingDevicesPage />
+            </TabsContent>
+            <TabsContent value="reviews" className="mt-4 -mx-6">
+              <ReviewsPage />
             </TabsContent>
           </Tabs>
         </div>

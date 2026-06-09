@@ -33,7 +33,7 @@ const reviewSchema = z.object({
   body: z.string().trim().min(10, "Tell us a bit more (10+ chars)").max(1000),
 });
 
-function ReviewsPage() {
+export function ReviewsPage() {
   const { user } = useAuth();
   const [tab, setTab] = useState("welcome");
   const [reviews, setReviews] = useState<Review[]>([]);
