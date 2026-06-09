@@ -96,15 +96,14 @@ function PredictionsPage() {
     return leaderboard.find((r) => r.userId === user.id) ?? null;
   }, [leaderboard, user]);
 
-  const todayFixtures = useMemo(() => {
+  const upcomingFixtures = useMemo(() => {
     if (!fixtures) return [];
-    const now = new Date();
-    const start = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-    const end = start + 24 * 60 * 60 * 1000;
+    const now = Date.now();
+    const end = now + 3 * 24 * 60 * 60 * 1000;
     return fixtures
       .filter((f) => {
         const t = new Date(f.kickoffAt).getTime();
-        return t >= start && t < end;
+        return t >= now && t < end;
       })
       .sort((a, b) => +new Date(a.kickoffAt) - +new Date(b.kickoffAt));
   }, [fixtures]);
@@ -197,7 +196,7 @@ function PredictionsPage() {
           </Tabs>
 
           <aside className="hidden lg:block">
-            <TodaysFixtures fixtures={todayFixtures} loading={loading} />
+            <UpcomingFixtures fixtures={upcomingFixtures} loading={loading} />
           </aside>
         </div>
       </div>
@@ -205,7 +204,7 @@ function PredictionsPage() {
   );
 }
 
-function TodaysFixtures({
+function UpcomingFixtures({
   fixtures,
   loading,
 }: {
@@ -216,7 +215,7 @@ function TodaysFixtures({
     <div className="sticky top-6 rounded-2xl border border-border bg-surface-1 overflow-hidden">
       <div className="flex items-center gap-2 px-4 py-3 border-b border-border bg-surface-2">
         <CalendarDays className="size-4 text-primary" />
-        <h3 className="font-display text-sm font-semibold">Today's fixtures</h3>
+        <h3 className="font-display text-sm font-semibold">Next 3 days</h3>
         {fixtures.length > 0 && (
           <span className="ml-auto text-[10px] uppercase tracking-wider text-muted-foreground">
             {fixtures.length} match{fixtures.length === 1 ? "" : "es"}
@@ -229,13 +228,14 @@ function TodaysFixtures({
         </div>
       ) : fixtures.length === 0 ? (
         <div className="p-6 text-center text-xs text-muted-foreground">
-          No matches scheduled today.
+          No matches in the next 3 days.
         </div>
       ) : (
-        <ul className="divide-y divide-border">
+        <ul className="divide-y divide-border max-h-[70vh] overflow-y-auto">
           {fixtures.map((f) => {
             const t = new Date(f.kickoffAt);
-            const kickoff = t.toLocaleTimeString(undefined, {
+            const kickoff = t.toLocaleString(undefined, {
+              weekday: "short",
               hour: "2-digit",
               minute: "2-digit",
             });
