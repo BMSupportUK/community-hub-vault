@@ -35,7 +35,9 @@ export function GpsCapture() {
     markHandled();
     const pending = toast.loading("Requesting your location…");
     const fallback = window.setTimeout(() => {
-      toast.info("You can keep using the site while location permission finishes.", { id: pending });
+      toast.info("You can keep using the site while location permission finishes.", {
+        id: pending,
+      });
     }, 12_000);
 
     navigator.geolocation.getCurrentPosition(
@@ -105,13 +107,17 @@ export function GpsCapture() {
         <X className="size-4" />
       </button>
       <div className="space-y-4 pr-6">
-        <h2 id="gps-capture-title" className="flex items-center gap-2 text-lg font-semibold leading-tight">
+        <h2
+          id="gps-capture-title"
+          className="flex items-center gap-2 text-lg font-semibold leading-tight"
+        >
           <MapPin className="size-5 text-primary" /> Confirm your location
         </h2>
         <p className="text-sm leading-6 text-muted-foreground">
-          We need to check your approximate location to keep this community safe. It helps us block users who aren't
-          allowed access — including VPN/proxy abuse and accounts from restricted regions. Your browser will now ask for
-          permission. We only record the coordinates, never track you in the background.
+          We need to check your approximate location to keep this community safe. It helps us block
+          users who aren't allowed access — including VPN/proxy abuse and accounts from restricted
+          regions. Your browser will now ask for permission. We only record the coordinates, never
+          track you in the background.
         </p>
       </div>
       <div className="mt-5 grid gap-2">
