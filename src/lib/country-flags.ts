@@ -27,6 +27,7 @@ const TEAM_TO_ISO: Record<string, string> = {
   "Norway": "NO",
   "Poland": "PL",
   "Czechia": "CZ",
+  "Czech Republic": "CZ",
   "Serbia": "RS",
   "Türkiye": "TR",
   "Turkey": "TR",
