@@ -65,7 +65,8 @@ export function GpsCapture() {
       try {
         const currentPermission = await Geolocation.checkPermissions();
         const hasLocationAccess =
-          currentPermission.location === "granted" || currentPermission.coarseLocation === "granted";
+          currentPermission.location === "granted" ||
+          currentPermission.coarseLocation === "granted";
         const permission = hasLocationAccess
           ? currentPermission
           : await Geolocation.requestPermissions({ permissions: ["coarseLocation"] });
