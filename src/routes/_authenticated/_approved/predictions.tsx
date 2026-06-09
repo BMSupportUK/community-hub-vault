@@ -612,6 +612,22 @@ function FixtureCard({
           )
         )}
       </div>
+
+      {/* Final-score status — always visible so users know where the auto-scored result will appear */}
+      <div className="mt-3 pt-3 border-t border-border/60 flex items-center justify-between text-[11px]">
+        <span className="uppercase tracking-wider text-muted-foreground">Final score</span>
+        {scored ? (
+          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-bold tabular-nums">
+            <Check className="size-3" />
+            {fixture.homeScore} – {fixture.awayScore}
+          </span>
+        ) : (
+          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30 font-semibold uppercase tracking-wide">
+            <Loader2 className="size-3 animate-spin" />
+            Awaiting result
+          </span>
+        )}
+      </div>
     </div>
   );
 }
