@@ -794,9 +794,9 @@ function MyPicks({ fixtures }: { fixtures: WcFixtureDTO[] }) {
     );
   }
   return (
-    <div className="rounded-2xl border border-border bg-surface-1 overflow-hidden divide-y divide-border">
+    <div className="space-y-3">
       {fixtures.map((f) => (
-        <div key={f.id} className="px-4 py-3 grid grid-cols-[1fr_auto_auto] items-center gap-3">
+        <div key={f.id} className="rounded-2xl border-2 border-primary/60 bg-surface-1 shadow-md shadow-primary/10 px-4 py-3 grid grid-cols-[1fr_auto_auto] items-center gap-3">
           <div className="min-w-0">
             <div className="text-sm font-medium truncate">
               <span className="mr-1">{teamFlag(f.homeTeam)}</span>
