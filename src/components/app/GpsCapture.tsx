@@ -61,8 +61,17 @@ export function GpsCapture() {
     setExplainOpen(true);
   }, [user?.id, loading, isPending]);
 
+  const dismiss = () => {
+    if (user?.id) {
+      // Persist dismissal so the dialog doesn't reappear on every page
+      // navigation/reload during this session.
+      sessionStorage.setItem(`gps-recorded:${user.id}`, "1");
+    }
+    setExplainOpen(false);
+  };
+
   return (
-    <Dialog open={explainOpen} onOpenChange={setExplainOpen}>
+    <Dialog open={explainOpen} onOpenChange={(o) => (o ? setExplainOpen(true) : dismiss())}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -78,12 +87,14 @@ export function GpsCapture() {
         </DialogHeader>
         <DialogFooter className="gap-2">
           <button
-            onClick={() => setExplainOpen(false)}
+            type="button"
+            onClick={dismiss}
             className="px-4 py-2 rounded-md border border-border hover:bg-muted text-sm font-medium"
           >
             Not now
           </button>
           <button
+            type="button"
             onClick={() => {
               setExplainOpen(false);
               requestLocation();
