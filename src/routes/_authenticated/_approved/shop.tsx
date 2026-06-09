@@ -72,8 +72,10 @@ import { CreditCard, Ban } from "lucide-react";
 import { getOutOfHoursMessage } from "@/lib/business-hours";
 import { isAdminUnlocked } from "@/lib/admin-unlock";
 import { useRouter } from "@tanstack/react-router";
+import { MonitorPlay } from "lucide-react";
+import { StreamingDevicesPage } from "@/routes/_authenticated/_approved/streaming-devices";
 
-type View = "store" | "orders" | "admin" | "refund" | "multi_room" | "triple_room";
+type View = "store" | "orders" | "admin" | "refund" | "multi_room" | "triple_room" | "streaming_devices";
 
 function linkify(text: string): React.ReactNode[] {
   const re = /(https?:\/\/[^\s]+)/g;
@@ -135,7 +137,8 @@ export const Route = createFileRoute("/_authenticated/_approved/shop")({
     s.view === "discounts" ||
     s.view === "refund" ||
     s.view === "multi_room" ||
-    s.view === "triple_room"
+    s.view === "triple_room" ||
+    s.view === "streaming_devices"
       ? s.view
       : "store") as View | "discounts",
     id: typeof s.id === "string" ? s.id : undefined,
@@ -267,6 +270,13 @@ function ShopPage() {
           active: view === "orders" && scope !== "all",
           onClick: () => go({ view: "orders" }),
         },
+        {
+          to: "/shop",
+          label: "Streaming Devices",
+          icon: MonitorPlay,
+          active: view === "streaming_devices",
+          onClick: () => go({ view: "streaming_devices" }),
+        },
       ],
     },
     {
@@ -390,6 +400,7 @@ function ShopPage() {
             ) : (
               <RoomPolicyView roomKey={view as "multi_room" | "triple_room"} isAdmin={isAdmin} />
             ))}
+          {view === "streaming_devices" && <StreamingDevicesPage />}
         </div>
       </div>
     </>
@@ -1451,6 +1462,12 @@ function Storefront() {
               >
                 Triple-room Rules
               </TabsTrigger>
+              <TabsTrigger
+                value="streaming_devices"
+                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-sky-400 data-[state=active]:text-white"
+              >
+                Streaming Devices
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="welcome" className="mt-4">
@@ -1680,6 +1697,9 @@ function Storefront() {
               <MyOrdersTab
                 onOpenOrder={(id) => navigate({ to: "/shop", search: { view: "orders", id } })}
               />
+            </TabsContent>
+            <TabsContent value="streaming_devices" className="mt-4 -mx-6">
+              <StreamingDevicesPage />
             </TabsContent>
           </Tabs>
         </div>

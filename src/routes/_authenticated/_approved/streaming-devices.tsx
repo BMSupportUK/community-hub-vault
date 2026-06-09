@@ -239,7 +239,7 @@ function DeviceCard({
   );
 }
 
-function StreamingDevicesPage() {
+export function StreamingDevicesPage() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const devicesQuery = useQuery({
