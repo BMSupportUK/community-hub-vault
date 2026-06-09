@@ -119,6 +119,15 @@ export function NotificationBell() {
                 ? { label: "Open", onClick: () => navigate({ to: n.link_path! } as never) }
                 : undefined,
             });
+          } else if (n.kind === "ticket_assigned") {
+            playSound(ticketAudio, { label: "ticket-assigned", gain: 2.0 });
+            toast(`🎫 ${n.title}`, {
+              description: n.body ?? "A ticket has been assigned to you.",
+              duration: 8000,
+              action: n.link_path
+                ? { label: "Open", onClick: () => navigate({ to: n.link_path! } as never) }
+                : undefined,
+            });
           } else {
             toast(n.title, { description: n.body ?? undefined });
           }
