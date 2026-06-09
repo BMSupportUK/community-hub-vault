@@ -97,7 +97,7 @@ function PredictionsPage() {
 
   return (
     <main className="flex-1 overflow-y-auto">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6">
+      <div className="w-full px-4 sm:px-8 lg:px-16 py-6">
         <header className="relative rounded-3xl overflow-hidden border border-primary/30 shadow-glow bg-gradient-primary p-6 mb-6">
           <div className="absolute inset-0 bg-gradient-to-tr from-background/40 via-transparent to-transparent pointer-events-none" />
           <div className="relative flex items-center gap-3">
@@ -234,6 +234,14 @@ function FixturesList({
   }
 
   const groupLetters = ["A","B","C","D","E","F","G","H","I","J","K","L"];
+  const koRounds: { key: string; label: string }[] = [
+    { key: "r32", label: "Round of 32" },
+    { key: "r16", label: "Round of 16" },
+    { key: "qf", label: "Quarter-finals" },
+    { key: "sf", label: "Semi-finals" },
+    { key: "third", label: "Third Place" },
+    { key: "final", label: "Final" },
+  ];
   const chip = (key: string, label: string) => (
     <button
       key={key}
@@ -250,10 +258,17 @@ function FixturesList({
 
   return (
     <div className="space-y-6">
-      <div className="-mx-1 px-1 flex gap-1.5 overflow-x-auto pb-1">
-        {chip("all", "All")}
-        {groupLetters.map((g) => chip(g, `Group ${g}`))}
-        {chip("ko", "Knockout")}
+      <div className="space-y-2">
+        <div className="-mx-1 px-1 flex gap-1.5 overflow-x-auto pb-1">
+          {chip("all", "All")}
+          {groupLetters.map((g) => chip(g, `Group ${g}`))}
+        </div>
+        <div className="-mx-1 px-1 flex gap-1.5 overflow-x-auto pb-1">
+          <span className="self-center text-[10px] uppercase tracking-wider text-muted-foreground shrink-0 pr-1">
+            Knockouts
+          </span>
+          {koRounds.map((r) => chip(r.key, r.label))}
+        </div>
       </div>
       {byDate.size === 0 && (
         <div className="rounded-2xl border border-border bg-surface-1 p-8 text-center text-sm text-muted-foreground">
