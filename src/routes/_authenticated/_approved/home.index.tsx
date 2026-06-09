@@ -321,7 +321,7 @@ function WelcomePage() {
               {!hasRole("moderator") && (
                 <Link
                   to="/tickets"
-                  className="inline-flex items-center gap-3 self-start rounded-xl border-2 border-white/40 bg-white/10 backdrop-blur px-4 py-3 text-sm font-medium text-white shadow-[0_0_24px_rgba(255,255,255,0.15)] hover:bg-white/20 hover:border-white/60 transition"
+                  className="inline-flex w-full sm:w-auto items-center gap-3 self-start rounded-xl border-2 border-white/40 bg-white/10 backdrop-blur px-4 py-3 text-sm font-medium text-white shadow-[0_0_24px_rgba(255,255,255,0.15)] hover:bg-white/20 hover:border-white/60 transition"
                 >
                   <span className="grid place-items-center size-9 rounded-lg bg-gradient-to-br from-violet-600 to-blue-600">
                     <Headphones className="size-4 text-white" />
@@ -333,7 +333,7 @@ function WelcomePage() {
                   <span className="ml-2 size-2 rounded-full bg-emerald-400 shadow-[0_0_12px] shadow-emerald-400/60" />
                 </Link>
               )}
-              <ServiceStatusPill />
+              <ServiceStatusPill className="w-full sm:w-auto" />
             </div>
             <div className="mt-4 w-full max-w-[280px] self-center">
               <MembershipBox />
