@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Trophy, Loader2, Lock, Check, Star, Crown, Medal, Award, Pencil } from "lucide-react";
+import { Trophy, Loader2, Lock, Check, Star, Crown, Medal, Award, Pencil, CalendarDays } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -95,6 +95,19 @@ function PredictionsPage() {
     return leaderboard.find((r) => r.userId === user.id) ?? null;
   }, [leaderboard, user]);
 
+  const todayFixtures = useMemo(() => {
+    if (!fixtures) return [];
+    const now = new Date();
+    const start = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const end = start + 24 * 60 * 60 * 1000;
+    return fixtures
+      .filter((f) => {
+        const t = new Date(f.kickoffAt).getTime();
+        return t >= start && t < end;
+      })
+      .sort((a, b) => +new Date(a.kickoffAt) - +new Date(b.kickoffAt));
+  }, [fixtures]);
+
   return (
     <main className="flex-1 overflow-y-auto">
       <div className="w-full px-4 sm:px-8 lg:px-16 py-6">
@@ -137,51 +150,135 @@ function PredictionsPage() {
           </div>
         )}
 
-        <Tabs value={tab} onValueChange={setTab}>
-          <TabsList className="grid grid-cols-3 w-full sm:w-auto">
-            <TabsTrigger value="fixtures">Fixtures</TabsTrigger>
-            <TabsTrigger value="leaderboard">Leaderboard</TabsTrigger>
-            <TabsTrigger value="mine">My picks</TabsTrigger>
-          </TabsList>
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-6">
+          <Tabs value={tab} onValueChange={setTab} className="min-w-0">
+            <TabsList className="grid grid-cols-3 w-full sm:w-auto">
+              <TabsTrigger value="fixtures">Fixtures</TabsTrigger>
+              <TabsTrigger value="leaderboard">Leaderboard</TabsTrigger>
+              <TabsTrigger value="mine">My picks</TabsTrigger>
+            </TabsList>
 
-          <TabsContent value="fixtures" className="mt-4">
-            {loading || !fixtures ? (
-              <Loading />
-            ) : (
-              <FixturesList
-                fixtures={fixtures}
-                canPredict={canPredict}
-                onSave={async (fixtureId, hp, ap) => {
-                  try {
-                    await upsertFn({ data: { fixtureId, homePred: hp, awayPred: ap } });
-                    toast.success("Prediction saved");
-                    await loadAll();
-                  } catch (e: any) {
-                    toast.error(e?.message ?? "Save failed");
-                  }
-                }}
-              />
-            )}
-          </TabsContent>
+            <TabsContent value="fixtures" className="mt-4">
+              {loading || !fixtures ? (
+                <Loading />
+              ) : (
+                <FixturesList
+                  fixtures={fixtures}
+                  canPredict={canPredict}
+                  onSave={async (fixtureId, hp, ap) => {
+                    try {
+                      await upsertFn({ data: { fixtureId, homePred: hp, awayPred: ap } });
+                      toast.success("Prediction saved");
+                      await loadAll();
+                    } catch (e: any) {
+                      toast.error(e?.message ?? "Save failed");
+                    }
+                  }}
+                />
+              )}
+            </TabsContent>
 
-          <TabsContent value="leaderboard" className="mt-4">
-            {loading || !leaderboard ? (
-              <Loading />
-            ) : (
-              <LeaderboardList rows={leaderboard} currentUserId={user?.id ?? null} />
-            )}
-          </TabsContent>
+            <TabsContent value="leaderboard" className="mt-4">
+              {loading || !leaderboard ? (
+                <Loading />
+              ) : (
+                <LeaderboardList rows={leaderboard} currentUserId={user?.id ?? null} />
+              )}
+            </TabsContent>
 
-          <TabsContent value="mine" className="mt-4">
-            {loading || !fixtures ? (
-              <Loading />
-            ) : (
-              <MyPicks fixtures={fixtures.filter((f) => f.myPrediction)} />
-            )}
-          </TabsContent>
-        </Tabs>
+            <TabsContent value="mine" className="mt-4">
+              {loading || !fixtures ? (
+                <Loading />
+              ) : (
+                <MyPicks fixtures={fixtures.filter((f) => f.myPrediction)} />
+              )}
+            </TabsContent>
+          </Tabs>
+
+          <aside className="hidden lg:block">
+            <TodaysFixtures fixtures={todayFixtures} loading={loading} />
+          </aside>
+        </div>
       </div>
     </main>
+  );
+}
+
+function TodaysFixtures({
+  fixtures,
+  loading,
+}: {
+  fixtures: WcFixtureDTO[];
+  loading: boolean;
+}) {
+  return (
+    <div className="sticky top-6 rounded-2xl border border-border bg-surface-1 overflow-hidden">
+      <div className="flex items-center gap-2 px-4 py-3 border-b border-border bg-surface-2">
+        <CalendarDays className="size-4 text-primary" />
+        <h3 className="font-display text-sm font-semibold">Today's fixtures</h3>
+        {fixtures.length > 0 && (
+          <span className="ml-auto text-[10px] uppercase tracking-wider text-muted-foreground">
+            {fixtures.length} match{fixtures.length === 1 ? "" : "es"}
+          </span>
+        )}
+      </div>
+      {loading ? (
+        <div className="p-6 grid place-items-center text-muted-foreground">
+          <Loader2 className="size-4 animate-spin" />
+        </div>
+      ) : fixtures.length === 0 ? (
+        <div className="p-6 text-center text-xs text-muted-foreground">
+          No matches scheduled today.
+        </div>
+      ) : (
+        <ul className="divide-y divide-border">
+          {fixtures.map((f) => {
+            const t = new Date(f.kickoffAt);
+            const kickoff = t.toLocaleTimeString(undefined, {
+              hour: "2-digit",
+              minute: "2-digit",
+            });
+            const lockMs = t.getTime() - 30 * 60 * 1000;
+            const locked = Date.now() >= lockMs;
+            const scored = f.homeScore !== null && f.awayScore !== null;
+            return (
+              <li key={f.id} className="px-4 py-3 text-sm">
+                <div className="flex items-center justify-between text-[11px] text-muted-foreground mb-1">
+                  <span>
+                    {STAGE_LABEL[f.stage]}
+                    {f.groupLabel ? ` · ${f.groupLabel}` : ""}
+                  </span>
+                  <span className="font-mono tabular-nums">{kickoff}</span>
+                </div>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-medium truncate">{f.homeTeam}</span>
+                  <span className="text-xs tabular-nums text-muted-foreground shrink-0">
+                    {scored ? (
+                      <span className="font-bold text-foreground">
+                        {f.homeScore}–{f.awayScore}
+                      </span>
+                    ) : locked ? (
+                      <Lock className="size-3" />
+                    ) : (
+                      "vs"
+                    )}
+                  </span>
+                  <span className="font-medium truncate text-right">{f.awayTeam}</span>
+                </div>
+                {f.myPrediction && (
+                  <div className="mt-1 text-[11px] text-muted-foreground">
+                    Your pick:{" "}
+                    <span className="font-mono text-foreground">
+                      {f.myPrediction.homePred}–{f.myPrediction.awayPred}
+                    </span>
+                  </div>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </div>
   );
 }
 
