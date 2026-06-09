@@ -400,6 +400,7 @@ function ShopPage() {
             ) : (
               <RoomPolicyView roomKey={view as "multi_room" | "triple_room"} isAdmin={isAdmin} />
             ))}
+          {view === "streaming_devices" && <StreamingDevicesPage />}
         </div>
       </div>
     </>
