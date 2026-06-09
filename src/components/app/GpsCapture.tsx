@@ -87,12 +87,13 @@ export function GpsCapture() {
       } catch (err) {
         window.clearTimeout(fallback);
         const message = err instanceof Error ? err.message : "";
+        const lower = message.toLowerCase();
         const msg = message.includes("LOCATION_PERMISSION_DENIED")
-          ? "Location permission was denied. Enable location for BM Support in Android settings and try again."
-          : message.toLowerCase().includes("disabled")
-            ? "Turn on device location services, then try again."
-            : "Couldn't get your location. Check Android location settings and try again.";
-        toast.error(msg, { id: pending });
+          ? "Location permission was denied. Open Android Settings → Apps → BM Support → Permissions → Location, allow access, and turn ON 'Use precise location'."
+          : lower.includes("disabled")
+            ? "Turn on device Location services in Android quick settings, then try again."
+            : "Couldn't get your location. In Android Settings → Apps → BM Support → Permissions → Location, make sure 'Use precise location' is turned ON, then try again.";
+        toast.error(msg, { id: pending, duration: 12_000 });
       }
       return;
     }
