@@ -3798,6 +3798,86 @@ export type Database = {
         }
         Relationships: []
       }
+      wc_fixtures: {
+        Row: {
+          away_score: number | null
+          away_team: string
+          created_at: string
+          group_label: string | null
+          home_score: number | null
+          home_team: string
+          id: string
+          kickoff_at: string
+          stage: string
+          updated_at: string
+        }
+        Insert: {
+          away_score?: number | null
+          away_team: string
+          created_at?: string
+          group_label?: string | null
+          home_score?: number | null
+          home_team: string
+          id?: string
+          kickoff_at: string
+          stage: string
+          updated_at?: string
+        }
+        Update: {
+          away_score?: number | null
+          away_team?: string
+          created_at?: string
+          group_label?: string | null
+          home_score?: number | null
+          home_team?: string
+          id?: string
+          kickoff_at?: string
+          stage?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      wc_predictions: {
+        Row: {
+          away_pred: number
+          created_at: string
+          fixture_id: string
+          home_pred: number
+          id: string
+          points: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          away_pred: number
+          created_at?: string
+          fixture_id: string
+          home_pred: number
+          id?: string
+          points?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          away_pred?: number
+          created_at?: string
+          fixture_id?: string
+          home_pred?: number
+          id?: string
+          points?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wc_predictions_fixture_id_fkey"
+            columns: ["fixture_id"]
+            isOneToOne: false
+            referencedRelation: "wc_fixtures"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       app_credentials: {
@@ -3947,6 +4027,20 @@ export type Database = {
           ip?: never
           user_agent?: never
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      wc_leaderboard: {
+        Row: {
+          avatar_url: string | null
+          display_name: string | null
+          exact_count: number | null
+          predictions_made: number | null
+          predictions_scored: number | null
+          result_count: number | null
+          total_points: number | null
+          user_id: string | null
+          username: string | null
         }
         Relationships: []
       }
@@ -4303,6 +4397,11 @@ export type Database = {
         }
         Returns: undefined
       }
+      wc_calc_points: {
+        Args: { ap: number; as_: number; hp: number; hs: number }
+        Returns: number
+      }
+      wc_score_fixture: { Args: { _fixture_id: string }; Returns: undefined }
     }
     Enums: {
       app_role:
