@@ -150,18 +150,18 @@ function PredictionsPage() {
   }, [fixtures]);
 
   return (
-    <main className="relative flex-1 overflow-y-auto">
-      {/* Full-page hero background */}
+    <main className="relative isolate flex-1 overflow-y-auto">
+      {/* Full-page hero background (absolute so the parent's bg-background can't cover it) */}
       <div
-        className="pointer-events-none fixed inset-0 -z-10 bg-cover bg-center bg-no-repeat"
+        className="pointer-events-none absolute inset-0 z-0 bg-cover bg-center bg-no-repeat"
         style={{ backgroundImage: `url(${heroBg})` }}
         aria-hidden="true"
       />
       <div
-        className="pointer-events-none fixed inset-0 -z-10 bg-gradient-to-b from-background/80 via-background/70 to-background/90 backdrop-blur-[2px]"
+        className="pointer-events-none absolute inset-0 z-0 bg-gradient-to-b from-background/75 via-background/65 to-background/90"
         aria-hidden="true"
       />
-      <div className="relative w-full px-4 sm:px-8 lg:px-16 py-6">
+      <div className="relative z-10 w-full px-4 sm:px-8 lg:px-16 py-6">
         <header className="relative rounded-3xl overflow-hidden border border-primary/30 shadow-glow bg-gradient-primary p-6 mb-6">
           <div className="absolute inset-0 bg-gradient-to-tr from-background/40 via-transparent to-transparent pointer-events-none" />
           <div className="relative flex items-center gap-3">
