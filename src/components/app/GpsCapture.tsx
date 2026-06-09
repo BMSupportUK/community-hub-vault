@@ -27,17 +27,39 @@ export function GpsCapture() {
   const record = useServerFn(recordMyGpsLocation);
   const [explainOpen, setExplainOpen] = useState(false);
 
-  const requestLocation = () => {
+  const markHandled = () => {
+    if (!user?.id) return;
+    const key = `gps-recorded:${user.id}`;
+    sessionStorage.setItem(key, "1");
+  };
+
+  const requestLocation = async () => {
     if (!user?.id) return;
     const key = `gps-recorded:${user.id}`;
     if (!("geolocation" in navigator)) {
       toast.error("Your browser doesn't support location services.");
       return;
     }
-    sessionStorage.setItem(key, "1");
+
+    try {
+      const permission = await navigator.permissions?.query({ name: "geolocation" as PermissionName });
+      if (permission?.state === "denied") {
+        toast.error("Location permission is blocked. Enable it in your browser settings if asked again.");
+        return;
+      }
+    } catch {
+      // Some Android browsers/WebViews don't support querying this permission.
+    }
+
+    markHandled();
     const pending = toast.loading("Requesting your location…");
+    const fallback = window.setTimeout(() => {
+      toast.info("You can keep using the site while location permission finishes.", { id: pending });
+    }, 12_000);
+
     navigator.geolocation.getCurrentPosition(
       (pos) => {
+        window.clearTimeout(fallback);
         record({
           data: {
             latitude: pos.coords.latitude,
@@ -47,11 +69,11 @@ export function GpsCapture() {
         })
           .then(() => toast.success("Location confirmed.", { id: pending }))
           .catch(() => {
-            sessionStorage.removeItem(key);
             toast.error("Couldn't save your location. Please try again.", { id: pending });
           });
       },
       (err) => {
+        window.clearTimeout(fallback);
         const msg =
           err.code === err.PERMISSION_DENIED
             ? "Location permission was blocked. Enable it in your browser settings and reload."
@@ -62,7 +84,7 @@ export function GpsCapture() {
                 : "Couldn't get your location.";
         toast.error(msg, { id: pending });
       },
-      { enableHighAccuracy: true, timeout: 10_000, maximumAge: 5 * 60_000 },
+      { enableHighAccuracy: false, timeout: 8_000, maximumAge: 10 * 60_000 },
     );
   };
 
@@ -79,11 +101,9 @@ export function GpsCapture() {
   }, [user?.id, loading, isPending]);
 
   const dismiss = () => {
-    if (user?.id) {
-      // Persist dismissal so the dialog doesn't reappear on every page
-      // navigation/reload during this session.
-      sessionStorage.setItem(`gps-recorded:${user.id}`, "1");
-    }
+    // Persist dismissal so the dialog doesn't reappear on every page
+    // navigation/reload during this session.
+    markHandled();
     setExplainOpen(false);
   };
 
@@ -113,8 +133,8 @@ export function GpsCapture() {
           <button
             type="button"
             onClick={() => {
-              setExplainOpen(false);
-              requestLocation();
+              dismiss();
+              window.setTimeout(() => void requestLocation(), 0);
             }}
             className="px-4 py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 text-sm font-medium"
           >
