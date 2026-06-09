@@ -527,11 +527,13 @@ function FixtureCard({
             </div>
           </div>
         ) : locked ? (
-          <div className="text-center text-xs text-muted-foreground inline-flex flex-col items-center gap-0.5">
-            <span className="inline-flex items-center gap-1">
-              <Lock className="size-3.5" /> Awaiting game to finish
-            </span>
-            <span className="text-[10px]">Final score will appear here</span>
+          <div className="text-center">
+            <div className="px-3 py-1.5 rounded-lg bg-surface-2 border border-dashed border-border font-display text-lg font-bold tabular-nums text-muted-foreground">
+              ? – ?
+            </div>
+            <div className="text-[10px] uppercase tracking-wider text-amber-300/90 mt-1 inline-flex items-center gap-1">
+              <Lock className="size-3" /> Awaiting score
+            </div>
           </div>
         ) : showInputs ? (
           <div className="flex items-center gap-1.5">
