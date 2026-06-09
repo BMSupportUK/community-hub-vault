@@ -506,7 +506,10 @@ function FixtureCard({
             </span>
           )}
         </span>
-        <span>{formatKickoff(fixture.kickoffAt)}</span>
+        <span className="inline-flex items-center gap-2">
+          {!locked && !scored && <LockCountdownPill lockAtMs={lockAtMs} />}
+          {formatKickoff(fixture.kickoffAt)}
+        </span>
       </div>
 
       <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
