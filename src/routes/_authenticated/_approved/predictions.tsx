@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Trophy, Loader2, Lock, Check, Star, Crown, Medal, Award } from "lucide-react";
+import { Trophy, Loader2, Lock, Check, Star, Crown, Medal, Award, Pencil } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -310,6 +310,10 @@ function FixtureCard({
   const [hp, setHp] = useState<string>(fixture.myPrediction?.homePred?.toString() ?? "");
   const [ap, setAp] = useState<string>(fixture.myPrediction?.awayPred?.toString() ?? "");
   const [busy, setBusy] = useState(false);
+  const hasPick = !!fixture.myPrediction;
+  // When user already has a saved pick, hide inputs behind an Edit button.
+  const [editing, setEditing] = useState<boolean>(!hasPick);
+  const showInputs = !locked && !scored && (editing || !hasPick);
 
   const dirty =
     !locked &&
@@ -324,9 +328,16 @@ function FixtureCard({
     setBusy(true);
     try {
       await onSave(fixture.id, Number(hp), Number(ap));
+      setEditing(false);
     } finally {
       setBusy(false);
     }
+  };
+
+  const cancelEdit = () => {
+    setHp(fixture.myPrediction?.homePred?.toString() ?? "");
+    setAp(fixture.myPrediction?.awayPred?.toString() ?? "");
+    setEditing(false);
   };
 
   return (
@@ -361,7 +372,7 @@ function FixtureCard({
             </span>
             <span className="text-[10px]">Closed 30 min before kick-off</span>
           </div>
-        ) : (
+        ) : showInputs ? (
           <div className="flex items-center gap-1.5">
             <Input
               value={hp}
@@ -380,6 +391,15 @@ function FixtureCard({
               placeholder="–"
               className="w-12 text-center font-display text-lg font-bold"
             />
+          </div>
+        ) : (
+          <div className="text-center">
+            <div className="px-3 py-1.5 rounded-lg bg-surface-2 border border-border font-display text-lg font-bold tabular-nums">
+              {fixture.myPrediction?.homePred} – {fixture.myPrediction?.awayPred}
+            </div>
+            <div className="text-[10px] uppercase tracking-wider text-muted-foreground mt-1">
+              Your pick
+            </div>
           </div>
         )}
         <div className="font-medium">{fixture.awayTeam}</div>
@@ -409,10 +429,23 @@ function FixtureCard({
             <span>Join the predictor to enter</span>
           )}
         </div>
-        {!locked && canPredict && (
-          <Button size="sm" onClick={save} disabled={!dirty || busy}>
-            {busy ? <Loader2 className="size-3.5 animate-spin" /> : "Save"}
-          </Button>
+        {!locked && !scored && canPredict && (
+          showInputs ? (
+            <div className="flex items-center gap-1.5">
+              {hasPick && (
+                <Button size="sm" variant="ghost" onClick={cancelEdit} disabled={busy}>
+                  Cancel
+                </Button>
+              )}
+              <Button size="sm" onClick={save} disabled={!dirty || busy}>
+                {busy ? <Loader2 className="size-3.5 animate-spin" /> : "Save"}
+              </Button>
+            </div>
+          ) : (
+            <Button size="sm" variant="outline" onClick={() => setEditing(true)}>
+              <Pencil className="size-3.5 mr-1" /> Edit
+            </Button>
+          )
         )}
       </div>
     </div>
