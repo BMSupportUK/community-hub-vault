@@ -41,6 +41,7 @@ import { Route as AuthenticatedApprovedShiftsRouteImport } from './routes/_authe
 import { Route as AuthenticatedApprovedReviewsRouteImport } from './routes/_authenticated/_approved/reviews'
 import { Route as AuthenticatedApprovedResponsiveCheckRouteImport } from './routes/_authenticated/_approved/responsive-check'
 import { Route as AuthenticatedApprovedProfileRouteImport } from './routes/_authenticated/_approved/profile'
+import { Route as AuthenticatedApprovedPredictionsRouteImport } from './routes/_authenticated/_approved/predictions'
 import { Route as AuthenticatedApprovedNewContentRouteImport } from './routes/_authenticated/_approved/new-content'
 import { Route as AuthenticatedApprovedModerationRouteImport } from './routes/_authenticated/_approved/moderation'
 import { Route as AuthenticatedApprovedMembersRouteImport } from './routes/_authenticated/_approved/members'
@@ -57,6 +58,7 @@ import { Route as AuthenticatedApprovedAdminRolesRouteImport } from './routes/_a
 import { Route as AuthenticatedApprovedAdminReviewsRouteImport } from './routes/_authenticated/_approved/admin-reviews'
 import { Route as AuthenticatedApprovedAdminReportsRouteImport } from './routes/_authenticated/_approved/admin-reports'
 import { Route as AuthenticatedApprovedAdminProfanityRouteImport } from './routes/_authenticated/_approved/admin-profanity'
+import { Route as AuthenticatedApprovedAdminPredictionsRouteImport } from './routes/_authenticated/_approved/admin-predictions'
 import { Route as AuthenticatedApprovedAdminPermissionsRouteImport } from './routes/_authenticated/_approved/admin-permissions'
 import { Route as AuthenticatedApprovedAdminNotificationsRouteImport } from './routes/_authenticated/_approved/admin-notifications'
 import { Route as AuthenticatedApprovedAdminNameplatesRouteImport } from './routes/_authenticated/_approved/admin-nameplates'
@@ -267,6 +269,12 @@ const AuthenticatedApprovedProfileRoute =
     path: '/profile',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
+const AuthenticatedApprovedPredictionsRoute =
+  AuthenticatedApprovedPredictionsRouteImport.update({
+    id: '/predictions',
+    path: '/predictions',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
 const AuthenticatedApprovedNewContentRoute =
   AuthenticatedApprovedNewContentRouteImport.update({
     id: '/new-content',
@@ -361,6 +369,12 @@ const AuthenticatedApprovedAdminProfanityRoute =
   AuthenticatedApprovedAdminProfanityRouteImport.update({
     id: '/admin-profanity',
     path: '/admin-profanity',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
+const AuthenticatedApprovedAdminPredictionsRoute =
+  AuthenticatedApprovedAdminPredictionsRouteImport.update({
+    id: '/admin-predictions',
+    path: '/admin-predictions',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
 const AuthenticatedApprovedAdminPermissionsRoute =
@@ -620,6 +634,7 @@ export interface FileRoutesByFullPath {
   '/admin-nameplates': typeof AuthenticatedApprovedAdminNameplatesRoute
   '/admin-notifications': typeof AuthenticatedApprovedAdminNotificationsRoute
   '/admin-permissions': typeof AuthenticatedApprovedAdminPermissionsRoute
+  '/admin-predictions': typeof AuthenticatedApprovedAdminPredictionsRoute
   '/admin-profanity': typeof AuthenticatedApprovedAdminProfanityRoute
   '/admin-reports': typeof AuthenticatedApprovedAdminReportsRoute
   '/admin-reviews': typeof AuthenticatedApprovedAdminReviewsRoute
@@ -636,6 +651,7 @@ export interface FileRoutesByFullPath {
   '/members': typeof AuthenticatedApprovedMembersRoute
   '/moderation': typeof AuthenticatedApprovedModerationRoute
   '/new-content': typeof AuthenticatedApprovedNewContentRoute
+  '/predictions': typeof AuthenticatedApprovedPredictionsRoute
   '/profile': typeof AuthenticatedApprovedProfileRoute
   '/responsive-check': typeof AuthenticatedApprovedResponsiveCheckRoute
   '/reviews': typeof AuthenticatedApprovedReviewsRoute
@@ -706,6 +722,7 @@ export interface FileRoutesByTo {
   '/admin-nameplates': typeof AuthenticatedApprovedAdminNameplatesRoute
   '/admin-notifications': typeof AuthenticatedApprovedAdminNotificationsRoute
   '/admin-permissions': typeof AuthenticatedApprovedAdminPermissionsRoute
+  '/admin-predictions': typeof AuthenticatedApprovedAdminPredictionsRoute
   '/admin-profanity': typeof AuthenticatedApprovedAdminProfanityRoute
   '/admin-reports': typeof AuthenticatedApprovedAdminReportsRoute
   '/admin-reviews': typeof AuthenticatedApprovedAdminReviewsRoute
@@ -721,6 +738,7 @@ export interface FileRoutesByTo {
   '/members': typeof AuthenticatedApprovedMembersRoute
   '/moderation': typeof AuthenticatedApprovedModerationRoute
   '/new-content': typeof AuthenticatedApprovedNewContentRoute
+  '/predictions': typeof AuthenticatedApprovedPredictionsRoute
   '/profile': typeof AuthenticatedApprovedProfileRoute
   '/responsive-check': typeof AuthenticatedApprovedResponsiveCheckRoute
   '/reviews': typeof AuthenticatedApprovedReviewsRoute
@@ -794,6 +812,7 @@ export interface FileRoutesById {
   '/_authenticated/_approved/admin-nameplates': typeof AuthenticatedApprovedAdminNameplatesRoute
   '/_authenticated/_approved/admin-notifications': typeof AuthenticatedApprovedAdminNotificationsRoute
   '/_authenticated/_approved/admin-permissions': typeof AuthenticatedApprovedAdminPermissionsRoute
+  '/_authenticated/_approved/admin-predictions': typeof AuthenticatedApprovedAdminPredictionsRoute
   '/_authenticated/_approved/admin-profanity': typeof AuthenticatedApprovedAdminProfanityRoute
   '/_authenticated/_approved/admin-reports': typeof AuthenticatedApprovedAdminReportsRoute
   '/_authenticated/_approved/admin-reviews': typeof AuthenticatedApprovedAdminReviewsRoute
@@ -810,6 +829,7 @@ export interface FileRoutesById {
   '/_authenticated/_approved/members': typeof AuthenticatedApprovedMembersRoute
   '/_authenticated/_approved/moderation': typeof AuthenticatedApprovedModerationRoute
   '/_authenticated/_approved/new-content': typeof AuthenticatedApprovedNewContentRoute
+  '/_authenticated/_approved/predictions': typeof AuthenticatedApprovedPredictionsRoute
   '/_authenticated/_approved/profile': typeof AuthenticatedApprovedProfileRoute
   '/_authenticated/_approved/responsive-check': typeof AuthenticatedApprovedResponsiveCheckRoute
   '/_authenticated/_approved/reviews': typeof AuthenticatedApprovedReviewsRoute
@@ -882,6 +902,7 @@ export interface FileRouteTypes {
     | '/admin-nameplates'
     | '/admin-notifications'
     | '/admin-permissions'
+    | '/admin-predictions'
     | '/admin-profanity'
     | '/admin-reports'
     | '/admin-reviews'
@@ -898,6 +919,7 @@ export interface FileRouteTypes {
     | '/members'
     | '/moderation'
     | '/new-content'
+    | '/predictions'
     | '/profile'
     | '/responsive-check'
     | '/reviews'
@@ -968,6 +990,7 @@ export interface FileRouteTypes {
     | '/admin-nameplates'
     | '/admin-notifications'
     | '/admin-permissions'
+    | '/admin-predictions'
     | '/admin-profanity'
     | '/admin-reports'
     | '/admin-reviews'
@@ -983,6 +1006,7 @@ export interface FileRouteTypes {
     | '/members'
     | '/moderation'
     | '/new-content'
+    | '/predictions'
     | '/profile'
     | '/responsive-check'
     | '/reviews'
@@ -1055,6 +1079,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/admin-nameplates'
     | '/_authenticated/_approved/admin-notifications'
     | '/_authenticated/_approved/admin-permissions'
+    | '/_authenticated/_approved/admin-predictions'
     | '/_authenticated/_approved/admin-profanity'
     | '/_authenticated/_approved/admin-reports'
     | '/_authenticated/_approved/admin-reviews'
@@ -1071,6 +1096,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/members'
     | '/_authenticated/_approved/moderation'
     | '/_authenticated/_approved/new-content'
+    | '/_authenticated/_approved/predictions'
     | '/_authenticated/_approved/profile'
     | '/_authenticated/_approved/responsive-check'
     | '/_authenticated/_approved/reviews'
@@ -1370,6 +1396,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedApprovedProfileRouteImport
       parentRoute: typeof AuthenticatedApprovedRoute
     }
+    '/_authenticated/_approved/predictions': {
+      id: '/_authenticated/_approved/predictions'
+      path: '/predictions'
+      fullPath: '/predictions'
+      preLoaderRoute: typeof AuthenticatedApprovedPredictionsRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
     '/_authenticated/_approved/new-content': {
       id: '/_authenticated/_approved/new-content'
       path: '/new-content'
@@ -1480,6 +1513,13 @@ declare module '@tanstack/react-router' {
       path: '/admin-profanity'
       fullPath: '/admin-profanity'
       preLoaderRoute: typeof AuthenticatedApprovedAdminProfanityRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
+    '/_authenticated/_approved/admin-predictions': {
+      id: '/_authenticated/_approved/admin-predictions'
+      path: '/admin-predictions'
+      fullPath: '/admin-predictions'
+      preLoaderRoute: typeof AuthenticatedApprovedAdminPredictionsRouteImport
       parentRoute: typeof AuthenticatedApprovedRoute
     }
     '/_authenticated/_approved/admin-permissions': {
@@ -1848,6 +1888,7 @@ interface AuthenticatedApprovedRouteChildren {
   AuthenticatedApprovedAdminNameplatesRoute: typeof AuthenticatedApprovedAdminNameplatesRoute
   AuthenticatedApprovedAdminNotificationsRoute: typeof AuthenticatedApprovedAdminNotificationsRoute
   AuthenticatedApprovedAdminPermissionsRoute: typeof AuthenticatedApprovedAdminPermissionsRoute
+  AuthenticatedApprovedAdminPredictionsRoute: typeof AuthenticatedApprovedAdminPredictionsRoute
   AuthenticatedApprovedAdminProfanityRoute: typeof AuthenticatedApprovedAdminProfanityRoute
   AuthenticatedApprovedAdminReportsRoute: typeof AuthenticatedApprovedAdminReportsRoute
   AuthenticatedApprovedAdminReviewsRoute: typeof AuthenticatedApprovedAdminReviewsRoute
@@ -1864,6 +1905,7 @@ interface AuthenticatedApprovedRouteChildren {
   AuthenticatedApprovedMembersRoute: typeof AuthenticatedApprovedMembersRoute
   AuthenticatedApprovedModerationRoute: typeof AuthenticatedApprovedModerationRoute
   AuthenticatedApprovedNewContentRoute: typeof AuthenticatedApprovedNewContentRoute
+  AuthenticatedApprovedPredictionsRoute: typeof AuthenticatedApprovedPredictionsRoute
   AuthenticatedApprovedProfileRoute: typeof AuthenticatedApprovedProfileRoute
   AuthenticatedApprovedResponsiveCheckRoute: typeof AuthenticatedApprovedResponsiveCheckRoute
   AuthenticatedApprovedReviewsRoute: typeof AuthenticatedApprovedReviewsRoute
@@ -1907,6 +1949,8 @@ const AuthenticatedApprovedRouteChildren: AuthenticatedApprovedRouteChildren = {
     AuthenticatedApprovedAdminNotificationsRoute,
   AuthenticatedApprovedAdminPermissionsRoute:
     AuthenticatedApprovedAdminPermissionsRoute,
+  AuthenticatedApprovedAdminPredictionsRoute:
+    AuthenticatedApprovedAdminPredictionsRoute,
   AuthenticatedApprovedAdminProfanityRoute:
     AuthenticatedApprovedAdminProfanityRoute,
   AuthenticatedApprovedAdminReportsRoute:
@@ -1931,6 +1975,7 @@ const AuthenticatedApprovedRouteChildren: AuthenticatedApprovedRouteChildren = {
   AuthenticatedApprovedMembersRoute: AuthenticatedApprovedMembersRoute,
   AuthenticatedApprovedModerationRoute: AuthenticatedApprovedModerationRoute,
   AuthenticatedApprovedNewContentRoute: AuthenticatedApprovedNewContentRoute,
+  AuthenticatedApprovedPredictionsRoute: AuthenticatedApprovedPredictionsRoute,
   AuthenticatedApprovedProfileRoute: AuthenticatedApprovedProfileRoute,
   AuthenticatedApprovedResponsiveCheckRoute:
     AuthenticatedApprovedResponsiveCheckRoute,
@@ -2016,13 +2061,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
