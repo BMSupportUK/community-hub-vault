@@ -1,9 +1,19 @@
 import { useEffect, useState } from "react";
+import { Capacitor } from "@capacitor/core";
+import { Geolocation } from "@capacitor/geolocation";
 import { useServerFn } from "@tanstack/react-start";
 import { useAuth } from "@/hooks/use-auth";
 import { recordMyGpsLocation } from "@/lib/gps-capture.functions";
 import { MapPin, X } from "lucide-react";
 import { toast } from "sonner";
+
+const isNativeLocationApp = () => {
+  try {
+    return Capacitor.isNativePlatform();
+  } catch {
+    return false;
+  }
+};
 
 /**
  * Once per session, ask the browser for the user's precise GPS location and
@@ -25,13 +35,8 @@ export function GpsCapture() {
     sessionStorage.setItem(key, "1");
   };
 
-  const requestLocation = () => {
+  const requestLocation = async () => {
     if (!user?.id) return;
-    if (!("geolocation" in navigator)) {
-      toast.error("Your browser doesn't support location services.");
-      return;
-    }
-
     markHandled();
     const pending = toast.loading("Requesting your location…");
     const fallback = window.setTimeout(() => {
@@ -40,16 +45,61 @@ export function GpsCapture() {
       });
     }, 12_000);
 
+    const savePosition = async (coords: GeolocationCoordinates) => {
+      await record({
+        data: {
+          latitude: coords.latitude,
+          longitude: coords.longitude,
+          accuracy: coords.accuracy,
+        },
+      });
+    };
+
+    if (isNativeLocationApp()) {
+      try {
+        const currentPermission = await Geolocation.checkPermissions();
+        const hasLocationAccess =
+          currentPermission.location === "granted" || currentPermission.coarseLocation === "granted";
+        const permission = hasLocationAccess
+          ? currentPermission
+          : await Geolocation.requestPermissions({ permissions: ["coarseLocation"] });
+
+        if (permission.location !== "granted" && permission.coarseLocation !== "granted") {
+          throw new Error("LOCATION_PERMISSION_DENIED");
+        }
+
+        const pos = await Geolocation.getCurrentPosition({
+          enableHighAccuracy: false,
+          timeout: 8_000,
+          maximumAge: 10 * 60_000,
+          enableLocationFallback: true,
+        });
+        await savePosition(pos.coords as GeolocationCoordinates);
+        window.clearTimeout(fallback);
+        toast.success("Location confirmed.", { id: pending });
+      } catch (err) {
+        window.clearTimeout(fallback);
+        const message = err instanceof Error ? err.message : "";
+        const msg = message.includes("LOCATION_PERMISSION_DENIED")
+          ? "Location permission was denied. Enable location for BM Support in Android settings and try again."
+          : message.toLowerCase().includes("disabled")
+            ? "Turn on device location services, then try again."
+            : "Couldn't get your location. Check Android location settings and try again.";
+        toast.error(msg, { id: pending });
+      }
+      return;
+    }
+
+    if (!("geolocation" in navigator)) {
+      window.clearTimeout(fallback);
+      toast.error("Your browser doesn't support location services.", { id: pending });
+      return;
+    }
+
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         window.clearTimeout(fallback);
-        record({
-          data: {
-            latitude: pos.coords.latitude,
-            longitude: pos.coords.longitude,
-            accuracy: pos.coords.accuracy,
-          },
-        })
+        savePosition(pos.coords)
           .then(() => toast.success("Location confirmed.", { id: pending }))
           .catch(() => {
             toast.error("Couldn't save your location. Please try again.", { id: pending });
@@ -125,7 +175,7 @@ export function GpsCapture() {
           type="button"
           onClick={() => {
             dismiss();
-            requestLocation();
+            void requestLocation();
           }}
           className="rounded-md bg-primary px-4 py-3 text-sm font-medium text-primary-foreground hover:bg-primary/90"
         >
