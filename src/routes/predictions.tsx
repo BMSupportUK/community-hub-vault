@@ -21,6 +21,8 @@ import {
   listWcFixturesPublic,
   upsertWcGuestPrediction,
   getWcLeaderboardPublic,
+  requestGuestPinReset,
+  resetGuestPin,
 } from "@/lib/wc-guest.functions";
 import { teamFlag } from "@/lib/country-flags";
 import heroBg from "@/assets/england-world-cup-hero.jpg";
