@@ -31,6 +31,7 @@ import { Route as AuthenticatedFanZonePendingRouteImport } from './routes/_authe
 import { Route as AuthenticatedBannedRouteImport } from './routes/_authenticated/banned'
 import { Route as AuthenticatedAccountRejectedRouteImport } from './routes/_authenticated/account-rejected'
 import { Route as AuthenticatedApprovedRouteImport } from './routes/_authenticated/_approved'
+import { Route as FanZoneBoardIndexRouteImport } from './routes/fan-zone.$board.index'
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
 import { Route as FanZoneBoardTopicRouteImport } from './routes/fan-zone.$board.$topic'
 import { Route as ApiPublicTweetRouteImport } from './routes/api/public/tweet'
@@ -214,6 +215,11 @@ const AuthenticatedAccountRejectedRoute =
 const AuthenticatedApprovedRoute = AuthenticatedApprovedRouteImport.update({
   id: '/_approved',
   getParentRoute: () => AuthenticatedRoute,
+} as any)
+const FanZoneBoardIndexRoute = FanZoneBoardIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => FanZoneBoardRoute,
 } as any)
 const LovableEmailSuppressionRoute = LovableEmailSuppressionRouteImport.update({
   id: '/lovable/email/suppression',
@@ -717,6 +723,7 @@ export interface FileRoutesByFullPath {
   '/api/public/tweet': typeof ApiPublicTweetRoute
   '/fan-zone/$board/$topic': typeof FanZoneBoardTopicRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
+  '/fan-zone/$board/': typeof FanZoneBoardIndexRoute
   '/fanzone/blocks': typeof AuthenticatedApprovedFanzoneBlocksRoute
   '/fanzone/messages': typeof AuthenticatedApprovedFanzoneMessagesRouteWithChildren
   '/fanzone/profile': typeof AuthenticatedApprovedFanzoneProfileRoute
@@ -762,7 +769,6 @@ export interface FileRoutesByTo {
   '/fan-zone-pending': typeof AuthenticatedFanZonePendingRoute
   '/gate': typeof AuthenticatedGateRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
-  '/fan-zone/$board': typeof FanZoneBoardRouteWithChildren
   '/fan-zone': typeof FanZoneIndexRoute
   '/account-security': typeof AuthenticatedApprovedAccountSecurityRoute
   '/admin': typeof AuthenticatedApprovedAdminRoute
@@ -810,6 +816,7 @@ export interface FileRoutesByTo {
   '/api/public/tweet': typeof ApiPublicTweetRoute
   '/fan-zone/$board/$topic': typeof FanZoneBoardTopicRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
+  '/fan-zone/$board': typeof FanZoneBoardIndexRoute
   '/fanzone/blocks': typeof AuthenticatedApprovedFanzoneBlocksRoute
   '/fanzone/messages': typeof AuthenticatedApprovedFanzoneMessagesRouteWithChildren
   '/fanzone/profile': typeof AuthenticatedApprovedFanzoneProfileRoute
@@ -908,6 +915,7 @@ export interface FileRoutesById {
   '/api/public/tweet': typeof ApiPublicTweetRoute
   '/fan-zone/$board/$topic': typeof FanZoneBoardTopicRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
+  '/fan-zone/$board/': typeof FanZoneBoardIndexRoute
   '/_authenticated/_approved/fanzone/blocks': typeof AuthenticatedApprovedFanzoneBlocksRoute
   '/_authenticated/_approved/fanzone/messages': typeof AuthenticatedApprovedFanzoneMessagesRouteWithChildren
   '/_authenticated/_approved/fanzone/profile': typeof AuthenticatedApprovedFanzoneProfileRoute
@@ -1005,6 +1013,7 @@ export interface FileRouteTypes {
     | '/api/public/tweet'
     | '/fan-zone/$board/$topic'
     | '/lovable/email/suppression'
+    | '/fan-zone/$board/'
     | '/fanzone/blocks'
     | '/fanzone/messages'
     | '/fanzone/profile'
@@ -1050,7 +1059,6 @@ export interface FileRouteTypes {
     | '/fan-zone-pending'
     | '/gate'
     | '/email/unsubscribe'
-    | '/fan-zone/$board'
     | '/fan-zone'
     | '/account-security'
     | '/admin'
@@ -1098,6 +1106,7 @@ export interface FileRouteTypes {
     | '/api/public/tweet'
     | '/fan-zone/$board/$topic'
     | '/lovable/email/suppression'
+    | '/fan-zone/$board'
     | '/fanzone/blocks'
     | '/fanzone/messages'
     | '/fanzone/profile'
@@ -1195,6 +1204,7 @@ export interface FileRouteTypes {
     | '/api/public/tweet'
     | '/fan-zone/$board/$topic'
     | '/lovable/email/suppression'
+    | '/fan-zone/$board/'
     | '/_authenticated/_approved/fanzone/blocks'
     | '/_authenticated/_approved/fanzone/messages'
     | '/_authenticated/_approved/fanzone/profile'
@@ -1412,6 +1422,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof AuthenticatedApprovedRouteImport
       parentRoute: typeof AuthenticatedRoute
+    }
+    '/fan-zone/$board/': {
+      id: '/fan-zone/$board/'
+      path: '/'
+      fullPath: '/fan-zone/$board/'
+      preLoaderRoute: typeof FanZoneBoardIndexRouteImport
+      parentRoute: typeof FanZoneBoardRoute
     }
     '/lovable/email/suppression': {
       id: '/lovable/email/suppression'
@@ -2166,10 +2183,12 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
 
 interface FanZoneBoardRouteChildren {
   FanZoneBoardTopicRoute: typeof FanZoneBoardTopicRoute
+  FanZoneBoardIndexRoute: typeof FanZoneBoardIndexRoute
 }
 
 const FanZoneBoardRouteChildren: FanZoneBoardRouteChildren = {
   FanZoneBoardTopicRoute: FanZoneBoardTopicRoute,
+  FanZoneBoardIndexRoute: FanZoneBoardIndexRoute,
 }
 
 const FanZoneBoardRouteWithChildren = FanZoneBoardRoute._addFileChildren(
@@ -2228,13 +2247,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
