@@ -109,6 +109,7 @@ function PredictionsPage() {
   const joinFn = useServerFn(joinWcPredictor);
 
   const guestSignInFn = useServerFn(guestSignInOrRegister);
+  const guestSignInExistingFn = useServerFn(guestSignInExisting);
   const listFixturesPublicFn = useServerFn(listWcFixturesPublic);
   const upsertGuestFn = useServerFn(upsertWcGuestPrediction);
   const leaderboardPublicFn = useServerFn(getWcLeaderboardPublic);
@@ -119,6 +120,7 @@ function PredictionsPage() {
   type GuestSession = { guestId: string; email: string; pin: string; displayName: string };
   const [guest, setGuest] = useState<GuestSession | null>(null);
   const [showGuestLogin, setShowGuestLogin] = useState(false);
+  const [guestMode, setGuestMode] = useState<"signin" | "register">("register");
 
   useEffect(() => {
     try {
@@ -250,14 +252,25 @@ function PredictionsPage() {
               <p className="text-sm text-white/85">Predict every fixture.</p>
             </div>
             {!user && !guest && !showGuestLogin && (
-              <Button
-                type="button"
-                size="lg"
-                onClick={() => setShowGuestLogin(true)}
-                className="w-full sm:w-auto bg-white text-primary hover:bg-white/90"
-              >
-                Guest sign in
-              </Button>
+              <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                <Button
+                  type="button"
+                  size="lg"
+                  onClick={() => { setGuestMode("signin"); setShowGuestLogin(true); }}
+                  className="w-full sm:w-auto bg-white text-primary hover:bg-white/90"
+                >
+                  Guest sign in
+                </Button>
+                <Button
+                  type="button"
+                  size="lg"
+                  variant="outline"
+                  onClick={() => { setGuestMode("register"); setShowGuestLogin(true); }}
+                  className="w-full sm:w-auto bg-white/10 text-white border-white/40 hover:bg-white/20"
+                >
+                  Guest register
+                </Button>
+              </div>
             )}
           </div>
         </header>
