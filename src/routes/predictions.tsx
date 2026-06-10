@@ -28,6 +28,7 @@ import {
 import { teamFlag } from "@/lib/country-flags";
 import heroBg from "@/assets/england-world-cup-hero.jpg";
 import { LandingHeader } from "@/components/LandingHeader";
+import { IconRail } from "@/components/app/IconRail";
 
 export const Route = createFileRoute("/predictions")({
   component: PredictionsPage,
@@ -250,10 +251,14 @@ function PredictionsPage() {
   }, [fixtures]);
 
   return (
-    <main className="relative isolate flex-1 overflow-y-auto">
-      <div className="relative z-20 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
-        <LandingHeader />
-      </div>
+    <div className={user ? "min-h-screen flex bg-background" : "contents"}>
+      {user && <IconRail />}
+      <main className="relative isolate flex-1 overflow-y-auto min-w-0">
+        {!user && (
+          <div className="relative z-20 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+            <LandingHeader />
+          </div>
+        )}
       {/* Full-page hero background (absolute so the parent's bg-background can't cover it) */}
       <div
         className="pointer-events-none absolute inset-0 z-0 bg-cover bg-center bg-no-repeat"
@@ -535,7 +540,8 @@ function PredictionsPage() {
           </aside>
         </div>
       </div>
-    </main>
+      </main>
+    </div>
   );
 }
 
