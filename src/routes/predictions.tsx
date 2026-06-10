@@ -371,11 +371,12 @@ function PredictionsPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-6">
           <Tabs value={tab} onValueChange={setTab} className="min-w-0">
-            <TabsList className="grid grid-cols-4 w-full sm:w-auto">
+            <TabsList className="grid grid-cols-5 w-full sm:w-auto">
               <TabsTrigger value="fixtures">Fixtures</TabsTrigger>
               <TabsTrigger value="leaderboard">Leaderboard</TabsTrigger>
               <TabsTrigger value="mine">My picks</TabsTrigger>
               <TabsTrigger value="scoring">Scoring</TabsTrigger>
+              <TabsTrigger value="prize">Prize</TabsTrigger>
             </TabsList>
 
             <TabsContent value="fixtures" className="mt-4">
@@ -446,6 +447,29 @@ function PredictionsPage() {
                     <span>Correct result (win / draw / loss)</span>
                   </li>
                 </ul>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="prize" className="mt-4">
+              <div className="rounded-2xl border-2 border-amber-400/60 bg-gradient-to-br from-amber-500/10 via-surface-1 to-surface-1 shadow-md shadow-amber-500/10 p-5 space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="size-12 rounded-2xl bg-amber-500/20 grid place-items-center ring-1 ring-amber-400/40">
+                    <Trophy className="size-6 text-amber-300" />
+                  </div>
+                  <div>
+                    <h3 className="font-display text-lg font-bold">Prize</h3>
+                    <p className="text-xs text-muted-foreground">For the top of the leaderboard</p>
+                  </div>
+                </div>
+                <ul className="space-y-2 text-sm">
+                  <li className="flex items-center gap-3">
+                    <span className="inline-flex min-w-16 justify-center px-2 py-1 rounded bg-amber-500 text-black text-xs font-bold">1st place</span>
+                    <span>£10 Amazon voucher</span>
+                  </li>
+                </ul>
+                <p className="text-sm text-muted-foreground">
+                  If there is a tie, the winners will be entered into a draw to determine the winner.
+                </p>
               </div>
             </TabsContent>
           </Tabs>
