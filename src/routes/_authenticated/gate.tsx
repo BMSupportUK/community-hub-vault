@@ -13,6 +13,12 @@ import ticketAudio from "@/assets/ticket-notify.mp3";
 import { playSound } from "@/lib/sound";
 
 export const Route = createFileRoute("/_authenticated/gate")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    intent:
+      search.intent === "fan-zone" || search.intent === "bm-support"
+        ? (search.intent as "fan-zone" | "bm-support")
+        : undefined,
+  }),
   component: GatePage,
 });
 
@@ -22,6 +28,9 @@ interface Msg { id: string; sender_id: string; content: string; created_at: stri
 function GatePage() {
   const { user, refreshRoles, signOut } = useAuth();
   const navigate = useNavigate();
+  const { intent } = Route.useSearch();
+  const isFanZone = intent === "fan-zone";
+  const intentLabel = isFanZone ? "Boro Fan Zone" : "BM Support";
   const [appId, setAppId] = useState<string | null>(null);
   const [ticketNumber, setTicketNumber] = useState<number | null>(null);
   const [status, setStatus] = useState<string>("pending");
@@ -335,17 +344,17 @@ function GatePage() {
             ? "Welcome aboard. Refreshing your access…"
             : status === "denied"
             ? "Your request was denied. Contact an administrator if you believe this is a mistake."
-            : "Your account does not have access to this service yet."}
+            : `Your account is awaiting approval for ${intentLabel}.`}
         </p>
 
         {status !== "approved" && (
           <div className="mt-8 w-full max-w-md rounded-xl border border-red-500/40 bg-red-950/30 backdrop-blur-sm p-5 text-left">
             <div className="text-center font-semibold text-white text-sm">What should I do?</div>
             <p className="text-center text-red-100/80 text-sm mt-2">
-              You can chat with an admin to request access to the platform.
+              You can chat with an admin to request access to {intentLabel}.
             </p>
             <p className="text-center text-red-100/80 text-sm mt-2">
-              Click the button below to start a conversation with our support team.
+              Click the button below to start a conversation with the {isFanZone ? "Fan Zone moderators" : "support team"}.
             </p>
           </div>
         )}
