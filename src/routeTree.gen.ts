@@ -23,6 +23,7 @@ import { Route as ContactRouteImport } from './routes/contact'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as FanZoneBoardRouteImport } from './routes/fan-zone.$board'
 import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
 import { Route as AuthenticatedGateRouteImport } from './routes/_authenticated/gate'
 import { Route as AuthenticatedBannedRouteImport } from './routes/_authenticated/banned'
@@ -169,6 +170,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const FanZoneBoardRoute = FanZoneBoardRouteImport.update({
+  id: '/$board',
+  path: '/$board',
+  getParentRoute: () => FanZoneRoute,
 } as any)
 const EmailUnsubscribeRoute = EmailUnsubscribeRouteImport.update({
   id: '/email/unsubscribe',
@@ -628,7 +634,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/contact': typeof ContactRoute
-  '/fan-zone': typeof FanZoneRoute
+  '/fan-zone': typeof FanZoneRouteWithChildren
   '/faq': typeof FaqRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
@@ -642,6 +648,7 @@ export interface FileRoutesByFullPath {
   '/banned': typeof AuthenticatedBannedRoute
   '/gate': typeof AuthenticatedGateRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
+  '/fan-zone/$board': typeof FanZoneBoardRoute
   '/account-security': typeof AuthenticatedApprovedAccountSecurityRoute
   '/admin': typeof AuthenticatedApprovedAdminRoute
   '/admin-affiliate-banners': typeof AuthenticatedApprovedAdminAffiliateBannersRoute
@@ -719,7 +726,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/contact': typeof ContactRoute
-  '/fan-zone': typeof FanZoneRoute
+  '/fan-zone': typeof FanZoneRouteWithChildren
   '/faq': typeof FaqRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
@@ -733,6 +740,7 @@ export interface FileRoutesByTo {
   '/banned': typeof AuthenticatedBannedRoute
   '/gate': typeof AuthenticatedGateRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
+  '/fan-zone/$board': typeof FanZoneBoardRoute
   '/account-security': typeof AuthenticatedApprovedAccountSecurityRoute
   '/admin': typeof AuthenticatedApprovedAdminRoute
   '/admin-affiliate-banners': typeof AuthenticatedApprovedAdminAffiliateBannersRoute
@@ -811,7 +819,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/about': typeof AboutRoute
   '/contact': typeof ContactRoute
-  '/fan-zone': typeof FanZoneRoute
+  '/fan-zone': typeof FanZoneRouteWithChildren
   '/faq': typeof FaqRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
@@ -826,6 +834,7 @@ export interface FileRoutesById {
   '/_authenticated/banned': typeof AuthenticatedBannedRoute
   '/_authenticated/gate': typeof AuthenticatedGateRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
+  '/fan-zone/$board': typeof FanZoneBoardRoute
   '/_authenticated/_approved/account-security': typeof AuthenticatedApprovedAccountSecurityRoute
   '/_authenticated/_approved/admin': typeof AuthenticatedApprovedAdminRoute
   '/_authenticated/_approved/admin-affiliate-banners': typeof AuthenticatedApprovedAdminAffiliateBannersRoute
@@ -919,6 +928,7 @@ export interface FileRouteTypes {
     | '/banned'
     | '/gate'
     | '/email/unsubscribe'
+    | '/fan-zone/$board'
     | '/account-security'
     | '/admin'
     | '/admin-affiliate-banners'
@@ -1010,6 +1020,7 @@ export interface FileRouteTypes {
     | '/banned'
     | '/gate'
     | '/email/unsubscribe'
+    | '/fan-zone/$board'
     | '/account-security'
     | '/admin'
     | '/admin-affiliate-banners'
@@ -1102,6 +1113,7 @@ export interface FileRouteTypes {
     | '/_authenticated/banned'
     | '/_authenticated/gate'
     | '/email/unsubscribe'
+    | '/fan-zone/$board'
     | '/_authenticated/_approved/account-security'
     | '/_authenticated/_approved/admin'
     | '/_authenticated/_approved/admin-affiliate-banners'
@@ -1181,7 +1193,7 @@ export interface RootRouteChildren {
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   AboutRoute: typeof AboutRoute
   ContactRoute: typeof ContactRoute
-  FanZoneRoute: typeof FanZoneRoute
+  FanZoneRoute: typeof FanZoneRouteWithChildren
   FaqRoute: typeof FaqRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   LoginRoute: typeof LoginRoute
@@ -1309,6 +1321,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/fan-zone/$board': {
+      id: '/fan-zone/$board'
+      path: '/$board'
+      fullPath: '/fan-zone/$board'
+      preLoaderRoute: typeof FanZoneBoardRouteImport
+      parentRoute: typeof FanZoneRoute
     }
     '/email/unsubscribe': {
       id: '/email/unsubscribe'
@@ -2087,12 +2106,23 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
   AuthenticatedRouteChildren,
 )
 
+interface FanZoneRouteChildren {
+  FanZoneBoardRoute: typeof FanZoneBoardRoute
+}
+
+const FanZoneRouteChildren: FanZoneRouteChildren = {
+  FanZoneBoardRoute: FanZoneBoardRoute,
+}
+
+const FanZoneRouteWithChildren =
+  FanZoneRoute._addFileChildren(FanZoneRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   AboutRoute: AboutRoute,
   ContactRoute: ContactRoute,
-  FanZoneRoute: FanZoneRoute,
+  FanZoneRoute: FanZoneRouteWithChildren,
   FaqRoute: FaqRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
   LoginRoute: LoginRoute,
