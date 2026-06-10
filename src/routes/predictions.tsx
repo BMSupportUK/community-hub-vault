@@ -18,6 +18,7 @@ import {
 } from "@/lib/wc-predictions.functions";
 import {
   guestSignInOrRegister,
+  guestSignInExisting,
   listWcFixturesPublic,
   upsertWcGuestPrediction,
   getWcLeaderboardPublic,
