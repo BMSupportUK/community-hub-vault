@@ -66,9 +66,9 @@ function Landing() {
     <div className="min-h-screen md:h-screen md:overflow-hidden bg-background flex flex-col">
       <LandingHeader />
 
-      <main className="flex-1 min-h-0 md:overflow-hidden px-6 py-4 md:py-6 flex flex-col gap-4">
+      <main className="flex-1 min-h-0 md:overflow-hidden px-6 py-4 md:py-4 flex flex-col gap-3">
         <section
-          className="relative max-w-7xl w-full mx-auto rounded-3xl border border-red-900/60 p-4 md:p-6 lg:p-8 pb-16 md:pb-20"
+          className="relative max-w-7xl w-full mx-auto rounded-3xl border border-red-900/60 p-4 md:p-6 lg:p-8 pb-16 md:pb-20 flex-1 flex flex-col justify-center"
           style={{
             background:
               "radial-gradient(1200px 600px at 10% 10%, rgba(248,113,113,0.25), transparent 60%), radial-gradient(900px 500px at 90% 90%, rgba(127,29,29,0.6), transparent 60%), linear-gradient(135deg, #7f1d1d 0%, #991b1b 50%, #450a0a 100%)",
@@ -76,7 +76,7 @@ function Landing() {
               "0 0 80px rgba(220,38,38,0.35), inset 0 1px 0 rgba(255,255,255,0.06)",
           }}
         >
-          <div className="grid md:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] gap-5 md:gap-3 lg:gap-4 items-center">
+          <div className="grid md:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] gap-5 md:gap-3 lg:gap-4 items-center w-full">
             <div className="space-y-4 text-white">
               <h1 className="font-display text-3xl md:text-5xl font-bold tracking-tight leading-[1.05] drop-shadow-[0_2px_20px_rgba(0,0,0,0.5)]">
                 Welcome to <span className="bg-gradient-to-r from-red-200 via-white to-red-300 bg-clip-text text-transparent">BM Support</span>
@@ -100,7 +100,7 @@ function Landing() {
                   loading="eager"
                   fetchPriority="high"
                   decoding="async"
-                  className="block w-full h-auto max-h-[38vh] object-cover"
+                  className="block w-full h-auto max-h-[44vh] object-cover"
                 />
               </div>
             </div>
