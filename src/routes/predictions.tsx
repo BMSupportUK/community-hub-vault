@@ -197,6 +197,28 @@ function PredictionsPage() {
     }
   };
 
+  const handleGuestSignInExisting = async (email: string, pin: string) => {
+    setJoining(true);
+    try {
+      const res = await guestSignInExistingFn({ data: { email, pin } });
+      const session: GuestSession = {
+        guestId: res.guestId,
+        email: email.trim().toLowerCase(),
+        pin,
+        displayName: res.displayName,
+      };
+      localStorage.setItem("wc_guest_session", JSON.stringify(session));
+      setGuest(session);
+      setShowGuestLogin(false);
+      toast.success(`Welcome back, ${res.displayName}!`);
+      await loadAll();
+    } catch (e: any) {
+      toast.error(e?.message ?? "Sign-in failed");
+    } finally {
+      setJoining(false);
+    }
+  };
+
   const handleGuestSignOut = () => {
     localStorage.removeItem("wc_guest_session");
     setGuest(null);
@@ -296,7 +318,9 @@ function PredictionsPage() {
         {!user && showGuestLogin && (
           <GuestLoginCard
             busy={joining}
+            initialMode={guestMode}
             onSubmit={handleGuestSignIn}
+            onSignInExisting={handleGuestSignInExisting}
             onCancel={() => setShowGuestLogin(false)}
             onRequestReset={async (email) => {
               try {
