@@ -30,6 +30,7 @@ import { Route as AuthenticatedBannedRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedAccountRejectedRouteImport } from './routes/_authenticated/account-rejected'
 import { Route as AuthenticatedApprovedRouteImport } from './routes/_authenticated/_approved'
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
+import { Route as FanZoneBoardTopicRouteImport } from './routes/fan-zone.$board.$topic'
 import { Route as ApiPublicTweetRouteImport } from './routes/api/public/tweet'
 import { Route as ApiPublicLinkPreviewRouteImport } from './routes/api/public/link-preview'
 import { Route as AuthenticatedApprovedWhatToWatchRouteImport } from './routes/_authenticated/_approved/what-to-watch'
@@ -205,6 +206,11 @@ const LovableEmailSuppressionRoute = LovableEmailSuppressionRouteImport.update({
   id: '/lovable/email/suppression',
   path: '/lovable/email/suppression',
   getParentRoute: () => rootRouteImport,
+} as any)
+const FanZoneBoardTopicRoute = FanZoneBoardTopicRouteImport.update({
+  id: '/$topic',
+  path: '/$topic',
+  getParentRoute: () => FanZoneBoardRoute,
 } as any)
 const ApiPublicTweetRoute = ApiPublicTweetRouteImport.update({
   id: '/api/public/tweet',
@@ -648,7 +654,7 @@ export interface FileRoutesByFullPath {
   '/banned': typeof AuthenticatedBannedRoute
   '/gate': typeof AuthenticatedGateRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
-  '/fan-zone/$board': typeof FanZoneBoardRoute
+  '/fan-zone/$board': typeof FanZoneBoardRouteWithChildren
   '/account-security': typeof AuthenticatedApprovedAccountSecurityRoute
   '/admin': typeof AuthenticatedApprovedAdminRoute
   '/admin-affiliate-banners': typeof AuthenticatedApprovedAdminAffiliateBannersRoute
@@ -694,6 +700,7 @@ export interface FileRoutesByFullPath {
   '/what-to-watch': typeof AuthenticatedApprovedWhatToWatchRoute
   '/api/public/link-preview': typeof ApiPublicLinkPreviewRoute
   '/api/public/tweet': typeof ApiPublicTweetRoute
+  '/fan-zone/$board/$topic': typeof FanZoneBoardTopicRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/fanzone/blocks': typeof AuthenticatedApprovedFanzoneBlocksRoute
   '/fanzone/messages': typeof AuthenticatedApprovedFanzoneMessagesRouteWithChildren
@@ -740,7 +747,7 @@ export interface FileRoutesByTo {
   '/banned': typeof AuthenticatedBannedRoute
   '/gate': typeof AuthenticatedGateRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
-  '/fan-zone/$board': typeof FanZoneBoardRoute
+  '/fan-zone/$board': typeof FanZoneBoardRouteWithChildren
   '/account-security': typeof AuthenticatedApprovedAccountSecurityRoute
   '/admin': typeof AuthenticatedApprovedAdminRoute
   '/admin-affiliate-banners': typeof AuthenticatedApprovedAdminAffiliateBannersRoute
@@ -785,6 +792,7 @@ export interface FileRoutesByTo {
   '/what-to-watch': typeof AuthenticatedApprovedWhatToWatchRoute
   '/api/public/link-preview': typeof ApiPublicLinkPreviewRoute
   '/api/public/tweet': typeof ApiPublicTweetRoute
+  '/fan-zone/$board/$topic': typeof FanZoneBoardTopicRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/fanzone/blocks': typeof AuthenticatedApprovedFanzoneBlocksRoute
   '/fanzone/messages': typeof AuthenticatedApprovedFanzoneMessagesRouteWithChildren
@@ -834,7 +842,7 @@ export interface FileRoutesById {
   '/_authenticated/banned': typeof AuthenticatedBannedRoute
   '/_authenticated/gate': typeof AuthenticatedGateRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
-  '/fan-zone/$board': typeof FanZoneBoardRoute
+  '/fan-zone/$board': typeof FanZoneBoardRouteWithChildren
   '/_authenticated/_approved/account-security': typeof AuthenticatedApprovedAccountSecurityRoute
   '/_authenticated/_approved/admin': typeof AuthenticatedApprovedAdminRoute
   '/_authenticated/_approved/admin-affiliate-banners': typeof AuthenticatedApprovedAdminAffiliateBannersRoute
@@ -880,6 +888,7 @@ export interface FileRoutesById {
   '/_authenticated/_approved/what-to-watch': typeof AuthenticatedApprovedWhatToWatchRoute
   '/api/public/link-preview': typeof ApiPublicLinkPreviewRoute
   '/api/public/tweet': typeof ApiPublicTweetRoute
+  '/fan-zone/$board/$topic': typeof FanZoneBoardTopicRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/_authenticated/_approved/fanzone/blocks': typeof AuthenticatedApprovedFanzoneBlocksRoute
   '/_authenticated/_approved/fanzone/messages': typeof AuthenticatedApprovedFanzoneMessagesRouteWithChildren
@@ -974,6 +983,7 @@ export interface FileRouteTypes {
     | '/what-to-watch'
     | '/api/public/link-preview'
     | '/api/public/tweet'
+    | '/fan-zone/$board/$topic'
     | '/lovable/email/suppression'
     | '/fanzone/blocks'
     | '/fanzone/messages'
@@ -1065,6 +1075,7 @@ export interface FileRouteTypes {
     | '/what-to-watch'
     | '/api/public/link-preview'
     | '/api/public/tweet'
+    | '/fan-zone/$board/$topic'
     | '/lovable/email/suppression'
     | '/fanzone/blocks'
     | '/fanzone/messages'
@@ -1159,6 +1170,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/what-to-watch'
     | '/api/public/link-preview'
     | '/api/public/tweet'
+    | '/fan-zone/$board/$topic'
     | '/lovable/email/suppression'
     | '/_authenticated/_approved/fanzone/blocks'
     | '/_authenticated/_approved/fanzone/messages'
@@ -1370,6 +1382,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/lovable/email/suppression'
       preLoaderRoute: typeof LovableEmailSuppressionRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/fan-zone/$board/$topic': {
+      id: '/fan-zone/$board/$topic'
+      path: '/$topic'
+      fullPath: '/fan-zone/$board/$topic'
+      preLoaderRoute: typeof FanZoneBoardTopicRouteImport
+      parentRoute: typeof FanZoneBoardRoute
     }
     '/api/public/tweet': {
       id: '/api/public/tweet'
@@ -2106,12 +2125,24 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
   AuthenticatedRouteChildren,
 )
 
+interface FanZoneBoardRouteChildren {
+  FanZoneBoardTopicRoute: typeof FanZoneBoardTopicRoute
+}
+
+const FanZoneBoardRouteChildren: FanZoneBoardRouteChildren = {
+  FanZoneBoardTopicRoute: FanZoneBoardTopicRoute,
+}
+
+const FanZoneBoardRouteWithChildren = FanZoneBoardRoute._addFileChildren(
+  FanZoneBoardRouteChildren,
+)
+
 interface FanZoneRouteChildren {
-  FanZoneBoardRoute: typeof FanZoneBoardRoute
+  FanZoneBoardRoute: typeof FanZoneBoardRouteWithChildren
 }
 
 const FanZoneRouteChildren: FanZoneRouteChildren = {
-  FanZoneBoardRoute: FanZoneBoardRoute,
+  FanZoneBoardRoute: FanZoneBoardRouteWithChildren,
 }
 
 const FanZoneRouteWithChildren =

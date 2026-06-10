@@ -9,6 +9,7 @@ const navItems = [
   { to: "/packages", label: "Packages" },
   { to: "/faq", label: "FAQ" },
   { to: "/about", label: "About" },
+  { to: "/fan-zone", label: "Boro Fan Zone" },
   { to: "/contact", label: "Contact us" },
   { to: "/predictions", label: "World Cup 2026" },
 ];
