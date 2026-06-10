@@ -26,6 +26,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as FanZoneBoardRouteImport } from './routes/fan-zone.$board'
 import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
 import { Route as AuthenticatedGateRouteImport } from './routes/_authenticated/gate'
+import { Route as AuthenticatedFanZonePendingRouteImport } from './routes/_authenticated/fan-zone-pending'
 import { Route as AuthenticatedBannedRouteImport } from './routes/_authenticated/banned'
 import { Route as AuthenticatedAccountRejectedRouteImport } from './routes/_authenticated/account-rejected'
 import { Route as AuthenticatedApprovedRouteImport } from './routes/_authenticated/_approved'
@@ -187,6 +188,12 @@ const AuthenticatedGateRoute = AuthenticatedGateRouteImport.update({
   path: '/gate',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedFanZonePendingRoute =
+  AuthenticatedFanZonePendingRouteImport.update({
+    id: '/fan-zone-pending',
+    path: '/fan-zone-pending',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedBannedRoute = AuthenticatedBannedRouteImport.update({
   id: '/banned',
   path: '/banned',
@@ -652,6 +659,7 @@ export interface FileRoutesByFullPath {
   '/unsubscribe': typeof UnsubscribeRoute
   '/account-rejected': typeof AuthenticatedAccountRejectedRoute
   '/banned': typeof AuthenticatedBannedRoute
+  '/fan-zone-pending': typeof AuthenticatedFanZonePendingRoute
   '/gate': typeof AuthenticatedGateRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/fan-zone/$board': typeof FanZoneBoardRouteWithChildren
@@ -745,6 +753,7 @@ export interface FileRoutesByTo {
   '/unsubscribe': typeof UnsubscribeRoute
   '/account-rejected': typeof AuthenticatedAccountRejectedRoute
   '/banned': typeof AuthenticatedBannedRoute
+  '/fan-zone-pending': typeof AuthenticatedFanZonePendingRoute
   '/gate': typeof AuthenticatedGateRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/fan-zone/$board': typeof FanZoneBoardRouteWithChildren
@@ -840,6 +849,7 @@ export interface FileRoutesById {
   '/_authenticated/_approved': typeof AuthenticatedApprovedRouteWithChildren
   '/_authenticated/account-rejected': typeof AuthenticatedAccountRejectedRoute
   '/_authenticated/banned': typeof AuthenticatedBannedRoute
+  '/_authenticated/fan-zone-pending': typeof AuthenticatedFanZonePendingRoute
   '/_authenticated/gate': typeof AuthenticatedGateRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/fan-zone/$board': typeof FanZoneBoardRouteWithChildren
@@ -935,6 +945,7 @@ export interface FileRouteTypes {
     | '/unsubscribe'
     | '/account-rejected'
     | '/banned'
+    | '/fan-zone-pending'
     | '/gate'
     | '/email/unsubscribe'
     | '/fan-zone/$board'
@@ -1028,6 +1039,7 @@ export interface FileRouteTypes {
     | '/unsubscribe'
     | '/account-rejected'
     | '/banned'
+    | '/fan-zone-pending'
     | '/gate'
     | '/email/unsubscribe'
     | '/fan-zone/$board'
@@ -1122,6 +1134,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved'
     | '/_authenticated/account-rejected'
     | '/_authenticated/banned'
+    | '/_authenticated/fan-zone-pending'
     | '/_authenticated/gate'
     | '/email/unsubscribe'
     | '/fan-zone/$board'
@@ -1353,6 +1366,13 @@ declare module '@tanstack/react-router' {
       path: '/gate'
       fullPath: '/gate'
       preLoaderRoute: typeof AuthenticatedGateRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/fan-zone-pending': {
+      id: '/_authenticated/fan-zone-pending'
+      path: '/fan-zone-pending'
+      fullPath: '/fan-zone-pending'
+      preLoaderRoute: typeof AuthenticatedFanZonePendingRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/banned': {
@@ -2111,6 +2131,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedApprovedRoute: typeof AuthenticatedApprovedRouteWithChildren
   AuthenticatedAccountRejectedRoute: typeof AuthenticatedAccountRejectedRoute
   AuthenticatedBannedRoute: typeof AuthenticatedBannedRoute
+  AuthenticatedFanZonePendingRoute: typeof AuthenticatedFanZonePendingRoute
   AuthenticatedGateRoute: typeof AuthenticatedGateRoute
 }
 
@@ -2118,6 +2139,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedApprovedRoute: AuthenticatedApprovedRouteWithChildren,
   AuthenticatedAccountRejectedRoute: AuthenticatedAccountRejectedRoute,
   AuthenticatedBannedRoute: AuthenticatedBannedRoute,
+  AuthenticatedFanZonePendingRoute: AuthenticatedFanZonePendingRoute,
   AuthenticatedGateRoute: AuthenticatedGateRoute,
 }
 
