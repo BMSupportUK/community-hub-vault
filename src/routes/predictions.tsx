@@ -274,6 +274,32 @@ function PredictionsPage() {
             busy={joining}
             onSubmit={handleGuestSignIn}
             onCancel={() => setShowGuestLogin(false)}
+            onRequestReset={async (email) => {
+              try {
+                await requestPinResetFn({ data: { email } });
+                toast.success("If that email is registered, a reset code is on its way.");
+              } catch (e: any) {
+                toast.error(e?.message ?? "Could not send reset email");
+              }
+            }}
+            onResetPin={async (email, code, newPin) => {
+              try {
+                const res = await resetPinFn({ data: { email, code, newPin } });
+                const session: GuestSession = {
+                  guestId: res.guestId,
+                  email: email.trim().toLowerCase(),
+                  pin: newPin,
+                  displayName: res.displayName,
+                };
+                localStorage.setItem("wc_guest_session", JSON.stringify(session));
+                setGuest(session);
+                setShowGuestLogin(false);
+                toast.success("PIN reset — you're signed in.");
+                await loadAll();
+              } catch (e: any) {
+                toast.error(e?.message ?? "Reset failed");
+              }
+            }}
           />
         )}
 
