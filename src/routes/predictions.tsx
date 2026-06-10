@@ -247,16 +247,44 @@ function PredictionsPage() {
           </div>
         </header>
 
-        {!canPredict && (
+        {!canPredict && !showGuestLogin && (
           <div className="mb-6 rounded-2xl border border-primary/40 bg-primary/10 px-4 py-3 flex flex-col sm:flex-row items-start sm:items-center gap-3">
             <div className="flex-1 text-sm">
-              <div className="font-medium text-foreground">Join the predictor — it's free.</div>
+              <div className="font-medium text-foreground">
+                {user ? "Join the predictor — it's free." : "Play along — no account needed."}
+              </div>
               <div className="text-muted-foreground">
-                Opt in to submit your scores and appear on the leaderboard. No payment, no commitment.
+                {user
+                  ? "Opt in to submit your scores and appear on the leaderboard. No payment, no commitment."
+                  : "Continue as a guest with your email and a 4-digit PIN. Re-enter the same details next time to edit your picks."}
               </div>
             </div>
             <Button onClick={handleJoin} disabled={joining}>
-              {joining ? <Loader2 className="size-4 animate-spin" /> : "Join the predictor"}
+              {joining ? <Loader2 className="size-4 animate-spin" /> : user ? "Join the predictor" : "Continue as guest"}
+            </Button>
+          </div>
+        )}
+
+        {!user && showGuestLogin && (
+          <GuestLoginCard
+            busy={joining}
+            onSubmit={handleGuestSignIn}
+            onCancel={() => setShowGuestLogin(false)}
+          />
+        )}
+
+        {isGuest && (
+          <div className="mb-6 rounded-2xl border border-emerald-500/40 bg-emerald-500/10 px-4 py-3 flex flex-col sm:flex-row items-start sm:items-center gap-3 text-sm">
+            <div className="flex-1">
+              <div className="font-medium text-foreground">
+                Signed in as guest: <span className="font-bold">{guest?.displayName}</span>
+              </div>
+              <div className="text-muted-foreground text-xs">
+                {guest?.email} — your picks save automatically to this email + PIN.
+              </div>
+            </div>
+            <Button size="sm" variant="outline" onClick={handleGuestSignOut}>
+              <LogOut className="size-3.5 mr-1" /> Sign out
             </Button>
           </div>
         )}
@@ -279,7 +307,22 @@ function PredictionsPage() {
                   canPredict={canPredict}
                   onSave={async (fixtureId, hp, ap) => {
                     try {
-                      await upsertFn({ data: { fixtureId, homePred: hp, awayPred: ap } });
+                      if (user) {
+                        await upsertFn({ data: { fixtureId, homePred: hp, awayPred: ap } });
+                      } else if (guest) {
+                        await upsertGuestFn({
+                          data: {
+                            email: guest.email,
+                            pin: guest.pin,
+                            fixtureId,
+                            homePred: hp,
+                            awayPred: ap,
+                          },
+                        });
+                      } else {
+                        setShowGuestLogin(true);
+                        return;
+                      }
                       toast.success("Prediction saved");
                       await loadAll();
                     } catch (e: any) {
@@ -294,7 +337,7 @@ function PredictionsPage() {
               {loading || !leaderboard ? (
                 <Loading />
               ) : (
-                <LeaderboardList rows={leaderboard} currentUserId={user?.id ?? null} />
+                <LeaderboardList rows={leaderboard} currentUserId={myEntrantId} />
               )}
             </TabsContent>
 
