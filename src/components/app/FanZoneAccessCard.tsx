@@ -71,7 +71,7 @@ export function FanZoneAccessCard() {
     setMessage("");
   };
 
-  const ctaLabel = info!.status === "none" ? "Request access" : "Ask again";
+  const ctaLabel = info!.status === "none" ? "Join BM Support" : "Ask again";
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>

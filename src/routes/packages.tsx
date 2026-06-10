@@ -237,7 +237,7 @@ function PackagesPage() {
         {/* Final CTA */}
         <section className="px-6 py-20 text-center max-w-3xl mx-auto">
           <h2 className="font-display text-3xl md:text-4xl font-bold mb-4">Ready to get started?</h2>
-          <p className="text-muted-foreground mb-8">Request access to view full pricing and choose the package that fits.</p>
+          <p className="text-muted-foreground mb-8">Join BM Support to view full pricing and choose the package that fits.</p>
           <div className="flex items-center justify-center gap-3">
             {isVpn ? (
               <button
@@ -246,10 +246,10 @@ function PackagesPage() {
                 className="px-6 py-3 rounded-md bg-red-600/50 text-white font-medium cursor-not-allowed inline-flex items-center gap-2"
                 aria-disabled="true"
               >
-                <ShieldAlert className="size-4" /> Request access
+                <ShieldAlert className="size-4" /> Join BM Support
               </button>
             ) : (
-              <Link to="/signup" className="px-6 py-3 rounded-md bg-red-600 text-white hover:bg-red-500 font-medium">Request access</Link>
+              <Link to="/signup" className="px-6 py-3 rounded-md bg-red-600 text-white hover:bg-red-500 font-medium">Join BM Support</Link>
             )}
             <Link to="/contact" className="px-6 py-3 rounded-md border border-border hover:bg-muted font-medium">Contact us</Link>
           </div>
