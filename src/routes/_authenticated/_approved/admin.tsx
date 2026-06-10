@@ -495,6 +495,7 @@ function DashboardBody() {
     { to: "/admin-ticket-categories", label: "Ticket categories", desc: "Edit the names and descriptions of support ticket categories.", icon: LifeBuoy },
     { to: "/admin-archived-tickets", label: "Archived tickets", desc: "Browse and restore tickets auto-archived 7 days after closing.", icon: LifeBuoy },
     { to: "/admin-fan-zone", label: "Boro Fan Zone", desc: "Approve, reject or revoke fan-zone access for Middlesbrough F.C. supporters.", icon: Trophy },
+    { to: "/admin-predictions", label: "World Cup predictions", desc: "Manage fixtures, scores, leaderboard and prize settings for the 2026 predictions game.", icon: Trophy },
     { to: "/admin-forum", label: "Forum boards", desc: "Create boards, pin/lock them, and assign board-specific moderators.", icon: MessageSquare },
     { to: "/admin-affiliate-banners", label: "Affiliate banners", desc: "Upload sidebar advert images and assign them to forum boards.", icon: ImageIcon },
     { to: "/admin-streaming-devices", label: "Streaming devices", desc: "Manage the streaming device catalogue and refresh UK retailer prices.", icon: MonitorPlay },
