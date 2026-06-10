@@ -684,19 +684,129 @@ function GuestLoginCard({
   busy,
   onSubmit,
   onCancel,
+  onRequestReset,
+  onResetPin,
 }: {
   busy: boolean;
   onSubmit: (email: string, pin: string, displayName: string) => void;
   onCancel: () => void;
+  onRequestReset: (email: string) => Promise<void>;
+  onResetPin: (email: string, code: string, newPin: string) => Promise<void>;
 }) {
   const [email, setEmail] = useState("");
   const [pin, setPin] = useState("");
   const [displayName, setDisplayName] = useState("");
+  const [mode, setMode] = useState<"login" | "reset-request" | "reset-verify">("login");
+  const [resetCode, setResetCode] = useState("");
+  const [newPin, setNewPin] = useState("");
+  const [resetting, setResetting] = useState(false);
 
   const valid =
     /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.trim()) &&
     /^\d{4}$/.test(pin) &&
     displayName.trim().length >= 1;
+
+  const emailValid = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.trim());
+  const resetValid = emailValid && /^\d{6}$/.test(resetCode) && /^\d{4}$/.test(newPin);
+
+  if (mode === "reset-request" || mode === "reset-verify") {
+    return (
+      <div className="mb-6 rounded-2xl border-2 border-primary/60 bg-surface-1 p-5 shadow-md shadow-primary/10">
+        <h3 className="font-display text-lg font-bold mb-1">Reset your PIN</h3>
+        <p className="text-sm text-muted-foreground mb-4">
+          {mode === "reset-request"
+            ? "Enter your email and we'll send a 6-digit reset code."
+            : "Enter the 6-digit code from your email and choose a new 4-digit PIN."}
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div>
+            <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+              Email
+            </label>
+            <Input
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              type="email"
+              placeholder="you@example.com"
+              disabled={resetting || mode === "reset-verify"}
+              autoComplete="email"
+            />
+          </div>
+          {mode === "reset-verify" && (
+            <>
+              <div>
+                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  Reset code
+                </label>
+                <Input
+                  value={resetCode}
+                  onChange={(e) => setResetCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                  inputMode="numeric"
+                  placeholder="6-digit code"
+                  disabled={resetting}
+                />
+              </div>
+              <div>
+                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  New 4-digit PIN
+                </label>
+                <Input
+                  value={newPin}
+                  onChange={(e) => setNewPin(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                  inputMode="numeric"
+                  placeholder="••••"
+                  disabled={resetting}
+                />
+              </div>
+            </>
+          )}
+        </div>
+        <div className="mt-4 flex items-center gap-2 justify-end">
+          <Button
+            variant="ghost"
+            onClick={() => {
+              setMode("login");
+              setResetCode("");
+              setNewPin("");
+            }}
+            disabled={resetting}
+          >
+            Back to sign in
+          </Button>
+          {mode === "reset-request" ? (
+            <Button
+              onClick={async () => {
+                setResetting(true);
+                try {
+                  await onRequestReset(email.trim().toLowerCase());
+                  setMode("reset-verify");
+                } finally {
+                  setResetting(false);
+                }
+              }}
+              disabled={!emailValid || resetting}
+            >
+              {resetting ? <Loader2 className="size-4 animate-spin" /> : "Send reset code"}
+            </Button>
+          ) : (
+            <Button
+              onClick={async () => {
+                setResetting(true);
+                try {
+                  await onResetPin(email.trim().toLowerCase(), resetCode, newPin);
+                } finally {
+                  setResetting(false);
+                }
+              }}
+              disabled={!resetValid || resetting}
+            >
+              {resetting ? <Loader2 className="size-4 animate-spin" /> : "Reset PIN & sign in"}
+            </Button>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mb-6 rounded-2xl border-2 border-primary/60 bg-surface-1 p-5 shadow-md shadow-primary/10">
@@ -747,6 +857,14 @@ function GuestLoginCard({
       <div className="mt-4 flex items-center gap-2 justify-end">
         <Button variant="ghost" onClick={onCancel} disabled={busy}>
           Cancel
+        </Button>
+        <Button
+          variant="ghost"
+          onClick={() => setMode("reset-request")}
+          disabled={busy}
+          type="button"
+        >
+          Forgot PIN?
         </Button>
         <Button
           onClick={() => onSubmit(email.trim().toLowerCase(), pin, displayName.trim())}
