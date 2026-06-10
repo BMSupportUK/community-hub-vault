@@ -1,10 +1,12 @@
 import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Trophy, Plus, Trash2, Save, RefreshCw, Loader2 } from "lucide-react";
+import { Trophy, Plus, Trash2, Save, RefreshCw, Loader2, ListOrdered, Settings as SettingsIcon, CalendarDays, Star } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
   DialogContent,
@@ -20,8 +22,13 @@ import {
   adminDeleteWcFixture,
   adminSetWcResult,
   adminRescoreAllWc,
+  getWcLeaderboard,
+  getWcSettings,
+  adminSetWcSettings,
   type WcFixtureDTO,
   type WcStage,
+  type WcLeaderboardRowDTO,
+  type WcSettingsDTO,
 } from "@/lib/wc-predictions.functions";
 
 export const Route = createFileRoute("/_authenticated/_approved/admin-predictions")({
