@@ -27,6 +27,7 @@ import {
 } from "@/lib/wc-guest.functions";
 import { teamFlag } from "@/lib/country-flags";
 import heroBg from "@/assets/england-world-cup-hero.jpg";
+import { LandingHeader } from "@/components/LandingHeader";
 
 export const Route = createFileRoute("/predictions")({
   component: PredictionsPage,
@@ -250,6 +251,7 @@ function PredictionsPage() {
 
   return (
     <main className="relative isolate flex-1 overflow-y-auto">
+      <LandingHeader />
       {/* Full-page hero background (absolute so the parent's bg-background can't cover it) */}
       <div
         className="pointer-events-none absolute inset-0 z-0 bg-cover bg-center bg-no-repeat"
