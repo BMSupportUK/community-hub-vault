@@ -251,7 +251,9 @@ function PredictionsPage() {
 
   return (
     <main className="relative isolate flex-1 overflow-y-auto">
-      <LandingHeader />
+      <div className="relative z-20 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+        <LandingHeader />
+      </div>
       {/* Full-page hero background (absolute so the parent's bg-background can't cover it) */}
       <div
         className="pointer-events-none absolute inset-0 z-0 bg-cover bg-center bg-no-repeat"
