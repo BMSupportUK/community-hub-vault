@@ -77,21 +77,21 @@ function Landing() {
           }}
         >
           <div className="grid md:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] gap-5 md:gap-3 lg:gap-4 items-center w-full">
-            <div className="space-y-4 text-white">
-              <h1 className="font-display text-3xl md:text-5xl font-bold tracking-tight leading-[1.05] drop-shadow-[0_2px_20px_rgba(0,0,0,0.5)]">
+            <div className="space-y-5 text-white">
+              <h1 className="font-display text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight leading-[1.05] drop-shadow-[0_2px_20px_rgba(0,0,0,0.5)]">
                 Welcome to <span className="bg-gradient-to-r from-red-200 via-white to-red-300 bg-clip-text text-transparent">BM Support</span>
               </h1>
-              <p className="text-base md:text-lg text-red-50/95 max-w-xl">
+              <p className="text-lg md:text-2xl text-red-50/95 max-w-xl">
                 Your all-in-one server for BM Support — stay connected, all in one place.
               </p>
-              <p className="text-sm text-red-100/80 max-w-xl">
+              <p className="text-base md:text-lg text-red-100/80 max-w-xl">
                 Access community channels, manage your time, view schedules, get support, and explore our services. Everything you need is just one click away.
               </p>
             </div>
 
             <div className="relative w-full md:-ml-2 lg:-ml-4">
               <div className="absolute -inset-4 bg-gradient-to-tr from-red-500/40 via-transparent to-blue-500/30 blur-2xl rounded-3xl" aria-hidden />
-              <div className="relative rounded-3xl overflow-hidden border border-white/20 shadow-[0_20px_80px_rgba(0,0,0,0.6)] max-w-[520px] ml-auto">
+              <div className="relative rounded-3xl overflow-hidden border border-white/20 shadow-[0_20px_80px_rgba(0,0,0,0.6)] max-w-[680px] ml-auto">
                 <img
                   src={welcomeHero}
                   alt="BM Support hero"
@@ -100,7 +100,7 @@ function Landing() {
                   loading="eager"
                   fetchPriority="high"
                   decoding="async"
-                  className="block w-full h-auto max-h-[44vh] object-cover"
+                  className="block w-full h-auto max-h-[56vh] object-cover"
                 />
               </div>
             </div>
