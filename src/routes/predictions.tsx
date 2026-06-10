@@ -371,12 +371,37 @@ function PredictionsPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-6">
           <Tabs value={tab} onValueChange={setTab} className="min-w-0">
-            <TabsList className="grid grid-cols-5 w-full sm:w-auto">
-              <TabsTrigger value="fixtures">Fixtures</TabsTrigger>
-              <TabsTrigger value="leaderboard">Leaderboard</TabsTrigger>
-              <TabsTrigger value="mine">My picks</TabsTrigger>
-              <TabsTrigger value="scoring">Scoring</TabsTrigger>
-              <TabsTrigger value="prize">Prize</TabsTrigger>
+            <TabsList className="grid grid-cols-5 w-full sm:w-auto h-auto gap-1 p-1">
+              <TabsTrigger
+                value="fixtures"
+                className="px-1 sm:px-3 py-1.5 text-[11px] sm:text-sm leading-tight whitespace-normal text-center"
+              >
+                Fixtures
+              </TabsTrigger>
+              <TabsTrigger
+                value="leaderboard"
+                className="px-1 sm:px-3 py-1.5 text-[11px] sm:text-sm leading-tight whitespace-normal text-center"
+              >
+                Leaderboard
+              </TabsTrigger>
+              <TabsTrigger
+                value="mine"
+                className="px-1 sm:px-3 py-1.5 text-[11px] sm:text-sm leading-tight whitespace-normal text-center"
+              >
+                My picks
+              </TabsTrigger>
+              <TabsTrigger
+                value="scoring"
+                className="px-1 sm:px-3 py-1.5 text-[11px] sm:text-sm leading-tight whitespace-normal text-center"
+              >
+                Scoring
+              </TabsTrigger>
+              <TabsTrigger
+                value="prize"
+                className="px-1 sm:px-3 py-1.5 text-[11px] sm:text-sm leading-tight whitespace-normal text-center"
+              >
+                Prize
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="fixtures" className="mt-4">
