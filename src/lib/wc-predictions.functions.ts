@@ -284,3 +284,52 @@ export const adminRescoreAllWc = createServerFn({ method: "POST" })
     }
     return { ok: true, count: (fixtures ?? []).length };
   });
+
+// ------------------------------------------------------------------
+// Settings (prize text + tagline) — stored in app_settings
+// ------------------------------------------------------------------
+export type WcSettingsDTO = {
+  prizeText: string;
+  tagline: string;
+};
+
+const SETTING_KEYS = ["wc_prize_text", "wc_tagline"] as const;
+
+export const getWcSettings = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<WcSettingsDTO> => {
+    const { supabase } = context;
+    const { data, error } = await supabase
+      .from("app_settings")
+      .select("key, value")
+      .in("key", SETTING_KEYS as unknown as string[]);
+    if (error) throw new Error(error.message);
+    const map = new Map<string, unknown>((data ?? []).map((r: any) => [r.key, r.value]));
+    const asStr = (v: unknown) => (typeof v === "string" ? v : "");
+    return {
+      prizeText: asStr(map.get("wc_prize_text")),
+      tagline: asStr(map.get("wc_tagline")),
+    };
+  });
+
+const settingsSchema = z.object({
+  prizeText: z.string().max(500),
+  tagline: z.string().max(200),
+});
+
+export const adminSetWcSettings = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => settingsSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    if (!(await isAdminOrManagement(supabase, userId))) throw new Error("Forbidden");
+    const rows = [
+      { key: "wc_prize_text", value: data.prizeText as unknown as object, updated_by: userId },
+      { key: "wc_tagline", value: data.tagline as unknown as object, updated_by: userId },
+    ];
+    const { error } = await supabase
+      .from("app_settings")
+      .upsert(rows as never, { onConflict: "key" });
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
