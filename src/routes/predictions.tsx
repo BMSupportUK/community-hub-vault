@@ -111,6 +111,8 @@ function PredictionsPage() {
   const listFixturesPublicFn = useServerFn(listWcFixturesPublic);
   const upsertGuestFn = useServerFn(upsertWcGuestPrediction);
   const leaderboardPublicFn = useServerFn(getWcLeaderboardPublic);
+  const requestPinResetFn = useServerFn(requestGuestPinReset);
+  const resetPinFn = useServerFn(resetGuestPin);
 
   // Guest session lives in localStorage so the same browser can come back and edit.
   type GuestSession = { guestId: string; email: string; pin: string; displayName: string };
