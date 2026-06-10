@@ -1240,7 +1240,7 @@ function LeaderboardList({
   }
   return (
     <div className="rounded-2xl border border-border bg-surface-1 overflow-hidden">
-      <div className="grid grid-cols-[40px_1fr_70px_70px_70px_72px] sm:grid-cols-[48px_1fr_80px_80px_80px_80px_88px] gap-2 px-4 py-2.5 text-[11px] uppercase tracking-wider text-muted-foreground bg-surface-2 border-b border-border">
+      <div className="grid grid-cols-[28px_1fr_44px_44px_48px_60px] sm:grid-cols-[48px_1fr_80px_80px_80px_80px_88px] gap-2 px-3 sm:px-4 py-2.5 text-[11px] uppercase tracking-wider text-muted-foreground bg-surface-2 border-b border-border">
         <div>#</div>
         <div>Player</div>
         <div className="text-right">Played</div>
@@ -1256,7 +1256,7 @@ function LeaderboardList({
           return (
             <li
               key={r.userId}
-              className={`grid grid-cols-[40px_1fr_70px_70px_70px_72px] sm:grid-cols-[48px_1fr_80px_80px_80px_80px_88px] gap-2 px-4 py-2.5 text-sm border-b border-border last:border-b-0 ${
+              className={`grid grid-cols-[28px_1fr_44px_44px_48px_60px] sm:grid-cols-[48px_1fr_80px_80px_80px_80px_88px] gap-2 px-3 sm:px-4 py-2.5 text-sm border-b border-border last:border-b-0 ${
                 mine ? "bg-primary/5" : ""
               }`}
             >
@@ -1276,10 +1276,10 @@ function LeaderboardList({
                   <img
                     src={r.avatarUrl}
                     alt=""
-                    className="size-7 rounded-full object-cover bg-surface-2"
+                    className="hidden sm:block size-7 rounded-full object-cover bg-surface-2"
                   />
                 ) : (
-                  <div className="size-7 rounded-full bg-surface-2" />
+                  <div className="hidden sm:block size-7 rounded-full bg-surface-2" />
                 )}
                 <span className="truncate font-medium">
                   {r.displayName || r.username || "Anonymous"}
