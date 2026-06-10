@@ -3871,6 +3871,8 @@ export type Database = {
           email: string
           id: string
           pin_hash: string
+          pin_reset_expires_at: string | null
+          pin_reset_hash: string | null
           pin_salt: string
           updated_at: string
         }
@@ -3880,6 +3882,8 @@ export type Database = {
           email: string
           id?: string
           pin_hash: string
+          pin_reset_expires_at?: string | null
+          pin_reset_hash?: string | null
           pin_salt: string
           updated_at?: string
         }
@@ -3889,6 +3893,8 @@ export type Database = {
           email?: string
           id?: string
           pin_hash?: string
+          pin_reset_expires_at?: string | null
+          pin_reset_hash?: string | null
           pin_salt?: string
           updated_at?: string
         }

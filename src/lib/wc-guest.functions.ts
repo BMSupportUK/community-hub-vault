@@ -225,3 +225,139 @@ export const getWcLeaderboardPublic = createServerFn({ method: "GET" }).handler(
     }));
   },
 );
+
+// --------------------------------------------------------------------
+// Guest PIN reset — request a code by email
+// --------------------------------------------------------------------
+const requestResetSchema = z.object({ email: emailSchema });
+
+export const requestGuestPinReset = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => requestResetSchema.parse(d))
+  .handler(async ({ data }) => {
+    const admin = await getAdmin();
+    const { data: entrant } = await admin
+      .from("wc_guest_entrants")
+      .select("id, display_name, email")
+      .eq("email", data.email)
+      .maybeSingle();
+
+    // Always behave the same to avoid email enumeration.
+    if (!entrant) {
+      return { ok: true };
+    }
+
+    // 6-digit code, valid 30 min. Store only a hash.
+    const code = String(Math.floor(100000 + Math.random() * 900000));
+    const codeSalt = randomBytes(8).toString("hex");
+    const codeHash = `${codeSalt}:${hashPin(code, codeSalt)}`;
+    const expiresAt = new Date(Date.now() + 30 * 60 * 1000).toISOString();
+
+    const { error: updErr } = await admin
+      .from("wc_guest_entrants")
+      .update({ pin_reset_hash: codeHash, pin_reset_expires_at: expiresAt })
+      .eq("id", (entrant as any).id);
+    if (updErr) throw new Error(updErr.message);
+
+    // Render & enqueue the email directly via admin client.
+    try {
+      const React = await import("react");
+      const { render } = await import("@react-email/render");
+      const { template } = await import("@/lib/email-templates/wc-guest-pin-reset");
+
+      const element = React.createElement(template.component, {
+        displayName: (entrant as any).display_name,
+        code,
+        expiresMinutes: 30,
+      });
+      const html = await render(element);
+      const text = await render(element, { plainText: true });
+
+      const subject =
+        typeof template.subject === "function"
+          ? (template.subject as (d: any) => string)({ code })
+          : template.subject;
+
+      const messageId = crypto.randomUUID();
+      await admin.from("email_send_log").insert({
+        message_id: messageId,
+        template_name: "wc-guest-pin-reset",
+        recipient_email: (entrant as any).email,
+        status: "pending",
+      });
+
+      await admin.rpc("enqueue_email" as never, {
+        queue_name: "transactional_emails",
+        payload: {
+          message_id: messageId,
+          to: (entrant as any).email,
+          from: "BM Support <noreply@bmsupport.uk>",
+          sender_domain: "notify.bmsupport.uk",
+          subject,
+          html,
+          text,
+          purpose: "transactional",
+          label: "wc-guest-pin-reset",
+          idempotency_key: messageId,
+          queued_at: new Date().toISOString(),
+        },
+      } as never);
+    } catch (e) {
+      console.error("Failed to enqueue PIN reset email", e);
+      throw new Error("Failed to send reset email — please try again.");
+    }
+
+    return { ok: true };
+  });
+
+// --------------------------------------------------------------------
+// Guest PIN reset — verify code and set new PIN
+// --------------------------------------------------------------------
+const resetSchema = z.object({
+  email: emailSchema,
+  code: z.string().regex(/^\d{6}$/, "Reset code must be 6 digits"),
+  newPin: pinSchema,
+});
+
+export const resetGuestPin = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => resetSchema.parse(d))
+  .handler(async ({ data }) => {
+    const admin = await getAdmin();
+    const { data: entrant, error } = await admin
+      .from("wc_guest_entrants")
+      .select("id, display_name, pin_reset_hash, pin_reset_expires_at")
+      .eq("email", data.email)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!entrant || !(entrant as any).pin_reset_hash || !(entrant as any).pin_reset_expires_at) {
+      throw new Error("No reset request found. Please request a new code.");
+    }
+    if (new Date((entrant as any).pin_reset_expires_at).getTime() < Date.now()) {
+      throw new Error("Reset code has expired. Please request a new one.");
+    }
+    const stored: string = (entrant as any).pin_reset_hash;
+    const [codeSalt, codeHash] = stored.split(":");
+    if (!codeSalt || !codeHash) throw new Error("Invalid reset state.");
+    const computed = Buffer.from(hashPin(data.code, codeSalt), "hex");
+    const target = Buffer.from(codeHash, "hex");
+    if (computed.length !== target.length || !timingSafeEqual(computed, target)) {
+      throw new Error("Incorrect reset code.");
+    }
+
+    const salt = randomBytes(16).toString("hex");
+    const hash = hashPin(data.newPin, salt);
+    const { error: upErr } = await admin
+      .from("wc_guest_entrants")
+      .update({
+        pin_salt: salt,
+        pin_hash: hash,
+        pin_reset_hash: null,
+        pin_reset_expires_at: null,
+      })
+      .eq("id", (entrant as any).id);
+    if (upErr) throw new Error(upErr.message);
+    return {
+      ok: true,
+      guestId: (entrant as any).id as string,
+      displayName: (entrant as any).display_name as string,
+    };
+  });
