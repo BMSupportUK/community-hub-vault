@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Trophy, Loader2, Lock, Check, Star, Crown, Medal, Award, Pencil, CalendarDays } from "lucide-react";
+import { Trophy, Loader2, Lock, Check, Star, Crown, Medal, Award, Pencil, CalendarDays, LogOut } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,12 @@ import {
   type WcFixtureDTO,
   type WcLeaderboardRowDTO,
 } from "@/lib/wc-predictions.functions";
+import {
+  guestSignInOrRegister,
+  listWcFixturesPublic,
+  upsertWcGuestPrediction,
+  getWcLeaderboardPublic,
+} from "@/lib/wc-guest.functions";
 import { teamFlag } from "@/lib/country-flags";
 import heroBg from "@/assets/england-world-cup-hero.jpg";
 
