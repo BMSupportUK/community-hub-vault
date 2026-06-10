@@ -31,6 +31,7 @@ function SignupPage() {
   const [inviteCode, setInviteCode] = useState(inviteFromUrl ?? "");
   const [busy, setBusy] = useState(false);
   const [captchaToken, setCaptchaToken] = useState("");
+  const [intent, setIntent] = useState<"bm-support" | "fan-zone" | "">("");
   const isVpn = useVisitorVpn();
   const [vpnDialogOpen, setVpnDialogOpen] = useState(false);
 
@@ -40,6 +41,7 @@ function SignupPage() {
       setVpnDialogOpen(true);
       return;
     }
+    if (!intent) return toast.error("Please choose what you'd like access to.");
     if (!captchaToken) return toast.error("Please complete the captcha.");
     setBusy(true);
     const verify = await verifyTurnstile({ data: { token: captchaToken } });
@@ -68,6 +70,7 @@ function SignupPage() {
       };
       const conn = nav.connection;
       const client: Record<string, unknown> = {
+        access_intent: intent,
         userAgent: navigator.userAgent,
         language: navigator.language,
         languages: (navigator.languages ?? []).join(","),
@@ -95,13 +98,13 @@ function SignupPage() {
       if (redeemError) {
         setBusy(false);
         toast.error(`Invite code: ${redeemError.message}`);
-        navigate({ to: "/gate" });
+        navigate({ to: "/gate", search: { intent } });
         return;
       }
     }
     setBusy(false);
     toast.success("Account created. A moderator will review your request.");
-    navigate({ to: "/gate" });
+    navigate({ to: "/gate", search: { intent } });
   };
 
   return (
@@ -144,6 +147,56 @@ function SignupPage() {
               <Field label="Email" type="email" value={email} onChange={setEmail} />
               <Field label="Password" type="password" value={password} onChange={setPassword} />
               <Field label="Invite code (optional)" value={inviteCode} onChange={setInviteCode} required={false} />
+              <fieldset className="space-y-2">
+                <legend className="text-xs font-medium text-foreground/80 mb-1">
+                  What are you signing up for? <span className="text-destructive">*</span>
+                </legend>
+                <label
+                  className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                    intent === "bm-support"
+                      ? "border-primary bg-primary/10"
+                      : "border-border hover:border-primary/40 hover:bg-muted/30"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="intent"
+                    value="bm-support"
+                    checked={intent === "bm-support"}
+                    onChange={() => setIntent("bm-support")}
+                    className="mt-0.5 accent-primary"
+                    required
+                  />
+                  <span className="text-sm">
+                    <span className="block font-semibold">BM Support</span>
+                    <span className="block text-xs text-muted-foreground">
+                      Customer support, tickets, devices and orders.
+                    </span>
+                  </span>
+                </label>
+                <label
+                  className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                    intent === "fan-zone"
+                      ? "border-primary bg-primary/10"
+                      : "border-border hover:border-primary/40 hover:bg-muted/30"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="intent"
+                    value="fan-zone"
+                    checked={intent === "fan-zone"}
+                    onChange={() => setIntent("fan-zone")}
+                    className="mt-0.5 accent-primary"
+                  />
+                  <span className="text-sm">
+                    <span className="block font-semibold">Boro Fan Zone</span>
+                    <span className="block text-xs text-muted-foreground">
+                      Match-day banter, transfer talk and the forum.
+                    </span>
+                  </span>
+                </label>
+              </fieldset>
               <TurnstileWidget onToken={setCaptchaToken} onExpire={() => setCaptchaToken("")} />
               {isVpn ? (
                 <button
