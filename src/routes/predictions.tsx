@@ -466,10 +466,27 @@ function PredictionsPage() {
                     <span className="inline-flex min-w-16 justify-center px-2 py-1 rounded bg-amber-500 text-black text-xs font-bold">1st place</span>
                     <span>£10 Amazon voucher</span>
                   </li>
+                  <li className="flex items-center gap-3">
+                    <span className="inline-flex min-w-16 justify-center px-2 py-1 rounded bg-zinc-300 text-black text-xs font-bold">2nd place</span>
+                    <span>£5 Amazon voucher</span>
+                  </li>
+                  <li className="flex items-center gap-3">
+                    <span className="inline-flex min-w-16 justify-center px-2 py-1 rounded bg-orange-400 text-black text-xs font-bold">3rd place</span>
+                    <span>£5 Amazon voucher</span>
+                  </li>
                 </ul>
-                <p className="text-sm text-muted-foreground">
-                  If there is a tie, the winners will be entered into a draw to determine the winner.
-                </p>
+                <div className="rounded-xl border border-border bg-surface-2/60 p-3 space-y-2">
+                  <p className="text-sm font-semibold">Tie-breakers (in order)</p>
+                  <ol className="list-decimal list-inside text-sm text-muted-foreground space-y-1">
+                    <li>Most exact score predictions</li>
+                    <li>Most correct match results (win / draw / loss)</li>
+                    <li>Most correct goal difference predictions</li>
+                    <li>Earliest prediction submission timestamp</li>
+                  </ol>
+                  <p className="text-xs text-muted-foreground">
+                    If players are still level after all tie-breakers, a random draw decides the winner.
+                  </p>
+                </div>
               </div>
             </TabsContent>
           </Tabs>
