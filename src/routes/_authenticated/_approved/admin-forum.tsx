@@ -31,10 +31,11 @@ type Mod = { board_id: string; user_id: string };
 type Profile = { id: string; display_name: string | null; username: string | null };
 type Perm = { board_id: string; role: string; can_view: boolean; can_create_topic: boolean; can_reply: boolean };
 
-const ROLES: { value: AppRole; label: string }[] = [
+const ROLES: { value: AppRole | "guest"; label: string }[] = [
   { value: "admin", label: "Admin" },
   { value: "boro_fan_zone_moderator", label: "Boro Fan Zone Moderator" },
   { value: "boro_fan_zone_member", label: "Boro Fan Zone Member" },
+  { value: "guest", label: "Guest (signed-out visitor)" },
 ];
 
 function AdminForumPage() {
@@ -156,12 +157,12 @@ function AdminForumPage() {
 
   const togglePerm = async (
     boardId: string,
-    role: AppRole,
+    role: AppRole | "guest",
     field: "can_view" | "can_create_topic" | "can_reply",
     next: boolean,
   ) => {
     const existing = perms.find((p) => p.board_id === boardId && p.role === role);
-    const row: { board_id: string; role: AppRole; can_view: boolean; can_create_topic: boolean; can_reply: boolean } = {
+    const row: { board_id: string; role: AppRole | "guest"; can_view: boolean; can_create_topic: boolean; can_reply: boolean } = {
       board_id: boardId,
       role,
       can_view: existing?.can_view ?? false,
@@ -180,7 +181,7 @@ function AdminForumPage() {
     if (error) { toast.error("Couldn't save permission", { description: error.message }); void load(); }
   };
 
-  const permFor = (boardId: string, role: AppRole) =>
+  const permFor = (boardId: string, role: AppRole | "guest") =>
     perms.find((p) => p.board_id === boardId && p.role === role);
 
   return (
@@ -307,7 +308,7 @@ function AdminForumPage() {
                 <div className="rounded-lg bg-background/60 border border-border/60 p-3">
                   <div className="text-[11px] uppercase tracking-wide text-muted-foreground mb-2">Permissions per role</div>
                   <p className="text-[11px] text-muted-foreground mb-2">
-                    Admin, management and moderator roles always have full access. If no rows are toggled below, the default falls back to approved Fan Zone members.
+                    Admin, management and moderator roles always have full access. If no rows are toggled below, the default falls back to approved Fan Zone members. Use the Guest row to control what signed-out visitors can see on the public Boro Fan Zone pages.
                   </p>
                   <div className="overflow-x-auto">
                     <table className="w-full text-xs">
