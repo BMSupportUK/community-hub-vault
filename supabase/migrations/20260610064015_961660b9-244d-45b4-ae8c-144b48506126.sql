@@ -1,0 +1,1 @@
+ALTER TABLE public.wc_predictions ADD CONSTRAINT wc_predictions_guest_id_fixture_id_key UNIQUE (guest_id, fixture_id);
