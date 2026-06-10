@@ -476,16 +476,27 @@ function PredictionsPage() {
                   </li>
                 </ul>
                 <div className="rounded-xl border border-border bg-surface-2/60 p-3 space-y-2">
-                  <p className="text-sm font-semibold">Tie-breakers (in order)</p>
-                  <ol className="list-decimal list-inside text-sm text-muted-foreground space-y-1">
-                    <li>Most exact score predictions</li>
-                    <li>Most correct match results (win / draw / loss)</li>
-                    <li>Most correct goal difference predictions</li>
-                    <li>Earliest prediction submission timestamp</li>
-                  </ol>
+                  <p className="text-sm font-semibold">How tie-breakers work</p>
                   <p className="text-xs text-muted-foreground">
-                    If players are still level after all tie-breakers, a random draw decides the winner.
+                    If two or more players finish on the same total points, we apply the following rules in order until a winner is found:
                   </p>
+                  <ol className="list-decimal list-inside text-sm text-muted-foreground space-y-1">
+                    <li>
+                      <span className="text-foreground font-medium">Most exact score predictions</span> — whoever called the most final scores spot-on wins.
+                    </li>
+                    <li>
+                      <span className="text-foreground font-medium">Most correct match results</span> — next, who called the most win / draw / loss outcomes correctly.
+                    </li>
+                    <li>
+                      <span className="text-foreground font-medium">Closest goal difference</span> — total goal-difference error across all matches; lowest wins.
+                    </li>
+                    <li>
+                      <span className="text-foreground font-medium">Most correct knockout-stage picks</span> — accuracy on later, higher-stakes fixtures breaks remaining ties.
+                    </li>
+                    <li>
+                      <span className="text-foreground font-medium">Earliest submission</span> — the player who locked their predictions in first takes the prize.
+                    </li>
+                  </ol>
                 </div>
               </div>
             </TabsContent>
