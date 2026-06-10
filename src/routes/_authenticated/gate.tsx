@@ -56,6 +56,9 @@ function GatePage() {
   const verifyCaptcha = useServerFn(verifyTurnstile);
 
   const requestAccess = (action: "chat" | "form") => {
+    if (action === "form" && !reasonDraft && !appId) {
+      setReasonDraft(`[${intentLabel}] `);
+    }
     if (captchaPassed) {
       if (action === "chat") setChatOpen(true);
       else setFormOpen(true);
