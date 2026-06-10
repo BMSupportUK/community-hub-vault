@@ -94,7 +94,6 @@ function PredictionsPage() {
   const { user } = useAuth();
   const [joined, setJoined] = useState<boolean>(false);
   const [joining, setJoining] = useState(false);
-  const canPredict = joined;
   const [tab, setTab] = useState("fixtures");
   const [fixtures, setFixtures] = useState<WcFixtureDTO[] | null>(null);
   const [leaderboard, setLeaderboard] = useState<WcLeaderboardRowDTO[] | null>(null);
@@ -106,13 +105,45 @@ function PredictionsPage() {
   const statusFn = useServerFn(getWcEntrantStatus);
   const joinFn = useServerFn(joinWcPredictor);
 
+  const guestSignInFn = useServerFn(guestSignInOrRegister);
+  const listFixturesPublicFn = useServerFn(listWcFixturesPublic);
+  const upsertGuestFn = useServerFn(upsertWcGuestPrediction);
+  const leaderboardPublicFn = useServerFn(getWcLeaderboardPublic);
+
+  // Guest session lives in localStorage so the same browser can come back and edit.
+  type GuestSession = { guestId: string; email: string; pin: string; displayName: string };
+  const [guest, setGuest] = useState<GuestSession | null>(null);
+  const [showGuestLogin, setShowGuestLogin] = useState(false);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("wc_guest_session");
+      if (raw) setGuest(JSON.parse(raw));
+    } catch { /* ignore */ }
+  }, []);
+
+  const isGuest = !user && !!guest;
+  const canPredict = !!user ? joined : isGuest;
+  const myEntrantId = user ? user.id : guest?.guestId ?? null;
+
   const loadAll = async () => {
     setLoading(true);
     try {
-      const [fx, lb, st] = await Promise.all([listFixturesFn(), leaderboardFn(), statusFn()]);
-      setFixtures(fx);
-      setLeaderboard(lb);
-      setJoined(st.joined);
+      if (user) {
+        const [fx, lb, st] = await Promise.all([listFixturesFn(), leaderboardFn(), statusFn()]);
+        setFixtures(fx);
+        setLeaderboard(lb as any);
+        setJoined(st.joined);
+      } else {
+        const creds = guest ? { email: guest.email, pin: guest.pin } : {};
+        const [fx, lb] = await Promise.all([
+          listFixturesPublicFn({ data: creds }),
+          leaderboardPublicFn(),
+        ]);
+        setFixtures(fx as any);
+        setLeaderboard(lb as any);
+        setJoined(!!guest);
+      }
     } catch (e: any) {
       toast.error(e?.message ?? "Failed to load");
     } finally {
@@ -121,6 +152,10 @@ function PredictionsPage() {
   };
 
   const handleJoin = async () => {
+    if (!user) {
+      setShowGuestLogin(true);
+      return;
+    }
     setJoining(true);
     try {
       await joinFn();
@@ -133,15 +168,44 @@ function PredictionsPage() {
     }
   };
 
+  const handleGuestSignIn = async (email: string, pin: string, displayName: string) => {
+    setJoining(true);
+    try {
+      const res = await guestSignInFn({ data: { email, pin, displayName } });
+      const session: GuestSession = {
+        guestId: res.guestId,
+        email: email.trim().toLowerCase(),
+        pin,
+        displayName: res.displayName,
+      };
+      localStorage.setItem("wc_guest_session", JSON.stringify(session));
+      setGuest(session);
+      setShowGuestLogin(false);
+      toast.success("You're in! Start predicting.");
+      await loadAll();
+    } catch (e: any) {
+      toast.error(e?.message ?? "Sign-in failed");
+    } finally {
+      setJoining(false);
+    }
+  };
+
+  const handleGuestSignOut = () => {
+    localStorage.removeItem("wc_guest_session");
+    setGuest(null);
+    toast.success("Signed out of guest session.");
+    loadAll();
+  };
+
   useEffect(() => {
     loadAll();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [user?.id, guest?.guestId]);
 
   const myStats = useMemo(() => {
-    if (!user || !leaderboard) return null;
-    return leaderboard.find((r) => r.userId === user.id) ?? null;
-  }, [leaderboard, user]);
+    if (!leaderboard || !myEntrantId) return null;
+    return (leaderboard as any[]).find((r) => r.userId === myEntrantId) ?? null;
+  }, [leaderboard, myEntrantId]);
 
   const upcomingFixtures = useMemo(() => {
     if (!fixtures) return [];
