@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Trophy, Loader2, Lock, Check, Star, Crown, Medal, Award, Pencil, CalendarDays } from "lucide-react";
+import { Trophy, Loader2, Lock, Check, Star, Crown, Medal, Award, Pencil, CalendarDays, LogOut } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -16,10 +16,16 @@ import {
   type WcFixtureDTO,
   type WcLeaderboardRowDTO,
 } from "@/lib/wc-predictions.functions";
+import {
+  guestSignInOrRegister,
+  listWcFixturesPublic,
+  upsertWcGuestPrediction,
+  getWcLeaderboardPublic,
+} from "@/lib/wc-guest.functions";
 import { teamFlag } from "@/lib/country-flags";
 import heroBg from "@/assets/england-world-cup-hero.jpg";
 
-export const Route = createFileRoute("/_authenticated/_approved/predictions")({
+export const Route = createFileRoute("/predictions")({
   component: PredictionsPage,
 });
 
@@ -88,7 +94,6 @@ function PredictionsPage() {
   const { user } = useAuth();
   const [joined, setJoined] = useState<boolean>(false);
   const [joining, setJoining] = useState(false);
-  const canPredict = joined;
   const [tab, setTab] = useState("fixtures");
   const [fixtures, setFixtures] = useState<WcFixtureDTO[] | null>(null);
   const [leaderboard, setLeaderboard] = useState<WcLeaderboardRowDTO[] | null>(null);
@@ -100,13 +105,45 @@ function PredictionsPage() {
   const statusFn = useServerFn(getWcEntrantStatus);
   const joinFn = useServerFn(joinWcPredictor);
 
+  const guestSignInFn = useServerFn(guestSignInOrRegister);
+  const listFixturesPublicFn = useServerFn(listWcFixturesPublic);
+  const upsertGuestFn = useServerFn(upsertWcGuestPrediction);
+  const leaderboardPublicFn = useServerFn(getWcLeaderboardPublic);
+
+  // Guest session lives in localStorage so the same browser can come back and edit.
+  type GuestSession = { guestId: string; email: string; pin: string; displayName: string };
+  const [guest, setGuest] = useState<GuestSession | null>(null);
+  const [showGuestLogin, setShowGuestLogin] = useState(false);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("wc_guest_session");
+      if (raw) setGuest(JSON.parse(raw));
+    } catch { /* ignore */ }
+  }, []);
+
+  const isGuest = !user && !!guest;
+  const canPredict = !!user ? joined : isGuest;
+  const myEntrantId = user ? user.id : guest?.guestId ?? null;
+
   const loadAll = async () => {
     setLoading(true);
     try {
-      const [fx, lb, st] = await Promise.all([listFixturesFn(), leaderboardFn(), statusFn()]);
-      setFixtures(fx);
-      setLeaderboard(lb);
-      setJoined(st.joined);
+      if (user) {
+        const [fx, lb, st] = await Promise.all([listFixturesFn(), leaderboardFn(), statusFn()]);
+        setFixtures(fx);
+        setLeaderboard(lb as any);
+        setJoined(st.joined);
+      } else {
+        const creds = guest ? { email: guest.email, pin: guest.pin } : {};
+        const [fx, lb] = await Promise.all([
+          listFixturesPublicFn({ data: creds }),
+          leaderboardPublicFn(),
+        ]);
+        setFixtures(fx as any);
+        setLeaderboard(lb as any);
+        setJoined(!!guest);
+      }
     } catch (e: any) {
       toast.error(e?.message ?? "Failed to load");
     } finally {
@@ -115,6 +152,10 @@ function PredictionsPage() {
   };
 
   const handleJoin = async () => {
+    if (!user) {
+      setShowGuestLogin(true);
+      return;
+    }
     setJoining(true);
     try {
       await joinFn();
@@ -127,15 +168,44 @@ function PredictionsPage() {
     }
   };
 
+  const handleGuestSignIn = async (email: string, pin: string, displayName: string) => {
+    setJoining(true);
+    try {
+      const res = await guestSignInFn({ data: { email, pin, displayName } });
+      const session: GuestSession = {
+        guestId: res.guestId,
+        email: email.trim().toLowerCase(),
+        pin,
+        displayName: res.displayName,
+      };
+      localStorage.setItem("wc_guest_session", JSON.stringify(session));
+      setGuest(session);
+      setShowGuestLogin(false);
+      toast.success("You're in! Start predicting.");
+      await loadAll();
+    } catch (e: any) {
+      toast.error(e?.message ?? "Sign-in failed");
+    } finally {
+      setJoining(false);
+    }
+  };
+
+  const handleGuestSignOut = () => {
+    localStorage.removeItem("wc_guest_session");
+    setGuest(null);
+    toast.success("Signed out of guest session.");
+    loadAll();
+  };
+
   useEffect(() => {
     loadAll();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [user?.id, guest?.guestId]);
 
   const myStats = useMemo(() => {
-    if (!user || !leaderboard) return null;
-    return leaderboard.find((r) => r.userId === user.id) ?? null;
-  }, [leaderboard, user]);
+    if (!leaderboard || !myEntrantId) return null;
+    return (leaderboard as any[]).find((r) => r.userId === myEntrantId) ?? null;
+  }, [leaderboard, myEntrantId]);
 
   const upcomingFixtures = useMemo(() => {
     if (!fixtures) return [];
@@ -177,16 +247,44 @@ function PredictionsPage() {
           </div>
         </header>
 
-        {!canPredict && (
+        {!canPredict && !showGuestLogin && (
           <div className="mb-6 rounded-2xl border border-primary/40 bg-primary/10 px-4 py-3 flex flex-col sm:flex-row items-start sm:items-center gap-3">
             <div className="flex-1 text-sm">
-              <div className="font-medium text-foreground">Join the predictor — it's free.</div>
+              <div className="font-medium text-foreground">
+                {user ? "Join the predictor — it's free." : "Play along — no account needed."}
+              </div>
               <div className="text-muted-foreground">
-                Opt in to submit your scores and appear on the leaderboard. No payment, no commitment.
+                {user
+                  ? "Opt in to submit your scores and appear on the leaderboard. No payment, no commitment."
+                  : "Continue as a guest with your email and a 4-digit PIN. Re-enter the same details next time to edit your picks."}
               </div>
             </div>
             <Button onClick={handleJoin} disabled={joining}>
-              {joining ? <Loader2 className="size-4 animate-spin" /> : "Join the predictor"}
+              {joining ? <Loader2 className="size-4 animate-spin" /> : user ? "Join the predictor" : "Continue as guest"}
+            </Button>
+          </div>
+        )}
+
+        {!user && showGuestLogin && (
+          <GuestLoginCard
+            busy={joining}
+            onSubmit={handleGuestSignIn}
+            onCancel={() => setShowGuestLogin(false)}
+          />
+        )}
+
+        {isGuest && (
+          <div className="mb-6 rounded-2xl border border-emerald-500/40 bg-emerald-500/10 px-4 py-3 flex flex-col sm:flex-row items-start sm:items-center gap-3 text-sm">
+            <div className="flex-1">
+              <div className="font-medium text-foreground">
+                Signed in as guest: <span className="font-bold">{guest?.displayName}</span>
+              </div>
+              <div className="text-muted-foreground text-xs">
+                {guest?.email} — your picks save automatically to this email + PIN.
+              </div>
+            </div>
+            <Button size="sm" variant="outline" onClick={handleGuestSignOut}>
+              <LogOut className="size-3.5 mr-1" /> Sign out
             </Button>
           </div>
         )}
@@ -209,7 +307,22 @@ function PredictionsPage() {
                   canPredict={canPredict}
                   onSave={async (fixtureId, hp, ap) => {
                     try {
-                      await upsertFn({ data: { fixtureId, homePred: hp, awayPred: ap } });
+                      if (user) {
+                        await upsertFn({ data: { fixtureId, homePred: hp, awayPred: ap } });
+                      } else if (guest) {
+                        await upsertGuestFn({
+                          data: {
+                            email: guest.email,
+                            pin: guest.pin,
+                            fixtureId,
+                            homePred: hp,
+                            awayPred: ap,
+                          },
+                        });
+                      } else {
+                        setShowGuestLogin(true);
+                        return;
+                      }
                       toast.success("Prediction saved");
                       await loadAll();
                     } catch (e: any) {
@@ -224,7 +337,7 @@ function PredictionsPage() {
               {loading || !leaderboard ? (
                 <Loading />
               ) : (
-                <LeaderboardList rows={leaderboard} currentUserId={user?.id ?? null} />
+                <LeaderboardList rows={leaderboard} currentUserId={myEntrantId} />
               )}
             </TabsContent>
 
@@ -533,6 +646,85 @@ function FixturesList({
           </div>
         </div>
       ))}
+    </div>
+  );
+}
+
+function GuestLoginCard({
+  busy,
+  onSubmit,
+  onCancel,
+}: {
+  busy: boolean;
+  onSubmit: (email: string, pin: string, displayName: string) => void;
+  onCancel: () => void;
+}) {
+  const [email, setEmail] = useState("");
+  const [pin, setPin] = useState("");
+  const [displayName, setDisplayName] = useState("");
+
+  const valid =
+    /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.trim()) &&
+    /^\d{4}$/.test(pin) &&
+    displayName.trim().length >= 1;
+
+  return (
+    <div className="mb-6 rounded-2xl border-2 border-primary/60 bg-surface-1 p-5 shadow-md shadow-primary/10">
+      <h3 className="font-display text-lg font-bold mb-1">Play as guest</h3>
+      <p className="text-sm text-muted-foreground mb-4">
+        Use the same email + PIN later to edit your picks. No account required — your PIN protects
+        your entry.
+      </p>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div>
+          <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+            Display name
+          </label>
+          <Input
+            value={displayName}
+            onChange={(e) => setDisplayName(e.target.value.slice(0, 40))}
+            placeholder="e.g. Sarah B"
+            disabled={busy}
+          />
+        </div>
+        <div>
+          <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+            Email
+          </label>
+          <Input
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            type="email"
+            placeholder="you@example.com"
+            disabled={busy}
+            autoComplete="email"
+          />
+        </div>
+        <div>
+          <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+            4-digit PIN
+          </label>
+          <Input
+            value={pin}
+            onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 4))}
+            inputMode="numeric"
+            placeholder="••••"
+            disabled={busy}
+            autoComplete="one-time-code"
+          />
+        </div>
+      </div>
+      <div className="mt-4 flex items-center gap-2 justify-end">
+        <Button variant="ghost" onClick={onCancel} disabled={busy}>
+          Cancel
+        </Button>
+        <Button
+          onClick={() => onSubmit(email.trim().toLowerCase(), pin, displayName.trim())}
+          disabled={!valid || busy}
+        >
+          {busy ? <Loader2 className="size-4 animate-spin" /> : "Enter / continue"}
+        </Button>
+      </div>
     </div>
   );
 }

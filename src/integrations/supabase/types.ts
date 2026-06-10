@@ -3864,36 +3864,69 @@ export type Database = {
         }
         Relationships: []
       }
+      wc_guest_entrants: {
+        Row: {
+          created_at: string
+          display_name: string
+          email: string
+          id: string
+          pin_hash: string
+          pin_salt: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_name: string
+          email: string
+          id?: string
+          pin_hash: string
+          pin_salt: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string
+          email?: string
+          id?: string
+          pin_hash?: string
+          pin_salt?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       wc_predictions: {
         Row: {
           away_pred: number
           created_at: string
           fixture_id: string
+          guest_id: string | null
           home_pred: number
           id: string
           points: number | null
           updated_at: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           away_pred: number
           created_at?: string
           fixture_id: string
+          guest_id?: string | null
           home_pred: number
           id?: string
           points?: number | null
           updated_at?: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           away_pred?: number
           created_at?: string
           fixture_id?: string
+          guest_id?: string | null
           home_pred?: number
           id?: string
           points?: number | null
           updated_at?: string
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -3901,6 +3934,13 @@ export type Database = {
             columns: ["fixture_id"]
             isOneToOne: false
             referencedRelation: "wc_fixtures"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wc_predictions_guest_id_fkey"
+            columns: ["guest_id"]
+            isOneToOne: false
+            referencedRelation: "wc_guest_entrants"
             referencedColumns: ["id"]
           },
         ]
@@ -4062,6 +4102,7 @@ export type Database = {
           avatar_url: string | null
           display_name: string | null
           exact_count: number | null
+          is_guest: boolean | null
           predictions_made: number | null
           predictions_scored: number | null
           result_count: number | null

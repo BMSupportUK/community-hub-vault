@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as UnsubscribeRouteImport } from './routes/unsubscribe'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as PredictionsRouteImport } from './routes/predictions'
 import { Route as PackagesRouteImport } from './routes/packages'
 import { Route as MfaChallengeRouteImport } from './routes/mfa-challenge'
 import { Route as LoginRouteImport } from './routes/login'
@@ -41,7 +42,6 @@ import { Route as AuthenticatedApprovedShiftsRouteImport } from './routes/_authe
 import { Route as AuthenticatedApprovedReviewsRouteImport } from './routes/_authenticated/_approved/reviews'
 import { Route as AuthenticatedApprovedResponsiveCheckRouteImport } from './routes/_authenticated/_approved/responsive-check'
 import { Route as AuthenticatedApprovedProfileRouteImport } from './routes/_authenticated/_approved/profile'
-import { Route as AuthenticatedApprovedPredictionsRouteImport } from './routes/_authenticated/_approved/predictions'
 import { Route as AuthenticatedApprovedNewContentRouteImport } from './routes/_authenticated/_approved/new-content'
 import { Route as AuthenticatedApprovedModerationRouteImport } from './routes/_authenticated/_approved/moderation'
 import { Route as AuthenticatedApprovedMembersRouteImport } from './routes/_authenticated/_approved/members'
@@ -113,6 +113,11 @@ const SignupRoute = SignupRouteImport.update({
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
   path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PredictionsRoute = PredictionsRouteImport.update({
+  id: '/predictions',
+  path: '/predictions',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PackagesRoute = PackagesRouteImport.update({
@@ -269,12 +274,6 @@ const AuthenticatedApprovedProfileRoute =
   AuthenticatedApprovedProfileRouteImport.update({
     id: '/profile',
     path: '/profile',
-    getParentRoute: () => AuthenticatedApprovedRoute,
-  } as any)
-const AuthenticatedApprovedPredictionsRoute =
-  AuthenticatedApprovedPredictionsRouteImport.update({
-    id: '/predictions',
-    path: '/predictions',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
 const AuthenticatedApprovedNewContentRoute =
@@ -628,6 +627,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/mfa-challenge': typeof MfaChallengeRoute
   '/packages': typeof PackagesRoute
+  '/predictions': typeof PredictionsRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/unsubscribe': typeof UnsubscribeRoute
@@ -666,7 +666,6 @@ export interface FileRoutesByFullPath {
   '/members': typeof AuthenticatedApprovedMembersRoute
   '/moderation': typeof AuthenticatedApprovedModerationRoute
   '/new-content': typeof AuthenticatedApprovedNewContentRoute
-  '/predictions': typeof AuthenticatedApprovedPredictionsRoute
   '/profile': typeof AuthenticatedApprovedProfileRoute
   '/responsive-check': typeof AuthenticatedApprovedResponsiveCheckRoute
   '/reviews': typeof AuthenticatedApprovedReviewsRoute
@@ -718,6 +717,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/mfa-challenge': typeof MfaChallengeRoute
   '/packages': typeof PackagesRoute
+  '/predictions': typeof PredictionsRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/unsubscribe': typeof UnsubscribeRoute
@@ -755,7 +755,6 @@ export interface FileRoutesByTo {
   '/members': typeof AuthenticatedApprovedMembersRoute
   '/moderation': typeof AuthenticatedApprovedModerationRoute
   '/new-content': typeof AuthenticatedApprovedNewContentRoute
-  '/predictions': typeof AuthenticatedApprovedPredictionsRoute
   '/profile': typeof AuthenticatedApprovedProfileRoute
   '/responsive-check': typeof AuthenticatedApprovedResponsiveCheckRoute
   '/reviews': typeof AuthenticatedApprovedReviewsRoute
@@ -809,6 +808,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/mfa-challenge': typeof MfaChallengeRoute
   '/packages': typeof PackagesRoute
+  '/predictions': typeof PredictionsRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/unsubscribe': typeof UnsubscribeRoute
@@ -848,7 +848,6 @@ export interface FileRoutesById {
   '/_authenticated/_approved/members': typeof AuthenticatedApprovedMembersRoute
   '/_authenticated/_approved/moderation': typeof AuthenticatedApprovedModerationRoute
   '/_authenticated/_approved/new-content': typeof AuthenticatedApprovedNewContentRoute
-  '/_authenticated/_approved/predictions': typeof AuthenticatedApprovedPredictionsRoute
   '/_authenticated/_approved/profile': typeof AuthenticatedApprovedProfileRoute
   '/_authenticated/_approved/responsive-check': typeof AuthenticatedApprovedResponsiveCheckRoute
   '/_authenticated/_approved/reviews': typeof AuthenticatedApprovedReviewsRoute
@@ -902,6 +901,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/mfa-challenge'
     | '/packages'
+    | '/predictions'
     | '/reset-password'
     | '/signup'
     | '/unsubscribe'
@@ -940,7 +940,6 @@ export interface FileRouteTypes {
     | '/members'
     | '/moderation'
     | '/new-content'
-    | '/predictions'
     | '/profile'
     | '/responsive-check'
     | '/reviews'
@@ -992,6 +991,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/mfa-challenge'
     | '/packages'
+    | '/predictions'
     | '/reset-password'
     | '/signup'
     | '/unsubscribe'
@@ -1029,7 +1029,6 @@ export interface FileRouteTypes {
     | '/members'
     | '/moderation'
     | '/new-content'
-    | '/predictions'
     | '/profile'
     | '/responsive-check'
     | '/reviews'
@@ -1082,6 +1081,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/mfa-challenge'
     | '/packages'
+    | '/predictions'
     | '/reset-password'
     | '/signup'
     | '/unsubscribe'
@@ -1121,7 +1121,6 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/members'
     | '/_authenticated/_approved/moderation'
     | '/_authenticated/_approved/new-content'
-    | '/_authenticated/_approved/predictions'
     | '/_authenticated/_approved/profile'
     | '/_authenticated/_approved/responsive-check'
     | '/_authenticated/_approved/reviews'
@@ -1175,6 +1174,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   MfaChallengeRoute: typeof MfaChallengeRoute
   PackagesRoute: typeof PackagesRoute
+  PredictionsRoute: typeof PredictionsRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SignupRoute: typeof SignupRoute
   UnsubscribeRoute: typeof UnsubscribeRoute
@@ -1218,6 +1218,13 @@ declare module '@tanstack/react-router' {
       path: '/reset-password'
       fullPath: '/reset-password'
       preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/predictions': {
+      id: '/predictions'
+      path: '/predictions'
+      fullPath: '/predictions'
+      preLoaderRoute: typeof PredictionsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/packages': {
@@ -1421,13 +1428,6 @@ declare module '@tanstack/react-router' {
       path: '/profile'
       fullPath: '/profile'
       preLoaderRoute: typeof AuthenticatedApprovedProfileRouteImport
-      parentRoute: typeof AuthenticatedApprovedRoute
-    }
-    '/_authenticated/_approved/predictions': {
-      id: '/_authenticated/_approved/predictions'
-      path: '/predictions'
-      fullPath: '/predictions'
-      preLoaderRoute: typeof AuthenticatedApprovedPredictionsRouteImport
       parentRoute: typeof AuthenticatedApprovedRoute
     }
     '/_authenticated/_approved/new-content': {
@@ -1947,7 +1947,6 @@ interface AuthenticatedApprovedRouteChildren {
   AuthenticatedApprovedMembersRoute: typeof AuthenticatedApprovedMembersRoute
   AuthenticatedApprovedModerationRoute: typeof AuthenticatedApprovedModerationRoute
   AuthenticatedApprovedNewContentRoute: typeof AuthenticatedApprovedNewContentRoute
-  AuthenticatedApprovedPredictionsRoute: typeof AuthenticatedApprovedPredictionsRoute
   AuthenticatedApprovedProfileRoute: typeof AuthenticatedApprovedProfileRoute
   AuthenticatedApprovedResponsiveCheckRoute: typeof AuthenticatedApprovedResponsiveCheckRoute
   AuthenticatedApprovedReviewsRoute: typeof AuthenticatedApprovedReviewsRoute
@@ -2019,7 +2018,6 @@ const AuthenticatedApprovedRouteChildren: AuthenticatedApprovedRouteChildren = {
   AuthenticatedApprovedMembersRoute: AuthenticatedApprovedMembersRoute,
   AuthenticatedApprovedModerationRoute: AuthenticatedApprovedModerationRoute,
   AuthenticatedApprovedNewContentRoute: AuthenticatedApprovedNewContentRoute,
-  AuthenticatedApprovedPredictionsRoute: AuthenticatedApprovedPredictionsRoute,
   AuthenticatedApprovedProfileRoute: AuthenticatedApprovedProfileRoute,
   AuthenticatedApprovedResponsiveCheckRoute:
     AuthenticatedApprovedResponsiveCheckRoute,
@@ -2079,6 +2077,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   MfaChallengeRoute: MfaChallengeRoute,
   PackagesRoute: PackagesRoute,
+  PredictionsRoute: PredictionsRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SignupRoute: SignupRoute,
   UnsubscribeRoute: UnsubscribeRoute,
@@ -2106,13 +2105,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
