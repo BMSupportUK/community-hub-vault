@@ -19,7 +19,7 @@ import {
 import { teamFlag } from "@/lib/country-flags";
 import heroBg from "@/assets/england-world-cup-hero.jpg";
 
-export const Route = createFileRoute("/_authenticated/_approved/predictions")({
+export const Route = createFileRoute("/predictions")({
   component: PredictionsPage,
 });
 
