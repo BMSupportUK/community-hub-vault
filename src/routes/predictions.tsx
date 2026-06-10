@@ -297,7 +297,7 @@ function PredictionsPage() {
           </div>
         </header>
 
-        {!canPredict && !showGuestLogin && (
+        {!canPredict && !showGuestLogin && user && (
           <div className="mb-6 rounded-2xl border border-primary/40 bg-primary/10 px-4 py-3 flex flex-col sm:flex-row items-start sm:items-center gap-3">
             <div className="flex-1 text-sm">
               <div className="font-medium text-foreground">
