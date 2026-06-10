@@ -209,26 +209,29 @@ function AdminPredictionsPage() {
                 World Cup 2026 — Admin
               </h1>
               <p className="text-sm text-white/85">
-                Add fixtures, enter final scores, and rescore predictions.
+                Manage fixtures, view the leaderboard and edit settings.
               </p>
-            </div>
-            <div className="flex gap-2">
-              <Button
-                variant="secondary"
-                onClick={rescore}
-                disabled={busy}
-                className="bg-white/15 hover:bg-white/25 text-white border-white/25"
-              >
-                <RefreshCw className="size-4 mr-1.5" /> Rescore all
-              </Button>
-              <Button onClick={openCreate} className="bg-white text-primary hover:bg-white/90">
-                <Plus className="size-4 mr-1.5" /> Add fixture
-              </Button>
             </div>
           </div>
         </header>
 
-        {loading || !fixtures ? (
+        <Tabs defaultValue="fixtures" className="space-y-4">
+          <TabsList className="grid grid-cols-3 w-full max-w-md">
+            <TabsTrigger value="fixtures"><CalendarDays className="size-4 mr-1.5" />Fixtures</TabsTrigger>
+            <TabsTrigger value="leaderboard"><ListOrdered className="size-4 mr-1.5" />Leaderboard</TabsTrigger>
+            <TabsTrigger value="settings"><SettingsIcon className="size-4 mr-1.5" />Settings</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="fixtures" className="space-y-4">
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={rescore} disabled={busy}>
+                <RefreshCw className="size-4 mr-1.5" /> Rescore all
+              </Button>
+              <Button onClick={openCreate}>
+                <Plus className="size-4 mr-1.5" /> Add fixture
+              </Button>
+            </div>
+            {loading || !fixtures ? (
           <div className="grid place-items-center py-20 text-muted-foreground">
             <Loader2 className="size-5 animate-spin" />
           </div>
@@ -303,7 +306,17 @@ function AdminPredictionsPage() {
               </tbody>
             </table>
           </div>
-        )}
+            )}
+          </TabsContent>
+
+          <TabsContent value="leaderboard">
+            <LeaderboardSection />
+          </TabsContent>
+
+          <TabsContent value="settings">
+            <SettingsSection />
+          </TabsContent>
+        </Tabs>
       </div>
 
       {/* Edit / create fixture dialog */}
