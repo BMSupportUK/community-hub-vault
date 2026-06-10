@@ -177,7 +177,7 @@ function AdminForumPage() {
     });
     const { error } = await supabase
       .from("forum_board_permissions")
-      .upsert(row, { onConflict: "board_id,role" });
+      .upsert(row as never, { onConflict: "board_id,role" });
     if (error) { toast.error("Couldn't save permission", { description: error.message }); void load(); }
   };
 
