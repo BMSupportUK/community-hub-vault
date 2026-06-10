@@ -21,6 +21,7 @@ export type WcLeaderboardRowDTO = {
   displayName: string | null;
   username: string | null;
   avatarUrl: string | null;
+  isGuest: boolean;
   totalPoints: number;
   exactCount: number;
   resultCount: number;
@@ -174,6 +175,7 @@ export const getWcLeaderboard = createServerFn({ method: "GET" })
       displayName: r.display_name,
       username: r.username,
       avatarUrl: r.avatar_url,
+      isGuest: !!r.is_guest,
       totalPoints: r.total_points ?? 0,
       exactCount: r.exact_count ?? 0,
       resultCount: r.result_count ?? 0,
