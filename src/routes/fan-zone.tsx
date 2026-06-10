@@ -88,7 +88,7 @@ export function FanZoneShell({ children }: { children: React.ReactNode }) {
                 className="bg-red-600 text-white hover:bg-red-500"
                 onClick={() => navigate({ to: "/signup" })}
               >
-                Request access
+                Join BM Support
               </Button>
             </div>
           </div>

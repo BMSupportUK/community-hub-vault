@@ -88,7 +88,7 @@ export function LandingHeader() {
             aria-disabled="true"
             className="text-sm font-medium px-4 py-2 rounded-lg bg-red-600/50 text-white cursor-not-allowed inline-flex items-center justify-center gap-2 md:ml-1"
           >
-            <ShieldAlert className="size-4" /> Request access
+            <ShieldAlert className="size-4" /> Join BM Support
           </button>
         ) : (
           <Link
@@ -96,7 +96,7 @@ export function LandingHeader() {
             onClick={() => setOpen(false)}
             className="text-sm font-medium px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-500 shadow-[0_0_24px_rgba(220,38,38,0.55)] transition-all text-center md:ml-1"
           >
-            Request access
+            Join BM Support
           </Link>
         )}
       </nav>

@@ -125,7 +125,7 @@ function LoginPage() {
       </form>
       <div className="text-sm text-muted-foreground text-center mt-6">
         New here?{" "}
-        <Link to="/signup" className="text-primary hover:underline">Request access</Link>
+        <Link to="/signup" className="text-primary hover:underline">Join BM Support</Link>
       </div>
           </div>
         </div>

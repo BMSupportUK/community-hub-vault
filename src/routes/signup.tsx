@@ -154,7 +154,7 @@ function SignupPage() {
             <span className="font-display font-bold text-lg">Support Community</span>
           </Link>
           <div className="bg-surface/80 backdrop-blur-sm border border-border rounded-2xl p-8 shadow-soft">
-            <h1 className="font-display text-2xl font-bold">Request access</h1>
+            <h1 className="font-display text-2xl font-bold">Join BM Support</h1>
             <p className="text-sm text-muted-foreground mb-6">A moderator will review your request before you get in.</p>
             <form onSubmit={submit} className="space-y-3">
               <Field label="Display name" value={displayName} onChange={setDisplayName} />
@@ -219,11 +219,11 @@ function SignupPage() {
                   aria-disabled="true"
                   className="w-full h-11 rounded-lg bg-primary/50 text-primary-foreground font-medium cursor-not-allowed inline-flex items-center justify-center gap-2"
                 >
-                  <ShieldAlert className="size-4" /> Request access
+                  <ShieldAlert className="size-4" /> Join BM Support
                 </button>
               ) : (
                 <button disabled={busy} className="w-full h-11 rounded-lg bg-primary text-primary-foreground font-medium shadow-glow hover:opacity-90 disabled:opacity-50">
-                  {busy ? "Creating…" : "Request access"}
+                  {busy ? "Creating…" : "Join BM Support"}
                 </button>
               )}
             </form>

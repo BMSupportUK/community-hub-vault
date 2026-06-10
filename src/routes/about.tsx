@@ -293,7 +293,7 @@ function AboutPage() {
 
         <section className="px-6 py-16 text-center max-w-3xl mx-auto">
           <h2 className="font-display text-3xl font-bold mb-4">Ready to get started?</h2>
-          <p className="text-muted-foreground mb-8">Request access to view full pricing and choose the package that fits.</p>
+          <p className="text-muted-foreground mb-8">Join BM Support to view full pricing and choose the package that fits.</p>
           <div className="flex items-center justify-center gap-3">
             <RequestAccessCta />
             <Link to="/packages" className="px-6 py-3 rounded-md border border-border hover:bg-muted font-medium">See packages</Link>
@@ -367,7 +367,7 @@ function RequestAccessCta() {
           aria-disabled="true"
           className="px-6 py-3 rounded-md bg-red-600/50 text-white font-medium cursor-not-allowed inline-flex items-center gap-2"
         >
-          <ShieldAlert className="size-4" /> Request access
+          <ShieldAlert className="size-4" /> Join BM Support
         </button>
         <VpnBlockedDialog open={open} onOpenChange={setOpen} />
       </>
@@ -375,7 +375,7 @@ function RequestAccessCta() {
   }
   return (
     <Link to="/signup" className="px-6 py-3 rounded-md bg-red-600 text-white hover:bg-red-500 font-medium">
-      Request access
+      Join BM Support
     </Link>
   );
 }
