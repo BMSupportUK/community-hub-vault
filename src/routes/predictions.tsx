@@ -540,7 +540,8 @@ function PredictionsPage() {
           </aside>
         </div>
       </div>
-    </main>
+      </main>
+    </div>
   );
 }
 
