@@ -18,16 +18,19 @@ import { Route as MfaChallengeRouteImport } from './routes/mfa-challenge'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as FaqRouteImport } from './routes/faq'
+import { Route as FanZoneRouteImport } from './routes/fan-zone'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as FanZoneBoardRouteImport } from './routes/fan-zone.$board'
 import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
 import { Route as AuthenticatedGateRouteImport } from './routes/_authenticated/gate'
 import { Route as AuthenticatedBannedRouteImport } from './routes/_authenticated/banned'
 import { Route as AuthenticatedAccountRejectedRouteImport } from './routes/_authenticated/account-rejected'
 import { Route as AuthenticatedApprovedRouteImport } from './routes/_authenticated/_approved'
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
+import { Route as FanZoneBoardTopicRouteImport } from './routes/fan-zone.$board.$topic'
 import { Route as ApiPublicTweetRouteImport } from './routes/api/public/tweet'
 import { Route as ApiPublicLinkPreviewRouteImport } from './routes/api/public/link-preview'
 import { Route as AuthenticatedApprovedWhatToWatchRouteImport } from './routes/_authenticated/_approved/what-to-watch'
@@ -145,6 +148,11 @@ const FaqRoute = FaqRouteImport.update({
   path: '/faq',
   getParentRoute: () => rootRouteImport,
 } as any)
+const FanZoneRoute = FanZoneRouteImport.update({
+  id: '/fan-zone',
+  path: '/fan-zone',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ContactRoute = ContactRouteImport.update({
   id: '/contact',
   path: '/contact',
@@ -163,6 +171,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const FanZoneBoardRoute = FanZoneBoardRouteImport.update({
+  id: '/$board',
+  path: '/$board',
+  getParentRoute: () => FanZoneRoute,
 } as any)
 const EmailUnsubscribeRoute = EmailUnsubscribeRouteImport.update({
   id: '/email/unsubscribe',
@@ -193,6 +206,11 @@ const LovableEmailSuppressionRoute = LovableEmailSuppressionRouteImport.update({
   id: '/lovable/email/suppression',
   path: '/lovable/email/suppression',
   getParentRoute: () => rootRouteImport,
+} as any)
+const FanZoneBoardTopicRoute = FanZoneBoardTopicRouteImport.update({
+  id: '/$topic',
+  path: '/$topic',
+  getParentRoute: () => FanZoneBoardRoute,
 } as any)
 const ApiPublicTweetRoute = ApiPublicTweetRouteImport.update({
   id: '/api/public/tweet',
@@ -622,6 +640,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/contact': typeof ContactRoute
+  '/fan-zone': typeof FanZoneRouteWithChildren
   '/faq': typeof FaqRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
@@ -635,6 +654,7 @@ export interface FileRoutesByFullPath {
   '/banned': typeof AuthenticatedBannedRoute
   '/gate': typeof AuthenticatedGateRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
+  '/fan-zone/$board': typeof FanZoneBoardRouteWithChildren
   '/account-security': typeof AuthenticatedApprovedAccountSecurityRoute
   '/admin': typeof AuthenticatedApprovedAdminRoute
   '/admin-affiliate-banners': typeof AuthenticatedApprovedAdminAffiliateBannersRoute
@@ -680,6 +700,7 @@ export interface FileRoutesByFullPath {
   '/what-to-watch': typeof AuthenticatedApprovedWhatToWatchRoute
   '/api/public/link-preview': typeof ApiPublicLinkPreviewRoute
   '/api/public/tweet': typeof ApiPublicTweetRoute
+  '/fan-zone/$board/$topic': typeof FanZoneBoardTopicRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/fanzone/blocks': typeof AuthenticatedApprovedFanzoneBlocksRoute
   '/fanzone/messages': typeof AuthenticatedApprovedFanzoneMessagesRouteWithChildren
@@ -712,6 +733,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/contact': typeof ContactRoute
+  '/fan-zone': typeof FanZoneRouteWithChildren
   '/faq': typeof FaqRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
@@ -725,6 +747,7 @@ export interface FileRoutesByTo {
   '/banned': typeof AuthenticatedBannedRoute
   '/gate': typeof AuthenticatedGateRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
+  '/fan-zone/$board': typeof FanZoneBoardRouteWithChildren
   '/account-security': typeof AuthenticatedApprovedAccountSecurityRoute
   '/admin': typeof AuthenticatedApprovedAdminRoute
   '/admin-affiliate-banners': typeof AuthenticatedApprovedAdminAffiliateBannersRoute
@@ -769,6 +792,7 @@ export interface FileRoutesByTo {
   '/what-to-watch': typeof AuthenticatedApprovedWhatToWatchRoute
   '/api/public/link-preview': typeof ApiPublicLinkPreviewRoute
   '/api/public/tweet': typeof ApiPublicTweetRoute
+  '/fan-zone/$board/$topic': typeof FanZoneBoardTopicRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/fanzone/blocks': typeof AuthenticatedApprovedFanzoneBlocksRoute
   '/fanzone/messages': typeof AuthenticatedApprovedFanzoneMessagesRouteWithChildren
@@ -803,6 +827,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/about': typeof AboutRoute
   '/contact': typeof ContactRoute
+  '/fan-zone': typeof FanZoneRouteWithChildren
   '/faq': typeof FaqRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
@@ -817,6 +842,7 @@ export interface FileRoutesById {
   '/_authenticated/banned': typeof AuthenticatedBannedRoute
   '/_authenticated/gate': typeof AuthenticatedGateRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
+  '/fan-zone/$board': typeof FanZoneBoardRouteWithChildren
   '/_authenticated/_approved/account-security': typeof AuthenticatedApprovedAccountSecurityRoute
   '/_authenticated/_approved/admin': typeof AuthenticatedApprovedAdminRoute
   '/_authenticated/_approved/admin-affiliate-banners': typeof AuthenticatedApprovedAdminAffiliateBannersRoute
@@ -862,6 +888,7 @@ export interface FileRoutesById {
   '/_authenticated/_approved/what-to-watch': typeof AuthenticatedApprovedWhatToWatchRoute
   '/api/public/link-preview': typeof ApiPublicLinkPreviewRoute
   '/api/public/tweet': typeof ApiPublicTweetRoute
+  '/fan-zone/$board/$topic': typeof FanZoneBoardTopicRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/_authenticated/_approved/fanzone/blocks': typeof AuthenticatedApprovedFanzoneBlocksRoute
   '/_authenticated/_approved/fanzone/messages': typeof AuthenticatedApprovedFanzoneMessagesRouteWithChildren
@@ -896,6 +923,7 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/contact'
+    | '/fan-zone'
     | '/faq'
     | '/forgot-password'
     | '/login'
@@ -909,6 +937,7 @@ export interface FileRouteTypes {
     | '/banned'
     | '/gate'
     | '/email/unsubscribe'
+    | '/fan-zone/$board'
     | '/account-security'
     | '/admin'
     | '/admin-affiliate-banners'
@@ -954,6 +983,7 @@ export interface FileRouteTypes {
     | '/what-to-watch'
     | '/api/public/link-preview'
     | '/api/public/tweet'
+    | '/fan-zone/$board/$topic'
     | '/lovable/email/suppression'
     | '/fanzone/blocks'
     | '/fanzone/messages'
@@ -986,6 +1016,7 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/contact'
+    | '/fan-zone'
     | '/faq'
     | '/forgot-password'
     | '/login'
@@ -999,6 +1030,7 @@ export interface FileRouteTypes {
     | '/banned'
     | '/gate'
     | '/email/unsubscribe'
+    | '/fan-zone/$board'
     | '/account-security'
     | '/admin'
     | '/admin-affiliate-banners'
@@ -1043,6 +1075,7 @@ export interface FileRouteTypes {
     | '/what-to-watch'
     | '/api/public/link-preview'
     | '/api/public/tweet'
+    | '/fan-zone/$board/$topic'
     | '/lovable/email/suppression'
     | '/fanzone/blocks'
     | '/fanzone/messages'
@@ -1076,6 +1109,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/about'
     | '/contact'
+    | '/fan-zone'
     | '/faq'
     | '/forgot-password'
     | '/login'
@@ -1090,6 +1124,7 @@ export interface FileRouteTypes {
     | '/_authenticated/banned'
     | '/_authenticated/gate'
     | '/email/unsubscribe'
+    | '/fan-zone/$board'
     | '/_authenticated/_approved/account-security'
     | '/_authenticated/_approved/admin'
     | '/_authenticated/_approved/admin-affiliate-banners'
@@ -1135,6 +1170,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/what-to-watch'
     | '/api/public/link-preview'
     | '/api/public/tweet'
+    | '/fan-zone/$board/$topic'
     | '/lovable/email/suppression'
     | '/_authenticated/_approved/fanzone/blocks'
     | '/_authenticated/_approved/fanzone/messages'
@@ -1169,6 +1205,7 @@ export interface RootRouteChildren {
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   AboutRoute: typeof AboutRoute
   ContactRoute: typeof ContactRoute
+  FanZoneRoute: typeof FanZoneRouteWithChildren
   FaqRoute: typeof FaqRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   LoginRoute: typeof LoginRoute
@@ -1262,6 +1299,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FaqRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/fan-zone': {
+      id: '/fan-zone'
+      path: '/fan-zone'
+      fullPath: '/fan-zone'
+      preLoaderRoute: typeof FanZoneRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/contact': {
       id: '/contact'
       path: '/contact'
@@ -1289,6 +1333,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/fan-zone/$board': {
+      id: '/fan-zone/$board'
+      path: '/$board'
+      fullPath: '/fan-zone/$board'
+      preLoaderRoute: typeof FanZoneBoardRouteImport
+      parentRoute: typeof FanZoneRoute
     }
     '/email/unsubscribe': {
       id: '/email/unsubscribe'
@@ -1331,6 +1382,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/lovable/email/suppression'
       preLoaderRoute: typeof LovableEmailSuppressionRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/fan-zone/$board/$topic': {
+      id: '/fan-zone/$board/$topic'
+      path: '/$topic'
+      fullPath: '/fan-zone/$board/$topic'
+      preLoaderRoute: typeof FanZoneBoardTopicRouteImport
+      parentRoute: typeof FanZoneBoardRoute
     }
     '/api/public/tweet': {
       id: '/api/public/tweet'
@@ -2067,11 +2125,35 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
   AuthenticatedRouteChildren,
 )
 
+interface FanZoneBoardRouteChildren {
+  FanZoneBoardTopicRoute: typeof FanZoneBoardTopicRoute
+}
+
+const FanZoneBoardRouteChildren: FanZoneBoardRouteChildren = {
+  FanZoneBoardTopicRoute: FanZoneBoardTopicRoute,
+}
+
+const FanZoneBoardRouteWithChildren = FanZoneBoardRoute._addFileChildren(
+  FanZoneBoardRouteChildren,
+)
+
+interface FanZoneRouteChildren {
+  FanZoneBoardRoute: typeof FanZoneBoardRouteWithChildren
+}
+
+const FanZoneRouteChildren: FanZoneRouteChildren = {
+  FanZoneBoardRoute: FanZoneBoardRouteWithChildren,
+}
+
+const FanZoneRouteWithChildren =
+  FanZoneRoute._addFileChildren(FanZoneRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   AboutRoute: AboutRoute,
   ContactRoute: ContactRoute,
+  FanZoneRoute: FanZoneRouteWithChildren,
   FaqRoute: FaqRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
   LoginRoute: LoginRoute,
@@ -2105,13 +2187,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
