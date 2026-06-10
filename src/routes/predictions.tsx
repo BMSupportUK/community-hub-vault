@@ -650,6 +650,85 @@ function FixturesList({
   );
 }
 
+function GuestLoginCard({
+  busy,
+  onSubmit,
+  onCancel,
+}: {
+  busy: boolean;
+  onSubmit: (email: string, pin: string, displayName: string) => void;
+  onCancel: () => void;
+}) {
+  const [email, setEmail] = useState("");
+  const [pin, setPin] = useState("");
+  const [displayName, setDisplayName] = useState("");
+
+  const valid =
+    /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.trim()) &&
+    /^\d{4}$/.test(pin) &&
+    displayName.trim().length >= 1;
+
+  return (
+    <div className="mb-6 rounded-2xl border-2 border-primary/60 bg-surface-1 p-5 shadow-md shadow-primary/10">
+      <h3 className="font-display text-lg font-bold mb-1">Play as guest</h3>
+      <p className="text-sm text-muted-foreground mb-4">
+        Use the same email + PIN later to edit your picks. No account required — your PIN protects
+        your entry.
+      </p>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div>
+          <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+            Display name
+          </label>
+          <Input
+            value={displayName}
+            onChange={(e) => setDisplayName(e.target.value.slice(0, 40))}
+            placeholder="e.g. Sarah B"
+            disabled={busy}
+          />
+        </div>
+        <div>
+          <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+            Email
+          </label>
+          <Input
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            type="email"
+            placeholder="you@example.com"
+            disabled={busy}
+            autoComplete="email"
+          />
+        </div>
+        <div>
+          <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+            4-digit PIN
+          </label>
+          <Input
+            value={pin}
+            onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 4))}
+            inputMode="numeric"
+            placeholder="••••"
+            disabled={busy}
+            autoComplete="one-time-code"
+          />
+        </div>
+      </div>
+      <div className="mt-4 flex items-center gap-2 justify-end">
+        <Button variant="ghost" onClick={onCancel} disabled={busy}>
+          Cancel
+        </Button>
+        <Button
+          onClick={() => onSubmit(email.trim().toLowerCase(), pin, displayName.trim())}
+          disabled={!valid || busy}
+        >
+          {busy ? <Loader2 className="size-4 animate-spin" /> : "Enter / continue"}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 function FixtureCard({
   fixture,
   canPredict,
