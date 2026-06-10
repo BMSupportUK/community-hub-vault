@@ -730,13 +730,17 @@ function FixturesList({
 
 function GuestLoginCard({
   busy,
+  initialMode = "register",
   onSubmit,
+  onSignInExisting,
   onCancel,
   onRequestReset,
   onResetPin,
 }: {
   busy: boolean;
+  initialMode?: "signin" | "register";
   onSubmit: (email: string, pin: string, displayName: string) => void;
+  onSignInExisting: (email: string, pin: string) => void;
   onCancel: () => void;
   onRequestReset: (email: string) => Promise<void>;
   onResetPin: (email: string, code: string, newPin: string) => Promise<void>;
@@ -744,15 +748,19 @@ function GuestLoginCard({
   const [email, setEmail] = useState("");
   const [pin, setPin] = useState("");
   const [displayName, setDisplayName] = useState("");
-  const [mode, setMode] = useState<"login" | "reset-request" | "reset-verify">("login");
+  const [mode, setMode] = useState<"signin" | "register" | "reset-request" | "reset-verify">(
+    initialMode,
+  );
   const [resetCode, setResetCode] = useState("");
   const [newPin, setNewPin] = useState("");
   const [resetting, setResetting] = useState(false);
 
-  const valid =
+  const registerValid =
     /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.trim()) &&
     /^\d{4}$/.test(pin) &&
     displayName.trim().length >= 1;
+  const signinValid =
+    /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.trim()) && /^\d{4}$/.test(pin);
 
   const emailValid = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.trim());
   const resetValid = emailValid && /^\d{6}$/.test(resetCode) && /^\d{4}$/.test(newPin);
@@ -813,7 +821,7 @@ function GuestLoginCard({
           <Button
             variant="ghost"
             onClick={() => {
-              setMode("login");
+              setMode(initialMode);
               setResetCode("");
               setNewPin("");
             }}
@@ -858,12 +866,26 @@ function GuestLoginCard({
 
   return (
     <div className="mb-6 rounded-2xl border-2 border-primary/60 bg-surface-1 p-5 shadow-md shadow-primary/10">
-      <h3 className="font-display text-lg font-bold mb-1">Play as guest</h3>
+      <div className="flex items-center justify-between mb-1">
+        <h3 className="font-display text-lg font-bold">
+          {mode === "signin" ? "Guest sign in" : "Register as guest"}
+        </h3>
+        <button
+          type="button"
+          className="text-xs font-semibold text-primary hover:underline"
+          onClick={() => setMode(mode === "signin" ? "register" : "signin")}
+          disabled={busy}
+        >
+          {mode === "signin" ? "New here? Register" : "Already registered? Sign in"}
+        </button>
+      </div>
       <p className="text-sm text-muted-foreground mb-4">
-        Use the same email + PIN later to edit your picks. No account required — your PIN protects
-        your entry.
+        {mode === "signin"
+          ? "Enter the email and 4-digit PIN you used when you registered."
+          : "Pick a display name, enter your email, and choose a 4-digit PIN. Use the same email + PIN later to edit your picks."}
       </p>
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <div className={`grid grid-cols-1 gap-3 ${mode === "signin" ? "sm:grid-cols-2" : "sm:grid-cols-3"}`}>
+        {mode === "register" && (
         <div>
           <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
             Display name
@@ -875,6 +897,7 @@ function GuestLoginCard({
             disabled={busy}
           />
         </div>
+        )}
         <div>
           <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
             Email
@@ -914,12 +937,21 @@ function GuestLoginCard({
         >
           Forgot PIN?
         </Button>
-        <Button
-          onClick={() => onSubmit(email.trim().toLowerCase(), pin, displayName.trim())}
-          disabled={!valid || busy}
-        >
-          {busy ? <Loader2 className="size-4 animate-spin" /> : "Enter / continue"}
-        </Button>
+        {mode === "signin" ? (
+          <Button
+            onClick={() => onSignInExisting(email.trim().toLowerCase(), pin)}
+            disabled={!signinValid || busy}
+          >
+            {busy ? <Loader2 className="size-4 animate-spin" /> : "Sign in"}
+          </Button>
+        ) : (
+          <Button
+            onClick={() => onSubmit(email.trim().toLowerCase(), pin, displayName.trim())}
+            disabled={!registerValid || busy}
+          >
+            {busy ? <Loader2 className="size-4 animate-spin" /> : "Register & continue"}
+          </Button>
+        )}
       </div>
     </div>
   );
