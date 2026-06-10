@@ -238,7 +238,7 @@ function PredictionsPage() {
       <div className="relative z-10 w-full px-4 sm:px-8 lg:px-16 py-6">
         <header className="relative rounded-3xl overflow-hidden border border-primary/30 shadow-glow bg-gradient-primary p-6 mb-6">
           <div className="absolute inset-0 bg-gradient-to-tr from-background/40 via-transparent to-transparent pointer-events-none" />
-          <div className="relative flex items-center gap-3">
+          <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-3">
             <div className="size-12 rounded-2xl bg-white/15 backdrop-blur grid place-items-center shadow-glow ring-1 ring-white/20">
               <Trophy className="size-6 text-white" />
             </div>
@@ -248,6 +248,16 @@ function PredictionsPage() {
               </h1>
               <p className="text-sm text-white/85">Predict every fixture.</p>
             </div>
+            {!user && !guest && !showGuestLogin && (
+              <Button
+                type="button"
+                size="lg"
+                onClick={() => setShowGuestLogin(true)}
+                className="w-full sm:w-auto bg-white text-primary hover:bg-white/90"
+              >
+                Guest sign in
+              </Button>
+            )}
           </div>
         </header>
 
@@ -264,7 +274,7 @@ function PredictionsPage() {
               </div>
             </div>
             <Button onClick={handleJoin} disabled={joining}>
-              {joining ? <Loader2 className="size-4 animate-spin" /> : user ? "Join the predictor" : "Continue as guest"}
+              {joining ? <Loader2 className="size-4 animate-spin" /> : user ? "Join the predictor" : "Guest sign in"}
             </Button>
           </div>
         )}
