@@ -44,6 +44,33 @@ const signInSchema = z.object({
   displayName: z.string().trim().min(1).max(40),
 });
 
+const signInExistingSchema = z.object({
+  email: emailSchema,
+  pin: pinSchema,
+});
+
+export const guestSignInExisting = createServerFn({ method: "POST" })
+  .inputValidator((d: unknown) => signInExistingSchema.parse(d))
+  .handler(async ({ data }) => {
+    const admin = await getAdmin();
+    const { data: existing, error: selErr } = await admin
+      .from("wc_guest_entrants")
+      .select("id, pin_salt, pin_hash, display_name")
+      .eq("email", data.email)
+      .maybeSingle();
+    if (selErr) throw new Error(selErr.message);
+    if (!existing) {
+      throw new Error("No guest account found for that email. Please register first.");
+    }
+    if (!verifyPin(data.pin, (existing as any).pin_salt, (existing as any).pin_hash)) {
+      throw new Error("Incorrect PIN for this email.");
+    }
+    return {
+      guestId: (existing as any).id as string,
+      displayName: (existing as any).display_name as string,
+    };
+  });
+
 export const guestSignInOrRegister = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => signInSchema.parse(d))
   .handler(async ({ data }) => {
