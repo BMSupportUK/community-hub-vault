@@ -163,9 +163,11 @@ export const upsertWcPrediction = createServerFn({ method: "POST" })
 // ------------------------------------------------------------------
 export const getWcLeaderboard = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }): Promise<WcLeaderboardRowDTO[]> => {
-    const { supabase } = context;
-    const { data, error } = await supabase
+  .handler(async (): Promise<WcLeaderboardRowDTO[]> => {
+    // Use admin client: the view's security_invoker join to wc_guest_entrants
+    // is blocked by RLS for normal users, which would null out guest names.
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data, error } = await supabaseAdmin
       .from("wc_leaderboard")
       .select("*")
       .order("total_points", { ascending: false });
