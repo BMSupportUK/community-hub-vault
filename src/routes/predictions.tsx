@@ -1126,6 +1126,16 @@ function LeaderboardList({
                   {mine && (
                     <span className="ml-2 text-[10px] uppercase text-primary">you</span>
                   )}
+                  <span
+                    className={`ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider border ${
+                      r.isGuest
+                        ? "bg-amber-500/15 text-amber-300 border-amber-500/40"
+                        : "bg-emerald-500/15 text-emerald-300 border-emerald-500/40"
+                    }`}
+                    title={r.isGuest ? "Playing as guest" : "Registered member"}
+                  >
+                    {r.isGuest ? "Guest" : "Member"}
+                  </span>
                 </span>
               </div>
               <div className="text-right tabular-nums">{r.predictionsMade}</div>
