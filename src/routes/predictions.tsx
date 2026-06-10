@@ -1163,13 +1163,14 @@ function LeaderboardList({
   }
   return (
     <div className="rounded-2xl border border-border bg-surface-1 overflow-hidden">
-      <div className="grid grid-cols-[40px_1fr_70px_70px_70px] sm:grid-cols-[48px_1fr_80px_80px_80px_80px] gap-2 px-4 py-2.5 text-[11px] uppercase tracking-wider text-muted-foreground bg-surface-2 border-b border-border">
+      <div className="grid grid-cols-[40px_1fr_70px_70px_70px_72px] sm:grid-cols-[48px_1fr_80px_80px_80px_80px_88px] gap-2 px-4 py-2.5 text-[11px] uppercase tracking-wider text-muted-foreground bg-surface-2 border-b border-border">
         <div>#</div>
         <div>Player</div>
         <div className="text-right">Played</div>
         <div className="text-right hidden sm:block">Exact</div>
         <div className="text-right">Result</div>
         <div className="text-right">Points</div>
+        <div className="text-right">Type</div>
       </div>
       <ul>
         {rows.map((r, i) => {
@@ -1178,7 +1179,7 @@ function LeaderboardList({
           return (
             <li
               key={r.userId}
-              className={`grid grid-cols-[40px_1fr_70px_70px_70px] sm:grid-cols-[48px_1fr_80px_80px_80px_80px] gap-2 px-4 py-2.5 text-sm border-b border-border last:border-b-0 ${
+              className={`grid grid-cols-[40px_1fr_70px_70px_70px_72px] sm:grid-cols-[48px_1fr_80px_80px_80px_80px_88px] gap-2 px-4 py-2.5 text-sm border-b border-border last:border-b-0 ${
                 mine ? "bg-primary/5" : ""
               }`}
             >
@@ -1208,16 +1209,6 @@ function LeaderboardList({
                   {mine && (
                     <span className="ml-2 text-[10px] uppercase text-primary">you</span>
                   )}
-                  <span
-                    className={`ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider border ${
-                      r.isGuest
-                        ? "bg-amber-500/15 text-amber-300 border-amber-500/40"
-                        : "bg-emerald-500/15 text-emerald-300 border-emerald-500/40"
-                    }`}
-                    title={r.isGuest ? "Playing as guest" : "Registered member"}
-                  >
-                    {r.isGuest ? "Guest" : "Member"}
-                  </span>
                 </span>
               </div>
               <div className="text-right tabular-nums">{r.predictionsMade}</div>
@@ -1227,6 +1218,18 @@ function LeaderboardList({
               <div className="text-right tabular-nums">{r.resultCount}</div>
               <div className="text-right font-display font-bold tabular-nums">
                 {r.totalPoints}
+              </div>
+              <div className="flex items-center justify-end">
+                <span
+                  className={`inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider border ${
+                    r.isGuest
+                      ? "bg-amber-500/15 text-amber-300 border-amber-500/40"
+                      : "bg-emerald-500/15 text-emerald-300 border-emerald-500/40"
+                  }`}
+                  title={r.isGuest ? "Playing as guest" : "BM Support site user"}
+                >
+                  {r.isGuest ? "Guest" : "Site user"}
+                </span>
               </div>
             </li>
           );
