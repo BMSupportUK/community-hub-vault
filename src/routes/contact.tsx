@@ -3,6 +3,7 @@ import { useState } from "react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, Send, CheckCircle2 } from "lucide-react";
+import contactBg from "@/assets/contact-bg.jpg";
 
 export const Route = createFileRoute("/contact")({
   component: ContactPage,
@@ -72,8 +73,13 @@ function ContactPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="px-8 py-5 flex items-center justify-between border-b border-border">
+    <div
+      className="min-h-screen bg-background bg-cover bg-center bg-no-repeat relative"
+      style={{ backgroundImage: `url(${contactBg})` }}
+    >
+      <div className="absolute inset-0 bg-background/70 backdrop-blur-[2px]" aria-hidden="true" />
+      <div className="relative z-10">
+      <header className="px-8 py-5 flex items-center justify-between border-b border-border/40 bg-background/30 backdrop-blur-md">
         <Link to="/" className="flex items-center gap-2">
           <div className="size-9 rounded-xl bg-gradient-to-br from-violet-600 to-blue-600 shadow-[0_0_30px_rgba(220,38,38,0.6)] grid place-items-center font-display font-bold text-[13px] text-white">BM</div>
           <span className="font-display font-bold text-lg">Support</span>
@@ -84,6 +90,7 @@ function ContactPage() {
       </header>
 
       <main className="px-6 py-12 md:py-16 max-w-2xl mx-auto">
+        <div className="rounded-2xl border border-border/50 bg-card/80 backdrop-blur-xl p-6 md:p-10 shadow-2xl">
         <h1 className="font-display text-3xl md:text-4xl font-bold mb-3">Contact Us</h1>
         <p className="text-muted-foreground mb-8">Have a question or need help? Send us a message and we'll get back to you as soon as we can.</p>
 
@@ -168,7 +175,9 @@ function ContactPage() {
             </button>
           </form>
         )}
+        </div>
       </main>
+      </div>
     </div>
   );
 }
