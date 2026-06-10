@@ -98,13 +98,27 @@ function SignupPage() {
       if (redeemError) {
         setBusy(false);
         toast.error(`Invite code: ${redeemError.message}`);
-        navigate({ to: "/gate", search: { intent } });
+        if (intent === "fan-zone") navigate({ to: "/fan-zone-pending" });
+        else navigate({ to: "/gate", search: { intent } });
         return;
       }
     }
     setBusy(false);
-    toast.success("Account created. A moderator will review your request.");
-    navigate({ to: "/gate", search: { intent } });
+    if (intent === "fan-zone") {
+      // Queue a Boro Fan Zone membership request for moderator review.
+      const { data: { user: signedInUser } } = await supabase.auth.getUser();
+      if (signedInUser) {
+        await supabase
+          .from("fan_zone_members")
+          .insert({ user_id: signedInUser.id, status: "pending" })
+          .then(() => undefined, () => undefined);
+      }
+      toast.success("Account created. A Fan Zone moderator will review your request.");
+      navigate({ to: "/fan-zone-pending" });
+    } else {
+      toast.success("Account created. A moderator will review your request.");
+      navigate({ to: "/gate", search: { intent } });
+    }
   };
 
   return (
