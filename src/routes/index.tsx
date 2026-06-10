@@ -63,10 +63,10 @@ function Landing() {
   }
 
   return (
-    <div className="h-screen overflow-hidden bg-background flex flex-col">
+    <div className="min-h-screen md:h-screen md:overflow-hidden bg-background flex flex-col">
       <LandingHeader />
 
-      <main className="flex-1 min-h-0 overflow-hidden px-6 py-4 md:py-6 flex flex-col gap-4">
+      <main className="flex-1 min-h-0 md:overflow-hidden px-6 py-4 md:py-6 flex flex-col gap-4">
         <section
           className="relative max-w-7xl w-full mx-auto rounded-3xl border border-red-900/60 p-4 md:p-6 lg:p-8 pb-16 md:pb-20"
           style={{
