@@ -274,7 +274,7 @@ export const requestGuestPinReset = createServerFn({ method: "POST" })
 
       const subject =
         typeof template.subject === "function"
-          ? template.subject({ code })
+          ? (template.subject as (d: any) => string)({ code })
           : template.subject;
 
       const messageId = crypto.randomUUID();
