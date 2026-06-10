@@ -1,10 +1,12 @@
 import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Trophy, Plus, Trash2, Save, RefreshCw, Loader2 } from "lucide-react";
+import { Trophy, Plus, Trash2, Save, RefreshCw, Loader2, ListOrdered, Settings as SettingsIcon, CalendarDays, Star } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
   DialogContent,
@@ -20,8 +22,13 @@ import {
   adminDeleteWcFixture,
   adminSetWcResult,
   adminRescoreAllWc,
+  getWcLeaderboard,
+  getWcSettings,
+  adminSetWcSettings,
   type WcFixtureDTO,
   type WcStage,
+  type WcLeaderboardRowDTO,
+  type WcSettingsDTO,
 } from "@/lib/wc-predictions.functions";
 
 export const Route = createFileRoute("/_authenticated/_approved/admin-predictions")({
@@ -202,26 +209,29 @@ function AdminPredictionsPage() {
                 World Cup 2026 — Admin
               </h1>
               <p className="text-sm text-white/85">
-                Add fixtures, enter final scores, and rescore predictions.
+                Manage fixtures, view the leaderboard and edit settings.
               </p>
-            </div>
-            <div className="flex gap-2">
-              <Button
-                variant="secondary"
-                onClick={rescore}
-                disabled={busy}
-                className="bg-white/15 hover:bg-white/25 text-white border-white/25"
-              >
-                <RefreshCw className="size-4 mr-1.5" /> Rescore all
-              </Button>
-              <Button onClick={openCreate} className="bg-white text-primary hover:bg-white/90">
-                <Plus className="size-4 mr-1.5" /> Add fixture
-              </Button>
             </div>
           </div>
         </header>
 
-        {loading || !fixtures ? (
+        <Tabs defaultValue="fixtures" className="space-y-4">
+          <TabsList className="grid grid-cols-3 w-full max-w-md">
+            <TabsTrigger value="fixtures"><CalendarDays className="size-4 mr-1.5" />Fixtures</TabsTrigger>
+            <TabsTrigger value="leaderboard"><ListOrdered className="size-4 mr-1.5" />Leaderboard</TabsTrigger>
+            <TabsTrigger value="settings"><SettingsIcon className="size-4 mr-1.5" />Settings</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="fixtures" className="space-y-4">
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={rescore} disabled={busy}>
+                <RefreshCw className="size-4 mr-1.5" /> Rescore all
+              </Button>
+              <Button onClick={openCreate}>
+                <Plus className="size-4 mr-1.5" /> Add fixture
+              </Button>
+            </div>
+            {loading || !fixtures ? (
           <div className="grid place-items-center py-20 text-muted-foreground">
             <Loader2 className="size-5 animate-spin" />
           </div>
@@ -296,7 +306,17 @@ function AdminPredictionsPage() {
               </tbody>
             </table>
           </div>
-        )}
+            )}
+          </TabsContent>
+
+          <TabsContent value="leaderboard">
+            <LeaderboardSection />
+          </TabsContent>
+
+          <TabsContent value="settings">
+            <SettingsSection />
+          </TabsContent>
+        </Tabs>
       </div>
 
       {/* Edit / create fixture dialog */}
@@ -426,5 +446,135 @@ function AdminPredictionsPage() {
         </DialogContent>
       </Dialog>
     </main>
+  );
+}
+
+function LeaderboardSection() {
+  const fn = useServerFn(getWcLeaderboard);
+  const [rows, setRows] = useState<WcLeaderboardRowDTO[] | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+  const load = async () => {
+    setErr(null);
+    try {
+      const r = await fn();
+      setRows(r);
+    } catch (e: any) {
+      setErr(e?.message ?? "Failed to load");
+    }
+  };
+  useEffect(() => { load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, []);
+  if (err) return <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">{err}</div>;
+  if (!rows) return <div className="grid place-items-center py-20 text-muted-foreground"><Loader2 className="size-5 animate-spin" /></div>;
+  return (
+    <div className="rounded-2xl border border-border bg-surface-1 overflow-hidden">
+      <div className="flex items-center justify-between px-3 py-2 border-b border-border bg-surface-2 text-xs uppercase tracking-wider text-muted-foreground">
+        <span>{rows.length} entrants</span>
+        <Button size="sm" variant="ghost" onClick={load}><RefreshCw className="size-3.5 mr-1" />Refresh</Button>
+      </div>
+      <table className="w-full text-sm">
+        <thead className="bg-surface-2/60 text-xs uppercase tracking-wider text-muted-foreground">
+          <tr>
+            <th className="text-left px-3 py-2 w-10">#</th>
+            <th className="text-left px-3 py-2">Entrant</th>
+            <th className="text-center px-3 py-2">Type</th>
+            <th className="text-right px-3 py-2">Exact</th>
+            <th className="text-right px-3 py-2">Result</th>
+            <th className="text-right px-3 py-2">Made</th>
+            <th className="text-right px-3 py-2">Points</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r, i) => (
+            <tr key={r.userId} className="border-t border-border">
+              <td className="px-3 py-2 text-muted-foreground tabular-nums">{i + 1}</td>
+              <td className="px-3 py-2">
+                <div className="flex items-center gap-2 min-w-0">
+                  {r.avatarUrl ? (
+                    <img src={r.avatarUrl} alt="" className="size-7 rounded-full object-cover" />
+                  ) : (
+                    <div className="size-7 rounded-full bg-surface-2 grid place-items-center text-[10px] font-bold">
+                      {(r.displayName ?? r.username ?? "?").slice(0, 2).toUpperCase()}
+                    </div>
+                  )}
+                  <div className="min-w-0">
+                    <div className="truncate font-medium">{r.displayName || r.username || "Anonymous"}</div>
+                    {r.username && r.displayName && (
+                      <div className="truncate text-[11px] text-muted-foreground">@{r.username}</div>
+                    )}
+                  </div>
+                </div>
+              </td>
+              <td className="px-3 py-2 text-center text-xs">
+                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border ${r.isGuest ? "border-muted-foreground/30 text-muted-foreground" : "border-primary/40 text-primary"}`}>
+                  {r.isGuest ? "Guest" : "Member"}
+                </span>
+              </td>
+              <td className="px-3 py-2 text-right tabular-nums">{r.exactCount}</td>
+              <td className="px-3 py-2 text-right tabular-nums">{r.resultCount}</td>
+              <td className="px-3 py-2 text-right tabular-nums text-muted-foreground">{r.predictionsScored}/{r.predictionsMade}</td>
+              <td className="px-3 py-2 text-right font-display font-bold tabular-nums text-primary">{r.totalPoints}</td>
+            </tr>
+          ))}
+          {!rows.length && (
+            <tr><td colSpan={7} className="px-3 py-8 text-center text-muted-foreground">No entrants yet.</td></tr>
+          )}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function SettingsSection() {
+  const getFn = useServerFn(getWcSettings);
+  const saveFn = useServerFn(adminSetWcSettings);
+  const [data, setData] = useState<WcSettingsDTO | null>(null);
+  const [busy, setBusy] = useState(false);
+  useEffect(() => {
+    getFn().then(setData).catch((e: any) => toast.error(e?.message ?? "Failed to load settings"));
+  }, [getFn]);
+  const save = async () => {
+    if (!data) return;
+    setBusy(true);
+    try {
+      await saveFn({ data });
+      toast.success("Settings saved");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Save failed");
+    } finally {
+      setBusy(false);
+    }
+  };
+  if (!data) return <div className="grid place-items-center py-20 text-muted-foreground"><Loader2 className="size-5 animate-spin" /></div>;
+  return (
+    <div className="max-w-xl space-y-4 rounded-2xl border border-border bg-surface-1 p-5">
+      <div>
+        <Label className="flex items-center gap-1.5"><Star className="size-3.5 text-amber-400" />Prize text</Label>
+        <Textarea
+          value={data.prizeText}
+          onChange={(e) => setData({ ...data, prizeText: e.target.value })}
+          rows={3}
+          maxLength={500}
+          placeholder="e.g. Winner gets a free annual subscription and a Boro Fan Zone trophy badge."
+          className="mt-1"
+        />
+        <p className="text-[11px] text-muted-foreground mt-1">Shown to entrants and visitors on the World Cup 2026 page.</p>
+      </div>
+      <div>
+        <Label>Tagline</Label>
+        <Input
+          value={data.tagline}
+          onChange={(e) => setData({ ...data, tagline: e.target.value })}
+          maxLength={200}
+          placeholder="e.g. Make your picks before kickoff and climb the leaderboard."
+          className="mt-1"
+        />
+      </div>
+      <div className="flex justify-end">
+        <Button onClick={save} disabled={busy}>
+          {busy ? <Loader2 className="size-4 animate-spin mr-1.5" /> : <Save className="size-4 mr-1.5" />}
+          Save settings
+        </Button>
+      </div>
+    </div>
   );
 }
