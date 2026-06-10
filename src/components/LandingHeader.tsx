@@ -10,6 +10,7 @@ const navItems = [
   { to: "/faq", label: "FAQ" },
   { to: "/about", label: "About" },
   { to: "/contact", label: "Contact us" },
+  { to: "/predictions", label: "World Cup 2026" },
 ];
 
 export function LandingHeader() {
