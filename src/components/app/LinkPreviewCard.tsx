@@ -42,13 +42,13 @@ export function LinkPreviewCard({ url, title }: { url: string; title?: string })
       href={url}
       target="_blank"
       rel="noopener noreferrer"
-      className="not-prose my-3 flex max-w-[640px] overflow-hidden rounded-lg border border-border bg-card text-card-foreground no-underline shadow-sm transition-colors hover:bg-accent"
+      className="not-prose my-3 flex max-w-[640px] flex-col overflow-hidden rounded-lg border border-border bg-card text-card-foreground no-underline shadow-sm transition-colors hover:bg-accent sm:flex-row"
     >
       {m?.image ? (
         <img
           src={m.image}
           alt=""
-          className="hidden sm:block h-auto w-40 shrink-0 object-cover"
+          className="h-44 w-full shrink-0 object-cover sm:h-auto sm:w-40"
           loading="lazy"
           referrerPolicy="no-referrer"
           onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
