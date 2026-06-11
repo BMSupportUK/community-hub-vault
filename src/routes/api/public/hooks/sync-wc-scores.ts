@@ -30,9 +30,15 @@ type FdMatch = {
   id: number;
   utcDate: string;
   status: string;
+  minute?: number | null;
   homeTeam: { name: string };
   awayTeam: { name: string };
   score: { fullTime: { home: number | null; away: number | null } };
+} & {
+  score?: {
+    fullTime?: { home: number | null; away: number | null };
+    halfTime?: { home: number | null; away: number | null };
+  };
 };
 
 async function syncScores() {
@@ -42,7 +48,7 @@ async function syncScores() {
   }
 
   const res = await fetch(
-    "https://api.football-data.org/v4/competitions/WC/matches?status=FINISHED",
+    "https://api.football-data.org/v4/competitions/WC/matches",
     { headers: { "X-Auth-Token": apiKey } },
   );
   if (!res.ok) {
@@ -54,16 +60,21 @@ async function syncScores() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data: fixtures, error: fxErr } = await supabaseAdmin
     .from("wc_fixtures")
-    .select("id, home_team, away_team, kickoff_at, home_score, away_score");
+    .select("id, home_team, away_team, kickoff_at, home_score, away_score, status, minute");
   if (fxErr) return { ok: false, error: fxErr.message };
 
   let updated = 0;
   const skipped: string[] = [];
 
   for (const m of json.matches) {
-    const hs = m.score?.fullTime?.home;
-    const as = m.score?.fullTime?.away;
-    if (hs === null || as === null || hs === undefined || as === undefined) continue;
+    const status = m.status;
+    const isLive = status === "IN_PLAY" || status === "PAUSED" || status === "LIVE";
+    const isFinished = status === "FINISHED";
+    const ft = m.score?.fullTime;
+    const ht = (m as { score?: { halfTime?: { home: number | null; away: number | null } } })
+      .score?.halfTime;
+    const hs = ft?.home ?? ht?.home ?? null;
+    const as = ft?.away ?? ht?.away ?? null;
 
     const kickoffMs = new Date(m.utcDate).getTime();
     const match = fixtures!.find((f) => {
@@ -79,11 +90,29 @@ async function syncScores() {
       skipped.push(`${m.homeTeam.name} v ${m.awayTeam.name}`);
       continue;
     }
-    if (match.home_score === hs && match.away_score === as) continue;
+
+    const nextMinute = isLive ? (typeof m.minute === "number" ? m.minute : null) : null;
+    const update: {
+      status: string;
+      minute: number | null;
+      home_score?: number | null;
+      away_score?: number | null;
+    } = { status, minute: nextMinute };
+    if (isLive || isFinished) {
+      update.home_score = hs;
+      update.away_score = as;
+    }
+
+    const unchanged =
+      (match as { status?: string }).status === status &&
+      (match as { minute?: number | null }).minute === nextMinute &&
+      (update.home_score === undefined || match.home_score === update.home_score) &&
+      (update.away_score === undefined || match.away_score === update.away_score);
+    if (unchanged) continue;
 
     const { error: upErr } = await supabaseAdmin
       .from("wc_fixtures")
-      .update({ home_score: hs, away_score: as })
+      .update(update)
       .eq("id", match.id);
     if (upErr) {
       skipped.push(`${m.homeTeam.name} v ${m.awayTeam.name}: ${upErr.message}`);
@@ -92,7 +121,7 @@ async function syncScores() {
     updated += 1;
   }
 
-  return { ok: true, updated, skipped, totalFinished: json.matches.length };
+  return { ok: true, updated, skipped, total: json.matches.length };
 }
 
 export const Route = createFileRoute("/api/public/hooks/sync-wc-scores")({
