@@ -33,8 +33,6 @@ type FdMatch = {
   minute?: number | null;
   homeTeam: { name: string };
   awayTeam: { name: string };
-  score: { fullTime: { home: number | null; away: number | null } };
-} & {
   score?: {
     fullTime?: { home: number | null; away: number | null };
     halfTime?: { home: number | null; away: number | null };
