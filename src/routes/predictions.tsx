@@ -613,9 +613,13 @@ function PointsSidebar({
 function UpcomingFixtures({
   fixtures,
   loading,
+  canPredict,
+  onSave,
 }: {
   fixtures: WcFixtureDTO[];
   loading: boolean;
+  canPredict: boolean;
+  onSave: (fixtureId: string, hp: number, ap: number) => Promise<void>;
 }) {
   return (
     <div className="rounded-2xl border border-border bg-surface-1 overflow-hidden">
@@ -693,6 +697,13 @@ function UpcomingFixtures({
                       </span>
                     )}
                   </div>
+                )}
+                {!locked && !scored && (
+                  <SidebarPickInput
+                    fixture={f}
+                    canPredict={canPredict}
+                    onSave={onSave}
+                  />
                 )}
               </li>
             );
