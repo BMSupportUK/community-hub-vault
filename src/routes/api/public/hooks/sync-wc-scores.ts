@@ -51,6 +51,7 @@ type DbFixture = {
   away_score: number | null;
   status: string | null;
   minute: number | null;
+  minute_added: number | null;
 };
 
 function findFixture(
@@ -80,6 +81,7 @@ type EspnLiveMatch = {
   kickoffMs: number;
   status: string;
   minute: number | null;
+  minuteAdded: number | null;
   homeScore: number | null;
   awayScore: number | null;
 };
@@ -126,22 +128,20 @@ async function fetchEspnLive(): Promise<EspnLiveMatch[]> {
             ? "PAUSED"
             : "IN_PLAY";
       // ESPN's displayClock during stoppage time looks like "45'+2" or
-      // "90'+3" — split on '+' so injury minutes are added to the elapsed
-      // count (e.g. 45 + 2 → 47') instead of being silently dropped.
+      // "90'+3" — split on '+' so we keep the base minute and the added
+      // injury minutes separately (rendered as "45+2'").
       const dc = comp.status?.displayClock ?? "";
       const [baseStr, addedStr] = dc.split("+");
       const base = parseInt(baseStr ?? "", 10);
-      const added = parseInt(addedStr ?? "", 10);
-      const clock =
-        Number.isFinite(base)
-          ? base + (Number.isFinite(added) ? added : 0)
-          : NaN;
+      const addedParsed = parseInt(addedStr ?? "", 10);
+      const added = Number.isFinite(addedParsed) ? addedParsed : null;
       out.push({
         home: homeC.team.displayName,
         away: awayC.team.displayName,
         kickoffMs: new Date(e.date).getTime(),
         status,
-        minute: state === "in" && Number.isFinite(clock) ? clock : null,
+        minute: state === "in" && Number.isFinite(base) ? base : null,
+        minuteAdded: state === "in" ? added : null,
         homeScore: homeC.score != null && homeC.score !== "" ? Number(homeC.score) : null,
         awayScore: awayC.score != null && awayC.score !== "" ? Number(awayC.score) : null,
       });
@@ -171,7 +171,7 @@ async function syncScores() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data: fixtures, error: fxErr } = await supabaseAdmin
     .from("wc_fixtures")
-    .select("id, home_team, away_team, kickoff_at, home_score, away_score, status, minute");
+    .select("id, home_team, away_team, kickoff_at, home_score, away_score, status, minute, minute_added");
   if (fxErr) return { ok: false, error: fxErr.message };
 
   let updated = 0;
@@ -221,10 +221,11 @@ async function syncScores() {
     const update: {
       status: string;
       minute: number | null;
+      minute_added: number | null;
       kickoff_at?: string;
       home_score?: number | null;
       away_score?: number | null;
-    } = { status, minute: nextMinute };
+    } = { status, minute: nextMinute, minute_added: null };
     if (isLive || isFinished) {
       update.home_score = hs;
       update.away_score = as;
@@ -246,6 +247,7 @@ async function syncScores() {
     const unchanged =
       (match as { status?: string }).status === status &&
       (match as { minute?: number | null }).minute === nextMinute &&
+      ((match as { minute_added?: number | null }).minute_added ?? null) === null &&
       update.kickoff_at === undefined &&
       (update.home_score === undefined || match.home_score === update.home_score) &&
       (update.away_score === undefined || match.away_score === update.away_score);
@@ -274,6 +276,7 @@ async function syncScores() {
     const unchanged =
       fx.status === ev.status &&
       fx.minute === ev.minute &&
+      ((fx as { minute_added?: number | null }).minute_added ?? null) === ev.minuteAdded &&
       fx.home_score === ev.homeScore &&
       fx.away_score === ev.awayScore;
     if (unchanged) continue;
@@ -282,6 +285,7 @@ async function syncScores() {
       .update({
         status: ev.status,
         minute: ev.minute,
+        minute_added: ev.minuteAdded,
         home_score: ev.homeScore,
         away_score: ev.awayScore,
       })
@@ -291,7 +295,7 @@ async function syncScores() {
       continue;
     }
     updated += 1;
-    espnApplied.push(`${ev.home} ${ev.homeScore}-${ev.awayScore} ${ev.away} (${ev.status}${ev.minute != null ? ` ${ev.minute}'` : ""})`);
+    espnApplied.push(`${ev.home} ${ev.homeScore}-${ev.awayScore} ${ev.away} (${ev.status}${ev.minute != null ? ` ${ev.minute}${ev.minuteAdded ? `+${ev.minuteAdded}` : ""}'` : ""})`);
   }
 
   return { ok: true, updated, skipped, espn: espnApplied, total: json.matches.length };

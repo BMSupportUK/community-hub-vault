@@ -3830,6 +3830,7 @@ export type Database = {
           kickoff_at: string
           match_no: number | null
           minute: number | null
+          minute_added: number | null
           stage: string
           status: string
           updated_at: string
@@ -3847,6 +3848,7 @@ export type Database = {
           kickoff_at: string
           match_no?: number | null
           minute?: number | null
+          minute_added?: number | null
           stage: string
           status?: string
           updated_at?: string
@@ -3864,6 +3866,7 @@ export type Database = {
           kickoff_at?: string
           match_no?: number | null
           minute?: number | null
+          minute_added?: number | null
           stage?: string
           status?: string
           updated_at?: string

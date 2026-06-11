@@ -1,0 +1,1 @@
+ALTER TABLE public.wc_fixtures ADD COLUMN IF NOT EXISTS minute_added integer;

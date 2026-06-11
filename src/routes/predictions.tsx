@@ -67,10 +67,15 @@ function isFinished(f: { status?: string | null }) {
 function liveLabel(f: {
   status?: string | null;
   minute?: number | null;
+  minuteAdded?: number | null;
   kickoffAt?: string | null;
 }) {
   if (f.status === "PAUSED") return "HT";
-  if (typeof f.minute === "number" && f.minute > 0) return `${f.minute}'`;
+  if (typeof f.minute === "number" && f.minute > 0) {
+    return typeof f.minuteAdded === "number" && f.minuteAdded > 0
+      ? `${f.minute}+${f.minuteAdded}'`
+      : `${f.minute}'`;
+  }
   if (f.kickoffAt) {
     const elapsedMs = Date.now() - new Date(f.kickoffAt).getTime();
     if (elapsedMs > 0) {
@@ -86,7 +91,12 @@ function liveLabel(f: {
 function LivePill({
   fixture,
 }: {
-  fixture: { status?: string | null; minute?: number | null; kickoffAt?: string | null };
+  fixture: {
+    status?: string | null;
+    minute?: number | null;
+    minuteAdded?: number | null;
+    kickoffAt?: string | null;
+  };
 }) {
   // Re-render every 30s so the elapsed-minutes fallback ticks up.
   useNow(30_000);
