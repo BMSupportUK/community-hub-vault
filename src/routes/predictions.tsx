@@ -722,6 +722,77 @@ function Loading() {
   );
 }
 
+function SidebarPickInput({
+  fixture,
+  canPredict,
+  onSave,
+}: {
+  fixture: WcFixtureDTO;
+  canPredict: boolean;
+  onSave: (fixtureId: string, hp: number, ap: number) => Promise<void>;
+}) {
+  const [hp, setHp] = useState<string>(fixture.myPrediction?.homePred?.toString() ?? "");
+  const [ap, setAp] = useState<string>(fixture.myPrediction?.awayPred?.toString() ?? "");
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    setHp(fixture.myPrediction?.homePred?.toString() ?? "");
+    setAp(fixture.myPrediction?.awayPred?.toString() ?? "");
+  }, [fixture.myPrediction?.homePred, fixture.myPrediction?.awayPred]);
+
+  const valid =
+    hp !== "" && ap !== "" && Number.isInteger(Number(hp)) && Number.isInteger(Number(ap)) &&
+    Number(hp) >= 0 && Number(ap) >= 0;
+  const dirty =
+    valid &&
+    (Number(hp) !== fixture.myPrediction?.homePred ||
+      Number(ap) !== fixture.myPrediction?.awayPred);
+
+  const submit = async () => {
+    if (!valid || !dirty) return;
+    setBusy(true);
+    try {
+      await onSave(fixture.id, Number(hp), Number(ap));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="mt-2 flex items-center gap-1.5">
+      <Input
+        type="number"
+        min={0}
+        inputMode="numeric"
+        value={hp}
+        onChange={(e) => setHp(e.target.value)}
+        disabled={!canPredict || busy}
+        className="h-7 w-12 px-1.5 text-center text-sm tabular-nums"
+        aria-label="Home score"
+      />
+      <span className="text-xs text-muted-foreground">–</span>
+      <Input
+        type="number"
+        min={0}
+        inputMode="numeric"
+        value={ap}
+        onChange={(e) => setAp(e.target.value)}
+        disabled={!canPredict || busy}
+        className="h-7 w-12 px-1.5 text-center text-sm tabular-nums"
+        aria-label="Away score"
+      />
+      <Button
+        size="sm"
+        onClick={submit}
+        disabled={!canPredict || !dirty || busy}
+        className="ml-auto h-7 px-2 text-[11px]"
+      >
+        {busy ? <Loader2 className="size-3 animate-spin" /> : fixture.myPrediction ? "Update" : "Save"}
+      </Button>
+    </div>
+  );
+}
+
 function FixturesList({
   fixtures,
   canPredict,
