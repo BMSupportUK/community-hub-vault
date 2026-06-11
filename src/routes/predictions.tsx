@@ -567,18 +567,27 @@ function PredictionsPage() {
             <TabsContent value="scoring" className="mt-4">
               <div className="rounded-2xl border-2 border-primary/60 bg-surface-1 shadow-md shadow-primary/10 p-5 space-y-4">
                 <h3 className="font-display text-lg font-bold">How points are scored</h3>
+                <p className="text-xs text-muted-foreground">
+                  Each fixture pays out the <span className="text-foreground font-medium">highest</span> tier that
+                  matches your prediction — the tiers don&apos;t stack. An exact score is the top prize, so it pays
+                  5 pts (not 5 + 3 + 1).
+                </p>
                 <ul className="space-y-2 text-sm">
                   <li className="flex items-center gap-3">
                     <span className="inline-flex min-w-12 justify-center px-2 py-1 rounded bg-primary text-primary-foreground text-xs font-bold">5 pts</span>
-                    <span>Exact score</span>
+                    <span><span className="font-medium">Exact score</span> — e.g. you picked 2-0, it finished 2-0.</span>
                   </li>
                   <li className="flex items-center gap-3">
                     <span className="inline-flex min-w-12 justify-center px-2 py-1 rounded bg-primary/80 text-primary-foreground text-xs font-bold">3 pts</span>
-                    <span>Correct goal difference</span>
+                    <span><span className="font-medium">Correct goal difference</span> — right winning margin but wrong scoreline (e.g. picked 3-1, it finished 2-0).</span>
                   </li>
                   <li className="flex items-center gap-3">
                     <span className="inline-flex min-w-12 justify-center px-2 py-1 rounded bg-primary/60 text-primary-foreground text-xs font-bold">1 pt</span>
-                    <span>Correct result (win / draw / loss)</span>
+                    <span><span className="font-medium">Correct result only</span> — right winner (or draw) but wrong margin (e.g. picked 1-0, it finished 2-0).</span>
+                  </li>
+                  <li className="flex items-center gap-3">
+                    <span className="inline-flex min-w-12 justify-center px-2 py-1 rounded bg-muted text-muted-foreground text-xs font-bold">0 pts</span>
+                    <span><span className="font-medium">Wrong result</span> — you picked the wrong team to win (or picked a draw when there was a winner).</span>
                   </li>
                 </ul>
               </div>
