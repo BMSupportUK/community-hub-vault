@@ -17,6 +17,11 @@ const HTTP_URL_RE = /https?:\/\/[^\s<>"']+/i;
  */
 export function markLinkPreviews(html: string): string {
   if (!html) return html;
+  return stripPreviewedBareUrls(markLinkPreviewsInner(html));
+}
+
+function markLinkPreviewsInner(html: string): string {
+  if (!html) return html;
 
   const standalone = extractStandalonePreviewUrl(html);
   if (standalone) return linkPreviewMarker(standalone);
@@ -39,6 +44,56 @@ export function markLinkPreviews(html: string): string {
     const inlineUrl = firstAnchorPreviewUrl(inner) ?? firstPreviewUrlInText(htmlTextContent(inner));
     return inlineUrl ? `${match}${linkPreviewMarker(inlineUrl)}` : match;
   });
+}
+
+/**
+ * Once a URL has a link-preview card, hide the raw URL text/anchor from the
+ * post body — the card already links out, so the bare URL is just noise.
+ * Also tidies up empty blocks / <br> runs left behind directly before the
+ * preview marker. Runs at render time, so existing posts clean up too.
+ */
+function stripPreviewedBareUrls(html: string): string {
+  if (!html || !/data-link-preview=/i.test(html)) return html;
+
+  const urls = new Set<string>();
+  for (const m of html.matchAll(/data-link-preview=["']([^"']+)["']/gi)) {
+    urls.add(decodeBasicEntities(m[1]).replace(/\/+$/, ""));
+  }
+  if (urls.size === 0) return html;
+
+  let out = html;
+
+  // Remove self-text anchors pointing at a previewed URL.
+  out = out.replace(/<a\b[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi, (m, href: string, inner: string) => {
+    const h = decodeBasicEntities(href).replace(/\/+$/, "");
+    if (!urls.has(h)) return m;
+    const text = htmlTextContent(inner).replace(/\/+$/, "");
+    return !text || text === h ? "" : m;
+  });
+
+  // Remove bare text occurrences of previewed URLs (not inside attributes —
+  // attribute values are always preceded by a quote, which we don't match).
+  for (const url of urls) {
+    for (const variant of new Set([url, url.replace(/&/g, "&amp;")])) {
+      const re = new RegExp(`(^|>|\\s)${escapeRegExp(variant)}\\/?(?=<|\\s|$)`, "g");
+      out = out.replace(re, "$1");
+    }
+  }
+
+  // Collapse empty blocks / <br> runs left directly before the marker.
+  let prev = "";
+  while (prev !== out) {
+    prev = out;
+    out = out
+      .replace(/(?:<br\s*\/?>\s*)+(<div\b[^>]*data-link-preview)/gi, "$1")
+      .replace(/<(p|div)\b[^>]*>\s*(?:<br\s*\/?>\s*|&nbsp;)*<\/\1>\s*(<div\b[^>]*data-link-preview)/gi, "$2");
+  }
+
+  return out;
+}
+
+function escapeRegExp(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 export function prepareForumPostBody(html: string): string {
