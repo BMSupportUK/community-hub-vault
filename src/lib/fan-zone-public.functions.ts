@@ -54,11 +54,12 @@ export type PublicTopicDetail = {
 type AliasRow = { user_id: string; fan_alias: string | null; fan_avatar_url: string | null };
 
 /**
- * Returns the set of board IDs that are explicitly hidden from guests
- * (a `forum_board_permissions` row with role='guest' AND can_view=false).
- * Boards with no guest row remain visible by default.
+ * Returns the set of board IDs guests are allowed to view: boards with an
+ * explicit `forum_board_permissions` row role='guest' AND can_view=true.
+ * Boards with no guest row (or can_view=false) are hidden — this matches
+ * exactly what the admin permissions screen displays (unchecked = denied).
  */
-async function guestHiddenBoardIds(
+async function guestVisibleBoardIds(
   admin: { from: (t: string) => any },
 ): Promise<Set<string>> {
   const { data } = await admin
@@ -67,7 +68,7 @@ async function guestHiddenBoardIds(
     .eq("role", "guest");
   const out = new Set<string>();
   ((data ?? []) as Array<{ board_id: string; can_view: boolean }>).forEach((r) => {
-    if (!r.can_view) out.add(r.board_id);
+    if (r.can_view) out.add(r.board_id);
   });
   return out;
 }
@@ -102,9 +103,9 @@ export const listPublicBoards = createServerFn({ method: "GET" }).handler(async 
     .order("is_pinned", { ascending: false })
     .order("sort_order");
   if (error) throw error;
-  const hidden = await guestHiddenBoardIds(supabaseAdmin);
+  const visible = await guestVisibleBoardIds(supabaseAdmin);
   return ((data ?? []) as PublicBoard[])
-    .filter((b) => !hidden.has(b.id))
+    .filter((b) => visible.has(b.id))
     .map((b) => ({
     id: b.id,
     name: b.name,
@@ -131,8 +132,8 @@ export const listPublicTopics = createServerFn({ method: "GET" })
       .eq("slug", data.slug)
       .maybeSingle();
     if (!b) return { board: null, topics: [] as PublicTopicRow[], total: 0, page: data.page };
-    const hidden = await guestHiddenBoardIds(supabaseAdmin);
-    if (hidden.has((b as { id: string }).id)) {
+    const visible = await guestVisibleBoardIds(supabaseAdmin);
+    if (!visible.has((b as { id: string }).id)) {
       return { board: null, topics: [] as PublicTopicRow[], total: 0, page: data.page };
     }
     const from = (data.page - 1) * PAGE_SIZE;
@@ -188,8 +189,8 @@ export const getPublicTopic = createServerFn({ method: "GET" })
       reply_count: number;
       created_at: string;
     };
-    const hidden = await guestHiddenBoardIds(supabaseAdmin);
-    if (hidden.has(topic.board_id)) return null;
+    const visible = await guestVisibleBoardIds(supabaseAdmin);
+    if (!visible.has(topic.board_id)) return null;
     const { data: bd } = await supabaseAdmin
       .from("forum_boards")
       .select("id, name, slug")
