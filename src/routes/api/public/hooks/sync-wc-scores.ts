@@ -29,19 +29,6 @@ function nameMatches(dbName: string, apiName: string) {
   return false;
 }
 
-type FdMatch = {
-  id: number;
-  utcDate: string;
-  status: string;
-  minute?: number | null;
-  homeTeam: { name: string };
-  awayTeam: { name: string };
-  score?: {
-    fullTime?: { home: number | null; away: number | null };
-    halfTime?: { home: number | null; away: number | null };
-  };
-};
-
 type DbFixture = {
   id: string;
   home_team: string;
@@ -153,21 +140,9 @@ async function fetchEspnLive(): Promise<EspnLiveMatch[]> {
 }
 
 async function syncScores() {
-  const apiKey = process.env.FOOTBALL_DATA_API_KEY;
-  if (!apiKey) {
-    return { ok: false, error: "FOOTBALL_DATA_API_KEY not configured" };
-  }
-
-  const res = await fetch(
-    "https://api.football-data.org/v4/competitions/WC/matches",
-    { headers: { "X-Auth-Token": apiKey } },
-  );
-  if (!res.ok) {
-    const body = await res.text();
-    return { ok: false, error: `football-data: ${res.status} ${body.slice(0, 200)}` };
-  }
-  const json = (await res.json()) as { matches: FdMatch[] };
-
+  // ESPN's public scoreboard is the single source of truth — it's keyless and
+  // updates in real time. football-data's free tier was unreliable (often
+  // hours behind and occasionally dropped scores), so it's no longer used.
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data: fixtures, error: fxErr } = await supabaseAdmin
     .from("wc_fixtures")
@@ -176,109 +151,9 @@ async function syncScores() {
 
   let updated = 0;
   const skipped: string[] = [];
-  // Fixtures we should re-score this run: any fixture that was just marked
-  // FINISHED, or whose final score actually changed. Scoring runs once per
-  // fixture id at the end so we don't pay the cost on every minute-tick.
   const toScore = new Set<string>();
-  // Fixture ids that ESPN reports as live/finished — the football-data pass must
-  // not downgrade these (its feed can still say TIMED while the match is live).
   const espnLive = await fetchEspnLive();
-  const espnOwnedIds = new Set<string>();
-  for (const ev of espnLive) {
-    const fx = findFixture(fixtures as DbFixture[], ev.home, ev.away, ev.kickoffMs);
-    if (fx) espnOwnedIds.add(fx.id);
-  }
 
-  for (const m of json.matches) {
-    const status = m.status;
-    const isLive = status === "IN_PLAY" || status === "PAUSED" || status === "LIVE";
-    const isFinished = status === "FINISHED";
-    const ft = m.score?.fullTime;
-    const ht = (m as { score?: { halfTime?: { home: number | null; away: number | null } } })
-      .score?.halfTime;
-    const hs = ft?.home ?? ht?.home ?? null;
-    const as = ft?.away ?? ht?.away ?? null;
-
-    const kickoffMs = new Date(m.utcDate).getTime();
-    const match = findFixture(fixtures as DbFixture[], m.homeTeam.name, m.awayTeam.name, kickoffMs);
-
-    if (!match) {
-      skipped.push(`${m.homeTeam.name} v ${m.awayTeam.name}`);
-      continue;
-    }
-
-    // ESPN has fresher live data for this fixture — only let football-data fix
-    // the kickoff time, never the status/score/minute.
-    if (espnOwnedIds.has(match.id) && !isLive && !isFinished) {
-      const koDiff = Math.abs(new Date(match.kickoff_at).getTime() - kickoffMs);
-      if (koDiff > 60 * 1000) {
-        const { error: koErr } = await supabaseAdmin
-          .from("wc_fixtures")
-          .update({ kickoff_at: new Date(kickoffMs).toISOString() })
-          .eq("id", match.id);
-        if (!koErr) updated += 1;
-      }
-      continue;
-    }
-
-    const nextMinute = isLive ? (typeof m.minute === "number" ? m.minute : null) : null;
-    const update: {
-      status: string;
-      minute: number | null;
-      minute_added: number | null;
-      kickoff_at?: string;
-      home_score?: number | null;
-      away_score?: number | null;
-    } = { status, minute: nextMinute, minute_added: null };
-    if (isLive || isFinished) {
-      update.home_score = hs;
-      update.away_score = as;
-    } else {
-      // Status reverted to pre-match (SCHEDULED/TIMED/POSTPONED/etc.) — clear
-      // any stale score left from a prior live tick so the UI doesn't render
-      // "Final 0-0" before the match has actually kicked off.
-      update.home_score = null;
-      update.away_score = null;
-    }
-
-    // Keep kickoff_at aligned with the official feed (fixtures were entered manually
-    // and can be hours off, which breaks the "in play" / elapsed-minutes display).
-    const kickoffDiff = Math.abs(new Date(match.kickoff_at).getTime() - kickoffMs);
-    if (kickoffDiff > 60 * 1000) {
-      update.kickoff_at = new Date(kickoffMs).toISOString();
-    }
-
-    const unchanged =
-      (match as { status?: string }).status === status &&
-      (match as { minute?: number | null }).minute === nextMinute &&
-      ((match as { minute_added?: number | null }).minute_added ?? null) === null &&
-      update.kickoff_at === undefined &&
-      (update.home_score === undefined || match.home_score === update.home_score) &&
-      (update.away_score === undefined || match.away_score === update.away_score);
-    if (unchanged) continue;
-
-    const prevStatus = (match as { status?: string }).status;
-    const prevHs = match.home_score;
-    const prevAs = match.away_score;
-    const { error: upErr } = await supabaseAdmin
-      .from("wc_fixtures")
-      .update(update)
-      .eq("id", match.id);
-    if (upErr) {
-      skipped.push(`${m.homeTeam.name} v ${m.awayTeam.name}: ${upErr.message}`);
-      continue;
-    }
-    updated += 1;
-    if (
-      isFinished &&
-      (prevStatus !== "FINISHED" || prevHs !== hs || prevAs !== as)
-    ) {
-      toScore.add(match.id);
-    }
-  }
-
-  // Overlay ESPN live/finished data — it updates in real time while
-  // football-data's free tier can lag by an entire half.
   const espnApplied: string[] = [];
   for (const ev of espnLive) {
     const fx = findFixture(fixtures as DbFixture[], ev.home, ev.away, ev.kickoffMs);
@@ -293,6 +168,9 @@ async function syncScores() {
       fx.home_score === ev.homeScore &&
       fx.away_score === ev.awayScore;
     if (unchanged) continue;
+    const prevStatus = fx.status;
+    const prevHs = fx.home_score;
+    const prevAs = fx.away_score;
     const { error: upErr } = await supabaseAdmin
       .from("wc_fixtures")
       .update({
@@ -311,9 +189,9 @@ async function syncScores() {
     espnApplied.push(`${ev.home} ${ev.homeScore}-${ev.awayScore} ${ev.away} (${ev.status}${ev.minute != null ? ` ${ev.minute}${ev.minuteAdded ? `+${ev.minuteAdded}` : ""}'` : ""})`);
     if (
       ev.status === "FINISHED" &&
-      (fx.status !== "FINISHED" ||
-        fx.home_score !== ev.homeScore ||
-        fx.away_score !== ev.awayScore)
+      ev.homeScore !== null &&
+      ev.awayScore !== null &&
+      (prevStatus !== "FINISHED" || prevHs !== ev.homeScore || prevAs !== ev.awayScore)
     ) {
       toScore.add(fx.id);
     }
@@ -333,7 +211,7 @@ async function syncScores() {
     scored.push(id);
   }
 
-  return { ok: true, updated, skipped, espn: espnApplied, scored, total: json.matches.length };
+  return { ok: true, updated, skipped, espn: espnApplied, scored, total: espnLive.length };
 }
 
 export const Route = createFileRoute("/api/public/hooks/sync-wc-scores")({
