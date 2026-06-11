@@ -71,11 +71,12 @@ function stripPreviewedBareUrls(html: string): string {
     return !text || text === h ? "" : m;
   });
 
-  // Remove bare text occurrences of previewed URLs (not inside attributes —
-  // attribute values are always preceded by a quote, which we don't match).
+  // Remove bare text occurrences of previewed URLs, but only when the URL
+  // stands on its own line/block (mid-sentence URLs keep their text). Not
+  // matched inside attributes — those are always preceded by a quote.
   for (const url of urls) {
     for (const variant of new Set([url, url.replace(/&/g, "&amp;")])) {
-      const re = new RegExp(`(^|>|\\s)${escapeRegExp(variant)}\\/?(?=<|\\s|$)`, "g");
+      const re = new RegExp(`(^|>)\\s*${escapeRegExp(variant)}\\/?\\s*(?=<|$)`, "g");
       out = out.replace(re, "$1");
     }
   }
