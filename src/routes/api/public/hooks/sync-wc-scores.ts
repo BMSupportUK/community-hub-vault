@@ -96,6 +96,7 @@ async function syncScores() {
     const update: {
       status: string;
       minute: number | null;
+      kickoff_at?: string;
       home_score?: number | null;
       away_score?: number | null;
     } = { status, minute: nextMinute };
@@ -104,9 +105,17 @@ async function syncScores() {
       update.away_score = as;
     }
 
+    // Keep kickoff_at aligned with the official feed (fixtures were entered manually
+    // and can be hours off, which breaks the "in play" / elapsed-minutes display).
+    const kickoffDiff = Math.abs(new Date(match.kickoff_at).getTime() - kickoffMs);
+    if (kickoffDiff > 60 * 1000) {
+      update.kickoff_at = new Date(kickoffMs).toISOString();
+    }
+
     const unchanged =
       (match as { status?: string }).status === status &&
       (match as { minute?: number | null }).minute === nextMinute &&
+      update.kickoff_at === undefined &&
       (update.home_score === undefined || match.home_score === update.home_score) &&
       (update.away_score === undefined || match.away_score === update.away_score);
     if (unchanged) continue;
