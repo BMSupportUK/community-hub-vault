@@ -418,30 +418,7 @@ function PredictionsPage() {
                 <FixturesList
                   fixtures={fixtures}
                   canPredict={canPredict}
-                  onSave={async (fixtureId, hp, ap) => {
-                    try {
-                      if (user) {
-                        await upsertFn({ data: { fixtureId, homePred: hp, awayPred: ap } });
-                      } else if (guest) {
-                        await upsertGuestFn({
-                          data: {
-                            email: guest.email,
-                            pin: guest.pin,
-                            fixtureId,
-                            homePred: hp,
-                            awayPred: ap,
-                          },
-                        });
-                      } else {
-                        setShowGuestLogin(true);
-                        return;
-                      }
-                      toast.success("Prediction saved");
-                      await loadAll();
-                    } catch (e: any) {
-                      toast.error(e?.message ?? "Save failed");
-                    }
-                  }}
+                  onSave={handleSave}
                 />
               )}
             </TabsContent>
