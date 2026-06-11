@@ -532,7 +532,12 @@ function PredictionsPage() {
 
           <aside className="space-y-4 lg:sticky lg:top-6 lg:self-start">
             <PointsSidebar stats={myStats} loading={loading} joined={joined} />
-            <UpcomingFixtures fixtures={upcomingFixtures} loading={loading} />
+            <UpcomingFixtures
+              fixtures={upcomingFixtures}
+              loading={loading}
+              canPredict={canPredict}
+              onSave={handleSave}
+            />
           </aside>
         </div>
       </div>
