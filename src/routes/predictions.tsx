@@ -32,6 +32,7 @@ import heroBg from "@/assets/england-world-cup-hero.jpg";
 import { LandingHeader } from "@/components/LandingHeader";
 import { IconRail } from "@/components/app/IconRail";
 import { supabase } from "@/integrations/supabase/client";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/predictions")({
   component: PredictionsPage,
