@@ -691,7 +691,6 @@ function UpcomingFixtures({
             const locked = Date.now() >= lockMs;
             const scored = f.homeScore !== null && f.awayScore !== null;
             const live = isLive(f);
-            const finished = isFinished(f) || (scored && !live);
             return (
               <li key={f.id} className="px-4 py-3 text-sm">
                 <div className="flex items-center justify-between text-[11px] text-muted-foreground mb-1">
