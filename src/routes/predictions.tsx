@@ -13,8 +13,10 @@ import {
   getWcLeaderboard,
   getWcEntrantStatus,
   joinWcPredictor,
+  getEntrantWcPredictions,
   type WcFixtureDTO,
   type WcLeaderboardRowDTO,
+  type WcEntrantPickDTO,
 } from "@/lib/wc-predictions.functions";
 import {
   guestSignInOrRegister,
@@ -30,6 +32,7 @@ import heroBg from "@/assets/england-world-cup-hero.jpg";
 import { LandingHeader } from "@/components/LandingHeader";
 import { IconRail } from "@/components/app/IconRail";
 import { supabase } from "@/integrations/supabase/client";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/predictions")({
   component: PredictionsPage,
@@ -1475,6 +1478,22 @@ function LeaderboardList({
   const OWNER_ID = "73c113ce-ce1b-43f0-af24-c2a36cf0d8e7";
   const owner = rows.find((r) => r.userId === OWNER_ID) ?? null;
   const ranked = rows.filter((r) => r.userId !== OWNER_ID);
+  const [openEntrant, setOpenEntrant] = useState<WcLeaderboardRowDTO | null>(null);
+  const [picks, setPicks] = useState<WcEntrantPickDTO[] | null>(null);
+  const [picksLoading, setPicksLoading] = useState(false);
+  const fetchPicks = useServerFn(getEntrantWcPredictions);
+  useEffect(() => {
+    if (!openEntrant) {
+      setPicks(null);
+      return;
+    }
+    setPicksLoading(true);
+    setPicks(null);
+    fetchPicks({ data: { entrantId: openEntrant.userId, isGuest: openEntrant.isGuest } })
+      .then((rs) => setPicks(rs))
+      .catch((e: any) => toast.error(e?.message ?? "Failed to load picks"))
+      .finally(() => setPicksLoading(false));
+  }, [openEntrant, fetchPicks]);
   if (!rows.length) {
     return (
       <div className="rounded-2xl border border-border bg-surface-1 p-8 text-center text-sm text-muted-foreground">
@@ -1526,12 +1545,17 @@ function LeaderboardList({
                 ) : (
                   <div className="hidden sm:block size-7 rounded-full bg-surface-2" />
                 )}
-                <span className="truncate font-medium">
+                <button
+                  type="button"
+                  onClick={() => setOpenEntrant(r)}
+                  className="truncate font-medium text-left hover:text-primary hover:underline underline-offset-2 focus:outline-none focus:text-primary"
+                  title="View this player's predictions for matches already kicked off"
+                >
                   {r.displayName || r.username || "Anonymous"}
                   {mine && (
                     <span className="ml-2 text-[10px] uppercase text-primary">you</span>
                   )}
-                </span>
+                </button>
               </div>
               <div className="text-right tabular-nums">{r.predictionsMade}</div>
               <div className="text-right tabular-nums hidden sm:flex items-center justify-end gap-1">
@@ -1579,10 +1603,15 @@ function LeaderboardList({
               ) : (
                 <div className="hidden sm:block size-7 rounded-full bg-surface-2" />
               )}
-              <span className="truncate font-medium">
+              <button
+                type="button"
+                onClick={() => setOpenEntrant(owner)}
+                className="truncate font-medium text-left hover:text-primary hover:underline underline-offset-2 focus:outline-none focus:text-primary"
+                title="View this player's predictions for matches already kicked off"
+              >
                 {owner.displayName || owner.username || "Anonymous"}
                 <span className="ml-2 text-[10px] uppercase text-primary">owner</span>
-              </span>
+              </button>
             </div>
             <div className="text-right tabular-nums">{owner.predictionsMade}</div>
             <div className="text-right tabular-nums hidden sm:flex items-center justify-end gap-1">
@@ -1601,6 +1630,61 @@ function LeaderboardList({
           </div>
         </div>
       )}
+      <Dialog open={!!openEntrant} onOpenChange={(o) => !o && setOpenEntrant(null)}>
+        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <span className="truncate">{openEntrant?.displayName || openEntrant?.username || "Anonymous"}</span>
+              <span className="text-xs font-normal text-muted-foreground">· {openEntrant?.totalPoints ?? 0} pts</span>
+            </DialogTitle>
+            <p className="text-xs text-muted-foreground">
+              Only matches that have already kicked off are shown.
+            </p>
+          </DialogHeader>
+          {picksLoading ? (
+            <div className="grid place-items-center py-10 text-muted-foreground">
+              <Loader2 className="size-5 animate-spin" />
+            </div>
+          ) : !picks || picks.length === 0 ? (
+            <div className="py-8 text-center text-sm text-muted-foreground">
+              No revealed picks yet — come back after the next kickoff.
+            </div>
+          ) : (
+            <ul className="divide-y divide-border">
+              {picks.map((p) => {
+                const finished = p.status === "FINISHED" && p.homeScore !== null && p.awayScore !== null;
+                return (
+                  <li key={p.fixtureId} className="py-2.5 flex items-center gap-3 text-sm">
+                    <div className="flex-1 min-w-0">
+                      <div className="truncate font-medium">
+                        {p.homeTeam} <span className="text-muted-foreground">vs</span> {p.awayTeam}
+                      </div>
+                      <div className="text-[11px] text-muted-foreground">
+                        {new Date(p.kickoffAt).toLocaleString(undefined, { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
+                        {finished && (
+                          <span className="ml-2 font-mono text-foreground">FT {p.homeScore}-{p.awayScore}</span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="font-mono tabular-nums text-foreground">
+                      {p.homePred}-{p.awayPred}
+                    </div>
+                    <div className="w-12 text-right">
+                      {p.points !== null ? (
+                        <span className={`inline-flex px-1.5 py-0.5 rounded text-[10px] font-bold ${p.points >= 5 ? "bg-yellow-500/20 text-yellow-300" : p.points >= 3 ? "bg-emerald-500/20 text-emerald-300" : p.points >= 1 ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground"}`}>
+                          {p.points} pt{p.points === 1 ? "" : "s"}
+                        </span>
+                      ) : (
+                        <span className="text-[10px] text-muted-foreground">—</span>
+                      )}
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
