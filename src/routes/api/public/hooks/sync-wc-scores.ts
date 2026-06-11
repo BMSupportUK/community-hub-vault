@@ -7,12 +7,11 @@ const ALIASES: Record<string, string[]> = {
   "Iran": ["IR Iran", "Islamic Republic of Iran"],
   "Ivory Coast": ["Côte d'Ivoire", "Cote d'Ivoire"],
   "Türkiye": ["Turkey", "Turkiye"],
-  "DR Congo": ["Democratic Republic of the Congo", "DR Congo"],
+  "DR Congo": ["Democratic Republic of the Congo", "Congo DR"],
   "Republic of Ireland": ["Ireland"],
   "Czech Republic": ["Czechia"],
   "Bosnia and Herzegovina": ["Bosnia-Herzegovina", "Bosnia & Herzegovina"],
   "Cape Verde": ["Cape Verde Islands"],
-  "Congo DR": ["DR Congo", "Democratic Republic of the Congo", "Congo DR"],
 };
 
 function norm(s: string | null | undefined) {
