@@ -99,6 +99,8 @@ export const Route = createFileRoute("/api/public/link-preview")({
 
 function decode(s: string): string {
   return s
+    .replace(/&#x([0-9a-f]+);/gi, (_, hex) => safeCodePoint(parseInt(hex, 16)))
+    .replace(/&#(\d+);/g, (_, dec) => safeCodePoint(parseInt(dec, 10)))
     .replace(/&amp;/gi, "&")
     .replace(/&quot;/gi, '"')
     .replace(/&#39;|&apos;/gi, "'")
@@ -106,6 +108,14 @@ function decode(s: string): string {
     .replace(/&gt;/gi, ">")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+function safeCodePoint(cp: number): string {
+  try {
+    return Number.isFinite(cp) ? String.fromCodePoint(cp) : "";
+  } catch {
+    return "";
+  }
 }
 
 function json(body: unknown, status: number) {
