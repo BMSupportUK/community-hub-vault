@@ -1630,6 +1630,61 @@ function LeaderboardList({
           </div>
         </div>
       )}
+      <Dialog open={!!openEntrant} onOpenChange={(o) => !o && setOpenEntrant(null)}>
+        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <span className="truncate">{openEntrant?.displayName || openEntrant?.username || "Anonymous"}</span>
+              <span className="text-xs font-normal text-muted-foreground">· {openEntrant?.totalPoints ?? 0} pts</span>
+            </DialogTitle>
+            <p className="text-xs text-muted-foreground">
+              Only matches that have already kicked off are shown.
+            </p>
+          </DialogHeader>
+          {picksLoading ? (
+            <div className="grid place-items-center py-10 text-muted-foreground">
+              <Loader2 className="size-5 animate-spin" />
+            </div>
+          ) : !picks || picks.length === 0 ? (
+            <div className="py-8 text-center text-sm text-muted-foreground">
+              No revealed picks yet — come back after the next kickoff.
+            </div>
+          ) : (
+            <ul className="divide-y divide-border">
+              {picks.map((p) => {
+                const finished = p.status === "FINISHED" && p.homeScore !== null && p.awayScore !== null;
+                return (
+                  <li key={p.fixtureId} className="py-2.5 flex items-center gap-3 text-sm">
+                    <div className="flex-1 min-w-0">
+                      <div className="truncate font-medium">
+                        {p.homeTeam} <span className="text-muted-foreground">vs</span> {p.awayTeam}
+                      </div>
+                      <div className="text-[11px] text-muted-foreground">
+                        {new Date(p.kickoffAt).toLocaleString(undefined, { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
+                        {finished && (
+                          <span className="ml-2 font-mono text-foreground">FT {p.homeScore}-{p.awayScore}</span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="font-mono tabular-nums text-foreground">
+                      {p.homePred}-{p.awayPred}
+                    </div>
+                    <div className="w-12 text-right">
+                      {p.points !== null ? (
+                        <span className={`inline-flex px-1.5 py-0.5 rounded text-[10px] font-bold ${p.points >= 5 ? "bg-yellow-500/20 text-yellow-300" : p.points >= 3 ? "bg-emerald-500/20 text-emerald-300" : p.points >= 1 ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground"}`}>
+                          {p.points} pt{p.points === 1 ? "" : "s"}
+                        </span>
+                      ) : (
+                        <span className="text-[10px] text-muted-foreground">—</span>
+                      )}
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
