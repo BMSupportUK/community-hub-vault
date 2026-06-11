@@ -1484,7 +1484,7 @@ function LeaderboardList({
   }
   return (
     <div className="rounded-2xl border border-border bg-surface-1 overflow-hidden">
-      <div className="grid grid-cols-[28px_1fr_44px_44px_48px_60px] sm:grid-cols-[48px_1fr_72px_72px_72px_72px_72px_88px] gap-2 px-3 sm:px-4 py-2.5 text-[11px] uppercase tracking-wider text-muted-foreground bg-surface-2 border-b border-border">
+      <div className="grid grid-cols-[28px_1fr_44px_44px_48px_60px] sm:grid-cols-[40px_minmax(0,1.2fr)_64px_120px_140px_110px_72px_84px] gap-2 px-3 sm:px-4 py-2.5 text-[11px] uppercase tracking-wider text-muted-foreground bg-surface-2 border-b border-border">
         <div>#</div>
         <div>Player</div>
         <div className="text-right">Played</div>
@@ -1501,7 +1501,7 @@ function LeaderboardList({
           return (
             <li
               key={r.userId}
-              className={`grid grid-cols-[28px_1fr_44px_44px_48px_60px] sm:grid-cols-[48px_1fr_72px_72px_72px_72px_72px_88px] gap-2 px-3 sm:px-4 py-2.5 text-sm border-b border-border last:border-b-0 ${
+              className={`grid grid-cols-[28px_1fr_44px_44px_48px_60px] sm:grid-cols-[40px_minmax(0,1.2fr)_64px_120px_140px_110px_72px_84px] gap-2 px-3 sm:px-4 py-2.5 text-sm border-b border-border last:border-b-0 ${
                 mine ? "bg-primary/5" : ""
               }`}
             >
@@ -1564,7 +1564,7 @@ function LeaderboardList({
             Site owner · playing for fun (not ranked)
           </div>
           <div
-            className={`grid grid-cols-[28px_1fr_44px_44px_48px_60px] sm:grid-cols-[48px_1fr_72px_72px_72px_72px_72px_88px] gap-2 px-3 sm:px-4 py-2.5 text-sm ${
+            className={`grid grid-cols-[28px_1fr_44px_44px_48px_60px] sm:grid-cols-[40px_minmax(0,1.2fr)_64px_120px_140px_110px_72px_84px] gap-2 px-3 sm:px-4 py-2.5 text-sm ${
               owner.userId === currentUserId ? "bg-primary/5" : ""
             }`}
           >
