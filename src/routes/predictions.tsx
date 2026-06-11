@@ -178,8 +178,8 @@ function PredictionsPage() {
   const canPredict = !!user ? joined : isGuest;
   const myEntrantId = user ? user.id : guest?.guestId ?? null;
 
-  const loadAll = async () => {
-    setLoading(true);
+  const loadAll = async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       if (user) {
         const [fx, lb, st] = await Promise.all([listFixturesFn(), leaderboardFn(), statusFn()]);
@@ -295,15 +295,22 @@ function PredictionsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id, guest?.guestId]);
 
-  // Live-score polling: while any fixture is in-play (or paused at HT), refresh every 30s.
+  // Live-score polling: refresh every 30s while a match is in-play (or paused at
+  // HT), and also around kickoff time so the page flips to live on its own —
+  // without this, a fixture stuck on TIMED never starts polling.
   useEffect(() => {
     if (!fixtures) return;
-    const hasLive = fixtures.some(
-      (f) => f.status === "IN_PLAY" || f.status === "PAUSED" || f.status === "LIVE",
-    );
-    if (!hasLive) return;
+    const now = Date.now();
+    const shouldPoll = fixtures.some((f) => {
+      if (f.status === "IN_PLAY" || f.status === "PAUSED" || f.status === "LIVE") return true;
+      if (f.status === "FINISHED") return false;
+      const ko = f.kickoffAt ? new Date(f.kickoffAt).getTime() : null;
+      // From 5 minutes before kickoff until 3 hours after.
+      return ko !== null && now >= ko - 5 * 60 * 1000 && now <= ko + 3 * 60 * 60 * 1000;
+    });
+    if (!shouldPoll) return;
     const id = window.setInterval(() => {
-      loadAll();
+      loadAll(true);
     }, 30_000);
     return () => window.clearInterval(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
