@@ -126,16 +126,13 @@ async function fetchEspnLive(): Promise<EspnLiveMatch[]> {
             ? "PAUSED"
             : "IN_PLAY";
       // ESPN's displayClock during stoppage time looks like "45'+2" or
-      // "90'+3" — split on '+' so injury minutes are added to the elapsed
-      // count (e.g. 45 + 2 → 47') instead of being silently dropped.
+      // "90'+3" — split on '+' so we keep the base minute and the added
+      // injury minutes separately (rendered as "45+2'").
       const dc = comp.status?.displayClock ?? "";
       const [baseStr, addedStr] = dc.split("+");
       const base = parseInt(baseStr ?? "", 10);
-      const added = parseInt(addedStr ?? "", 10);
-      const clock =
-        Number.isFinite(base)
-          ? base + (Number.isFinite(added) ? added : 0)
-          : NaN;
+      const addedParsed = parseInt(addedStr ?? "", 10);
+      const added = Number.isFinite(addedParsed) ? addedParsed : null;
       out.push({
         home: homeC.team.displayName,
         away: awayC.team.displayName,
