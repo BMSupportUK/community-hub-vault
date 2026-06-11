@@ -1183,7 +1183,10 @@ function FixtureCard({
   const LOCK_MS = 30 * 60 * 1000;
   const lockAtMs = kickoffMs - LOCK_MS;
   const locked = Date.now() >= lockAtMs;
-  const scored = fixture.homeScore !== null && fixture.awayScore !== null;
+  const hasScore = fixture.homeScore !== null && fixture.awayScore !== null;
+  const live = isLive(fixture);
+  const finished = isFinished(fixture) || (hasScore && !live && locked);
+  const scored = finished && hasScore;
   const [hp, setHp] = useState<string>(fixture.myPrediction?.homePred?.toString() ?? "");
   const [ap, setAp] = useState<string>(fixture.myPrediction?.awayPred?.toString() ?? "");
   const [busy, setBusy] = useState(false);
@@ -1229,6 +1232,7 @@ function FixtureCard({
           )}
         </span>
         <span className="inline-flex items-center gap-2">
+          {live && <LivePill fixture={fixture} />}
           {!locked && !scored && <LockCountdownPill lockAtMs={lockAtMs} />}
           <span className="font-bold text-foreground tabular-nums">
             {formatKickoff(fixture.kickoffAt)}
@@ -1241,7 +1245,16 @@ function FixtureCard({
           <span className="mr-1.5">{teamFlag(fixture.homeTeam)}</span>
           {fixture.homeTeam}
         </div>
-        {scored ? (
+        {live && hasScore ? (
+          <div className="text-center">
+            <div className="px-3 py-1.5 rounded-lg bg-red-500/10 border border-red-500/40 font-display text-lg font-bold tabular-nums text-red-300">
+              {fixture.homeScore} – {fixture.awayScore}
+            </div>
+            <div className="text-[10px] uppercase tracking-wider text-red-300/80 mt-1 inline-flex items-center gap-1">
+              <span className="size-1.5 rounded-full bg-red-400 animate-pulse" /> {liveLabel(fixture)}
+            </div>
+          </div>
+        ) : scored ? (
           <div className="text-center">
             <div className="px-3 py-1.5 rounded-lg bg-surface-2 border border-border font-display text-lg font-bold tabular-nums">
               {fixture.homeScore} – {fixture.awayScore}
@@ -1341,8 +1354,15 @@ function FixtureCard({
 
       {/* Final-score status — always visible so users know where the auto-scored result will appear */}
       <div className="mt-3 pt-3 border-t border-border/60 flex items-center justify-between text-[11px]">
-        <span className="uppercase tracking-wider text-muted-foreground">Final score</span>
-        {scored ? (
+        <span className="uppercase tracking-wider text-muted-foreground">
+          {live ? "Live score" : "Final score"}
+        </span>
+        {live && hasScore ? (
+          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-red-500/15 text-red-300 border border-red-500/30 font-bold tabular-nums">
+            <span className="size-1.5 rounded-full bg-red-400 animate-pulse" />
+            {fixture.homeScore} – {fixture.awayScore} · {liveLabel(fixture)}
+          </span>
+        ) : scored ? (
           <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-bold tabular-nums">
             <Check className="size-3" />
             {fixture.homeScore} – {fixture.awayScore}
