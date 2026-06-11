@@ -131,6 +131,7 @@ export type PublicWcFixture = {
   awayScore: number | null;
   status: string;
   minute: number | null;
+  minuteAdded: number | null;
   myPrediction: { homePred: number; awayPred: number; points: number | null } | null;
 };
 
@@ -141,7 +142,7 @@ export const listWcFixturesPublic = createServerFn({ method: "POST" })
     const admin = await getAdmin();
     const { data: fixtures, error } = await admin
       .from("wc_fixtures")
-      .select("id, stage, group_label, home_team, away_team, kickoff_at, home_score, away_score, status, minute")
+      .select("id, stage, group_label, home_team, away_team, kickoff_at, home_score, away_score, status, minute, minute_added")
       .order("kickoff_at", { ascending: true });
     if (error) throw new Error(error.message);
 
@@ -172,6 +173,7 @@ export const listWcFixturesPublic = createServerFn({ method: "POST" })
         awayScore: f.away_score,
         status: (f.status as string | null) ?? "SCHEDULED",
         minute: (f.minute as number | null) ?? null,
+        minuteAdded: (f.minute_added as number | null) ?? null,
         myPrediction: p
           ? { homePred: p.home_pred, awayPred: p.away_pred, points: p.points ?? null }
           : null,
