@@ -231,6 +231,7 @@ export type PublicLeaderboardRow = {
   isGuest: boolean;
   totalPoints: number;
   exactCount: number;
+  goalDiffCount: number;
   resultCount: number;
   predictionsMade: number;
   predictionsScored: number;
@@ -252,6 +253,7 @@ export const getWcLeaderboardPublic = createServerFn({ method: "GET" }).handler(
       isGuest: !!r.is_guest,
       totalPoints: r.total_points ?? 0,
       exactCount: r.exact_count ?? 0,
+      goalDiffCount: r.goal_diff_count ?? 0,
       resultCount: r.result_count ?? 0,
       predictionsMade: r.predictions_made ?? 0,
       predictionsScored: r.predictions_scored ?? 0,
