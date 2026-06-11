@@ -29,19 +29,6 @@ function nameMatches(dbName: string, apiName: string) {
   return false;
 }
 
-type FdMatch = {
-  id: number;
-  utcDate: string;
-  status: string;
-  minute?: number | null;
-  homeTeam: { name: string };
-  awayTeam: { name: string };
-  score?: {
-    fullTime?: { home: number | null; away: number | null };
-    halfTime?: { home: number | null; away: number | null };
-  };
-};
-
 type DbFixture = {
   id: string;
   home_team: string;
