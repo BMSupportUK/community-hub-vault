@@ -16,11 +16,15 @@ export const Route = createFileRoute("/api/public/link-preview")({
         }
 
         try {
+          // Facebook redirects generic fetchers to a login page (no og tags),
+          // but serves full Open Graph metadata to known crawler UAs.
+          const isFacebook = /(?:^|\.)(?:facebook\.com|fb\.watch|fb\.com)$/i.test(target.hostname);
           const res = await fetch(target.toString(), {
             redirect: "follow",
             headers: {
-              "user-agent":
-                "Mozilla/5.0 (compatible; BMSupportLinkPreview/1.0; +https://bmsupport.uk)",
+              "user-agent": isFacebook
+                ? "Twitterbot/1.0"
+                : "Mozilla/5.0 (compatible; BMSupportLinkPreview/1.0; +https://bmsupport.uk)",
               accept: "text/html,application/xhtml+xml",
             },
             signal: AbortSignal.timeout(6000),
@@ -70,7 +74,7 @@ export const Route = createFileRoute("/api/public/link-preview")({
           const description = meta("og:description") ?? meta("twitter:description") ?? meta("description");
           let image = meta("og:image") ?? meta("twitter:image") ?? null;
           if (image) {
-            try { image = new URL(image, target).toString(); } catch { /* keep raw */ }
+            try { image = new URL(decode(image), target).toString(); } catch { /* keep raw */ }
           }
 
           return json(
