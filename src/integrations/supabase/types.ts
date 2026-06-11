@@ -3957,6 +3957,21 @@ export type Database = {
           },
         ]
       }
+      wc_sync_state: {
+        Row: {
+          id: number
+          request_id: number | null
+        }
+        Insert: {
+          id: number
+          request_id?: number | null
+        }
+        Update: {
+          id?: number
+          request_id?: number | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       app_credentials: {
@@ -4483,6 +4498,11 @@ export type Database = {
         Returns: number
       }
       wc_score_fixture: { Args: { _fixture_id: string }; Returns: undefined }
+      wc_sync_live_scores: { Args: never; Returns: undefined }
+      wc_team_matches: {
+        Args: { api_name: string; db_name: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role:
