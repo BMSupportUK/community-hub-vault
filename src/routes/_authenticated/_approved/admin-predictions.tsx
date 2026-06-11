@@ -510,7 +510,7 @@ function LeaderboardSection() {
                 </span>
               </td>
               <td className="px-3 py-2 text-right tabular-nums">{r.exactCount}</td>
-              <td className="px-3 py-2 text-right tabular-nums">{r.resultCount}</td>
+              <td className="px-3 py-2 text-right tabular-nums">{r.goalDiffCount + r.resultCount}</td>
               <td className="px-3 py-2 text-right tabular-nums text-muted-foreground">{r.predictionsScored}/{r.predictionsMade}</td>
               <td className="px-3 py-2 text-right font-display font-bold tabular-nums text-primary">{r.totalPoints}</td>
             </tr>

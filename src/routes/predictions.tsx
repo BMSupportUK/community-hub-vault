@@ -621,8 +621,8 @@ function PointsSidebar({
 }) {
   const totalPoints = stats?.totalPoints ?? 0;
   const exactCount = stats?.exactCount ?? 0;
+  const goalDiffCount = stats?.goalDiffCount ?? 0;
   const resultCount = stats?.resultCount ?? 0;
-  const scoredCount = stats?.predictionsScored ?? 0;
 
   return (
     <section className="rounded-2xl border-2 border-primary bg-primary/15 shadow-lg shadow-primary/20 overflow-hidden">
@@ -651,15 +651,15 @@ function PointsSidebar({
             <div className="mt-3 grid grid-cols-3 gap-2 text-center">
               <div className="rounded-lg border border-primary/40 bg-surface-1 px-2 py-2">
                 <div className="text-lg font-black text-foreground tabular-nums">{exactCount}</div>
-                <div className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Exact</div>
+                <div className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Exact · 5pt</div>
+              </div>
+              <div className="rounded-lg border border-primary/40 bg-surface-1 px-2 py-2">
+                <div className="text-lg font-black text-foreground tabular-nums">{goalDiffCount}</div>
+                <div className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Goal diff · 3pt</div>
               </div>
               <div className="rounded-lg border border-primary/40 bg-surface-1 px-2 py-2">
                 <div className="text-lg font-black text-foreground tabular-nums">{resultCount}</div>
-                <div className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Results</div>
-              </div>
-              <div className="rounded-lg border border-primary/40 bg-surface-1 px-2 py-2">
-                <div className="text-lg font-black text-foreground tabular-nums">{scoredCount}</div>
-                <div className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Scored</div>
+                <div className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Result · 1pt</div>
               </div>
             </div>
             {!joined && (
@@ -1485,7 +1485,7 @@ function LeaderboardList({
               <div className="text-right tabular-nums hidden sm:flex items-center justify-end gap-1">
                 <Star className="size-3 text-yellow-400" /> {r.exactCount}
               </div>
-              <div className="text-right tabular-nums">{r.resultCount}</div>
+              <div className="text-right tabular-nums">{r.goalDiffCount + r.resultCount}</div>
               <div className="text-right font-display font-bold tabular-nums">
                 {r.totalPoints}
               </div>
@@ -1535,7 +1535,7 @@ function LeaderboardList({
             <div className="text-right tabular-nums hidden sm:flex items-center justify-end gap-1">
               <Star className="size-3 text-yellow-400" /> {owner.exactCount}
             </div>
-            <div className="text-right tabular-nums">{owner.resultCount}</div>
+            <div className="text-right tabular-nums">{owner.goalDiffCount + owner.resultCount}</div>
             <div className="text-right font-display font-bold tabular-nums">
               {owner.totalPoints}
             </div>
