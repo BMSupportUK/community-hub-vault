@@ -42,6 +42,106 @@ type FdMatch = {
   };
 };
 
+type DbFixture = {
+  id: string;
+  home_team: string;
+  away_team: string;
+  kickoff_at: string;
+  home_score: number | null;
+  away_score: number | null;
+  status: string | null;
+  minute: number | null;
+};
+
+function findFixture(
+  fixtures: DbFixture[],
+  homeName: string,
+  awayName: string,
+  kickoffMs: number,
+): DbFixture | undefined {
+  // Pick the closest fixture (by kickoff time) with the same teams, within 5 days —
+  // manually-entered fixture times can be days off from the official schedule.
+  const candidates = fixtures.filter(
+    (f) =>
+      nameMatches(f.home_team, homeName) &&
+      nameMatches(f.away_team, awayName) &&
+      Math.abs(new Date(f.kickoff_at).getTime() - kickoffMs) <= 5 * 24 * 60 * 60 * 1000,
+  );
+  return candidates.sort(
+    (a, b) =>
+      Math.abs(new Date(a.kickoff_at).getTime() - kickoffMs) -
+      Math.abs(new Date(b.kickoff_at).getTime() - kickoffMs),
+  )[0];
+}
+
+type EspnLiveMatch = {
+  home: string;
+  away: string;
+  kickoffMs: number;
+  status: string;
+  minute: number | null;
+  homeScore: number | null;
+  awayScore: number | null;
+};
+
+// football-data.org's free tier can lag far behind kickoff (it has been seen
+// reporting TIMED 20+ minutes into a live match). ESPN's public scoreboard is
+// real-time and keyless, so we overlay its live/finished data on top.
+async function fetchEspnLive(): Promise<EspnLiveMatch[]> {
+  try {
+    const res = await fetch(
+      "https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard",
+    );
+    if (!res.ok) return [];
+    const json = (await res.json()) as {
+      events?: Array<{
+        date?: string;
+        competitions?: Array<{
+          status?: {
+            displayClock?: string;
+            type?: { state?: string; name?: string };
+          };
+          competitors?: Array<{
+            homeAway?: string;
+            score?: string;
+            team?: { displayName?: string };
+          }>;
+        }>;
+      }>;
+    };
+    const out: EspnLiveMatch[] = [];
+    for (const e of json.events ?? []) {
+      const comp = e.competitions?.[0];
+      if (!comp || !e.date) continue;
+      const state = comp.status?.type?.state; // "pre" | "in" | "post"
+      if (state !== "in" && state !== "post") continue;
+      const homeC = comp.competitors?.find((c) => c.homeAway === "home");
+      const awayC = comp.competitors?.find((c) => c.homeAway === "away");
+      if (!homeC?.team?.displayName || !awayC?.team?.displayName) continue;
+      const typeName = comp.status?.type?.name ?? "";
+      const status =
+        state === "post"
+          ? "FINISHED"
+          : typeName === "STATUS_HALFTIME"
+            ? "PAUSED"
+            : "IN_PLAY";
+      const clock = parseInt(comp.status?.displayClock ?? "", 10);
+      out.push({
+        home: homeC.team.displayName,
+        away: awayC.team.displayName,
+        kickoffMs: new Date(e.date).getTime(),
+        status,
+        minute: state === "in" && Number.isFinite(clock) ? clock : null,
+        homeScore: homeC.score != null && homeC.score !== "" ? Number(homeC.score) : null,
+        awayScore: awayC.score != null && awayC.score !== "" ? Number(awayC.score) : null,
+      });
+    }
+    return out;
+  } catch {
+    return [];
+  }
+}
+
 async function syncScores() {
   const apiKey = process.env.FOOTBALL_DATA_API_KEY;
   if (!apiKey) {
@@ -66,6 +166,14 @@ async function syncScores() {
 
   let updated = 0;
   const skipped: string[] = [];
+  // Fixture ids that ESPN reports as live/finished — the football-data pass must
+  // not downgrade these (its feed can still say TIMED while the match is live).
+  const espnLive = await fetchEspnLive();
+  const espnOwnedIds = new Set<string>();
+  for (const ev of espnLive) {
+    const fx = findFixture(fixtures as DbFixture[], ev.home, ev.away, ev.kickoffMs);
+    if (fx) espnOwnedIds.add(fx.id);
+  }
 
   for (const m of json.matches) {
     const status = m.status;
@@ -78,22 +186,24 @@ async function syncScores() {
     const as = ft?.away ?? ht?.away ?? null;
 
     const kickoffMs = new Date(m.utcDate).getTime();
-    // Pick the closest fixture (by kickoff time) with the same teams, within 5 days —
-    // manually-entered fixture times can be days off from the official schedule.
-    const candidates = fixtures!.filter(
-      (f) =>
-        nameMatches(f.home_team, m.homeTeam.name) &&
-        nameMatches(f.away_team, m.awayTeam.name) &&
-        Math.abs(new Date(f.kickoff_at).getTime() - kickoffMs) <= 5 * 24 * 60 * 60 * 1000,
-    );
-    const match = candidates.sort(
-      (a, b) =>
-        Math.abs(new Date(a.kickoff_at).getTime() - kickoffMs) -
-        Math.abs(new Date(b.kickoff_at).getTime() - kickoffMs),
-    )[0];
+    const match = findFixture(fixtures as DbFixture[], m.homeTeam.name, m.awayTeam.name, kickoffMs);
 
     if (!match) {
       skipped.push(`${m.homeTeam.name} v ${m.awayTeam.name}`);
+      continue;
+    }
+
+    // ESPN has fresher live data for this fixture — only let football-data fix
+    // the kickoff time, never the status/score/minute.
+    if (espnOwnedIds.has(match.id) && !isLive && !isFinished) {
+      const koDiff = Math.abs(new Date(match.kickoff_at).getTime() - kickoffMs);
+      if (koDiff > 60 * 1000) {
+        const { error: koErr } = await supabaseAdmin
+          .from("wc_fixtures")
+          .update({ kickoff_at: new Date(kickoffMs).toISOString() })
+          .eq("id", match.id);
+        if (!koErr) updated += 1;
+      }
       continue;
     }
 
@@ -142,7 +252,39 @@ async function syncScores() {
     updated += 1;
   }
 
-  return { ok: true, updated, skipped, total: json.matches.length };
+  // Overlay ESPN live/finished data — it updates in real time while
+  // football-data's free tier can lag by an entire half.
+  const espnApplied: string[] = [];
+  for (const ev of espnLive) {
+    const fx = findFixture(fixtures as DbFixture[], ev.home, ev.away, ev.kickoffMs);
+    if (!fx) {
+      skipped.push(`espn: ${ev.home} v ${ev.away}`);
+      continue;
+    }
+    const unchanged =
+      fx.status === ev.status &&
+      fx.minute === ev.minute &&
+      fx.home_score === ev.homeScore &&
+      fx.away_score === ev.awayScore;
+    if (unchanged) continue;
+    const { error: upErr } = await supabaseAdmin
+      .from("wc_fixtures")
+      .update({
+        status: ev.status,
+        minute: ev.minute,
+        home_score: ev.homeScore,
+        away_score: ev.awayScore,
+      })
+      .eq("id", fx.id);
+    if (upErr) {
+      skipped.push(`espn: ${ev.home} v ${ev.away}: ${upErr.message}`);
+      continue;
+    }
+    updated += 1;
+    espnApplied.push(`${ev.home} ${ev.homeScore}-${ev.awayScore} ${ev.away} (${ev.status}${ev.minute != null ? ` ${ev.minute}'` : ""})`);
+  }
+
+  return { ok: true, updated, skipped, espn: espnApplied, total: json.matches.length };
 }
 
 export const Route = createFileRoute("/api/public/hooks/sync-wc-scores")({
