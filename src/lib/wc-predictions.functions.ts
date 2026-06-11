@@ -13,6 +13,8 @@ export type WcFixtureDTO = {
   kickoffAt: string;
   homeScore: number | null;
   awayScore: number | null;
+  status: string;
+  minute: number | null;
   myPrediction: { homePred: number; awayPred: number; points: number | null } | null;
 };
 
@@ -83,7 +85,7 @@ export const listWcFixtures = createServerFn({ method: "GET" })
     const [{ data: fixtures, error: fxErr }, { data: preds, error: prErr }] = await Promise.all([
       supabase
         .from("wc_fixtures")
-        .select("id, stage, group_label, home_team, away_team, kickoff_at, home_score, away_score")
+        .select("id, stage, group_label, home_team, away_team, kickoff_at, home_score, away_score, status, minute")
         .order("kickoff_at", { ascending: true }),
       supabase
         .from("wc_predictions")
@@ -105,6 +107,8 @@ export const listWcFixtures = createServerFn({ method: "GET" })
         kickoffAt: f.kickoff_at,
         homeScore: f.home_score,
         awayScore: f.away_score,
+        status: (f.status as string | null) ?? "SCHEDULED",
+        minute: (f.minute as number | null) ?? null,
         myPrediction: p
           ? { homePred: p.home_pred, awayPred: p.away_pred, points: p.points ?? null }
           : null,
