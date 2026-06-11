@@ -1433,11 +1433,12 @@ function LeaderboardList({
   }
   return (
     <div className="rounded-2xl border border-border bg-surface-1 overflow-hidden">
-      <div className="grid grid-cols-[28px_1fr_44px_44px_48px_60px] sm:grid-cols-[48px_1fr_80px_80px_80px_80px_88px] gap-2 px-3 sm:px-4 py-2.5 text-[11px] uppercase tracking-wider text-muted-foreground bg-surface-2 border-b border-border">
+      <div className="grid grid-cols-[28px_1fr_44px_44px_48px_60px] sm:grid-cols-[48px_1fr_72px_72px_72px_72px_72px_88px] gap-2 px-3 sm:px-4 py-2.5 text-[11px] uppercase tracking-wider text-muted-foreground bg-surface-2 border-b border-border">
         <div>#</div>
         <div>Player</div>
         <div className="text-right">Played</div>
         <div className="text-right hidden sm:block">Exact</div>
+        <div className="text-right hidden sm:block" title="Correct goal difference (3 pts)">GD</div>
         <div className="text-right">Result</div>
         <div className="text-right">Points</div>
         <div className="text-right">Type</div>
@@ -1449,7 +1450,7 @@ function LeaderboardList({
           return (
             <li
               key={r.userId}
-              className={`grid grid-cols-[28px_1fr_44px_44px_48px_60px] sm:grid-cols-[48px_1fr_80px_80px_80px_80px_88px] gap-2 px-3 sm:px-4 py-2.5 text-sm border-b border-border last:border-b-0 ${
+              className={`grid grid-cols-[28px_1fr_44px_44px_48px_60px] sm:grid-cols-[48px_1fr_72px_72px_72px_72px_72px_88px] gap-2 px-3 sm:px-4 py-2.5 text-sm border-b border-border last:border-b-0 ${
                 mine ? "bg-primary/5" : ""
               }`}
             >
@@ -1485,7 +1486,8 @@ function LeaderboardList({
               <div className="text-right tabular-nums hidden sm:flex items-center justify-end gap-1">
                 <Star className="size-3 text-yellow-400" /> {r.exactCount}
               </div>
-              <div className="text-right tabular-nums">{r.goalDiffCount + r.resultCount}</div>
+              <div className="text-right tabular-nums hidden sm:block text-muted-foreground">{r.goalDiffCount}</div>
+              <div className="text-right tabular-nums">{r.resultCount}</div>
               <div className="text-right font-display font-bold tabular-nums">
                 {r.totalPoints}
               </div>
@@ -1511,7 +1513,7 @@ function LeaderboardList({
             Site owner · playing for fun (not ranked)
           </div>
           <div
-            className={`grid grid-cols-[28px_1fr_44px_44px_48px_60px] sm:grid-cols-[48px_1fr_80px_80px_80px_80px_88px] gap-2 px-3 sm:px-4 py-2.5 text-sm ${
+            className={`grid grid-cols-[28px_1fr_44px_44px_48px_60px] sm:grid-cols-[48px_1fr_72px_72px_72px_72px_72px_88px] gap-2 px-3 sm:px-4 py-2.5 text-sm ${
               owner.userId === currentUserId ? "bg-primary/5" : ""
             }`}
           >
@@ -1535,7 +1537,8 @@ function LeaderboardList({
             <div className="text-right tabular-nums hidden sm:flex items-center justify-end gap-1">
               <Star className="size-3 text-yellow-400" /> {owner.exactCount}
             </div>
-            <div className="text-right tabular-nums">{owner.goalDiffCount + owner.resultCount}</div>
+            <div className="text-right tabular-nums hidden sm:block text-muted-foreground">{owner.goalDiffCount}</div>
+            <div className="text-right tabular-nums">{owner.resultCount}</div>
             <div className="text-right font-display font-bold tabular-nums">
               {owner.totalPoints}
             </div>
