@@ -690,6 +690,8 @@ function UpcomingFixtures({
             const lockMs = t.getTime() - 30 * 60 * 1000;
             const locked = Date.now() >= lockMs;
             const scored = f.homeScore !== null && f.awayScore !== null;
+            const live = isLive(f);
+            const finished = isFinished(f) || (scored && !live);
             return (
               <li key={f.id} className="px-4 py-3 text-sm">
                 <div className="flex items-center justify-between text-[11px] text-muted-foreground mb-1">
@@ -697,7 +699,10 @@ function UpcomingFixtures({
                     {STAGE_LABEL[f.stage]}
                     {f.groupLabel ? ` · ${f.groupLabel}` : ""}
                   </span>
-                  <span className="font-mono tabular-nums">{kickoff}</span>
+                  <span className="inline-flex items-center gap-1.5">
+                    {live && <LivePill fixture={f} />}
+                    <span className="font-mono tabular-nums">{kickoff}</span>
+                  </span>
                 </div>
                 <div className="flex items-center justify-between gap-2">
                   <span className="font-medium truncate">
@@ -706,7 +711,7 @@ function UpcomingFixtures({
                   </span>
                   <span className="text-xs tabular-nums text-muted-foreground shrink-0">
                     {scored ? (
-                      <span className="font-bold text-foreground">
+                      <span className={`font-bold ${live ? "text-red-300" : "text-foreground"}`}>
                         {f.homeScore}–{f.awayScore}
                       </span>
                     ) : locked ? (
