@@ -1488,9 +1488,9 @@ function LeaderboardList({
         <div>#</div>
         <div>Player</div>
         <div className="text-right">Played</div>
-        <div className="text-right hidden sm:block">Exact</div>
-        <div className="text-right hidden sm:block" title="Correct goal difference (3 pts)">GD</div>
-        <div className="text-right">Result</div>
+        <div className="text-right hidden sm:block">Correct Score</div>
+        <div className="text-right hidden sm:block" title="Correct goal difference (3 pts)">Correct Goal Difference</div>
+        <div className="text-right">Correct Result</div>
         <div className="text-right">Points</div>
         <div className="text-right">Type</div>
       </div>
