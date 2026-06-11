@@ -4129,6 +4129,7 @@ export type Database = {
           avatar_url: string | null
           display_name: string | null
           exact_count: number | null
+          goal_diff_count: number | null
           is_guest: boolean | null
           predictions_made: number | null
           predictions_scored: number | null
