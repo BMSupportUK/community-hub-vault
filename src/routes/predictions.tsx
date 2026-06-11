@@ -55,6 +55,30 @@ function formatKickoff(iso: string) {
   });
 }
 
+function isLive(f: { status?: string | null }) {
+  const s = f.status ?? "";
+  return s === "IN_PLAY" || s === "PAUSED" || s === "LIVE";
+}
+
+function isFinished(f: { status?: string | null }) {
+  return (f.status ?? "") === "FINISHED";
+}
+
+function liveLabel(f: { status?: string | null; minute?: number | null }) {
+  if (f.status === "PAUSED") return "HT";
+  if (typeof f.minute === "number" && f.minute > 0) return `${f.minute}'`;
+  return "LIVE";
+}
+
+function LivePill({ fixture }: { fixture: { status?: string | null; minute?: number | null } }) {
+  return (
+    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-red-500/20 text-red-300 border border-red-500/40 text-[10px] font-bold uppercase tracking-wide tabular-nums">
+      <span className="size-1.5 rounded-full bg-red-400 animate-pulse" />
+      {liveLabel(fixture)}
+    </span>
+  );
+}
+
 function useNow(intervalMs = 1000) {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
