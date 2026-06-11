@@ -176,6 +176,10 @@ async function syncScores() {
 
   let updated = 0;
   const skipped: string[] = [];
+  // Fixtures we should re-score this run: any fixture that was just marked
+  // FINISHED, or whose final score actually changed. Scoring runs once per
+  // fixture id at the end so we don't pay the cost on every minute-tick.
+  const toScore = new Set<string>();
   // Fixture ids that ESPN reports as live/finished — the football-data pass must
   // not downgrade these (its feed can still say TIMED while the match is live).
   const espnLive = await fetchEspnLive();
@@ -253,6 +257,9 @@ async function syncScores() {
       (update.away_score === undefined || match.away_score === update.away_score);
     if (unchanged) continue;
 
+    const prevStatus = (match as { status?: string }).status;
+    const prevHs = match.home_score;
+    const prevAs = match.away_score;
     const { error: upErr } = await supabaseAdmin
       .from("wc_fixtures")
       .update(update)
@@ -262,6 +269,12 @@ async function syncScores() {
       continue;
     }
     updated += 1;
+    if (
+      isFinished &&
+      (prevStatus !== "FINISHED" || prevHs !== hs || prevAs !== as)
+    ) {
+      toScore.add(match.id);
+    }
   }
 
   // Overlay ESPN live/finished data — it updates in real time while
@@ -296,9 +309,31 @@ async function syncScores() {
     }
     updated += 1;
     espnApplied.push(`${ev.home} ${ev.homeScore}-${ev.awayScore} ${ev.away} (${ev.status}${ev.minute != null ? ` ${ev.minute}${ev.minuteAdded ? `+${ev.minuteAdded}` : ""}'` : ""})`);
+    if (
+      ev.status === "FINISHED" &&
+      (fx.status !== "FINISHED" ||
+        fx.home_score !== ev.homeScore ||
+        fx.away_score !== ev.awayScore)
+    ) {
+      toScore.add(fx.id);
+    }
   }
 
-  return { ok: true, updated, skipped, espn: espnApplied, total: json.matches.length };
+  // Award/refresh points for any fixture that just went FINISHED.
+  const scored: string[] = [];
+  for (const id of toScore) {
+    const { error: scoreErr } = await supabaseAdmin.rpc(
+      "wc_score_fixture" as never,
+      { _fixture_id: id } as never,
+    );
+    if (scoreErr) {
+      skipped.push(`score ${id}: ${scoreErr.message}`);
+      continue;
+    }
+    scored.push(id);
+  }
+
+  return { ok: true, updated, skipped, espn: espnApplied, scored, total: json.matches.length };
 }
 
 export const Route = createFileRoute("/api/public/hooks/sync-wc-scores")({
