@@ -197,6 +197,60 @@ export const getWcLeaderboard = createServerFn({ method: "GET" })
   });
 
 // ------------------------------------------------------------------
+// Public picks: another entrant's predictions (only for fixtures that
+// have already kicked off, so you can't copy a live entrant's picks).
+// ------------------------------------------------------------------
+export type WcEntrantPickDTO = {
+  fixtureId: string;
+  stage: WcStage;
+  groupLabel: string | null;
+  homeTeam: string;
+  awayTeam: string;
+  kickoffAt: string;
+  homeScore: number | null;
+  awayScore: number | null;
+  status: string;
+  homePred: number;
+  awayPred: number;
+  points: number | null;
+};
+
+export const getEntrantWcPredictions = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z.object({ entrantId: z.string().uuid(), isGuest: z.boolean() }).parse(d),
+  )
+  .handler(async ({ data }): Promise<WcEntrantPickDTO[]> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const nowIso = new Date().toISOString();
+    const col = data.isGuest ? "guest_id" : "user_id";
+    const { data: rows, error } = await supabaseAdmin
+      .from("wc_predictions")
+      .select(
+        "home_pred, away_pred, points, fixture:wc_fixtures!inner(id, stage, group_label, home_team, away_team, kickoff_at, home_score, away_score, status)",
+      )
+      .eq(col, data.entrantId)
+      .lte("fixture.kickoff_at", nowIso);
+    if (error) throw new Error(error.message);
+    return (rows ?? [])
+      .map((r: any) => ({
+        fixtureId: r.fixture.id,
+        stage: r.fixture.stage,
+        groupLabel: r.fixture.group_label,
+        homeTeam: r.fixture.home_team,
+        awayTeam: r.fixture.away_team,
+        kickoffAt: r.fixture.kickoff_at,
+        homeScore: r.fixture.home_score,
+        awayScore: r.fixture.away_score,
+        status: r.fixture.status,
+        homePred: r.home_pred,
+        awayPred: r.away_pred,
+        points: r.points,
+      }))
+      .sort((a, b) => +new Date(b.kickoffAt) - +new Date(a.kickoffAt));
+  });
+
+// ------------------------------------------------------------------
 // Admin: upsert / delete a fixture
 // ------------------------------------------------------------------
 const fixtureSchema = z.object({
