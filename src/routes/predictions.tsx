@@ -196,23 +196,6 @@ function PredictionsPage() {
     }
   };
 
-  const _legacyHandleJoinPlaceholder = async () => {
-    if (!user) {
-      setShowGuestLogin(true);
-      return;
-    }
-    setJoining(true);
-    try {
-      await joinFn();
-      setJoined(true);
-      toast.success("You're in! Start predicting.");
-    } catch (e: any) {
-      toast.error(e?.message ?? "Failed to join");
-    } finally {
-      setJoining(false);
-    }
-  };
-
   const handleGuestSignIn = async (email: string, pin: string, displayName: string) => {
     setJoining(true);
     try {
