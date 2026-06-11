@@ -252,6 +252,20 @@ function PredictionsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id, guest?.guestId]);
 
+  // Live-score polling: while any fixture is in-play (or paused at HT), refresh every 30s.
+  useEffect(() => {
+    if (!fixtures) return;
+    const hasLive = fixtures.some(
+      (f) => f.status === "IN_PLAY" || f.status === "PAUSED" || f.status === "LIVE",
+    );
+    if (!hasLive) return;
+    const id = window.setInterval(() => {
+      loadAll();
+    }, 30_000);
+    return () => window.clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fixtures]);
+
   const myStats = useMemo(() => {
     if (!leaderboard || !myEntrantId) return null;
     return (leaderboard as any[]).find((r) => r.userId === myEntrantId) ?? null;
