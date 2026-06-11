@@ -478,6 +478,7 @@ function LeaderboardSection() {
             <th className="text-left px-3 py-2">Entrant</th>
             <th className="text-center px-3 py-2">Type</th>
             <th className="text-right px-3 py-2">Exact</th>
+            <th className="text-right px-3 py-2" title="Correct goal difference (3 pts)">GD</th>
             <th className="text-right px-3 py-2">Result</th>
             <th className="text-right px-3 py-2">Made</th>
             <th className="text-right px-3 py-2">Points</th>
@@ -510,13 +511,14 @@ function LeaderboardSection() {
                 </span>
               </td>
               <td className="px-3 py-2 text-right tabular-nums">{r.exactCount}</td>
-              <td className="px-3 py-2 text-right tabular-nums">{r.goalDiffCount + r.resultCount}</td>
+              <td className="px-3 py-2 text-right tabular-nums">{r.goalDiffCount}</td>
+              <td className="px-3 py-2 text-right tabular-nums">{r.resultCount}</td>
               <td className="px-3 py-2 text-right tabular-nums text-muted-foreground">{r.predictionsScored}/{r.predictionsMade}</td>
               <td className="px-3 py-2 text-right font-display font-bold tabular-nums text-primary">{r.totalPoints}</td>
             </tr>
           ))}
           {!rows.length && (
-            <tr><td colSpan={7} className="px-3 py-8 text-center text-muted-foreground">No entrants yet.</td></tr>
+            <tr><td colSpan={8} className="px-3 py-8 text-center text-muted-foreground">No entrants yet.</td></tr>
           )}
         </tbody>
       </table>
