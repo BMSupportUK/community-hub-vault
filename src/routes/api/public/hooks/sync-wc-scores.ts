@@ -51,6 +51,7 @@ type DbFixture = {
   away_score: number | null;
   status: string | null;
   minute: number | null;
+  minute_added: number | null;
 };
 
 function findFixture(
