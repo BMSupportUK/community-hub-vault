@@ -1398,6 +1398,11 @@ function FixtureCard({
             <Check className="size-3" />
             {fixture.homeScore} – {fixture.awayScore}
           </span>
+        ) : fixture.myPrediction ? (
+          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/30 font-bold tabular-nums uppercase tracking-wide">
+            <Check className="size-3" />
+            Your prediction: {fixture.myPrediction.homePred} – {fixture.myPrediction.awayPred}
+          </span>
         ) : (
           <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30 font-semibold uppercase tracking-wide">
             <Loader2 className="size-3 animate-spin" />
