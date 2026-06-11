@@ -78,14 +78,19 @@ async function syncScores() {
     const as = ft?.away ?? ht?.away ?? null;
 
     const kickoffMs = new Date(m.utcDate).getTime();
-    const match = fixtures!.find((f) => {
-      const sameTeams =
+    // Pick the closest fixture (by kickoff time) with the same teams, within 5 days —
+    // manually-entered fixture times can be days off from the official schedule.
+    const candidates = fixtures!.filter(
+      (f) =>
         nameMatches(f.home_team, m.homeTeam.name) &&
-        nameMatches(f.away_team, m.awayTeam.name);
-      if (!sameTeams) return false;
-      const diff = Math.abs(new Date(f.kickoff_at).getTime() - kickoffMs);
-      return diff <= 36 * 60 * 60 * 1000; // within 36h
-    });
+        nameMatches(f.away_team, m.awayTeam.name) &&
+        Math.abs(new Date(f.kickoff_at).getTime() - kickoffMs) <= 5 * 24 * 60 * 60 * 1000,
+    );
+    const match = candidates.sort(
+      (a, b) =>
+        Math.abs(new Date(a.kickoff_at).getTime() - kickoffMs) -
+        Math.abs(new Date(b.kickoff_at).getTime() - kickoffMs),
+    )[0];
 
     if (!match) {
       skipped.push(`${m.homeTeam.name} v ${m.awayTeam.name}`);
@@ -96,6 +101,7 @@ async function syncScores() {
     const update: {
       status: string;
       minute: number | null;
+      kickoff_at?: string;
       home_score?: number | null;
       away_score?: number | null;
     } = { status, minute: nextMinute };
@@ -104,9 +110,17 @@ async function syncScores() {
       update.away_score = as;
     }
 
+    // Keep kickoff_at aligned with the official feed (fixtures were entered manually
+    // and can be hours off, which breaks the "in play" / elapsed-minutes display).
+    const kickoffDiff = Math.abs(new Date(match.kickoff_at).getTime() - kickoffMs);
+    if (kickoffDiff > 60 * 1000) {
+      update.kickoff_at = new Date(kickoffMs).toISOString();
+    }
+
     const unchanged =
       (match as { status?: string }).status === status &&
       (match as { minute?: number | null }).minute === nextMinute &&
+      update.kickoff_at === undefined &&
       (update.home_score === undefined || match.home_score === update.home_score) &&
       (update.away_score === undefined || match.away_score === update.away_score);
     if (unchanged) continue;
