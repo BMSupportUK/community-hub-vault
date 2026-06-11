@@ -137,6 +137,7 @@ export type PublicWcFixture = {
 export const listWcFixturesPublic = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => listSchema.parse(d ?? {}))
   .handler(async ({ data }): Promise<PublicWcFixture[]> => {
+    setResponseHeader("cache-control", "no-store, max-age=0");
     const admin = await getAdmin();
     const { data: fixtures, error } = await admin
       .from("wc_fixtures")
