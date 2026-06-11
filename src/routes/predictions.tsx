@@ -1478,6 +1478,22 @@ function LeaderboardList({
   const OWNER_ID = "73c113ce-ce1b-43f0-af24-c2a36cf0d8e7";
   const owner = rows.find((r) => r.userId === OWNER_ID) ?? null;
   const ranked = rows.filter((r) => r.userId !== OWNER_ID);
+  const [openEntrant, setOpenEntrant] = useState<WcLeaderboardRowDTO | null>(null);
+  const [picks, setPicks] = useState<WcEntrantPickDTO[] | null>(null);
+  const [picksLoading, setPicksLoading] = useState(false);
+  const fetchPicks = useServerFn(getEntrantWcPredictions);
+  useEffect(() => {
+    if (!openEntrant) {
+      setPicks(null);
+      return;
+    }
+    setPicksLoading(true);
+    setPicks(null);
+    fetchPicks({ data: { entrantId: openEntrant.userId, isGuest: openEntrant.isGuest } })
+      .then((rs) => setPicks(rs))
+      .catch((e: any) => toast.error(e?.message ?? "Failed to load picks"))
+      .finally(() => setPicksLoading(false));
+  }, [openEntrant, fetchPicks]);
   if (!rows.length) {
     return (
       <div className="rounded-2xl border border-border bg-surface-1 p-8 text-center text-sm text-muted-foreground">
