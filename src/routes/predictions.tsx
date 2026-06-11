@@ -13,8 +13,10 @@ import {
   getWcLeaderboard,
   getWcEntrantStatus,
   joinWcPredictor,
+  getEntrantWcPredictions,
   type WcFixtureDTO,
   type WcLeaderboardRowDTO,
+  type WcEntrantPickDTO,
 } from "@/lib/wc-predictions.functions";
 import {
   guestSignInOrRegister,
