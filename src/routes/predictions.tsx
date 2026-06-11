@@ -1373,7 +1373,7 @@ function FixtureCard({
       {/* Final-score status — always visible so users know where the auto-scored result will appear */}
       <div className="mt-3 pt-3 border-t border-border/60 flex items-center justify-between text-[11px]">
         <span className="uppercase tracking-wider text-muted-foreground">
-          {live ? "Live score" : "Final score"}
+          {live ? "Game in play" : "Final score"}
         </span>
         {live && hasScore ? (
           <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-red-500/15 text-red-300 border border-red-500/30 font-bold tabular-nums">
