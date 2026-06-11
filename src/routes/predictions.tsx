@@ -1485,7 +1485,7 @@ function LeaderboardList({
               <div className="text-right tabular-nums hidden sm:flex items-center justify-end gap-1">
                 <Star className="size-3 text-yellow-400" /> {r.exactCount}
               </div>
-              <div className="text-right tabular-nums">{r.resultCount}</div>
+              <div className="text-right tabular-nums">{r.goalDiffCount + r.resultCount}</div>
               <div className="text-right font-display font-bold tabular-nums">
                 {r.totalPoints}
               </div>
@@ -1535,7 +1535,7 @@ function LeaderboardList({
             <div className="text-right tabular-nums hidden sm:flex items-center justify-end gap-1">
               <Star className="size-3 text-yellow-400" /> {owner.exactCount}
             </div>
-            <div className="text-right tabular-nums">{owner.resultCount}</div>
+            <div className="text-right tabular-nums">{owner.goalDiffCount + owner.resultCount}</div>
             <div className="text-right font-display font-bold tabular-nums">
               {owner.totalPoints}
             </div>
