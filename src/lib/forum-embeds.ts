@@ -1,9 +1,11 @@
 import { useEffect } from "react";
 
 const TWEET_RE = /^https?:\/\/(?:www\.|mobile\.)?(?:twitter|x)\.com\/[A-Za-z0-9_]+\/status\/(\d+)(?:[/?#]\S*)?$/i;
-const FB_RE = /^https?:\/\/(?:www\.|m\.|web\.)?facebook\.com\/[^\s<>"']+$/i;
-const FB_WATCH_RE = /^https?:\/\/fb\.watch\/[A-Za-z0-9_-]+\/?(?:[?#]\S*)?$/i;
-const SKIP_PREVIEW_RE = /^https?:\/\/(?:www\.|m\.|mobile\.|web\.)?(?:twitter\.com|x\.com|facebook\.com|fb\.watch|youtube\.com|youtu\.be)\//i;
+// Facebook's public embed SDK requires an App ID + token now, so xfbml
+// `.fb-post` shells render blank for most viewers. We deliberately let
+// Facebook / fb.watch URLs fall through to the standard link-preview card
+// instead of trying to embed them.
+const SKIP_PREVIEW_RE = /^https?:\/\/(?:www\.|m\.|mobile\.|web\.)?(?:twitter\.com|x\.com|youtube\.com|youtu\.be)\//i;
 const HTTP_URL_RE = /https?:\/\/[^\s<>"']+/i;
 
 /**
@@ -102,15 +104,11 @@ function tweetEmbed(url: string, id: string) {
   // Marker consumed by ForumPostBody; rendered by the app (no widgets.js iframe).
   return `<div data-tweet-embed="${id}" data-tweet-url="${url}"></div>`;
 }
-function fbEmbed(url: string) {
-  return `<div class="fb-post" data-href="${url}" data-width="500" data-show-text="true"></div>`;
-}
 
 function tryEmbedUrl(raw: string): string | null {
   const url = raw.trim();
   const t = url.match(TWEET_RE);
   if (t) return tweetEmbed(url.replace(/^http:/, "https:"), t[1]);
-  if (FB_RE.test(url) || FB_WATCH_RE.test(url)) return fbEmbed(url.replace(/^http:/, "https:"));
   return null;
 }
 
