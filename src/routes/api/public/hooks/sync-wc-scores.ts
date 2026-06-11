@@ -125,7 +125,17 @@ async function fetchEspnLive(): Promise<EspnLiveMatch[]> {
           : typeName === "STATUS_HALFTIME"
             ? "PAUSED"
             : "IN_PLAY";
-      const clock = parseInt(comp.status?.displayClock ?? "", 10);
+      // ESPN's displayClock during stoppage time looks like "45'+2" or
+      // "90'+3" — split on '+' so injury minutes are added to the elapsed
+      // count (e.g. 45 + 2 → 47') instead of being silently dropped.
+      const dc = comp.status?.displayClock ?? "";
+      const [baseStr, addedStr] = dc.split("+");
+      const base = parseInt(baseStr ?? "", 10);
+      const added = parseInt(addedStr ?? "", 10);
+      const clock =
+        Number.isFinite(base)
+          ? base + (Number.isFinite(added) ? added : 0)
+          : NaN;
       out.push({
         home: homeC.team.displayName,
         away: awayC.team.displayName,
