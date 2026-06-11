@@ -163,6 +163,17 @@ export function embedSocialUrls(html: string): string {
     },
   );
 
+  // Migrate legacy Facebook xfbml shells (`<div class="fb-post" data-href="...">`)
+  // to a link-preview marker. Meta's public embed SDK now requires an App ID
+  // and access token, so these render blank for most viewers.
+  html = html.replace(
+    /<div\b[^>]*class=["'][^"']*fb-post[^"']*["'][^>]*>[\s\S]*?<\/div>/gi,
+    (match) => {
+      const url = match.match(/data-href=["']([^"']+)["']/i)?.[1];
+      return url ? `<div data-link-preview="${escapeAttr(url)}"></div>` : match;
+    },
+  );
+
   // Important: this must work during SSR too. React may not patch a
   // dangerouslySetInnerHTML mismatch during hydration, so returning raw HTML on
   // the server and embed HTML in the browser leaves old posts visibly unembedded.
