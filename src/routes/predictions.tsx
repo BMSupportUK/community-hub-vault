@@ -1412,6 +1412,9 @@ function LeaderboardList({
   rows: WcLeaderboardRowDTO[];
   currentUserId: string | null;
 }) {
+  const OWNER_ID = "73c113ce-ce1b-43f0-af24-c2a36cf0d8e7";
+  const owner = rows.find((r) => r.userId === OWNER_ID) ?? null;
+  const ranked = rows.filter((r) => r.userId !== OWNER_ID);
   if (!rows.length) {
     return (
       <div className="rounded-2xl border border-border bg-surface-1 p-8 text-center text-sm text-muted-foreground">
@@ -1431,7 +1434,7 @@ function LeaderboardList({
         <div className="text-right">Type</div>
       </div>
       <ul>
-        {rows.map((r, i) => {
+        {ranked.map((r, i) => {
           const rank = i + 1;
           const mine = r.userId === currentUserId;
           return (
@@ -1493,6 +1496,48 @@ function LeaderboardList({
           );
         })}
       </ul>
+      {owner && (
+        <div className="border-t-2 border-dashed border-border bg-surface-2/40">
+          <div className="px-3 sm:px-4 pt-2.5 pb-1 text-[10px] uppercase tracking-wider text-muted-foreground">
+            Site owner · playing for fun (not ranked)
+          </div>
+          <div
+            className={`grid grid-cols-[28px_1fr_44px_44px_48px_60px] sm:grid-cols-[48px_1fr_80px_80px_80px_80px_88px] gap-2 px-3 sm:px-4 py-2.5 text-sm ${
+              owner.userId === currentUserId ? "bg-primary/5" : ""
+            }`}
+          >
+            <div className="flex items-center text-muted-foreground">—</div>
+            <div className="flex items-center gap-2 min-w-0">
+              {owner.avatarUrl ? (
+                <img
+                  src={owner.avatarUrl}
+                  alt=""
+                  className="hidden sm:block size-7 rounded-full object-cover bg-surface-2"
+                />
+              ) : (
+                <div className="hidden sm:block size-7 rounded-full bg-surface-2" />
+              )}
+              <span className="truncate font-medium">
+                {owner.displayName || owner.username || "Anonymous"}
+                <span className="ml-2 text-[10px] uppercase text-primary">owner</span>
+              </span>
+            </div>
+            <div className="text-right tabular-nums">{owner.predictionsMade}</div>
+            <div className="text-right tabular-nums hidden sm:flex items-center justify-end gap-1">
+              <Star className="size-3 text-yellow-400" /> {owner.exactCount}
+            </div>
+            <div className="text-right tabular-nums">{owner.resultCount}</div>
+            <div className="text-right font-display font-bold tabular-nums">
+              {owner.totalPoints}
+            </div>
+            <div className="flex items-center justify-end">
+              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider border bg-primary/15 text-primary border-primary/40">
+                Owner
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
