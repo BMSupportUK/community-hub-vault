@@ -17,7 +17,7 @@ export function LinkPreviewCard({ url, title }: { url: string; title?: string })
   useEffect(() => {
     if (meta) return;
     let cancelled = false;
-    fetch(`/api/public/link-preview?url=${encodeURIComponent(url)}`)
+    fetch(`/api/public/link-preview?url=${encodeURIComponent(url)}&v=2`)
       .then(async (res) => {
         const json = (await res.json().catch(() => null)) as Meta | null;
         if (cancelled) return;
