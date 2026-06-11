@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { setResponseHeader } from "@tanstack/react-start/server";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
@@ -81,6 +82,7 @@ export const joinWcPredictor = createServerFn({ method: "POST" })
 export const listWcFixtures = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<WcFixtureDTO[]> => {
+    setResponseHeader("cache-control", "no-store, max-age=0");
     const { supabase, userId } = context;
     const [{ data: fixtures, error: fxErr }, { data: preds, error: prErr }] = await Promise.all([
       supabase
