@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Trophy, Loader2, Lock, Check, Star, Crown, Medal, Award, Pencil, CalendarDays, LogOut } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -29,6 +29,7 @@ import { teamFlag } from "@/lib/country-flags";
 import heroBg from "@/assets/england-world-cup-hero.jpg";
 import { LandingHeader } from "@/components/LandingHeader";
 import { IconRail } from "@/components/app/IconRail";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/predictions")({
   component: PredictionsPage,
@@ -304,6 +305,37 @@ function PredictionsPage() {
     loadAll();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id, guest?.guestId]);
+
+  // Realtime: when a fixture's score/status changes or a prediction is
+  // scored, refresh fixtures + leaderboard in the background so standings
+  // tick over without a page refresh. Debounced so a burst of row updates
+  // (e.g. the sync hook writing every match) only triggers one reload.
+  const reloadRef = useRef<() => void>(() => {});
+  reloadRef.current = () => loadAll(true);
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const schedule = () => {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => reloadRef.current(), 1500);
+    };
+    const channel = supabase
+      .channel("wc-standings")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "wc_fixtures" },
+        schedule,
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "wc_predictions" },
+        schedule,
+      )
+      .subscribe();
+    return () => {
+      if (timer) clearTimeout(timer);
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   // Live-score polling: refresh every 30s while a match is in-play (or paused at
   // HT), and also around kickoff time so the page flips to live on its own —
