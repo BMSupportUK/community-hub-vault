@@ -1545,12 +1545,17 @@ function LeaderboardList({
                 ) : (
                   <div className="hidden sm:block size-7 rounded-full bg-surface-2" />
                 )}
-                <span className="truncate font-medium">
+                <button
+                  type="button"
+                  onClick={() => setOpenEntrant(r)}
+                  className="truncate font-medium text-left hover:text-primary hover:underline underline-offset-2 focus:outline-none focus:text-primary"
+                  title="View this player's predictions for matches already kicked off"
+                >
                   {r.displayName || r.username || "Anonymous"}
                   {mine && (
                     <span className="ml-2 text-[10px] uppercase text-primary">you</span>
                   )}
-                </span>
+                </button>
               </div>
               <div className="text-right tabular-nums">{r.predictionsMade}</div>
               <div className="text-right tabular-nums hidden sm:flex items-center justify-end gap-1">
@@ -1598,10 +1603,15 @@ function LeaderboardList({
               ) : (
                 <div className="hidden sm:block size-7 rounded-full bg-surface-2" />
               )}
-              <span className="truncate font-medium">
+              <button
+                type="button"
+                onClick={() => setOpenEntrant(owner)}
+                className="truncate font-medium text-left hover:text-primary hover:underline underline-offset-2 focus:outline-none focus:text-primary"
+                title="View this player's predictions for matches already kicked off"
+              >
                 {owner.displayName || owner.username || "Anonymous"}
                 <span className="ml-2 text-[10px] uppercase text-primary">owner</span>
-              </span>
+              </button>
             </div>
             <div className="text-right tabular-nums">{owner.predictionsMade}</div>
             <div className="text-right tabular-nums hidden sm:flex items-center justify-end gap-1">
