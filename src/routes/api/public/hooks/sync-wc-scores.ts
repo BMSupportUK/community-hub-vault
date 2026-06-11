@@ -108,6 +108,12 @@ async function syncScores() {
     if (isLive || isFinished) {
       update.home_score = hs;
       update.away_score = as;
+    } else {
+      // Status reverted to pre-match (SCHEDULED/TIMED/POSTPONED/etc.) — clear
+      // any stale score left from a prior live tick so the UI doesn't render
+      // "Final 0-0" before the match has actually kicked off.
+      update.home_score = null;
+      update.away_score = null;
     }
 
     // Keep kickoff_at aligned with the official feed (fixtures were entered manually
