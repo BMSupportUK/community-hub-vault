@@ -1203,7 +1203,9 @@ function FixtureCard({
   const locked = Date.now() >= lockAtMs;
   const hasScore = fixture.homeScore !== null && fixture.awayScore !== null;
   const live = isLive(fixture);
-  const finished = isFinished(fixture) || (hasScore && !live && locked);
+  // Only treat a fixture as finished when the feed says so — a stale score on a
+  // TIMED fixture must not be rendered as "Final".
+  const finished = isFinished(fixture);
   const scored = finished && hasScore;
   const [hp, setHp] = useState<string>(fixture.myPrediction?.homePred?.toString() ?? "");
   const [ap, setAp] = useState<string>(fixture.myPrediction?.awayPred?.toString() ?? "");
