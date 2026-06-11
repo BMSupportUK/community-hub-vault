@@ -177,6 +177,25 @@ function PredictionsPage() {
     }
   };
 
+  const handleSave = async (fixtureId: string, hp: number, ap: number) => {
+    try {
+      if (user) {
+        await upsertFn({ data: { fixtureId, homePred: hp, awayPred: ap } });
+      } else if (guest) {
+        await upsertGuestFn({
+          data: { email: guest.email, pin: guest.pin, fixtureId, homePred: hp, awayPred: ap },
+        });
+      } else {
+        setShowGuestLogin(true);
+        return;
+      }
+      toast.success("Prediction saved");
+      await loadAll();
+    } catch (e: any) {
+      toast.error(e?.message ?? "Save failed");
+    }
+  };
+
   const handleGuestSignIn = async (email: string, pin: string, displayName: string) => {
     setJoining(true);
     try {
@@ -418,30 +437,7 @@ function PredictionsPage() {
                 <FixturesList
                   fixtures={fixtures}
                   canPredict={canPredict}
-                  onSave={async (fixtureId, hp, ap) => {
-                    try {
-                      if (user) {
-                        await upsertFn({ data: { fixtureId, homePred: hp, awayPred: ap } });
-                      } else if (guest) {
-                        await upsertGuestFn({
-                          data: {
-                            email: guest.email,
-                            pin: guest.pin,
-                            fixtureId,
-                            homePred: hp,
-                            awayPred: ap,
-                          },
-                        });
-                      } else {
-                        setShowGuestLogin(true);
-                        return;
-                      }
-                      toast.success("Prediction saved");
-                      await loadAll();
-                    } catch (e: any) {
-                      toast.error(e?.message ?? "Save failed");
-                    }
-                  }}
+                  onSave={handleSave}
                 />
               )}
             </TabsContent>
@@ -536,7 +532,12 @@ function PredictionsPage() {
 
           <aside className="space-y-4 lg:sticky lg:top-6 lg:self-start">
             <PointsSidebar stats={myStats} loading={loading} joined={joined} />
-            <UpcomingFixtures fixtures={upcomingFixtures} loading={loading} />
+            <UpcomingFixtures
+              fixtures={upcomingFixtures}
+              loading={loading}
+              canPredict={canPredict}
+              onSave={handleSave}
+            />
           </aside>
         </div>
       </div>
@@ -612,9 +613,13 @@ function PointsSidebar({
 function UpcomingFixtures({
   fixtures,
   loading,
+  canPredict,
+  onSave,
 }: {
   fixtures: WcFixtureDTO[];
   loading: boolean;
+  canPredict: boolean;
+  onSave: (fixtureId: string, hp: number, ap: number) => Promise<void>;
 }) {
   return (
     <div className="rounded-2xl border border-border bg-surface-1 overflow-hidden">
@@ -693,6 +698,13 @@ function UpcomingFixtures({
                     )}
                   </div>
                 )}
+                {!locked && !scored && (
+                  <SidebarPickInput
+                    fixture={f}
+                    canPredict={canPredict}
+                    onSave={onSave}
+                  />
+                )}
               </li>
             );
           })}
@@ -706,6 +718,77 @@ function Loading() {
   return (
     <div className="grid place-items-center py-20 text-muted-foreground">
       <Loader2 className="size-5 animate-spin" />
+    </div>
+  );
+}
+
+function SidebarPickInput({
+  fixture,
+  canPredict,
+  onSave,
+}: {
+  fixture: WcFixtureDTO;
+  canPredict: boolean;
+  onSave: (fixtureId: string, hp: number, ap: number) => Promise<void>;
+}) {
+  const [hp, setHp] = useState<string>(fixture.myPrediction?.homePred?.toString() ?? "");
+  const [ap, setAp] = useState<string>(fixture.myPrediction?.awayPred?.toString() ?? "");
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    setHp(fixture.myPrediction?.homePred?.toString() ?? "");
+    setAp(fixture.myPrediction?.awayPred?.toString() ?? "");
+  }, [fixture.myPrediction?.homePred, fixture.myPrediction?.awayPred]);
+
+  const valid =
+    hp !== "" && ap !== "" && Number.isInteger(Number(hp)) && Number.isInteger(Number(ap)) &&
+    Number(hp) >= 0 && Number(ap) >= 0;
+  const dirty =
+    valid &&
+    (Number(hp) !== fixture.myPrediction?.homePred ||
+      Number(ap) !== fixture.myPrediction?.awayPred);
+
+  const submit = async () => {
+    if (!valid || !dirty) return;
+    setBusy(true);
+    try {
+      await onSave(fixture.id, Number(hp), Number(ap));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="mt-2 flex items-center gap-1.5">
+      <Input
+        type="number"
+        min={0}
+        inputMode="numeric"
+        value={hp}
+        onChange={(e) => setHp(e.target.value)}
+        disabled={!canPredict || busy}
+        className="h-7 w-12 px-1.5 text-center text-sm tabular-nums"
+        aria-label="Home score"
+      />
+      <span className="text-xs text-muted-foreground">–</span>
+      <Input
+        type="number"
+        min={0}
+        inputMode="numeric"
+        value={ap}
+        onChange={(e) => setAp(e.target.value)}
+        disabled={!canPredict || busy}
+        className="h-7 w-12 px-1.5 text-center text-sm tabular-nums"
+        aria-label="Away score"
+      />
+      <Button
+        size="sm"
+        onClick={submit}
+        disabled={!canPredict || !dirty || busy}
+        className="ml-auto h-7 px-2 text-[11px]"
+      >
+        {busy ? <Loader2 className="size-3 animate-spin" /> : fixture.myPrediction ? "Update" : "Save"}
+      </Button>
     </div>
   );
 }
