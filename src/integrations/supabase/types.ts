@@ -3829,7 +3829,9 @@ export type Database = {
           id: string
           kickoff_at: string
           match_no: number | null
+          minute: number | null
           stage: string
+          status: string
           updated_at: string
         }
         Insert: {
@@ -3844,7 +3846,9 @@ export type Database = {
           id?: string
           kickoff_at: string
           match_no?: number | null
+          minute?: number | null
           stage: string
+          status?: string
           updated_at?: string
         }
         Update: {
@@ -3859,7 +3863,9 @@ export type Database = {
           id?: string
           kickoff_at?: string
           match_no?: number | null
+          minute?: number | null
           stage?: string
+          status?: string
           updated_at?: string
         }
         Relationships: []

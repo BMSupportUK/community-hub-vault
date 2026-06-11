@@ -1,0 +1,3 @@
+ALTER TABLE public.wc_fixtures
+  ADD COLUMN IF NOT EXISTS status text NOT NULL DEFAULT 'SCHEDULED',
+  ADD COLUMN IF NOT EXISTS minute int;
