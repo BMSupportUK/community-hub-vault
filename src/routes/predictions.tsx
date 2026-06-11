@@ -64,13 +64,32 @@ function isFinished(f: { status?: string | null }) {
   return (f.status ?? "") === "FINISHED";
 }
 
-function liveLabel(f: { status?: string | null; minute?: number | null }) {
+function liveLabel(f: {
+  status?: string | null;
+  minute?: number | null;
+  kickoffAt?: string | null;
+}) {
   if (f.status === "PAUSED") return "HT";
   if (typeof f.minute === "number" && f.minute > 0) return `${f.minute}'`;
+  if (f.kickoffAt) {
+    const elapsedMs = Date.now() - new Date(f.kickoffAt).getTime();
+    if (elapsedMs > 0) {
+      // Cap elapsed mins at 90+ so it doesn't blow past full time if the
+      // feed is slow to mark a match FINISHED.
+      const mins = Math.min(120, Math.floor(elapsedMs / 60000) + 1);
+      return `${mins}'`;
+    }
+  }
   return "LIVE";
 }
 
-function LivePill({ fixture }: { fixture: { status?: string | null; minute?: number | null } }) {
+function LivePill({
+  fixture,
+}: {
+  fixture: { status?: string | null; minute?: number | null; kickoffAt?: string | null };
+}) {
+  // Re-render every 30s so the elapsed-minutes fallback ticks up.
+  useNow(30_000);
   return (
     <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-red-500/20 text-red-300 border border-red-500/40 text-[10px] font-bold uppercase tracking-wide tabular-nums">
       <span className="size-1.5 rounded-full bg-red-400 animate-pulse" />
