@@ -741,6 +741,10 @@ function UpcomingFixtures({
                       </span>
                     ) : locked ? (
                       <Lock className="size-3" />
+                    ) : f.myPrediction ? (
+                      <span className="font-bold text-primary tabular-nums" title="Your prediction">
+                        {f.myPrediction.homePred}–{f.myPrediction.awayPred}
+                      </span>
                     ) : (
                       "vs"
                     )}
