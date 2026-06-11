@@ -34,6 +34,7 @@ export const Route = createFileRoute("/api/public/link-preview")({
             return json(
               { host: target.hostname.replace(/^www\./, ""), title: null, description: null, image: null },
               200,
+              true,
             );
           }
           // Read at most ~256KB of HTML to find <head> metadata.
@@ -77,19 +78,28 @@ export const Route = createFileRoute("/api/public/link-preview")({
             try { image = new URL(decode(image), target).toString(); } catch { /* keep raw */ }
           }
 
+          // Facebook serves a generic login shell ("Facebook" / "Log in") to
+          // blocked fetches — never cache those so retries can recover.
+          const decodedTitle = title ? decode(title) : null;
+          const isGeneric =
+            !decodedTitle ||
+            (isFacebook && /^(facebook|log in(to| to)? facebook.*)?$/i.test(decodedTitle.trim()));
+
           return json(
             {
               host: target.hostname.replace(/^www\./, ""),
-              title: title ? decode(title).slice(0, 240) : null,
+              title: decodedTitle ? decodedTitle.slice(0, 240) : null,
               description: description ? decode(description).slice(0, 400) : null,
               image,
             },
             200,
+            isGeneric,
           );
         } catch {
           return json(
             { host: target.hostname.replace(/^www\./, ""), title: null, description: null, image: null },
             200,
+            true,
           );
         }
       },
@@ -118,11 +128,13 @@ function safeCodePoint(cp: number): string {
   }
 }
 
-function json(body: unknown, status: number) {
+function json(body: unknown, status: number, noCache = false) {
   return Response.json(body, {
     status,
     headers: {
-      "cache-control": "public, max-age=3600, stale-while-revalidate=86400",
+      "cache-control": noCache
+        ? "no-store"
+        : "public, max-age=3600, stale-while-revalidate=86400",
     },
   });
 }
