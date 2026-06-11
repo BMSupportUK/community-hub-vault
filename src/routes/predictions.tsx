@@ -177,6 +177,42 @@ function PredictionsPage() {
     }
   };
 
+  const handleSave = async (fixtureId: string, hp: number, ap: number) => {
+    try {
+      if (user) {
+        await upsertFn({ data: { fixtureId, homePred: hp, awayPred: ap } });
+      } else if (guest) {
+        await upsertGuestFn({
+          data: { email: guest.email, pin: guest.pin, fixtureId, homePred: hp, awayPred: ap },
+        });
+      } else {
+        setShowGuestLogin(true);
+        return;
+      }
+      toast.success("Prediction saved");
+      await loadAll();
+    } catch (e: any) {
+      toast.error(e?.message ?? "Save failed");
+    }
+  };
+
+  const _legacyHandleJoinPlaceholder = async () => {
+    if (!user) {
+      setShowGuestLogin(true);
+      return;
+    }
+    setJoining(true);
+    try {
+      await joinFn();
+      setJoined(true);
+      toast.success("You're in! Start predicting.");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Failed to join");
+    } finally {
+      setJoining(false);
+    }
+  };
+
   const handleGuestSignIn = async (email: string, pin: string, displayName: string) => {
     setJoining(true);
     try {
