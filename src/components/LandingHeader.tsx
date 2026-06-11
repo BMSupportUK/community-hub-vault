@@ -9,7 +9,7 @@ const navItems = [
   { to: "/packages", label: "Packages" },
   { to: "/faq", label: "FAQ" },
   { to: "/about", label: "About" },
-  { to: "/fan-zone", label: "Boro Fan Zone" },
+  { to: "/fan-zone", label: "Boro Fan Zone Forum" },
   { to: "/predictions", label: "World Cup 2026 Predictions Comp" },
   { to: "/contact", label: "Contact us" },
 ];
