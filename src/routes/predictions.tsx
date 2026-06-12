@@ -1506,11 +1506,11 @@ function LeaderboardList({
       <div className="grid grid-cols-[28px_1fr_44px_44px_48px_60px] sm:grid-cols-[36px_minmax(0,0.9fr)_56px_112px_160px_112px_64px_80px] gap-2 px-3 sm:px-4 py-2.5 text-[11px] uppercase tracking-wider text-muted-foreground bg-surface-2 border-b border-border [&>div]:whitespace-nowrap">
         <div>#</div>
         <div>Player</div>
-        <div className="text-right">Played</div>
+        <div className="text-right"><span className="sm:hidden">P</span><span className="hidden sm:inline">Played</span></div>
         <div className="text-right hidden sm:block">Correct Score</div>
         <div className="text-right hidden sm:block" title="Correct goal difference (3 pts)">Correct Goal Diff</div>
-        <div className="text-right">Correct Result</div>
-        <div className="text-right">Points</div>
+        <div className="text-right" title="Correct result"><span className="sm:hidden">Res</span><span className="hidden sm:inline">Correct Result</span></div>
+        <div className="text-right"><span className="sm:hidden">Pts</span><span className="hidden sm:inline">Points</span></div>
         <div className="text-right">Type</div>
       </div>
       <ul>
