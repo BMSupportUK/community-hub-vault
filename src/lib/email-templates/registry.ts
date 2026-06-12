@@ -21,10 +21,12 @@ import { template as twofaResetAdmin } from './twofa-reset-admin'
 import { template as twofaResetUser } from './twofa-reset-user'
 import { template as subscriptionExpiryReminder } from './subscription-expiry-reminder'
 import { template as wcGuestPinReset } from './wc-guest-pin-reset'
+import { template as wcPredictionReminder } from './wc-prediction-reminder'
 
 export const TEMPLATES: Record<string, TemplateEntry> = {
   'twofa-reset-admin': twofaResetAdmin,
   'twofa-reset-user': twofaResetUser,
   'subscription-expiry-reminder': subscriptionExpiryReminder,
   'wc-guest-pin-reset': wcGuestPinReset,
+  'wc-prediction-reminder': wcPredictionReminder,
 }
