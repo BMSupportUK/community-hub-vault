@@ -142,7 +142,8 @@ export const Route = createFileRoute("/_authenticated/_approved/shop")({
     s.view === "multi_room" ||
     s.view === "triple_room" ||
     s.view === "streaming_devices" ||
-    s.view === "reviews"
+    s.view === "reviews" ||
+    s.view === "app_demos"
       ? s.view
       : "store") as View | "discounts",
     id: typeof s.id === "string" ? s.id : undefined,
