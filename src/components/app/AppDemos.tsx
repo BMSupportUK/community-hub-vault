@@ -53,18 +53,22 @@ function useSignedUrl(path: string | null | undefined) {
   return url;
 }
 
-function DemoCard({ demo, isAdmin, onEdit, onDelete }: { demo: Demo; isAdmin: boolean; onEdit: () => void; onDelete: () => void }) {
-  const videoUrl = useSignedUrl(demo.video_path);
+function DemoCard({ demo, isAdmin, onEdit, onDelete, onPlay }: { demo: Demo; isAdmin: boolean; onEdit: () => void; onDelete: () => void; onPlay: () => void }) {
   const posterUrl = useSignedUrl(demo.poster_path);
   return (
     <div className="rounded-xl border border-border bg-surface overflow-hidden shadow-soft">
-      <div className="aspect-video bg-surface-2 grid place-items-center">
-        {videoUrl ? (
-          <video src={videoUrl} poster={posterUrl ?? undefined} controls playsInline className="w-full h-full object-contain bg-black" />
-        ) : (
-          <Loader2 className="size-6 animate-spin text-muted-foreground" />
+      <button
+        type="button"
+        onClick={onPlay}
+        className="relative aspect-video w-full bg-black grid place-items-center group overflow-hidden"
+      >
+        {posterUrl && (
+          <img src={posterUrl} alt={demo.title} className="absolute inset-0 w-full h-full object-cover opacity-90 group-hover:opacity-100 transition" />
         )}
-      </div>
+        <span className="relative z-10 size-14 rounded-full bg-black/60 text-white grid place-items-center backdrop-blur group-hover:scale-110 group-hover:bg-black/70 transition">
+          <Play className="size-7 fill-white" />
+        </span>
+      </button>
       <div className="p-3 space-y-1">
         <div className="flex items-start justify-between gap-2">
           <div>
@@ -93,6 +97,7 @@ export function AppDemosView() {
   const [draft, setDraft] = useState<Draft | null>(null);
   const [saving, setSaving] = useState(false);
   const [activeCat, setActiveCat] = useState<CategoryKey>("official_server");
+  const [playing, setPlaying] = useState<Demo | null>(null);
 
   const load = async () => {
     setLoading(true);
@@ -244,7 +249,7 @@ export function AppDemosView() {
           return (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {filtered.map((d) => (
-                <DemoCard key={d.id} demo={d} isAdmin={isAdmin} onEdit={() => setDraft(d)} onDelete={() => remove(d)} />
+                <DemoCard key={d.id} demo={d} isAdmin={isAdmin} onEdit={() => setDraft(d)} onDelete={() => remove(d)} onPlay={() => setPlaying(d)} />
               ))}
             </div>
           );
@@ -319,6 +324,42 @@ export function AppDemosView() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <PlayerDialog demo={playing} onClose={() => setPlaying(null)} />
     </main>
+  );
+}
+
+function PlayerDialog({ demo, onClose }: { demo: Demo | null; onClose: () => void }) {
+  const videoUrl = useSignedUrl(demo?.video_path);
+  const posterUrl = useSignedUrl(demo?.poster_path);
+  return (
+    <Dialog open={!!demo} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-5xl w-[95vw] p-0 bg-black border-border overflow-hidden sm:rounded-xl">
+        {demo && (
+          <div>
+            <div className="aspect-video w-full bg-black grid place-items-center">
+              {videoUrl ? (
+                <video
+                  src={videoUrl}
+                  poster={posterUrl ?? undefined}
+                  controls
+                  autoPlay
+                  playsInline
+                  className="w-full h-full object-contain bg-black"
+                />
+              ) : (
+                <Loader2 className="size-6 animate-spin text-muted-foreground" />
+              )}
+            </div>
+            <div className="px-4 py-3 bg-background">
+              <div className="font-semibold text-base">{demo.title}</div>
+              {demo.app_name && <div className="text-xs text-muted-foreground">{demo.app_name}</div>}
+              {demo.description && <p className="text-sm text-muted-foreground whitespace-pre-wrap mt-2">{demo.description}</p>}
+            </div>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 }
