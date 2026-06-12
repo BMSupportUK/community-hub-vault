@@ -1445,6 +1445,12 @@ function Storefront() {
                 Shop
               </TabsTrigger>
               <TabsTrigger
+                value="app_demos"
+                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-sky-400 data-[state=active]:text-white"
+              >
+                App Demos
+              </TabsTrigger>
+              <TabsTrigger
                 value="orders"
                 className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-sky-400 data-[state=active]:text-white"
               >
@@ -1473,12 +1479,6 @@ function Storefront() {
                 className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-sky-400 data-[state=active]:text-white"
               >
                 Streaming Devices
-              </TabsTrigger>
-              <TabsTrigger
-                value="app_demos"
-                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-sky-400 data-[state=active]:text-white"
-              >
-                App Demos
               </TabsTrigger>
               <TabsTrigger
                 value="reviews"
