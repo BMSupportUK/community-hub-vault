@@ -938,18 +938,24 @@ function FixturesList({
   }, [fixtures, filter]);
 
   // group by date (YYYY-MM-DD)
-  const byDate = useMemo(() => {
-    const m = new Map<string, WcFixtureDTO[]>();
-    for (const f of filtered) {
+  // group by date (YYYY-MM-DD), with finished fixtures pushed to the bottom
+  const { byDate, byDateFinished } = useMemo(() => {
+    const active = new Map<string, WcFixtureDTO[]>();
+    const finished = new Map<string, WcFixtureDTO[]>();
+    const sorted = [...filtered].sort(
+      (a, b) => +new Date(a.kickoffAt) - +new Date(b.kickoffAt),
+    );
+    for (const f of sorted) {
       const d = new Date(f.kickoffAt).toLocaleDateString(undefined, {
         weekday: "long",
         day: "2-digit",
         month: "long",
       });
-      if (!m.has(d)) m.set(d, []);
-      m.get(d)!.push(f);
+      const target = isFinished(f) ? finished : active;
+      if (!target.has(d)) target.set(d, []);
+      target.get(d)!.push(f);
     }
-    return m;
+    return { byDate: active, byDateFinished: finished };
   }, [filtered]);
 
   if (!fixtures.length) {
@@ -1003,7 +1009,7 @@ function FixturesList({
           </div>
         </div>
       </div>
-      {byDate.size === 0 && (
+      {byDate.size === 0 && byDateFinished.size === 0 && (
         <div className="rounded-2xl border border-border bg-surface-1 p-8 text-center text-sm text-muted-foreground">
           No fixtures in this view yet.
         </div>
@@ -1020,6 +1026,25 @@ function FixturesList({
           </div>
         </div>
       ))}
+      {byDateFinished.size > 0 && (
+        <div className="space-y-4 pt-2">
+          <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground px-2">
+            Completed
+          </h2>
+          {[...byDateFinished.entries()].map(([date, items]) => (
+            <div key={`done-${date}`}>
+              <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-2 px-2 py-1.5 rounded-md bg-surface-2 border-l-4 border-border">
+                {date}
+              </h3>
+              <div className="grid gap-3 opacity-90">
+                {items.map((f) => (
+                  <FixtureCard key={f.id} fixture={f} canPredict={canPredict} onSave={onSave} />
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
