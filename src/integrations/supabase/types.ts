@@ -134,6 +134,7 @@ export type Database = {
       app_demos: {
         Row: {
           app_name: string | null
+          category: string
           created_at: string
           created_by: string | null
           description: string | null
@@ -147,6 +148,7 @@ export type Database = {
         }
         Insert: {
           app_name?: string | null
+          category?: string
           created_at?: string
           created_by?: string | null
           description?: string | null
@@ -160,6 +162,7 @@ export type Database = {
         }
         Update: {
           app_name?: string | null
+          category?: string
           created_at?: string
           created_by?: string | null
           description?: string | null
