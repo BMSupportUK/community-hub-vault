@@ -75,8 +75,10 @@ import { useRouter } from "@tanstack/react-router";
 import { MonitorPlay } from "lucide-react";
 import { StreamingDevicesPage } from "@/routes/_authenticated/_approved/streaming-devices";
 import { ReviewsPage } from "@/routes/_authenticated/_approved/reviews";
+import { AppDemosView } from "@/components/app/AppDemos";
+import { Film } from "lucide-react";
 
-type View = "store" | "orders" | "admin" | "refund" | "multi_room" | "triple_room" | "streaming_devices" | "reviews";
+type View = "store" | "orders" | "admin" | "refund" | "multi_room" | "triple_room" | "streaming_devices" | "reviews" | "app_demos";
 
 function linkify(text: string): React.ReactNode[] {
   const re = /(https?:\/\/[^\s]+)/g;
