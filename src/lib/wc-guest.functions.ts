@@ -241,6 +241,7 @@ export type PublicLeaderboardRow = {
 
 export const getWcLeaderboardPublic = createServerFn({ method: "GET" }).handler(
   async (): Promise<PublicLeaderboardRow[]> => {
+    setResponseHeader("cache-control", "no-store, max-age=0");
     const admin = await getAdmin();
     const { data, error } = await admin
       .from("wc_leaderboard")

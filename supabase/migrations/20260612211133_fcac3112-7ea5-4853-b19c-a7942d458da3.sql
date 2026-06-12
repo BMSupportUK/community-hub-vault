@@ -1,0 +1,1 @@
+CREATE POLICY wc_fixtures_select_anon ON public.wc_fixtures FOR SELECT TO anon USING (true);
