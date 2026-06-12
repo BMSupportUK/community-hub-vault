@@ -1520,7 +1520,7 @@ function LeaderboardList({
           return (
             <li
               key={r.userId}
-              className={`grid grid-cols-[28px_1fr_44px_44px_48px_60px] sm:grid-cols-[36px_minmax(0,0.9fr)_56px_112px_160px_112px_64px_80px] gap-2 px-3 sm:px-4 py-2.5 text-sm border-b border-border last:border-b-0 ${
+              className={`grid grid-cols-[24px_1fr_32px_36px_40px_40px_52px] sm:grid-cols-[36px_minmax(0,0.9fr)_56px_112px_160px_112px_64px_80px] gap-1.5 sm:gap-2 px-2 sm:px-4 py-2.5 text-sm border-b border-border last:border-b-0 ${
                 mine ? "bg-primary/5" : ""
               }`}
             >
@@ -1561,7 +1561,7 @@ function LeaderboardList({
               <div className="text-right tabular-nums hidden sm:flex items-center justify-end gap-1">
                 <Star className="size-3 text-yellow-400" /> {r.exactCount}
               </div>
-              <div className="text-right tabular-nums hidden sm:block text-muted-foreground">{r.goalDiffCount}</div>
+              <div className="text-right tabular-nums text-muted-foreground">{r.goalDiffCount}</div>
               <div className="text-right tabular-nums">{r.resultCount}</div>
               <div className="text-right font-display font-bold tabular-nums">
                 {r.totalPoints}
@@ -1588,7 +1588,7 @@ function LeaderboardList({
             Site owner · playing for fun (not ranked)
           </div>
           <div
-            className={`grid grid-cols-[28px_1fr_44px_44px_48px_60px] sm:grid-cols-[36px_minmax(0,0.9fr)_56px_112px_160px_112px_64px_80px] gap-2 px-3 sm:px-4 py-2.5 text-sm ${
+            className={`grid grid-cols-[24px_1fr_32px_36px_40px_40px_52px] sm:grid-cols-[36px_minmax(0,0.9fr)_56px_112px_160px_112px_64px_80px] gap-1.5 sm:gap-2 px-2 sm:px-4 py-2.5 text-sm ${
               owner.userId === currentUserId ? "bg-primary/5" : ""
             }`}
           >
@@ -1617,7 +1617,7 @@ function LeaderboardList({
             <div className="text-right tabular-nums hidden sm:flex items-center justify-end gap-1">
               <Star className="size-3 text-yellow-400" /> {owner.exactCount}
             </div>
-            <div className="text-right tabular-nums hidden sm:block text-muted-foreground">{owner.goalDiffCount}</div>
+            <div className="text-right tabular-nums text-muted-foreground">{owner.goalDiffCount}</div>
             <div className="text-right tabular-nums">{owner.resultCount}</div>
             <div className="text-right font-display font-bold tabular-nums">
               {owner.totalPoints}
