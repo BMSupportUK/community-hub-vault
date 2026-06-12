@@ -9,6 +9,14 @@ import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { Plus, Pencil, Trash2, Upload, Play, Loader2 } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+const CATEGORIES = [
+  { key: "official_server", label: "Official Server App" },
+  { key: "official_3rd_party", label: "Official 3rd Party App" },
+  { key: "rebranded", label: "Rebranded Apps" },
+] as const;
+type CategoryKey = (typeof CATEGORIES)[number]["key"];
 
 type Demo = {
   id: string;
@@ -19,6 +27,7 @@ type Demo = {
   poster_path: string | null;
   sort_order: number;
   is_active: boolean;
+  category: CategoryKey;
   created_at: string;
 };
 
@@ -83,6 +92,7 @@ export function AppDemosView() {
   const [loading, setLoading] = useState(true);
   const [draft, setDraft] = useState<Draft | null>(null);
   const [saving, setSaving] = useState(false);
+  const [activeCat, setActiveCat] = useState<CategoryKey>("official_server");
 
   const load = async () => {
     setLoading(true);
@@ -140,6 +150,7 @@ export function AppDemosView() {
             poster_path: posterPath,
             sort_order: draft.sort_order ?? 100,
             is_active: draft.is_active ?? true,
+            category: (draft.category ?? "official_server") as CategoryKey,
           })
           .eq("id", draft.id);
         if (error) throw error;
@@ -153,6 +164,7 @@ export function AppDemosView() {
           poster_path: posterPath,
           sort_order: draft.sort_order ?? 100,
           is_active: draft.is_active ?? true,
+          category: (draft.category ?? activeCat) as CategoryKey,
           created_by: u.user?.id ?? null,
         });
         if (error) throw error;
@@ -189,13 +201,56 @@ export function AppDemosView() {
             <p className="text-sm text-muted-foreground">Short video walkthroughs of our apps.</p>
           </div>
           {isAdmin && (
-            <Button onClick={() => setDraft({ is_active: true, sort_order: 100 })}>
+            <Button onClick={() => setDraft({ is_active: true, sort_order: 100, category: activeCat })}>
               <Plus className="size-4" /> Upload demo
             </Button>
           )}
         </header>
 
-        {loading ? (
+        <div className="flex flex-wrap gap-2">
+          {CATEGORIES.map((c) => {
+            const count = items.filter((i) => i.category === c.key).length;
+            const active = activeCat === c.key;
+            return (
+              <button
+                key={c.key}
+                onClick={() => setActiveCat(c.key)}
+                className={cn(
+                  "px-3 py-1.5 rounded-full text-xs font-medium border transition",
+                  active
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-surface-2 text-muted-foreground border-border hover:text-foreground",
+                )}
+              >
+                {c.label} <span className="opacity-70 ml-1">{count}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        {(() => {
+          const filtered = items.filter((i) => i.category === activeCat);
+          if (loading) return (
+            <div className="py-16 grid place-items-center text-muted-foreground">
+              <Loader2 className="size-6 animate-spin" />
+            </div>
+          );
+          if (filtered.length === 0) return (
+            <div className="rounded-xl border border-dashed border-border p-10 text-center text-muted-foreground">
+              <Play className="size-8 mx-auto mb-2 opacity-50" />
+              No demos in this category yet.
+            </div>
+          );
+          return (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {filtered.map((d) => (
+                <DemoCard key={d.id} demo={d} isAdmin={isAdmin} onEdit={() => setDraft(d)} onDelete={() => remove(d)} />
+              ))}
+            </div>
+          );
+        })()}
+
+        {false && loading ? (
           <div className="py-16 grid place-items-center text-muted-foreground">
             <Loader2 className="size-6 animate-spin" />
           </div>
@@ -223,6 +278,18 @@ export function AppDemosView() {
               <div>
                 <Label>Title</Label>
                 <Input value={draft.title ?? ""} onChange={(e) => setDraft({ ...draft, title: e.target.value })} />
+              </div>
+              <div>
+                <Label>Category</Label>
+                <select
+                  className="w-full h-10 rounded-md border border-border bg-surface-2 px-3 text-sm"
+                  value={(draft.category as string) ?? activeCat}
+                  onChange={(e) => setDraft({ ...draft, category: e.target.value as CategoryKey })}
+                >
+                  {CATEGORIES.map((c) => (
+                    <option key={c.key} value={c.key}>{c.label}</option>
+                  ))}
+                </select>
               </div>
               <div>
                 <Label>App name</Label>
