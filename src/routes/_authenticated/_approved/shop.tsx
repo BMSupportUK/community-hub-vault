@@ -282,6 +282,13 @@ function ShopPage() {
           active: view === "streaming_devices",
           onClick: () => go({ view: "streaming_devices" }),
         },
+        {
+          to: "/shop",
+          label: "App Demos",
+          icon: Film,
+          active: view === "app_demos",
+          onClick: () => go({ view: "app_demos" }),
+        },
       ],
     },
     {
