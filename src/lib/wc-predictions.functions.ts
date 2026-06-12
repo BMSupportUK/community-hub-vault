@@ -216,7 +216,6 @@ export type WcEntrantPickDTO = {
 };
 
 export const getEntrantWcPredictions = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
   .inputValidator((d) =>
     z.object({ entrantId: z.string().uuid(), isGuest: z.boolean() }).parse(d),
   )
