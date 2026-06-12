@@ -1,45 +1,17 @@
 ## Goal
-On the `/predictions` page, show the current **live score** and **minute elapsed** for any World Cup fixture that's currently being played, refreshing every 30 seconds. Finished matches keep showing the full-time score as today.
+When a user clicks play on an App Demo card, open the video in a large centered lightbox (like YouTube's theatre/recommendation preview) instead of playing inline in the small card.
 
-## What changes
+## Changes (UI only, `src/components/app/AppDemos.tsx`)
 
-### 1. Database (migration)
-Add two columns to `public.wc_fixtures` so we can distinguish live vs finished and show the in-match minute:
-
-- `status text` — values from football-data.org: `SCHEDULED`, `LIVE`, `IN_PLAY`, `PAUSED`, `FINISHED`, etc. Default `'SCHEDULED'`.
-- `minute int` — current minute (e.g. `67`). Nullable.
-
-Existing `home_score` / `away_score` keep their current meaning — they hold the latest known score whether the match is live or finished. No data migration needed; existing rows default to `SCHEDULED` and get updated on the next sync.
-
-### 2. Sync hook
-Update `src/routes/api/public/hooks/sync-wc-scores.ts`:
-
-- Drop the `?status=FINISHED` filter so the request returns all WC matches.
-- For each matched fixture, also write `status` and `minute` (from `m.status` and `m.minute`).
-- Treat `IN_PLAY` / `PAUSED` / `LIVE` as live — write current score and minute.
-- `FINISHED` writes the final score and clears `minute`.
-- Everything else just updates `status`.
-
-Bump the existing pg_cron schedule to **every minute** so the cache is at most ~60s stale (the hook is cheap and football-data.org's free tier allows it).
-
-### 3. Predictions page
-In `src/routes/predictions.tsx`:
-
-- The TanStack Query that loads fixtures gets `refetchInterval: 30_000` **only when at least one fixture is live** (`status` in `LIVE` / `IN_PLAY` / `PAUSED`); otherwise no polling.
-- Each fixture row that's currently live shows:
-  - the live score in place of "TBD"
-  - a red `LIVE 67'` pill next to the score (using the `minute` value; falls back to `LIVE` if minute is null, e.g. half-time / `PAUSED` shows `HT`).
-- Finished matches show the same full-time score they already do.
-- The sidebar score-entry inputs lock as soon as `status !== 'SCHEDULED'` (in addition to the existing 30-min-before-kickoff lock).
-
-No new tables, no realtime channel, no new feed — uses the existing football-data.org integration and key.
+1. **Replace inline `<video controls>` on the card** with a poster/thumbnail + large play button overlay. Clicking it sets a `playing: Demo | null` state.
+2. **Add a lightbox `Dialog`** rendered when `playing` is set:
+   - Wide content: `max-w-5xl w-[95vw]`, no default padding, black background, rounded.
+   - Inner `aspect-video` wrapper containing a `<video controls autoPlay playsInline>` using the signed URL.
+   - Title + app name shown below the video.
+   - Existing dialog close button (X) handles dismissal; closing pauses by unmounting the video.
+3. **Signed URL fetch** for the lightbox video reuses the existing `useSignedUrl` hook.
+4. No DB, storage, or route changes. No changes to upload flow, categories, or admin controls.
 
 ## Out of scope
-- No edits to /sports-guides.
-- No realtime/websocket subscription (you chose 30s polling).
-- No new live-score page outside /predictions.
-
-## Technical notes
-- Migration also widens grants only if needed; `wc_fixtures` already has the right policies — verify before adding any GRANT.
-- Polling is conditional so idle users (no live match) don't generate background traffic.
-- Football-data.org free tier rate limit is 10 req/min; 1 cron call/min plus opportunistic client refreshes via the cached DB row is well within that.
+- No autoplay on hover, no playlist/recommendations sidebar (just the YouTube-style large player size).
+- No changes to thumbnails/posters generation.
