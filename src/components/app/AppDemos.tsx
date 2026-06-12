@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { toast } from "sonner";
 import { Plus, Pencil, Trash2, Upload, Play, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import tvLoginIllustration from "@/assets/tv-login-illustration.jpg";
 
 const CATEGORIES = [
   { key: "official_server", label: "Official Server App" },
@@ -198,8 +199,12 @@ export function AppDemosView() {
   };
 
   return (
-    <main className="flex-1 overflow-y-auto">
-      <div className="max-w-6xl mx-auto px-4 md:px-6 py-6 space-y-6">
+    <main
+      className="relative flex-1 overflow-y-auto bg-cover bg-center bg-no-repeat bg-fixed"
+      style={{ backgroundImage: `url(${tvLoginIllustration})` }}
+    >
+      <div aria-hidden className="pointer-events-none absolute inset-0 bg-background/35" />
+      <div className="relative max-w-6xl mx-auto px-4 md:px-6 py-6 space-y-6">
         <header className="flex items-start justify-between gap-3 flex-wrap">
           <div>
             <h1 className="font-display text-2xl md:text-3xl font-bold">App Demos</h1>
