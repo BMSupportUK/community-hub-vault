@@ -75,8 +75,10 @@ import { useRouter } from "@tanstack/react-router";
 import { MonitorPlay } from "lucide-react";
 import { StreamingDevicesPage } from "@/routes/_authenticated/_approved/streaming-devices";
 import { ReviewsPage } from "@/routes/_authenticated/_approved/reviews";
+import { AppDemosView } from "@/components/app/AppDemos";
+import { Film } from "lucide-react";
 
-type View = "store" | "orders" | "admin" | "refund" | "multi_room" | "triple_room" | "streaming_devices" | "reviews";
+type View = "store" | "orders" | "admin" | "refund" | "multi_room" | "triple_room" | "streaming_devices" | "reviews" | "app_demos";
 
 function linkify(text: string): React.ReactNode[] {
   const re = /(https?:\/\/[^\s]+)/g;
@@ -140,7 +142,8 @@ export const Route = createFileRoute("/_authenticated/_approved/shop")({
     s.view === "multi_room" ||
     s.view === "triple_room" ||
     s.view === "streaming_devices" ||
-    s.view === "reviews"
+    s.view === "reviews" ||
+    s.view === "app_demos"
       ? s.view
       : "store") as View | "discounts",
     id: typeof s.id === "string" ? s.id : undefined,
@@ -279,6 +282,13 @@ function ShopPage() {
           active: view === "streaming_devices",
           onClick: () => go({ view: "streaming_devices" }),
         },
+        {
+          to: "/shop",
+          label: "App Demos",
+          icon: Film,
+          active: view === "app_demos",
+          onClick: () => go({ view: "app_demos" }),
+        },
       ],
     },
     {
@@ -403,6 +413,7 @@ function ShopPage() {
               <RoomPolicyView roomKey={view as "multi_room" | "triple_room"} isAdmin={isAdmin} />
             ))}
           {view === "streaming_devices" && <StreamingDevicesPage />}
+          {view === "app_demos" && <AppDemosView />}
         </div>
       </div>
     </>
