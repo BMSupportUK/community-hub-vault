@@ -83,6 +83,7 @@ import { Route as AuthenticatedApprovedHomeIndexRouteImport } from './routes/_au
 import { Route as LovableEmailTransactionalSendRouteImport } from './routes/lovable/email/transactional/send'
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
+import { Route as ApiPublicHooksWcPredictionRemindersRouteImport } from './routes/api/public/hooks/wc-prediction-reminders'
 import { Route as ApiPublicHooksUserNotificationPushRouteImport } from './routes/api/public/hooks/user-notification-push'
 import { Route as ApiPublicHooksSyncWcScoresRouteImport } from './routes/api/public/hooks/sync-wc-scores'
 import { Route as ApiPublicHooksSubscriptionExpiryRemindersRouteImport } from './routes/api/public/hooks/subscription-expiry-reminders'
@@ -523,6 +524,12 @@ const LovableEmailQueueProcessRoute =
     path: '/lovable/email/queue/process',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksWcPredictionRemindersRoute =
+  ApiPublicHooksWcPredictionRemindersRouteImport.update({
+    id: '/api/public/hooks/wc-prediction-reminders',
+    path: '/api/public/hooks/wc-prediction-reminders',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksUserNotificationPushRoute =
   ApiPublicHooksUserNotificationPushRouteImport.update({
     id: '/api/public/hooks/user-notification-push',
@@ -741,6 +748,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/subscription-expiry-reminders': typeof ApiPublicHooksSubscriptionExpiryRemindersRoute
   '/api/public/hooks/sync-wc-scores': typeof ApiPublicHooksSyncWcScoresRoute
   '/api/public/hooks/user-notification-push': typeof ApiPublicHooksUserNotificationPushRoute
+  '/api/public/hooks/wc-prediction-reminders': typeof ApiPublicHooksWcPredictionRemindersRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
   '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
@@ -834,6 +842,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/subscription-expiry-reminders': typeof ApiPublicHooksSubscriptionExpiryRemindersRoute
   '/api/public/hooks/sync-wc-scores': typeof ApiPublicHooksSyncWcScoresRoute
   '/api/public/hooks/user-notification-push': typeof ApiPublicHooksUserNotificationPushRoute
+  '/api/public/hooks/wc-prediction-reminders': typeof ApiPublicHooksWcPredictionRemindersRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
   '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
@@ -933,6 +942,7 @@ export interface FileRoutesById {
   '/api/public/hooks/subscription-expiry-reminders': typeof ApiPublicHooksSubscriptionExpiryRemindersRoute
   '/api/public/hooks/sync-wc-scores': typeof ApiPublicHooksSyncWcScoresRoute
   '/api/public/hooks/user-notification-push': typeof ApiPublicHooksUserNotificationPushRoute
+  '/api/public/hooks/wc-prediction-reminders': typeof ApiPublicHooksWcPredictionRemindersRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
   '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
@@ -1031,6 +1041,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/subscription-expiry-reminders'
     | '/api/public/hooks/sync-wc-scores'
     | '/api/public/hooks/user-notification-push'
+    | '/api/public/hooks/wc-prediction-reminders'
     | '/lovable/email/queue/process'
     | '/lovable/email/transactional/preview'
     | '/lovable/email/transactional/send'
@@ -1124,6 +1135,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/subscription-expiry-reminders'
     | '/api/public/hooks/sync-wc-scores'
     | '/api/public/hooks/user-notification-push'
+    | '/api/public/hooks/wc-prediction-reminders'
     | '/lovable/email/queue/process'
     | '/lovable/email/transactional/preview'
     | '/lovable/email/transactional/send'
@@ -1222,6 +1234,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/subscription-expiry-reminders'
     | '/api/public/hooks/sync-wc-scores'
     | '/api/public/hooks/user-notification-push'
+    | '/api/public/hooks/wc-prediction-reminders'
     | '/lovable/email/queue/process'
     | '/lovable/email/transactional/preview'
     | '/lovable/email/transactional/send'
@@ -1262,6 +1275,7 @@ export interface RootRouteChildren {
   ApiPublicHooksSubscriptionExpiryRemindersRoute: typeof ApiPublicHooksSubscriptionExpiryRemindersRoute
   ApiPublicHooksSyncWcScoresRoute: typeof ApiPublicHooksSyncWcScoresRoute
   ApiPublicHooksUserNotificationPushRoute: typeof ApiPublicHooksUserNotificationPushRoute
+  ApiPublicHooksWcPredictionRemindersRoute: typeof ApiPublicHooksWcPredictionRemindersRoute
   LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
   LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
   LovableEmailTransactionalSendRoute: typeof LovableEmailTransactionalSendRoute
@@ -1787,6 +1801,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LovableEmailQueueProcessRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/wc-prediction-reminders': {
+      id: '/api/public/hooks/wc-prediction-reminders'
+      path: '/api/public/hooks/wc-prediction-reminders'
+      fullPath: '/api/public/hooks/wc-prediction-reminders'
+      preLoaderRoute: typeof ApiPublicHooksWcPredictionRemindersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/user-notification-push': {
       id: '/api/public/hooks/user-notification-push'
       path: '/api/public/hooks/user-notification-push'
@@ -2240,6 +2261,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksSyncWcScoresRoute: ApiPublicHooksSyncWcScoresRoute,
   ApiPublicHooksUserNotificationPushRoute:
     ApiPublicHooksUserNotificationPushRoute,
+  ApiPublicHooksWcPredictionRemindersRoute:
+    ApiPublicHooksWcPredictionRemindersRoute,
   LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
   LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
   LovableEmailTransactionalSendRoute: LovableEmailTransactionalSendRoute,
