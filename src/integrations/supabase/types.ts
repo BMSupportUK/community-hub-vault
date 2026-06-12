@@ -131,6 +131,48 @@ export type Database = {
         }
         Relationships: []
       }
+      app_demos: {
+        Row: {
+          app_name: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          is_active: boolean
+          poster_path: string | null
+          sort_order: number
+          title: string
+          updated_at: string
+          video_path: string
+        }
+        Insert: {
+          app_name?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          poster_path?: string | null
+          sort_order?: number
+          title: string
+          updated_at?: string
+          video_path: string
+        }
+        Update: {
+          app_name?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          poster_path?: string | null
+          sort_order?: number
+          title?: string
+          updated_at?: string
+          video_path?: string
+        }
+        Relationships: []
+      }
       app_settings: {
         Row: {
           key: string
