@@ -181,7 +181,7 @@ function LeaderboardPage() {
   return (
     <div className="flex-1 overflow-y-auto bg-gradient-to-br from-[#1a0b2e] via-[#2d1b4e] to-[#1a0b2e]">
       <header className="px-8 pt-8 pb-6 border-b border-purple-500/30 bg-purple-950/40 backdrop-blur">
-        <h1 className="font-display text-3xl font-bold bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 bg-clip-text text-transparent">Leaderboard</h1>
+        <h1 className="font-display text-3xl font-bold bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 bg-clip-text text-transparent">Referrals</h1>
         <p className="text-purple-200/80 mt-1">Invite friends to the community and climb the ranks</p>
       </header>
 
@@ -205,7 +205,7 @@ function LeaderboardPage() {
                 <div className="size-12 rounded-xl bg-gradient-to-br from-violet-600 to-blue-600 grid place-items-center shadow-lg shadow-purple-900/50">
                   <Trophy className="size-6 text-white" />
                 </div>
-                <h2 className="font-display text-3xl font-bold bg-gradient-to-r from-violet-600 to-blue-600 bg-clip-text text-transparent">Welcome to the Leaderboard</h2>
+                <h2 className="font-display text-3xl font-bold bg-gradient-to-r from-violet-600 to-blue-600 bg-clip-text text-transparent">Welcome to Referrals</h2>
               </div>
               <p className="mt-3 text-lg text-purple-100/90 max-w-2xl">
                 Spread the word and grow our community. Generate single-use invite codes to share with friends — no expiry, no fuss.
