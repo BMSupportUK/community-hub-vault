@@ -1641,18 +1641,22 @@ function LeaderboardList({
               Only matches that have already kicked off are shown.
             </p>
           </DialogHeader>
-          {picksLoading ? (
+          {(() => {
+            const finishedPicks = (picks ?? []).filter(
+              (p) => p.status === "FINISHED" && p.homeScore !== null && p.awayScore !== null,
+            );
+            return picksLoading ? (
             <div className="grid place-items-center py-10 text-muted-foreground">
               <Loader2 className="size-5 animate-spin" />
             </div>
-          ) : !picks || picks.length === 0 ? (
+          ) : finishedPicks.length === 0 ? (
             <div className="py-8 text-center text-sm text-muted-foreground">
-              No revealed picks yet — come back after the next kickoff.
+              No completed matches yet — picks reveal once a match finishes.
             </div>
           ) : (
             <ul className="divide-y divide-border">
-              {picks.map((p) => {
-                const finished = p.status === "FINISHED" && p.homeScore !== null && p.awayScore !== null;
+              {finishedPicks.map((p) => {
+                const finished = true;
                 return (
                   <li key={p.fixtureId} className="py-2.5 flex items-center gap-3 text-sm">
                     <div className="flex-1 min-w-0">
@@ -1682,7 +1686,8 @@ function LeaderboardList({
                 );
               })}
             </ul>
-          )}
+          );
+          })()}
         </DialogContent>
       </Dialog>
     </div>
