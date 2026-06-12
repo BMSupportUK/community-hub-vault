@@ -38,6 +38,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import shopHero from "@/assets/shop-hero.jpg";
 import shopOrdersBg from "@/assets/shop-orders-bg.jpg";
+import tvLoginIllustration from "@/assets/tv-login-illustration.jpg";
 import houseCutaway from "@/assets/house-cutaway.jpg";
 import judgeCourtroom from "@/assets/judge-courtroom.jpg";
 import refundPolicyHero from "@/assets/refund-policy-hero.jpg";
@@ -406,7 +407,15 @@ function ShopPage() {
               <RoomPolicyView roomKey={view as "multi_room" | "triple_room"} isAdmin={isAdmin} />
             ))}
           {view === "streaming_devices" && <StreamingDevicesPage />}
-          {view === "app_demos" && <AppDemosView />}
+          {view === "app_demos" && (
+            <div
+              className="relative flex-1 flex min-w-0 bg-cover bg-center bg-no-repeat bg-fixed"
+              style={{ backgroundImage: `url(${tvLoginIllustration})` }}
+            >
+              <div aria-hidden className="pointer-events-none absolute inset-0 bg-background/35" />
+              <AppDemosView />
+            </div>
+          )}
         </div>
       </div>
     </>
@@ -1420,12 +1429,25 @@ function Storefront() {
         className={cn(
           "flex-1 overflow-y-auto",
           tab === "orders" && "relative bg-cover bg-center bg-fixed min-h-screen",
+          tab === "app_demos" && "relative bg-cover bg-center bg-no-repeat bg-fixed min-h-screen",
         )}
-        style={tab === "orders" ? { backgroundImage: `url(${shopOrdersBg})` } : undefined}
+        style={
+          tab === "orders"
+            ? { backgroundImage: `url(${shopOrdersBg})` }
+            : tab === "app_demos"
+              ? { backgroundImage: `url(${tvLoginIllustration})` }
+              : undefined
+        }
       >
         {tab === "orders" && (
           <div
             className="absolute inset-0 min-h-screen bg-gradient-to-b from-[#1a0b2e]/85 via-[#1a0b2e]/65 to-[#1a0b2e]/90 backdrop-blur-[2px] pointer-events-none"
+            aria-hidden
+          />
+        )}
+        {tab === "app_demos" && (
+          <div
+            className="absolute inset-0 min-h-screen bg-background/35 pointer-events-none"
             aria-hidden
           />
         )}

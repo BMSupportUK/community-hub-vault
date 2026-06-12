@@ -10,7 +10,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { toast } from "sonner";
 import { Plus, Pencil, Trash2, Upload, Play, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import tvLoginIllustration from "@/assets/tv-login-illustration.jpg";
 
 const CATEGORIES = [
   { key: "official_server", label: "Official Server App" },
