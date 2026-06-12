@@ -250,22 +250,6 @@ export function AppDemosView() {
           );
         })()}
 
-        {false && loading ? (
-          <div className="py-16 grid place-items-center text-muted-foreground">
-            <Loader2 className="size-6 animate-spin" />
-          </div>
-        ) : items.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-border p-10 text-center text-muted-foreground">
-            <Play className="size-8 mx-auto mb-2 opacity-50" />
-            No demos yet.
-          </div>
-        ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {items.map((d) => (
-              <DemoCard key={d.id} demo={d} isAdmin={isAdmin} onEdit={() => setDraft(d)} onDelete={() => remove(d)} />
-            ))}
-          </div>
-        )}
       </div>
 
       <Dialog open={!!draft} onOpenChange={(o) => !o && !saving && setDraft(null)}>
