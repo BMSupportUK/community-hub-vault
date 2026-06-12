@@ -3909,6 +3909,30 @@ export type Database = {
         }
         Relationships: []
       }
+      wc_prediction_reminders: {
+        Row: {
+          created_at: string
+          entrant_id: string
+          entrant_kind: string
+          recipient_email: string
+          sent_date: string
+        }
+        Insert: {
+          created_at?: string
+          entrant_id: string
+          entrant_kind: string
+          recipient_email: string
+          sent_date: string
+        }
+        Update: {
+          created_at?: string
+          entrant_id?: string
+          entrant_kind?: string
+          recipient_email?: string
+          sent_date?: string
+        }
+        Relationships: []
+      }
       wc_predictions: {
         Row: {
           away_pred: number
@@ -4311,6 +4335,17 @@ export type Database = {
         }[]
       }
       get_vpn_user_ids: { Args: never; Returns: string[] }
+      get_wc_reminder_recipients: {
+        Args: never
+        Returns: {
+          display_name: string
+          entrant_id: string
+          entrant_kind: string
+          missing_count: number
+          next_kickoff_at: string
+          recipient_email: string
+        }[]
+      }
       has_any_role: {
         Args: {
           _roles: Database["public"]["Enums"]["app_role"][]
