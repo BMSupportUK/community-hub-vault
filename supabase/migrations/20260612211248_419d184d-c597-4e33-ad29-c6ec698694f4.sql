@@ -1,0 +1,1 @@
+UPDATE public.wc_fixtures SET status = status WHERE home_team = 'Canada' AND away_team = 'Bosnia and Herzegovina';
