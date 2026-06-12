@@ -282,13 +282,6 @@ function ShopPage() {
           active: view === "streaming_devices",
           onClick: () => go({ view: "streaming_devices" }),
         },
-        {
-          to: "/shop",
-          label: "App Demos",
-          icon: Film,
-          active: view === "app_demos",
-          onClick: () => go({ view: "app_demos" }),
-        },
       ],
     },
     {
@@ -1482,6 +1475,12 @@ function Storefront() {
                 Streaming Devices
               </TabsTrigger>
               <TabsTrigger
+                value="app_demos"
+                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-sky-400 data-[state=active]:text-white"
+              >
+                App Demos
+              </TabsTrigger>
+              <TabsTrigger
                 value="reviews"
                 className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-sky-400 data-[state=active]:text-white"
               >
@@ -1719,6 +1718,9 @@ function Storefront() {
             </TabsContent>
             <TabsContent value="streaming_devices" className="mt-4 -mx-6">
               <StreamingDevicesPage />
+            </TabsContent>
+            <TabsContent value="app_demos" className="mt-4 -mx-6">
+              <AppDemosView />
             </TabsContent>
             <TabsContent value="reviews" className="mt-4 -mx-6">
               <ReviewsPage />
