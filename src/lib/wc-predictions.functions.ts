@@ -173,6 +173,7 @@ export const upsertWcPrediction = createServerFn({ method: "POST" })
 export const getWcLeaderboard = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async (): Promise<WcLeaderboardRowDTO[]> => {
+    setResponseHeader("cache-control", "no-store, max-age=0");
     // Use admin client: the view's security_invoker join to wc_guest_entrants
     // is blocked by RLS for normal users, which would null out guest names.
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
