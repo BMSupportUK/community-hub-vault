@@ -231,11 +231,12 @@ function BoroPredictionsPage() {
           )}
 
           <Tabs value={tab} onValueChange={setTab}>
-            <TabsList className="grid grid-cols-4 w-full sm:w-auto h-auto gap-1 p-1">
+            <TabsList className="grid grid-cols-5 w-full sm:w-auto h-auto gap-1 p-1">
               <TabsTrigger value="fixtures">Fixtures</TabsTrigger>
               <TabsTrigger value="results">Results</TabsTrigger>
               <TabsTrigger value="leaderboard">Leaderboard</TabsTrigger>
               <TabsTrigger value="scoring">Scoring</TabsTrigger>
+              <TabsTrigger value="prize">Prize</TabsTrigger>
             </TabsList>
 
             <TabsContent value="fixtures" className="mt-4">
@@ -263,15 +264,83 @@ function BoroPredictionsPage() {
               )}
             </TabsContent>
             <TabsContent value="scoring" className="mt-4">
-              <div className="rounded-2xl border-2 border-primary/60 bg-surface-1 p-5 space-y-3">
+              <div className="rounded-2xl border-2 border-primary/60 bg-surface-1 shadow-md shadow-primary/10 p-5 space-y-4">
                 <h3 className="font-display text-lg font-bold">How points are scored</h3>
+                <p className="text-xs text-muted-foreground">
+                  Each fixture pays out the <span className="text-foreground font-medium">highest</span> tier that
+                  matches your prediction — the tiers don&apos;t stack. An exact score is the top prize, so it pays
+                  5 pts (not 5 + 3 + 1).
+                </p>
                 <ul className="space-y-2 text-sm">
-                  <li className="flex gap-3 items-center"><span className="min-w-12 text-center px-2 py-1 rounded bg-primary text-primary-foreground text-xs font-bold">5 pts</span>Exact score</li>
-                  <li className="flex gap-3 items-center"><span className="min-w-12 text-center px-2 py-1 rounded bg-primary/80 text-primary-foreground text-xs font-bold">3 pts</span>Correct goal difference</li>
-                  <li className="flex gap-3 items-center"><span className="min-w-12 text-center px-2 py-1 rounded bg-primary/60 text-primary-foreground text-xs font-bold">1 pt</span>Correct result only</li>
-                  <li className="flex gap-3 items-center"><span className="min-w-12 text-center px-2 py-1 rounded bg-muted text-muted-foreground text-xs font-bold">0 pts</span>Wrong result</li>
+                  <li className="flex items-center gap-3">
+                    <span className="inline-flex min-w-12 justify-center px-2 py-1 rounded bg-primary text-primary-foreground text-xs font-bold">5 pts</span>
+                    <span><span className="font-medium">Exact score</span> — e.g. you picked 2-0, it finished 2-0.</span>
+                  </li>
+                  <li className="flex items-center gap-3">
+                    <span className="inline-flex min-w-12 justify-center px-2 py-1 rounded bg-primary/80 text-primary-foreground text-xs font-bold">3 pts</span>
+                    <span><span className="font-medium">Correct goal difference</span> — right winning margin but wrong scoreline (e.g. picked 3-1, it finished 2-0).</span>
+                  </li>
+                  <li className="flex items-center gap-3">
+                    <span className="inline-flex min-w-12 justify-center px-2 py-1 rounded bg-primary/60 text-primary-foreground text-xs font-bold">1 pt</span>
+                    <span><span className="font-medium">Correct result only</span> — right winner (or draw) but wrong margin (e.g. picked 1-0, it finished 2-0).</span>
+                  </li>
+                  <li className="flex items-center gap-3">
+                    <span className="inline-flex min-w-12 justify-center px-2 py-1 rounded bg-muted text-muted-foreground text-xs font-bold">0 pts</span>
+                    <span><span className="font-medium">Wrong result</span> — you picked the wrong team to win (or picked a draw when there was a winner).</span>
+                  </li>
                 </ul>
                 <p className="text-xs text-muted-foreground">Predictions lock 30 minutes before kick-off.</p>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="prize" className="mt-4">
+              <div className="rounded-2xl border-2 border-amber-400/60 bg-gradient-to-br from-amber-500/10 via-surface-1 to-surface-1 shadow-md shadow-amber-500/10 p-5 space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="size-12 rounded-2xl bg-amber-500/20 grid place-items-center ring-1 ring-amber-400/40">
+                    <Trophy className="size-6 text-amber-300" />
+                  </div>
+                  <div>
+                    <h3 className="font-display text-lg font-bold">Prize</h3>
+                    <p className="text-xs text-muted-foreground">For the top of the leaderboard</p>
+                  </div>
+                </div>
+                <ul className="space-y-2 text-sm">
+                  <li className="flex items-center gap-3">
+                    <span className="inline-flex min-w-16 justify-center px-2 py-1 rounded bg-amber-500 text-black text-xs font-bold">1st place</span>
+                    <span>£10 Amazon voucher</span>
+                  </li>
+                  <li className="flex items-center gap-3">
+                    <span className="inline-flex min-w-16 justify-center px-2 py-1 rounded bg-zinc-300 text-black text-xs font-bold">2nd place</span>
+                    <span>£5 Amazon voucher</span>
+                  </li>
+                  <li className="flex items-center gap-3">
+                    <span className="inline-flex min-w-16 justify-center px-2 py-1 rounded bg-orange-400 text-black text-xs font-bold">3rd place</span>
+                    <span>£5 Amazon voucher</span>
+                  </li>
+                </ul>
+                <div className="rounded-xl border border-border bg-surface-2/60 p-3 space-y-2">
+                  <p className="text-sm font-semibold">How tie-breakers work</p>
+                  <p className="text-xs text-muted-foreground">
+                    If two or more players finish on the same total points, we apply the following rules in order until a winner is found:
+                  </p>
+                  <ol className="list-decimal list-inside text-sm text-muted-foreground space-y-1">
+                    <li>
+                      <span className="text-foreground font-medium">Most exact score predictions</span> — whoever called the most final scores spot-on wins.
+                    </li>
+                    <li>
+                      <span className="text-foreground font-medium">Most correct match results</span> — next, who called the most win / draw / loss outcomes correctly.
+                    </li>
+                    <li>
+                      <span className="text-foreground font-medium">Closest goal difference</span> — total goal-difference error across all matches; lowest wins.
+                    </li>
+                    <li>
+                      <span className="text-foreground font-medium">Most correct knockout-stage picks</span> — accuracy on later, higher-stakes fixtures breaks remaining ties.
+                    </li>
+                    <li>
+                      <span className="text-foreground font-medium">Earliest submission</span> — the player who locked their predictions in first takes the prize.
+                    </li>
+                  </ol>
+                </div>
               </div>
             </TabsContent>
           </Tabs>
