@@ -95,6 +95,7 @@ import { Route as ApiPublicHooksScheduledRemindersRouteImport } from './routes/a
 import { Route as ApiPublicHooksRefreshStreamingPricesRouteImport } from './routes/api/public/hooks/refresh-streaming-prices'
 import { Route as ApiPublicHooksNowpaymentsRouteImport } from './routes/api/public/hooks/nowpayments'
 import { Route as ApiPublicHooksNotifyRouteImport } from './routes/api/public/hooks/notify'
+import { Route as ApiPublicHooksBoroFetchFixturesRouteImport } from './routes/api/public/hooks/boro-fetch-fixtures'
 import { Route as ApiPublicHooksBackupOrdersRouteImport } from './routes/api/public/hooks/backup-orders'
 import { Route as ApiPublicHooksBackupCredentialsRouteImport } from './routes/api/public/hooks/backup-credentials'
 import { Route as AuthenticatedApprovedUUsernameRouteImport } from './routes/_authenticated/_approved/u.$username'
@@ -595,6 +596,12 @@ const ApiPublicHooksNotifyRoute = ApiPublicHooksNotifyRouteImport.update({
   path: '/api/public/hooks/notify',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHooksBoroFetchFixturesRoute =
+  ApiPublicHooksBoroFetchFixturesRouteImport.update({
+    id: '/api/public/hooks/boro-fetch-fixtures',
+    path: '/api/public/hooks/boro-fetch-fixtures',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksBackupOrdersRoute =
   ApiPublicHooksBackupOrdersRouteImport.update({
     id: '/api/public/hooks/backup-orders',
@@ -759,6 +766,7 @@ export interface FileRoutesByFullPath {
   '/u/$username': typeof AuthenticatedApprovedUUsernameRoute
   '/api/public/hooks/backup-credentials': typeof ApiPublicHooksBackupCredentialsRoute
   '/api/public/hooks/backup-orders': typeof ApiPublicHooksBackupOrdersRoute
+  '/api/public/hooks/boro-fetch-fixtures': typeof ApiPublicHooksBoroFetchFixturesRoute
   '/api/public/hooks/notify': typeof ApiPublicHooksNotifyRoute
   '/api/public/hooks/nowpayments': typeof ApiPublicHooksNowpaymentsRoute
   '/api/public/hooks/refresh-streaming-prices': typeof ApiPublicHooksRefreshStreamingPricesRoute
@@ -856,6 +864,7 @@ export interface FileRoutesByTo {
   '/u/$username': typeof AuthenticatedApprovedUUsernameRoute
   '/api/public/hooks/backup-credentials': typeof ApiPublicHooksBackupCredentialsRoute
   '/api/public/hooks/backup-orders': typeof ApiPublicHooksBackupOrdersRoute
+  '/api/public/hooks/boro-fetch-fixtures': typeof ApiPublicHooksBoroFetchFixturesRoute
   '/api/public/hooks/notify': typeof ApiPublicHooksNotifyRoute
   '/api/public/hooks/nowpayments': typeof ApiPublicHooksNowpaymentsRoute
   '/api/public/hooks/refresh-streaming-prices': typeof ApiPublicHooksRefreshStreamingPricesRoute
@@ -959,6 +968,7 @@ export interface FileRoutesById {
   '/_authenticated/_approved/u/$username': typeof AuthenticatedApprovedUUsernameRoute
   '/api/public/hooks/backup-credentials': typeof ApiPublicHooksBackupCredentialsRoute
   '/api/public/hooks/backup-orders': typeof ApiPublicHooksBackupOrdersRoute
+  '/api/public/hooks/boro-fetch-fixtures': typeof ApiPublicHooksBoroFetchFixturesRoute
   '/api/public/hooks/notify': typeof ApiPublicHooksNotifyRoute
   '/api/public/hooks/nowpayments': typeof ApiPublicHooksNowpaymentsRoute
   '/api/public/hooks/refresh-streaming-prices': typeof ApiPublicHooksRefreshStreamingPricesRoute
@@ -1061,6 +1071,7 @@ export interface FileRouteTypes {
     | '/u/$username'
     | '/api/public/hooks/backup-credentials'
     | '/api/public/hooks/backup-orders'
+    | '/api/public/hooks/boro-fetch-fixtures'
     | '/api/public/hooks/notify'
     | '/api/public/hooks/nowpayments'
     | '/api/public/hooks/refresh-streaming-prices'
@@ -1158,6 +1169,7 @@ export interface FileRouteTypes {
     | '/u/$username'
     | '/api/public/hooks/backup-credentials'
     | '/api/public/hooks/backup-orders'
+    | '/api/public/hooks/boro-fetch-fixtures'
     | '/api/public/hooks/notify'
     | '/api/public/hooks/nowpayments'
     | '/api/public/hooks/refresh-streaming-prices'
@@ -1260,6 +1272,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/u/$username'
     | '/api/public/hooks/backup-credentials'
     | '/api/public/hooks/backup-orders'
+    | '/api/public/hooks/boro-fetch-fixtures'
     | '/api/public/hooks/notify'
     | '/api/public/hooks/nowpayments'
     | '/api/public/hooks/refresh-streaming-prices'
@@ -1304,6 +1317,7 @@ export interface RootRouteChildren {
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
   ApiPublicHooksBackupCredentialsRoute: typeof ApiPublicHooksBackupCredentialsRoute
   ApiPublicHooksBackupOrdersRoute: typeof ApiPublicHooksBackupOrdersRoute
+  ApiPublicHooksBoroFetchFixturesRoute: typeof ApiPublicHooksBoroFetchFixturesRoute
   ApiPublicHooksNotifyRoute: typeof ApiPublicHooksNotifyRoute
   ApiPublicHooksNowpaymentsRoute: typeof ApiPublicHooksNowpaymentsRoute
   ApiPublicHooksRefreshStreamingPricesRoute: typeof ApiPublicHooksRefreshStreamingPricesRoute
@@ -1924,6 +1938,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksNotifyRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/boro-fetch-fixtures': {
+      id: '/api/public/hooks/boro-fetch-fixtures'
+      path: '/api/public/hooks/boro-fetch-fixtures'
+      fullPath: '/api/public/hooks/boro-fetch-fixtures'
+      preLoaderRoute: typeof ApiPublicHooksBoroFetchFixturesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/backup-orders': {
       id: '/api/public/hooks/backup-orders'
       path: '/api/public/hooks/backup-orders'
@@ -2311,6 +2332,7 @@ const rootRouteChildren: RootRouteChildren = {
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
   ApiPublicHooksBackupCredentialsRoute: ApiPublicHooksBackupCredentialsRoute,
   ApiPublicHooksBackupOrdersRoute: ApiPublicHooksBackupOrdersRoute,
+  ApiPublicHooksBoroFetchFixturesRoute: ApiPublicHooksBoroFetchFixturesRoute,
   ApiPublicHooksNotifyRoute: ApiPublicHooksNotifyRoute,
   ApiPublicHooksNowpaymentsRoute: ApiPublicHooksNowpaymentsRoute,
   ApiPublicHooksRefreshStreamingPricesRoute:
