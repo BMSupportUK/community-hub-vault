@@ -412,10 +412,29 @@ function InstallGuidesPage() {
                         <div className="aspect-[16/10] bg-violet-900/50 relative overflow-hidden">
                           {b.image_url ? (
                             <img src={b.image_url} alt={b.title} className="w-full h-full object-contain group-hover:scale-105 transition-transform" />
+                          ) : b.video_url ? (
+                            <video src={b.video_url} className="w-full h-full object-cover" preload="metadata" muted playsInline />
                           ) : (
                             <div className="w-full h-full grid place-items-center text-violet-300/70">
                               {b.pdf_url ? <FileText className="size-10" /> : <ImageIcon className="size-10" />}
                             </div>
+                          )}
+                          {b.video_url && (
+                            <button
+                              type="button"
+                              onClick={() => setPlayingVideo(b)}
+                              className="absolute inset-0 grid place-items-center bg-black/30 hover:bg-black/50 transition"
+                              aria-label="Play video"
+                            >
+                              <span className="size-16 rounded-full bg-white/90 grid place-items-center shadow-2xl group-hover:scale-110 transition-transform">
+                                <Play className="size-7 text-violet-700 fill-violet-700 ml-1" />
+                              </span>
+                            </button>
+                          )}
+                          {b.video_url && (
+                            <span className="absolute top-2 left-2 text-[10px] uppercase tracking-wider px-2 py-1 rounded-md bg-violet-600/90 text-white font-semibold flex items-center gap-1">
+                              <Film className="size-3" /> Video
+                            </span>
                           )}
                           {b.pdf_url && (
                             <span className="absolute top-2 right-2 text-[10px] uppercase tracking-wider px-2 py-1 rounded-md bg-fuchsia-500/90 text-white font-semibold flex items-center gap-1">
@@ -423,7 +442,7 @@ function InstallGuidesPage() {
                             </span>
                           )}
                           {isMod && (
-                            <div className="absolute top-2 left-2 size-8 rounded-md bg-black/60 backdrop-blur grid place-items-center text-white cursor-grab">
+                            <div className="absolute bottom-2 left-2 size-8 rounded-md bg-black/60 backdrop-blur grid place-items-center text-white cursor-grab">
                               <GripVertical className="size-4" />
                             </div>
                           )}
@@ -625,6 +644,14 @@ function InstallGuidesPage() {
                   value={editing.pdf_url ?? ""}
                   onChange={(e) => setEditing({ ...editing, pdf_url: e.target.value })}
                   placeholder="https://…/guide.pdf"
+                />
+              </div>
+              <div>
+                <Label>Video (optional — shows a play button on the card)</Label>
+                <HeaderVideoUpload
+                  value={editing.video_url}
+                  onChange={(url) => setEditing({ ...editing, video_url: url })}
+                  folder="install-guides"
                 />
               </div>
               <div>
