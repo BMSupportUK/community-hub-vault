@@ -557,7 +557,12 @@ function PredictionsPage() {
               {loading || !leaderboard ? (
                 <Loading />
               ) : (
-                <LeaderboardList rows={leaderboard} currentUserId={myEntrantId} />
+                <LeaderboardList
+                  rows={leaderboard}
+                  currentUserId={myEntrantId}
+                  canManage={canManage}
+                  onChanged={() => loadAll(true)}
+                />
               )}
             </TabsContent>
 
