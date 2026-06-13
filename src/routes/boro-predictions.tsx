@@ -170,11 +170,21 @@ function BoroPredictionsPage() {
   );
 
   return (
-    <div className={user ? "min-h-screen flex bg-background" : "contents"}>
+    <div className={user ? "relative isolate min-h-screen flex bg-transparent" : "relative isolate min-h-screen bg-transparent"}>
+      <img
+        src={riversideBg}
+        alt=""
+        className="pointer-events-none fixed inset-0 z-0 h-screen w-screen object-cover object-center"
+        aria-hidden
+      />
+      <div
+        className="pointer-events-none fixed inset-0 z-0 boro-page-backdrop"
+        aria-hidden
+      />
       {user && <IconRail />}
-      <main className="relative flex-1 overflow-y-auto min-w-0">
+      <main className="relative z-10 flex-1 overflow-y-auto min-w-0">
         {!user && (
-          <div className="bg-background/95 backdrop-blur">
+          <div className="relative z-10 border-b border-white/10 bg-background/30 backdrop-blur-sm">
             <LandingHeader />
           </div>
         )}
