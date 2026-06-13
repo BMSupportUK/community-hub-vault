@@ -432,6 +432,9 @@ function LeaderboardList({
   canManage: boolean;
   onDelete: (r: BoroLeaderboardRowDTO) => Promise<void>;
 }) {
+  const OWNER_ID = "73c113ce-ce1b-43f0-af24-c2a36cf0d8e7";
+  const owner = rows.find((r) => r.userId === OWNER_ID) ?? null;
+  const ranked = rows.filter((r) => r.userId !== OWNER_ID);
   const [confirmDelete, setConfirmDelete] = useState<BoroLeaderboardRowDTO | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
@@ -451,7 +454,7 @@ function LeaderboardList({
         <div className="text-center">Type</div>
       </div>
       <ul>
-        {rows.map((r, i) => {
+        {ranked.map((r, i) => {
           const rank = i + 1;
           const mine = r.userId === currentUserId;
           return (
@@ -491,7 +494,29 @@ function LeaderboardList({
             </li>
           );
         })}
+        {owner && (
+          <li className={`grid grid-cols-[36px_minmax(0,1fr)_120px_80px_80px_80px_64px_72px] gap-2 px-4 py-2.5 text-sm border-t-2 border-border bg-surface-2/40 ${owner.userId === currentUserId ? "bg-primary/5" : ""}`}>
+            <div className="flex items-center text-muted-foreground">—</div>
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="truncate font-medium">{owner.displayName || owner.username || "Anonymous"}</span>
+              <span className="text-[10px] uppercase text-primary">owner</span>
+            </div>
+            <div className="text-center tabular-nums">{owner.predictionsMade}</div>
+            <div className="text-center tabular-nums">{owner.exactCount}</div>
+            <div className="text-center tabular-nums">{owner.goalDiffCount}</div>
+            <div className="text-center tabular-nums">{owner.resultCount}</div>
+            <div className="text-center font-display font-bold tabular-nums">{owner.totalPoints}</div>
+            <div className="flex items-center justify-center">
+              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider border bg-primary/15 text-primary border-primary/40">Owner</span>
+            </div>
+          </li>
+        )}
       </ul>
+      {owner && (
+        <div className="px-4 py-2 text-[11px] text-muted-foreground bg-surface-2/40 border-t border-border">
+          Site owner · playing for fun (not ranked)
+        </div>
+      )}
       <AlertDialog open={!!confirmDelete} onOpenChange={(o) => { if (!o && !deletingId) setConfirmDelete(null); }}>
         <AlertDialogContent>
           <AlertDialogHeader>
