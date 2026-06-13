@@ -1,0 +1,1 @@
+ALTER VIEW public.boro_leaderboard SET (security_invoker = on);
