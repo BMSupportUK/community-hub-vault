@@ -1768,6 +1768,45 @@ function LeaderboardList({
           })()}
         </DialogContent>
       </Dialog>
+      <AlertDialog
+        open={!!confirmDelete}
+        onOpenChange={(o) => {
+          if (!o && !deletingId) setConfirmDelete(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this entrant?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently remove{" "}
+              <span className="font-semibold text-foreground">
+                {confirmDelete?.displayName || confirmDelete?.username || "this entrant"}
+              </span>{" "}
+              {confirmDelete?.isGuest ? "(guest)" : "(site user)"} and all of their predictions
+              from the leaderboard. This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={!!deletingId}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={!!deletingId}
+              onClick={(e) => {
+                e.preventDefault();
+                if (confirmDelete) handleDeleteEntrant(confirmDelete);
+              }}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              {deletingId ? (
+                <span className="inline-flex items-center gap-2">
+                  <Loader2 className="size-4 animate-spin" /> Deleting…
+                </span>
+              ) : (
+                "Delete entrant"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
