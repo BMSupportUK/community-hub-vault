@@ -248,6 +248,19 @@ function InstallGuidesPage() {
     load();
   };
 
+  const renameCategory = async (id: string, currentName: string) => {
+    const name = window.prompt("Rename category", currentName)?.trim();
+    if (!name || name === currentName) return;
+    const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || `cat-${Date.now()}`;
+    const { error } = await supabase
+      .from("install_categories")
+      .update({ name, slug })
+      .eq("id", id);
+    if (error) return toast.error(error.message);
+    toast.success("Category renamed");
+    load();
+  };
+
   const reorderCategories = async (fromId: string, toId: string) => {
     if (fromId === toId) return;
     const list = [...categories];
