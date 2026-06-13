@@ -614,6 +614,37 @@ function InstallGuidesPage() {
         </DialogContent>
       </Dialog>
 
+      {/* Fullscreen video player */}
+      <Dialog open={!!playingVideo} onOpenChange={(o) => { if (!o) setPlayingVideo(null); }}>
+        <DialogContent className="max-w-6xl p-0 bg-black border-violet-500/30">
+          {playingVideo?.video_url && (
+            <>
+              <DialogHeader className="px-4 pt-3 pb-2">
+                <DialogTitle className="text-white font-display text-lg">{playingVideo.title}</DialogTitle>
+              </DialogHeader>
+              <video
+                ref={(el) => {
+                  videoElRef.current = el;
+                  if (el) {
+                    el.play().catch(() => { /* autoplay may be blocked */ });
+                    const req = (el as any).requestFullscreen
+                      || (el as any).webkitRequestFullscreen
+                      || (el as any).webkitEnterFullscreen;
+                    if (req) {
+                      try { req.call(el); } catch { /* user gesture required on some browsers */ }
+                    }
+                  }
+                }}
+                src={playingVideo.video_url}
+                controls
+                playsInline
+                className="w-full max-h-[80vh] bg-black"
+              />
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+
       {/* Editor */}
       <Dialog open={showEditor} onOpenChange={(o) => { if (!o) { setShowEditor(false); setEditing(null); } }}>
         <DialogContent className="max-w-xl">
