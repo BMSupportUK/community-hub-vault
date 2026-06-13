@@ -155,6 +155,8 @@ function LockCountdownPill({ lockAtMs }: { lockAtMs: number }) {
 
 function PredictionsPage() {
   const { user } = useAuth();
+  const { hasRole } = useAuth();
+  const canManage = hasRole("admin") || hasRole("management");
   const [joined, setJoined] = useState<boolean>(false);
   const [joining, setJoining] = useState(false);
   const [tab, setTab] = useState("fixtures");
