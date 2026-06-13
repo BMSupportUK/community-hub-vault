@@ -11,6 +11,7 @@ const navItems = [
   { to: "/about", label: "About" },
   { to: "/fan-zone", label: "Boro Fan Zone Forum" },
   { to: "/predictions", label: "World Cup 2026 Predictions Comp" },
+  { to: "/boro-predictions", label: "Boro 26/27 Predictions" },
   { to: "/contact", label: "Contact us" },
 ];
 
