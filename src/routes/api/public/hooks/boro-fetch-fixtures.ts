@@ -100,11 +100,20 @@ async function syncFixtures() {
     return { ok: true, skipped: "no-fixtures-found" };
   }
 
+  type ExistingRow = {
+    id: string;
+    competition: string;
+    home_team: string;
+    away_team: string;
+    kickoff_at: string;
+    venue: string | null;
+    status: string;
+  };
   const { data: existing } = await supabaseAdmin
     .from("boro_fixtures")
     .select("id, competition, home_team, away_team, kickoff_at, venue, status");
-  const byTeams = new Map<string, typeof existing[number]>();
-  for (const f of existing ?? []) {
+  const byTeams = new Map<string, ExistingRow>();
+  for (const f of (existing ?? []) as ExistingRow[]) {
     byTeams.set(`${norm(f.home_team)}|${norm(f.away_team)}`, f);
   }
 
@@ -132,7 +141,11 @@ async function syncFixtures() {
 
     // Update kickoff/venue/competition if MFC have moved the match. Never touch
     // scores or status — those are owned by the live-score sync / admin.
-    const changes: Record<string, unknown> = {};
+    const changes: {
+      kickoff_at?: string;
+      venue?: string;
+      competition?: string;
+    } = {};
     if (new Date(existingRow.kickoff_at).toISOString() !== newKickoff) {
       changes.kickoff_at = newKickoff;
     }
