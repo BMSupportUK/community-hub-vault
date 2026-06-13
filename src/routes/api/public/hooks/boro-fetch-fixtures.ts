@@ -90,14 +90,6 @@ async function syncFixtures() {
 
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-  // If admin has already loaded a full season manually, don't keep re-scraping.
-  const { count } = await supabaseAdmin
-    .from("boro_fixtures")
-    .select("id", { count: "exact", head: true });
-  if ((count ?? 0) >= 30) {
-    return { ok: true, skipped: "already-populated", count };
-  }
-
   let scraped: ParsedFixture[];
   try {
     scraped = await scrapeFixtures();
@@ -108,37 +100,79 @@ async function syncFixtures() {
     return { ok: true, skipped: "no-fixtures-found" };
   }
 
+  type ExistingRow = {
+    id: string;
+    competition: string;
+    home_team: string;
+    away_team: string;
+    kickoff_at: string;
+    venue: string | null;
+    status: string;
+  };
   const { data: existing } = await supabaseAdmin
     .from("boro_fixtures")
-    .select("id, home_team, away_team, kickoff_at");
-  const existingKeys = new Set(
-    (existing ?? []).map(
-      (f) =>
-        `${norm(f.home_team)}|${norm(f.away_team)}|${new Date(f.kickoff_at).toISOString().slice(0, 10)}`,
-    ),
-  );
-
-  const inserted: string[] = [];
-  const errors: string[] = [];
-  for (const fx of scraped) {
-    const key = `${norm(fx.home_team)}|${norm(fx.away_team)}|${new Date(fx.kickoff_at).toISOString().slice(0, 10)}`;
-    if (existingKeys.has(key)) continue;
-    const { error } = await supabaseAdmin.from("boro_fixtures").insert({
-      competition: fx.competition ?? "Championship",
-      home_team: fx.home_team,
-      away_team: fx.away_team,
-      kickoff_at: new Date(fx.kickoff_at).toISOString(),
-      venue: fx.venue ?? null,
-      status: "SCHEDULED",
-    });
-    if (error) {
-      errors.push(`${fx.home_team} v ${fx.away_team}: ${error.message}`);
-    } else {
-      inserted.push(`${fx.home_team} v ${fx.away_team} @ ${fx.kickoff_at}`);
-    }
+    .select("id, competition, home_team, away_team, kickoff_at, venue, status");
+  const byTeams = new Map<string, ExistingRow>();
+  for (const f of (existing ?? []) as ExistingRow[]) {
+    byTeams.set(`${norm(f.home_team)}|${norm(f.away_team)}`, f);
   }
 
-  return { ok: true, scraped: scraped.length, inserted: inserted.length, errors, inserted_list: inserted };
+  const inserted: string[] = [];
+  const updated: string[] = [];
+  const errors: string[] = [];
+  for (const fx of scraped) {
+    const teamKey = `${norm(fx.home_team)}|${norm(fx.away_team)}`;
+    const newKickoff = new Date(fx.kickoff_at).toISOString();
+    const existingRow = byTeams.get(teamKey);
+
+    if (!existingRow) {
+      const { error } = await supabaseAdmin.from("boro_fixtures").insert({
+        competition: fx.competition ?? "Championship",
+        home_team: fx.home_team,
+        away_team: fx.away_team,
+        kickoff_at: newKickoff,
+        venue: fx.venue ?? null,
+        status: "SCHEDULED",
+      });
+      if (error) errors.push(`insert ${fx.home_team} v ${fx.away_team}: ${error.message}`);
+      else inserted.push(`${fx.home_team} v ${fx.away_team} @ ${newKickoff}`);
+      continue;
+    }
+
+    // Update kickoff/venue/competition if MFC have moved the match. Never touch
+    // scores or status — those are owned by the live-score sync / admin.
+    const changes: {
+      kickoff_at?: string;
+      venue?: string;
+      competition?: string;
+    } = {};
+    if (new Date(existingRow.kickoff_at).toISOString() !== newKickoff) {
+      changes.kickoff_at = newKickoff;
+    }
+    if ((fx.venue ?? null) !== (existingRow.venue ?? null) && fx.venue) {
+      changes.venue = fx.venue;
+    }
+    if (fx.competition && fx.competition !== existingRow.competition) {
+      changes.competition = fx.competition;
+    }
+    if (Object.keys(changes).length === 0) continue;
+    const { error } = await supabaseAdmin
+      .from("boro_fixtures")
+      .update(changes)
+      .eq("id", existingRow.id);
+    if (error) errors.push(`update ${fx.home_team} v ${fx.away_team}: ${error.message}`);
+    else updated.push(`${fx.home_team} v ${fx.away_team}: ${Object.keys(changes).join(",")}`);
+  }
+
+  return {
+    ok: true,
+    scraped: scraped.length,
+    inserted: inserted.length,
+    updated: updated.length,
+    errors,
+    inserted_list: inserted,
+    updated_list: updated,
+  };
 }
 
 export const Route = createFileRoute("/api/public/hooks/boro-fetch-fixtures")({
