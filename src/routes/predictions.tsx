@@ -940,10 +940,12 @@ function FixturesList({
   fixtures,
   canPredict,
   onSave,
+  mode = "upcoming",
 }: {
   fixtures: WcFixtureDTO[];
   canPredict: boolean;
   onSave: (fixtureId: string, hp: number, ap: number) => Promise<void>;
+  mode?: "upcoming" | "completed";
 }) {
   const [filter, setFilter] = useState<string>("A"); // "A".."L" | "r32"…"final"
 
@@ -978,7 +980,9 @@ function FixturesList({
   if (!fixtures.length) {
     return (
       <div className="rounded-2xl border border-border bg-surface-1 p-8 text-center text-sm text-muted-foreground">
-        No fixtures yet. An admin can add them from the admin panel.
+        {mode === "completed"
+          ? "No completed matches yet."
+          : "No fixtures yet. An admin can add them from the admin panel."}
       </div>
     );
   }
