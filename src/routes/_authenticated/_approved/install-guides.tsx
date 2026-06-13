@@ -647,7 +647,7 @@ function InstallGuidesPage() {
 
       {/* Editor */}
       <Dialog open={showEditor} onOpenChange={(o) => { if (!o) { setShowEditor(false); setEditing(null); } }}>
-        <DialogContent className="max-w-xl">
+        <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editing?.id ? "Edit guide" : "Add guide"}</DialogTitle>
           </DialogHeader>
