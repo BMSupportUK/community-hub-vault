@@ -1,0 +1,1 @@
+ALTER TABLE public.install_blogs ADD COLUMN IF NOT EXISTS video_url text;
