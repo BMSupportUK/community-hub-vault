@@ -390,6 +390,26 @@ function PredictionsPage() {
       .sort((a, b) => +new Date(a.kickoffAt) - +new Date(b.kickoffAt));
   }, [fixtures]);
 
+  const liveCount = useMemo(() => {
+    if (!fixtures) return 0;
+    return fixtures.filter((f) => {
+      const s = f.status ?? "";
+      return s === "IN_PLAY" || s === "PAUSED" || s === "LIVE";
+    }).length;
+  }, [fixtures]);
+
+  const upcomingSoonCount = useMemo(() => {
+    if (!fixtures) return 0;
+    const now = Date.now();
+    const end = now + 24 * 60 * 60 * 1000;
+    return fixtures.filter((f) => {
+      const t = new Date(f.kickoffAt).getTime();
+      const s = f.status ?? "";
+      if (s === "FINISHED" || s === "IN_PLAY" || s === "PAUSED" || s === "LIVE") return false;
+      return t >= now && t < end;
+    }).length;
+  }, [fixtures]);
+
   return (
     <div className={user ? "min-h-screen flex bg-background" : "contents"}>
       {user && <IconRail />}
@@ -523,7 +543,26 @@ function PredictionsPage() {
                 value="fixtures"
                 className="px-1 sm:px-3 py-1.5 text-[11px] sm:text-sm leading-tight whitespace-normal text-center"
               >
-                Fixtures
+                <span className="inline-flex items-center gap-1.5">
+                  Fixtures
+                  {liveCount > 0 && (
+                    <span
+                      className="inline-flex items-center gap-1 rounded-full bg-red-500/90 text-white text-[9px] sm:text-[10px] font-bold px-1.5 py-0.5 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.7)]"
+                      title={`${liveCount} live now`}
+                    >
+                      <span className="size-1.5 rounded-full bg-white animate-pulse" />
+                      LIVE {liveCount}
+                    </span>
+                  )}
+                  {liveCount === 0 && upcomingSoonCount > 0 && (
+                    <span
+                      className="inline-flex items-center rounded-full bg-amber-500/90 text-black text-[9px] sm:text-[10px] font-bold px-1.5 py-0.5 animate-pulse"
+                      title={`${upcomingSoonCount} kicking off in the next 24h`}
+                    >
+                      SOON {upcomingSoonCount}
+                    </span>
+                  )}
+                </span>
               </TabsTrigger>
               <TabsTrigger
                 value="results"
