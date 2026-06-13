@@ -1608,6 +1608,22 @@ function LeaderboardList({
                     <span className="ml-2 text-[10px] uppercase text-primary">you</span>
                   )}
                 </button>
+                {canManage && (
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteEntrant(r)}
+                    disabled={deletingId === r.userId}
+                    className="ml-1 text-muted-foreground hover:text-red-500 disabled:opacity-50"
+                    title="Admin: delete this entrant and their predictions"
+                    aria-label="Delete entrant"
+                  >
+                    {deletingId === r.userId ? (
+                      <Loader2 className="size-3.5 animate-spin" />
+                    ) : (
+                      <Trash2 className="size-3.5" />
+                    )}
+                  </button>
+                )}
               </div>
               <div className="text-right tabular-nums">{r.predictionsMade}</div>
               <div className="text-right tabular-nums flex items-center justify-end gap-1">
