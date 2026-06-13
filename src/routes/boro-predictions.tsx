@@ -177,7 +177,7 @@ function BoroPredictionsPage() {
         aria-hidden
       />
       <div
-        className="pointer-events-none fixed inset-0 -z-10 bg-[linear-gradient(180deg,rgba(11,26,43,0.78)_0%,rgba(20,8,12,0.66)_46%,rgba(11,26,43,0.84)_100%)]"
+        className="pointer-events-none fixed inset-0 -z-10 boro-page-backdrop"
         aria-hidden
       />
       {user && <IconRail />}
