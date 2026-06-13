@@ -543,23 +543,27 @@ function PredictionsPage() {
                 value="fixtures"
                 className="px-1 sm:px-3 py-1.5 text-[11px] sm:text-sm leading-tight whitespace-normal text-center"
               >
-                <span className="inline-flex items-center gap-1.5">
-                  Fixtures
-                  {liveCount > 0 && (
-                    <span
-                      className="inline-flex items-center gap-1 rounded-full bg-red-500/90 text-white text-[9px] sm:text-[10px] font-bold px-1.5 py-0.5 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.7)]"
-                      title={`${liveCount} live now`}
-                    >
-                      <span className="size-1.5 rounded-full bg-white animate-pulse" />
-                      LIVE {liveCount}
-                    </span>
-                  )}
-                  {liveCount === 0 && upcomingSoonCount > 0 && (
-                    <span
-                      className="inline-flex items-center rounded-full bg-amber-500/90 text-black text-[9px] sm:text-[10px] font-bold px-1.5 py-0.5 animate-pulse"
-                      title={`${upcomingSoonCount} kicking off in the next 24h`}
-                    >
-                      SOON {upcomingSoonCount}
+                <span className="flex flex-col items-center gap-0.5">
+                  <span>Fixtures</span>
+                  {(liveCount > 0 || upcomingSoonCount > 0) && (
+                    <span className="inline-flex items-center gap-1">
+                      {liveCount > 0 && (
+                        <span
+                          className="inline-flex items-center gap-1 rounded-full bg-emerald-500/90 text-white text-[9px] sm:text-[10px] font-bold px-1.5 py-0.5 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.7)]"
+                          title={`${liveCount} live now`}
+                        >
+                          <span className="size-1.5 rounded-full bg-white animate-pulse" />
+                          LIVE {liveCount}
+                        </span>
+                      )}
+                      {upcomingSoonCount > 0 && (
+                        <span
+                          className="inline-flex items-center rounded-full bg-red-500/90 text-white text-[9px] sm:text-[10px] font-bold px-1.5 py-0.5 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.7)]"
+                          title={`${upcomingSoonCount} kicking off in the next 24h`}
+                        >
+                          SOON {upcomingSoonCount}
+                        </span>
+                      )}
                     </span>
                   )}
                 </span>
