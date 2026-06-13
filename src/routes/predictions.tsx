@@ -518,12 +518,18 @@ function PredictionsPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-6">
           <Tabs value={tab} onValueChange={setTab} className="min-w-0">
-            <TabsList className="grid grid-cols-5 w-full sm:w-auto h-auto gap-1 p-1">
+            <TabsList className="grid grid-cols-6 w-full sm:w-auto h-auto gap-1 p-1">
               <TabsTrigger
                 value="fixtures"
                 className="px-1 sm:px-3 py-1.5 text-[11px] sm:text-sm leading-tight whitespace-normal text-center"
               >
                 Fixtures
+              </TabsTrigger>
+              <TabsTrigger
+                value="results"
+                className="px-1 sm:px-3 py-1.5 text-[11px] sm:text-sm leading-tight whitespace-normal text-center"
+              >
+                Results
               </TabsTrigger>
               <TabsTrigger
                 value="leaderboard"
@@ -559,6 +565,19 @@ function PredictionsPage() {
                   fixtures={fixtures}
                   canPredict={canPredict}
                   onSave={handleSave}
+                />
+              )}
+            </TabsContent>
+
+            <TabsContent value="results" className="mt-4">
+              {loading || !fixtures ? (
+                <Loading />
+              ) : (
+                <FixturesList
+                  fixtures={fixtures}
+                  canPredict={canPredict}
+                  onSave={handleSave}
+                  mode="completed"
                 />
               )}
             </TabsContent>
