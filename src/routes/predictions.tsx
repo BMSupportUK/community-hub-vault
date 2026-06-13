@@ -1079,12 +1079,9 @@ function FixturesList({
           filter === key
             ? "bg-primary text-primary-foreground border-primary shadow-glow"
             : "bg-surface-1 text-muted-foreground border-border hover:text-foreground"
-        } ${hot ? "animate-pulse ring-2 ring-red-500/80 shadow-[0_0_10px_rgba(239,68,68,0.7)]" : ""}`}
+        } ${hot ? "animate-pulse" : ""}`}
       >
         {label}
-        {hot && (
-          <span className="absolute -top-1 -right-1 size-2.5 rounded-full bg-red-500 ring-2 ring-background animate-pulse" />
-        )}
       </button>
     );
   };
@@ -1399,6 +1396,7 @@ function FixtureCard({
   // TIMED fixture must not be rendered as "Final".
   const finished = isFinished(fixture);
   const scored = finished && hasScore;
+  const upcomingSoon = !live && !finished && kickoffMs - Date.now() <= 24 * 60 * 60 * 1000 && kickoffMs - Date.now() > 0;
   const [hp, setHp] = useState<string>(fixture.myPrediction?.homePred?.toString() ?? "");
   const [ap, setAp] = useState<string>(fixture.myPrediction?.awayPred?.toString() ?? "");
   const [busy, setBusy] = useState(false);
@@ -1433,7 +1431,15 @@ function FixtureCard({
   };
 
   return (
-    <div className="rounded-2xl border-2 border-primary/60 bg-surface-1 p-4 shadow-md shadow-primary/10">
+    <div
+      className={`rounded-2xl border-2 bg-surface-1 p-4 shadow-md ${
+        live
+          ? "border-emerald-500/80 shadow-emerald-500/30 animate-pulse"
+          : upcomingSoon
+            ? "border-red-500/80 shadow-red-500/30 animate-pulse"
+            : "border-primary/60 shadow-primary/10"
+      }`}
+    >
       <div className="flex items-center justify-between text-xs text-muted-foreground mb-3">
         <span className="inline-flex items-center gap-1.5">
           {STAGE_LABEL[fixture.stage]}
