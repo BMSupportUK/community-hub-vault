@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { Trophy, Loader2, Lock, Check, Crown, Medal, Award, LogOut, Trash2, Pencil, Star } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
+import riversideBg from "@/assets/riverside-stadium-bg.jpg";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -62,6 +63,16 @@ function BoroPredictionsPage() {
   const [guest, setGuest] = useState<GuestSession | null>(null);
   const [showGuestLogin, setShowGuestLogin] = useState(false);
   const [guestMode, setGuestMode] = useState<"signin" | "register">("register");
+
+  useEffect(() => {
+    const html = document.documentElement;
+    html.style.setProperty("--boro-bg-image", `url(${riversideBg})`);
+    html.classList.add("boro-bg-active");
+    return () => {
+      html.classList.remove("boro-bg-active");
+      html.style.removeProperty("--boro-bg-image");
+    };
+  }, []);
 
   const listFn = useServerFn(listBoroFixtures);
   const upsertFn = useServerFn(upsertBoroPrediction);
