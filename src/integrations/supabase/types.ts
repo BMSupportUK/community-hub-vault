@@ -1698,6 +1698,7 @@ export type Database = {
           sort_order: number
           title: string
           updated_at: string
+          video_url: string | null
         }
         Insert: {
           badge?: string | null
@@ -1713,6 +1714,7 @@ export type Database = {
           sort_order?: number
           title: string
           updated_at?: string
+          video_url?: string | null
         }
         Update: {
           badge?: string | null
@@ -1728,6 +1730,7 @@ export type Database = {
           sort_order?: number
           title?: string
           updated_at?: string
+          video_url?: string | null
         }
         Relationships: [
           {
