@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
@@ -333,6 +333,25 @@ export function AppDemosView() {
 function PlayerDialog({ demo, onClose }: { demo: Demo | null; onClose: () => void }) {
   const videoUrl = useSignedUrl(demo?.video_path);
   const posterUrl = useSignedUrl(demo?.poster_path);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    if (!videoUrl) return;
+    const el = videoRef.current;
+    if (!el) return;
+    const tryFullscreen = () => {
+      const anyEl = el as HTMLVideoElement & {
+        webkitRequestFullscreen?: () => Promise<void>;
+        webkitEnterFullscreen?: () => void;
+      };
+      if (anyEl.requestFullscreen) anyEl.requestFullscreen().catch(() => {});
+      else if (anyEl.webkitRequestFullscreen) anyEl.webkitRequestFullscreen();
+      else if (anyEl.webkitEnterFullscreen) anyEl.webkitEnterFullscreen();
+    };
+    const t = setTimeout(tryFullscreen, 100);
+    return () => clearTimeout(t);
+  }, [videoUrl]);
+
   return (
     <Dialog open={!!demo} onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-5xl w-[95vw] p-0 bg-black border-border overflow-hidden sm:rounded-xl">
@@ -341,6 +360,7 @@ function PlayerDialog({ demo, onClose }: { demo: Demo | null; onClose: () => voi
             <div className="aspect-video w-full bg-black grid place-items-center">
               {videoUrl ? (
                 <video
+                  ref={videoRef}
                   src={videoUrl}
                   poster={posterUrl ?? undefined}
                   controls
