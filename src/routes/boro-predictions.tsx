@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Trophy, Loader2, Lock, Check, Crown, Medal, Award, LogOut, Trash2, Pencil } from "lucide-react";
+import { Trophy, Loader2, Lock, Check, Crown, Medal, Award, LogOut, Trash2, Pencil, Star } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -153,6 +153,10 @@ function BoroPredictionsPage() {
 
   const upcoming = useMemo(() => (fixtures ?? []).filter((f) => !isFinished(f)), [fixtures]);
   const completed = useMemo(() => (fixtures ?? []).filter((f) => isFinished(f)), [fixtures]);
+  const myStats = useMemo(
+    () => (leaderboard ?? []).find((r) => r.userId === myEntrantId) ?? null,
+    [leaderboard, myEntrantId],
+  );
 
   return (
     <div className={user ? "min-h-screen flex bg-background" : "contents"}>
@@ -230,6 +234,7 @@ function BoroPredictionsPage() {
             </div>
           )}
 
+          <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-6">
           <Tabs value={tab} onValueChange={setTab}>
             <TabsList className="grid grid-cols-5 w-full sm:w-auto h-auto gap-1 p-1">
               <TabsTrigger value="fixtures">Fixtures</TabsTrigger>
@@ -341,9 +346,78 @@ function BoroPredictionsPage() {
               </div>
             </TabsContent>
           </Tabs>
+
+          <aside className="space-y-4 lg:sticky lg:top-6 lg:self-start">
+            <BoroPointsSidebar stats={myStats} loading={loading} joined={canPredict} />
+          </aside>
+          </div>
         </div>
       </main>
     </div>
+  );
+}
+
+function BoroPointsSidebar({
+  stats,
+  loading,
+  joined,
+}: {
+  stats: BoroLeaderboardRowDTO | null;
+  loading: boolean;
+  joined: boolean;
+}) {
+  const totalPoints = stats?.totalPoints ?? 0;
+  const exactCount = stats?.exactCount ?? 0;
+  const goalDiffCount = stats?.goalDiffCount ?? 0;
+  const resultCount = stats?.resultCount ?? 0;
+
+  return (
+    <section className="rounded-2xl border-2 border-primary bg-primary/15 shadow-lg shadow-primary/20 overflow-hidden">
+      <div className="flex items-center gap-2 px-4 py-3 border-b border-primary/40 bg-primary/25">
+        <Star className="size-5 text-primary fill-primary" />
+        <h2 className="font-display text-base font-black uppercase tracking-wide text-primary">
+          Your Points
+        </h2>
+      </div>
+      <div className="p-4">
+        {loading ? (
+          <div className="grid place-items-center py-8 text-primary">
+            <Loader2 className="size-5 animate-spin" />
+          </div>
+        ) : (
+          <>
+            <div className="rounded-xl border-2 border-primary bg-primary text-primary-foreground px-4 py-5 text-center shadow-glow">
+              <div className="text-xs font-black uppercase tracking-wider opacity-90">Total score</div>
+              <div className="font-display text-6xl font-black leading-none tabular-nums">
+                {totalPoints}
+              </div>
+              <div className="text-sm font-bold uppercase tracking-wide">
+                point{totalPoints === 1 ? "" : "s"}
+              </div>
+            </div>
+            <div className="mt-3 grid grid-cols-3 gap-2 text-center">
+              <div className="rounded-lg border border-primary/40 bg-surface-1 px-2 py-2">
+                <div className="text-lg font-black text-foreground tabular-nums">{exactCount}</div>
+                <div className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Exact · 5pt</div>
+              </div>
+              <div className="rounded-lg border border-primary/40 bg-surface-1 px-2 py-2">
+                <div className="text-lg font-black text-foreground tabular-nums">{goalDiffCount}</div>
+                <div className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Goal diff · 3pt</div>
+              </div>
+              <div className="rounded-lg border border-primary/40 bg-surface-1 px-2 py-2">
+                <div className="text-lg font-black text-foreground tabular-nums">{resultCount}</div>
+                <div className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Result · 1pt</div>
+              </div>
+            </div>
+            {!joined && (
+              <div className="mt-3 rounded-lg border border-border bg-surface-1 px-3 py-2 text-xs font-semibold text-muted-foreground">
+                Join the predictor to start collecting points.
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </section>
   );
 }
 
