@@ -1593,12 +1593,12 @@ function LeaderboardList({
       <div className="grid grid-cols-[20px_1fr_38px_30px_30px_30px_36px_44px] sm:grid-cols-[36px_minmax(0,0.6fr)_140px_112px_160px_112px_64px_80px] gap-1 sm:gap-2 px-2 sm:px-4 py-2.5 text-[11px] uppercase tracking-wider text-muted-foreground bg-surface-2 border-b border-border [&>div]:whitespace-nowrap">
         <div>#</div>
         <div>Player</div>
-        <div className="text-right"><span className="sm:hidden">P</span><span className="hidden sm:inline">Predictions Entered</span></div>
-        <div className="text-right" title="Correct score (exact)"><span className="sm:hidden">CS</span><span className="hidden sm:inline">Correct Score</span></div>
-        <div className="text-right" title="Correct goal difference (3 pts)"><span className="sm:hidden">GD</span><span className="hidden sm:inline">Correct Goal Diff</span></div>
-        <div className="text-right" title="Correct result"><span className="sm:hidden">Res</span><span className="hidden sm:inline">Correct Result</span></div>
-        <div className="text-right"><span className="sm:hidden">Pts</span><span className="hidden sm:inline">Points</span></div>
-        <div className="text-right">Type</div>
+        <div className="text-center"><span className="sm:hidden">P</span><span className="hidden sm:inline">Predictions Entered</span></div>
+        <div className="text-center" title="Correct score (exact)"><span className="sm:hidden">CS</span><span className="hidden sm:inline">Correct Score</span></div>
+        <div className="text-center" title="Correct goal difference (3 pts)"><span className="sm:hidden">GD</span><span className="hidden sm:inline">Correct Goal Diff</span></div>
+        <div className="text-center" title="Correct result"><span className="sm:hidden">Res</span><span className="hidden sm:inline">Correct Result</span></div>
+        <div className="text-center"><span className="sm:hidden">Pts</span><span className="hidden sm:inline">Points</span></div>
+        <div className="text-center">Type</div>
       </div>
       <ul>
         {ranked.map((r, i) => {
@@ -1660,16 +1660,16 @@ function LeaderboardList({
                   </button>
                 )}
               </div>
-              <div className="text-right tabular-nums">{r.predictionsMade}</div>
-              <div className="text-right tabular-nums flex items-center justify-end gap-1">
+              <div className="text-center tabular-nums">{r.predictionsMade}</div>
+              <div className="tabular-nums flex items-center justify-center gap-1">
                 <Star className="size-3 text-yellow-400 hidden sm:block" /> {r.exactCount}
               </div>
-              <div className="text-right tabular-nums text-muted-foreground">{r.goalDiffCount}</div>
-              <div className="text-right tabular-nums">{r.resultCount}</div>
-              <div className="text-right font-display font-bold tabular-nums">
+              <div className="text-center tabular-nums text-muted-foreground">{r.goalDiffCount}</div>
+              <div className="text-center tabular-nums">{r.resultCount}</div>
+              <div className="text-center font-display font-bold tabular-nums">
                 {r.totalPoints}
               </div>
-              <div className="flex items-center justify-end">
+              <div className="flex items-center justify-center">
                 <span
                   className={`inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider border ${
                     r.isGuest
@@ -1716,16 +1716,16 @@ function LeaderboardList({
                 <span className="ml-2 text-[10px] uppercase text-primary">owner</span>
               </button>
             </div>
-            <div className="text-right tabular-nums">{owner.predictionsMade}</div>
-            <div className="text-right tabular-nums flex items-center justify-end gap-1">
+            <div className="text-center tabular-nums">{owner.predictionsMade}</div>
+            <div className="tabular-nums flex items-center justify-center gap-1">
               <Star className="size-3 text-yellow-400 hidden sm:block" /> {owner.exactCount}
             </div>
-            <div className="text-right tabular-nums text-muted-foreground">{owner.goalDiffCount}</div>
-            <div className="text-right tabular-nums">{owner.resultCount}</div>
-            <div className="text-right font-display font-bold tabular-nums">
+            <div className="text-center tabular-nums text-muted-foreground">{owner.goalDiffCount}</div>
+            <div className="text-center tabular-nums">{owner.resultCount}</div>
+            <div className="text-center font-display font-bold tabular-nums">
               {owner.totalPoints}
             </div>
-            <div className="flex items-center justify-end">
+            <div className="flex items-center justify-center">
               <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider border bg-primary/15 text-primary border-primary/40">
                 Owner
               </span>
