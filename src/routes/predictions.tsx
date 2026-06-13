@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Trophy, Loader2, Lock, Check, Star, Crown, Medal, Award, Pencil, CalendarDays, LogOut } from "lucide-react";
+import { Trophy, Loader2, Lock, Check, Star, Crown, Medal, Award, Pencil, CalendarDays, LogOut, Trash2 } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,7 @@ import {
   getWcEntrantStatus,
   joinWcPredictor,
   getEntrantWcPredictions,
+  adminDeleteWcEntrant,
   type WcFixtureDTO,
   type WcLeaderboardRowDTO,
   type WcEntrantPickDTO,
@@ -153,7 +154,8 @@ function LockCountdownPill({ lockAtMs }: { lockAtMs: number }) {
 }
 
 function PredictionsPage() {
-  const { user } = useAuth();
+  const { user, hasRole } = useAuth();
+  const canManage = hasRole("admin") || hasRole("management");
   const [joined, setJoined] = useState<boolean>(false);
   const [joining, setJoining] = useState(false);
   const [tab, setTab] = useState("fixtures");
@@ -555,7 +557,12 @@ function PredictionsPage() {
               {loading || !leaderboard ? (
                 <Loading />
               ) : (
-                <LeaderboardList rows={leaderboard} currentUserId={myEntrantId} />
+                <LeaderboardList
+                  rows={leaderboard}
+                  currentUserId={myEntrantId}
+                  canManage={canManage}
+                  onChanged={() => loadAll(true)}
+                />
               )}
             </TabsContent>
 
@@ -1496,9 +1503,13 @@ function FixtureCard({
 function LeaderboardList({
   rows,
   currentUserId,
+  canManage,
+  onChanged,
 }: {
   rows: WcLeaderboardRowDTO[];
   currentUserId: string | null;
+  canManage?: boolean;
+  onChanged?: () => void;
 }) {
   const OWNER_ID = "73c113ce-ce1b-43f0-af24-c2a36cf0d8e7";
   const owner = rows.find((r) => r.userId === OWNER_ID) ?? null;
@@ -1507,6 +1518,22 @@ function LeaderboardList({
   const [picks, setPicks] = useState<WcEntrantPickDTO[] | null>(null);
   const [picksLoading, setPicksLoading] = useState(false);
   const fetchPicks = useServerFn(getEntrantWcPredictions);
+  const deleteEntrantFn = useServerFn(adminDeleteWcEntrant);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const handleDeleteEntrant = async (r: WcLeaderboardRowDTO) => {
+    const label = r.displayName || r.username || "this entrant";
+    if (!window.confirm(`Delete ${label} and all their predictions? This cannot be undone.`)) return;
+    setDeletingId(r.userId);
+    try {
+      await deleteEntrantFn({ data: { entrantId: r.userId, isGuest: r.isGuest } });
+      toast.success("Entrant removed");
+      onChanged?.();
+    } catch (e: any) {
+      toast.error(e?.message ?? "Failed to delete entrant");
+    } finally {
+      setDeletingId(null);
+    }
+  };
   useEffect(() => {
     if (!openEntrant) {
       setPicks(null);
@@ -1581,6 +1608,22 @@ function LeaderboardList({
                     <span className="ml-2 text-[10px] uppercase text-primary">you</span>
                   )}
                 </button>
+                {canManage && (
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteEntrant(r)}
+                    disabled={deletingId === r.userId}
+                    className="ml-1 text-muted-foreground hover:text-red-500 disabled:opacity-50"
+                    title="Admin: delete this entrant and their predictions"
+                    aria-label="Delete entrant"
+                  >
+                    {deletingId === r.userId ? (
+                      <Loader2 className="size-3.5 animate-spin" />
+                    ) : (
+                      <Trash2 className="size-3.5" />
+                    )}
+                  </button>
+                )}
               </div>
               <div className="text-right tabular-nums">{r.predictionsMade}</div>
               <div className="text-right tabular-nums flex items-center justify-end gap-1">

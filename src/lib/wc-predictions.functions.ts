@@ -350,6 +350,44 @@ export const adminRescoreAllWc = createServerFn({ method: "POST" })
   });
 
 // ------------------------------------------------------------------
+// Admin: delete an entrant (user or guest) and all their predictions
+// ------------------------------------------------------------------
+export const adminDeleteWcEntrant = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z.object({ entrantId: z.string().uuid(), isGuest: z.boolean() }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    if (!(await isAdminOrManagement(supabase, userId))) throw new Error("Forbidden");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    if (data.isGuest) {
+      const { error: pErr } = await supabaseAdmin
+        .from("wc_predictions")
+        .delete()
+        .eq("guest_id", data.entrantId);
+      if (pErr) throw new Error(pErr.message);
+      const { error: eErr } = await supabaseAdmin
+        .from("wc_guest_entrants")
+        .delete()
+        .eq("id", data.entrantId);
+      if (eErr) throw new Error(eErr.message);
+    } else {
+      const { error: pErr } = await supabaseAdmin
+        .from("wc_predictions")
+        .delete()
+        .eq("user_id", data.entrantId);
+      if (pErr) throw new Error(pErr.message);
+      const { error: eErr } = await supabaseAdmin
+        .from("wc_entrants")
+        .delete()
+        .eq("user_id", data.entrantId);
+      if (eErr) throw new Error(eErr.message);
+    }
+    return { ok: true };
+  });
+
+// ------------------------------------------------------------------
 // Settings (prize text + tagline) — stored in app_settings
 // ------------------------------------------------------------------
 export type WcSettingsDTO = {
