@@ -1079,12 +1079,9 @@ function FixturesList({
           filter === key
             ? "bg-primary text-primary-foreground border-primary shadow-glow"
             : "bg-surface-1 text-muted-foreground border-border hover:text-foreground"
-        } ${hot ? "animate-pulse ring-2 ring-red-500/80 shadow-[0_0_10px_rgba(239,68,68,0.7)]" : ""}`}
+        } ${hot ? "animate-pulse" : ""}`}
       >
         {label}
-        {hot && (
-          <span className="absolute -top-1 -right-1 size-2.5 rounded-full bg-red-500 ring-2 ring-background animate-pulse" />
-        )}
       </button>
     );
   };
