@@ -1030,12 +1030,17 @@ function FixturesList({
           </div>
         </div>
       </div>
-      {byDate.size === 0 && byDateFinished.size === 0 && (
+      {mode === "upcoming" && byDate.size === 0 && (
         <div className="rounded-2xl border border-border bg-surface-1 p-8 text-center text-sm text-muted-foreground">
           No fixtures in this view yet.
         </div>
       )}
-      {[...byDate.entries()].map(([date, items]) => (
+      {mode === "completed" && byDateFinished.size === 0 && (
+        <div className="rounded-2xl border border-border bg-surface-1 p-8 text-center text-sm text-muted-foreground">
+          No completed matches in this view yet.
+        </div>
+      )}
+      {mode === "upcoming" && [...byDate.entries()].map(([date, items]) => (
         <div key={date}>
           <h2 className="text-sm font-bold uppercase tracking-wider text-foreground mb-2 px-2 py-1.5 rounded-md bg-surface-2 border-l-4 border-primary">
             {date}
@@ -1047,17 +1052,14 @@ function FixturesList({
           </div>
         </div>
       ))}
-      {byDateFinished.size > 0 && (
+      {mode === "completed" && byDateFinished.size > 0 && (
         <div className="space-y-4 pt-2">
-          <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground px-2">
-            Completed
-          </h2>
           {[...byDateFinished.entries()].map(([date, items]) => (
             <div key={`done-${date}`}>
-              <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-2 px-2 py-1.5 rounded-md bg-surface-2 border-l-4 border-border">
+              <h3 className="text-sm font-bold uppercase tracking-wider text-foreground mb-2 px-2 py-1.5 rounded-md bg-surface-2 border-l-4 border-primary">
                 {date}
               </h3>
-              <div className="grid gap-3 opacity-90">
+              <div className="grid gap-3">
                 {items.map((f) => (
                   <FixtureCard key={f.id} fixture={f} canPredict={canPredict} onSave={onSave} />
                 ))}
