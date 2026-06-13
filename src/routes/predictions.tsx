@@ -390,6 +390,26 @@ function PredictionsPage() {
       .sort((a, b) => +new Date(a.kickoffAt) - +new Date(b.kickoffAt));
   }, [fixtures]);
 
+  const liveCount = useMemo(() => {
+    if (!fixtures) return 0;
+    return fixtures.filter((f) => {
+      const s = f.status ?? "";
+      return s === "IN_PLAY" || s === "PAUSED" || s === "LIVE";
+    }).length;
+  }, [fixtures]);
+
+  const upcomingSoonCount = useMemo(() => {
+    if (!fixtures) return 0;
+    const now = Date.now();
+    const end = now + 24 * 60 * 60 * 1000;
+    return fixtures.filter((f) => {
+      const t = new Date(f.kickoffAt).getTime();
+      const s = f.status ?? "";
+      if (s === "FINISHED" || s === "IN_PLAY" || s === "PAUSED" || s === "LIVE") return false;
+      return t >= now && t < end;
+    }).length;
+  }, [fixtures]);
+
   return (
     <div className={user ? "min-h-screen flex bg-background" : "contents"}>
       {user && <IconRail />}
