@@ -1565,10 +1565,9 @@ function LeaderboardList({
   }
   return (
     <div className="rounded-2xl border border-border bg-surface-1 overflow-hidden">
-      <div className="grid grid-cols-[20px_1fr_26px_30px_30px_30px_36px_44px] sm:grid-cols-[36px_minmax(0,0.9fr)_56px_112px_160px_112px_64px_80px] gap-1 sm:gap-2 px-2 sm:px-4 py-2.5 text-[11px] uppercase tracking-wider text-muted-foreground bg-surface-2 border-b border-border [&>div]:whitespace-nowrap">
         <div>#</div>
         <div>Player</div>
-        <div className="text-right"><span className="sm:hidden">P</span><span className="hidden sm:inline">Played</span></div>
+        <div className="text-right"><span className="sm:hidden">P</span><span className="hidden sm:inline">Predictions Entered</span></div>
         <div className="text-right" title="Correct score (exact)"><span className="sm:hidden">CS</span><span className="hidden sm:inline">Correct Score</span></div>
         <div className="text-right" title="Correct goal difference (3 pts)"><span className="sm:hidden">GD</span><span className="hidden sm:inline">Correct Goal Diff</span></div>
         <div className="text-right" title="Correct result"><span className="sm:hidden">Res</span><span className="hidden sm:inline">Correct Result</span></div>
@@ -1582,7 +1581,6 @@ function LeaderboardList({
           return (
             <li
               key={r.userId}
-              className={`grid grid-cols-[20px_1fr_26px_30px_30px_30px_36px_44px] sm:grid-cols-[36px_minmax(0,0.9fr)_56px_112px_160px_112px_64px_80px] gap-1 sm:gap-2 px-2 sm:px-4 py-2.5 text-sm border-b border-border last:border-b-0 ${
                 mine ? "bg-primary/5" : ""
               }`}
             >
