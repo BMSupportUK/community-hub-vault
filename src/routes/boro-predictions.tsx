@@ -170,11 +170,11 @@ function BoroPredictionsPage() {
   );
 
   return (
-    <div className={user ? "min-h-screen flex bg-background" : "contents"}>
+    <div className={user ? "min-h-screen flex bg-background" : "min-h-screen"}>
       {user && <IconRail />}
       <main className="relative flex-1 overflow-y-auto min-w-0">
         {!user && (
-          <div className="bg-background/95 backdrop-blur">
+          <div className="relative z-10 border-b border-white/10 bg-background/30 backdrop-blur-sm">
             <LandingHeader />
           </div>
         )}

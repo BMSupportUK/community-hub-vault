@@ -1061,15 +1061,18 @@
 .nameplate-panda .nameplate-panda-sparkle.s2 { right: 70px; bottom: 18%; animation-delay: 0.7s; font-size: 10px; }
 .nameplate-panda .nameplate-panda-sparkle.s3 { right: 100px; top: 45%; animation-delay: 1.4s; font-size: 14px; }
 
-/* Boro Fan Zone full-page background — scoped to /forum/* via JS-toggled class */
+/* Boro full-page background — scoped via JS-toggled class */
+html.boro-bg-active,
 html.boro-bg-active body {
   background-image: var(--boro-bg-image);
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
   background-attachment: fixed;
+  min-height: 100%;
 }
 @media (max-width: 768px) {
+  html.boro-bg-active,
   html.boro-bg-active body {
     background-attachment: scroll;
   }
