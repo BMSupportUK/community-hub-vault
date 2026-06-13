@@ -31,7 +31,7 @@ const EMAIL_TEMPLATES: Record<string, React.ComponentType<any>> = {
 }
 
 // Configuration
-const SITE_NAME = "community-hub-vault"
+const SITE_NAME = "BM Support"
 const SENDER_DOMAIN = "notify.bmsupport.uk"
 const ROOT_DOMAIN = "bmsupport.uk"
 const FROM_DOMAIN = "bmsupport.uk"
