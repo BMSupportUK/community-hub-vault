@@ -1090,3 +1090,7 @@ html.boro-bg-active body::before {
   z-index: 0;
   background: linear-gradient(180deg, rgba(11,26,43,0.82) 0%, rgba(20,8,12,0.78) 50%, rgba(11,26,43,0.88) 100%);
 }
+
+.boro-page-backdrop {
+  background: linear-gradient(180deg, rgba(11,26,43,0.78) 0%, rgba(20,8,12,0.66) 46%, rgba(11,26,43,0.84) 100%);
+}
