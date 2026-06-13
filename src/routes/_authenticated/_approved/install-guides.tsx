@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, Search, X, Pencil, Trash2, ImageIcon, GripVertical, FileText, ExternalLink } from "lucide-react";
+import { Plus, Search, X, Pencil, Trash2, ImageIcon, GripVertical, FileText, ExternalLink, Play, Film } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { HeaderImageUpload } from "@/components/ui/header-image-upload";
+import { HeaderVideoUpload } from "@/components/ui/header-video-upload";
 import { toast } from "sonner";
 import installHero from "@/assets/install-guides-bg.jpg";
 
@@ -34,6 +35,7 @@ type Blog = {
   body: string | null;
   image_url: string | null;
   pdf_url: string | null;
+  video_url: string | null;
   badge: string | null;
   published: boolean;
   created_at: string;
@@ -64,6 +66,8 @@ function InstallGuidesPage() {
   const [addingCat, setAddingCat] = useState(false);
   const dragCatId = useRef<string | null>(null);
   const dragBlogId = useRef<string | null>(null);
+  const [playingVideo, setPlayingVideo] = useState<Blog | null>(null);
+  const videoElRef = useRef<HTMLVideoElement | null>(null);
 
   // Persist UI state across screen swaps (route remounts).
   useEffect(() => { try { sessionStorage.setItem(IG_TAB_KEY, tab); } catch { /* ignore */ } }, [tab]);
@@ -171,12 +175,13 @@ function InstallGuidesPage() {
       body: draft?.body ?? "",
       image_url: draft?.image_url ?? "",
       pdf_url: draft?.pdf_url ?? "",
+      video_url: draft?.video_url ?? "",
       badge: draft?.badge ?? "",
       published: draft?.published ?? true,
       created_at: "",
       sort_order: 0,
     });
-    if (draft && (draft.title || draft.body || draft.excerpt || draft.image_url || draft.pdf_url)) {
+    if (draft && (draft.title || draft.body || draft.excerpt || draft.image_url || draft.pdf_url || draft.video_url)) {
       toast.message("Draft restored");
     }
     setShowEditor(true);
@@ -195,6 +200,7 @@ function InstallGuidesPage() {
       body: editing.body?.trim() || null,
       image_url: editing.image_url?.trim() || null,
       pdf_url: editing.pdf_url?.trim() || null,
+      video_url: editing.video_url?.trim() || null,
       badge: editing.badge?.trim() || null,
       published: editing.published,
     };
