@@ -1054,19 +1054,40 @@ function FixturesList({
     { key: "third", label: "Third Place" },
     { key: "final", label: "Final" },
   ];
-  const chip = (key: string, label: string) => (
-    <button
-      key={key}
-      onClick={() => setFilter(key)}
-      className={`shrink-0 px-3 h-8 rounded-full text-xs font-medium border transition ${
-        filter === key
-          ? "bg-primary text-primary-foreground border-primary shadow-glow"
-          : "bg-surface-1 text-muted-foreground border-border hover:text-foreground"
-      }`}
-    >
-      {label}
-    </button>
-  );
+  const hotKeys = useMemo(() => {
+    const now = Date.now();
+    const soon = now + 24 * 60 * 60 * 1000;
+    const hot = new Set<string>();
+    for (const f of fixtures) {
+      const s = f.status ?? "";
+      const live = s === "IN_PLAY" || s === "PAUSED" || s === "LIVE";
+      const t = new Date(f.kickoffAt).getTime();
+      const upcomingSoon = s !== "FINISHED" && t >= now && t < soon;
+      if (!live && !upcomingSoon) continue;
+      const key = f.stage === "group" ? (f.groupLabel ?? "") : f.stage;
+      if (key) hot.add(key);
+    }
+    return hot;
+  }, [fixtures]);
+  const chip = (key: string, label: string) => {
+    const hot = hotKeys.has(key);
+    return (
+      <button
+        key={key}
+        onClick={() => setFilter(key)}
+        className={`relative shrink-0 px-3 h-8 rounded-full text-xs font-medium border transition ${
+          filter === key
+            ? "bg-primary text-primary-foreground border-primary shadow-glow"
+            : "bg-surface-1 text-muted-foreground border-border hover:text-foreground"
+        } ${hot ? "animate-pulse ring-2 ring-red-500/80 shadow-[0_0_10px_rgba(239,68,68,0.7)]" : ""}`}
+      >
+        {label}
+        {hot && (
+          <span className="absolute -top-1 -right-1 size-2.5 rounded-full bg-red-500 ring-2 ring-background animate-pulse" />
+        )}
+      </button>
+    );
+  };
 
   return (
     <div className="space-y-6">
