@@ -1058,34 +1058,56 @@ function FixturesList({
     { key: "third", label: "Third Place" },
     { key: "final", label: "Final" },
   ];
-  const hotKeys = useMemo(() => {
+  const hotCounts = useMemo(() => {
     const now = Date.now();
     const soon = now + 24 * 60 * 60 * 1000;
-    const hot = new Set<string>();
+    const counts = new Map<string, { live: number; soon: number }>();
     for (const f of fixtures) {
       const s = f.status ?? "";
       const live = s === "IN_PLAY" || s === "PAUSED" || s === "LIVE";
       const t = new Date(f.kickoffAt).getTime();
-      const upcomingSoon = s !== "FINISHED" && t >= now && t < soon;
+      const upcomingSoon = !live && s !== "FINISHED" && t >= now && t < soon;
       if (!live && !upcomingSoon) continue;
       const key = f.stage === "group" ? (f.groupLabel ?? "") : f.stage;
-      if (key) hot.add(key);
+      if (!key) continue;
+      const c = counts.get(key) ?? { live: 0, soon: 0 };
+      if (live) c.live += 1;
+      else c.soon += 1;
+      counts.set(key, c);
     }
-    return hot;
+    return counts;
   }, [fixtures]);
   const chip = (key: string, label: string) => {
-    const hot = hotKeys.has(key);
+    const c = hotCounts.get(key);
+    const hot = !!c;
     return (
       <button
         key={key}
         onClick={() => setFilter(key)}
-        className={`relative shrink-0 px-3 h-8 rounded-full text-xs font-medium border transition ${
+        className={`relative shrink-0 inline-flex items-center gap-1.5 px-3 h-8 rounded-full text-xs font-medium border transition ${
           filter === key
             ? "bg-primary text-primary-foreground border-primary shadow-glow"
             : "bg-surface-1 text-muted-foreground border-border hover:text-foreground"
         } ${hot ? "animate-pulse" : ""}`}
       >
-        {label}
+        <span>{label}</span>
+        {c && c.live > 0 && (
+          <span
+            className="inline-flex items-center gap-1 rounded-full bg-emerald-500/90 text-white text-[9px] font-bold px-1.5 py-0.5 shadow-[0_0_8px_rgba(16,185,129,0.7)]"
+            title={`${c.live} live now`}
+          >
+            <span className="size-1.5 rounded-full bg-white animate-pulse" />
+            LIVE {c.live}
+          </span>
+        )}
+        {c && c.soon > 0 && (
+          <span
+            className="inline-flex items-center rounded-full bg-red-500/90 text-white text-[9px] font-bold px-1.5 py-0.5 shadow-[0_0_8px_rgba(239,68,68,0.7)]"
+            title={`${c.soon} kicking off in the next 24h`}
+          >
+            SOON {c.soon}
+          </span>
+        )}
       </button>
     );
   };
