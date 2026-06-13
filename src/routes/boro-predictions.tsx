@@ -334,9 +334,6 @@ function BoroPredictionsPage() {
                       <span className="text-foreground font-medium">Closest goal difference</span> — total goal-difference error across all matches; lowest wins.
                     </li>
                     <li>
-                      <span className="text-foreground font-medium">Most correct knockout-stage picks</span> — accuracy on later, higher-stakes fixtures breaks remaining ties.
-                    </li>
-                    <li>
                       <span className="text-foreground font-medium">Earliest submission</span> — the player who locked their predictions in first takes the prize.
                     </li>
                   </ol>
