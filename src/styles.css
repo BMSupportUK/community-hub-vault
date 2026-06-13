@@ -1081,16 +1081,7 @@ html.boro-bg-active body {
 html.boro-bg-active .min-h-screen.bg-background {
   background-color: transparent !important;
 }
-/* Dark gradient overlay for legibility */
-html.boro-bg-active body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-  background: linear-gradient(180deg, rgba(11,26,43,0.82) 0%, rgba(20,8,12,0.78) 50%, rgba(11,26,43,0.88) 100%);
-}
-
+/* Single legibility overlay applied by the page component */
 .boro-page-backdrop {
-  background: linear-gradient(180deg, rgba(11,26,43,0.78) 0%, rgba(20,8,12,0.66) 46%, rgba(11,26,43,0.84) 100%);
+  background: linear-gradient(180deg, rgba(11,26,43,0.55) 0%, rgba(20,8,12,0.45) 50%, rgba(11,26,43,0.60) 100%);
 }
