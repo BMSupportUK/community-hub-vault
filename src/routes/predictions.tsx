@@ -518,12 +518,18 @@ function PredictionsPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-6">
           <Tabs value={tab} onValueChange={setTab} className="min-w-0">
-            <TabsList className="grid grid-cols-5 w-full sm:w-auto h-auto gap-1 p-1">
+            <TabsList className="grid grid-cols-6 w-full sm:w-auto h-auto gap-1 p-1">
               <TabsTrigger
                 value="fixtures"
                 className="px-1 sm:px-3 py-1.5 text-[11px] sm:text-sm leading-tight whitespace-normal text-center"
               >
                 Fixtures
+              </TabsTrigger>
+              <TabsTrigger
+                value="results"
+                className="px-1 sm:px-3 py-1.5 text-[11px] sm:text-sm leading-tight whitespace-normal text-center"
+              >
+                Results
               </TabsTrigger>
               <TabsTrigger
                 value="leaderboard"
@@ -559,6 +565,19 @@ function PredictionsPage() {
                   fixtures={fixtures}
                   canPredict={canPredict}
                   onSave={handleSave}
+                />
+              )}
+            </TabsContent>
+
+            <TabsContent value="results" className="mt-4">
+              {loading || !fixtures ? (
+                <Loading />
+              ) : (
+                <FixturesList
+                  fixtures={fixtures}
+                  canPredict={canPredict}
+                  onSave={handleSave}
+                  mode="completed"
                 />
               )}
             </TabsContent>
@@ -940,10 +959,12 @@ function FixturesList({
   fixtures,
   canPredict,
   onSave,
+  mode = "upcoming",
 }: {
   fixtures: WcFixtureDTO[];
   canPredict: boolean;
   onSave: (fixtureId: string, hp: number, ap: number) => Promise<void>;
+  mode?: "upcoming" | "completed";
 }) {
   const [filter, setFilter] = useState<string>("A"); // "A".."L" | "r32"…"final"
 
@@ -978,7 +999,9 @@ function FixturesList({
   if (!fixtures.length) {
     return (
       <div className="rounded-2xl border border-border bg-surface-1 p-8 text-center text-sm text-muted-foreground">
-        No fixtures yet. An admin can add them from the admin panel.
+        {mode === "completed"
+          ? "No completed matches yet."
+          : "No fixtures yet. An admin can add them from the admin panel."}
       </div>
     );
   }
@@ -1026,12 +1049,17 @@ function FixturesList({
           </div>
         </div>
       </div>
-      {byDate.size === 0 && byDateFinished.size === 0 && (
+      {mode === "upcoming" && byDate.size === 0 && (
         <div className="rounded-2xl border border-border bg-surface-1 p-8 text-center text-sm text-muted-foreground">
           No fixtures in this view yet.
         </div>
       )}
-      {[...byDate.entries()].map(([date, items]) => (
+      {mode === "completed" && byDateFinished.size === 0 && (
+        <div className="rounded-2xl border border-border bg-surface-1 p-8 text-center text-sm text-muted-foreground">
+          No completed matches in this view yet.
+        </div>
+      )}
+      {mode === "upcoming" && [...byDate.entries()].map(([date, items]) => (
         <div key={date}>
           <h2 className="text-sm font-bold uppercase tracking-wider text-foreground mb-2 px-2 py-1.5 rounded-md bg-surface-2 border-l-4 border-primary">
             {date}
@@ -1043,17 +1071,14 @@ function FixturesList({
           </div>
         </div>
       ))}
-      {byDateFinished.size > 0 && (
+      {mode === "completed" && byDateFinished.size > 0 && (
         <div className="space-y-4 pt-2">
-          <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground px-2">
-            Completed
-          </h2>
           {[...byDateFinished.entries()].map(([date, items]) => (
             <div key={`done-${date}`}>
-              <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-2 px-2 py-1.5 rounded-md bg-surface-2 border-l-4 border-border">
+              <h3 className="text-sm font-bold uppercase tracking-wider text-foreground mb-2 px-2 py-1.5 rounded-md bg-surface-2 border-l-4 border-primary">
                 {date}
               </h3>
-              <div className="grid gap-3 opacity-90">
+              <div className="grid gap-3">
                 {items.map((f) => (
                   <FixtureCard key={f.id} fixture={f} canPredict={canPredict} onSave={onSave} />
                 ))}
@@ -1568,12 +1593,12 @@ function LeaderboardList({
       <div className="grid grid-cols-[20px_1fr_38px_30px_30px_30px_36px_44px] sm:grid-cols-[36px_minmax(0,0.6fr)_140px_112px_160px_112px_64px_80px] gap-1 sm:gap-2 px-2 sm:px-4 py-2.5 text-[11px] uppercase tracking-wider text-muted-foreground bg-surface-2 border-b border-border [&>div]:whitespace-nowrap">
         <div>#</div>
         <div>Player</div>
-        <div className="text-right"><span className="sm:hidden">P</span><span className="hidden sm:inline">Predictions Entered</span></div>
-        <div className="text-right" title="Correct score (exact)"><span className="sm:hidden">CS</span><span className="hidden sm:inline">Correct Score</span></div>
-        <div className="text-right" title="Correct goal difference (3 pts)"><span className="sm:hidden">GD</span><span className="hidden sm:inline">Correct Goal Diff</span></div>
-        <div className="text-right" title="Correct result"><span className="sm:hidden">Res</span><span className="hidden sm:inline">Correct Result</span></div>
-        <div className="text-right"><span className="sm:hidden">Pts</span><span className="hidden sm:inline">Points</span></div>
-        <div className="text-right">Type</div>
+        <div className="text-center"><span className="sm:hidden">P</span><span className="hidden sm:inline">Predictions Entered</span></div>
+        <div className="text-center" title="Correct score (exact)"><span className="sm:hidden">CS</span><span className="hidden sm:inline">Correct Score</span></div>
+        <div className="text-center" title="Correct goal difference (3 pts)"><span className="sm:hidden">GD</span><span className="hidden sm:inline">Correct Goal Diff</span></div>
+        <div className="text-center" title="Correct result"><span className="sm:hidden">Res</span><span className="hidden sm:inline">Correct Result</span></div>
+        <div className="text-center"><span className="sm:hidden">Pts</span><span className="hidden sm:inline">Points</span></div>
+        <div className="text-center">Type</div>
       </div>
       <ul>
         {ranked.map((r, i) => {
@@ -1635,16 +1660,16 @@ function LeaderboardList({
                   </button>
                 )}
               </div>
-              <div className="text-right tabular-nums">{r.predictionsMade}</div>
-              <div className="text-right tabular-nums flex items-center justify-end gap-1">
+              <div className="text-center tabular-nums">{r.predictionsMade}</div>
+              <div className="tabular-nums flex items-center justify-center gap-1">
                 <Star className="size-3 text-yellow-400 hidden sm:block" /> {r.exactCount}
               </div>
-              <div className="text-right tabular-nums text-muted-foreground">{r.goalDiffCount}</div>
-              <div className="text-right tabular-nums">{r.resultCount}</div>
-              <div className="text-right font-display font-bold tabular-nums">
+              <div className="text-center tabular-nums text-muted-foreground">{r.goalDiffCount}</div>
+              <div className="text-center tabular-nums">{r.resultCount}</div>
+              <div className="text-center font-display font-bold tabular-nums">
                 {r.totalPoints}
               </div>
-              <div className="flex items-center justify-end">
+              <div className="flex items-center justify-center">
                 <span
                   className={`inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider border ${
                     r.isGuest
@@ -1691,16 +1716,16 @@ function LeaderboardList({
                 <span className="ml-2 text-[10px] uppercase text-primary">owner</span>
               </button>
             </div>
-            <div className="text-right tabular-nums">{owner.predictionsMade}</div>
-            <div className="text-right tabular-nums flex items-center justify-end gap-1">
+            <div className="text-center tabular-nums">{owner.predictionsMade}</div>
+            <div className="tabular-nums flex items-center justify-center gap-1">
               <Star className="size-3 text-yellow-400 hidden sm:block" /> {owner.exactCount}
             </div>
-            <div className="text-right tabular-nums text-muted-foreground">{owner.goalDiffCount}</div>
-            <div className="text-right tabular-nums">{owner.resultCount}</div>
-            <div className="text-right font-display font-bold tabular-nums">
+            <div className="text-center tabular-nums text-muted-foreground">{owner.goalDiffCount}</div>
+            <div className="text-center tabular-nums">{owner.resultCount}</div>
+            <div className="text-center font-display font-bold tabular-nums">
               {owner.totalPoints}
             </div>
-            <div className="flex items-center justify-end">
+            <div className="flex items-center justify-center">
               <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider border bg-primary/15 text-primary border-primary/40">
                 Owner
               </span>
