@@ -20,6 +20,7 @@ import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as FaqRouteImport } from './routes/faq'
 import { Route as FanZoneRouteImport } from './routes/fan-zone'
 import { Route as ContactRouteImport } from './routes/contact'
+import { Route as BoroPredictionsRouteImport } from './routes/boro-predictions'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
@@ -162,6 +163,11 @@ const FanZoneRoute = FanZoneRouteImport.update({
 const ContactRoute = ContactRouteImport.update({
   id: '/contact',
   path: '/contact',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BoroPredictionsRoute = BoroPredictionsRouteImport.update({
+  id: '/boro-predictions',
+  path: '/boro-predictions',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AboutRoute = AboutRouteImport.update({
@@ -677,6 +683,7 @@ const AuthenticatedApprovedFanzoneMessagesThreadRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/boro-predictions': typeof BoroPredictionsRoute
   '/contact': typeof ContactRoute
   '/fan-zone': typeof FanZoneRouteWithChildren
   '/faq': typeof FaqRoute
@@ -776,6 +783,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/boro-predictions': typeof BoroPredictionsRoute
   '/contact': typeof ContactRoute
   '/faq': typeof FaqRoute
   '/forgot-password': typeof ForgotPasswordRoute
@@ -874,6 +882,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/about': typeof AboutRoute
+  '/boro-predictions': typeof BoroPredictionsRoute
   '/contact': typeof ContactRoute
   '/fan-zone': typeof FanZoneRouteWithChildren
   '/faq': typeof FaqRoute
@@ -976,6 +985,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/about'
+    | '/boro-predictions'
     | '/contact'
     | '/fan-zone'
     | '/faq'
@@ -1075,6 +1085,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/about'
+    | '/boro-predictions'
     | '/contact'
     | '/faq'
     | '/forgot-password'
@@ -1172,6 +1183,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/about'
+    | '/boro-predictions'
     | '/contact'
     | '/fan-zone'
     | '/faq'
@@ -1274,6 +1286,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   AboutRoute: typeof AboutRoute
+  BoroPredictionsRoute: typeof BoroPredictionsRoute
   ContactRoute: typeof ContactRoute
   FanZoneRoute: typeof FanZoneRouteWithChildren
   FaqRoute: typeof FaqRoute
@@ -1384,6 +1397,13 @@ declare module '@tanstack/react-router' {
       path: '/contact'
       fullPath: '/contact'
       preLoaderRoute: typeof ContactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/boro-predictions': {
+      id: '/boro-predictions'
+      path: '/boro-predictions'
+      fullPath: '/boro-predictions'
+      preLoaderRoute: typeof BoroPredictionsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/about': {
@@ -2273,6 +2293,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   AboutRoute: AboutRoute,
+  BoroPredictionsRoute: BoroPredictionsRoute,
   ContactRoute: ContactRoute,
   FanZoneRoute: FanZoneRouteWithChildren,
   FaqRoute: FaqRoute,
@@ -2312,13 +2333,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

@@ -224,6 +224,108 @@ export type Database = {
         }
         Relationships: []
       }
+      boro_entrants: {
+        Row: {
+          created_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      boro_fixtures: {
+        Row: {
+          away_score: number | null
+          away_team: string
+          competition: string
+          created_at: string
+          home_score: number | null
+          home_team: string
+          id: string
+          kickoff_at: string
+          minute: number | null
+          minute_added: number | null
+          month_key: string | null
+          status: string
+          updated_at: string
+          venue: string | null
+        }
+        Insert: {
+          away_score?: number | null
+          away_team: string
+          competition?: string
+          created_at?: string
+          home_score?: number | null
+          home_team: string
+          id?: string
+          kickoff_at: string
+          minute?: number | null
+          minute_added?: number | null
+          month_key?: string | null
+          status?: string
+          updated_at?: string
+          venue?: string | null
+        }
+        Update: {
+          away_score?: number | null
+          away_team?: string
+          competition?: string
+          created_at?: string
+          home_score?: number | null
+          home_team?: string
+          id?: string
+          kickoff_at?: string
+          minute?: number | null
+          minute_added?: number | null
+          month_key?: string | null
+          status?: string
+          updated_at?: string
+          venue?: string | null
+        }
+        Relationships: []
+      }
+      boro_guest_entrants: {
+        Row: {
+          created_at: string
+          display_name: string
+          email: string
+          id: string
+          pin_hash: string
+          pin_reset_expires_at: string | null
+          pin_reset_hash: string | null
+          pin_salt: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_name: string
+          email: string
+          id?: string
+          pin_hash: string
+          pin_reset_expires_at?: string | null
+          pin_reset_hash?: string | null
+          pin_salt: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string
+          email?: string
+          id?: string
+          pin_hash?: string
+          pin_reset_expires_at?: string | null
+          pin_reset_hash?: string | null
+          pin_salt?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       boro_match_centre: {
         Row: {
           fetched_at: string | null
@@ -259,6 +361,81 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      boro_prediction_reminders: {
+        Row: {
+          entrant_id: string
+          entrant_kind: string
+          id: string
+          recipient_email: string
+          sent_date: string
+        }
+        Insert: {
+          entrant_id: string
+          entrant_kind: string
+          id?: string
+          recipient_email: string
+          sent_date: string
+        }
+        Update: {
+          entrant_id?: string
+          entrant_kind?: string
+          id?: string
+          recipient_email?: string
+          sent_date?: string
+        }
+        Relationships: []
+      }
+      boro_predictions: {
+        Row: {
+          away_pred: number
+          created_at: string
+          fixture_id: string
+          guest_id: string | null
+          home_pred: number
+          id: string
+          points: number | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          away_pred: number
+          created_at?: string
+          fixture_id: string
+          guest_id?: string | null
+          home_pred: number
+          id?: string
+          points?: number | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          away_pred?: number
+          created_at?: string
+          fixture_id?: string
+          guest_id?: string | null
+          home_pred?: number
+          id?: string
+          points?: number | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "boro_predictions_fixture_id_fkey"
+            columns: ["fixture_id"]
+            isOneToOne: false
+            referencedRelation: "boro_fixtures"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "boro_predictions_guest_id_fkey"
+            columns: ["guest_id"]
+            isOneToOne: false
+            referencedRelation: "boro_guest_entrants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       breaks: {
         Row: {
@@ -4085,6 +4262,22 @@ export type Database = {
         }
         Relationships: []
       }
+      boro_leaderboard: {
+        Row: {
+          avatar_url: string | null
+          display_name: string | null
+          exact_count: number | null
+          goal_diff_count: number | null
+          is_guest: boolean | null
+          predictions_made: number | null
+          predictions_scored: number | null
+          result_count: number | null
+          total_points: number | null
+          user_id: string | null
+          username: string | null
+        }
+        Relationships: []
+      }
       gate_messages: {
         Row: {
           application_id: string | null
@@ -4270,6 +4463,7 @@ export type Database = {
       apply_blacklist_ban: { Args: { _user_id: string }; Returns: undefined }
       archive_old_closed_tickets: { Args: never; Returns: number }
       assign_pending_tickets: { Args: never; Returns: number }
+      boro_score_fixture: { Args: { _fixture_id: string }; Returns: undefined }
       can_in_channel: {
         Args: { _action: string; _channel: string; _user: string }
         Returns: boolean
@@ -4345,6 +4539,17 @@ export type Database = {
         Returns: undefined
       }
       get_active_mute: { Args: { _user_id: string }; Returns: string }
+      get_boro_reminder_recipients: {
+        Args: never
+        Returns: {
+          display_name: string
+          entrant_id: string
+          entrant_kind: string
+          missing_count: number
+          next_kickoff_at: string
+          recipient_email: string
+        }[]
+      }
       get_fan_zone_profile: {
         Args: { _user_id: string }
         Returns: {
