@@ -6,6 +6,27 @@ import { createFileRoute } from "@tanstack/react-router";
 const RELEASE_AT_MS = Date.UTC(2026, 5, 25, 11, 0, 0); // 25 Jun 2026 11:00 UTC = 12:00 BST
 const FIXTURES_URL = "https://www.mfc.co.uk/matches";
 
+// Reject anything that isn't the senior men's first team. MFC list U21,
+// Academy, U18, Women, friendlies for development squads, etc. on the same
+// site — we only want the first-team competitive fixtures.
+const EXCLUDE_PATTERNS = [
+  /\bu\s?2[13]\b/i,
+  /\bu\s?1[68]\b/i,
+  /\bunder[- ]?\d+\b/i,
+  /\bacademy\b/i,
+  /\byouth\b/i,
+  /\bdevelopment\b/i,
+  /\bwomen('s)?\b/i,
+  /\bladies\b/i,
+  /\bres(erves)?\b/i,
+  /\bb team\b/i,
+];
+
+function isFirstTeam(fx: ParsedFixture): boolean {
+  const haystack = `${fx.home_team} ${fx.away_team} ${fx.competition ?? ""}`;
+  return !EXCLUDE_PATTERNS.some((re) => re.test(haystack));
+}
+
 type ParsedFixture = {
   competition?: string | null;
   home_team: string;
@@ -52,9 +73,11 @@ async function scrapeFixtures(): Promise<ParsedFixture[]> {
           type: "json",
           schema,
           prompt:
-            "Extract every Middlesbrough FC 2026/27 senior men's first-team fixture listed. " +
+            "Extract ONLY Middlesbrough FC senior men's FIRST TEAM 2026/27 fixtures. " +
+            "EXCLUDE every Under-21, Under-18, Academy, Youth, Development, Women's, " +
+            "Reserves and B-team match — do not return them at all. " +
             "kickoff_at must be ISO 8601 in UTC. If only a date is shown, use 15:00 UK time. " +
-            "home_team/away_team must be the full club names (one of which is Middlesbrough).",
+            "home_team/away_team must be the full club names (one side is always Middlesbrough).",
         },
       ],
       onlyMainContent: true,
@@ -70,7 +93,12 @@ async function scrapeFixtures(): Promise<ParsedFixture[]> {
   };
   const fixtures = json.data?.json?.fixtures ?? [];
   return fixtures.filter(
-    (f) => f.home_team && f.away_team && f.kickoff_at && !Number.isNaN(Date.parse(f.kickoff_at)),
+    (f) =>
+      f.home_team &&
+      f.away_team &&
+      f.kickoff_at &&
+      !Number.isNaN(Date.parse(f.kickoff_at)) &&
+      isFirstTeam(f),
   );
 }
 
