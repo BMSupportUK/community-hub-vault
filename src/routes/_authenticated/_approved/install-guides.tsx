@@ -248,6 +248,19 @@ function InstallGuidesPage() {
     load();
   };
 
+  const renameCategory = async (id: string, currentName: string) => {
+    const name = window.prompt("Rename category", currentName)?.trim();
+    if (!name || name === currentName) return;
+    const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || `cat-${Date.now()}`;
+    const { error } = await supabase
+      .from("install_categories")
+      .update({ name, slug })
+      .eq("id", id);
+    if (error) return toast.error(error.message);
+    toast.success("Category renamed");
+    load();
+  };
+
   const reorderCategories = async (fromId: string, toId: string) => {
     if (fromId === toId) return;
     const list = [...categories];
@@ -544,6 +557,13 @@ function InstallGuidesPage() {
                   {isMod && (
                     <div className="absolute top-2 right-2 flex items-center gap-1">
                       <GripVertical className="size-4 text-violet-300/70 cursor-grab" />
+                      <button
+                        onClick={(e) => { e.stopPropagation(); renameCategory(c.id, c.name); }}
+                        className="text-violet-300/70 hover:text-white p-1 rounded-md"
+                        title="Rename category"
+                      >
+                        <Pencil className="size-4" />
+                      </button>
                       <button
                         onClick={(e) => { e.stopPropagation(); deleteCategory(c.id); }}
                         className="text-violet-300/70 hover:text-white p-1 rounded-md"
