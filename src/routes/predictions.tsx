@@ -1503,9 +1503,13 @@ function FixtureCard({
 function LeaderboardList({
   rows,
   currentUserId,
+  canManage,
+  onChanged,
 }: {
   rows: WcLeaderboardRowDTO[];
   currentUserId: string | null;
+  canManage?: boolean;
+  onChanged?: () => void;
 }) {
   const OWNER_ID = "73c113ce-ce1b-43f0-af24-c2a36cf0d8e7";
   const owner = rows.find((r) => r.userId === OWNER_ID) ?? null;
@@ -1514,6 +1518,22 @@ function LeaderboardList({
   const [picks, setPicks] = useState<WcEntrantPickDTO[] | null>(null);
   const [picksLoading, setPicksLoading] = useState(false);
   const fetchPicks = useServerFn(getEntrantWcPredictions);
+  const deleteEntrantFn = useServerFn(adminDeleteWcEntrant);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const handleDeleteEntrant = async (r: WcLeaderboardRowDTO) => {
+    const label = r.displayName || r.username || "this entrant";
+    if (!window.confirm(`Delete ${label} and all their predictions? This cannot be undone.`)) return;
+    setDeletingId(r.userId);
+    try {
+      await deleteEntrantFn({ data: { entrantId: r.userId, isGuest: r.isGuest } });
+      toast.success("Entrant removed");
+      onChanged?.();
+    } catch (e: any) {
+      toast.error(e?.message ?? "Failed to delete entrant");
+    } finally {
+      setDeletingId(null);
+    }
+  };
   useEffect(() => {
     if (!openEntrant) {
       setPicks(null);
