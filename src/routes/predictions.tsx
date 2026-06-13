@@ -1530,13 +1530,13 @@ function LeaderboardList({
   const fetchPicks = useServerFn(getEntrantWcPredictions);
   const deleteEntrantFn = useServerFn(adminDeleteWcEntrant);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<WcLeaderboardRowDTO | null>(null);
   const handleDeleteEntrant = async (r: WcLeaderboardRowDTO) => {
-    const label = r.displayName || r.username || "this entrant";
-    if (!window.confirm(`Delete ${label} and all their predictions? This cannot be undone.`)) return;
     setDeletingId(r.userId);
     try {
       await deleteEntrantFn({ data: { entrantId: r.userId, isGuest: r.isGuest } });
       toast.success("Entrant removed");
+      setConfirmDelete(null);
       onChanged?.();
     } catch (e: any) {
       toast.error(e?.message ?? "Failed to delete entrant");
