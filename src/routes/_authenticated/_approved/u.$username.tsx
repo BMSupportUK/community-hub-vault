@@ -56,8 +56,8 @@ interface ShiftRow { id: string; user_id: string; clock_in: string; clock_out: s
 interface BreakRow { id: string; user_id: string; kind: "break" | "lunch"; started_at: string; ended_at: string | null; }
 interface CredRow { id: string; app_login_name: string; password: string; expiry_at: string | null; notes: string | null; }
 interface DnsRow { id: string; label: string; code: string; notes: string | null; }
-interface TicketRow { id: string; subject: string; status: string; created_at: string; }
-interface OrderRow { id: string; total_cents: number; status: string; created_at: string; }
+interface TicketRow { id: string; subject: string; status: string; priority: string; created_at: string; updated_at: string; closed_at: string | null; }
+interface OrderRow { id: string; total_cents: number; status: string; created_at: string; paid_at: string | null; completed_at: string | null; shipping_name: string | null; discount_code: string | null; }
 interface InviteSummary {
   sent: number;
   used: number;
