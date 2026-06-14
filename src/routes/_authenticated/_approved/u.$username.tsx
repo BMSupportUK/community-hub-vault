@@ -715,25 +715,19 @@ function ProfilePage() {
           )}
 
           <TabsContent value="tickets" className="mt-6">
-            <ActivityCard title="Recent tickets" icon={Ticket} empty="No tickets yet">
+            <ActivityCardGrid title="Recent tickets" icon={Ticket} empty="No tickets yet" isEmpty={tickets.length === 0}>
               {tickets.map((t) => (
-                <li key={t.id} className="flex items-center justify-between gap-3 py-2 text-sm">
-                  <span className="truncate">{t.subject}</span>
-                  <span className="text-xs text-white/70 capitalize">{t.status}</span>
-                </li>
+                <TicketCardItem key={t.id} ticket={t} />
               ))}
-            </ActivityCard>
+            </ActivityCardGrid>
           </TabsContent>
 
           <TabsContent value="orders" className="mt-6">
-            <ActivityCard title="Recent orders" icon={ShoppingBag} empty="No orders yet">
+            <ActivityCardGrid title="Recent orders" icon={ShoppingBag} empty="No orders yet" isEmpty={orders.length === 0}>
               {orders.map((o) => (
-                <li key={o.id} className="flex items-center justify-between gap-3 py-2 text-sm">
-                  <span>{fmtCurrency(o.total_cents)}</span>
-                  <span className="text-xs text-white/70 capitalize">{o.status}</span>
-                </li>
+                <OrderCardItem key={o.id} order={o} fmtCurrency={fmtCurrency} />
               ))}
-            </ActivityCard>
+            </ActivityCardGrid>
           </TabsContent>
 
           <TabsContent value="friends" className="mt-6">
