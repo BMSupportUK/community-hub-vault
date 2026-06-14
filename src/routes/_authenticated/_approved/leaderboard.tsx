@@ -241,47 +241,65 @@ function LeaderboardPage() {
                 <Trophy className="size-10 mx-auto mb-3 text-purple-300/60" />
                 No invites yet — be the first to put yourself on the board!
               </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-                {rows.map((r, idx) => {
-                  const isMe = r.user_id === user?.id;
-                  return (
-                    <div
-                      key={r.user_id}
-                      className={`rounded-2xl border p-5 backdrop-blur transition-colors flex items-center gap-4 ${isMe ? "bg-fuchsia-500/10 border-fuchsia-500/50" : "bg-purple-950/50 border-purple-500/30 hover:border-fuchsia-500/50"}`}
-                    >
-                      <div className="w-8 grid place-items-center shrink-0">{rankIcon(idx)}</div>
-                      <div className="size-12 rounded-full bg-gradient-to-br from-violet-600 to-blue-600 grid place-items-center overflow-hidden shrink-0">
-                        {r.avatar_url ? (
-                          <img src={r.avatar_url} alt="" className="size-full object-cover" />
-                        ) : (
-                          <span className="text-white font-semibold">
-                            {(r.display_name ?? r.username ?? "?").slice(0, 1).toUpperCase()}
-                          </span>
-                        )}
+            ) : (() => {
+              const isDane = (r: typeof rows[number]) =>
+                (r.username?.toLowerCase() === "dane") ||
+                (r.display_name?.toLowerCase() === "dane");
+              const daneRow = rows.find(isDane);
+              const otherRows = rows.filter((r) => !isDane(r));
+              const renderCard = (r: typeof rows[number], idx: number | null) => {
+                const isMe = r.user_id === user?.id;
+                return (
+                  <div
+                    key={r.user_id}
+                    className={`rounded-2xl border p-5 backdrop-blur transition-colors flex items-center gap-4 ${isMe ? "bg-fuchsia-500/10 border-fuchsia-500/50" : "bg-purple-950/50 border-purple-500/30 hover:border-fuchsia-500/50"}`}
+                  >
+                    <div className="w-8 grid place-items-center shrink-0">{idx !== null ? rankIcon(idx) : null}</div>
+                    <div className="size-12 rounded-full bg-gradient-to-br from-violet-600 to-blue-600 grid place-items-center overflow-hidden shrink-0">
+                      {r.avatar_url ? (
+                        <img src={r.avatar_url} alt="" className="size-full object-cover" />
+                      ) : (
+                        <span className="text-white font-semibold">
+                          {(r.display_name ?? r.username ?? "?").slice(0, 1).toUpperCase()}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-purple-50 truncate">
+                        {r.display_name ?? r.username ?? "Member"}
+                        {isMe && <span className="ml-2 text-xs text-fuchsia-300">(you)</span>}
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="font-medium text-purple-50 truncate">
-                          {r.display_name ?? r.username ?? "Member"}
-                          {isMe && <span className="ml-2 text-xs text-fuchsia-300">(you)</span>}
-                        </div>
-                        {r.username && (
-                          <div className="text-xs text-purple-300/70 truncate">@{r.username}</div>
-                        )}
+                      {r.username && (
+                        <div className="text-xs text-purple-300/70 truncate">@{r.username}</div>
+                      )}
+                    </div>
+                    <div className="text-right shrink-0">
+                      <div className="font-display text-2xl font-bold bg-gradient-to-r from-fuchsia-400 to-violet-400 bg-clip-text text-transparent leading-none">
+                        {r.used_count}
                       </div>
-                      <div className="text-right shrink-0">
-                        <div className="font-display text-2xl font-bold bg-gradient-to-r from-fuchsia-400 to-violet-400 bg-clip-text text-transparent leading-none">
-                          {r.used_count}
-                        </div>
-                        <div className="text-[10px] uppercase tracking-wider text-purple-300/70 mt-1">
-                          of {r.total_count} sent
-                        </div>
+                      <div className="text-[10px] uppercase tracking-wider text-purple-300/70 mt-1">
+                        of {r.total_count} sent
                       </div>
                     </div>
-                  );
-                })}
-              </div>
-            )}
+                  </div>
+                );
+              };
+              return (
+                <>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                    {otherRows.map((r, idx) => renderCard(r, idx))}
+                  </div>
+                  {daneRow && (
+                    <>
+                      <hr className="my-6 border-purple-500/30" />
+                      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                        {renderCard(daneRow, null)}
+                      </div>
+                    </>
+                  )}
+                </>
+              );
+            })()}
           </TabsContent>
 
           <TabsContent value="invites" className="mt-6">
