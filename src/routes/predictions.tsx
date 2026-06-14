@@ -87,16 +87,21 @@ function liveLabel(f: {
 }) {
   if (f.status === "PAUSED") return "HT";
   if (typeof f.minute === "number" && f.minute > 0) {
-    return typeof f.minuteAdded === "number" && f.minuteAdded > 0
-      ? `${f.minute}+${f.minuteAdded}'`
-      : `${f.minute}'`;
+    const added = typeof f.minuteAdded === "number" && f.minuteAdded > 0 ? f.minuteAdded : 0;
+    if (added > 0) {
+      // Normalise: some feeds report minute=90/45 with added, others report minute=93.
+      const base = f.minute >= 90 ? 90 : f.minute >= 45 && f.minute < 60 ? 45 : f.minute;
+      return `${base}+${added}'`;
+    }
+    if (f.minute > 90) return `90+${f.minute - 90}'`;
+    if (f.minute > 45 && f.minute < 60) return `45+${f.minute - 45}'`;
+    return `${f.minute}'`;
   }
   if (f.kickoffAt) {
     const elapsedMs = Date.now() - new Date(f.kickoffAt).getTime();
     if (elapsedMs > 0) {
-      // Cap elapsed mins at 90+ so it doesn't blow past full time if the
-      // feed is slow to mark a match FINISHED.
       const mins = Math.min(120, Math.floor(elapsedMs / 60000) + 1);
+      if (mins > 90) return `90+${mins - 90}'`;
       return `${mins}'`;
     }
   }
