@@ -1471,6 +1471,12 @@ function Storefront() {
                 Shop
               </TabsTrigger>
               <TabsTrigger
+                value="vpn"
+                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-sky-400 data-[state=active]:text-white"
+              >
+                VPN Guide
+              </TabsTrigger>
+              <TabsTrigger
                 value="app_demos"
                 className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-sky-400 data-[state=active]:text-white"
               >
