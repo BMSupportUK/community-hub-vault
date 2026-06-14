@@ -1838,21 +1838,20 @@ function LeaderboardList({
             </p>
           </DialogHeader>
           {(() => {
-            const finishedPicks = (picks ?? []).filter(
-              (p) => p.status === "FINISHED" && p.homeScore !== null && p.awayScore !== null,
-            );
+            const kickedOffPicks = picks ?? [];
             return picksLoading ? (
             <div className="grid place-items-center py-10 text-muted-foreground">
               <Loader2 className="size-5 animate-spin" />
             </div>
-          ) : finishedPicks.length === 0 ? (
+          ) : kickedOffPicks.length === 0 ? (
             <div className="py-8 text-center text-sm text-muted-foreground">
-              No completed matches yet — picks reveal once a match finishes.
+              No matches have kicked off yet — picks reveal once kick-off passes.
             </div>
           ) : (
             <ul className="divide-y divide-border">
-              {finishedPicks.map((p) => {
-                const finished = true;
+              {kickedOffPicks.map((p) => {
+                const finished = p.status === "FINISHED" && p.homeScore !== null && p.awayScore !== null;
+                const live = isLive(p);
                 return (
                   <li key={p.fixtureId} className="py-2.5 flex items-center gap-3 text-sm">
                     <div className="flex-1 min-w-0">
@@ -1863,6 +1862,9 @@ function LeaderboardList({
                         {new Date(p.kickoffAt).toLocaleString(undefined, { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
                         {finished && (
                           <span className="ml-2 font-mono text-foreground">FT {p.homeScore}-{p.awayScore}</span>
+                        )}
+                        {!finished && live && (
+                          <span className="ml-2 font-mono text-red-300">LIVE {liveLabel(p)}</span>
                         )}
                       </div>
                     </div>
