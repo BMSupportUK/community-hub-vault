@@ -91,42 +91,54 @@ function WhatToWatchPage() {
             </div>
           ) : null}
 
-          <Tabs value={section} onValueChange={(v) => setSection(v as "trending" | "hot")} className="w-full">
-            <TabsList className="grid w-full max-w-md grid-cols-2">
-              <TabsTrigger value="trending" className="gap-2">
-                <Flame className="size-4" /> Trending
-              </TabsTrigger>
-              <TabsTrigger value="hot" className="gap-2">
-                <Tv className="size-4" /> Hot Right Now
-              </TabsTrigger>
+          <Tabs defaultValue="movies" className="w-full">
+            <TabsList className="grid w-full max-w-sm grid-cols-2">
+              <TabsTrigger value="movies">In Cinemas</TabsTrigger>
+              <TabsTrigger value="series">Tv Series</TabsTrigger>
             </TabsList>
 
-            <TabsContent value="trending" className="mt-6">
-              <Tabs defaultValue="movies" className="w-full">
-                <TabsList className="grid w-full max-w-sm grid-cols-2">
-                  <TabsTrigger value="movies">Movies</TabsTrigger>
-                  <TabsTrigger value="series">Series</TabsTrigger>
+            <TabsContent value="movies" className="mt-6">
+              <Tabs
+                value={section}
+                onValueChange={(v) => setSection(v as "trending" | "hot")}
+                className="w-full"
+              >
+                <TabsList className="grid w-full max-w-md grid-cols-2">
+                  <TabsTrigger value="trending" className="gap-2">
+                    <Flame className="size-4" /> Trending
+                  </TabsTrigger>
+                  <TabsTrigger value="hot" className="gap-2">
+                    <Tv className="size-4" /> Hot Right Now
+                  </TabsTrigger>
                 </TabsList>
-                <TabsContent value="movies" className="mt-6">
-                  <Grid items={data?.movies ?? []} loading={isLoading} onPick={setSelected} />
+                <TabsContent value="trending" className="mt-6">
+                  <Grid items={sortByDateDesc(data?.movies ?? [])} loading={isLoading} onPick={setSelected} />
                 </TabsContent>
-                <TabsContent value="series" className="mt-6">
-                  <Grid items={data?.tv ?? []} loading={isLoading} onPick={setSelected} />
+                <TabsContent value="hot" className="mt-6">
+                  <Grid items={sortByDateDesc(hotData?.movies ?? [])} loading={hotLoading} onPick={setSelected} />
                 </TabsContent>
               </Tabs>
             </TabsContent>
 
-            <TabsContent value="hot" className="mt-6">
-              <Tabs defaultValue="movies" className="w-full">
-                <TabsList className="grid w-full max-w-sm grid-cols-2">
-                  <TabsTrigger value="movies">In Cinemas</TabsTrigger>
-                  <TabsTrigger value="series">On The Air</TabsTrigger>
+            <TabsContent value="series" className="mt-6">
+              <Tabs
+                value={section}
+                onValueChange={(v) => setSection(v as "trending" | "hot")}
+                className="w-full"
+              >
+                <TabsList className="grid w-full max-w-md grid-cols-2">
+                  <TabsTrigger value="trending" className="gap-2">
+                    <Flame className="size-4" /> Trending
+                  </TabsTrigger>
+                  <TabsTrigger value="hot" className="gap-2">
+                    <Tv className="size-4" /> Hot Right Now
+                  </TabsTrigger>
                 </TabsList>
-                <TabsContent value="movies" className="mt-6">
-                  <Grid items={hotData?.movies ?? []} loading={hotLoading} onPick={setSelected} />
+                <TabsContent value="trending" className="mt-6">
+                  <Grid items={sortByDateDesc(data?.tv ?? [])} loading={isLoading} onPick={setSelected} />
                 </TabsContent>
-                <TabsContent value="series" className="mt-6">
-                  <Grid items={hotData?.tv ?? []} loading={hotLoading} onPick={setSelected} />
+                <TabsContent value="hot" className="mt-6">
+                  <Grid items={sortByDateDesc(hotData?.tv ?? [])} loading={hotLoading} onPick={setSelected} />
                 </TabsContent>
               </Tabs>
             </TabsContent>
