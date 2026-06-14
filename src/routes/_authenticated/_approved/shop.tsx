@@ -149,6 +149,7 @@ export const Route = createFileRoute("/_authenticated/_approved/shop")({
       : "store") as View | "discounts",
     id: typeof s.id === "string" ? s.id : undefined,
     scope: s.scope === "all" ? "all" : undefined,
+    tab: typeof s.tab === "string" ? s.tab : undefined,
   }),
   head: () => ({
     links: [
