@@ -199,8 +199,8 @@ function ProfilePage() {
       supabase.from("user_roles").select("role").eq("user_id", p.id),
       supabase.from("shifts").select("*").eq("user_id", p.id).is("clock_out", null).maybeSingle(),
       supabase.from("breaks").select("*").eq("user_id", p.id).is("ended_at", null).maybeSingle(),
-      supabase.from("tickets").select("id, subject, status, created_at").eq("user_id", p.id).order("created_at", { ascending: false }).limit(5),
-      supabase.from("orders").select("id, total_cents, status, created_at").eq("user_id", p.id).order("created_at", { ascending: false }).limit(5),
+      supabase.from("tickets").select("id, subject, status, priority, created_at, updated_at, closed_at").eq("user_id", p.id).order("created_at", { ascending: false }).limit(5),
+      supabase.from("orders").select("id, total_cents, status, created_at, paid_at, completed_at, shipping_name, discount_code").eq("user_id", p.id).order("created_at", { ascending: false }).limit(5),
     ]);
     setRoles((r ?? []).map((x: any) => x.role as AppRole));
     setShift((s as ShiftRow) ?? null);
