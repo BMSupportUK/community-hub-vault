@@ -5,6 +5,7 @@ export type TmdbItem = {
   kind: "movie" | "tv";
   title: string;
   year: string | null;
+  date: string | null;
   overview: string;
   posterUrl: string | null;
   backdropUrl: string | null;
@@ -42,6 +43,7 @@ function mapItem(raw: RawItem, kind: "movie" | "tv"): TmdbItem {
     kind,
     title,
     year: date ? date.slice(0, 4) : null,
+    date: date || null,
     overview: raw.overview ?? "",
     posterUrl: raw.poster_path ? `https://image.tmdb.org/t/p/w500${raw.poster_path}` : null,
     backdropUrl: raw.backdrop_path ? `https://image.tmdb.org/t/p/w1280${raw.backdrop_path}` : null,
