@@ -73,19 +73,29 @@ export const Route = createFileRoute("/api/public/hooks/scheduled-reminders")({
           new Set((slots ?? []).map((s) => s.assigned_to as string)),
         );
 
-        // Pull open shifts for those users so we can decide start-overdue vs
-        // end-warn.
-        const { data: openShifts } = assignedUserIds.length
+        // Pull recent shifts (open OR closed) for those users so we can tell
+        // whether someone has already worked the slot. Without this, a user
+        // who has clocked out keeps receiving "Shift has started" pings until
+        // the slot's end time, because the open-only query returned nothing.
+        const sinceIso = new Date(now - 36 * 60 * 60 * 1000).toISOString();
+        const { data: recentShifts } = assignedUserIds.length
           ? await supabaseAdmin
               .from("shifts")
-              .select("user_id, clock_in")
+              .select("user_id, clock_in, clock_out")
               .in("user_id", assignedUserIds)
-              .is("clock_out", null)
-          : { data: [] as { user_id: string; clock_in: string }[] };
+              .gte("clock_in", sinceIso)
+          : { data: [] as { user_id: string; clock_in: string; clock_out: string | null }[] };
 
-        const openByUser = new Map<string, number>();
-        for (const sh of openShifts ?? []) {
-          openByUser.set(sh.user_id, new Date(sh.clock_in).getTime());
+        type ShiftRow = { clockIn: number; clockOut: number | null };
+        const shiftsByUser = new Map<string, ShiftRow[]>();
+        for (const sh of recentShifts ?? []) {
+          const row: ShiftRow = {
+            clockIn: new Date(sh.clock_in).getTime(),
+            clockOut: sh.clock_out ? new Date(sh.clock_out).getTime() : null,
+          };
+          const arr = shiftsByUser.get(sh.user_id) ?? [];
+          arr.push(row);
+          shiftsByUser.set(sh.user_id, arr);
         }
 
         for (const slot of slots ?? []) {
@@ -94,15 +104,24 @@ export const Route = createFileRoute("/api/public/hooks/scheduled-reminders")({
           const endsAt = shiftStartsAt(slot.shift_date as string, slot.end_time as string);
           if (isNaN(startsAt) || isNaN(endsAt)) continue;
 
-          const openIn = openByUser.get(userId);
+          const userShifts = shiftsByUser.get(userId) ?? [];
+          // A shift "covers" this slot if it was clocked in before the slot's
+          // end time AND (still open OR clocked out after the slot started).
+          const coveringShift = userShifts.find(
+            (s) =>
+              s.clockIn <= endsAt &&
+              (s.clockOut === null || s.clockOut >= startsAt),
+          );
+          const openShift = coveringShift && coveringShift.clockOut === null ? coveringShift : null;
+          const alreadyWorked = !!coveringShift && coveringShift.clockOut !== null;
           const isOpenForSlot =
-            openIn !== undefined && openIn <= endsAt && now >= startsAt - WARN_MS;
+            !!openShift && openShift.clockIn <= endsAt && now >= startsAt - WARN_MS;
 
           const toStart = startsAt - now;
           const toEnd = endsAt - now;
 
           // START warn
-          if (!openIn && toStart > 0 && toStart <= WARN_MS) {
+          if (!openShift && !alreadyWorked && toStart > 0 && toStart <= WARN_MS) {
             jobs.push({
               key: `slot:${slot.id}:start:warn`,
               userId,
@@ -113,7 +132,7 @@ export const Route = createFileRoute("/api/public/hooks/scheduled-reminders")({
             });
           }
           // START overdue
-          if (!openIn && toStart <= 0 && now < endsAt) {
+          if (!openShift && !alreadyWorked && toStart <= 0 && now < endsAt) {
             jobs.push({
               key: `slot:${slot.id}:start:over`,
               userId,
