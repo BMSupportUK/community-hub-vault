@@ -47,40 +47,49 @@ function WhatToWatchPage() {
       <div className="absolute inset-0 bg-gradient-to-b from-[#1a0b2e]/75 via-[#1a0b2e]/65 to-[#1a0b2e]/85 pointer-events-none" aria-hidden />
       <main className="relative z-10 flex-1">
         <div className="max-w-7xl mx-auto px-4 lg:px-8 py-8 space-y-6">
-          <header className="relative overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-primary/20 via-surface-2 to-background p-6 lg:p-10">
-            <div className="absolute -top-16 -right-16 size-72 rounded-full bg-primary/20 blur-3xl pointer-events-none" />
-            <div className="relative">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/15 text-primary-glow text-xs font-medium mb-3">
-                <Popcorn className="size-3.5" /> What to Watch
-              </div>
-              <h1 className="font-display text-3xl lg:text-5xl font-bold tracking-tight">
-                {section === "trending" ? "Trending right now" : "Hot to watch right now"}
-              </h1>
-              <p className="mt-3 text-muted-foreground text-base lg:text-lg max-w-2xl">
-                {section === "trending"
-                  ? `The most-watched movies and series across the world this ${window === "day" ? "day" : "week"}, refreshed live from TMDB.`
-                  : "Movies playing in cinemas now and series currently airing this week."}
-              </p>
-              {section === "trending" && (
-                <div className="mt-5 inline-flex rounded-xl border border-border bg-surface-2 p-1">
-                  <button
-                    onClick={() => setWindow("day")}
-                    className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${window === "day" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
-                  >
-                    Today
-                  </button>
-                  <button
-                    onClick={() => setWindow("week")}
-                    className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${window === "week" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
-                  >
-                    This week
-                  </button>
+          <Tabs defaultValue="movies" className="w-full">
+            <header className="relative overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-primary/20 via-surface-2 to-background p-6 lg:p-10">
+              <div className="absolute -top-16 -right-16 size-72 rounded-full bg-primary/20 blur-3xl pointer-events-none" />
+              <div className="relative grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_auto] gap-6 lg:items-end">
+                <div className="min-w-0">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/15 text-primary-glow text-xs font-medium mb-3">
+                    <Popcorn className="size-3.5" /> What to Watch
+                  </div>
+                  <h1 className="font-display text-3xl lg:text-5xl font-bold tracking-tight">
+                    {section === "trending" ? "Trending right now" : "Hot to watch right now"}
+                  </h1>
+                  <p className="mt-3 text-muted-foreground text-base lg:text-lg max-w-2xl">
+                    {section === "trending"
+                      ? `The most-watched movies and series across the world this ${window === "day" ? "day" : "week"}, refreshed live from TMDB.`
+                      : "Movies playing in cinemas now and series currently airing this week."}
+                  </p>
                 </div>
-              )}
-            </div>
-          </header>
+                <div className="flex flex-col gap-3 lg:items-end">
+                  {section === "trending" && (
+                    <div className="inline-flex rounded-xl border border-border bg-surface-2 p-1 self-start lg:self-end">
+                      <button
+                        onClick={() => setWindow("day")}
+                        className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${window === "day" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                      >
+                        Today
+                      </button>
+                      <button
+                        onClick={() => setWindow("week")}
+                        className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${window === "week" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                      >
+                        This week
+                      </button>
+                    </div>
+                  )}
+                  <TabsList className="grid w-full max-w-sm grid-cols-2 lg:w-[20rem]">
+                    <TabsTrigger value="movies">In Cinemas</TabsTrigger>
+                    <TabsTrigger value="series">Tv Series</TabsTrigger>
+                  </TabsList>
+                </div>
+              </div>
+            </header>
 
-          {section === "trending" && (isError || data?.error) ? (
+            {section === "trending" && (isError || data?.error) ? (
             <div className="rounded-2xl border border-destructive/40 bg-destructive/10 p-6 text-sm">
               Couldn't load trending titles{data?.error ? `: ${data.error}` : "."}
             </div>
@@ -90,12 +99,6 @@ function WhatToWatchPage() {
               Couldn't load hot titles{hotData?.error ? `: ${hotData.error}` : "."}
             </div>
           ) : null}
-
-          <Tabs defaultValue="movies" className="w-full">
-            <TabsList className="grid w-full max-w-sm grid-cols-2">
-              <TabsTrigger value="movies">In Cinemas</TabsTrigger>
-              <TabsTrigger value="series">Tv Series</TabsTrigger>
-            </TabsList>
 
             <TabsContent value="movies" className="mt-6">
               <Tabs
