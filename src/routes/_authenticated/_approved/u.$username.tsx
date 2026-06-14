@@ -970,7 +970,7 @@ function OrderCardItem({ order, fmtCurrency }: { order: OrderRow; fmtCurrency: (
   return (
     <Link
       to="/shop"
-      search={{ view: "orders" }}
+      search={{ view: "orders", id: order.id }}
       className="group rounded-xl border border-white/15 bg-white/[0.06] hover:bg-white/[0.1] hover:border-white/30 transition p-4 flex flex-col gap-2 text-left"
     >
       <div className="flex items-start justify-between gap-3">
