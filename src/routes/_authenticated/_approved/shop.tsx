@@ -1515,7 +1515,7 @@ function Storefront() {
               <section className="relative overflow-hidden -mx-6 -mt-6">
                 <div className="absolute inset-0">
                   <img src={shopHero} alt="" aria-hidden className="w-full h-full object-cover" />
-                  <div className="absolute inset-0 bg-gradient-to-br from-violet-700/80 via-fuchsia-700/70 to-blue-700/80" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-background/85 via-background/40 to-transparent" />
                   <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-b from-transparent to-background" />
                 </div>
                 <div className="relative px-6 md:px-10 pt-10 md:pt-16 pb-20 md:pb-28 max-w-3xl">
