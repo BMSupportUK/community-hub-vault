@@ -236,6 +236,21 @@ export function embedSocialUrls(html: string): string {
   const wholePostReplacement = tryEmbedUrl(htmlTextContent(html));
   if (wholePostReplacement) return wholePostReplacement;
 
+  // Plain-text posts can contain normal text followed by an X status URL on
+  // its own line. Convert those lines during SSR too, otherwise the raw URL
+  // stays visible until the post is edited and re-saved.
+  if (!/<[a-z][\s\S]*>/i.test(html)) {
+    const lines = html.split(/\r?\n/);
+    let changed = false;
+    const converted = lines.map((line) => {
+      const replacement = tryEmbedUrl(line.trim());
+      if (!replacement) return escapeHtml(line);
+      changed = true;
+      return replacement;
+    });
+    if (changed) return converted.join("<br/>");
+  }
+
   if (typeof window === "undefined") return html;
   const doc = new DOMParser().parseFromString(`<div id="__root">${html}</div>`, "text/html");
   const root = doc.getElementById("__root");
