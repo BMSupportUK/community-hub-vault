@@ -426,7 +426,8 @@ function PredictionsPage() {
         aria-hidden="true"
       />
       <div
-        className="pointer-events-none absolute inset-0 z-0 bg-gradient-to-b from-background/75 via-background/65 to-background/90"
+        className="pointer-events-none absolute inset-0 z-0"
+        style={{ background: "rgba(5, 10, 20, 0.88)" }}
         aria-hidden="true"
       />
       <div className="relative z-10 w-full px-4 sm:px-8 lg:px-16 py-6">
