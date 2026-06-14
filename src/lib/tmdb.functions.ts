@@ -25,6 +25,7 @@ type RawItem = {
   backdrop_path?: string | null;
   vote_average?: number;
   vote_count?: number;
+  original_language?: string;
 };
 
 function buildAuth(key: string): { headers: Record<string, string>; query: string } {
@@ -53,6 +54,10 @@ function mapItem(raw: RawItem, kind: "movie" | "tv"): TmdbItem {
   };
 }
 
+function isEnglish(raw: RawItem): boolean {
+  return (raw.original_language ?? "en") === "en";
+}
+
 export const getTrending = createServerFn({ method: "GET" })
   .inputValidator((data: { window?: "day" | "week" }) => ({
     window: data?.window === "day" ? "day" : "week",
@@ -79,8 +84,8 @@ export const getTrending = createServerFn({ method: "GET" })
       const mJson = (await mRes.json()) as { results?: RawItem[] };
       const tJson = (await tRes.json()) as { results?: RawItem[] };
       return {
-        movies: (mJson.results ?? []).map((r) => mapItem(r, "movie")),
-        tv: (tJson.results ?? []).map((r) => mapItem(r, "tv")),
+        movies: (mJson.results ?? []).filter(isEnglish).map((r) => mapItem(r, "movie")),
+        tv: (tJson.results ?? []).filter(isEnglish).map((r) => mapItem(r, "tv")),
         error: null as string | null,
       };
     } catch (e) {
@@ -114,8 +119,8 @@ export const getHot = createServerFn({ method: "GET" }).handler(async () => {
     const mJson = (await mRes.json()) as { results?: RawItem[] };
     const tJson = (await tRes.json()) as { results?: RawItem[] };
     return {
-      movies: (mJson.results ?? []).map((r) => mapItem(r, "movie")),
-      tv: (tJson.results ?? []).map((r) => mapItem(r, "tv")),
+      movies: (mJson.results ?? []).filter(isEnglish).map((r) => mapItem(r, "movie")),
+      tv: (tJson.results ?? []).filter(isEnglish).map((r) => mapItem(r, "tv")),
       error: null as string | null,
     };
   } catch (e) {
