@@ -70,24 +70,29 @@ export const getTrending = createServerFn({ method: "GET" })
     const auth = buildAuth(key);
     const base = "https://api.themoviedb.org/3";
     try {
-      const [mRes, tRes] = await Promise.all([
+      const sep = auth.query ? "&" : "?";
+      const [m1, t1, m2, t2] = await Promise.all([
         fetch(`${base}/trending/movie/${data.window}${auth.query}`, { headers: auth.headers }),
         fetch(`${base}/trending/tv/${data.window}${auth.query}`, { headers: auth.headers }),
+        fetch(`${base}/trending/movie/${data.window}${auth.query}${sep}page=2`, { headers: auth.headers }),
+        fetch(`${base}/trending/tv/${data.window}${auth.query}${sep}page=2`, { headers: auth.headers }),
       ]);
-      if (!mRes.ok || !tRes.ok) {
+      if (!m1.ok || !t1.ok) {
         return {
           movies: [] as TmdbItem[],
           tv: [] as TmdbItem[],
-          error: `TMDB request failed (${mRes.status}/${tRes.status})`,
+          error: `TMDB request failed (${m1.status}/${t1.status})`,
         };
       }
-      const mJson = (await mRes.json()) as { results?: RawItem[] };
-      const tJson = (await tRes.json()) as { results?: RawItem[] };
-      return {
-        movies: (mJson.results ?? []).filter(isEnglish).map((r) => mapItem(r, "movie")),
-        tv: (tJson.results ?? []).filter(isEnglish).map((r) => mapItem(r, "tv")),
-        error: null as string | null,
-      };
+      const [m1J, t1J, m2J, t2J] = await Promise.all([
+        m1.json() as Promise<{ results?: RawItem[] }>,
+        t1.json() as Promise<{ results?: RawItem[] }>,
+        m2.ok ? (m2.json() as Promise<{ results?: RawItem[] }>) : Promise.resolve({ results: [] as RawItem[] }),
+        t2.ok ? (t2.json() as Promise<{ results?: RawItem[] }>) : Promise.resolve({ results: [] as RawItem[] }),
+      ]);
+      const movies = [...(m1J.results ?? []), ...(m2J.results ?? [])].filter(isEnglish).slice(0, 30).map((r) => mapItem(r, "movie"));
+      const tv = [...(t1J.results ?? []), ...(t2J.results ?? [])].filter(isEnglish).slice(0, 30).map((r) => mapItem(r, "tv"));
+      return { movies, tv, error: null as string | null };
     } catch (e) {
       return {
         movies: [] as TmdbItem[],
@@ -105,24 +110,29 @@ export const getHot = createServerFn({ method: "GET" }).handler(async () => {
   const auth = buildAuth(key);
   const base = "https://api.themoviedb.org/3";
   try {
-    const [mRes, tRes] = await Promise.all([
+    const sep = auth.query ? "&" : "?";
+    const [m1, t1, m2, t2] = await Promise.all([
       fetch(`${base}/movie/now_playing${auth.query}`, { headers: auth.headers }),
       fetch(`${base}/tv/on_the_air${auth.query}`, { headers: auth.headers }),
+      fetch(`${base}/movie/now_playing${auth.query}${sep}page=2`, { headers: auth.headers }),
+      fetch(`${base}/tv/on_the_air${auth.query}${sep}page=2`, { headers: auth.headers }),
     ]);
-    if (!mRes.ok || !tRes.ok) {
+    if (!m1.ok || !t1.ok) {
       return {
         movies: [] as TmdbItem[],
         tv: [] as TmdbItem[],
-        error: `TMDB request failed (${mRes.status}/${tRes.status})`,
+        error: `TMDB request failed (${m1.status}/${t1.status})`,
       };
     }
-    const mJson = (await mRes.json()) as { results?: RawItem[] };
-    const tJson = (await tRes.json()) as { results?: RawItem[] };
-    return {
-      movies: (mJson.results ?? []).filter(isEnglish).map((r) => mapItem(r, "movie")),
-      tv: (tJson.results ?? []).filter(isEnglish).map((r) => mapItem(r, "tv")),
-      error: null as string | null,
-    };
+    const [m1J, t1J, m2J, t2J] = await Promise.all([
+      m1.json() as Promise<{ results?: RawItem[] }>,
+      t1.json() as Promise<{ results?: RawItem[] }>,
+      m2.ok ? (m2.json() as Promise<{ results?: RawItem[] }>) : Promise.resolve({ results: [] as RawItem[] }),
+      t2.ok ? (t2.json() as Promise<{ results?: RawItem[] }>) : Promise.resolve({ results: [] as RawItem[] }),
+    ]);
+    const movies = [...(m1J.results ?? []), ...(m2J.results ?? [])].filter(isEnglish).slice(0, 30).map((r) => mapItem(r, "movie"));
+    const tv = [...(t1J.results ?? []), ...(t2J.results ?? [])].filter(isEnglish).slice(0, 30).map((r) => mapItem(r, "tv"));
+    return { movies, tv, error: null as string | null };
   } catch (e) {
     return {
       movies: [] as TmdbItem[],
