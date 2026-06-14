@@ -89,3 +89,38 @@ export const getTrending = createServerFn({ method: "GET" })
       };
     }
   });
+
+export const getHot = createServerFn({ method: "GET" }).handler(async () => {
+  const key = process.env.TMDB_API_KEY;
+  if (!key) {
+    return { movies: [] as TmdbItem[], tv: [] as TmdbItem[], error: "TMDB_API_KEY not configured" };
+  }
+  const auth = buildAuth(key);
+  const base = "https://api.themoviedb.org/3";
+  try {
+    const [mRes, tRes] = await Promise.all([
+      fetch(`${base}/movie/now_playing${auth.query}`, { headers: auth.headers }),
+      fetch(`${base}/tv/on_the_air${auth.query}`, { headers: auth.headers }),
+    ]);
+    if (!mRes.ok || !tRes.ok) {
+      return {
+        movies: [] as TmdbItem[],
+        tv: [] as TmdbItem[],
+        error: `TMDB request failed (${mRes.status}/${tRes.status})`,
+      };
+    }
+    const mJson = (await mRes.json()) as { results?: RawItem[] };
+    const tJson = (await tRes.json()) as { results?: RawItem[] };
+    return {
+      movies: (mJson.results ?? []).map((r) => mapItem(r, "movie")),
+      tv: (tJson.results ?? []).map((r) => mapItem(r, "tv")),
+      error: null as string | null,
+    };
+  } catch (e) {
+    return {
+      movies: [] as TmdbItem[],
+      tv: [] as TmdbItem[],
+      error: e instanceof Error ? e.message : "TMDB fetch failed",
+    };
+  }
+});
