@@ -56,8 +56,8 @@ interface ShiftRow { id: string; user_id: string; clock_in: string; clock_out: s
 interface BreakRow { id: string; user_id: string; kind: "break" | "lunch"; started_at: string; ended_at: string | null; }
 interface CredRow { id: string; app_login_name: string; password: string; expiry_at: string | null; notes: string | null; }
 interface DnsRow { id: string; label: string; code: string; notes: string | null; }
-interface TicketRow { id: string; subject: string; status: string; created_at: string; }
-interface OrderRow { id: string; total_cents: number; status: string; created_at: string; }
+interface TicketRow { id: string; subject: string; status: string; priority: string; created_at: string; updated_at: string; closed_at: string | null; }
+interface OrderRow { id: string; total_cents: number; status: string; created_at: string; paid_at: string | null; completed_at: string | null; shipping_name: string | null; discount_code: string | null; }
 interface InviteSummary {
   sent: number;
   used: number;
@@ -199,8 +199,8 @@ function ProfilePage() {
       supabase.from("user_roles").select("role").eq("user_id", p.id),
       supabase.from("shifts").select("*").eq("user_id", p.id).is("clock_out", null).maybeSingle(),
       supabase.from("breaks").select("*").eq("user_id", p.id).is("ended_at", null).maybeSingle(),
-      supabase.from("tickets").select("id, subject, status, created_at").eq("user_id", p.id).order("created_at", { ascending: false }).limit(5),
-      supabase.from("orders").select("id, total_cents, status, created_at").eq("user_id", p.id).order("created_at", { ascending: false }).limit(5),
+      supabase.from("tickets").select("id, subject, status, priority, created_at, updated_at, closed_at").eq("user_id", p.id).order("created_at", { ascending: false }).limit(5),
+      supabase.from("orders").select("id, total_cents, status, created_at, paid_at, completed_at, shipping_name, discount_code").eq("user_id", p.id).order("created_at", { ascending: false }).limit(5),
     ]);
     setRoles((r ?? []).map((x: any) => x.role as AppRole));
     setShift((s as ShiftRow) ?? null);
@@ -500,6 +500,7 @@ function ProfilePage() {
           />
           <div className="absolute inset-0 bg-gradient-to-br from-rose-950/70 via-fuchsia-900/55 to-amber-900/60" />
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(255,200,150,0.25),transparent_60%)]" />
+          <div className="absolute inset-0" style={{ background: "rgba(5, 10, 20, 0.88)" }} />
         </div>
       )}
       {mainTab === "friends" && (
@@ -512,6 +513,7 @@ function ProfilePage() {
           />
           <div className="absolute inset-0 bg-gradient-to-b from-[#1a0b2e]/85 via-[#1a0b2e]/55 to-[#1a0b2e]/90" />
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom,rgba(217,70,239,0.18),transparent_65%)]" />
+          <div className="absolute inset-0" style={{ background: "rgba(5, 10, 20, 0.88)" }} />
         </div>
       )}
       {mainTab === "tickets" && (
@@ -524,6 +526,7 @@ function ProfilePage() {
           />
           <div className="absolute inset-0 bg-gradient-to-b from-[#1a0b2e]/85 via-[#1a0b2e]/55 to-[#1a0b2e]/90" />
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom,rgba(59,130,246,0.18),transparent_65%)]" />
+          <div className="absolute inset-0" style={{ background: "rgba(5, 10, 20, 0.88)" }} />
         </div>
       )}
       {mainTab === "orders" && (
@@ -536,6 +539,7 @@ function ProfilePage() {
           />
           <div className="absolute inset-0 bg-gradient-to-b from-[#1a0b2e]/85 via-[#1a0b2e]/55 to-[#1a0b2e]/90" />
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom,rgba(16,185,129,0.18),transparent_65%)]" />
+          <div className="absolute inset-0" style={{ background: "rgba(5, 10, 20, 0.88)" }} />
         </div>
       )}
       <div className="relative z-10">
@@ -711,25 +715,19 @@ function ProfilePage() {
           )}
 
           <TabsContent value="tickets" className="mt-6">
-            <ActivityCard title="Recent tickets" icon={Ticket} empty="No tickets yet">
+            <ActivityCardGrid title="Recent tickets" icon={Ticket} empty="No tickets yet" isEmpty={tickets.length === 0}>
               {tickets.map((t) => (
-                <li key={t.id} className="flex items-center justify-between gap-3 py-2 text-sm">
-                  <span className="truncate">{t.subject}</span>
-                  <span className="text-xs text-white/70 capitalize">{t.status}</span>
-                </li>
+                <TicketCardItem key={t.id} ticket={t} />
               ))}
-            </ActivityCard>
+            </ActivityCardGrid>
           </TabsContent>
 
           <TabsContent value="orders" className="mt-6">
-            <ActivityCard title="Recent orders" icon={ShoppingBag} empty="No orders yet">
+            <ActivityCardGrid title="Recent orders" icon={ShoppingBag} empty="No orders yet" isEmpty={orders.length === 0}>
               {orders.map((o) => (
-                <li key={o.id} className="flex items-center justify-between gap-3 py-2 text-sm">
-                  <span>{fmtCurrency(o.total_cents)}</span>
-                  <span className="text-xs text-white/70 capitalize">{o.status}</span>
-                </li>
+                <OrderCardItem key={o.id} order={o} fmtCurrency={fmtCurrency} />
               ))}
-            </ActivityCard>
+            </ActivityCardGrid>
           </TabsContent>
 
           <TabsContent value="friends" className="mt-6">
@@ -888,6 +886,115 @@ function ActivityCard({ title, icon: Icon, children, empty }: { title: string; i
         <ul className="divide-y divide-white/15">{children}</ul>
       )}
     </section>
+  );
+}
+
+function ActivityCardGrid({
+  title,
+  icon: Icon,
+  children,
+  empty,
+  isEmpty,
+}: {
+  title: string;
+  icon: any;
+  children: React.ReactNode;
+  empty: string;
+  isEmpty: boolean;
+}) {
+  return (
+    <section className="rounded-2xl border border-white/25 bg-white/10 backdrop-blur-xl p-5 shadow-[0_10px_40px_-15px_rgba(0,0,0,0.4)] text-white">
+      <h2 className="flex items-center gap-2 font-display text-lg font-bold mb-4">
+        <Icon className="size-4 text-amber-200" /> {title}
+      </h2>
+      {isEmpty ? (
+        <p className="text-sm text-white/70">{empty}</p>
+      ) : (
+        <div className="grid gap-3 sm:grid-cols-2">{children}</div>
+      )}
+    </section>
+  );
+}
+
+function statusToneClass(status: string) {
+  const s = status.toLowerCase();
+  if (["paid", "completed", "fulfilled", "closed", "resolved"].includes(s))
+    return "bg-emerald-500/15 text-emerald-200 border-emerald-400/30";
+  if (["cancelled", "canceled", "refunded", "failed", "rejected"].includes(s))
+    return "bg-rose-500/15 text-rose-200 border-rose-400/30";
+  if (["pending", "awaiting", "in_progress", "open", "processing"].includes(s))
+    return "bg-amber-500/15 text-amber-200 border-amber-400/30";
+  return "bg-white/10 text-white/80 border-white/20";
+}
+
+function fmtShortDate(iso: string) {
+  try {
+    return new Date(iso).toLocaleDateString(undefined, {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  } catch {
+    return iso;
+  }
+}
+
+function TicketCardItem({ ticket }: { ticket: TicketRow }) {
+  return (
+    <Link
+      to="/tickets"
+      search={{ id: ticket.id }}
+      className="group rounded-xl border border-white/15 bg-white/[0.06] hover:bg-white/[0.1] hover:border-white/30 transition p-4 flex flex-col gap-2 text-left"
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-amber-100/80">
+          <Ticket className="size-3.5" /> Ticket
+        </div>
+        <span className={cn("text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full border", statusToneClass(ticket.status))}>
+          {ticket.status.replace(/_/g, " ")}
+        </span>
+      </div>
+      <p className="font-semibold text-sm text-white truncate group-hover:underline">{ticket.subject}</p>
+      <div className="flex items-center justify-between text-[11px] text-white/60">
+        <span className="capitalize">Priority: {ticket.priority}</span>
+        <span>{fmtShortDate(ticket.created_at)}</span>
+      </div>
+      {ticket.closed_at && (
+        <div className="text-[11px] text-emerald-200/80">Closed {fmtShortDate(ticket.closed_at)}</div>
+      )}
+    </Link>
+  );
+}
+
+function OrderCardItem({ order, fmtCurrency }: { order: OrderRow; fmtCurrency: (cents: number) => string }) {
+  return (
+    <Link
+      to="/shop"
+      search={{ view: "orders" }}
+      className="group rounded-xl border border-white/15 bg-white/[0.06] hover:bg-white/[0.1] hover:border-white/30 transition p-4 flex flex-col gap-2 text-left"
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-amber-100/80">
+          <ShoppingBag className="size-3.5" /> Order #{order.id.slice(0, 8)}
+        </div>
+        <span className={cn("text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full border", statusToneClass(order.status))}>
+          {order.status.replace(/_/g, " ")}
+        </span>
+      </div>
+      <p className="font-display text-lg font-bold text-white">{fmtCurrency(order.total_cents)}</p>
+      <div className="flex items-center justify-between text-[11px] text-white/60">
+        <span>Placed {fmtShortDate(order.created_at)}</span>
+        {order.discount_code && (
+          <span className="text-amber-200/80">Code: {order.discount_code}</span>
+        )}
+      </div>
+      {order.paid_at && (
+        <div className="text-[11px] text-emerald-200/80">Paid {fmtShortDate(order.paid_at)}</div>
+      )}
+      {order.completed_at && (
+        <div className="text-[11px] text-emerald-200/80">Completed {fmtShortDate(order.completed_at)}</div>
+      )}
+    </Link>
   );
 }
 
