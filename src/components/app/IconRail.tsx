@@ -55,6 +55,7 @@ interface RailItem {
   icon: React.ComponentType<{ className?: string }>;
   show: boolean;
   badge?: number;
+  search?: Record<string, string>;
 }
 
 export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
