@@ -363,7 +363,11 @@ export function StreamingDevicesPage() {
       className="relative flex-1 overflow-y-auto bg-cover bg-center bg-no-repeat bg-fixed"
       style={{ backgroundImage: `url(${tvLoginIllustration})` }}
     >
-      <div aria-hidden className="pointer-events-none absolute inset-0 bg-background/35" />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0"
+        style={{ background: "rgba(5, 10, 20, 0.88)" }}
+      />
       <div className="relative w-full px-4 sm:px-6 lg:px-8 py-6 space-y-8">
         <header className="space-y-2">
           <h1 className="text-3xl font-bold tracking-tight">Streaming device reviews</h1>
