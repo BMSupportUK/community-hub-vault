@@ -500,6 +500,7 @@ function ProfilePage() {
           />
           <div className="absolute inset-0 bg-gradient-to-br from-rose-950/70 via-fuchsia-900/55 to-amber-900/60" />
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(255,200,150,0.25),transparent_60%)]" />
+          <div className="absolute inset-0" style={{ background: "rgba(5, 10, 20, 0.88)" }} />
         </div>
       )}
       {mainTab === "friends" && (
@@ -512,6 +513,7 @@ function ProfilePage() {
           />
           <div className="absolute inset-0 bg-gradient-to-b from-[#1a0b2e]/85 via-[#1a0b2e]/55 to-[#1a0b2e]/90" />
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom,rgba(217,70,239,0.18),transparent_65%)]" />
+          <div className="absolute inset-0" style={{ background: "rgba(5, 10, 20, 0.88)" }} />
         </div>
       )}
       {mainTab === "tickets" && (
@@ -524,6 +526,7 @@ function ProfilePage() {
           />
           <div className="absolute inset-0 bg-gradient-to-b from-[#1a0b2e]/85 via-[#1a0b2e]/55 to-[#1a0b2e]/90" />
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom,rgba(59,130,246,0.18),transparent_65%)]" />
+          <div className="absolute inset-0" style={{ background: "rgba(5, 10, 20, 0.88)" }} />
         </div>
       )}
       {mainTab === "orders" && (
@@ -536,6 +539,7 @@ function ProfilePage() {
           />
           <div className="absolute inset-0 bg-gradient-to-b from-[#1a0b2e]/85 via-[#1a0b2e]/55 to-[#1a0b2e]/90" />
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom,rgba(16,185,129,0.18),transparent_65%)]" />
+          <div className="absolute inset-0" style={{ background: "rgba(5, 10, 20, 0.88)" }} />
         </div>
       )}
       <div className="relative z-10">
