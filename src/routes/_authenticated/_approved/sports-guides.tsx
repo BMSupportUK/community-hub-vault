@@ -159,14 +159,23 @@ function SportsGuidesPage() {
   const baselineAt = dataQuery.data?.baselineAt ?? null;
   const load = () => queryClient.invalidateQueries({ queryKey });
 
+  // Resolve catFromUrl as either category id or slug.
+  const resolvedCatFromUrl = useMemo(() => {
+    if (!catFromUrl) return null;
+    const byId = categories.find((c) => c.id === catFromUrl);
+    if (byId) return byId.id;
+    const bySlug = categories.find((c) => c.slug === catFromUrl);
+    return bySlug?.id ?? null;
+  }, [catFromUrl, categories]);
+
   useEffect(() => {
-    if (categories.length) setActiveCat((cur) => cur ?? catFromUrl ?? categories[0].id);
-  }, [categories, catFromUrl]);
+    if (categories.length) setActiveCat((cur) => cur ?? resolvedCatFromUrl ?? categories[0].id);
+  }, [categories, resolvedCatFromUrl]);
 
   // If we arrived back here from new/edit/read, jump straight to the category.
   useEffect(() => {
-    if (catFromUrl) {
-      setActiveCat(catFromUrl);
+    if (catFromUrl && resolvedCatFromUrl) {
+      setActiveCat(resolvedCatFromUrl);
       setTab("guides");
       if (subFromUrl !== undefined) {
         skipDefaultSubOnce.current = true;
@@ -175,7 +184,7 @@ function SportsGuidesPage() {
       // Consume the URL params so future category clicks use defaults.
       navigate({ to: "/sports-guides", search: {}, replace: true });
     }
-  }, [catFromUrl, subFromUrl, navigate]);
+  }, [catFromUrl, resolvedCatFromUrl, subFromUrl, navigate]);
 
   const isUnread = (b: Blog) => {
     const upd = new Date(b.updated_at ?? b.created_at).getTime();
