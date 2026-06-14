@@ -242,9 +242,12 @@ function LeaderboardPage() {
                 No invites yet — be the first to put yourself on the board!
               </div>
             ) : (() => {
-              const isDane = (r: typeof rows[number]) =>
-                (r.username?.toLowerCase() === "dane") ||
-                (r.display_name?.toLowerCase() === "dane");
+              const isDane = (r: typeof rows[number]) => {
+                const aliases = new Set(["dane", "danej"]);
+                const username = r.username?.trim().toLowerCase();
+                const displayName = r.display_name?.trim().toLowerCase();
+                return aliases.has(username ?? "") || aliases.has(displayName ?? "");
+              };
               const daneRow = rows.find(isDane);
               const otherRows = rows.filter((r) => !isDane(r));
               const renderCard = (r: typeof rows[number], idx: number | null) => {
