@@ -78,6 +78,7 @@ import { StreamingDevicesPage } from "@/routes/_authenticated/_approved/streamin
 import { ReviewsPage } from "@/routes/_authenticated/_approved/reviews";
 import { AppDemosView } from "@/components/app/AppDemos";
 import { Film } from "lucide-react";
+import { VpnGuideView } from "@/components/app/VpnGuideView";
 
 type View = "store" | "orders" | "admin" | "refund" | "multi_room" | "triple_room" | "streaming_devices" | "reviews" | "app_demos";
 
@@ -149,6 +150,7 @@ export const Route = createFileRoute("/_authenticated/_approved/shop")({
       : "store") as View | "discounts",
     id: typeof s.id === "string" ? s.id : undefined,
     scope: s.scope === "all" ? "all" : undefined,
+    tab: typeof s.tab === "string" ? s.tab : undefined,
   }),
   head: () => ({
     links: [
@@ -1113,7 +1115,8 @@ function Storefront() {
   const [dbCategories, setDbCategories] = useState<ProductCategory[]>([]);
   const [cart, setCart] = useState<Record<string, number>>({});
   const [showCheckout, setShowCheckout] = useState(false);
-  const [tab, setTab] = useState<string>("welcome");
+  const initialTab = Route.useSearch().tab;
+  const [tab, setTab] = useState<string>(initialTab ?? "welcome");
   const navigate = useNavigate();
   const { user, hasAny, refreshRoles } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
@@ -1468,6 +1471,12 @@ function Storefront() {
                 Shop
               </TabsTrigger>
               <TabsTrigger
+                value="vpn"
+                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-sky-400 data-[state=active]:text-white"
+              >
+                VPN Guide
+              </TabsTrigger>
+              <TabsTrigger
                 value="app_demos"
                 className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-sky-400 data-[state=active]:text-white"
               >
@@ -1747,6 +1756,9 @@ function Storefront() {
             </TabsContent>
             <TabsContent value="reviews" className="mt-4 -mx-6">
               <ReviewsPage />
+            </TabsContent>
+            <TabsContent value="vpn" className="mt-4 -mx-6">
+              <VpnGuideView />
             </TabsContent>
           </Tabs>
         </div>
