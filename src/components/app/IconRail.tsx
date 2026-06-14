@@ -187,7 +187,6 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
     { to: "/install-guides", label: "Install guides", icon: Wrench, show: true },
     { to: "/sports-guides", label: "Sports guides", icon: Goal, show: true },
     { to: "/knowledge-base", label: "Knowledge base", icon: BookOpen, show: true },
-    { to: "/vpn", label: "VPN guide", icon: ShieldCheck, show: true },
     { to: "/what-to-watch", label: "What to Watch", icon: Popcorn, show: true },
     { to: "/leaderboard", label: "Referrals", icon: Trophy, show: true },
     { to: "/predictions", label: "World Cup 2026", icon: Goal, show: true },
