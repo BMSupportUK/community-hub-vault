@@ -211,6 +211,8 @@ export type WcEntrantPickDTO = {
   homeScore: number | null;
   awayScore: number | null;
   status: string;
+  minute: number | null;
+  minuteAdded: number | null;
   homePred: number;
   awayPred: number;
   points: number | null;
@@ -227,7 +229,7 @@ export const getEntrantWcPredictions = createServerFn({ method: "GET" })
     const { data: rows, error } = await supabaseAdmin
       .from("wc_predictions")
       .select(
-        "home_pred, away_pred, points, fixture:wc_fixtures!inner(id, stage, group_label, home_team, away_team, kickoff_at, home_score, away_score, status)",
+        "home_pred, away_pred, points, fixture:wc_fixtures!inner(id, stage, group_label, home_team, away_team, kickoff_at, home_score, away_score, status, minute, minute_added)",
       )
       .eq(col, data.entrantId);
     if (error) throw new Error(error.message);
@@ -243,6 +245,8 @@ export const getEntrantWcPredictions = createServerFn({ method: "GET" })
         homeScore: r.fixture.home_score,
         awayScore: r.fixture.away_score,
         status: r.fixture.status,
+        minute: (r.fixture.minute as number | null) ?? null,
+        minuteAdded: (r.fixture.minute_added as number | null) ?? null,
         homePred: r.home_pred,
         awayPred: r.away_pred,
         points: r.points,
