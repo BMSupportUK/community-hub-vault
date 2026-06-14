@@ -240,16 +240,15 @@ export function embedSocialUrls(html: string): string {
   // its own line. Convert those lines during SSR too, otherwise the raw URL
   // stays visible until the post is edited and re-saved.
   if (!/<[a-z][\s\S]*>/i.test(html)) {
-    const lines = html.split(/(\r?\n)/);
+    const lines = html.split(/\r?\n/);
     let changed = false;
-    const converted = lines.map((part) => {
-      if (/^\r?\n$/.test(part)) return part === "\r\n" ? "<br/>" : "<br/>";
-      const replacement = tryEmbedUrl(part.trim());
-      if (!replacement) return escapeHtml(part);
+    const converted = lines.map((line) => {
+      const replacement = tryEmbedUrl(line.trim());
+      if (!replacement) return escapeHtml(line);
       changed = true;
       return replacement;
     });
-    if (changed) return converted.join("");
+    if (changed) return converted.join("<br/>");
   }
 
   if (typeof window === "undefined") return html;
