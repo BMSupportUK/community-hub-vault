@@ -412,7 +412,7 @@ function ShopPage() {
               className="relative flex-1 flex min-w-0 bg-cover bg-center bg-no-repeat bg-fixed"
               style={{ backgroundImage: `url(${tvLoginIllustration})` }}
             >
-              <div aria-hidden className="pointer-events-none absolute inset-0 bg-background/35" />
+              <div aria-hidden className="pointer-events-none absolute inset-0" style={{ background: "rgba(5, 10, 20, 0.88)" }} />
               <AppDemosView />
             </div>
           )}
