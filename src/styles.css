@@ -1071,12 +1071,12 @@ html.boro-bg-active body {
   background-attachment: fixed;
   min-height: 100%;
 }
-/* Dim the background image so post cards stand out */
+/* Dim the background image so content stands out */
 html.boro-bg-active body::before {
   content: "";
   position: fixed;
   inset: 0;
-  background: rgba(5, 10, 20, 0.65);
+  background: rgba(5, 10, 20, 0.72);
   pointer-events: none;
   z-index: 0;
 }
