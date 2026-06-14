@@ -21,7 +21,7 @@ import { getOutOfHoursMessage } from "@/lib/business-hours";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useRoleFlashMap, resolveAvatarUrl, roleFlashClass } from "@/lib/role-flash";
-import { ServiceStatusBox } from "@/components/app/ServiceStatusBox";
+import { ActiveOutagesBox } from "@/components/app/ActiveOutagesBox";
 import { PayOrderDialog, OrderProgressStrip } from "@/routes/_authenticated/_approved/shop";
 import { refreshSquareInvoiceStatus, cancelOrderAndSquareInvoice } from "@/lib/square-invoices.functions";
 import { formatRoleLabel } from "@/lib/role-label";
@@ -469,8 +469,8 @@ function TicketsPage() {
                     </button>
                   </div>
                 </div>
-                <div className="mt-6 md:mt-0 md:w-[300px] md:shrink-0 [&>section]:px-0 [&>section]:pt-0">
-                  <ServiceStatusBox hideButtons />
+                <div className="mt-6 md:mt-0 md:w-[320px] md:shrink-0">
+                  <ActiveOutagesBox />
                 </div>
               </div>
             </div>
