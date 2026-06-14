@@ -889,6 +889,115 @@ function ActivityCard({ title, icon: Icon, children, empty }: { title: string; i
   );
 }
 
+function ActivityCardGrid({
+  title,
+  icon: Icon,
+  children,
+  empty,
+  isEmpty,
+}: {
+  title: string;
+  icon: any;
+  children: React.ReactNode;
+  empty: string;
+  isEmpty: boolean;
+}) {
+  return (
+    <section className="rounded-2xl border border-white/25 bg-white/10 backdrop-blur-xl p-5 shadow-[0_10px_40px_-15px_rgba(0,0,0,0.4)] text-white">
+      <h2 className="flex items-center gap-2 font-display text-lg font-bold mb-4">
+        <Icon className="size-4 text-amber-200" /> {title}
+      </h2>
+      {isEmpty ? (
+        <p className="text-sm text-white/70">{empty}</p>
+      ) : (
+        <div className="grid gap-3 sm:grid-cols-2">{children}</div>
+      )}
+    </section>
+  );
+}
+
+function statusToneClass(status: string) {
+  const s = status.toLowerCase();
+  if (["paid", "completed", "fulfilled", "closed", "resolved"].includes(s))
+    return "bg-emerald-500/15 text-emerald-200 border-emerald-400/30";
+  if (["cancelled", "canceled", "refunded", "failed", "rejected"].includes(s))
+    return "bg-rose-500/15 text-rose-200 border-rose-400/30";
+  if (["pending", "awaiting", "in_progress", "open", "processing"].includes(s))
+    return "bg-amber-500/15 text-amber-200 border-amber-400/30";
+  return "bg-white/10 text-white/80 border-white/20";
+}
+
+function fmtShortDate(iso: string) {
+  try {
+    return new Date(iso).toLocaleDateString(undefined, {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  } catch {
+    return iso;
+  }
+}
+
+function TicketCardItem({ ticket }: { ticket: TicketRow }) {
+  return (
+    <Link
+      to="/tickets"
+      search={{ id: ticket.id }}
+      className="group rounded-xl border border-white/15 bg-white/[0.06] hover:bg-white/[0.1] hover:border-white/30 transition p-4 flex flex-col gap-2 text-left"
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-amber-100/80">
+          <Ticket className="size-3.5" /> Ticket
+        </div>
+        <span className={cn("text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full border", statusToneClass(ticket.status))}>
+          {ticket.status.replace(/_/g, " ")}
+        </span>
+      </div>
+      <p className="font-semibold text-sm text-white truncate group-hover:underline">{ticket.subject}</p>
+      <div className="flex items-center justify-between text-[11px] text-white/60">
+        <span className="capitalize">Priority: {ticket.priority}</span>
+        <span>{fmtShortDate(ticket.created_at)}</span>
+      </div>
+      {ticket.closed_at && (
+        <div className="text-[11px] text-emerald-200/80">Closed {fmtShortDate(ticket.closed_at)}</div>
+      )}
+    </Link>
+  );
+}
+
+function OrderCardItem({ order, fmtCurrency }: { order: OrderRow; fmtCurrency: (cents: number) => string }) {
+  return (
+    <Link
+      to="/shop"
+      search={{ view: "orders" }}
+      className="group rounded-xl border border-white/15 bg-white/[0.06] hover:bg-white/[0.1] hover:border-white/30 transition p-4 flex flex-col gap-2 text-left"
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-amber-100/80">
+          <ShoppingBag className="size-3.5" /> Order #{order.id.slice(0, 8)}
+        </div>
+        <span className={cn("text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full border", statusToneClass(order.status))}>
+          {order.status.replace(/_/g, " ")}
+        </span>
+      </div>
+      <p className="font-display text-lg font-bold text-white">{fmtCurrency(order.total_cents)}</p>
+      <div className="flex items-center justify-between text-[11px] text-white/60">
+        <span>Placed {fmtShortDate(order.created_at)}</span>
+        {order.discount_code && (
+          <span className="text-amber-200/80">Code: {order.discount_code}</span>
+        )}
+      </div>
+      {order.paid_at && (
+        <div className="text-[11px] text-emerald-200/80">Paid {fmtShortDate(order.paid_at)}</div>
+      )}
+      {order.completed_at && (
+        <div className="text-[11px] text-emerald-200/80">Completed {fmtShortDate(order.completed_at)}</div>
+      )}
+    </Link>
+  );
+}
+
 function InfoCard({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-2xl border border-white/25 bg-white/10 backdrop-blur-xl p-4 shadow-[0_10px_40px_-15px_rgba(0,0,0,0.4)] text-white">
