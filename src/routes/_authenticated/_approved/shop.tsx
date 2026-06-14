@@ -78,6 +78,7 @@ import { StreamingDevicesPage } from "@/routes/_authenticated/_approved/streamin
 import { ReviewsPage } from "@/routes/_authenticated/_approved/reviews";
 import { AppDemosView } from "@/components/app/AppDemos";
 import { Film } from "lucide-react";
+import { VpnGuideView } from "@/components/app/VpnGuideView";
 
 type View = "store" | "orders" | "admin" | "refund" | "multi_room" | "triple_room" | "streaming_devices" | "reviews" | "app_demos";
 
