@@ -2,8 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Popcorn, Star, ExternalLink, Calendar, Flame } from "lucide-react";
-import { getTrending, type TmdbItem } from "@/lib/tmdb.functions";
+import { Popcorn, Star, ExternalLink, Calendar, Flame, Tv } from "lucide-react";
+import { getTrending, getHot, type TmdbItem } from "@/lib/tmdb.functions";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -21,13 +21,21 @@ export const Route = createFileRoute("/_authenticated/_approved/what-to-watch")(
 });
 
 function WhatToWatchPage() {
+  const [section, setSection] = useState<"trending" | "hot">("trending");
   const [window, setWindow] = useState<"day" | "week">("week");
   const [selected, setSelected] = useState<TmdbItem | null>(null);
   const fetchTrending = useServerFn(getTrending);
+  const fetchHot = useServerFn(getHot);
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ["tmdb-trending", window],
     queryFn: () => fetchTrending({ data: { window } }),
+    staleTime: 60 * 60 * 1000,
+  });
+
+  const { data: hotData, isLoading: hotLoading, isError: hotError } = useQuery({
+    queryKey: ["tmdb-hot"],
+    queryFn: () => fetchHot({}),
     staleTime: 60 * 60 * 1000,
   });
 
@@ -46,44 +54,81 @@ function WhatToWatchPage() {
                 <Popcorn className="size-3.5" /> What to Watch
               </div>
               <h1 className="font-display text-3xl lg:text-5xl font-bold tracking-tight">
-                Trending right now
+                {section === "trending" ? "Trending right now" : "Hot to watch right now"}
               </h1>
               <p className="mt-3 text-muted-foreground text-base lg:text-lg max-w-2xl">
-                The most-watched movies and series across the world this {window === "day" ? "day" : "week"}, refreshed live from TMDB.
+                {section === "trending"
+                  ? `The most-watched movies and series across the world this ${window === "day" ? "day" : "week"}, refreshed live from TMDB.`
+                  : "Movies playing in cinemas now and series currently airing this week."}
               </p>
-              <div className="mt-5 inline-flex rounded-xl border border-border bg-surface-2 p-1">
-                <button
-                  onClick={() => setWindow("day")}
-                  className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${window === "day" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
-                >
-                  Today
-                </button>
-                <button
-                  onClick={() => setWindow("week")}
-                  className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${window === "week" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
-                >
-                  This week
-                </button>
-              </div>
+              {section === "trending" && (
+                <div className="mt-5 inline-flex rounded-xl border border-border bg-surface-2 p-1">
+                  <button
+                    onClick={() => setWindow("day")}
+                    className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${window === "day" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                  >
+                    Today
+                  </button>
+                  <button
+                    onClick={() => setWindow("week")}
+                    className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${window === "week" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                  >
+                    This week
+                  </button>
+                </div>
+              )}
             </div>
           </header>
 
-          {isError || data?.error ? (
+          {section === "trending" && (isError || data?.error) ? (
             <div className="rounded-2xl border border-destructive/40 bg-destructive/10 p-6 text-sm">
               Couldn't load trending titles{data?.error ? `: ${data.error}` : "."}
             </div>
           ) : null}
+          {section === "hot" && (hotError || hotData?.error) ? (
+            <div className="rounded-2xl border border-destructive/40 bg-destructive/10 p-6 text-sm">
+              Couldn't load hot titles{hotData?.error ? `: ${hotData.error}` : "."}
+            </div>
+          ) : null}
 
-          <Tabs defaultValue="movies" className="w-full">
-            <TabsList className="grid w-full max-w-sm grid-cols-2">
-              <TabsTrigger value="movies">Movies</TabsTrigger>
-              <TabsTrigger value="series">Series</TabsTrigger>
+          <Tabs value={section} onValueChange={(v) => setSection(v as "trending" | "hot")} className="w-full">
+            <TabsList className="grid w-full max-w-md grid-cols-2">
+              <TabsTrigger value="trending" className="gap-2">
+                <Flame className="size-4" /> Trending
+              </TabsTrigger>
+              <TabsTrigger value="hot" className="gap-2">
+                <Tv className="size-4" /> Hot Right Now
+              </TabsTrigger>
             </TabsList>
-            <TabsContent value="movies" className="mt-6">
-              <Grid items={data?.movies ?? []} loading={isLoading} onPick={setSelected} />
+
+            <TabsContent value="trending" className="mt-6">
+              <Tabs defaultValue="movies" className="w-full">
+                <TabsList className="grid w-full max-w-sm grid-cols-2">
+                  <TabsTrigger value="movies">Movies</TabsTrigger>
+                  <TabsTrigger value="series">Series</TabsTrigger>
+                </TabsList>
+                <TabsContent value="movies" className="mt-6">
+                  <Grid items={data?.movies ?? []} loading={isLoading} onPick={setSelected} />
+                </TabsContent>
+                <TabsContent value="series" className="mt-6">
+                  <Grid items={data?.tv ?? []} loading={isLoading} onPick={setSelected} />
+                </TabsContent>
+              </Tabs>
             </TabsContent>
-            <TabsContent value="series" className="mt-6">
-              <Grid items={data?.tv ?? []} loading={isLoading} onPick={setSelected} />
+
+            <TabsContent value="hot" className="mt-6">
+              <Tabs defaultValue="movies" className="w-full">
+                <TabsList className="grid w-full max-w-sm grid-cols-2">
+                  <TabsTrigger value="movies">In Cinemas</TabsTrigger>
+                  <TabsTrigger value="series">On The Air</TabsTrigger>
+                </TabsList>
+                <TabsContent value="movies" className="mt-6">
+                  <Grid items={hotData?.movies ?? []} loading={hotLoading} onPick={setSelected} />
+                </TabsContent>
+                <TabsContent value="series" className="mt-6">
+                  <Grid items={hotData?.tv ?? []} loading={hotLoading} onPick={setSelected} />
+                </TabsContent>
+              </Tabs>
             </TabsContent>
           </Tabs>
         </div>
