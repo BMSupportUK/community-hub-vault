@@ -273,6 +273,31 @@ export function embedSocialUrls(html: string): string {
   const htmlBlockReplacement = embedStandaloneTweetBlocksSSR(html);
   if (htmlBlockReplacement !== html) return htmlBlockReplacement;
 
+  // Bare tweet URLs that sit directly in the HTML between block elements
+  // (e.g. `<div>Hansen starts</div><br>https://x.com/.../status/123?s=20`)
+  // aren't inside a <p|div|span>, so the block scanner above misses them.
+  // Walk text segments between tags and convert any standalone tweet URL.
+  const looksLikeHtml = /<[a-z][\s\S]*>/i.test(html);
+  if (looksLikeHtml) {
+    let changed = false;
+    const segments = html.split(/(<[^>]+>)/g);
+    for (let i = 0; i < segments.length; i++) {
+      const seg = segments[i];
+      if (!seg || seg.startsWith("<")) continue;
+      // Only convert when the URL is the entire text segment (ignoring
+      // surrounding whitespace / non-breaking spaces). Mid-sentence URLs
+      // keep their existing rendering.
+      const trimmed = seg.replace(/&nbsp;/gi, " ").trim();
+      if (!trimmed) continue;
+      const replacement = tryEmbedUrl(trimmed);
+      if (replacement) {
+        segments[i] = replacement;
+        changed = true;
+      }
+    }
+    if (changed) return segments.join("");
+  }
+
   if (typeof window === "undefined") return html;
   const doc = new DOMParser().parseFromString(`<div id="__root">${html}</div>`, "text/html");
   const root = doc.getElementById("__root");
