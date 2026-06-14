@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 
-const TWEET_RE = /^https?:\/\/(?:www\.|mobile\.)?(?:twitter|x)\.com\/[A-Za-z0-9_]+\/status\/(\d+)(?:[/?#]\S*)?$/i;
+const TWEET_RE = /^https?:\/\/(?:www\.|m\.|mobile\.|web\.)?(?:twitter|x)\.com\/(?:i\/(?:web\/)?status|[A-Za-z0-9_]+\/status(?:es)?)\/(\d{1,40})(?:[/?#]\S*)?$/i;
 // Facebook's public embed SDK requires an App ID + token now, so xfbml
 // `.fb-post` shells render blank for most viewers. We deliberately let
 // Facebook / fb.watch URLs fall through to the standard link-preview card
@@ -162,10 +162,29 @@ function tweetEmbed(url: string, id: string) {
 }
 
 function tryEmbedUrl(raw: string): string | null {
-  const url = raw.trim();
+  const url = decodeBasicEntities(raw)
+    .trim()
+    .replace(/^[<\s]+|[>\s]+$/g, "")
+    .replace(/[)\].,!?:;]+$/g, "");
   const t = url.match(TWEET_RE);
   if (t) return tweetEmbed(url.replace(/^http:/, "https:"), t[1]);
   return null;
+}
+
+function embedStandaloneTweetBlocksSSR(html: string): string {
+  return html.replace(/<(p|div|span)\b([^>]*)>([\s\S]*?)<\/\1>/gi, (match, tag: string, attrs: string, inner: string) => {
+    if (/data-tweet-embed|twitter-tweet|fb-post|video-embed|data-link-preview/i.test(match)) return match;
+    if (/<(?:img|iframe|video|blockquote)\b/i.test(inner)) return match;
+
+    const anchor = inner.match(/^\s*<a\b[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>\s*$/i);
+    if (anchor) {
+      const text = htmlTextContent(anchor[2]);
+      const href = decodeBasicEntities(anchor[1]);
+      if (!text || text === href || /^https?:\/\//i.test(text)) return tryEmbedUrl(href) ?? match;
+    }
+
+    return tryEmbedUrl(htmlTextContent(inner)) ?? match;
+  });
 }
 
 function decodeBasicEntities(text: string): string {
@@ -250,6 +269,9 @@ export function embedSocialUrls(html: string): string {
     });
     if (changed) return converted.join("<br/>");
   }
+
+  const htmlBlockReplacement = embedStandaloneTweetBlocksSSR(html);
+  if (htmlBlockReplacement !== html) return htmlBlockReplacement;
 
   if (typeof window === "undefined") return html;
   const doc = new DOMParser().parseFromString(`<div id="__root">${html}</div>`, "text/html");
