@@ -295,6 +295,9 @@ function LeaderboardPage() {
                   {daneRow && (
                     <>
                       <hr className="my-6 border-purple-500/30" />
+                      <p className="mb-3 text-sm font-medium text-purple-200/80 text-center">
+                        Excluded from leaderboard due to being site owner.
+                      </p>
                       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
                         {renderCard(daneRow, null)}
                       </div>
