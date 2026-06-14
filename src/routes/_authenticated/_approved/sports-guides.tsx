@@ -169,7 +169,11 @@ function SportsGuidesPage() {
   }, [catFromUrl, categories]);
 
   useEffect(() => {
-    if (categories.length) setActiveCat((cur) => cur ?? resolvedCatFromUrl ?? categories[0].id);
+    if (categories.length) {
+      const preferred =
+        categories.find((c) => c.slug === "daily-sports-ppv")?.id ?? categories[0].id;
+      setActiveCat((cur) => cur ?? resolvedCatFromUrl ?? preferred);
+    }
   }, [categories, resolvedCatFromUrl]);
 
   // If we arrived back here from new/edit/read, jump straight to the category.
