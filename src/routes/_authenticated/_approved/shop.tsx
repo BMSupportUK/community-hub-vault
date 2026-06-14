@@ -1535,8 +1535,8 @@ function Storefront() {
                     Welcome to the Store
                   </h1>
                   <p className="mt-4 text-sky-100/90 max-w-xl text-base md:text-lg">
-                    Browse plans, gear and add-ons hand-picked for BM Support members. Place an
-                    order in seconds — we'll keep you posted every step of the way.
+                    Browse plans hand-picked for BM Support members. Place an order in seconds —
+                    we'll keep you posted every step of the way.
                   </p>
                   <div className="mt-6 flex flex-wrap items-center gap-3">
                     <button
