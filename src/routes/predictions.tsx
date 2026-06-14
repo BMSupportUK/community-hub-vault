@@ -103,6 +103,12 @@ function liveLabel(f: {
   return "LIVE";
 }
 
+function scoreLabel(f: { homeScore?: number | null; awayScore?: number | null }) {
+  return f.homeScore !== null && f.homeScore !== undefined && f.awayScore !== null && f.awayScore !== undefined
+    ? `${f.homeScore}-${f.awayScore}`
+    : null;
+}
+
 function LivePill({
   fixture,
 }: {
@@ -1864,7 +1870,9 @@ function LeaderboardList({
                           <span className="ml-2 font-mono text-foreground">FT {p.homeScore}-{p.awayScore}</span>
                         )}
                         {!finished && live && (
-                          <span className="ml-2 font-mono text-red-300">LIVE {liveLabel(p)}</span>
+                          <span className="ml-2 font-mono text-red-300">
+                            LIVE {liveLabel(p)}{scoreLabel(p) ? ` ${scoreLabel(p)}` : ""}
+                          </span>
                         )}
                       </div>
                     </div>
