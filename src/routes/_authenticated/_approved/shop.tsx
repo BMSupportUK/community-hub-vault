@@ -1447,7 +1447,8 @@ function Storefront() {
         )}
         {tab === "app_demos" && (
           <div
-            className="absolute inset-0 min-h-screen bg-background/35 pointer-events-none"
+            className="absolute inset-0 min-h-screen pointer-events-none"
+            style={{ background: "rgba(5, 10, 20, 0.88)" }}
             aria-hidden
           />
         )}
