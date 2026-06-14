@@ -65,6 +65,10 @@ function WhatToWatchPage() {
                   </p>
                 </div>
                 <div className="flex flex-col gap-3 lg:items-end">
+                  <TabsList className="grid w-full max-w-sm grid-cols-2 lg:w-[20rem]">
+                    <TabsTrigger value="movies">In Cinemas</TabsTrigger>
+                    <TabsTrigger value="series">Tv Series</TabsTrigger>
+                  </TabsList>
                   {section === "trending" && (
                     <div className="inline-flex rounded-xl border border-border bg-surface-2 p-1 self-start lg:self-end">
                       <button
@@ -81,10 +85,6 @@ function WhatToWatchPage() {
                       </button>
                     </div>
                   )}
-                  <TabsList className="grid w-full max-w-sm grid-cols-2 lg:w-[20rem]">
-                    <TabsTrigger value="movies">In Cinemas</TabsTrigger>
-                    <TabsTrigger value="series">Tv Series</TabsTrigger>
-                  </TabsList>
                 </div>
               </div>
             </header>
