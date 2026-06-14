@@ -73,8 +73,10 @@ export const getTrending = createServerFn({ method: "GET" })
       const [mRes, tRes] = await Promise.all([
         fetch(`${base}/trending/movie/${data.window}${auth.query}`, { headers: auth.headers }),
         fetch(`${base}/trending/tv/${data.window}${auth.query}`, { headers: auth.headers }),
-      ]);
-      if (!mRes.ok || !tRes.ok) {
+        fetch(`${base}/trending/movie/${data.window}${auth.query}${auth.query ? "&" : "?"}page=2`, { headers: auth.headers }),
+        fetch(`${base}/trending/tv/${data.window}${auth.query}${auth.query ? "&" : "?"}page=2`, { headers: auth.headers }),
+      ] as const as unknown as [Response, Response, Response, Response]);
+      const [mRes1, tRes1, mRes2, tRes2] = [mRes, tRes, arguments[0], arguments[0]] as any;
         return {
           movies: [] as TmdbItem[],
           tv: [] as TmdbItem[],
