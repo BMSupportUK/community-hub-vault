@@ -179,6 +179,10 @@ function WhatToWatchPage() {
   );
 }
 
+function sortByDateDesc(items: TmdbItem[]): TmdbItem[] {
+  return [...items].sort((a, b) => (b.date ?? "").localeCompare(a.date ?? ""));
+}
+
 function Grid({ items, loading, onPick }: { items: TmdbItem[]; loading: boolean; onPick: (i: TmdbItem) => void }) {
   if (loading) {
     return (
