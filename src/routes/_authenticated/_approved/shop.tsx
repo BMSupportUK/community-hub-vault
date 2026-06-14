@@ -1757,6 +1757,9 @@ function Storefront() {
             <TabsContent value="reviews" className="mt-4 -mx-6">
               <ReviewsPage />
             </TabsContent>
+            <TabsContent value="vpn" className="mt-4 -mx-6">
+              <VpnGuideView />
+            </TabsContent>
           </Tabs>
         </div>
       </div>
