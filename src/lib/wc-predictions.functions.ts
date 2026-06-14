@@ -229,10 +229,10 @@ export const getEntrantWcPredictions = createServerFn({ method: "GET" })
       .select(
         "home_pred, away_pred, points, fixture:wc_fixtures!inner(id, stage, group_label, home_team, away_team, kickoff_at, home_score, away_score, status)",
       )
-      .eq(col, data.entrantId)
-      .lte("fixture.kickoff_at", nowIso);
+      .eq(col, data.entrantId);
     if (error) throw new Error(error.message);
     return (rows ?? [])
+      .filter((r: any) => r.fixture && r.fixture.kickoff_at <= nowIso)
       .map((r: any) => ({
         fixtureId: r.fixture.id,
         stage: r.fixture.stage,
