@@ -44,7 +44,7 @@ function WhatToWatchPage() {
       className="flex-1 flex min-w-0 overflow-y-auto bg-[#1a0b2e] bg-cover bg-center bg-no-repeat bg-fixed relative"
       style={{ backgroundImage: `url(${whatToWatchBg.url})` }}
     >
-      <div className="absolute inset-0 bg-gradient-to-b from-[#1a0b2e]/75 via-[#1a0b2e]/65 to-[#1a0b2e]/85 pointer-events-none" aria-hidden />
+      <div className="absolute inset-0 bg-gradient-to-b from-[#1a0b2e]/50 via-[#1a0b2e]/35 to-[#1a0b2e]/55 pointer-events-none" aria-hidden />
       <main className="relative z-10 flex-1">
         <div className="max-w-7xl mx-auto px-4 lg:px-8 py-8 space-y-6">
           <Tabs defaultValue="movies" className="w-full">

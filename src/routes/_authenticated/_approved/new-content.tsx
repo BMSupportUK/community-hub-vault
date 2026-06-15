@@ -294,7 +294,7 @@ function NewContentPage() {
     >
       <div
         className="absolute inset-0 pointer-events-none"
-        style={{ background: "rgba(5, 10, 20, 0.88)" }}
+        style={{ background: "rgba(5, 10, 20, 0.55)" }}
         aria-hidden
       />
       <div className="relative z-10">

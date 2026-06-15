@@ -340,7 +340,7 @@ function InstallGuidesPage() {
               className="relative rounded-2xl border border-violet-500/30 overflow-hidden p-4 sm:p-6 shadow-[0_0_60px_-15px_rgba(139,92,246,0.5)] bg-cover bg-center"
               style={{ backgroundImage: `url(${installHero})` }}
             >
-              <div className="absolute inset-0 bg-gradient-to-br from-[#1a0b2e]/90 via-[#1a0b2e]/80 to-[#2d1b4e]/85 pointer-events-none" />
+              <div className="absolute inset-0 bg-gradient-to-br from-[#1a0b2e]/55 via-[#1a0b2e]/40 to-[#2d1b4e]/55 pointer-events-none" />
               <div className="relative grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6">
               <aside className="rounded-2xl bg-violet-950/50 border border-violet-500/30 p-4 h-fit">
                 <h3 className="font-display font-semibold mb-3 px-2 text-violet-50">Categories</h3>
@@ -514,7 +514,7 @@ function InstallGuidesPage() {
               className="relative rounded-2xl border border-violet-500/30 overflow-hidden p-4 sm:p-6 shadow-[0_0_60px_-15px_rgba(139,92,246,0.5)] bg-cover bg-center"
               style={{ backgroundImage: `url(${installHero})` }}
             >
-              <div className="absolute inset-0 bg-gradient-to-br from-[#1a0b2e]/90 via-[#1a0b2e]/80 to-[#2d1b4e]/85 pointer-events-none" />
+              <div className="absolute inset-0 bg-gradient-to-br from-[#1a0b2e]/55 via-[#1a0b2e]/40 to-[#2d1b4e]/55 pointer-events-none" />
               <div className="relative">
             {isMod && (
               <div className="mb-4 flex items-center gap-2">

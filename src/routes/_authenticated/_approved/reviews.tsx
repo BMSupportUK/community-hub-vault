@@ -116,7 +116,7 @@ export function ReviewsPage() {
       className="relative flex-1 overflow-y-auto bg-[#1a0b2e] bg-cover bg-center bg-no-repeat bg-fixed"
       style={{ backgroundImage: `url(${reviewsBg})` }}
     >
-      <div className="pointer-events-none absolute inset-0 z-0 bg-gradient-to-br from-[#1a0b2e]/80 via-purple-900/65 to-fuchsia-900/55" />
+      <div className="pointer-events-none absolute inset-0 z-0 bg-gradient-to-br from-[#1a0b2e]/50 via-purple-900/40 to-fuchsia-900/35" />
       <div className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(ellipse_at_top_right,rgba(167,139,250,0.18),transparent_60%)]" />
       <div className="relative z-10">
       <header className="px-8 pt-8 pb-6 border-b border-purple-500/30 bg-purple-950/40 backdrop-blur">

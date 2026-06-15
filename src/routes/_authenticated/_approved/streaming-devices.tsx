@@ -366,7 +366,7 @@ export function StreamingDevicesPage() {
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0"
-        style={{ background: "rgba(5, 10, 20, 0.88)" }}
+        style={{ background: "rgba(5, 10, 20, 0.55)" }}
       />
       <div className="relative w-full px-4 sm:px-6 lg:px-8 py-6 space-y-8">
         <header className="space-y-2">

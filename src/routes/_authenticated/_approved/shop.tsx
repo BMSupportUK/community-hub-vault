@@ -414,7 +414,7 @@ function ShopPage() {
               className="relative flex-1 flex min-w-0 bg-cover bg-center bg-no-repeat bg-fixed"
               style={{ backgroundImage: `url(${tvLoginIllustration})` }}
             >
-              <div aria-hidden className="pointer-events-none absolute inset-0" style={{ background: "rgba(5, 10, 20, 0.88)" }} />
+              <div aria-hidden className="pointer-events-none absolute inset-0" style={{ background: "rgba(5, 10, 20, 0.55)" }} />
               <AppDemosView />
             </div>
           )}
@@ -1444,14 +1444,14 @@ function Storefront() {
       >
         {tab === "orders" && (
           <div
-            className="absolute inset-0 min-h-screen bg-gradient-to-b from-[#1a0b2e]/85 via-[#1a0b2e]/65 to-[#1a0b2e]/90 backdrop-blur-[2px] pointer-events-none"
+            className="absolute inset-0 min-h-screen bg-gradient-to-b from-[#1a0b2e]/55 via-[#1a0b2e]/40 to-[#1a0b2e]/60 backdrop-blur-[2px] pointer-events-none"
             aria-hidden
           />
         )}
         {tab === "app_demos" && (
           <div
             className="absolute inset-0 min-h-screen pointer-events-none"
-            style={{ background: "rgba(5, 10, 20, 0.88)" }}
+            style={{ background: "rgba(5, 10, 20, 0.55)" }}
             aria-hidden
           />
         )}
@@ -2817,7 +2817,7 @@ function OrdersView({
       style={{ backgroundImage: `url(${shopOrdersBg})` }}
     >
       <div
-        className="absolute inset-0 bg-gradient-to-b from-[#1a0b2e]/85 via-[#1a0b2e]/65 to-[#1a0b2e]/90 backdrop-blur-[2px] pointer-events-none"
+        className="absolute inset-0 bg-gradient-to-b from-[#1a0b2e]/55 via-[#1a0b2e]/40 to-[#1a0b2e]/60 backdrop-blur-[2px] pointer-events-none"
         aria-hidden
       />
       <header className="relative px-6 md:px-8 pt-8 pb-6 border-b border-purple-500/30 bg-purple-950/40 backdrop-blur">
