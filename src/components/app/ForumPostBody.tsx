@@ -199,39 +199,39 @@ function XPostEmbed({ id, url }: { id: string; url: string }) {
         </div>
       ) : (
         <a href={href} target="_blank" rel="noopener noreferrer" className="not-prose relative block no-underline">
-        <div className="flex items-start gap-3">
-          {user?.profile_image_url_https ? (
-            <img
-              src={user.profile_image_url_https}
-              alt=""
-              className="size-11 shrink-0 rounded-full border-2 border-white/25 ring-2 ring-[#E11B22]/40"
-              loading="lazy"
-              referrerPolicy="no-referrer"
-            />
-          ) : (
-            <div className="flex size-11 shrink-0 items-center justify-center rounded-full border-2 border-white/25 bg-black text-base font-black text-white ring-2 ring-[#E11B22]/40">
+          <div className="flex items-start gap-3">
+            {user?.profile_image_url_https ? (
+              <img
+                src={user.profile_image_url_https}
+                alt=""
+                className="size-11 shrink-0 rounded-full border-2 border-white/25 ring-2 ring-[#E11B22]/40"
+                loading="lazy"
+                referrerPolicy="no-referrer"
+              />
+            ) : (
+              <div className="flex size-11 shrink-0 items-center justify-center rounded-full border-2 border-white/25 bg-black text-base font-black text-white ring-2 ring-[#E11B22]/40">
+                𝕏
+              </div>
+            )}
+            <div className="min-w-0 flex-1">
+              <div className="flex min-w-0 items-center gap-1.5">
+                <span className="truncate text-base font-bold text-white">{user?.name ?? "View post on X"}</span>
+                {(user?.is_blue_verified || user?.verified) && <span className="text-sky-400">✓</span>}
+              </div>
+              <div className="boro-x-handle truncate text-sm text-white/55">{handle}</div>
+            </div>
+            <span className="boro-x-action flex size-9 shrink-0 items-center justify-center rounded-full bg-white text-lg font-black text-black shadow-[0_4px_14px_-2px_rgba(255,255,255,0.35)]">
               𝕏
+            </span>
+          </div>
+
+          {tweet?.text ? (
+            <p className="mt-4 whitespace-pre-wrap text-[16px] leading-[1.55] text-white/95">{formatTweetText(tweet)}</p>
+          ) : (
+            <div className="mt-4 rounded-md border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-white/60">
+              {failed ? "X could not provide a preview for this post." : "Loading X post preview…"}
             </div>
           )}
-          <div className="min-w-0 flex-1">
-            <div className="flex min-w-0 items-center gap-1.5">
-              <span className="truncate text-base font-bold text-white">{user?.name ?? "View post on X"}</span>
-              {(user?.is_blue_verified || user?.verified) && <span className="text-sky-400">✓</span>}
-            </div>
-            <div className="boro-x-handle truncate text-sm text-white/55">{handle}</div>
-          </div>
-          <span className="boro-x-action flex size-9 shrink-0 items-center justify-center rounded-full bg-white text-lg font-black text-black shadow-[0_4px_14px_-2px_rgba(255,255,255,0.35)]">
-            𝕏
-          </span>
-        </div>
-
-        {tweet?.text ? (
-          <p className="mt-4 whitespace-pre-wrap text-[16px] leading-[1.55] text-white/95">{formatTweetText(tweet)}</p>
-        ) : (
-          <div className="mt-4 rounded-md border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-white/60">
-            {failed ? "X could not provide a preview for this post." : "Loading X post preview…"}
-          </div>
-        )}
 
         {media.length > 0 && (
           <div className={`mt-4 grid gap-1 overflow-hidden rounded-xl border border-white/15 ${media.length > 1 ? "grid-cols-2" : "grid-cols-1"}`}>
