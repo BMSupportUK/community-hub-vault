@@ -42,30 +42,30 @@ export function LinkPreviewCard({ url, title }: { url: string; title?: string })
       href={url}
       target="_blank"
       rel="noopener noreferrer"
-      className="not-prose my-3 flex max-w-[640px] flex-col overflow-hidden rounded-lg border border-border bg-card text-card-foreground no-underline shadow-sm transition-colors hover:bg-accent sm:flex-row"
+      className="boro-link-card not-prose group/link-card my-4 flex max-w-[640px] flex-col overflow-hidden rounded-2xl border border-white/15 bg-[linear-gradient(155deg,#0b0f17_0%,#0f1522_55%,#0a0d14_100%)] !text-white !no-underline shadow-[0_18px_46px_-18px_rgba(0,0,0,0.92)] ring-1 ring-white/5 transition-all duration-200 hover:border-[#E11B22]/60 hover:shadow-[0_22px_56px_-18px_rgba(225,27,34,0.55)] sm:flex-row"
     >
       {m?.image ? (
         <img
           src={m.image}
           alt=""
-          className="h-44 w-full shrink-0 object-cover sm:h-auto sm:w-40"
+          className="h-44 w-full shrink-0 object-cover sm:h-auto sm:w-44"
           loading="lazy"
           referrerPolicy="no-referrer"
           onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
         />
       ) : null}
-      <div className="min-w-0 flex-1 p-3.5">
-        <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-wide text-muted-foreground">
+      <div className="min-w-0 flex-1 p-4">
+        <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide !text-white/60">
           <Link2 className="size-3" />
           <span className="truncate">{m?.host ?? host}</span>
         </div>
-        <div className="mt-1 font-semibold leading-snug text-foreground line-clamp-2">
+        <div className="mt-1.5 text-[15px] font-bold leading-snug !text-white line-clamp-2">
           {fallbackTitle}
         </div>
         {m?.description ? (
-          <p className="mt-1 text-sm text-muted-foreground line-clamp-2">{m.description}</p>
+          <p className="mt-1.5 text-sm !text-white/75 line-clamp-2">{m.description}</p>
         ) : !failed && !m ? (
-          <p className="mt-1 text-sm text-muted-foreground line-clamp-2">Loading link details…</p>
+          <p className="mt-1.5 text-sm !text-white/55 line-clamp-2">Loading link details…</p>
         ) : null}
       </div>
     </a>
