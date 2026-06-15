@@ -52,7 +52,7 @@ export function FanZoneStaffBox() {
           const isAdmin = m.role === "admin";
           const initials = name.slice(0, 2).toUpperCase();
           const inner = (
-            <div className="flex items-center gap-2.5 rounded-lg border border-white/12 bg-white/8 px-2.5 py-2 hover:border-[#E11B22]/60 hover:bg-white/12 transition-colors">
+            <div className="flex items-center gap-2.5 rounded-lg border border-white/[0.12] bg-white/[0.08] px-2.5 py-2 hover:border-[#E11B22]/60 hover:bg-white/[0.12] transition-colors">
               <div className="relative shrink-0">
                 {m.fan_avatar_url ? (
                   <img
