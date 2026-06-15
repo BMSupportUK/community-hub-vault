@@ -115,7 +115,7 @@ function MessagesLayout() {
   return (
     <div
       className="boro-theme flex-1 w-full min-w-0 min-h-full self-stretch overflow-y-auto bg-cover bg-center bg-no-repeat bg-fixed"
-      style={{ backgroundImage: `linear-gradient(to bottom, rgba(10,8,16,0.25), rgba(10,8,16,0.4)), url(${bgAsset.url})` }}
+      style={{ backgroundImage: `linear-gradient(to bottom, rgba(6,8,14,0.62), rgba(6,8,14,0.76)), url(${bgAsset.url})` }}
     >
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6">
       <div className="flex items-center justify-between gap-3 mb-4">
@@ -128,7 +128,7 @@ function MessagesLayout() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-[320px_minmax(0,1fr)]">
-        <aside className="rounded-2xl border border-[#E11B22]/30 bg-surface-1/85 backdrop-blur-sm shadow-soft overflow-hidden">
+        <aside className="rounded-2xl border border-[#E11B22]/30 bg-surface-1/95 backdrop-blur-md shadow-soft overflow-hidden">
           <div className="px-4 py-3 border-b border-border/60 flex items-center gap-2">
             <MessageSquare className="size-4 text-[#E11B22]" />
             <h2 className="font-display font-bold text-sm">Fan zone inbox</h2>
@@ -220,7 +220,7 @@ function MessagesLayout() {
           )}
         </aside>
 
-        <section className="rounded-2xl border border-border bg-surface-1/85 backdrop-blur-sm shadow-soft min-h-[60vh] overflow-hidden">
+        <section className="rounded-2xl border border-border bg-surface-1/95 backdrop-blur-md shadow-soft min-h-[60vh] overflow-hidden">
           {isNested ? (
             <Outlet />
           ) : (
