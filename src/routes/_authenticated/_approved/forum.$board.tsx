@@ -313,7 +313,7 @@ function BoardPage() {
             </section>
           )}
           {topics.length === 0 ? (
-            <div className="rounded-2xl border border-[#E11B22]/20 bg-surface-1 px-4 py-10 text-center text-sm text-muted-foreground shadow-soft">
+            <div className="rounded-2xl border border-[#E11B22]/20 bg-surface-1/40 px-4 py-10 text-center text-sm text-muted-foreground shadow-soft">
               No topics yet. {canPost ? "Be first — start one!" : ""}
             </div>
           ) : (
@@ -328,7 +328,7 @@ function BoardPage() {
             return (
               <article
                 key={t.id}
-                className="group relative rounded-xl border border-border/80 bg-gradient-to-br from-surface-1 via-surface-1 to-surface-2/60 hover:border-[#E11B22]/60 hover:shadow-[0_10px_36px_-14px_rgba(225,27,34,0.55)] hover:-translate-y-[1px] transition-all overflow-hidden shadow-soft"
+                className="group relative rounded-xl border border-border/80 bg-gradient-to-br from-surface-1/45 via-surface-1/35 to-surface-2/25 hover:border-[#E11B22]/60 hover:shadow-[0_10px_36px_-14px_rgba(225,27,34,0.55)] hover:-translate-y-[1px] transition-all overflow-hidden shadow-soft"
               >
                 <span
                   aria-hidden
@@ -367,11 +367,11 @@ function BoardPage() {
                       <span>{formatLastSeen(t.created_at)}</span>
                     </div>
                     <div className="mt-3 flex items-center gap-2 text-[11px] text-muted-foreground flex-wrap">
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-surface-2/80 border border-border/60 font-medium tabular-nums">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-surface-2/40 border border-border/60 font-medium tabular-nums">
                         <MessageSquare className="size-3 text-[#E11B22]" />
                         {t.reply_count}
                       </span>
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-surface-2/80 border border-border/60 font-medium tabular-nums">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-surface-2/40 border border-border/60 font-medium tabular-nums">
                         <Eye className="size-3 text-muted-foreground" />
                         {t.view_count}
                       </span>

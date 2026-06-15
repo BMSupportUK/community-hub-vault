@@ -357,7 +357,7 @@ function TopicPage() {
                 return (
                   <article
                     key={p.id}
-                    className={`rounded-2xl border bg-surface-1 overflow-hidden shadow-soft transition-shadow hover:shadow-[0_8px_30px_-12px_rgba(225,27,34,0.45)] ${
+                    className={`rounded-2xl border bg-surface-1/40 overflow-hidden shadow-soft transition-shadow hover:shadow-[0_8px_30px_-12px_rgba(225,27,34,0.45)] ${
                       p.is_op
                         ? "border-[#E11B22]/50 ring-1 ring-[#E11B22]/20"
                         : "border-border/80 hover:border-[#E11B22]/30"
@@ -365,7 +365,7 @@ function TopicPage() {
                   >
                     <header
                       className={`grid grid-cols-[auto_1fr_auto] gap-3 px-5 py-3 items-center border-b border-border/60 ${
-                        p.is_op ? "bg-gradient-to-r from-[#E11B22]/10 via-[#E11B22]/5 to-transparent" : "bg-surface-2/40"
+                        p.is_op ? "bg-gradient-to-r from-[#E11B22]/10 via-[#E11B22]/5 to-transparent" : "bg-surface-2/25"
                       }`}
                     >
                       <Link
@@ -458,7 +458,7 @@ function TopicPage() {
         };
 
         const ViewingBox = () => (
-          <div className="mt-3 rounded-2xl border border-border/60 bg-surface-2/40 px-4 py-3 space-y-2">
+          <div className="mt-3 rounded-2xl border border-border/60 bg-surface-2/25 px-4 py-3 space-y-2">
             <div className="flex items-center gap-2">
               <Eye className="size-4 text-emerald-500 shrink-0" />
               <div className="text-xs font-semibold text-foreground">
@@ -472,7 +472,7 @@ function TopicPage() {
                   return (
                     <div
                       key={v.user_id}
-                      className="flex items-center gap-1.5 rounded-full border border-border/60 bg-surface-1 pl-1 pr-2.5 py-0.5"
+                        className="flex items-center gap-1.5 rounded-full border border-border/60 bg-surface-1/40 pl-1 pr-2.5 py-0.5"
                     >
                       {v.avatar ? (
                         <img src={v.avatar} alt="" className="size-6 rounded-full object-cover" />

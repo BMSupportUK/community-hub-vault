@@ -251,7 +251,7 @@ function BoardsIndex() {
               key={b.id}
               to="/forum/$board"
               params={{ board: b.slug }}
-              className="group flex flex-col rounded-xl border border-border bg-surface-1/85 backdrop-blur-sm hover:border-[#E11B22]/70 hover:shadow-[0_10px_30px_-10px_rgba(225,27,34,0.55)] hover:-translate-y-[2px] transition-all overflow-hidden relative h-full"
+              className="group flex flex-col rounded-xl border border-border bg-surface-1/40 hover:border-[#E11B22]/70 hover:shadow-[0_10px_30px_-10px_rgba(225,27,34,0.55)] hover:-translate-y-[2px] transition-all overflow-hidden relative h-full"
             >
               <span
                 className="absolute left-0 top-0 right-0 h-1 bg-gradient-to-r from-[#E11B22] to-[#8B0F14]"
@@ -353,7 +353,7 @@ function ForumStats({ boards }: { boards: Board[] }) {
   const fmt = (n: number) => n.toLocaleString();
 
   return (
-    <div className="rounded-xl border border-[#E11B22]/40 bg-surface-1/85 backdrop-blur-sm overflow-hidden shadow-[0_10px_30px_-10px_rgba(225,27,34,0.4)] h-full flex flex-col">
+    <div className="rounded-xl border border-[#E11B22]/40 bg-surface-1/40 overflow-hidden shadow-[0_10px_30px_-10px_rgba(225,27,34,0.4)] h-full flex flex-col">
       <div className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-[#E11B22] to-[#8B0F14] text-white">
         <BarChart3 className="size-4" />
         <h3 className="font-display font-bold text-sm tracking-wide">Forum statistics</h3>

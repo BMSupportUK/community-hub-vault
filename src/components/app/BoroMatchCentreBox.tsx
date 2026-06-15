@@ -137,7 +137,7 @@ export function BoroMatchCentreBox() {
 
   if (loading) {
     return (
-      <aside className="rounded-xl border border-[#E11B22]/40 bg-surface-1/85 p-4 text-sm text-muted-foreground">
+      <aside className="rounded-xl border border-[#E11B22]/40 bg-surface-1/40 p-4 text-sm text-muted-foreground">
         Loading match centre…
       </aside>
     );
@@ -148,7 +148,7 @@ export function BoroMatchCentreBox() {
   const lp = data?.leaguePosition ?? null;
 
   return (
-    <aside className="rounded-xl border border-[#E11B22]/40 bg-surface-1/85 backdrop-blur-sm overflow-hidden shadow-[0_8px_30px_-12px_rgba(225,27,34,0.45)]">
+    <aside className="rounded-xl border border-[#E11B22]/40 bg-surface-1/40 overflow-hidden shadow-[0_8px_30px_-12px_rgba(225,27,34,0.45)]">
       <div className="px-4 py-3 bg-gradient-to-r from-[#E11B22] to-[#8B0F14] text-white flex items-center justify-between">
         <h3 className="font-display text-sm font-bold uppercase tracking-wider flex items-center gap-2">
           <Trophy className="size-4" /> Boro Match Centre
