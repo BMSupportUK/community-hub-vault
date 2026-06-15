@@ -100,7 +100,14 @@ function FanZoneProfilePage() {
       className="boro-theme relative min-h-[calc(100vh-4rem)] w-full overflow-hidden bg-cover bg-center bg-no-repeat"
       style={{ backgroundImage: `url(${bgAsset.url})` }}
     >
-      <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-black/15 to-black/35" aria-hidden />
+      <div
+        className="absolute inset-0"
+        style={{
+          background:
+            "linear-gradient(to bottom, rgba(3, 7, 18, 0.78), rgba(3, 7, 18, 0.72), rgba(3, 7, 18, 0.86))",
+        }}
+        aria-hidden
+      />
 
       <div className="relative z-10 w-full px-4 sm:px-6 lg:px-10 py-8">
         <Button asChild variant="ghost" size="sm" className="text-white hover:text-white hover:bg-white/10 -ml-2 mb-4">
@@ -116,7 +123,7 @@ function FanZoneProfilePage() {
         </div>
 
         {!canEdit ? (
-          <div className="rounded-2xl border border-white/20 bg-black/30 backdrop-blur-md p-8 text-center text-white/80">
+          <div className="rounded-2xl border border-white/20 bg-black/75 backdrop-blur-md p-8 text-center text-white/80 shadow-2xl">
             Fan Zone membership required to edit your profile.
           </div>
         ) : (
@@ -129,7 +136,7 @@ function FanZoneProfilePage() {
             </TabsList>
 
             <TabsContent value="profile">
-              <div className="rounded-2xl border border-[#E11B22]/40 bg-black/35 backdrop-blur-md shadow-2xl text-white overflow-hidden">
+              <div className="rounded-2xl border border-[#E11B22]/45 bg-black/75 backdrop-blur-md shadow-2xl text-white overflow-hidden">
             <div className="flex items-center gap-4 px-5 sm:px-6 py-5 bg-gradient-to-r from-[#E11B22]/30 to-transparent border-b border-white/10">
               <div className="size-20 rounded-full overflow-hidden bg-gradient-to-br from-[#E11B22] to-[#8B0F14] ring-4 ring-white/15 shrink-0">
                 <img src={editPreviewAvatar} alt="" className="size-20 object-cover" />
