@@ -64,16 +64,6 @@ function BoroPredictionsPage() {
   const [showGuestLogin, setShowGuestLogin] = useState(false);
   const [guestMode, setGuestMode] = useState<"signin" | "register">("register");
 
-  useEffect(() => {
-    const html = document.documentElement;
-    html.style.setProperty("--boro-bg-image", `url(${riversideBg})`);
-    html.classList.add("boro-bg-active");
-    return () => {
-      html.classList.remove("boro-bg-active");
-      html.style.removeProperty("--boro-bg-image");
-    };
-  }, []);
-
   const listFn = useServerFn(listBoroFixtures);
   const upsertFn = useServerFn(upsertBoroPrediction);
   const lbFn = useServerFn(getBoroLeaderboard);
