@@ -365,8 +365,6 @@ function TopicPage() {
                   >
                     <header
                       className={`boro-topic-post-header grid grid-cols-[auto_1fr_auto] gap-3 px-5 py-3 items-center border-b ${
-                        p.is-op ? "" : ""
-                      } ${
                         p.is_op ? "border-[#E11B22]/35" : "border-white/10"
                       }`}
                     >
