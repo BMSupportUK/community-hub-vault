@@ -168,7 +168,8 @@ function BoroPredictionsPage() {
         aria-hidden
       />
       <div
-        className="pointer-events-none fixed inset-0 z-0 boro-page-backdrop"
+        className="pointer-events-none fixed inset-0 z-0"
+        style={{ background: "rgba(5, 10, 20, 0.34)" }}
         aria-hidden
       />
       {user && <IconRail />}
