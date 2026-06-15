@@ -100,7 +100,7 @@ function FanZoneProfilePage() {
       className="boro-theme relative min-h-[calc(100vh-4rem)] w-full overflow-hidden bg-cover bg-center bg-no-repeat"
       style={{ backgroundImage: `url(${bgAsset.url})` }}
     >
-      <div className="absolute inset-0 bg-gradient-to-b from-black/45 via-black/35 to-black/55" aria-hidden />
+      <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-black/15 to-black/35" aria-hidden />
 
       <div className="relative z-10 w-full px-4 sm:px-6 lg:px-10 py-8">
         <Button asChild variant="ghost" size="sm" className="text-white hover:text-white hover:bg-white/10 -ml-2 mb-4">
@@ -116,7 +116,7 @@ function FanZoneProfilePage() {
         </div>
 
         {!canEdit ? (
-          <div className="rounded-2xl border border-white/20 bg-black/50 backdrop-blur-md p-8 text-center text-white/80">
+          <div className="rounded-2xl border border-white/20 bg-black/30 backdrop-blur-md p-8 text-center text-white/80">
             Fan Zone membership required to edit your profile.
           </div>
         ) : (
@@ -129,7 +129,7 @@ function FanZoneProfilePage() {
             </TabsList>
 
             <TabsContent value="profile">
-              <div className="rounded-2xl border border-[#E11B22]/40 bg-black/55 backdrop-blur-md shadow-2xl text-white overflow-hidden">
+              <div className="rounded-2xl border border-[#E11B22]/40 bg-black/35 backdrop-blur-md shadow-2xl text-white overflow-hidden">
             <div className="flex items-center gap-4 px-5 sm:px-6 py-5 bg-gradient-to-r from-[#E11B22]/30 to-transparent border-b border-white/10">
               <div className="size-20 rounded-full overflow-hidden bg-gradient-to-br from-[#E11B22] to-[#8B0F14] ring-4 ring-white/15 shrink-0">
                 <img src={editPreviewAvatar} alt="" className="size-20 object-cover" />
@@ -299,7 +299,7 @@ function FriendsPanel({ userId }: { userId: string }) {
   };
 
   return (
-    <div className="rounded-2xl border border-[#E11B22]/40 bg-black/55 backdrop-blur-md shadow-2xl text-white p-5 sm:p-6">
+    <div className="rounded-2xl border border-[#E11B22]/40 bg-black/35 backdrop-blur-md shadow-2xl text-white p-5 sm:p-6">
       <h2 className="font-display text-xl font-bold mb-1">Friends</h2>
       <p className="text-sm text-white/70 mb-4">Your Boro Fan Zone friends. Remove anyone you no longer want connected.</p>
       {rows === null ? (
@@ -372,7 +372,7 @@ function StatsBox({ userId }: { userId: string }) {
   );
 
   return (
-    <div className="rounded-2xl border border-[#E11B22]/40 bg-black/55 backdrop-blur-md shadow-2xl text-white p-5">
+    <div className="rounded-2xl border border-[#E11B22]/40 bg-black/35 backdrop-blur-md shadow-2xl text-white p-5">
       <h2 className="font-display text-lg font-bold mb-3 flex items-center gap-2"><Award className="size-4 text-[#E11B22]" />Fan stats</h2>
       {!s ? (
         <div className="grid place-items-center py-8"><Loader2 className="size-4 animate-spin text-white/70" /></div>
@@ -424,7 +424,7 @@ function ReputationBox({ userId }: { userId: string }) {
   }, [userId]);
 
   return (
-    <div className="rounded-2xl border border-[#E11B22]/40 bg-black/55 backdrop-blur-md shadow-2xl text-white p-5">
+    <div className="rounded-2xl border border-[#E11B22]/40 bg-black/35 backdrop-blur-md shadow-2xl text-white p-5">
       <h2 className="font-display text-lg font-bold mb-1 flex items-center gap-2"><Award className="size-4 text-[#E11B22]" />Reputation</h2>
       <p className="text-[11px] text-white/60 mb-3">Based on reactions to your forum posts.</p>
       {!data ? (
@@ -485,7 +485,7 @@ function IgnoredPanel() {
   };
 
   return (
-    <div className="rounded-2xl border border-[#E11B22]/40 bg-black/55 backdrop-blur-md shadow-2xl text-white p-5 sm:p-6">
+    <div className="rounded-2xl border border-[#E11B22]/40 bg-black/35 backdrop-blur-md shadow-2xl text-white p-5 sm:p-6">
       <h2 className="font-display text-xl font-bold mb-1">Ignored members</h2>
       <p className="text-sm text-white/70 mb-4">Members you've blocked. Their posts and DMs are hidden from you.</p>
       {rows === null ? (
