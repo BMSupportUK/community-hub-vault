@@ -188,12 +188,17 @@ function XPostEmbed({ id, url }: { id: string; url: string }) {
           <blockquote className="twitter-tweet" data-dnt="true" data-theme="dark" data-lang="en">
             <a href={href}>View post on X</a>
           </blockquote>
-          <a href={href} target="_blank" rel="noopener noreferrer" className="boro-x-action mt-2 inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1 text-xs font-semibold text-black no-underline hover:bg-white/90">
+          <a
+            href={href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="boro-x-action mt-2 inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1 text-xs font-semibold text-black no-underline hover:bg-white/90"
+          >
             <span className="text-sm font-black leading-none">𝕏</span> Open on X
           </a>
         </div>
       ) : (
-      <a href={href} target="_blank" rel="noopener noreferrer" className="not-prose relative block no-underline">
+        <a href={href} target="_blank" rel="noopener noreferrer" className="not-prose relative block no-underline">
         <div className="flex items-start gap-3">
           {user?.profile_image_url_https ? (
             <img
@@ -215,7 +220,9 @@ function XPostEmbed({ id, url }: { id: string; url: string }) {
             </div>
             <div className="boro-x-handle truncate text-sm text-white/55">{handle}</div>
           </div>
-          <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-white text-lg font-black text-black shadow-[0_4px_14px_-2px_rgba(255,255,255,0.35)]">𝕏</span>
+          <span className="boro-x-action flex size-9 shrink-0 items-center justify-center rounded-full bg-white text-lg font-black text-black shadow-[0_4px_14px_-2px_rgba(255,255,255,0.35)]">
+            𝕏
+          </span>
         </div>
 
         {tweet?.text ? (
@@ -249,7 +256,7 @@ function XPostEmbed({ id, url }: { id: string; url: string }) {
             Open on 𝕏
           </span>
         </div>
-      </a>
+        </a>
       )}
     </article>
   );
