@@ -142,7 +142,7 @@ function FanProfilePage() {
       className="boro-theme relative min-h-[calc(100vh-4rem)] w-full overflow-hidden bg-cover bg-center bg-no-repeat"
       style={{ backgroundImage: `url(${bgAsset.url})` }}
     >
-      <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/60 to-black/85" aria-hidden />
+      <div className="absolute inset-0 bg-gradient-to-b from-black/45 via-black/35 to-black/55" aria-hidden />
 
       <div className="relative z-10 w-full px-4 sm:px-6 lg:px-10 py-8 space-y-4">
       <Button asChild variant="ghost" size="sm" className="text-white hover:text-white hover:bg-white/10 -ml-2">

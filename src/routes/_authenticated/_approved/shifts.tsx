@@ -399,7 +399,7 @@ function ShiftsPage() {
       className="flex-1 overflow-y-auto relative bg-cover bg-center bg-fixed"
       style={{ backgroundImage: `url(${shiftsBg})` }}
     >
-      <div className="absolute inset-0 bg-background/70 backdrop-blur-[2px] pointer-events-none" aria-hidden />
+      <div className="absolute inset-0 bg-background/45 backdrop-blur-[2px] pointer-events-none" aria-hidden />
       <header className="relative px-8 pt-8 pb-6 border-b border-border bg-surface/60 backdrop-blur">
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div>

@@ -77,7 +77,7 @@ function ContactPage() {
       className="min-h-screen bg-background bg-cover bg-center bg-no-repeat relative"
       style={{ backgroundImage: `url(${contactBg})` }}
     >
-      <div className="absolute inset-0 bg-background/70 backdrop-blur-[2px]" aria-hidden="true" />
+      <div className="absolute inset-0 bg-background/45 backdrop-blur-[2px]" aria-hidden="true" />
       <div className="relative z-10">
       <header className="px-8 py-5 flex items-center justify-between border-b border-border/40 bg-background/30 backdrop-blur-md">
         <Link to="/" className="flex items-center gap-2">

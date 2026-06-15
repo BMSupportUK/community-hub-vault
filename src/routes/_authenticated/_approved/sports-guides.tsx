@@ -601,7 +601,7 @@ function SportsGuidesPage() {
       className="flex-1 overflow-y-auto relative bg-cover bg-center bg-fixed"
       style={{ backgroundImage: `url(${sportsBg})` }}
     >
-      <div className="absolute inset-0 bg-black/[0.88] pointer-events-none" aria-hidden />
+      <div className="absolute inset-0 bg-black/55 pointer-events-none" aria-hidden />
       <header className="relative px-8 pt-8 pb-6 border-b border-purple-500/30 bg-purple-950/40 backdrop-blur">
         <h1 className="font-display text-3xl font-bold bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 bg-clip-text text-transparent">Sports Guide</h1>
         <p className="text-purple-200/80 mt-1">Explore guides and news from all major sports</p>
