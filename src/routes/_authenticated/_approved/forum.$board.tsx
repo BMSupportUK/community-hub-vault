@@ -328,7 +328,7 @@ function BoardPage() {
             return (
               <article
                 key={t.id}
-                className="group relative rounded-xl border border-border/80 bg-gradient-to-br from-surface-1/45 via-surface-1/35 to-surface-2/25 hover:border-[#E11B22]/60 hover:shadow-[0_10px_36px_-14px_rgba(225,27,34,0.55)] hover:-translate-y-[1px] transition-all overflow-hidden shadow-soft"
+                 className="group relative rounded-xl border border-white/10 bg-[rgba(8,12,22,0.88)] backdrop-blur-md hover:border-[#E11B22]/70 hover:shadow-[0_14px_42px_-12px_rgba(225,27,34,0.6)] hover:-translate-y-[1px] transition-all overflow-hidden shadow-[0_8px_28px_-10px_rgba(0,0,0,0.7)]"
               >
                 <span
                   aria-hidden
