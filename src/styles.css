@@ -1173,3 +1173,26 @@ html.boro-bg-active .min-h-screen.bg-background {
   color: rgba(226, 232, 240, 0.92) !important;
   border-left-color: rgba(225, 27, 34, 0.75) !important;
 }
+.boro-x-embed,
+.boro-x-embed a,
+.boro-x-embed a:visited,
+.boro-x-embed :is(p, div, span, strong) {
+  color: rgba(248, 250, 252, 0.98) !important;
+  text-decoration: none !important;
+}
+.boro-readable-copy.prose .boro-x-embed,
+.boro-readable-copy.prose .boro-x-embed a,
+.boro-readable-copy.prose .boro-x-embed a:visited,
+.boro-readable-copy.prose .boro-x-embed :is(p, div, span, strong) {
+  color: rgba(248, 250, 252, 0.98) !important;
+  text-decoration: none !important;
+}
+.boro-x-embed .boro-x-handle,
+.boro-x-embed .boro-x-meta,
+.boro-x-embed .boro-x-meta * {
+  color: rgba(226, 232, 240, 0.78) !important;
+}
+.boro-x-embed .boro-x-action,
+.boro-x-embed .boro-x-action * {
+  color: rgb(8, 12, 20) !important;
+}
