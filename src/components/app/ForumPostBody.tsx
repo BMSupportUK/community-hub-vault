@@ -188,7 +188,7 @@ function XPostEmbed({ id, url }: { id: string; url: string }) {
           <blockquote className="twitter-tweet" data-dnt="true" data-theme="dark" data-lang="en">
             <a href={href}>View post on X</a>
           </blockquote>
-          <a href={href} target="_blank" rel="noopener noreferrer" className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1 text-xs font-semibold text-black no-underline hover:bg-white/90">
+          <a href={href} target="_blank" rel="noopener noreferrer" className="boro-x-action mt-2 inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1 text-xs font-semibold text-black no-underline hover:bg-white/90">
             <span className="text-sm font-black leading-none">𝕏</span> Open on X
           </a>
         </div>
@@ -213,7 +213,7 @@ function XPostEmbed({ id, url }: { id: string; url: string }) {
               <span className="truncate text-base font-bold text-white">{user?.name ?? "View post on X"}</span>
               {(user?.is_blue_verified || user?.verified) && <span className="text-sky-400">✓</span>}
             </div>
-            <div className="truncate text-sm text-white/55">{handle}</div>
+            <div className="boro-x-handle truncate text-sm text-white/55">{handle}</div>
           </div>
           <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-white text-lg font-black text-black shadow-[0_4px_14px_-2px_rgba(255,255,255,0.35)]">𝕏</span>
         </div>
@@ -241,11 +241,11 @@ function XPostEmbed({ id, url }: { id: string; url: string }) {
           </div>
         )}
 
-        <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-white/10 pt-3 text-xs text-white/55">
+        <div className="boro-x-meta mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-white/10 pt-3 text-xs text-white/55">
           {tweet?.created_at && <span>{formatTweetDate(tweet.created_at)}</span>}
           {typeof tweet?.favorite_count === "number" && <span>♥ {compactNumber(tweet.favorite_count)}</span>}
           {typeof tweet?.conversation_count === "number" && <span>💬 {compactNumber(tweet.conversation_count)}</span>}
-          <span className="ml-auto inline-flex items-center gap-1 rounded-full bg-white px-3 py-1 text-[11px] font-bold text-black transition-transform group-hover/x-embed:scale-105">
+          <span className="boro-x-action ml-auto inline-flex items-center gap-1 rounded-full bg-white px-3 py-1 text-[11px] font-bold text-black transition-transform group-hover/x-embed:scale-105">
             Open on 𝕏
           </span>
         </div>
