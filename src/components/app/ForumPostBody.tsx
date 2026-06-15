@@ -180,52 +180,54 @@ function XPostEmbed({ id, url }: { id: string; url: string }) {
   const media = tweet ? getTweetMedia(tweet) : [];
 
   return (
-    <article className="my-3 max-w-[540px] rounded-lg border border-border bg-card p-4 text-card-foreground shadow-sm">
+    <article className="boro-x-embed group/x-embed relative my-4 max-w-[560px] overflow-hidden rounded-2xl border border-white/15 bg-[linear-gradient(155deg,#0b0f17_0%,#0f1522_55%,#0a0d14_100%)] p-5 text-white shadow-[0_18px_46px_-18px_rgba(0,0,0,0.92)] ring-1 ring-white/5 transition-all duration-200 hover:border-[#E11B22]/60 hover:shadow-[0_22px_56px_-18px_rgba(225,27,34,0.55)]">
+      <span aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#E11B22]/70 to-transparent" />
+      <span aria-hidden className="pointer-events-none absolute -right-16 -top-16 size-44 rounded-full bg-[radial-gradient(circle,rgba(225,27,34,0.22),transparent_70%)] blur-2xl" />
       {failed && !tweet ? (
         <div ref={fallbackRef} className="not-prose">
           <blockquote className="twitter-tweet" data-dnt="true" data-theme="dark" data-lang="en">
             <a href={href}>View post on X</a>
           </blockquote>
-          <a href={href} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-primary underline">
-            Open on X
+          <a href={href} target="_blank" rel="noopener noreferrer" className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1 text-xs font-semibold text-black no-underline hover:bg-white/90">
+            <span className="text-sm font-black leading-none">𝕏</span> Open on X
           </a>
         </div>
       ) : (
-      <a href={href} target="_blank" rel="noopener noreferrer" className="not-prose block no-underline">
+      <a href={href} target="_blank" rel="noopener noreferrer" className="not-prose relative block no-underline">
         <div className="flex items-start gap-3">
           {user?.profile_image_url_https ? (
             <img
               src={user.profile_image_url_https}
               alt=""
-              className="size-10 shrink-0 rounded-full border border-border"
+              className="size-11 shrink-0 rounded-full border-2 border-white/25 ring-2 ring-[#E11B22]/40"
               loading="lazy"
               referrerPolicy="no-referrer"
             />
           ) : (
-            <div className="flex size-10 shrink-0 items-center justify-center rounded-full border border-border bg-muted text-sm font-bold text-muted-foreground">
-              X
+            <div className="flex size-11 shrink-0 items-center justify-center rounded-full border-2 border-white/25 bg-black text-base font-black text-white ring-2 ring-[#E11B22]/40">
+              𝕏
             </div>
           )}
           <div className="min-w-0 flex-1">
             <div className="flex min-w-0 items-center gap-1.5">
-              <span className="truncate font-semibold text-foreground">{user?.name ?? "View post on X"}</span>
-              {(user?.is_blue_verified || user?.verified) && <span className="text-primary">✓</span>}
+              <span className="truncate text-base font-bold text-white">{user?.name ?? "View post on X"}</span>
+              {(user?.is_blue_verified || user?.verified) && <span className="text-sky-400">✓</span>}
             </div>
-            <div className="truncate text-sm text-muted-foreground">{handle}</div>
+            <div className="truncate text-sm text-white/55">{handle}</div>
           </div>
-          <span className="shrink-0 text-lg font-bold text-foreground">𝕏</span>
+          <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-white text-lg font-black text-black shadow-[0_4px_14px_-2px_rgba(255,255,255,0.35)]">𝕏</span>
         </div>
 
         {tweet?.text ? (
-          <p className="mt-3 whitespace-pre-wrap text-[15px] leading-relaxed text-foreground">{formatTweetText(tweet)}</p>
+          <p className="mt-4 whitespace-pre-wrap text-[16px] leading-[1.55] text-white/95">{formatTweetText(tweet)}</p>
         ) : (
-          <div className="mt-3 rounded-md border border-border bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
+          <div className="mt-4 rounded-md border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-white/60">
             {failed ? "X could not provide a preview for this post." : "Loading X post preview…"}
           </div>
         )}
 
         {media.length > 0 && (
-          <div className={`mt-3 grid gap-1 overflow-hidden rounded-md border border-border ${media.length > 1 ? "grid-cols-2" : "grid-cols-1"}`}>
+          <div className={`mt-4 grid gap-1 overflow-hidden rounded-xl border border-white/15 ${media.length > 1 ? "grid-cols-2" : "grid-cols-1"}`}>
             {media.slice(0, 4).map((item, index) => (
               <img
                 key={`${item}-${index}`}
@@ -239,11 +241,13 @@ function XPostEmbed({ id, url }: { id: string; url: string }) {
           </div>
         )}
 
-        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+        <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-white/10 pt-3 text-xs text-white/55">
           {tweet?.created_at && <span>{formatTweetDate(tweet.created_at)}</span>}
-          {typeof tweet?.favorite_count === "number" && <span>{compactNumber(tweet.favorite_count)} likes</span>}
-          {typeof tweet?.conversation_count === "number" && <span>{compactNumber(tweet.conversation_count)} replies</span>}
-          <span className="font-medium text-primary">Open on X</span>
+          {typeof tweet?.favorite_count === "number" && <span>♥ {compactNumber(tweet.favorite_count)}</span>}
+          {typeof tweet?.conversation_count === "number" && <span>💬 {compactNumber(tweet.conversation_count)}</span>}
+          <span className="ml-auto inline-flex items-center gap-1 rounded-full bg-white px-3 py-1 text-[11px] font-bold text-black transition-transform group-hover/x-embed:scale-105">
+            Open on 𝕏
+          </span>
         </div>
       </a>
       )}
