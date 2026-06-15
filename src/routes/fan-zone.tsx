@@ -38,7 +38,7 @@ export function FanZoneShell({ children }: { children: React.ReactNode }) {
             className="absolute inset-0"
             style={{
               background:
-                "linear-gradient(115deg, rgba(95,8,14,0.94) 0%, rgba(45,7,12,0.92) 48%, rgba(5,12,24,0.94) 100%)",
+                "linear-gradient(115deg, rgba(150,16,22,0.82) 0%, rgba(105,12,18,0.74) 48%, rgba(9,23,42,0.78) 100%)",
             }}
             aria-hidden
           />
@@ -75,7 +75,7 @@ export function FanZoneShell({ children }: { children: React.ReactNode }) {
           </div>
         </header>
         {!user && (
-          <div className="mb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-amber-500/30 bg-black/70 backdrop-blur-md px-4 py-3 shadow-2xl">
+          <div className="mb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-amber-500/30 bg-black/55 backdrop-blur-md px-4 py-3 shadow-2xl">
             <p className="text-sm text-amber-100/90">
               You're viewing the Boro Fan Zone as a guest. Sign in or request access to post, react and join polls.
             </p>
@@ -93,7 +93,7 @@ export function FanZoneShell({ children }: { children: React.ReactNode }) {
             </div>
           </div>
         )}
-        <div className="rounded-2xl border border-white/15 bg-black/78 backdrop-blur-md p-5 sm:p-7 shadow-2xl">
+        <div className="rounded-2xl border border-white/15 bg-black/62 backdrop-blur-md p-5 sm:p-7 shadow-2xl">
           {children}
         </div>
       </div>
