@@ -201,7 +201,7 @@ export function BoroMatchCentreBox() {
         )}
 
         {/* League position */}
-        <section className="rounded-lg border border-border bg-surface-2/70 p-3">
+        <section className="boro-inner-panel rounded-lg p-3">
           <div className="flex items-center justify-between mb-2">
             <span className="text-[10px] uppercase tracking-wider font-bold text-[#E11B22] flex items-center gap-1">
               <Trophy className="size-3" /> League
