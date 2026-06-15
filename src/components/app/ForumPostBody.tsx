@@ -180,7 +180,7 @@ function XPostEmbed({ id, url }: { id: string; url: string }) {
   const media = tweet ? getTweetMedia(tweet) : [];
 
   return (
-    <article className="boro-x-embed group/x-embed relative my-4 max-w-[560px] overflow-hidden rounded-2xl border border-white/15 bg-[linear-gradient(155deg,#0b0f17_0%,#0f1522_55%,#0a0d14_100%)] p-5 text-white shadow-[0_18px_46px_-18px_rgba(0,0,0,0.92)] ring-1 ring-white/5 transition-all duration-200 hover:border-[#E11B22]/60 hover:shadow-[0_22px_56px_-18px_rgba(225,27,34,0.55)]">
+    <article className="not-prose boro-x-embed group/x-embed relative my-4 max-w-[560px] overflow-hidden rounded-2xl border border-white/15 bg-[linear-gradient(155deg,#0b0f17_0%,#0f1522_55%,#0a0d14_100%)] p-5 text-white shadow-[0_18px_46px_-18px_rgba(0,0,0,0.92)] ring-1 ring-white/5 transition-all duration-200 hover:border-[#E11B22]/60 hover:shadow-[0_22px_56px_-18px_rgba(225,27,34,0.55)]">
       <span aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#E11B22]/70 to-transparent" />
       <span aria-hidden className="pointer-events-none absolute -right-16 -top-16 size-44 rounded-full bg-[radial-gradient(circle,rgba(225,27,34,0.22),transparent_70%)] blur-2xl" />
       {failed && !tweet ? (
