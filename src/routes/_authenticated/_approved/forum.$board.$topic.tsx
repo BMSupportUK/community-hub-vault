@@ -445,7 +445,7 @@ function TopicPage() {
                           </div>
                         </div>
                       ) : (
-                        <ForumPostBody html={p.body} />
+                        <ForumPostBody html={p.body} className="boro-readable-copy" />
                       )}
                     </div>
                     <ForumPostReactions
