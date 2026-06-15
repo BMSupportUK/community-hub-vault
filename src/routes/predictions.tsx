@@ -1952,9 +1952,76 @@ function MyPicks({ fixtures }: { fixtures: WcFixtureDTO[] }) {
       </div>
     );
   }
+  const groupLetters = ["A","B","C","D","E","F","G","H","I","J","K","L"];
+  const koRounds: { key: string; label: string }[] = [
+    { key: "r32", label: "Round of 32" },
+    { key: "r16", label: "Round of 16" },
+    { key: "qf", label: "Quarter-finals" },
+    { key: "sf", label: "Semi-finals" },
+    { key: "third", label: "Third Place" },
+    { key: "final", label: "Final" },
+  ];
+  // Pick a sensible default chip: first group/stage that actually has picks.
+  const availableKeys = new Set<string>();
+  for (const f of fixtures) {
+    availableKeys.add(f.stage === "group" ? (f.groupLabel ?? "") : f.stage);
+  }
+  const defaultKey =
+    groupLetters.find((g) => availableKeys.has(g)) ??
+    koRounds.map((r) => r.key).find((k) => availableKeys.has(k)) ??
+    "A";
+  const [filter, setFilter] = useState<string>(defaultKey);
+  const filtered = useMemo(() => {
+    const ko = ["r32", "r16", "qf", "sf", "third", "final"];
+    const list = ko.includes(filter)
+      ? fixtures.filter((f) => f.stage === filter)
+      : fixtures.filter((f) => f.stage === "group" && f.groupLabel === filter);
+    return list.sort((a, b) => +new Date(a.kickoffAt) - +new Date(b.kickoffAt));
+  }, [fixtures, filter]);
+  const chip = (key: string, label: string) => {
+    const has = availableKeys.has(key);
+    return (
+      <button
+        key={key}
+        onClick={() => setFilter(key)}
+        disabled={!has}
+        className={`shrink-0 inline-flex items-center px-3 h-8 rounded-full text-xs font-medium border transition ${
+          filter === key
+            ? "bg-primary text-primary-foreground border-primary shadow-glow"
+            : "bg-surface-1 text-muted-foreground border-border hover:text-foreground"
+        } ${!has ? "opacity-40 cursor-not-allowed" : ""}`}
+      >
+        {label}
+      </button>
+    );
+  };
   return (
-    <div className="space-y-3">
-      {fixtures.map((f) => (
+    <div className="space-y-6">
+      <div className="rounded-2xl border-2 border-primary/60 bg-surface-1 p-3 shadow-md shadow-primary/10 space-y-3">
+        <div>
+          <h3 className="text-[11px] font-bold uppercase tracking-wider text-primary mb-1.5 px-1">
+            Group Games
+          </h3>
+          <div className="-mx-1 px-1 flex gap-1.5 overflow-x-auto pb-1">
+            {groupLetters.map((g) => chip(g, `Group ${g}`))}
+          </div>
+        </div>
+        <div className="border-t border-border/60 pt-2">
+          <h3 className="text-[11px] font-bold uppercase tracking-wider text-primary mb-1.5 px-1">
+            Knock-out Games
+          </h3>
+          <div className="-mx-1 px-1 flex gap-1.5 overflow-x-auto pb-1">
+            {koRounds.map((r) => chip(r.key, r.label))}
+          </div>
+        </div>
+      </div>
+      {filtered.length === 0 ? (
+        <div className="rounded-2xl border border-border bg-surface-1 p-8 text-center text-sm text-muted-foreground">
+          No picks in this stage yet.
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {filtered.map((f) => (
         <div key={f.id} className="rounded-2xl border-2 border-primary/60 bg-surface-1 shadow-md shadow-primary/10 px-4 py-3 grid grid-cols-[1fr_auto_auto] items-center gap-3">
           <div className="min-w-0">
             <div className="text-sm font-medium truncate">
@@ -1991,7 +2058,9 @@ function MyPicks({ fixtures }: { fixtures: WcFixtureDTO[] }) {
             )}
           </div>
         </div>
-      ))}
+          ))}
+        </div>
+      )}
     </div>
   );
 }
