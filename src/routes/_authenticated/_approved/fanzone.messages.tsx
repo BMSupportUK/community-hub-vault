@@ -115,7 +115,7 @@ function MessagesLayout() {
   return (
     <div
       className="boro-theme flex-1 w-full min-w-0 min-h-full self-stretch overflow-y-auto bg-cover bg-center bg-no-repeat bg-fixed"
-      style={{ backgroundImage: `linear-gradient(to bottom, rgba(10,8,16,0.45), rgba(10,8,16,0.6)), url(${bgAsset.url})` }}
+      style={{ backgroundImage: `linear-gradient(to bottom, rgba(10,8,16,0.25), rgba(10,8,16,0.4)), url(${bgAsset.url})` }}
     >
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6">
       <div className="flex items-center justify-between gap-3 mb-4">
