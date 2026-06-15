@@ -1134,3 +1134,42 @@ html.boro-bg-active .min-h-screen.bg-background {
   background: rgba(18, 25, 39, 0.9);
   border: 1px solid rgba(255, 255, 255, 0.14);
 }
+.boro-topic-page {
+  --foreground: oklch(0.98 0.006 260);
+  --muted-foreground: oklch(0.82 0.018 260);
+  --border: oklch(0.5 0.06 260 / 0.7);
+}
+.boro-topic-post {
+  color: var(--color-foreground);
+  background: rgba(7, 11, 19, 0.97);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow:
+    0 18px 46px -18px rgba(0, 0, 0, 0.92),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+.boro-topic-post-header {
+  background:
+    linear-gradient(90deg, rgba(225, 27, 34, 0.18), rgba(16, 23, 36, 0.98) 34%, rgba(9, 14, 24, 0.98));
+}
+.boro-topic-post-content {
+  background:
+    linear-gradient(180deg, rgba(15, 22, 34, 0.99), rgba(11, 16, 26, 0.99));
+}
+.boro-readable-copy,
+.boro-readable-copy.prose {
+  color: rgba(248, 250, 252, 0.96) !important;
+  font-size: 16px;
+  line-height: 1.78;
+}
+.boro-readable-copy :is(p, li, div, span, strong) {
+  color: inherit;
+}
+.boro-readable-copy :is(h1, h2, h3, h4) {
+  color: rgb(255, 255, 255);
+  margin-top: 0.25rem;
+}
+.boro-readable-copy blockquote {
+  background: rgba(225, 27, 34, 0.1) !important;
+  color: rgba(226, 232, 240, 0.92) !important;
+  border-left-color: rgba(225, 27, 34, 0.75) !important;
+}

@@ -317,7 +317,7 @@ function TopicPage() {
   );
 
   return (
-    <div className="space-y-4">
+    <div className="boro-topic-page space-y-4">
       <div>
         <Button asChild variant="ghost" size="sm" className="-ml-2 mb-1">
           <Link to="/forum/$board" params={{ board: slug }}><ArrowLeft className="size-4 mr-1" />{board?.name ?? "Board"}</Link>
@@ -357,15 +357,15 @@ function TopicPage() {
                 return (
                   <article
                     key={p.id}
-                    className={`rounded-2xl border bg-surface-1/40 overflow-hidden shadow-soft transition-shadow hover:shadow-[0_8px_30px_-12px_rgba(225,27,34,0.45)] ${
+                    className={`boro-topic-post rounded-xl overflow-hidden transition-shadow hover:shadow-[0_14px_42px_-14px_rgba(225,27,34,0.5)] ${
                       p.is_op
-                        ? "border-[#E11B22]/50 ring-1 ring-[#E11B22]/20"
-                        : "border-border/80 hover:border-[#E11B22]/30"
+                        ? "border-[#E11B22]/65 ring-1 ring-[#E11B22]/25"
+                        : "border-white/15 hover:border-[#E11B22]/45"
                     }`}
                   >
                     <header
-                      className={`grid grid-cols-[auto_1fr_auto] gap-3 px-5 py-3 items-center border-b border-border/60 ${
-                        p.is_op ? "bg-gradient-to-r from-[#E11B22]/10 via-[#E11B22]/5 to-transparent" : "bg-surface-2/25"
+                      className={`boro-topic-post-header grid grid-cols-[auto_1fr_auto] gap-3 px-5 py-3 items-center border-b ${
+                        p.is_op ? "border-[#E11B22]/35" : "border-white/10"
                       }`}
                     >
                       <Link
@@ -435,7 +435,7 @@ function TopicPage() {
                         )}
                       </div>
                     </header>
-                    <div className="px-5 py-4">
+                    <div className="boro-topic-post-content px-5 py-5 sm:px-6">
                       {editingId === p.id ? (
                         <div className="space-y-3">
                           <HtmlEditor value={editText} onChange={setEditText} mentions={mentionCandidates} />
@@ -445,7 +445,7 @@ function TopicPage() {
                           </div>
                         </div>
                       ) : (
-                        <ForumPostBody html={p.body} />
+                        <ForumPostBody html={p.body} className="boro-readable-copy" />
                       )}
                     </div>
                     <ForumPostReactions
