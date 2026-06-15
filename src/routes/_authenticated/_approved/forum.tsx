@@ -53,7 +53,7 @@ function ForumLayout() {
   }, []);
   return (
     <div className="boro-theme relative w-full px-4 sm:px-6 lg:px-10 py-6">
-      <header className="relative mb-6 overflow-hidden rounded-2xl border border-[#E11B22]/40 shadow-[0_10px_40px_-10px_rgba(225,27,34,0.55)]">
+      <header className="relative mb-6 overflow-hidden rounded-xl border border-[#E11B22]/55 shadow-[0_14px_46px_-12px_rgba(0,0,0,0.8)]">
         <div
           className="absolute inset-0 bg-cover bg-center"
           style={{ backgroundImage: `url(${boroHero})` }}
@@ -238,7 +238,7 @@ function BoardsIndex() {
   }
 
   return (
-    <div className="grid gap-4 xl:grid-cols-[1fr_280px]">
+    <div className="boro-forum-index grid gap-4 xl:grid-cols-[1fr_280px]">
       <div className="space-y-3 min-w-0">
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {boards.map((b) => {
@@ -251,7 +251,7 @@ function BoardsIndex() {
               key={b.id}
               to="/forum/$board"
               params={{ board: b.slug }}
-              className="group flex flex-col rounded-xl border border-border bg-surface-1/40 hover:border-[#E11B22]/70 hover:shadow-[0_10px_30px_-10px_rgba(225,27,34,0.55)] hover:-translate-y-[2px] transition-all overflow-hidden relative h-full"
+              className="boro-board-card group flex flex-col rounded-xl hover:border-[#E11B22]/80 hover:shadow-[0_16px_38px_-14px_rgba(225,27,34,0.7)] hover:-translate-y-[2px] transition-all overflow-hidden relative h-full"
             >
               <span
                 className="absolute left-0 top-0 right-0 h-1 bg-gradient-to-r from-[#E11B22] to-[#8B0F14]"
@@ -353,7 +353,7 @@ function ForumStats({ boards }: { boards: Board[] }) {
   const fmt = (n: number) => n.toLocaleString();
 
   return (
-    <div className="rounded-xl border border-[#E11B22]/40 bg-surface-1/40 overflow-hidden shadow-[0_10px_30px_-10px_rgba(225,27,34,0.4)] h-full flex flex-col">
+    <div className="boro-solid-panel rounded-xl overflow-hidden h-full flex flex-col">
       <div className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-[#E11B22] to-[#8B0F14] text-white">
         <BarChart3 className="size-4" />
         <h3 className="font-display font-bold text-sm tracking-wide">Forum statistics</h3>
