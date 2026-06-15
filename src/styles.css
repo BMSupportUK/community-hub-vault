@@ -1076,7 +1076,7 @@ html.boro-bg-active body::before {
   content: "";
   position: fixed;
   inset: 0;
-  background: rgba(5, 10, 20, 0.34);
+  background: rgba(5, 10, 20, 0.58);
   pointer-events: none;
   z-index: 0;
 }
@@ -1096,5 +1096,5 @@ html.boro-bg-active .min-h-screen.bg-background {
 }
 /* Single legibility overlay applied by the page component */
 .boro-page-backdrop {
-  background: rgba(5, 10, 20, 0.34);
+  background: rgba(5, 10, 20, 0.58);
 }
