@@ -68,16 +68,17 @@ function Landing() {
 
       <main className="flex-1 min-h-0 md:overflow-hidden px-6 py-4 md:py-4 flex flex-col gap-3">
         <section
-          className="relative max-w-7xl w-full mx-auto rounded-3xl border border-red-900/60 p-4 md:p-6 lg:p-8 pb-16 md:pb-20 flex-1 flex flex-col justify-center"
+          className="relative max-w-7xl w-full mx-auto rounded-3xl border border-red-950/80 p-4 md:p-6 lg:p-8 pb-16 md:pb-20 flex-1 flex flex-col justify-center overflow-hidden"
           style={{
             background:
-              "radial-gradient(1200px 600px at 10% 10%, rgba(248,113,113,0.25), transparent 60%), radial-gradient(900px 500px at 90% 90%, rgba(127,29,29,0.6), transparent 60%), linear-gradient(135deg, #7f1d1d 0%, #991b1b 50%, #450a0a 100%)",
+              "radial-gradient(1000px 520px at 10% 10%, rgba(127,29,29,0.2), transparent 62%), radial-gradient(760px 460px at 92% 88%, rgba(69,10,10,0.55), transparent 64%), linear-gradient(135deg, #250707 0%, #3f0a0a 52%, #120509 100%)",
             boxShadow:
-              "0 0 80px rgba(220,38,38,0.35), inset 0 1px 0 rgba(255,255,255,0.06)",
+              "0 18px 70px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.04)",
           }}
         >
+          <div className="absolute inset-0 bg-black/25" aria-hidden />
           <div className="grid md:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] gap-5 md:gap-3 lg:gap-4 items-center w-full">
-            <div className="space-y-5 text-white">
+            <div className="relative z-10 space-y-5 text-white">
               <h1 className="font-display text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight leading-[1.05] drop-shadow-[0_2px_20px_rgba(0,0,0,0.5)]">
                 Welcome to <span className="bg-gradient-to-r from-red-200 via-white to-red-300 bg-clip-text text-transparent">BM Support</span>
               </h1>
@@ -89,8 +90,8 @@ function Landing() {
               </p>
             </div>
 
-            <div className="relative w-full md:-ml-2 lg:-ml-4">
-              <div className="absolute -inset-4 bg-gradient-to-tr from-red-500/40 via-transparent to-blue-500/30 blur-2xl rounded-3xl" aria-hidden />
+            <div className="relative z-10 w-full md:-ml-2 lg:-ml-4">
+              <div className="absolute -inset-4 bg-gradient-to-tr from-black/35 via-transparent to-red-950/30 blur-2xl rounded-3xl" aria-hidden />
               <div className="relative rounded-3xl overflow-hidden border border-white/20 shadow-[0_20px_80px_rgba(0,0,0,0.6)] max-w-[680px] ml-auto">
                 <img
                   src={welcomeHero}
@@ -102,6 +103,7 @@ function Landing() {
                   decoding="async"
                   className="block w-full h-auto max-h-[56vh] object-cover"
                 />
+                <div className="absolute inset-0 bg-black/20" aria-hidden />
               </div>
             </div>
           </div>
