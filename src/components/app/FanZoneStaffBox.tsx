@@ -40,7 +40,7 @@ export function FanZoneStaffBox() {
   if (!members || members.length === 0) return null;
 
   return (
-    <aside className="rounded-xl border border-[#E11B22]/40 bg-surface-1/55 backdrop-blur-[1px] overflow-hidden shadow-[0_8px_30px_-12px_rgba(225,27,34,0.45)]">
+    <aside className="rounded-xl border border-[#E11B22]/40 bg-surface-1/40 overflow-hidden shadow-[0_8px_30px_-12px_rgba(225,27,34,0.45)]">
       <div className="px-4 py-3 bg-gradient-to-r from-[#E11B22] to-[#8B0F14] text-white">
         <h3 className="font-display text-sm font-bold uppercase tracking-wider flex items-center gap-2">
           <Shield className="size-4" /> Fan Zone Staff
@@ -52,7 +52,7 @@ export function FanZoneStaffBox() {
           const isAdmin = m.role === "admin";
           const initials = name.slice(0, 2).toUpperCase();
           const inner = (
-            <div className="flex items-center gap-2.5 rounded-lg border border-border bg-surface-2/45 px-2.5 py-2 hover:border-[#E11B22]/60 hover:bg-surface-2/70 transition-colors">
+            <div className="flex items-center gap-2.5 rounded-lg border border-border bg-surface-2/35 px-2.5 py-2 hover:border-[#E11B22]/60 hover:bg-surface-2/60 transition-colors">
               <div className="relative shrink-0">
                 {m.fan_avatar_url ? (
                   <img
