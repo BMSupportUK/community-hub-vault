@@ -142,7 +142,14 @@ function FanProfilePage() {
       className="boro-theme relative min-h-[calc(100vh-4rem)] w-full overflow-hidden bg-cover bg-center bg-no-repeat"
       style={{ backgroundImage: `url(${bgAsset.url})` }}
     >
-      <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-black/15 to-black/35" aria-hidden />
+      <div
+        className="absolute inset-0"
+        style={{
+          background:
+            "linear-gradient(to bottom, rgba(3, 7, 18, 0.78), rgba(3, 7, 18, 0.72), rgba(3, 7, 18, 0.86))",
+        }}
+        aria-hidden
+      />
 
       <div className="relative z-10 w-full px-4 sm:px-6 lg:px-10 py-8 space-y-4">
       <Button asChild variant="ghost" size="sm" className="text-white hover:text-white hover:bg-white/10 -ml-2">
@@ -152,10 +159,10 @@ function FanProfilePage() {
       {loading ? (
         <div className="grid place-items-center py-20 text-white/80"><Loader2 className="size-5 animate-spin" /></div>
       ) : !p ? (
-        <div className="rounded-2xl border border-white/20 bg-black/30 backdrop-blur-md p-10 text-center text-white/80">This member's fan zone profile is not available.</div>
+        <div className="rounded-2xl border border-white/20 bg-black/75 backdrop-blur-md p-10 text-center text-white/80 shadow-2xl">This member's fan zone profile is not available.</div>
       ) : (
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px] items-start">
-        <div className="rounded-2xl border border-[#E11B22]/40 bg-black/35 backdrop-blur-md shadow-2xl text-white overflow-hidden min-w-0">
+        <div className="rounded-2xl border border-[#E11B22]/45 bg-black/75 backdrop-blur-md shadow-2xl text-white overflow-hidden min-w-0">
           <div className="relative bg-gradient-to-br from-[#E11B22] to-[#8B0F14] px-6 py-8 text-white">
             <div className="flex items-center gap-4">
               <img src={p.fan_avatar_url} alt={p.fan_alias} className="size-20 rounded-full object-cover ring-4 ring-white/20 shadow-lg" />
