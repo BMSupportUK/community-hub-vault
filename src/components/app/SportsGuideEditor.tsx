@@ -164,6 +164,52 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const [newSubName, setNewSubName] = useState("");
+  const [addingSub, setAddingSub] = useState(false);
+
+  const addSubcategory = async () => {
+    if (!editing) return;
+    const name = newSubName.trim();
+    if (!name) return;
+    if (!editing.category_id) {
+      toast.error("Pick a category first");
+      return;
+    }
+    const dupe = subcategories.some(
+      (s) =>
+        s.category_id === editing.category_id &&
+        s.name.toLowerCase() === name.toLowerCase(),
+    );
+    if (dupe) {
+      toast.error("That sub-category already exists");
+      return;
+    }
+    setAddingSub(true);
+    const existingForCat = subcategories.filter(
+      (s) => s.category_id === editing.category_id,
+    );
+    const nextOrder =
+      (existingForCat.reduce((m, s) => Math.max(m, s.sort_order ?? 0), 0) || 0) + 10;
+    const { data, error } = await supabase
+      .from("sports_subcategories")
+      .insert({
+        category_id: editing.category_id,
+        name,
+        sort_order: nextOrder,
+        is_default: false,
+      })
+      .select("id, category_id, name, sort_order, is_default")
+      .single();
+    setAddingSub(false);
+    if (error || !data) {
+      toast.error(error?.message ?? "Failed to add sub-category");
+      return;
+    }
+    setSubcategories((prev) => [...prev, data as Subcategory]);
+    setEditing((e) => (e ? { ...e, subcategory: (data as Subcategory).name } : e));
+    setNewSubName("");
+    toast.success("Sub-category added");
+  };
 
   const uploadCover = async (file: File) => {
     if (!file.type.startsWith("image/")) {
@@ -410,6 +456,34 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
                   ))}
                 </select>
                 <p className="text-[11px] text-purple-300/70 mt-1">Used to filter this guide under the category pills. Manage sub-categories in the Categories tab.</p>
+              </div>
+            )}
+            {editing.category_id && (
+              <div>
+                <Label className="text-purple-100">Add new sub-category</Label>
+                <div className="mt-1 flex gap-2">
+                  <Input
+                    value={newSubName}
+                    onChange={(e) => setNewSubName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        addSubcategory();
+                      }
+                    }}
+                    placeholder="e.g. Premier League"
+                    className="bg-purple-950/50 border-purple-500/30 text-purple-50"
+                  />
+                  <Button
+                    type="button"
+                    onClick={addSubcategory}
+                    disabled={addingSub || !newSubName.trim()}
+                    className="bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white border-0 shrink-0"
+                  >
+                    {addingSub ? "Adding…" : "Add"}
+                  </Button>
+                </div>
+                <p className="text-[11px] text-purple-300/70 mt-1">Creates a new sub-category under the selected category and selects it for this guide.</p>
               </div>
             )}
             <div>
