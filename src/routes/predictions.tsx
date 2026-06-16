@@ -1795,7 +1795,7 @@ function LeaderboardList({
             Site owner · playing for fun (not ranked)
           </div>
           <div
-            className={`grid grid-cols-[20px_1fr_26px_30px_30px_30px_36px_44px] sm:grid-cols-[36px_minmax(0,0.9fr)_56px_112px_160px_112px_64px_80px] gap-1 sm:gap-2 px-2 sm:px-4 py-2.5 text-sm ${
+            className={`grid grid-cols-[20px_1fr_38px_30px_30px_30px_36px_44px] sm:grid-cols-[36px_minmax(0,0.6fr)_140px_112px_160px_112px_64px_80px] gap-1 sm:gap-2 px-2 sm:px-4 py-2.5 text-sm ${
               owner.userId === currentUserId ? "bg-primary/5" : ""
             }`}
           >
