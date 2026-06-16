@@ -673,7 +673,7 @@ function PredictionsPage() {
                   </li>
                   <li className="flex items-center gap-3">
                     <span className="inline-flex min-w-12 justify-center px-2 py-1 rounded bg-primary/80 text-primary-foreground text-xs font-bold">3 pts</span>
-                    <span><span className="font-medium">Correct goal difference</span> — right winning margin but wrong scoreline (e.g. picked 3-1, it finished 2-0).</span>
+                    <span><span className="font-medium">Right winning margin</span> — right winning margin but wrong scoreline (e.g. picked 3-1, it finished 2-0).</span>
                   </li>
                   <li className="flex items-center gap-3">
                     <span className="inline-flex min-w-12 justify-center px-2 py-1 rounded bg-primary/60 text-primary-foreground text-xs font-bold">1 pt</span>
@@ -725,7 +725,7 @@ function PredictionsPage() {
                       <span className="text-foreground font-medium">Most correct match results</span> — next, who called the most win / draw / loss outcomes correctly.
                     </li>
                     <li>
-                      <span className="text-foreground font-medium">Closest goal difference</span> — total goal-difference error across all matches; lowest wins.
+                      <span className="text-foreground font-medium">Closest winning margin</span> — total winning-margin error across all matches; lowest wins.
                     </li>
                     <li>
                       <span className="text-foreground font-medium">Most correct knockout-stage picks</span> — accuracy on later, higher-stakes fixtures breaks remaining ties.
