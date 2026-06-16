@@ -389,7 +389,13 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
       try { localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
     }
     toast.success(editing.id ? "Blog updated" : "Blog added");
-    close();
+    navigate({
+      to: "/sports-guides",
+      search: {
+        cat: editing.category_id || undefined,
+        sub: payload.subcategory || undefined,
+      },
+    });
     } catch (e: any) {
       console.error("[SportsGuideEditor] unexpected save error", e);
       toast.error(e?.message || "Unexpected error while saving");
