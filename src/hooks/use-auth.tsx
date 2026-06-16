@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { checkMyVpnOnLogin } from "@/lib/vpn-login-check.functions";
+import { sendShiftEventPush, sendBreakEventPush } from "@/lib/push.functions";
 
 export type AppRole =
   | "admin"
@@ -174,6 +175,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isBanned,
         isRejected,
         signOut: async () => {
+          // Auto-clock-out any active shift (and end any active break) so the
+          // staff member doesn't stay "on shift" after leaving. The shift
+          // record's user_id is the signed-in user, so the audit trail
+          // attributes the clock-out to the staff member performing the sign out.
+          try {
+            if (user) {
+              const { data: shift } = await supabase
+                .from("shifts")
+                .select("id")
+                .eq("user_id", user.id)
+                .is("clock_out", null)
+                .maybeSingle();
+              if (shift?.id) {
+                const { data: brk } = await supabase
+                  .from("breaks")
+                  .select("id,kind")
+                  .eq("shift_id", shift.id)
+                  .is("ended_at", null)
+                  .maybeSingle();
+                if (brk?.id) {
+                  await supabase
+                    .from("breaks")
+                    .update({ ended_at: new Date().toISOString() })
+                    .eq("id", brk.id);
+                  sendBreakEventPush({ data: { kind: "end", breakKind: brk.kind as "break" | "lunch" } }).catch(() => {});
+                }
+                await supabase
+                  .from("shifts")
+                  .update({ clock_out: new Date().toISOString() })
+                  .eq("id", shift.id);
+                sendShiftEventPush({ data: { kind: "clock_out" } }).catch(() => {});
+              }
+            }
+          } catch (err) {
+            console.warn("[auth] auto clock-out on sign out failed", err);
+          }
           await supabase.auth.signOut();
         },
         refreshRoles: async () => {
