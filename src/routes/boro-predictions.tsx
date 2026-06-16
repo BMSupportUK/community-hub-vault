@@ -174,7 +174,7 @@ function BoroPredictionsPage() {
       />
       <div
         className="pointer-events-none fixed inset-0 z-0"
-        style={{ background: "rgba(5, 10, 20, 0.34)" }}
+        style={{ background: "rgba(2, 6, 14, 0.78)" }}
         aria-hidden
       />
       {user && <IconRail />}
