@@ -594,20 +594,33 @@ function LeaderboardList({
   const ranked = rows.filter((r) => r.userId !== OWNER_ID);
   const [confirmDelete, setConfirmDelete] = useState<BoroLeaderboardRowDTO | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [openEntrant, setOpenEntrant] = useState<BoroLeaderboardRowDTO | null>(null);
+  const [picks, setPicks] = useState<BoroEntrantPickDTO[] | null>(null);
+  const [picksLoading, setPicksLoading] = useState(false);
+  const fetchPicks = useServerFn(getEntrantBoroPredictions);
+  useEffect(() => {
+    if (!openEntrant) { setPicks(null); return; }
+    setPicksLoading(true);
+    setPicks(null);
+    fetchPicks({ data: { entrantId: openEntrant.userId, isGuest: openEntrant.isGuest } })
+      .then((rs) => setPicks(rs))
+      .catch((e: any) => toast.error(e?.message ?? "Failed to load picks"))
+      .finally(() => setPicksLoading(false));
+  }, [openEntrant, fetchPicks]);
 
   if (!rows.length) {
     return <div className="rounded-2xl border border-border bg-surface-1 p-8 text-center text-sm text-muted-foreground">No predictions yet — be the first to enter.</div>;
   }
   return (
     <div className="rounded-2xl border border-border bg-surface-1 overflow-hidden">
-      <div className="grid grid-cols-[36px_minmax(0,1fr)_120px_80px_80px_80px_64px_72px] gap-2 px-4 py-2.5 text-[11px] uppercase tracking-wider text-muted-foreground bg-surface-2 border-b border-border">
+      <div className="grid grid-cols-[20px_1fr_38px_30px_30px_30px_36px_44px] sm:grid-cols-[36px_minmax(0,0.6fr)_140px_112px_160px_112px_64px_80px] gap-1 sm:gap-2 px-2 sm:px-4 py-2.5 text-[11px] uppercase tracking-wider text-muted-foreground bg-surface-2 border-b border-border [&>div]:whitespace-nowrap">
         <div>#</div>
         <div>Player</div>
-        <div className="text-center">Predictions Entered</div>
-        <div className="text-center">Exact</div>
-        <div className="text-center" title="Right winning margin (3 pts)">WM</div>
-        <div className="text-center">Result</div>
-        <div className="text-center">Pts</div>
+        <div className="text-center"><span className="sm:hidden">P</span><span className="hidden sm:inline">Predictions Entered</span></div>
+        <div className="text-center" title="Correct score (exact)"><span className="sm:hidden">CS</span><span className="hidden sm:inline">Correct Score</span></div>
+        <div className="text-center" title="Right winning margin (3 pts)"><span className="sm:hidden">WM</span><span className="hidden sm:inline">Winning Margin</span></div>
+        <div className="text-center" title="Correct result"><span className="sm:hidden">Res</span><span className="hidden sm:inline">Correct Result</span></div>
+        <div className="text-center"><span className="sm:hidden">Pts</span><span className="hidden sm:inline">Points</span></div>
         <div className="text-center">Type</div>
       </div>
       <ul>
@@ -615,7 +628,12 @@ function LeaderboardList({
           const rank = i + 1;
           const mine = r.userId === currentUserId;
           return (
-            <li key={r.userId} className={`grid grid-cols-[36px_minmax(0,1fr)_120px_80px_80px_80px_64px_72px] gap-2 px-4 py-2.5 text-sm border-b border-border last:border-b-0 ${mine ? "bg-primary/5" : ""}`}>
+            <li
+              key={r.userId}
+              className={`grid grid-cols-[20px_1fr_38px_30px_30px_30px_36px_44px] sm:grid-cols-[36px_minmax(0,0.6fr)_140px_112px_160px_112px_64px_80px] gap-1 sm:gap-2 px-2 sm:px-4 py-2.5 text-sm border-b border-border last:border-b-0 ${
+                mine ? "bg-primary/5" : ""
+              }`}
+            >
               <div className="flex items-center">
                 {rank === 1 ? <Crown className="size-4 text-yellow-400" />
                   : rank === 2 ? <Medal className="size-4 text-zinc-300" />
@@ -623,15 +641,27 @@ function LeaderboardList({
                   : <span className="text-muted-foreground tabular-nums">{rank}</span>}
               </div>
               <div className="flex items-center gap-2 min-w-0">
-                <span className="truncate font-medium">{r.displayName || r.username || "Anonymous"}</span>
-                {mine && <span className="text-[10px] uppercase text-primary">you</span>}
+                {r.avatarUrl ? (
+                  <img src={r.avatarUrl} alt="" className="hidden sm:block size-7 rounded-full object-cover bg-surface-2" />
+                ) : (
+                  <div className="hidden sm:block size-7 rounded-full bg-surface-2" />
+                )}
+                <button
+                  type="button"
+                  onClick={() => setOpenEntrant(r)}
+                  className="truncate font-medium text-left hover:text-primary hover:underline underline-offset-2 focus:outline-none focus:text-primary"
+                  title="View this player's predictions for matches already kicked off"
+                >
+                  {r.displayName || r.username || "Anonymous"}
+                  {mine && <span className="ml-2 text-[10px] uppercase text-primary">you</span>}
+                </button>
                 {canManage && (
                   <button
                     type="button"
                     onClick={() => setConfirmDelete(r)}
                     disabled={deletingId === r.userId}
                     className="ml-1 text-muted-foreground hover:text-red-500 disabled:opacity-50"
-                    title="Delete this entrant"
+                    title="Admin: delete this entrant and their predictions"
                     aria-label="Delete entrant"
                   >
                     {deletingId === r.userId ? <Loader2 className="size-3.5 animate-spin" /> : <Trash2 className="size-3.5" />}
@@ -639,41 +669,125 @@ function LeaderboardList({
                 )}
               </div>
               <div className="text-center tabular-nums">{r.predictionsMade}</div>
-              <div className="text-center tabular-nums">{r.exactCount}</div>
-              <div className="text-center tabular-nums">{r.goalDiffCount}</div>
+              <div className="tabular-nums flex items-center justify-center gap-1">
+                <Star className="size-3 text-yellow-400 hidden sm:block" /> {r.exactCount}
+              </div>
+              <div className="text-center tabular-nums text-muted-foreground">{r.goalDiffCount}</div>
               <div className="text-center tabular-nums">{r.resultCount}</div>
               <div className="text-center font-display font-bold tabular-nums">{r.totalPoints}</div>
               <div className="flex items-center justify-center">
-                <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider border ${r.isGuest ? "bg-amber-500/15 text-amber-300 border-amber-500/40" : "bg-emerald-500/15 text-emerald-300 border-emerald-500/40"}`}>
+                <span
+                  className={`inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider border ${
+                    r.isGuest
+                      ? "bg-amber-500/15 text-amber-300 border-amber-500/40"
+                      : "bg-emerald-500/15 text-emerald-300 border-emerald-500/40"
+                  }`}
+                  title={r.isGuest ? "Playing as guest" : "BM Support site user"}
+                >
                   {r.isGuest ? "Guest" : "Site user"}
                 </span>
               </div>
             </li>
           );
         })}
-        {owner && (
-          <li className={`grid grid-cols-[36px_minmax(0,1fr)_120px_80px_80px_80px_64px_72px] gap-2 px-4 py-2.5 text-sm border-t-2 border-border bg-surface-2/40 ${owner.userId === currentUserId ? "bg-primary/5" : ""}`}>
+      </ul>
+      {owner && (
+        <div className="border-t-2 border-dashed border-border bg-surface-2/40">
+          <div className="px-3 sm:px-4 pt-2.5 pb-1 text-[10px] uppercase tracking-wider text-muted-foreground">
+            Site owner · playing for fun (not ranked)
+          </div>
+          <div
+            className={`grid grid-cols-[20px_1fr_26px_30px_30px_30px_36px_44px] sm:grid-cols-[36px_minmax(0,0.9fr)_56px_112px_160px_112px_64px_80px] gap-1 sm:gap-2 px-2 sm:px-4 py-2.5 text-sm ${
+              owner.userId === currentUserId ? "bg-primary/5" : ""
+            }`}
+          >
             <div className="flex items-center text-muted-foreground">—</div>
             <div className="flex items-center gap-2 min-w-0">
-              <span className="truncate font-medium">{owner.displayName || owner.username || "Anonymous"}</span>
-              <span className="text-[10px] uppercase text-primary">owner</span>
+              {owner.avatarUrl ? (
+                <img src={owner.avatarUrl} alt="" className="hidden sm:block size-7 rounded-full object-cover bg-surface-2" />
+              ) : (
+                <div className="hidden sm:block size-7 rounded-full bg-surface-2" />
+              )}
+              <button
+                type="button"
+                onClick={() => setOpenEntrant(owner)}
+                className="truncate font-medium text-left hover:text-primary hover:underline underline-offset-2 focus:outline-none focus:text-primary"
+                title="View this player's predictions for matches already kicked off"
+              >
+                {owner.displayName || owner.username || "Anonymous"}
+                <span className="ml-2 text-[10px] uppercase text-primary">owner</span>
+              </button>
             </div>
             <div className="text-center tabular-nums">{owner.predictionsMade}</div>
-            <div className="text-center tabular-nums">{owner.exactCount}</div>
-            <div className="text-center tabular-nums">{owner.goalDiffCount}</div>
+            <div className="tabular-nums flex items-center justify-center gap-1">
+              <Star className="size-3 text-yellow-400 hidden sm:block" /> {owner.exactCount}
+            </div>
+            <div className="text-center tabular-nums text-muted-foreground">{owner.goalDiffCount}</div>
             <div className="text-center tabular-nums">{owner.resultCount}</div>
             <div className="text-center font-display font-bold tabular-nums">{owner.totalPoints}</div>
             <div className="flex items-center justify-center">
-              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider border bg-primary/15 text-primary border-primary/40">Owner</span>
+              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider border bg-primary/15 text-primary border-primary/40">
+                Owner
+              </span>
             </div>
-          </li>
-        )}
-      </ul>
-      {owner && (
-        <div className="px-4 py-2 text-[11px] text-muted-foreground bg-surface-2/40 border-t border-border">
-          Site owner · playing for fun (not ranked)
+          </div>
         </div>
       )}
+      <Dialog open={!!openEntrant} onOpenChange={(o) => !o && setOpenEntrant(null)}>
+        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <span className="truncate">{openEntrant?.displayName || openEntrant?.username || "Anonymous"}</span>
+              <span className="text-xs font-normal text-muted-foreground">· {openEntrant?.totalPoints ?? 0} pts</span>
+            </DialogTitle>
+            <p className="text-xs text-muted-foreground">
+              Only matches that have already kicked off are shown.
+            </p>
+          </DialogHeader>
+          {picksLoading ? (
+            <div className="grid place-items-center py-10 text-muted-foreground">
+              <Loader2 className="size-5 animate-spin" />
+            </div>
+          ) : !picks || picks.length === 0 ? (
+            <div className="py-8 text-center text-sm text-muted-foreground">
+              No matches have kicked off yet — picks reveal once kick-off passes.
+            </div>
+          ) : (
+            <ul className="divide-y divide-border">
+              {picks.map((p) => {
+                const finished = p.status === "FINISHED" && p.homeScore !== null && p.awayScore !== null;
+                return (
+                  <li key={p.fixtureId} className="py-2.5 flex items-center gap-3 text-sm">
+                    <div className="flex-1 min-w-0">
+                      <div className="truncate font-medium">
+                        {p.homeTeam} <span className="text-muted-foreground">vs</span> {p.awayTeam}
+                      </div>
+                      <div className="text-[11px] text-muted-foreground">
+                        {new Date(p.kickoffAt).toLocaleString(undefined, { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
+                        {finished && (
+                          <span className="ml-2 font-mono text-foreground">FT {p.homeScore}-{p.awayScore}</span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="font-mono tabular-nums text-foreground">
+                      {p.homePred}-{p.awayPred}
+                    </div>
+                    <div className="w-12 text-right">
+                      {p.points !== null ? (
+                        <span className={`inline-flex px-1.5 py-0.5 rounded text-[10px] font-bold ${p.points >= 5 ? "bg-yellow-500/20 text-yellow-300" : p.points >= 3 ? "bg-emerald-500/20 text-emerald-300" : p.points >= 1 ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground"}`}>
+                          {p.points} pt{p.points === 1 ? "" : "s"}
+                        </span>
+                      ) : (
+                        <span className="text-[10px] text-muted-foreground">—</span>
+                      )}
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </DialogContent>
+      </Dialog>
       <AlertDialog open={!!confirmDelete} onOpenChange={(o) => { if (!o && !deletingId) setConfirmDelete(null); }}>
         <AlertDialogContent>
           <AlertDialogHeader>
