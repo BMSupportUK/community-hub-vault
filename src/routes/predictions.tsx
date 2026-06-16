@@ -800,7 +800,7 @@ function PointsSidebar({
               </div>
               <div className="rounded-lg border border-primary/40 bg-surface-1 px-2 py-2">
                 <div className="text-lg font-black text-foreground tabular-nums">{goalDiffCount}</div>
-                <div className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Goal diff · 3pt</div>
+                <div className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Winning margin · 3pt</div>
               </div>
               <div className="rounded-lg border border-primary/40 bg-surface-1 px-2 py-2">
                 <div className="text-lg font-black text-foreground tabular-nums">{resultCount}</div>
@@ -1699,7 +1699,7 @@ function LeaderboardList({
         <div>Player</div>
         <div className="text-center"><span className="sm:hidden">P</span><span className="hidden sm:inline">Predictions Entered</span></div>
         <div className="text-center" title="Correct score (exact)"><span className="sm:hidden">CS</span><span className="hidden sm:inline">Correct Score</span></div>
-        <div className="text-center" title="Correct goal difference (3 pts)"><span className="sm:hidden">GD</span><span className="hidden sm:inline">Correct Goal Diff</span></div>
+        <div className="text-center" title="Right winning margin (3 pts)"><span className="sm:hidden">WM</span><span className="hidden sm:inline">Winning Margin</span></div>
         <div className="text-center" title="Correct result"><span className="sm:hidden">Res</span><span className="hidden sm:inline">Correct Result</span></div>
         <div className="text-center"><span className="sm:hidden">Pts</span><span className="hidden sm:inline">Points</span></div>
         <div className="text-center">Type</div>
