@@ -414,7 +414,7 @@ function BoroPointsSidebar({
               </div>
               <div className="rounded-lg border border-primary/40 bg-surface-1 px-2 py-2">
                 <div className="text-lg font-black text-foreground tabular-nums">{goalDiffCount}</div>
-                <div className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Goal diff · 3pt</div>
+                <div className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Winning margin · 3pt</div>
               </div>
               <div className="rounded-lg border border-primary/40 bg-surface-1 px-2 py-2">
                 <div className="text-lg font-black text-foreground tabular-nums">{resultCount}</div>
@@ -600,7 +600,7 @@ function LeaderboardList({
         <div>Player</div>
         <div className="text-center">Predictions Entered</div>
         <div className="text-center">Exact</div>
-        <div className="text-center">GD</div>
+        <div className="text-center" title="Right winning margin (3 pts)">WM</div>
         <div className="text-center">Result</div>
         <div className="text-center">Pts</div>
         <div className="text-center">Type</div>
