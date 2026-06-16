@@ -600,7 +600,7 @@ function LeaderboardList({
         <div>Player</div>
         <div className="text-center">Predictions Entered</div>
         <div className="text-center">Exact</div>
-        <div className="text-center">GD</div>
+        <div className="text-center" title="Right winning margin (3 pts)">WM</div>
         <div className="text-center">Result</div>
         <div className="text-center">Pts</div>
         <div className="text-center">Type</div>
