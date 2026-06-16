@@ -707,14 +707,28 @@ function SportsGuidesPage() {
 
               <section>
                 <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-6">
-                  <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-purple-300" />
-                    <Input
-                      value={search}
-                      onChange={(e) => setSearch(e.target.value)}
-                      placeholder="Search sports guides..."
-                      className="pl-9 bg-purple-950/50 border-purple-500/30 text-purple-50 placeholder:text-purple-300/50 focus-visible:ring-fuchsia-500"
-                    />
+                  <div className="relative flex-1 group">
+                    <div className="absolute -inset-0.5 rounded-xl bg-gradient-to-r from-fuchsia-500 via-purple-500 to-indigo-500 opacity-60 blur-sm group-focus-within:opacity-100 group-focus-within:blur-md transition-all duration-300" />
+                    <div className="relative flex items-center rounded-xl bg-slate-950/90 ring-1 ring-fuchsia-400/40 shadow-lg shadow-fuchsia-900/40 backdrop-blur-md">
+                      <div className="pl-3 pr-2 py-2.5 grid place-items-center">
+                        <Search className="size-5 text-fuchsia-300 drop-shadow-[0_0_6px_rgba(232,121,249,0.8)]" />
+                      </div>
+                      <Input
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        placeholder="Search sports guides..."
+                        className="h-11 border-0 bg-transparent text-base font-medium text-white placeholder:text-purple-200/60 focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none"
+                      />
+                      {search && (
+                        <button
+                          type="button"
+                          onClick={() => setSearch("")}
+                          className="mr-2 px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider text-fuchsia-200 hover:text-white hover:bg-fuchsia-500/20 transition-colors"
+                        >
+                          Clear
+                        </button>
+                      )}
+                    </div>
                   </div>
                   {isMod && (
                     <Button onClick={openNew} className="bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white border-0">
