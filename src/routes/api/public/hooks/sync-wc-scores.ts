@@ -88,6 +88,7 @@ async function fetchEspnLive(): Promise<EspnLiveMatch[]> {
         competitions?: Array<{
           status?: {
             displayClock?: string;
+            period?: number;
             type?: { state?: string; name?: string };
           };
           competitors?: Array<{
@@ -122,12 +123,23 @@ async function fetchEspnLive(): Promise<EspnLiveMatch[]> {
       const base = parseInt(baseStr ?? "", 10);
       const addedParsed = parseInt(addedStr ?? "", 10);
       const added = Number.isFinite(addedParsed) ? addedParsed : null;
+      // ESPN resets the clock each half: 2nd-half displayClock is "10'00",
+      // and 2nd-half stoppage is "45'+10" — meaning 90+10, not 45+10.
+      // Translate into a continuous match minute using `period`.
+      const period = typeof comp.status?.period === "number" ? comp.status.period : 1;
+      let normalisedMinute: number | null = null;
+      if (state === "in" && Number.isFinite(base)) {
+        if (period === 2) normalisedMinute = 45 + base;
+        else if (period === 3) normalisedMinute = 90 + base; // 1st ET
+        else if (period === 4) normalisedMinute = 105 + base; // 2nd ET
+        else normalisedMinute = base;
+      }
       out.push({
         home: homeC.team.displayName,
         away: awayC.team.displayName,
         kickoffMs: new Date(e.date).getTime(),
         status,
-        minute: state === "in" && Number.isFinite(base) ? base : null,
+        minute: normalisedMinute,
         minuteAdded: state === "in" ? added : null,
         homeScore: homeC.score != null && homeC.score !== "" ? Number(homeC.score) : null,
         awayScore: awayC.score != null && awayC.score !== "" ? Number(awayC.score) : null,
