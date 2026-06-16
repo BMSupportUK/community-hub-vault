@@ -15,8 +15,10 @@ import {
   getBoroEntrantStatus,
   joinBoroPredictor,
   adminDeleteBoroEntrant,
+  getEntrantBoroPredictions,
   type BoroFixtureDTO,
   type BoroLeaderboardRowDTO,
+  type BoroEntrantPickDTO,
 } from "@/lib/boro-predictions.functions";
 import {
   boroGuestSignInOrRegister,
@@ -33,6 +35,9 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/boro-predictions")({
   component: BoroPredictionsPage,
