@@ -123,17 +123,11 @@ async function fetchEspnLive(): Promise<EspnLiveMatch[]> {
       const base = parseInt(baseStr ?? "", 10);
       const addedParsed = parseInt(addedStr ?? "", 10);
       const added = Number.isFinite(addedParsed) ? addedParsed : null;
-      // ESPN resets the clock each half: 2nd-half displayClock is "10'00",
-      // and 2nd-half stoppage is "45'+10" — meaning 90+10, not 45+10.
-      // Translate into a continuous match minute using `period`.
-      const period = typeof comp.status?.period === "number" ? comp.status.period : 1;
-      let normalisedMinute: number | null = null;
-      if (state === "in" && Number.isFinite(base)) {
-        if (period === 2) normalisedMinute = 45 + base;
-        else if (period === 3) normalisedMinute = 90 + base; // 1st ET
-        else if (period === 4) normalisedMinute = 105 + base; // 2nd ET
-        else normalisedMinute = base;
-      }
+      // ESPN's displayClock is already cumulative across halves — "60'" in
+      // the 2nd half means minute 60 of the match, and stoppage shows as
+      // "90'+3". Use the base value directly; do NOT add a period offset.
+      const normalisedMinute: number | null =
+        state === "in" && Number.isFinite(base) ? base : null;
       out.push({
         home: homeC.team.displayName,
         away: awayC.team.displayName,
