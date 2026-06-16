@@ -770,17 +770,17 @@ function SportsGuidesPage() {
                         <button
                           key={sub.id}
                           onClick={() => setSubFilter(sub.name)}
-                          className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition-colors ${active ? "bg-gradient-to-r from-fuchsia-600 to-purple-600 text-white border-transparent shadow-md shadow-purple-900/40" : "bg-purple-950/50 text-purple-100/80 border-purple-500/30 hover:bg-purple-800/60"}`}
+                          className={`group relative text-xs font-bold uppercase tracking-wider px-4 py-2 rounded-full border-2 transition-all duration-200 ${active ? "bg-gradient-to-r from-fuchsia-500 via-purple-500 to-indigo-500 text-white border-white/30 shadow-lg shadow-fuchsia-500/50 scale-105 ring-2 ring-fuchsia-400/40 ring-offset-2 ring-offset-purple-950" : "bg-purple-950/70 text-purple-100 border-purple-400/50 hover:bg-purple-800/80 hover:border-fuchsia-400/70 hover:text-white hover:shadow-md hover:shadow-purple-500/30 hover:scale-105"}`}
                         >
                           <span className="inline-flex items-center gap-1.5">
                             {unread > 0 && (
-                              <span className="size-1.5 rounded-full bg-fuchsia-400 shadow-[0_0_6px_rgba(232,121,249,0.9)] animate-pulse" />
+                              <span className="size-2 rounded-full bg-fuchsia-400 shadow-[0_0_8px_rgba(232,121,249,1)] animate-pulse" />
                             )}
-                            {sub.name}
+                            <span className="drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">{sub.name}</span>
+                            <span className={`ml-1 inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-[10px] font-black ${active ? "bg-white/25 text-white" : "bg-fuchsia-500/30 text-fuchsia-100 border border-fuchsia-400/40"}`}>{count}</span>
                           </span>
-                          <span className="ml-1.5 opacity-70">{count}</span>
                           {unread > 0 && (
-                            <span className="ml-1 text-[10px] px-1.5 py-0.5 rounded-full bg-fuchsia-500 text-white font-bold">{unread}</span>
+                            <span className="ml-1 text-[10px] px-1.5 py-0.5 rounded-full bg-fuchsia-500 text-white font-bold shadow-md">{unread}</span>
                           )}
                         </button>
                       );
