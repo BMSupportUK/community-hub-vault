@@ -120,11 +120,12 @@ export function HomeChannelsSidebar() {
         title="Support Community"
         groups={[
           {
-            label: "Loading",
+            label: "\u00A0",
             items: Array.from({ length: 6 }).map((_, i) => ({
-              to: `#skeleton-${i}`,
-              label: "",
+              to: `#sk-${i}`,
+              label: "\u00A0",
               icon: () => <Skeleton className="size-4 rounded" />,
+              onClick: () => {},
             })),
           },
         ]}
