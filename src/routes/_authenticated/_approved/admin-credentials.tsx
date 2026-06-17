@@ -283,10 +283,10 @@ function CredentialEditor({
 
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4" onClick={onClose}>
-      <div className="w-full max-w-lg rounded-2xl border border-border bg-surface-2 shadow-2xl p-6" onClick={(e) => e.stopPropagation()}>
+      <div className="ed-dialog w-full max-w-lg rounded-2xl p-6" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4">
-          <h3 className="font-display text-lg font-bold">{row ? "Edit credential" : "New credential"}</h3>
-          <button onClick={onClose} className="p-1.5 rounded hover:bg-surface-2"><X className="size-4" /></button>
+          <h3 className="ed-title font-display text-lg font-bold">{row ? "Edit credential" : "New credential"}</h3>
+          <button onClick={onClose} className="ed-close p-1.5 rounded"><X className="size-4" /></button>
         </div>
         <div className="space-y-3">
           <Field label="App login name">
@@ -306,23 +306,33 @@ function CredentialEditor({
           </Field>
         </div>
         <div className="flex justify-end gap-2 mt-5">
-          <button onClick={onClose} className="px-4 py-2 rounded-lg border border-border text-sm">Cancel</button>
-          <button onClick={save} disabled={busy} className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium flex items-center gap-2">
+          <button onClick={onClose} className="ed-cancel px-4 py-2 rounded-lg text-sm font-medium">Cancel</button>
+          <button onClick={save} disabled={busy} className="ed-save px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2">
             {busy ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />} Save
           </button>
         </div>
         <style>{`
-          .ed-input{width:100%;padding:.6rem .8rem;border-radius:.5rem;background:hsl(var(--background));border:1px solid hsl(var(--border));font-size:.9rem;color:hsl(var(--foreground));outline:none;transition:border-color .15s, box-shadow .15s}
-          .ed-input::placeholder{color:hsl(var(--muted-foreground));opacity:.8}
-          .ed-input:hover{border-color:hsl(var(--primary) / 0.5)}
-          .ed-input:focus{border-color:hsl(var(--primary));box-shadow:0 0 0 3px hsl(var(--primary) / 0.2)}
-          .ed-input::-webkit-calendar-picker-indicator{filter:invert(1) opacity(.85);cursor:pointer;margin-left:.25rem}
+          .ed-dialog{background:linear-gradient(140deg,#fff7ed 0%,#ffffff 45%,#ecfeff 100%);color:#0f172a;border:1px solid #fcd34d;box-shadow:0 25px 60px -15px rgba(244,114,182,.45),0 10px 30px -10px rgba(56,189,248,.35)}
+          .ed-title{color:#0f172a;background:linear-gradient(90deg,#db2777,#7c3aed 50%,#0891b2);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+          .ed-close{color:#475569}
+          .ed-close:hover{background:#fde68a;color:#0f172a}
+          .ed-dialog label > div{color:#7c3aed !important}
+          .ed-input{width:100%;padding:.65rem .85rem;border-radius:.6rem;background:#ffffff;border:1.5px solid #c4b5fd;font-size:.95rem;color:#0f172a;outline:none;transition:border-color .15s,box-shadow .15s,background .15s}
+          .ed-input::placeholder{color:#94a3b8}
+          .ed-input:hover{border-color:#a78bfa;background:#fdfaff}
+          .ed-input:focus{border-color:#db2777;background:#ffffff;box-shadow:0 0 0 3px rgba(219,39,119,.2)}
+          .ed-input::-webkit-calendar-picker-indicator{filter:none;opacity:1;cursor:pointer;margin-left:.25rem}
           .ed-input::-webkit-datetime-edit-text,
           .ed-input::-webkit-datetime-edit-day-field,
           .ed-input::-webkit-datetime-edit-month-field,
           .ed-input::-webkit-datetime-edit-year-field,
           .ed-input::-webkit-datetime-edit-hour-field,
-          .ed-input::-webkit-datetime-edit-minute-field{color:hsl(var(--foreground))}
+          .ed-input::-webkit-datetime-edit-minute-field{color:#0f172a}
+          .ed-cancel{background:#fff;color:#475569;border:1.5px solid #cbd5e1}
+          .ed-cancel:hover{background:#f1f5f9;border-color:#94a3b8;color:#0f172a}
+          .ed-save{background:linear-gradient(135deg,#db2777,#7c3aed 55%,#0891b2);color:#ffffff;border:none;box-shadow:0 10px 25px -8px rgba(124,58,237,.55)}
+          .ed-save:hover{filter:brightness(1.08)}
+          .ed-save:disabled{opacity:.7;cursor:not-allowed}
         `}</style>
       </div>
     </div>
