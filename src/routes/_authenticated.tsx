@@ -59,6 +59,7 @@ function AuthLayout() {
   useLayoutEffect(() => {
     const html = document.documentElement;
     const body = document.body;
+    html.classList.add("app-shell-locked");
     const prev = {
       htmlOverflow: html.style.overflow,
       bodyOverflow: body.style.overflow,
@@ -74,6 +75,7 @@ function AuthLayout() {
     body.style.position = "fixed";
     body.style.width = "100%";
     return () => {
+      html.classList.remove("app-shell-locked");
       html.style.overflow = prev.htmlOverflow;
       body.style.overflow = prev.bodyOverflow;
       html.style.height = prev.htmlHeight;
