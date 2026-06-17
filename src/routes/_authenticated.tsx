@@ -91,7 +91,7 @@ function AuthLayout() {
           <div className="flex items-center gap-1.5 lg:gap-2 shrink-0">
             <Sheet open={navOpen} onOpenChange={setNavOpen}>
               <SheetTrigger
-                className="lg:hidden inline-flex items-center justify-center size-9 rounded-md hover:bg-surface-2 text-muted-foreground"
+                className="md:hidden inline-flex items-center justify-center size-9 rounded-md hover:bg-surface-2 text-muted-foreground"
                 aria-label="Open navigation"
               >
                 <Menu className="size-5" />
