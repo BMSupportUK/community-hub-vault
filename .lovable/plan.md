@@ -1,25 +1,41 @@
-## Plan: Hot Right Now tabs on What to Watch
+## Make the side icon rail pop
 
-Restructure `src/routes/_authenticated/_approved/what-to-watch.tsx` so the page has two top-level tabs — **Trending** and **Hot Right Now** — each with its own Movies / Series sub-tabs.
+The rail currently uses a flat `bg-rail` background with subtle `bg-primary/15` icon tiles. It blends into the page and feels dull across all themes.
 
-### Backend (TMDB server function)
+### Visual upgrades (theme-aware, no hardcoded colors)
 
-In `src/lib/tmdb.functions.ts`:
-- Add a new server function `getHot` (mirroring `getTrending`) that calls:
-  - `/movie/now_playing` → in cinemas now
-  - `/tv/on_the_air` → currently airing this week
-- Reuse the existing `buildAuth` / `mapItem` helpers and `TmdbItem` type.
-- Same error-shape return as `getTrending` (`{ movies, tv, error }`).
+**1. Rail background**
+- Replace flat `bg-rail` with a vertical gradient using theme tokens: `bg-gradient-to-b from-surface via-rail to-surface-2`
+- Add a subtle right-edge glow: inner shadow / `shadow-[inset_-1px_0_0_0_hsl(var(--primary-glow)/0.3)]`
+- Add a faint vertical accent stripe behind the active item
 
-### Frontend
+**2. BM logo tile (top)**
+- Add pulsing glow ring + slight scale-on-hover
+- Stronger `shadow-glow` with primary-glow halo
 
-In the What to Watch route:
-- Wrap the page content in an outer `Tabs` with two triggers: `Trending` and `Hot Right Now`.
-- Move the existing Today/This-week toggle + Movies/Series tabs inside the **Trending** TabsContent (no behaviour change).
-- Inside **Hot Right Now** TabsContent, render Movies/Series sub-tabs powered by a new `useQuery(["tmdb-hot"], getHot)` call. No time-window toggle (Now Playing / On The Air are inherently "right now").
-- Update the header copy/description to reflect the active top-level tab.
-- Reuse the existing `Grid` component and details `Dialog` for both sections.
+**3. Inactive icon tiles**
+- Upgrade from `bg-primary/15` flat to a subtle gradient (`bg-gradient-to-br from-surface-2 to-surface`) with a 1px `ring-1 ring-border/50`
+- Icon color uses `text-primary-glow` already — bump contrast with `text-foreground/70` → `text-primary-glow` on hover
 
-### Notes
-- Pure presentation + one additional TMDB endpoint; no DB or schema changes.
-- Uses the existing `TMDB_API_KEY` secret already wired into `getTrending`.
+**4. Active icon tile**
+- Keep gradient + shadow-glow, but add:
+  - Animated outer glow (pulsing `ring-2 ring-primary-glow/40`)
+  - Brighter left indicator bar (currently `w-1`, bump to `w-1.5` with `shadow-glow`)
+  - Subtle scale: `scale-105`
+
+**5. Hover micro-interaction**
+- Add `transition-all duration-200`
+- Hover: `scale-105` + glow ring fade-in
+- Icon: subtle rotate or wiggle on first hover (optional)
+
+**6. Section divider**
+- Replace plain `h-px w-8 bg-border` with a gradient divider: `bg-gradient-to-r from-transparent via-primary-glow/40 to-transparent`
+
+### Files to edit
+- `src/components/app/IconRail.tsx` — update the `<aside>` background, BM logo tile, `RailIcon` button classes (active/inactive/hover states), and the divider.
+
+No new CSS variables needed — everything uses existing theme tokens (`--primary`, `--primary-glow`, `--surface`, `--surface-2`, `--border`, `--gradient-primary`, `--shadow-glow`) so all 4 themes (Purple, Crimson, Ocean, Sunset) benefit automatically.
+
+### Out of scope
+- No changes to icon set, order, badges, or behavior
+- No changes to mobile sheet trigger logic
