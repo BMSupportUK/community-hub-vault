@@ -173,17 +173,81 @@ export async function fetchEspnWcLive(): Promise<EspnLiveMatch[]> {
 
 export async function getWcLiveOverlays(fixtures: WcLiveFixtureRow[]) {
   const overlays = new Map<string, WcLiveOverlay>();
-  const live = await fetchEspnWcLive();
-  for (const ev of live) {
-    const fx = findWcLiveFixture(fixtures, ev.home, ev.away, ev.kickoffMs);
-    if (!fx) continue;
-    overlays.set(fx.id, {
-      status: ev.status,
-      minute: ev.minute,
-      minute_added: ev.minuteAdded,
-      home_score: ev.homeScore,
-      away_score: ev.awayScore,
-    });
+  try {
+    const live = await fetchEspnWcLive();
+    for (const ev of live) {
+      const fx = findWcLiveFixture(fixtures, ev.home, ev.away, ev.kickoffMs);
+      if (!fx) continue;
+      overlays.set(fx.id, {
+        status: ev.status,
+        minute: ev.minute,
+        minute_added: ev.minuteAdded,
+        home_score: ev.homeScore,
+        away_score: ev.awayScore,
+      });
+    }
+  } catch {
+    // Swallow — callers must fall back to the DB row.
   }
   return overlays;
+}
+
+// Pick the freshest source per field. If ESPN is missing, partial, or stale
+// (lower minute than what the cron sync already wrote), prefer the DB row so
+// the live timer never ticks backwards or freezes on a stale ESPN snapshot.
+export function mergeWcLive(
+  row: Pick<WcLiveFixtureRow, "home_score" | "away_score" | "status" | "minute" | "minute_added">,
+  overlay: WcLiveOverlay | undefined,
+) {
+  const dbStatus = (row.status ?? "SCHEDULED") as string;
+  const dbMinute = (row.minute ?? null) as number | null;
+  const dbAdded = (row.minute_added ?? null) as number | null;
+  const dbHome = (row.home_score ?? null) as number | null;
+  const dbAway = (row.away_score ?? null) as number | null;
+
+  if (!overlay) {
+    return {
+      home_score: dbHome,
+      away_score: dbAway,
+      status: dbStatus,
+      minute: dbMinute,
+      minute_added: dbAdded,
+    };
+  }
+
+  // If DB already says FINISHED, never demote it back to IN_PLAY from a stale ESPN snapshot.
+  if (dbStatus === "FINISHED" && overlay.status !== "FINISHED") {
+    return {
+      home_score: dbHome,
+      away_score: dbAway,
+      status: dbStatus,
+      minute: dbMinute,
+      minute_added: dbAdded,
+    };
+  }
+
+  const overlayClock = (overlay.minute ?? 0) + (overlay.minute_added ?? 0) / 100;
+  const dbClock = (dbMinute ?? 0) + (dbAdded ?? 0) / 100;
+  const overlayLive = overlay.status === "IN_PLAY" || overlay.status === "PAUSED";
+  const dbLive = dbStatus === "IN_PLAY" || dbStatus === "PAUSED";
+
+  // If both sources are mid-match but the DB clock is ahead, the ESPN payload
+  // is stale — keep the freshest values we already have.
+  if (overlayLive && dbLive && dbClock > overlayClock) {
+    return {
+      home_score: dbHome,
+      away_score: dbAway,
+      status: dbStatus,
+      minute: dbMinute,
+      minute_added: dbAdded,
+    };
+  }
+
+  return {
+    home_score: overlay.home_score ?? dbHome,
+    away_score: overlay.away_score ?? dbAway,
+    status: overlay.status ?? dbStatus,
+    minute: overlay.minute ?? dbMinute,
+    minute_added: overlay.minute_added ?? dbAdded,
+  };
 }
