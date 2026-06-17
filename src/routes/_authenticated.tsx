@@ -39,6 +39,18 @@ function AuthLayout() {
   const isAdmin = hasAny(["admin", "management"]);
   const navigate = useNavigate();
   const path = useRouterState({ select: (r) => r.location.pathname });
+  const search = useRouterState({ select: (r) => r.location.search });
+  const unlockShell =
+    path.endsWith("/streaming-devices") ||
+    path.endsWith("/reviews") ||
+    (path.endsWith("/shop") &&
+      (search.tab === "vpn" ||
+        search.tab === "streaming_devices" ||
+        search.tab === "reviews" ||
+        search.tab === "app_demos" ||
+        search.view === "streaming_devices" ||
+        search.view === "reviews" ||
+        search.view === "app_demos"));
   const logIp = useServerFn(logMyIp);
   const loggedRef = useRef(false);
   const [navOpen, setNavOpen] = useState(false);
@@ -70,7 +82,7 @@ function AuthLayout() {
       bodyWidth: body.style.width,
     };
     const apply = () => {
-      if (mq.matches) {
+      if (mq.matches && !unlockShell) {
         html.classList.add("app-shell-locked");
         html.style.overflow = "hidden";
         body.style.overflow = "hidden";
@@ -100,7 +112,7 @@ function AuthLayout() {
       body.style.position = prev.bodyPosition;
       body.style.width = prev.bodyWidth;
     };
-  }, []);
+  }, [unlockShell]);
 
   useEffect(() => {
     if (loading || isPending || loggedRef.current) return;
@@ -132,9 +144,9 @@ function AuthLayout() {
   }
 
   return (
-    <div className="relative flex min-h-dvh w-full bg-background md:fixed md:inset-0 md:h-dvh md:w-dvw md:overflow-hidden">
+    <div className={unlockShell ? "relative flex min-h-dvh w-full bg-background" : "relative flex min-h-dvh w-full bg-background md:fixed md:inset-0 md:h-dvh md:w-dvw md:overflow-hidden"}>
       <IconRail />
-      <div className="flex-1 flex flex-col min-w-0 min-h-dvh md:h-full md:min-h-0 md:overflow-hidden">
+      <div className={unlockShell ? "flex-1 flex flex-col min-w-0 min-h-dvh" : "flex-1 flex flex-col min-w-0 min-h-dvh md:h-full md:min-h-0 md:overflow-hidden"}>
         <header className="h-12 shrink-0 border-b border-border bg-rail/40 backdrop-blur flex items-center justify-between px-2 lg:px-4 gap-1.5 lg:gap-3 overflow-x-auto scrollbar-thin">
           <div className="flex items-center gap-1.5 lg:gap-2 shrink-0">
             <Sheet open={navOpen} onOpenChange={setNavOpen}>
@@ -223,7 +235,7 @@ function AuthLayout() {
               <MyWorkingStatus />
             </div>
         </header>
-        <div className="flex-1 flex md:min-h-0 md:overflow-hidden">
+        <div className={unlockShell ? "flex-1 flex" : "flex-1 flex md:min-h-0 md:overflow-hidden"}>
           <Outlet />
         </div>
         <BreakEndingAlert />
