@@ -1243,15 +1243,15 @@ function Storefront() {
     for (const n of [...fromDb, ...fromProducts]) {
       if (n && !merged.includes(n)) merged.push(n);
     }
-    return ["All", ...merged];
+    return merged;
   }, [products, dbCategories]);
   const [cat, setCat] = useState("Single Account");
-  const filtered = cat === "All" ? products : products.filter((p) => p.category === cat);
+  const filtered = products.filter((p) => p.category === cat);
 
-  // Group products by category for the "All" view (professional store layout)
+  // Group products by category (used when no specific category is selected)
   const grouped = useMemo(() => {
     const groups: { name: string; items: Product[] }[] = [];
-    const order = categories.filter((c) => c !== "All");
+    const order = categories;
     for (const name of order) {
       const items = products.filter((p) => p.category === name);
       if (items.length) groups.push({ name, items });
@@ -1430,7 +1430,7 @@ function Storefront() {
     <main className="flex-1 flex flex-col overflow-hidden">
       <div
         className={cn(
-          "flex-1 overflow-y-auto",
+          "flex-1 overflow-y-auto scrollbar-hide",
           tab === "orders" && "relative bg-cover bg-center bg-fixed min-h-screen",
           tab === "app_demos" && "relative bg-cover bg-center bg-no-repeat bg-fixed min-h-screen",
         )}
@@ -1575,8 +1575,7 @@ function Storefront() {
                 className="bg-background/80 backdrop-blur border border-border rounded-xl px-4 py-3 flex items-center gap-2 flex-wrap mb-4 sticky top-0 z-10"
               >
                 {categories.map((c) => {
-                  const count =
-                    c === "All" ? products.length : products.filter((p) => p.category === c).length;
+                  const count = products.filter((p) => p.category === c).length;
                   return (
                     <button
                       key={c}
@@ -1647,51 +1646,6 @@ function Storefront() {
               </div>
               {products.length === 0 ? (
                 <div className="text-center text-muted-foreground py-20">No products yet.</div>
-              ) : cat === "All" ? (
-                <div className="space-y-10">
-                  {grouped.length === 0 ? (
-                    <div className="text-center text-muted-foreground py-20">No products yet.</div>
-                  ) : (
-                    grouped.map((g) => (
-                      <section key={g.name}>
-                        <div className="flex items-end justify-between mb-4 pb-2 border-b border-border">
-                          <div>
-                            <h2 className="font-display text-xl md:text-2xl font-bold tracking-tight">
-                              {g.name}
-                            </h2>
-                            <p className="text-xs text-muted-foreground mt-0.5">
-                              {g.items.length} {g.items.length === 1 ? "product" : "products"}
-                            </p>
-                          </div>
-                          {g.name !== "Other" && (
-                            <button
-                              onClick={() => setCat(g.name)}
-                              className="text-xs text-sky-400 hover:text-sky-300 font-medium"
-                            >
-                              View all →
-                            </button>
-                          )}
-                        </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-                          {g.items.map((p) => (
-                            <ProductCard
-                              key={p.id}
-                              p={p}
-                              qty={cart[p.id] ?? 0}
-                              onAdd={() => add(p.id)}
-                              onSub={() => sub(p.id)}
-                              onPlace={() => setShowCheckout(true)}
-                              rating={myRatings[p.id] ?? 0}
-                              average={ratings[p.id] ? ratings[p.id].sum / ratings[p.id].count : 0}
-                              ratingCount={ratings[p.id]?.count ?? 0}
-                              onRate={(v) => rateProduct(p.id, v)}
-                            />
-                          ))}
-                        </div>
-                      </section>
-                    ))
-                  )}
-                </div>
               ) : filtered.length === 0 ? (
                 <div className="text-center text-muted-foreground py-20">
                   No products in this category yet.
@@ -1708,7 +1662,7 @@ function Storefront() {
                       </p>
                     </div>
                     <button
-                      onClick={() => setCat("All")}
+                      onClick={() => setCat(categories[0] ?? cat)}
                       className="text-xs text-sky-400 hover:text-sky-300 font-medium"
                     >
                       ← All categories
