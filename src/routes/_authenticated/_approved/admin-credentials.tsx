@@ -311,7 +311,12 @@ function CredentialEditor({
             {busy ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />} Save
           </button>
         </div>
-        <style>{`.ed-input{width:100%;padding:.55rem .75rem;border-radius:.5rem;background:hsl(var(--muted));border:1px solid hsl(var(--border));font-size:.875rem;color:inherit}`}</style>
+        <style>{`
+          .ed-input{width:100%;padding:.55rem .75rem;border-radius:.5rem;background:hsl(var(--background));border:1px solid hsl(var(--border));font-size:.875rem;color:hsl(var(--foreground));outline:none}
+          .ed-input::placeholder{color:hsl(var(--muted-foreground))}
+          .ed-input:focus{border-color:hsl(var(--primary));box-shadow:0 0 0 2px hsl(var(--primary) / 0.25)}
+          .ed-input::-webkit-calendar-picker-indicator{filter:invert(1) opacity(.75);cursor:pointer}
+        `}</style>
       </div>
     </div>
   );
