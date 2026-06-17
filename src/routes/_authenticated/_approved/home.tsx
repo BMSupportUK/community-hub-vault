@@ -59,14 +59,12 @@ function HomeLayout() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const isHomeIndex = pathname === "/home" || pathname === "/home/";
   const path = useRouterState({ select: (r) => r.location.pathname });
-  const [channelContentReady, setChannelContentReady] = useState(false);
+  const [readyPath, setReadyPath] = useState<string | null>(null);
+  const channelContentReady = isHomeIndex || readyPath === path;
   const [channels, setChannels] = useState<ChannelRow[] | null>(null);
   const [chanNavOpen, setChanNavOpen] = useState(false);
   useEffect(() => {
     setChanNavOpen(false);
-  }, [path]);
-  useEffect(() => {
-    setChannelContentReady(isHomeIndex);
   }, [path]);
   const [mentionCounts, setMentionCounts] = useState<Record<string, number>>({});
   const [addChannelGroup, setAddChannelGroup] = useState<string | null>(null);
@@ -518,7 +516,7 @@ function HomeLayout() {
           </div>
         )}
         <div className="flex-1 flex min-h-0 min-w-0">
-          <HomeChannelReadyProvider onReady={() => setChannelContentReady(true)}>
+          <HomeChannelReadyProvider onReady={() => setReadyPath(path)}>
             <Outlet />
           </HomeChannelReadyProvider>
         </div>
