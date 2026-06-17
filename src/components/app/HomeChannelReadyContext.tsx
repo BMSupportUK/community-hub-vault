@@ -9,7 +9,9 @@ export function HomeChannelReadyProvider({
   children: ReactNode;
   onReady: () => void;
 }) {
-  return <HomeChannelReadyContext.Provider value={onReady}>{children}</HomeChannelReadyContext.Provider>;
+  return (
+    <HomeChannelReadyContext.Provider value={onReady}>{children}</HomeChannelReadyContext.Provider>
+  );
 }
 
 export function useHomeChannelContentReady() {
