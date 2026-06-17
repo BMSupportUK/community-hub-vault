@@ -1212,10 +1212,11 @@ function TicketDetail({
     setSending(true);
     const uploaded = replyFiles.length ? await uploadTicketFiles(replyFiles, currentUserId, setReplyProgress) : [];
     setReplyProgress(null);
-    const { error } = await supabase.from("ticket_messages").insert({
-      ticket_id: ticket.id, sender_id: currentUserId, content, is_internal: internal && isStaff,
+    const isInternal = internal && isStaff;
+    const { data: inserted, error } = await supabase.from("ticket_messages").insert({
+      ticket_id: ticket.id, sender_id: currentUserId, content, is_internal: isInternal,
       attachments: uploaded as unknown as never,
-    });
+    }).select("id").maybeSingle();
     setSending(false);
     if (error) {
       const msg = error.message;
@@ -1232,6 +1233,14 @@ function TicketDetail({
     setReplyFiles([]);
     await load();
     notifyTicketChanged();
+    // Email the ticket owner when a staff member posts a public reply.
+    if (isStaff && !isInternal && ticket.user_id !== currentUserId && inserted?.id) {
+      try {
+        await notifyTicketReply({ data: { ticketId: ticket.id, messageId: inserted.id } });
+      } catch (e) {
+        console.warn("[tickets] notifyTicketReply failed", e);
+      }
+    }
     // Bump updated_at via status touch (only staff allowed) — skip for users
     if (isStaff && ticket.status === "open") {
       await supabase.from("tickets").update({ status: "in_progress" }).eq("id", ticket.id);
