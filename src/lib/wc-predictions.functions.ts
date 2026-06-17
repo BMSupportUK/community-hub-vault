@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { setResponseHeader } from "@tanstack/react-start/server";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import type { WcLiveFixtureRow } from "@/lib/wc-live-scores.server";
 
 export type WcStage = "group" | "r32" | "r16" | "qf" | "sf" | "third" | "final";
 
@@ -98,10 +99,13 @@ export const listWcFixtures = createServerFn({ method: "GET" })
     ]);
     if (fxErr) throw new Error(fxErr.message);
     if (prErr) throw new Error(prErr.message);
+    const { getWcLiveOverlays } = await import("@/lib/wc-live-scores.server");
+    const liveOverlays = await getWcLiveOverlays((fixtures ?? []) as WcLiveFixtureRow[]);
     const predMap = new Map<string, { home_pred: number; away_pred: number; points: number | null }>();
     for (const p of preds ?? []) predMap.set((p as any).fixture_id, p as any);
     return (fixtures ?? []).map((f: any) => {
       const p = predMap.get(f.id);
+      const live = liveOverlays.get(f.id);
       return {
         id: f.id,
         stage: f.stage,
@@ -109,11 +113,11 @@ export const listWcFixtures = createServerFn({ method: "GET" })
         homeTeam: f.home_team,
         awayTeam: f.away_team,
         kickoffAt: f.kickoff_at,
-        homeScore: f.home_score,
-        awayScore: f.away_score,
-        status: (f.status as string | null) ?? "SCHEDULED",
-        minute: (f.minute as number | null) ?? null,
-        minuteAdded: (f.minute_added as number | null) ?? null,
+        homeScore: live?.home_score ?? f.home_score,
+        awayScore: live?.away_score ?? f.away_score,
+        status: live?.status ?? (f.status as string | null) ?? "SCHEDULED",
+        minute: live?.minute ?? (f.minute as number | null) ?? null,
+        minuteAdded: live?.minute_added ?? (f.minute_added as number | null) ?? null,
         myPrediction: p
           ? { homePred: p.home_pred, awayPred: p.away_pred, points: p.points ?? null }
           : null,
