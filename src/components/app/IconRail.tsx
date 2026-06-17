@@ -303,14 +303,14 @@ function RailIcon({
             draggable={false}
             onDragStart={draggable ? undefined : (e) => e.preventDefault()}
             className={cn(
-              "group relative z-10 size-13 rounded-2xl flex items-center justify-center transition-all duration-200",
+              "group relative z-10 size-[52px] rounded-2xl flex items-center justify-center transition-all duration-200",
               active
                 ? "bg-gradient-primary text-primary-foreground rounded-xl shadow-glow ring-2 ring-primary-glow scale-110"
                 : "bg-[color-mix(in_oklab,var(--surface)_62%,transparent)] text-primary-glow ring-1 ring-primary-glow/35 shadow-[inset_0_1px_0_color-mix(in_oklab,var(--foreground)_12%,transparent)] hover:bg-gradient-primary hover:text-primary-foreground hover:rounded-xl hover:shadow-glow hover:scale-110 hover:ring-primary-glow",
               accent && !active && "ring-2 ring-primary/55",
             )}
           >
-            <Icon className="size-5.5" />
+            <Icon className="size-[22px]" />
             {badge && badge > 0 ? (
               <span className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1 rounded-full bg-red-500 text-white text-[11px] font-bold flex items-center justify-center shadow-lg ring-2 ring-rail animate-pulse">
                 {badge > 99 ? "99+" : badge}
