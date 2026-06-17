@@ -54,12 +54,13 @@ function AuthLayout() {
   // Broadcast this user's presence globally while signed in.
   useOnlineUsers();
 
-  // Discord-style: lock the document to the viewport while inside the app
-  // shell so internal panels scroll instead of the whole page.
+  // Discord-style: lock the document to the viewport on desktop only so
+  // internal panels scroll instead of the whole page. On mobile (<768px)
+  // let the page scroll normally — small screens need natural scrolling.
   useLayoutEffect(() => {
     const html = document.documentElement;
     const body = document.body;
-    html.classList.add("app-shell-locked");
+    const mq = window.matchMedia("(min-width: 768px)");
     const prev = {
       htmlOverflow: html.style.overflow,
       bodyOverflow: body.style.overflow,
@@ -68,13 +69,29 @@ function AuthLayout() {
       bodyPosition: body.style.position,
       bodyWidth: body.style.width,
     };
-    html.style.overflow = "hidden";
-    body.style.overflow = "hidden";
-    html.style.height = "100dvh";
-    body.style.height = "100dvh";
-    body.style.position = "fixed";
-    body.style.width = "100%";
+    const apply = () => {
+      if (mq.matches) {
+        html.classList.add("app-shell-locked");
+        html.style.overflow = "hidden";
+        body.style.overflow = "hidden";
+        html.style.height = "100dvh";
+        body.style.height = "100dvh";
+        body.style.position = "fixed";
+        body.style.width = "100%";
+      } else {
+        html.classList.remove("app-shell-locked");
+        html.style.overflow = prev.htmlOverflow;
+        body.style.overflow = prev.bodyOverflow;
+        html.style.height = prev.htmlHeight;
+        body.style.height = prev.bodyHeight;
+        body.style.position = prev.bodyPosition;
+        body.style.width = prev.bodyWidth;
+      }
+    };
+    apply();
+    mq.addEventListener("change", apply);
     return () => {
+      mq.removeEventListener("change", apply);
       html.classList.remove("app-shell-locked");
       html.style.overflow = prev.htmlOverflow;
       body.style.overflow = prev.bodyOverflow;
@@ -115,9 +132,9 @@ function AuthLayout() {
   }
 
   return (
-    <div className="fixed inset-0 flex h-dvh w-dvw bg-background overflow-hidden">
+    <div className="relative flex min-h-dvh w-full bg-background md:fixed md:inset-0 md:h-dvh md:w-dvw md:overflow-hidden">
       <IconRail />
-      <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
+      <div className="flex-1 flex flex-col min-w-0 min-h-dvh md:h-full md:min-h-0 md:overflow-hidden">
         <header className="h-12 shrink-0 border-b border-border bg-rail/40 backdrop-blur flex items-center justify-between px-2 lg:px-4 gap-1.5 lg:gap-3 overflow-x-auto scrollbar-thin">
           <div className="flex items-center gap-1.5 lg:gap-2 shrink-0">
             <Sheet open={navOpen} onOpenChange={setNavOpen}>
@@ -206,7 +223,7 @@ function AuthLayout() {
               <MyWorkingStatus />
             </div>
         </header>
-        <div className="flex-1 flex min-h-0 overflow-hidden">
+        <div className="flex-1 flex md:min-h-0 md:overflow-hidden">
           <Outlet />
         </div>
         <BreakEndingAlert />
