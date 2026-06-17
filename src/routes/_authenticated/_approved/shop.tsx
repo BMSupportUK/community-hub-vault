@@ -351,7 +351,7 @@ function ShopPage() {
 
   return (
     <>
-      <div className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden">
+      <div className="flex h-full max-h-full min-h-0 flex-1 flex-col overflow-hidden min-w-0">
         {/* Admin-only quick nav: regular users navigate via Storefront tabs */}
         {isAdmin && adminUnlocked && (
           <nav className="shrink-0 border-b border-border bg-surface/60 backdrop-blur px-3 md:px-6 py-2 flex items-center gap-4 overflow-x-auto scrollbar-hide">
@@ -390,7 +390,7 @@ function ShopPage() {
             </button>
           </nav>
         )}
-        <div className="flex-1 flex min-h-0 min-w-0 overflow-hidden">
+        <div className="flex h-full max-h-full min-h-0 min-w-0 flex-1 overflow-hidden">
           {view === "store" && <Storefront />}
           {view === "orders" && (
             <OrdersView
@@ -1433,7 +1433,7 @@ function Storefront() {
   };
 
   return (
-    <main className="flex-1 min-h-0 flex flex-col overflow-hidden">
+    <main className="flex h-full max-h-full min-h-0 flex-1 flex-col overflow-hidden">
       <div
         className={cn(
           "flex-1 min-h-0 overflow-hidden",
