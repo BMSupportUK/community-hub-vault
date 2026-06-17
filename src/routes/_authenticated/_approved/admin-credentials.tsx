@@ -316,7 +316,7 @@ function CredentialEditor({
           .ed-title{color:#0f172a;background:linear-gradient(90deg,#db2777,#7c3aed 50%,#0891b2);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
           .ed-close{color:#475569}
           .ed-close:hover{background:#fde68a;color:#0f172a}
-          .ed-dialog :global(label > div){color:#7c3aed !important}
+          .ed-dialog label > div{color:#7c3aed !important}
           .ed-input{width:100%;padding:.65rem .85rem;border-radius:.6rem;background:#ffffff;border:1.5px solid #c4b5fd;font-size:.95rem;color:#0f172a;outline:none;transition:border-color .15s,box-shadow .15s,background .15s}
           .ed-input::placeholder{color:#94a3b8}
           .ed-input:hover{border-color:#a78bfa;background:#fdfaff}
