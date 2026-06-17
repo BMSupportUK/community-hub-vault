@@ -113,7 +113,7 @@ export function ReviewsPage() {
 
   return (
     <div
-      className="relative flex-1 overflow-y-auto scrollbar-hide bg-[#1a0b2e] bg-cover bg-center bg-no-repeat bg-fixed"
+      className="relative flex-1 overflow-visible md:overflow-y-auto md:scrollbar-hide bg-[#1a0b2e] bg-cover bg-center bg-no-repeat bg-fixed"
       style={{ backgroundImage: `url(${reviewsBg})` }}
     >
       <div className="pointer-events-none absolute inset-0 z-0 bg-gradient-to-br from-[#1a0b2e]/50 via-purple-900/40 to-fuchsia-900/35" />
