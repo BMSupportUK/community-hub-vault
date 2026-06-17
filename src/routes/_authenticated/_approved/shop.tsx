@@ -390,7 +390,7 @@ function ShopPage() {
             </button>
           </nav>
         )}
-        <div className="flex h-full max-h-full min-h-0 min-w-0 flex-1 overflow-hidden">
+        <div className="flex min-h-0 min-w-0 flex-1 overflow-visible md:h-full md:max-h-full md:overflow-hidden">
           {view === "store" && <Storefront />}
           {view === "orders" && (
             <OrdersView
@@ -411,7 +411,7 @@ function ShopPage() {
           {view === "streaming_devices" && <StreamingDevicesPage />}
           {view === "app_demos" && (
             <div
-              className="relative flex-1 flex min-w-0 bg-cover bg-center bg-no-repeat bg-fixed"
+              className="relative flex-1 flex min-w-0 bg-cover bg-center bg-no-repeat bg-fixed overflow-visible md:overflow-hidden"
               style={{ backgroundImage: `url(${tvLoginIllustration})` }}
             >
               <div aria-hidden className="pointer-events-none absolute inset-0" style={{ background: "rgba(2, 5, 12, 0.82)" }} />
