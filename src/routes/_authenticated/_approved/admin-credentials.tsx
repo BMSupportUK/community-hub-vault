@@ -316,7 +316,7 @@ function CredentialEditor({
           .ed-input::placeholder{color:hsl(var(--muted-foreground))}
           .ed-input:focus{border-color:hsl(var(--primary));box-shadow:0 0 0 2px hsl(var(--primary) / 0.25)}
           .ed-input::-webkit-calendar-picker-indicator{filter:invert(1) opacity(.75);cursor:pointer}
-județ`}</style>
+        `}</style>
       </div>
     </div>
   );
