@@ -166,14 +166,17 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
   if (isPending) {
     return (
       <aside className={cn(
-        "bg-rail w-[72px] flex-col items-center py-4 gap-2",
+        "relative w-[88px] flex-col items-center py-4 gap-3 overflow-hidden",
+        "bg-[linear-gradient(180deg,color-mix(in_oklab,var(--primary)_36%,var(--rail)),var(--rail)_42%,color-mix(in_oklab,var(--primary-glow)_22%,var(--surface-2)))]",
+        "shadow-[inset_-1px_0_0_color-mix(in_oklab,var(--primary-glow)_55%,transparent),18px_0_46px_-28px_color-mix(in_oklab,var(--primary)_90%,transparent)]",
+        "before:content-[''] before:absolute before:inset-y-4 before:left-2 before:w-1 before:rounded-full before:bg-gradient-primary before:shadow-glow before:pointer-events-none",
         inSheet
           ? "flex h-full"
-          : "shrink-0 hidden lg:flex border-r border-border sticky top-0 self-start h-screen",
+          : "shrink-0 hidden lg:flex border-r border-primary-glow/40 sticky top-0 self-start h-screen",
       )}>
         <RailIcon to="/gate" label="Gate" Icon={MessageSquare} active={path.startsWith("/gate")} accent />
         <div className="mt-auto" />
-        <button onClick={handleSignOut} className="text-muted-foreground hover:text-destructive p-3" title="Sign out">
+        <button onClick={handleSignOut} className="relative z-10 text-muted-foreground hover:text-destructive p-3 rounded-2xl hover:bg-surface-2 transition-colors" title="Sign out">
           <LogOut className="size-5" />
         </button>
       </aside>
@@ -228,17 +231,19 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
 
   return (
     <aside className={cn(
-      "relative w-[72px] flex-col items-center py-4 gap-1",
-      "bg-gradient-to-b from-surface via-rail to-surface-2",
-      "before:content-[''] before:absolute before:inset-y-0 before:right-0 before:w-px before:bg-gradient-to-b before:from-transparent before:via-primary-glow/50 before:to-transparent before:pointer-events-none",
+      "relative w-[88px] flex-col items-center py-4 gap-2 overflow-hidden",
+      "bg-[linear-gradient(180deg,color-mix(in_oklab,var(--primary)_36%,var(--rail)),var(--rail)_42%,color-mix(in_oklab,var(--primary-glow)_22%,var(--surface-2)))]",
+      "shadow-[inset_-1px_0_0_color-mix(in_oklab,var(--primary-glow)_55%,transparent),18px_0_46px_-28px_color-mix(in_oklab,var(--primary)_90%,transparent)]",
+      "before:content-[''] before:absolute before:inset-y-4 before:left-2 before:w-1 before:rounded-full before:bg-gradient-primary before:shadow-glow before:pointer-events-none",
+      "after:content-[''] after:absolute after:inset-x-3 after:top-3 after:h-24 after:rounded-full after:bg-primary-glow/20 after:blur-2xl after:pointer-events-none",
       inSheet
         ? "flex h-full"
-        : "shrink-0 hidden lg:flex border-r border-border sticky top-0 self-start h-screen",
+        : "shrink-0 hidden lg:flex border-r border-primary-glow/40 sticky top-0 self-start h-screen",
     )}>
-      <Link to="/home" className="size-12 rounded-2xl bg-gradient-primary flex items-center justify-center font-display font-bold text-[15px] text-primary-foreground shadow-glow mb-2 ring-2 ring-primary-glow/40 hover:ring-primary-glow/80 hover:scale-105 transition-all duration-200">
+      <Link to="/home" className="relative z-10 size-14 rounded-2xl bg-gradient-primary flex items-center justify-center font-display font-bold text-base text-primary-foreground shadow-glow mb-2 ring-2 ring-primary-glow/70 hover:ring-primary-glow hover:scale-110 transition-all duration-200">
         BM
       </Link>
-      <div className="h-px w-10 my-1 bg-gradient-to-r from-transparent via-primary-glow/50 to-transparent" />
+      <div className="relative z-10 h-px w-12 my-1 bg-gradient-to-r from-transparent via-primary-glow to-transparent" />
       {sorted.map((i) => (
         <div
           key={i.to}
@@ -254,7 +259,7 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
       <div className="mt-auto" />
       <button
         onClick={handleSignOut}
-        className="text-muted-foreground hover:text-destructive p-3 rounded-xl hover:bg-surface-2 transition-colors"
+        className="relative z-10 text-muted-foreground hover:text-destructive p-3 rounded-2xl hover:bg-surface-2 transition-colors"
         title="Sign out"
       >
         <LogOut className="size-5" />
