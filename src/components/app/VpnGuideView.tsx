@@ -12,7 +12,7 @@ export function VpnGuideView({ standalone = false }: { standalone?: boolean }) {
   return (
     <div className={outerClass} style={{ backgroundImage: `url(${hackerBg})` }}>
       <div className="absolute inset-0 bg-background/70 backdrop-blur-sm pointer-events-none" aria-hidden />
-      <main className="relative flex-1 overflow-y-auto">
+      <main className="relative flex-1 overflow-y-auto scrollbar-hide">
         <div className="max-w-5xl mx-auto px-4 lg:px-8 py-8 space-y-8">
           <header className="relative overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-primary/20 via-surface-2 to-background p-8 lg:p-12">
             <div className="absolute -top-16 -right-16 size-72 rounded-full bg-primary/20 blur-3xl pointer-events-none" />
