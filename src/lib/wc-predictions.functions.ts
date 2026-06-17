@@ -99,13 +99,13 @@ export const listWcFixtures = createServerFn({ method: "GET" })
     ]);
     if (fxErr) throw new Error(fxErr.message);
     if (prErr) throw new Error(prErr.message);
-    const { getWcLiveOverlays } = await import("@/lib/wc-live-scores.server");
+    const { getWcLiveOverlays, mergeWcLive } = await import("@/lib/wc-live-scores.server");
     const liveOverlays = await getWcLiveOverlays((fixtures ?? []) as WcLiveFixtureRow[]);
     const predMap = new Map<string, { home_pred: number; away_pred: number; points: number | null }>();
     for (const p of preds ?? []) predMap.set((p as any).fixture_id, p as any);
     return (fixtures ?? []).map((f: any) => {
       const p = predMap.get(f.id);
-      const live = liveOverlays.get(f.id);
+      const merged = mergeWcLive(f, liveOverlays.get(f.id));
       return {
         id: f.id,
         stage: f.stage,
@@ -113,11 +113,11 @@ export const listWcFixtures = createServerFn({ method: "GET" })
         homeTeam: f.home_team,
         awayTeam: f.away_team,
         kickoffAt: f.kickoff_at,
-        homeScore: live?.home_score ?? f.home_score,
-        awayScore: live?.away_score ?? f.away_score,
-        status: live?.status ?? (f.status as string | null) ?? "SCHEDULED",
-        minute: live?.minute ?? (f.minute as number | null) ?? null,
-        minuteAdded: live?.minute_added ?? (f.minute_added as number | null) ?? null,
+        homeScore: merged.home_score,
+        awayScore: merged.away_score,
+        status: merged.status ?? "SCHEDULED",
+        minute: merged.minute,
+        minuteAdded: merged.minute_added,
         myPrediction: p
           ? { homePred: p.home_pred, awayPred: p.away_pred, points: p.points ?? null }
           : null,
@@ -238,12 +238,12 @@ export const getEntrantWcPredictions = createServerFn({ method: "GET" })
       .eq(col, data.entrantId);
     if (error) throw new Error(error.message);
     const fixtures = (rows ?? []).map((r: any) => r.fixture).filter(Boolean) as WcLiveFixtureRow[];
-    const { getWcLiveOverlays } = await import("@/lib/wc-live-scores.server");
+    const { getWcLiveOverlays, mergeWcLive } = await import("@/lib/wc-live-scores.server");
     const liveOverlays = await getWcLiveOverlays(fixtures);
     return (rows ?? [])
       .filter((r: any) => r.fixture && r.fixture.kickoff_at <= nowIso)
       .map((r: any) => {
-        const live = liveOverlays.get(r.fixture.id);
+        const merged = mergeWcLive(r.fixture, liveOverlays.get(r.fixture.id));
         return {
           fixtureId: r.fixture.id,
           stage: r.fixture.stage,
@@ -251,11 +251,11 @@ export const getEntrantWcPredictions = createServerFn({ method: "GET" })
           homeTeam: r.fixture.home_team,
           awayTeam: r.fixture.away_team,
           kickoffAt: r.fixture.kickoff_at,
-          homeScore: live?.home_score ?? r.fixture.home_score,
-          awayScore: live?.away_score ?? r.fixture.away_score,
-          status: live?.status ?? r.fixture.status,
-          minute: live?.minute ?? (r.fixture.minute as number | null) ?? null,
-          minuteAdded: live?.minute_added ?? (r.fixture.minute_added as number | null) ?? null,
+          homeScore: merged.home_score,
+          awayScore: merged.away_score,
+          status: merged.status,
+          minute: merged.minute,
+          minuteAdded: merged.minute_added,
           homePred: r.home_pred,
           awayPred: r.away_pred,
           points: r.points,
