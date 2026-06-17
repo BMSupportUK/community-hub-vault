@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { backfillVpnDetection } from "@/lib/vpn-backfill.functions";
+import { useAppTheme, setAppTheme, type AppTheme } from "@/hooks/use-app-theme";
 
 export const Route = createFileRoute("/_authenticated/_approved/admin")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -508,6 +509,7 @@ function DashboardBody() {
     <div className="space-y-6">
       <RecoveryCodes />
       <VpnBackfillCard />
+      <ThemePickerCard />
       <div className="grid gap-6 lg:grid-cols-[1fr_300px]">
         <section className="order-1">
           <h2 className="font-display text-sm uppercase tracking-wide text-muted-foreground mb-3">Admin tools</h2>
@@ -758,6 +760,58 @@ function RecoveryCodes() {
       {rows && rows.length === 0 && !fresh && (
         <div className="text-sm text-muted-foreground">No backup codes yet. Generate a batch to keep handy in case you ever lose access.</div>
       )}
+    </section>
+  );
+}
+function ThemePickerCard() {
+  const current = useAppTheme();
+  const [busy, setBusy] = useState<AppTheme | null>(null);
+  const choose = async (t: AppTheme) => {
+    if (t === current) return;
+    setBusy(t);
+    try {
+      await setAppTheme(t);
+      toast.success(`Default theme set to ${t === "red" ? "Crimson & Rose" : "Vibrant Purple"}`);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Failed to update theme");
+    } finally {
+      setBusy(null);
+    }
+  };
+  const Option = ({ value, name, swatches }: { value: AppTheme; name: string; swatches: string[] }) => {
+    const active = current === value;
+    return (
+      <button
+        onClick={() => choose(value)}
+        disabled={busy !== null}
+        className={`flex-1 text-left rounded-2xl border p-4 transition-all ${active ? "border-primary shadow-glow bg-primary/5" : "border-border bg-surface-1 hover:border-primary/50"}`}
+      >
+        <div className="flex items-center justify-between mb-3">
+          <div className="font-display font-bold">{name}</div>
+          {active && <span className="text-[10px] uppercase tracking-wide px-2 py-0.5 rounded-full bg-primary text-primary-foreground">Active</span>}
+          {busy === value && <Loader2 className="size-4 animate-spin text-muted-foreground" />}
+        </div>
+        <div className="flex gap-1.5">
+          {swatches.map((c) => (
+            <span key={c} className="h-7 flex-1 rounded-md ring-1 ring-black/20" style={{ background: c }} />
+          ))}
+        </div>
+      </button>
+    );
+  };
+  return (
+    <section className="rounded-2xl border border-border bg-surface-1 p-5">
+      <div className="flex items-center gap-2 mb-3">
+        <Sparkles className="size-4 text-primary" />
+        <h2 className="font-display text-sm uppercase tracking-wide text-muted-foreground">App theme</h2>
+      </div>
+      <p className="text-xs text-muted-foreground mb-4">
+        Choose the default colour scheme applied to every member of the app. Changes apply instantly.
+      </p>
+      <div className="flex flex-col sm:flex-row gap-3">
+        <Option value="purple" name="Vibrant Purple" swatches={["#7c3aed", "#a855f7", "#3b82f6", "#ec4899"]} />
+        <Option value="red" name="Crimson & Rose" swatches={["#dc2626", "#ef4444", "#f43f5e", "#fb7185"]} />
+      </div>
     </section>
   );
 }
