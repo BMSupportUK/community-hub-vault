@@ -25,6 +25,7 @@ import { ActiveOutagesBox } from "@/components/app/ActiveOutagesBox";
 import { PayOrderDialog, OrderProgressStrip } from "@/routes/_authenticated/_approved/shop";
 import { refreshSquareInvoiceStatus, cancelOrderAndSquareInvoice } from "@/lib/square-invoices.functions";
 import { formatRoleLabel } from "@/lib/role-label";
+import { notifyTicketReply } from "@/lib/ticket-notify.functions";
 
 export const Route = createFileRoute("/_authenticated/_approved/tickets")({
   validateSearch: (s: Record<string, unknown>) => ({
@@ -1211,10 +1212,11 @@ function TicketDetail({
     setSending(true);
     const uploaded = replyFiles.length ? await uploadTicketFiles(replyFiles, currentUserId, setReplyProgress) : [];
     setReplyProgress(null);
-    const { error } = await supabase.from("ticket_messages").insert({
-      ticket_id: ticket.id, sender_id: currentUserId, content, is_internal: internal && isStaff,
+    const isInternal = internal && isStaff;
+    const { data: inserted, error } = await supabase.from("ticket_messages").insert({
+      ticket_id: ticket.id, sender_id: currentUserId, content, is_internal: isInternal,
       attachments: uploaded as unknown as never,
-    });
+    }).select("id").maybeSingle();
     setSending(false);
     if (error) {
       const msg = error.message;
@@ -1231,6 +1233,14 @@ function TicketDetail({
     setReplyFiles([]);
     await load();
     notifyTicketChanged();
+    // Email the ticket owner when a staff member posts a public reply.
+    if (isStaff && !isInternal && ticket.user_id !== currentUserId && inserted?.id) {
+      try {
+        await notifyTicketReply({ data: { ticketId: ticket.id, messageId: inserted.id } });
+      } catch (e) {
+        console.warn("[tickets] notifyTicketReply failed", e);
+      }
+    }
     // Bump updated_at via status touch (only staff allowed) — skip for users
     if (isStaff && ticket.status === "open") {
       await supabase.from("tickets").update({ status: "in_progress" }).eq("id", ticket.id);
