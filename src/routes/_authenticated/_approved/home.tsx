@@ -501,7 +501,9 @@ function HomeLayout() {
                 <ChannelColumn
                   inSheet
                   title="Support Community"
-                  groups={channelsQuery.isLoading && channels === null ? channelSkeletonGroups : groups}
+                  groups={
+                    channelsQuery.isLoading && channels === null ? channelSkeletonGroups : groups
+                  }
                   onAddGroup={isAdmin ? () => setShowAddGroup(true) : undefined}
                   onReorderChannels={isAdmin && channels !== null ? reorderChannels : undefined}
                   onReorderGroups={isAdmin && channels !== null ? reorderGroups : undefined}
