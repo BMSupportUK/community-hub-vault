@@ -58,9 +58,15 @@ function HomeLayout() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const isHomeIndex = pathname === "/home" || pathname === "/home/";
   const path = useRouterState({ select: (r) => r.location.pathname });
+  const [layoutReady, setLayoutReady] = useState(false);
   const [channels, setChannels] = useState<ChannelRow[] | null>(null);
   const [chanNavOpen, setChanNavOpen] = useState(false);
   useEffect(() => { setChanNavOpen(false); }, [path]);
+  useEffect(() => {
+    setLayoutReady(false);
+    const frame = window.requestAnimationFrame(() => setLayoutReady(true));
+    return () => window.cancelAnimationFrame(frame);
+  }, [path]);
   const [mentionCounts, setMentionCounts] = useState<Record<string, number>>({});
   const [addChannelGroup, setAddChannelGroup] = useState<string | null>(null);
   const [showAddGroup, setShowAddGroup] = useState(false);
@@ -466,7 +472,7 @@ function HomeLayout() {
 
   return (
     <>
-      {!isHomeIndex && (
+      {!isHomeIndex && layoutReady && (
         <ChannelColumn
           title="Support Community"
           groups={channelsQuery.isLoading && channels === null ? channelSkeletonGroups : groups}
@@ -477,7 +483,7 @@ function HomeLayout() {
         />
       )}
       <div className="flex-1 flex flex-col min-w-0">
-        {!isHomeIndex && (
+        {!isHomeIndex && layoutReady && (
         <div className="md:hidden h-10 shrink-0 flex items-center px-3 border-b border-border bg-rail/30">
           <Sheet open={chanNavOpen} onOpenChange={setChanNavOpen}>
             <SheetTrigger className="inline-flex items-center gap-2 text-xs font-medium text-muted-foreground hover:text-foreground">
