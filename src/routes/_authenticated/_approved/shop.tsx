@@ -1433,10 +1433,10 @@ function Storefront() {
   };
 
   return (
-    <main className="flex h-full max-h-full min-h-0 flex-1 flex-col overflow-hidden">
+    <main className="flex min-h-0 flex-1 flex-col overflow-visible md:h-full md:max-h-full md:overflow-hidden">
       <div
         className={cn(
-          "flex-1 min-h-0 overflow-hidden",
+          "flex-1 min-h-0 overflow-visible md:overflow-hidden",
           tab === "orders" && "relative bg-cover bg-center bg-fixed",
           tab === "app_demos" && "relative bg-cover bg-center bg-no-repeat bg-fixed",
         )}
@@ -1461,8 +1461,8 @@ function Storefront() {
             aria-hidden
           />
         )}
-        <div className="relative z-10 flex h-full min-h-0 flex-col px-3 pt-3 sm:px-5 sm:pt-5">
-          <Tabs value={tab} onValueChange={setTab} className="flex h-full min-h-0 w-full flex-col overflow-hidden">
+        <div className="relative z-10 flex min-h-0 flex-col px-3 pt-3 sm:px-5 sm:pt-5 md:h-full">
+          <Tabs value={tab} onValueChange={setTab} className="flex min-h-0 w-full flex-col overflow-visible md:h-full md:overflow-hidden">
             <TabsList className="shrink-0 max-w-full justify-start overflow-x-auto scrollbar-hide bg-surface-2 border border-border flex flex-nowrap h-auto">
               <TabsTrigger
                 value="welcome"
@@ -1708,16 +1708,16 @@ function Storefront() {
                 onOpenOrder={(id) => navigate({ to: "/shop", search: { view: "orders", id } })}
               />
             </TabsContent>
-            <TabsContent value="streaming_devices" className="mt-3 min-h-0 flex-1 overflow-hidden -mx-3 sm:-mx-5">
+            <TabsContent value="streaming_devices" className="mt-3 min-h-0 flex-1 overflow-visible md:overflow-hidden -mx-3 sm:-mx-5">
               <StreamingDevicesPage />
             </TabsContent>
-            <TabsContent value="app_demos" className="mt-3 min-h-0 flex-1 overflow-hidden -mx-3 sm:-mx-5">
+            <TabsContent value="app_demos" className="mt-3 min-h-0 flex-1 overflow-visible md:overflow-hidden -mx-3 sm:-mx-5">
               <AppDemosView />
             </TabsContent>
-            <TabsContent value="reviews" className="mt-3 min-h-0 flex-1 overflow-hidden -mx-3 sm:-mx-5">
+            <TabsContent value="reviews" className="mt-3 min-h-0 flex-1 overflow-visible md:overflow-hidden -mx-3 sm:-mx-5">
               <ReviewsPage />
             </TabsContent>
-            <TabsContent value="vpn" className="mt-3 min-h-0 flex-1 overflow-hidden -mx-3 sm:-mx-5">
+            <TabsContent value="vpn" className="mt-3 min-h-0 flex-1 overflow-visible md:overflow-hidden -mx-3 sm:-mx-5">
               <VpnGuideView />
             </TabsContent>
           </Tabs>
