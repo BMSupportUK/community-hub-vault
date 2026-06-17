@@ -98,6 +98,48 @@
   --shadow-soft: 0 10px 30px -10px oklch(0 0 0 / 0.55);
 }
 
+/* ===== Crimson & Rose theme (admin-toggled alternative) ===== */
+html.theme-red {
+  --background: oklch(0.26 0.10 22);
+  --foreground: oklch(0.97 0.005 20);
+  --surface: oklch(0.30 0.12 18);
+  --surface-2: oklch(0.36 0.14 14);
+  --rail: oklch(0.28 0.06 18);
+
+  --card: oklch(0.22 0.05 18);
+  --card-foreground: oklch(0.97 0.005 20);
+  --popover: oklch(0.22 0.05 18);
+  --popover-foreground: oklch(0.97 0.005 20);
+
+  --primary: oklch(0.62 0.27 22);
+  --primary-foreground: oklch(0.99 0.005 20);
+  --primary-glow: oklch(0.70 0.25 8);
+
+  --secondary: oklch(0.32 0.10 18);
+  --secondary-foreground: oklch(0.97 0.005 20);
+  --muted: oklch(0.27 0.04 18);
+  --muted-foreground: oklch(0.74 0.03 20);
+  --accent: oklch(0.65 0.26 350);
+  --accent-foreground: oklch(0.99 0.005 20);
+
+  --border: oklch(0.34 0.07 18);
+  --input: oklch(0.27 0.05 18);
+  --ring: oklch(0.65 0.25 22);
+
+  --gradient-primary: linear-gradient(135deg, oklch(0.58 0.28 22), oklch(0.62 0.28 8) 55%, oklch(0.65 0.26 350));
+  --gradient-rail: linear-gradient(180deg, oklch(0.30 0.07 20), oklch(0.28 0.06 12) 55%, oklch(0.27 0.06 0));
+  --gradient-accent: linear-gradient(90deg, oklch(0.62 0.27 22), oklch(0.66 0.28 8), oklch(0.68 0.26 350));
+  --shadow-glow: 0 0 0 1px color-mix(in oklab, var(--primary) 40%, transparent), 0 12px 40px -10px color-mix(in oklab, var(--primary) 55%, transparent);
+}
+html.theme-red body {
+  background:
+    radial-gradient(ellipse at top left, oklch(0.55 0.28 22 / 0.55), transparent 55%),
+    radial-gradient(ellipse at top right, oklch(0.58 0.28 5 / 0.45), transparent 55%),
+    radial-gradient(ellipse at bottom, oklch(0.55 0.26 350 / 0.55), transparent 60%),
+    var(--color-background);
+  background-attachment: fixed;
+}
+
 @layer base {
   * { border-color: var(--color-border); }
   html, body {

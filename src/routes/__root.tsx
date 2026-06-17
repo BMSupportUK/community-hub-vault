@@ -12,6 +12,7 @@ import { useEffect, useState } from "react";
 
 import appCss from "../styles.css?url";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
+import { useAppTheme } from "@/hooks/use-app-theme";
 
 function NotFoundComponent() {
   return (
@@ -102,6 +103,7 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  useAppTheme();
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
