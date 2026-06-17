@@ -290,6 +290,14 @@ html.theme-sunset body {
   -webkit-background-clip: text !important;
   background-clip: text !important;
 }
+:is(html.theme-red, html.theme-ocean, html.theme-sunset) :is(.bg-\[\#1a0b2e\], .from-\[\#1a0b2e\], .via-\[\#2d1b4e\], .to-\[\#1a0b2e\]) {
+  background: var(--gradient-primary) !important;
+}
+:is(html.theme-red, html.theme-ocean, html.theme-sunset) :is(.from-\[\#1a0b2e\]\/95, .from-\[\#1a0b2e\]\/80, .from-\[\#1a0b2e\]\/55, .via-\[\#1a0b2e\]\/70, .via-\[\#1a0b2e\]\/40, .to-\[\#2d1b4e\]\/55) {
+  --tw-gradient-from: color-mix(in oklab, var(--background) 92%, transparent) var(--tw-gradient-from-position) !important;
+  --tw-gradient-via: color-mix(in oklab, var(--background) 58%, transparent) var(--tw-gradient-via-position) !important;
+  --tw-gradient-to: color-mix(in oklab, var(--surface) 70%, transparent) var(--tw-gradient-to-position) !important;
+}
 
 /* ===== Animated nameplates ===== */
 @keyframes nameplate-soccer-pan {
