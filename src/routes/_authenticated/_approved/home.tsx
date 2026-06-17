@@ -1,9 +1,11 @@
 import { createFileRoute, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Hash, Menu } from "lucide-react";
 import { ChannelColumn, type ChannelGroup } from "@/components/app/ChannelColumn";
 import { ServiceStatusBox } from "@/components/app/ServiceStatusBox";
 import { WorkingStatusBox } from "@/components/app/WorkingStatusBox";
+import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import {
@@ -34,6 +36,21 @@ interface ChannelRow {
   sort_order: number;
 }
 
+const SidebarSkeletonIcon = () => <Skeleton className="size-4 rounded" />;
+
+const channelSkeletonGroups: ChannelGroup[] = [
+  {
+    label: "\u00A0",
+    items: Array.from({ length: 6 }).map((_, i) => ({
+      to: `#sk-${i}`,
+      label: "\u00A0",
+      icon: SidebarSkeletonIcon,
+      active: false,
+      onClick: () => {},
+    })),
+  },
+];
+
 function HomeLayout() {
   const { hasAny, user } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
@@ -59,12 +76,41 @@ function HomeLayout() {
   const [renameCategory, setRenameCategory] = useState<string | null>(null);
   const [renameCategoryName, setRenameCategoryName] = useState("");
 
+  const channelsQuery = useQuery({
+    queryKey: ["home-channels-sidebar"],
+    queryFn: async () => {
+      const [{ data: channelRows }, { data: iconRows }, { data: orderRows }] = await Promise.all([
+        supabase
+          .from("chat_channels")
+          .select("id, slug, name, group_label, icon, staff_only, sort_order")
+          .order("sort_order"),
+        supabase.from("app_settings").select("value").eq("key", "category_icons").maybeSingle(),
+        supabase.from("app_settings").select("value").eq("key", "category_order").maybeSingle(),
+      ]);
+      const orderValue = (orderRows?.value ?? {}) as { labels?: unknown };
+      return {
+        channels: (channelRows as ChannelRow[] | null) ?? [],
+        categoryIcons: (iconRows?.value ?? {}) as Record<string, string>,
+        categoryOrder: Array.isArray(orderValue.labels)
+          ? orderValue.labels.filter((v): v is string => typeof v === "string")
+          : [],
+      };
+    },
+    staleTime: 5 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
+
+  useEffect(() => {
+    if (!channelsQuery.data) return;
+    setChannels(channelsQuery.data.channels);
+    setCategoryIcons(channelsQuery.data.categoryIcons);
+    setCategoryOrder(channelsQuery.data.categoryOrder);
+  }, [channelsQuery.data]);
+
   const load = async () => {
-    const { data } = await supabase
-      .from("chat_channels")
-      .select("id, slug, name, group_label, icon, staff_only, sort_order")
-      .order("sort_order");
-    setChannels((data as ChannelRow[] | null) ?? []);
+    const { data } = await channelsQuery.refetch();
+    if (data) setChannels(data.channels);
   };
 
   const loadCategoryIcons = async () => {
@@ -90,12 +136,6 @@ function HomeLayout() {
         : [],
     );
   };
-
-  useEffect(() => {
-    load();
-    loadCategoryIcons();
-    loadCategoryOrder();
-  }, []);
 
   const saveChannelIcon = async (iconName: string): Promise<void> => {
     if (!editChannelIcon) return;
@@ -429,10 +469,10 @@ function HomeLayout() {
       {!isHomeIndex && (
         <ChannelColumn
           title="Support Community"
-          groups={groups}
+          groups={channelsQuery.isLoading && channels === null ? channelSkeletonGroups : groups}
           onAddGroup={isAdmin ? () => setShowAddGroup(true) : undefined}
-          onReorderChannels={isAdmin ? reorderChannels : undefined}
-          onReorderGroups={isAdmin ? reorderGroups : undefined}
+          onReorderChannels={isAdmin && channels !== null ? reorderChannels : undefined}
+          onReorderGroups={isAdmin && channels !== null ? reorderGroups : undefined}
           footer={<><ServiceStatusBox /><WorkingStatusBox /></>}
         />
       )}
@@ -448,10 +488,10 @@ function HomeLayout() {
               <ChannelColumn
                 inSheet
                 title="Support Community"
-                groups={groups}
+                groups={channelsQuery.isLoading && channels === null ? channelSkeletonGroups : groups}
                 onAddGroup={isAdmin ? () => setShowAddGroup(true) : undefined}
-                onReorderChannels={isAdmin ? reorderChannels : undefined}
-                onReorderGroups={isAdmin ? reorderGroups : undefined}
+                onReorderChannels={isAdmin && channels !== null ? reorderChannels : undefined}
+                onReorderGroups={isAdmin && channels !== null ? reorderGroups : undefined}
                 footer={<><ServiceStatusBox /><WorkingStatusBox /></>}
               />
             </SheetContent>
