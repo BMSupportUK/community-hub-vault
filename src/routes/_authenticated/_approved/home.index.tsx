@@ -490,7 +490,7 @@ function WelcomePage() {
       </section>
 
       {/* Quick links */}
-      <section className="shrink-0 p-4 xl:p-5">
+      <section className="shrink-0 p-3 xl:p-4">
         <div className="flex items-center justify-between mb-3">
           <h2 className="font-display text-lg font-semibold">Jump back in</h2>
           <Link to="/home/$channel" params={{ channel: "welcome" }} className="text-sm text-sky-300 hover:text-sky-200">
@@ -689,14 +689,14 @@ function QuickCard({
     <Link
       to={to as never}
       params={params as never}
-      className="group w-full h-full rounded-xl border-2 border-violet-500/40 bg-surface hover:bg-surface-2 hover:border-violet-400/70 hover:shadow-[0_0_20px_rgba(139,92,246,0.25)] transition-all p-4 flex items-start gap-3"
+      className="group w-full h-14 rounded-xl border-2 border-violet-500/40 bg-surface hover:bg-surface-2 hover:border-violet-400/70 hover:shadow-[0_0_20px_rgba(139,92,246,0.25)] transition-all px-4 py-2 flex items-center gap-3 overflow-hidden"
     >
       <span className="grid place-items-center size-10 rounded-lg bg-gradient-to-br from-violet-600 to-blue-600 text-white shrink-0">
         <Icon className="size-5" />
       </span>
       <span className="min-w-0">
-        <span className="block font-semibold text-sm text-foreground">{title}</span>
-        <span className="block text-xs text-foreground/75 mt-0.5">{desc}</span>
+        <span className="block truncate font-semibold text-sm text-foreground">{title}</span>
+        <span className="block truncate text-xs text-foreground/75 mt-0.5">{desc}</span>
       </span>
     </Link>
   );
@@ -716,14 +716,14 @@ function QuickAction({
   return (
     <button
       onClick={onClick}
-      className="group w-full h-full text-left rounded-xl border-2 border-violet-500/40 bg-surface hover:bg-surface-2 hover:border-violet-400/70 hover:shadow-[0_0_20px_rgba(139,92,246,0.25)] transition-all p-4 flex items-start gap-3"
+      className="group w-full h-14 text-left rounded-xl border-2 border-violet-500/40 bg-surface hover:bg-surface-2 hover:border-violet-400/70 hover:shadow-[0_0_20px_rgba(139,92,246,0.25)] transition-all px-4 py-2 flex items-center gap-3 overflow-hidden"
     >
       <span className="grid place-items-center size-10 rounded-lg bg-gradient-to-br from-violet-600 to-blue-600 text-white shrink-0">
         <Icon className="size-5" />
       </span>
       <span className="min-w-0">
-        <span className="block font-semibold text-sm text-foreground">{title}</span>
-        <span className="block text-xs text-foreground/75 mt-0.5">{desc}</span>
+        <span className="block truncate font-semibold text-sm text-foreground">{title}</span>
+        <span className="block truncate text-xs text-foreground/75 mt-0.5">{desc}</span>
       </span>
     </button>
   );
