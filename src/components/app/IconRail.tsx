@@ -259,13 +259,6 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
       ))}
       </div>
       <div className="relative z-10 shrink-0 h-px w-12 bg-gradient-to-r from-transparent via-primary-glow to-transparent" />
-      <button
-        onClick={handleSignOut}
-        className="relative z-10 text-muted-foreground hover:text-destructive p-3 rounded-2xl hover:bg-surface-2 transition-colors"
-        title="Sign out"
-      >
-        <LogOut className="size-5" />
-      </button>
       {user && (
         <div className="flex flex-col items-center pt-1 shrink-0">
           <UserAvatarMenu variant="bar" />
