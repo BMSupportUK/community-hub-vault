@@ -1248,6 +1248,12 @@ function Storefront() {
   const [cat, setCat] = useState("Single Account");
   const filtered = products.filter((p) => p.category === cat);
 
+  // Ensure the selected category is always one that actually exists.
+  useEffect(() => {
+    if (categories.length === 0) return;
+    if (!categories.includes(cat)) setCat(categories[0]);
+  }, [categories, cat]);
+
   // Group products by category (used when no specific category is selected)
   const grouped = useMemo(() => {
     const groups: { name: string; items: Product[] }[] = [];
