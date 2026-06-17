@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Trophy, Loader2, Lock, Check, Star, Crown, Medal, Award, Pencil, CalendarDays, LogOut, Trash2 } from "lucide-react";
+import { Trophy, Loader2, Lock, Check, Star, Crown, Medal, Award, Pencil, CalendarDays, LogOut, Trash2, Menu } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -32,6 +32,7 @@ import { teamFlag } from "@/lib/country-flags";
 import heroBg from "@/assets/england-world-cup-hero.jpg";
 import { LandingHeader } from "@/components/LandingHeader";
 import { IconRail } from "@/components/app/IconRail";
+import { Sheet, SheetTrigger, SheetContent } from "@/components/ui/sheet";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
@@ -430,6 +431,21 @@ function PredictionsPage() {
             <LandingHeader />
           </div>
         )}
+      {user && (
+        <div className="lg:hidden sticky top-0 z-30 h-12 border-b border-border bg-rail/90 backdrop-blur flex items-center px-2">
+          <Sheet>
+            <SheetTrigger
+              className="inline-flex items-center justify-center size-9 rounded-md hover:bg-surface-2 text-foreground"
+              aria-label="Open navigation"
+            >
+              <Menu className="size-5" />
+            </SheetTrigger>
+            <SheetContent side="left" className="p-0 w-auto bg-rail border-r border-border">
+              <IconRail inSheet />
+            </SheetContent>
+          </Sheet>
+        </div>
+      )}
       {/* Full-page hero background (absolute so the parent's bg-background can't cover it) */}
       <div
         className="pointer-events-none absolute inset-0 z-0 bg-cover bg-center bg-no-repeat"
@@ -1694,14 +1710,14 @@ function LeaderboardList({
   }
   return (
     <div className="rounded-2xl border border-border bg-surface-1 overflow-hidden">
-      <div className="grid grid-cols-[20px_1fr_38px_30px_30px_30px_36px_44px] sm:grid-cols-[36px_minmax(0,0.6fr)_140px_112px_160px_112px_64px_80px] gap-1 sm:gap-2 px-2 sm:px-4 py-2.5 text-[11px] uppercase tracking-wider text-muted-foreground bg-surface-2 border-b border-border [&>div]:whitespace-nowrap">
+      <div className="grid grid-cols-[16px_minmax(0,1fr)_24px_22px_24px_22px_28px_36px] sm:grid-cols-[36px_minmax(0,0.6fr)_140px_112px_160px_112px_64px_80px] gap-0.5 sm:gap-2 px-1.5 sm:px-4 py-2.5 text-[10px] sm:text-[11px] uppercase tracking-wider text-muted-foreground bg-surface-2 border-b border-border [&>div]:whitespace-nowrap">
         <div>#</div>
         <div>Player</div>
         <div className="text-center"><span className="sm:hidden">P</span><span className="hidden sm:inline">Predictions Entered</span></div>
         <div className="text-center" title="Correct score (exact)"><span className="sm:hidden">CS</span><span className="hidden sm:inline">Correct Score</span></div>
         <div className="text-center" title="Right winning margin (3 pts)"><span className="sm:hidden">WM</span><span className="hidden sm:inline">Winning Margin</span></div>
-        <div className="text-center" title="Correct result"><span className="sm:hidden">Res</span><span className="hidden sm:inline">Correct Result</span></div>
-        <div className="text-center"><span className="sm:hidden">Pts</span><span className="hidden sm:inline">Points</span></div>
+        <div className="text-center" title="Correct result"><span className="sm:hidden">R</span><span className="hidden sm:inline">Correct Result</span></div>
+        <div className="text-center"><span className="sm:hidden">Pt</span><span className="hidden sm:inline">Points</span></div>
         <div className="text-center">Type</div>
       </div>
       <ul>
@@ -1711,7 +1727,7 @@ function LeaderboardList({
           return (
             <li
               key={r.userId}
-              className={`grid grid-cols-[20px_1fr_38px_30px_30px_30px_36px_44px] sm:grid-cols-[36px_minmax(0,0.6fr)_140px_112px_160px_112px_64px_80px] gap-1 sm:gap-2 px-2 sm:px-4 py-2.5 text-sm border-b border-border last:border-b-0 ${
+              className={`grid grid-cols-[16px_minmax(0,1fr)_24px_22px_24px_22px_28px_36px] sm:grid-cols-[36px_minmax(0,0.6fr)_140px_112px_160px_112px_64px_80px] gap-0.5 sm:gap-2 px-1.5 sm:px-4 py-2.5 text-xs sm:text-sm border-b border-border last:border-b-0 ${
                 mine ? "bg-primary/5" : ""
               }`}
             >
@@ -1795,7 +1811,7 @@ function LeaderboardList({
             Site owner · playing for fun (not ranked)
           </div>
           <div
-            className={`grid grid-cols-[20px_1fr_38px_30px_30px_30px_36px_44px] sm:grid-cols-[36px_minmax(0,0.6fr)_140px_112px_160px_112px_64px_80px] gap-1 sm:gap-2 px-2 sm:px-4 py-2.5 text-sm ${
+            className={`grid grid-cols-[16px_minmax(0,1fr)_24px_22px_24px_22px_28px_36px] sm:grid-cols-[36px_minmax(0,0.6fr)_140px_112px_160px_112px_64px_80px] gap-0.5 sm:gap-2 px-1.5 sm:px-4 py-2.5 text-xs sm:text-sm ${
               owner.userId === currentUserId ? "bg-primary/5" : ""
             }`}
           >
