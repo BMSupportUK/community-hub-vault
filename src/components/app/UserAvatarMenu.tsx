@@ -165,12 +165,12 @@ export function UserAvatarMenu({ variant = "header" }: { variant?: "header" | "b
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>{trigger}</DropdownMenuTrigger>
-        <DropdownMenuContent
-          side={variant === "bar" ? "top" : "bottom"}
-          align={variant === "bar" ? "start" : "end"}
-          sideOffset={8}
-          className="w-72 p-0 overflow-hidden"
-        >
+      <DropdownMenuContent
+        side={variant === "bar" ? "top" : "bottom"}
+        align={variant === "bar" ? "start" : "end"}
+        sideOffset={8}
+        className="w-72 p-0 overflow-hidden"
+      >
           <div className="relative p-4 pb-3 overflow-hidden">
             <Nameplate
               id={profile?.equipped_nameplate_id ?? null}
@@ -263,7 +263,7 @@ export function UserAvatarMenu({ variant = "header" }: { variant?: "header" | "b
               <LogOut className="size-4 mr-2" />
               Sign out
             </DropdownMenuItem>
-          </div>
+        </div>
       </DropdownMenuContent>
     </DropdownMenu>
   );
