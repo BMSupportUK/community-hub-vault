@@ -556,6 +556,7 @@ function DashboardBody() {
 }
 
 interface BackupCodeRow {
+  // placeholder — see below
   id: string;
   used_at: string | null;
   created_at: string;
