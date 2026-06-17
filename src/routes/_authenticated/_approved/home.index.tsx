@@ -298,26 +298,27 @@ function WelcomePage() {
   };
 
   return (
-    <main className="flex-1 overflow-y-auto">
+    <main className="flex-1 min-h-0 overflow-hidden">
       {/* Hero */}
-      <section className="relative overflow-hidden border-b border-border">
+      <div className="grid h-full min-h-0 grid-rows-[minmax(0,1fr)_auto] overflow-hidden">
+      <section className="relative min-h-0 overflow-hidden border-b border-border">
         <div className="absolute inset-0 bg-gradient-to-br from-violet-600 via-fuchsia-600 to-blue-600" />
-        <div className="relative grid md:grid-cols-[minmax(0,32rem)_1fr] gap-8 p-6 md:p-8 items-stretch">
+        <div className="relative grid h-full min-h-0 lg:grid-cols-[minmax(0,28rem)_1fr] gap-4 xl:gap-6 p-4 xl:p-6 items-stretch">
           <div className="flex flex-col justify-center text-white">
-            <div className="text-xs uppercase tracking-[0.2em] text-sky-200/80 mb-3">BM Support · Member Hub</div>
-            <h1 className="font-display text-3xl md:text-5xl font-bold leading-tight">
+            <div className="text-xs uppercase tracking-[0.2em] text-sky-200/80 mb-2">BM Support · Member Hub</div>
+            <h1 className="font-display text-3xl xl:text-5xl font-bold leading-tight">
               Welcome to BM Support
             </h1>
-            <p className="mt-4 text-white/95 max-w-lg">
+            <p className="mt-3 text-sm xl:text-base text-white/95 max-w-lg">
               Hey {name} — your all-in-one server for BM Support. Stay connected with the
               community, manage your account and get help, all in one place.
             </p>
-            <p className="mt-3 text-white/85 max-w-lg text-sm">
+            <p className="mt-2 text-white/85 max-w-lg text-xs xl:text-sm">
               Access community channels, view schedules, get support and explore our
               services. Everything you need is just one click away.
             </p>
 
-            <div className="mt-6 flex flex-wrap items-center gap-3">
+            <div className="mt-4 flex flex-wrap items-center gap-3">
               {!hasRole("moderator") && (
                 <Link
                   to="/tickets"
@@ -335,13 +336,13 @@ function WelcomePage() {
               )}
               <ServiceStatusPill className="w-full sm:w-auto" />
             </div>
-            <div className="mt-4 w-full max-w-[280px] self-center">
+            <div className="mt-3 w-full max-w-[280px] self-center">
               <MembershipBox />
             </div>
           </div>
 
-          <div className="flex flex-col xl:flex-row gap-8 items-stretch">
-            <div className="relative rounded-2xl overflow-hidden ring-1 ring-white/10 shadow-2xl flex-1 min-h-[300px] bg-blue-950/30">
+          <div className="hidden min-h-0 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(220px,300px)] gap-4 xl:gap-6 items-stretch">
+            <div className="relative rounded-2xl overflow-hidden ring-1 ring-white/10 shadow-2xl min-h-0 bg-blue-950/30">
               <img
                 src={heroImg}
                 alt="BM Support — community and support"
@@ -353,10 +354,10 @@ function WelcomePage() {
             </div>
 
             {/* Combined event advert (image + divider + text) */}
-            <div className="flex justify-center xl:justify-start">
+            <div className="flex min-h-0 justify-center xl:justify-start">
               <div
-                className="group relative rounded-2xl border-2 border-violet-500/60 bg-surface shadow-[0_0_30px_rgba(139,92,246,0.25)] overflow-hidden flex flex-col"
-                style={{ width: 300 }}
+                className="group relative h-full max-h-full rounded-2xl border-2 border-violet-500/60 bg-surface shadow-[0_0_30px_rgba(139,92,246,0.25)] overflow-hidden flex flex-col"
+                style={{ width: 300, maxWidth: "100%" }}
               >
                 {canEditEvent && (
                   <div className="absolute top-2 right-2 z-20 flex items-center gap-1 opacity-0 pointer-events-none transition-opacity group-hover:opacity-100 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:pointer-events-auto">
@@ -400,7 +401,7 @@ function WelcomePage() {
                 )}
 
                 {/* Image area */}
-                <div className="relative w-full" style={{ height: 250 }}>
+                <div className="relative w-full shrink-0" style={{ height: 185 }}>
                   {event?.banner_url ? (
                     <img
                       src={event.banner_url}
@@ -433,7 +434,7 @@ function WelcomePage() {
                 <div className="h-px bg-gradient-to-r from-transparent via-violet-500/60 to-transparent" />
 
                 {/* Text area */}
-                <div className="p-5 flex flex-col items-center gap-3 min-h-[230px]">
+                <div className="min-h-0 flex-1 p-4 flex flex-col items-center gap-2">
                   <h3 className="font-display font-bold text-center text-base leading-tight text-foreground">
                     Upcoming Events On BM Support
                   </h3>
@@ -448,7 +449,7 @@ function WelcomePage() {
                   <button
                     onClick={() => setEventOpen(true)}
                     disabled={!event}
-                    className="px-4 py-2 rounded-md bg-gradient-to-br from-violet-600 to-blue-600 hover:opacity-90 text-white text-sm font-medium shadow-[0_0_20px_rgba(139,92,246,0.45)] transition disabled:opacity-40 opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
+                    className="px-4 py-1.5 rounded-md bg-gradient-to-br from-violet-600 to-blue-600 hover:opacity-90 text-white text-sm font-medium shadow-[0_0_20px_rgba(139,92,246,0.45)] transition disabled:opacity-40 opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
                   >
                     Read more
                   </button>
@@ -489,14 +490,14 @@ function WelcomePage() {
       </section>
 
       {/* Quick links */}
-      <section className="p-6 md:p-10">
-        <div className="flex items-center justify-between mb-4">
+      <section className="shrink-0 p-3 xl:p-4">
+        <div className="flex items-center justify-between mb-3">
           <h2 className="font-display text-lg font-semibold">Jump back in</h2>
           <Link to="/home/$channel" params={{ channel: "welcome" }} className="text-sm text-sky-300 hover:text-sky-200">
             Open BM Support Customer Chat-room →
           </Link>
         </div>
-        <div className="grid sm:grid-cols-2 gap-3">
+        <div className="grid sm:grid-cols-2 gap-2">
           {order.map((key, idx) => {
             if (hasRole("moderator") && key === "tickets") return null;
             const c = CARDS[key];
@@ -536,6 +537,7 @@ function WelcomePage() {
             })}
         </div>
       </section>
+      </div>
 
       <Dialog open={eventOpen} onOpenChange={setEventOpen}>
         <DialogContent>
@@ -687,14 +689,14 @@ function QuickCard({
     <Link
       to={to as never}
       params={params as never}
-      className="group w-full h-full rounded-xl border-2 border-violet-500/40 bg-surface hover:bg-surface-2 hover:border-violet-400/70 hover:shadow-[0_0_20px_rgba(139,92,246,0.25)] transition-all p-4 flex items-start gap-3"
+      className="group w-full h-14 rounded-xl border-2 border-violet-500/40 bg-surface hover:bg-surface-2 hover:border-violet-400/70 hover:shadow-[0_0_20px_rgba(139,92,246,0.25)] transition-all px-4 py-2 flex items-center gap-3 overflow-hidden"
     >
       <span className="grid place-items-center size-10 rounded-lg bg-gradient-to-br from-violet-600 to-blue-600 text-white shrink-0">
         <Icon className="size-5" />
       </span>
       <span className="min-w-0">
-        <span className="block font-semibold text-sm text-foreground">{title}</span>
-        <span className="block text-xs text-foreground/75 mt-0.5">{desc}</span>
+        <span className="block truncate font-semibold text-sm text-foreground">{title}</span>
+        <span className="block truncate text-xs text-foreground/75 mt-0.5">{desc}</span>
       </span>
     </Link>
   );
@@ -714,14 +716,14 @@ function QuickAction({
   return (
     <button
       onClick={onClick}
-      className="group w-full h-full text-left rounded-xl border-2 border-violet-500/40 bg-surface hover:bg-surface-2 hover:border-violet-400/70 hover:shadow-[0_0_20px_rgba(139,92,246,0.25)] transition-all p-4 flex items-start gap-3"
+      className="group w-full h-14 text-left rounded-xl border-2 border-violet-500/40 bg-surface hover:bg-surface-2 hover:border-violet-400/70 hover:shadow-[0_0_20px_rgba(139,92,246,0.25)] transition-all px-4 py-2 flex items-center gap-3 overflow-hidden"
     >
       <span className="grid place-items-center size-10 rounded-lg bg-gradient-to-br from-violet-600 to-blue-600 text-white shrink-0">
         <Icon className="size-5" />
       </span>
       <span className="min-w-0">
-        <span className="block font-semibold text-sm text-foreground">{title}</span>
-        <span className="block text-xs text-foreground/75 mt-0.5">{desc}</span>
+        <span className="block truncate font-semibold text-sm text-foreground">{title}</span>
+        <span className="block truncate text-xs text-foreground/75 mt-0.5">{desc}</span>
       </span>
     </button>
   );
