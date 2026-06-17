@@ -228,15 +228,17 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
 
   return (
     <aside className={cn(
-      "bg-rail w-[72px] flex-col items-center py-4 gap-1",
+      "relative w-[72px] flex-col items-center py-4 gap-1",
+      "bg-gradient-to-b from-surface via-rail to-surface-2",
+      "before:content-[''] before:absolute before:inset-y-0 before:right-0 before:w-px before:bg-gradient-to-b before:from-transparent before:via-primary-glow/50 before:to-transparent before:pointer-events-none",
       inSheet
         ? "flex h-full"
         : "shrink-0 hidden lg:flex border-r border-border sticky top-0 self-start h-screen",
     )}>
-      <Link to="/home" className="size-12 rounded-2xl bg-gradient-primary flex items-center justify-center font-display font-bold text-[15px] text-primary-foreground shadow-glow mb-2">
+      <Link to="/home" className="size-12 rounded-2xl bg-gradient-primary flex items-center justify-center font-display font-bold text-[15px] text-primary-foreground shadow-glow mb-2 ring-2 ring-primary-glow/40 hover:ring-primary-glow/80 hover:scale-105 transition-all duration-200">
         BM
       </Link>
-      <div className="h-px w-8 bg-border my-1" />
+      <div className="h-px w-10 my-1 bg-gradient-to-r from-transparent via-primary-glow/50 to-transparent" />
       {sorted.map((i) => (
         <div
           key={i.to}
@@ -298,8 +300,8 @@ function RailIcon({
             className={cn(
               "group relative size-12 rounded-2xl flex items-center justify-center transition-all",
               active
-                ? "bg-gradient-to-br from-primary to-primary-glow text-primary-foreground rounded-xl shadow-glow ring-1 ring-primary-glow/60"
-                : "bg-primary/15 text-primary-glow hover:bg-gradient-to-br hover:from-primary hover:to-primary-glow hover:text-primary-foreground hover:rounded-xl hover:shadow-glow",
+                ? "bg-gradient-to-br from-primary to-primary-glow text-primary-foreground rounded-xl shadow-glow ring-2 ring-primary-glow/70 scale-105"
+                : "bg-gradient-to-br from-surface-2 to-surface text-primary-glow ring-1 ring-border/60 hover:bg-gradient-to-br hover:from-primary hover:to-primary-glow hover:text-primary-foreground hover:rounded-xl hover:shadow-glow hover:scale-105 hover:ring-primary-glow/60",
               accent && !active && "ring-1 ring-primary/40",
             )}
           >
@@ -309,7 +311,7 @@ function RailIcon({
                 {badge > 99 ? "99+" : badge}
               </span>
             ) : null}
-            {active && <span className="absolute -left-1 top-1/2 -translate-y-1/2 h-8 w-1 bg-primary-glow rounded-r" />}
+            {active && <span className="absolute -left-1 top-1/2 -translate-y-1/2 h-8 w-1.5 bg-primary-glow rounded-r shadow-glow" />}
           </Link>
         </TooltipTrigger>
         <TooltipContent side="right" sideOffset={8} className="z-[1000] whitespace-nowrap text-xs font-medium">
