@@ -237,24 +237,30 @@ export const getEntrantWcPredictions = createServerFn({ method: "GET" })
       )
       .eq(col, data.entrantId);
     if (error) throw new Error(error.message);
+    const fixtures = (rows ?? []).map((r: any) => r.fixture).filter(Boolean) as WcLiveFixtureRow[];
+    const { getWcLiveOverlays } = await import("@/lib/wc-live-scores.server");
+    const liveOverlays = await getWcLiveOverlays(fixtures);
     return (rows ?? [])
       .filter((r: any) => r.fixture && r.fixture.kickoff_at <= nowIso)
-      .map((r: any) => ({
-        fixtureId: r.fixture.id,
-        stage: r.fixture.stage,
-        groupLabel: r.fixture.group_label,
-        homeTeam: r.fixture.home_team,
-        awayTeam: r.fixture.away_team,
-        kickoffAt: r.fixture.kickoff_at,
-        homeScore: r.fixture.home_score,
-        awayScore: r.fixture.away_score,
-        status: r.fixture.status,
-        minute: (r.fixture.minute as number | null) ?? null,
-        minuteAdded: (r.fixture.minute_added as number | null) ?? null,
-        homePred: r.home_pred,
-        awayPred: r.away_pred,
-        points: r.points,
-      }))
+      .map((r: any) => {
+        const live = liveOverlays.get(r.fixture.id);
+        return {
+          fixtureId: r.fixture.id,
+          stage: r.fixture.stage,
+          groupLabel: r.fixture.group_label,
+          homeTeam: r.fixture.home_team,
+          awayTeam: r.fixture.away_team,
+          kickoffAt: r.fixture.kickoff_at,
+          homeScore: live?.home_score ?? r.fixture.home_score,
+          awayScore: live?.away_score ?? r.fixture.away_score,
+          status: live?.status ?? r.fixture.status,
+          minute: live?.minute ?? (r.fixture.minute as number | null) ?? null,
+          minuteAdded: live?.minute_added ?? (r.fixture.minute_added as number | null) ?? null,
+          homePred: r.home_pred,
+          awayPred: r.away_pred,
+          points: r.points,
+        };
+      })
       .sort((a, b) => +new Date(b.kickoffAt) - +new Date(a.kickoffAt));
   });
 
