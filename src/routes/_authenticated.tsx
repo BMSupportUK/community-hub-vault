@@ -1,7 +1,7 @@
 import { createFileRoute, Outlet, redirect, useRouterState, Navigate, useNavigate } from "@tanstack/react-router";
 import { Link } from "@tanstack/react-router";
 import { LayoutDashboard, Shield, ShieldCheck, Menu, Receipt, Clock, Calendar } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -56,7 +56,7 @@ function AuthLayout() {
 
   // Discord-style: lock the document to the viewport while inside the app
   // shell so internal panels scroll instead of the whole page.
-  useEffect(() => {
+  useLayoutEffect(() => {
     const html = document.documentElement;
     const body = document.body;
     const prev = {
@@ -64,16 +64,22 @@ function AuthLayout() {
       bodyOverflow: body.style.overflow,
       htmlHeight: html.style.height,
       bodyHeight: body.style.height,
+      bodyPosition: body.style.position,
+      bodyWidth: body.style.width,
     };
     html.style.overflow = "hidden";
     body.style.overflow = "hidden";
-    html.style.height = "100%";
-    body.style.height = "100%";
+    html.style.height = "100dvh";
+    body.style.height = "100dvh";
+    body.style.position = "fixed";
+    body.style.width = "100%";
     return () => {
       html.style.overflow = prev.htmlOverflow;
       body.style.overflow = prev.bodyOverflow;
       html.style.height = prev.htmlHeight;
       body.style.height = prev.bodyHeight;
+      body.style.position = prev.bodyPosition;
+      body.style.width = prev.bodyWidth;
     };
   }, []);
 
@@ -107,7 +113,7 @@ function AuthLayout() {
   }
 
   return (
-    <div className="h-screen flex bg-background overflow-hidden">
+    <div className="fixed inset-0 flex h-dvh w-dvw bg-background overflow-hidden">
       <IconRail />
       <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
         <header className="h-12 shrink-0 border-b border-border bg-rail/40 backdrop-blur flex items-center justify-between px-2 lg:px-4 gap-1.5 lg:gap-3 overflow-x-auto scrollbar-thin">
