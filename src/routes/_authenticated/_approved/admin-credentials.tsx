@@ -283,7 +283,7 @@ function CredentialEditor({
 
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4" onClick={onClose}>
-      <div className="w-full max-w-lg rounded-2xl border border-border bg-surface-1 p-6" onClick={(e) => e.stopPropagation()}>
+      <div className="w-full max-w-lg rounded-2xl border border-border bg-surface-2 shadow-2xl p-6" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-display text-lg font-bold">{row ? "Edit credential" : "New credential"}</h3>
           <button onClick={onClose} className="p-1.5 rounded hover:bg-surface-2"><X className="size-4" /></button>
@@ -312,10 +312,17 @@ function CredentialEditor({
           </button>
         </div>
         <style>{`
-          .ed-input{width:100%;padding:.55rem .75rem;border-radius:.5rem;background:hsl(var(--background));border:1px solid hsl(var(--border));font-size:.875rem;color:hsl(var(--foreground));outline:none}
-          .ed-input::placeholder{color:hsl(var(--muted-foreground))}
-          .ed-input:focus{border-color:hsl(var(--primary));box-shadow:0 0 0 2px hsl(var(--primary) / 0.25)}
-          .ed-input::-webkit-calendar-picker-indicator{filter:invert(1) opacity(.75);cursor:pointer}
+          .ed-input{width:100%;padding:.6rem .8rem;border-radius:.5rem;background:hsl(var(--background));border:1px solid hsl(var(--border));font-size:.9rem;color:hsl(var(--foreground));outline:none;transition:border-color .15s, box-shadow .15s}
+          .ed-input::placeholder{color:hsl(var(--muted-foreground));opacity:.8}
+          .ed-input:hover{border-color:hsl(var(--primary) / 0.5)}
+          .ed-input:focus{border-color:hsl(var(--primary));box-shadow:0 0 0 3px hsl(var(--primary) / 0.2)}
+          .ed-input::-webkit-calendar-picker-indicator{filter:invert(1) opacity(.85);cursor:pointer;margin-left:.25rem}
+          .ed-input::-webkit-datetime-edit-text,
+          .ed-input::-webkit-datetime-edit-day-field,
+          .ed-input::-webkit-datetime-edit-month-field,
+          .ed-input::-webkit-datetime-edit-year-field,
+          .ed-input::-webkit-datetime-edit-hour-field,
+          .ed-input::-webkit-datetime-edit-minute-field{color:hsl(var(--foreground))}
         `}</style>
       </div>
     </div>
