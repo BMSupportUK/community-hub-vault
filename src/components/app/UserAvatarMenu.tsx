@@ -22,7 +22,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { Nameplate } from "@/components/app/Nameplate";
@@ -51,6 +50,7 @@ export function UserAvatarMenu({ variant = "header" }: { variant?: "header" | "b
   const isAdmin = hasAny(["admin", "management"]);
   const roleFlashMap = useRoleFlashMap();
   const instanceId = useRef(Math.random().toString(36).slice(2)).current;
+  const presence = usePresence(user?.id, Boolean(user));
 
   useEffect(() => {
     if (!user) return;
@@ -74,7 +74,7 @@ export function UserAvatarMenu({ variant = "header" }: { variant?: "header" | "b
     return () => {
       supabase.removeChannel(ch);
     };
-  }, [user]);
+  }, [user, instanceId]);
 
   if (!user) return null;
   const name = profile?.display_name || profile?.username || user.email?.split("@")[0] || "User";
@@ -85,11 +85,62 @@ export function UserAvatarMenu({ variant = "header" }: { variant?: "header" | "b
   const flashRole = FLASH_PRIORITY.find((r) => roles.includes(r)) ?? null;
   const flashCls = roleFlashClass(flashRole);
   const resolvedAvatar = resolveAvatarUrl(user.id, profile?.avatar_url, roleFlashMap);
-  // Treat the signed-in user as always "online" here; DND, if enabled,
-  // upgrades the indicator to violet via usePresence.
-  const presence = usePresence(user.id, true);
   const isDnd = presence.kind === "dnd";
   const statusLabel = presence.shortLabel;
+  const trigger =
+    variant === "bar" ? (
+      <button
+        aria-label="Account menu"
+        title={statusLabel}
+        className="group relative rounded-full focus:outline-none focus:ring-2 focus:ring-primary/60"
+      >
+        <Avatar className="h-9 w-9 ring-2 ring-primary/40 group-hover:ring-primary transition">
+          <AvatarImage src={resolvedAvatar} alt={name} />
+          <AvatarFallback className="text-[11px] font-bold bg-gradient-primary text-primary-foreground">
+            {initial}
+          </AvatarFallback>
+        </Avatar>
+        <span
+          className={cn(
+            "absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full ring-2 ring-rail",
+            isDnd ? "bg-violet-500 shadow-[0_0_10px_rgba(167,139,250,0.85)]" : "bg-emerald-500",
+          )}
+          aria-label={statusLabel}
+        />
+      </button>
+    ) : (
+      <button
+        aria-label="Account menu"
+        title={statusLabel}
+        className="group relative flex items-center gap-2 rounded-full bg-rail/80 ring-1 ring-border hover:ring-primary/60 hover:bg-surface-2 transition-all px-1.5 py-1 shadow-soft"
+      >
+        <Avatar className="h-7 w-7 ring-2 ring-primary/40 group-hover:ring-primary transition">
+          <AvatarImage src={resolvedAvatar} alt={name} />
+          <AvatarFallback className="text-[10px] font-bold bg-gradient-primary text-primary-foreground">
+            {initial}
+          </AvatarFallback>
+        </Avatar>
+        <span className="hidden lg:flex flex-col items-start leading-tight pr-2">
+          <span
+            className={cn(
+              "text-xs font-semibold text-foreground max-w-[120px] truncate inline-flex items-center gap-1",
+              flashCls,
+            )}
+          >
+            {name}
+            <VpnBadge userId={user.id} size={11} showInactive />
+          </span>
+          <span className="text-[10px] text-muted-foreground capitalize">{topRole}</span>
+        </span>
+        <span
+          className={cn(
+            "absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full ring-2 ring-rail",
+            isDnd ? "bg-violet-500 shadow-[0_0_10px_rgba(167,139,250,0.85)]" : "bg-emerald-500",
+          )}
+          aria-label={statusLabel}
+        />
+      </button>
+    );
 
   const copyHandle = async () => {
     if (!profile?.username) return;
@@ -112,178 +163,108 @@ export function UserAvatarMenu({ variant = "header" }: { variant?: "header" | "b
   };
 
   return (
-    <TooltipProvider delayDuration={150}>
-      <DropdownMenu>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <DropdownMenuTrigger asChild>
-              {variant === "bar" ? (
-                <button
-                  aria-label="Account menu"
-                  className="group relative rounded-full focus:outline-none focus:ring-2 focus:ring-primary/60"
-                >
-                  <Avatar className="h-9 w-9 ring-2 ring-primary/40 group-hover:ring-primary transition">
-                    <AvatarImage src={resolvedAvatar} alt={name} />
-                    <AvatarFallback className="text-[11px] font-bold bg-gradient-primary text-primary-foreground">
-                      {initial}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span
-                    className={cn(
-                      "absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full ring-2 ring-rail",
-                      isDnd
-                        ? "bg-violet-500 shadow-[0_0_10px_rgba(167,139,250,0.85)]"
-                        : "bg-emerald-500",
-                    )}
-                    aria-label={statusLabel}
-                  />
-                </button>
-              ) : (
-              <button
-                aria-label="Account menu"
-                className="group relative flex items-center gap-2 rounded-full bg-rail/80 ring-1 ring-border hover:ring-primary/60 hover:bg-surface-2 transition-all px-1.5 py-1 shadow-soft"
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>{trigger}</DropdownMenuTrigger>
+      <DropdownMenuContent
+        side={variant === "bar" ? "top" : "bottom"}
+        align={variant === "bar" ? "start" : "end"}
+        sideOffset={8}
+        className="w-72 p-0 overflow-hidden"
+      >
+        <div className="relative p-4 pb-3 overflow-hidden">
+          <Nameplate
+            id={profile?.equipped_nameplate_id ?? null}
+            className="absolute inset-0"
+            fallbackStyle={{
+              background:
+                "linear-gradient(to bottom right, hsl(var(--primary)/0.3), hsl(330 80% 60% / 0.2), hsl(220 80% 60% / 0.2))",
+            }}
+          />
+          <div className="relative flex items-center gap-3">
+            <Avatar className="h-14 w-14 ring-2 ring-background shadow-lg">
+              <AvatarImage src={resolvedAvatar} alt={name} />
+              <AvatarFallback className="text-base font-bold bg-gradient-primary text-primary-foreground">
+                {initial}
+              </AvatarFallback>
+            </Avatar>
+            <div className="min-w-0 flex-1">
+              <div
+                className={cn(
+                  "font-semibold text-sm truncate inline-flex items-center gap-1",
+                  flashCls,
+                )}
               >
-                <Avatar className="h-7 w-7 ring-2 ring-primary/40 group-hover:ring-primary transition">
-                  <AvatarImage src={resolvedAvatar} alt={name} />
-                  <AvatarFallback className="text-[10px] font-bold bg-gradient-primary text-primary-foreground">
-                    {initial}
-                  </AvatarFallback>
-                </Avatar>
-                <span className="hidden lg:flex flex-col items-start leading-tight pr-2">
-                  <span
-                    className={cn(
-                      "text-xs font-semibold text-foreground max-w-[120px] truncate inline-flex items-center gap-1",
-                      flashCls,
-                    )}
-                  >
-                    {name}
-                    <VpnBadge userId={user.id} size={11} showInactive />
-                  </span>
-                  <span className="text-[10px] text-muted-foreground capitalize">{topRole}</span>
-                </span>
-                <span
-                  className={cn(
-                    "absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full ring-2 ring-rail",
-                    isDnd
-                      ? "bg-violet-500 shadow-[0_0_10px_rgba(167,139,250,0.85)]"
-                      : "bg-emerald-500",
-                  )}
-                  aria-label={statusLabel}
-                />
-              </button>
-              )}
-            </DropdownMenuTrigger>
-          </TooltipTrigger>
-          <TooltipContent
-            side={variant === "bar" ? "top" : "bottom"}
-            align="center"
-            sideOffset={8}
-            className="z-[1000] whitespace-nowrap bg-popover px-2 py-1 text-[10px] font-medium text-popover-foreground shadow-md ring-1 ring-border"
-          >
-            {statusLabel}
-          </TooltipContent>
-        </Tooltip>
-        <DropdownMenuContent
-          side={variant === "bar" ? "top" : "bottom"}
-          align={variant === "bar" ? "start" : "end"}
-          sideOffset={8}
-          className="w-72 p-0 overflow-hidden"
-        >
-          <div className="relative p-4 pb-3 overflow-hidden">
-            <Nameplate
-              id={profile?.equipped_nameplate_id ?? null}
-              className="absolute inset-0"
-              fallbackStyle={{
-                background:
-                  "linear-gradient(to bottom right, hsl(var(--primary)/0.3), hsl(330 80% 60% / 0.2), hsl(220 80% 60% / 0.2))",
-              }}
-            />
-            <div className="relative flex items-center gap-3">
-              <Avatar className="h-14 w-14 ring-2 ring-background shadow-lg">
-                <AvatarImage src={resolvedAvatar} alt={name} />
-                <AvatarFallback className="text-base font-bold bg-gradient-primary text-primary-foreground">
-                  {initial}
-                </AvatarFallback>
-              </Avatar>
-              <div className="min-w-0 flex-1">
-                <div
-                  className={cn(
-                    "font-semibold text-sm truncate inline-flex items-center gap-1",
-                    flashCls,
-                  )}
-                >
-                  {name}
-                  <VpnBadge userId={user.id} size={12} showInactive />
-                </div>
-                <div className="text-xs text-muted-foreground truncate flex items-center gap-1">
-                  <AtSign className="size-3" />
-                  {profile?.username ?? user.email}
-                </div>
-                <div className="mt-1 inline-flex items-center gap-1 text-[10px] uppercase tracking-wider rounded-full bg-background/60 px-2 py-0.5 text-foreground/80 capitalize">
-                  <Shield className="size-3" />
-                  {topRole}
-                </div>
+                {name}
+                <VpnBadge userId={user.id} size={12} showInactive />
+              </div>
+              <div className="text-xs text-muted-foreground truncate flex items-center gap-1">
+                <AtSign className="size-3" />
+                {profile?.username ?? user.email}
+              </div>
+              <div className="mt-1 inline-flex items-center gap-1 text-[10px] uppercase tracking-wider rounded-full bg-background/60 px-2 py-0.5 text-foreground/80 capitalize">
+                <Shield className="size-3" />
+                {topRole}
               </div>
             </div>
           </div>
-          <div className="p-1">
-            <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground">
-              Account
-            </DropdownMenuLabel>
-            <DropdownMenuItem onSelect={goEdit} className="cursor-pointer">
-              <Pencil className="size-4 mr-2" />
-              Edit profile
-            </DropdownMenuItem>
-            {profile?.username ? (
-              <DropdownMenuItem asChild className="cursor-pointer">
-                <Link to="/u/$username" params={{ username: profile.username }}>
-                  <UserCircle2 className="size-4 mr-2" />
-                  View profile
-                </Link>
-              </DropdownMenuItem>
-            ) : null}
-            <DropdownMenuItem
-              onSelect={(e) => {
-                e.preventDefault();
-                copyHandle();
-              }}
-              className="cursor-pointer"
-            >
-              {copied ? (
-                <Check className="size-4 mr-2 text-emerald-500" />
-              ) : (
-                <Copy className="size-4 mr-2" />
-              )}
-              Copy username
-            </DropdownMenuItem>
+        </div>
+        <div className="p-1">
+          <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground">
+            Account
+          </DropdownMenuLabel>
+          <DropdownMenuItem onSelect={goEdit} className="cursor-pointer">
+            <Pencil className="size-4 mr-2" />
+            Edit profile
+          </DropdownMenuItem>
+          {profile?.username ? (
             <DropdownMenuItem asChild className="cursor-pointer">
-              <Link to="/account-security">
-                <ShieldCheck className="size-4 mr-2" />
-                Security & 2FA
+              <Link to="/u/$username" params={{ username: profile.username }}>
+                <UserCircle2 className="size-4 mr-2" />
+                View profile
               </Link>
             </DropdownMenuItem>
-            {isAdmin ? (
-              <DropdownMenuItem asChild className="cursor-pointer">
-                <Link to="/admin">
-                  <Settings className="size-4 mr-2" />
-                  Admin dashboard
-                </Link>
-              </DropdownMenuItem>
-            ) : null}
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onSelect={async () => {
-                await signOut();
-                navigate({ to: "/login" });
-              }}
-              className="cursor-pointer text-destructive focus:text-destructive"
-            >
-              <LogOut className="size-4 mr-2" />
-              Sign out
+          ) : null}
+          <DropdownMenuItem
+            onSelect={(e) => {
+              e.preventDefault();
+              copyHandle();
+            }}
+            className="cursor-pointer"
+          >
+            {copied ? (
+              <Check className="size-4 mr-2 text-emerald-500" />
+            ) : (
+              <Copy className="size-4 mr-2" />
+            )}
+            Copy username
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild className="cursor-pointer">
+            <Link to="/account-security">
+              <ShieldCheck className="size-4 mr-2" />
+              Security & 2FA
+            </Link>
+          </DropdownMenuItem>
+          {isAdmin ? (
+            <DropdownMenuItem asChild className="cursor-pointer">
+              <Link to="/admin">
+                <Settings className="size-4 mr-2" />
+                Admin dashboard
+              </Link>
             </DropdownMenuItem>
-          </div>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </TooltipProvider>
+          ) : null}
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            onSelect={async () => {
+              await signOut();
+              navigate({ to: "/login" });
+            }}
+            className="cursor-pointer text-destructive focus:text-destructive"
+          >
+            <LogOut className="size-4 mr-2" />
+            Sign out
+          </DropdownMenuItem>
+        </div>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
