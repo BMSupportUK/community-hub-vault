@@ -39,18 +39,20 @@ function AuthLayout() {
   const isAdmin = hasAny(["admin", "management"]);
   const navigate = useNavigate();
   const path = useRouterState({ select: (r) => r.location.pathname });
-  const search = useRouterState({ select: (r) => r.location.search });
+  const search = useRouterState({ select: (r) => r.location.search as Record<string, unknown> });
+  const shopTab = typeof search.tab === "string" ? search.tab : undefined;
+  const shopView = typeof search.view === "string" ? search.view : undefined;
   const unlockShell =
     path.endsWith("/streaming-devices") ||
     path.endsWith("/reviews") ||
     (path.endsWith("/shop") &&
-      (search.tab === "vpn" ||
-        search.tab === "streaming_devices" ||
-        search.tab === "reviews" ||
-        search.tab === "app_demos" ||
-        search.view === "streaming_devices" ||
-        search.view === "reviews" ||
-        search.view === "app_demos"));
+      (shopTab === "vpn" ||
+        shopTab === "streaming_devices" ||
+        shopTab === "reviews" ||
+        shopTab === "app_demos" ||
+        shopView === "streaming_devices" ||
+        shopView === "reviews" ||
+        shopView === "app_demos"));
   const logIp = useServerFn(logMyIp);
   const loggedRef = useRef(false);
   const [navOpen, setNavOpen] = useState(false);
