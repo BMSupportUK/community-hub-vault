@@ -172,96 +172,87 @@ export function UserAvatarMenu({ variant = "header" }: { variant?: "header" | "b
         className="w-72 p-0 overflow-hidden"
       >
         <div className="relative p-4 pb-3 overflow-hidden">
-            <Nameplate
-              id={profile?.equipped_nameplate_id ?? null}
-              className="absolute inset-0"
-              fallbackStyle={{
-                background:
-                  "linear-gradient(to bottom right, hsl(var(--primary)/0.3), hsl(330 80% 60% / 0.2), hsl(220 80% 60% / 0.2))",
-              }}
-            />
-            <div className="relative flex items-center gap-3">
-              <Avatar className="h-14 w-14 ring-2 ring-background shadow-lg">
-                <AvatarImage src={resolvedAvatar} alt={name} />
-                <AvatarFallback className="text-base font-bold bg-gradient-primary text-primary-foreground">
-                  {initial}
-                </AvatarFallback>
-              </Avatar>
-              <div className="min-w-0 flex-1">
-                <div
-                  className={cn(
-                    "font-semibold text-sm truncate inline-flex items-center gap-1",
-                    flashCls,
-                  )}
-                >
-                  {name}
-                  <VpnBadge userId={user.id} size={12} showInactive />
-                </div>
-                <div className="text-xs text-muted-foreground truncate flex items-center gap-1">
-                  <AtSign className="size-3" />
-                  {profile?.username ?? user.email}
-                </div>
-                <div className="mt-1 inline-flex items-center gap-1 text-[10px] uppercase tracking-wider rounded-full bg-background/60 px-2 py-0.5 text-foreground/80 capitalize">
-                  <Shield className="size-3" />
-                  {topRole}
-                </div>
+          <Nameplate
+            id={profile?.equipped_nameplate_id ?? null}
+            className="absolute inset-0"
+            fallbackStyle={{
+              background:
+                "linear-gradient(to bottom right, hsl(var(--primary)/0.3), hsl(330 80% 60% / 0.2), hsl(220 80% 60% / 0.2))",
+            }}
+          />
+          <div className="relative flex items-center gap-3">
+            <Avatar className="h-14 w-14 ring-2 ring-background shadow-lg">
+              <AvatarImage src={resolvedAvatar} alt={name} />
+              <AvatarFallback className="text-base font-bold bg-gradient-primary text-primary-foreground">
+                {initial}
+              </AvatarFallback>
+            </Avatar>
+            <div className="min-w-0 flex-1">
+              <div className={cn("font-semibold text-sm truncate inline-flex items-center gap-1", flashCls)}>
+                {name}
+                <VpnBadge userId={user.id} size={12} showInactive />
+              </div>
+              <div className="text-xs text-muted-foreground truncate flex items-center gap-1">
+                <AtSign className="size-3" />
+                {profile?.username ?? user.email}
+              </div>
+              <div className="mt-1 inline-flex items-center gap-1 text-[10px] uppercase tracking-wider rounded-full bg-background/60 px-2 py-0.5 text-foreground/80 capitalize">
+                <Shield className="size-3" />
+                {topRole}
               </div>
             </div>
+          </div>
         </div>
         <div className="p-1">
-            <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground">
-              Account
-            </DropdownMenuLabel>
-            <DropdownMenuItem onSelect={goEdit} className="cursor-pointer">
-              <Pencil className="size-4 mr-2" />
-              Edit profile
-            </DropdownMenuItem>
-            {profile?.username ? (
-              <DropdownMenuItem asChild className="cursor-pointer">
-                <Link to="/u/$username" params={{ username: profile.username }}>
-                  <UserCircle2 className="size-4 mr-2" />
-                  View profile
-                </Link>
-              </DropdownMenuItem>
-            ) : null}
-            <DropdownMenuItem
-              onSelect={(e) => {
-                e.preventDefault();
-                copyHandle();
-              }}
-              className="cursor-pointer"
-            >
-              {copied ? (
-                <Check className="size-4 mr-2 text-emerald-500" />
-              ) : (
-                <Copy className="size-4 mr-2" />
-              )}
-              Copy username
-            </DropdownMenuItem>
+          <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground">
+            Account
+          </DropdownMenuLabel>
+          <DropdownMenuItem onSelect={goEdit} className="cursor-pointer">
+            <Pencil className="size-4 mr-2" />
+            Edit profile
+          </DropdownMenuItem>
+          {profile?.username ? (
             <DropdownMenuItem asChild className="cursor-pointer">
-              <Link to="/account-security">
-                <ShieldCheck className="size-4 mr-2" />
-                Security & 2FA
+              <Link to="/u/$username" params={{ username: profile.username }}>
+                <UserCircle2 className="size-4 mr-2" />
+                View profile
               </Link>
             </DropdownMenuItem>
-            {isAdmin ? (
-              <DropdownMenuItem asChild className="cursor-pointer">
-                <Link to="/admin">
-                  <Settings className="size-4 mr-2" />
-                  Admin dashboard
-                </Link>
-              </DropdownMenuItem>
-            ) : null}
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onSelect={async () => {
-                await signOut();
-                navigate({ to: "/login" });
-              }}
-              className="cursor-pointer text-destructive focus:text-destructive"
-            >
-              <LogOut className="size-4 mr-2" />
-              Sign out
+          ) : null}
+          <DropdownMenuItem
+            onSelect={(e) => {
+              e.preventDefault();
+              copyHandle();
+            }}
+            className="cursor-pointer"
+          >
+            {copied ? <Check className="size-4 mr-2 text-emerald-500" /> : <Copy className="size-4 mr-2" />}
+            Copy username
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild className="cursor-pointer">
+            <Link to="/account-security">
+              <ShieldCheck className="size-4 mr-2" />
+              Security & 2FA
+            </Link>
+          </DropdownMenuItem>
+          {isAdmin ? (
+            <DropdownMenuItem asChild className="cursor-pointer">
+              <Link to="/admin">
+                <Settings className="size-4 mr-2" />
+                Admin dashboard
+              </Link>
+            </DropdownMenuItem>
+          ) : null}
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            onSelect={async () => {
+              await signOut();
+              navigate({ to: "/login" });
+            }}
+            className="cursor-pointer text-destructive focus:text-destructive"
+          >
+            <LogOut className="size-4 mr-2" />
+            Sign out
           </DropdownMenuItem>
         </div>
       </DropdownMenuContent>
