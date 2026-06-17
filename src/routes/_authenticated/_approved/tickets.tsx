@@ -25,6 +25,7 @@ import { ActiveOutagesBox } from "@/components/app/ActiveOutagesBox";
 import { PayOrderDialog, OrderProgressStrip } from "@/routes/_authenticated/_approved/shop";
 import { refreshSquareInvoiceStatus, cancelOrderAndSquareInvoice } from "@/lib/square-invoices.functions";
 import { formatRoleLabel } from "@/lib/role-label";
+import { notifyTicketReply } from "@/lib/ticket-notify.functions";
 
 export const Route = createFileRoute("/_authenticated/_approved/tickets")({
   validateSearch: (s: Record<string, unknown>) => ({
