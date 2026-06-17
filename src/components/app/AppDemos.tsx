@@ -198,7 +198,7 @@ export function AppDemosView() {
   };
 
   return (
-    <main className="relative flex-1 overflow-y-auto scrollbar-hide">
+    <main className="relative flex-1 overflow-visible md:overflow-y-auto md:scrollbar-hide">
       <div className="relative max-w-6xl mx-auto px-4 md:px-6 py-6 space-y-6">
         <header className="flex items-start justify-between gap-3 flex-wrap">
           <div>
