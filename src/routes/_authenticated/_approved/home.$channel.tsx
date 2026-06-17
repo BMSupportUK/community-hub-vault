@@ -25,6 +25,7 @@ import { useOnlineUsers } from "@/hooks/use-online-users";
 import { PresenceMiniDot, PresenceMiniLabel } from "@/components/app/PresenceIndicators";
 import { formatLastSeen } from "@/lib/relative-time";
 import { useRoleFlashMap, roleFlashClass, resolveAvatarUrl } from "@/lib/role-flash";
+import { useHomeChannelContentReady } from "@/components/app/HomeChannelReadyContext";
 
 export const Route = createFileRoute("/_authenticated/_approved/home/$channel")({
   component: ChannelPage,
@@ -77,6 +78,7 @@ function formatSlow(s: number): string {
 
 function ChannelPage() {
   const onlineUsers = useOnlineUsers();
+  const markContentReady = useHomeChannelContentReady();
   const { channel: slug } = Route.useParams();
   const { user, hasAny } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
@@ -320,6 +322,10 @@ function ChannelPage() {
       else setChannel(data as Channel);
     })();
   }, [slug]);
+
+  useEffect(() => {
+    if (channel || missing) markContentReady();
+  }, [channel, missing, markContentReady]);
 
   // Clear unread @mention notifications for this channel when the user views it.
   // This makes the AtSign badge and per-channel counters reset on read.

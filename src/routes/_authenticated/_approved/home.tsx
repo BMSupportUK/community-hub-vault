@@ -1,9 +1,11 @@
 import { createFileRoute, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Hash, Menu } from "lucide-react";
 import { ChannelColumn, type ChannelGroup } from "@/components/app/ChannelColumn";
 import { ServiceStatusBox } from "@/components/app/ServiceStatusBox";
 import { WorkingStatusBox } from "@/components/app/WorkingStatusBox";
+import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import {
@@ -19,6 +21,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { IconPicker, getIcon } from "@/components/app/IconPicker";
+import { HomeChannelReadyProvider } from "@/components/app/HomeChannelReadyContext";
 
 export const Route = createFileRoute("/_authenticated/_approved/home")({
   component: HomeLayout,
@@ -34,6 +37,21 @@ interface ChannelRow {
   sort_order: number;
 }
 
+const SidebarSkeletonIcon = () => <Skeleton className="size-4 rounded" />;
+
+const channelSkeletonGroups: ChannelGroup[] = [
+  {
+    label: "\u00A0",
+    items: Array.from({ length: 6 }).map((_, i) => ({
+      to: `#sk-${i}`,
+      label: "\u00A0",
+      icon: SidebarSkeletonIcon,
+      active: false,
+      onClick: () => {},
+    })),
+  },
+];
+
 function HomeLayout() {
   const { hasAny, user } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
@@ -41,9 +59,13 @@ function HomeLayout() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const isHomeIndex = pathname === "/home" || pathname === "/home/";
   const path = useRouterState({ select: (r) => r.location.pathname });
+  const [readyPath, setReadyPath] = useState<string | null>(null);
+  const channelContentReady = isHomeIndex || readyPath === path;
   const [channels, setChannels] = useState<ChannelRow[] | null>(null);
   const [chanNavOpen, setChanNavOpen] = useState(false);
-  useEffect(() => { setChanNavOpen(false); }, [path]);
+  useEffect(() => {
+    setChanNavOpen(false);
+  }, [path]);
   const [mentionCounts, setMentionCounts] = useState<Record<string, number>>({});
   const [addChannelGroup, setAddChannelGroup] = useState<string | null>(null);
   const [showAddGroup, setShowAddGroup] = useState(false);
@@ -59,12 +81,41 @@ function HomeLayout() {
   const [renameCategory, setRenameCategory] = useState<string | null>(null);
   const [renameCategoryName, setRenameCategoryName] = useState("");
 
+  const channelsQuery = useQuery({
+    queryKey: ["home-channels-sidebar"],
+    queryFn: async () => {
+      const [{ data: channelRows }, { data: iconRows }, { data: orderRows }] = await Promise.all([
+        supabase
+          .from("chat_channels")
+          .select("id, slug, name, group_label, icon, staff_only, sort_order")
+          .order("sort_order"),
+        supabase.from("app_settings").select("value").eq("key", "category_icons").maybeSingle(),
+        supabase.from("app_settings").select("value").eq("key", "category_order").maybeSingle(),
+      ]);
+      const orderValue = (orderRows?.value ?? {}) as { labels?: unknown };
+      return {
+        channels: (channelRows as ChannelRow[] | null) ?? [],
+        categoryIcons: (iconRows?.value ?? {}) as Record<string, string>,
+        categoryOrder: Array.isArray(orderValue.labels)
+          ? orderValue.labels.filter((v): v is string => typeof v === "string")
+          : [],
+      };
+    },
+    staleTime: 5 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
+
+  useEffect(() => {
+    if (!channelsQuery.data) return;
+    setChannels(channelsQuery.data.channels);
+    setCategoryIcons(channelsQuery.data.categoryIcons);
+    setCategoryOrder(channelsQuery.data.categoryOrder);
+  }, [channelsQuery.data]);
+
   const load = async () => {
-    const { data } = await supabase
-      .from("chat_channels")
-      .select("id, slug, name, group_label, icon, staff_only, sort_order")
-      .order("sort_order");
-    setChannels((data as ChannelRow[] | null) ?? []);
+    const { data } = await channelsQuery.refetch();
+    if (data) setChannels(data.channels);
   };
 
   const loadCategoryIcons = async () => {
@@ -90,12 +141,6 @@ function HomeLayout() {
         : [],
     );
   };
-
-  useEffect(() => {
-    load();
-    loadCategoryIcons();
-    loadCategoryOrder();
-  }, []);
 
   const saveChannelIcon = async (iconName: string): Promise<void> => {
     if (!editChannelIcon) return;
@@ -426,40 +471,54 @@ function HomeLayout() {
 
   return (
     <>
-      {!isHomeIndex && (
+      {!isHomeIndex && channelContentReady && (
         <ChannelColumn
           title="Support Community"
-          groups={groups}
+          groups={channelsQuery.isLoading && channels === null ? channelSkeletonGroups : groups}
           onAddGroup={isAdmin ? () => setShowAddGroup(true) : undefined}
-          onReorderChannels={isAdmin ? reorderChannels : undefined}
-          onReorderGroups={isAdmin ? reorderGroups : undefined}
-          footer={<><ServiceStatusBox /><WorkingStatusBox /></>}
+          onReorderChannels={isAdmin && channels !== null ? reorderChannels : undefined}
+          onReorderGroups={isAdmin && channels !== null ? reorderGroups : undefined}
+          footer={
+            <>
+              <ServiceStatusBox />
+              <WorkingStatusBox />
+            </>
+          }
         />
       )}
       <div className="flex-1 flex flex-col min-w-0">
-        {!isHomeIndex && (
-        <div className="md:hidden h-10 shrink-0 flex items-center px-3 border-b border-border bg-rail/30">
-          <Sheet open={chanNavOpen} onOpenChange={setChanNavOpen}>
-            <SheetTrigger className="inline-flex items-center gap-2 text-xs font-medium text-muted-foreground hover:text-foreground">
-              <Menu className="size-4" />
-              Channels
-            </SheetTrigger>
-            <SheetContent side="left" className="p-0 w-72 bg-surface border-r border-border">
-              <ChannelColumn
-                inSheet
-                title="Support Community"
-                groups={groups}
-                onAddGroup={isAdmin ? () => setShowAddGroup(true) : undefined}
-                onReorderChannels={isAdmin ? reorderChannels : undefined}
-                onReorderGroups={isAdmin ? reorderGroups : undefined}
-                footer={<><ServiceStatusBox /><WorkingStatusBox /></>}
-              />
-            </SheetContent>
-          </Sheet>
-        </div>
+        {!isHomeIndex && channelContentReady && (
+          <div className="md:hidden h-10 shrink-0 flex items-center px-3 border-b border-border bg-rail/30">
+            <Sheet open={chanNavOpen} onOpenChange={setChanNavOpen}>
+              <SheetTrigger className="inline-flex items-center gap-2 text-xs font-medium text-muted-foreground hover:text-foreground">
+                <Menu className="size-4" />
+                Channels
+              </SheetTrigger>
+              <SheetContent side="left" className="p-0 w-72 bg-surface border-r border-border">
+                <ChannelColumn
+                  inSheet
+                  title="Support Community"
+                  groups={
+                    channelsQuery.isLoading && channels === null ? channelSkeletonGroups : groups
+                  }
+                  onAddGroup={isAdmin ? () => setShowAddGroup(true) : undefined}
+                  onReorderChannels={isAdmin && channels !== null ? reorderChannels : undefined}
+                  onReorderGroups={isAdmin && channels !== null ? reorderGroups : undefined}
+                  footer={
+                    <>
+                      <ServiceStatusBox />
+                      <WorkingStatusBox />
+                    </>
+                  }
+                />
+              </SheetContent>
+            </Sheet>
+          </div>
         )}
         <div className="flex-1 flex min-h-0 min-w-0">
-          <Outlet />
+          <HomeChannelReadyProvider onReady={() => setReadyPath(path)}>
+            <Outlet />
+          </HomeChannelReadyProvider>
         </div>
       </div>
 
