@@ -488,7 +488,7 @@ function PolicyView({ policyKey, isAdmin }: { policyKey: PolicyKey; isAdmin: boo
   };
 
   return (
-    <main className="flex-1 overflow-y-auto">
+    <main className="flex-1 min-h-0 overflow-y-auto scrollbar-hide">
       <div className="max-w-4xl mx-auto px-6 py-8">
         {policyKey === "refund" && (
           <section className="relative overflow-hidden rounded-3xl border border-border mb-8 shadow-soft">
@@ -2773,7 +2773,7 @@ function OrdersView({
 
   return (
     <div
-      className="flex-1 overflow-y-auto relative bg-cover bg-center bg-fixed min-h-screen"
+      className="flex-1 min-h-0 overflow-y-auto scrollbar-hide relative bg-cover bg-center bg-fixed"
       style={{ backgroundImage: `url(${shopOrdersBg})` }}
     >
       <div
