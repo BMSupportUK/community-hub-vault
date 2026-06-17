@@ -1,7 +1,11 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
-export type AppTheme = "purple" | "red";
+export type AppTheme = "purple" | "red" | "ocean" | "sunset";
+const THEMES: AppTheme[] = ["purple", "red", "ocean", "sunset"];
+function normalize(v: unknown): AppTheme {
+  return THEMES.includes(v as AppTheme) ? (v as AppTheme) : "purple";
+}
 const DEFAULT: AppTheme = "purple";
 const KEY = "app_theme";
 
@@ -14,7 +18,8 @@ function apply(t: AppTheme) {
   cache = t;
   if (typeof document !== "undefined") {
     const html = document.documentElement;
-    html.classList.toggle("theme-red", t === "red");
+    html.classList.remove("theme-red", "theme-ocean", "theme-sunset");
+    if (t !== "purple") html.classList.add(`theme-${t}`);
   }
   listeners.forEach((l) => l(t));
 }
@@ -28,7 +33,7 @@ async function load() {
       .eq("key", KEY)
       .maybeSingle();
     const v = (data?.value as { theme?: AppTheme } | null) ?? null;
-    apply(v?.theme === "red" ? "red" : "purple");
+    apply(normalize(v?.theme));
     loaded = true;
   })();
   return loading;
@@ -45,7 +50,7 @@ function startChannel() {
       { event: "*", schema: "public", table: "app_settings", filter: `key=eq.${KEY}` },
       (payload) => {
         const v = ((payload.new as { value?: { theme?: AppTheme } } | null)?.value) ?? null;
-        apply(v?.theme === "red" ? "red" : "purple");
+        apply(normalize(v?.theme));
       },
     )
     .subscribe();

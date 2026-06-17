@@ -140,6 +140,90 @@ html.theme-red body {
   background-attachment: fixed;
 }
 
+/* ===== Electric Ocean theme (cyan / teal / azure) ===== */
+html.theme-ocean {
+  --background: oklch(0.22 0.07 230);
+  --foreground: oklch(0.97 0.01 220);
+  --surface: oklch(0.26 0.09 225);
+  --surface-2: oklch(0.32 0.11 220);
+  --rail: oklch(0.24 0.06 225);
+
+  --card: oklch(0.20 0.05 230);
+  --card-foreground: oklch(0.97 0.01 220);
+  --popover: oklch(0.20 0.05 230);
+  --popover-foreground: oklch(0.97 0.01 220);
+
+  --primary: oklch(0.70 0.18 215);
+  --primary-foreground: oklch(0.15 0.03 230);
+  --primary-glow: oklch(0.78 0.16 195);
+
+  --secondary: oklch(0.30 0.09 225);
+  --secondary-foreground: oklch(0.97 0.01 220);
+  --muted: oklch(0.25 0.04 225);
+  --muted-foreground: oklch(0.76 0.04 220);
+  --accent: oklch(0.72 0.18 180);
+  --accent-foreground: oklch(0.15 0.03 230);
+
+  --border: oklch(0.34 0.07 225);
+  --input: oklch(0.26 0.05 225);
+  --ring: oklch(0.70 0.18 215);
+
+  --gradient-primary: linear-gradient(135deg, oklch(0.66 0.20 235), oklch(0.70 0.18 210) 55%, oklch(0.74 0.18 185));
+  --gradient-rail: linear-gradient(180deg, oklch(0.28 0.08 230), oklch(0.26 0.07 215) 55%, oklch(0.24 0.07 195));
+  --gradient-accent: linear-gradient(90deg, oklch(0.66 0.20 235), oklch(0.72 0.18 200), oklch(0.74 0.18 180));
+  --shadow-glow: 0 0 0 1px color-mix(in oklab, var(--primary) 40%, transparent), 0 12px 40px -10px color-mix(in oklab, var(--primary) 55%, transparent);
+}
+html.theme-ocean body {
+  background:
+    radial-gradient(ellipse at top left, oklch(0.60 0.20 235 / 0.55), transparent 55%),
+    radial-gradient(ellipse at top right, oklch(0.65 0.18 200 / 0.45), transparent 55%),
+    radial-gradient(ellipse at bottom, oklch(0.65 0.18 180 / 0.50), transparent 60%),
+    var(--color-background);
+  background-attachment: fixed;
+}
+
+/* ===== Sunset Blaze theme (orange / amber / magenta) ===== */
+html.theme-sunset {
+  --background: oklch(0.24 0.08 35);
+  --foreground: oklch(0.98 0.01 60);
+  --surface: oklch(0.30 0.11 40);
+  --surface-2: oklch(0.36 0.13 45);
+  --rail: oklch(0.26 0.07 30);
+
+  --card: oklch(0.22 0.05 30);
+  --card-foreground: oklch(0.98 0.01 60);
+  --popover: oklch(0.22 0.05 30);
+  --popover-foreground: oklch(0.98 0.01 60);
+
+  --primary: oklch(0.70 0.20 45);
+  --primary-foreground: oklch(0.15 0.03 40);
+  --primary-glow: oklch(0.78 0.18 70);
+
+  --secondary: oklch(0.32 0.10 40);
+  --secondary-foreground: oklch(0.98 0.01 60);
+  --muted: oklch(0.27 0.04 40);
+  --muted-foreground: oklch(0.78 0.04 50);
+  --accent: oklch(0.65 0.25 350);
+  --accent-foreground: oklch(0.99 0.005 20);
+
+  --border: oklch(0.36 0.08 40);
+  --input: oklch(0.27 0.05 40);
+  --ring: oklch(0.70 0.20 45);
+
+  --gradient-primary: linear-gradient(135deg, oklch(0.68 0.22 35), oklch(0.74 0.20 65) 50%, oklch(0.62 0.26 350));
+  --gradient-rail: linear-gradient(180deg, oklch(0.30 0.09 40), oklch(0.28 0.08 25) 55%, oklch(0.27 0.09 0));
+  --gradient-accent: linear-gradient(90deg, oklch(0.70 0.22 40), oklch(0.74 0.20 70), oklch(0.65 0.26 350));
+  --shadow-glow: 0 0 0 1px color-mix(in oklab, var(--primary) 40%, transparent), 0 12px 40px -10px color-mix(in oklab, var(--primary) 55%, transparent);
+}
+html.theme-sunset body {
+  background:
+    radial-gradient(ellipse at top left, oklch(0.65 0.22 35 / 0.55), transparent 55%),
+    radial-gradient(ellipse at top right, oklch(0.72 0.20 65 / 0.50), transparent 55%),
+    radial-gradient(ellipse at bottom, oklch(0.60 0.26 350 / 0.55), transparent 60%),
+    var(--color-background);
+  background-attachment: fixed;
+}
+
 @layer base {
   * { border-color: var(--color-border); }
   html, body {
