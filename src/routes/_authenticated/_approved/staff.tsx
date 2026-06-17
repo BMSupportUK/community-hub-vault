@@ -135,40 +135,40 @@ function StaffPage() {
   filtered.forEach((p) => grouped[topRole(p.id)].push(p));
 
   return (
-    <div className="flex-1 overflow-y-auto bg-gradient-to-br from-violet-950 via-fuchsia-950 to-blue-950">
-      <header className="px-8 pt-8 pb-6 border-b border-purple-500/30 bg-purple-950/40 backdrop-blur flex items-center gap-3">
-        <div className="size-11 rounded-xl bg-gradient-to-br from-violet-600 to-blue-600 grid place-items-center text-white shadow-lg shadow-purple-900/50">
+    <div className="flex-1 overflow-y-auto bg-background">
+      <header className="px-8 pt-8 pb-6 border-b border-border bg-surface/70 backdrop-blur flex items-center gap-3">
+        <div className="size-11 rounded-xl bg-gradient-primary grid place-items-center text-primary-foreground shadow-glow">
           <Briefcase className="size-5" />
         </div>
         <div>
-          <h1 className="font-display text-3xl font-bold bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 bg-clip-text text-transparent">
+          <h1 className="font-display text-3xl font-bold text-gradient-primary">
             Staff Directory
           </h1>
-          <p className="text-purple-200/80 mt-1">The people running the show — grouped by role.</p>
+          <p className="text-muted-foreground mt-1">The people running the show — grouped by role.</p>
         </div>
       </header>
 
       <div className="px-8 py-6">
         <div className="relative max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-purple-300" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
             <input
               value={q}
               onChange={(e) => setQ(e.target.value)}
               placeholder="Search staff…"
-              className="w-full pl-9 pr-3 py-2 rounded-lg bg-purple-950/50 border border-purple-500/30 text-purple-50 placeholder:text-purple-300/50 outline-none focus:border-fuchsia-400 focus:ring-2 focus:ring-fuchsia-500/40"
+              className="w-full pl-9 pr-3 py-2 rounded-lg bg-surface/70 border border-border text-purple-50 placeholder:text-muted-foreground/50 outline-none focus:border-fuchsia-400 focus:ring-2 focus:ring-fuchsia-500/40"
             />
           </div>
 
         <Tabs defaultValue="admin" className="mt-6">
-          <TabsList className="bg-purple-950/50 border border-purple-500/30 h-auto p-1 flex-wrap">
+          <TabsList className="bg-surface/70 border border-border h-auto p-1 flex-wrap">
             {ROLE_ORDER.map((role) => (
               <TabsTrigger
                 key={role}
                 value={role}
-                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-violet-600 data-[state=active]:to-fuchsia-600 data-[state=active]:text-white text-purple-200"
+                className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-muted-foreground"
               >
                 {ROLE_LABEL[role]}
-                <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded-full bg-purple-900/70 border border-purple-400/30">
+                <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded-full bg-surface-2/70 border border-border">
                   {grouped[role].length}
                 </span>
               </TabsTrigger>
@@ -181,7 +181,7 @@ function StaffPage() {
               <TabsContent key={role} value={role} className="mt-6">
                 <section>
                   <div
-                    className="relative mb-4 w-full aspect-[15/4] rounded-2xl overflow-hidden border border-purple-500/30 bg-purple-950/80"
+                    className="relative mb-4 w-full aspect-[15/4] rounded-2xl overflow-hidden border border-border bg-surface/80"
                     aria-hidden
                   >
                     <img
@@ -190,19 +190,19 @@ function StaffPage() {
                       className="absolute inset-0 h-full w-full object-cover object-center"
                       decoding="async"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-r from-purple-950/90 via-purple-950/40 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-r from-background/90 via-background/40 to-transparent" />
                     <div className="absolute inset-0 flex items-center gap-3 px-5">
-                      <h2 className="font-display text-2xl sm:text-3xl font-bold text-white drop-shadow-lg">
+                      <h2 className="font-display text-2xl sm:text-3xl font-bold text-foreground drop-shadow-lg">
                         {ROLE_LABEL[role]}
                       </h2>
-                      <span className="text-xs px-2 py-0.5 rounded-full bg-purple-900/70 text-purple-100 border border-purple-400/40 backdrop-blur">
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-surface-2/70 text-foreground border border-border backdrop-blur">
                         {list.length}
                       </span>
                     </div>
                   </div>
 
                   {list.length === 0 ? (
-                    <div className="rounded-2xl border border-dashed border-purple-500/40 p-12 text-center text-purple-200/70 bg-purple-950/30">
+                    <div className="rounded-2xl border border-dashed border-border p-12 text-center text-muted-foreground bg-surface/50">
                       No {ROLE_LABEL[role].toLowerCase()} found.
                     </div>
                   ) : (
@@ -215,9 +215,9 @@ function StaffPage() {
                       return (
                         <div
                           key={p.id}
-                          className="group rounded-2xl bg-purple-950/50 border border-purple-500/30 hover:border-fuchsia-400/70 hover:shadow-[0_0_30px_-10px_rgba(217,70,239,0.6)] transition-all overflow-hidden flex flex-col backdrop-blur"
+                          className="group rounded-2xl bg-surface/70 border border-border hover:border-fuchsia-400/70 hover:shadow-[0_0_30px_-10px_rgba(217,70,239,0.6)] transition-all overflow-hidden flex flex-col backdrop-blur"
                         >
-                          <div className="relative h-16 bg-purple-950/80 overflow-hidden" aria-hidden>
+                          <div className="relative h-16 bg-surface/80 overflow-hidden" aria-hidden>
                             <img
                               src={ROLE_HEADER[role] ?? profileHeader}
                               alt=""
@@ -232,24 +232,24 @@ function StaffPage() {
                                 <img
                                   src={p.avatar_url}
                                   alt=""
-                                  className="size-16 rounded-2xl object-cover ring-4 ring-purple-950"
+                                  className="size-16 rounded-2xl object-cover ring-4 ring-surface"
                                 />
                               ) : (
-                                <div className="size-16 rounded-2xl ring-4 ring-purple-950 bg-gradient-to-br from-violet-600 to-blue-600 grid place-items-center text-white text-xl font-bold">
+                                <div className="size-16 rounded-2xl ring-4 ring-surface bg-gradient-primary grid place-items-center text-primary-foreground text-xl font-bold">
                                   {initial}
                                 </div>
                               )}
                               <PresenceDot
                                 userId={p.id}
                                 isOnline={isOnline}
-                                ringClass="ring-purple-950"
+                                ringClass="ring-surface"
                               />
                             </div>
                             <div className="mt-3">
                               <Link
                                 to="/u/$username"
                                 params={{ username: p.username ?? p.id }}
-                                className="font-semibold text-sm text-purple-50 hover:text-fuchsia-300 transition-colors"
+                                className="font-semibold text-sm text-foreground hover:text-primary-glow transition-colors"
                               >
                                 {name}
                               </Link>
@@ -259,12 +259,12 @@ function StaffPage() {
                                   userId={p.id}
                                   isOnline={isOnline}
                                   offlineText={`Last seen ${formatLastSeen(p.last_seen_at)}`}
-                                  offlineTextClass="text-purple-300/70"
+                                  offlineTextClass="text-muted-foreground/70"
                                 />
                                 <DndCountdown userId={p.id} compact />
                               </div>
                               {p.username && (
-                                <div className="text-[11px] text-purple-300/70">@{p.username}</div>
+                                <div className="text-[11px] text-muted-foreground/70">@{p.username}</div>
                               )}
                             </div>
                             <div className="flex flex-wrap gap-1 mt-2">
@@ -273,20 +273,20 @@ function StaffPage() {
                                 .map((r) => (
                                   <span
                                     key={r}
-                                    className="text-[10px] uppercase tracking-wider rounded-full ring-1 ring-fuchsia-400/40 bg-fuchsia-500/20 text-fuchsia-200 px-2 py-0.5"
+                                    className="text-[10px] uppercase tracking-wider rounded-full ring-1 ring-primary/40 bg-primary/20 text-primary-glow px-2 py-0.5"
                                   >
                                     {formatRoleLabel(r)}
                                   </span>
                                 ))}
                             </div>
                             {p.bio && (
-                              <p className="text-xs text-purple-200/70 mt-2 line-clamp-2">{p.bio}</p>
+                              <p className="text-xs text-muted-foreground mt-2 line-clamp-2">{p.bio}</p>
                             )}
                             <div className="mt-3 grid grid-cols-2 gap-2">
                               <Link
                                 to="/u/$username"
                                 params={{ username: p.username ?? p.id }}
-                                className="flex items-center justify-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg bg-purple-900/60 border border-purple-500/30 text-purple-100 hover:border-fuchsia-400 hover:text-fuchsia-200 transition"
+                                className="flex items-center justify-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg bg-surface-2/70 border border-border text-foreground hover:border-primary hover:text-primary-glow transition"
                               >
                                 <Eye className="size-3.5" /> View profile
                               </Link>
@@ -300,11 +300,11 @@ function StaffPage() {
                               />
                             </div>
                             {p.is_private && (
-                              <p className="mt-2 text-[10px] text-purple-300/70 flex items-center gap-1">
+                              <p className="mt-2 text-[10px] text-muted-foreground/70 flex items-center gap-1">
                                 <Lock className="size-3" /> Private profile — friends only
                               </p>
                             )}
-                            <div className="mt-auto pt-3 border-t border-purple-500/20 text-[11px] text-purple-300/70 flex items-center gap-1.5">
+                            <div className="mt-auto pt-3 border-t border-purple-500/20 text-[11px] text-muted-foreground/70 flex items-center gap-1.5">
                               <Clock className="size-3" />
                               Joined {new Date(p.created_at).toLocaleDateString()}
                             </div>
@@ -335,7 +335,7 @@ function FriendActionMini({
   onAccept: (id: string) => void;
 }) {
   if (!viewerId || viewerId === targetId) {
-    return <span className="flex items-center justify-center text-[11px] text-purple-300/70">—</span>;
+    return <span className="flex items-center justify-center text-[11px] text-muted-foreground/70">—</span>;
   }
   if (state.kind === "friends") {
     return (
@@ -346,7 +346,7 @@ function FriendActionMini({
   }
   if (state.kind === "outgoing") {
     return (
-      <span className="flex items-center justify-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg bg-purple-900/60 text-purple-200/80 ring-1 ring-purple-500/30">
+      <span className="flex items-center justify-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg bg-purple-900/60 text-muted-foreground ring-1 ring-purple-500/30">
         <Clock className="size-3.5" /> Pending
       </span>
     );
@@ -366,7 +366,7 @@ function FriendActionMini({
     <button
       disabled={busy}
       onClick={onSend}
-      className="flex items-center justify-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-blue-600 text-white disabled:opacity-60"
+      className="flex items-center justify-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg bg-gradient-primary text-primary-foreground disabled:opacity-60"
     >
       <UserPlus className="size-3.5" /> Add friend
     </button>
