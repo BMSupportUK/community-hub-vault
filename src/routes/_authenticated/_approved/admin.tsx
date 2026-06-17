@@ -774,7 +774,13 @@ function ThemePickerCard() {
     setBusy(t);
     try {
       await setAppTheme(t);
-      toast.success(`Default theme set to ${t === "red" ? "Crimson & Rose" : "Vibrant Purple"}`);
+      const names: Record<AppTheme, string> = {
+        purple: "Vibrant Purple",
+        red: "Crimson & Rose",
+        ocean: "Electric Ocean",
+        sunset: "Sunset Blaze",
+      };
+      toast.success(`Default theme set to ${names[t]}`);
     } catch (e: any) {
       toast.error(e?.message ?? "Failed to update theme");
     } finally {
@@ -813,9 +819,11 @@ function ThemePickerCard() {
           <p className="text-xs text-muted-foreground">Switch the colour scheme everyone sees across the app.</p>
         </div>
       </div>
-      <div className="flex flex-col sm:flex-row gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <Option value="purple" name="Vibrant Purple" swatches={["#7c3aed", "#a855f7", "#3b82f6", "#ec4899"]} />
         <Option value="red" name="Crimson & Rose" swatches={["#dc2626", "#ef4444", "#f43f5e", "#fb7185"]} />
+        <Option value="ocean" name="Electric Ocean" swatches={["#0891b2", "#06b6d4", "#22d3ee", "#5eead4"]} />
+        <Option value="sunset" name="Sunset Blaze" swatches={["#ea580c", "#f97316", "#f59e0b", "#ec4899"]} />
       </div>
     </section>
   );
