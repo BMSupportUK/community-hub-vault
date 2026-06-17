@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { backfillVpnDetection } from "@/lib/vpn-backfill.functions";
+import { useAppTheme, setAppTheme, type AppTheme } from "@/hooks/use-app-theme";
 
 export const Route = createFileRoute("/_authenticated/_approved/admin")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -508,6 +509,7 @@ function DashboardBody() {
     <div className="space-y-6">
       <RecoveryCodes />
       <VpnBackfillCard />
+      <ThemePickerCard />
       <div className="grid gap-6 lg:grid-cols-[1fr_300px]">
         <section className="order-1">
           <h2 className="font-display text-sm uppercase tracking-wide text-muted-foreground mb-3">Admin tools</h2>
