@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { useRouterState } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { ChannelColumn, type ChannelGroup } from "@/components/app/ChannelColumn";
 import { ServiceStatusBox } from "@/components/app/ServiceStatusBox";
 import { WorkingStatusBox } from "@/components/app/WorkingStatusBox";
+import { Skeleton } from "@/components/ui/skeleton";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -21,13 +23,9 @@ interface ChannelRow {
 function useChannelGroups() {
   const { user } = useAuth();
   const path = useRouterState({ select: (r) => r.location.pathname });
-  const [channels, setChannels] = useState<ChannelRow[] | null>(null);
-  const [categoryIcons, setCategoryIcons] = useState<Record<string, string>>({});
-  const [categoryOrder, setCategoryOrder] = useState<string[]>([]);
-  const [mentionCounts, setMentionCounts] = useState<Record<string, number>>({});
-
-  useEffect(() => {
-    void (async () => {
+  const { data: sidebarData } = useQuery({
+    queryKey: ["home-channels-sidebar"],
+    queryFn: async () => {
       const [{ data: ch }, { data: icons }, { data: order }] = await Promise.all([
         supabase
           .from("chat_channels")
@@ -36,16 +34,23 @@ function useChannelGroups() {
         supabase.from("app_settings").select("value").eq("key", "category_icons").maybeSingle(),
         supabase.from("app_settings").select("value").eq("key", "category_order").maybeSingle(),
       ]);
-      setChannels((ch as ChannelRow[] | null) ?? []);
-      setCategoryIcons((icons?.value ?? {}) as Record<string, string>);
       const value = (order?.value ?? {}) as { labels?: unknown };
-      setCategoryOrder(
-        Array.isArray(value.labels)
+      return {
+        channels: (ch as ChannelRow[] | null) ?? [],
+        categoryIcons: (icons?.value ?? {}) as Record<string, string>,
+        categoryOrder: Array.isArray(value.labels)
           ? value.labels.filter((v): v is string => typeof v === "string")
           : [],
-      );
-    })();
-  }, []);
+      };
+    },
+    staleTime: 5 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+    refetchOnWindowFocus: false,
+  });
+  const channels = sidebarData?.channels ?? null;
+  const categoryIcons = sidebarData?.categoryIcons ?? {};
+  const categoryOrder = sidebarData?.categoryOrder ?? [];
+  const [mentionCounts, setMentionCounts] = useState<Record<string, number>>({});
 
   useEffect(() => {
     if (!user) return;
@@ -104,11 +109,30 @@ function useChannelGroups() {
       });
     }
   }
-  return groups;
+  return { groups, isLoading: channels === null };
 }
 
 export function HomeChannelsSidebar() {
-  const groups = useChannelGroups();
+  const { groups, isLoading } = useChannelGroups();
+  if (isLoading) {
+    return (
+      <ChannelColumn
+        title="Support Community"
+        groups={[
+          {
+            label: "\u00A0",
+            items: Array.from({ length: 6 }).map((_, i) => ({
+              to: `#sk-${i}`,
+              label: "\u00A0",
+              icon: () => <Skeleton className="size-4 rounded" />,
+              onClick: () => {},
+            })),
+          },
+        ]}
+        footer={<><ServiceStatusBox /><WorkingStatusBox /></>}
+      />
+    );
+  }
   return (
     <ChannelColumn
       title="Support Community"
