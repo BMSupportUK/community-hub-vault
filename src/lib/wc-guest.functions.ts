@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { setResponseHeader } from "@tanstack/react-start/server";
 import { z } from "zod";
 import { scryptSync, randomBytes, timingSafeEqual } from "crypto";
+import type { WcLiveFixtureRow } from "@/lib/wc-live-scores.server";
 
 const emailSchema = z.string().trim().toLowerCase().email().max(255);
 const pinSchema = z.string().regex(/^\d{4}$/, "PIN must be 4 digits");
@@ -145,6 +146,8 @@ export const listWcFixturesPublic = createServerFn({ method: "POST" })
       .select("id, stage, group_label, home_team, away_team, kickoff_at, home_score, away_score, status, minute, minute_added")
       .order("kickoff_at", { ascending: true });
     if (error) throw new Error(error.message);
+    const { getWcLiveOverlays } = await import("@/lib/wc-live-scores.server");
+    const liveOverlays = await getWcLiveOverlays((fixtures ?? []) as WcLiveFixtureRow[]);
 
     const predMap = new Map<string, { home_pred: number; away_pred: number; points: number | null }>();
     if (data.email && data.pin) {
@@ -162,6 +165,7 @@ export const listWcFixturesPublic = createServerFn({ method: "POST" })
 
     return (fixtures ?? []).map((f: any) => {
       const p = predMap.get(f.id);
+      const live = liveOverlays.get(f.id);
       return {
         id: f.id,
         stage: f.stage,
@@ -169,11 +173,11 @@ export const listWcFixturesPublic = createServerFn({ method: "POST" })
         homeTeam: f.home_team,
         awayTeam: f.away_team,
         kickoffAt: f.kickoff_at,
-        homeScore: f.home_score,
-        awayScore: f.away_score,
-        status: (f.status as string | null) ?? "SCHEDULED",
-        minute: (f.minute as number | null) ?? null,
-        minuteAdded: (f.minute_added as number | null) ?? null,
+        homeScore: live?.home_score ?? f.home_score,
+        awayScore: live?.away_score ?? f.away_score,
+        status: live?.status ?? (f.status as string | null) ?? "SCHEDULED",
+        minute: live?.minute ?? (f.minute as number | null) ?? null,
+        minuteAdded: live?.minute_added ?? (f.minute_added as number | null) ?? null,
         myPrediction: p
           ? { homePred: p.home_pred, awayPred: p.away_pred, points: p.points ?? null }
           : null,
