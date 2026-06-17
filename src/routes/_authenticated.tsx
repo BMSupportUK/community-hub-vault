@@ -84,9 +84,9 @@ function AuthLayout() {
   }
 
   return (
-    <div className="min-h-screen flex bg-background">
+    <div className="h-screen flex bg-background overflow-hidden">
       <IconRail />
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
         <header className="h-12 shrink-0 border-b border-border bg-rail/40 backdrop-blur flex items-center justify-between px-2 lg:px-4 gap-1.5 lg:gap-3 overflow-x-auto scrollbar-thin">
           <div className="flex items-center gap-1.5 lg:gap-2 shrink-0">
             <Sheet open={navOpen} onOpenChange={setNavOpen}>
@@ -175,7 +175,7 @@ function AuthLayout() {
               <MyWorkingStatus />
             </div>
         </header>
-        <div className="flex-1 flex min-h-0">
+        <div className="flex-1 flex min-h-0 overflow-hidden">
           <Outlet />
         </div>
         <BreakEndingAlert />
