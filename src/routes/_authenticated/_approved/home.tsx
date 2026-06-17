@@ -486,7 +486,7 @@ function HomeLayout() {
           }
         />
       )}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 min-h-0 overflow-hidden">
         {!isHomeIndex && channelContentReady && (
           <div className="md:hidden h-10 shrink-0 flex items-center px-3 border-b border-border bg-rail/30">
             <Sheet open={chanNavOpen} onOpenChange={setChanNavOpen}>
@@ -515,7 +515,7 @@ function HomeLayout() {
             </Sheet>
           </div>
         )}
-        <div className="flex-1 flex min-h-0 min-w-0">
+        <div className="flex-1 flex min-h-0 min-w-0 overflow-hidden">
           <HomeChannelReadyProvider onReady={() => setReadyPath(path)}>
             <Outlet />
           </HomeChannelReadyProvider>
