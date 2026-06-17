@@ -111,6 +111,10 @@ function AdminDashboard() {
           </header>
         </div>
 
+        <div className="mb-6">
+          <ThemePickerCard />
+        </div>
+
         {hasPin === null ? (
           <div className="grid place-items-center py-16 text-muted-foreground"><Loader2 className="size-5 animate-spin" /></div>
         ) : !unlocked ? (
@@ -509,7 +513,6 @@ function DashboardBody() {
     <div className="space-y-6">
       <RecoveryCodes />
       <VpnBackfillCard />
-      <ThemePickerCard />
       <div className="grid gap-6 lg:grid-cols-[1fr_300px]">
         <section className="order-1">
           <h2 className="font-display text-sm uppercase tracking-wide text-muted-foreground mb-3">Admin tools</h2>
@@ -800,14 +803,16 @@ function ThemePickerCard() {
     );
   };
   return (
-    <section className="rounded-2xl border border-border bg-surface-1 p-5">
-      <div className="flex items-center gap-2 mb-3">
-        <Sparkles className="size-4 text-primary" />
-        <h2 className="font-display text-sm uppercase tracking-wide text-muted-foreground">App theme</h2>
+    <section className="rounded-3xl border-2 border-primary/40 bg-gradient-to-br from-primary/15 via-surface-1 to-accent/15 p-5 shadow-glow">
+      <div className="flex items-center gap-3 mb-3">
+        <div className="size-11 rounded-2xl bg-gradient-primary text-primary-foreground grid place-items-center shadow-glow">
+          <Sparkles className="size-5" />
+        </div>
+        <div>
+          <h2 className="font-display text-xl font-bold text-foreground">App settings — default theme</h2>
+          <p className="text-xs text-muted-foreground">Switch the colour scheme everyone sees across the app.</p>
+        </div>
       </div>
-      <p className="text-xs text-muted-foreground mb-4">
-        Choose the default colour scheme applied to every member of the app. Changes apply instantly.
-      </p>
       <div className="flex flex-col sm:flex-row gap-3">
         <Option value="purple" name="Vibrant Purple" swatches={["#7c3aed", "#a855f7", "#3b82f6", "#ec4899"]} />
         <Option value="red" name="Crimson & Rose" swatches={["#dc2626", "#ef4444", "#f43f5e", "#fb7185"]} />
