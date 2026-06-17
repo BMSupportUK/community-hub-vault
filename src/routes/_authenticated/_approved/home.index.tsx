@@ -298,12 +298,12 @@ function WelcomePage() {
   };
 
   return (
-    <main className="flex-1 min-h-0 overflow-hidden">
+    <main className="flex-1 min-h-0 overflow-visible md:overflow-hidden">
       {/* Hero */}
-      <div className="grid h-full min-h-0 grid-rows-[minmax(0,1fr)_auto] overflow-hidden">
+      <div className="grid min-h-dvh grid-rows-[auto_auto] overflow-visible md:h-full md:min-h-0 md:grid-rows-[minmax(0,1fr)_auto] md:overflow-hidden">
       <section className="relative min-h-0 overflow-hidden border-b border-border">
         <div className="absolute inset-0 bg-gradient-to-br from-violet-600 via-fuchsia-600 to-blue-600" />
-        <div className="relative grid h-full min-h-0 lg:grid-cols-[minmax(0,28rem)_1fr] gap-4 xl:gap-6 p-4 xl:p-6 items-stretch">
+        <div className="relative grid min-h-0 lg:grid-cols-[minmax(0,28rem)_1fr] gap-4 xl:gap-6 p-4 xl:p-6 items-stretch md:h-full">
           <div className="flex flex-col justify-center text-white">
             <div className="text-xs uppercase tracking-[0.2em] text-sky-200/80 mb-2">BM Support · Member Hub</div>
             <h1 className="font-display text-3xl xl:text-5xl font-bold leading-tight">

@@ -80,12 +80,12 @@ function AuthLayout() {
         body.style.width = "100%";
       } else {
         html.classList.remove("app-shell-locked");
-        html.style.overflow = prev.htmlOverflow;
-        body.style.overflow = prev.bodyOverflow;
-        html.style.height = prev.htmlHeight;
-        body.style.height = prev.bodyHeight;
-        body.style.position = prev.bodyPosition;
-        body.style.width = prev.bodyWidth;
+        html.style.overflow = "";
+        body.style.overflow = "";
+        html.style.height = "";
+        body.style.height = "";
+        body.style.position = "";
+        body.style.width = "";
       }
     };
     apply();
