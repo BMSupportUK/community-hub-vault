@@ -52,7 +52,7 @@ function ForumLayout() {
     };
   }, []);
   return (
-    <div className="boro-theme relative w-full px-4 sm:px-6 lg:px-10 py-6">
+    <div className="boro-theme relative w-full h-full overflow-y-auto scrollbar-hide px-4 sm:px-6 lg:px-10 py-6">
       <header className="relative mb-6 overflow-hidden rounded-xl border border-[#E11B22]/55 shadow-[0_14px_46px_-12px_rgba(0,0,0,0.8)]">
         <div
           className="absolute inset-0 bg-cover bg-center"

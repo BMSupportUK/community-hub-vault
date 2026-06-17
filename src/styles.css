@@ -265,6 +265,8 @@ html.theme-sunset body {
   .scrollbar-thin::-webkit-scrollbar { width: 8px; height: 8px; }
   .scrollbar-thin::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 8px; }
   .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+  .scrollbar-hide { scrollbar-width: none; -ms-overflow-style: none; }
+  .scrollbar-hide::-webkit-scrollbar { display: none; width: 0; height: 0; }
 }
 
 /* Legacy purple/violet page bridge: old hardcoded utilities now follow the admin theme. */
