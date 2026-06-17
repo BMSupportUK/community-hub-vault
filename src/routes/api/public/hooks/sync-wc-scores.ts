@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { fetchEspnWcLive, findWcLiveFixture, type WcLiveFixtureRow } from "@/lib/wc-live-scores.server";
+import type { WcLiveFixtureRow } from "@/lib/wc-live-scores.server";
 
 async function syncScores() {
   // ESPN's public scoreboard is the single source of truth — it's keyless and
@@ -14,6 +14,7 @@ async function syncScores() {
   let updated = 0;
   const skipped: string[] = [];
   const toScore = new Set<string>();
+  const { fetchEspnWcLive, findWcLiveFixture } = await import("@/lib/wc-live-scores.server");
   const espnLive = await fetchEspnWcLive();
 
   const espnApplied: string[] = [];
