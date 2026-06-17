@@ -303,7 +303,7 @@ function WelcomePage() {
       <div className="grid h-full min-h-0 grid-rows-[minmax(0,1fr)_auto] overflow-hidden">
       <section className="relative min-h-0 overflow-hidden border-b border-border">
         <div className="absolute inset-0 bg-gradient-to-br from-violet-600 via-fuchsia-600 to-blue-600" />
-        <div className="relative grid h-full min-h-0 md:grid-cols-[minmax(0,28rem)_1fr] gap-4 xl:gap-6 p-4 xl:p-6 items-stretch">
+        <div className="relative grid h-full min-h-0 lg:grid-cols-[minmax(0,28rem)_1fr] gap-4 xl:gap-6 p-4 xl:p-6 items-stretch">
           <div className="flex flex-col justify-center text-white">
             <div className="text-xs uppercase tracking-[0.2em] text-sky-200/80 mb-2">BM Support · Member Hub</div>
             <h1 className="font-display text-3xl xl:text-5xl font-bold leading-tight">
@@ -341,7 +341,7 @@ function WelcomePage() {
             </div>
           </div>
 
-          <div className="grid min-h-0 grid-cols-[minmax(0,1fr)_minmax(220px,300px)] gap-4 xl:gap-6 items-stretch">
+          <div className="hidden min-h-0 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(220px,300px)] gap-4 xl:gap-6 items-stretch">
             <div className="relative rounded-2xl overflow-hidden ring-1 ring-white/10 shadow-2xl min-h-0 bg-blue-950/30">
               <img
                 src={heroImg}
