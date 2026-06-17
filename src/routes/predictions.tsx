@@ -432,7 +432,7 @@ function PredictionsPage() {
           </div>
         )}
       {user && (
-        <div className="lg:hidden sticky top-0 z-30 h-12 border-b border-border bg-rail/90 backdrop-blur flex items-center px-2">
+        <div className="md:hidden sticky top-0 z-30 h-12 border-b border-border bg-rail/90 backdrop-blur flex items-center px-2">
           <Sheet>
             <SheetTrigger
               className="inline-flex items-center justify-center size-9 rounded-md hover:bg-surface-2 text-foreground"
