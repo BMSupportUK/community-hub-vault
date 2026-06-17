@@ -240,10 +240,11 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
         ? "flex h-full"
         : "shrink-0 hidden md:flex border-r border-primary-glow/40 sticky top-0 self-start h-screen",
     )}>
-      <Link to="/home" className="relative z-10 size-14 rounded-2xl bg-gradient-primary flex items-center justify-center font-display font-bold text-base text-primary-foreground shadow-glow mb-2 ring-2 ring-primary-glow/70 hover:ring-primary-glow hover:scale-110 transition-all duration-200">
+      <Link to="/home" className="relative z-10 shrink-0 size-12 rounded-2xl bg-gradient-primary flex items-center justify-center font-display font-bold text-sm text-primary-foreground shadow-glow mb-1 ring-2 ring-primary-glow/70 hover:ring-primary-glow hover:scale-110 transition-all duration-200">
         BM
       </Link>
-      <div className="relative z-10 h-px w-12 my-1 bg-gradient-to-r from-transparent via-primary-glow to-transparent" />
+      <div className="relative z-10 shrink-0 h-px w-12 bg-gradient-to-r from-transparent via-primary-glow to-transparent" />
+      <div className="relative z-10 flex-1 min-h-0 w-full overflow-y-auto overflow-x-hidden flex flex-col items-center gap-2 py-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       {sorted.map((i) => (
         <div
           key={i.to}
@@ -251,12 +252,13 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
           onDragStart={() => { dragKey.current = i.to; }}
           onDragOver={(e) => { if (isAdmin) e.preventDefault(); }}
           onDrop={() => reorder(i.to)}
-          className={cn("relative z-10", isAdmin ? "cursor-grab active:cursor-grabbing" : undefined)}
+          className={cn("relative z-10 shrink-0", isAdmin ? "cursor-grab active:cursor-grabbing" : undefined)}
         >
           <RailIcon to={i.to} label={i.label} Icon={i.icon} active={path.startsWith(i.to)} badge={i.badge} draggable={isAdmin} search={i.search} />
         </div>
       ))}
-      <div className="mt-auto" />
+      </div>
+      <div className="relative z-10 shrink-0 h-px w-12 bg-gradient-to-r from-transparent via-primary-glow to-transparent" />
       <button
         onClick={handleSignOut}
         className="relative z-10 text-muted-foreground hover:text-destructive p-3 rounded-2xl hover:bg-surface-2 transition-colors"
@@ -265,7 +267,7 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
         <LogOut className="size-5" />
       </button>
       {user && (
-        <div className="flex flex-col items-center pt-1">
+        <div className="flex flex-col items-center pt-1 shrink-0">
           <UserAvatarMenu variant="bar" />
         </div>
       )}
