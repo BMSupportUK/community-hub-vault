@@ -61,7 +61,9 @@ function HomeLayout() {
   const [layoutReady, setLayoutReady] = useState(false);
   const [channels, setChannels] = useState<ChannelRow[] | null>(null);
   const [chanNavOpen, setChanNavOpen] = useState(false);
-  useEffect(() => { setChanNavOpen(false); }, [path]);
+  useEffect(() => {
+    setChanNavOpen(false);
+  }, [path]);
   useEffect(() => {
     setLayoutReady(false);
     const frame = window.requestAnimationFrame(() => setLayoutReady(true));
@@ -479,30 +481,40 @@ function HomeLayout() {
           onAddGroup={isAdmin ? () => setShowAddGroup(true) : undefined}
           onReorderChannels={isAdmin && channels !== null ? reorderChannels : undefined}
           onReorderGroups={isAdmin && channels !== null ? reorderGroups : undefined}
-          footer={<><ServiceStatusBox /><WorkingStatusBox /></>}
+          footer={
+            <>
+              <ServiceStatusBox />
+              <WorkingStatusBox />
+            </>
+          }
         />
       )}
       <div className="flex-1 flex flex-col min-w-0">
         {!isHomeIndex && layoutReady && (
-        <div className="md:hidden h-10 shrink-0 flex items-center px-3 border-b border-border bg-rail/30">
-          <Sheet open={chanNavOpen} onOpenChange={setChanNavOpen}>
-            <SheetTrigger className="inline-flex items-center gap-2 text-xs font-medium text-muted-foreground hover:text-foreground">
-              <Menu className="size-4" />
-              Channels
-            </SheetTrigger>
-            <SheetContent side="left" className="p-0 w-72 bg-surface border-r border-border">
-              <ChannelColumn
-                inSheet
-                title="Support Community"
-                groups={channelsQuery.isLoading && channels === null ? channelSkeletonGroups : groups}
-                onAddGroup={isAdmin ? () => setShowAddGroup(true) : undefined}
-                onReorderChannels={isAdmin && channels !== null ? reorderChannels : undefined}
-                onReorderGroups={isAdmin && channels !== null ? reorderGroups : undefined}
-                footer={<><ServiceStatusBox /><WorkingStatusBox /></>}
-              />
-            </SheetContent>
-          </Sheet>
-        </div>
+          <div className="md:hidden h-10 shrink-0 flex items-center px-3 border-b border-border bg-rail/30">
+            <Sheet open={chanNavOpen} onOpenChange={setChanNavOpen}>
+              <SheetTrigger className="inline-flex items-center gap-2 text-xs font-medium text-muted-foreground hover:text-foreground">
+                <Menu className="size-4" />
+                Channels
+              </SheetTrigger>
+              <SheetContent side="left" className="p-0 w-72 bg-surface border-r border-border">
+                <ChannelColumn
+                  inSheet
+                  title="Support Community"
+                  groups={channelsQuery.isLoading && channels === null ? channelSkeletonGroups : groups}
+                  onAddGroup={isAdmin ? () => setShowAddGroup(true) : undefined}
+                  onReorderChannels={isAdmin && channels !== null ? reorderChannels : undefined}
+                  onReorderGroups={isAdmin && channels !== null ? reorderGroups : undefined}
+                  footer={
+                    <>
+                      <ServiceStatusBox />
+                      <WorkingStatusBox />
+                    </>
+                  }
+                />
+              </SheetContent>
+            </Sheet>
+          </div>
         )}
         <div className="flex-1 flex min-h-0 min-w-0">
           <Outlet />
