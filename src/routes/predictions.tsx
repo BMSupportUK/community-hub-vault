@@ -431,6 +431,21 @@ function PredictionsPage() {
             <LandingHeader />
           </div>
         )}
+      {user && (
+        <div className="lg:hidden sticky top-0 z-30 h-12 border-b border-border bg-rail/90 backdrop-blur flex items-center px-2">
+          <Sheet>
+            <SheetTrigger
+              className="inline-flex items-center justify-center size-9 rounded-md hover:bg-surface-2 text-foreground"
+              aria-label="Open navigation"
+            >
+              <Menu className="size-5" />
+            </SheetTrigger>
+            <SheetContent side="left" className="p-0 w-auto bg-rail border-r border-border">
+              <IconRail inSheet />
+            </SheetContent>
+          </Sheet>
+        </div>
+      )}
       {/* Full-page hero background (absolute so the parent's bg-background can't cover it) */}
       <div
         className="pointer-events-none absolute inset-0 z-0 bg-cover bg-center bg-no-repeat"
