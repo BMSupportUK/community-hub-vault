@@ -1694,30 +1694,30 @@ function Storefront() {
               )}
             </TabsContent>
 
-            <TabsContent value="refund" className="mt-4">
+            <TabsContent value="refund" className="mt-3 min-h-0 flex-1 overflow-y-auto scrollbar-hide pb-5">
               <InlinePolicy policyKey="refund" />
             </TabsContent>
-            <TabsContent value="multi_room" className="mt-4">
+            <TabsContent value="multi_room" className="mt-3 min-h-0 flex-1 overflow-y-auto scrollbar-hide pb-5">
               <InlinePolicy policyKey="multi_room" />
             </TabsContent>
-            <TabsContent value="triple_room" className="mt-4">
+            <TabsContent value="triple_room" className="mt-3 min-h-0 flex-1 overflow-y-auto scrollbar-hide pb-5">
               <InlinePolicy policyKey="triple_room" />
             </TabsContent>
-            <TabsContent value="orders" className="mt-4">
+            <TabsContent value="orders" className="mt-3 min-h-0 flex-1 overflow-y-auto scrollbar-hide pb-5">
               <MyOrdersTab
                 onOpenOrder={(id) => navigate({ to: "/shop", search: { view: "orders", id } })}
               />
             </TabsContent>
-            <TabsContent value="streaming_devices" className="mt-4 -mx-6">
+            <TabsContent value="streaming_devices" className="mt-3 min-h-0 flex-1 overflow-hidden -mx-3 sm:-mx-5">
               <StreamingDevicesPage />
             </TabsContent>
-            <TabsContent value="app_demos" className="mt-4 -mx-6">
+            <TabsContent value="app_demos" className="mt-3 min-h-0 flex-1 overflow-hidden -mx-3 sm:-mx-5">
               <AppDemosView />
             </TabsContent>
-            <TabsContent value="reviews" className="mt-4 -mx-6">
+            <TabsContent value="reviews" className="mt-3 min-h-0 flex-1 overflow-hidden -mx-3 sm:-mx-5">
               <ReviewsPage />
             </TabsContent>
-            <TabsContent value="vpn" className="mt-4 -mx-6">
+            <TabsContent value="vpn" className="mt-3 min-h-0 flex-1 overflow-hidden -mx-3 sm:-mx-5">
               <VpnGuideView />
             </TabsContent>
           </Tabs>
