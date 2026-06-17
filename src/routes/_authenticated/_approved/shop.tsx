@@ -1118,6 +1118,10 @@ function Storefront() {
   const initialTab = Route.useSearch().tab;
   const [tab, setTab] = useState<string>(initialTab ?? "welcome");
   const navigate = useNavigate();
+  const setShopTab = (nextTab: string) => {
+    setTab(nextTab);
+    navigate({ to: "/shop", search: { tab: nextTab } as never, replace: true });
+  };
   const { user, hasAny, refreshRoles } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
   const [addingCat, setAddingCat] = useState(false);
@@ -1462,7 +1466,7 @@ function Storefront() {
           />
         )}
         <div className="relative z-10 flex min-h-0 flex-col px-3 pt-3 sm:px-5 sm:pt-5 md:h-full">
-          <Tabs value={tab} onValueChange={setTab} className="flex min-h-0 w-full flex-col overflow-visible md:h-full md:overflow-hidden">
+          <Tabs value={tab} onValueChange={setShopTab} className="flex min-h-0 w-full flex-col overflow-visible md:h-full md:overflow-hidden">
             <TabsList className="shrink-0 max-w-full justify-start overflow-x-auto scrollbar-hide bg-surface-2 border border-border flex flex-nowrap h-auto">
               <TabsTrigger
                 value="welcome"
