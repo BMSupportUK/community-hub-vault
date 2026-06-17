@@ -78,11 +78,26 @@ type EspnLiveMatch = {
 // real-time and keyless, so we overlay its live/finished data on top.
 async function fetchEspnLive(): Promise<EspnLiveMatch[]> {
   try {
-    const res = await fetch(
-      "https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard",
+    // ESPN's default scoreboard only returns a narrow rolling window and
+    // drops matches that finished a few hours ago. Query yesterday/today/
+    // tomorrow (UTC) explicitly so we catch finished games before the
+    // window rolls past them.
+    const today = new Date();
+    const ymd = (d: Date) =>
+      `${d.getUTCFullYear()}${String(d.getUTCMonth() + 1).padStart(2, "0")}${String(d.getUTCDate()).padStart(2, "0")}`;
+    const dates = [-1, 0, 1].map((offset) => {
+      const d = new Date(today);
+      d.setUTCDate(d.getUTCDate() + offset);
+      return ymd(d);
+    });
+    const responses = await Promise.all(
+      ["", ...dates.map((d) => `?dates=${d}`)].map((qs) =>
+        fetch(
+          `https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard${qs}`,
+        ).then((r) => (r.ok ? r.json() : { events: [] })).catch(() => ({ events: [] })),
+      ),
     );
-    if (!res.ok) return [];
-    const json = (await res.json()) as {
+    type EspnJson = {
       events?: Array<{
         date?: string;
         competitions?: Array<{
@@ -100,7 +115,9 @@ async function fetchEspnLive(): Promise<EspnLiveMatch[]> {
       }>;
     };
     const out: EspnLiveMatch[] = [];
-    for (const e of json.events ?? []) {
+    const seen = new Set<string>();
+    const allEvents = (responses as EspnJson[]).flatMap((j) => j.events ?? []);
+    for (const e of allEvents) {
       const comp = e.competitions?.[0];
       if (!comp || !e.date) continue;
       const state = comp.status?.type?.state; // "pre" | "in" | "post"
@@ -108,6 +125,9 @@ async function fetchEspnLive(): Promise<EspnLiveMatch[]> {
       const homeC = comp.competitors?.find((c) => c.homeAway === "home");
       const awayC = comp.competitors?.find((c) => c.homeAway === "away");
       if (!homeC?.team?.displayName || !awayC?.team?.displayName) continue;
+      const dedupeKey = `${e.date}|${homeC.team.displayName}|${awayC.team.displayName}`;
+      if (seen.has(dedupeKey)) continue;
+      seen.add(dedupeKey);
       const typeName = comp.status?.type?.name ?? "";
       const status =
         state === "post"
