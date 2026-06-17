@@ -1433,12 +1433,12 @@ function Storefront() {
   };
 
   return (
-    <main className="flex-1 flex flex-col overflow-hidden">
+    <main className="flex-1 min-h-0 flex flex-col overflow-hidden">
       <div
         className={cn(
-          "flex-1 overflow-y-auto scrollbar-hide",
-          tab === "orders" && "relative bg-cover bg-center bg-fixed min-h-screen",
-          tab === "app_demos" && "relative bg-cover bg-center bg-no-repeat bg-fixed min-h-screen",
+          "flex-1 min-h-0 overflow-hidden",
+          tab === "orders" && "relative bg-cover bg-center bg-fixed",
+          tab === "app_demos" && "relative bg-cover bg-center bg-no-repeat bg-fixed",
         )}
         style={
           tab === "orders"
@@ -1450,20 +1450,20 @@ function Storefront() {
       >
         {tab === "orders" && (
           <div
-            className="absolute inset-0 min-h-screen bg-gradient-to-b from-[#1a0b2e]/55 via-[#1a0b2e]/40 to-[#1a0b2e]/60 backdrop-blur-[2px] pointer-events-none"
+            className="absolute inset-0 bg-gradient-to-b from-[#1a0b2e]/55 via-[#1a0b2e]/40 to-[#1a0b2e]/60 backdrop-blur-[2px] pointer-events-none"
             aria-hidden
           />
         )}
         {tab === "app_demos" && (
           <div
-            className="absolute inset-0 min-h-screen pointer-events-none"
+            className="absolute inset-0 pointer-events-none"
             style={{ background: "rgba(5, 10, 20, 0.55)" }}
             aria-hidden
           />
         )}
-        <div className="relative z-10 px-6 pt-6 min-h-screen">
-          <Tabs value={tab} onValueChange={setTab} className="w-full">
-            <TabsList className="bg-surface-2 border border-border flex flex-wrap h-auto">
+        <div className="relative z-10 flex h-full min-h-0 flex-col px-3 pt-3 sm:px-5 sm:pt-5">
+          <Tabs value={tab} onValueChange={setTab} className="flex h-full min-h-0 w-full flex-col overflow-hidden">
+            <TabsList className="shrink-0 max-w-full justify-start overflow-x-auto scrollbar-hide bg-surface-2 border border-border flex flex-nowrap h-auto">
               <TabsTrigger
                 value="welcome"
                 className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-sky-400 data-[state=active]:text-white"
@@ -1526,7 +1526,7 @@ function Storefront() {
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="welcome" className="mt-4">
+            <TabsContent value="welcome" className="mt-3 min-h-0 flex-1 overflow-y-auto scrollbar-hide">
               <section className="relative overflow-hidden -mx-6 -mt-6">
                 <div className="absolute inset-0">
                   <img src={shopHero} alt="" aria-hidden className="w-full h-full object-cover" />
@@ -1575,7 +1575,7 @@ function Storefront() {
               />
             </TabsContent>
 
-            <TabsContent value="shop" className="mt-4">
+            <TabsContent value="shop" className="mt-3 min-h-0 flex-1 overflow-y-auto scrollbar-hide pb-5">
               <div
                 id="products"
                 className="bg-background/80 backdrop-blur border border-border rounded-xl px-4 py-3 flex items-center gap-2 flex-wrap mb-4 sticky top-0 z-10"
