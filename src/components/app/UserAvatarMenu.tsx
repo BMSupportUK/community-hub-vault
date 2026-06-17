@@ -188,7 +188,12 @@ export function UserAvatarMenu({ variant = "header" }: { variant?: "header" | "b
               </AvatarFallback>
             </Avatar>
             <div className="min-w-0 flex-1">
-              <div className={cn("font-semibold text-sm truncate inline-flex items-center gap-1", flashCls)}>
+              <div
+                className={cn(
+                  "font-semibold text-sm truncate inline-flex items-center gap-1",
+                  flashCls,
+                )}
+              >
                 {name}
                 <VpnBadge userId={user.id} size={12} showInactive />
               </div>
@@ -226,7 +231,11 @@ export function UserAvatarMenu({ variant = "header" }: { variant?: "header" | "b
             }}
             className="cursor-pointer"
           >
-            {copied ? <Check className="size-4 mr-2 text-emerald-500" /> : <Copy className="size-4 mr-2" />}
+            {copied ? (
+              <Check className="size-4 mr-2 text-emerald-500" />
+            ) : (
+              <Copy className="size-4 mr-2" />
+            )}
             Copy username
           </DropdownMenuItem>
           <DropdownMenuItem asChild className="cursor-pointer">
