@@ -1563,7 +1563,7 @@ function Storefront() {
                       )}
                     </button>
                     <button
-                      onClick={() => setTab("shop")}
+                      onClick={() => setShopTab("shop")}
                       className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/10 backdrop-blur px-4 py-2.5 text-sm text-white hover:bg-white/15 transition"
                     >
                       Shop now
@@ -1574,7 +1574,7 @@ function Storefront() {
 
               <BuySteps
                 latestOrder={latestOrder}
-                onBrowse={() => setTab("shop")}
+                onBrowse={() => setShopTab("shop")}
                 onViewOrder={(id) => navigate({ to: "/shop", search: { view: "orders", id } })}
               />
             </TabsContent>
