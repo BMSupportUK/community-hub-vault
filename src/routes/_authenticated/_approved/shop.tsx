@@ -1950,7 +1950,7 @@ function RoomPolicyView({
   };
 
   return (
-    <main className="flex-1 overflow-y-auto">
+    <main className="flex-1 min-h-0 overflow-y-auto scrollbar-hide">
       <div className="max-w-6xl mx-auto px-6 py-8">
         {/* Hero illustration */}
         <section className="relative overflow-hidden rounded-3xl border border-border mb-8 shadow-soft">
@@ -5259,7 +5259,7 @@ function AdminProductsInner() {
           </button>
         </div>
       </header>
-      <div className="flex-1 overflow-y-auto p-6">
+      <div className="flex-1 min-h-0 overflow-y-auto scrollbar-hide p-6">
         <CurrencySettingsCard />
         <div className="bg-surface rounded-xl border border-border overflow-hidden">
           <table className="w-full text-sm">
@@ -5826,7 +5826,7 @@ function AdminDiscounts() {
           <Plus className="size-4" /> New Code
         </button>
       </header>
-      <div className="flex-1 overflow-y-auto p-6">
+      <div className="flex-1 min-h-0 overflow-y-auto scrollbar-hide p-6">
         <div className="bg-surface rounded-xl border border-border overflow-hidden">
           <table className="w-full text-sm">
             <thead className="bg-surface-2 text-muted-foreground text-xs">
