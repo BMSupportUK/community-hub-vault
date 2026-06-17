@@ -251,7 +251,7 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
           onDragStart={() => { dragKey.current = i.to; }}
           onDragOver={(e) => { if (isAdmin) e.preventDefault(); }}
           onDrop={() => reorder(i.to)}
-          className={isAdmin ? "cursor-grab active:cursor-grabbing" : undefined}
+          className={cn("relative z-10", isAdmin ? "cursor-grab active:cursor-grabbing" : undefined)}
         >
           <RailIcon to={i.to} label={i.label} Icon={i.icon} active={path.startsWith(i.to)} badge={i.badge} draggable={isAdmin} search={i.search} />
         </div>
@@ -303,20 +303,20 @@ function RailIcon({
             draggable={false}
             onDragStart={draggable ? undefined : (e) => e.preventDefault()}
             className={cn(
-              "group relative size-12 rounded-2xl flex items-center justify-center transition-all",
+              "group relative z-10 size-13 rounded-2xl flex items-center justify-center transition-all duration-200",
               active
-                ? "bg-gradient-to-br from-primary to-primary-glow text-primary-foreground rounded-xl shadow-glow ring-2 ring-primary-glow/70 scale-105"
-                : "bg-gradient-to-br from-surface-2 to-surface text-primary-glow ring-1 ring-border/60 hover:bg-gradient-to-br hover:from-primary hover:to-primary-glow hover:text-primary-foreground hover:rounded-xl hover:shadow-glow hover:scale-105 hover:ring-primary-glow/60",
-              accent && !active && "ring-1 ring-primary/40",
+                ? "bg-gradient-primary text-primary-foreground rounded-xl shadow-glow ring-2 ring-primary-glow scale-110"
+                : "bg-[color-mix(in_oklab,var(--surface)_62%,transparent)] text-primary-glow ring-1 ring-primary-glow/35 shadow-[inset_0_1px_0_color-mix(in_oklab,var(--foreground)_12%,transparent)] hover:bg-gradient-primary hover:text-primary-foreground hover:rounded-xl hover:shadow-glow hover:scale-110 hover:ring-primary-glow",
+              accent && !active && "ring-2 ring-primary/55",
             )}
           >
-            <Icon className="size-5" />
+            <Icon className="size-5.5" />
             {badge && badge > 0 ? (
               <span className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1 rounded-full bg-red-500 text-white text-[11px] font-bold flex items-center justify-center shadow-lg ring-2 ring-rail animate-pulse">
                 {badge > 99 ? "99+" : badge}
               </span>
             ) : null}
-            {active && <span className="absolute -left-1 top-1/2 -translate-y-1/2 h-8 w-1.5 bg-primary-glow rounded-r shadow-glow" />}
+            {active && <span className="absolute -left-3 top-1/2 -translate-y-1/2 h-10 w-2 bg-primary-glow rounded-r shadow-glow" />}
           </Link>
         </TooltipTrigger>
         <TooltipContent side="right" sideOffset={8} className="z-[1000] whitespace-nowrap text-xs font-medium">
