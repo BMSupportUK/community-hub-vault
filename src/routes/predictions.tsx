@@ -95,7 +95,6 @@ function liveLabel(f: {
       return `${base}+${added}'`;
     }
     if (f.minute > 90) return `90+${f.minute - 90}'`;
-    if (f.minute > 45 && f.minute < 60) return `45+${f.minute - 45}'`;
     return `${f.minute}'`;
   }
   if (f.kickoffAt) {
