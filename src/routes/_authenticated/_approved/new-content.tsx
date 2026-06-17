@@ -76,7 +76,7 @@ function AttachmentList({ items }: { items: Attachment[] }) {
         const isImg = a.type?.startsWith("image/");
         return isImg ? (
           <a key={i} href={a.url} target="_blank" rel="noreferrer">
-            <img src={a.url} alt={a.name} className="size-24 rounded-lg object-cover border border-purple-500/30 hover:opacity-80" />
+            <img src={a.url} alt={a.name} className="size-24 rounded-lg object-cover border border-border hover:opacity-80" />
           </a>
         ) : (
           <a
@@ -84,7 +84,7 @@ function AttachmentList({ items }: { items: Attachment[] }) {
             href={a.url}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex items-center gap-2 px-2.5 py-1.5 rounded-lg border border-purple-500/30 bg-purple-950/50 text-xs hover:border-fuchsia-400 text-purple-100"
+            className="inline-flex items-center gap-2 px-2.5 py-1.5 rounded-lg border border-border bg-surface/70 text-xs hover:border-primary text-foreground"
           >
             <FileText className="size-3.5" />
             <span className="max-w-[180px] truncate">{a.name}</span>
@@ -187,15 +187,15 @@ function NewContentPage() {
       {canManage && (
         <Button
           onClick={() => setEditor({ open: true, kind })}
-          className="w-full sm:w-auto bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white border-0 shadow-lg shadow-purple-900/50"
+          className="w-full sm:w-auto bg-gradient-primary text-primary-foreground border-0 shadow-glow hover:opacity-90"
         >
           <Plus className="size-4 mr-1" /> Add {kind === "channel" ? "Channel" : "Category"} Post
         </Button>
       )}
       {posts === null ? (
-        <div className="grid place-items-center py-16 text-purple-200/70"><Loader2 className="size-5 animate-spin" /></div>
+        <div className="grid place-items-center py-16 text-muted-foreground"><Loader2 className="size-5 animate-spin" /></div>
       ) : items.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-purple-500/40 p-12 text-center text-purple-200/70 bg-purple-950/30">
+        <div className="rounded-2xl border border-dashed border-border p-12 text-center text-muted-foreground bg-surface/50">
           No {kind === "channel" ? "new channel" : "new category"} posts yet.
         </div>
       ) : (
@@ -207,37 +207,37 @@ function NewContentPage() {
             return (
               <article
                 key={p.id}
-                className={`rounded-2xl bg-purple-950/50 overflow-hidden flex flex-col group transition-all border ${unread ? "border-fuchsia-500/70 shadow-[0_0_20px_-10px_rgba(232,121,249,0.8)]" : "border-purple-500/30 hover:border-fuchsia-500/60 hover:shadow-[0_0_30px_-10px_rgba(217,70,239,0.6)]"}`}
+                className={`rounded-2xl bg-surface/70 overflow-hidden flex flex-col group transition-all border ${unread ? "border-primary/70 shadow-glow" : "border-border hover:border-primary/60 hover:shadow-glow"}`}
               >
-                <div className="aspect-[16/10] bg-purple-900/50 relative overflow-hidden">
+                <div className="aspect-[16/10] bg-surface-2/70 relative overflow-hidden">
                   <img
                     src={coverUrl}
                     alt={p.title}
                     loading="lazy"
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-purple-950/80 via-purple-950/10 to-transparent pointer-events-none" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-background/10 to-transparent pointer-events-none" />
                   {unread && (
-                    <div className="absolute top-2 right-2 px-2 py-1 rounded-md bg-fuchsia-500 text-white text-[10px] font-bold uppercase tracking-wide shadow-lg">
+                    <div className="absolute top-2 right-2 px-2 py-1 rounded-md bg-primary text-primary-foreground text-[10px] font-bold uppercase tracking-wide shadow-lg">
                       New
                     </div>
                   )}
                 </div>
                 <div className="p-4 flex-1 flex flex-col gap-2">
                   <div className="flex flex-wrap gap-2">
-                    <span className="text-xs px-2 py-1 rounded-md bg-fuchsia-500/20 text-fuchsia-200 font-medium border border-fuchsia-500/30 inline-flex items-center gap-1">
+                    <span className="text-xs px-2 py-1 rounded-md bg-primary/15 text-primary-glow font-medium border border-primary/30 inline-flex items-center gap-1">
                       {kind === "channel" ? <Hash className="size-3" /> : <FolderPlus className="size-3" />}
                       {kind === "channel" ? "New Channel" : "New Category"}
                     </span>
                     {unread && (
-                      <span className="size-2 rounded-full bg-fuchsia-400 shadow-[0_0_8px_rgba(232,121,249,0.9)] self-center" title="Unread" />
+                      <span className="size-2 rounded-full bg-primary-glow shadow-glow self-center" title="Unread" />
                     )}
                   </div>
-                  <h3 className="font-display font-semibold text-lg leading-snug text-purple-50">{p.title}</h3>
+                  <h3 className="font-display font-semibold text-lg leading-snug text-foreground">{p.title}</h3>
                   {p.description && (
-                    <p className="text-sm text-purple-200/70 line-clamp-2 whitespace-pre-wrap">{p.description}</p>
+                    <p className="text-sm text-muted-foreground line-clamp-2 whitespace-pre-wrap">{p.description}</p>
                   )}
-                  <div className="text-[11px] text-purple-300/70 mt-1">
+                  <div className="text-[11px] text-muted-foreground mt-1">
                     Posted {new Date(p.created_at).toLocaleDateString()}
                   </div>
                   <div className="mt-auto pt-3 flex flex-wrap items-center gap-2">
@@ -251,7 +251,7 @@ function NewContentPage() {
                     <Button
                       size="icon"
                       variant="ghost"
-                      className="text-purple-200 hover:text-white hover:bg-purple-800/60"
+                      className="text-muted-foreground hover:text-foreground hover:bg-surface-2"
                       title={unread ? "Mark as read" : "Mark as unread"}
                       onClick={() => (unread ? markRead(p) : markUnread(p))}
                     >
@@ -262,7 +262,7 @@ function NewContentPage() {
                         <Button
                           size="icon"
                           variant="ghost"
-                          className="text-purple-200 hover:text-white hover:bg-purple-800/60"
+                          className="text-muted-foreground hover:text-foreground hover:bg-surface-2"
                           onClick={() => setEditor({ open: true, kind, post: p })}
                         >
                           <Pencil className="size-4" />
@@ -270,7 +270,7 @@ function NewContentPage() {
                         <Button
                           size="icon"
                           variant="ghost"
-                          className="text-purple-200 hover:text-white hover:bg-purple-800/60"
+                          className="text-muted-foreground hover:text-foreground hover:bg-surface-2"
                           onClick={() => remove(p.id)}
                         >
                           <Trash2 className="size-4" />
@@ -289,7 +289,7 @@ function NewContentPage() {
 
   return (
     <div
-      className="flex-1 overflow-y-auto bg-[#1a0b2e] bg-cover bg-center bg-no-repeat bg-fixed relative"
+      className="flex-1 overflow-y-auto bg-background bg-cover bg-center bg-no-repeat bg-fixed relative"
       style={{ backgroundImage: `url(${newContentBg})` }}
     >
       <div
@@ -298,44 +298,44 @@ function NewContentPage() {
         aria-hidden
       />
       <div className="relative z-10">
-      <header className="px-4 md:px-8 pt-6 md:pt-8 pb-4 md:pb-6 border-b border-purple-500/30 bg-purple-950/50 backdrop-blur flex items-center gap-3">
-        <div className="size-10 md:size-12 rounded-2xl bg-gradient-to-br from-fuchsia-600 to-violet-700 grid place-items-center shadow-glow shrink-0">
+      <header className="px-4 md:px-8 pt-6 md:pt-8 pb-4 md:pb-6 border-b border-border bg-surface/70 backdrop-blur flex items-center gap-3">
+        <div className="size-10 md:size-12 rounded-2xl bg-gradient-primary grid place-items-center shadow-glow shrink-0">
           <Sparkles className="size-5 md:size-6 text-white" />
         </div>
         <div className="min-w-0">
-          <h1 className="font-display text-xl md:text-3xl font-bold bg-gradient-to-r from-violet-300 via-fuchsia-300 to-blue-300 bg-clip-text text-transparent">New Content</h1>
-          <p className="text-purple-200/80 mt-1 text-xs md:text-sm">Announcements about new channels and categories</p>
+          <h1 className="font-display text-xl md:text-3xl font-bold text-gradient-primary bg-clip-text text-transparent">New Content</h1>
+          <p className="text-muted-foreground mt-1 text-xs md:text-sm">Announcements about new channels and categories</p>
         </div>
       </header>
 
       <div className="px-4 md:px-8 py-4 md:py-6">
         <Tabs value={tab} onValueChange={(v) => setTab(v as any)} className="w-full min-w-0">
-          <TabsList className="grid grid-cols-1 min-[380px]:grid-cols-3 w-full max-w-2xl h-auto gap-1 bg-purple-950/60 border border-purple-500/30 overflow-hidden">
-            <TabsTrigger value="welcome" className="min-w-0 w-full text-xs sm:text-sm px-2 sm:px-3 py-2 whitespace-normal text-center leading-tight break-words data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white">Welcome</TabsTrigger>
-            <TabsTrigger value="channel" className="min-w-0 w-full text-xs sm:text-sm px-2 sm:px-3 py-2 whitespace-normal text-center leading-tight break-words data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white">
+          <TabsList className="grid grid-cols-1 min-[380px]:grid-cols-3 w-full max-w-2xl h-auto gap-1 bg-surface/70 border border-border overflow-hidden">
+            <TabsTrigger value="welcome" className="min-w-0 w-full text-xs sm:text-sm px-2 sm:px-3 py-2 whitespace-normal text-center leading-tight break-words data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Welcome</TabsTrigger>
+            <TabsTrigger value="channel" className="min-w-0 w-full text-xs sm:text-sm px-2 sm:px-3 py-2 whitespace-normal text-center leading-tight break-words data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               New Channels{channels.length ? ` (${channels.length})` : ""}
             </TabsTrigger>
-            <TabsTrigger value="category" className="min-w-0 w-full text-xs sm:text-sm px-2 sm:px-3 py-2 whitespace-normal text-center leading-tight break-words data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white">
+            <TabsTrigger value="category" className="min-w-0 w-full text-xs sm:text-sm px-2 sm:px-3 py-2 whitespace-normal text-center leading-tight break-words data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               New Categories{categories.length ? ` (${categories.length})` : ""}
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="welcome" className="mt-6">
-            <div className="rounded-2xl bg-gradient-to-br from-fuchsia-600/30 via-purple-600/30 to-violet-700/30 border border-purple-500/40 p-5 sm:p-10 shadow-[0_0_60px_-15px_rgba(168,85,247,0.5)] overflow-hidden">
-              <h2 className="font-display text-2xl sm:text-3xl font-bold bg-gradient-to-r from-violet-300 to-blue-300 bg-clip-text text-transparent leading-tight">
+            <div className="rounded-2xl bg-surface/70 border border-border p-5 sm:p-10 shadow-glow overflow-hidden">
+              <h2 className="font-display text-2xl sm:text-3xl font-bold text-gradient-primary bg-clip-text text-transparent leading-tight">
                 Welcome to New Content
               </h2>
-              <p className="mt-3 text-base sm:text-lg text-purple-100/90 max-w-2xl">
+              <p className="mt-3 text-base sm:text-lg text-foreground/90 max-w-2xl">
                 Stay up to date with every new channel and category added to the platform.
               </p>
-              <p className="mt-4 text-purple-200/70 max-w-2xl">
-                Browse the <span className="font-semibold text-white">New Channels</span> tab for newly added channels, or the <span className="font-semibold text-white">New Categories</span> tab for new content categories. Admins post details, images, and setup info here so you'll never miss what's new.
+              <p className="mt-4 text-muted-foreground max-w-2xl">
+                Browse the <span className="font-semibold text-foreground">New Channels</span> tab for newly added channels, or the <span className="font-semibold text-foreground">New Categories</span> tab for new content categories. Admins post details, images, and setup info here so you'll never miss what's new.
               </p>
               <div className="mt-6 grid gap-2 sm:flex sm:flex-wrap">
-                <Button onClick={() => setTab("channel")} className="w-full sm:w-auto min-w-0 bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white border-0 shadow-lg shadow-purple-900/50">
+                <Button onClick={() => setTab("channel")} className="w-full sm:w-auto min-w-0 bg-gradient-primary text-primary-foreground border-0 shadow-glow hover:opacity-90">
                   <Hash className="size-4 mr-1" /> View new channels
                 </Button>
-                <Button onClick={() => setTab("category")} variant="outline" className="w-full sm:w-auto min-w-0 border-purple-500/40 bg-purple-950/40 text-purple-100 hover:bg-purple-900/60">
+                <Button onClick={() => setTab("category")} variant="outline" className="w-full sm:w-auto min-w-0 border-border bg-surface/60 text-foreground hover:bg-surface-2">
                   <FolderPlus className="size-4 mr-1" /> View new categories
                 </Button>
               </div>
@@ -366,23 +366,23 @@ function NewContentPage() {
 
 function PostViewer({ post, onClose }: { post: Post; onClose: () => void }) {
   return (
-    <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm grid place-items-center p-4" onClick={onClose}>
-      <div onClick={(e) => e.stopPropagation()} className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border border-purple-500/40 bg-[#1a0b2e] shadow-2xl">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-purple-500/30 sticky top-0 bg-[#1a0b2e]/95 backdrop-blur z-10">
-          <h2 className="font-display text-xl font-bold text-white pr-4">
-            <span className="text-xs uppercase tracking-wider text-fuchsia-300/80 block mb-1">
+    <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm grid place-items-center p-4" onClick={onClose}>
+      <div onClick={(e) => e.stopPropagation()} className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border border-border bg-popover shadow-2xl">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border sticky top-0 bg-popover/95 backdrop-blur z-10">
+          <h2 className="font-display text-xl font-bold text-popover-foreground pr-4">
+            <span className="text-xs uppercase tracking-wider text-primary-glow block mb-1">
               {post.kind === "channel" ? "New Channel" : "New Category"}
             </span>
             {post.title}
           </h2>
-          <button onClick={onClose} className="size-8 rounded-lg hover:bg-purple-800/50 text-purple-200 grid place-items-center shrink-0">
+          <button onClick={onClose} className="size-8 rounded-lg hover:bg-surface-2 text-muted-foreground grid place-items-center shrink-0">
             <X className="size-4" />
           </button>
         </div>
         <div className="p-6 space-y-4">
-          <div className="text-xs text-purple-300/80">Posted {new Date(post.created_at).toLocaleString()}</div>
+          <div className="text-xs text-muted-foreground">Posted {new Date(post.created_at).toLocaleString()}</div>
           {post.description && (
-            <p className="text-sm text-purple-100/90 whitespace-pre-wrap">{post.description}</p>
+            <p className="text-sm text-foreground/90 whitespace-pre-wrap">{post.description}</p>
           )}
           <AttachmentList items={post.attachments ?? []} />
         </div>
@@ -443,40 +443,40 @@ function PostEditor({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm grid place-items-center p-4" onClick={onClose}>
-      <div onClick={(e) => e.stopPropagation()} className="w-full max-w-xl rounded-2xl border border-purple-500/40 bg-[#1a0b2e] p-6 shadow-2xl">
+    <div className="fixed inset-0 z-50 bg-background/75 backdrop-blur-sm grid place-items-center p-4" onClick={onClose}>
+      <div onClick={(e) => e.stopPropagation()} className="w-full max-w-xl rounded-2xl border border-border bg-popover p-6 shadow-2xl">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="font-display text-xl font-bold text-white">
+          <h2 className="font-display text-xl font-bold text-popover-foreground">
             {post ? "Edit" : "New"} {kind === "channel" ? "Channel" : "Category"} Post
           </h2>
-          <button onClick={onClose} className="size-8 rounded-lg hover:bg-purple-800/50 text-purple-200 grid place-items-center">
+          <button onClick={onClose} className="size-8 rounded-lg hover:bg-surface-2 text-muted-foreground grid place-items-center">
             <X className="size-4" />
           </button>
         </div>
         <div className="space-y-3">
           <div>
-            <label className="text-xs uppercase tracking-wider text-purple-300/80">Title</label>
+            <label className="text-xs uppercase tracking-wider text-muted-foreground">Title</label>
             <input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder={kind === "channel" ? "New channel name" : "New category name"}
-              className="mt-1 w-full rounded-lg bg-purple-950/60 border border-purple-500/30 px-3 py-2 text-sm text-white outline-none focus:border-fuchsia-400"
+              className="mt-1 w-full rounded-lg bg-surface/70 border border-border px-3 py-2 text-sm text-white outline-none focus:border-fuchsia-400"
             />
           </div>
           <div>
-            <label className="text-xs uppercase tracking-wider text-purple-300/80">Description</label>
+            <label className="text-xs uppercase tracking-wider text-muted-foreground">Description</label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={5}
               placeholder="What's been added? Include details, info, and any setup notes."
-              className="mt-1 w-full rounded-lg bg-purple-950/60 border border-purple-500/30 px-3 py-2 text-sm text-white outline-none focus:border-fuchsia-400 resize-none"
+              className="mt-1 w-full rounded-lg bg-surface/70 border border-border px-3 py-2 text-sm text-white outline-none focus:border-fuchsia-400 resize-none"
             />
           </div>
           <div>
-            <label className="text-xs uppercase tracking-wider text-purple-300/80">Attachments</label>
+            <label className="text-xs uppercase tracking-wider text-muted-foreground">Attachments</label>
             <div className="mt-1 space-y-2">
-              <label className="inline-flex items-center gap-2 px-2.5 py-1.5 rounded-lg border border-purple-500/30 bg-purple-950/60 text-xs text-purple-100 cursor-pointer hover:border-fuchsia-400">
+              <label className="inline-flex items-center gap-2 px-2.5 py-1.5 rounded-lg border border-border bg-surface/70 text-xs text-foreground cursor-pointer hover:border-primary">
                 <Paperclip className="size-3.5" /> Attach files
                 <input
                   type="file"
@@ -493,9 +493,9 @@ function PostEditor({
               {existing.length > 0 && (
                 <div className="flex flex-wrap gap-1.5">
                   {existing.map((a, i) => (
-                    <span key={i} className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded border border-purple-500/30 bg-purple-950/60 text-[11px] text-purple-100">
+                    <span key={i} className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded border border-border bg-surface/70 text-[11px] text-foreground">
                       <span className="max-w-[160px] truncate">{a.name}</span>
-                      <button type="button" onClick={() => setExisting((arr) => arr.filter((_, j) => j !== i))} className="text-purple-300 hover:text-destructive">
+                      <button type="button" onClick={() => setExisting((arr) => arr.filter((_, j) => j !== i))} className="text-muted-foreground hover:text-destructive">
                         <X className="size-3" />
                       </button>
                     </span>
@@ -505,9 +505,9 @@ function PostEditor({
               {files.length > 0 && (
                 <div className="flex flex-wrap gap-1.5">
                   {files.map((f, i) => (
-                    <span key={i} className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded border border-purple-500/30 bg-purple-950/60 text-[11px] text-purple-100">
+                    <span key={i} className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded border border-border bg-surface/70 text-[11px] text-foreground">
                       <span className="max-w-[160px] truncate">{f.name}</span>
-                      <button type="button" onClick={() => setFiles((arr) => arr.filter((_, j) => j !== i))} className="text-purple-300 hover:text-destructive">
+                      <button type="button" onClick={() => setFiles((arr) => arr.filter((_, j) => j !== i))} className="text-muted-foreground hover:text-destructive">
                         <X className="size-3" />
                       </button>
                     </span>
@@ -517,7 +517,7 @@ function PostEditor({
             </div>
           </div>
           <div className="flex justify-end gap-2 pt-2">
-            <Button variant="outline" onClick={onClose} disabled={saving} className="border-purple-500/40 bg-purple-950/40 text-purple-100 hover:bg-purple-900/60">
+            <Button variant="outline" onClick={onClose} disabled={saving} className="border-border bg-surface/60 text-foreground hover:bg-surface-2">
               Cancel
             </Button>
             <Button onClick={save} disabled={saving} className="bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white border-0">

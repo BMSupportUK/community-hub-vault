@@ -293,24 +293,24 @@ function InstallGuidesPage() {
   };
 
   return (
-    <div className="flex-1 overflow-y-auto bg-gradient-to-br from-[#1a0b2e] via-[#2d1b4e] to-[#1a0b2e] text-violet-50">
-      <header className="px-8 pt-8 pb-6 border-b border-violet-500/30 bg-violet-950/40 backdrop-blur">
-        <h1 className="font-display text-3xl font-bold text-violet-50">Install Guides</h1>
-        <p className="text-violet-200/80 mt-1">Step-by-step installation walkthroughs and PDF docs</p>
+    <div className="flex-1 overflow-y-auto bg-background text-foreground">
+      <header className="px-8 pt-8 pb-6 border-b border-border bg-surface/60 backdrop-blur">
+        <h1 className="font-display text-3xl font-bold text-foreground">Install Guides</h1>
+        <p className="text-muted-foreground mt-1">Step-by-step installation walkthroughs and PDF docs</p>
       </header>
 
       <div className="px-8 py-6">
         <Tabs value={tab} onValueChange={setTab} className="w-full">
-          <TabsList className={`grid ${canManageCategories ? "grid-cols-3" : "grid-cols-2"} max-w-2xl bg-violet-950/60 border border-violet-500/30`}>
-            <TabsTrigger value="welcome" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-violet-600 data-[state=active]:to-purple-600 data-[state=active]:text-white">Welcome</TabsTrigger>
-            <TabsTrigger value="guides" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-violet-600 data-[state=active]:to-purple-600 data-[state=active]:text-white">Guides</TabsTrigger>
+          <TabsList className={`grid ${canManageCategories ? "grid-cols-3" : "grid-cols-2"} max-w-2xl bg-surface/70 border border-border`}>
+            <TabsTrigger value="welcome" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Welcome</TabsTrigger>
+            <TabsTrigger value="guides" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Guides</TabsTrigger>
             {canManageCategories && (
-              <TabsTrigger value="categories" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-violet-600 data-[state=active]:to-purple-600 data-[state=active]:text-white">Categories</TabsTrigger>
+              <TabsTrigger value="categories" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Categories</TabsTrigger>
             )}
           </TabsList>
 
           <TabsContent value="welcome" className="mt-6">
-            <div className="relative overflow-hidden rounded-2xl border border-violet-500/30 shadow-[0_0_60px_-15px_rgba(139,92,246,0.5)] min-h-[60vh] lg:min-h-[70vh]">
+            <div className="relative overflow-hidden rounded-2xl border border-border shadow-glow min-h-[60vh] lg:min-h-[70vh]">
               <img
                 src={installHero}
                 alt="Couple watching an install guide on TV from their sofa"
@@ -318,32 +318,32 @@ function InstallGuidesPage() {
                 height={1080}
                 className="absolute inset-0 h-full w-full object-cover"
               />
-              <div className="absolute inset-0 bg-gradient-to-r from-[#1a0b2e]/95 via-[#1a0b2e]/70 to-transparent" />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#1a0b2e]/80 via-transparent to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-r from-background/95 via-background/70 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent" />
               <div className="relative p-6 sm:p-10 md:p-14 max-w-2xl">
-                <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold text-violet-50 leading-tight drop-shadow-[0_2px_12px_rgba(0,0,0,0.6)]">
+                <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold text-foreground leading-tight drop-shadow-[0_2px_12px_rgba(0,0,0,0.6)]">
                   Welcome to Install Guides
                 </h2>
-                <p className="mt-4 text-base sm:text-lg text-violet-100/90 drop-shadow">
+                <p className="mt-4 text-base sm:text-lg text-foreground/90 drop-shadow">
                   Everything you need to get up and running — written walkthroughs and downloadable PDF references.
                 </p>
-                <p className="mt-3 text-violet-100/80 drop-shadow">
+                <p className="mt-3 text-foreground/80 drop-shadow">
                   Browse by category, search for what you need, and open PDFs directly in your browser.
                 </p>
-                <Button className="mt-6 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-violet-500 text-white shadow-lg shadow-violet-900/40" onClick={() => setTab("guides")}>Browse guides</Button>
+                <Button className="mt-6 bg-gradient-primary text-primary-foreground shadow-glow hover:opacity-90" onClick={() => setTab("guides")}>Browse guides</Button>
               </div>
             </div>
           </TabsContent>
 
           <TabsContent value="guides" className="mt-6">
             <div
-              className="relative rounded-2xl border border-violet-500/30 overflow-hidden p-4 sm:p-6 shadow-[0_0_60px_-15px_rgba(139,92,246,0.5)] bg-cover bg-center"
+              className="relative rounded-2xl border border-border overflow-hidden p-4 sm:p-6 shadow-glow bg-cover bg-center"
               style={{ backgroundImage: `url(${installHero})` }}
             >
-              <div className="absolute inset-0 bg-gradient-to-br from-[#1a0b2e]/55 via-[#1a0b2e]/40 to-[#2d1b4e]/55 pointer-events-none" />
+              <div className="absolute inset-0 bg-gradient-to-br from-background/70 via-background/50 to-surface/70 pointer-events-none" />
               <div className="relative grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6">
-              <aside className="rounded-2xl bg-violet-950/50 border border-violet-500/30 p-4 h-fit">
-                <h3 className="font-display font-semibold mb-3 px-2 text-violet-50">Categories</h3>
+              <aside className="rounded-2xl bg-surface/70 border border-border p-4 h-fit">
+                <h3 className="font-display font-semibold mb-3 px-2 text-foreground">Categories</h3>
                 <div className="space-y-1">
                   {categories.map((c) => {
                     const active = c.id === activeCat;
@@ -360,7 +360,7 @@ function InstallGuidesPage() {
                           if (dragCatId.current) reorderCategories(dragCatId.current, c.id);
                           dragCatId.current = null;
                         }}
-                        className={`group flex items-center gap-1 px-1 rounded-lg ${active ? "bg-gradient-to-r from-violet-600 to-blue-600 text-white" : "text-violet-100 hover:bg-violet-900/50"}`}
+                        className={`group flex items-center gap-1 px-1 rounded-lg ${active ? "bg-gradient-primary text-primary-foreground" : "text-foreground/85 hover:bg-surface-2/70"}`}
                       >
                         {isMod && (
                           <GripVertical className="size-3.5 opacity-40 group-hover:opacity-80 cursor-grab shrink-0" />
@@ -371,7 +371,7 @@ function InstallGuidesPage() {
                         >
                           <span>{c.name}</span>
                           {n > 0 && (
-                            <span className={`text-xs px-2 py-0.5 rounded-full ${active ? "bg-white/20" : "bg-violet-900/60"}`}>{n}</span>
+                            <span className={`text-xs px-2 py-0.5 rounded-full ${active ? "bg-white/20" : "bg-surface-2/80"}`}>{n}</span>
                           )}
                         </button>
                       </div>
@@ -383,27 +383,27 @@ function InstallGuidesPage() {
               <section>
                 <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-6">
                   <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-violet-300/70" />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                     <Input
                       value={search}
                       onChange={(e) => setSearch(e.target.value)}
                       placeholder="Search install guides..."
-                      className="pl-9 bg-violet-950/50 border-violet-500/30 text-violet-50 placeholder:text-violet-300/50"
+                      className="pl-9 bg-violet-950/50 border-violet-500/30 text-foreground placeholder:text-violet-300/50"
                     />
                   </div>
                   {isMod && (
-                    <Button onClick={openNew} className="bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white">
+                    <Button onClick={openNew} className="bg-gradient-primary text-primary-foreground hover:opacity-90">
                       <Plus className="size-4 mr-1" /> Add Guide
                     </Button>
                   )}
                 </div>
 
                 {activeCategory && (
-                  <h2 className="font-display text-2xl font-bold mb-4 text-violet-50">{activeCategory.name} Guides</h2>
+                  <h2 className="font-display text-2xl font-bold mb-4 text-foreground">{activeCategory.name} Guides</h2>
                 )}
 
                 {filtered.length === 0 ? (
-                  <div className="rounded-2xl border border-dashed border-violet-500/30 p-12 text-center text-violet-200/70">
+                  <div className="rounded-2xl border border-dashed border-violet-500/30 p-12 text-center text-muted-foreground">
                     No guides in this category yet.
                   </div>
                 ) : (
@@ -420,15 +420,15 @@ function InstallGuidesPage() {
                           if (dragBlogId.current) reorderBlogs(dragBlogId.current, b.id);
                           dragBlogId.current = null;
                         }}
-                        className="rounded-2xl bg-violet-950/50 border border-violet-500/30 overflow-hidden flex flex-col group hover:shadow-[0_0_40px_-10px_rgba(139,92,246,0.6)] transition-shadow"
+                        className="rounded-2xl bg-surface/70 border border-border overflow-hidden flex flex-col group hover:shadow-[0_0_40px_-10px_rgba(139,92,246,0.6)] transition-shadow"
                       >
-                        <div className="aspect-[16/10] bg-violet-900/50 relative overflow-hidden">
+                        <div className="aspect-[16/10] bg-surface-2/70 relative overflow-hidden">
                           {b.image_url ? (
                             <img src={b.image_url} alt={b.title} className="w-full h-full object-contain group-hover:scale-105 transition-transform" />
                           ) : b.video_url ? (
                             <video src={b.video_url} className="w-full h-full object-cover" preload="metadata" muted playsInline />
                           ) : (
-                            <div className="w-full h-full grid place-items-center text-violet-300/70">
+                            <div className="w-full h-full grid place-items-center text-muted-foreground">
                               {b.pdf_url ? <FileText className="size-10" /> : <ImageIcon className="size-10" />}
                             </div>
                           )}
@@ -445,35 +445,35 @@ function InstallGuidesPage() {
                             </button>
                           )}
                           {b.video_url && (
-                            <span className="absolute top-2 left-2 text-[10px] uppercase tracking-wider px-2 py-1 rounded-md bg-violet-600/90 text-white font-semibold flex items-center gap-1">
+                            <span className="absolute top-2 left-2 text-[10px] uppercase tracking-wider px-2 py-1 rounded-md bg-primary text-primary-foreground font-semibold flex items-center gap-1">
                               <Film className="size-3" /> Video
                             </span>
                           )}
                           {b.pdf_url && (
-                            <span className="absolute top-2 right-2 text-[10px] uppercase tracking-wider px-2 py-1 rounded-md bg-fuchsia-500/90 text-white font-semibold flex items-center gap-1">
+                            <span className="absolute top-2 right-2 text-[10px] uppercase tracking-wider px-2 py-1 rounded-md bg-primary text-primary-foreground font-semibold flex items-center gap-1">
                               <FileText className="size-3" /> PDF
                             </span>
                           )}
                           {isMod && (
-                            <div className="absolute bottom-2 left-2 size-8 rounded-md bg-black/60 backdrop-blur grid place-items-center text-white cursor-grab">
+                            <div className="absolute bottom-2 left-2 size-8 rounded-md bg-background/70 backdrop-blur grid place-items-center text-foreground cursor-grab">
                               <GripVertical className="size-4" />
                             </div>
                           )}
                         </div>
                         <div className="p-4 flex-1 flex flex-col gap-2">
                           <div className="flex flex-wrap gap-2">
-                            <span className="text-xs px-2 py-1 rounded-md bg-fuchsia-500/30 text-white font-semibold border border-fuchsia-400/50">
+                            <span className="text-xs px-2 py-1 rounded-md bg-primary/25 text-foreground font-semibold border border-primary/40">
                               {categories.find((c) => c.id === b.category_id)?.name}
                             </span>
                             {b.badge && (
-                              <span className="text-xs px-2 py-1 rounded-md bg-fuchsia-500/20 text-fuchsia-200 font-medium">{b.badge}</span>
+                              <span className="text-xs px-2 py-1 rounded-md bg-primary/15 text-primary-glow font-medium">{b.badge}</span>
                             )}
                           </div>
-                          <h3 className="font-display font-semibold text-lg leading-snug text-violet-50">{b.title}</h3>
-                          {b.excerpt && <p className="text-sm text-violet-200/70 line-clamp-2">{b.excerpt}</p>}
+                          <h3 className="font-display font-semibold text-lg leading-snug text-foreground">{b.title}</h3>
+                          {b.excerpt && <p className="text-sm text-muted-foreground line-clamp-2">{b.excerpt}</p>}
                           <div className="mt-auto pt-3 flex items-center gap-2">
                             {b.pdf_url ? (
-                              <Button asChild size="sm" className="flex-1 bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white">
+                              <Button asChild size="sm" className="flex-1 bg-gradient-primary text-primary-foreground hover:opacity-90">
                                 <a
                                   href={b.pdf_url}
                                   download={`${b.title}.pdf`}
@@ -484,16 +484,16 @@ function InstallGuidesPage() {
                                 </a>
                               </Button>
                             ) : (
-                              <Button size="sm" className="flex-1 bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white" onClick={() => setReading(b)}>
+                              <Button size="sm" className="flex-1 bg-gradient-primary text-primary-foreground hover:opacity-90" onClick={() => setReading(b)}>
                                 Click to Read
                               </Button>
                             )}
                             {isMod && (
                               <>
-                                <Button size="icon" variant="ghost" className="text-violet-200 hover:bg-violet-900/60 hover:text-white" onClick={() => { setEditing(b); setShowEditor(true); }}>
+                                <Button size="icon" variant="ghost" className="text-violet-200 hover:bg-surface-2/80 hover:text-foreground" onClick={() => { setEditing(b); setShowEditor(true); }}>
                                   <Pencil className="size-4" />
                                 </Button>
-                                <Button size="icon" variant="ghost" className="text-violet-200 hover:bg-violet-900/60 hover:text-white" onClick={() => deleteBlog(b.id)}>
+                                <Button size="icon" variant="ghost" className="text-violet-200 hover:bg-surface-2/80 hover:text-foreground" onClick={() => deleteBlog(b.id)}>
                                   <Trash2 className="size-4" />
                                 </Button>
                               </>
@@ -511,10 +511,10 @@ function InstallGuidesPage() {
 
           <TabsContent value="categories" className="mt-6">
             <div
-              className="relative rounded-2xl border border-violet-500/30 overflow-hidden p-4 sm:p-6 shadow-[0_0_60px_-15px_rgba(139,92,246,0.5)] bg-cover bg-center"
+              className="relative rounded-2xl border border-border overflow-hidden p-4 sm:p-6 shadow-glow bg-cover bg-center"
               style={{ backgroundImage: `url(${installHero})` }}
             >
-              <div className="absolute inset-0 bg-gradient-to-br from-[#1a0b2e]/55 via-[#1a0b2e]/40 to-[#2d1b4e]/55 pointer-events-none" />
+              <div className="absolute inset-0 bg-gradient-to-br from-background/70 via-background/50 to-surface/70 pointer-events-none" />
               <div className="relative">
             {isMod && (
               <div className="mb-4 flex items-center gap-2">
@@ -526,17 +526,17 @@ function InstallGuidesPage() {
                       onChange={(e) => setNewCatName(e.target.value)}
                       placeholder="New category name"
                       onKeyDown={(e) => { if (e.key === "Enter") addCategory(); if (e.key === "Escape") { setAddingCat(false); setNewCatName(""); } }}
-                      className="max-w-xs bg-violet-950/50 border-violet-500/30 text-violet-50 placeholder:text-violet-300/50"
+                      className="max-w-xs bg-violet-950/50 border-violet-500/30 text-foreground placeholder:text-violet-300/50"
                     />
-                    <Button onClick={addCategory} className="bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white">Add</Button>
-                    <Button variant="ghost" className="text-violet-200 hover:bg-violet-900/60 hover:text-white" onClick={() => { setAddingCat(false); setNewCatName(""); }}>Cancel</Button>
+                    <Button onClick={addCategory} className="bg-gradient-primary text-primary-foreground hover:opacity-90">Add</Button>
+                    <Button variant="ghost" className="text-violet-200 hover:bg-surface-2/80 hover:text-foreground" onClick={() => { setAddingCat(false); setNewCatName(""); }}>Cancel</Button>
                   </>
                 ) : (
-                  <Button onClick={() => setAddingCat(true)} className="bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white">
+                  <Button onClick={() => setAddingCat(true)} className="bg-gradient-primary text-primary-foreground hover:opacity-90">
                     <Plus className="size-4 mr-1" /> Add Category
                   </Button>
                 )}
-                <span className="text-xs text-violet-200/70 ml-2">Drag cards to reorder — order is saved for everyone.</span>
+                <span className="text-xs text-muted-foreground ml-2">Drag cards to reorder — order is saved for everyone.</span>
               </div>
             )}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -552,21 +552,21 @@ function InstallGuidesPage() {
                     if (dragCatId.current) reorderCategories(dragCatId.current, c.id);
                     dragCatId.current = null;
                   }}
-                  className="rounded-2xl bg-violet-950/50 border border-violet-500/30 p-5 hover:border-violet-400 transition relative"
+                  className="rounded-2xl bg-surface/70 border border-border p-5 hover:border-violet-400 transition relative"
                 >
                   {isMod && (
                     <div className="absolute top-2 right-2 flex items-center gap-1">
-                      <GripVertical className="size-4 text-violet-300/70 cursor-grab" />
+                      <GripVertical className="size-4 text-muted-foreground cursor-grab" />
                       <button
                         onClick={(e) => { e.stopPropagation(); renameCategory(c.id, c.name); }}
-                        className="text-violet-300/70 hover:text-white p-1 rounded-md"
+                        className="text-muted-foreground hover:text-foreground p-1 rounded-md"
                         title="Rename category"
                       >
                         <Pencil className="size-4" />
                       </button>
                       <button
                         onClick={(e) => { e.stopPropagation(); deleteCategory(c.id); }}
-                        className="text-violet-300/70 hover:text-white p-1 rounded-md"
+                        className="text-muted-foreground hover:text-foreground p-1 rounded-md"
                         title="Delete category"
                       >
                         <Trash2 className="size-4" />
@@ -574,8 +574,8 @@ function InstallGuidesPage() {
                     </div>
                   )}
                   <button onClick={() => { setActiveCat(c.id); setTab("guides"); }} className="text-left w-full">
-                    <div className="font-display font-semibold text-lg text-violet-50">{c.name}</div>
-                    <div className="text-sm text-violet-200/70 mt-1">{counts[c.id] ?? 0} guide{(counts[c.id] ?? 0) === 1 ? "" : "s"}</div>
+                    <div className="font-display font-semibold text-lg text-foreground">{c.name}</div>
+                    <div className="text-sm text-muted-foreground mt-1">{counts[c.id] ?? 0} guide{(counts[c.id] ?? 0) === 1 ? "" : "s"}</div>
                   </button>
                 </div>
               ))}
@@ -618,7 +618,7 @@ function InstallGuidesPage() {
                     <img src={reading.image_url} alt={reading.title} className="max-h-48 md:max-h-64 w-auto mx-auto rounded-2xl border border-purple-500/30 object-contain" />
                   )}
                   <div className="flex flex-wrap gap-2">
-                    <span className="text-xs px-2 py-1 rounded-md bg-fuchsia-500/30 text-white font-semibold border border-fuchsia-400/50">
+                    <span className="text-xs px-2 py-1 rounded-md bg-primary/25 text-foreground font-semibold border border-primary/40">
                       {categories.find((c) => c.id === reading.category_id)?.name}
                     </span>
                     {reading.badge && (

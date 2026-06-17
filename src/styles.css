@@ -254,6 +254,53 @@ html.theme-sunset body {
   .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
 }
 
+/* Legacy purple/violet page bridge: old hardcoded utilities now follow the admin theme. */
+:is(html.theme-red, html.theme-ocean, html.theme-sunset) :is(.bg-purple-950\/30, .bg-violet-950\/30) { background-color: color-mix(in oklab, var(--surface) 38%, transparent) !important; }
+:is(html.theme-red, html.theme-ocean, html.theme-sunset) :is(.bg-purple-950\/40, .bg-violet-950\/40, .bg-purple-900\/30, .bg-violet-900\/30, .bg-slate-950\/40) { background-color: color-mix(in oklab, var(--surface) 50%, transparent) !important; }
+:is(html.theme-red, html.theme-ocean, html.theme-sunset) :is(.bg-purple-950\/50, .bg-violet-950\/50, .bg-purple-900\/40, .bg-violet-900\/40, .bg-slate-950\/75) { background-color: color-mix(in oklab, var(--surface) 64%, transparent) !important; }
+:is(html.theme-red, html.theme-ocean, html.theme-sunset) :is(.bg-purple-950\/60, .bg-violet-950\/60, .bg-purple-900\/50, .bg-violet-900\/50, .bg-slate-950\/90) { background-color: color-mix(in oklab, var(--surface) 76%, transparent) !important; }
+:is(html.theme-red, html.theme-ocean, html.theme-sunset) :is(.bg-purple-950\/70, .bg-violet-950\/70, .bg-purple-900\/60, .bg-violet-900\/60, .bg-purple-800\/60) { background-color: color-mix(in oklab, var(--surface-2) 76%, transparent) !important; }
+:is(html.theme-red, html.theme-ocean, html.theme-sunset) :is(.bg-purple-950\/80, .bg-violet-950\/80, .bg-purple-900\/70, .bg-violet-900\/70, .bg-purple-800\/40, .bg-violet-800\/40) { background-color: color-mix(in oklab, var(--surface-2) 84%, transparent) !important; }
+:is(html.theme-red, html.theme-ocean, html.theme-sunset) :is(.bg-purple-800\/50, .bg-violet-800\/50, .bg-purple-800\/80, .bg-violet-800\/80) { background-color: color-mix(in oklab, var(--primary) 24%, var(--surface-2)) !important; }
+:is(html.theme-red, html.theme-ocean, html.theme-sunset) :is(.bg-fuchsia-500, .bg-fuchsia-600, .bg-violet-600, .bg-purple-600, .bg-blue-600) { background-color: var(--primary) !important; }
+:is(html.theme-red, html.theme-ocean, html.theme-sunset) :is(.bg-fuchsia-500\/10, .bg-fuchsia-500\/15, .bg-fuchsia-500\/20, .bg-violet-500\/20, .bg-purple-500\/20, .bg-rose-500\/20, .bg-rose-600\/30, .bg-rose-700\/85) { background-color: color-mix(in oklab, var(--primary) 18%, transparent) !important; }
+:is(html.theme-red, html.theme-ocean, html.theme-sunset) :is(.bg-fuchsia-500\/30, .bg-violet-500\/30, .bg-purple-500\/30, .bg-fuchsia-600\/30, .bg-violet-600\/30, .bg-purple-600\/30, .bg-fuchsia-600\/20, .bg-fuchsia-700\/75, .bg-violet-700\/30, .bg-violet-800\/85) { background-color: color-mix(in oklab, var(--primary) 30%, transparent) !important; }
+:is(html.theme-red, html.theme-ocean, html.theme-sunset) :is(.bg-rose-950, .bg-rose-950\/40, .bg-fuchsia-950, .bg-fuchsia-950\/60, .bg-slate-950, .bg-slate-950\/80, .bg-slate-900\/80, .bg-slate-900\/40) { background-color: color-mix(in oklab, var(--surface) 72%, transparent) !important; }
+
+:is(html.theme-red, html.theme-ocean, html.theme-sunset) :is(.border-purple-500\/20, .border-violet-500\/20, .border-fuchsia-500\/20) { border-color: color-mix(in oklab, var(--border) 55%, transparent) !important; }
+:is(html.theme-red, html.theme-ocean, html.theme-sunset) :is(.border-purple-500\/30, .border-violet-500\/30, .border-fuchsia-500\/30, .border-rose-500\/30, .border-purple-400\/30, .border-violet-400\/30, .border-fuchsia-400\/30) { border-color: color-mix(in oklab, var(--border) 70%, transparent) !important; }
+:is(html.theme-red, html.theme-ocean, html.theme-sunset) :is(.border-purple-500\/40, .border-violet-500\/40, .border-fuchsia-500\/40, .border-rose-500\/40, .border-purple-400\/40, .border-violet-400\/40, .border-fuchsia-400\/40) { border-color: color-mix(in oklab, var(--primary) 42%, transparent) !important; }
+:is(html.theme-red, html.theme-ocean, html.theme-sunset) :is(.border-purple-500\/50, .border-violet-500\/50, .border-fuchsia-500\/50, .border-purple-400\/50, .border-violet-400\/50, .border-fuchsia-400\/50) { border-color: color-mix(in oklab, var(--primary) 52%, transparent) !important; }
+:is(html.theme-red, html.theme-ocean, html.theme-sunset) :is(.border-purple-500\/60, .border-violet-500\/60, .border-fuchsia-500\/60, .border-purple-400\/60, .border-violet-400\/60, .border-fuchsia-400\/60, .border-purple-400\/70, .border-violet-400\/70, .border-fuchsia-400\/70, .border-fuchsia-500\/70) { border-color: color-mix(in oklab, var(--primary) 68%, transparent) !important; }
+
+:is(html.theme-red, html.theme-ocean, html.theme-sunset) :is(.text-purple-50, .text-violet-50, .text-fuchsia-50) { color: var(--foreground) !important; }
+:is(html.theme-red, html.theme-ocean, html.theme-sunset) :is(.text-purple-100, .text-violet-100, .text-fuchsia-100, .text-purple-100\/80, .text-violet-100\/80, .text-fuchsia-100\/80, .text-purple-100\/90, .text-violet-100\/90, .text-fuchsia-100\/90) { color: color-mix(in oklab, var(--foreground) 92%, transparent) !important; }
+:is(html.theme-red, html.theme-ocean, html.theme-sunset) :is(.text-purple-200, .text-violet-200, .text-fuchsia-200, .text-purple-200\/70, .text-violet-200\/70, .text-fuchsia-200\/70, .text-purple-200\/80, .text-violet-200\/80, .text-fuchsia-200\/80) { color: color-mix(in oklab, var(--foreground) 76%, transparent) !important; }
+:is(html.theme-red, html.theme-ocean, html.theme-sunset) :is(.text-purple-300, .text-violet-300, .text-fuchsia-300, .text-purple-300\/50, .text-violet-300\/50, .text-fuchsia-300\/50, .text-purple-300\/60, .text-violet-300\/60, .text-fuchsia-300\/60, .text-purple-300\/70, .text-violet-300\/70, .text-fuchsia-300\/70, .text-purple-300\/80, .text-violet-300\/80, .text-fuchsia-300\/80) { color: var(--muted-foreground) !important; }
+:is(html.theme-red, html.theme-ocean, html.theme-sunset) :is(.text-fuchsia-400, .text-violet-400, .text-purple-400, .text-blue-400, .text-fuchsia-200, .text-violet-200) { color: var(--primary-glow) !important; }
+:is(html.theme-red, html.theme-ocean, html.theme-sunset) :is(.text-rose-600, .text-rose-700, .text-rose-300, .text-rose-500, .text-amber-500) { color: var(--primary-glow) !important; }
+
+:is(html.theme-red, html.theme-ocean, html.theme-sunset) :is(.ring-purple-400\/30, .ring-violet-400\/30, .ring-fuchsia-400\/30, .ring-purple-400\/40, .ring-violet-400\/40, .ring-fuchsia-400\/40, .ring-purple-500\/30, .ring-violet-500\/30, .ring-fuchsia-500\/30) { --tw-ring-color: color-mix(in oklab, var(--primary) 45%, transparent) !important; }
+:is(html.theme-red, html.theme-ocean, html.theme-sunset) :is(.shadow-purple-900\/40, .shadow-purple-900\/50, .shadow-violet-900\/40, .shadow-fuchsia-900\/40, .shadow-fuchsia-500\/50, .shadow-purple-500\/30) { --tw-shadow-color: color-mix(in oklab, var(--primary) 42%, transparent) !important; }
+
+:is(html.theme-red, html.theme-ocean, html.theme-sunset) :is(.from-violet-600, .from-fuchsia-600, .from-purple-600, .from-violet-500, .from-fuchsia-500, .from-purple-500, .from-violet-300, .from-fuchsia-300, .from-purple-300):is(.bg-gradient-to-r, .bg-gradient-to-br, .bg-gradient-to-tr),
+:is(html.theme-red, html.theme-ocean, html.theme-sunset) :is(.to-blue-600, .to-purple-600, .to-violet-700, .to-blue-300, .to-violet-400):is(.bg-gradient-to-r, .bg-gradient-to-br, .bg-gradient-to-tr) {
+  background: var(--gradient-primary) !important;
+}
+:is(html.theme-red, html.theme-ocean, html.theme-sunset) .bg-clip-text:is(.from-violet-600, .from-fuchsia-600, .from-purple-600, .from-violet-400, .from-fuchsia-400, .from-violet-300, .from-fuchsia-300, .from-purple-300, .from-sky-300) {
+  background: var(--gradient-accent) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+}
+:is(html.theme-red, html.theme-ocean, html.theme-sunset) :is(.bg-\[\#1a0b2e\], .from-\[\#1a0b2e\], .via-\[\#2d1b4e\], .to-\[\#1a0b2e\]) {
+  background: var(--gradient-primary) !important;
+}
+:is(html.theme-red, html.theme-ocean, html.theme-sunset) :is(.from-\[\#1a0b2e\]\/95, .from-\[\#1a0b2e\]\/80, .from-\[\#1a0b2e\]\/55, .via-\[\#1a0b2e\]\/70, .via-\[\#1a0b2e\]\/40, .to-\[\#2d1b4e\]\/55) {
+  --tw-gradient-from: color-mix(in oklab, var(--background) 92%, transparent) var(--tw-gradient-from-position) !important;
+  --tw-gradient-via: color-mix(in oklab, var(--background) 58%, transparent) var(--tw-gradient-via-position) !important;
+  --tw-gradient-to: color-mix(in oklab, var(--surface) 70%, transparent) var(--tw-gradient-to-position) !important;
+}
+
 /* ===== Animated nameplates ===== */
 @keyframes nameplate-soccer-pan {
   0%   { background-position: 0% 50%; }
