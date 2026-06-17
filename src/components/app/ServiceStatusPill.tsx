@@ -46,18 +46,18 @@ export function ServiceStatusPill({ className }: { className?: string }) {
         className,
       )}
     >
-      <span className="grid place-items-center size-9 rounded-lg bg-gradient-to-br from-violet-600 to-blue-600">
+      <span className="status-icon grid place-items-center size-9 rounded-lg bg-gradient-to-br from-violet-600 to-blue-600">
         <Activity className="size-4 text-white" />
       </span>
       <span>
         <span className="block text-white">Service Status</span>
-        <span className="block text-[11px] text-sky-50/90">
+        <span className="status-copy block text-[11px] text-sky-50/90">
           {loading ? "Checking…" : operational ? "All systems operational" : `${count} active incident${count === 1 ? "" : "s"}`}
         </span>
       </span>
       <span
         className={cn(
-          "ml-2 size-2 rounded-full",
+          "status-dot ml-2 size-2 rounded-full",
           loading
             ? "bg-zinc-400"
             : operational
