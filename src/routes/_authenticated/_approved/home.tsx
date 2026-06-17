@@ -21,6 +21,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { IconPicker, getIcon } from "@/components/app/IconPicker";
+import { HomeChannelReadyProvider } from "@/components/app/HomeChannelReadyContext";
 
 export const Route = createFileRoute("/_authenticated/_approved/home")({
   component: HomeLayout,
@@ -58,16 +59,14 @@ function HomeLayout() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const isHomeIndex = pathname === "/home" || pathname === "/home/";
   const path = useRouterState({ select: (r) => r.location.pathname });
-  const [layoutReady, setLayoutReady] = useState(false);
+  const [channelContentReady, setChannelContentReady] = useState(false);
   const [channels, setChannels] = useState<ChannelRow[] | null>(null);
   const [chanNavOpen, setChanNavOpen] = useState(false);
   useEffect(() => {
     setChanNavOpen(false);
   }, [path]);
   useEffect(() => {
-    setLayoutReady(false);
-    const frame = window.requestAnimationFrame(() => setLayoutReady(true));
-    return () => window.cancelAnimationFrame(frame);
+    setChannelContentReady(isHomeIndex);
   }, [path]);
   const [mentionCounts, setMentionCounts] = useState<Record<string, number>>({});
   const [addChannelGroup, setAddChannelGroup] = useState<string | null>(null);
@@ -474,7 +473,7 @@ function HomeLayout() {
 
   return (
     <>
-      {!isHomeIndex && layoutReady && (
+      {!isHomeIndex && channelContentReady && (
         <ChannelColumn
           title="Support Community"
           groups={channelsQuery.isLoading && channels === null ? channelSkeletonGroups : groups}
@@ -490,7 +489,7 @@ function HomeLayout() {
         />
       )}
       <div className="flex-1 flex flex-col min-w-0">
-        {!isHomeIndex && layoutReady && (
+        {!isHomeIndex && channelContentReady && (
           <div className="md:hidden h-10 shrink-0 flex items-center px-3 border-b border-border bg-rail/30">
             <Sheet open={chanNavOpen} onOpenChange={setChanNavOpen}>
               <SheetTrigger className="inline-flex items-center gap-2 text-xs font-medium text-muted-foreground hover:text-foreground">
@@ -519,7 +518,9 @@ function HomeLayout() {
           </div>
         )}
         <div className="flex-1 flex min-h-0 min-w-0">
-          <Outlet />
+          <HomeChannelReadyProvider onReady={() => setChannelContentReady(true)}>
+            <Outlet />
+          </HomeChannelReadyProvider>
         </div>
       </div>
 
