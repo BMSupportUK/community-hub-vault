@@ -54,6 +54,29 @@ function AuthLayout() {
   // Broadcast this user's presence globally while signed in.
   useOnlineUsers();
 
+  // Discord-style: lock the document to the viewport while inside the app
+  // shell so internal panels scroll instead of the whole page.
+  useEffect(() => {
+    const html = document.documentElement;
+    const body = document.body;
+    const prev = {
+      htmlOverflow: html.style.overflow,
+      bodyOverflow: body.style.overflow,
+      htmlHeight: html.style.height,
+      bodyHeight: body.style.height,
+    };
+    html.style.overflow = "hidden";
+    body.style.overflow = "hidden";
+    html.style.height = "100%";
+    body.style.height = "100%";
+    return () => {
+      html.style.overflow = prev.htmlOverflow;
+      body.style.overflow = prev.bodyOverflow;
+      html.style.height = prev.htmlHeight;
+      body.style.height = prev.bodyHeight;
+    };
+  }, []);
+
   useEffect(() => {
     if (loading || isPending || loggedRef.current) return;
     loggedRef.current = true;
