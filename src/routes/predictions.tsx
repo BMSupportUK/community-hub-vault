@@ -783,6 +783,7 @@ function PredictionsPage() {
       </div>
       </main>
     </div>
+    </FixturesFetchedAtContext.Provider>
   );
 }
 
