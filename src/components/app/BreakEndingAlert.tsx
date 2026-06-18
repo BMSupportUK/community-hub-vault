@@ -48,6 +48,23 @@ export function BreakEndingAlert() {
     return () => clearInterval(t);
   }, [active]);
 
+  // Re-sync clock when the tab regains visibility/focus — background tabs
+  // throttle setInterval, so without this the "break over" warning only
+  // fires after the user comes back and clicks around.
+  useEffect(() => {
+    if (!active) return;
+    const resync = () => setNow(Date.now());
+    const onVis = () => { if (document.visibilityState === "visible") resync(); };
+    document.addEventListener("visibilitychange", onVis);
+    window.addEventListener("focus", resync);
+    window.addEventListener("pageshow", resync);
+    return () => {
+      document.removeEventListener("visibilitychange", onVis);
+      window.removeEventListener("focus", resync);
+      window.removeEventListener("pageshow", resync);
+    };
+  }, [active]);
+
   // load active break + subscribe to changes
   useEffect(() => {
     if (!user || !isStaff) return;
