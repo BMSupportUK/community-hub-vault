@@ -1564,7 +1564,7 @@ function FixtureCard({
               {fixture.homeScore} – {fixture.awayScore}
             </div>
             <div className="text-[10px] uppercase tracking-wider text-red-300/80 mt-1 inline-flex items-center gap-1">
-              <span className="size-1.5 rounded-full bg-red-400 animate-pulse" /> {liveLabel(fixture)}
+              <span className="size-1.5 rounded-full bg-red-400 animate-pulse" /> <LiveMinuteText fixture={fixture} />
             </div>
           </div>
         ) : scored ? (
@@ -1673,7 +1673,7 @@ function FixtureCard({
         {live && hasScore ? (
           <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-red-500/15 text-red-300 border border-red-500/30 font-bold tabular-nums">
             <span className="size-1.5 rounded-full bg-red-400 animate-pulse" />
-            {fixture.homeScore} – {fixture.awayScore} · {liveLabel(fixture)}
+            {fixture.homeScore} – {fixture.awayScore} · <LiveMinuteText fixture={fixture} />
           </span>
         ) : scored ? (
           <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-bold tabular-nums">
@@ -1933,7 +1933,7 @@ function LeaderboardList({
                         )}
                         {!finished && live && (
                           <span className="ml-2 font-mono text-red-300">
-                            LIVE {liveLabel(p)}{scoreLabel(p) ? ` ${scoreLabel(p)}` : ""}
+                            LIVE <LiveMinuteText fixture={p} />{scoreLabel(p) ? ` ${scoreLabel(p)}` : ""}
                           </span>
                         )}
                       </div>
