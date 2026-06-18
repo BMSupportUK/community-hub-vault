@@ -228,16 +228,22 @@ export const Route = createFileRoute("/api/public/hooks/scheduled-reminders")({
         let failed = 0;
         for (const job of pending) {
           try {
-            const res = await pushToUser(job.userId, {
-              title: job.title,
-              body: job.body,
-              data: { kind: job.kind, url: job.url, alertKey: job.key },
-            });
-            if (res.sent > 0) sent++;
+            const [fcmRes, webRes] = await Promise.all([
+              pushToUser(job.userId, {
+                title: job.title,
+                body: job.body,
+                data: { kind: job.kind, url: job.url, alertKey: job.key },
+              }).catch((e) => ({ sent: 0, failed: 0, skipped: String(e) } as { sent: number; failed: number; skipped?: string })),
+              broadcastToUser(job.userId, job.title, job.body, job.url, job.key).catch((e) => ({ sent: 0, error: String(e) } as { sent: number; error?: string })),
+            ]);
+            if (fcmRes.sent > 0 || webRes.sent > 0) sent++;
             else failed++;
+            if ("error" in webRes && webRes.error) {
+              console.error("[scheduled-reminders] web push failed", job.key, webRes.error);
+            }
           } catch (e) {
             failed++;
-            console.error("[scheduled-reminders] pushToUser failed", job.key, e);
+            console.error("[scheduled-reminders] push failed", job.key, e);
           }
           // Record regardless so we don't spam if push delivery is flaky.
           await adminAny
