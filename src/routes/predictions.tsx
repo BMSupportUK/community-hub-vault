@@ -130,7 +130,9 @@ function LivePill({
 }) {
   // Re-render every 15s so the elapsed-minutes fallback ticks up.
   const now = useNow(15_000);
-  const since = fetchedAt ? now - fetchedAt : 0;
+  const ctxFetchedAt = useContext(FixturesFetchedAtContext);
+  const anchor = fetchedAt ?? ctxFetchedAt;
+  const since = anchor ? now - anchor : 0;
   return (
     <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-red-500/20 text-red-300 border border-red-500/40 text-[10px] font-bold uppercase tracking-wide tabular-nums">
       <span className="size-1.5 rounded-full bg-red-400 animate-pulse" />
@@ -147,6 +149,11 @@ function useNow(intervalMs = 1000) {
   }, [intervalMs]);
   return now;
 }
+
+// Anchor timestamp for the most recent fixtures fetch. LivePill / liveLabel
+// extrapolate the minute clock from this so the displayed minute ticks every
+// 60s between server polls instead of freezing on the last fetched value.
+const FixturesFetchedAtContext = createContext<number>(0);
 
 function formatCountdown(ms: number) {
   const total = Math.max(0, Math.floor(ms / 1000));
