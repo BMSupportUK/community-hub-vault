@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { Trophy, Loader2, Lock, Check, Star, Crown, Medal, Award, Pencil, CalendarDays, LogOut, Trash2, Menu } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -85,17 +85,19 @@ function liveLabel(f: {
   minute?: number | null;
   minuteAdded?: number | null;
   kickoffAt?: string | null;
-}) {
+}, sinceMs = 0) {
   if (f.status === "PAUSED") return "HT";
+  const tick = Math.max(0, Math.floor(sinceMs / 60000));
   if (typeof f.minute === "number" && f.minute > 0) {
     const added = typeof f.minuteAdded === "number" && f.minuteAdded > 0 ? f.minuteAdded : 0;
     if (added > 0) {
       // Normalise: some feeds report minute=90/45 with added, others report minute=93.
       const base = f.minute >= 90 ? 90 : f.minute >= 45 && f.minute < 60 ? 45 : f.minute;
-      return `${base}+${added}'`;
+      return `${base}+${added + tick}'`;
     }
-    if (f.minute > 90) return `90+${f.minute - 90}'`;
-    return `${f.minute}'`;
+    const m = f.minute + tick;
+    if (m > 90) return `90+${m - 90}'`;
+    return `${m}'`;
   }
   if (f.kickoffAt) {
     const elapsedMs = Date.now() - new Date(f.kickoffAt).getTime();
@@ -116,6 +118,7 @@ function scoreLabel(f: { homeScore?: number | null; awayScore?: number | null })
 
 function LivePill({
   fixture,
+  fetchedAt,
 }: {
   fixture: {
     status?: string | null;
@@ -123,13 +126,17 @@ function LivePill({
     minuteAdded?: number | null;
     kickoffAt?: string | null;
   };
+  fetchedAt?: number;
 }) {
-  // Re-render every 30s so the elapsed-minutes fallback ticks up.
-  useNow(30_000);
+  // Re-render every 15s so the elapsed-minutes fallback ticks up.
+  const now = useNow(15_000);
+  const ctxFetchedAt = useContext(FixturesFetchedAtContext);
+  const anchor = fetchedAt ?? ctxFetchedAt;
+  const since = anchor ? now - anchor : 0;
   return (
     <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-red-500/20 text-red-300 border border-red-500/40 text-[10px] font-bold uppercase tracking-wide tabular-nums">
       <span className="size-1.5 rounded-full bg-red-400 animate-pulse" />
-      {liveLabel(fixture)}
+      {liveLabel(fixture, since)}
     </span>
   );
 }
@@ -141,6 +148,22 @@ function useNow(intervalMs = 1000) {
     return () => clearInterval(id);
   }, [intervalMs]);
   return now;
+}
+
+// Anchor timestamp for the most recent fixtures fetch. LivePill / liveLabel
+// extrapolate the minute clock from this so the displayed minute ticks every
+// 60s between server polls instead of freezing on the last fetched value.
+const FixturesFetchedAtContext = createContext<number>(0);
+
+function useLiveSinceMs() {
+  const fetchedAt = useContext(FixturesFetchedAtContext);
+  const now = useNow(15_000);
+  return fetchedAt ? now - fetchedAt : 0;
+}
+
+function LiveMinuteText({ fixture }: { fixture: Parameters<typeof liveLabel>[0] }) {
+  const since = useLiveSinceMs();
+  return <>{liveLabel(fixture, since)}</>;
 }
 
 function formatCountdown(ms: number) {
@@ -181,6 +204,7 @@ function PredictionsPage() {
   const [joining, setJoining] = useState(false);
   const [tab, setTab] = useState("fixtures");
   const [fixtures, setFixtures] = useState<WcFixtureDTO[] | null>(null);
+  const [fixturesAt, setFixturesAt] = useState<number>(0);
   const [leaderboard, setLeaderboard] = useState<WcLeaderboardRowDTO[] | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -221,6 +245,7 @@ function PredictionsPage() {
       if (user) {
         const [fx, lb, st] = await Promise.all([listFixturesFn(), leaderboardFn(), statusFn()]);
         setFixtures(fx);
+        setFixturesAt(Date.now());
         setLeaderboard(lb as any);
         setJoined(st.joined);
       } else {
@@ -230,6 +255,7 @@ function PredictionsPage() {
           leaderboardPublicFn(),
         ]);
         setFixtures(fx as any);
+        setFixturesAt(Date.now());
         setLeaderboard(lb as any);
         setJoined(!!guest);
       }
@@ -380,7 +406,21 @@ function PredictionsPage() {
     const id = window.setInterval(() => {
       loadAll(true);
     }, 30_000);
-    return () => window.clearInterval(id);
+    // Also re-poll the moment the tab regains focus — browsers throttle
+    // setInterval on background tabs (sometimes to once per minute), which
+    // leaves the displayed minute stale until the user interacts.
+    const onVisible = () => {
+      if (document.visibilityState === "visible") loadAll(true);
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("focus", onVisible);
+    window.addEventListener("pageshow", onVisible);
+    return () => {
+      window.clearInterval(id);
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("focus", onVisible);
+      window.removeEventListener("pageshow", onVisible);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fixtures]);
 
@@ -422,6 +462,7 @@ function PredictionsPage() {
   }, [fixtures]);
 
   return (
+    <FixturesFetchedAtContext.Provider value={fixturesAt}>
     <div className={user ? "min-h-screen flex bg-background" : "contents"}>
       {user && <IconRail />}
       <main className="relative isolate flex-1 overflow-y-auto min-w-0">
@@ -767,6 +808,7 @@ function PredictionsPage() {
       </div>
       </main>
     </div>
+    </FixturesFetchedAtContext.Provider>
   );
 }
 
@@ -1522,7 +1564,7 @@ function FixtureCard({
               {fixture.homeScore} – {fixture.awayScore}
             </div>
             <div className="text-[10px] uppercase tracking-wider text-red-300/80 mt-1 inline-flex items-center gap-1">
-              <span className="size-1.5 rounded-full bg-red-400 animate-pulse" /> {liveLabel(fixture)}
+              <span className="size-1.5 rounded-full bg-red-400 animate-pulse" /> <LiveMinuteText fixture={fixture} />
             </div>
           </div>
         ) : scored ? (
@@ -1631,7 +1673,7 @@ function FixtureCard({
         {live && hasScore ? (
           <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-red-500/15 text-red-300 border border-red-500/30 font-bold tabular-nums">
             <span className="size-1.5 rounded-full bg-red-400 animate-pulse" />
-            {fixture.homeScore} – {fixture.awayScore} · {liveLabel(fixture)}
+            {fixture.homeScore} – {fixture.awayScore} · <LiveMinuteText fixture={fixture} />
           </span>
         ) : scored ? (
           <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-bold tabular-nums">
@@ -1891,7 +1933,7 @@ function LeaderboardList({
                         )}
                         {!finished && live && (
                           <span className="ml-2 font-mono text-red-300">
-                            LIVE {liveLabel(p)}{scoreLabel(p) ? ` ${scoreLabel(p)}` : ""}
+                            LIVE <LiveMinuteText fixture={p} />{scoreLabel(p) ? ` ${scoreLabel(p)}` : ""}
                           </span>
                         )}
                       </div>
