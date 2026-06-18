@@ -110,7 +110,7 @@ async function broadcast(title: string, body: string, url: string, tag: string) 
   return { sent };
 }
 
-async function broadcastToUser(
+export async function broadcastToUser(
   userId: string,
   title: string,
   body: string,
