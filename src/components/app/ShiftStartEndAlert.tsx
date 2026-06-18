@@ -67,6 +67,24 @@ export function ShiftStartEndAlert() {
     return () => clearInterval(t);
   }, [isStaff]);
 
+  // Background tabs get setInterval throttled (or paused entirely), which
+  // means `now` stops advancing and the warning dialog never crosses its
+  // threshold until the user interacts. Re-sync the clock the moment the
+  // tab becomes visible / focused so the alert fires immediately.
+  useEffect(() => {
+    if (!isStaff) return;
+    const resync = () => setNow(Date.now());
+    const onVis = () => { if (document.visibilityState === "visible") resync(); };
+    document.addEventListener("visibilitychange", onVis);
+    window.addEventListener("focus", resync);
+    window.addEventListener("pageshow", resync);
+    return () => {
+      document.removeEventListener("visibilitychange", onVis);
+      window.removeEventListener("focus", resync);
+      window.removeEventListener("pageshow", resync);
+    };
+  }, [isStaff]);
+
   // Load today's assigned shift slots and open shift
   useEffect(() => {
     if (!user || !isStaff) return;
