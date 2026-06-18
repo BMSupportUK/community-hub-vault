@@ -10,10 +10,9 @@ import { broadcastToUser } from "@/lib/push.functions";
 //   - Shift ending soon / overdue (clocked in past end time)
 //   - Break ending soon / over the limit
 //
-// These notifications are what make the app play a sound on Android even
-// when the app is in the background or fully closed. Web push subscriptions
-// receive the same notification via the existing web-push channel below
-// (handled by the service worker /sw.js → showNotification → OS sound).
+// Both FCM (Android app) and Web Push (browser/PWA) are used so the alert
+// reaches the user when the app is in the background or fully closed.
+// Web Push subscriptions are handled by the service worker at /sw.js.
 //
 // Idempotency is enforced by writing to public.scheduled_alert_log keyed by
 // a deterministic alert_key (slot/break id + stage + phase).
