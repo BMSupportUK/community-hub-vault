@@ -395,7 +395,21 @@ function PredictionsPage() {
     const id = window.setInterval(() => {
       loadAll(true);
     }, 30_000);
-    return () => window.clearInterval(id);
+    // Also re-poll the moment the tab regains focus — browsers throttle
+    // setInterval on background tabs (sometimes to once per minute), which
+    // leaves the displayed minute stale until the user interacts.
+    const onVisible = () => {
+      if (document.visibilityState === "visible") loadAll(true);
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("focus", onVisible);
+    window.addEventListener("pageshow", onVisible);
+    return () => {
+      window.clearInterval(id);
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("focus", onVisible);
+      window.removeEventListener("pageshow", onVisible);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fixtures]);
 
