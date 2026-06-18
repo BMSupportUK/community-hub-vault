@@ -85,17 +85,19 @@ function liveLabel(f: {
   minute?: number | null;
   minuteAdded?: number | null;
   kickoffAt?: string | null;
-}) {
+}, sinceMs = 0) {
   if (f.status === "PAUSED") return "HT";
+  const tick = Math.max(0, Math.floor(sinceMs / 60000));
   if (typeof f.minute === "number" && f.minute > 0) {
     const added = typeof f.minuteAdded === "number" && f.minuteAdded > 0 ? f.minuteAdded : 0;
     if (added > 0) {
       // Normalise: some feeds report minute=90/45 with added, others report minute=93.
       const base = f.minute >= 90 ? 90 : f.minute >= 45 && f.minute < 60 ? 45 : f.minute;
-      return `${base}+${added}'`;
+      return `${base}+${added + tick}'`;
     }
-    if (f.minute > 90) return `90+${f.minute - 90}'`;
-    return `${f.minute}'`;
+    const m = f.minute + tick;
+    if (m > 90) return `90+${m - 90}'`;
+    return `${m}'`;
   }
   if (f.kickoffAt) {
     const elapsedMs = Date.now() - new Date(f.kickoffAt).getTime();
@@ -116,6 +118,7 @@ function scoreLabel(f: { homeScore?: number | null; awayScore?: number | null })
 
 function LivePill({
   fixture,
+  fetchedAt,
 }: {
   fixture: {
     status?: string | null;
@@ -123,13 +126,15 @@ function LivePill({
     minuteAdded?: number | null;
     kickoffAt?: string | null;
   };
+  fetchedAt?: number;
 }) {
-  // Re-render every 30s so the elapsed-minutes fallback ticks up.
-  useNow(30_000);
+  // Re-render every 15s so the elapsed-minutes fallback ticks up.
+  const now = useNow(15_000);
+  const since = fetchedAt ? now - fetchedAt : 0;
   return (
     <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-red-500/20 text-red-300 border border-red-500/40 text-[10px] font-bold uppercase tracking-wide tabular-nums">
       <span className="size-1.5 rounded-full bg-red-400 animate-pulse" />
-      {liveLabel(fixture)}
+      {liveLabel(fixture, since)}
     </span>
   );
 }
