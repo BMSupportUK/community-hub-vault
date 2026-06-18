@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Clock, LogIn, LogOut, Coffee, UtensilsCrossed, Loader2, PlayCircle } from "lucide-react";
+import { Clock, LogIn, LogOut, Coffee, UtensilsCrossed, Loader2, PlayCircle, Bell } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useUserTimezone } from "@/hooks/use-user-timezone";
@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import clockBg from "@/assets/clock-bg.jpg";
 import { useServerFn } from "@tanstack/react-start";
 import { sendShiftEventPush, sendBreakEventPush } from "@/lib/push.functions";
+import { PushNotificationsToggle } from "@/components/app/PushNotificationsToggle";
 
 export const Route = createFileRoute("/_authenticated/_approved/clock")({
   component: ClockPage,
