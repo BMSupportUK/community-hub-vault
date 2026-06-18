@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Clock, LogIn, LogOut, Coffee, UtensilsCrossed, Loader2, PlayCircle } from "lucide-react";
+import { Clock, LogIn, LogOut, Coffee, UtensilsCrossed, Loader2, PlayCircle, Bell } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useUserTimezone } from "@/hooks/use-user-timezone";
@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import clockBg from "@/assets/clock-bg.jpg";
 import { useServerFn } from "@tanstack/react-start";
 import { sendShiftEventPush, sendBreakEventPush } from "@/lib/push.functions";
+import { PushNotificationsToggle } from "@/components/app/PushNotificationsToggle";
 
 export const Route = createFileRoute("/_authenticated/_approved/clock")({
   component: ClockPage,
@@ -180,6 +181,20 @@ function ClockPage() {
           </div>
           <div className="font-mono text-3xl tabular-nums drop-shadow">{fmtClock(now)}</div>
         </header>
+
+        {/* Push notifications toggle */}
+        <div className="rounded-2xl border border-border bg-surface-1/70 backdrop-blur-md p-4 flex items-center justify-between gap-3 flex-wrap">
+          <div className="flex items-center gap-3">
+            <div className="size-9 rounded-xl bg-primary/15 grid place-items-center">
+              <Bell className="size-4 text-primary" />
+            </div>
+            <div>
+              <div className="text-sm font-medium">Shift & break alerts</div>
+              <div className="text-xs text-muted-foreground">Get notified when your shift or break is about to end, even with the app closed.</div>
+            </div>
+          </div>
+          <PushNotificationsToggle />
+        </div>
 
         {/* Status banner */}
         <div className={cn(

@@ -67,7 +67,7 @@ export function PushNotificationsToggle() {
     return <p className="text-xs text-muted-foreground">Push notifications aren't supported in this browser. On Android, use Chrome and add to home screen.</p>;
   }
   if (status === "denied") {
-    return <p className="text-xs text-muted-foreground">Notifications are blocked. Enable them in your browser site settings to receive outage alerts.</p>;
+    return <p className="text-xs text-muted-foreground">Notifications are blocked. Enable them in your browser site settings to receive outage and shift alerts.</p>;
   }
 
   if (status === "subscribed") {
@@ -78,7 +78,7 @@ export function PushNotificationsToggle() {
         className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-border bg-surface-2 text-sm hover:bg-surface-1 disabled:opacity-50"
       >
         {busy ? <Loader2 className="size-4 animate-spin" /> : <BellOff className="size-4" />}
-        Disable outage notifications
+        Disable notifications
       </button>
     );
   }
@@ -89,7 +89,7 @@ export function PushNotificationsToggle() {
       className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium disabled:opacity-50"
     >
       {busy ? <Loader2 className="size-4 animate-spin" /> : <Bell className="size-4" />}
-      Enable outage notifications
+      Enable notifications
     </button>
   );
 }

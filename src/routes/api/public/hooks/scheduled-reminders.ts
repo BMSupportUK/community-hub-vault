@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { pushToUser } from "@/lib/fcm.server";
+import { broadcastToUser } from "@/lib/push.functions";
+
 
 // POST /api/public/hooks/scheduled-reminders
 // Runs every minute via pg_cron. Sends push notifications for:
@@ -8,10 +10,9 @@ import { pushToUser } from "@/lib/fcm.server";
 //   - Shift ending soon / overdue (clocked in past end time)
 //   - Break ending soon / over the limit
 //
-// These notifications are what make the app play a sound on Android even
-// when the app is in the background or fully closed. Web push subscriptions
-// receive the same notification via the existing web-push channel below
-// (handled by the service worker /sw.js → showNotification → OS sound).
+// Both FCM (Android app) and Web Push (browser/PWA) are used so the alert
+// reaches the user when the app is in the background or fully closed.
+// Web Push subscriptions are handled by the service worker at /sw.js.
 //
 // Idempotency is enforced by writing to public.scheduled_alert_log keyed by
 // a deterministic alert_key (slot/break id + stage + phase).
@@ -226,16 +227,22 @@ export const Route = createFileRoute("/api/public/hooks/scheduled-reminders")({
         let failed = 0;
         for (const job of pending) {
           try {
-            const res = await pushToUser(job.userId, {
-              title: job.title,
-              body: job.body,
-              data: { kind: job.kind, url: job.url, alertKey: job.key },
-            });
-            if (res.sent > 0) sent++;
+            const [fcmRes, webRes] = await Promise.all([
+              pushToUser(job.userId, {
+                title: job.title,
+                body: job.body,
+                data: { kind: job.kind, url: job.url, alertKey: job.key },
+              }).catch((e) => ({ sent: 0, failed: 0, skipped: String(e) } as { sent: number; failed: number; skipped?: string })),
+              broadcastToUser(job.userId, job.title, job.body, job.url, job.key).catch((e) => ({ sent: 0, error: String(e) } as { sent: number; error?: string })),
+            ]);
+            if (fcmRes.sent > 0 || webRes.sent > 0) sent++;
             else failed++;
+            if ("error" in webRes && webRes.error) {
+              console.error("[scheduled-reminders] web push failed", job.key, webRes.error);
+            }
           } catch (e) {
             failed++;
-            console.error("[scheduled-reminders] pushToUser failed", job.key, e);
+            console.error("[scheduled-reminders] push failed", job.key, e);
           }
           // Record regardless so we don't spam if push delivery is flaky.
           await adminAny
