@@ -193,6 +193,7 @@ function PredictionsPage() {
   const [joining, setJoining] = useState(false);
   const [tab, setTab] = useState("fixtures");
   const [fixtures, setFixtures] = useState<WcFixtureDTO[] | null>(null);
+  const [fixturesAt, setFixturesAt] = useState<number>(0);
   const [leaderboard, setLeaderboard] = useState<WcLeaderboardRowDTO[] | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -233,6 +234,7 @@ function PredictionsPage() {
       if (user) {
         const [fx, lb, st] = await Promise.all([listFixturesFn(), leaderboardFn(), statusFn()]);
         setFixtures(fx);
+        setFixturesAt(Date.now());
         setLeaderboard(lb as any);
         setJoined(st.joined);
       } else {
@@ -242,6 +244,7 @@ function PredictionsPage() {
           leaderboardPublicFn(),
         ]);
         setFixtures(fx as any);
+        setFixturesAt(Date.now());
         setLeaderboard(lb as any);
         setJoined(!!guest);
       }
