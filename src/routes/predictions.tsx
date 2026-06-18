@@ -155,6 +155,17 @@ function useNow(intervalMs = 1000) {
 // 60s between server polls instead of freezing on the last fetched value.
 const FixturesFetchedAtContext = createContext<number>(0);
 
+function useLiveSinceMs() {
+  const fetchedAt = useContext(FixturesFetchedAtContext);
+  const now = useNow(15_000);
+  return fetchedAt ? now - fetchedAt : 0;
+}
+
+function LiveMinuteText({ fixture }: { fixture: Parameters<typeof liveLabel>[0] }) {
+  const since = useLiveSinceMs();
+  return <>{liveLabel(fixture, since)}</>;
+}
+
 function formatCountdown(ms: number) {
   const total = Math.max(0, Math.floor(ms / 1000));
   const d = Math.floor(total / 86400);
