@@ -303,8 +303,21 @@ function WelcomePage() {
       <div className="grid min-h-dvh w-full min-w-0 grid-rows-[auto_auto] overflow-x-hidden overflow-y-visible md:h-full md:min-h-0 md:grid-rows-[minmax(0,1fr)_auto] md:overflow-hidden">
       <section className="relative min-h-0 min-w-0 w-full overflow-hidden border-b border-border">
         <div className="absolute inset-0 bg-gradient-to-br from-violet-600 via-fuchsia-600 to-blue-600" />
-        <div className="relative grid min-h-0 min-w-0 w-full lg:grid-cols-[1fr_minmax(0,28rem)] gap-4 xl:gap-6 p-4 xl:p-6 items-stretch md:h-full">
-          <div className="flex min-w-0 flex-col justify-center text-white order-2">
+        <div className="relative grid min-h-0 min-w-0 w-full lg:grid-cols-[minmax(0,1fr)_minmax(0,28rem)_minmax(220px,300px)] gap-4 xl:gap-6 p-4 xl:p-6 items-stretch md:h-full">
+          {/* Hero image (left) */}
+          <div className="hidden lg:block relative rounded-2xl overflow-hidden ring-1 ring-white/10 shadow-2xl min-h-0 bg-blue-950/30">
+            <img
+              src={heroImg}
+              alt="BM Support — community and support"
+              width={1280}
+              height={832}
+              className="w-full h-full object-contain"
+            />
+            <div className="absolute inset-0 bg-gradient-to-tr from-blue-950/40 via-transparent to-transparent" />
+          </div>
+
+          {/* Text (middle) */}
+          <div className="flex min-w-0 flex-col justify-center text-white">
             <div className="text-xs uppercase tracking-[0.2em] text-sky-200/80 mb-2">BM Support · Member Hub</div>
             <h1 className="font-display text-3xl xl:text-5xl font-bold leading-tight">
               Welcome to BM Support
@@ -341,148 +354,135 @@ function WelcomePage() {
             </div>
           </div>
 
-          <div className="hidden min-h-0 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(220px,300px)] gap-4 xl:gap-6 items-stretch order-1">
-            <div className="relative rounded-2xl overflow-hidden ring-1 ring-white/10 shadow-2xl min-h-0 bg-blue-950/30">
-              <img
-                src={heroImg}
-                alt="BM Support — community and support"
-                width={1280}
-                height={832}
-                className="w-full h-full object-contain"
-              />
-              <div className="absolute inset-0 bg-gradient-to-tr from-blue-950/40 via-transparent to-transparent" />
-            </div>
+          {/* Event banner (right) */}
+          <div className="hidden lg:flex min-h-0 justify-center xl:justify-start">
+            <div
+              className="group relative h-full max-h-full rounded-2xl border-2 border-violet-500/60 bg-surface shadow-[0_0_30px_rgba(139,92,246,0.25)] overflow-hidden flex flex-col"
+              style={{ width: 300, maxWidth: "100%" }}
+            >
+              {canEditEvent && (
+                <div className="absolute top-2 right-2 z-20 flex items-center gap-1 opacity-0 pointer-events-none transition-opacity group-hover:opacity-100 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:pointer-events-auto">
+                  <button
+                    onClick={() => setBannerOpen(true)}
+                    disabled={!event}
+                    className="size-7 grid place-items-center rounded-md bg-background/80 border border-violet-500/40 text-foreground/80 hover:bg-violet-500/20 transition disabled:opacity-40"
+                    aria-label="Edit banner"
+                    title="Edit banner"
+                  >
+                    <ImageIcon className="size-3.5" />
+                  </button>
+                  <button
+                    onClick={openEdit}
+                    disabled={!event}
+                    className="size-7 grid place-items-center rounded-md bg-background/80 border border-violet-500/40 text-foreground/80 hover:bg-violet-500/20 transition disabled:opacity-40"
+                    aria-label="Edit event text"
+                    title="Edit text"
+                  >
+                    <Pencil className="size-3.5" />
+                  </button>
+                  <button
+                    onClick={addEvent}
+                    className="size-7 grid place-items-center rounded-md bg-background/80 border border-violet-500/40 text-foreground/80 hover:bg-violet-500/20 transition"
+                    aria-label="Add event"
+                    title="Add event"
+                  >
+                    <Plus className="size-3.5" />
+                  </button>
+                  {events.length > 0 && (
+                    <button
+                      onClick={deleteEvent}
+                      className="size-7 grid place-items-center rounded-md bg-background/80 border border-red-500/40 text-red-300 hover:bg-red-500/20 transition"
+                      aria-label="Delete event"
+                      title="Delete event"
+                    >
+                      <Trash2 className="size-3.5" />
+                    </button>
+                  )}
+                </div>
+              )}
 
-            {/* Combined event advert (image + divider + text) */}
-            <div className="flex min-h-0 justify-center xl:justify-start">
-              <div
-                className="group relative h-full max-h-full rounded-2xl border-2 border-violet-500/60 bg-surface shadow-[0_0_30px_rgba(139,92,246,0.25)] overflow-hidden flex flex-col"
-                style={{ width: 300, maxWidth: "100%" }}
-              >
-                {canEditEvent && (
-                  <div className="absolute top-2 right-2 z-20 flex items-center gap-1 opacity-0 pointer-events-none transition-opacity group-hover:opacity-100 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:pointer-events-auto">
-                    <button
-                      onClick={() => setBannerOpen(true)}
-                      disabled={!event}
-                      className="size-7 grid place-items-center rounded-md bg-background/80 border border-violet-500/40 text-foreground/80 hover:bg-violet-500/20 transition disabled:opacity-40"
-                      aria-label="Edit banner"
-                      title="Edit banner"
-                    >
-                      <ImageIcon className="size-3.5" />
-                    </button>
-                    <button
-                      onClick={openEdit}
-                      disabled={!event}
-                      className="size-7 grid place-items-center rounded-md bg-background/80 border border-violet-500/40 text-foreground/80 hover:bg-violet-500/20 transition disabled:opacity-40"
-                      aria-label="Edit event text"
-                      title="Edit text"
-                    >
-                      <Pencil className="size-3.5" />
-                    </button>
-                    <button
-                      onClick={addEvent}
-                      className="size-7 grid place-items-center rounded-md bg-background/80 border border-violet-500/40 text-foreground/80 hover:bg-violet-500/20 transition"
-                      aria-label="Add event"
-                      title="Add event"
-                    >
-                      <Plus className="size-3.5" />
-                    </button>
-                    {events.length > 0 && (
-                      <button
-                        onClick={deleteEvent}
-                        className="size-7 grid place-items-center rounded-md bg-background/80 border border-red-500/40 text-red-300 hover:bg-red-500/20 transition"
-                        aria-label="Delete event"
-                        title="Delete event"
-                      >
-                        <Trash2 className="size-3.5" />
-                      </button>
-                    )}
-                  </div>
-                )}
-
-                {/* Image area */}
-                <div className="relative w-full shrink-0" style={{ height: 185 }}>
-                  {event?.banner_url ? (
+              {/* Image area */}
+              <div className="relative w-full shrink-0" style={{ height: 185 }}>
+                {event?.banner_url ? (
+                  <img
+                    src={event.banner_url}
+                    alt="Upcoming event banner"
+                    className="w-full h-full object-cover"
+                  />
+                ) : events.length === 0 ? (
+                  <div className="relative w-full h-full">
                     <img
-                      src={event.banner_url}
-                      alt="Upcoming event banner"
+                      src={eventPlaceholder}
+                      alt="Awaiting the next event"
+                      width={300}
+                      height={250}
+                      loading="lazy"
                       className="w-full h-full object-cover"
                     />
-                  ) : events.length === 0 ? (
-                    <div className="relative w-full h-full">
-                      <img
-                        src={eventPlaceholder}
-                        alt="Awaiting the next event"
-                        width={300}
-                        height={250}
-                        loading="lazy"
-                        className="w-full h-full object-cover"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
-                      <p className="absolute inset-x-0 bottom-0 p-3 font-display font-semibold text-sm text-center text-white drop-shadow">
-                        Awaiting The Next Event Information.
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="w-full h-full grid place-items-center bg-gradient-to-br from-violet-950/40 to-blue-950/40 text-foreground/50 text-xs">
-                      No banner yet
-                    </div>
-                  )}
-                </div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+                    <p className="absolute inset-x-0 bottom-0 p-3 font-display font-semibold text-sm text-center text-white drop-shadow">
+                      Awaiting The Next Event Information.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="w-full h-full grid place-items-center bg-gradient-to-br from-violet-950/40 to-blue-950/40 text-foreground/50 text-xs">
+                    No banner yet
+                  </div>
+                )}
+              </div>
 
-                {/* Divider */}
-                <div className="h-px bg-gradient-to-r from-transparent via-violet-500/60 to-transparent" />
+              {/* Divider */}
+              <div className="h-px bg-gradient-to-r from-transparent via-violet-500/60 to-transparent" />
 
-                {/* Text area */}
-                <div className="min-h-0 flex-1 p-4 flex flex-col items-center gap-2">
-                  <h3 className="font-display font-bold text-center text-base leading-tight text-foreground">
-                    Upcoming Events On BM Support
-                  </h3>
-                  {event?.body ? (
-                    <div
-                      className="prose prose-sm dark:prose-invert max-w-none text-sm text-foreground/75 text-center line-clamp-4 flex-1"
-                      dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(event.body) }}
-                    />
-                  ) : (
-                    <p className="text-sm text-foreground/75 text-center line-clamp-4 flex-1">Stay tuned…</p>
-                  )}
-                  <button
-                    onClick={() => setEventOpen(true)}
-                    disabled={!event}
-                    className="px-4 py-1.5 rounded-md bg-gradient-to-br from-violet-600 to-blue-600 hover:opacity-90 text-white text-sm font-medium shadow-[0_0_20px_rgba(139,92,246,0.45)] transition disabled:opacity-40 opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
-                  >
-                    Read more
-                  </button>
+              {/* Text area */}
+              <div className="min-h-0 flex-1 p-4 flex flex-col items-center gap-2">
+                <h3 className="font-display font-bold text-center text-base leading-tight text-foreground">
+                  Upcoming Events On BM Support
+                </h3>
+                {event?.body ? (
+                  <div
+                    className="prose prose-sm dark:prose-invert max-w-none text-sm text-foreground/75 text-center line-clamp-4 flex-1"
+                    dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(event.body) }}
+                  />
+                ) : (
+                  <p className="text-sm text-foreground/75 text-center line-clamp-4 flex-1">Stay tuned…</p>
+                )}
+                <button
+                  onClick={() => setEventOpen(true)}
+                  disabled={!event}
+                  className="px-4 py-1.5 rounded-md bg-gradient-to-br from-violet-600 to-blue-600 hover:opacity-90 text-white text-sm font-medium shadow-[0_0_20px_rgba(139,92,246,0.45)] transition disabled:opacity-40 opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
+                >
+                  Read more
+                </button>
 
-                  {events.length > 1 && (
-                    <div className="flex items-center justify-between w-full pt-1">
-                      <button
-                        onClick={() => setCurrentIdx((i) => (i - 1 + events.length) % events.length)}
-                        className="size-7 grid place-items-center rounded-md hover:bg-violet-500/20 text-foreground/70"
-                        aria-label="Previous event"
-                      >
-                        <ChevronLeft className="size-4" />
-                      </button>
-                      <div className="flex items-center gap-1.5">
-                        {events.map((e, i) => (
-                          <button
-                            key={e.id}
-                            onClick={() => setCurrentIdx(i)}
-                            aria-label={`Go to event ${i + 1}`}
-                            className={`size-1.5 rounded-full transition-all ${i === currentIdx ? "bg-violet-400 w-4" : "bg-foreground/30 hover:bg-foreground/50"}`}
-                          />
-                        ))}
-                      </div>
-                      <button
-                        onClick={() => setCurrentIdx((i) => (i + 1) % events.length)}
-                        className="size-7 grid place-items-center rounded-md hover:bg-violet-500/20 text-foreground/70"
-                        aria-label="Next event"
-                      >
-                        <ChevronRight className="size-4" />
-                      </button>
+                {events.length > 1 && (
+                  <div className="flex items-center justify-between w-full pt-1">
+                    <button
+                      onClick={() => setCurrentIdx((i) => (i - 1 + events.length) % events.length)}
+                      className="size-7 grid place-items-center rounded-md hover:bg-violet-500/20 text-foreground/70"
+                      aria-label="Previous event"
+                    >
+                      <ChevronLeft className="size-4" />
+                    </button>
+                    <div className="flex items-center gap-1.5">
+                      {events.map((e, i) => (
+                        <button
+                          key={e.id}
+                          onClick={() => setCurrentIdx(i)}
+                          aria-label={`Go to event ${i + 1}`}
+                          className={`size-1.5 rounded-full transition-all ${i === currentIdx ? "bg-violet-400 w-4" : "bg-foreground/30 hover:bg-foreground/50"}`}
+                        />
+                      ))}
                     </div>
-                  )}
-                </div>
+                    <button
+                      onClick={() => setCurrentIdx((i) => (i + 1) % events.length)}
+                      className="size-7 grid place-items-center rounded-md hover:bg-violet-500/20 text-foreground/70"
+                      aria-label="Next event"
+                    >
+                      <ChevronRight className="size-4" />
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </div>
