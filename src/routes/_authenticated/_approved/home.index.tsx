@@ -355,7 +355,7 @@ function WelcomePage() {
           </div>
 
           {/* Event banner (right) */}
-          <div className="hidden lg:flex min-h-0 justify-center xl:justify-start">
+          <div className="min-h-0 justify-center xl:justify-start">
             <div
               className="group relative h-full max-h-full rounded-2xl border-2 border-violet-500/60 bg-surface shadow-[0_0_30px_rgba(139,92,246,0.25)] overflow-hidden flex flex-col"
               style={{ width: 300, maxWidth: "100%" }}
