@@ -305,7 +305,7 @@ function WelcomePage() {
         <div className="absolute inset-0 bg-gradient-to-br from-violet-600 via-fuchsia-600 to-blue-600" />
         <div className="relative grid min-h-0 min-w-0 w-full lg:grid-cols-[minmax(0,1fr)_minmax(0,28rem)_minmax(220px,300px)] gap-4 xl:gap-6 p-4 xl:p-6 items-stretch md:h-full">
           {/* Hero image (left) */}
-          <div className="hidden lg:block relative rounded-2xl overflow-hidden ring-1 ring-white/10 shadow-2xl min-h-0 bg-blue-950/30">
+          <div className="relative rounded-2xl overflow-hidden ring-1 ring-white/10 shadow-2xl min-h-0 bg-blue-950/30">
             <img
               src={heroImg}
               alt="BM Support — community and support"
