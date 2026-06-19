@@ -305,7 +305,7 @@ function WelcomePage() {
         <div className="absolute inset-0 bg-gradient-to-br from-violet-600 via-fuchsia-600 to-blue-600" />
         <div className="relative grid min-h-0 min-w-0 w-full lg:grid-cols-[minmax(0,1fr)_minmax(0,28rem)_minmax(220px,300px)] gap-4 xl:gap-6 p-4 xl:p-6 items-stretch md:h-full">
           {/* Hero image (left) */}
-          <div className="hidden lg:block relative rounded-2xl overflow-hidden ring-1 ring-white/10 shadow-2xl min-h-0 bg-blue-950/30">
+          <div className="relative rounded-2xl overflow-hidden ring-1 ring-white/10 shadow-2xl min-h-0 bg-blue-950/30">
             <img
               src={heroImg}
               alt="BM Support — community and support"
@@ -355,7 +355,7 @@ function WelcomePage() {
           </div>
 
           {/* Event banner (right) */}
-          <div className="hidden lg:flex min-h-0 justify-center xl:justify-start">
+          <div className="min-h-0 justify-center xl:justify-start">
             <div
               className="group relative h-full max-h-full rounded-2xl border-2 border-violet-500/60 bg-surface shadow-[0_0_30px_rgba(139,92,246,0.25)] overflow-hidden flex flex-col"
               style={{ width: 300, maxWidth: "100%" }}
