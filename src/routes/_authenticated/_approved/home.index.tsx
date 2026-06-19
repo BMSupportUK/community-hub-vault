@@ -304,7 +304,7 @@ function WelcomePage() {
       <section className="relative min-h-0 min-w-0 w-full overflow-hidden border-b border-border">
         <div className="absolute inset-0 bg-gradient-to-br from-violet-600 via-fuchsia-600 to-blue-600" />
         <div className="relative grid min-h-0 min-w-0 w-full lg:grid-cols-[1fr_minmax(0,28rem)] gap-4 xl:gap-6 p-4 xl:p-6 items-stretch md:h-full">
-          <div className="flex min-w-0 flex-col justify-center text-white">
+          <div className="flex min-w-0 flex-col justify-center text-white order-2">
             <div className="text-xs uppercase tracking-[0.2em] text-sky-200/80 mb-2">BM Support · Member Hub</div>
             <h1 className="font-display text-3xl xl:text-5xl font-bold leading-tight">
               Welcome to BM Support
@@ -341,7 +341,7 @@ function WelcomePage() {
             </div>
           </div>
 
-          <div className="hidden min-h-0 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(220px,300px)] gap-4 xl:gap-6 items-stretch">
+          <div className="hidden min-h-0 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(220px,300px)] gap-4 xl:gap-6 items-stretch order-1">
             <div className="relative rounded-2xl overflow-hidden ring-1 ring-white/10 shadow-2xl min-h-0 bg-blue-950/30">
               <img
                 src={heroImg}
