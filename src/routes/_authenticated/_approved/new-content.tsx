@@ -201,8 +201,9 @@ function NewContentPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
           {items.map((p) => {
-            const cover = (p.attachments ?? []).find((a) => a.type?.startsWith("image/"));
-            const coverUrl = cover?.url ?? defaultCover;
+            // Always use the default header image so every channel/category
+            // post shows the same cover as the New Content section itself.
+            const coverUrl = defaultCover;
             const unread = isUnread(p);
             return (
               <article
