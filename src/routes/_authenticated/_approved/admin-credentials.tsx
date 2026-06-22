@@ -22,9 +22,9 @@ interface CredentialRow {
   app_login_name: string;
   password: string;
   expiry_at: string | null;
-  notes: string | null;
   created_at: string;
 }
+
 
 interface ProfileLite {
   id: string;
@@ -178,8 +178,8 @@ function AdminCredentialsPage() {
                                   {expired ? "Expired" : "Expires"} {exp.toLocaleString()}
                                 </div>
                               )}
-                              {c.notes && <div className="text-xs text-muted-foreground line-clamp-1 mt-0.5">{c.notes}</div>}
                             </div>
+
                             <div className="flex items-center gap-2 px-2.5 py-1.5 rounded bg-surface-2 border border-border font-mono text-xs min-w-[170px]">
                               <span className="flex-1 truncate">{revealed[c.id] ? c.password : "•".repeat(Math.min(c.password.length, 12))}</span>
                               <button onClick={() => setRevealed((s) => ({ ...s, [c.id]: !s[c.id] }))} className="text-muted-foreground hover:text-foreground">
@@ -244,8 +244,8 @@ function CredentialEditor({
   const [appLoginName, setAppLoginName] = useState(row?.app_login_name ?? "");
   const [password, setPassword] = useState(row?.password ?? "");
   const [expiry, setExpiry] = useState(row?.expiry_at ? row.expiry_at.slice(0, 16) : "");
-  const [notes, setNotes] = useState(row?.notes ?? "");
   const [busy, setBusy] = useState(false);
+
 
   const generate = () => {
     const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#$%";
@@ -265,8 +265,8 @@ function CredentialEditor({
         password,
         owner_id: ownerId,
         expiry_at: expiry ? new Date(expiry).toISOString() : null,
-        notes: notes || null,
       };
+
       if (row) {
         const { error } = await supabase.from("app_credentials").update(payload as never).eq("id", row.id);
         if (error) throw error;
@@ -301,10 +301,8 @@ function CredentialEditor({
           <Field label="Expiry (optional)">
             <input type="datetime-local" value={expiry} onChange={(e) => setExpiry(e.target.value)} className="ed-input" />
           </Field>
-          <Field label="Notes (optional)">
-            <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} className="ed-input resize-none" />
-          </Field>
         </div>
+
         <div className="flex justify-end gap-2 mt-5">
           <button onClick={onClose} className="ed-cancel px-4 py-2 rounded-lg text-sm font-medium">Cancel</button>
           <button onClick={save} disabled={busy} className="ed-save px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2">

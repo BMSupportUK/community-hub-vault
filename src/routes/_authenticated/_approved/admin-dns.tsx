@@ -14,9 +14,9 @@ interface DnsRow {
   id: string;
   label: string;
   code: string;
-  notes: string | null;
   created_at: string;
 }
+
 
 function AdminDnsPage() {
   const { user, hasAny, loading } = useAuth();
@@ -62,8 +62,9 @@ function AdminDnsPage() {
   const filtered = rows.filter((r) => {
     const q = query.trim().toLowerCase();
     if (!q) return true;
-    return r.label.toLowerCase().includes(q) || r.code.toLowerCase().includes(q) || (r.notes ?? "").toLowerCase().includes(q);
+    return r.label.toLowerCase().includes(q) || r.code.toLowerCase().includes(q);
   });
+
 
   return (
     <main className="flex-1 overflow-y-auto">
@@ -124,8 +125,8 @@ function AdminDnsPage() {
                     </button>
                   </div>
                 </div>
-                {r.notes && <p className="text-xs text-muted-foreground whitespace-pre-wrap">{r.notes}</p>}
               </li>
+
             ))}
           </ul>
         )}
@@ -151,14 +152,15 @@ function DnsEditor({ row, currentUserId, onClose, onSaved }: {
 }) {
   const [label, setLabel] = useState(row?.label ?? "");
   const [code, setCode] = useState(row?.code ?? "");
-  const [notes, setNotes] = useState(row?.notes ?? "");
   const [busy, setBusy] = useState(false);
+
 
   const save = async () => {
     if (!label.trim() || !code.trim()) return toast.error("Label and code required");
     setBusy(true);
     try {
-      const payload = { label: label.trim(), code: code.trim(), notes: notes.trim() || null };
+      const payload = { label: label.trim(), code: code.trim() };
+
       if (row) {
         const { error } = await supabase.from("qd_dns_codes").update(payload).eq("id", row.id);
         if (error) throw error;
@@ -191,12 +193,8 @@ function DnsEditor({ row, currentUserId, onClose, onSaved }: {
             <input value={code} onChange={(e) => setCode(e.target.value)} maxLength={255}
               className="w-full px-3 py-2 rounded-lg bg-surface-2 border border-border text-sm font-mono" />
           </label>
-          <label className="block">
-            <span className="text-xs text-muted-foreground mb-1 block">Notes (optional)</span>
-            <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} maxLength={500}
-              className="w-full px-3 py-2 rounded-lg bg-surface-2 border border-border text-sm resize-none" />
-          </label>
         </div>
+
         <div className="flex justify-end gap-2 mt-5">
           <button onClick={onClose} className="px-4 py-2 rounded-lg border border-border text-sm">Cancel</button>
           <button onClick={save} disabled={busy} className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium flex items-center gap-2 disabled:opacity-60">
