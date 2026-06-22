@@ -405,8 +405,28 @@ function ProfilePage() {
   };
 
   const sortedRoles = useMemo(() => {
-    const order: AppRole[] = ["admin", "management", "moderator", "staff", "member", "pending", "banned"];
-    return [...roles].sort((a, b) => order.indexOf(a) - order.indexOf(b));
+    const order: AppRole[] = [
+      "admin",
+      "management",
+      "moderator",
+      "staff",
+      "subscriber",
+      "nonsubscriber",
+      "member",
+      "boro_fan_zone_moderator",
+      "boro_fan_zone_member",
+      "pending",
+      "rejected",
+      "banned",
+    ];
+    return [...roles].sort((a, b) => {
+      const ai = order.indexOf(a);
+      const bi = order.indexOf(b);
+      // Unknown roles go to the end, not the front (indexOf returns -1).
+      const an = ai === -1 ? Number.MAX_SAFE_INTEGER : ai;
+      const bn = bi === -1 ? Number.MAX_SAFE_INTEGER : bi;
+      return an - bn;
+    });
   }, [roles]);
 
   if (loading) {
