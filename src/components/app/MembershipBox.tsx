@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
-import { CalendarClock, BadgeCheck } from "lucide-react";
+import { CalendarClock, BadgeCheck, ExternalLink } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useUserTimezone } from "@/hooks/use-user-timezone";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
 
 type Cred = { app_login_name: string | null; expiry_at: string | null };
 
@@ -13,11 +15,13 @@ export function MembershipBox() {
   const tz = useUserTimezone();
   const [creds, setCreds] = useState<Cred[]>([]);
   const [loaded, setLoaded] = useState(false);
+  const [username, setUsername] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) {
       setCreds([]);
       setLoaded(true);
+      setUsername(null);
       return;
     }
     let active = true;
@@ -34,7 +38,19 @@ export function MembershipBox() {
           setLoaded(true);
         });
     };
+    const loadUsername = () => {
+      supabase
+        .from("profiles")
+        .select("username")
+        .eq("id", user.id)
+        .maybeSingle()
+        .then(({ data }) => {
+          if (!active) return;
+          setUsername(data?.username ?? null);
+        });
+    };
     load();
+    loadUsername();
     const channel = supabase
       .channel(`membership-box-${user.id}-${Math.random().toString(36).slice(2)}`)
       .on(
@@ -112,6 +128,14 @@ export function MembershipBox() {
             <BadgeCheck className="size-3.5 text-violet-300" />
             <h2 className="font-display text-[11px] font-bold tracking-wider uppercase">Your Subscription Details</h2>
           </div>
+          {username && (
+            <Button asChild variant="ghost" size="sm" className="h-auto px-2 py-1 text-[10px] gap-1 text-violet-200 hover:text-violet-100 hover:bg-violet-600/20">
+              <Link to="/u/$username" params={{ username }} search={{ tab: "creds" }}>
+                View credentials
+                <ExternalLink className="size-3" />
+              </Link>
+            </Button>
+          )}
         </div>
         {items.length > 1 ? (
           <Tabs defaultValue="0" className="w-full">
