@@ -51,6 +51,32 @@ const ROLE_COLOR: Record<string, string> = {
   banned: "bg-red-500/20 text-red-300 ring-red-400/40",
 };
 
+// BM Support roles take priority over Boro Fan Zone roles when a user has both,
+// so the badge list shows their support role first.
+const ROLE_PRIORITY = [
+  "admin",
+  "management",
+  "moderator",
+  "staff",
+  "subscriber",
+  "nonsubscriber",
+  "member",
+  "boro_fan_zone_moderator",
+  "boro_fan_zone_member",
+  "pending",
+  "rejected",
+  "banned",
+];
+function sortRolesByPriority(roles: string[]): string[] {
+  return [...roles].sort((a, b) => {
+    const ai = ROLE_PRIORITY.indexOf(a);
+    const bi = ROLE_PRIORITY.indexOf(b);
+    const an = ai === -1 ? Number.MAX_SAFE_INTEGER : ai;
+    const bn = bi === -1 ? Number.MAX_SAFE_INTEGER : bi;
+    return an - bn;
+  });
+}
+
 function MembersPage() {
   const { hasAny, user: viewer } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
@@ -217,7 +243,7 @@ function MembersPage() {
           </div>
         )}
         {filtered.map((p) => {
-          const userRoles = rolesByUser[p.id] ?? ["member"];
+          const userRoles = sortRolesByPriority(rolesByUser[p.id] ?? ["member"]);
           const name = p.display_name ?? p.username ?? "Unknown";
           const initial = name.slice(0, 1).toUpperCase();
           const isOnline = onlineUsers.has(p.id);
