@@ -27,7 +27,7 @@ export function MembershipBox() {
         .select("app_login_name, expiry_at")
         .eq("owner_id", user.id)
         .not("expiry_at", "is", null)
-        .order("expiry_at", { ascending: false })
+        .order("expiry_at", { ascending: true })
         .then(({ data }) => {
           if (!active) return;
           setCreds((data as Cred[] | null) ?? []);
