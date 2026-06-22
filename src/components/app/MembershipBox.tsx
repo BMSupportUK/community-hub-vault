@@ -128,14 +128,6 @@ export function MembershipBox() {
             <BadgeCheck className="size-3.5 text-violet-300" />
             <h2 className="font-display text-[11px] font-bold tracking-wider uppercase">Your Subscription Details</h2>
           </div>
-          {username && (
-            <Button asChild variant="ghost" size="sm" className="h-auto px-2 py-1 text-[10px] gap-1 text-violet-200 hover:text-violet-100 hover:bg-violet-600/20">
-              <Link to="/u/$username" params={{ username }} search={{ tab: "creds" }}>
-                View credentials
-                <ExternalLink className="size-3" />
-              </Link>
-            </Button>
-          )}
         </div>
         {items.length > 1 ? (
           <Tabs defaultValue="0" className="w-full">
@@ -153,11 +145,33 @@ export function MembershipBox() {
             {items.map((c, i) => (
               <TabsContent key={i} value={String(i)} className="mt-0">
                 <ul className="px-3 py-3 space-y-2">{renderItem(c, i)}</ul>
+                {username && (
+                  <div className="px-3 pb-3 text-center">
+                    <Button asChild variant="ghost" size="sm" className="h-auto px-2 py-1 text-[10px] gap-1 text-violet-200 hover:text-violet-100 hover:bg-violet-600/20">
+                      <Link to="/u/$username" params={{ username }} search={{ tab: "creds" }}>
+                        View credentials
+                        <ExternalLink className="size-3" />
+                      </Link>
+                    </Button>
+                  </div>
+                )}
               </TabsContent>
             ))}
           </Tabs>
         ) : (
-          <ul className="px-3 py-3 space-y-2">{items.map((c, i) => renderItem(c, i))}</ul>
+          <>
+            <ul className="px-3 py-3 space-y-2">{items.map((c, i) => renderItem(c, i))}</ul>
+            {username && (
+              <div className="px-3 pb-3 text-center">
+                <Button asChild variant="ghost" size="sm" className="h-auto px-2 py-1 text-[10px] gap-1 text-violet-200 hover:text-violet-100 hover:bg-violet-600/20">
+                  <Link to="/u/$username" params={{ username }} search={{ tab: "creds" }}>
+                    View credentials
+                    <ExternalLink className="size-3" />
+                  </Link>
+                </Button>
+              </div>
+            )}
+          </>
         )}
       </div>
     </section>
