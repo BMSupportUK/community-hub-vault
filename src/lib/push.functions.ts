@@ -462,3 +462,36 @@ export const registerDeviceToken = createServerFn({ method: "POST" })
     console.log(`[push] registered ${data.platform} token`);
     return { ok: true };
   });
+
+export const sendNewTicketPush = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z.object({
+      ticketId: z.string().uuid(),
+      subject: z.string().min(1).max(300),
+      categorySlug: z.string().max(120).optional(),
+    }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const name = await getActorName(context.userId);
+    // Owner-management tickets are restricted to admin + management; all
+    // other categories notify the full staff group.
+    const roles =
+      data.categorySlug === "owner-management"
+        ? (["admin", "management"] as const)
+        : (["admin", "management", "staff", "moderator"] as const);
+    const title = "New support ticket";
+    const body = `${name}: ${data.subject}`.slice(0, 200);
+    const url = "/tickets";
+    const tag = `ticket-${data.ticketId}`;
+    const [web, fcm] = await Promise.all([
+      broadcastToRoles([...roles], title, body, url, tag).catch((e) => ({ sent: 0, error: String(e) })),
+      pushToRoles([...roles], {
+        title,
+        body,
+        data: { kind: "ticket", ticketId: data.ticketId, url },
+      }).catch((e) => ({ sent: 0, failed: 0, error: String(e) })),
+    ]);
+    console.log(`[push] new ticket ${data.ticketId} web=${web.sent} fcm=${fcm.sent}`);
+    return { web, fcm };
+  });
