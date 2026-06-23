@@ -643,6 +643,7 @@ function NewTicketForm({
   const [uploadProgress, setUploadProgress] = useState<UploadProgress | null>(null);
   const [captchaToken, setCaptchaToken] = useState("");
   const verifyCaptcha = useServerFn(verifyTurnstile);
+  const notifyNewTicket = useServerFn(sendNewTicketPush);
 
   useEffect(() => { if (!categoryId && categories[0]) setCategoryId(categories[0].id); }, [categories, categoryId]);
 
@@ -732,6 +733,12 @@ function NewTicketForm({
     }
 
     toast.success("Ticket opened");
+    // Fire-and-forget: push (web + FCM) to staff so background/closed
+    // browsers and the Android app see the alert even when the page is
+    // not in focus.
+    void notifyNewTicket({
+      data: { ticketId: t.id, subject: parsed.data.subject, categorySlug: cat?.slug },
+    }).catch((e) => console.error("[ticket] new ticket push failed", e));
     onCreated(t.id);
   };
 
