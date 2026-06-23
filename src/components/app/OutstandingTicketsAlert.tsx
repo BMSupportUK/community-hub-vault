@@ -3,6 +3,9 @@ import { useNavigate } from "@tanstack/react-router";
 import { LifeBuoy } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { toast } from "sonner";
+import { playSound } from "@/lib/sound";
+import ticketAudio from "@/assets/ticket-notify.mp3";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,6 +29,7 @@ export function OutstandingTicketsAlert() {
   useEffect(() => {
     if (!user || !isStaffRole) return;
     let cancelled = false;
+    let bootstrapped = false;
 
     const load = async (autoOpen: boolean) => {
       const [openRes, progRes, unassignedRes] = await Promise.all([
@@ -46,15 +50,33 @@ export function OutstandingTicketsAlert() {
         sessionStorage.setItem(SESSION_KEY, "1");
         setOpen(true);
       }
+      bootstrapped = true;
     };
 
     void load(true);
 
     const ch = supabase
       .channel("outstanding-tickets-alert")
-      .on("postgres_changes", { event: "*", schema: "public", table: "tickets" }, () => {
-        void load(false);
-      })
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "tickets" },
+        (payload) => {
+          void load(false);
+          // Surface new tickets the moment they arrive — don't wait for refresh.
+          if (
+            bootstrapped &&
+            payload.eventType === "INSERT" &&
+            (payload.new as { user_id?: string } | null)?.user_id !== user.id
+          ) {
+            const subject =
+              (payload.new as { subject?: string } | null)?.subject?.trim() ||
+              "New support ticket";
+            toast.info(subject, { description: "A new support ticket was just opened." });
+            playSound(ticketAudio, { label: "ticket-new", gain: 2.0 });
+            setOpen(true);
+          }
+        },
+      )
       .subscribe();
 
     return () => {
