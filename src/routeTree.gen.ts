@@ -90,6 +90,7 @@ import { Route as ApiPublicHooksWcPredictionRemindersRouteImport } from './route
 import { Route as ApiPublicHooksUserNotificationPushRouteImport } from './routes/api/public/hooks/user-notification-push'
 import { Route as ApiPublicHooksSyncWcScoresRouteImport } from './routes/api/public/hooks/sync-wc-scores'
 import { Route as ApiPublicHooksSubscriptionExpiryRemindersRouteImport } from './routes/api/public/hooks/subscription-expiry-reminders'
+import { Route as ApiPublicHooksStatusIncidentPushRouteImport } from './routes/api/public/hooks/status-incident-push'
 import { Route as ApiPublicHooksStaffNotificationPushRouteImport } from './routes/api/public/hooks/staff-notification-push'
 import { Route as ApiPublicHooksSquareInvoiceRouteImport } from './routes/api/public/hooks/square-invoice'
 import { Route as ApiPublicHooksScheduledRemindersRouteImport } from './routes/api/public/hooks/scheduled-reminders'
@@ -568,6 +569,12 @@ const ApiPublicHooksSubscriptionExpiryRemindersRoute =
     path: '/api/public/hooks/subscription-expiry-reminders',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksStatusIncidentPushRoute =
+  ApiPublicHooksStatusIncidentPushRouteImport.update({
+    id: '/api/public/hooks/status-incident-push',
+    path: '/api/public/hooks/status-incident-push',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksStaffNotificationPushRoute =
   ApiPublicHooksStaffNotificationPushRouteImport.update({
     id: '/api/public/hooks/staff-notification-push',
@@ -780,6 +787,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/scheduled-reminders': typeof ApiPublicHooksScheduledRemindersRoute
   '/api/public/hooks/square-invoice': typeof ApiPublicHooksSquareInvoiceRoute
   '/api/public/hooks/staff-notification-push': typeof ApiPublicHooksStaffNotificationPushRoute
+  '/api/public/hooks/status-incident-push': typeof ApiPublicHooksStatusIncidentPushRoute
   '/api/public/hooks/subscription-expiry-reminders': typeof ApiPublicHooksSubscriptionExpiryRemindersRoute
   '/api/public/hooks/sync-wc-scores': typeof ApiPublicHooksSyncWcScoresRoute
   '/api/public/hooks/user-notification-push': typeof ApiPublicHooksUserNotificationPushRoute
@@ -879,6 +887,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/scheduled-reminders': typeof ApiPublicHooksScheduledRemindersRoute
   '/api/public/hooks/square-invoice': typeof ApiPublicHooksSquareInvoiceRoute
   '/api/public/hooks/staff-notification-push': typeof ApiPublicHooksStaffNotificationPushRoute
+  '/api/public/hooks/status-incident-push': typeof ApiPublicHooksStatusIncidentPushRoute
   '/api/public/hooks/subscription-expiry-reminders': typeof ApiPublicHooksSubscriptionExpiryRemindersRoute
   '/api/public/hooks/sync-wc-scores': typeof ApiPublicHooksSyncWcScoresRoute
   '/api/public/hooks/user-notification-push': typeof ApiPublicHooksUserNotificationPushRoute
@@ -984,6 +993,7 @@ export interface FileRoutesById {
   '/api/public/hooks/scheduled-reminders': typeof ApiPublicHooksScheduledRemindersRoute
   '/api/public/hooks/square-invoice': typeof ApiPublicHooksSquareInvoiceRoute
   '/api/public/hooks/staff-notification-push': typeof ApiPublicHooksStaffNotificationPushRoute
+  '/api/public/hooks/status-incident-push': typeof ApiPublicHooksStatusIncidentPushRoute
   '/api/public/hooks/subscription-expiry-reminders': typeof ApiPublicHooksSubscriptionExpiryRemindersRoute
   '/api/public/hooks/sync-wc-scores': typeof ApiPublicHooksSyncWcScoresRoute
   '/api/public/hooks/user-notification-push': typeof ApiPublicHooksUserNotificationPushRoute
@@ -1088,6 +1098,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/scheduled-reminders'
     | '/api/public/hooks/square-invoice'
     | '/api/public/hooks/staff-notification-push'
+    | '/api/public/hooks/status-incident-push'
     | '/api/public/hooks/subscription-expiry-reminders'
     | '/api/public/hooks/sync-wc-scores'
     | '/api/public/hooks/user-notification-push'
@@ -1187,6 +1198,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/scheduled-reminders'
     | '/api/public/hooks/square-invoice'
     | '/api/public/hooks/staff-notification-push'
+    | '/api/public/hooks/status-incident-push'
     | '/api/public/hooks/subscription-expiry-reminders'
     | '/api/public/hooks/sync-wc-scores'
     | '/api/public/hooks/user-notification-push'
@@ -1291,6 +1303,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/scheduled-reminders'
     | '/api/public/hooks/square-invoice'
     | '/api/public/hooks/staff-notification-push'
+    | '/api/public/hooks/status-incident-push'
     | '/api/public/hooks/subscription-expiry-reminders'
     | '/api/public/hooks/sync-wc-scores'
     | '/api/public/hooks/user-notification-push'
@@ -1337,6 +1350,7 @@ export interface RootRouteChildren {
   ApiPublicHooksScheduledRemindersRoute: typeof ApiPublicHooksScheduledRemindersRoute
   ApiPublicHooksSquareInvoiceRoute: typeof ApiPublicHooksSquareInvoiceRoute
   ApiPublicHooksStaffNotificationPushRoute: typeof ApiPublicHooksStaffNotificationPushRoute
+  ApiPublicHooksStatusIncidentPushRoute: typeof ApiPublicHooksStatusIncidentPushRoute
   ApiPublicHooksSubscriptionExpiryRemindersRoute: typeof ApiPublicHooksSubscriptionExpiryRemindersRoute
   ApiPublicHooksSyncWcScoresRoute: typeof ApiPublicHooksSyncWcScoresRoute
   ApiPublicHooksUserNotificationPushRoute: typeof ApiPublicHooksUserNotificationPushRoute
@@ -1917,6 +1931,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksSubscriptionExpiryRemindersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/status-incident-push': {
+      id: '/api/public/hooks/status-incident-push'
+      path: '/api/public/hooks/status-incident-push'
+      fullPath: '/api/public/hooks/status-incident-push'
+      preLoaderRoute: typeof ApiPublicHooksStatusIncidentPushRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/staff-notification-push': {
       id: '/api/public/hooks/staff-notification-push'
       path: '/api/public/hooks/staff-notification-push'
@@ -2362,6 +2383,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksSquareInvoiceRoute: ApiPublicHooksSquareInvoiceRoute,
   ApiPublicHooksStaffNotificationPushRoute:
     ApiPublicHooksStaffNotificationPushRoute,
+  ApiPublicHooksStatusIncidentPushRoute: ApiPublicHooksStatusIncidentPushRoute,
   ApiPublicHooksSubscriptionExpiryRemindersRoute:
     ApiPublicHooksSubscriptionExpiryRemindersRoute,
   ApiPublicHooksSyncWcScoresRoute: ApiPublicHooksSyncWcScoresRoute,

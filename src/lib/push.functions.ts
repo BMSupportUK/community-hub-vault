@@ -79,7 +79,7 @@ export const removeSubscription = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-async function broadcast(title: string, body: string, url: string, tag: string) {
+export async function broadcast(title: string, body: string, url: string, tag: string) {
   const webpush = await getWebPush();
   const { data: subs, error } = await supabaseAdmin
     .from("push_subscriptions")
