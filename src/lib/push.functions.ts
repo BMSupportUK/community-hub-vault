@@ -147,7 +147,7 @@ export async function broadcastToUser(
   return { sent };
 }
 
-async function broadcastToRoles(
+export async function broadcastToRoles(
   roles: ("admin" | "management" | "staff" | "moderator")[],
   title: string,
   body: string,
