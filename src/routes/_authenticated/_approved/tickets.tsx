@@ -26,6 +26,7 @@ import { PayOrderDialog, OrderProgressStrip } from "@/routes/_authenticated/_app
 import { refreshSquareInvoiceStatus, cancelOrderAndSquareInvoice } from "@/lib/square-invoices.functions";
 import { formatRoleLabel } from "@/lib/role-label";
 import { notifyTicketReply } from "@/lib/ticket-notify.functions";
+import { sendNewTicketPush } from "@/lib/push.functions";
 
 export const Route = createFileRoute("/_authenticated/_approved/tickets")({
   validateSearch: (s: Record<string, unknown>) => ({
