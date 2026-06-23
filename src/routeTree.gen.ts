@@ -90,6 +90,7 @@ import { Route as ApiPublicHooksWcPredictionRemindersRouteImport } from './route
 import { Route as ApiPublicHooksUserNotificationPushRouteImport } from './routes/api/public/hooks/user-notification-push'
 import { Route as ApiPublicHooksSyncWcScoresRouteImport } from './routes/api/public/hooks/sync-wc-scores'
 import { Route as ApiPublicHooksSubscriptionExpiryRemindersRouteImport } from './routes/api/public/hooks/subscription-expiry-reminders'
+import { Route as ApiPublicHooksStaffNotificationPushRouteImport } from './routes/api/public/hooks/staff-notification-push'
 import { Route as ApiPublicHooksSquareInvoiceRouteImport } from './routes/api/public/hooks/square-invoice'
 import { Route as ApiPublicHooksScheduledRemindersRouteImport } from './routes/api/public/hooks/scheduled-reminders'
 import { Route as ApiPublicHooksRefreshStreamingPricesRouteImport } from './routes/api/public/hooks/refresh-streaming-prices'
@@ -567,6 +568,12 @@ const ApiPublicHooksSubscriptionExpiryRemindersRoute =
     path: '/api/public/hooks/subscription-expiry-reminders',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksStaffNotificationPushRoute =
+  ApiPublicHooksStaffNotificationPushRouteImport.update({
+    id: '/api/public/hooks/staff-notification-push',
+    path: '/api/public/hooks/staff-notification-push',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksSquareInvoiceRoute =
   ApiPublicHooksSquareInvoiceRouteImport.update({
     id: '/api/public/hooks/square-invoice',
@@ -772,6 +779,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/refresh-streaming-prices': typeof ApiPublicHooksRefreshStreamingPricesRoute
   '/api/public/hooks/scheduled-reminders': typeof ApiPublicHooksScheduledRemindersRoute
   '/api/public/hooks/square-invoice': typeof ApiPublicHooksSquareInvoiceRoute
+  '/api/public/hooks/staff-notification-push': typeof ApiPublicHooksStaffNotificationPushRoute
   '/api/public/hooks/subscription-expiry-reminders': typeof ApiPublicHooksSubscriptionExpiryRemindersRoute
   '/api/public/hooks/sync-wc-scores': typeof ApiPublicHooksSyncWcScoresRoute
   '/api/public/hooks/user-notification-push': typeof ApiPublicHooksUserNotificationPushRoute
@@ -870,6 +878,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/refresh-streaming-prices': typeof ApiPublicHooksRefreshStreamingPricesRoute
   '/api/public/hooks/scheduled-reminders': typeof ApiPublicHooksScheduledRemindersRoute
   '/api/public/hooks/square-invoice': typeof ApiPublicHooksSquareInvoiceRoute
+  '/api/public/hooks/staff-notification-push': typeof ApiPublicHooksStaffNotificationPushRoute
   '/api/public/hooks/subscription-expiry-reminders': typeof ApiPublicHooksSubscriptionExpiryRemindersRoute
   '/api/public/hooks/sync-wc-scores': typeof ApiPublicHooksSyncWcScoresRoute
   '/api/public/hooks/user-notification-push': typeof ApiPublicHooksUserNotificationPushRoute
@@ -974,6 +983,7 @@ export interface FileRoutesById {
   '/api/public/hooks/refresh-streaming-prices': typeof ApiPublicHooksRefreshStreamingPricesRoute
   '/api/public/hooks/scheduled-reminders': typeof ApiPublicHooksScheduledRemindersRoute
   '/api/public/hooks/square-invoice': typeof ApiPublicHooksSquareInvoiceRoute
+  '/api/public/hooks/staff-notification-push': typeof ApiPublicHooksStaffNotificationPushRoute
   '/api/public/hooks/subscription-expiry-reminders': typeof ApiPublicHooksSubscriptionExpiryRemindersRoute
   '/api/public/hooks/sync-wc-scores': typeof ApiPublicHooksSyncWcScoresRoute
   '/api/public/hooks/user-notification-push': typeof ApiPublicHooksUserNotificationPushRoute
@@ -1077,6 +1087,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/refresh-streaming-prices'
     | '/api/public/hooks/scheduled-reminders'
     | '/api/public/hooks/square-invoice'
+    | '/api/public/hooks/staff-notification-push'
     | '/api/public/hooks/subscription-expiry-reminders'
     | '/api/public/hooks/sync-wc-scores'
     | '/api/public/hooks/user-notification-push'
@@ -1175,6 +1186,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/refresh-streaming-prices'
     | '/api/public/hooks/scheduled-reminders'
     | '/api/public/hooks/square-invoice'
+    | '/api/public/hooks/staff-notification-push'
     | '/api/public/hooks/subscription-expiry-reminders'
     | '/api/public/hooks/sync-wc-scores'
     | '/api/public/hooks/user-notification-push'
@@ -1278,6 +1290,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/refresh-streaming-prices'
     | '/api/public/hooks/scheduled-reminders'
     | '/api/public/hooks/square-invoice'
+    | '/api/public/hooks/staff-notification-push'
     | '/api/public/hooks/subscription-expiry-reminders'
     | '/api/public/hooks/sync-wc-scores'
     | '/api/public/hooks/user-notification-push'
@@ -1323,6 +1336,7 @@ export interface RootRouteChildren {
   ApiPublicHooksRefreshStreamingPricesRoute: typeof ApiPublicHooksRefreshStreamingPricesRoute
   ApiPublicHooksScheduledRemindersRoute: typeof ApiPublicHooksScheduledRemindersRoute
   ApiPublicHooksSquareInvoiceRoute: typeof ApiPublicHooksSquareInvoiceRoute
+  ApiPublicHooksStaffNotificationPushRoute: typeof ApiPublicHooksStaffNotificationPushRoute
   ApiPublicHooksSubscriptionExpiryRemindersRoute: typeof ApiPublicHooksSubscriptionExpiryRemindersRoute
   ApiPublicHooksSyncWcScoresRoute: typeof ApiPublicHooksSyncWcScoresRoute
   ApiPublicHooksUserNotificationPushRoute: typeof ApiPublicHooksUserNotificationPushRoute
@@ -1903,6 +1917,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksSubscriptionExpiryRemindersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/staff-notification-push': {
+      id: '/api/public/hooks/staff-notification-push'
+      path: '/api/public/hooks/staff-notification-push'
+      fullPath: '/api/public/hooks/staff-notification-push'
+      preLoaderRoute: typeof ApiPublicHooksStaffNotificationPushRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/square-invoice': {
       id: '/api/public/hooks/square-invoice'
       path: '/api/public/hooks/square-invoice'
@@ -2339,6 +2360,8 @@ const rootRouteChildren: RootRouteChildren = {
     ApiPublicHooksRefreshStreamingPricesRoute,
   ApiPublicHooksScheduledRemindersRoute: ApiPublicHooksScheduledRemindersRoute,
   ApiPublicHooksSquareInvoiceRoute: ApiPublicHooksSquareInvoiceRoute,
+  ApiPublicHooksStaffNotificationPushRoute:
+    ApiPublicHooksStaffNotificationPushRoute,
   ApiPublicHooksSubscriptionExpiryRemindersRoute:
     ApiPublicHooksSubscriptionExpiryRemindersRoute,
   ApiPublicHooksSyncWcScoresRoute: ApiPublicHooksSyncWcScoresRoute,
