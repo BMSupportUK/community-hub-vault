@@ -254,20 +254,6 @@ function BoroPredictionsPage() {
       return t >= now && t < end;
     }).length;
   }, [fixtures]);
-  const handleSaveVenue = async (f: BoroFixtureDTO, venue: string | null) => {
-    await adminUpsertFixtureFn({
-      data: {
-        id: f.id,
-        competition: f.competition,
-        homeTeam: f.homeTeam,
-        awayTeam: f.awayTeam,
-        kickoffAt: f.kickoffAt,
-        venue,
-      },
-    });
-    toast.success("Venue updated");
-    await loadAll();
-  };
   const myStats = useMemo(
     () => (leaderboard ?? []).find((r) => r.userId === myEntrantId) ?? null,
     [leaderboard, myEntrantId],
@@ -397,12 +383,12 @@ function BoroPredictionsPage() {
 
             <TabsContent value="fixtures" className="mt-4">
               {loading || !fixtures ? <Loading /> : (
-                <FixturesByMonth fixtures={upcoming} canPredict={canPredict} canManage={canManage} onSave={handleSave} onSaveVenue={handleSaveVenue} emptyText="No upcoming fixtures yet." ascending />
+                <FixturesByMonth fixtures={upcoming} canPredict={canPredict} canManage={canManage} onSave={handleSave} emptyText="No upcoming fixtures yet." ascending />
               )}
             </TabsContent>
             <TabsContent value="results" className="mt-4">
               {loading || !fixtures ? <Loading /> : (
-                <FixturesByMonth fixtures={completed} canPredict={false} canManage={canManage} onSave={handleSave} onSaveVenue={handleSaveVenue} emptyText="No completed matches yet." ascending={false} />
+                <FixturesByMonth fixtures={completed} canPredict={false} canManage={canManage} onSave={handleSave} emptyText="No completed matches yet." ascending={false} />
               )}
             </TabsContent>
             <TabsContent value="leaderboard" className="mt-4">

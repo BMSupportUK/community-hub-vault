@@ -124,6 +124,54 @@ function norm(s: string) {
   return s.trim().toLowerCase().replace(/\s+/g, " ");
 }
 
+// Championship 2026/27 home grounds — used to auto-populate the venue
+// for both home and away Boro fixtures. Keys are normalised team names.
+const HOME_GROUNDS: Record<string, string> = {
+  "middlesbrough": "Riverside Stadium",
+  "birmingham city": "St Andrew's",
+  "birmingham": "St Andrew's",
+  "blackburn rovers": "Ewood Park",
+  "blackburn": "Ewood Park",
+  "bristol city": "Ashton Gate",
+  "charlton athletic": "The Valley",
+  "charlton": "The Valley",
+  "coventry city": "Coventry Building Society Arena",
+  "coventry": "Coventry Building Society Arena",
+  "derby county": "Pride Park Stadium",
+  "derby": "Pride Park Stadium",
+  "hull city": "MKM Stadium",
+  "hull": "MKM Stadium",
+  "ipswich town": "Portman Road",
+  "ipswich": "Portman Road",
+  "leicester city": "King Power Stadium",
+  "leicester": "King Power Stadium",
+  "millwall": "The Den",
+  "norwich city": "Carrow Road",
+  "norwich": "Carrow Road",
+  "oxford united": "Kassam Stadium",
+  "oxford": "Kassam Stadium",
+  "portsmouth": "Fratton Park",
+  "preston north end": "Deepdale",
+  "preston": "Deepdale",
+  "queens park rangers": "Loftus Road",
+  "qpr": "Loftus Road",
+  "sheffield united": "Bramall Lane",
+  "sheffield wednesday": "Hillsborough",
+  "southampton": "St Mary's Stadium",
+  "stoke city": "bet365 Stadium",
+  "stoke": "bet365 Stadium",
+  "swansea city": "Swansea.com Stadium",
+  "swansea": "Swansea.com Stadium",
+  "watford": "Vicarage Road",
+  "west bromwich albion": "The Hawthorns",
+  "west brom": "The Hawthorns",
+  "wrexham": "Racecourse Ground",
+};
+
+function venueFor(homeTeam: string): string | null {
+  return HOME_GROUNDS[norm(homeTeam)] ?? null;
+}
+
 async function syncFixtures() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
@@ -176,13 +224,12 @@ async function syncFixtures() {
     const existingRow = byTeams.get(teamKey);
 
     if (!existingRow) {
-      const isHome = /middlesbrough/i.test(fx.home_team);
       const { error } = await supabaseAdmin.from("boro_fixtures").insert({
         competition: fx.competition ?? "Championship",
         home_team: fx.home_team,
         away_team: fx.away_team,
         kickoff_at: newKickoff,
-        venue: isHome ? "Riverside Stadium" : null,
+        venue: venueFor(fx.home_team),
         status: "SCHEDULED",
       });
       if (error) errors.push(`insert ${fx.home_team} v ${fx.away_team}: ${error.message}`);
@@ -195,12 +242,17 @@ async function syncFixtures() {
     const changes: {
       kickoff_at?: string;
       competition?: string;
+      venue?: string | null;
     } = {};
     if (new Date(existingRow.kickoff_at).toISOString() !== newKickoff) {
       changes.kickoff_at = newKickoff;
     }
     if (fx.competition && fx.competition !== existingRow.competition) {
       changes.competition = fx.competition;
+    }
+    const expectedVenue = venueFor(fx.home_team);
+    if (expectedVenue && expectedVenue !== existingRow.venue) {
+      changes.venue = expectedVenue;
     }
     if (Object.keys(changes).length === 0) continue;
     const { error } = await supabaseAdmin
