@@ -61,7 +61,15 @@ async function syncBoroScores() {
     if (fx.status === "FINISHED" && ev.status !== "FINISHED") continue;
 
     const newCompetition = fx.competition || ev.competition;
-    const patch: Record<string, unknown> = {};
+    const patch: {
+      status?: string;
+      minute?: number | null;
+      minute_added?: number | null;
+      home_score?: number | null;
+      away_score?: number | null;
+      venue?: string | null;
+      competition?: string;
+    } = {};
     if (ev.status && ev.status !== fx.status) patch.status = ev.status;
     if (ev.minute !== fx.minute) patch.minute = ev.minute;
     if (ev.minuteAdded !== fx.minute_added) patch.minute_added = ev.minuteAdded;
@@ -81,7 +89,7 @@ async function syncBoroScores() {
 
     const { error: upErr } = await supabaseAdmin
       .from("boro_fixtures")
-      .update(patch)
+      .update(patch as never)
       .eq("id", fx.id);
     if (upErr) {
       skipped.push(`update ${ev.home} v ${ev.away}: ${upErr.message}`);
