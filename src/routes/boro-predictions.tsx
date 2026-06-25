@@ -460,6 +460,65 @@ function Loading() {
   return <div className="grid place-items-center py-20 text-muted-foreground"><Loader2 className="size-5 animate-spin" /></div>;
 }
 
+function UpcomingMonthCard({ fixtures }: { fixtures: BoroFixtureDTO[] }) {
+  const now = Date.now();
+  const upcoming = useMemo(() => {
+    const future = fixtures
+      .filter((f) => new Date(f.kickoffAt).getTime() >= now - 2 * 60 * 60 * 1000)
+      .sort((a, b) => +new Date(a.kickoffAt) - +new Date(b.kickoffAt));
+    if (future.length === 0) return { label: null as string | null, items: [] as BoroFixtureDTO[] };
+    const firstKey = future[0].monthKey ?? future[0].kickoffAt.slice(0, 7);
+    const items = future.filter((f) => (f.monthKey ?? f.kickoffAt.slice(0, 7)) === firstKey);
+    const label = new Date(`${firstKey}-01T12:00:00Z`).toLocaleString(undefined, { month: "long", year: "numeric" });
+    return { label, items };
+  }, [fixtures, now]);
+
+  return (
+    <section className="rounded-2xl border border-border bg-surface-1 overflow-hidden">
+      <div className="px-4 py-3 border-b border-border bg-surface-2/60">
+        <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Upcoming this month</div>
+        <div className="font-display text-base font-bold">{upcoming.label ?? "No fixtures"}</div>
+      </div>
+      {upcoming.items.length === 0 ? (
+        <div className="p-4 text-xs text-muted-foreground">Nothing scheduled.</div>
+      ) : (
+        <ul className="divide-y divide-border">
+          {upcoming.items.map((f) => {
+            const isBoroHome = /middlesbrough/i.test(f.homeTeam);
+            const opponent = isBoroHome ? f.awayTeam : f.homeTeam;
+            const d = new Date(f.kickoffAt);
+            return (
+              <li key={f.id} className="px-3 py-2.5 text-xs flex items-center gap-2">
+                <div className="flex flex-col items-center min-w-9">
+                  <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                    {d.toLocaleString(undefined, { month: "short" })}
+                  </span>
+                  <span className="font-display text-base font-bold leading-none tabular-nums">
+                    {d.getDate()}
+                  </span>
+                </div>
+                <TeamKit team={opponent} size={20} />
+                <div className="flex-1 min-w-0">
+                  <div className="truncate font-medium">
+                    <span className={`inline-block w-5 text-[10px] font-bold ${isBoroHome ? "text-emerald-400" : "text-amber-400"}`}>
+                      {isBoroHome ? "H" : "A"}
+                    </span>
+                    {opponent}
+                  </div>
+                  <div className="text-[10px] text-muted-foreground">
+                    {d.toLocaleString(undefined, { weekday: "short", hour: "2-digit", minute: "2-digit" })}
+                    {f.venue ? ` · ${f.venue}` : ""}
+                  </div>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </section>
+  );
+}
+
 function FixturesByMonth({
   fixtures, canPredict, canManage, onSave, onSaveVenue, emptyText, ascending,
 }: {
