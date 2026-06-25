@@ -363,7 +363,32 @@ function BoroPredictionsPage() {
           <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-6">
           <Tabs value={tab} onValueChange={setTab}>
             <TabsList className="grid grid-cols-5 w-full sm:w-auto h-auto gap-1 p-1">
-              <TabsTrigger value="fixtures">Fixtures</TabsTrigger>
+              <TabsTrigger value="fixtures">
+                <span className="flex flex-col items-center gap-0.5">
+                  <span>Fixtures</span>
+                  {(liveCount > 0 || soonCount > 0) && (
+                    <span className="inline-flex items-center gap-1">
+                      {liveCount > 0 && (
+                        <span
+                          className="inline-flex items-center gap-1 rounded-full bg-emerald-500/90 text-white text-[9px] font-bold px-1.5 py-0.5 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.7)]"
+                          title={`${liveCount} live now`}
+                        >
+                          <span className="size-1.5 rounded-full bg-white animate-pulse" />
+                          LIVE {liveCount}
+                        </span>
+                      )}
+                      {soonCount > 0 && (
+                        <span
+                          className="inline-flex items-center rounded-full bg-red-500/90 text-white text-[9px] font-bold px-1.5 py-0.5 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.7)]"
+                          title={`${soonCount} kicking off in the next 24h`}
+                        >
+                          SOON {soonCount}
+                        </span>
+                      )}
+                    </span>
+                  )}
+                </span>
+              </TabsTrigger>
               <TabsTrigger value="results">Results</TabsTrigger>
               <TabsTrigger value="leaderboard">Leaderboard</TabsTrigger>
               <TabsTrigger value="scoring">Scoring</TabsTrigger>
