@@ -26,6 +26,11 @@ async function syncBoroScores() {
   for (const ev of live) {
     const fx = findBoroFixture(rows, ev);
     if (!fx) {
+      // Predictions game is Championship-only — skip inserting cup ties.
+      if (ev.competition !== "Championship") {
+        skipped.push(`skip non-league ${ev.competition}: ${ev.home} v ${ev.away}`);
+        continue;
+      }
       // ESPN knows about a fixture we don't yet — most often a freshly drawn
       // cup tie. Insert it so it shows up on the predictions page.
       const { data: insRows, error: insErr } = await supabaseAdmin
