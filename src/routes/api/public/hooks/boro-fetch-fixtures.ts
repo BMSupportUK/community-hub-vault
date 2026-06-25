@@ -2,8 +2,9 @@ import { createFileRoute } from "@tanstack/react-router";
 
 // 2026/27 Middlesbrough first-team fixtures. Pulled from BBC Sport monthly
 // pages — they are authoritative for kick-off times, kept up to date when the
-// EFL move games for TV, and clearly mark home/away. Cup ties get added as
-// they come up.
+// EFL move games for TV, and clearly mark home/away. We parse the rendered
+// HTML directly rather than going through an LLM extractor (which was
+// hallucinating fixtures that don't exist).
 const SEASON_MONTHS = [
   "2026-08", "2026-09", "2026-10", "2026-11", "2026-12",
   "2027-01", "2027-02", "2027-03", "2027-04", "2027-05",
@@ -18,73 +19,105 @@ type ParsedFixture = {
   venue?: string | null;
 };
 
+const MONTH_NAMES: Record<string, number> = {
+  january: 1, february: 2, march: 3, april: 4, may: 5, june: 6,
+  july: 7, august: 8, september: 9, october: 10, november: 11, december: 12,
+};
+
+// Convert "YYYY-MM-DD HH:MM" in Europe/London to a real UTC ISO string.
+function ukLocalToUtcIso(year: number, month: number, day: number, hour: number, minute: number): string {
+  // British Summer Time runs from the last Sunday of March 01:00 UTC to the
+  // last Sunday of October 01:00 UTC. Inside that window UK clocks are UTC+1.
+  const lastSunday = (y: number, m: number) => {
+    const d = new Date(Date.UTC(y, m, 0)); // last day of month m (1-indexed)
+    return d.getUTCDate() - d.getUTCDay();
+  };
+  const bstStart = Date.UTC(year, 2, lastSunday(year, 3), 1, 0); // March
+  const bstEnd = Date.UTC(year, 9, lastSunday(year, 10), 1, 0); // October
+  const localGuessUtc = Date.UTC(year, month - 1, day, hour, minute);
+  const isBst = localGuessUtc >= bstStart && localGuessUtc < bstEnd;
+  const utcMs = localGuessUtc - (isBst ? 60 * 60 * 1000 : 0);
+  return new Date(utcMs).toISOString();
+}
+
+function stripTags(s: string) {
+  return s.replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&nbsp;/g, " ").trim();
+}
+
 async function scrapeMonth(monthKey: string): Promise<ParsedFixture[]> {
-  const apiKey = process.env.FIRECRAWL_API_KEY;
-  if (!apiKey) throw new Error("FIRECRAWL_API_KEY is not configured");
+  const [yearStr, monthStr] = monthKey.split("-");
+  const year = Number(yearStr);
 
-  const schema = {
-    type: "object",
-    properties: {
-      fixtures: {
-        type: "array",
-        items: {
-          type: "object",
-          properties: {
-            competition: { type: "string" },
-            home_team: { type: "string" },
-            away_team: { type: "string" },
-            kickoff_at: { type: "string", description: "ISO 8601 datetime in UTC" },
-          },
-          required: ["home_team", "away_team", "kickoff_at"],
-        },
-      },
-    },
-    required: ["fixtures"],
-  };
-
-  const res = await fetch("https://api.firecrawl.dev/v2/scrape", {
-    method: "POST",
+  const res = await fetch(`${BBC_BASE}/${monthKey}`, {
     headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
+      "User-Agent":
+        "Mozilla/5.0 (compatible; BMSupportBot/1.0; +https://bmsupport.uk)",
+      Accept: "text/html",
     },
-    body: JSON.stringify({
-      url: `${BBC_BASE}/${monthKey}`,
-      formats: [
-        {
-          type: "json",
-          schema,
-          prompt:
-            `Extract every Middlesbrough FC senior men's first-team fixture shown on this page for ${monthKey}. ` +
-            "One side of every fixture is Middlesbrough. Identify home/away from the order on the page — " +
-            "the team listed first is the home team. competition is the league or cup shown above the match " +
-            "(e.g. \"Championship\", \"FA Cup\", \"EFL Cup\"). kickoff_at MUST be a UTC ISO-8601 datetime " +
-            `derived from the displayed kick-off time, which is UK local time (BST in Aug-Oct ${monthKey.slice(0,4)}, ` +
-            "GMT in Nov-Mar, BST again from late Mar). If only a date is shown, use 15:00 UK time. " +
-            "Skip Under-21, Under-18, Academy, Youth, Women's, Reserves, B-team and friendly matches.",
-        },
-      ],
-      onlyMainContent: true,
-    }),
   });
+  if (!res.ok) throw new Error(`BBC fetch failed for ${monthKey}: HTTP ${res.status}`);
+  const html = await res.text();
 
-  if (!res.ok) {
-    const body = await res.text();
-    throw new Error(`Firecrawl scrape failed for ${monthKey} [${res.status}]: ${body}`);
+  // Each match block has, in order:
+  //   <h2 ...GroupHeader...>Saturday 15th August</h2>
+  //   (optionally other dates/headers in between)
+  //   <h3 ...SecondaryHeading...>Championship</h3>
+  //   <span ...VisuallyHidden...>Middlesbrough versus Lincoln City kick off 15:00</span>
+  // We walk the document, tracking the most recent date H2 and competition H3,
+  // and emit a fixture each time we see an "X versus Y kick off HH:MM" span.
+  const tokenRe =
+    /<h2[^>]*GroupHeader[^>]*>([^<]+)<\/h2>|<h3[^>]*SecondaryHeading[^>]*>([^<]+)<\/h3>|<span[^>]*VisuallyHidden[^>]*>([^<]*?versus[^<]*?kick off[^<]*?)<\/span>/g;
+
+  let currentDate: { day: number; month: number; year: number } | null = null;
+  let currentComp: string | null = null;
+  const out: ParsedFixture[] = [];
+  const seen = new Set<string>();
+  let m: RegExpExecArray | null;
+  while ((m = tokenRe.exec(html)) !== null) {
+    if (m[1]) {
+      // e.g. "Saturday 15th August" or "Tuesday 1st September"
+      const text = stripTags(m[1]);
+      const dm = text.match(/(\d{1,2})(?:st|nd|rd|th)?\s+([A-Za-z]+)/);
+      if (dm) {
+        const day = Number(dm[1]);
+        const monthName = dm[2].toLowerCase();
+        const mo = MONTH_NAMES[monthName];
+        if (mo) {
+          // The page is for monthKey, but BBC sometimes leaks the first
+          // fixture of the next month onto this page. If the displayed month
+          // name is earlier in the calendar than monthKey's month, it must be
+          // next calendar year (Dec -> Jan rollover, etc.).
+          let y = year;
+          const pageMonth = Number(monthStr);
+          if (mo < pageMonth - 6) y = year + 1;
+          else if (mo > pageMonth + 6) y = year - 1;
+          currentDate = { day, month: mo, year: y };
+        }
+      }
+    } else if (m[2]) {
+      currentComp = stripTags(m[2]);
+    } else if (m[3] && currentDate) {
+      const text = stripTags(m[3]);
+      const fm = text.match(/^(.*?)\s+versus\s+(.*?)\s+kick off\s+(\d{1,2}):(\d{2})/i);
+      if (!fm) continue;
+      const home = fm[1].trim();
+      const away = fm[2].trim();
+      const hh = Number(fm[3]);
+      const mm = Number(fm[4]);
+      if (!/middlesbrough/i.test(home) && !/middlesbrough/i.test(away)) continue;
+      const kickoff = ukLocalToUtcIso(currentDate.year, currentDate.month, currentDate.day, hh, mm);
+      const key = `${home.toLowerCase()}|${away.toLowerCase()}|${kickoff.slice(0, 10)}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push({
+        competition: currentComp ?? "Championship",
+        home_team: home,
+        away_team: away,
+        kickoff_at: kickoff,
+      });
+    }
   }
-  const json = (await res.json()) as {
-    data?: { json?: { fixtures?: ParsedFixture[] } };
-  };
-  const fixtures = json.data?.json?.fixtures ?? [];
-  const boroRe = /middlesbrough/i;
-  return fixtures.filter(
-    (f) =>
-      f.home_team &&
-      f.away_team &&
-      f.kickoff_at &&
-      !Number.isNaN(Date.parse(f.kickoff_at)) &&
-      (boroRe.test(f.home_team) || boroRe.test(f.away_team)),
-  );
+  return out;
 }
 
 function norm(s: string) {
