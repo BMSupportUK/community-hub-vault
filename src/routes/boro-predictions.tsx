@@ -726,9 +726,6 @@ function FixtureCard({
   const [ap, setAp] = useState(fixture.myPrediction?.awayPred?.toString() ?? "");
   const [editing, setEditing] = useState(!hasPick);
   const [busy, setBusy] = useState(false);
-  const [editingVenue, setEditingVenue] = useState(false);
-  const [venueDraft, setVenueDraft] = useState(fixture.venue ?? "");
-  const [savingVenue, setSavingVenue] = useState(false);
   const dirty = !locked && canPredict && hp !== "" && ap !== "" &&
     (Number(hp) !== fixture.myPrediction?.homePred || Number(ap) !== fixture.myPrediction?.awayPred);
 
