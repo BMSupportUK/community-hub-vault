@@ -99,6 +99,7 @@ export const listBoroFixtures = createServerFn({ method: "GET" })
       supabase
         .from("boro_fixtures")
         .select("id, competition, home_team, away_team, kickoff_at, venue, home_score, away_score, status, minute, minute_added, month_key")
+        .eq("competition", "Championship")
         .order("kickoff_at", { ascending: true }),
       supabase
         .from("boro_predictions")
@@ -212,6 +213,7 @@ export const getEntrantBoroPredictions = createServerFn({ method: "GET" })
         "home_pred, away_pred, points, fixture:boro_fixtures!inner(id, competition, home_team, away_team, kickoff_at, home_score, away_score, status)",
       )
       .eq(col, data.entrantId)
+      .eq("fixture.competition", "Championship")
       .lte("fixture.kickoff_at", nowIso);
     if (error) throw new Error(error.message);
     return (rows ?? [])
