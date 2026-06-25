@@ -13,6 +13,7 @@ import {
 } from "@/lib/boro-match-centre.functions";
 import { useAuth } from "@/hooks/use-auth";
 import { useUserTimezone } from "@/hooks/use-user-timezone";
+import { TeamKit } from "@/lib/boro-team-kits";
 
 const BORO = "Middlesbrough";
 
@@ -66,12 +67,7 @@ function TeamRow({
             loading="lazy"
           />
         ) : (
-          <span
-            className={`inline-block size-5 rounded-full ring-1 ring-white/20 ${
-              isBoro(name) ? "bg-[#E11B22]" : "bg-amber-300"
-            }`}
-            aria-hidden
-          />
+          <TeamKit team={name} size={26} />
         )}
       </div>
       <span className="flex-1 truncate text-base font-medium">{name}</span>
