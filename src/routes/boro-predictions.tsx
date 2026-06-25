@@ -15,6 +15,7 @@ import {
   getBoroEntrantStatus,
   joinBoroPredictor,
   adminDeleteBoroEntrant,
+  adminUpsertBoroFixture,
   getEntrantBoroPredictions,
   type BoroFixtureDTO,
   type BoroLeaderboardRowDTO,
@@ -31,6 +32,7 @@ import {
 } from "@/lib/boro-guest.functions";
 import { LandingHeader } from "@/components/LandingHeader";
 import { IconRail } from "@/components/app/IconRail";
+import { TeamKit } from "@/lib/boro-team-kits";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -75,6 +77,7 @@ function BoroPredictionsPage() {
   const statusFn = useServerFn(getBoroEntrantStatus);
   const joinFn = useServerFn(joinBoroPredictor);
   const deleteEntrantFn = useServerFn(adminDeleteBoroEntrant);
+  const adminUpsertFixtureFn = useServerFn(adminUpsertBoroFixture);
 
   const guestRegisterFn = useServerFn(boroGuestSignInOrRegister);
   const guestSignInExistingFn = useServerFn(boroGuestSignInExisting);
@@ -159,6 +162,20 @@ function BoroPredictionsPage() {
 
   const upcoming = useMemo(() => (fixtures ?? []).filter((f) => !isFinished(f)), [fixtures]);
   const completed = useMemo(() => (fixtures ?? []).filter((f) => isFinished(f)), [fixtures]);
+  const handleSaveVenue = async (f: BoroFixtureDTO, venue: string | null) => {
+    await adminUpsertFixtureFn({
+      data: {
+        id: f.id,
+        competition: f.competition,
+        homeTeam: f.homeTeam,
+        awayTeam: f.awayTeam,
+        kickoffAt: f.kickoffAt,
+        venue,
+      },
+    });
+    toast.success("Venue updated");
+    await loadAll();
+  };
   const myStats = useMemo(
     () => (leaderboard ?? []).find((r) => r.userId === myEntrantId) ?? null,
     [leaderboard, myEntrantId],
@@ -263,12 +280,12 @@ function BoroPredictionsPage() {
 
             <TabsContent value="fixtures" className="mt-4">
               {loading || !fixtures ? <Loading /> : (
-                <FixturesByMonth fixtures={upcoming} canPredict={canPredict} onSave={handleSave} emptyText="No upcoming fixtures yet." ascending />
+                <FixturesByMonth fixtures={upcoming} canPredict={canPredict} canManage={canManage} onSave={handleSave} onSaveVenue={handleSaveVenue} emptyText="No upcoming fixtures yet." ascending />
               )}
             </TabsContent>
             <TabsContent value="results" className="mt-4">
               {loading || !fixtures ? <Loading /> : (
-                <FixturesByMonth fixtures={completed} canPredict={false} onSave={handleSave} emptyText="No completed matches yet." ascending={false} />
+                <FixturesByMonth fixtures={completed} canPredict={false} canManage={canManage} onSave={handleSave} onSaveVenue={handleSaveVenue} emptyText="No completed matches yet." ascending={false} />
               )}
             </TabsContent>
             <TabsContent value="leaderboard" className="mt-4">
@@ -366,6 +383,7 @@ function BoroPredictionsPage() {
 
           <aside className="space-y-4 lg:sticky lg:top-6 lg:self-start">
             <BoroPointsSidebar stats={myStats} loading={loading} joined={canPredict} />
+            <UpcomingMonthCard fixtures={upcoming} />
           </aside>
           </div>
         </div>
@@ -442,12 +460,73 @@ function Loading() {
   return <div className="grid place-items-center py-20 text-muted-foreground"><Loader2 className="size-5 animate-spin" /></div>;
 }
 
+function UpcomingMonthCard({ fixtures }: { fixtures: BoroFixtureDTO[] }) {
+  const now = Date.now();
+  const upcoming = useMemo(() => {
+    const future = fixtures
+      .filter((f) => new Date(f.kickoffAt).getTime() >= now - 2 * 60 * 60 * 1000)
+      .sort((a, b) => +new Date(a.kickoffAt) - +new Date(b.kickoffAt));
+    if (future.length === 0) return { label: null as string | null, items: [] as BoroFixtureDTO[] };
+    const firstKey = future[0].monthKey ?? future[0].kickoffAt.slice(0, 7);
+    const items = future.filter((f) => (f.monthKey ?? f.kickoffAt.slice(0, 7)) === firstKey);
+    const label = new Date(`${firstKey}-01T12:00:00Z`).toLocaleString(undefined, { month: "long", year: "numeric" });
+    return { label, items };
+  }, [fixtures, now]);
+
+  return (
+    <section className="rounded-2xl border border-border bg-surface-1 overflow-hidden">
+      <div className="px-4 py-3 border-b border-border bg-surface-2/60">
+        <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Upcoming this month</div>
+        <div className="font-display text-base font-bold">{upcoming.label ?? "No fixtures"}</div>
+      </div>
+      {upcoming.items.length === 0 ? (
+        <div className="p-4 text-xs text-muted-foreground">Nothing scheduled.</div>
+      ) : (
+        <ul className="divide-y divide-border">
+          {upcoming.items.map((f) => {
+            const isBoroHome = /middlesbrough/i.test(f.homeTeam);
+            const opponent = isBoroHome ? f.awayTeam : f.homeTeam;
+            const d = new Date(f.kickoffAt);
+            return (
+              <li key={f.id} className="px-3 py-2.5 text-xs flex items-center gap-2">
+                <div className="flex flex-col items-center min-w-9">
+                  <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                    {d.toLocaleString(undefined, { month: "short" })}
+                  </span>
+                  <span className="font-display text-base font-bold leading-none tabular-nums">
+                    {d.getDate()}
+                  </span>
+                </div>
+                <TeamKit team={opponent} size={20} />
+                <div className="flex-1 min-w-0">
+                  <div className="truncate font-medium">
+                    <span className={`inline-block w-5 text-[10px] font-bold ${isBoroHome ? "text-emerald-400" : "text-amber-400"}`}>
+                      {isBoroHome ? "H" : "A"}
+                    </span>
+                    {opponent}
+                  </div>
+                  <div className="text-[10px] text-muted-foreground">
+                    {d.toLocaleString(undefined, { weekday: "short", hour: "2-digit", minute: "2-digit" })}
+                    {f.venue ? ` · ${f.venue}` : ""}
+                  </div>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </section>
+  );
+}
+
 function FixturesByMonth({
-  fixtures, canPredict, onSave, emptyText, ascending,
+  fixtures, canPredict, canManage, onSave, onSaveVenue, emptyText, ascending,
 }: {
   fixtures: BoroFixtureDTO[];
   canPredict: boolean;
+  canManage: boolean;
   onSave: (id: string, hp: number, ap: number) => Promise<void>;
+  onSaveVenue: (f: BoroFixtureDTO, venue: string | null) => Promise<void>;
   emptyText: string;
   ascending: boolean;
 }) {
@@ -497,7 +576,7 @@ function FixturesByMonth({
           </h2>
           <div className="grid gap-3">
             {items.map((f) => (
-              <FixtureCard key={f.id} fixture={f} canPredict={canPredict} onSave={onSave} />
+              <FixtureCard key={f.id} fixture={f} canPredict={canPredict} canManage={canManage} onSave={onSave} onSaveVenue={onSaveVenue} />
             ))}
           </div>
         </TabsContent>
@@ -507,11 +586,13 @@ function FixturesByMonth({
 }
 
 function FixtureCard({
-  fixture, canPredict, onSave,
+  fixture, canPredict, canManage, onSave, onSaveVenue,
 }: {
   fixture: BoroFixtureDTO;
   canPredict: boolean;
+  canManage: boolean;
   onSave: (id: string, hp: number, ap: number) => Promise<void>;
+  onSaveVenue: (f: BoroFixtureDTO, venue: string | null) => Promise<void>;
 }) {
   const lockMs = new Date(fixture.kickoffAt).getTime() - 30 * 60 * 1000;
   const locked = Date.now() >= lockMs;
@@ -522,6 +603,9 @@ function FixtureCard({
   const [ap, setAp] = useState(fixture.myPrediction?.awayPred?.toString() ?? "");
   const [editing, setEditing] = useState(!hasPick);
   const [busy, setBusy] = useState(false);
+  const [editingVenue, setEditingVenue] = useState(false);
+  const [venueDraft, setVenueDraft] = useState(fixture.venue ?? "");
+  const [savingVenue, setSavingVenue] = useState(false);
   const dirty = !locked && canPredict && hp !== "" && ap !== "" &&
     (Number(hp) !== fixture.myPrediction?.homePred || Number(ap) !== fixture.myPrediction?.awayPred);
 
@@ -537,11 +621,51 @@ function FixtureCard({
   return (
     <div className="rounded-2xl border-2 border-primary/60 bg-surface-1 p-4 shadow-md shadow-primary/10">
       <div className="flex items-center justify-between text-xs text-muted-foreground mb-3">
-        <span>{fixture.competition}{fixture.venue ? ` · ${fixture.venue}` : ""}</span>
+        <span className="flex items-center gap-1.5 flex-wrap">
+          <span>{fixture.competition}{fixture.venue ? ` · ${fixture.venue}` : ""}</span>
+          {canManage && !editingVenue && (
+            <button
+              type="button"
+              onClick={() => { setVenueDraft(fixture.venue ?? ""); setEditingVenue(true); }}
+              className="text-[10px] uppercase tracking-wider text-primary hover:underline"
+            >
+              {fixture.venue ? "Edit" : "+ Add venue"}
+            </button>
+          )}
+        </span>
         <span className="font-bold text-foreground tabular-nums">{formatKickoff(fixture.kickoffAt)}</span>
       </div>
+      {canManage && editingVenue && (
+        <div className="mb-3 flex items-center gap-2">
+          <Input
+            value={venueDraft}
+            onChange={(e) => setVenueDraft(e.target.value)}
+            placeholder="e.g. Stadium of Light"
+            disabled={savingVenue}
+            className="h-8 text-xs"
+          />
+          <Button
+            size="sm"
+            disabled={savingVenue}
+            onClick={async () => {
+              setSavingVenue(true);
+              try {
+                await onSaveVenue(fixture, venueDraft.trim() ? venueDraft.trim() : null);
+                setEditingVenue(false);
+              } catch (e: any) { toast.error(e?.message ?? "Save failed"); }
+              finally { setSavingVenue(false); }
+            }}
+          >
+            {savingVenue ? <Loader2 className="size-3.5 animate-spin" /> : "Save"}
+          </Button>
+          <Button size="sm" variant="ghost" disabled={savingVenue} onClick={() => setEditingVenue(false)}>Cancel</Button>
+        </div>
+      )}
       <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
-        <div className="text-right font-medium">{fixture.homeTeam}</div>
+        <div className="flex items-center justify-end gap-2 font-medium">
+          <span className="truncate">{fixture.homeTeam}</span>
+          <TeamKit team={fixture.homeTeam} />
+        </div>
         {scored ? (
           <div className="text-center">
             <div className="px-3 py-1.5 rounded-lg bg-surface-2 border border-border font-display text-lg font-bold tabular-nums">
@@ -570,7 +694,10 @@ function FixtureCard({
             <div className="text-[10px] uppercase tracking-wider text-muted-foreground mt-1">Your pick</div>
           </div>
         )}
-        <div className="font-medium">{fixture.awayTeam}</div>
+        <div className="flex items-center gap-2 font-medium">
+          <TeamKit team={fixture.awayTeam} />
+          <span className="truncate">{fixture.awayTeam}</span>
+        </div>
       </div>
       <div className="mt-3 flex items-center justify-between text-xs">
         <div className="text-muted-foreground">
