@@ -882,7 +882,12 @@ function FixtureCard({
                 <span className="ml-2 px-1.5 py-0.5 rounded bg-primary/15 text-primary font-medium">{fixture.myPrediction.points} pt{fixture.myPrediction.points === 1 ? "" : "s"}</span>
               )}
             </span>
-          ) : locked ? <span>No prediction submitted</span> : canPredict ? <span>Enter a score to predict</span> : <span>Join the predictor to enter</span>}
+          ) : locked ? <span>No prediction submitted</span> : canPredict ? (
+            <span className="inline-flex items-center gap-1.5 text-primary font-semibold">
+              <span className="size-2 rounded-full bg-primary animate-pulse" />
+              Enter a score above, then tap Save
+            </span>
+          ) : <span>Join the predictor to enter</span>}
         </div>
         {!locked && !scored && canPredict && (
           showInputs ? (
