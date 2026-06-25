@@ -678,10 +678,29 @@ function FixturesByMonth({
           const d = new Date(`${key}-01T12:00:00Z`);
           const short = d.toLocaleString(undefined, { month: "short" });
           const yy = d.getFullYear().toString().slice(2);
+          const now = Date.now();
+          const soon = now + 24 * 60 * 60 * 1000;
+          let live = 0, soonN = 0;
+          for (const f of items) {
+            if (isLive(f)) { live++; continue; }
+            if (isFinished(f)) continue;
+            const t = new Date(f.kickoffAt).getTime();
+            if (t >= now && t < soon) soonN++;
+          }
           return (
-            <TabsTrigger key={key} value={key} className="text-xs">
+            <TabsTrigger key={key} value={key} className={`text-xs ${live > 0 || soonN > 0 ? "animate-pulse" : ""}`}>
               {short} '{yy}
               <span className="ml-1.5 px-1.5 py-0.5 rounded bg-muted text-muted-foreground text-[10px] tabular-nums">{items.length}</span>
+              {live > 0 && (
+                <span className="ml-1 inline-flex items-center gap-1 rounded-full bg-emerald-500/90 text-white text-[9px] font-bold px-1.5 py-0.5 shadow-[0_0_8px_rgba(16,185,129,0.7)]">
+                  <span className="size-1.5 rounded-full bg-white animate-pulse" /> LIVE {live}
+                </span>
+              )}
+              {soonN > 0 && (
+                <span className="ml-1 inline-flex items-center rounded-full bg-red-500/90 text-white text-[9px] font-bold px-1.5 py-0.5 shadow-[0_0_8px_rgba(239,68,68,0.7)]">
+                  SOON {soonN}
+                </span>
+              )}
             </TabsTrigger>
           );
         })}
