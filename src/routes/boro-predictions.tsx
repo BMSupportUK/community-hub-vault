@@ -733,7 +733,11 @@ function FixtureCard({
   const lockMs = new Date(fixture.kickoffAt).getTime() - 30 * 60 * 1000;
   const locked = Date.now() >= lockMs;
   const hasScore = fixture.homeScore !== null && fixture.awayScore !== null;
-  const scored = isFinished(fixture) && hasScore;
+  const finished = isFinished(fixture);
+  const scored = finished && hasScore;
+  const live = isLive(fixture);
+  const kickoffMs = new Date(fixture.kickoffAt).getTime();
+  const upcomingSoon = !live && !finished && kickoffMs - Date.now() <= 24 * 60 * 60 * 1000 && kickoffMs - Date.now() > 0;
   const hasPick = !!fixture.myPrediction;
   const [hp, setHp] = useState(fixture.myPrediction?.homePred?.toString() ?? "");
   const [ap, setAp] = useState(fixture.myPrediction?.awayPred?.toString() ?? "");
@@ -755,7 +759,13 @@ function FixtureCard({
   const showInputs = !locked && !scored && (editing || !hasPick);
 
   return (
-    <div className="rounded-2xl border-2 border-primary/60 bg-surface-1 p-4 shadow-md shadow-primary/10">
+    <div className={`rounded-2xl border-2 bg-surface-1 p-4 shadow-md ${
+      live
+        ? "border-emerald-500/80 shadow-emerald-500/30 animate-pulse"
+        : upcomingSoon
+          ? "border-red-500/80 shadow-red-500/30 animate-pulse"
+          : "border-primary/60 shadow-primary/10"
+    }`}>
       <div className="flex items-center justify-between text-xs text-muted-foreground mb-3">
         <span className="flex items-center gap-1.5 flex-wrap">
           <span>{fixture.competition}{fixture.venue ? ` · ${fixture.venue}` : ""}</span>
@@ -769,7 +779,10 @@ function FixtureCard({
             </button>
           )}
         </span>
-        <span className="font-bold text-foreground tabular-nums">{formatKickoff(fixture.kickoffAt)}</span>
+        <span className="inline-flex items-center gap-2">
+          {live && <LivePill fixture={fixture} />}
+          <span className="font-bold text-foreground tabular-nums">{formatKickoff(fixture.kickoffAt)}</span>
+        </span>
       </div>
       {canManage && editingVenue && (
         <div className="mb-3 flex items-center gap-2">
@@ -808,6 +821,13 @@ function FixtureCard({
               {fixture.homeScore} – {fixture.awayScore}
             </div>
             <div className="text-[10px] uppercase tracking-wider text-muted-foreground mt-1">Final</div>
+          </div>
+        ) : live && hasScore ? (
+          <div className="text-center">
+            <div className="px-3 py-1.5 rounded-lg bg-emerald-500/15 border border-emerald-500/60 font-display text-lg font-bold tabular-nums text-emerald-200">
+              {fixture.homeScore} – {fixture.awayScore}
+            </div>
+            <div className="text-[10px] uppercase tracking-wider text-emerald-300 mt-1">Live</div>
           </div>
         ) : locked ? (
           <div className="text-center">
