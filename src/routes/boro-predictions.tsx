@@ -629,7 +629,6 @@ function FixturesByMonth({
   canPredict: boolean;
   canManage: boolean;
   onSave: (id: string, hp: number, ap: number) => Promise<void>;
-  onSaveVenue: (f: BoroFixtureDTO, venue: string | null) => Promise<void>;
   emptyText: string;
   ascending: boolean;
 }) {
@@ -698,7 +697,7 @@ function FixturesByMonth({
           </h2>
           <div className="grid gap-3">
             {items.map((f) => (
-              <FixtureCard key={f.id} fixture={f} canPredict={canPredict} canManage={canManage} onSave={onSave} onSaveVenue={onSaveVenue} />
+              <FixtureCard key={f.id} fixture={f} canPredict={canPredict} onSave={onSave} />
             ))}
           </div>
         </TabsContent>
@@ -708,13 +707,11 @@ function FixturesByMonth({
 }
 
 function FixtureCard({
-  fixture, canPredict, canManage, onSave, onSaveVenue,
+  fixture, canPredict, onSave,
 }: {
   fixture: BoroFixtureDTO;
   canPredict: boolean;
-  canManage: boolean;
   onSave: (id: string, hp: number, ap: number) => Promise<void>;
-  onSaveVenue: (f: BoroFixtureDTO, venue: string | null) => Promise<void>;
 }) {
   const lockMs = new Date(fixture.kickoffAt).getTime() - 30 * 60 * 1000;
   const locked = Date.now() >= lockMs;
