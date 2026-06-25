@@ -14,6 +14,7 @@ async function syncBoroScores() {
 
   const rows = (fixtures ?? []) as BoroFixtureRow[];
   const live = await fetchEspnBoroLive();
+  const debug = (globalThis as { __espnDebug?: { ok: number; bad: number; total: number } }).__espnDebug ?? null;
 
   let updated = 0;
   let inserted = 0;
@@ -132,6 +133,7 @@ async function syncBoroScores() {
     updated_list: updatedList,
     inserted_list: insertedList,
     skipped,
+    fetches: debug,
   };
 }
 
