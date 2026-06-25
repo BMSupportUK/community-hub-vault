@@ -623,7 +623,7 @@ function UpcomingMonthCard({ fixtures }: { fixtures: BoroFixtureDTO[] }) {
 }
 
 function FixturesByMonth({
-  fixtures, canPredict, canManage, onSave, onSaveVenue, emptyText, ascending,
+  fixtures, canPredict, canManage, onSave, emptyText, ascending,
 }: {
   fixtures: BoroFixtureDTO[];
   canPredict: boolean;
@@ -752,47 +752,12 @@ function FixtureCard({
       <div className="flex items-center justify-between text-xs text-muted-foreground mb-3">
         <span className="flex items-center gap-1.5 flex-wrap">
           <span>{fixture.competition}{fixture.venue ? ` · ${fixture.venue}` : ""}</span>
-          {canManage && !editingVenue && (
-            <button
-              type="button"
-              onClick={() => { setVenueDraft(fixture.venue ?? ""); setEditingVenue(true); }}
-              className="text-[10px] uppercase tracking-wider text-primary hover:underline"
-            >
-              {fixture.venue ? "Edit" : "+ Add venue"}
-            </button>
-          )}
         </span>
         <span className="inline-flex items-center gap-2">
           {live && <LivePill fixture={fixture} />}
           <span className="font-bold text-foreground tabular-nums">{formatKickoff(fixture.kickoffAt)}</span>
         </span>
       </div>
-      {canManage && editingVenue && (
-        <div className="mb-3 flex items-center gap-2">
-          <Input
-            value={venueDraft}
-            onChange={(e) => setVenueDraft(e.target.value)}
-            placeholder="e.g. Stadium of Light"
-            disabled={savingVenue}
-            className="h-8 text-xs"
-          />
-          <Button
-            size="sm"
-            disabled={savingVenue}
-            onClick={async () => {
-              setSavingVenue(true);
-              try {
-                await onSaveVenue(fixture, venueDraft.trim() ? venueDraft.trim() : null);
-                setEditingVenue(false);
-              } catch (e: any) { toast.error(e?.message ?? "Save failed"); }
-              finally { setSavingVenue(false); }
-            }}
-          >
-            {savingVenue ? <Loader2 className="size-3.5 animate-spin" /> : "Save"}
-          </Button>
-          <Button size="sm" variant="ghost" disabled={savingVenue} onClick={() => setEditingVenue(false)}>Cancel</Button>
-        </div>
-      )}
       <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
         <div className="flex items-center justify-end gap-2 font-medium">
           <span className="truncate">{fixture.homeTeam}</span>
