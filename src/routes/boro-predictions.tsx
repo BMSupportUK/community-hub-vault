@@ -254,20 +254,6 @@ function BoroPredictionsPage() {
       return t >= now && t < end;
     }).length;
   }, [fixtures]);
-  const handleSaveVenue = async (f: BoroFixtureDTO, venue: string | null) => {
-    await adminUpsertFixtureFn({
-      data: {
-        id: f.id,
-        competition: f.competition,
-        homeTeam: f.homeTeam,
-        awayTeam: f.awayTeam,
-        kickoffAt: f.kickoffAt,
-        venue,
-      },
-    });
-    toast.success("Venue updated");
-    await loadAll();
-  };
   const myStats = useMemo(
     () => (leaderboard ?? []).find((r) => r.userId === myEntrantId) ?? null,
     [leaderboard, myEntrantId],
@@ -397,12 +383,12 @@ function BoroPredictionsPage() {
 
             <TabsContent value="fixtures" className="mt-4">
               {loading || !fixtures ? <Loading /> : (
-                <FixturesByMonth fixtures={upcoming} canPredict={canPredict} canManage={canManage} onSave={handleSave} onSaveVenue={handleSaveVenue} emptyText="No upcoming fixtures yet." ascending />
+                <FixturesByMonth fixtures={upcoming} canPredict={canPredict} canManage={canManage} onSave={handleSave} emptyText="No upcoming fixtures yet." ascending />
               )}
             </TabsContent>
             <TabsContent value="results" className="mt-4">
               {loading || !fixtures ? <Loading /> : (
-                <FixturesByMonth fixtures={completed} canPredict={false} canManage={canManage} onSave={handleSave} onSaveVenue={handleSaveVenue} emptyText="No completed matches yet." ascending={false} />
+                <FixturesByMonth fixtures={completed} canPredict={false} canManage={canManage} onSave={handleSave} emptyText="No completed matches yet." ascending={false} />
               )}
             </TabsContent>
             <TabsContent value="leaderboard" className="mt-4">
@@ -637,13 +623,12 @@ function UpcomingMonthCard({ fixtures }: { fixtures: BoroFixtureDTO[] }) {
 }
 
 function FixturesByMonth({
-  fixtures, canPredict, canManage, onSave, onSaveVenue, emptyText, ascending,
+  fixtures, canPredict, canManage, onSave, emptyText, ascending,
 }: {
   fixtures: BoroFixtureDTO[];
   canPredict: boolean;
   canManage: boolean;
   onSave: (id: string, hp: number, ap: number) => Promise<void>;
-  onSaveVenue: (f: BoroFixtureDTO, venue: string | null) => Promise<void>;
   emptyText: string;
   ascending: boolean;
 }) {
@@ -712,7 +697,7 @@ function FixturesByMonth({
           </h2>
           <div className="grid gap-3">
             {items.map((f) => (
-              <FixtureCard key={f.id} fixture={f} canPredict={canPredict} canManage={canManage} onSave={onSave} onSaveVenue={onSaveVenue} />
+              <FixtureCard key={f.id} fixture={f} canPredict={canPredict} onSave={onSave} />
             ))}
           </div>
         </TabsContent>
@@ -722,13 +707,11 @@ function FixturesByMonth({
 }
 
 function FixtureCard({
-  fixture, canPredict, canManage, onSave, onSaveVenue,
+  fixture, canPredict, onSave,
 }: {
   fixture: BoroFixtureDTO;
   canPredict: boolean;
-  canManage: boolean;
   onSave: (id: string, hp: number, ap: number) => Promise<void>;
-  onSaveVenue: (f: BoroFixtureDTO, venue: string | null) => Promise<void>;
 }) {
   const lockMs = new Date(fixture.kickoffAt).getTime() - 30 * 60 * 1000;
   const locked = Date.now() >= lockMs;
@@ -743,9 +726,6 @@ function FixtureCard({
   const [ap, setAp] = useState(fixture.myPrediction?.awayPred?.toString() ?? "");
   const [editing, setEditing] = useState(!hasPick);
   const [busy, setBusy] = useState(false);
-  const [editingVenue, setEditingVenue] = useState(false);
-  const [venueDraft, setVenueDraft] = useState(fixture.venue ?? "");
-  const [savingVenue, setSavingVenue] = useState(false);
   const dirty = !locked && canPredict && hp !== "" && ap !== "" &&
     (Number(hp) !== fixture.myPrediction?.homePred || Number(ap) !== fixture.myPrediction?.awayPred);
 
@@ -769,47 +749,12 @@ function FixtureCard({
       <div className="flex items-center justify-between text-xs text-muted-foreground mb-3">
         <span className="flex items-center gap-1.5 flex-wrap">
           <span>{fixture.competition}{fixture.venue ? ` · ${fixture.venue}` : ""}</span>
-          {canManage && !editingVenue && (
-            <button
-              type="button"
-              onClick={() => { setVenueDraft(fixture.venue ?? ""); setEditingVenue(true); }}
-              className="text-[10px] uppercase tracking-wider text-primary hover:underline"
-            >
-              {fixture.venue ? "Edit" : "+ Add venue"}
-            </button>
-          )}
         </span>
         <span className="inline-flex items-center gap-2">
           {live && <LivePill fixture={fixture} />}
           <span className="font-bold text-foreground tabular-nums">{formatKickoff(fixture.kickoffAt)}</span>
         </span>
       </div>
-      {canManage && editingVenue && (
-        <div className="mb-3 flex items-center gap-2">
-          <Input
-            value={venueDraft}
-            onChange={(e) => setVenueDraft(e.target.value)}
-            placeholder="e.g. Stadium of Light"
-            disabled={savingVenue}
-            className="h-8 text-xs"
-          />
-          <Button
-            size="sm"
-            disabled={savingVenue}
-            onClick={async () => {
-              setSavingVenue(true);
-              try {
-                await onSaveVenue(fixture, venueDraft.trim() ? venueDraft.trim() : null);
-                setEditingVenue(false);
-              } catch (e: any) { toast.error(e?.message ?? "Save failed"); }
-              finally { setSavingVenue(false); }
-            }}
-          >
-            {savingVenue ? <Loader2 className="size-3.5 animate-spin" /> : "Save"}
-          </Button>
-          <Button size="sm" variant="ghost" disabled={savingVenue} onClick={() => setEditingVenue(false)}>Cancel</Button>
-        </div>
-      )}
       <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
         <div className="flex items-center justify-end gap-2 font-medium">
           <span className="truncate">{fixture.homeTeam}</span>
