@@ -461,11 +461,13 @@ function Loading() {
 }
 
 function FixturesByMonth({
-  fixtures, canPredict, onSave, emptyText, ascending,
+  fixtures, canPredict, canManage, onSave, onSaveVenue, emptyText, ascending,
 }: {
   fixtures: BoroFixtureDTO[];
   canPredict: boolean;
+  canManage: boolean;
   onSave: (id: string, hp: number, ap: number) => Promise<void>;
+  onSaveVenue: (f: BoroFixtureDTO, venue: string | null) => Promise<void>;
   emptyText: string;
   ascending: boolean;
 }) {
@@ -515,7 +517,7 @@ function FixturesByMonth({
           </h2>
           <div className="grid gap-3">
             {items.map((f) => (
-              <FixtureCard key={f.id} fixture={f} canPredict={canPredict} onSave={onSave} />
+              <FixtureCard key={f.id} fixture={f} canPredict={canPredict} canManage={canManage} onSave={onSave} onSaveVenue={onSaveVenue} />
             ))}
           </div>
         </TabsContent>
@@ -525,11 +527,13 @@ function FixturesByMonth({
 }
 
 function FixtureCard({
-  fixture, canPredict, onSave,
+  fixture, canPredict, canManage, onSave, onSaveVenue,
 }: {
   fixture: BoroFixtureDTO;
   canPredict: boolean;
+  canManage: boolean;
   onSave: (id: string, hp: number, ap: number) => Promise<void>;
+  onSaveVenue: (f: BoroFixtureDTO, venue: string | null) => Promise<void>;
 }) {
   const lockMs = new Date(fixture.kickoffAt).getTime() - 30 * 60 * 1000;
   const locked = Date.now() >= lockMs;
@@ -540,6 +544,9 @@ function FixtureCard({
   const [ap, setAp] = useState(fixture.myPrediction?.awayPred?.toString() ?? "");
   const [editing, setEditing] = useState(!hasPick);
   const [busy, setBusy] = useState(false);
+  const [editingVenue, setEditingVenue] = useState(false);
+  const [venueDraft, setVenueDraft] = useState(fixture.venue ?? "");
+  const [savingVenue, setSavingVenue] = useState(false);
   const dirty = !locked && canPredict && hp !== "" && ap !== "" &&
     (Number(hp) !== fixture.myPrediction?.homePred || Number(ap) !== fixture.myPrediction?.awayPred);
 
@@ -555,11 +562,51 @@ function FixtureCard({
   return (
     <div className="rounded-2xl border-2 border-primary/60 bg-surface-1 p-4 shadow-md shadow-primary/10">
       <div className="flex items-center justify-between text-xs text-muted-foreground mb-3">
-        <span>{fixture.competition}{fixture.venue ? ` · ${fixture.venue}` : ""}</span>
+        <span className="flex items-center gap-1.5 flex-wrap">
+          <span>{fixture.competition}{fixture.venue ? ` · ${fixture.venue}` : ""}</span>
+          {canManage && !editingVenue && (
+            <button
+              type="button"
+              onClick={() => { setVenueDraft(fixture.venue ?? ""); setEditingVenue(true); }}
+              className="text-[10px] uppercase tracking-wider text-primary hover:underline"
+            >
+              {fixture.venue ? "Edit" : "+ Add venue"}
+            </button>
+          )}
+        </span>
         <span className="font-bold text-foreground tabular-nums">{formatKickoff(fixture.kickoffAt)}</span>
       </div>
+      {canManage && editingVenue && (
+        <div className="mb-3 flex items-center gap-2">
+          <Input
+            value={venueDraft}
+            onChange={(e) => setVenueDraft(e.target.value)}
+            placeholder="e.g. Stadium of Light"
+            disabled={savingVenue}
+            className="h-8 text-xs"
+          />
+          <Button
+            size="sm"
+            disabled={savingVenue}
+            onClick={async () => {
+              setSavingVenue(true);
+              try {
+                await onSaveVenue(fixture, venueDraft.trim() ? venueDraft.trim() : null);
+                setEditingVenue(false);
+              } catch (e: any) { toast.error(e?.message ?? "Save failed"); }
+              finally { setSavingVenue(false); }
+            }}
+          >
+            {savingVenue ? <Loader2 className="size-3.5 animate-spin" /> : "Save"}
+          </Button>
+          <Button size="sm" variant="ghost" disabled={savingVenue} onClick={() => setEditingVenue(false)}>Cancel</Button>
+        </div>
+      )}
       <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
-        <div className="text-right font-medium">{fixture.homeTeam}</div>
+        <div className="flex items-center justify-end gap-2 font-medium">
+          <span className="truncate">{fixture.homeTeam}</span>
+          <TeamKit team={fixture.homeTeam} />
+        </div>
         {scored ? (
           <div className="text-center">
             <div className="px-3 py-1.5 rounded-lg bg-surface-2 border border-border font-display text-lg font-bold tabular-nums">
@@ -588,7 +635,10 @@ function FixtureCard({
             <div className="text-[10px] uppercase tracking-wider text-muted-foreground mt-1">Your pick</div>
           </div>
         )}
-        <div className="font-medium">{fixture.awayTeam}</div>
+        <div className="flex items-center gap-2 font-medium">
+          <TeamKit team={fixture.awayTeam} />
+          <span className="truncate">{fixture.awayTeam}</span>
+        </div>
       </div>
       <div className="mt-3 flex items-center justify-between text-xs">
         <div className="text-muted-foreground">
