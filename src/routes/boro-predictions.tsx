@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Trophy, Loader2, Lock, Check, Crown, Medal, Award, LogOut, Trash2, Pencil, Star } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
+import { supabase } from "@/integrations/supabase/client";
 import riversideBg from "@/assets/riverside-stadium-bg.jpg";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -55,6 +56,44 @@ function monthLabel(key: string | null, iso: string) {
   return d.toLocaleString(undefined, { month: "long", year: "numeric" });
 }
 function isFinished(f: { status?: string | null }) { return (f.status ?? "") === "FINISHED"; }
+function isLive(f: { status?: string | null }) {
+  const s = f.status ?? "";
+  return s === "IN_PLAY" || s === "PAUSED" || s === "LIVE";
+}
+function liveLabel(f: { status?: string | null; minute?: number | null; minuteAdded?: number | null; kickoffAt?: string | null }) {
+  if (f.status === "PAUSED") return "HT";
+  if (typeof f.minute === "number" && f.minute > 0) {
+    const added = typeof f.minuteAdded === "number" && f.minuteAdded > 0 ? f.minuteAdded : 0;
+    if (added > 0) {
+      const base = f.minute >= 90 ? 90 : f.minute >= 45 && f.minute < 60 ? 45 : f.minute;
+      return `${base}+${added}'`;
+    }
+    if (f.minute > 90) return `90+${f.minute - 90}'`;
+    return `${f.minute}'`;
+  }
+  if (f.kickoffAt) {
+    const elapsedMs = Date.now() - new Date(f.kickoffAt).getTime();
+    if (elapsedMs > 0) {
+      const mins = Math.min(120, Math.floor(elapsedMs / 60000) + 1);
+      if (mins > 90) return `90+${mins - 90}'`;
+      return `${mins}'`;
+    }
+  }
+  return "LIVE";
+}
+function LivePill({ fixture }: { fixture: BoroFixtureDTO }) {
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setTick((t) => t + 1), 15_000);
+    return () => clearInterval(id);
+  }, []);
+  return (
+    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-red-500/20 text-red-300 border border-red-500/40 text-[10px] font-bold uppercase tracking-wide tabular-nums">
+      <span className="size-1.5 rounded-full bg-red-400 animate-pulse" />
+      {liveLabel(fixture)}
+    </span>
+  );
+}
 
 type GuestSession = { guestId: string; email: string; pin: string; displayName: string };
 
@@ -98,8 +137,8 @@ function BoroPredictionsPage() {
   const canPredict = user ? joined : isGuest;
   const myEntrantId = user ? user.id : guest?.guestId ?? null;
 
-  const loadAll = async () => {
-    setLoading(true);
+  const loadAll = async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       if (user) {
         const [fx, lb, st] = await Promise.all([listFn(), lbFn(), statusFn()]);
@@ -110,13 +149,56 @@ function BoroPredictionsPage() {
         setFixtures(fx as any); setLeaderboard(lb as any); setJoined(!!guest);
       }
     } catch (e: any) {
-      toast.error(e?.message ?? "Failed to load");
+      if (!silent) toast.error(e?.message ?? "Failed to load");
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
   useEffect(() => { loadAll(); /* eslint-disable-next-line */ }, [user?.id, guest?.guestId]);
+
+  // Realtime: refresh fixtures + leaderboard when fixtures or predictions change.
+  const reloadRef = useRef<() => void>(() => {});
+  reloadRef.current = () => loadAll(true);
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const schedule = () => {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => reloadRef.current(), 1500);
+    };
+    const channel = supabase
+      .channel("boro-standings")
+      .on("postgres_changes", { event: "*", schema: "public", table: "boro_fixtures" }, schedule)
+      .on("postgres_changes", { event: "*", schema: "public", table: "boro_predictions" }, schedule)
+      .subscribe();
+    return () => {
+      if (timer) clearTimeout(timer);
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  // Live-score polling: refresh every 30s when a match is in-play or about to start.
+  useEffect(() => {
+    if (!fixtures) return;
+    const now = Date.now();
+    const shouldPoll = fixtures.some((f) => {
+      if (isLive(f)) return true;
+      if (isFinished(f)) return false;
+      const ko = new Date(f.kickoffAt).getTime();
+      return now >= ko - 5 * 60 * 1000 && now <= ko + 3 * 60 * 60 * 1000;
+    });
+    if (!shouldPoll) return;
+    const id = window.setInterval(() => loadAll(true), 30_000);
+    const onVisible = () => { if (document.visibilityState === "visible") loadAll(true); };
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("focus", onVisible);
+    return () => {
+      window.clearInterval(id);
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("focus", onVisible);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fixtures]);
 
   const handleJoin = async () => {
     if (!user) { setShowGuestLogin(true); return; }
@@ -162,6 +244,16 @@ function BoroPredictionsPage() {
 
   const upcoming = useMemo(() => (fixtures ?? []).filter((f) => !isFinished(f)), [fixtures]);
   const completed = useMemo(() => (fixtures ?? []).filter((f) => isFinished(f)), [fixtures]);
+  const liveCount = useMemo(() => (fixtures ?? []).filter(isLive).length, [fixtures]);
+  const soonCount = useMemo(() => {
+    const now = Date.now();
+    const end = now + 24 * 60 * 60 * 1000;
+    return (fixtures ?? []).filter((f) => {
+      if (isLive(f) || isFinished(f)) return false;
+      const t = new Date(f.kickoffAt).getTime();
+      return t >= now && t < end;
+    }).length;
+  }, [fixtures]);
   const handleSaveVenue = async (f: BoroFixtureDTO, venue: string | null) => {
     await adminUpsertFixtureFn({
       data: {
