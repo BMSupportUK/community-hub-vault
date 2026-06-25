@@ -835,12 +835,29 @@ function FixtureCard({
             <div className="text-[10px] uppercase tracking-wider text-amber-300/90 mt-1 inline-flex items-center gap-1"><Lock className="size-3" /> Locked</div>
           </div>
         ) : showInputs ? (
-          <div className="flex items-center gap-1.5">
-            <Input value={hp} onChange={(e) => setHp(e.target.value.replace(/\D/g, "").slice(0, 2))}
-              disabled={!canPredict || busy} inputMode="numeric" className="w-12 text-center font-display text-lg font-bold" />
-            <span className="text-muted-foreground">–</span>
-            <Input value={ap} onChange={(e) => setAp(e.target.value.replace(/\D/g, "").slice(0, 2))}
-              disabled={!canPredict || busy} inputMode="numeric" className="w-12 text-center font-display text-lg font-bold" />
+          <div className="flex flex-col items-center gap-1.5">
+            <div className="rounded-xl border-2 border-primary bg-primary/10 p-2 shadow-glow">
+              <div className="flex items-center gap-2">
+                <Input
+                  value={hp}
+                  onChange={(e) => setHp(e.target.value.replace(/\D/g, "").slice(0, 2))}
+                  disabled={!canPredict || busy}
+                  inputMode="numeric"
+                  placeholder="0"
+                  className="w-14 h-14 text-center font-display text-2xl font-bold bg-surface-1 border-primary/50 focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/50"
+                />
+                <span className="text-xl font-bold text-primary">–</span>
+                <Input
+                  value={ap}
+                  onChange={(e) => setAp(e.target.value.replace(/\D/g, "").slice(0, 2))}
+                  disabled={!canPredict || busy}
+                  inputMode="numeric"
+                  placeholder="0"
+                  className="w-14 h-14 text-center font-display text-2xl font-bold bg-surface-1 border-primary/50 focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/50"
+                />
+              </div>
+            </div>
+            <span className="text-[10px] uppercase tracking-wider font-bold text-primary">Enter your score prediction</span>
           </div>
         ) : (
           <div className="text-center">
