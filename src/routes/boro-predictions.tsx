@@ -469,10 +469,29 @@ function FixturesByMonth({
   if (!fixtures.length) {
     return <div className="rounded-2xl border border-border bg-surface-1 p-8 text-center text-sm text-muted-foreground">{emptyText}</div>;
   }
+  const defaultMonth = (() => {
+    if (!ascending) return grouped[0][0];
+    const nowKey = new Date().toISOString().slice(0, 7);
+    const upcoming = grouped.find(([k]) => k >= nowKey);
+    return (upcoming ?? grouped[0])[0];
+  })();
   return (
-    <div className="space-y-6">
+    <Tabs defaultValue={defaultMonth}>
+      <TabsList className="flex flex-wrap h-auto gap-1 p-1 w-full sm:w-auto justify-start">
+        {grouped.map(([key, items]) => {
+          const d = new Date(`${key}-01T12:00:00Z`);
+          const short = d.toLocaleString(undefined, { month: "short" });
+          const yy = d.getFullYear().toString().slice(2);
+          return (
+            <TabsTrigger key={key} value={key} className="text-xs">
+              {short} '{yy}
+              <span className="ml-1.5 px-1.5 py-0.5 rounded bg-muted text-muted-foreground text-[10px] tabular-nums">{items.length}</span>
+            </TabsTrigger>
+          );
+        })}
+      </TabsList>
       {grouped.map(([key, items]) => (
-        <div key={key}>
+        <TabsContent key={key} value={key} className="mt-3">
           <h2 className="text-sm font-bold uppercase tracking-wider mb-2 px-2 py-1.5 rounded-md bg-surface-2 border-l-4 border-primary">
             {monthLabel(key, items[0].kickoffAt)}
           </h2>
@@ -481,9 +500,9 @@ function FixturesByMonth({
               <FixtureCard key={f.id} fixture={f} canPredict={canPredict} onSave={onSave} />
             ))}
           </div>
-        </div>
+        </TabsContent>
       ))}
-    </div>
+    </Tabs>
   );
 }
 
