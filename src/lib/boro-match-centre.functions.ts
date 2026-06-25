@@ -95,12 +95,69 @@ export const getBoroMatchCentre = createServerFn({ method: "GET" }).handler(
           return null;
         }),
       ]);
+      // Fall back to our own boro_fixtures table (populated from BBC) when
+      // ESPN doesn't yet know about a fixture/result — e.g. just after the
+      // EFL release the season schedule. We only fill in slots that ESPN
+      // didn't supply, and never override manual admin entries.
+      let nextFromDb: NextFixture | null = null;
+      let lastFromDb: LastResult | null = null;
+      if ((!live.nextFixture && !dto.nextFixtureManual) || (!live.lastResult && !dto.lastResultManual)) {
+        const nowIso = new Date().toISOString();
+        const [{ data: upcoming }, { data: recent }] = await Promise.all([
+          supabaseAdmin
+            .from("boro_fixtures")
+            .select("competition, home_team, away_team, kickoff_at, venue")
+            .gte("kickoff_at", nowIso)
+            .order("kickoff_at", { ascending: true })
+            .limit(1),
+          supabaseAdmin
+            .from("boro_fixtures")
+            .select("competition, home_team, away_team, kickoff_at, venue, home_score, away_score, status")
+            .lt("kickoff_at", nowIso)
+            .not("home_score", "is", null)
+            .not("away_score", "is", null)
+            .order("kickoff_at", { ascending: false })
+            .limit(1),
+        ]);
+        const u = upcoming?.[0] as any;
+        if (u) {
+          nextFromDb = {
+            kickoff: new Date(u.kickoff_at).toISOString(),
+            competition: u.competition ?? "Championship",
+            home: u.home_team,
+            away: u.away_team,
+            venue: u.venue ?? null,
+            homeLogo: null,
+            awayLogo: null,
+          };
+        }
+        const r = recent?.[0] as any;
+        if (r) {
+          lastFromDb = {
+            date: new Date(r.kickoff_at).toISOString(),
+            competition: r.competition ?? "Championship",
+            home: r.home_team,
+            away: r.away_team,
+            homeScore: r.home_score ?? 0,
+            awayScore: r.away_score ?? 0,
+            venue: r.venue ?? null,
+            homeLogo: null,
+            awayLogo: null,
+          };
+        }
+      }
       const patch: Record<string, unknown> = {
         fetched_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       };
-      if (!dto.lastResultManual && live.lastResult) patch.last_result = live.lastResult;
-      if (!dto.nextFixtureManual && live.nextFixture) patch.next_fixture = live.nextFixture;
+      if (!dto.lastResultManual) {
+        const lr = live.lastResult ?? lastFromDb;
+        if (lr) patch.last_result = lr;
+      }
+      if (!dto.nextFixtureManual) {
+        const nf = live.nextFixture ?? nextFromDb;
+        if (nf) patch.next_fixture = nf;
+      }
       if (!dto.leaguePositionManual && standings) patch.league_position = standings;
       await supabaseAdmin
         .from("boro_match_centre")
