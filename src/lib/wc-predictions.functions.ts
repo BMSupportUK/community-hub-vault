@@ -221,6 +221,8 @@ export type WcEntrantPickDTO = {
   status: string;
   minute: number | null;
   minuteAdded: number | null;
+  homeReds: number;
+  awayReds: number;
   homePred: number;
   awayPred: number;
   points: number | null;
