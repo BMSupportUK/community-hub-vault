@@ -11,6 +11,8 @@ export type WcLiveFixtureRow = {
   status: string | null;
   minute: number | null;
   minute_added: number | null;
+  home_reds?: number | null;
+  away_reds?: number | null;
 };
 
 export type WcLiveOverlay = {
@@ -19,6 +21,8 @@ export type WcLiveOverlay = {
   minute_added: number | null;
   home_score: number | null;
   away_score: number | null;
+  home_reds: number | null;
+  away_reds: number | null;
 };
 
 export type EspnLiveMatch = {
@@ -30,6 +34,8 @@ export type EspnLiveMatch = {
   minuteAdded: number | null;
   homeScore: number | null;
   awayScore: number | null;
+  homeReds: number;
+  awayReds: number;
 };
 
 const ALIASES: Record<string, string[]> = {
@@ -130,9 +136,14 @@ export async function fetchEspnWcLive(): Promise<EspnLiveMatch[]> {
             type?: { state?: string; name?: string };
           };
           competitors?: Array<{
+            id?: string;
             homeAway?: string;
             score?: string;
-            team?: { displayName?: string };
+            team?: { id?: string; displayName?: string };
+          }>;
+          details?: Array<{
+            type?: { id?: string; text?: string };
+            team?: { id?: string };
           }>;
         }>;
       }>;
@@ -151,6 +162,17 @@ export async function fetchEspnWcLive(): Promise<EspnLiveMatch[]> {
       const typeName = comp.status?.type?.name ?? "";
       const status = state === "post" ? "FINISHED" : typeName === "STATUS_HALFTIME" ? "PAUSED" : "IN_PLAY";
       const parsed = parseEspnMinute(comp.status?.displayClock, comp.status?.clock, state);
+      const homeTeamId = homeC.team?.id ?? homeC.id ?? "";
+      const awayTeamId = awayC.team?.id ?? awayC.id ?? "";
+      let homeReds = 0;
+      let awayReds = 0;
+      for (const d of comp.details ?? []) {
+        const txt = d.type?.text ?? "";
+        if (!/red/i.test(txt)) continue;
+        const tid = d.team?.id ?? "";
+        if (tid && tid === homeTeamId) homeReds += 1;
+        else if (tid && tid === awayTeamId) awayReds += 1;
+      }
       const match: EspnLiveMatch = {
         home: homeC.team.displayName,
         away: awayC.team.displayName,
@@ -160,6 +182,8 @@ export async function fetchEspnWcLive(): Promise<EspnLiveMatch[]> {
         minuteAdded: parsed.minuteAdded,
         homeScore: homeC.score != null && homeC.score !== "" ? Number(homeC.score) : null,
         awayScore: awayC.score != null && awayC.score !== "" ? Number(awayC.score) : null,
+        homeReds,
+        awayReds,
       };
       const key = `${e.date}|${norm(match.home)}|${norm(match.away)}`;
       const existing = byMatch.get(key);
@@ -184,6 +208,8 @@ export async function getWcLiveOverlays(fixtures: WcLiveFixtureRow[]) {
         minute_added: ev.minuteAdded,
         home_score: ev.homeScore,
         away_score: ev.awayScore,
+        home_reds: ev.homeReds,
+        away_reds: ev.awayReds,
       });
     }
   } catch {
@@ -196,7 +222,7 @@ export async function getWcLiveOverlays(fixtures: WcLiveFixtureRow[]) {
 // (lower minute than what the cron sync already wrote), prefer the DB row so
 // the live timer never ticks backwards or freezes on a stale ESPN snapshot.
 export function mergeWcLive(
-  row: Pick<WcLiveFixtureRow, "home_score" | "away_score" | "status" | "minute" | "minute_added">,
+  row: Pick<WcLiveFixtureRow, "home_score" | "away_score" | "status" | "minute" | "minute_added" | "home_reds" | "away_reds">,
   overlay: WcLiveOverlay | undefined,
 ) {
   const dbStatus = (row.status ?? "SCHEDULED") as string;
@@ -204,6 +230,8 @@ export function mergeWcLive(
   const dbAdded = (row.minute_added ?? null) as number | null;
   const dbHome = (row.home_score ?? null) as number | null;
   const dbAway = (row.away_score ?? null) as number | null;
+  const dbHomeReds = (row.home_reds ?? 0) as number;
+  const dbAwayReds = (row.away_reds ?? 0) as number;
 
   if (!overlay) {
     return {
@@ -212,6 +240,8 @@ export function mergeWcLive(
       status: dbStatus,
       minute: dbMinute,
       minute_added: dbAdded,
+      home_reds: dbHomeReds,
+      away_reds: dbAwayReds,
     };
   }
 
@@ -223,6 +253,8 @@ export function mergeWcLive(
       status: dbStatus,
       minute: dbMinute,
       minute_added: dbAdded,
+      home_reds: dbHomeReds,
+      away_reds: dbAwayReds,
     };
   }
 
@@ -240,6 +272,8 @@ export function mergeWcLive(
       status: dbStatus,
       minute: dbMinute,
       minute_added: dbAdded,
+      home_reds: Math.max(dbHomeReds, overlay.home_reds ?? 0),
+      away_reds: Math.max(dbAwayReds, overlay.away_reds ?? 0),
     };
   }
 
@@ -249,5 +283,7 @@ export function mergeWcLive(
     status: overlay.status ?? dbStatus,
     minute: overlay.minute ?? dbMinute,
     minute_added: overlay.minute_added ?? dbAdded,
+    home_reds: Math.max(dbHomeReds, overlay.home_reds ?? 0),
+    away_reds: Math.max(dbAwayReds, overlay.away_reds ?? 0),
   };
 }

@@ -22,6 +22,8 @@ export type EspnBoroMatch = {
   minuteAdded: number | null;
   homeScore: number | null;
   awayScore: number | null;
+  homeReds: number;
+  awayReds: number;
 };
 
 export type BoroFixtureRow = {
@@ -36,6 +38,8 @@ export type BoroFixtureRow = {
   status: string | null;
   minute: number | null;
   minute_added: number | null;
+  home_reds?: number | null;
+  away_reds?: number | null;
 };
 
 function norm(s: string | null | undefined) {
@@ -85,9 +89,14 @@ type EspnJson = {
         type?: { state?: string; name?: string };
       };
       competitors?: Array<{
+        id?: string;
         homeAway?: string;
         score?: string;
-        team?: { displayName?: string; shortDisplayName?: string };
+        team?: { id?: string; displayName?: string; shortDisplayName?: string };
+      }>;
+      details?: Array<{
+        type?: { id?: string; text?: string };
+        team?: { id?: string };
       }>;
     }>;
   }>;
@@ -159,6 +168,17 @@ export async function fetchEspnBoroLive(): Promise<EspnBoroMatch[]> {
               : "IN_PLAY"
             : "SCHEDULED";
       const parsed = parseMinute(comp.status?.displayClock, comp.status?.clock, state);
+      const homeTeamId = home?.team?.id ?? home?.id ?? "";
+      const awayTeamId = away?.team?.id ?? away?.id ?? "";
+      let homeReds = 0;
+      let awayReds = 0;
+      for (const d of comp.details ?? []) {
+        const txt = d.type?.text ?? "";
+        if (!/red/i.test(txt)) continue;
+        const tid = d.team?.id ?? "";
+        if (tid && tid === homeTeamId) homeReds += 1;
+        else if (tid && tid === awayTeamId) awayReds += 1;
+      }
       const m: EspnBoroMatch = {
         competition,
         home: homeName,
@@ -170,6 +190,8 @@ export async function fetchEspnBoroLive(): Promise<EspnBoroMatch[]> {
         minuteAdded: parsed.minuteAdded,
         homeScore: home?.score != null && home.score !== "" ? Number(home.score) : null,
         awayScore: away?.score != null && away.score !== "" ? Number(away.score) : null,
+        homeReds,
+        awayReds,
       };
       const key = `${competition}|${e.date}|${norm(homeName)}|${norm(awayName)}`;
       byKey.set(key, m);
