@@ -92,7 +92,7 @@ export const listWcFixtures = createServerFn({ method: "GET" })
     const [{ data: fixtures, error: fxErr }, { data: preds, error: prErr }] = await Promise.all([
       supabase
         .from("wc_fixtures")
-        .select("id, stage, group_label, home_team, away_team, kickoff_at, home_score, away_score, status, minute, minute_added")
+        .select("id, stage, group_label, home_team, away_team, kickoff_at, home_score, away_score, status, minute, minute_added, home_reds, away_reds")
         .order("kickoff_at", { ascending: true }),
       supabase
         .from("wc_predictions")
@@ -120,6 +120,8 @@ export const listWcFixtures = createServerFn({ method: "GET" })
         status: merged.status ?? "SCHEDULED",
         minute: merged.minute,
         minuteAdded: merged.minute_added,
+        homeReds: merged.home_reds ?? 0,
+        awayReds: merged.away_reds ?? 0,
         myPrediction: p
           ? { homePred: p.home_pred, awayPred: p.away_pred, points: p.points ?? null }
           : null,
