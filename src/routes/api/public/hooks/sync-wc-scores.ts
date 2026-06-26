@@ -8,7 +8,7 @@ async function syncScores() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data: fixtures, error: fxErr } = await supabaseAdmin
     .from("wc_fixtures")
-    .select("id, home_team, away_team, kickoff_at, home_score, away_score, status, minute, minute_added");
+    .select("id, home_team, away_team, kickoff_at, home_score, away_score, status, minute, minute_added, home_reds, away_reds");
   if (fxErr) return { ok: false, error: fxErr.message };
 
   let updated = 0;
@@ -29,7 +29,9 @@ async function syncScores() {
       fx.minute === ev.minute &&
       ((fx as { minute_added?: number | null }).minute_added ?? null) === ev.minuteAdded &&
       fx.home_score === ev.homeScore &&
-      fx.away_score === ev.awayScore;
+      fx.away_score === ev.awayScore &&
+      ((fx as { home_reds?: number | null }).home_reds ?? 0) === ev.homeReds &&
+      ((fx as { away_reds?: number | null }).away_reds ?? 0) === ev.awayReds;
     if (unchanged) continue;
     const prevStatus = fx.status;
     const prevHs = fx.home_score;
@@ -42,6 +44,8 @@ async function syncScores() {
         minute_added: ev.minuteAdded,
         home_score: ev.homeScore,
         away_score: ev.awayScore,
+        home_reds: ev.homeReds,
+        away_reds: ev.awayReds,
       })
       .eq("id", fx.id);
     if (upErr) {
