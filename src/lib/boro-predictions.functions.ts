@@ -16,6 +16,8 @@ export type BoroFixtureDTO = {
   minute: number | null;
   minuteAdded: number | null;
   monthKey: string | null;
+  homeReds: number;
+  awayReds: number;
   myPrediction: { homePred: number; awayPred: number; points: number | null } | null;
 };
 
@@ -62,6 +64,8 @@ function rowToFixture(f: any): BoroFixtureDTO {
     minute: (f.minute as number | null) ?? null,
     minuteAdded: (f.minute_added as number | null) ?? null,
     monthKey: f.month_key ?? null,
+    homeReds: (f.home_reds as number | null) ?? 0,
+    awayReds: (f.away_reds as number | null) ?? 0,
     myPrediction: null,
   };
 }
@@ -98,7 +102,7 @@ export const listBoroFixtures = createServerFn({ method: "GET" })
     const [{ data: fixtures, error: fxErr }, { data: preds, error: prErr }] = await Promise.all([
       supabase
         .from("boro_fixtures")
-        .select("id, competition, home_team, away_team, kickoff_at, venue, home_score, away_score, status, minute, minute_added, month_key")
+        .select("id, competition, home_team, away_team, kickoff_at, venue, home_score, away_score, status, minute, minute_added, month_key, home_reds, away_reds")
         .eq("competition", "Championship")
         .order("kickoff_at", { ascending: true }),
       supabase
