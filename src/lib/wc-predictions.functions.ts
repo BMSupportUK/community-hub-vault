@@ -233,7 +233,7 @@ export const getEntrantWcPredictions = createServerFn({ method: "GET" })
     const { data: rows, error } = await supabaseAdmin
       .from("wc_predictions")
       .select(
-        "home_pred, away_pred, points, fixture:wc_fixtures!inner(id, stage, group_label, home_team, away_team, kickoff_at, home_score, away_score, status, minute, minute_added)",
+        "home_pred, away_pred, points, fixture:wc_fixtures!inner(id, stage, group_label, home_team, away_team, kickoff_at, home_score, away_score, status, minute, minute_added, home_reds, away_reds)",
       )
       .eq(col, data.entrantId);
     if (error) throw new Error(error.message);
@@ -256,6 +256,8 @@ export const getEntrantWcPredictions = createServerFn({ method: "GET" })
           status: merged.status,
           minute: merged.minute,
           minuteAdded: merged.minute_added,
+          homeReds: merged.home_reds ?? 0,
+          awayReds: merged.away_reds ?? 0,
           homePred: r.home_pred,
           awayPred: r.away_pred,
           points: r.points,
