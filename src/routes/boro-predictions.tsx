@@ -775,6 +775,7 @@ function FixtureCard({
       </div>
       <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
         <div className="flex items-center justify-end gap-2 font-medium">
+          <RedCards count={fixture.homeReds} />
           <span className="truncate">{fixture.homeTeam}</span>
           <TeamKit team={fixture.homeTeam} />
         </div>
@@ -833,6 +834,7 @@ function FixtureCard({
         <div className="flex items-center gap-2 font-medium">
           <TeamKit team={fixture.awayTeam} />
           <span className="truncate">{fixture.awayTeam}</span>
+          <RedCards count={fixture.awayReds} />
         </div>
       </div>
       <div className="mt-3 flex items-center justify-between text-xs">
