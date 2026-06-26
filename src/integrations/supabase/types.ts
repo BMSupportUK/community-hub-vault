@@ -241,10 +241,12 @@ export type Database = {
       }
       boro_fixtures: {
         Row: {
+          away_reds: number
           away_score: number | null
           away_team: string
           competition: string
           created_at: string
+          home_reds: number
           home_score: number | null
           home_team: string
           id: string
@@ -257,10 +259,12 @@ export type Database = {
           venue: string | null
         }
         Insert: {
+          away_reds?: number
           away_score?: number | null
           away_team: string
           competition?: string
           created_at?: string
+          home_reds?: number
           home_score?: number | null
           home_team: string
           id?: string
@@ -273,10 +277,12 @@ export type Database = {
           venue?: string | null
         }
         Update: {
+          away_reds?: number
           away_score?: number | null
           away_team?: string
           competition?: string
           created_at?: string
+          home_reds?: number
           home_score?: number | null
           home_team?: string
           id?: string
@@ -4043,11 +4049,13 @@ export type Database = {
       }
       wc_fixtures: {
         Row: {
+          away_reds: number
           away_score: number | null
           away_seed: string | null
           away_team: string
           created_at: string
           group_label: string | null
+          home_reds: number
           home_score: number | null
           home_seed: string | null
           home_team: string
@@ -4061,11 +4069,13 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          away_reds?: number
           away_score?: number | null
           away_seed?: string | null
           away_team: string
           created_at?: string
           group_label?: string | null
+          home_reds?: number
           home_score?: number | null
           home_seed?: string | null
           home_team: string
@@ -4079,11 +4089,13 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          away_reds?: number
           away_score?: number | null
           away_seed?: string | null
           away_team?: string
           created_at?: string
           group_label?: string | null
+          home_reds?: number
           home_score?: number | null
           home_seed?: string | null
           home_team?: string

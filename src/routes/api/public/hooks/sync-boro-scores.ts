@@ -8,7 +8,7 @@ async function syncBoroScores() {
   const { data: fixtures, error: fxErr } = await supabaseAdmin
     .from("boro_fixtures")
     .select(
-      "id, competition, home_team, away_team, kickoff_at, venue, home_score, away_score, status, minute, minute_added",
+      "id, competition, home_team, away_team, kickoff_at, venue, home_score, away_score, status, minute, minute_added, home_reds, away_reds",
     );
   if (fxErr) return { ok: false, error: fxErr.message };
 
@@ -46,6 +46,8 @@ async function syncBoroScores() {
           minute_added: ev.minuteAdded,
           home_score: ev.homeScore,
           away_score: ev.awayScore,
+          home_reds: ev.homeReds,
+          away_reds: ev.awayReds,
         })
         .select("id")
         .single();
@@ -75,6 +77,8 @@ async function syncBoroScores() {
       away_score?: number | null;
       venue?: string | null;
       competition?: string;
+      home_reds?: number;
+      away_reds?: number;
     } = {};
     if (ev.status && ev.status !== fx.status) patch.status = ev.status;
     if (ev.minute !== fx.minute) patch.minute = ev.minute;
@@ -82,6 +86,8 @@ async function syncBoroScores() {
     if (ev.homeScore !== null && ev.homeScore !== fx.home_score) patch.home_score = ev.homeScore;
     if (ev.awayScore !== null && ev.awayScore !== fx.away_score) patch.away_score = ev.awayScore;
     if (ev.venue && !fx.venue) patch.venue = ev.venue;
+    if (ev.homeReds !== (fx.home_reds ?? 0)) patch.home_reds = ev.homeReds;
+    if (ev.awayReds !== (fx.away_reds ?? 0)) patch.away_reds = ev.awayReds;
     if (newCompetition !== fx.competition && ev.competition !== "Championship") {
       // Only overwrite competition if ESPN says it's a cup — we don't want a
       // generic "Championship" label to clobber a more specific BBC value.

@@ -133,6 +133,8 @@ export type PublicWcFixture = {
   status: string;
   minute: number | null;
   minuteAdded: number | null;
+  homeReds: number;
+  awayReds: number;
   myPrediction: { homePred: number; awayPred: number; points: number | null } | null;
 };
 
@@ -143,7 +145,7 @@ export const listWcFixturesPublic = createServerFn({ method: "POST" })
     const admin = await getAdmin();
     const { data: fixtures, error } = await admin
       .from("wc_fixtures")
-      .select("id, stage, group_label, home_team, away_team, kickoff_at, home_score, away_score, status, minute, minute_added")
+      .select("id, stage, group_label, home_team, away_team, kickoff_at, home_score, away_score, status, minute, minute_added, home_reds, away_reds")
       .order("kickoff_at", { ascending: true });
     if (error) throw new Error(error.message);
     const { getWcLiveOverlays, mergeWcLive } = await import("@/lib/wc-live-scores.server");
@@ -178,6 +180,8 @@ export const listWcFixturesPublic = createServerFn({ method: "POST" })
         status: merged.status ?? "SCHEDULED",
         minute: merged.minute,
         minuteAdded: merged.minute_added,
+        homeReds: merged.home_reds ?? 0,
+        awayReds: merged.away_reds ?? 0,
         myPrediction: p
           ? { homePred: p.home_pred, awayPred: p.away_pred, points: p.points ?? null }
           : null,

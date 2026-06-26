@@ -116,6 +116,24 @@ function scoreLabel(f: { homeScore?: number | null; awayScore?: number | null })
     : null;
 }
 
+function RedCards({ count }: { count: number }) {
+  if (!count || count < 1) return null;
+  return (
+    <span
+      className="inline-flex items-center gap-0.5 align-middle"
+      title={`${count} red card${count === 1 ? "" : "s"}`}
+      aria-label={`${count} red card${count === 1 ? "" : "s"}`}
+    >
+      {Array.from({ length: count }).map((_, i) => (
+        <span
+          key={i}
+          className="inline-block w-2.5 h-3.5 rounded-[2px] bg-red-600 border border-red-900 shadow-[0_0_4px_rgba(220,38,38,0.7)]"
+        />
+      ))}
+    </span>
+  );
+}
+
 function LivePill({
   fixture,
   fetchedAt,
@@ -1557,6 +1575,7 @@ function FixtureCard({
         <div className="text-right font-medium">
           <span className="mr-1.5">{teamFlag(fixture.homeTeam)}</span>
           {fixture.homeTeam}
+          {fixture.homeReds > 0 && <span className="ml-1.5"><RedCards count={fixture.homeReds} /></span>}
         </div>
         {live && hasScore ? (
           <div className="text-center">
@@ -1618,6 +1637,7 @@ function FixtureCard({
         <div className="font-medium">
           {fixture.awayTeam}
           <span className="ml-1.5">{teamFlag(fixture.awayTeam)}</span>
+          {fixture.awayReds > 0 && <span className="ml-1.5"><RedCards count={fixture.awayReds} /></span>}
         </div>
       </div>
 

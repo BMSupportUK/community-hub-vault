@@ -95,6 +95,24 @@ function LivePill({ fixture }: { fixture: BoroFixtureDTO }) {
   );
 }
 
+function RedCards({ count }: { count: number }) {
+  if (!count || count < 1) return null;
+  return (
+    <span
+      className="inline-flex items-center gap-0.5 align-middle"
+      title={`${count} red card${count === 1 ? "" : "s"}`}
+      aria-label={`${count} red card${count === 1 ? "" : "s"}`}
+    >
+      {Array.from({ length: count }).map((_, i) => (
+        <span
+          key={i}
+          className="inline-block w-2.5 h-3.5 rounded-[2px] bg-red-600 border border-red-900 shadow-[0_0_4px_rgba(220,38,38,0.7)]"
+        />
+      ))}
+    </span>
+  );
+}
+
 type GuestSession = { guestId: string; email: string; pin: string; displayName: string };
 
 function BoroPredictionsPage() {
@@ -757,6 +775,7 @@ function FixtureCard({
       </div>
       <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
         <div className="flex items-center justify-end gap-2 font-medium">
+          <RedCards count={fixture.homeReds} />
           <span className="truncate">{fixture.homeTeam}</span>
           <TeamKit team={fixture.homeTeam} />
         </div>
@@ -815,6 +834,7 @@ function FixtureCard({
         <div className="flex items-center gap-2 font-medium">
           <TeamKit team={fixture.awayTeam} />
           <span className="truncate">{fixture.awayTeam}</span>
+          <RedCards count={fixture.awayReds} />
         </div>
       </div>
       <div className="mt-3 flex items-center justify-between text-xs">

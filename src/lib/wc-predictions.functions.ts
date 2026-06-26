@@ -18,6 +18,8 @@ export type WcFixtureDTO = {
   status: string;
   minute: number | null;
   minuteAdded: number | null;
+  homeReds: number;
+  awayReds: number;
   myPrediction: { homePred: number; awayPred: number; points: number | null } | null;
 };
 
@@ -90,7 +92,7 @@ export const listWcFixtures = createServerFn({ method: "GET" })
     const [{ data: fixtures, error: fxErr }, { data: preds, error: prErr }] = await Promise.all([
       supabase
         .from("wc_fixtures")
-        .select("id, stage, group_label, home_team, away_team, kickoff_at, home_score, away_score, status, minute, minute_added")
+        .select("id, stage, group_label, home_team, away_team, kickoff_at, home_score, away_score, status, minute, minute_added, home_reds, away_reds")
         .order("kickoff_at", { ascending: true }),
       supabase
         .from("wc_predictions")
@@ -118,6 +120,8 @@ export const listWcFixtures = createServerFn({ method: "GET" })
         status: merged.status ?? "SCHEDULED",
         minute: merged.minute,
         minuteAdded: merged.minute_added,
+        homeReds: merged.home_reds ?? 0,
+        awayReds: merged.away_reds ?? 0,
         myPrediction: p
           ? { homePred: p.home_pred, awayPred: p.away_pred, points: p.points ?? null }
           : null,
@@ -217,6 +221,8 @@ export type WcEntrantPickDTO = {
   status: string;
   minute: number | null;
   minuteAdded: number | null;
+  homeReds: number;
+  awayReds: number;
   homePred: number;
   awayPred: number;
   points: number | null;
@@ -233,7 +239,7 @@ export const getEntrantWcPredictions = createServerFn({ method: "GET" })
     const { data: rows, error } = await supabaseAdmin
       .from("wc_predictions")
       .select(
-        "home_pred, away_pred, points, fixture:wc_fixtures!inner(id, stage, group_label, home_team, away_team, kickoff_at, home_score, away_score, status, minute, minute_added)",
+        "home_pred, away_pred, points, fixture:wc_fixtures!inner(id, stage, group_label, home_team, away_team, kickoff_at, home_score, away_score, status, minute, minute_added, home_reds, away_reds)",
       )
       .eq(col, data.entrantId);
     if (error) throw new Error(error.message);
@@ -256,6 +262,8 @@ export const getEntrantWcPredictions = createServerFn({ method: "GET" })
           status: merged.status,
           minute: merged.minute,
           minuteAdded: merged.minute_added,
+          homeReds: merged.home_reds ?? 0,
+          awayReds: merged.away_reds ?? 0,
           homePred: r.home_pred,
           awayPred: r.away_pred,
           points: r.points,
