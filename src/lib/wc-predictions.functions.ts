@@ -18,6 +18,8 @@ export type WcFixtureDTO = {
   status: string;
   minute: number | null;
   minuteAdded: number | null;
+  homeReds: number;
+  awayReds: number;
   myPrediction: { homePred: number; awayPred: number; points: number | null } | null;
 };
 
