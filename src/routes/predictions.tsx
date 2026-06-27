@@ -210,7 +210,7 @@ function LockCountdownPill({ lockAtMs }: { lockAtMs: number }) {
       title="Time left to predict (locks 30 min before kick-off)"
     >
       <Lock className="size-3.5" strokeWidth={3} />
-      {formatCountdown(remaining)} left
+      Locks in {formatCountdown(remaining)}
     </span>
   );
 }
