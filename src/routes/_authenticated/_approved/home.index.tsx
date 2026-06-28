@@ -1,11 +1,12 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Headphones, MessageSquare, Activity, Ticket, ShoppingBag, BookOpen, UserPlus, ArrowUp, ArrowDown, Pencil, Upload, Sparkles, Image as ImageIcon, Plus, Trash2, ChevronLeft, ChevronRight, Trophy, KeyRound } from "lucide-react";
+import type { RealtimeChannel } from "@supabase/supabase-js";
 import heroImg from "@/assets/member-hero.jpg";
 import eventPlaceholder from "@/assets/event-placeholder.jpg";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { generateEventBanner } from "@/lib/event-banner.functions";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -255,6 +256,85 @@ function WelcomePage() {
 
   const [order, setOrder] = useState<string[]>(Object.keys(CARDS));
   const [saving, setSaving] = useState(false);
+  const [unreadWelcome, setUnreadWelcome] = useState(0);
+  const welcomeChannelIdRef = useRef<string | null>(null);
+  const lastReadWelcomeRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    let messageSub: RealtimeChannel | null = null;
+    let readSub: RealtimeChannel | null = null;
+
+    const refreshCount = async () => {
+      const cid = welcomeChannelIdRef.current;
+      if (!cid || !user?.id) return;
+      const query = supabase
+        .from("chat_messages")
+        .select("id", { count: "exact", head: true })
+        .eq("channel_id", cid);
+      if (lastReadWelcomeRef.current) {
+        query.gt("created_at", lastReadWelcomeRef.current);
+      }
+      const { count } = await query;
+      if (!cancelled) setUnreadWelcome(count ?? 0);
+    };
+
+    const load = async () => {
+      if (!user?.id) return;
+      const { data: channel } = await supabase
+        .from("chat_channels")
+        .select("id")
+        .eq("slug", "welcome")
+        .maybeSingle();
+      if (!channel || cancelled) return;
+      welcomeChannelIdRef.current = channel.id;
+      const { data: read } = await supabase
+        .from("channel_reads")
+        .select("last_read_at")
+        .eq("user_id", user.id)
+        .eq("channel_id", channel.id)
+        .maybeSingle();
+      lastReadWelcomeRef.current = read?.last_read_at ?? null;
+      await refreshCount();
+      if (cancelled) return;
+
+      messageSub = supabase
+        .channel(`home-welcome-messages:${channel.id}`)
+        .on(
+          "postgres_changes",
+          { event: "INSERT", schema: "public", table: "chat_messages", filter: `channel_id=eq.${channel.id}` },
+          () => {
+            if (lastReadWelcomeRef.current) {
+              void refreshCount();
+            } else {
+              setUnreadWelcome((n) => n + 1);
+            }
+          }
+        )
+        .subscribe();
+
+      readSub = supabase
+        .channel(`home-welcome-reads:${channel.id}`)
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "channel_reads", filter: `channel_id=eq.${channel.id}` },
+          (payload) => {
+            const row = payload.new as { user_id: string; last_read_at: string } | undefined;
+            if (row?.user_id !== user?.id) return;
+            lastReadWelcomeRef.current = row?.last_read_at ?? null;
+            void refreshCount();
+          }
+        )
+        .subscribe();
+    };
+
+    load();
+    return () => {
+      cancelled = true;
+      if (messageSub) supabase.removeChannel(messageSub);
+      if (readSub) supabase.removeChannel(readSub);
+    };
+  }, [user?.id]);
 
   useEffect(() => {
     let cancelled = false;
@@ -493,8 +573,22 @@ function WelcomePage() {
       <section className="shrink-0 min-w-0 p-3 xl:p-4">
         <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
           <h2 className="font-display text-lg font-semibold">Jump back in</h2>
-          <Link to="/home/$channel" params={{ channel: "welcome" }} className="text-sm text-sky-300 hover:text-sky-200">
+          <Link
+            to="/home/$channel"
+            params={{ channel: "welcome" }}
+            className="text-sm text-sky-300 hover:text-sky-200 inline-flex items-center gap-2"
+          >
             Open BM Support Customer Chat-room →
+            <span
+              className={`inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1 rounded-full text-[10px] font-bold tabular-nums transition-colors ${
+                unreadWelcome > 0
+                  ? "bg-red-500 text-white animate-unread-flash"
+                  : "bg-muted text-muted-foreground"
+              }`}
+              aria-label={unreadWelcome > 0 ? `${unreadWelcome} unread messages` : "No unread messages"}
+            >
+              {unreadWelcome}
+            </span>
           </Link>
         </div>
         <div className="grid sm:grid-cols-2 gap-2">
