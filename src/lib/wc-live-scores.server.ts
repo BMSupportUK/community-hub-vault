@@ -195,6 +195,76 @@ export async function fetchEspnWcLive(): Promise<EspnLiveMatch[]> {
   }
 }
 
+export type EspnWcFixture = {
+  home: string;
+  away: string;
+  kickoffMs: number;
+};
+
+/**
+ * Wider ESPN sweep covering the next few months of World Cup fixtures.
+ * Used to resolve placeholder team names (e.g. "3rd Group A/B/C/D/F",
+ * "Winner Match 99") in knockout rows once FIFA confirms the matchups.
+ */
+export async function fetchEspnWcAllFixtures(): Promise<EspnWcFixture[]> {
+  try {
+    const today = new Date();
+    const ym = (d: Date) =>
+      `${d.getUTCFullYear()}${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
+    const months: string[] = [];
+    for (let i = 0; i <= 2; i += 1) {
+      const d = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth() + i, 1));
+      months.push(ym(d));
+    }
+    const responses = await Promise.all(
+      months.map((m) =>
+        fetch(
+          `https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=${m}&limit=200`,
+          { headers: { accept: "application/json" } },
+        )
+          .then((r) => (r.ok ? r.json() : { events: [] }))
+          .catch(() => ({ events: [] })),
+      ),
+    );
+    type EspnJson = {
+      events?: Array<{
+        date?: string;
+        competitions?: Array<{
+          competitors?: Array<{
+            homeAway?: string;
+            team?: { displayName?: string };
+          }>;
+        }>;
+      }>;
+    };
+    const out: EspnWcFixture[] = [];
+    const seen = new Set<string>();
+    for (const j of responses as EspnJson[]) {
+      for (const e of j.events ?? []) {
+        const comp = e.competitions?.[0];
+        if (!comp || !e.date) continue;
+        const home = comp.competitors?.find((c) => c.homeAway === "home")?.team?.displayName ?? "";
+        const away = comp.competitors?.find((c) => c.homeAway === "away")?.team?.displayName ?? "";
+        if (!home || !away) continue;
+        const key = `${e.date}|${home}|${away}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        out.push({ home, away, kickoffMs: new Date(e.date).getTime() });
+      }
+    }
+    return out;
+  } catch {
+    return [];
+  }
+}
+
+const PLACEHOLDER_RE = /^(3rd\s+Group|Winner\s+(Match|Group)|Loser\s+(Match|Group)|Round\s+of\s+\d+|TBD|TBC)/i;
+
+export function isWcPlaceholderName(name: string | null | undefined): boolean {
+  if (!name) return true;
+  return PLACEHOLDER_RE.test(name.trim());
+}
+
 export async function getWcLiveOverlays(fixtures: WcLiveFixtureRow[]) {
   const overlays = new Map<string, WcLiveOverlay>();
   try {
