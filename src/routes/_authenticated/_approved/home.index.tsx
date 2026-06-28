@@ -573,8 +573,22 @@ function WelcomePage() {
       <section className="shrink-0 min-w-0 p-3 xl:p-4">
         <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
           <h2 className="font-display text-lg font-semibold">Jump back in</h2>
-          <Link to="/home/$channel" params={{ channel: "welcome" }} className="text-sm text-sky-300 hover:text-sky-200">
+          <Link
+            to="/home/$channel"
+            params={{ channel: "welcome" }}
+            className="text-sm text-sky-300 hover:text-sky-200 inline-flex items-center gap-2"
+          >
             Open BM Support Customer Chat-room →
+            <span
+              className={`inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1 rounded-full text-[10px] font-bold tabular-nums transition-colors ${
+                unreadWelcome > 0
+                  ? "bg-red-500 text-white animate-unread-flash"
+                  : "bg-muted text-muted-foreground"
+              }`}
+              aria-label={unreadWelcome > 0 ? `${unreadWelcome} unread messages` : "No unread messages"}
+            >
+              {unreadWelcome}
+            </span>
           </Link>
         </div>
         <div className="grid sm:grid-cols-2 gap-2">
