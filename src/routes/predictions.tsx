@@ -314,7 +314,7 @@ function PredictionsPage() {
         return;
       }
       toast.success("Prediction saved");
-      await loadAll();
+      await loadAll(true);
     } catch (e: any) {
       toast.error(e?.message ?? "Save failed");
     }
