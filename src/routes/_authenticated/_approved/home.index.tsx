@@ -402,7 +402,7 @@ function WelcomePage() {
               )}
 
               {/* Image area */}
-              <div className="relative w-full shrink-0" style={{ height: 185 }}>
+              <div className="relative w-full shrink-0 aspect-[300/250]">
                 {event?.banner_url ? (
                   <img
                     src={event.banner_url}
