@@ -232,7 +232,7 @@ function BoroPredictionsPage() {
       else if (guest) await upsertGuestFn({ data: { email: guest.email, pin: guest.pin, fixtureId, homePred: hp, awayPred: ap } });
       else { setShowGuestLogin(true); return; }
       toast.success("Prediction saved");
-      await loadAll();
+      await loadAll(true);
     } catch (e: any) { toast.error(e?.message ?? "Save failed"); }
   };
 
