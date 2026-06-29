@@ -963,7 +963,12 @@ function UpcomingFixtures({
   fixtures: WcFixtureDTO[];
   loading: boolean;
   canPredict: boolean;
-  onSave: (fixtureId: string, hp: number, ap: number) => Promise<void>;
+  onSave: (
+    fixtureId: string,
+    hp: number,
+    ap: number,
+    penWinnerPred?: "home" | "away" | null,
+  ) => Promise<void>;
 }) {
   return (
     <div className="rounded-2xl border border-border bg-surface-1 overflow-hidden">
@@ -995,8 +1000,10 @@ function UpcomingFixtures({
             });
             const lockMs = t.getTime() - 30 * 60 * 1000;
             const locked = Date.now() >= lockMs;
-            const scored = f.homeScore !== null && f.awayScore !== null;
+            const hasScore = f.homeScore !== null && f.awayScore !== null;
             const live = isLive(f);
+            const finished = isFinished(f);
+            const showScore = hasScore && (live || finished);
             return (
               <li key={f.id} className="px-4 py-3 text-sm">
                 <div className="flex items-center justify-between text-[11px] text-muted-foreground mb-1">
@@ -1015,7 +1022,7 @@ function UpcomingFixtures({
                     {f.homeTeam}
                   </span>
                   <span className="text-xs tabular-nums text-muted-foreground shrink-0">
-                    {scored ? (
+                    {showScore ? (
                       <span className={`font-bold ${live ? "text-red-300" : "text-foreground"}`}>
                         {f.homeScore}–{f.awayScore}
                       </span>
@@ -1041,8 +1048,13 @@ function UpcomingFixtures({
                       <span className="font-mono text-foreground">
                         {f.myPrediction.homePred}–{f.myPrediction.awayPred}
                       </span>
+                      {f.myPrediction.penWinnerPred && (
+                        <span className="ml-1 px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-300 text-[10px] font-semibold uppercase tracking-wide">
+                          Pens: {f.myPrediction.penWinnerPred === "home" ? f.homeTeam : f.awayTeam}
+                        </span>
+                      )}
                     </span>
-                    {scored && f.myPrediction.points !== null && (
+                    {finished && f.myPrediction.points !== null && (
                       <span className="px-1.5 py-0.5 rounded-full bg-primary/20 text-primary border border-primary/40 font-bold tabular-nums uppercase tracking-wide">
                         +{f.myPrediction.points} pt
                         {f.myPrediction.points === 1 ? "" : "s"}
@@ -1050,7 +1062,7 @@ function UpcomingFixtures({
                     )}
                   </div>
                 )}
-                {!locked && !scored && (
+                {!locked && !finished && (
                   <SidebarPickInput
                     fixture={f}
                     canPredict={canPredict}
