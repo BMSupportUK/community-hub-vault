@@ -4181,6 +4181,7 @@ export type Database = {
           guest_id: string | null
           home_pred: number
           id: string
+          pen_winner_pred: string | null
           points: number | null
           updated_at: string
           user_id: string | null
@@ -4192,6 +4193,7 @@ export type Database = {
           guest_id?: string | null
           home_pred: number
           id?: string
+          pen_winner_pred?: string | null
           points?: number | null
           updated_at?: string
           user_id?: string | null
@@ -4203,6 +4205,7 @@ export type Database = {
           guest_id?: string | null
           home_pred?: number
           id?: string
+          pen_winner_pred?: string | null
           points?: number | null
           updated_at?: string
           user_id?: string | null
@@ -4813,6 +4816,17 @@ export type Database = {
               hp: number
               hs: number
               pen_winner?: string
+            }
+            Returns: number
+          }
+        | {
+            Args: {
+              ap: number
+              as_: number
+              hp: number
+              hs: number
+              pen_winner?: string
+              pen_winner_pred?: string
             }
             Returns: number
           }
