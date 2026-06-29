@@ -198,6 +198,7 @@ const upsertSchema = z.object({
   fixtureId: z.string().uuid(),
   homePred: z.number().int().min(0).max(30),
   awayPred: z.number().int().min(0).max(30),
+  penWinnerPred: z.enum(["home", "away"]).nullable().optional(),
 });
 
 export const upsertWcGuestPrediction = createServerFn({ method: "POST" })
@@ -223,6 +224,8 @@ export const upsertWcGuestPrediction = createServerFn({ method: "POST" })
           fixture_id: data.fixtureId,
           home_pred: data.homePred,
           away_pred: data.awayPred,
+          pen_winner_pred:
+            data.homePred === data.awayPred ? (data.penWinnerPred ?? null) : null,
         },
         { onConflict: "guest_id,fixture_id" },
       );

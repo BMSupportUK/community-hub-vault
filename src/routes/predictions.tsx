@@ -314,13 +314,25 @@ function PredictionsPage() {
     }
   };
 
-  const handleSave = async (fixtureId: string, hp: number, ap: number) => {
+  const handleSave = async (
+    fixtureId: string,
+    hp: number,
+    ap: number,
+    penWinnerPred: "home" | "away" | null = null,
+  ) => {
     try {
       if (user) {
-        await upsertFn({ data: { fixtureId, homePred: hp, awayPred: ap } });
+        await upsertFn({ data: { fixtureId, homePred: hp, awayPred: ap, penWinnerPred } });
       } else if (guest) {
         await upsertGuestFn({
-          data: { email: guest.email, pin: guest.pin, fixtureId, homePred: hp, awayPred: ap },
+          data: {
+            email: guest.email,
+            pin: guest.pin,
+            fixtureId,
+            homePred: hp,
+            awayPred: ap,
+            penWinnerPred,
+          },
         });
       } else {
         setShowGuestLogin(true);
@@ -1056,7 +1068,12 @@ function SidebarPickInput({
 }: {
   fixture: WcFixtureDTO;
   canPredict: boolean;
-  onSave: (fixtureId: string, hp: number, ap: number) => Promise<void>;
+  onSave: (
+    fixtureId: string,
+    hp: number,
+    ap: number,
+    penWinnerPred?: "home" | "away" | null,
+  ) => Promise<void>;
 }) {
   const [hp, setHp] = useState<string>(fixture.myPrediction?.homePred?.toString() ?? "");
   const [ap, setAp] = useState<string>(fixture.myPrediction?.awayPred?.toString() ?? "");
@@ -1128,7 +1145,12 @@ function FixturesList({
 }: {
   fixtures: WcFixtureDTO[];
   canPredict: boolean;
-  onSave: (fixtureId: string, hp: number, ap: number) => Promise<void>;
+  onSave: (
+    fixtureId: string,
+    hp: number,
+    ap: number,
+    penWinnerPred?: "home" | "away" | null,
+  ) => Promise<void>;
   mode?: "upcoming" | "completed";
 }) {
   const [filter, setFilter] = useState<string>("A"); // "A".."L" | "r32"…"final"
@@ -1532,7 +1554,12 @@ function FixtureCard({
 }: {
   fixture: WcFixtureDTO;
   canPredict: boolean;
-  onSave: (fixtureId: string, hp: number, ap: number) => Promise<void>;
+  onSave: (
+    fixtureId: string,
+    hp: number,
+    ap: number,
+    penWinnerPred?: "home" | "away" | null,
+  ) => Promise<void>;
 }) {
   const kickoffMs = new Date(fixture.kickoffAt).getTime();
   const LOCK_MS = 30 * 60 * 1000;
@@ -1547,11 +1574,19 @@ function FixtureCard({
   const upcomingSoon = !live && !finished && kickoffMs - Date.now() <= 24 * 60 * 60 * 1000 && kickoffMs - Date.now() > 0;
   const [hp, setHp] = useState<string>(fixture.myPrediction?.homePred?.toString() ?? "");
   const [ap, setAp] = useState<string>(fixture.myPrediction?.awayPred?.toString() ?? "");
+  const [penPick, setPenPick] = useState<"home" | "away" | null>(
+    fixture.myPrediction?.penWinnerPred ?? null,
+  );
   const [busy, setBusy] = useState(false);
   const hasPick = !!fixture.myPrediction;
   // When user already has a saved pick, hide inputs behind an Edit button.
   const [editing, setEditing] = useState<boolean>(!hasPick);
   const showInputs = !locked && !scored && (editing || !hasPick);
+
+  const isKnockout = fixture.stage !== "group";
+  const numericDraw =
+    hp !== "" && ap !== "" && Number(hp) === Number(ap);
+  const showPenPicker = isKnockout && showInputs && numericDraw && canPredict;
 
   const dirty =
     !locked &&
@@ -1559,13 +1594,14 @@ function FixtureCard({
     hp !== "" &&
     ap !== "" &&
     (Number(hp) !== fixture.myPrediction?.homePred ||
-      Number(ap) !== fixture.myPrediction?.awayPred);
+      Number(ap) !== fixture.myPrediction?.awayPred ||
+      (numericDraw && penPick !== (fixture.myPrediction?.penWinnerPred ?? null)));
 
   const save = async () => {
     if (!dirty) return;
     setBusy(true);
     try {
-      await onSave(fixture.id, Number(hp), Number(ap));
+      await onSave(fixture.id, Number(hp), Number(ap), numericDraw ? penPick : null);
       setEditing(false);
     } finally {
       setBusy(false);
@@ -1575,6 +1611,7 @@ function FixtureCard({
   const cancelEdit = () => {
     setHp(fixture.myPrediction?.homePred?.toString() ?? "");
     setAp(fixture.myPrediction?.awayPred?.toString() ?? "");
+    setPenPick(fixture.myPrediction?.penWinnerPred ?? null);
     setEditing(false);
   };
 
@@ -1676,6 +1713,39 @@ function FixtureCard({
         </div>
       </div>
 
+      {showPenPicker && (
+        <div className="mt-3 rounded-lg border border-emerald-500/40 bg-emerald-500/5 p-2.5 space-y-1.5">
+          <div className="text-[11px] font-bold uppercase tracking-wide text-emerald-300">
+            Knockout — pick the pens winner
+          </div>
+          <p className="text-[11px] text-muted-foreground">
+            You&apos;ve predicted a draw. If the match is decided on penalties,
+            you&apos;ll get +1 bonus for picking the right team to win the shootout.
+          </p>
+          <div className="grid grid-cols-2 gap-2">
+            {(["home", "away"] as const).map((side) => {
+              const teamName = side === "home" ? fixture.homeTeam : fixture.awayTeam;
+              const selected = penPick === side;
+              return (
+                <button
+                  key={side}
+                  type="button"
+                  onClick={() => setPenPick(selected ? null : side)}
+                  className={`rounded px-2 py-1.5 text-xs font-semibold border transition ${
+                    selected
+                      ? "bg-emerald-500 text-black border-emerald-500"
+                      : "border-border bg-surface-1 hover:bg-surface-2"
+                  }`}
+                  aria-pressed={selected}
+                >
+                  {teamFlag(teamName)} {teamName}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       <div className="mt-3 flex items-center justify-between text-xs">
         <div className="text-muted-foreground">
           {fixture.myPrediction ? (
@@ -1685,6 +1755,11 @@ function FixtureCard({
               <span className="font-mono text-foreground">
                 {fixture.myPrediction.homePred} – {fixture.myPrediction.awayPred}
               </span>
+              {fixture.myPrediction.penWinnerPred && (
+                <span className="ml-1 px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-300 text-[10px] font-semibold uppercase tracking-wide">
+                  Pens: {fixture.myPrediction.penWinnerPred === "home" ? fixture.homeTeam : fixture.awayTeam}
+                </span>
+              )}
               {fixture.myPrediction.points !== null && (
                 <span className="ml-2 px-1.5 py-0.5 rounded bg-primary/15 text-primary font-medium">
                   {fixture.myPrediction.points} pt
