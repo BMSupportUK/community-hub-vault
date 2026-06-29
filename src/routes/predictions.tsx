@@ -1755,6 +1755,11 @@ function FixtureCard({
               <span className="font-mono text-foreground">
                 {fixture.myPrediction.homePred} – {fixture.myPrediction.awayPred}
               </span>
+              {fixture.myPrediction.penWinnerPred && (
+                <span className="ml-1 px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-300 text-[10px] font-semibold uppercase tracking-wide">
+                  Pens: {fixture.myPrediction.penWinnerPred === "home" ? fixture.homeTeam : fixture.awayTeam}
+                </span>
+              )}
               {fixture.myPrediction.points !== null && (
                 <span className="ml-2 px-1.5 py-0.5 rounded bg-primary/15 text-primary font-medium">
                   {fixture.myPrediction.points} pt
