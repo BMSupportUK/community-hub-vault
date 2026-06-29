@@ -1166,7 +1166,35 @@ function FixturesList({
   ) => Promise<void>;
   mode?: "upcoming" | "completed";
 }) {
-  const [filter, setFilter] = useState<string>("A"); // "A".."L" | "r32"…"final"
+  const defaultFilter = useMemo<string>(() => {
+    const now = Date.now();
+    const groups = fixtures.filter((f) => f.stage === "group" && f.groupLabel);
+    if (!groups.length) return "A";
+    // 1) A group with a live fixture
+    const live = groups.find((f) => {
+      const s = f.status ?? "";
+      return s === "IN_PLAY" || s === "PAUSED" || s === "LIVE";
+    });
+    if (live?.groupLabel) return live.groupLabel;
+    // 2) Group with the next upcoming (not-finished) kickoff
+    const upcoming = groups
+      .filter((f) => (f.status ?? "") !== "FINISHED" && new Date(f.kickoffAt).getTime() >= now)
+      .sort((a, b) => +new Date(a.kickoffAt) - +new Date(b.kickoffAt))[0];
+    if (upcoming?.groupLabel) return upcoming.groupLabel;
+    // 3) Group with the most recent kickoff (all groups done)
+    const latest = [...groups].sort(
+      (a, b) => +new Date(b.kickoffAt) - +new Date(a.kickoffAt),
+    )[0];
+    return latest?.groupLabel ?? "A";
+  }, [fixtures]);
+  const [filter, setFilter] = useState<string>(defaultFilter); // "A".."L" | "r32"…"final"
+  const didInitFilter = useRef(false);
+  useEffect(() => {
+    if (didInitFilter.current) return;
+    if (fixtures.length === 0) return;
+    didInitFilter.current = true;
+    setFilter(defaultFilter);
+  }, [fixtures.length, defaultFilter]);
 
   const filtered = useMemo(() => {
     if (["r32", "r16", "qf", "sf", "third", "final"].includes(filter)) {
