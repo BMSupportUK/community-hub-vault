@@ -85,9 +85,21 @@ function liveLabel(f: {
   minute?: number | null;
   minuteAdded?: number | null;
   kickoffAt?: string | null;
+  livePhase?: "ET" | "PENS" | null;
 }, sinceMs = 0) {
+  if (f.livePhase === "PENS") return "PENS";
   if (f.status === "PAUSED") return "HT";
   const tick = Math.max(0, Math.floor(sinceMs / 60000));
+  if (f.livePhase === "ET") {
+    // Extra time runs 91-120. Show the running clock when we have one.
+    if (typeof f.minute === "number" && f.minute > 0) {
+      const added = typeof f.minuteAdded === "number" && f.minuteAdded > 0 ? f.minuteAdded : 0;
+      const base = f.minute >= 105 ? 105 : f.minute >= 90 ? 90 : f.minute;
+      if (added > 0) return `ET ${base}+${added + tick}'`;
+      return `ET ${f.minute + tick}'`;
+    }
+    return "ET";
+  }
   if (typeof f.minute === "number" && f.minute > 0) {
     const added = typeof f.minuteAdded === "number" && f.minuteAdded > 0 ? f.minuteAdded : 0;
     if (added > 0) {
@@ -143,6 +155,7 @@ function LivePill({
     minute?: number | null;
     minuteAdded?: number | null;
     kickoffAt?: string | null;
+    livePhase?: "ET" | "PENS" | null;
   };
   fetchedAt?: number;
 }) {
