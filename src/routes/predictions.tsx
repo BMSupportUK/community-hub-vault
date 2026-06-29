@@ -2171,6 +2171,20 @@ function LeaderboardList({
                     <div className="font-mono tabular-nums text-foreground">
                       {p.homePred}-{p.awayPred}
                     </div>
+                    {p.penWinnerPred && p.homePred === p.awayPred && (
+                      <div
+                        className={`text-[10px] px-1.5 py-0.5 rounded font-semibold ${
+                          p.penWinner && p.penWinner === p.penWinnerPred
+                            ? "bg-emerald-500/20 text-emerald-300"
+                            : p.penWinner
+                            ? "bg-red-500/20 text-red-300"
+                            : "bg-amber-500/15 text-amber-300"
+                        }`}
+                        title="Pens winner pick"
+                      >
+                        Pens: {p.penWinnerPred === "home" ? p.homeTeam : p.awayTeam}
+                      </div>
+                    )}
                     <div className="w-12 text-right">
                       {p.points !== null ? (
                         <span className={`inline-flex px-1.5 py-0.5 rounded text-[10px] font-bold ${p.points >= 5 ? "bg-yellow-500/20 text-yellow-300" : p.points >= 3 ? "bg-emerald-500/20 text-emerald-300" : p.points >= 1 ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground"}`}>
