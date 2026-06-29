@@ -243,6 +243,7 @@ export type PublicLeaderboardRow = {
   exactCount: number;
   goalDiffCount: number;
   resultCount: number;
+  penWinCount: number;
   predictionsMade: number;
   predictionsScored: number;
 };
@@ -266,6 +267,7 @@ export const getWcLeaderboardPublic = createServerFn({ method: "GET" }).handler(
       exactCount: r.exact_count ?? 0,
       goalDiffCount: r.goal_diff_count ?? 0,
       resultCount: r.result_count ?? 0,
+      penWinCount: r.pen_win_count ?? 0,
       predictionsMade: r.predictions_made ?? 0,
       predictionsScored: r.predictions_scored ?? 0,
     }));
