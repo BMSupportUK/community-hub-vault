@@ -1818,7 +1818,7 @@ function LeaderboardList({
           return (
             <li
               key={r.userId}
-              className={`grid grid-cols-[16px_minmax(0,1fr)_24px_22px_24px_22px_28px_36px] sm:grid-cols-[36px_minmax(0,0.6fr)_140px_112px_160px_112px_64px_80px] gap-0.5 sm:gap-2 px-1.5 sm:px-4 py-2.5 text-xs sm:text-sm border-b border-border last:border-b-0 ${
+              className={`grid grid-cols-[16px_minmax(0,1fr)_24px_22px_24px_22px_22px_28px_36px] sm:grid-cols-[36px_minmax(0,0.6fr)_140px_112px_160px_112px_112px_64px_80px] gap-0.5 sm:gap-2 px-1.5 sm:px-4 py-2.5 text-xs sm:text-sm border-b border-border last:border-b-0 ${
                 mine ? "bg-primary/5" : ""
               }`}
             >
@@ -1877,6 +1877,7 @@ function LeaderboardList({
               </div>
               <div className="text-center tabular-nums text-muted-foreground">{r.goalDiffCount}</div>
               <div className="text-center tabular-nums">{r.resultCount}</div>
+              <div className="text-center tabular-nums text-muted-foreground">{r.penWinCount}</div>
               <div className="text-center font-display font-bold tabular-nums">
                 {r.totalPoints}
               </div>
