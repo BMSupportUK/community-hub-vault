@@ -773,17 +773,22 @@ function PredictionsPage() {
                 </ul>
                 <div className="pt-2 mt-2 border-t border-border space-y-2">
                   <h4 className="font-display text-sm font-bold">Knockouts that go to extra time / penalties</h4>
-                  <p className="text-xs text-muted-foreground">
-                    From the Round of 32 onwards, if the match is level after 90 minutes it goes
-                    to extra time and then penalties. Your prediction is always scored against the
-                    <span className="text-foreground font-medium"> 90-minute scoreline</span> (so a 1-1
-                    pick still wins exact / margin / result points if it&apos;s 1-1 at full time),
-                    and there&apos;s a bonus on top for backing the right team to progress:
-                  </p>
                   <ul className="space-y-2 text-sm">
-                    <li className="flex items-center gap-3">
-                      <span className="inline-flex min-w-12 justify-center px-2 py-1 rounded bg-emerald-500 text-black text-xs font-bold">+2 pts</span>
-                      <span><span className="font-medium">Progression bonus</span> — your prediction had a clear winner and that team won on pens (added on top of any standard points above).</span>
+                    <li className="flex items-start gap-3">
+                      <span className="inline-flex min-w-16 justify-center px-2 py-1 rounded bg-primary/70 text-primary-foreground text-xs font-bold">Won in ET</span>
+                      <span>
+                        Match decided in extra time — scored exactly like a regulation game using the
+                        <span className="text-foreground font-medium"> final score after extra time</span>
+                        (5 / 3 / 1 / 0 as above).
+                      </span>
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <span className="inline-flex min-w-16 justify-center px-2 py-1 rounded bg-emerald-500 text-black text-xs font-bold">Won on pens</span>
+                      <span>
+                        Match decided on penalties — the scoreline is ignored. You get
+                        <span className="text-foreground font-medium"> 1 point</span> if your prediction
+                        picked the team that won the shootout, otherwise 0.
+                      </span>
                     </li>
                   </ul>
                 </div>
