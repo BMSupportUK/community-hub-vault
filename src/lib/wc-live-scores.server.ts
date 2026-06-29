@@ -23,6 +23,7 @@ export type WcLiveOverlay = {
   away_score: number | null;
   home_reds: number | null;
   away_reds: number | null;
+  phase: "ET" | "PENS" | null;
 };
 
 export type EspnLiveMatch = {
@@ -36,6 +37,7 @@ export type EspnLiveMatch = {
   awayScore: number | null;
   homeReds: number;
   awayReds: number;
+  phase: "ET" | "PENS" | null;
 };
 
 const ALIASES: Record<string, string[]> = {
@@ -162,6 +164,11 @@ export async function fetchEspnWcLive(): Promise<EspnLiveMatch[]> {
       const typeName = comp.status?.type?.name ?? "";
       const status = state === "post" ? "FINISHED" : typeName === "STATUS_HALFTIME" ? "PAUSED" : "IN_PLAY";
       const parsed = parseEspnMinute(comp.status?.displayClock, comp.status?.clock, state);
+      // Detect knockout phase from ESPN's status type name.
+      // Examples: STATUS_FIRST_HALF_EXTRA_TIME, STATUS_END_OF_EXTRATIME, STATUS_SHOOTOUT, STATUS_FINAL_PEN, STATUS_FINAL_AET.
+      let phase: "ET" | "PENS" | null = null;
+      if (/SHOOTOUT|FINAL_PEN|PENALTY/i.test(typeName)) phase = "PENS";
+      else if (/OVERTIME|EXTRA[_ ]?TIME|FINAL_AET/i.test(typeName)) phase = "ET";
       const homeTeamId = homeC.team?.id ?? homeC.id ?? "";
       const awayTeamId = awayC.team?.id ?? awayC.id ?? "";
       let homeReds = 0;
@@ -184,6 +191,7 @@ export async function fetchEspnWcLive(): Promise<EspnLiveMatch[]> {
         awayScore: awayC.score != null && awayC.score !== "" ? Number(awayC.score) : null,
         homeReds,
         awayReds,
+        phase,
       };
       const key = `${e.date}|${norm(match.home)}|${norm(match.away)}`;
       const existing = byMatch.get(key);
@@ -280,6 +288,7 @@ export async function getWcLiveOverlays(fixtures: WcLiveFixtureRow[]) {
         away_score: ev.awayScore,
         home_reds: ev.homeReds,
         away_reds: ev.awayReds,
+        phase: ev.phase,
       });
     }
   } catch {
@@ -312,6 +321,7 @@ export function mergeWcLive(
       minute_added: dbAdded,
       home_reds: dbHomeReds,
       away_reds: dbAwayReds,
+      phase: null as "ET" | "PENS" | null,
     };
   }
 
@@ -325,6 +335,7 @@ export function mergeWcLive(
       minute_added: dbAdded,
       home_reds: dbHomeReds,
       away_reds: dbAwayReds,
+      phase: null as "ET" | "PENS" | null,
     };
   }
 
@@ -344,6 +355,7 @@ export function mergeWcLive(
       minute_added: dbAdded,
       home_reds: Math.max(dbHomeReds, overlay.home_reds ?? 0),
       away_reds: Math.max(dbAwayReds, overlay.away_reds ?? 0),
+      phase: overlay.phase,
     };
   }
 
@@ -355,5 +367,6 @@ export function mergeWcLive(
     minute_added: overlay.minute_added ?? dbAdded,
     home_reds: Math.max(dbHomeReds, overlay.home_reds ?? 0),
     away_reds: Math.max(dbAwayReds, overlay.away_reds ?? 0),
+    phase: overlay.phase,
   };
 }

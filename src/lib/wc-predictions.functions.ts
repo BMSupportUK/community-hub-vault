@@ -21,6 +21,7 @@ export type WcFixtureDTO = {
   homeReds: number;
   awayReds: number;
   penWinner: "home" | "away" | null;
+  livePhase: "ET" | "PENS" | null;
   myPrediction: { homePred: number; awayPred: number; points: number | null } | null;
 };
 
@@ -124,6 +125,7 @@ export const listWcFixtures = createServerFn({ method: "GET" })
         homeReds: merged.home_reds ?? 0,
         awayReds: merged.away_reds ?? 0,
         penWinner: (f.pen_winner ?? null) as "home" | "away" | null,
+        livePhase: merged.phase ?? null,
         myPrediction: p
           ? { homePred: p.home_pred, awayPred: p.away_pred, points: p.points ?? null }
           : null,
