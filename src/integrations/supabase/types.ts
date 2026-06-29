@@ -4414,6 +4414,7 @@ export type Database = {
           exact_count: number | null
           goal_diff_count: number | null
           is_guest: boolean | null
+          pen_win_count: number | null
           predictions_made: number | null
           predictions_scored: number | null
           result_count: number | null

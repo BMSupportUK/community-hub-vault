@@ -429,9 +429,10 @@ function AdminPredictionsPage() {
                 <div className="space-y-2 rounded-lg border border-border bg-surface-2/40 p-3">
                   <Label className="text-xs">Winner on penalties (knockouts only)</Label>
                   <p className="text-[11px] text-muted-foreground">
-                    Set if the 90-min score was a draw and the match went to extra time / pens.
-                    Predictions still score against the 90-min scoreline above, plus a +2 bonus
-                    for anyone who picked the team that progresses.
+                    Only set this if the match was decided on a penalty shootout. The scoreline
+                    above is then ignored for scoring — predictions get 1 point if they picked
+                    the winning team and 0 otherwise. For an extra-time winner, leave this as
+                    &quot;No pens&quot; and enter the final post-ET score above.
                   </p>
                   <div className="grid grid-cols-3 gap-2 text-xs">
                     {([

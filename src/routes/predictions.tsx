@@ -773,17 +773,22 @@ function PredictionsPage() {
                 </ul>
                 <div className="pt-2 mt-2 border-t border-border space-y-2">
                   <h4 className="font-display text-sm font-bold">Knockouts that go to extra time / penalties</h4>
-                  <p className="text-xs text-muted-foreground">
-                    From the Round of 32 onwards, if the match is level after 90 minutes it goes
-                    to extra time and then penalties. Your prediction is always scored against the
-                    <span className="text-foreground font-medium"> 90-minute scoreline</span> (so a 1-1
-                    pick still wins exact / margin / result points if it&apos;s 1-1 at full time),
-                    and there&apos;s a bonus on top for backing the right team to progress:
-                  </p>
                   <ul className="space-y-2 text-sm">
-                    <li className="flex items-center gap-3">
-                      <span className="inline-flex min-w-12 justify-center px-2 py-1 rounded bg-emerald-500 text-black text-xs font-bold">+2 pts</span>
-                      <span><span className="font-medium">Progression bonus</span> — your prediction had a clear winner and that team won on pens (added on top of any standard points above).</span>
+                    <li className="flex items-start gap-3">
+                      <span className="inline-flex min-w-16 justify-center px-2 py-1 rounded bg-primary/70 text-primary-foreground text-xs font-bold">Won in ET</span>
+                      <span>
+                        Match decided in extra time — scored exactly like a regulation game using the
+                        <span className="text-foreground font-medium"> final score after extra time</span>
+                        (5 / 3 / 1 / 0 as above).
+                      </span>
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <span className="inline-flex min-w-16 justify-center px-2 py-1 rounded bg-emerald-500 text-black text-xs font-bold">Won on pens</span>
+                      <span>
+                        Match decided on penalties — the scoreline is ignored. You get
+                        <span className="text-foreground font-medium"> 1 point</span> if your prediction
+                        picked the team that won the shootout, otherwise 0.
+                      </span>
                     </li>
                   </ul>
                 </div>
@@ -1800,13 +1805,14 @@ function LeaderboardList({
   }
   return (
     <div className="rounded-2xl border border-border bg-surface-1 overflow-hidden">
-      <div className="grid grid-cols-[16px_minmax(0,1fr)_24px_22px_24px_22px_28px_36px] sm:grid-cols-[36px_minmax(0,0.6fr)_140px_112px_160px_112px_64px_80px] gap-0.5 sm:gap-2 px-1.5 sm:px-4 py-2.5 text-[10px] sm:text-[11px] uppercase tracking-wider text-muted-foreground bg-surface-2 border-b border-border [&>div]:whitespace-nowrap">
+      <div className="grid grid-cols-[16px_minmax(0,1fr)_24px_22px_24px_22px_22px_28px_36px] sm:grid-cols-[36px_minmax(0,0.6fr)_140px_112px_160px_112px_112px_64px_80px] gap-0.5 sm:gap-2 px-1.5 sm:px-4 py-2.5 text-[10px] sm:text-[11px] uppercase tracking-wider text-muted-foreground bg-surface-2 border-b border-border [&>div]:whitespace-nowrap">
         <div>#</div>
         <div>Player</div>
         <div className="text-center"><span className="sm:hidden">P</span><span className="hidden sm:inline">Predictions Entered</span></div>
         <div className="text-center" title="Correct score (exact)"><span className="sm:hidden">CS</span><span className="hidden sm:inline">Correct Score</span></div>
         <div className="text-center" title="Right winning margin (3 pts)"><span className="sm:hidden">WM</span><span className="hidden sm:inline">Winning Margin</span></div>
         <div className="text-center" title="Correct result"><span className="sm:hidden">R</span><span className="hidden sm:inline">Correct Result</span></div>
+        <div className="text-center" title="Picked the winner of a penalty shootout (1 pt)"><span className="sm:hidden">PW</span><span className="hidden sm:inline">Pen Wins</span></div>
         <div className="text-center"><span className="sm:hidden">Pt</span><span className="hidden sm:inline">Points</span></div>
         <div className="text-center">Type</div>
       </div>
@@ -1817,7 +1823,7 @@ function LeaderboardList({
           return (
             <li
               key={r.userId}
-              className={`grid grid-cols-[16px_minmax(0,1fr)_24px_22px_24px_22px_28px_36px] sm:grid-cols-[36px_minmax(0,0.6fr)_140px_112px_160px_112px_64px_80px] gap-0.5 sm:gap-2 px-1.5 sm:px-4 py-2.5 text-xs sm:text-sm border-b border-border last:border-b-0 ${
+              className={`grid grid-cols-[16px_minmax(0,1fr)_24px_22px_24px_22px_22px_28px_36px] sm:grid-cols-[36px_minmax(0,0.6fr)_140px_112px_160px_112px_112px_64px_80px] gap-0.5 sm:gap-2 px-1.5 sm:px-4 py-2.5 text-xs sm:text-sm border-b border-border last:border-b-0 ${
                 mine ? "bg-primary/5" : ""
               }`}
             >
@@ -1876,6 +1882,7 @@ function LeaderboardList({
               </div>
               <div className="text-center tabular-nums text-muted-foreground">{r.goalDiffCount}</div>
               <div className="text-center tabular-nums">{r.resultCount}</div>
+              <div className="text-center tabular-nums text-muted-foreground">{r.penWinCount}</div>
               <div className="text-center font-display font-bold tabular-nums">
                 {r.totalPoints}
               </div>
@@ -1901,7 +1908,7 @@ function LeaderboardList({
             Site owner · playing for fun (not ranked)
           </div>
           <div
-            className={`grid grid-cols-[16px_minmax(0,1fr)_24px_22px_24px_22px_28px_36px] sm:grid-cols-[36px_minmax(0,0.6fr)_140px_112px_160px_112px_64px_80px] gap-0.5 sm:gap-2 px-1.5 sm:px-4 py-2.5 text-xs sm:text-sm ${
+            className={`grid grid-cols-[16px_minmax(0,1fr)_24px_22px_24px_22px_22px_28px_36px] sm:grid-cols-[36px_minmax(0,0.6fr)_140px_112px_160px_112px_112px_64px_80px] gap-0.5 sm:gap-2 px-1.5 sm:px-4 py-2.5 text-xs sm:text-sm ${
               owner.userId === currentUserId ? "bg-primary/5" : ""
             }`}
           >
@@ -1932,6 +1939,7 @@ function LeaderboardList({
             </div>
             <div className="text-center tabular-nums text-muted-foreground">{owner.goalDiffCount}</div>
             <div className="text-center tabular-nums">{owner.resultCount}</div>
+            <div className="text-center tabular-nums text-muted-foreground">{owner.penWinCount}</div>
             <div className="text-center font-display font-bold tabular-nums">
               {owner.totalPoints}
             </div>
