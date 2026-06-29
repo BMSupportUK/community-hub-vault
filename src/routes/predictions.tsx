@@ -800,7 +800,20 @@ function PredictionsPage() {
                         Match decided on penalties — the recorded scoreline is scored normally
                         (5 / 3 / 1 / 0 as above), plus a
                         <span className="text-foreground font-medium"> +1 bonus </span>
-                        if your prediction picked the team that won the shootout.
+                        if you backed the team that won the shootout. If you predicted a
+                        <span className="text-foreground font-medium"> draw </span>
+                        on a knockout fixture, you&apos;ll get a separate
+                        <span className="text-foreground font-medium"> &ldquo;Pick the pens winner&rdquo; </span>
+                        selector — picking the correct shootout winner earns the same
+                        <span className="text-foreground font-medium"> +1 bonus</span>.
+                      </span>
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <span className="inline-flex min-w-16 justify-center px-2 py-1 rounded bg-amber-400 text-black text-xs font-bold">Pens wins</span>
+                      <span>
+                        Every correct pens-winner call (via your scoreline or your pens pick on a drawn prediction) also adds to your
+                        <span className="text-foreground font-medium"> Pens Wins </span>
+                        tally on the leaderboard.
                       </span>
                     </li>
                   </ul>
