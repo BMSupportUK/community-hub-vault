@@ -785,9 +785,10 @@ function PredictionsPage() {
                     <li className="flex items-start gap-3">
                       <span className="inline-flex min-w-16 justify-center px-2 py-1 rounded bg-emerald-500 text-black text-xs font-bold">Won on pens</span>
                       <span>
-                        Match decided on penalties — the scoreline is ignored. You get
-                        <span className="text-foreground font-medium"> 1 point</span> if your prediction
-                        picked the team that won the shootout, otherwise 0.
+                        Match decided on penalties — the recorded scoreline is scored normally
+                        (5 / 3 / 1 / 0 as above), plus a
+                        <span className="text-foreground font-medium"> +1 bonus </span>
+                        if your prediction picked the team that won the shootout.
                       </span>
                     </li>
                   </ul>
