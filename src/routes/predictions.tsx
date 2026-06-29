@@ -1168,24 +1168,25 @@ function FixturesList({
 }) {
   const defaultFilter = useMemo<string>(() => {
     const now = Date.now();
-    const groups = fixtures.filter((f) => f.stage === "group" && f.groupLabel);
-    if (!groups.length) return "A";
-    // 1) A group with a live fixture
-    const live = groups.find((f) => {
+    if (!fixtures.length) return "A";
+    const keyOf = (f: WcFixtureDTO) =>
+      f.stage === "group" ? (f.groupLabel ?? "") : f.stage;
+    // 1) A fixture currently live
+    const live = fixtures.find((f) => {
       const s = f.status ?? "";
       return s === "IN_PLAY" || s === "PAUSED" || s === "LIVE";
     });
-    if (live?.groupLabel) return live.groupLabel;
-    // 2) Group with the next upcoming (not-finished) kickoff
-    const upcoming = groups
+    if (live) return keyOf(live) || "A";
+    // 2) Next upcoming (not-finished) fixture across all stages
+    const upcoming = fixtures
       .filter((f) => (f.status ?? "") !== "FINISHED" && new Date(f.kickoffAt).getTime() >= now)
       .sort((a, b) => +new Date(a.kickoffAt) - +new Date(b.kickoffAt))[0];
-    if (upcoming?.groupLabel) return upcoming.groupLabel;
-    // 3) Group with the most recent kickoff (all groups done)
-    const latest = [...groups].sort(
+    if (upcoming) return keyOf(upcoming) || "A";
+    // 3) Most recent fixture (everything finished)
+    const latest = [...fixtures].sort(
       (a, b) => +new Date(b.kickoffAt) - +new Date(a.kickoffAt),
     )[0];
-    return latest?.groupLabel ?? "A";
+    return (latest && keyOf(latest)) || "A";
   }, [fixtures]);
   const [filter, setFilter] = useState<string>(defaultFilter); // "A".."L" | "r32"…"final"
   const didInitFilter = useRef(false);
