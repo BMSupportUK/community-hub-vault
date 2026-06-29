@@ -1145,7 +1145,12 @@ function FixturesList({
 }: {
   fixtures: WcFixtureDTO[];
   canPredict: boolean;
-  onSave: (fixtureId: string, hp: number, ap: number) => Promise<void>;
+  onSave: (
+    fixtureId: string,
+    hp: number,
+    ap: number,
+    penWinnerPred?: "home" | "away" | null,
+  ) => Promise<void>;
   mode?: "upcoming" | "completed";
 }) {
   const [filter, setFilter] = useState<string>("A"); // "A".."L" | "r32"…"final"
