@@ -430,8 +430,8 @@ function AdminPredictionsPage() {
                   <Label className="text-xs">Winner on penalties (knockouts only)</Label>
                   <p className="text-[11px] text-muted-foreground">
                     Only set this if the match was decided on a penalty shootout. The scoreline
-                    above is then ignored for scoring — predictions get 1 point if they picked
-                    the winning team and 0 otherwise. For an extra-time winner, leave this as
+                    above is still scored normally and predictions that picked the winning team
+                    get a +1 bonus on top. For an extra-time winner, leave this as
                     &quot;No pens&quot; and enter the final post-ET score above.
                   </p>
                   <div className="grid grid-cols-3 gap-2 text-xs">
