@@ -20,6 +20,7 @@ export type WcFixtureDTO = {
   minuteAdded: number | null;
   homeReds: number;
   awayReds: number;
+  penWinner: "home" | "away" | null;
   myPrediction: { homePred: number; awayPred: number; points: number | null } | null;
 };
 
@@ -92,7 +93,7 @@ export const listWcFixtures = createServerFn({ method: "GET" })
     const [{ data: fixtures, error: fxErr }, { data: preds, error: prErr }] = await Promise.all([
       supabase
         .from("wc_fixtures")
-        .select("id, stage, group_label, home_team, away_team, kickoff_at, home_score, away_score, status, minute, minute_added, home_reds, away_reds")
+        .select("id, stage, group_label, home_team, away_team, kickoff_at, home_score, away_score, status, minute, minute_added, home_reds, away_reds, pen_winner")
         .order("kickoff_at", { ascending: true }),
       supabase
         .from("wc_predictions")
@@ -122,6 +123,7 @@ export const listWcFixtures = createServerFn({ method: "GET" })
         minuteAdded: merged.minute_added,
         homeReds: merged.home_reds ?? 0,
         awayReds: merged.away_reds ?? 0,
+        penWinner: (f.pen_winner ?? null) as "home" | "away" | null,
         myPrediction: p
           ? { homePred: p.home_pred, awayPred: p.away_pred, points: p.points ?? null }
           : null,
@@ -329,6 +331,7 @@ const resultSchema = z.object({
   fixtureId: z.string().uuid(),
   homeScore: z.number().int().min(0).max(99).nullable(),
   awayScore: z.number().int().min(0).max(99).nullable(),
+  penWinner: z.enum(["home", "away"]).nullable().optional(),
 });
 
 export const adminSetWcResult = createServerFn({ method: "POST" })
@@ -341,7 +344,11 @@ export const adminSetWcResult = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error: upErr } = await supabaseAdmin
       .from("wc_fixtures")
-      .update({ home_score: data.homeScore, away_score: data.awayScore })
+      .update({
+        home_score: data.homeScore,
+        away_score: data.awayScore,
+        pen_winner: data.penWinner ?? null,
+      })
       .eq("id", data.fixtureId);
     if (upErr) throw new Error(upErr.message);
 

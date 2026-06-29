@@ -70,6 +70,7 @@ function AdminPredictionsPage() {
   const [scoring, setScoring] = useState<WcFixtureDTO | null>(null);
   const [scoreHome, setScoreHome] = useState("");
   const [scoreAway, setScoreAway] = useState("");
+  const [penWinner, setPenWinner] = useState<"home" | "away" | "none">("none");
   const [busy, setBusy] = useState(false);
 
   const listFn = useServerFn(listWcFixtures);
@@ -160,6 +161,7 @@ function AdminPredictionsPage() {
     setScoring(f);
     setScoreHome(f.homeScore?.toString() ?? "");
     setScoreAway(f.awayScore?.toString() ?? "");
+    setPenWinner(f.penWinner ?? "none");
   };
 
   const saveScore = async (clear = false) => {
@@ -171,6 +173,7 @@ function AdminPredictionsPage() {
           fixtureId: scoring.id,
           homeScore: clear ? null : Number(scoreHome),
           awayScore: clear ? null : Number(scoreAway),
+          penWinner: clear ? null : penWinner === "none" ? null : penWinner,
         },
       });
       toast.success(clear ? "Score cleared" : "Score saved & points recalculated");
@@ -422,6 +425,36 @@ function AdminPredictionsPage() {
                   />
                 </div>
               </div>
+              {scoring.stage !== "group" && (
+                <div className="space-y-2 rounded-lg border border-border bg-surface-2/40 p-3">
+                  <Label className="text-xs">Winner on penalties (knockouts only)</Label>
+                  <p className="text-[11px] text-muted-foreground">
+                    Set if the 90-min score was a draw and the match went to extra time / pens.
+                    Predictions still score against the 90-min scoreline above, plus a +2 bonus
+                    for anyone who picked the team that progresses.
+                  </p>
+                  <div className="grid grid-cols-3 gap-2 text-xs">
+                    {([
+                      { v: "none", label: "No pens" },
+                      { v: "home", label: scoring.homeTeam },
+                      { v: "away", label: scoring.awayTeam },
+                    ] as const).map((opt) => (
+                      <button
+                        key={opt.v}
+                        type="button"
+                        onClick={() => setPenWinner(opt.v)}
+                        className={`rounded px-2 py-1.5 border ${
+                          penWinner === opt.v
+                            ? "bg-primary text-primary-foreground border-primary"
+                            : "border-border bg-surface-1 hover:bg-surface-2"
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
           <DialogFooter className="gap-2">
