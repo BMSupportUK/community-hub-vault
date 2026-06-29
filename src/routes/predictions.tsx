@@ -2159,7 +2159,14 @@ function LeaderboardList({
                       <div className="text-[11px] text-muted-foreground">
                         {new Date(p.kickoffAt).toLocaleString(undefined, { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
                         {finished && (
-                          <span className="ml-2 font-mono text-foreground">FT {p.homeScore}-{p.awayScore}</span>
+                          <span className="ml-2 font-mono text-foreground">
+                            FT {p.homeScore}-{p.awayScore}
+                            {p.penWinner && p.homeScore === p.awayScore && (
+                              <span className="ml-1 text-muted-foreground">
+                                (Pens: {p.penWinner === "home" ? p.homeTeam : p.awayTeam})
+                              </span>
+                            )}
+                          </span>
                         )}
                         {!finished && live && (
                           <span className="ml-2 font-mono text-red-300">
