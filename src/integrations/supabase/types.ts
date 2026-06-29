@@ -4064,6 +4064,7 @@ export type Database = {
           match_no: number | null
           minute: number | null
           minute_added: number | null
+          pen_winner: string | null
           stage: string
           status: string
           updated_at: string
@@ -4084,6 +4085,7 @@ export type Database = {
           match_no?: number | null
           minute?: number | null
           minute_added?: number | null
+          pen_winner?: string | null
           stage: string
           status?: string
           updated_at?: string
@@ -4104,6 +4106,7 @@ export type Database = {
           match_no?: number | null
           minute?: number | null
           minute_added?: number | null
+          pen_winner?: string | null
           stage?: string
           status?: string
           updated_at?: string
@@ -4797,10 +4800,21 @@ export type Database = {
         }
         Returns: undefined
       }
-      wc_calc_points: {
-        Args: { ap: number; as_: number; hp: number; hs: number }
-        Returns: number
-      }
+      wc_calc_points:
+        | {
+            Args: { ap: number; as_: number; hp: number; hs: number }
+            Returns: number
+          }
+        | {
+            Args: {
+              ap: number
+              as_: number
+              hp: number
+              hs: number
+              pen_winner?: string
+            }
+            Returns: number
+          }
       wc_score_fixture: { Args: { _fixture_id: string }; Returns: undefined }
       wc_sync_live_scores: { Args: never; Returns: undefined }
       wc_team_matches: {
