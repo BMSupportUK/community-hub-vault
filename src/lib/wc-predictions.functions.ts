@@ -22,7 +22,12 @@ export type WcFixtureDTO = {
   awayReds: number;
   penWinner: "home" | "away" | null;
   livePhase: "ET" | "PENS" | null;
-  myPrediction: { homePred: number; awayPred: number; points: number | null } | null;
+  myPrediction: {
+    homePred: number;
+    awayPred: number;
+    points: number | null;
+    penWinnerPred: "home" | "away" | null;
+  } | null;
 };
 
 export type WcLeaderboardRowDTO = {
@@ -99,14 +104,17 @@ export const listWcFixtures = createServerFn({ method: "GET" })
         .order("kickoff_at", { ascending: true }),
       supabase
         .from("wc_predictions")
-        .select("fixture_id, home_pred, away_pred, points")
+        .select("fixture_id, home_pred, away_pred, points, pen_winner_pred")
         .eq("user_id", userId),
     ]);
     if (fxErr) throw new Error(fxErr.message);
     if (prErr) throw new Error(prErr.message);
     const { getWcLiveOverlays, mergeWcLive } = await import("@/lib/wc-live-scores.server");
     const liveOverlays = await getWcLiveOverlays((fixtures ?? []) as WcLiveFixtureRow[]);
-    const predMap = new Map<string, { home_pred: number; away_pred: number; points: number | null }>();
+    const predMap = new Map<
+      string,
+      { home_pred: number; away_pred: number; points: number | null; pen_winner_pred: string | null }
+    >();
     for (const p of preds ?? []) predMap.set((p as any).fixture_id, p as any);
     return (fixtures ?? []).map((f: any) => {
       const p = predMap.get(f.id);
@@ -128,7 +136,12 @@ export const listWcFixtures = createServerFn({ method: "GET" })
         penWinner: (f.pen_winner ?? null) as "home" | "away" | null,
         livePhase: merged.phase ?? null,
         myPrediction: p
-          ? { homePred: p.home_pred, awayPred: p.away_pred, points: p.points ?? null }
+          ? {
+              homePred: p.home_pred,
+              awayPred: p.away_pred,
+              points: p.points ?? null,
+              penWinnerPred: (p.pen_winner_pred ?? null) as "home" | "away" | null,
+            }
           : null,
       };
     });
@@ -141,6 +154,7 @@ const upsertSchema = z.object({
   fixtureId: z.string().uuid(),
   homePred: z.number().int().min(0).max(30),
   awayPred: z.number().int().min(0).max(30),
+  penWinnerPred: z.enum(["home", "away"]).nullable().optional(),
 });
 
 export const upsertWcPrediction = createServerFn({ method: "POST" })
@@ -173,6 +187,9 @@ export const upsertWcPrediction = createServerFn({ method: "POST" })
           fixture_id: data.fixtureId,
           home_pred: data.homePred,
           away_pred: data.awayPred,
+          // Only meaningful when the predicted scoreline is a draw; ignored otherwise.
+          pen_winner_pred:
+            data.homePred === data.awayPred ? (data.penWinnerPred ?? null) : null,
         },
         { onConflict: "user_id,fixture_id" },
       );
