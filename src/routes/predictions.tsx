@@ -1068,7 +1068,12 @@ function SidebarPickInput({
 }: {
   fixture: WcFixtureDTO;
   canPredict: boolean;
-  onSave: (fixtureId: string, hp: number, ap: number) => Promise<void>;
+  onSave: (
+    fixtureId: string,
+    hp: number,
+    ap: number,
+    penWinnerPred?: "home" | "away" | null,
+  ) => Promise<void>;
 }) {
   const [hp, setHp] = useState<string>(fixture.myPrediction?.homePred?.toString() ?? "");
   const [ap, setAp] = useState<string>(fixture.myPrediction?.awayPred?.toString() ?? "");
