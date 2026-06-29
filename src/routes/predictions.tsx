@@ -1090,33 +1090,46 @@ function SidebarPickInput({
 }) {
   const [hp, setHp] = useState<string>(fixture.myPrediction?.homePred?.toString() ?? "");
   const [ap, setAp] = useState<string>(fixture.myPrediction?.awayPred?.toString() ?? "");
+  const [penPick, setPenPick] = useState<"home" | "away" | null>(
+    fixture.myPrediction?.penWinnerPred ?? null,
+  );
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     setHp(fixture.myPrediction?.homePred?.toString() ?? "");
     setAp(fixture.myPrediction?.awayPred?.toString() ?? "");
-  }, [fixture.myPrediction?.homePred, fixture.myPrediction?.awayPred]);
+    setPenPick(fixture.myPrediction?.penWinnerPred ?? null);
+  }, [
+    fixture.myPrediction?.homePred,
+    fixture.myPrediction?.awayPred,
+    fixture.myPrediction?.penWinnerPred,
+  ]);
 
   const valid =
     hp !== "" && ap !== "" && Number.isInteger(Number(hp)) && Number.isInteger(Number(ap)) &&
     Number(hp) >= 0 && Number(ap) >= 0;
+  const isKnockout = fixture.stage !== "group";
+  const numericDraw = valid && Number(hp) === Number(ap);
+  const showPenPicker = isKnockout && numericDraw && canPredict;
   const dirty =
     valid &&
     (Number(hp) !== fixture.myPrediction?.homePred ||
-      Number(ap) !== fixture.myPrediction?.awayPred);
+      Number(ap) !== fixture.myPrediction?.awayPred ||
+      (numericDraw && penPick !== (fixture.myPrediction?.penWinnerPred ?? null)));
 
   const submit = async () => {
     if (!valid || !dirty) return;
     setBusy(true);
     try {
-      await onSave(fixture.id, Number(hp), Number(ap));
+      await onSave(fixture.id, Number(hp), Number(ap), numericDraw ? penPick : null);
     } finally {
       setBusy(false);
     }
   };
 
   return (
-    <div className="mt-2 flex items-center gap-1.5">
+    <div className="mt-2 space-y-2">
+      <div className="flex items-center gap-1.5">
       <Input
         type="number"
         min={0}
@@ -1146,6 +1159,36 @@ function SidebarPickInput({
       >
         {busy ? <Loader2 className="size-3 animate-spin" /> : fixture.myPrediction ? "Update" : "Save"}
       </Button>
+      </div>
+      {showPenPicker && (
+        <div className="rounded-md border border-emerald-500/40 bg-emerald-500/5 p-2 space-y-1.5">
+          <div className="text-[10px] font-bold uppercase tracking-wide text-emerald-300">
+            Pick the pens winner
+          </div>
+          <div className="grid grid-cols-2 gap-1.5">
+            {(["home", "away"] as const).map((side) => {
+              const teamName = side === "home" ? fixture.homeTeam : fixture.awayTeam;
+              const selected = penPick === side;
+              return (
+                <button
+                  key={side}
+                  type="button"
+                  onClick={() => setPenPick(selected ? null : side)}
+                  disabled={!canPredict || busy}
+                  className={`rounded px-2 py-1 text-[11px] font-semibold border transition truncate ${
+                    selected
+                      ? "bg-emerald-500 text-black border-emerald-500"
+                      : "border-border bg-surface-1 hover:bg-surface-2"
+                  }`}
+                  aria-pressed={selected}
+                >
+                  {teamFlag(teamName)} {teamName}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
