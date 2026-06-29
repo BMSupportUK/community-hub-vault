@@ -314,13 +314,25 @@ function PredictionsPage() {
     }
   };
 
-  const handleSave = async (fixtureId: string, hp: number, ap: number) => {
+  const handleSave = async (
+    fixtureId: string,
+    hp: number,
+    ap: number,
+    penWinnerPred: "home" | "away" | null = null,
+  ) => {
     try {
       if (user) {
-        await upsertFn({ data: { fixtureId, homePred: hp, awayPred: ap } });
+        await upsertFn({ data: { fixtureId, homePred: hp, awayPred: ap, penWinnerPred } });
       } else if (guest) {
         await upsertGuestFn({
-          data: { email: guest.email, pin: guest.pin, fixtureId, homePred: hp, awayPred: ap },
+          data: {
+            email: guest.email,
+            pin: guest.pin,
+            fixtureId,
+            homePred: hp,
+            awayPred: ap,
+            penWinnerPred,
+          },
         });
       } else {
         setShowGuestLogin(true);
