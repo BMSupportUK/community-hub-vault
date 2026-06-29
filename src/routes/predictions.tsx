@@ -1800,13 +1800,14 @@ function LeaderboardList({
   }
   return (
     <div className="rounded-2xl border border-border bg-surface-1 overflow-hidden">
-      <div className="grid grid-cols-[16px_minmax(0,1fr)_24px_22px_24px_22px_28px_36px] sm:grid-cols-[36px_minmax(0,0.6fr)_140px_112px_160px_112px_64px_80px] gap-0.5 sm:gap-2 px-1.5 sm:px-4 py-2.5 text-[10px] sm:text-[11px] uppercase tracking-wider text-muted-foreground bg-surface-2 border-b border-border [&>div]:whitespace-nowrap">
+      <div className="grid grid-cols-[16px_minmax(0,1fr)_24px_22px_24px_22px_22px_28px_36px] sm:grid-cols-[36px_minmax(0,0.6fr)_140px_112px_160px_112px_112px_64px_80px] gap-0.5 sm:gap-2 px-1.5 sm:px-4 py-2.5 text-[10px] sm:text-[11px] uppercase tracking-wider text-muted-foreground bg-surface-2 border-b border-border [&>div]:whitespace-nowrap">
         <div>#</div>
         <div>Player</div>
         <div className="text-center"><span className="sm:hidden">P</span><span className="hidden sm:inline">Predictions Entered</span></div>
         <div className="text-center" title="Correct score (exact)"><span className="sm:hidden">CS</span><span className="hidden sm:inline">Correct Score</span></div>
         <div className="text-center" title="Right winning margin (3 pts)"><span className="sm:hidden">WM</span><span className="hidden sm:inline">Winning Margin</span></div>
         <div className="text-center" title="Correct result"><span className="sm:hidden">R</span><span className="hidden sm:inline">Correct Result</span></div>
+        <div className="text-center" title="Picked the winner of a penalty shootout (1 pt)"><span className="sm:hidden">PW</span><span className="hidden sm:inline">Pen Wins</span></div>
         <div className="text-center"><span className="sm:hidden">Pt</span><span className="hidden sm:inline">Points</span></div>
         <div className="text-center">Type</div>
       </div>
