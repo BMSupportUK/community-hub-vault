@@ -1713,6 +1713,39 @@ function FixtureCard({
         </div>
       </div>
 
+      {showPenPicker && (
+        <div className="mt-3 rounded-lg border border-emerald-500/40 bg-emerald-500/5 p-2.5 space-y-1.5">
+          <div className="text-[11px] font-bold uppercase tracking-wide text-emerald-300">
+            Knockout — pick the pens winner
+          </div>
+          <p className="text-[11px] text-muted-foreground">
+            You&apos;ve predicted a draw. If the match is decided on penalties,
+            you&apos;ll get +1 bonus for picking the right team to win the shootout.
+          </p>
+          <div className="grid grid-cols-2 gap-2">
+            {(["home", "away"] as const).map((side) => {
+              const teamName = side === "home" ? fixture.homeTeam : fixture.awayTeam;
+              const selected = penPick === side;
+              return (
+                <button
+                  key={side}
+                  type="button"
+                  onClick={() => setPenPick(selected ? null : side)}
+                  className={`rounded px-2 py-1.5 text-xs font-semibold border transition ${
+                    selected
+                      ? "bg-emerald-500 text-black border-emerald-500"
+                      : "border-border bg-surface-1 hover:bg-surface-2"
+                  }`}
+                  aria-pressed={selected}
+                >
+                  {teamFlag(teamName)} {teamName}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       <div className="mt-3 flex items-center justify-between text-xs">
         <div className="text-muted-foreground">
           {fixture.myPrediction ? (
