@@ -1554,7 +1554,12 @@ function FixtureCard({
 }: {
   fixture: WcFixtureDTO;
   canPredict: boolean;
-  onSave: (fixtureId: string, hp: number, ap: number) => Promise<void>;
+  onSave: (
+    fixtureId: string,
+    hp: number,
+    ap: number,
+    penWinnerPred?: "home" | "away" | null,
+  ) => Promise<void>;
 }) {
   const kickoffMs = new Date(fixture.kickoffAt).getTime();
   const LOCK_MS = 30 * 60 * 1000;
@@ -1569,11 +1574,19 @@ function FixtureCard({
   const upcomingSoon = !live && !finished && kickoffMs - Date.now() <= 24 * 60 * 60 * 1000 && kickoffMs - Date.now() > 0;
   const [hp, setHp] = useState<string>(fixture.myPrediction?.homePred?.toString() ?? "");
   const [ap, setAp] = useState<string>(fixture.myPrediction?.awayPred?.toString() ?? "");
+  const [penPick, setPenPick] = useState<"home" | "away" | null>(
+    fixture.myPrediction?.penWinnerPred ?? null,
+  );
   const [busy, setBusy] = useState(false);
   const hasPick = !!fixture.myPrediction;
   // When user already has a saved pick, hide inputs behind an Edit button.
   const [editing, setEditing] = useState<boolean>(!hasPick);
   const showInputs = !locked && !scored && (editing || !hasPick);
+
+  const isKnockout = fixture.stage !== "group";
+  const numericDraw =
+    hp !== "" && ap !== "" && Number(hp) === Number(ap);
+  const showPenPicker = isKnockout && showInputs && numericDraw && canPredict;
 
   const dirty =
     !locked &&
@@ -1581,13 +1594,14 @@ function FixtureCard({
     hp !== "" &&
     ap !== "" &&
     (Number(hp) !== fixture.myPrediction?.homePred ||
-      Number(ap) !== fixture.myPrediction?.awayPred);
+      Number(ap) !== fixture.myPrediction?.awayPred ||
+      (numericDraw && penPick !== (fixture.myPrediction?.penWinnerPred ?? null)));
 
   const save = async () => {
     if (!dirty) return;
     setBusy(true);
     try {
-      await onSave(fixture.id, Number(hp), Number(ap));
+      await onSave(fixture.id, Number(hp), Number(ap), numericDraw ? penPick : null);
       setEditing(false);
     } finally {
       setBusy(false);
@@ -1597,6 +1611,7 @@ function FixtureCard({
   const cancelEdit = () => {
     setHp(fixture.myPrediction?.homePred?.toString() ?? "");
     setAp(fixture.myPrediction?.awayPred?.toString() ?? "");
+    setPenPick(fixture.myPrediction?.penWinnerPred ?? null);
     setEditing(false);
   };
 
