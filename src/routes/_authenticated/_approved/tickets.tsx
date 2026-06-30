@@ -783,6 +783,14 @@ function NewTicketForm({
             <textarea
               value={message} onChange={(e) => setMessage(e.target.value)} maxLength={2000} rows={6}
               placeholder="Provide as much detail as you can…"
+              onPaste={(e) => {
+                const imgs = extractImagesFromClipboard(e);
+                if (imgs.length) {
+                  e.preventDefault();
+                  setFiles([...files, ...imgs]);
+                  toast.success(`Attached ${imgs.length} pasted image${imgs.length > 1 ? "s" : ""}`);
+                }
+              }}
               className="w-full px-3 py-2 rounded-lg bg-white/15 backdrop-blur border border-white/30 focus:border-white text-white placeholder:text-white/60 outline-none resize-none"
             />
           </Field>
