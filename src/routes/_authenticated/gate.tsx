@@ -339,10 +339,13 @@ function GatePage() {
       toast.error(error?.message ?? "Could not create ticket.");
       return;
     }
+    const referralLine = referralCode
+      ? `\n\n🎟️ Referral code: ${referralCode}${referralNote ? ` (auto-redeem failed: ${referralNote})` : " (already redeemed)"}`
+      : "";
     await supabase.from("gate_messages").insert({
       application_id: created.id,
       sender_id: user.id,
-      content: `Access ticket #GATE-${String(created.ticket_number).padStart(6, "0")}\n\n${trimmed}`,
+      content: `Access ticket #GATE-${String(created.ticket_number).padStart(6, "0")}\n\n${trimmed}${referralLine}`,
     } as never);
     setAppId(created.id);
     setTicketNumber(created.ticket_number);
