@@ -102,6 +102,13 @@ function SignupPage() {
         else navigate({ to: "/gate", search: { intent } });
         return;
       }
+      // Valid invite → user is auto-approved as nonsubscriber; skip the gate for BM Support.
+      if (intent !== "fan-zone") {
+        setBusy(false);
+        toast.success("Welcome — invite accepted.");
+        navigate({ to: "/home" });
+        return;
+      }
     }
     setBusy(false);
     if (intent === "fan-zone") {
