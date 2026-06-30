@@ -255,6 +255,8 @@ export type WcEntrantPickDTO = {
   points: number | null;
   penWinnerPred: "home" | "away" | null;
   penWinner: "home" | "away" | null;
+  homePens: number | null;
+  awayPens: number | null;
 };
 
 export const getEntrantWcPredictions = createServerFn({ method: "GET" })
@@ -363,6 +365,8 @@ const resultSchema = z.object({
   homeScore: z.number().int().min(0).max(99).nullable(),
   awayScore: z.number().int().min(0).max(99).nullable(),
   penWinner: z.enum(["home", "away"]).nullable().optional(),
+  homePens: z.number().int().min(0).max(99).nullable().optional(),
+  awayPens: z.number().int().min(0).max(99).nullable().optional(),
 });
 
 export const adminSetWcResult = createServerFn({ method: "POST" })
@@ -379,6 +383,8 @@ export const adminSetWcResult = createServerFn({ method: "POST" })
         home_score: data.homeScore,
         away_score: data.awayScore,
         pen_winner: data.penWinner ?? null,
+        home_pens: data.penWinner ? (data.homePens ?? null) : null,
+        away_pens: data.penWinner ? (data.awayPens ?? null) : null,
       })
       .eq("id", data.fixtureId);
     if (upErr) throw new Error(upErr.message);
