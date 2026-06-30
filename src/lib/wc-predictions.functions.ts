@@ -102,7 +102,6 @@ export const listWcFixtures = createServerFn({ method: "GET" })
     const [{ data: fixtures, error: fxErr }, { data: preds, error: prErr }] = await Promise.all([
       supabase
         .from("wc_fixtures")
-        .select("id, stage, group_label, home_team, away_team, kickoff_at, home_score, away_score, status, minute, minute_added, home_reds, away_reds, pen_winner")
         .select("id, stage, group_label, home_team, away_team, kickoff_at, home_score, away_score, status, minute, minute_added, home_reds, away_reds, pen_winner, home_pens, away_pens")
         .order("kickoff_at", { ascending: true }),
       supabase
@@ -137,6 +136,8 @@ export const listWcFixtures = createServerFn({ method: "GET" })
         homeReds: merged.home_reds ?? 0,
         awayReds: merged.away_reds ?? 0,
         penWinner: (f.pen_winner ?? null) as "home" | "away" | null,
+        homePens: f.home_pens ?? null,
+        awayPens: f.away_pens ?? null,
         livePhase: merged.phase ?? null,
         myPrediction: p
           ? {
@@ -268,6 +269,7 @@ export const getEntrantWcPredictions = createServerFn({ method: "GET" })
       .from("wc_predictions")
       .select(
         "home_pred, away_pred, points, pen_winner_pred, fixture:wc_fixtures!inner(id, stage, group_label, home_team, away_team, kickoff_at, home_score, away_score, status, minute, minute_added, home_reds, away_reds, pen_winner)",
+        "home_pred, away_pred, points, pen_winner_pred, fixture:wc_fixtures!inner(id, stage, group_label, home_team, away_team, kickoff_at, home_score, away_score, status, minute, minute_added, home_reds, away_reds, pen_winner, home_pens, away_pens)",
       )
       .eq(col, data.entrantId);
     if (error) throw new Error(error.message);
