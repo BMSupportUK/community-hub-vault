@@ -21,6 +21,8 @@ export type WcFixtureDTO = {
   homeReds: number;
   awayReds: number;
   penWinner: "home" | "away" | null;
+  homePens: number | null;
+  awayPens: number | null;
   livePhase: "ET" | "PENS" | null;
   myPrediction: {
     homePred: number;
@@ -101,6 +103,7 @@ export const listWcFixtures = createServerFn({ method: "GET" })
       supabase
         .from("wc_fixtures")
         .select("id, stage, group_label, home_team, away_team, kickoff_at, home_score, away_score, status, minute, minute_added, home_reds, away_reds, pen_winner")
+        .select("id, stage, group_label, home_team, away_team, kickoff_at, home_score, away_score, status, minute, minute_added, home_reds, away_reds, pen_winner, home_pens, away_pens")
         .order("kickoff_at", { ascending: true }),
       supabase
         .from("wc_predictions")
