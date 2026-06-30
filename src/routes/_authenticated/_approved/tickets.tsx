@@ -215,6 +215,26 @@ function FilePicker({
   );
 }
 
+function extractImagesFromClipboard(e: React.ClipboardEvent): File[] {
+  const items = e.clipboardData?.items;
+  if (!items) return [];
+  const out: File[] = [];
+  for (let i = 0; i < items.length; i++) {
+    const it = items[i];
+    if (it.kind === "file" && it.type.startsWith("image/")) {
+      const f = it.getAsFile();
+      if (f) {
+        const ext = (f.type.split("/")[1] || "png").split("+")[0];
+        const named = f.name && f.name !== "image.png"
+          ? f
+          : new File([f], `pasted-${Date.now()}.${ext}`, { type: f.type });
+        out.push(named);
+      }
+    }
+  }
+  return out;
+}
+
 function TicketsPage() {
   const { user, isStaff, hasAny } = useAuth();
   const search = Route.useSearch();
@@ -763,6 +783,14 @@ function NewTicketForm({
             <textarea
               value={message} onChange={(e) => setMessage(e.target.value)} maxLength={2000} rows={6}
               placeholder="Provide as much detail as you can…"
+              onPaste={(e) => {
+                const imgs = extractImagesFromClipboard(e);
+                if (imgs.length) {
+                  e.preventDefault();
+                  setFiles([...files, ...imgs]);
+                  toast.success(`Attached ${imgs.length} pasted image${imgs.length > 1 ? "s" : ""}`);
+                }
+              }}
               className="w-full px-3 py-2 rounded-lg bg-white/15 backdrop-blur border border-white/30 focus:border-white text-white placeholder:text-white/60 outline-none resize-none"
             />
           </Field>
@@ -1508,6 +1536,14 @@ function TicketDetail({
                 value={draft} onChange={(e) => onDraftChange(e.target.value)} rows={2} maxLength={2000}
                 onBlur={() => sendTyping(true)}
                 placeholder={internal ? "Internal note (staff only)… type @ to mention" : "Reply to ticket… type @ to mention"}
+                onPaste={(e) => {
+                  const imgs = extractImagesFromClipboard(e);
+                  if (imgs.length) {
+                    e.preventDefault();
+                    setReplyFiles([...replyFiles, ...imgs]);
+                    toast.success(`Attached ${imgs.length} pasted image${imgs.length > 1 ? "s" : ""}`);
+                  }
+                }}
                 onKeyDown={(e) => {
                   if (mention.onKeyDown(e)) return;
                   if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) send();
