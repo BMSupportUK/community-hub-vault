@@ -18,6 +18,7 @@ export const Route = createFileRoute("/_authenticated/gate")({
       search.intent === "fan-zone" || search.intent === "bm-support"
         ? (search.intent as "fan-zone" | "bm-support")
         : undefined,
+    invite: typeof search.invite === "string" ? search.invite : undefined,
   }),
   component: GatePage,
 });
@@ -28,7 +29,7 @@ interface Msg { id: string; sender_id: string; content: string; created_at: stri
 function GatePage() {
   const { user, refreshRoles, signOut } = useAuth();
   const navigate = useNavigate();
-  const { intent } = Route.useSearch();
+  const { intent, invite: inviteFromUrl } = Route.useSearch();
   const isFanZone = intent === "fan-zone";
   const intentLabel = isFanZone ? "Boro Fan Zone" : "BM Support";
   const [appId, setAppId] = useState<string | null>(null);
