@@ -18,6 +18,7 @@ export const Route = createFileRoute("/_authenticated/gate")({
       search.intent === "fan-zone" || search.intent === "bm-support"
         ? (search.intent as "fan-zone" | "bm-support")
         : undefined,
+    invite: typeof search.invite === "string" ? search.invite : undefined,
   }),
   component: GatePage,
 });
@@ -28,7 +29,7 @@ interface Msg { id: string; sender_id: string; content: string; created_at: stri
 function GatePage() {
   const { user, refreshRoles, signOut } = useAuth();
   const navigate = useNavigate();
-  const { intent } = Route.useSearch();
+  const { intent, invite: inviteFromUrl } = Route.useSearch();
   const isFanZone = intent === "fan-zone";
   const intentLabel = isFanZone ? "Boro Fan Zone" : "BM Support";
   const [appId, setAppId] = useState<string | null>(null);
@@ -54,6 +55,8 @@ function GatePage() {
   const [verifyingCaptcha, setVerifyingCaptcha] = useState(false);
   const [pendingAction, setPendingAction] = useState<"chat" | "form" | null>(null);
   const verifyCaptcha = useServerFn(verifyTurnstile);
+  const [referralCode, setReferralCode] = useState<string | null>(null);
+  const [referralNote, setReferralNote] = useState<string | null>(null);
 
   const requestAccess = (action: "chat" | "form") => {
     if (action === "form" && !reasonDraft && !appId) {
@@ -100,6 +103,44 @@ function GatePage() {
     const params = new URLSearchParams(window.location.search);
     if (params.get("chat") === "1") setChatOpen(true);
   }, []);
+
+  // Look up any referral/invite info for this user. Prefer the ?invite= URL
+  // param (in case auto-redeem failed during signup) and fall back to an
+  // already-redeemed invite row in the database.
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    (async () => {
+      const urlCode = inviteFromUrl?.trim();
+      if (urlCode) {
+        // Try to redeem one more time — if it works, auto-approve and leave.
+        const { error } = await supabase.rpc("redeem_invite", { p_code: urlCode });
+        if (!cancelled) {
+          if (!error) {
+            toast.success("Invite accepted — welcome.");
+            await refreshRoles?.();
+            navigate({ to: "/home" });
+            return;
+          }
+          setReferralCode(urlCode);
+          setReferralNote(error.message);
+          return;
+        }
+      }
+      // No URL code — check whether an invite is already linked to this user.
+      const { data: linked } = await supabase
+        .from("invites")
+        .select("code")
+        .eq("used_by", user.id)
+        .maybeSingle();
+      if (!cancelled && linked?.code) {
+        setReferralCode(linked.code);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user, inviteFromUrl, navigate, refreshRoles]);
 
   useEffect(() => {
     if (!user) return;
@@ -298,10 +339,13 @@ function GatePage() {
       toast.error(error?.message ?? "Could not create ticket.");
       return;
     }
+    const referralLine = referralCode
+      ? `\n\n🎟️ Referral code: ${referralCode}${referralNote ? ` (auto-redeem failed: ${referralNote})` : " (already redeemed)"}`
+      : "";
     await supabase.from("gate_messages").insert({
       application_id: created.id,
       sender_id: user.id,
-      content: `Access ticket #GATE-${String(created.ticket_number).padStart(6, "0")}\n\n${trimmed}`,
+      content: `Access ticket #GATE-${String(created.ticket_number).padStart(6, "0")}\n\n${trimmed}${referralLine}`,
     } as never);
     setAppId(created.id);
     setTicketNumber(created.ticket_number);

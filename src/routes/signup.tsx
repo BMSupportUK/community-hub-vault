@@ -99,7 +99,7 @@ function SignupPage() {
         setBusy(false);
         toast.error(`Invite code: ${redeemError.message}`);
         if (intent === "fan-zone") navigate({ to: "/fan-zone-pending" });
-        else navigate({ to: "/gate", search: { intent } });
+        else navigate({ to: "/gate", search: { intent, invite: inviteCode.trim() } });
         return;
       }
       // Valid invite → user is auto-approved as nonsubscriber; skip the gate for BM Support.
