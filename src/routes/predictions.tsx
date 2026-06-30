@@ -2182,7 +2182,7 @@ function LeaderboardList({
                             FT {p.homeScore}-{p.awayScore}
                             {p.penWinner && p.homeScore === p.awayScore && (
                               <span className="ml-1 text-muted-foreground">
-                                (Pens: {p.penWinner === "home" ? p.homeTeam : p.awayTeam})
+                                (Pens {p.homePens ?? "?"}-{p.awayPens ?? "?"}, {p.penWinner === "home" ? p.homeTeam : p.awayTeam})
                               </span>
                             )}
                           </span>

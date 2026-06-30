@@ -21,6 +21,8 @@ export type WcFixtureDTO = {
   homeReds: number;
   awayReds: number;
   penWinner: "home" | "away" | null;
+  homePens: number | null;
+  awayPens: number | null;
   livePhase: "ET" | "PENS" | null;
   myPrediction: {
     homePred: number;
@@ -100,7 +102,7 @@ export const listWcFixtures = createServerFn({ method: "GET" })
     const [{ data: fixtures, error: fxErr }, { data: preds, error: prErr }] = await Promise.all([
       supabase
         .from("wc_fixtures")
-        .select("id, stage, group_label, home_team, away_team, kickoff_at, home_score, away_score, status, minute, minute_added, home_reds, away_reds, pen_winner")
+        .select("id, stage, group_label, home_team, away_team, kickoff_at, home_score, away_score, status, minute, minute_added, home_reds, away_reds, pen_winner, home_pens, away_pens")
         .order("kickoff_at", { ascending: true }),
       supabase
         .from("wc_predictions")
@@ -134,6 +136,8 @@ export const listWcFixtures = createServerFn({ method: "GET" })
         homeReds: merged.home_reds ?? 0,
         awayReds: merged.away_reds ?? 0,
         penWinner: (f.pen_winner ?? null) as "home" | "away" | null,
+        homePens: f.home_pens ?? null,
+        awayPens: f.away_pens ?? null,
         livePhase: merged.phase ?? null,
         myPrediction: p
           ? {
@@ -251,6 +255,8 @@ export type WcEntrantPickDTO = {
   points: number | null;
   penWinnerPred: "home" | "away" | null;
   penWinner: "home" | "away" | null;
+  homePens: number | null;
+  awayPens: number | null;
 };
 
 export const getEntrantWcPredictions = createServerFn({ method: "GET" })
@@ -264,7 +270,7 @@ export const getEntrantWcPredictions = createServerFn({ method: "GET" })
     const { data: rows, error } = await supabaseAdmin
       .from("wc_predictions")
       .select(
-        "home_pred, away_pred, points, pen_winner_pred, fixture:wc_fixtures!inner(id, stage, group_label, home_team, away_team, kickoff_at, home_score, away_score, status, minute, minute_added, home_reds, away_reds, pen_winner)",
+        "home_pred, away_pred, points, pen_winner_pred, fixture:wc_fixtures!inner(id, stage, group_label, home_team, away_team, kickoff_at, home_score, away_score, status, minute, minute_added, home_reds, away_reds, pen_winner, home_pens, away_pens)",
       )
       .eq(col, data.entrantId);
     if (error) throw new Error(error.message);
@@ -294,6 +300,8 @@ export const getEntrantWcPredictions = createServerFn({ method: "GET" })
           points: r.points,
           penWinnerPred: (r.pen_winner_pred ?? null) as "home" | "away" | null,
           penWinner: ((r.fixture as any).pen_winner ?? null) as "home" | "away" | null,
+          homePens: (r.fixture as any).home_pens ?? null,
+          awayPens: (r.fixture as any).away_pens ?? null,
         };
       })
       .sort((a, b) => +new Date(b.kickoffAt) - +new Date(a.kickoffAt));
@@ -357,6 +365,8 @@ const resultSchema = z.object({
   homeScore: z.number().int().min(0).max(99).nullable(),
   awayScore: z.number().int().min(0).max(99).nullable(),
   penWinner: z.enum(["home", "away"]).nullable().optional(),
+  homePens: z.number().int().min(0).max(99).nullable().optional(),
+  awayPens: z.number().int().min(0).max(99).nullable().optional(),
 });
 
 export const adminSetWcResult = createServerFn({ method: "POST" })
@@ -373,6 +383,8 @@ export const adminSetWcResult = createServerFn({ method: "POST" })
         home_score: data.homeScore,
         away_score: data.awayScore,
         pen_winner: data.penWinner ?? null,
+        home_pens: data.penWinner ? (data.homePens ?? null) : null,
+        away_pens: data.penWinner ? (data.awayPens ?? null) : null,
       })
       .eq("id", data.fixtureId);
     if (upErr) throw new Error(upErr.message);

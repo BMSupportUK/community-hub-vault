@@ -71,6 +71,8 @@ function AdminPredictionsPage() {
   const [scoreHome, setScoreHome] = useState("");
   const [scoreAway, setScoreAway] = useState("");
   const [penWinner, setPenWinner] = useState<"home" | "away" | "none">("none");
+  const [penHome, setPenHome] = useState("");
+  const [penAway, setPenAway] = useState("");
   const [busy, setBusy] = useState(false);
 
   const listFn = useServerFn(listWcFixtures);
@@ -162,6 +164,8 @@ function AdminPredictionsPage() {
     setScoreHome(f.homeScore?.toString() ?? "");
     setScoreAway(f.awayScore?.toString() ?? "");
     setPenWinner(f.penWinner ?? "none");
+    setPenHome(f.homePens?.toString() ?? "");
+    setPenAway(f.awayPens?.toString() ?? "");
   };
 
   const saveScore = async (clear = false) => {
@@ -174,6 +178,10 @@ function AdminPredictionsPage() {
           homeScore: clear ? null : Number(scoreHome),
           awayScore: clear ? null : Number(scoreAway),
           penWinner: clear ? null : penWinner === "none" ? null : penWinner,
+          homePens:
+            clear || penWinner === "none" || penHome === "" ? null : Number(penHome),
+          awayPens:
+            clear || penWinner === "none" || penAway === "" ? null : Number(penAway),
         },
       });
       toast.success(clear ? "Score cleared" : "Score saved & points recalculated");
@@ -454,6 +462,31 @@ function AdminPredictionsPage() {
                       </button>
                     ))}
                   </div>
+                  {penWinner !== "none" && (
+                    <div className="grid grid-cols-[1fr_auto_1fr] items-end gap-3 pt-2">
+                      <div>
+                        <Label className="text-xs">Pens {scoring.homeTeam}</Label>
+                        <Input
+                          value={penHome}
+                          onChange={(e) => setPenHome(e.target.value.replace(/\D/g, "").slice(0, 2))}
+                          inputMode="numeric"
+                          className="text-center font-display text-lg font-bold"
+                          placeholder="0"
+                        />
+                      </div>
+                      <div className="pb-2 text-muted-foreground">–</div>
+                      <div>
+                        <Label className="text-xs">Pens {scoring.awayTeam}</Label>
+                        <Input
+                          value={penAway}
+                          onChange={(e) => setPenAway(e.target.value.replace(/\D/g, "").slice(0, 2))}
+                          inputMode="numeric"
+                          className="text-center font-display text-lg font-bold"
+                          placeholder="0"
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
