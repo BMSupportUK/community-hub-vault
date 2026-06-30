@@ -1,0 +1,1 @@
+UPDATE public.wc_fixtures SET home_team='Paraguay' WHERE stage='r16' AND home_team='Germany' AND kickoff_at='2026-07-04 21:00:00+00';
