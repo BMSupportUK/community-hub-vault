@@ -71,6 +71,8 @@ function AdminPredictionsPage() {
   const [scoreHome, setScoreHome] = useState("");
   const [scoreAway, setScoreAway] = useState("");
   const [penWinner, setPenWinner] = useState<"home" | "away" | "none">("none");
+  const [penHome, setPenHome] = useState("");
+  const [penAway, setPenAway] = useState("");
   const [busy, setBusy] = useState(false);
 
   const listFn = useServerFn(listWcFixtures);
@@ -162,6 +164,8 @@ function AdminPredictionsPage() {
     setScoreHome(f.homeScore?.toString() ?? "");
     setScoreAway(f.awayScore?.toString() ?? "");
     setPenWinner(f.penWinner ?? "none");
+    setPenHome(f.homePens?.toString() ?? "");
+    setPenAway(f.awayPens?.toString() ?? "");
   };
 
   const saveScore = async (clear = false) => {
@@ -174,6 +178,10 @@ function AdminPredictionsPage() {
           homeScore: clear ? null : Number(scoreHome),
           awayScore: clear ? null : Number(scoreAway),
           penWinner: clear ? null : penWinner === "none" ? null : penWinner,
+          homePens:
+            clear || penWinner === "none" || penHome === "" ? null : Number(penHome),
+          awayPens:
+            clear || penWinner === "none" || penAway === "" ? null : Number(penAway),
         },
       });
       toast.success(clear ? "Score cleared" : "Score saved & points recalculated");
