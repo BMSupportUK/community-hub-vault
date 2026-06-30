@@ -268,7 +268,6 @@ export const getEntrantWcPredictions = createServerFn({ method: "GET" })
     const { data: rows, error } = await supabaseAdmin
       .from("wc_predictions")
       .select(
-        "home_pred, away_pred, points, pen_winner_pred, fixture:wc_fixtures!inner(id, stage, group_label, home_team, away_team, kickoff_at, home_score, away_score, status, minute, minute_added, home_reds, away_reds, pen_winner)",
         "home_pred, away_pred, points, pen_winner_pred, fixture:wc_fixtures!inner(id, stage, group_label, home_team, away_team, kickoff_at, home_score, away_score, status, minute, minute_added, home_reds, away_reds, pen_winner, home_pens, away_pens)",
       )
       .eq(col, data.entrantId);
@@ -299,6 +298,8 @@ export const getEntrantWcPredictions = createServerFn({ method: "GET" })
           points: r.points,
           penWinnerPred: (r.pen_winner_pred ?? null) as "home" | "away" | null,
           penWinner: ((r.fixture as any).pen_winner ?? null) as "home" | "away" | null,
+          homePens: (r.fixture as any).home_pens ?? null,
+          awayPens: (r.fixture as any).away_pens ?? null,
         };
       })
       .sort((a, b) => +new Date(b.kickoffAt) - +new Date(a.kickoffAt));
