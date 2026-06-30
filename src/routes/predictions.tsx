@@ -1925,6 +1925,12 @@ function FixtureCard({
           <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-bold tabular-nums">
             <Check className="size-3" />
             {fixture.homeScore} – {fixture.awayScore}
+            {fixture.penWinner && fixture.homeScore === fixture.awayScore && (
+              <span className="ml-1 normal-case tracking-normal text-emerald-200/90 font-semibold">
+                (Pens {fixture.homePens ?? "?"}-{fixture.awayPens ?? "?"},{" "}
+                {fixture.penWinner === "home" ? fixture.homeTeam : fixture.awayTeam})
+              </span>
+            )}
           </span>
         ) : fixture.myPrediction ? (
           <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/30 font-bold tabular-nums uppercase tracking-wide">
