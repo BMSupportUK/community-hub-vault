@@ -1025,6 +1025,11 @@ function UpcomingFixtures({
                     {showScore ? (
                       <span className={`font-bold ${live ? "text-red-300" : "text-foreground"}`}>
                         {f.homeScore}–{f.awayScore}
+                        {f.penWinner && f.homeScore === f.awayScore && (
+                          <span className="ml-1 text-[10px] font-semibold text-emerald-300">
+                            (pens {f.homePens ?? "?"}-{f.awayPens ?? "?"})
+                          </span>
+                        )}
                       </span>
                     ) : locked ? (
                       <Lock className="size-3" />
