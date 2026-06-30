@@ -4049,12 +4049,14 @@ export type Database = {
       }
       wc_fixtures: {
         Row: {
+          away_pens: number | null
           away_reds: number
           away_score: number | null
           away_seed: string | null
           away_team: string
           created_at: string
           group_label: string | null
+          home_pens: number | null
           home_reds: number
           home_score: number | null
           home_seed: string | null
@@ -4070,12 +4072,14 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          away_pens?: number | null
           away_reds?: number
           away_score?: number | null
           away_seed?: string | null
           away_team: string
           created_at?: string
           group_label?: string | null
+          home_pens?: number | null
           home_reds?: number
           home_score?: number | null
           home_seed?: string | null
@@ -4091,12 +4095,14 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          away_pens?: number | null
           away_reds?: number
           away_score?: number | null
           away_seed?: string | null
           away_team?: string
           created_at?: string
           group_label?: string | null
+          home_pens?: number | null
           home_reds?: number
           home_score?: number | null
           home_seed?: string | null

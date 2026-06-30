@@ -1,0 +1,1 @@
+ALTER TABLE public.wc_fixtures ADD COLUMN IF NOT EXISTS home_pens smallint, ADD COLUMN IF NOT EXISTS away_pens smallint;
