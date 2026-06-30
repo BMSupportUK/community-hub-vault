@@ -1536,6 +1536,14 @@ function TicketDetail({
                 value={draft} onChange={(e) => onDraftChange(e.target.value)} rows={2} maxLength={2000}
                 onBlur={() => sendTyping(true)}
                 placeholder={internal ? "Internal note (staff only)… type @ to mention" : "Reply to ticket… type @ to mention"}
+                onPaste={(e) => {
+                  const imgs = extractImagesFromClipboard(e);
+                  if (imgs.length) {
+                    e.preventDefault();
+                    setReplyFiles([...replyFiles, ...imgs]);
+                    toast.success(`Attached ${imgs.length} pasted image${imgs.length > 1 ? "s" : ""}`);
+                  }
+                }}
                 onKeyDown={(e) => {
                   if (mention.onKeyDown(e)) return;
                   if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) send();
