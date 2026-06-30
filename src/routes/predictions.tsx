@@ -1232,12 +1232,31 @@ function FixturesList({
       return s === "IN_PLAY" || s === "PAUSED" || s === "LIVE";
     });
     if (live) return keyOf(live) || "A";
-    // 2) Next upcoming (not-finished) fixture across all stages
+    // 2) The stage currently in progress — one with both finished AND
+    //    not-finished fixtures. Prefer later stages (knockout over group),
+    //    and within a stage pick the key whose next unfinished fixture is
+    //    soonest. This makes the page land on e.g. R32 while it's being
+    //    played, even if today's earlier R32 kick-offs are already in the
+    //    past.
+    const stageOrder = ["group", "r32", "r16", "qf", "sf", "third", "final"];
+    for (let i = stageOrder.length - 1; i >= 0; i--) {
+      const stage = stageOrder[i] as WcFixtureDTO["stage"];
+      const inStage = fixtures.filter((f) => f.stage === stage);
+      if (!inStage.length) continue;
+      const hasFinished = inStage.some((f) => (f.status ?? "") === "FINISHED");
+      const unfinished = inStage
+        .filter((f) => (f.status ?? "") !== "FINISHED")
+        .sort((a, b) => +new Date(a.kickoffAt) - +new Date(b.kickoffAt));
+      if (hasFinished && unfinished.length) {
+        return keyOf(unfinished[0]) || "A";
+      }
+    }
+    // 3) Otherwise the next upcoming fixture across all stages.
     const upcoming = fixtures
       .filter((f) => (f.status ?? "") !== "FINISHED" && new Date(f.kickoffAt).getTime() >= now)
       .sort((a, b) => +new Date(a.kickoffAt) - +new Date(b.kickoffAt))[0];
     if (upcoming) return keyOf(upcoming) || "A";
-    // 3) Most recent fixture (everything finished)
+    // 4) Most recent fixture (everything finished)
     const latest = [...fixtures].sort(
       (a, b) => +new Date(b.kickoffAt) - +new Date(a.kickoffAt),
     )[0];
