@@ -215,6 +215,26 @@ function FilePicker({
   );
 }
 
+function extractImagesFromClipboard(e: React.ClipboardEvent): File[] {
+  const items = e.clipboardData?.items;
+  if (!items) return [];
+  const out: File[] = [];
+  for (let i = 0; i < items.length; i++) {
+    const it = items[i];
+    if (it.kind === "file" && it.type.startsWith("image/")) {
+      const f = it.getAsFile();
+      if (f) {
+        const ext = (f.type.split("/")[1] || "png").split("+")[0];
+        const named = f.name && f.name !== "image.png"
+          ? f
+          : new File([f], `pasted-${Date.now()}.${ext}`, { type: f.type });
+        out.push(named);
+      }
+    }
+  }
+  return out;
+}
+
 function TicketsPage() {
   const { user, isStaff, hasAny } = useAuth();
   const search = Route.useSearch();
