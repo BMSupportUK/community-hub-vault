@@ -462,6 +462,31 @@ function AdminPredictionsPage() {
                       </button>
                     ))}
                   </div>
+                  {penWinner !== "none" && (
+                    <div className="grid grid-cols-[1fr_auto_1fr] items-end gap-3 pt-2">
+                      <div>
+                        <Label className="text-xs">Pens {scoring.homeTeam}</Label>
+                        <Input
+                          value={penHome}
+                          onChange={(e) => setPenHome(e.target.value.replace(/\D/g, "").slice(0, 2))}
+                          inputMode="numeric"
+                          className="text-center font-display text-lg font-bold"
+                          placeholder="0"
+                        />
+                      </div>
+                      <div className="pb-2 text-muted-foreground">–</div>
+                      <div>
+                        <Label className="text-xs">Pens {scoring.awayTeam}</Label>
+                        <Input
+                          value={penAway}
+                          onChange={(e) => setPenAway(e.target.value.replace(/\D/g, "").slice(0, 2))}
+                          inputMode="numeric"
+                          className="text-center font-display text-lg font-bold"
+                          placeholder="0"
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
