@@ -175,7 +175,9 @@ export async function fetchEspnWcLive(): Promise<EspnLiveMatch[]> {
       let awayReds = 0;
       for (const d of comp.details ?? []) {
         const txt = d.type?.text ?? "";
-        if (!/red/i.test(txt)) continue;
+        // ESPN penalty shootouts include detail text like "Scored", which
+        // contains "red". Only count actual red-card event labels.
+        if (!/\bred\s+card\b|\bsent\s+off\b/i.test(txt)) continue;
         const tid = d.team?.id ?? "";
         if (tid && tid === homeTeamId) homeReds += 1;
         else if (tid && tid === awayTeamId) awayReds += 1;
