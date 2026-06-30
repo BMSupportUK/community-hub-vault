@@ -105,7 +105,6 @@ function SignupPage() {
       // Valid invite → user is auto-approved as nonsubscriber; skip the gate for BM Support.
       if (intent !== "fan-zone") {
         setBusy(false);
-        await refreshRoles?.();
         toast.success("Welcome — invite accepted.");
         navigate({ to: "/home" });
         return;
