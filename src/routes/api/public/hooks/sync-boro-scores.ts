@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import type { BoroFixtureRow } from "@/lib/boro-live-scores.server";
 
+const BORO_TEAM_RE = /\bmiddles(?:brough|borough)\b|\bboro\b/i;
+
 async function syncBoroScores() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { fetchEspnBoroLive, findBoroFixture } = await import("@/lib/boro-live-scores.server");
@@ -27,7 +29,7 @@ async function syncBoroScores() {
     const fx = findBoroFixture(rows, ev);
     if (!fx) {
       // Safety: never insert a fixture that doesn't involve Middlesbrough.
-      if (!/middles?brough|boro/i.test(ev.home) && !/middles?brough|boro/i.test(ev.away)) {
+      if (!BORO_TEAM_RE.test(ev.home) && !BORO_TEAM_RE.test(ev.away)) {
         skipped.push(`skip non-Boro fixture: ${ev.home} v ${ev.away}`);
         continue;
       }

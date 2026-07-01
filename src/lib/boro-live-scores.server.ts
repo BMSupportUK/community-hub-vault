@@ -52,7 +52,7 @@ function norm(s: string | null | undefined) {
 }
 
 function isBoro(name: string) {
-  return /middles?brough|boro/i.test(name);
+  return /\bmiddles(?:brough|borough)\b|\bboro\b/i.test(name);
 }
 
 function nameMatches(a: string, b: string) {

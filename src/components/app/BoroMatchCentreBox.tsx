@@ -18,7 +18,7 @@ import { TeamKit } from "@/lib/boro-team-kits";
 const BORO = "Middlesbrough";
 
 function isBoro(name: string) {
-  return /middles?brough|boro/i.test(name);
+  return /\bmiddles(?:brough|borough)\b|\bboro\b/i.test(name);
 }
 
 function fmtDate(iso: string, tz: string) {
