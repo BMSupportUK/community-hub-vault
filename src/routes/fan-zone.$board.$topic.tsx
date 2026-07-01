@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Lock, Pin, ArrowLeft } from "lucide-react";
-import { getPublicTopic } from "@/lib/fan-zone-public.functions";
+import { getPublicTopic, type PublicPost } from "@/lib/fan-zone-public.functions";
 import { ForumPostBody } from "@/components/app/ForumPostBody";
 import { formatLastSeen } from "@/lib/relative-time";
 import { Button } from "@/components/ui/button";
@@ -46,7 +46,7 @@ function TopicReadPage() {
       <p className="text-xs text-white/60 mt-1">Started {formatLastSeen(data.topic.created_at)} · {data.topic.reply_count} replies · {data.topic.view_count} views</p>
 
       <ol className="mt-5 space-y-3">
-        {data.posts.map((p) => (
+        {data.posts.map((p: PublicPost) => (
           <li key={p.id} className="rounded-xl border border-white/10 bg-white/5 p-4 sm:p-5">
             <header className="flex items-center gap-2.5 mb-3">
               {p.author_avatar ? (
