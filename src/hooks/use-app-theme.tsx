@@ -8,6 +8,7 @@ function normalize(v: unknown): AppTheme {
 }
 const DEFAULT: AppTheme = "purple";
 const KEY = "app_theme";
+const STORAGE_KEY = "bm_app_theme";
 
 let cache: AppTheme = DEFAULT;
 let loaded = false;
@@ -24,6 +25,25 @@ function apply(t: AppTheme) {
   listeners.forEach((l) => l(t));
 }
 
+function hydrateCache() {
+  if (loaded || typeof window === "undefined") return;
+  try {
+    const stored = window.localStorage.getItem(STORAGE_KEY);
+    if (stored) apply(normalize(stored));
+  } catch {
+    // Ignore storage failures.
+  }
+}
+
+function persistTheme(theme: AppTheme) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(STORAGE_KEY, theme);
+  } catch {
+    // Ignore storage failures.
+  }
+}
+
 async function load() {
   if (loading) return loading;
   loading = (async () => {
@@ -33,7 +53,9 @@ async function load() {
       .eq("key", KEY)
       .maybeSingle();
     const v = (data?.value as { theme?: AppTheme } | null) ?? null;
-    apply(normalize(v?.theme));
+    const nextTheme = normalize(v?.theme);
+    apply(nextTheme);
+    persistTheme(nextTheme);
     loaded = true;
   })();
   return loading;
@@ -57,12 +79,24 @@ function startChannel() {
 }
 
 export function useAppTheme() {
+  hydrateCache();
   const [theme, setTheme] = useState<AppTheme>(cache);
   useEffect(() => {
     listeners.add(setTheme);
-    if (!loaded) load();
-    startChannel();
-    return () => { listeners.delete(setTheme); };
+    const start = () => {
+      if (!loaded) void load();
+      startChannel();
+    };
+    const idle = (window as unknown as { requestIdleCallback?: (cb: () => void, opts?: { timeout?: number }) => number }).requestIdleCallback;
+    const idleId = idle ? idle(start, { timeout: 4000 }) : window.setTimeout(start, 2000);
+    return () => {
+      listeners.delete(setTheme);
+      if (idle) {
+        (window as unknown as { cancelIdleCallback?: (id: number) => void }).cancelIdleCallback?.(idleId as number);
+      } else {
+        window.clearTimeout(idleId as number);
+      }
+    };
   }, []);
   return theme;
 }
@@ -73,4 +107,5 @@ export async function setAppTheme(theme: AppTheme) {
     .upsert({ key: KEY, value: { theme } as never }, { onConflict: "key" });
   if (error) throw error;
   apply(theme);
+  persistTheme(theme);
 }
