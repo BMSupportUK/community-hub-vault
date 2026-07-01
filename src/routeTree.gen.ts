@@ -35,6 +35,7 @@ import { Route as AuthenticatedApprovedRouteImport } from './routes/_authenticat
 import { Route as FanZoneBoardIndexRouteImport } from './routes/fan-zone.$board.index'
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
 import { Route as FanZoneBoardTopicRouteImport } from './routes/fan-zone.$board.$topic'
+import { Route as ApiPublicTweetImageRouteImport } from './routes/api/public/tweet-image'
 import { Route as ApiPublicTweetRouteImport } from './routes/api/public/tweet'
 import { Route as ApiPublicLinkPreviewRouteImport } from './routes/api/public/link-preview'
 import { Route as AuthenticatedApprovedWhatToWatchRouteImport } from './routes/_authenticated/_approved/what-to-watch'
@@ -243,6 +244,11 @@ const FanZoneBoardTopicRoute = FanZoneBoardTopicRouteImport.update({
   id: '/$topic',
   path: '/$topic',
   getParentRoute: () => FanZoneBoardRoute,
+} as any)
+const ApiPublicTweetImageRoute = ApiPublicTweetImageRouteImport.update({
+  id: '/api/public/tweet-image',
+  path: '/api/public/tweet-image',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicTweetRoute = ApiPublicTweetRouteImport.update({
   id: '/api/public/tweet',
@@ -775,6 +781,7 @@ export interface FileRoutesByFullPath {
   '/what-to-watch': typeof AuthenticatedApprovedWhatToWatchRoute
   '/api/public/link-preview': typeof ApiPublicLinkPreviewRoute
   '/api/public/tweet': typeof ApiPublicTweetRoute
+  '/api/public/tweet-image': typeof ApiPublicTweetImageRoute
   '/fan-zone/$board/$topic': typeof FanZoneBoardTopicRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/fan-zone/$board/': typeof FanZoneBoardIndexRoute
@@ -876,6 +883,7 @@ export interface FileRoutesByTo {
   '/what-to-watch': typeof AuthenticatedApprovedWhatToWatchRoute
   '/api/public/link-preview': typeof ApiPublicLinkPreviewRoute
   '/api/public/tweet': typeof ApiPublicTweetRoute
+  '/api/public/tweet-image': typeof ApiPublicTweetImageRoute
   '/fan-zone/$board/$topic': typeof FanZoneBoardTopicRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/fan-zone/$board': typeof FanZoneBoardIndexRoute
@@ -983,6 +991,7 @@ export interface FileRoutesById {
   '/_authenticated/_approved/what-to-watch': typeof AuthenticatedApprovedWhatToWatchRoute
   '/api/public/link-preview': typeof ApiPublicLinkPreviewRoute
   '/api/public/tweet': typeof ApiPublicTweetRoute
+  '/api/public/tweet-image': typeof ApiPublicTweetImageRoute
   '/fan-zone/$board/$topic': typeof FanZoneBoardTopicRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/fan-zone/$board/': typeof FanZoneBoardIndexRoute
@@ -1089,6 +1098,7 @@ export interface FileRouteTypes {
     | '/what-to-watch'
     | '/api/public/link-preview'
     | '/api/public/tweet'
+    | '/api/public/tweet-image'
     | '/fan-zone/$board/$topic'
     | '/lovable/email/suppression'
     | '/fan-zone/$board/'
@@ -1190,6 +1200,7 @@ export interface FileRouteTypes {
     | '/what-to-watch'
     | '/api/public/link-preview'
     | '/api/public/tweet'
+    | '/api/public/tweet-image'
     | '/fan-zone/$board/$topic'
     | '/lovable/email/suppression'
     | '/fan-zone/$board'
@@ -1296,6 +1307,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/what-to-watch'
     | '/api/public/link-preview'
     | '/api/public/tweet'
+    | '/api/public/tweet-image'
     | '/fan-zone/$board/$topic'
     | '/lovable/email/suppression'
     | '/fan-zone/$board/'
@@ -1353,6 +1365,7 @@ export interface RootRouteChildren {
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
   ApiPublicLinkPreviewRoute: typeof ApiPublicLinkPreviewRoute
   ApiPublicTweetRoute: typeof ApiPublicTweetRoute
+  ApiPublicTweetImageRoute: typeof ApiPublicTweetImageRoute
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
   ApiPublicHooksBackupCredentialsRoute: typeof ApiPublicHooksBackupCredentialsRoute
   ApiPublicHooksBackupOrdersRoute: typeof ApiPublicHooksBackupOrdersRoute
@@ -1559,6 +1572,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/fan-zone/$board/$topic'
       preLoaderRoute: typeof FanZoneBoardTopicRouteImport
       parentRoute: typeof FanZoneBoardRoute
+    }
+    '/api/public/tweet-image': {
+      id: '/api/public/tweet-image'
+      path: '/api/public/tweet-image'
+      fullPath: '/api/public/tweet-image'
+      preLoaderRoute: typeof ApiPublicTweetImageRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/public/tweet': {
       id: '/api/public/tweet'
@@ -2392,6 +2412,7 @@ const rootRouteChildren: RootRouteChildren = {
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,
   ApiPublicLinkPreviewRoute: ApiPublicLinkPreviewRoute,
   ApiPublicTweetRoute: ApiPublicTweetRoute,
+  ApiPublicTweetImageRoute: ApiPublicTweetImageRoute,
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
   ApiPublicHooksBackupCredentialsRoute: ApiPublicHooksBackupCredentialsRoute,
   ApiPublicHooksBackupOrdersRoute: ApiPublicHooksBackupOrdersRoute,
