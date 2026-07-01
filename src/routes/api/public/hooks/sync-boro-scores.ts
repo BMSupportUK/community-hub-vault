@@ -26,6 +26,11 @@ async function syncBoroScores() {
   for (const ev of live) {
     const fx = findBoroFixture(rows, ev);
     if (!fx) {
+      // Safety: never insert a fixture that doesn't involve Middlesbrough.
+      if (!/middles?brough|boro/i.test(ev.home) && !/middles?brough|boro/i.test(ev.away)) {
+        skipped.push(`skip non-Boro fixture: ${ev.home} v ${ev.away}`);
+        continue;
+      }
       // Predictions game is Championship-only — skip inserting cup ties.
       if (ev.competition !== "Championship") {
         skipped.push(`skip non-league ${ev.competition}: ${ev.home} v ${ev.away}`);
