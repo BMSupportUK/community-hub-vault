@@ -57,6 +57,12 @@ export type MatchCentreDTO = {
   updatedAt: string | null;
 };
 
+const BORO_TEAM_RE = /middles?brough|boro/i;
+
+function isBoroMatch(match: { home?: string | null; away?: string | null } | null | undefined) {
+  return !!match && (BORO_TEAM_RE.test(match.home ?? "") || BORO_TEAM_RE.test(match.away ?? ""));
+}
+
 function rowToDto(row: any): MatchCentreDTO {
   return {
     lastResult: (row?.last_result as LastResult | null) ?? null,
@@ -79,12 +85,19 @@ export const getBoroMatchCentre = createServerFn({ method: "GET" }).handler(
       .eq("id", "singleton")
       .maybeSingle();
     if (error) throw new Error(error.message);
-    const dto = rowToDto(data);
+    const rawDto = rowToDto(data);
+    const invalidCachedNext = !!rawDto.nextFixture && !isBoroMatch(rawDto.nextFixture);
+    const invalidCachedLast = !!rawDto.lastResult && !isBoroMatch(rawDto.lastResult);
+    const dto: MatchCentreDTO = {
+      ...rawDto,
+      nextFixture: invalidCachedNext ? null : rawDto.nextFixture,
+      lastResult: invalidCachedLast ? null : rawDto.lastResult,
+    };
     const stale =
       !dto.fetchedAt ||
       Date.now() - new Date(dto.fetchedAt).getTime() > 30 * 60 * 1000;
     const needsFetch =
-      stale &&
+      (stale || invalidCachedNext || invalidCachedLast) &&
       (!dto.lastResultManual || !dto.nextFixtureManual || !dto.leaguePositionManual);
     if (!needsFetch) return dto;
     try {
@@ -109,7 +122,7 @@ export const getBoroMatchCentre = createServerFn({ method: "GET" }).handler(
             .select("competition, home_team, away_team, kickoff_at, venue")
             .gte("kickoff_at", nowIso)
             .order("kickoff_at", { ascending: true })
-            .limit(1),
+            .limit(25),
           supabaseAdmin
             .from("boro_fixtures")
             .select("competition, home_team, away_team, kickoff_at, venue, home_score, away_score, status")
@@ -117,10 +130,10 @@ export const getBoroMatchCentre = createServerFn({ method: "GET" }).handler(
             .not("home_score", "is", null)
             .not("away_score", "is", null)
             .order("kickoff_at", { ascending: false })
-            .limit(1),
+            .limit(25),
         ]);
-        const u = upcoming?.[0] as any;
-        if (u && (/middles?brough|boro/i.test(u.home_team) || /middles?brough|boro/i.test(u.away_team))) {
+        const u = (upcoming ?? []).find((row: any) => isBoroMatch({ home: row.home_team, away: row.away_team })) as any;
+        if (u) {
           nextFromDb = {
             kickoff: new Date(u.kickoff_at).toISOString(),
             competition: u.competition ?? "Championship",
@@ -131,8 +144,8 @@ export const getBoroMatchCentre = createServerFn({ method: "GET" }).handler(
             awayLogo: null,
           };
         }
-        const r = recent?.[0] as any;
-        if (r && (/middles?brough|boro/i.test(r.home_team) || /middles?brough|boro/i.test(r.away_team))) {
+        const r = (recent ?? []).find((row: any) => isBoroMatch({ home: row.home_team, away: row.away_team })) as any;
+        if (r) {
           lastFromDb = {
             date: new Date(r.kickoff_at).toISOString(),
             competition: r.competition ?? "Championship",
@@ -153,10 +166,12 @@ export const getBoroMatchCentre = createServerFn({ method: "GET" }).handler(
       if (!dto.lastResultManual) {
         const lr = live.lastResult ?? lastFromDb;
         if (lr) patch.last_result = lr;
+        else if (invalidCachedLast) patch.last_result = null;
       }
       if (!dto.nextFixtureManual) {
         const nf = live.nextFixture ?? nextFromDb;
         if (nf) patch.next_fixture = nf;
+        else if (invalidCachedNext) patch.next_fixture = null;
       }
       if (!dto.leaguePositionManual && standings) patch.league_position = standings;
       await supabaseAdmin
@@ -312,7 +327,7 @@ async function fetchEspnBoro(): Promise<{
         completed: !!e.status?.type?.completed || t < now,
       };
     })
-    .filter((x): x is NonNullable<typeof x> => x !== null)
+    .filter((x): x is NonNullable<typeof x> => x !== null && isBoroMatch(x))
     .sort((a, b) => a.t - b.t);
 
   const past = parsed.filter((p) => p.completed && p.homeScore !== null && p.awayScore !== null);
