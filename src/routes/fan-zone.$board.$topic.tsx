@@ -1,14 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { useServerFn } from "@tanstack/react-start";
-import { Loader2, Lock, Pin, ArrowLeft } from "lucide-react";
-import { getPublicTopic, type PublicTopicDetail } from "@/lib/fan-zone-public.functions";
+import { Lock, Pin, ArrowLeft } from "lucide-react";
+import { getPublicTopic, type PublicPost } from "@/lib/fan-zone-public.functions";
 import { ForumPostBody } from "@/components/app/ForumPostBody";
 import { formatLastSeen } from "@/lib/relative-time";
 import { Button } from "@/components/ui/button";
 import { FanZoneShell } from "./fan-zone";
 
 export const Route = createFileRoute("/fan-zone/$board/$topic")({
+  loader: ({ params }) => getPublicTopic({ data: { topicId: params.topic } }),
   head: () => ({
     meta: [
       { title: "Topic — Boro Fan Zone" },
@@ -19,21 +18,10 @@ export const Route = createFileRoute("/fan-zone/$board/$topic")({
 });
 
 function TopicReadPage() {
-  const { board: slug, topic: topicId } = Route.useParams();
-  const fetchTopic = useServerFn(getPublicTopic);
-  const [data, setData] = useState<PublicTopicDetail | null | "missing">(null);
-  useEffect(() => {
-    void fetchTopic({ data: { topicId } }).then((r) => setData(r ?? "missing"));
-  }, [topicId, fetchTopic]);
+  const { board: slug } = Route.useParams();
+  const data = Route.useLoaderData();
 
-  if (data === null) {
-    return (
-      <FanZoneShell>
-        <div className="grid place-items-center py-20 text-white/60"><Loader2 className="size-5 animate-spin" /></div>
-      </FanZoneShell>
-    );
-  }
-  if (data === "missing") {
+  if (!data) {
     return (
       <FanZoneShell>
         <div className="rounded-xl border border-white/10 bg-white/5 p-8 text-center text-sm text-white/70">
@@ -58,7 +46,7 @@ function TopicReadPage() {
       <p className="text-xs text-white/60 mt-1">Started {formatLastSeen(data.topic.created_at)} · {data.topic.reply_count} replies · {data.topic.view_count} views</p>
 
       <ol className="mt-5 space-y-3">
-        {data.posts.map((p) => (
+        {data.posts.map((p: PublicPost) => (
           <li key={p.id} className="rounded-xl border border-white/10 bg-white/5 p-4 sm:p-5">
             <header className="flex items-center gap-2.5 mb-3">
               {p.author_avatar ? (
