@@ -1,0 +1,16 @@
+CREATE INDEX IF NOT EXISTS idx_user_roles_user_id ON public.user_roles (user_id);
+CREATE INDEX IF NOT EXISTS idx_user_roles_role ON public.user_roles (role);
+CREATE INDEX IF NOT EXISTS idx_tickets_status ON public.tickets (status);
+CREATE INDEX IF NOT EXISTS idx_tickets_unassigned_status ON public.tickets (status, assigned_to) WHERE assigned_to IS NULL;
+CREATE INDEX IF NOT EXISTS idx_gate_applications_status ON public.gate_applications (status);
+CREATE INDEX IF NOT EXISTS idx_staff_notifications_created_at ON public.staff_notifications (created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_shift_slots_type_assigned_date ON public.shift_slots (slot_type, assigned_to, shift_date) WHERE assigned_to IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_shift_slots_assigned_date_type_start ON public.shift_slots (assigned_to, shift_date, slot_type, start_time);
+CREATE INDEX IF NOT EXISTS idx_ticket_messages_ticket_created ON public.ticket_messages (ticket_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_chat_channels_sort_order ON public.chat_channels (sort_order);
+CREATE INDEX IF NOT EXISTS idx_sports_blogs_sort_created ON public.sports_blogs (sort_order, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_app_settings_key ON public.app_settings (key);
+CREATE INDEX IF NOT EXISTS idx_forum_topics_board_last ON public.forum_topics (board_id, is_sticky DESC, last_post_at DESC);
+CREATE INDEX IF NOT EXISTS idx_forum_posts_topic_order ON public.forum_posts (topic_id, is_op DESC, created_at ASC);
+CREATE INDEX IF NOT EXISTS idx_forum_board_permissions_guest ON public.forum_board_permissions (role, board_id) WHERE can_view = true;
+CREATE INDEX IF NOT EXISTS idx_fan_zone_members_user_id ON public.fan_zone_members (user_id);

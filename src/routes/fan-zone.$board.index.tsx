@@ -1,37 +1,41 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { useServerFn } from "@tanstack/react-start";
-import { Loader2, Lock, Pin, MessageSquare, Eye, ArrowLeft } from "lucide-react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { Lock, Pin, MessageSquare, Eye, ArrowLeft } from "lucide-react";
 import { listPublicTopics, type PublicTopicRow } from "@/lib/fan-zone-public.functions";
 import { formatLastSeen } from "@/lib/relative-time";
 import { Button } from "@/components/ui/button";
 import { FanZoneShell } from "./fan-zone";
 
 export const Route = createFileRoute("/fan-zone/$board/")({
+  validateSearch: (search) => ({
+    page: Math.max(1, Number(search.page) || 1),
+  }),
+  loaderDeps: ({ search: { page } }) => ({ page }),
+  loader: ({ params, deps }) => listPublicTopics({ data: { slug: params.board, page: deps.page } }),
+  staleTime: 30_000,
   component: BoardTopicsPage,
 });
 
 function BoardTopicsPage() {
   const { board: slug } = Route.useParams();
-  const fetchTopics = useServerFn(listPublicTopics);
-  const [page, setPage] = useState(1);
-  const [state, setState] = useState<Awaited<ReturnType<typeof listPublicTopics>> | null>(null);
-
-  useEffect(() => {
-    setState(null);
-    void fetchTopics({ data: { slug, page } }).then(setState);
-  }, [slug, page, fetchTopics]);
+  const { page } = Route.useSearch();
+  const navigate = useNavigate();
+  const state = Route.useLoaderData();
 
   const totalPages = state ? Math.max(1, Math.ceil(state.total / (state.pageSize ?? 20))) : 1;
+  const goToPage = (nextPage: number) => {
+    void navigate({
+      to: "/fan-zone/$board",
+      params: { board: slug },
+      search: { page: Math.max(1, Math.min(totalPages, nextPage)) },
+    });
+  };
 
   return (
     <FanZoneShell>
       <Button asChild variant="ghost" size="sm" className="-ml-2 mb-2 text-white/80 hover:text-white">
         <Link to="/fan-zone"><ArrowLeft className="size-4 mr-1" /> All boards</Link>
       </Button>
-      {!state ? (
-        <div className="grid place-items-center py-20 text-white/60"><Loader2 className="size-5 animate-spin" /></div>
-      ) : !state.board ? (
+      {!state.board ? (
         <div className="rounded-xl border border-white/10 bg-white/5 p-8 text-center text-sm text-white/70">
           Board not found.
         </div>
@@ -83,9 +87,9 @@ function BoardTopicsPage() {
           )}
           {totalPages > 1 && (
             <div className="mt-5 flex items-center justify-center gap-2 text-sm text-white/70">
-              <Button size="sm" variant="outline" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>Prev</Button>
+              <Button size="sm" variant="outline" disabled={page <= 1} onClick={() => goToPage(page - 1)}>Prev</Button>
               <span>Page {page} of {totalPages}</span>
-              <Button size="sm" variant="outline" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>Next</Button>
+              <Button size="sm" variant="outline" disabled={page >= totalPages} onClick={() => goToPage(page + 1)}>Next</Button>
             </div>
           )}
         </>

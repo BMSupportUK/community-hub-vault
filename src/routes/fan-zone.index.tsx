@@ -1,13 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { useServerFn } from "@tanstack/react-start";
 import { listPublicBoards, type PublicBoard } from "@/lib/fan-zone-public.functions";
 import { getIcon } from "@/components/app/IconPicker";
-import { Loader2, Lock, Pin, MessageSquare, ChevronRight } from "lucide-react";
+import { Lock, Pin, MessageSquare, ChevronRight } from "lucide-react";
 import { formatLastSeen } from "@/lib/relative-time";
 import { FanZoneShell } from "./fan-zone";
 
 export const Route = createFileRoute("/fan-zone/")({
+  loader: () => listPublicBoards(),
+  staleTime: 60_000,
   head: () => ({
     meta: [
       { title: "Boro Fan Zone — BM Support" },
@@ -27,20 +27,14 @@ export const Route = createFileRoute("/fan-zone/")({
 });
 
 function FanZoneBoardsPage() {
-  const fetchBoards = useServerFn(listPublicBoards);
-  const [boards, setBoards] = useState<PublicBoard[] | null>(null);
-  useEffect(() => {
-    void fetchBoards().then(setBoards).catch(() => setBoards([]));
-  }, [fetchBoards]);
+  const boards = Route.useLoaderData() as PublicBoard[];
   return (
     <FanZoneShell>
       <h1 className="font-display text-2xl sm:text-3xl font-black text-white">Boro Fan Zone — boards</h1>
       <p className="mt-1 text-sm text-white/70">
         Browse supporter-led boards. Posting, reactions and polls require a member account.
       </p>
-      {!boards ? (
-        <div className="grid place-items-center py-20 text-white/60"><Loader2 className="size-5 animate-spin" /></div>
-      ) : boards.length === 0 ? (
+      {boards.length === 0 ? (
         <div className="rounded-xl border border-white/10 bg-white/5 p-8 text-center text-sm text-white/70 mt-6">
           No boards yet.
         </div>

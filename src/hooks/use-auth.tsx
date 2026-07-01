@@ -93,17 +93,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => sub.subscription.unsubscribe();
   }, []);
 
-  // Refresh roles without a full page reload:
-  // - poll every 30s while signed in
-  // - re-check on tab focus / visibility change
+  // Refresh roles without a full page reload, but keep it light. This used to
+  // poll every 30s and became one of the highest-volume backend reads.
   // (user_roles is no longer broadcast via Realtime for security reasons.)
   useEffect(() => {
     if (!user?.id) return;
     const uid = user.id;
+    let lastRun = Date.now();
+    const MIN_INTERVAL_MS = 5 * 60_000;
     const tick = () => {
+      const now = Date.now();
+      if (now - lastRun < MIN_INTERVAL_MS) return;
+      lastRun = now;
       loadRoles(uid);
     };
-    const interval = window.setInterval(tick, 30_000);
+    const interval = window.setInterval(tick, MIN_INTERVAL_MS);
     const onFocus = () => tick();
     const onVis = () => {
       if (document.visibilityState === "visible") tick();
