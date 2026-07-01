@@ -120,7 +120,7 @@ export const getBoroMatchCentre = createServerFn({ method: "GET" }).handler(
             .limit(1),
         ]);
         const u = upcoming?.[0] as any;
-        if (u) {
+        if (u && (/middles?brough|boro/i.test(u.home_team) || /middles?brough|boro/i.test(u.away_team))) {
           nextFromDb = {
             kickoff: new Date(u.kickoff_at).toISOString(),
             competition: u.competition ?? "Championship",
@@ -132,7 +132,7 @@ export const getBoroMatchCentre = createServerFn({ method: "GET" }).handler(
           };
         }
         const r = recent?.[0] as any;
-        if (r) {
+        if (r && (/middles?brough|boro/i.test(r.home_team) || /middles?brough|boro/i.test(r.away_team))) {
           lastFromDb = {
             date: new Date(r.kickoff_at).toISOString(),
             competition: r.competition ?? "Championship",
