@@ -55,8 +55,9 @@ export const Route = createFileRoute("/api/public/tweet")({
           return getOembedFallback(id);
         }
 
-        cache.set(id, { expires: Date.now() + CACHE_TTL_MS, data });
-        return json({ data }, 200);
+        const enriched = await enrichTweetMedia(data, id);
+        cache.set(id, { expires: Date.now() + CACHE_TTL_MS, data: enriched });
+        return json({ data: enriched }, 200);
       },
     },
   },
@@ -83,19 +84,82 @@ async function getOembedFallback(id: string) {
     const embed = await res.json() as { html?: string; author_name?: string; author_url?: string; url?: string };
     const html = embed.html ?? "";
     const handle = embed.author_url?.match(/x\.com\/([^/?#]+)/i)?.[1];
-    return json({
-      data: {
-        __typename: "Tweet",
-        id_str: id,
-        text: htmlToTweetText(html),
-        user: {
-          name: embed.author_name,
-          screen_name: handle,
-        },
+    const fallbackData = await enrichTweetMedia({
+      __typename: "Tweet",
+      id_str: id,
+      text: htmlToTweetText(html),
+      user: {
+        name: embed.author_name,
+        screen_name: handle,
       },
-    }, 200);
+    }, id);
+    cache.set(id, { expires: Date.now() + CACHE_TTL_MS, data: fallbackData });
+    return json({ data: fallbackData }, 200);
   } catch {
+    const fallbackData = await enrichTweetMedia({ __typename: "Tweet", id_str: id }, id);
+    if (hasTweetMedia(fallbackData)) {
+      cache.set(id, { expires: Date.now() + CACHE_TTL_MS, data: fallbackData });
+      return json({ data: fallbackData }, 200);
+    }
     return json({ data: null, error: "Tweet preview unavailable" }, 502);
+  }
+}
+
+type TweetLike = Record<string, unknown> & {
+  photos?: Array<Record<string, unknown>>;
+  mediaDetails?: Array<Record<string, unknown>>;
+};
+
+function hasTweetMedia(data: TweetLike | null | undefined): boolean {
+  return !!(
+    data?.photos?.some((photo) => typeof photo.url === "string" && photo.url) ||
+    data?.mediaDetails?.some((media) => typeof media.media_url_https === "string" && media.media_url_https)
+  );
+}
+
+async function enrichTweetMedia<T extends TweetLike>(data: T, id: string): Promise<T> {
+  if (hasTweetMedia(data)) return data;
+  const pageMedia = await getXPageMedia(id);
+  if (!pageMedia.length) return data;
+  return {
+    ...data,
+    photos: [...(data.photos ?? []), ...pageMedia.map((url) => ({ url, expandedUrl: `https://x.com/i/status/${id}` }))],
+    mediaDetails: [
+      ...(data.mediaDetails ?? []),
+      ...pageMedia.map((url) => ({ media_url_https: url, type: "photo", expanded_url: `https://x.com/i/status/${id}` })),
+    ],
+  };
+}
+
+async function getXPageMedia(id: string): Promise<string[]> {
+  try {
+    const res = await fetchWithTimeout(new URL(`https://x.com/i/status/${id}`), {
+      headers: { accept: "text/html,application/xhtml+xml", "user-agent": "Mozilla/5.0" },
+    }, 3500);
+    if (!res.ok) return [];
+    const html = await res.text();
+    const urls = new Set<string>();
+    for (const match of html.matchAll(/<meta\s+[^>]*(?:property|name)=["'](?:og:image|twitter:image)["'][^>]*content=["']([^"']+)["'][^>]*>/gi)) {
+      const normalized = normalizeTweetImageUrl(decodeHtml(match[1] ?? ""));
+      if (normalized) urls.add(normalized);
+    }
+    for (const match of html.matchAll(/https:\/\/pbs\.twimg\.com\/media\/[^"'<>\\\s]+/gi)) {
+      const normalized = normalizeTweetImageUrl(decodeHtml(match[0] ?? ""));
+      if (normalized) urls.add(normalized);
+    }
+    return Array.from(urls).slice(0, 4);
+  } catch {
+    return [];
+  }
+}
+
+function normalizeTweetImageUrl(raw: string): string | null {
+  try {
+    const url = new URL(raw.trim().replace(/:(?:small|medium|large|orig)$/i, ""));
+    if (url.protocol !== "https:" || url.hostname !== "pbs.twimg.com") return null;
+    return url.toString();
+  } catch {
+    return null;
   }
 }
 
