@@ -4,6 +4,7 @@ const TWEET_ID = /^\d{1,40}$/;
 const SYNDICATION_URL = "https://cdn.syndication.twimg.com/tweet-result";
 const OEMBED_URL = "https://publish.twitter.com/oembed";
 const CACHE_TTL_MS = 10 * 60 * 1000;
+const FAST_RETURN_MS = 1800;
 const cache = new Map<string, { expires: number; data: unknown }>();
 const FEATURES = [
   "tfw_timeline_list:",
@@ -33,31 +34,24 @@ export const Route = createFileRoute("/api/public/tweet")({
         const cached = cache.get(id);
         if (cached && cached.expires > Date.now()) return json({ data: cached.data }, 200);
 
-        const url = new URL(SYNDICATION_URL);
-        url.searchParams.set("id", id);
-        url.searchParams.set("lang", "en");
-        url.searchParams.set("features", FEATURES);
-        url.searchParams.set("token", getToken(id));
+        const pageMediaPromise = getXPageMedia(id);
+        const syndicationPromise = getSyndicationTweet(id, pageMediaPromise);
+        const fallbackPromise = getOembedFallbackData(id, pageMediaPromise);
 
-        const res = await fetchWithTimeout(url, { headers: { accept: "application/json" } }, 3500);
+        // Production can occasionally stall on X's syndication endpoint. Start
+        // the metadata scrape at the same time and return it as soon as it has
+        // an image, instead of waiting several seconds before even trying it.
+        const fastWithImage = await Promise.race([
+          syndicationPromise.then((data) => (data && hasTweetMedia(data) ? data : null)).catch(() => null),
+          fallbackPromise.then((data) => (data && hasTweetMedia(data) ? data : null)).catch(() => null),
+          delay(FAST_RETURN_MS).then(() => null),
+        ]);
 
-        if (res.status === 404) {
-          return getOembedFallback(id);
-        }
+        const data = fastWithImage ?? await firstSettledData(syndicationPromise, fallbackPromise);
+        if (!data) return json({ data: null, error: "Tweet preview unavailable" }, 502);
 
-        const contentType = res.headers.get("content-type") ?? "";
-        if (!res.ok || !contentType.includes("application/json")) {
-          return getOembedFallback(id);
-        }
-
-        const data = await res.json();
-        if (data?.__typename === "TweetTombstone" || (data && Object.keys(data).length === 0)) {
-          return getOembedFallback(id);
-        }
-
-        const enriched = await enrichTweetMedia(data, id);
-        cache.set(id, { expires: Date.now() + CACHE_TTL_MS, data: enriched });
-        return json({ data: enriched }, 200);
+        cache.set(id, { expires: Date.now() + CACHE_TTL_MS, data });
+        return json({ data }, 200);
       },
     },
   },
@@ -67,7 +61,23 @@ function getToken(id: string) {
   return ((Number(id) / 1e15) * Math.PI).toString(36).replace(/(0+|\.)/g, "");
 }
 
-async function getOembedFallback(id: string) {
+async function getSyndicationTweet(id: string, pageMediaPromise: Promise<string[]>): Promise<TweetLike | null> {
+  const url = new URL(SYNDICATION_URL);
+  url.searchParams.set("id", id);
+  url.searchParams.set("lang", "en");
+  url.searchParams.set("features", FEATURES);
+  url.searchParams.set("token", getToken(id));
+
+  const res = await fetchWithTimeout(url, { headers: { accept: "application/json" } }, 2200);
+  const contentType = res.headers.get("content-type") ?? "";
+  if (!res.ok || !contentType.includes("application/json")) return null;
+
+  const data = await res.json() as TweetLike & { __typename?: string };
+  if (data?.__typename === "TweetTombstone" || Object.keys(data).length === 0) return null;
+  return enrichTweetMedia(data, id, pageMediaPromise);
+}
+
+async function getOembedFallbackData(id: string, pageMediaPromise: Promise<string[]>): Promise<TweetLike | null> {
   const url = new URL(OEMBED_URL);
   url.searchParams.set("url", `https://x.com/i/status/${id}`);
   url.searchParams.set("omit_script", "true");
@@ -75,16 +85,17 @@ async function getOembedFallback(id: string) {
   url.searchParams.set("theme", "dark");
 
   try {
-    const res = await fetchWithTimeout(url, { headers: { accept: "application/json" } }, 3500);
+    const res = await fetchWithTimeout(url, { headers: { accept: "application/json" } }, 2200);
     const contentType = res.headers.get("content-type") ?? "";
     if (!res.ok || !contentType.includes("application/json")) {
-      return json({ data: null, error: "Tweet preview unavailable" }, res.status === 404 ? 404 : 502);
+      const pageOnly = await enrichTweetMedia({ __typename: "Tweet", id_str: id }, id, pageMediaPromise);
+      return hasTweetMedia(pageOnly) ? pageOnly : null;
     }
 
     const embed = await res.json() as { html?: string; author_name?: string; author_url?: string; url?: string };
     const html = embed.html ?? "";
     const handle = embed.author_url?.match(/x\.com\/([^/?#]+)/i)?.[1];
-    const fallbackData = await enrichTweetMedia({
+    return enrichTweetMedia({
       __typename: "Tweet",
       id_str: id,
       text: htmlToTweetText(html),
@@ -92,17 +103,23 @@ async function getOembedFallback(id: string) {
         name: embed.author_name,
         screen_name: handle,
       },
-    }, id);
-    cache.set(id, { expires: Date.now() + CACHE_TTL_MS, data: fallbackData });
-    return json({ data: fallbackData }, 200);
+    }, id, pageMediaPromise);
   } catch {
-    const fallbackData = await enrichTweetMedia({ __typename: "Tweet", id_str: id }, id);
-    if (hasTweetMedia(fallbackData)) {
-      cache.set(id, { expires: Date.now() + CACHE_TTL_MS, data: fallbackData });
-      return json({ data: fallbackData }, 200);
-    }
-    return json({ data: null, error: "Tweet preview unavailable" }, 502);
+    const fallbackData = await enrichTweetMedia({ __typename: "Tweet", id_str: id }, id, pageMediaPromise);
+    return hasTweetMedia(fallbackData) ? fallbackData : null;
   }
+}
+
+async function firstSettledData(...promises: Array<Promise<TweetLike | null>>): Promise<TweetLike | null> {
+  const results = await Promise.allSettled(promises);
+  for (const result of results) {
+    if (result.status === "fulfilled" && result.value) return result.value;
+  }
+  return null;
+}
+
+function delay(ms: number) {
+  return new Promise<null>((resolve) => setTimeout(() => resolve(null), ms));
 }
 
 type TweetLike = Record<string, unknown> & {
@@ -117,9 +134,9 @@ function hasTweetMedia(data: TweetLike | null | undefined): boolean {
   );
 }
 
-async function enrichTweetMedia<T extends TweetLike>(data: T, id: string): Promise<T> {
+async function enrichTweetMedia<T extends TweetLike>(data: T, id: string, pageMediaPromise?: Promise<string[]>): Promise<T> {
   if (hasTweetMedia(data)) return data;
-  const pageMedia = await getXPageMedia(id);
+  const pageMedia = await (pageMediaPromise ?? getXPageMedia(id));
   if (!pageMedia.length) return data;
   return {
     ...data,
