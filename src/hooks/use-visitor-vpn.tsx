@@ -81,10 +81,11 @@ function persistCache() {
 }
 
 export function useVisitorVpn() {
-  hydrateCache();
   const [isVpn, setIsVpn] = useState<boolean>(cached ?? false);
 
   useEffect(() => {
+    hydrateCache();
+    if (cached !== null) setIsVpn(cached);
     const l = (v: boolean) => setIsVpn(v);
     listeners.add(l);
     const start = () => void refresh();

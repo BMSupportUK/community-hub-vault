@@ -79,9 +79,10 @@ function startChannel() {
 }
 
 export function useAppTheme() {
-  hydrateCache();
   const [theme, setTheme] = useState<AppTheme>(cache);
   useEffect(() => {
+    hydrateCache();
+    setTheme(cache);
     listeners.add(setTheme);
     const start = () => {
       if (!loaded) void load();
