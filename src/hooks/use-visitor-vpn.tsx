@@ -6,7 +6,7 @@ let cachedAt = 0;
 let cachedIp: string | null = null;
 let inflight: Promise<boolean> | null = null;
 const listeners = new Set<(v: boolean) => void>();
-const TTL_MS = 10_000;
+const TTL_MS = 30 * 60 * 1000;
 type NavigatorWithConnection = Navigator & {
   connection?: EventTarget;
 };
@@ -61,21 +61,21 @@ export function useVisitorVpn() {
     listeners.add(l);
     void refresh();
 
-    const interval = setInterval(() => refresh(true), TTL_MS);
-    const onFocus = () => refresh(true);
-    const onVisible = () => {
-      if (document.visibilityState === "visible") refresh(true);
+    const refreshIfStale = () => {
+      if (Date.now() - cachedAt > TTL_MS) void refresh();
     };
-    const onOnline = () => refresh(true);
+    const onVisible = () => {
+      if (document.visibilityState === "visible") refreshIfStale();
+    };
+    const onOnline = () => refreshIfStale();
     const connection = (navigator as NavigatorWithConnection).connection;
-    window.addEventListener("focus", onFocus);
+    window.addEventListener("focus", refreshIfStale);
     window.addEventListener("online", onOnline);
     connection?.addEventListener?.("change", onOnline);
     document.addEventListener("visibilitychange", onVisible);
     return () => {
       listeners.delete(l);
-      clearInterval(interval);
-      window.removeEventListener("focus", onFocus);
+      window.removeEventListener("focus", refreshIfStale);
       window.removeEventListener("online", onOnline);
       connection?.removeEventListener?.("change", onOnline);
       document.removeEventListener("visibilitychange", onVisible);
