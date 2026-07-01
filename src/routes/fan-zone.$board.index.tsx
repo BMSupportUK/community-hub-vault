@@ -24,7 +24,9 @@ function BoardTopicsPage() {
   const totalPages = state ? Math.max(1, Math.ceil(state.total / (state.pageSize ?? 20))) : 1;
   const goToPage = (nextPage: number) => {
     void navigate({
-      search: (prev) => ({ ...prev, page: Math.max(1, Math.min(totalPages, nextPage)) }),
+      to: "/fan-zone/$board",
+      params: { board: slug },
+      search: { page: Math.max(1, Math.min(totalPages, nextPage)) },
     });
   };
 

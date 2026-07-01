@@ -27,7 +27,7 @@ export const Route = createFileRoute("/fan-zone/")({
 });
 
 function FanZoneBoardsPage() {
-  const boards = Route.useLoaderData();
+  const boards = Route.useLoaderData() as PublicBoard[];
   return (
     <FanZoneShell>
       <h1 className="font-display text-2xl sm:text-3xl font-black text-white">Boro Fan Zone — boards</h1>
