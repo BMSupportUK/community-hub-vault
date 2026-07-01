@@ -287,9 +287,10 @@ function normalizeXUrl(url: string, id: string) {
 function getTweetMedia(tweet: TweetApiData): string[] {
   const photos = tweet.photos?.map((p) => p.url).filter(Boolean) as string[] | undefined;
   const media = tweet.mediaDetails
-    ?.filter((m) => m.type === "photo" && m.media_url_https)
+    ?.filter((m) => m.media_url_https)
     .map((m) => m.media_url_https as string);
-  return Array.from(new Set([...(photos ?? []), ...(media ?? [])]));
+  const videoPoster = (tweet as unknown as { video?: { poster?: string } }).video?.poster;
+  return Array.from(new Set([...(photos ?? []), ...(media ?? []), ...(videoPoster ? [videoPoster] : [])]));
 }
 
 function formatTweetText(tweet: TweetApiData): string {
