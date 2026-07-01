@@ -134,10 +134,12 @@ type TweetApiData = {
   favorite_count?: number;
   conversation_count?: number;
   user?: TweetApiUser;
-  photos?: { url?: string; expandedUrl?: string }[];
-  mediaDetails?: { media_url_https?: string; type?: string; expanded_url?: string }[];
+  photos?: { url?: string; expandedUrl?: string; width?: number; height?: number; accessibilityLabel?: string }[];
+  mediaDetails?: { media_url_https?: string; type?: string; expanded_url?: string; ext_alt_text?: string; original_info?: { width?: number; height?: number } }[];
   entities?: { urls?: { url?: string; expanded_url?: string; display_url?: string }[] };
 };
+
+type TweetMedia = { url: string; width?: number; height?: number; alt?: string };
 
 function XPostEmbed({ id, url }: { id: string; url: string }) {
   const fallbackRef = useRef<HTMLDivElement>(null);
@@ -233,20 +235,25 @@ function XPostEmbed({ id, url }: { id: string; url: string }) {
             </div>
           )}
 
-        {media.length > 0 && (
-          <div className={`mt-4 grid gap-1 overflow-hidden rounded-xl border border-white/15 ${media.length > 1 ? "grid-cols-2" : "grid-cols-1"}`}>
-            {media.slice(0, 4).map((item, index) => (
-              <img
-                key={`${item}-${index}`}
-                src={item}
-                alt="X post media"
-                className="aspect-video h-full w-full object-cover"
-                loading="lazy"
-                referrerPolicy="no-referrer"
-              />
-            ))}
-          </div>
-        )}
+          {media.length > 0 && (
+            <div className={`mt-4 grid gap-1 overflow-hidden rounded-xl border border-white/15 bg-black/35 ${media.length > 1 ? "grid-cols-2" : "grid-cols-1"}`}>
+              {media.slice(0, 4).map((item, index) => {
+                const ratio = item.width && item.height ? `${item.width} / ${item.height}` : undefined;
+                return (
+                  <img
+                    key={`${item.url}-${index}`}
+                    src={tweetMediaSrc(item.url)}
+                    alt={item.alt || "X post media"}
+                    className="h-auto max-h-[680px] w-full bg-black/30 object-contain"
+                    style={ratio ? { aspectRatio: ratio } : undefined}
+                    loading={index === 0 ? "eager" : "lazy"}
+                    fetchPriority={index === 0 ? "high" : "auto"}
+                    referrerPolicy="no-referrer"
+                  />
+                );
+              })}
+            </div>
+          )}
 
         <div className="boro-x-meta mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-white/10 pt-3 text-xs text-white/55">
           {tweet?.created_at && <span>{formatTweetDate(tweet.created_at)}</span>}
@@ -284,13 +291,35 @@ function normalizeXUrl(url: string, id: string) {
   return safeUrl.replace(/^http:/i, "https:").replace(/^https:\/\/twitter\.com/i, "https://x.com");
 }
 
-function getTweetMedia(tweet: TweetApiData): string[] {
-  const photos = tweet.photos?.map((p) => p.url).filter(Boolean) as string[] | undefined;
-  const media = tweet.mediaDetails
-    ?.filter((m) => m.media_url_https)
-    .map((m) => m.media_url_https as string);
+function getTweetMedia(tweet: TweetApiData): TweetMedia[] {
+  const out = new Map<string, TweetMedia>();
+  for (const photo of tweet.photos ?? []) {
+    if (photo.url) out.set(photo.url, { url: photo.url, width: photo.width, height: photo.height, alt: photo.accessibilityLabel });
+  }
+  for (const media of tweet.mediaDetails ?? []) {
+    if (!media.media_url_https) continue;
+    out.set(media.media_url_https, {
+      url: media.media_url_https,
+      width: media.original_info?.width,
+      height: media.original_info?.height,
+      alt: media.ext_alt_text,
+    });
+  }
   const videoPoster = (tweet as unknown as { video?: { poster?: string } }).video?.poster;
-  return Array.from(new Set([...(photos ?? []), ...(media ?? []), ...(videoPoster ? [videoPoster] : [])]));
+  if (videoPoster) out.set(videoPoster, { url: videoPoster });
+  return Array.from(out.values());
+}
+
+function tweetMediaSrc(url: string): string {
+  try {
+    const src = new URL(url);
+    if (["pbs.twimg.com", "ton.twimg.com", "video.twimg.com"].includes(src.hostname)) {
+      return `/api/public/tweet-image?url=${encodeURIComponent(src.toString())}`;
+    }
+  } catch {
+    // Fall back to the original value below.
+  }
+  return url;
 }
 
 function formatTweetText(tweet: TweetApiData): string {

@@ -3,6 +3,8 @@ import { createFileRoute } from "@tanstack/react-router";
 const TWEET_ID = /^\d{1,40}$/;
 const SYNDICATION_URL = "https://cdn.syndication.twimg.com/tweet-result";
 const OEMBED_URL = "https://publish.twitter.com/oembed";
+const CACHE_TTL_MS = 10 * 60 * 1000;
+const cache = new Map<string, { expires: number; data: unknown }>();
 const FEATURES = [
   "tfw_timeline_list:",
   "tfw_follower_count_sunset:true",
@@ -28,6 +30,8 @@ export const Route = createFileRoute("/api/public/tweet")({
         if (!TWEET_ID.test(id)) {
           return Response.json({ data: null, error: "Invalid tweet id" }, { status: 400 });
         }
+        const cached = cache.get(id);
+        if (cached && cached.expires > Date.now()) return json({ data: cached.data }, 200);
 
         const url = new URL(SYNDICATION_URL);
         url.searchParams.set("id", id);
@@ -35,11 +39,7 @@ export const Route = createFileRoute("/api/public/tweet")({
         url.searchParams.set("features", FEATURES);
         url.searchParams.set("token", getToken(id));
 
-        const res = await fetch(url, {
-          headers: {
-            accept: "application/json",
-          },
-        });
+        const res = await fetchWithTimeout(url, { headers: { accept: "application/json" } }, 3500);
 
         if (res.status === 404) {
           return getOembedFallback(id);
@@ -55,6 +55,7 @@ export const Route = createFileRoute("/api/public/tweet")({
           return getOembedFallback(id);
         }
 
+        cache.set(id, { expires: Date.now() + CACHE_TTL_MS, data });
         return json({ data }, 200);
       },
     },
@@ -73,7 +74,7 @@ async function getOembedFallback(id: string) {
   url.searchParams.set("theme", "dark");
 
   try {
-    const res = await fetch(url, { headers: { accept: "application/json" } });
+    const res = await fetchWithTimeout(url, { headers: { accept: "application/json" } }, 3500);
     const contentType = res.headers.get("content-type") ?? "";
     if (!res.ok || !contentType.includes("application/json")) {
       return json({ data: null, error: "Tweet preview unavailable" }, res.status === 404 ? 404 : 502);
@@ -95,6 +96,16 @@ async function getOembedFallback(id: string) {
     }, 200);
   } catch {
     return json({ data: null, error: "Tweet preview unavailable" }, 502);
+  }
+}
+
+async function fetchWithTimeout(url: URL, init: RequestInit, timeoutMs: number) {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...init, signal: ctrl.signal });
+  } finally {
+    clearTimeout(t);
   }
 }
 

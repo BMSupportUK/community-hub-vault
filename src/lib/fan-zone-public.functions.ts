@@ -52,6 +52,8 @@ export type PublicTopicDetail = {
 };
 
 type AliasRow = { user_id: string; fan_alias: string | null; fan_avatar_url: string | null };
+let guestBoardCache: { at: number; ids: Set<string> } | null = null;
+const GUEST_BOARD_CACHE_MS = 60_000;
 
 /**
  * Returns the set of board IDs guests are allowed to view: boards with an
@@ -62,6 +64,7 @@ type AliasRow = { user_id: string; fan_alias: string | null; fan_avatar_url: str
 async function guestVisibleBoardIds(
   admin: { from: (t: string) => any },
 ): Promise<Set<string>> {
+  if (guestBoardCache && Date.now() - guestBoardCache.at < GUEST_BOARD_CACHE_MS) return guestBoardCache.ids;
   const { data } = await admin
     .from("forum_board_permissions")
     .select("board_id, can_view")
@@ -70,6 +73,7 @@ async function guestVisibleBoardIds(
   ((data ?? []) as Array<{ board_id: string; can_view: boolean }>).forEach((r) => {
     if (r.can_view) out.add(r.board_id);
   });
+  guestBoardCache = { at: Date.now(), ids: out };
   return out;
 }
 
@@ -95,15 +99,18 @@ async function loadAliases(
 
 export const listPublicBoards = createServerFn({ method: "GET" }).handler(async () => {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const { data, error } = await supabaseAdmin
-    .from("forum_boards")
-    .select(
-      "id, name, slug, description, icon, is_pinned, is_locked, topic_count, post_count, last_post_at, sort_order",
-    )
-    .order("is_pinned", { ascending: false })
-    .order("sort_order");
+  const [boardsResult, visible] = await Promise.all([
+    supabaseAdmin
+      .from("forum_boards")
+      .select(
+        "id, name, slug, description, icon, is_pinned, is_locked, topic_count, post_count, last_post_at, sort_order",
+      )
+      .order("is_pinned", { ascending: false })
+      .order("sort_order"),
+    guestVisibleBoardIds(supabaseAdmin),
+  ]);
+  const { data, error } = boardsResult;
   if (error) throw error;
-  const visible = await guestVisibleBoardIds(supabaseAdmin);
   return ((data ?? []) as PublicBoard[])
     .filter((b) => visible.has(b.id))
     .map((b) => ({
@@ -126,13 +133,16 @@ export const listPublicTopics = createServerFn({ method: "GET" })
   )
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: b } = await supabaseAdmin
-      .from("forum_boards")
-      .select("id, name, slug, description, is_locked")
-      .eq("slug", data.slug)
-      .maybeSingle();
+    const [boardResult, visible] = await Promise.all([
+      supabaseAdmin
+        .from("forum_boards")
+        .select("id, name, slug, description, is_locked")
+        .eq("slug", data.slug)
+        .maybeSingle(),
+      guestVisibleBoardIds(supabaseAdmin),
+    ]);
+    const { data: b } = boardResult;
     if (!b) return { board: null, topics: [] as PublicTopicRow[], total: 0, page: data.page };
-    const visible = await guestVisibleBoardIds(supabaseAdmin);
     if (!visible.has((b as { id: string }).id)) {
       return { board: null, topics: [] as PublicTopicRow[], total: 0, page: data.page };
     }
@@ -189,19 +199,23 @@ export const getPublicTopic = createServerFn({ method: "GET" })
       reply_count: number;
       created_at: string;
     };
-    const visible = await guestVisibleBoardIds(supabaseAdmin);
+    const [visible, boardResult, postsResult] = await Promise.all([
+      guestVisibleBoardIds(supabaseAdmin),
+      supabaseAdmin
+        .from("forum_boards")
+        .select("id, name, slug")
+        .eq("id", topic.board_id)
+        .maybeSingle(),
+      supabaseAdmin
+        .from("forum_posts")
+        .select("id, author_id, body, is_op, created_at")
+        .eq("topic_id", topic.id)
+        .order("is_op", { ascending: false })
+        .order("created_at", { ascending: true }),
+    ]);
     if (!visible.has(topic.board_id)) return null;
-    const { data: bd } = await supabaseAdmin
-      .from("forum_boards")
-      .select("id, name, slug")
-      .eq("id", topic.board_id)
-      .maybeSingle();
-    const { data: ps } = await supabaseAdmin
-      .from("forum_posts")
-      .select("id, author_id, body, is_op, created_at")
-      .eq("topic_id", topic.id)
-      .order("is_op", { ascending: false })
-      .order("created_at", { ascending: true });
+    const { data: bd } = boardResult;
+    const { data: ps } = postsResult;
     const list = (ps ?? []) as Array<{ id: string; author_id: string; body: string; is_op: boolean; created_at: string }>;
     const aliases = await loadAliases(supabaseAdmin, list.map((p) => p.author_id));
     return {
