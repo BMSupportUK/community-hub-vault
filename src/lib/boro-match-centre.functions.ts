@@ -57,7 +57,7 @@ export type MatchCentreDTO = {
   updatedAt: string | null;
 };
 
-const BORO_TEAM_RE = /middles?brough|boro/i;
+const BORO_TEAM_RE = /\bmiddles(?:brough|borough)\b|\bboro\b/i;
 
 function isBoroMatch(match: { home?: string | null; away?: string | null } | null | undefined) {
   return !!match && (BORO_TEAM_RE.test(match.home ?? "") || BORO_TEAM_RE.test(match.away ?? ""));
@@ -229,7 +229,7 @@ async function fetchEspnStandings(): Promise<LeaguePosition | null> {
       lost: statNum(by("losses")),
       goalDifference: statNum(by("pointdifferential") ?? by("pointDifferential")),
       points: statNum(by("points")),
-      isBoro: /middles?brough|boro/i.test(name),
+      isBoro: BORO_TEAM_RE.test(name),
     };
   });
 
