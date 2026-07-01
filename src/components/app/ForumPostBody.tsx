@@ -192,7 +192,7 @@ function XPostEmbed({ id, url }: { id: string; url: string }) {
             href={href}
             target="_blank"
             rel="noopener noreferrer"
-            className="boro-x-action mt-2 inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1 text-xs font-semibold text-black no-underline hover:bg-white/90"
+            className="boro-x-action mt-2 inline-flex items-center gap-1.5 rounded-full border border-[#E11B22]/55 bg-[#E11B22]/18 px-3 py-1 text-xs font-semibold text-white no-underline shadow-[0_0_18px_rgba(225,27,34,0.22)] transition-colors hover:bg-[#E11B22]/28"
           >
             <span className="text-sm font-black leading-none">𝕏</span> Open on X
           </a>
@@ -220,7 +220,7 @@ function XPostEmbed({ id, url }: { id: string; url: string }) {
               </div>
               <div className="boro-x-handle truncate text-sm text-white/55">{handle}</div>
             </div>
-            <span className="boro-x-action flex size-9 shrink-0 items-center justify-center rounded-full bg-white text-lg font-black text-black shadow-[0_4px_14px_-2px_rgba(255,255,255,0.35)]">
+            <span className="boro-x-action flex size-9 shrink-0 items-center justify-center rounded-full border border-[#E11B22]/60 bg-[#16070a] text-lg font-black text-white shadow-[0_0_22px_rgba(225,27,34,0.28)] transition-colors group-hover/x-embed:bg-[#E11B22]/25">
               𝕏
             </span>
           </div>
@@ -252,7 +252,7 @@ function XPostEmbed({ id, url }: { id: string; url: string }) {
           {tweet?.created_at && <span>{formatTweetDate(tweet.created_at)}</span>}
           {typeof tweet?.favorite_count === "number" && <span>♥ {compactNumber(tweet.favorite_count)}</span>}
           {typeof tweet?.conversation_count === "number" && <span>💬 {compactNumber(tweet.conversation_count)}</span>}
-          <span className="boro-x-action ml-auto inline-flex items-center gap-1 rounded-full bg-white px-3 py-1 text-[11px] font-bold text-black transition-transform group-hover/x-embed:scale-105">
+          <span className="boro-x-action ml-auto inline-flex items-center gap-1 rounded-full border border-[#E11B22]/55 bg-[#E11B22]/18 px-3 py-1 text-[11px] font-bold text-white shadow-[0_0_18px_rgba(225,27,34,0.18)] transition-all group-hover/x-embed:scale-105 group-hover/x-embed:bg-[#E11B22]/28">
             Open on 𝕏
           </span>
         </div>
