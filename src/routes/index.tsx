@@ -3,6 +3,15 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { LandingHeader } from "@/components/LandingHeader";
 import welcomeHero from "@/assets/welcome-hero.webp";
+import { MessageSquare, CalendarClock, LifeBuoy, Sparkles } from "lucide-react";
+
+function pickIcon(title: string) {
+  const t = title.toLowerCase();
+  if (/chat|channel|community|forum|message/.test(t)) return MessageSquare;
+  if (/schedule|time|shift|calendar|roster/.test(t)) return CalendarClock;
+  if (/support|ticket|service|help/.test(t)) return LifeBuoy;
+  return Sparkles;
+}
 
 function isAndroidAppShell() {
   if (typeof window === "undefined") return false;
@@ -117,11 +126,22 @@ function Landing() {
                   "linear-gradient(135deg, rgba(127,29,29,0.9) 0%, rgba(69,10,10,0.9) 100%)",
               }}
             >
-              <div className="shrink-0 size-14 rounded-xl bg-black/40 border border-white/10 grid place-items-center overflow-hidden ring-1 ring-red-500/30 group-hover:ring-red-300/60 transition">
+              <div
+                className="shrink-0 size-14 rounded-xl grid place-items-center overflow-hidden ring-1 ring-red-300/40 group-hover:ring-red-200/70 transition shadow-inner"
+                style={{
+                  background:
+                    "linear-gradient(135deg, rgba(254,202,202,0.18) 0%, rgba(220,38,38,0.35) 100%)",
+                  boxShadow:
+                    "inset 0 1px 0 rgba(255,255,255,0.15), 0 4px 16px rgba(0,0,0,0.35)",
+                }}
+              >
                 {b.icon_url ? (
                   <img src={b.icon_url} alt="" className="size-full object-contain p-2" />
                 ) : (
-                  <span className="text-red-200 text-xs">?</span>
+                  (() => {
+                    const Icon = pickIcon(b.title);
+                    return <Icon className="size-7 text-red-50 drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]" strokeWidth={2} />;
+                  })()
                 )}
               </div>
               <div className="min-w-0">
