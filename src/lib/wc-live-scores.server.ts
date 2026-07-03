@@ -38,6 +38,9 @@ export type EspnLiveMatch = {
   homeReds: number;
   awayReds: number;
   phase: "ET" | "PENS" | null;
+  homePens: number | null;
+  awayPens: number | null;
+  penWinner: "home" | "away" | null;
 };
 
 const ALIASES: Record<string, string[]> = {
@@ -141,6 +144,7 @@ export async function fetchEspnWcLive(): Promise<EspnLiveMatch[]> {
             id?: string;
             homeAway?: string;
             score?: string;
+            shootoutScore?: number;
             team?: { id?: string; displayName?: string };
           }>;
           details?: Array<{
@@ -171,6 +175,14 @@ export async function fetchEspnWcLive(): Promise<EspnLiveMatch[]> {
       else if (/OVERTIME|EXTRA[_ ]?TIME|FINAL_AET/i.test(typeName)) phase = "ET";
       const homeTeamId = homeC.team?.id ?? homeC.id ?? "";
       const awayTeamId = awayC.team?.id ?? awayC.id ?? "";
+      const homePens =
+        typeof homeC.shootoutScore === "number" ? homeC.shootoutScore : null;
+      const awayPens =
+        typeof awayC.shootoutScore === "number" ? awayC.shootoutScore : null;
+      let penWinner: "home" | "away" | null = null;
+      if (homePens !== null && awayPens !== null && homePens !== awayPens) {
+        penWinner = homePens > awayPens ? "home" : "away";
+      }
       let homeReds = 0;
       let awayReds = 0;
       for (const d of comp.details ?? []) {
@@ -194,6 +206,9 @@ export async function fetchEspnWcLive(): Promise<EspnLiveMatch[]> {
         homeReds,
         awayReds,
         phase,
+        homePens,
+        awayPens,
+        penWinner,
       };
       const key = `${e.date}|${norm(match.home)}|${norm(match.away)}`;
       const existing = byMatch.get(key);
