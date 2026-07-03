@@ -800,18 +800,18 @@ function PredictionsPage() {
                         Match decided on penalties — the recorded scoreline is scored normally
                         (5 / 3 / 1 / 0 as above), plus a
                         <span className="text-foreground font-medium"> +1 bonus </span>
-                        if you backed the team that won the shootout. If you predicted a
+                        only if you used the pens selector and picked the team that won the shootout. If you predicted a
                         <span className="text-foreground font-medium"> draw </span>
                         on a knockout fixture, you&apos;ll get a separate
                         <span className="text-foreground font-medium"> &ldquo;Pick the pens winner&rdquo; </span>
-                        selector — picking the correct shootout winner earns the same
+                        selector — picking the correct shootout winner earns the
                         <span className="text-foreground font-medium"> +1 bonus</span>.
                       </span>
                     </li>
                     <li className="flex items-start gap-3">
                       <span className="inline-flex min-w-16 justify-center px-2 py-1 rounded bg-amber-400 text-black text-xs font-bold">Pens wins</span>
                       <span>
-                        Every correct pens-winner call (via your scoreline or your pens pick on a drawn prediction) also adds to your
+                        Every correct explicit pens-winner pick also adds to your
                         <span className="text-foreground font-medium"> Pens Wins </span>
                         tally on the leaderboard.
                       </span>
@@ -2015,7 +2015,7 @@ function LeaderboardList({
         <div className="text-center" title="Correct score (exact)"><span className="sm:hidden">CS</span><span className="hidden sm:inline">Correct Score</span></div>
         <div className="text-center" title="Right winning margin (3 pts)"><span className="sm:hidden">WM</span><span className="hidden sm:inline">Winning Margin</span></div>
         <div className="text-center" title="Correct result"><span className="sm:hidden">R</span><span className="hidden sm:inline">Correct Result</span></div>
-        <div className="text-center" title="Picked the winner of a penalty shootout (1 pt)"><span className="sm:hidden">PW</span><span className="hidden sm:inline">Pen Wins</span></div>
+        <div className="text-center" title="Correct explicit penalty shootout winner picks (1 pt)"><span className="sm:hidden">PW</span><span className="hidden sm:inline">Pen Wins</span></div>
         <div className="text-center"><span className="sm:hidden">Pt</span><span className="hidden sm:inline">Points</span></div>
         <div className="text-center">Type</div>
       </div>
