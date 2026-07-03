@@ -8,7 +8,7 @@ async function syncScores() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data: fixtures, error: fxErr } = await supabaseAdmin
     .from("wc_fixtures")
-    .select("id, stage, home_team, away_team, kickoff_at, home_score, away_score, status, minute, minute_added, home_reds, away_reds");
+    .select("id, stage, home_team, away_team, kickoff_at, home_score, away_score, status, minute, minute_added, home_reds, away_reds, pen_winner, home_pens, away_pens");
   if (fxErr) return { ok: false, error: fxErr.message };
 
   // -------------------------------------------------------------------
@@ -77,11 +77,15 @@ async function syncScores() {
       fx.home_score === ev.homeScore &&
       fx.away_score === ev.awayScore &&
       ((fx as { home_reds?: number | null }).home_reds ?? 0) === ev.homeReds &&
-      ((fx as { away_reds?: number | null }).away_reds ?? 0) === ev.awayReds;
+      ((fx as { away_reds?: number | null }).away_reds ?? 0) === ev.awayReds &&
+      ((fx as { home_pens?: number | null }).home_pens ?? null) === ev.homePens &&
+      ((fx as { away_pens?: number | null }).away_pens ?? null) === ev.awayPens &&
+      (((fx as { pen_winner?: string | null }).pen_winner ?? null) || null) === (ev.penWinner ?? null);
     if (unchanged) continue;
     const prevStatus = fx.status;
     const prevHs = fx.home_score;
     const prevAs = fx.away_score;
+    const prevPenWinner = ((fx as { pen_winner?: string | null }).pen_winner ?? null) || null;
     const { error: upErr } = await supabaseAdmin
       .from("wc_fixtures")
       .update({
@@ -92,6 +96,9 @@ async function syncScores() {
         away_score: ev.awayScore,
         home_reds: ev.homeReds,
         away_reds: ev.awayReds,
+        home_pens: ev.homePens,
+        away_pens: ev.awayPens,
+        pen_winner: ev.penWinner,
       })
       .eq("id", fx.id);
     if (upErr) {
@@ -104,7 +111,10 @@ async function syncScores() {
       ev.status === "FINISHED" &&
       ev.homeScore !== null &&
       ev.awayScore !== null &&
-      (prevStatus !== "FINISHED" || prevHs !== ev.homeScore || prevAs !== ev.awayScore)
+      (prevStatus !== "FINISHED" ||
+        prevHs !== ev.homeScore ||
+        prevAs !== ev.awayScore ||
+        prevPenWinner !== (ev.penWinner ?? null))
     ) {
       toScore.add(fx.id);
     }
