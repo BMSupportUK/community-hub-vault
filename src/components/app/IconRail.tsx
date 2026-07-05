@@ -27,27 +27,6 @@ function SoccerPlayer({ className }: { className?: string }) {
   );
 }
 
-function SoccerBall({ className }: { className?: string }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.75"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-    >
-      <circle cx="12" cy="12" r="9" />
-      <polygon points="12,8 15.5,10.5 14,14.5 10,14.5 8.5,10.5" />
-      <path d="M12 3v5" />
-      <path d="M21 12l-5.5-1.5" />
-      <path d="M18.5 19l-4.5-4.5" />
-      <path d="M5.5 19l4.5-4.5" />
-      <path d="M3 12l5.5-1.5" />
-    </svg>
-  );
-}
 
 interface RailItem {
   to: string;
@@ -185,7 +164,6 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
 
   const items: RailItem[] = [
     { to: "/home", label: "Home", icon: Home, show: true },
-    { to: "/forum", label: "Boro Fan Zone", icon: SoccerBall, show: true },
     { to: "/tickets", label: "Tickets", icon: Ticket, show: !hasRole("moderator") },
     { to: "/shop", label: "Shop", icon: ShoppingBag, show: true },
     { to: "/install-guides", label: "Install guides", icon: Wrench, show: true },
