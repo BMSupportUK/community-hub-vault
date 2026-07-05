@@ -7,7 +7,7 @@ import { useFanZoneMembership } from "@/hooks/use-fan-zone";
 import { getIcon } from "@/components/app/IconPicker";
 import { formatLastSeen } from "@/lib/relative-time";
 import { Button } from "@/components/ui/button";
-import { MessageSquareText, Ban, BarChart3, UserCog, Users } from "lucide-react";
+import { MessageSquareText, Ban, BarChart3, UserCog, Users, Trophy } from "lucide-react";
 import { FanZoneStaffBox } from "@/components/app/FanZoneStaffBox";
 import { BoroMatchCentreBox } from "@/components/app/BoroMatchCentreBox";
 import boroHero from "@/assets/boro-hero.jpg";
@@ -117,6 +117,9 @@ function ForumLayout() {
                 <Link to="/admin-fan-zone"><Users className="size-4 mr-1.5" />Members</Link>
               </Button>
             )}
+            <Button asChild size="sm" className="bg-white text-[#961016] hover:bg-white/90 border-0 shadow-md justify-center col-span-2 sm:col-span-1">
+              <Link to="/boro-predictions"><Trophy className="size-4 mr-1.5" />MFC 2026 Predictions</Link>
+            </Button>
           </div>
           <div className="hidden sm:flex size-20 rounded-full bg-white items-center justify-center shadow-lg ring-2 ring-white/50 shrink-0">
             <img
