@@ -1,8 +1,8 @@
-import { createFileRoute, Outlet, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { LandingHeader } from "@/components/LandingHeader";
-import { LogIn } from "lucide-react";
+import { LogIn, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import boroHero from "@/assets/boro-hero.jpg";
 import boroBadge from "@/assets/boro-fan-zone-badge.png";
@@ -71,6 +71,15 @@ export function FanZoneShell({ children }: { children: React.ReactNode }) {
               <p className="mt-2 text-sm text-white/85 italic">
                 Up the Boro — boards, banter & match-day debate.
               </p>
+            </div>
+            <div className="sm:self-center">
+              <Link
+                to="/boro-predictions"
+                className="inline-flex items-center gap-2 rounded-lg bg-white/95 px-4 py-2.5 text-sm font-bold text-[#961016] shadow-lg ring-1 ring-white/40 hover:bg-white transition"
+              >
+                <Trophy className="size-4" />
+                Boro 2026 Predictions
+              </Link>
             </div>
           </div>
         </header>
