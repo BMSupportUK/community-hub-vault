@@ -941,8 +941,15 @@ function LeaderboardList({
                   className="truncate font-medium text-left hover:text-primary hover:underline underline-offset-2 focus:outline-none focus:text-primary"
                   title="View this player's predictions for matches already kicked off"
                 >
-                  {r.displayName || r.username || "Anonymous"}
-                  {mine && <span className="ml-2 text-[10px] uppercase text-primary">you</span>}
+                  <span className="block truncate">
+                    {r.displayName || r.username || "Anonymous"}
+                    {mine && <span className="ml-2 text-[10px] uppercase text-primary">you</span>}
+                  </span>
+                  {canManage && r.email && (
+                    <span className="block truncate text-[10px] text-muted-foreground font-normal normal-case">
+                      {r.email}
+                    </span>
+                  )}
                 </button>
                 {canManage && (
                   <button

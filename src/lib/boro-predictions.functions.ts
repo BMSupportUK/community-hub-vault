@@ -33,6 +33,7 @@ export type BoroLeaderboardRowDTO = {
   resultCount: number;
   predictionsMade: number;
   predictionsScored: number;
+  email: string | null;
 };
 
 async function isAdminOrManagement(supabase: any, userId: string) {
@@ -166,7 +167,7 @@ export const upsertBoroPrediction = createServerFn({ method: "POST" })
 
 export const getBoroLeaderboard = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async (): Promise<BoroLeaderboardRowDTO[]> => {
+  .handler(async ({ context }): Promise<BoroLeaderboardRowDTO[]> => {
     setResponseHeader("cache-control", "no-store, max-age=0");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data, error } = await supabaseAdmin
@@ -174,7 +175,29 @@ export const getBoroLeaderboard = createServerFn({ method: "GET" })
       .select("*")
       .order("total_points", { ascending: false });
     if (error) throw new Error(error.message);
-    return (data ?? []).map((r: any) => ({
+    const rows = (data ?? []) as any[];
+    const isAdmin = await isAdminOrManagement(context.supabase, context.userId);
+    const emailMap = new Map<string, string>();
+    if (isAdmin) {
+      const userIds = new Set(rows.filter((r) => !r.is_guest).map((r) => r.user_id as string));
+      const guestIds = rows.filter((r) => r.is_guest).map((r) => r.user_id as string);
+      if (userIds.size) {
+        for (let page = 1; page < 20; page++) {
+          const { data: list } = await supabaseAdmin.auth.admin.listUsers({ page, perPage: 1000 });
+          const users = list?.users ?? [];
+          for (const u of users) if (userIds.has(u.id) && u.email) emailMap.set(u.id, u.email);
+          if (users.length < 1000) break;
+        }
+      }
+      if (guestIds.length) {
+        const { data: gs } = await supabaseAdmin
+          .from("boro_guest_entrants")
+          .select("id, email")
+          .in("id", guestIds);
+        for (const g of gs ?? []) if ((g as any).email) emailMap.set((g as any).id, (g as any).email);
+      }
+    }
+    return rows.map((r: any) => ({
       userId: r.user_id,
       displayName: r.display_name,
       username: r.username,
@@ -186,6 +209,7 @@ export const getBoroLeaderboard = createServerFn({ method: "GET" })
       resultCount: r.result_count ?? 0,
       predictionsMade: r.predictions_made ?? 0,
       predictionsScored: r.predictions_scored ?? 0,
+      email: emailMap.get(r.user_id) ?? null,
     }));
   });
 
