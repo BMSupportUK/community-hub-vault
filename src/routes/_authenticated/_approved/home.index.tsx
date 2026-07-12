@@ -411,11 +411,11 @@ function WelcomePage() {
               services. Everything you need is just one click away.
             </p>
 
-            <div className="mt-4 flex flex-wrap items-center gap-2 overflow-visible">
+            <div className="mt-4 flex flex-col items-stretch justify-center gap-2 sm:flex-row">
               {!hasRole("moderator") && (
                 <Link
                   to="/tickets"
-                  className="inline-flex w-auto shrink-0 items-center gap-2 self-start rounded-xl border-2 border-white/40 bg-white/10 backdrop-blur px-3 py-2.5 text-xs font-medium text-white shadow-[0_0_24px_rgba(255,255,255,0.15)] hover:bg-white/20 hover:border-white/60 transition xl:gap-3 xl:px-4 xl:py-3 xl:text-sm"
+                  className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border-2 border-white/40 bg-white/10 backdrop-blur px-3 py-2.5 text-xs font-medium text-white shadow-[0_0_24px_rgba(255,255,255,0.15)] hover:bg-white/20 hover:border-white/60 transition xl:gap-3 xl:px-4 xl:py-3 xl:text-sm"
                 >
                   <span className="grid place-items-center size-8 rounded-lg bg-gradient-to-br from-violet-600 to-blue-600 xl:size-9">
                     <Headphones className="size-4 text-white" />
@@ -427,7 +427,7 @@ function WelcomePage() {
                   <span className="size-2 rounded-full bg-emerald-400 shadow-[0_0_12px] shadow-emerald-400/60 xl:ml-2" />
                 </Link>
               )}
-              <ServiceStatusPill className="w-auto shrink-0 gap-2 px-3 py-2.5 text-xs xl:gap-3 xl:px-4 xl:py-3 xl:text-sm [&_.status-copy]:text-[10px] xl:[&_.status-copy]:text-[11px] [&_.status-icon]:size-8 xl:[&_.status-icon]:size-9 [&_.status-dot]:ml-0 xl:[&_.status-dot]:ml-2" />
+              <ServiceStatusPill className="flex-1 justify-center self-stretch gap-2 px-3 py-2.5 text-xs xl:gap-3 xl:px-4 xl:py-3 xl:text-sm [&_.status-copy]:text-[10px] xl:[&_.status-copy]:text-[11px] [&_.status-icon]:size-8 xl:[&_.status-icon]:size-9 [&_.status-dot]:ml-0 xl:[&_.status-dot]:ml-2" />
             </div>
             <div className="mt-3 w-full max-w-[280px] self-center">
               <MembershipBox />
