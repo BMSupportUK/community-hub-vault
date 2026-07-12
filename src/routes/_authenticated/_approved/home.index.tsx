@@ -411,7 +411,7 @@ function WelcomePage() {
               services. Everything you need is just one click away.
             </p>
 
-            <div className="mt-4 flex flex-nowrap items-center gap-2 overflow-visible">
+            <div className="mt-4 flex flex-wrap items-center gap-2 overflow-visible">
               {!hasRole("moderator") && (
                 <Link
                   to="/tickets"
