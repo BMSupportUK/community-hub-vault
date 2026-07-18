@@ -66,7 +66,7 @@ export const resetUserVaultPin = createServerFn({ method: "POST" })
         const html = await render(el);
         const text = await render(el, { plainText: true });
         const subject = typeof vaultPinResetTpl.subject === "function"
-          ? vaultPinResetTpl.subject({})
+          ? (vaultPinResetTpl.subject as (d: Record<string, any>) => string)({})
           : vaultPinResetTpl.subject;
 
         const messageId = crypto.randomUUID();
