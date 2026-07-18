@@ -29,7 +29,7 @@ export const resetUserVaultPin = createServerFn({ method: "POST" })
 
     const { error } = await supabaseAdmin
       .from("vault_pins")
-      .upsert({ user_id: data.userId, pin_hash: pinHash });
+      .upsert({ user_id: data.userId, pin_hash: pinHash, must_change: true });
     if (error) throw new Error(error.message);
 
     return { success: true, tempPin: "0000" };
