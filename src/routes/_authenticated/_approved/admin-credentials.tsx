@@ -1,6 +1,6 @@
 import { createFileRoute, Navigate, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { KeyRound, Search, Loader2, Plus, Pencil, Trash2, X, Check, ChevronDown, ChevronRight, Eye, EyeOff, ArrowLeft, History, RotateCcw } from "lucide-react";
+import { KeyRound, Search, Loader2, Plus, Pencil, Trash2, X, Check, ChevronDown, ChevronRight, Eye, EyeOff, ArrowLeft, History, RotateCcw, Lock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
@@ -11,6 +11,7 @@ import {
   restoreCredentialBackup,
   type CredentialBackupFile,
 } from "@/lib/credentials-restore.functions";
+import { resetUserVaultPin } from "@/lib/vault-pin-admin.functions";
 
 export const Route = createFileRoute("/_authenticated/_approved/admin-credentials")({
   component: AdminCredentialsPage,
@@ -43,6 +44,8 @@ function AdminCredentialsPage() {
   const [revealed, setRevealed] = useState<Record<string, boolean>>({});
   const [editor, setEditor] = useState<{ ownerId: string; row: CredentialRow | null } | null>(null);
   const [restoreOpen, setRestoreOpen] = useState(false);
+  const [pinBusyFor, setPinBusyFor] = useState<string | null>(null);
+  const resetPinFn = useServerFn(resetUserVaultPin);
 
   const load = async () => {
     setLoading(true);
@@ -87,6 +90,20 @@ function AdminCredentialsPage() {
     if (error) return toast.error(error.message);
     toast.success("Deleted");
     load();
+  };
+
+  const resetPin = async (p: ProfileLite) => {
+    const label = p.display_name || p.username || "this user";
+    if (!confirm(`Reset the credentials vault PIN for ${label}? They'll be prompted to set a new PIN next time they reveal credentials.`)) return;
+    setPinBusyFor(p.id);
+    try {
+      await resetPinFn({ data: { userId: p.id } });
+      toast.success("Vault PIN reset");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Failed to reset PIN");
+    } finally {
+      setPinBusyFor(null);
+    }
   };
 
   if (!isAdmin) return <Navigate to="/home" />;
@@ -155,6 +172,14 @@ function AdminCredentialsPage() {
                     <span className={cn("text-xs px-2 py-0.5 rounded-full border", list.length > 0 ? "border-primary text-primary" : "border-border text-muted-foreground")}>
                       {list.length} {list.length === 1 ? "credential" : "credentials"}
                     </span>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); resetPin(p); }}
+                      disabled={pinBusyFor === p.id}
+                      title="Reset this user's credentials vault PIN"
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-amber-500/50 bg-amber-500/10 text-amber-300 text-xs font-medium hover:bg-amber-500/20 disabled:opacity-60"
+                    >
+                      {pinBusyFor === p.id ? <Loader2 className="size-3.5 animate-spin" /> : <Lock className="size-3.5" />} Reset PIN
+                    </button>
                     <button
                       onClick={(e) => { e.stopPropagation(); setEditor({ ownerId: p.id, row: null }); }}
                       className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-medium hover:opacity-90"
