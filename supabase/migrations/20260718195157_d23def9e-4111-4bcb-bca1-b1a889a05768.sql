@@ -1,0 +1,1 @@
+ALTER TABLE public.vault_pins ADD COLUMN IF NOT EXISTS must_change boolean NOT NULL DEFAULT false;

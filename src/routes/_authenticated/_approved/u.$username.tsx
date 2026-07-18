@@ -1658,8 +1658,14 @@ function RevealGate({ hasPin, onUnlocked, onPinSet }: { hasPin: boolean | null; 
       const { error: signErr } = await supabase.auth.signInWithPassword({ email: user.email, password });
       if (signErr) throw new Error("Incorrect password");
       const hash = await sha256Hex(`${user.id}:${pin}`);
-      const { data: row } = await supabase.from("vault_pins").select("pin_hash").eq("user_id", user.id).maybeSingle();
+      const { data: row } = await supabase.from("vault_pins").select("pin_hash, must_change").eq("user_id", user.id).maybeSingle() as { data: { pin_hash: string; must_change?: boolean } | null };
       if (!row || row.pin_hash !== hash) throw new Error("Incorrect PIN");
+      if (row.must_change) {
+        toast.info("Your PIN was reset by an admin. Please choose a new PIN.");
+        setMode("reset");
+        setPin(""); setConfirmPin("");
+        return;
+      }
       onUnlocked();
     } catch (e: any) {
       toast.error(e.message ?? "Unlock failed");
@@ -1692,7 +1698,7 @@ function RevealGate({ hasPin, onUnlocked, onPinSet }: { hasPin: boolean | null; 
       const { error: signErr } = await supabase.auth.signInWithPassword({ email: user.email, password });
       if (signErr) throw new Error("Incorrect password");
       const hash = await sha256Hex(`${user.id}:${pin}`);
-      const { error } = await supabase.from("vault_pins").upsert({ user_id: user.id, pin_hash: hash });
+      const { error } = await supabase.from("vault_pins").upsert({ user_id: user.id, pin_hash: hash, must_change: false } as any);
       if (error) throw error;
       toast.success("Vault PIN reset. Please unlock with your new PIN.");
       setPassword(""); setPin(""); setConfirmPin("");

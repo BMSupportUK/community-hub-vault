@@ -19,11 +19,18 @@ export const resetUserVaultPin = createServerFn({ method: "POST" })
     }
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    // Reset PIN to "0000" (sha256 of `${user_id}:0000`) so the user can unlock
+    // and is prompted to change it. Matches client-side hashing scheme.
+    const enc = new TextEncoder().encode(`${data.userId}:0000`);
+    const digest = await crypto.subtle.digest("SHA-256", enc);
+    const pinHash = Array.from(new Uint8Array(digest))
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
+
     const { error } = await supabaseAdmin
       .from("vault_pins")
-      .delete()
-      .eq("user_id", data.userId);
+      .upsert({ user_id: data.userId, pin_hash: pinHash, must_change: true });
     if (error) throw new Error(error.message);
 
-    return { success: true };
+    return { success: true, tempPin: "0000" };
   });
