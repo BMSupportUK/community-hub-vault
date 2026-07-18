@@ -1698,7 +1698,7 @@ function RevealGate({ hasPin, onUnlocked, onPinSet }: { hasPin: boolean | null; 
       const { error: signErr } = await supabase.auth.signInWithPassword({ email: user.email, password });
       if (signErr) throw new Error("Incorrect password");
       const hash = await sha256Hex(`${user.id}:${pin}`);
-      const { error } = await supabase.from("vault_pins").upsert({ user_id: user.id, pin_hash: hash, must_change: false });
+      const { error } = await supabase.from("vault_pins").upsert({ user_id: user.id, pin_hash: hash, must_change: false } as any);
       if (error) throw error;
       toast.success("Vault PIN reset. Please unlock with your new PIN.");
       setPassword(""); setPin(""); setConfirmPin("");
