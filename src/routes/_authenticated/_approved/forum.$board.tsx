@@ -269,7 +269,7 @@ function BoardPage() {
         )}
       </div>
 
-      <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_180px] lg:grid-cols-[minmax(0,1fr)_256px] md:items-start">
+      <div className={`grid gap-4 ${open ? "" : "md:grid-cols-[minmax(0,1fr)_180px] lg:grid-cols-[minmax(0,1fr)_256px]"} md:items-start`}>
         <div className="min-w-0 space-y-4">
           {canPost && open && (
             <section
@@ -312,7 +312,7 @@ function BoardPage() {
               </div>
             </section>
           )}
-          {topics.length === 0 ? (
+          {!open && (topics.length === 0 ? (
             <div className="rounded-2xl border border-[#E11B22]/20 bg-surface-1/40 px-4 py-10 text-center text-sm text-muted-foreground shadow-soft">
               No topics yet. {canPost ? "Be first — start one!" : ""}
             </div>
@@ -413,9 +413,9 @@ function BoardPage() {
             );
               })}
             </div>
-          )}
+          ))}
 
-          {totalPages > 1 && (
+          {!open && totalPages > 1 && (
             <div className="flex items-center justify-center gap-2 pt-2">
               <Button size="sm" variant="outline" disabled={page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>
                 Previous
@@ -427,9 +427,11 @@ function BoardPage() {
             </div>
           )}
         </div>
-        <aside className="hidden md:block md:sticky md:top-4" aria-label="Sponsored advert">
-          {renderSponsorAdvert()}
-        </aside>
+        {!open && (
+          <aside className="hidden md:block md:sticky md:top-4" aria-label="Sponsored advert">
+            {renderSponsorAdvert()}
+          </aside>
+        )}
       </div>
 
       <Dialog open={!!editingTopic} onOpenChange={(o) => { if (!o) { setEditingTopic(null); setEditTitle(""); } }}>
