@@ -129,6 +129,10 @@ function BoroPredictionsPage() {
   const [showGuestLogin, setShowGuestLogin] = useState(false);
   const [guestMode, setGuestMode] = useState<"signin" | "register">("register");
 
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("tab") === "winners") setTab("winners");
+  }, []);
+
   const listFn = useServerFn(listBoroFixtures);
   const upsertFn = useServerFn(upsertBoroPrediction);
   const lbFn = useServerFn(getBoroLeaderboard);

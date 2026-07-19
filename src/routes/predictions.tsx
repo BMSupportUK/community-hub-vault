@@ -261,6 +261,10 @@ function PredictionsPage() {
   const [guestMode, setGuestMode] = useState<"signin" | "register">("register");
 
   useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("tab") === "winners") setTab("winners");
+  }, []);
+
+  useEffect(() => {
     try {
       const raw = localStorage.getItem("wc_guest_session");
       if (raw) setGuest(JSON.parse(raw));

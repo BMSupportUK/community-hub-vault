@@ -82,7 +82,14 @@ export const announcePredictionWinners = createServerFn({ method: "POST" })
       const { error: upErr } = await supabaseAdmin
         .from("prediction_winners")
         .upsert(
-          { competition: data.competition, place: w.place, user_id: w.userId, is_guest: !!w.isGuest },
+          {
+            competition: data.competition,
+            place: w.place,
+            user_id: w.userId,
+            is_guest: !!w.isGuest,
+            notified_at: null,
+            confirmed_at: null,
+          },
           { onConflict: "competition,place" },
         );
       if (upErr) {
