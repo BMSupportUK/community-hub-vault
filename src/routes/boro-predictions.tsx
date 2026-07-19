@@ -288,6 +288,7 @@ function BoroPredictionsPage() {
       .slice(0, 3)
       .map((r, index) => ({
         place: (index + 1) as 1 | 2 | 3,
+        userId: r.userId,
         name: r.displayName || r.username || "Anonymous",
         note: `${r.totalPoints} pt${r.totalPoints === 1 ? "" : "s"}`,
       }));
@@ -523,6 +524,7 @@ function BoroPredictionsPage() {
                 title="MFC 2026/27 Predictor Winners"
                 subtitle="The top 3 will appear automatically once every MFC 2026/27 fixture is finished."
                 winners={winners}
+                competition="boro2026"
               />
             </TabsContent>
           </Tabs>
