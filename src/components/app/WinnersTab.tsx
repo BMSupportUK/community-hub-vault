@@ -11,6 +11,7 @@ type Props = {
 
 export function WinnersTab({ title, subtitle, winners = [] }: Props) {
   const firedRef = useRef(false);
+  const hasWinners = winners.some((winner) => !!winner.name);
 
   useEffect(() => {
     if (firedRef.current) return;
@@ -90,7 +91,9 @@ export function WinnersTab({ title, subtitle, winners = [] }: Props) {
       </div>
 
       <p className="text-center text-xs text-muted-foreground">
-        Winners will be revealed here once all matches are complete. Good luck! 🍀
+        {hasWinners
+          ? "Final winners are pulled from the leaderboard. Congratulations! 🎉"
+          : "Winners will appear here automatically once all matches are complete. Good luck! 🍀"}
       </p>
     </div>
   );
