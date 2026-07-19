@@ -507,17 +507,6 @@ function BoroPredictionsPage() {
               <WinnersTab
                 title="MFC 2026/27 Predictor Winners"
                 subtitle="The final leaderboard — announced at the end of the season."
-                winners={
-                  fixtures && fixtures.length > 0 &&
-                  fixtures.every((f) => isFinished(f)) &&
-                  leaderboard
-                    ? leaderboard.slice(0, 3).map((r, i) => ({
-                        place: (i + 1) as 1 | 2 | 3,
-                        name: r.displayName || r.username || "Anonymous",
-                        note: `${r.totalPoints} pts`,
-                      }))
-                    : undefined
-                }
               />
             </TabsContent>
           </Tabs>
