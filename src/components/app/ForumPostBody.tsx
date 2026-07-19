@@ -293,12 +293,30 @@ function normalizeXUrl(url: string, id: string) {
 
 function getTweetMedia(tweet: TweetApiData): TweetMedia[] {
   const out = new Map<string, TweetMedia>();
+  const keyFor = (url: string) => {
+    try {
+      const u = new URL(url);
+      const path = u.pathname.replace(/\.(?:jpe?g|png|webp|gif)$/i, "");
+      return `${u.hostname}${path}`;
+    } catch {
+      return url;
+    }
+  };
+  const add = (media: TweetMedia) => {
+    if (!media.url) return;
+    const key = keyFor(media.url);
+    const existing = out.get(key);
+    // Prefer entry with known dimensions/alt text over a bare URL duplicate.
+    if (!existing || (!existing.width && media.width) || (!existing.alt && media.alt)) {
+      out.set(key, { ...existing, ...media });
+    }
+  };
   for (const photo of tweet.photos ?? []) {
-    if (photo.url) out.set(photo.url, { url: photo.url, width: photo.width, height: photo.height, alt: photo.accessibilityLabel });
+    if (photo.url) add({ url: photo.url, width: photo.width, height: photo.height, alt: photo.accessibilityLabel });
   }
   for (const media of tweet.mediaDetails ?? []) {
     if (!media.media_url_https) continue;
-    out.set(media.media_url_https, {
+    add({
       url: media.media_url_https,
       width: media.original_info?.width,
       height: media.original_info?.height,
@@ -306,7 +324,7 @@ function getTweetMedia(tweet: TweetApiData): TweetMedia[] {
     });
   }
   const videoPoster = (tweet as unknown as { video?: { poster?: string } }).video?.poster;
-  if (videoPoster) out.set(videoPoster, { url: videoPoster });
+  if (videoPoster) add({ url: videoPoster });
   return Array.from(out.values());
 }
 
