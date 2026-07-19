@@ -650,7 +650,7 @@ function PredictionsPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-6">
           <Tabs value={tab} onValueChange={setTab} className="min-w-0">
-            <TabsList className="grid grid-cols-6 w-full sm:w-auto h-auto gap-1 p-1">
+            <TabsList className="grid grid-cols-7 w-full sm:w-auto h-auto gap-1 p-1">
               <TabsTrigger
                 value="fixtures"
                 className="px-1 sm:px-3 py-1.5 text-[11px] sm:text-sm leading-tight whitespace-normal text-center"
@@ -709,6 +709,12 @@ function PredictionsPage() {
                 className="px-1 sm:px-3 py-1.5 text-[11px] sm:text-sm leading-tight whitespace-normal text-center"
               >
                 Prize
+              </TabsTrigger>
+              <TabsTrigger
+                value="winners"
+                className="px-1 sm:px-3 py-1.5 text-[11px] sm:text-sm leading-tight whitespace-normal text-center"
+              >
+                Winners
               </TabsTrigger>
             </TabsList>
 
