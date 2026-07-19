@@ -878,6 +878,13 @@ function PredictionsPage() {
                 </div>
               </div>
             </TabsContent>
+
+            <TabsContent value="winners" className="mt-4">
+              <WinnersTab
+                title="World Cup 2026 Predictor Winners"
+                subtitle="The final leaderboard — announced after the World Cup 2026 final."
+              />
+            </TabsContent>
           </Tabs>
 
           <aside className="space-y-4 lg:sticky lg:top-6 lg:self-start">
