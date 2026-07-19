@@ -80,6 +80,21 @@ async function getWinnerContact(
   };
 }
 
+async function resolveWinnerIsGuest(
+  supabaseAdmin: any,
+  competition: "wc2026" | "boro2026",
+  userId: string,
+  isGuestHint?: boolean,
+) {
+  if (isGuestHint) return true;
+  const { data: guest } = await supabaseAdmin
+    .from(guestTableForCompetition(competition))
+    .select("id")
+    .eq("id", userId)
+    .maybeSingle();
+  return !!guest;
+}
+
 async function callerCanManage(supabase: any, userId: string) {
   const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", userId);
   const rs = (roles ?? []).map((r: any) => String(r.role));
@@ -110,6 +125,7 @@ export const announcePredictionWinners = createServerFn({ method: "POST" })
     // Replace any existing winners for this competition, then insert the new set
     // so re-announcing after a leaderboard change works cleanly.
     for (const w of data.winners) {
+      const isGuest = await resolveWinnerIsGuest(supabaseAdmin, data.competition, w.userId, w.isGuest);
       const { error: upErr } = await supabaseAdmin
         .from("prediction_winners")
         .upsert(
@@ -117,7 +133,7 @@ export const announcePredictionWinners = createServerFn({ method: "POST" })
             competition: data.competition,
             place: w.place,
             user_id: w.userId,
-            is_guest: !!w.isGuest,
+            is_guest: isGuest,
             notified_at: null,
             confirmed_at: null,
           },
