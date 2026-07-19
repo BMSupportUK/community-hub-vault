@@ -5,16 +5,20 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   announcePredictionWinners,
+  confirmPredictionGuestWinnerEmail,
   confirmPredictionWinnerEmail,
   getPredictionWinners,
+  getPredictionWinnersPublic,
   type PredictionWinnerRow,
 } from "@/lib/prediction-winners.functions";
 
 export type DerivedWinner = {
   place: 1 | 2 | 3;
   userId?: string;
+  isGuest?: boolean;
   name?: string;
   note?: string;
 };
@@ -26,25 +30,41 @@ type Props = {
   winners?: DerivedWinner[];
   /** Competition slug — enables emailing + confirmation flow. */
   competition?: "wc2026" | "boro2026";
+  viewerUserId?: string | null;
+  guestSession?: { guestId: string; email: string; pin: string; displayName?: string } | null;
 };
 
-export function WinnersTab({ title, subtitle, winners = [], competition }: Props) {
+export function WinnersTab({ title, subtitle, winners = [], competition, viewerUserId = null, guestSession = null }: Props) {
   const firedRef = useRef(false);
+  const [manualGuestId, setManualGuestId] = useState<string | null>(null);
+  const [guestEmail, setGuestEmail] = useState(guestSession?.email ?? "");
+  const [guestPin, setGuestPin] = useState(guestSession?.pin ?? "");
 
   const qc = useQueryClient();
   const getWinners = useServerFn(getPredictionWinners);
+  const getPublicWinners = useServerFn(getPredictionWinnersPublic);
   const announceFn = useServerFn(announcePredictionWinners);
   const confirmFn = useServerFn(confirmPredictionWinnerEmail);
+  const confirmGuestFn = useServerFn(confirmPredictionGuestWinnerEmail);
 
   const winnersQuery = useQuery({
-    queryKey: ["prediction-winners", competition],
-    queryFn: () => getWinners({ data: { competition: competition! } }),
-    enabled: !!competition,
+    queryKey: ["prediction-winners", competition, "auth", viewerUserId, guestSession?.guestId ?? null],
+    queryFn: () => getWinners({ data: { competition: competition!, guestId: guestSession?.guestId ?? null } }),
+    enabled: !!competition && !!viewerUserId,
     staleTime: 15_000,
   });
 
-  const persisted: PredictionWinnerRow[] = winnersQuery.data?.winners ?? [];
-  const canSeeEmails = !!winnersQuery.data?.canSeeEmails;
+  const publicGuestId = guestSession?.guestId ?? manualGuestId;
+  const publicWinnersQuery = useQuery({
+    queryKey: ["prediction-winners", competition, "public", publicGuestId ?? null],
+    queryFn: () => getPublicWinners({ data: { competition: competition!, guestId: publicGuestId ?? null } }),
+    enabled: !!competition && !viewerUserId,
+    staleTime: 15_000,
+  });
+
+  const winnerData = winnersQuery.data ?? publicWinnersQuery.data;
+  const persisted: PredictionWinnerRow[] = winnerData?.winners ?? [];
+  const canSeeEmails = !!winnerData?.canSeeEmails;
   const hasPersisted = persisted.length > 0;
   const derivedReady = winners.some((w) => !!w.name && !!w.userId);
   const hasWinners = hasPersisted || winners.some((w) => !!w.name);
@@ -104,7 +124,7 @@ export function WinnersTab({ title, subtitle, winners = [], competition }: Props
     if (!competition) return;
     const payload = winners
       .filter((w) => !!w.userId)
-      .map((w) => ({ place: w.place, userId: w.userId! }));
+      .map((w) => ({ place: w.place, userId: w.userId!, isGuest: !!w.isGuest }));
     if (payload.length === 0) {
       toast.error("No winners to announce yet.");
       return;
@@ -125,7 +145,13 @@ export function WinnersTab({ title, subtitle, winners = [], competition }: Props
     if (!competition) return;
     setConfirming(true);
     try {
-      await confirmFn({ data: { competition } });
+      if (myRow?.isGuest) {
+        if (!guestSession) throw new Error("Sign in as the winning guest entrant first.");
+        const res = await confirmGuestFn({ data: { competition, email: guestSession.email, pin: guestSession.pin } });
+        setManualGuestId(res.guestId);
+      } else {
+        await confirmFn({ data: { competition } });
+      }
       toast.success("Email confirmed — thank you! 🎉");
       qc.invalidateQueries({ queryKey: ["prediction-winners", competition] });
     } catch (e: any) {
@@ -136,6 +162,21 @@ export function WinnersTab({ title, subtitle, winners = [], competition }: Props
   }
 
   const myRow = persisted.find((r) => r.isMe);
+
+  async function handleGuestManualConfirm() {
+    if (!competition) return;
+    setConfirming(true);
+    try {
+      const res = await confirmGuestFn({ data: { competition, email: guestEmail, pin: guestPin } });
+      setManualGuestId(res.guestId);
+      toast.success("Email confirmed — thank you! 🎉");
+      qc.invalidateQueries({ queryKey: ["prediction-winners", competition] });
+    } catch (e: any) {
+      toast.error(e?.message ?? "Failed to confirm");
+    } finally {
+      setConfirming(false);
+    }
+  }
 
   return (
     <div className="rounded-2xl border-2 border-amber-400/60 bg-gradient-to-br from-amber-500/10 via-surface-1 to-surface-1 shadow-md shadow-amber-500/10 p-5 sm:p-8 space-y-6">
@@ -167,6 +208,23 @@ export function WinnersTab({ title, subtitle, winners = [], competition }: Props
               Confirm my email
             </Button>
           )}
+        </div>
+      )}
+
+      {!myRow && !viewerUserId && persisted.some((r) => r.isGuest && !r.confirmed) && (
+        <div className="rounded-xl border border-amber-400/50 bg-surface-2/70 p-4 space-y-3">
+          <div className="text-sm">
+            <div className="font-semibold">Winner email confirmation</div>
+            <div className="text-muted-foreground">If you're one of the winners, enter your prediction game email and 4-digit PIN to confirm where your voucher should be sent.</div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-[1fr_120px_auto] gap-2">
+            <Input type="email" value={guestEmail} onChange={(e) => setGuestEmail(e.target.value)} placeholder="Email address" />
+            <Input inputMode="numeric" maxLength={4} value={guestPin} onChange={(e) => setGuestPin(e.target.value.replace(/\D/g, "").slice(0, 4))} placeholder="PIN" />
+            <Button onClick={handleGuestManualConfirm} disabled={confirming || !guestEmail || guestPin.length !== 4} className="gap-2">
+              {confirming ? <Loader2 className="size-4 animate-spin" /> : <Mail className="size-4" />}
+              Confirm email
+            </Button>
+          </div>
         </div>
       )}
 

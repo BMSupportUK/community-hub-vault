@@ -2613,6 +2613,7 @@ export type Database = {
           confirmed_at: string | null
           created_at: string
           id: string
+          is_guest: boolean
           notified_at: string | null
           place: number
           user_id: string
@@ -2622,6 +2623,7 @@ export type Database = {
           confirmed_at?: string | null
           created_at?: string
           id?: string
+          is_guest?: boolean
           notified_at?: string | null
           place: number
           user_id: string
@@ -2631,6 +2633,7 @@ export type Database = {
           confirmed_at?: string | null
           created_at?: string
           id?: string
+          is_guest?: boolean
           notified_at?: string | null
           place?: number
           user_id?: string

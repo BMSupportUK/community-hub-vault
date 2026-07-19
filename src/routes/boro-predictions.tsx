@@ -129,6 +129,10 @@ function BoroPredictionsPage() {
   const [showGuestLogin, setShowGuestLogin] = useState(false);
   const [guestMode, setGuestMode] = useState<"signin" | "register">("register");
 
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("tab") === "winners") setTab("winners");
+  }, []);
+
   const listFn = useServerFn(listBoroFixtures);
   const upsertFn = useServerFn(upsertBoroPrediction);
   const lbFn = useServerFn(getBoroLeaderboard);
@@ -289,6 +293,7 @@ function BoroPredictionsPage() {
       .map((r, index) => ({
         place: (index + 1) as 1 | 2 | 3,
         userId: r.userId,
+        isGuest: r.isGuest,
         name: r.displayName || r.username || "Anonymous",
         note: `${r.totalPoints} pt${r.totalPoints === 1 ? "" : "s"}`,
       }));
@@ -525,6 +530,8 @@ function BoroPredictionsPage() {
                 subtitle="The top 3 will appear automatically once every MFC 2026/27 fixture is finished."
                 winners={winners}
                 competition="boro2026"
+                viewerUserId={user?.id ?? null}
+                guestSession={guest}
               />
             </TabsContent>
           </Tabs>
