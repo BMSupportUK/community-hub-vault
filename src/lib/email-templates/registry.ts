@@ -24,6 +24,7 @@ import { template as wcGuestPinReset } from './wc-guest-pin-reset'
 import { template as wcPredictionReminder } from './wc-prediction-reminder'
 import { template as ticketReply } from './ticket-reply'
 import { template as vaultPinReset } from './vault-pin-reset'
+import { template as winnerNotification } from './winner-notification'
 
 export const TEMPLATES: Record<string, TemplateEntry> = {
   'twofa-reset-admin': twofaResetAdmin,
@@ -33,4 +34,5 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'wc-prediction-reminder': wcPredictionReminder,
   'ticket-reply': ticketReply,
   'vault-pin-reset': vaultPinReset,
+  'winner-notification': winnerNotification,
 }
