@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
+import { WinnersTab } from "@/components/app/WinnersTab";
 import {
   listWcFixtures,
   upsertWcPrediction,
