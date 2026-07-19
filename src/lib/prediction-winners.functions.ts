@@ -53,10 +53,16 @@ export const announcePredictionWinners = createServerFn({ method: "POST" })
     (existing ?? []).forEach((r: any) => existingUserIds.add(r.user_id));
 
     for (const w of data.winners) {
-      await supabaseAdmin.from("prediction_winners").upsert(
-        { competition: data.competition, place: w.place, user_id: w.userId },
-        { onConflict: "competition,place" },
-      );
+      const { error: upErr } = await supabaseAdmin
+        .from("prediction_winners")
+        .upsert(
+          { competition: data.competition, place: w.place, user_id: w.userId },
+          { onConflict: "competition,place" },
+        );
+      if (upErr) {
+        console.error("prediction_winners upsert failed", { place: w.place, userId: w.userId, err: upErr });
+        throw new Error(`Failed to save winner (place ${w.place}): ${upErr.message}`);
+      }
     }
 
     // Fetch the current winners after upsert
