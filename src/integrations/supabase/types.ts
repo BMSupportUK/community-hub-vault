@@ -2607,6 +2607,36 @@ export type Database = {
         }
         Relationships: []
       }
+      prediction_winners: {
+        Row: {
+          competition: string
+          confirmed_at: string | null
+          created_at: string
+          id: string
+          notified_at: string | null
+          place: number
+          user_id: string
+        }
+        Insert: {
+          competition: string
+          confirmed_at?: string | null
+          created_at?: string
+          id?: string
+          notified_at?: string | null
+          place: number
+          user_id: string
+        }
+        Update: {
+          competition?: string
+          confirmed_at?: string | null
+          created_at?: string
+          id?: string
+          notified_at?: string | null
+          place?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       product_categories: {
         Row: {
           created_at: string

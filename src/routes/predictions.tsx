@@ -515,6 +515,7 @@ function PredictionsPage() {
       .slice(0, 3)
       .map((r, index) => ({
         place: (index + 1) as 1 | 2 | 3,
+        userId: r.userId,
         name: r.displayName || r.username || "Anonymous",
         note: `${r.totalPoints} pt${r.totalPoints === 1 ? "" : "s"}`,
       }));
@@ -899,6 +900,7 @@ function PredictionsPage() {
                 title="World Cup 2026 Predictor Winners"
                 subtitle="The top 3 will appear automatically once every World Cup 2026 fixture is finished."
                 winners={winners}
+                competition="wc2026"
               />
             </TabsContent>
           </Tabs>
