@@ -506,7 +506,7 @@ function PredictionsPage() {
 
   return (
     <FixturesFetchedAtContext.Provider value={fixturesAt}>
-    <div className={user ? "min-h-screen flex bg-background" : "contents"}>
+    <div className={user ? "min-h-dvh md:h-dvh md:overflow-hidden flex bg-background" : "contents"}>
       {user && <IconRail />}
       <main className="relative isolate flex-1 overflow-y-auto min-w-0">
         {!user && (
