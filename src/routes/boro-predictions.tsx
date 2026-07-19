@@ -5,6 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import riversideBg from "@/assets/riverside-stadium-bg.jpg";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { WinnersTab } from "@/components/app/WinnersTab";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -366,7 +367,7 @@ function BoroPredictionsPage() {
 
           <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-6">
           <Tabs value={tab} onValueChange={setTab}>
-            <TabsList className="grid grid-cols-5 w-full sm:w-auto h-auto gap-1 p-1">
+            <TabsList className="grid grid-cols-6 w-full sm:w-auto h-auto gap-1 p-1">
               <TabsTrigger value="fixtures">
                 <span className="flex flex-col items-center gap-0.5">
                   <span>Fixtures</span>
@@ -397,6 +398,7 @@ function BoroPredictionsPage() {
               <TabsTrigger value="leaderboard">Leaderboard</TabsTrigger>
               <TabsTrigger value="scoring">Scoring</TabsTrigger>
               <TabsTrigger value="prize">Prize</TabsTrigger>
+              <TabsTrigger value="winners">Winners</TabsTrigger>
             </TabsList>
 
             <TabsContent value="fixtures" className="mt-4">
@@ -499,6 +501,13 @@ function BoroPredictionsPage() {
                   </ol>
                 </div>
               </div>
+            </TabsContent>
+
+            <TabsContent value="winners" className="mt-4">
+              <WinnersTab
+                title="MFC 2026/27 Predictor Winners"
+                subtitle="The final leaderboard — announced at the end of the season."
+              />
             </TabsContent>
           </Tabs>
 
