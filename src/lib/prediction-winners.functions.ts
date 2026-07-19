@@ -3,7 +3,6 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import * as React from "react";
 import { render } from "@react-email/components";
-import { scryptSync, timingSafeEqual } from "crypto";
 import { template as winnerTpl } from "@/lib/email-templates/winner-notification";
 
 const SITE_NAME = "BM Support";
@@ -21,12 +20,14 @@ function guestTableForCompetition(competition: "wc2026" | "boro2026") {
   return competition === "wc2026" ? "wc_guest_entrants" : "boro_guest_entrants";
 }
 
-function hashGuestPin(pin: string, salt: string) {
+async function hashGuestPin(pin: string, salt: string) {
+  const { scryptSync } = await import("crypto");
   return scryptSync(pin, salt, 32).toString("hex");
 }
 
-function verifyGuestPin(pin: string, salt: string, hash: string) {
-  const computed = Buffer.from(hashGuestPin(pin, salt), "hex");
+async function verifyGuestPin(pin: string, salt: string, hash: string) {
+  const { timingSafeEqual } = await import("crypto");
+  const computed = Buffer.from(await hashGuestPin(pin, salt), "hex");
   const target = Buffer.from(hash, "hex");
   return computed.length === target.length && timingSafeEqual(computed, target);
 }
@@ -44,7 +45,7 @@ async function authenticateWinnerGuest(
     .maybeSingle();
   if (error) throw new Error(error.message);
   if (!guest) throw new Error("No guest account found for that email.");
-  if (!verifyGuestPin(pin, (guest as any).pin_salt, (guest as any).pin_hash)) {
+  if (!(await verifyGuestPin(pin, (guest as any).pin_salt, (guest as any).pin_hash))) {
     throw new Error("Incorrect guest PIN.");
   }
   return guest as { id: string; email: string; display_name: string };
@@ -242,13 +243,13 @@ async function readPredictionWinners(
 
 export const getPredictionWinners = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input) => z.object({ competition: CompSchema }).parse(input))
+  .inputValidator((input) => z.object({ competition: CompSchema, guestId: z.string().uuid().nullable().optional() }).parse(input))
   .handler(async ({ data, context }): Promise<{ winners: PredictionWinnerRow[]; canSeeEmails: boolean }> => {
     const { supabase, userId } = context;
     const canSeeEmails = await callerCanManage(supabase, userId);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    return { winners: await readPredictionWinners(supabaseAdmin, data.competition, canSeeEmails, userId, null), canSeeEmails };
+    return { winners: await readPredictionWinners(supabaseAdmin, data.competition, canSeeEmails, userId, data.guestId ?? null), canSeeEmails };
   });
 
 export const getPredictionWinnersPublic = createServerFn({ method: "GET" })
@@ -277,7 +278,7 @@ export const confirmPredictionWinnerEmail = createServerFn({ method: "POST" })
       .maybeSingle();
     if (error) throw new Error(error.message);
     if (!row) throw new Error("You're not on the winners list for this competition.");
-    return { ok: true };
+    return { ok: true, guestId: guest.id };
   });
 
 export const confirmPredictionGuestWinnerEmail = createServerFn({ method: "POST" })
