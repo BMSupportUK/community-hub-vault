@@ -278,7 +278,7 @@ export const confirmPredictionWinnerEmail = createServerFn({ method: "POST" })
       .maybeSingle();
     if (error) throw new Error(error.message);
     if (!row) throw new Error("You're not on the winners list for this competition.");
-    return { ok: true, guestId: guest.id };
+    return { ok: true };
   });
 
 export const confirmPredictionGuestWinnerEmail = createServerFn({ method: "POST" })
@@ -302,5 +302,5 @@ export const confirmPredictionGuestWinnerEmail = createServerFn({ method: "POST"
       .maybeSingle();
     if (error) throw new Error(error.message);
     if (!row) throw new Error("You're not on the winners list for this competition.");
-    return { ok: true };
+    return { ok: true, guestId: guest.id };
   });
