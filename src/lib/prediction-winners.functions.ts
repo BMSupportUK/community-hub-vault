@@ -19,7 +19,7 @@ const COMP_META: Record<"wc2026" | "boro2026", { title: string; winnersUrl: stri
 async function callerCanManage(supabase: any, userId: string) {
   const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", userId);
   const rs = (roles ?? []).map((r: any) => String(r.role));
-  return rs.some((r) => r === "admin" || r === "management");
+  return rs.some((r: string) => r === "admin" || r === "management");
 }
 
 function newId() {
