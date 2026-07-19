@@ -155,16 +155,20 @@ async function getXPageMedia(id: string): Promise<string[]> {
     }, 3500);
     if (!res.ok) return [];
     const html = await res.text();
-    const urls = new Set<string>();
+    const byKey = new Map<string, string>();
+    const add = (raw: string) => {
+      const normalized = normalizeTweetImageUrl(decodeHtml(raw));
+      if (!normalized) return;
+      const key = tweetMediaKey(normalized);
+      if (!byKey.has(key)) byKey.set(key, normalized);
+    };
     for (const match of html.matchAll(/<meta\s+[^>]*(?:property|name)=["'](?:og:image|twitter:image)["'][^>]*content=["']([^"']+)["'][^>]*>/gi)) {
-      const normalized = normalizeTweetImageUrl(decodeHtml(match[1] ?? ""));
-      if (normalized) urls.add(normalized);
+      add(match[1] ?? "");
     }
     for (const match of html.matchAll(/https:\/\/pbs\.twimg\.com\/media\/[^"'<>\\\s]+/gi)) {
-      const normalized = normalizeTweetImageUrl(decodeHtml(match[0] ?? ""));
-      if (normalized) urls.add(normalized);
+      add(match[0] ?? "");
     }
-    return Array.from(urls).slice(0, 4);
+    return Array.from(byKey.values()).slice(0, 4);
   } catch {
     return [];
   }
@@ -177,6 +181,19 @@ function normalizeTweetImageUrl(raw: string): string | null {
     return url.toString();
   } catch {
     return null;
+  }
+}
+
+// Extract a stable identifier from a pbs.twimg.com media URL so we can dedupe
+// the same image across og:image, twitter:image, and inline HTML matches that
+// differ only by ?format=/&name= query parameters or file extension.
+function tweetMediaKey(url: string): string {
+  try {
+    const u = new URL(url);
+    const path = u.pathname.replace(/\.(?:jpe?g|png|webp|gif)$/i, "");
+    return `${u.hostname}${path}`;
+  } catch {
+    return url;
   }
 }
 
