@@ -502,6 +502,13 @@ function BoroPredictionsPage() {
                 </div>
               </div>
             </TabsContent>
+
+            <TabsContent value="winners" className="mt-4">
+              <WinnersTab
+                title="MFC 2026/27 Predictor Winners"
+                subtitle="The final leaderboard — announced at the end of the season."
+              />
+            </TabsContent>
           </Tabs>
 
           <aside className="space-y-4 lg:sticky lg:top-6 lg:self-start">
