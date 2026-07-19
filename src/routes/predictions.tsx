@@ -505,6 +505,21 @@ function PredictionsPage() {
     }).length;
   }, [fixtures]);
 
+  const winners = useMemo(() => {
+    const competitionFinished = !!fixtures?.length && fixtures.every((f) => isFinished(f));
+    if (!competitionFinished || !leaderboard?.length) return [];
+
+    const OWNER_ID = "73c113ce-ce1b-43f0-af24-c2a36cf0d8e7";
+    return leaderboard
+      .filter((r) => r.userId !== OWNER_ID)
+      .slice(0, 3)
+      .map((r, index) => ({
+        place: (index + 1) as 1 | 2 | 3,
+        name: r.displayName || r.username || "Anonymous",
+        note: `${r.totalPoints} pt${r.totalPoints === 1 ? "" : "s"}`,
+      }));
+  }, [fixtures, leaderboard]);
+
   return (
     <FixturesFetchedAtContext.Provider value={fixturesAt}>
     <div className={user ? "min-h-dvh md:h-dvh md:overflow-hidden flex bg-background" : "contents"}>
@@ -882,7 +897,8 @@ function PredictionsPage() {
             <TabsContent value="winners" className="mt-4">
               <WinnersTab
                 title="World Cup 2026 Predictor Winners"
-                subtitle="The final leaderboard — announced after the World Cup 2026 final."
+                subtitle="The top 3 will appear automatically once every World Cup 2026 fixture is finished."
+                winners={winners}
               />
             </TabsContent>
           </Tabs>

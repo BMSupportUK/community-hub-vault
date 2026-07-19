@@ -278,6 +278,21 @@ function BoroPredictionsPage() {
     [leaderboard, myEntrantId],
   );
 
+  const winners = useMemo(() => {
+    const competitionFinished = !!fixtures?.length && fixtures.every((f) => isFinished(f));
+    if (!competitionFinished || !leaderboard?.length) return [];
+
+    const OWNER_ID = "73c113ce-ce1b-43f0-af24-c2a36cf0d8e7";
+    return leaderboard
+      .filter((r) => r.userId !== OWNER_ID)
+      .slice(0, 3)
+      .map((r, index) => ({
+        place: (index + 1) as 1 | 2 | 3,
+        name: r.displayName || r.username || "Anonymous",
+        note: `${r.totalPoints} pt${r.totalPoints === 1 ? "" : "s"}`,
+      }));
+  }, [fixtures, leaderboard]);
+
   return (
     <div className={user ? "relative isolate min-h-dvh md:h-dvh md:overflow-hidden flex bg-transparent" : "relative isolate min-h-screen bg-transparent"}>
       <img
@@ -506,7 +521,8 @@ function BoroPredictionsPage() {
             <TabsContent value="winners" className="mt-4">
               <WinnersTab
                 title="MFC 2026/27 Predictor Winners"
-                subtitle="The final leaderboard — announced at the end of the season."
+                subtitle="The top 3 will appear automatically once every MFC 2026/27 fixture is finished."
+                winners={winners}
               />
             </TabsContent>
           </Tabs>
