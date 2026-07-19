@@ -15,6 +15,7 @@ import {
 export type DerivedWinner = {
   place: 1 | 2 | 3;
   userId?: string;
+  isGuest?: boolean;
   name?: string;
   note?: string;
 };
@@ -104,7 +105,7 @@ export function WinnersTab({ title, subtitle, winners = [], competition }: Props
     if (!competition) return;
     const payload = winners
       .filter((w) => !!w.userId)
-      .map((w) => ({ place: w.place, userId: w.userId! }));
+      .map((w) => ({ place: w.place, userId: w.userId!, isGuest: !!w.isGuest }));
     if (payload.length === 0) {
       toast.error("No winners to announce yet.");
       return;

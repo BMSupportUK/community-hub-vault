@@ -516,6 +516,7 @@ function PredictionsPage() {
       .map((r, index) => ({
         place: (index + 1) as 1 | 2 | 3,
         userId: r.userId,
+        isGuest: r.isGuest,
         name: r.displayName || r.username || "Anonymous",
         note: `${r.totalPoints} pt${r.totalPoints === 1 ? "" : "s"}`,
       }));

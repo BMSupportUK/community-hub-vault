@@ -16,6 +16,39 @@ const COMP_META: Record<"wc2026" | "boro2026", { title: string; winnersUrl: stri
   boro2026: { title: "MFC 2026/27 Predictor", winnersUrl: "https://bmsupport.uk/boro-predictions?tab=winners" },
 };
 
+function guestTableForCompetition(competition: "wc2026" | "boro2026") {
+  return competition === "wc2026" ? "wc_guest_entrants" : "boro_guest_entrants";
+}
+
+async function getWinnerContact(
+  supabaseAdmin: any,
+  competition: "wc2026" | "boro2026",
+  userId: string,
+  isGuest: boolean,
+): Promise<{ email: string | null; displayName: string }> {
+  if (isGuest) {
+    const { data: guest } = await supabaseAdmin
+      .from(guestTableForCompetition(competition))
+      .select("email, display_name")
+      .eq("id", userId)
+      .maybeSingle();
+    return {
+      email: (guest as any)?.email ?? null,
+      displayName: (guest as any)?.display_name || "Winner",
+    };
+  }
+
+  const [{ data: u }, { data: prof }] = await Promise.all([
+    supabaseAdmin.auth.admin.getUserById(userId),
+    supabaseAdmin.from("profiles").select("display_name, username").eq("id", userId).maybeSingle(),
+  ]);
+
+  return {
+    email: u?.user?.email ?? null,
+    displayName: (prof as any)?.display_name || (prof as any)?.username || "Winner",
+  };
+}
+
 async function callerCanManage(supabase: any, userId: string) {
   const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", userId);
   const rs = (roles ?? []).map((r: any) => String(r.role));
@@ -33,7 +66,7 @@ export const announcePredictionWinners = createServerFn({ method: "POST" })
     z.object({
       competition: CompSchema,
       winners: z
-        .array(z.object({ userId: z.string().uuid(), place: z.number().int().min(1).max(3) }))
+        .array(z.object({ userId: z.string().uuid(), place: z.number().int().min(1).max(3), isGuest: z.boolean().optional() }))
         .min(1)
         .max(3),
     }).parse(input),
@@ -45,18 +78,11 @@ export const announcePredictionWinners = createServerFn({ method: "POST" })
 
     // Replace any existing winners for this competition, then insert the new set
     // so re-announcing after a leaderboard change works cleanly.
-    const existingUserIds = new Set<string>();
-    const { data: existing } = await supabaseAdmin
-      .from("prediction_winners")
-      .select("user_id")
-      .eq("competition", data.competition);
-    (existing ?? []).forEach((r: any) => existingUserIds.add(r.user_id));
-
     for (const w of data.winners) {
       const { error: upErr } = await supabaseAdmin
         .from("prediction_winners")
         .upsert(
-          { competition: data.competition, place: w.place, user_id: w.userId },
+          { competition: data.competition, place: w.place, user_id: w.userId, is_guest: !!w.isGuest },
           { onConflict: "competition,place" },
         );
       if (upErr) {
@@ -68,7 +94,7 @@ export const announcePredictionWinners = createServerFn({ method: "POST" })
     // Fetch the current winners after upsert
     const { data: rows } = await supabaseAdmin
       .from("prediction_winners")
-      .select("id, place, user_id, notified_at")
+      .select("id, place, user_id, is_guest, notified_at")
       .eq("competition", data.competition)
       .order("place");
 
@@ -78,12 +104,16 @@ export const announcePredictionWinners = createServerFn({ method: "POST" })
     for (const row of rows ?? []) {
       if (row.notified_at) continue;
       try {
-        const { data: u } = await supabaseAdmin.auth.admin.getUserById(row.user_id);
-        const email = u?.user?.email;
-        if (!email) continue;
-        const { data: prof } = await supabaseAdmin
-          .from("profiles").select("display_name, username").eq("id", row.user_id).maybeSingle();
-        const displayName = (prof as any)?.display_name || (prof as any)?.username || "Winner";
+        const { email, displayName } = await getWinnerContact(
+          supabaseAdmin,
+          data.competition,
+          row.user_id,
+          !!row.is_guest,
+        );
+        if (!email) {
+          console.error("winner notification skipped: no email", { place: row.place, userId: row.user_id, isGuest: !!row.is_guest });
+          continue;
+        }
 
         const props = { displayName, place: row.place, competitionTitle: meta.title, winnersUrl: meta.winnersUrl };
         const el = React.createElement(winnerTpl.component, props);
@@ -133,6 +163,7 @@ export const announcePredictionWinners = createServerFn({ method: "POST" })
 export type PredictionWinnerRow = {
   place: 1 | 2 | 3;
   userId: string;
+  isGuest: boolean;
   displayName: string | null;
   confirmed: boolean;
   confirmedAt: string | null;
@@ -151,28 +182,23 @@ export const getPredictionWinners = createServerFn({ method: "GET" })
 
     const { data: rows } = await supabaseAdmin
       .from("prediction_winners")
-      .select("place, user_id, confirmed_at, notified_at")
+      .select("place, user_id, is_guest, confirmed_at, notified_at")
       .eq("competition", data.competition)
       .order("place");
 
     const out: PredictionWinnerRow[] = [];
     for (const r of rows ?? []) {
-      const { data: prof } = await supabaseAdmin
-        .from("profiles").select("display_name, username").eq("id", r.user_id).maybeSingle();
-      let email: string | null = null;
-      if (canSeeEmails) {
-        const { data: u } = await supabaseAdmin.auth.admin.getUserById(r.user_id);
-        email = u?.user?.email ?? null;
-      }
+      const contact = await getWinnerContact(supabaseAdmin, data.competition, r.user_id, !!r.is_guest);
       out.push({
         place: r.place as 1 | 2 | 3,
         userId: r.user_id,
-        displayName: (prof as any)?.display_name || (prof as any)?.username || null,
+        isGuest: !!r.is_guest,
+        displayName: contact.displayName || null,
         confirmed: !!r.confirmed_at,
         confirmedAt: r.confirmed_at,
         notifiedAt: r.notified_at,
-        email,
-        isMe: r.user_id === userId,
+        email: canSeeEmails ? contact.email : null,
+        isMe: !r.is_guest && r.user_id === userId,
       });
     }
     return { winners: out, canSeeEmails };
