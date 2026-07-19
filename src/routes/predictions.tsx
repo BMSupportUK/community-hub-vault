@@ -883,6 +883,17 @@ function PredictionsPage() {
               <WinnersTab
                 title="World Cup 2026 Predictor Winners"
                 subtitle="The final leaderboard — announced after the World Cup 2026 final."
+                winners={
+                  fixtures && fixtures.length > 0 &&
+                  fixtures.every((f) => f.homeScore !== null && f.awayScore !== null) &&
+                  leaderboard
+                    ? leaderboard.slice(0, 3).map((r, i) => ({
+                        place: (i + 1) as 1 | 2 | 3,
+                        name: r.displayName || r.username || "Anonymous",
+                        note: `${r.totalPoints} pts`,
+                      }))
+                    : undefined
+                }
               />
             </TabsContent>
           </Tabs>
