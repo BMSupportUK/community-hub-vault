@@ -906,6 +906,8 @@ function PredictionsPage() {
                 subtitle="The top 3 will appear automatically once every World Cup 2026 fixture is finished."
                 winners={winners}
                 competition="wc2026"
+                viewerUserId={user?.id ?? null}
+                guestSession={guest}
               />
             </TabsContent>
           </Tabs>

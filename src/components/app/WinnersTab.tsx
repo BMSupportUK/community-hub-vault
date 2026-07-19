@@ -7,8 +7,10 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   announcePredictionWinners,
+  confirmPredictionGuestWinnerEmail,
   confirmPredictionWinnerEmail,
   getPredictionWinners,
+  getPredictionWinnersPublic,
   type PredictionWinnerRow,
 } from "@/lib/prediction-winners.functions";
 
@@ -27,25 +29,37 @@ type Props = {
   winners?: DerivedWinner[];
   /** Competition slug — enables emailing + confirmation flow. */
   competition?: "wc2026" | "boro2026";
+  viewerUserId?: string | null;
+  guestSession?: { guestId: string; email: string; pin: string; displayName?: string } | null;
 };
 
-export function WinnersTab({ title, subtitle, winners = [], competition }: Props) {
+export function WinnersTab({ title, subtitle, winners = [], competition, viewerUserId = null, guestSession = null }: Props) {
   const firedRef = useRef(false);
 
   const qc = useQueryClient();
   const getWinners = useServerFn(getPredictionWinners);
+  const getPublicWinners = useServerFn(getPredictionWinnersPublic);
   const announceFn = useServerFn(announcePredictionWinners);
   const confirmFn = useServerFn(confirmPredictionWinnerEmail);
+  const confirmGuestFn = useServerFn(confirmPredictionGuestWinnerEmail);
 
   const winnersQuery = useQuery({
-    queryKey: ["prediction-winners", competition],
+    queryKey: ["prediction-winners", competition, "auth", viewerUserId],
     queryFn: () => getWinners({ data: { competition: competition! } }),
-    enabled: !!competition,
+    enabled: !!competition && !!viewerUserId,
     staleTime: 15_000,
   });
 
-  const persisted: PredictionWinnerRow[] = winnersQuery.data?.winners ?? [];
-  const canSeeEmails = !!winnersQuery.data?.canSeeEmails;
+  const publicWinnersQuery = useQuery({
+    queryKey: ["prediction-winners", competition, "public", guestSession?.guestId ?? null],
+    queryFn: () => getPublicWinners({ data: { competition: competition!, guestId: guestSession?.guestId ?? null } }),
+    enabled: !!competition && !viewerUserId,
+    staleTime: 15_000,
+  });
+
+  const winnerData = winnersQuery.data ?? publicWinnersQuery.data;
+  const persisted: PredictionWinnerRow[] = winnerData?.winners ?? [];
+  const canSeeEmails = !!winnerData?.canSeeEmails;
   const hasPersisted = persisted.length > 0;
   const derivedReady = winners.some((w) => !!w.name && !!w.userId);
   const hasWinners = hasPersisted || winners.some((w) => !!w.name);
@@ -126,7 +140,12 @@ export function WinnersTab({ title, subtitle, winners = [], competition }: Props
     if (!competition) return;
     setConfirming(true);
     try {
-      await confirmFn({ data: { competition } });
+      if (myRow?.isGuest) {
+        if (!guestSession) throw new Error("Sign in as the winning guest entrant first.");
+        await confirmGuestFn({ data: { competition, email: guestSession.email, pin: guestSession.pin } });
+      } else {
+        await confirmFn({ data: { competition } });
+      }
       toast.success("Email confirmed — thank you! 🎉");
       qc.invalidateQueries({ queryKey: ["prediction-winners", competition] });
     } catch (e: any) {

@@ -530,6 +530,8 @@ function BoroPredictionsPage() {
                 subtitle="The top 3 will appear automatically once every MFC 2026/27 fixture is finished."
                 winners={winners}
                 competition="boro2026"
+                viewerUserId={user?.id ?? null}
+                guestSession={guest}
               />
             </TabsContent>
           </Tabs>
