@@ -114,6 +114,46 @@ function RedCards({ count }: { count: number }) {
   );
 }
 
+function useNow(intervalMs = 1000) {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), intervalMs);
+    return () => clearInterval(id);
+  }, [intervalMs]);
+  return now;
+}
+
+function formatCountdown(ms: number) {
+  const total = Math.max(0, Math.floor(ms / 1000));
+  const d = Math.floor(total / 86400);
+  const h = Math.floor((total % 86400) / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const s = total % 60;
+  if (d > 0) return `${d}d ${h}h ${m}m`;
+  if (h > 0) return `${h}h ${m}m ${s.toString().padStart(2, "0")}s`;
+  return `${m}m ${s.toString().padStart(2, "0")}s`;
+}
+
+function LockCountdownPill({ lockAtMs }: { lockAtMs: number }) {
+  const now = useNow(1000);
+  const remaining = lockAtMs - now;
+  if (remaining <= 0) return null;
+  const urgent = remaining <= 60 * 60 * 1000;
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-black tracking-wider tabular-nums border-2 shadow-lg uppercase ${
+        urgent
+          ? "bg-red-500 text-white border-red-300 shadow-red-500/60 animate-pulse"
+          : "bg-lime-400 text-black border-lime-200 shadow-lime-400/50"
+      }`}
+      title="Time left to predict (locks 30 min before kick-off)"
+    >
+      <Lock className="size-3.5" strokeWidth={3} />
+      Locks in {formatCountdown(remaining)}
+    </span>
+  );
+}
+
 type GuestSession = { guestId: string; email: string; pin: string; displayName: string };
 
 function BoroPredictionsPage() {
@@ -804,6 +844,7 @@ function FixtureCard({
         </span>
         <span className="inline-flex items-center gap-2">
           {live && <LivePill fixture={fixture} />}
+          {!locked && !scored && !live && <LockCountdownPill lockAtMs={lockMs} />}
           <span className="font-bold text-foreground tabular-nums">{formatKickoff(fixture.kickoffAt)}</span>
         </span>
       </div>
