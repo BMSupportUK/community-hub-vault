@@ -224,6 +224,8 @@ export type PredictionWinnerRow = {
   notifiedAt: string | null;
   email: string | null;
   isMe: boolean;
+  voucherSent: boolean;
+  voucherSentAt: string | null;
 };
 
 async function readPredictionWinners(
@@ -235,7 +237,7 @@ async function readPredictionWinners(
 ): Promise<PredictionWinnerRow[]> {
   const { data: rows } = await supabaseAdmin
     .from("prediction_winners")
-    .select("place, user_id, is_guest, confirmed_at, notified_at")
+    .select("place, user_id, is_guest, confirmed_at, notified_at, voucher_sent_at")
     .eq("competition", competition)
     .order("place");
 
@@ -252,6 +254,8 @@ async function readPredictionWinners(
       notifiedAt: r.notified_at,
       email: canSeeEmails ? contact.email : null,
       isMe: r.is_guest ? r.user_id === viewerGuestId : r.user_id === viewerUserId,
+      voucherSent: !!(r as any).voucher_sent_at,
+      voucherSentAt: (r as any).voucher_sent_at ?? null,
     });
   }
   return out;
