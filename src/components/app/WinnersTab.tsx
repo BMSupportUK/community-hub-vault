@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import confetti from "canvas-confetti";
-import { Trophy, Medal, Award, Loader2, CheckCircle2, Mail } from "lucide-react";
+import { Trophy, Medal, Award, Loader2, CheckCircle2, Mail, Gift } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -12,6 +12,7 @@ import {
   confirmPredictionWinnerEmail,
   getPredictionWinners,
   getPredictionWinnersPublic,
+  setPredictionWinnerVoucherSent,
   type PredictionWinnerRow,
 } from "@/lib/prediction-winners.functions";
 
@@ -46,6 +47,7 @@ export function WinnersTab({ title, subtitle, winners = [], competition, viewerU
   const announceFn = useServerFn(announcePredictionWinners);
   const confirmFn = useServerFn(confirmPredictionWinnerEmail);
   const confirmGuestFn = useServerFn(confirmPredictionGuestWinnerEmail);
+  const setVoucherFn = useServerFn(setPredictionWinnerVoucherSent);
 
   const winnersQuery = useQuery({
     queryKey: ["prediction-winners", competition, "auth", viewerUserId, guestSession?.guestId ?? null],
@@ -71,6 +73,7 @@ export function WinnersTab({ title, subtitle, winners = [], competition, viewerU
 
   const [announcing, setAnnouncing] = useState(false);
   const [confirming, setConfirming] = useState(false);
+  const [voucherBusy, setVoucherBusy] = useState<number | null>(null);
 
   useEffect(() => {
     if (firedRef.current) return;
@@ -178,6 +181,20 @@ export function WinnersTab({ title, subtitle, winners = [], competition, viewerU
     }
   }
 
+  async function handleToggleVoucher(place: 1 | 2 | 3, sent: boolean) {
+    if (!competition) return;
+    setVoucherBusy(place);
+    try {
+      await setVoucherFn({ data: { competition, place, sent } });
+      toast.success(sent ? "Marked voucher as sent." : "Voucher marked as not sent.");
+      qc.invalidateQueries({ queryKey: ["prediction-winners", competition] });
+    } catch (e: any) {
+      toast.error(e?.message ?? "Failed to update voucher status");
+    } finally {
+      setVoucherBusy(null);
+    }
+  }
+
   return (
     <div className="rounded-2xl border-2 border-amber-400/60 bg-gradient-to-br from-amber-500/10 via-surface-1 to-surface-1 shadow-md shadow-amber-500/10 p-5 sm:p-8 space-y-6">
       <div className="text-center space-y-2">
@@ -260,6 +277,29 @@ export function WinnersTab({ title, subtitle, winners = [], competition, viewerU
                     </span>
                   )}
                 </div>
+              )}
+              {pRow && pRow.voucherSent && (
+                <div className="mt-1">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/20 text-amber-200 px-2 py-0.5 text-[11px] font-semibold">
+                    <Gift className="size-3" /> Voucher sent
+                  </span>
+                </div>
+              )}
+              {pRow && canSeeEmails && (
+                <Button
+                  size="sm"
+                  variant={pRow.voucherSent ? "outline" : "default"}
+                  className="mt-2 gap-2 h-7 text-xs"
+                  disabled={voucherBusy === pRow.place}
+                  onClick={() => handleToggleVoucher(pRow.place, !pRow.voucherSent)}
+                >
+                  {voucherBusy === pRow.place ? (
+                    <Loader2 className="size-3 animate-spin" />
+                  ) : (
+                    <Gift className="size-3" />
+                  )}
+                  {pRow.voucherSent ? "Mark not sent" : "Mark voucher sent"}
+                </Button>
               )}
             </div>
           );

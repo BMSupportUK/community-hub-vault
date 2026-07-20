@@ -2617,6 +2617,8 @@ export type Database = {
           notified_at: string | null
           place: number
           user_id: string
+          voucher_sent_at: string | null
+          voucher_sent_by: string | null
         }
         Insert: {
           competition: string
@@ -2627,6 +2629,8 @@ export type Database = {
           notified_at?: string | null
           place: number
           user_id: string
+          voucher_sent_at?: string | null
+          voucher_sent_by?: string | null
         }
         Update: {
           competition?: string
@@ -2637,6 +2641,8 @@ export type Database = {
           notified_at?: string | null
           place?: number
           user_id?: string
+          voucher_sent_at?: string | null
+          voucher_sent_by?: string | null
         }
         Relationships: []
       }
