@@ -844,6 +844,7 @@ function FixtureCard({
         </span>
         <span className="inline-flex items-center gap-2">
           {live && <LivePill fixture={fixture} />}
+          {!locked && !scored && !live && <LockCountdownPill lockAtMs={lockMs} />}
           <span className="font-bold text-foreground tabular-nums">{formatKickoff(fixture.kickoffAt)}</span>
         </span>
       </div>
