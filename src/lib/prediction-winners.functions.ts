@@ -324,3 +324,28 @@ export const confirmPredictionGuestWinnerEmail = createServerFn({ method: "POST"
     if (!row) throw new Error("You're not on the winners list for this competition.");
     return { ok: true, guestId: guest.id };
   });
+
+export const setPredictionWinnerVoucherSent = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z.object({
+      competition: CompSchema,
+      place: z.number().int().min(1).max(3),
+      sent: z.boolean(),
+    }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    if (!(await callerCanManage(supabase, userId))) throw new Error("Forbidden");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin
+      .from("prediction_winners")
+      .update({
+        voucher_sent_at: data.sent ? new Date().toISOString() : null,
+        voucher_sent_by: data.sent ? userId : null,
+      } as never)
+      .eq("competition", data.competition)
+      .eq("place", data.place);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
