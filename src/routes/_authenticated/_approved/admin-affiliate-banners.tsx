@@ -123,7 +123,7 @@ function AdminAffiliateBannersPage() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-5xl px-4 py-6 space-y-5">
+    <div className="w-full h-dvh overflow-y-auto px-4 md:px-8 py-6 space-y-5">
       <Button asChild variant="ghost" size="sm" className="-ml-2">
         <Link to="/admin"><ArrowLeft className="size-4 mr-1" />Admin</Link>
       </Button>
@@ -167,7 +167,7 @@ function AdminAffiliateBannersPage() {
           No banners uploaded yet. Upload one above to get started.
         </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
           {banners.map((b) => (
             <div key={b.id} className="rounded-2xl border border-border bg-surface-1 overflow-hidden">
               <div className="grid grid-cols-[112px_1fr] gap-3 p-3">
