@@ -123,7 +123,7 @@ function AdminAffiliateBannersPage() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-5xl px-4 py-6 space-y-5">
+    <div className="w-full h-dvh overflow-y-auto px-4 md:px-8 py-6 space-y-5">
       <Button asChild variant="ghost" size="sm" className="-ml-2">
         <Link to="/admin"><ArrowLeft className="size-4 mr-1" />Admin</Link>
       </Button>
