@@ -167,7 +167,7 @@ function AdminAffiliateBannersPage() {
           No banners uploaded yet. Upload one above to get started.
         </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
           {banners.map((b) => (
             <div key={b.id} className="rounded-2xl border border-border bg-surface-1 overflow-hidden">
               <div className="grid grid-cols-[112px_1fr] gap-3 p-3">
