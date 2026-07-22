@@ -136,12 +136,17 @@ function TopicPage() {
     void load();
     // Increment view count once
     void supabase.rpc("forum_increment_view", { _topic: topicId });
+    let t: ReturnType<typeof setTimeout> | null = null;
+    const scheduleLoad = () => {
+      if (t) clearTimeout(t);
+      t = setTimeout(() => { t = null; void load(); }, 250);
+    };
     const ch = supabase
       .channel(`forum-topic-${topicId}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "forum_posts", filter: `topic_id=eq.${topicId}` }, () => void load())
-      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "forum_topics", filter: `id=eq.${topicId}` }, () => void load())
+      .on("postgres_changes", { event: "*", schema: "public", table: "forum_posts", filter: `topic_id=eq.${topicId}` }, scheduleLoad)
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "forum_topics", filter: `id=eq.${topicId}` }, scheduleLoad)
       .subscribe();
-    return () => { supabase.removeChannel(ch); };
+    return () => { if (t) clearTimeout(t); supabase.removeChannel(ch); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [topicId, canEnter]);
 
@@ -194,7 +199,11 @@ function TopicPage() {
         }
       });
     return () => { supabase.removeChannel(presence); };
-  }, [topicId, user?.id, canEnter, profiles]);
+    // Intentionally NOT depending on `profiles` — it changes on every load(),
+    // which would tear down/re-track the channel after every post and freeze
+    // the UI. Alias/avatar are resolved once inside the subscribe callback.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [topicId, user?.id, canEnter]);
 
   const submitReply = async () => {
     if (!user || !topic) return;
@@ -211,7 +220,7 @@ function TopicPage() {
     setReply("");
     setReplySuccessOpen(true);
     setTab("reply");
-    void load();
+    // Realtime INSERT listener will refresh; no manual reload needed.
   };
 
   const quotePost = (p: Post) => {
