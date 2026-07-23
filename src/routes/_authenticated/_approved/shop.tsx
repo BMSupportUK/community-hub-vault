@@ -74,8 +74,8 @@ import { getOutOfHoursMessage } from "@/lib/business-hours";
 import { isAdminUnlocked } from "@/lib/admin-unlock";
 import { useRouter } from "@tanstack/react-router";
 import { MonitorPlay } from "lucide-react";
-import { StreamingDevicesPage } from "@/routes/_authenticated/_approved/streaming-devices";
-import { ReviewsPage } from "@/routes/_authenticated/_approved/reviews";
+import { StreamingDevicesPage } from "@/components/app/StreamingDevicesPage";
+import { ReviewsPage } from "@/components/app/ReviewsPage";
 import { AppDemosView } from "@/components/app/AppDemos";
 import { Film } from "lucide-react";
 import { VpnGuideView } from "@/components/app/VpnGuideView";
@@ -812,7 +812,7 @@ function SidebarLatestOrderProgress() {
   );
 }
 
-export function OrderProgressStrip({
+function OrderProgressStrip({
   order,
 }: {
   order: { status: string; paid_at?: string | null; completed_at?: string | null };
@@ -3986,7 +3986,7 @@ function AdminProducts() {
   return <AdminProductsInner />;
 }
 
-export function PayOrderDialog({
+function PayOrderDialog({
   orderId,
   amountCents,
   onChange,
