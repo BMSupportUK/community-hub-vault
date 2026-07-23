@@ -138,11 +138,6 @@ function BoardPage() {
         { event: "*", schema: "public", table: "forum_topics", filter: `board_id=eq.${board.id}` },
         () => { void reloadTopics(); },
       )
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "forum_posts" },
-        () => { void reloadTopics(); },
-      )
       .subscribe();
     return () => { supabase.removeChannel(ch); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
