@@ -31,17 +31,10 @@ export function ForumPostReactions({
 
   useEffect(() => {
     void load();
-    const ch = supabase
-      .channel(`reactions-${postId}`)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "forum_post_reactions", filter: `post_id=eq.${postId}` },
-        () => void load(),
-      )
-      .subscribe();
-    return () => {
-      supabase.removeChannel(ch);
-    };
+    // Keep reactions cheap: the topic page can render 20+ posts at once, so a
+    // realtime channel per post creates a pile-up of subscriptions and makes
+    // posting feel frozen on busy threads. Reactions refresh on mount and after
+    // the current user toggles one.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [postId]);
 
@@ -70,11 +63,13 @@ export function ForumPostReactions({
         .eq("user_id", userId)
         .eq("emoji", emoji);
       if (error) toast.error("Couldn't remove reaction", { description: error.message });
+      else void load();
     } else {
       const { error } = await supabase
         .from("forum_post_reactions")
         .insert({ post_id: postId, user_id: userId, emoji });
       if (error) toast.error("Couldn't react", { description: error.message });
+      else void load();
       setOpen(false);
     }
   };

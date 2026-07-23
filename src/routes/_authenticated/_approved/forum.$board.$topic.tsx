@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowLeft, Loader2, Pin, Lock, Quote, Reply as ReplyIcon, Pencil, Trash2, Send, History, Check, X, Ban, MessageSquare, Eye, FolderInput } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -92,7 +92,26 @@ function TopicPage() {
   const isBoardMod = isStaff || (user ? moderatorIds.has(user.id) : false);
   const canPost = canEnter && !!topic && !topic.is_locked;
 
-  const load = async () => {
+  const loadAliases = useCallback(async (ids: string[], replace = false) => {
+    const unique = Array.from(new Set(ids.filter(Boolean)));
+    if (unique.length === 0) {
+      if (replace) setProfiles({});
+      return;
+    }
+    const { data: aliases } = await supabase.rpc("fan_zone_aliases", { _ids: unique });
+    const map: Record<string, Profile> = {};
+    (aliases ?? []).forEach((a: { user_id: string; fan_alias: string | null; fan_avatar_url: string | null }) => {
+      map[a.user_id] = {
+        id: a.user_id,
+        display_name: a.fan_alias ?? "Boro Fan",
+        username: null,
+        avatar_url: a.fan_avatar_url ?? null,
+      };
+    });
+    setProfiles((prev) => (replace ? map : { ...prev, ...map }));
+  }, []);
+
+  const load = useCallback(async () => {
     const { data: t } = await supabase
       .from("forum_topics")
       .select("id, board_id, author_id, title, is_sticky, is_locked, view_count, reply_count")
@@ -108,34 +127,38 @@ function TopicPage() {
     setBoard((b as Board | null) ?? null);
     const { data: mods } = await supabase.from("forum_board_moderators").select("user_id").eq("board_id", (t as Topic).board_id);
     setModeratorIds(new Set(((mods ?? []) as { user_id: string }[]).map((m) => m.user_id)));
-    const { data: ps } = await supabase
+    const from = (page - 1) * REPLIES_PER_PAGE;
+    const to = from + REPLIES_PER_PAGE - 1;
+    const { data: opRows } = await supabase
       .from("forum_posts")
       .select("id, topic_id, author_id, body, quote_of, edited_at, is_op, created_at")
       .eq("topic_id", topicId)
-      .order("created_at");
-    const list = (ps ?? []) as Post[];
+      .eq("is_op", true)
+      .order("created_at")
+      .limit(1);
+    const { data: replyRows } = await supabase
+      .from("forum_posts")
+      .select("id, topic_id, author_id, body, quote_of, edited_at, is_op, created_at")
+      .eq("topic_id", topicId)
+      .eq("is_op", false)
+      .order("created_at")
+      .range(from, to);
+    const list = [
+      ...((opRows ?? []) as Post[]),
+      ...((replyRows ?? []) as Post[]),
+    ];
     setPosts(list);
-    const ids = Array.from(new Set(list.map((p) => p.author_id)));
-    if (ids.length) {
-      const map: Record<string, Profile> = {};
-      const { data: aliases } = await supabase.rpc("fan_zone_aliases", { _ids: ids });
-      (aliases ?? []).forEach((a: { user_id: string; fan_alias: string | null; fan_avatar_url: string | null }) => {
-        map[a.user_id] = {
-          id: a.user_id,
-          display_name: a.fan_alias ?? "Boro Fan",
-          username: null,
-          avatar_url: a.fan_avatar_url ?? null,
-        };
-      });
-      setProfiles(map);
-    }
-  };
+    await loadAliases(list.map((p) => p.author_id), true);
+  }, [loadAliases, page, topicId]);
+
+  useEffect(() => {
+    if (!canEnter) return;
+    void supabase.rpc("forum_increment_view", { _topic: topicId });
+  }, [topicId, canEnter]);
 
   useEffect(() => {
     if (!canEnter) return;
     void load();
-    // Increment view count once
-    void supabase.rpc("forum_increment_view", { _topic: topicId });
     let t: ReturnType<typeof setTimeout> | null = null;
     const scheduleLoad = () => {
       if (t) clearTimeout(t);
@@ -147,8 +170,7 @@ function TopicPage() {
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "forum_topics", filter: `id=eq.${topicId}` }, scheduleLoad)
       .subscribe();
     return () => { if (t) clearTimeout(t); supabase.removeChannel(ch); };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [topicId, canEnter]);
+  }, [topicId, canEnter, load]);
 
   // Realtime presence: who is currently viewing this topic
   useEffect(() => {
@@ -220,6 +242,7 @@ function TopicPage() {
     setReply("");
     setReplySuccessOpen(true);
     setTab("reply");
+    setPage(Math.max(1, Math.ceil(((topic.reply_count ?? 0) + 1) / REPLIES_PER_PAGE)));
     // Realtime INSERT listener will refresh; no manual reload needed.
   };
 
@@ -353,10 +376,10 @@ function TopicPage() {
       {(() => {
         const opPost = posts.find((p) => p.is_op) ?? null;
         const replies = posts.filter((p) => !p.is_op && !blocked.has(p.author_id));
-        const totalPages = Math.max(1, Math.ceil(replies.length / REPLIES_PER_PAGE));
+        const totalPages = Math.max(1, Math.ceil((topic.reply_count ?? replies.length) / REPLIES_PER_PAGE));
         const safePage = Math.min(page, totalPages);
         const start = (safePage - 1) * REPLIES_PER_PAGE;
-        const pageReplies = replies.slice(start, start + REPLIES_PER_PAGE);
+        const pageReplies = replies;
         const renderPost = (p: Post, i: number) => {
                 const author = profiles[p.author_id];
                 const name = author?.display_name || author?.username || "Someone";
@@ -506,7 +529,7 @@ function TopicPage() {
           <Tabs value={tab} onValueChange={(v) => setTab(v as "posts" | "reply")} className="w-full">
             <TabsList>
               <TabsTrigger value="posts">Original Post</TabsTrigger>
-              <TabsTrigger value="reply">Replies ({replies.length})</TabsTrigger>
+              <TabsTrigger value="reply">Replies ({topic.reply_count ?? replies.length})</TabsTrigger>
             </TabsList>
 
             <TabsContent value="posts" className="space-y-3 mt-3">
@@ -525,7 +548,7 @@ function TopicPage() {
               {pageReplies.length === 0 ? (
                 <div className="text-sm text-muted-foreground text-center py-6">No replies yet.</div>
               ) : (
-                pageReplies.map((p) => renderPost(p, posts.findIndex((x) => x.id === p.id)))
+                pageReplies.map((p, idx) => renderPost(p, start + idx + 1))
               )}
 
               {totalPages > 1 && (
