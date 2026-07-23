@@ -283,7 +283,11 @@ const AuthenticatedApprovedStreamingDevicesRoute =
     id: '/streaming-devices',
     path: '/streaming-devices',
     getParentRoute: () => AuthenticatedApprovedRoute,
-  } as any)
+  } as any).lazy(() =>
+    import('./routes/_authenticated/_approved/streaming-devices.lazy').then(
+      (d) => d.Route,
+    ),
+  )
 const AuthenticatedApprovedStatusRoute =
   AuthenticatedApprovedStatusRouteImport.update({
     id: '/status',
@@ -319,7 +323,11 @@ const AuthenticatedApprovedReviewsRoute =
     id: '/reviews',
     path: '/reviews',
     getParentRoute: () => AuthenticatedApprovedRoute,
-  } as any)
+  } as any).lazy(() =>
+    import('./routes/_authenticated/_approved/reviews.lazy').then(
+      (d) => d.Route,
+    ),
+  )
 const AuthenticatedApprovedResponsiveCheckRoute =
   AuthenticatedApprovedResponsiveCheckRouteImport.update({
     id: '/responsive-check',

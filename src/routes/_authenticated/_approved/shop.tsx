@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -74,13 +74,24 @@ import { getOutOfHoursMessage } from "@/lib/business-hours";
 import { isAdminUnlocked } from "@/lib/admin-unlock";
 import { useRouter } from "@tanstack/react-router";
 import { MonitorPlay } from "lucide-react";
-import { StreamingDevicesPage } from "@/routes/_authenticated/_approved/streaming-devices";
-import { ReviewsPage } from "@/routes/_authenticated/_approved/reviews";
 import { AppDemosView } from "@/components/app/AppDemos";
 import { Film } from "lucide-react";
 import { VpnGuideView } from "@/components/app/VpnGuideView";
 
 type View = "store" | "orders" | "admin" | "refund" | "multi_room" | "triple_room" | "streaming_devices" | "reviews" | "app_demos";
+
+const StreamingDevicesPage = lazy(() =>
+  import("@/components/app/StreamingDevicesPage").then((module) => ({
+    default: module.StreamingDevicesPage,
+  })),
+);
+const ReviewsPage = lazy(() =>
+  import("@/components/app/ReviewsPage").then((module) => ({ default: module.ReviewsPage })),
+);
+
+function ShopLazyFallback() {
+  return <div className="flex-1 p-6 text-sm text-muted-foreground">Loading…</div>;
+}
 
 function linkify(text: string): React.ReactNode[] {
   const re = /(https?:\/\/[^\s]+)/g;
@@ -408,7 +419,11 @@ function ShopPage() {
             ) : (
               <RoomPolicyView roomKey={view as "multi_room" | "triple_room"} isAdmin={isAdmin} />
             ))}
-          {view === "streaming_devices" && <StreamingDevicesPage />}
+          {view === "streaming_devices" && (
+            <Suspense fallback={<ShopLazyFallback />}>
+              <StreamingDevicesPage />
+            </Suspense>
+          )}
           {view === "app_demos" && (
             <div
               className="relative flex-1 flex min-w-0 bg-cover bg-center bg-no-repeat bg-fixed overflow-visible md:overflow-hidden"
@@ -812,7 +827,7 @@ function SidebarLatestOrderProgress() {
   );
 }
 
-export function OrderProgressStrip({
+function OrderProgressStrip({
   order,
 }: {
   order: { status: string; paid_at?: string | null; completed_at?: string | null };
@@ -1713,13 +1728,17 @@ function Storefront() {
               />
             </TabsContent>
             <TabsContent value="streaming_devices" className="mt-3 min-h-0 flex-1 overflow-visible md:overflow-hidden -mx-3 sm:-mx-5">
-              <StreamingDevicesPage />
+              <Suspense fallback={<ShopLazyFallback />}>
+                <StreamingDevicesPage />
+              </Suspense>
             </TabsContent>
             <TabsContent value="app_demos" className="mt-3 min-h-0 flex-1 overflow-visible md:overflow-hidden -mx-3 sm:-mx-5">
               <AppDemosView />
             </TabsContent>
             <TabsContent value="reviews" className="mt-3 min-h-0 flex-1 overflow-visible md:overflow-hidden -mx-3 sm:-mx-5">
-              <ReviewsPage />
+              <Suspense fallback={<ShopLazyFallback />}>
+                <ReviewsPage />
+              </Suspense>
             </TabsContent>
             <TabsContent value="vpn" className="mt-3 min-h-0 flex-1 overflow-visible md:overflow-hidden -mx-3 sm:-mx-5">
               <VpnGuideView />
@@ -3986,7 +4005,7 @@ function AdminProducts() {
   return <AdminProductsInner />;
 }
 
-export function PayOrderDialog({
+function PayOrderDialog({
   orderId,
   amountCents,
   onChange,
