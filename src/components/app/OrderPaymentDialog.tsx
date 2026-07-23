@@ -318,7 +318,7 @@ function UsdtLogo({ className = "" }: { className?: string }) {
         <circle cx="12" cy="12" r="12" className="fill-success" />
         <path
           d="M13.3 10.9V9.5h3.2V7.4H7.5v2.1h3.2v1.4c-2.6.1-4.6.6-4.6 1.2 0 .6 2 1.1 4.6 1.2v4.5h2.6v-4.5c2.6-.1 4.6-.6 4.6-1.2 0-.6-2-1.1-4.6-1.2zm0 2v0c-.1 0-.7.1-1.9.1-1 0-1.7-.1-1.9-.1v0c-2.2-.1-3.8-.5-3.8-.9 0-.5 1.6-.8 3.8-.9v1.5c.2 0 .9.1 1.9.1 1.2 0 1.8-.1 1.9-.1v-1.5c2.2.1 3.8.4 3.8.9 0 .4-1.6.8-3.8.9z"
-          className="fill-success-foreground"
+          className="fill-primary-foreground"
         />
       </svg>
       <span className="text-xs font-semibold tracking-tight">USDT</span>
