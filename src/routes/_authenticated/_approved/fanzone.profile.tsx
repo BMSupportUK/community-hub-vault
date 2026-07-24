@@ -279,9 +279,9 @@ function FriendsPanel({ userId }: { userId: string }) {
       .from("fan_zone_friendships")
       .select("id, requester_id, addressee_id")
       .eq("status", "accepted")
-      .eq("addressee_id", userId);
+      .or(`requester_id.eq.${userId},addressee_id.eq.${userId}`);
     const list = friends ?? [];
-    const ids = list.map((f: any) => f.requester_id);
+    const ids = list.map((f: any) => (f.requester_id === userId ? f.addressee_id : f.requester_id));
     if (ids.length === 0) { setRows([]); return; }
     const { data: members } = await supabase
       .from("fan_zone_members")
@@ -289,7 +289,7 @@ function FriendsPanel({ userId }: { userId: string }) {
       .in("user_id", ids);
     const byId = new Map((members ?? []).map((m: any) => [m.user_id, m]));
     setRows(list.map((f: any) => {
-      const otherId = f.requester_id;
+      const otherId = f.requester_id === userId ? f.addressee_id : f.requester_id;
       const m = byId.get(otherId) as any;
       return { user_id: otherId, fan_alias: m?.fan_alias ?? null, fan_avatar_url: m?.fan_avatar_url ?? null, friendship_id: f.id };
     }));
