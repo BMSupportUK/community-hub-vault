@@ -347,31 +347,53 @@ function AdminFanZonePage() {
         </div>
 
         {/* Top tabs strip */}
-        <div className="flex items-center gap-6 border-b border-border pb-3 mb-6 overflow-x-auto">
-          <div className="flex items-center gap-2 shrink-0 text-sm font-semibold">
-            <Users className="size-4 text-muted-foreground" />
-            <span>Members</span>
-            {counts.pending > 0 && (
-              <span className="ml-1 size-2 rounded-full bg-rose-500" aria-label={`${counts.pending} pending`} />
+        <div className="flex flex-col gap-3 border-b border-border pb-3 mb-6">
+          <div className="flex items-center gap-6 overflow-x-auto">
+            <div className="flex items-center gap-2 shrink-0 text-sm font-semibold">
+              <Users className="size-4 text-muted-foreground" />
+              <span>Members</span>
+              {counts.pending > 0 && (
+                <span className="ml-1 size-2 rounded-full bg-rose-500" aria-label={`${counts.pending} pending`} />
+              )}
+            </div>
+            {isAdmin && (
+              <Tabs value={roleTab} onValueChange={(v) => setRoleTab(v as RoleTab)}>
+                <TabsList className="bg-transparent p-0 h-auto gap-1">
+                  <TabsTrigger value="admins" className="data-[state=active]:bg-surface-2 data-[state=active]:text-foreground rounded-md px-3 py-1.5 text-sm">
+                    <Shield className="size-3.5 mr-1.5 text-amber-400" /> Admins{counts.admins > 0 && <span className="ml-1.5 text-xs text-amber-400">{counts.admins}</span>}
+                  </TabsTrigger>
+                  <TabsTrigger value="moderators" className="data-[state=active]:bg-surface-2 data-[state=active]:text-foreground rounded-md px-3 py-1.5 text-sm">
+                    <ShieldCheck className="size-3.5 mr-1.5 text-sky-400" /> Moderators{counts.moderators > 0 && <span className="ml-1.5 text-xs text-sky-400">{counts.moderators}</span>}
+                  </TabsTrigger>
+                  <TabsTrigger value="members" className="data-[state=active]:bg-surface-2 data-[state=active]:text-foreground rounded-md px-3 py-1.5 text-sm">
+                    Users{counts.members > 0 && <span className="ml-1.5 text-xs text-muted-foreground">{counts.members}</span>}
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
             )}
           </div>
-          {isAdmin && (
-            <Tabs value={tab} onValueChange={(v) => setTab(v as Tab)}>
-              <TabsList className="bg-transparent p-0 h-auto gap-1">
-                <TabsTrigger value="all" className="data-[state=active]:bg-surface-2 data-[state=active]:text-foreground rounded-md px-3 py-1.5 text-sm">
-                  All Members
-                </TabsTrigger>
-                <TabsTrigger value="pending" className="data-[state=active]:bg-surface-2 data-[state=active]:text-foreground rounded-md px-3 py-1.5 text-sm">
-                  Pending{counts.pending > 0 && <span className="ml-1.5 text-xs text-rose-400">{counts.pending}</span>}
-                </TabsTrigger>
-                <TabsTrigger value="rejected" className="data-[state=active]:bg-surface-2 data-[state=active]:text-foreground rounded-md px-3 py-1.5 text-sm">
-                  Rejected
-                </TabsTrigger>
-                <TabsTrigger value="approved" className="data-[state=active]:bg-surface-2 data-[state=active]:text-foreground rounded-md px-3 py-1.5 text-sm">
-                  Approved
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
+          {isAdmin && roleTab === "members" && (
+            <div className="flex items-center gap-6 overflow-x-auto pl-[88px]">
+              <Tabs value={statusTab} onValueChange={(v) => setStatusTab(v as StatusTab)}>
+                <TabsList className="bg-transparent p-0 h-auto gap-1">
+                  <TabsTrigger value="all" className="data-[state=active]:bg-surface-2 data-[state=active]:text-foreground rounded-md px-3 py-1.5 text-sm">
+                    All
+                  </TabsTrigger>
+                  <TabsTrigger value="pending" className="data-[state=active]:bg-surface-2 data-[state=active]:text-foreground rounded-md px-3 py-1.5 text-sm">
+                    Pending{counts.pending > 0 && <span className="ml-1.5 text-xs text-rose-400">{counts.pending}</span>}
+                  </TabsTrigger>
+                  <TabsTrigger value="rejected" className="data-[state=active]:bg-surface-2 data-[state=active]:text-foreground rounded-md px-3 py-1.5 text-sm">
+                    Rejected
+                  </TabsTrigger>
+                  <TabsTrigger value="approved" className="data-[state=active]:bg-surface-2 data-[state=active]:text-foreground rounded-md px-3 py-1.5 text-sm">
+                    Approved
+                  </TabsTrigger>
+                  <TabsTrigger value="revoked" className="data-[state=active]:bg-surface-2 data-[state=active]:text-foreground rounded-md px-3 py-1.5 text-sm">
+                    Revoked
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
+            </div>
           )}
         </div>
 
@@ -380,7 +402,7 @@ function AdminFanZonePage() {
           <div className="flex items-center gap-2">
             <Trophy className="size-5 text-amber-500" />
             <h1 className="text-xl font-semibold">
-              {tab === "all" ? "Recent Members" : tab.charAt(0).toUpperCase() + tab.slice(1) + " Members"}
+              {roleTab === "admins" ? "Admin Team" : roleTab === "moderators" ? "Moderators" : statusTab === "all" ? "Recent Members" : statusTab.charAt(0).toUpperCase() + statusTab.slice(1) + " Members"}
             </h1>
           </div>
           <div className="flex items-center gap-2">
