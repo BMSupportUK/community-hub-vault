@@ -470,7 +470,7 @@ function TopicPage() {
                     <div className="boro-topic-post-content px-5 py-5 sm:px-6">
                       {editingId === p.id ? (
                         <div className="space-y-3">
-                          <HtmlEditor value={editText} onChange={setEditText} mentions={mentionCandidates} />
+                          <HtmlEditor value={editText} onChange={setEditText} mentions={mentionCandidates} imageUpload={{ userId: user?.id }} />
                           <div className="flex gap-2 justify-end">
                             <Button size="sm" variant="outline" onClick={() => setEditingId(null)}><X className="size-3.5 mr-1" />Cancel</Button>
                             <Button size="sm" onClick={() => void saveEdit()}><Check className="size-3.5 mr-1" />Save</Button>
@@ -574,6 +574,7 @@ function TopicPage() {
                     onChange={setReply}
                     placeholder="What's on your mind? Paste an X or Facebook URL on its own line to embed it."
                     mentions={mentionCandidates}
+                    imageUpload={{ userId: user?.id }}
                   />
                   <div className="flex justify-end pt-1">
                     <Button
