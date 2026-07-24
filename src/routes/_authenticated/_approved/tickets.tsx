@@ -1524,7 +1524,7 @@ function TicketDetail({
         );
       })()}
 
-      <div className="border-t border-white/20 p-3 bg-white/5 backdrop-blur">
+      <div className="border-t border-white/20 p-2 sm:p-3 bg-white/5 backdrop-blur">
         {ticket.status === "closed" ? (
           <div className="text-center text-xs text-white/80 py-2">This ticket is closed.</div>
         ) : (
@@ -1533,7 +1533,7 @@ function TicketDetail({
               {mention.dropdown}
               <textarea
                 ref={taRef}
-                value={draft} onChange={(e) => onDraftChange(e.target.value)} rows={2} maxLength={2000}
+                value={draft} onChange={(e) => onDraftChange(e.target.value)} rows={1} maxLength={2000}
                 onBlur={() => sendTyping(true)}
                 placeholder={internal ? "Internal note (staff only)… type @ to mention" : "Reply to ticket… type @ to mention"}
                 onPaste={(e) => {
