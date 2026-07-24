@@ -63,10 +63,13 @@ function AdminFanZonePage() {
   const info = useFanZoneMembership(user?.id ?? null);
   const isMember = info?.status === "approved" || hasAny(["boro_fan_zone_member"]);
   const canView = isAdmin || isMember;
-  type Tab = "all" | Status;
-  const [tab, setTab] = useState<Tab>(isAdmin ? "all" : "approved");
+  type StatusTab = "all" | Status;
+  type RoleTab = "admins" | "moderators" | "members";
+  const [roleTab, setRoleTab] = useState<RoleTab>("members");
+  const [statusTab, setStatusTab] = useState<StatusTab>(isAdmin ? "all" : "approved");
   const [rows, setRows] = useState<Row[]>([]);
   const [profiles, setProfiles] = useState<Record<string, Profile>>({});
+  const [userRoles, setUserRoles] = useState<Record<string, string[]>>({});
   const [busy, setBusy] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<"name" | "since" | "requested">("requested");
