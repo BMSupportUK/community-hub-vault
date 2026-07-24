@@ -1414,18 +1414,18 @@ function TicketDetail({
   return (
     <div className="flex-1 flex flex-col lg:flex-row min-h-0">
       <div className="flex-1 flex flex-col min-h-0">
-      <header className="border-b border-white/20 px-5 py-3 space-y-3 bg-white/5 backdrop-blur">
-        <div className="flex flex-wrap sm:flex-nowrap items-start sm:items-center gap-3">
-          <div className="size-9 shrink-0 rounded-lg bg-white/25 grid place-items-center"><CatIcon className="size-4 text-white" /></div>
+      <header className="border-b border-white/20 px-3 sm:px-5 py-2 sm:py-3 space-y-2 sm:space-y-3 bg-white/5 backdrop-blur">
+        <div className="flex flex-wrap sm:flex-nowrap items-start sm:items-center gap-2 sm:gap-3">
+          <div className="hidden sm:grid size-9 shrink-0 rounded-lg bg-white/25 place-items-center"><CatIcon className="size-4 text-white" /></div>
           <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-white/80">
+            <div className="hidden sm:flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-white/80">
               <span>{cat?.name ?? "—"}</span>
               <span>·</span>
               <span>Opened by {senderName(ticket.user_id)}</span>
               <span>·</span>
               <span>{new Date(ticket.created_at).toLocaleDateString([], { timeZone: tz })}</span>
             </div>
-            <h1 className="font-display font-semibold text-lg truncate text-white drop-shadow">{ticket.subject}</h1>
+            <h1 className="font-display font-semibold text-base sm:text-lg truncate text-white drop-shadow">{ticket.subject}</h1>
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-white/25 text-xs text-white">
@@ -1482,7 +1482,7 @@ function TicketDetail({
         onRate={onRate}
       />
 
-      <div ref={scrollRef} className="flex-1 overflow-y-auto px-5 py-4 space-y-3">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto px-3 sm:px-5 py-3 sm:py-4 space-y-3">
         {messages.map((m) => {
           const mine = m.sender_id === currentUserId;
           return (
@@ -1490,7 +1490,7 @@ function TicketDetail({
               <div className="size-8 rounded-full bg-white text-rose-600 grid place-items-center text-xs font-bold shrink-0 shadow">
                 {senderName(m.sender_id).slice(0, 1).toUpperCase()}
               </div>
-              <div className={cn("max-w-[70%] rounded-2xl px-4 py-2 text-sm shadow",
+              <div className={cn("max-w-[88%] sm:max-w-[70%] rounded-2xl px-3 sm:px-4 py-2 text-sm shadow",
                 m.is_internal ? "bg-amber-200/90 text-amber-950 border border-amber-300" :
                 mine ? "bg-white text-rose-700" : "bg-white/20 backdrop-blur text-white border border-white/25",
               )}>
@@ -1524,7 +1524,7 @@ function TicketDetail({
         );
       })()}
 
-      <div className="border-t border-white/20 p-3 bg-white/5 backdrop-blur">
+      <div className="border-t border-white/20 p-2 sm:p-3 bg-white/5 backdrop-blur">
         {ticket.status === "closed" ? (
           <div className="text-center text-xs text-white/80 py-2">This ticket is closed.</div>
         ) : (
@@ -1533,7 +1533,7 @@ function TicketDetail({
               {mention.dropdown}
               <textarea
                 ref={taRef}
-                value={draft} onChange={(e) => onDraftChange(e.target.value)} rows={2} maxLength={2000}
+                value={draft} onChange={(e) => onDraftChange(e.target.value)} rows={1} maxLength={2000}
                 onBlur={() => sendTyping(true)}
                 placeholder={internal ? "Internal note (staff only)… type @ to mention" : "Reply to ticket… type @ to mention"}
                 onPaste={(e) => {
