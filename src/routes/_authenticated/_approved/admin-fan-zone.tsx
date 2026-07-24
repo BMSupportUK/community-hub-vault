@@ -339,11 +339,6 @@ function AdminFanZonePage() {
           <Link to="/forum" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
             <ArrowLeft className="size-4" /> Back to Boro Fan Zone
           </Link>
-          {isAdmin && (
-            <Link to="/admin" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
-              <ArrowLeft className="size-4" /> Back to Admin Dashboard
-            </Link>
-          )}
         </div>
 
         {/* Top tabs strip */}
