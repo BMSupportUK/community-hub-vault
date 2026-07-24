@@ -582,7 +582,7 @@ function AdminFanZonePage() {
               </tbody>
             </table>
           </div>
-          <div className="px-5 py-3 text-xs text-muted-foreground border-t border-border bg-surface-2/30">
+          <div className="px-5 py-3 text-xs text-muted-foreground border-t border-primary/10 bg-surface-2/40">
             Showing <span className="font-medium text-foreground">{filtered.length}</span> {filtered.length === 1 ? "member" : "members"}
           </div>
         </div>
