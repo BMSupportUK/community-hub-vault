@@ -288,6 +288,7 @@ function BoardPage() {
                     onChange={setBody}
                     placeholder="What's on your mind? Paste an X or Facebook URL on its own line to embed it."
                     mentions={mentionCandidates}
+                    imageUpload={{ userId: user?.id }}
                   />
                 </div>
                   {poll ? (
