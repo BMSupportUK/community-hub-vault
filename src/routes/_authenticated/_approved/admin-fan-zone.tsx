@@ -15,6 +15,8 @@ import {
   UserPlus,
   UserCheck,
   Clock,
+  Shield,
+  ShieldCheck,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -61,10 +63,13 @@ function AdminFanZonePage() {
   const info = useFanZoneMembership(user?.id ?? null);
   const isMember = info?.status === "approved" || hasAny(["boro_fan_zone_member"]);
   const canView = isAdmin || isMember;
-  type Tab = "all" | Status;
-  const [tab, setTab] = useState<Tab>(isAdmin ? "all" : "approved");
+  type StatusTab = "all" | Status;
+  type RoleTab = "admins" | "moderators" | "members";
+  const [roleTab, setRoleTab] = useState<RoleTab>("members");
+  const [statusTab, setStatusTab] = useState<StatusTab>(isAdmin ? "all" : "approved");
   const [rows, setRows] = useState<Row[]>([]);
   const [profiles, setProfiles] = useState<Record<string, Profile>>({});
+  const [userRoles, setUserRoles] = useState<Record<string, string[]>>({});
   const [busy, setBusy] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<"name" | "since" | "requested">("requested");
@@ -158,6 +163,19 @@ function AdminFanZonePage() {
         const map: Record<string, Profile> = {};
         (ps ?? []).forEach((p) => (map[(p as Profile).id] = p as Profile));
         setProfiles(map);
+
+        const { data: rs } = await supabase
+          .from("user_roles")
+          .select("user_id, role")
+          .in("user_id", ids);
+        const rmap: Record<string, string[]> = {};
+        (rs ?? []).forEach((row) => {
+          const uid = (row as { user_id: string; role: string }).user_id;
+          const role = (row as { user_id: string; role: string }).role;
+          rmap[uid] = rmap[uid] ?? [];
+          rmap[uid].push(role);
+        });
+        setUserRoles(rmap);
       }
     } else {
       const { data } = await (supabase.rpc as unknown as (fn: string) => Promise<{ data: unknown }>)(
@@ -238,22 +256,47 @@ function AdminFanZonePage() {
     void load();
   };
 
+  const getRoles = (userId: string) => userRoles[userId] ?? [];
+  const isAdminRole = (userId: string) => {
+    const rs = getRoles(userId);
+    return rs.includes("admin") || rs.includes("management");
+  };
+  const isModeratorRole = (userId: string) => {
+    const rs = getRoles(userId);
+    return rs.includes("moderator") || rs.includes("boro_fan_zone_moderator");
+  };
+
+  const roleGroups = useMemo(() => {
+    const admins: Row[] = [];
+    const moderators: Row[] = [];
+    const members: Row[] = [];
+    for (const r of rows) {
+      if (isAdminRole(r.user_id)) admins.push(r);
+      else if (isModeratorRole(r.user_id)) moderators.push(r);
+      else members.push(r);
+    }
+    return { admins, moderators, members };
+  }, [rows, userRoles]);
+
   const counts = useMemo(
     () => ({
-      all: rows.length,
-      pending: rows.filter((r) => r.status === "pending").length,
-      approved: rows.filter((r) => r.status === "approved").length,
-      rejected: rows.filter((r) => r.status === "rejected").length,
-      revoked: rows.filter((r) => r.status === "revoked").length,
+      admins: roleGroups.admins.length,
+      moderators: roleGroups.moderators.length,
+      members: roleGroups.members.length,
+      pending: roleGroups.members.filter((r) => r.status === "pending").length,
+      approved: roleGroups.members.filter((r) => r.status === "approved").length,
+      rejected: roleGroups.members.filter((r) => r.status === "rejected").length,
+      revoked: roleGroups.members.filter((r) => r.status === "revoked").length,
     }),
-    [rows],
+    [roleGroups],
   );
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     const dir = sortDir === "asc" ? 1 : -1;
-    return rows
-      .filter((r) => (tab === "all" ? true : r.status === tab))
+    const group = roleTab === "admins" ? roleGroups.admins : roleTab === "moderators" ? roleGroups.moderators : roleGroups.members;
+    return group
+      .filter((r) => (roleTab !== "members" || statusTab === "all" ? true : r.status === statusTab))
       .filter((r) => {
         if (!q) return true;
         const p = profiles[r.user_id];
@@ -276,7 +319,7 @@ function AdminFanZonePage() {
         }
         return (new Date(a.requested_at).getTime() - new Date(b.requested_at).getTime()) * dir;
       });
-  }, [rows, profiles, tab, search, sortKey, sortDir]);
+  }, [roleGroups, roleTab, statusTab, profiles, search, sortKey, sortDir]);
 
   const toggleSort = (key: "name" | "since" | "requested") => {
     if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
@@ -304,31 +347,53 @@ function AdminFanZonePage() {
         </div>
 
         {/* Top tabs strip */}
-        <div className="flex items-center gap-6 border-b border-border pb-3 mb-6 overflow-x-auto">
-          <div className="flex items-center gap-2 shrink-0 text-sm font-semibold">
-            <Users className="size-4 text-muted-foreground" />
-            <span>Members</span>
-            {counts.pending > 0 && (
-              <span className="ml-1 size-2 rounded-full bg-rose-500" aria-label={`${counts.pending} pending`} />
+        <div className="flex flex-col gap-3 border-b border-border pb-3 mb-6">
+          <div className="flex items-center gap-6 overflow-x-auto">
+            <div className="flex items-center gap-2 shrink-0 text-sm font-semibold">
+              <Users className="size-4 text-muted-foreground" />
+              <span>Members</span>
+              {counts.pending > 0 && (
+                <span className="ml-1 size-2 rounded-full bg-rose-500" aria-label={`${counts.pending} pending`} />
+              )}
+            </div>
+            {isAdmin && (
+              <Tabs value={roleTab} onValueChange={(v) => setRoleTab(v as RoleTab)}>
+                <TabsList className="bg-transparent p-0 h-auto gap-1">
+                  <TabsTrigger value="admins" className="data-[state=active]:bg-surface-2 data-[state=active]:text-foreground rounded-md px-3 py-1.5 text-sm">
+                    <Shield className="size-3.5 mr-1.5 text-amber-400" /> Admins{counts.admins > 0 && <span className="ml-1.5 text-xs text-amber-400">{counts.admins}</span>}
+                  </TabsTrigger>
+                  <TabsTrigger value="moderators" className="data-[state=active]:bg-surface-2 data-[state=active]:text-foreground rounded-md px-3 py-1.5 text-sm">
+                    <ShieldCheck className="size-3.5 mr-1.5 text-sky-400" /> Moderators{counts.moderators > 0 && <span className="ml-1.5 text-xs text-sky-400">{counts.moderators}</span>}
+                  </TabsTrigger>
+                  <TabsTrigger value="members" className="data-[state=active]:bg-surface-2 data-[state=active]:text-foreground rounded-md px-3 py-1.5 text-sm">
+                    Users{counts.members > 0 && <span className="ml-1.5 text-xs text-muted-foreground">{counts.members}</span>}
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
             )}
           </div>
-          {isAdmin && (
-            <Tabs value={tab} onValueChange={(v) => setTab(v as Tab)}>
-              <TabsList className="bg-transparent p-0 h-auto gap-1">
-                <TabsTrigger value="all" className="data-[state=active]:bg-surface-2 data-[state=active]:text-foreground rounded-md px-3 py-1.5 text-sm">
-                  All Members
-                </TabsTrigger>
-                <TabsTrigger value="pending" className="data-[state=active]:bg-surface-2 data-[state=active]:text-foreground rounded-md px-3 py-1.5 text-sm">
-                  Pending{counts.pending > 0 && <span className="ml-1.5 text-xs text-rose-400">{counts.pending}</span>}
-                </TabsTrigger>
-                <TabsTrigger value="rejected" className="data-[state=active]:bg-surface-2 data-[state=active]:text-foreground rounded-md px-3 py-1.5 text-sm">
-                  Rejected
-                </TabsTrigger>
-                <TabsTrigger value="approved" className="data-[state=active]:bg-surface-2 data-[state=active]:text-foreground rounded-md px-3 py-1.5 text-sm">
-                  Approved
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
+          {isAdmin && roleTab === "members" && (
+            <div className="flex items-center gap-6 overflow-x-auto pl-[88px]">
+              <Tabs value={statusTab} onValueChange={(v) => setStatusTab(v as StatusTab)}>
+                <TabsList className="bg-transparent p-0 h-auto gap-1">
+                  <TabsTrigger value="all" className="data-[state=active]:bg-surface-2 data-[state=active]:text-foreground rounded-md px-3 py-1.5 text-sm">
+                    All
+                  </TabsTrigger>
+                  <TabsTrigger value="pending" className="data-[state=active]:bg-surface-2 data-[state=active]:text-foreground rounded-md px-3 py-1.5 text-sm">
+                    Pending{counts.pending > 0 && <span className="ml-1.5 text-xs text-rose-400">{counts.pending}</span>}
+                  </TabsTrigger>
+                  <TabsTrigger value="rejected" className="data-[state=active]:bg-surface-2 data-[state=active]:text-foreground rounded-md px-3 py-1.5 text-sm">
+                    Rejected
+                  </TabsTrigger>
+                  <TabsTrigger value="approved" className="data-[state=active]:bg-surface-2 data-[state=active]:text-foreground rounded-md px-3 py-1.5 text-sm">
+                    Approved
+                  </TabsTrigger>
+                  <TabsTrigger value="revoked" className="data-[state=active]:bg-surface-2 data-[state=active]:text-foreground rounded-md px-3 py-1.5 text-sm">
+                    Revoked
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
+            </div>
           )}
         </div>
 
@@ -337,7 +402,7 @@ function AdminFanZonePage() {
           <div className="flex items-center gap-2">
             <Trophy className="size-5 text-amber-500" />
             <h1 className="text-xl font-semibold">
-              {tab === "all" ? "Recent Members" : tab.charAt(0).toUpperCase() + tab.slice(1) + " Members"}
+              {roleTab === "admins" ? "Admin Team" : roleTab === "moderators" ? "Moderators" : statusTab === "all" ? "Recent Members" : statusTab.charAt(0).toUpperCase() + statusTab.slice(1) + " Members"}
             </h1>
           </div>
           <div className="flex items-center gap-2">
@@ -479,6 +544,18 @@ function AdminFanZonePage() {
                               >
                                 {name}
                               </Link>
+                              <div className="flex items-center gap-1.5 mt-1">
+                                {isAdminRole(r.user_id) && (
+                                  <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/30 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide">
+                                    <Shield className="size-3" /> Admin
+                                  </span>
+                                )}
+                                {isModeratorRole(r.user_id) && !isAdminRole(r.user_id) && (
+                                  <span className="inline-flex items-center gap-1 rounded-full bg-sky-500/10 text-sky-400 border border-sky-500/30 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide">
+                                    <ShieldCheck className="size-3" /> Moderator
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           </div>
                         </td>
