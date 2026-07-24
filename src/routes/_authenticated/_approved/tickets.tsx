@@ -501,12 +501,12 @@ function TicketsPage() {
           <TabsContent value="tickets" className={cn("mt-6", isChatting && "mt-0 h-full")}>
             <div className={cn(
               "grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-4",
-              isChatting && "h-[calc(100vh-4rem)] gap-0 lg:grid-cols-[280px_1fr]"
+              isChatting && "h-[calc(100dvh-4rem)] gap-0 lg:grid-cols-[280px_1fr] grid-rows-[auto_1fr] lg:grid-rows-1"
             )}>
               {/* Left list */}
               <aside className={cn(
                 "rounded-2xl bg-rose-950/50 border border-rose-500/30 p-4 h-fit backdrop-blur space-y-3",
-                isChatting && "rounded-none border-y-0 border-l-0 h-full overflow-y-auto"
+                isChatting && "rounded-none border-y-0 border-l-0 h-full overflow-y-auto hidden lg:block"
               )}>
                 {!isChatting && (
                   <button
@@ -594,7 +594,7 @@ function TicketsPage() {
                 ref={detailPanelRef}
                 className={cn(
                   "rounded-2xl bg-gradient-to-br from-violet-600 via-fuchsia-600 to-rose-600 text-white relative overflow-hidden min-h-[600px] flex flex-col scroll-mt-16",
-                  isChatting ? "h-full rounded-none border-y-0 border-r-0" : "h-[calc(100vh-8rem)]"
+                  isChatting ? "h-full rounded-none border-y-0 border-r-0" : "h-[calc(100dvh-8rem)]"
                 )}
               >
                 <div className="pointer-events-none absolute inset-0 opacity-60" style={{
