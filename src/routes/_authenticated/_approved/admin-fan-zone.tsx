@@ -415,28 +415,28 @@ function AdminFanZonePage() {
         )}
 
         {/* Table */}
-        <div className="rounded-xl border border-border bg-surface-1 overflow-hidden">
+        <div className="rounded-2xl border border-primary/20 bg-card/90 backdrop-blur-xl shadow-glow overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-[11px] uppercase tracking-wider text-muted-foreground border-b border-border bg-surface-2/40">
-                  <th className="text-left font-semibold px-5 py-3">
-                    <button onClick={() => toggleSort("name")} className="inline-flex items-center gap-1 hover:text-foreground">
+                <tr className="text-[11px] uppercase tracking-wider text-muted-foreground border-b border-primary/10 bg-gradient-to-r from-surface-2/80 to-surface/80">
+                  <th className="text-left font-semibold px-5 py-3.5">
+                    <button onClick={() => toggleSort("name")} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">
                       Name <ArrowUpDown className="size-3" />
                     </button>
                   </th>
-                  <th className="text-left font-semibold px-5 py-3">
-                    <button onClick={() => toggleSort("since")} className="inline-flex items-center gap-1 hover:text-foreground">
+                  <th className="text-left font-semibold px-5 py-3.5">
+                    <button onClick={() => toggleSort("since")} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">
                       Member Since <ArrowUpDown className="size-3" />
                     </button>
                   </th>
-                  <th className="text-left font-semibold px-5 py-3">
-                    <button onClick={() => toggleSort("requested")} className="inline-flex items-center gap-1 hover:text-foreground">
+                  <th className="text-left font-semibold px-5 py-3.5">
+                    <button onClick={() => toggleSort("requested")} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">
                       Requested <ArrowUpDown className="size-3" />
                     </button>
                   </th>
-                  {isAdmin && <th className="text-left font-semibold px-5 py-3">Reason</th>}
-                  {isAdmin && <th className="text-left font-semibold px-5 py-3">Status</th>}
+                  {isAdmin && <th className="text-left font-semibold px-5 py-3.5">Reason</th>}
+                  {isAdmin && <th className="text-left font-semibold px-5 py-3.5">Status</th>}
                   <th className="w-12 px-3 text-center font-semibold">Friend</th>
                   {isAdmin && <th className="w-12 px-3" />}
                 </tr>
