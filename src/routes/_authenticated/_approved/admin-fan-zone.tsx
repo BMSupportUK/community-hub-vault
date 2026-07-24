@@ -364,7 +364,7 @@ function AdminFanZonePage() {
 
         {/* Pending friend requests */}
         {incomingReqs.length > 0 && (
-          <div className="mb-4 rounded-xl border border-amber-500/30 bg-amber-500/5 p-4">
+          <div className="mb-6 rounded-2xl border border-amber-400/30 bg-amber-500/10 backdrop-blur-md shadow-soft p-4">
             <div className="flex items-center gap-2 mb-3">
               <UserPlus className="size-4 text-amber-400" />
               <h2 className="text-sm font-semibold">
@@ -377,19 +377,19 @@ function AdminFanZonePage() {
                 const name = p?.display_name || p?.username || "Boro Fan";
                 const avatar = p?.avatar_url;
                 return (
-                  <li key={req.id} className="flex items-center justify-between gap-3 rounded-lg bg-surface-1 px-3 py-2">
+                  <li key={req.id} className="flex items-center justify-between gap-3 rounded-xl bg-card/80 border border-border/60 px-3 py-2 hover:border-amber-400/40 transition-colors">
                     <div className="flex items-center gap-3 min-w-0">
                       {avatar ? (
-                        <img src={avatar} alt={name} className="size-9 rounded-full object-cover" />
+                        <img src={avatar} alt={name} className="size-9 rounded-full object-cover ring-2 ring-amber-400/30 ring-offset-2 ring-offset-card" />
                       ) : (
-                        <div className="size-9 rounded-full bg-gradient-to-br from-rose-600 to-amber-600 grid place-items-center text-white text-xs font-bold">
+                        <div className="size-9 rounded-full bg-gradient-to-br from-rose-600 to-amber-600 grid place-items-center text-white text-xs font-bold ring-2 ring-amber-400/30 ring-offset-2 ring-offset-card">
                           {name.slice(0, 1).toUpperCase()}
                         </div>
                       )}
                       <Link
                         to="/fanzone/u/$userId"
                         params={{ userId: req.requester_id }}
-                        className="font-medium hover:underline truncate"
+                        className="font-medium hover:text-amber-400 hover:underline truncate transition-colors"
                       >
                         {name}
                       </Link>
@@ -415,28 +415,28 @@ function AdminFanZonePage() {
         )}
 
         {/* Table */}
-        <div className="rounded-xl border border-border bg-surface-1 overflow-hidden">
+        <div className="rounded-2xl border border-primary/20 bg-card/90 backdrop-blur-xl shadow-glow overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-[11px] uppercase tracking-wider text-muted-foreground border-b border-border bg-surface-2/40">
-                  <th className="text-left font-semibold px-5 py-3">
-                    <button onClick={() => toggleSort("name")} className="inline-flex items-center gap-1 hover:text-foreground">
+                <tr className="text-[11px] uppercase tracking-wider text-muted-foreground border-b border-primary/10 bg-gradient-to-r from-surface-2/80 to-surface/80">
+                  <th className="text-left font-semibold px-5 py-3.5">
+                    <button onClick={() => toggleSort("name")} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">
                       Name <ArrowUpDown className="size-3" />
                     </button>
                   </th>
-                  <th className="text-left font-semibold px-5 py-3">
-                    <button onClick={() => toggleSort("since")} className="inline-flex items-center gap-1 hover:text-foreground">
+                  <th className="text-left font-semibold px-5 py-3.5">
+                    <button onClick={() => toggleSort("since")} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">
                       Member Since <ArrowUpDown className="size-3" />
                     </button>
                   </th>
-                  <th className="text-left font-semibold px-5 py-3">
-                    <button onClick={() => toggleSort("requested")} className="inline-flex items-center gap-1 hover:text-foreground">
+                  <th className="text-left font-semibold px-5 py-3.5">
+                    <button onClick={() => toggleSort("requested")} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">
                       Requested <ArrowUpDown className="size-3" />
                     </button>
                   </th>
-                  {isAdmin && <th className="text-left font-semibold px-5 py-3">Reason</th>}
-                  {isAdmin && <th className="text-left font-semibold px-5 py-3">Status</th>}
+                  {isAdmin && <th className="text-left font-semibold px-5 py-3.5">Reason</th>}
+                  {isAdmin && <th className="text-left font-semibold px-5 py-3.5">Status</th>}
                   <th className="w-12 px-3 text-center font-semibold">Friend</th>
                   {isAdmin && <th className="w-12 px-3" />}
                 </tr>
@@ -445,7 +445,12 @@ function AdminFanZonePage() {
                 {filtered.length === 0 ? (
                   <tr>
                     <td colSpan={isAdmin ? 7 : 4} className="text-center text-muted-foreground py-16">
-                      No members in this view.
+                      <div className="flex flex-col items-center gap-3">
+                        <div className="size-12 rounded-full bg-surface-2/60 grid place-items-center">
+                          <Users className="size-6 text-muted-foreground/60" />
+                        </div>
+                        <p>No members in this view.</p>
+                      </div>
                     </td>
                   </tr>
                 ) : (
@@ -455,13 +460,14 @@ function AdminFanZonePage() {
                     const isSelf = user?.id === r.user_id;
                     const fs = friendByUser[r.user_id];
                     return (
-                      <tr key={r.user_id} className="border-b border-border/60 last:border-0 hover:bg-surface-2/30">
-                        <td className="px-5 py-3">
+                      <tr key={r.user_id} className="border-b border-border/60 last:border-0 transition-all duration-200 hover:bg-surface-2/50 group relative">
+                        <td className="px-5 py-3.5">
+                          <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-gradient-to-b from-primary to-primary-glow opacity-0 group-hover:opacity-100 transition-opacity rounded-l-2xl" />
                           <div className="flex items-center gap-3 min-w-0">
                             {avatar ? (
-                              <img src={avatar} alt={name} className="size-9 rounded-full object-cover" />
+                              <img src={avatar} alt={name} className="size-10 rounded-full object-cover ring-2 ring-primary/30 ring-offset-2 ring-offset-card transition-all group-hover:ring-primary/60" />
                             ) : (
-                              <div className="size-9 rounded-full bg-gradient-to-br from-rose-600 to-amber-600 grid place-items-center text-white text-xs font-bold">
+                              <div className="size-10 rounded-full bg-gradient-to-br from-rose-600 to-amber-600 grid place-items-center text-white text-sm font-bold ring-2 ring-primary/30 ring-offset-2 ring-offset-card transition-all group-hover:ring-primary/60">
                                 {name.slice(0, 1).toUpperCase()}
                               </div>
                             )}
@@ -469,7 +475,7 @@ function AdminFanZonePage() {
                               <Link
                                 to="/fanzone/u/$userId"
                                 params={{ userId: r.user_id }}
-                                className="font-medium hover:underline truncate block max-w-[220px]"
+                                className="font-semibold text-foreground hover:text-primary hover:underline truncate block max-w-[220px] transition-colors"
                               >
                                 {name}
                               </Link>
@@ -576,7 +582,7 @@ function AdminFanZonePage() {
               </tbody>
             </table>
           </div>
-          <div className="px-5 py-3 text-xs text-muted-foreground border-t border-border bg-surface-2/30">
+          <div className="px-5 py-3 text-xs text-muted-foreground border-t border-primary/10 bg-surface-2/40">
             Showing <span className="font-medium text-foreground">{filtered.length}</span> {filtered.length === 1 ? "member" : "members"}
           </div>
         </div>
