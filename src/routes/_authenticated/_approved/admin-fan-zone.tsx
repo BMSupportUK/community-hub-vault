@@ -256,15 +256,39 @@ function AdminFanZonePage() {
     void load();
   };
 
+  const getRoles = (userId: string) => userRoles[userId] ?? [];
+  const isAdminRole = (userId: string) => {
+    const rs = getRoles(userId);
+    return rs.includes("admin") || rs.includes("management");
+  };
+  const isModeratorRole = (userId: string) => {
+    const rs = getRoles(userId);
+    return rs.includes("moderator") || rs.includes("boro_fan_zone_moderator");
+  };
+
+  const roleGroups = useMemo(() => {
+    const admins: Row[] = [];
+    const moderators: Row[] = [];
+    const members: Row[] = [];
+    for (const r of rows) {
+      if (isAdminRole(r.user_id)) admins.push(r);
+      else if (isModeratorRole(r.user_id)) moderators.push(r);
+      else members.push(r);
+    }
+    return { admins, moderators, members };
+  }, [rows, userRoles]);
+
   const counts = useMemo(
     () => ({
-      all: rows.length,
-      pending: rows.filter((r) => r.status === "pending").length,
-      approved: rows.filter((r) => r.status === "approved").length,
-      rejected: rows.filter((r) => r.status === "rejected").length,
-      revoked: rows.filter((r) => r.status === "revoked").length,
+      admins: roleGroups.admins.length,
+      moderators: roleGroups.moderators.length,
+      members: roleGroups.members.length,
+      pending: roleGroups.members.filter((r) => r.status === "pending").length,
+      approved: roleGroups.members.filter((r) => r.status === "approved").length,
+      rejected: roleGroups.members.filter((r) => r.status === "rejected").length,
+      revoked: roleGroups.members.filter((r) => r.status === "revoked").length,
     }),
-    [rows],
+    [roleGroups],
   );
 
   const filtered = useMemo(() => {
