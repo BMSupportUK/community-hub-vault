@@ -364,7 +364,7 @@ function AdminFanZonePage() {
 
         {/* Pending friend requests */}
         {incomingReqs.length > 0 && (
-          <div className="mb-4 rounded-xl border border-amber-500/30 bg-amber-500/5 p-4">
+          <div className="mb-6 rounded-2xl border border-amber-400/30 bg-amber-500/10 backdrop-blur-md shadow-soft p-4">
             <div className="flex items-center gap-2 mb-3">
               <UserPlus className="size-4 text-amber-400" />
               <h2 className="text-sm font-semibold">
@@ -377,19 +377,19 @@ function AdminFanZonePage() {
                 const name = p?.display_name || p?.username || "Boro Fan";
                 const avatar = p?.avatar_url;
                 return (
-                  <li key={req.id} className="flex items-center justify-between gap-3 rounded-lg bg-surface-1 px-3 py-2">
+                  <li key={req.id} className="flex items-center justify-between gap-3 rounded-xl bg-card/80 border border-border/60 px-3 py-2 hover:border-amber-400/40 transition-colors">
                     <div className="flex items-center gap-3 min-w-0">
                       {avatar ? (
-                        <img src={avatar} alt={name} className="size-9 rounded-full object-cover" />
+                        <img src={avatar} alt={name} className="size-9 rounded-full object-cover ring-2 ring-amber-400/30 ring-offset-2 ring-offset-card" />
                       ) : (
-                        <div className="size-9 rounded-full bg-gradient-to-br from-rose-600 to-amber-600 grid place-items-center text-white text-xs font-bold">
+                        <div className="size-9 rounded-full bg-gradient-to-br from-rose-600 to-amber-600 grid place-items-center text-white text-xs font-bold ring-2 ring-amber-400/30 ring-offset-2 ring-offset-card">
                           {name.slice(0, 1).toUpperCase()}
                         </div>
                       )}
                       <Link
                         to="/fanzone/u/$userId"
                         params={{ userId: req.requester_id }}
-                        className="font-medium hover:underline truncate"
+                        className="font-medium hover:text-amber-400 hover:underline truncate transition-colors"
                       >
                         {name}
                       </Link>
