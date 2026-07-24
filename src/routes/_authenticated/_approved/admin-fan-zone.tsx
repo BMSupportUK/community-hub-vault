@@ -544,6 +544,18 @@ function AdminFanZonePage() {
                               >
                                 {name}
                               </Link>
+                              <div className="flex items-center gap-1.5 mt-1">
+                                {isAdminRole(r.user_id) && (
+                                  <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/30 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide">
+                                    <Shield className="size-3" /> Admin
+                                  </span>
+                                )}
+                                {isModeratorRole(r.user_id) && !isAdminRole(r.user_id) && (
+                                  <span className="inline-flex items-center gap-1 rounded-full bg-sky-500/10 text-sky-400 border border-sky-500/30 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide">
+                                    <ShieldCheck className="size-3" /> Moderator
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           </div>
                         </td>
