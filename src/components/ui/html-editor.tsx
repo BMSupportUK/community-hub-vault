@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Bold, Italic, Underline, Heading1, Heading2, List, ListOrdered, Link2, Quote, Code, Undo2, Redo2, Eraser, Youtube, Minus, Film, Loader2 } from "lucide-react";
+import { Bold, Italic, Underline, Heading1, Heading2, List, ListOrdered, Link2, Quote, Code, Undo2, Redo2, Eraser, Youtube, Minus, Film, Image as ImageIcon, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { MentionCandidate } from "@/hooks/use-mention-candidates";
@@ -11,6 +11,8 @@ type Props = {
   placeholder?: string;
   /** Enable an "upload video" button. Provide the userId to scope the storage path. */
   videoUpload?: { userId: string | null | undefined; bucket?: string; folder?: string };
+  /** Enable an "upload image" button + paste-to-upload for image blobs. */
+  imageUpload?: { userId: string | null | undefined; bucket?: string; folder?: string };
   /**
    * Optional transform applied to pasted plain text BEFORE insertion. Return
    * an HTML string. When set, the editor intercepts paste events, reads the
@@ -27,10 +29,12 @@ function exec(cmd: string, arg?: string) {
   document.execCommand(cmd, false, arg);
 }
 
-export function HtmlEditor({ value, onChange, className, placeholder, videoUpload, pasteTransform, mentions }: Props) {
+export function HtmlEditor({ value, onChange, className, placeholder, videoUpload, imageUpload, pasteTransform, mentions }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
   const [uploadingVideo, setUploadingVideo] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [active, setActive] = useState<Record<string, boolean>>({});
   const [mention, setMention] = useState<{
     query: string;
@@ -152,6 +156,19 @@ export function HtmlEditor({ value, onChange, className, placeholder, videoUploa
   };
 
   const handlePaste = (e: React.ClipboardEvent<HTMLDivElement>) => {
+    // If an image is on the clipboard and image upload is enabled, intercept.
+    if (imageUpload) {
+      const items = Array.from(e.clipboardData.items ?? []);
+      const imgItem = items.find((it) => it.kind === "file" && it.type.startsWith("image/"));
+      if (imgItem) {
+        const file = imgItem.getAsFile();
+        if (file) {
+          e.preventDefault();
+          void uploadImage(file);
+          return;
+        }
+      }
+    }
     if (!pasteTransform) return;
     const text = e.clipboardData.getData("text/plain");
     if (!text) return;
@@ -160,6 +177,29 @@ export function HtmlEditor({ value, onChange, className, placeholder, videoUploa
     ref.current?.focus();
     exec("insertHTML", html);
     handleInput();
+  };
+
+  const uploadImage = async (file: File) => {
+    if (!imageUpload) return;
+    if (!file.type.startsWith("image/")) { toast.error("Please choose an image file"); return; }
+    if (file.size > 10 * 1024 * 1024) { toast.error("Image must be under 10MB"); return; }
+    const bucket = imageUpload.bucket ?? "avatars";
+    const owner = imageUpload.userId ?? "anon";
+    const folder = imageUpload.folder ?? "forum";
+    const ext = file.name.split(".").pop()?.toLowerCase() || "png";
+    const path = `${owner}/${folder}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+    setUploadingImage(true);
+    const { error } = await supabase.storage.from(bucket).upload(path, file, {
+      cacheControl: "3600", upsert: false, contentType: file.type,
+    });
+    if (error) { setUploadingImage(false); toast.error(error.message); return; }
+    const { data } = supabase.storage.from(bucket).getPublicUrl(path);
+    ref.current?.focus();
+    const html = `<p><img src="${data.publicUrl}" alt="" style="max-width:100%;height:auto;border-radius:0.5rem;margin:0.5rem 0;" /></p><p><br/></p>`;
+    exec("insertHTML", html);
+    handleInput();
+    setUploadingImage(false);
+    toast.success("Image added");
   };
 
   const Btn = ({ onClick, title, isActive, children }: { onClick: () => void; title: string; isActive?: boolean; children: React.ReactNode }) => (
@@ -266,6 +306,23 @@ export function HtmlEditor({ value, onChange, className, placeholder, videoUploa
         <Btn title="Numbered list" isActive={active.ol} onClick={() => { exec("insertOrderedList"); handleInput(); }}><ListOrdered className="size-4" /></Btn>
         <Btn title="Link" onClick={promptLink}><Link2 className="size-4" /></Btn>
         <Btn title="Embed YouTube video" onClick={promptYouTube}><Youtube className="size-4" /></Btn>
+        {imageUpload && (
+          <>
+            <input
+              ref={imageInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) void uploadImage(f); e.currentTarget.value = ""; }}
+            />
+            <Btn
+              title={uploadingImage ? "Uploading image…" : "Upload image (or paste from clipboard)"}
+              onClick={() => { if (!uploadingImage) imageInputRef.current?.click(); }}
+            >
+              {uploadingImage ? <Loader2 className="size-4 animate-spin" /> : <ImageIcon className="size-4" />}
+            </Btn>
+          </>
+        )}
         {videoUpload && (
           <>
             <input
