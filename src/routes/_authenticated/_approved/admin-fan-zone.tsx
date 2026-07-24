@@ -445,7 +445,12 @@ function AdminFanZonePage() {
                 {filtered.length === 0 ? (
                   <tr>
                     <td colSpan={isAdmin ? 7 : 4} className="text-center text-muted-foreground py-16">
-                      No members in this view.
+                      <div className="flex flex-col items-center gap-3">
+                        <div className="size-12 rounded-full bg-surface-2/60 grid place-items-center">
+                          <Users className="size-6 text-muted-foreground/60" />
+                        </div>
+                        <p>No members in this view.</p>
+                      </div>
                     </td>
                   </tr>
                 ) : (
@@ -455,13 +460,14 @@ function AdminFanZonePage() {
                     const isSelf = user?.id === r.user_id;
                     const fs = friendByUser[r.user_id];
                     return (
-                      <tr key={r.user_id} className="border-b border-border/60 last:border-0 hover:bg-surface-2/30">
-                        <td className="px-5 py-3">
+                      <tr key={r.user_id} className="border-b border-border/60 last:border-0 transition-all duration-200 hover:bg-surface-2/50 group relative">
+                        <td className="px-5 py-3.5">
+                          <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-gradient-to-b from-primary to-primary-glow opacity-0 group-hover:opacity-100 transition-opacity rounded-l-2xl" />
                           <div className="flex items-center gap-3 min-w-0">
                             {avatar ? (
-                              <img src={avatar} alt={name} className="size-9 rounded-full object-cover" />
+                              <img src={avatar} alt={name} className="size-10 rounded-full object-cover ring-2 ring-primary/30 ring-offset-2 ring-offset-card transition-all group-hover:ring-primary/60" />
                             ) : (
-                              <div className="size-9 rounded-full bg-gradient-to-br from-rose-600 to-amber-600 grid place-items-center text-white text-xs font-bold">
+                              <div className="size-10 rounded-full bg-gradient-to-br from-rose-600 to-amber-600 grid place-items-center text-white text-sm font-bold ring-2 ring-primary/30 ring-offset-2 ring-offset-card transition-all group-hover:ring-primary/60">
                                 {name.slice(0, 1).toUpperCase()}
                               </div>
                             )}
@@ -469,7 +475,7 @@ function AdminFanZonePage() {
                               <Link
                                 to="/fanzone/u/$userId"
                                 params={{ userId: r.user_id }}
-                                className="font-medium hover:underline truncate block max-w-[220px]"
+                                className="font-semibold text-foreground hover:text-primary hover:underline truncate block max-w-[220px] transition-colors"
                               >
                                 {name}
                               </Link>
