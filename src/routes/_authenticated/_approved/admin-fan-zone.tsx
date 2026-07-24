@@ -294,8 +294,9 @@ function AdminFanZonePage() {
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     const dir = sortDir === "asc" ? 1 : -1;
-    return rows
-      .filter((r) => (tab === "all" ? true : r.status === tab))
+    const group = roleTab === "admins" ? roleGroups.admins : roleTab === "moderators" ? roleGroups.moderators : roleGroups.members;
+    return group
+      .filter((r) => (roleTab !== "members" || statusTab === "all" ? true : r.status === statusTab))
       .filter((r) => {
         if (!q) return true;
         const p = profiles[r.user_id];
@@ -318,7 +319,7 @@ function AdminFanZonePage() {
         }
         return (new Date(a.requested_at).getTime() - new Date(b.requested_at).getTime()) * dir;
       });
-  }, [rows, profiles, tab, search, sortKey, sortDir]);
+  }, [roleGroups, roleTab, statusTab, profiles, search, sortKey, sortDir]);
 
   const toggleSort = (key: "name" | "since" | "requested") => {
     if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
