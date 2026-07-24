@@ -163,6 +163,19 @@ function AdminFanZonePage() {
         const map: Record<string, Profile> = {};
         (ps ?? []).forEach((p) => (map[(p as Profile).id] = p as Profile));
         setProfiles(map);
+
+        const { data: rs } = await supabase
+          .from("user_roles")
+          .select("user_id, role")
+          .in("user_id", ids);
+        const rmap: Record<string, string[]> = {};
+        (rs ?? []).forEach((row) => {
+          const uid = (row as { user_id: string; role: string }).user_id;
+          const role = (row as { user_id: string; role: string }).role;
+          rmap[uid] = rmap[uid] ?? [];
+          rmap[uid].push(role);
+        });
+        setUserRoles(rmap);
       }
     } else {
       const { data } = await (supabase.rpc as unknown as (fn: string) => Promise<{ data: unknown }>)(
