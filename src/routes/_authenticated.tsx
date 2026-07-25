@@ -1,14 +1,13 @@
 import { createFileRoute, Outlet, redirect, useRouterState, Navigate, useNavigate } from "@tanstack/react-router";
 import { Link } from "@tanstack/react-router";
 import { LayoutDashboard, Shield, ShieldCheck, Menu, Receipt, Clock, Calendar } from "lucide-react";
-import { useEffect, useLayoutEffect, useRef, useState, lazy, Suspense } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, lazy, Suspense, type ReactNode } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { isAdminUnlocked } from "@/lib/admin-unlock";
 import { IconRail } from "@/components/app/IconRail";
 import { logMyIp } from "@/lib/ip-log.functions";
-import { DndDialogButton } from "@/components/app/DndDialogButton";
 import { useOnlineUsers } from "@/hooks/use-online-users";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
@@ -19,13 +18,14 @@ const MentionsBadge = lazy(() => import("@/components/app/MentionsBadge").then((
 const NotificationBell = lazy(() => import("@/components/app/NotificationBell").then((m) => ({ default: m.NotificationBell })));
 const TwoFactorPill = lazy(() => import("@/components/app/TwoFactorBanner").then((m) => ({ default: m.TwoFactorPill })));
 const VpnPill = lazy(() => import("@/components/app/TwoFactorBanner").then((m) => ({ default: m.VpnPill })));
+const DndDialogButton = lazy(() => import("@/components/app/DndDialogButton").then((m) => ({ default: m.DndDialogButton })));
 const BreakEndingAlert = lazy(() => import("@/components/app/BreakEndingAlert").then((m) => ({ default: m.BreakEndingAlert })));
 const ShiftStartEndAlert = lazy(() => import("@/components/app/ShiftStartEndAlert").then((m) => ({ default: m.ShiftStartEndAlert })));
 const ModerationPendingBadge = lazy(() => import("@/components/app/ModerationPendingBadge").then((m) => ({ default: m.ModerationPendingBadge })));
 const PendingOrdersBadge = lazy(() => import("@/components/app/PendingOrdersBadge").then((m) => ({ default: m.PendingOrdersBadge })));
 const GpsCapture = lazy(() => import("@/components/app/GpsCapture").then((m) => ({ default: m.GpsCapture })));
 
-function DeferUntilIdle({ children }: { children: React.ReactNode }) {
+function DeferUntilIdle({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
   useEffect(() => {
     const w = window as unknown as { requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number };
@@ -38,6 +38,11 @@ function DeferUntilIdle({ children }: { children: React.ReactNode }) {
   }, []);
   if (!ready) return null;
   return <Suspense fallback={null}>{children}</Suspense>;
+}
+
+function OnlinePresence() {
+  useOnlineUsers();
+  return null;
 }
 
 export const Route = createFileRoute("/_authenticated")({
@@ -83,9 +88,6 @@ function AuthLayout() {
   };
   // Close mobile drawer on route change
   useEffect(() => { setNavOpen(false); }, [path]);
-  // Broadcast this user's presence globally while signed in.
-  useOnlineUsers();
-
   // Discord-style: lock the document to the viewport on desktop only so
   // internal panels scroll instead of the whole page. On mobile (<768px)
   // let the page scroll normally — small screens need natural scrolling.
@@ -187,7 +189,7 @@ function AuthLayout() {
                 <Menu className="size-5" />
               </SheetTrigger>
               <SheetContent side="left" className="p-0 w-auto bg-rail border-r border-border">
-                <IconRail inSheet />
+                {navOpen ? <IconRail inSheet /> : null}
               </SheetContent>
             </Sheet>
             {isAdmin && (
@@ -271,7 +273,9 @@ function AuthLayout() {
             <DeferUntilIdle>
               <VpnPill />
             </DeferUntilIdle>
-            <DndDialogButton />
+            <DeferUntilIdle>
+              <DndDialogButton />
+            </DeferUntilIdle>
             <div className="hidden lg:flex items-center gap-2">
               <DeferUntilIdle>
                 <Clocks />
@@ -292,6 +296,9 @@ function AuthLayout() {
         </DeferUntilIdle>
         <DeferUntilIdle>
           <GpsCapture />
+        </DeferUntilIdle>
+        <DeferUntilIdle>
+          <OnlinePresence />
         </DeferUntilIdle>
       </div>
     </div>
