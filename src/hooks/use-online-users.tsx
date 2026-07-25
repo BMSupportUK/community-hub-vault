@@ -11,6 +11,7 @@ let refCount = 0;
 let pingInterval: ReturnType<typeof setInterval> | null = null;
 let currentState = new Set<string>();
 const listeners = new Set<(s: Set<string>) => void>();
+const LAST_SEEN_PING_MS = 5 * 60_000;
 
 function notify() {
   for (const fn of listeners) fn(currentState);
@@ -25,7 +26,7 @@ function ensureChannel(uid: string) {
   teardown();
   channelUid = uid;
   pingLastSeen(uid);
-  pingInterval = setInterval(() => pingLastSeen(uid), 60_000);
+  pingInterval = setInterval(() => pingLastSeen(uid), LAST_SEEN_PING_MS);
 
   const ch = supabase.channel("presence:online", { config: { presence: { key: uid } } });
   const sync = () => {

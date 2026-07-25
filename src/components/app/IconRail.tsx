@@ -7,6 +7,26 @@ import { supabase } from "@/integrations/supabase/client";
 import { UserAvatarMenu } from "@/components/app/UserAvatarMenu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
+type PagePermMap = Record<string, string[]>;
+type NavOrderMap = Record<string, number>;
+
+let cachedUnreadNewContent = 0;
+let cachedNavOrder: NavOrderMap = {};
+let cachedPagePerms: PagePermMap = {};
+
+function runWhenIdle(task: () => void) {
+  const w = window as Window & {
+    requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
+    cancelIdleCallback?: (id: number) => void;
+  };
+  if (typeof w.requestIdleCallback === "function") {
+    const id = w.requestIdleCallback(task, { timeout: 1200 });
+    return () => w.cancelIdleCallback?.(id);
+  }
+  const id = window.setTimeout(task, 250);
+  return () => window.clearTimeout(id);
+}
+
 interface RailItem {
   to: string;
   label: string;
@@ -19,14 +39,11 @@ interface RailItem {
 export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
   const { user, isStaff, isPending, signOut, hasAny, roles, hasRole } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
-  const isStaffOrMod = hasAny(["admin", "management", "staff", "moderator", "boro_fan_zone_moderator"]);
   const path = useRouterState({ select: (r) => r.location.pathname });
-  const [activeIncidents, setActiveIncidents] = useState(0);
-  const [unreadNewContent, setUnreadNewContent] = useState(0);
-  const [order, setOrder] = useState<Record<string, number>>({});
-  const [pagePerms, setPagePerms] = useState<Record<string, string[]>>({});
+  const [unreadNewContent, setUnreadNewContent] = useState(cachedUnreadNewContent);
+  const [order, setOrder] = useState<NavOrderMap>(cachedNavOrder);
+  const [pagePerms, setPagePerms] = useState<PagePermMap>(cachedPagePerms);
   const dragKey = useRef<string | null>(null);
-  const channelInstanceId = useRef(Math.random().toString(36).slice(2)).current;
   const navigate = useNavigate();
   const handleSignOut = async () => {
     await signOut();
@@ -34,35 +51,15 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
   };
 
   useEffect(() => {
-    if (isPending) return;
+    if (isPending || inSheet || !user?.id) return;
+    let cancelled = false;
     const load = async () => {
-      const { count } = await supabase
-        .from("status_incidents")
-        .select("id", { count: "exact", head: true })
-        .neq("status", "completed");
-      setActiveIncidents(count ?? 0);
-    };
-    load();
-    const ch = supabase
-      .channel(`rail-status-incidents-${channelInstanceId}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "status_incidents" }, () => load())
-      .subscribe();
-    return () => {
-      supabase.removeChannel(ch);
-    };
-  }, [isPending, channelInstanceId]);
-
-  useEffect(() => {
-    if (isPending) return;
-    const load = async () => {
-      const { data: userData } = await supabase.auth.getUser();
-      const uid = userData.user?.id;
-      if (!uid) { setUnreadNewContent(0); return; }
       const [{ data: posts }, { data: rs }, { data: prof }] = await Promise.all([
         supabase.from("new_content_posts").select("id, created_at, updated_at"),
-        supabase.from("new_content_reads").select("post_id, read_at").eq("user_id", uid),
-        supabase.from("profiles").select("new_content_baseline_at").eq("id", uid).maybeSingle(),
+        supabase.from("new_content_reads").select("post_id, read_at").eq("user_id", user.id),
+        supabase.from("profiles").select("new_content_baseline_at").eq("id", user.id).maybeSingle(),
       ]);
+      if (cancelled) return;
       const reads: Record<string, string> = {};
       for (const r of (rs ?? []) as { post_id: string; read_at: string }[]) reads[r.post_id] = r.read_at;
       const baseline = (prof as { new_content_baseline_at: string | null } | null)?.new_content_baseline_at ?? null;
@@ -74,52 +71,61 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
         const r = reads[p.id];
         if (!r || new Date(r).getTime() < upd) count++;
       }
+      cachedUnreadNewContent = count;
       setUnreadNewContent(count);
     };
-    load();
-    const ch = supabase
-      .channel(`rail-new-content-${channelInstanceId}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "new_content_posts" }, () => load())
-      .on("postgres_changes", { event: "*", schema: "public", table: "new_content_reads" }, () => load())
-      .subscribe();
-    return () => { supabase.removeChannel(ch); };
-  }, [isPending, channelInstanceId]);
+    const cancelIdle = runWhenIdle(() => {
+      void load();
+    });
+    return () => {
+      cancelled = true;
+      cancelIdle();
+    };
+  }, [isPending, inSheet, user?.id]);
 
   useEffect(() => {
+    if (inSheet) return;
+    let cancelled = false;
     const loadOrder = async () => {
       const { data } = await supabase.from("nav_order").select("key,sort_order");
+      if (cancelled) return;
       const map: Record<string, number> = {};
       (data ?? []).forEach((r: { key: string; sort_order: number }) => {
         map[r.key] = r.sort_order;
       });
+      cachedNavOrder = map;
       setOrder(map);
     };
-    loadOrder();
-    const ch = supabase
-      .channel(`rail-nav-order-${channelInstanceId}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "nav_order" }, () => loadOrder())
-      .subscribe();
+    const cancelIdle = runWhenIdle(() => {
+      void loadOrder();
+    });
     return () => {
-      supabase.removeChannel(ch);
+      cancelled = true;
+      cancelIdle();
     };
-  }, [channelInstanceId]);
+  }, [inSheet]);
 
   useEffect(() => {
+    if (inSheet) return;
+    let cancelled = false;
     const loadPerms = async () => {
       const { data } = await supabase.from("page_permissions").select("page_key,allowed_roles");
+      if (cancelled) return;
       const map: Record<string, string[]> = {};
       (data ?? []).forEach((r: { page_key: string; allowed_roles: string[] }) => {
         map[r.page_key] = r.allowed_roles ?? [];
       });
+      cachedPagePerms = map;
       setPagePerms(map);
     };
-    loadPerms();
-    const ch = supabase
-      .channel(`rail-page-perms-${channelInstanceId}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "page_permissions" }, () => loadPerms())
-      .subscribe();
-    return () => { supabase.removeChannel(ch); };
-  }, [channelInstanceId]);
+    const cancelIdle = runWhenIdle(() => {
+      void loadPerms();
+    });
+    return () => {
+      cancelled = true;
+      cancelIdle();
+    };
+  }, [inSheet]);
 
   if (isPending) {
     return (
@@ -181,7 +187,9 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
     if (from < 0 || to < 0) return;
     keys.splice(to, 0, keys.splice(from, 1)[0]);
     const rows = keys.map((key, i) => ({ key, sort_order: (i + 1) * 10 }));
-    setOrder(Object.fromEntries(rows.map((r) => [r.key, r.sort_order])));
+    const nextOrder = Object.fromEntries(rows.map((r) => [r.key, r.sort_order]));
+    cachedNavOrder = nextOrder;
+    setOrder(nextOrder);
     await supabase.from("nav_order").upsert(rows, { onConflict: "key" });
   };
 

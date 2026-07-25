@@ -1,12 +1,29 @@
 import { createFileRoute, Outlet } from "@tanstack/react-router";
-import { FriendRequestsListener } from "@/components/app/FriendRequestsListener";
-import { TwoFactorBanner } from "@/components/app/TwoFactorBanner";
-import { OutstandingTicketsAlert } from "@/components/app/OutstandingTicketsAlert";
-import { TicketAssignedAlert } from "@/components/app/TicketAssignedAlert";
-import { TicketHelpRequestedAlert } from "@/components/app/TicketHelpRequestedAlert";
-import { FanZoneAccessCard } from "@/components/app/FanZoneAccessCard";
-import { SoundUnlocker } from "@/components/app/SoundUnlocker";
-import { usePushRegister } from "@/hooks/use-push-register";
+import { lazy, Suspense, useEffect, useState } from "react";
+
+const ApprovedDeferredExtras = lazy(() =>
+  import("@/components/app/ApprovedDeferredExtras").then((module) => ({
+    default: module.ApprovedDeferredExtras,
+  })),
+);
+
+function DeferUntilIdle({ children }: { children: React.ReactNode }) {
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    const w = window as Window & {
+      requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
+      cancelIdleCallback?: (id: number) => void;
+    };
+    if (typeof w.requestIdleCallback === "function") {
+      const id = w.requestIdleCallback(() => setReady(true), { timeout: 1800 });
+      return () => w.cancelIdleCallback?.(id);
+    }
+    const id = window.setTimeout(() => setReady(true), 500);
+    return () => window.clearTimeout(id);
+  }, []);
+  if (!ready) return null;
+  return <Suspense fallback={null}>{children}</Suspense>;
+}
 
 export const Route = createFileRoute("/_authenticated/_approved")({
   beforeLoad: async () => {
@@ -17,17 +34,12 @@ export const Route = createFileRoute("/_authenticated/_approved")({
 });
 
 function ApprovedLayout() {
-  usePushRegister();
   return (
     <>
-      <SoundUnlocker />
-      <TwoFactorBanner />
       <Outlet />
-      <FriendRequestsListener />
-      <OutstandingTicketsAlert />
-      <TicketAssignedAlert />
-      <TicketHelpRequestedAlert />
-      <FanZoneAccessCard />
+      <DeferUntilIdle>
+        <ApprovedDeferredExtras />
+      </DeferUntilIdle>
     </>
   );
 }
