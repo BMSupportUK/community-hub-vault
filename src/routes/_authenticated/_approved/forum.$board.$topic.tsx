@@ -88,9 +88,33 @@ function TopicPage() {
   const [boardList, setBoardList] = useState<{ id: string; name: string; slug: string }[]>([]);
   const [moveTargetId, setMoveTargetId] = useState<string>("");
   const [moving, setMoving] = useState(false);
+  const [editingTitle, setEditingTitle] = useState(false);
+  const [titleDraft, setTitleDraft] = useState("");
+  const [savingTitle, setSavingTitle] = useState(false);
 
   const isBoardMod = isStaff || (user ? moderatorIds.has(user.id) : false);
   const canPost = canEnter && !!topic && !topic.is_locked;
+  const canEditTitle = !!user && !!topic && (topic.author_id === user.id || isBoardMod);
+
+  const startEditTitle = () => {
+    if (!topic) return;
+    setTitleDraft(topic.title);
+    setEditingTitle(true);
+  };
+  const saveTitle = async () => {
+    if (!topic) return;
+    const next = titleDraft.trim();
+    if (!next) { toast.error("Title cannot be empty"); return; }
+    if (next.length > 200) { toast.error("Title too long"); return; }
+    if (next === topic.title) { setEditingTitle(false); return; }
+    setSavingTitle(true);
+    const { error } = await supabase.from("forum_topics").update({ title: next }).eq("id", topic.id);
+    setSavingTitle(false);
+    if (error) { toast.error(error.message); return; }
+    setTopic({ ...topic, title: next });
+    setEditingTitle(false);
+    toast.success("Title updated");
+  };
 
   const loadAliases = useCallback(async (ids: string[], replace = false) => {
     const unique = Array.from(new Set(ids.filter(Boolean)));
