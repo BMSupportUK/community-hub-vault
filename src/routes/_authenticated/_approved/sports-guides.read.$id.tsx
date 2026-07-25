@@ -40,6 +40,15 @@ function ReadPage() {
   const [page, setPage] = useState(0);
   const [pageCount, setPageCount] = useState(1);
   const [stageHeight, setStageHeight] = useState(0);
+  // Re-run the annotator on an interval so events whose stale window
+  // (>10h past start) has elapsed drop out of the reader without the user
+  // needing to refresh the page. Multi-date guides otherwise kept showing
+  // yesterday's events until a full reload.
+  const [tzTick, setTzTick] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setTzTick((v) => v + 1), 5 * 60 * 1000);
+    return () => clearInterval(id);
+  }, []);
   // Guides sourced from Flosports (College Football, Racing) publish their
   // schedules in US Eastern time, not GMT. Detect by title so bare times
   // without a zone are interpreted in ET.
@@ -115,7 +124,8 @@ function ReadPage() {
         return hasText || hasMedia;
       })
       .map((el) => (el as HTMLElement).outerHTML);
-  }, [blog?.body, viewerTz, defaultSourceZone]);
+  // tzTick intentionally in deps to re-prune stale rows on the interval.
+  }, [blog?.body, viewerTz, defaultSourceZone, tzTick]);
 
   // Reset to first page when switching guides.
   useEffect(() => {
