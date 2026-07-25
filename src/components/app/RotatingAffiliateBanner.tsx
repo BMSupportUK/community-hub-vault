@@ -113,6 +113,8 @@ export function RotatingAffiliateBanner({
         height={1536}
         className={`w-full aspect-[1/3] object-cover object-center block transition-opacity duration-300 ${fading ? "opacity-0" : "opacity-100"}`}
         loading="lazy"
+        decoding="async"
+        sizes="(max-width: 768px) 200px, 256px"
       />
     </a>
   );
