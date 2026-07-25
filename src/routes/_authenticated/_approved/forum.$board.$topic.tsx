@@ -379,11 +379,36 @@ function TopicPage() {
           <Link to="/forum/$board" params={{ board: slug }}><ArrowLeft className="size-4 mr-1" />{board?.name ?? "Board"}</Link>
         </Button>
         <div className="flex items-start justify-between gap-3 flex-wrap">
-          <h2 className="font-display text-xl font-bold flex items-center gap-2 min-w-0">
-            {topic.is_sticky && <Pin className="size-4 text-[#F4B400]" />}
-            {topic.is_locked && <Lock className="size-4 text-muted-foreground" />}
-            <span className="truncate">{censorText(topic.title)}</span>
-          </h2>
+          {editingTitle ? (
+            <div className="flex items-center gap-2 min-w-0 flex-1">
+              <input
+                autoFocus
+                value={titleDraft}
+                onChange={(e) => setTitleDraft(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") { e.preventDefault(); void saveTitle(); }
+                  else if (e.key === "Escape") setEditingTitle(false);
+                }}
+                maxLength={200}
+                className="flex-1 min-w-0 rounded-md border border-white/20 bg-black/30 px-3 py-1.5 font-display text-xl font-bold text-white outline-none focus:border-[#E11B22]"
+              />
+              <Button size="sm" onClick={() => void saveTitle()} disabled={savingTitle}>
+                {savingTitle ? <Loader2 className="size-3.5 animate-spin" /> : <><Check className="size-3.5 mr-1" />Save</>}
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => setEditingTitle(false)} disabled={savingTitle}><X className="size-3.5" /></Button>
+            </div>
+          ) : (
+            <h2 className="font-display text-xl font-bold flex items-center gap-2 min-w-0">
+              {topic.is_sticky && <Pin className="size-4 text-[#F4B400]" />}
+              {topic.is_locked && <Lock className="size-4 text-muted-foreground" />}
+              <span className="truncate">{censorText(topic.title)}</span>
+              {canEditTitle && (
+                <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={startEditTitle} title="Edit title">
+                  <Pencil className="size-3.5" />
+                </Button>
+              )}
+            </h2>
+          )}
           {isBoardMod && (
             <div className="flex gap-1.5">
               <Button size="sm" variant="outline" onClick={toggleSticky}>{topic.is_sticky ? "Unpin" : "Pin"}</Button>
