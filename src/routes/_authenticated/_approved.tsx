@@ -1,5 +1,5 @@
 import { createFileRoute, Outlet } from "@tanstack/react-router";
-import { lazy, Suspense, useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState, type ReactNode } from "react";
 
 const ApprovedDeferredExtras = lazy(() =>
   import("@/components/app/ApprovedDeferredExtras").then((module) => ({
@@ -7,7 +7,7 @@ const ApprovedDeferredExtras = lazy(() =>
   })),
 );
 
-function DeferUntilIdle({ children }: { children: React.ReactNode }) {
+function DeferUntilIdle({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
   useEffect(() => {
     const w = window as Window & {
