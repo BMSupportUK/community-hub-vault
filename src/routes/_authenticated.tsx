@@ -1,26 +1,44 @@
 import { createFileRoute, Outlet, redirect, useRouterState, Navigate, useNavigate } from "@tanstack/react-router";
 import { Link } from "@tanstack/react-router";
 import { LayoutDashboard, Shield, ShieldCheck, Menu, Receipt, Clock, Calendar } from "lucide-react";
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, lazy, Suspense } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { isAdminUnlocked } from "@/lib/admin-unlock";
 import { IconRail } from "@/components/app/IconRail";
-import { Clocks } from "@/components/app/Clocks";
-import { MyWorkingStatus } from "@/components/app/MyWorkingStatus";
-import { MentionsBadge } from "@/components/app/MentionsBadge";
-import { NotificationBell } from "@/components/app/NotificationBell";
-import { TwoFactorPill, VpnPill } from "@/components/app/TwoFactorBanner";
-import { BreakEndingAlert } from "@/components/app/BreakEndingAlert";
-import { ShiftStartEndAlert } from "@/components/app/ShiftStartEndAlert";
-import { ModerationPendingBadge } from "@/components/app/ModerationPendingBadge";
-import { PendingOrdersBadge } from "@/components/app/PendingOrdersBadge";
 import { logMyIp } from "@/lib/ip-log.functions";
-import { GpsCapture } from "@/components/app/GpsCapture";
 import { DndDialogButton } from "@/components/app/DndDialogButton";
 import { useOnlineUsers } from "@/hooks/use-online-users";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+
+// Defer non-critical header widgets & alerts so the shell paints immediately.
+const Clocks = lazy(() => import("@/components/app/Clocks").then((m) => ({ default: m.Clocks })));
+const MyWorkingStatus = lazy(() => import("@/components/app/MyWorkingStatus").then((m) => ({ default: m.MyWorkingStatus })));
+const MentionsBadge = lazy(() => import("@/components/app/MentionsBadge").then((m) => ({ default: m.MentionsBadge })));
+const NotificationBell = lazy(() => import("@/components/app/NotificationBell").then((m) => ({ default: m.NotificationBell })));
+const TwoFactorPill = lazy(() => import("@/components/app/TwoFactorBanner").then((m) => ({ default: m.TwoFactorPill })));
+const VpnPill = lazy(() => import("@/components/app/TwoFactorBanner").then((m) => ({ default: m.VpnPill })));
+const BreakEndingAlert = lazy(() => import("@/components/app/BreakEndingAlert").then((m) => ({ default: m.BreakEndingAlert })));
+const ShiftStartEndAlert = lazy(() => import("@/components/app/ShiftStartEndAlert").then((m) => ({ default: m.ShiftStartEndAlert })));
+const ModerationPendingBadge = lazy(() => import("@/components/app/ModerationPendingBadge").then((m) => ({ default: m.ModerationPendingBadge })));
+const PendingOrdersBadge = lazy(() => import("@/components/app/PendingOrdersBadge").then((m) => ({ default: m.PendingOrdersBadge })));
+const GpsCapture = lazy(() => import("@/components/app/GpsCapture").then((m) => ({ default: m.GpsCapture })));
+
+function DeferUntilIdle({ children }: { children: React.ReactNode }) {
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    const w = window as unknown as { requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number };
+    if (typeof w.requestIdleCallback === "function") {
+      const id = w.requestIdleCallback(() => setReady(true), { timeout: 1500 });
+      return () => cancelIdleCallback?.(id);
+    }
+    const t = window.setTimeout(() => setReady(true), 400);
+    return () => window.clearTimeout(t);
+  }, []);
+  if (!ready) return null;
+  return <Suspense fallback={null}>{children}</Suspense>;
+}
 
 export const Route = createFileRoute("/_authenticated")({
   beforeLoad: async ({ location }) => {
@@ -119,9 +137,19 @@ function AuthLayout() {
   useEffect(() => {
     if (loading || isPending || loggedRef.current) return;
     loggedRef.current = true;
-    logIp().catch(() => {
-      loggedRef.current = false;
-    });
+    // Fire-and-forget, and defer past first paint so it never blocks
+    // the initial render pipeline.
+    const run = () => {
+      logIp().catch(() => {
+        loggedRef.current = false;
+      });
+    };
+    const w = window as unknown as { requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number };
+    if (typeof w.requestIdleCallback === "function") {
+      w.requestIdleCallback(run, { timeout: 2000 });
+    } else {
+      window.setTimeout(run, 800);
+    }
   }, [loading, isPending, logIp]);
 
   if (loading) {
@@ -225,24 +253,46 @@ function AuthLayout() {
                 <Calendar className="size-4" />
               </Link>
             )}
-            {user && <MentionsBadge />}
-            {user && <NotificationBell />}
+            {user && (
+              <DeferUntilIdle>
+                <MentionsBadge />
+              </DeferUntilIdle>
+            )}
+            {user && (
+              <DeferUntilIdle>
+                <NotificationBell />
+              </DeferUntilIdle>
+            )}
           </div>
           <div className="hidden xl:flex flex-1 min-w-0 px-3" />
-            <TwoFactorPill />
-            <VpnPill />
+            <DeferUntilIdle>
+              <TwoFactorPill />
+            </DeferUntilIdle>
+            <DeferUntilIdle>
+              <VpnPill />
+            </DeferUntilIdle>
             <DndDialogButton />
             <div className="hidden lg:flex items-center gap-2">
-              <Clocks />
-              <MyWorkingStatus />
+              <DeferUntilIdle>
+                <Clocks />
+              </DeferUntilIdle>
+              <DeferUntilIdle>
+                <MyWorkingStatus />
+              </DeferUntilIdle>
             </div>
         </header>
         <div className={unlockShell ? "flex-1 flex" : "flex-1 flex md:min-h-0 md:overflow-hidden"}>
           <Outlet />
         </div>
-        <BreakEndingAlert />
-        <ShiftStartEndAlert />
-        <GpsCapture />
+        <DeferUntilIdle>
+          <BreakEndingAlert />
+        </DeferUntilIdle>
+        <DeferUntilIdle>
+          <ShiftStartEndAlert />
+        </DeferUntilIdle>
+        <DeferUntilIdle>
+          <GpsCapture />
+        </DeferUntilIdle>
       </div>
     </div>
   );
