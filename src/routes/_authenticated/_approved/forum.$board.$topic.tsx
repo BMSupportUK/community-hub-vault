@@ -88,9 +88,33 @@ function TopicPage() {
   const [boardList, setBoardList] = useState<{ id: string; name: string; slug: string }[]>([]);
   const [moveTargetId, setMoveTargetId] = useState<string>("");
   const [moving, setMoving] = useState(false);
+  const [editingTitle, setEditingTitle] = useState(false);
+  const [titleDraft, setTitleDraft] = useState("");
+  const [savingTitle, setSavingTitle] = useState(false);
 
   const isBoardMod = isStaff || (user ? moderatorIds.has(user.id) : false);
   const canPost = canEnter && !!topic && !topic.is_locked;
+  const canEditTitle = !!user && !!topic && (topic.author_id === user.id || isBoardMod);
+
+  const startEditTitle = () => {
+    if (!topic) return;
+    setTitleDraft(topic.title);
+    setEditingTitle(true);
+  };
+  const saveTitle = async () => {
+    if (!topic) return;
+    const next = titleDraft.trim();
+    if (!next) { toast.error("Title cannot be empty"); return; }
+    if (next.length > 200) { toast.error("Title too long"); return; }
+    if (next === topic.title) { setEditingTitle(false); return; }
+    setSavingTitle(true);
+    const { error } = await supabase.from("forum_topics").update({ title: next }).eq("id", topic.id);
+    setSavingTitle(false);
+    if (error) { toast.error(error.message); return; }
+    setTopic({ ...topic, title: next });
+    setEditingTitle(false);
+    toast.success("Title updated");
+  };
 
   const loadAliases = useCallback(async (ids: string[], replace = false) => {
     const unique = Array.from(new Set(ids.filter(Boolean)));
@@ -355,11 +379,36 @@ function TopicPage() {
           <Link to="/forum/$board" params={{ board: slug }}><ArrowLeft className="size-4 mr-1" />{board?.name ?? "Board"}</Link>
         </Button>
         <div className="flex items-start justify-between gap-3 flex-wrap">
-          <h2 className="font-display text-xl font-bold flex items-center gap-2 min-w-0">
-            {topic.is_sticky && <Pin className="size-4 text-[#F4B400]" />}
-            {topic.is_locked && <Lock className="size-4 text-muted-foreground" />}
-            <span className="truncate">{censorText(topic.title)}</span>
-          </h2>
+          {editingTitle ? (
+            <div className="flex items-center gap-2 min-w-0 flex-1">
+              <input
+                autoFocus
+                value={titleDraft}
+                onChange={(e) => setTitleDraft(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") { e.preventDefault(); void saveTitle(); }
+                  else if (e.key === "Escape") setEditingTitle(false);
+                }}
+                maxLength={200}
+                className="flex-1 min-w-0 rounded-md border border-white/20 bg-black/30 px-3 py-1.5 font-display text-xl font-bold text-white outline-none focus:border-[#E11B22]"
+              />
+              <Button size="sm" onClick={() => void saveTitle()} disabled={savingTitle}>
+                {savingTitle ? <Loader2 className="size-3.5 animate-spin" /> : <><Check className="size-3.5 mr-1" />Save</>}
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => setEditingTitle(false)} disabled={savingTitle}><X className="size-3.5" /></Button>
+            </div>
+          ) : (
+            <h2 className="font-display text-xl font-bold flex items-center gap-2 min-w-0">
+              {topic.is_sticky && <Pin className="size-4 text-[#F4B400]" />}
+              {topic.is_locked && <Lock className="size-4 text-muted-foreground" />}
+              <span className="truncate">{censorText(topic.title)}</span>
+              {canEditTitle && (
+                <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={startEditTitle} title="Edit title">
+                  <Pencil className="size-3.5" />
+                </Button>
+              )}
+            </h2>
+          )}
           {isBoardMod && (
             <div className="flex gap-1.5">
               <Button size="sm" variant="outline" onClick={toggleSticky}>{topic.is_sticky ? "Unpin" : "Pin"}</Button>
