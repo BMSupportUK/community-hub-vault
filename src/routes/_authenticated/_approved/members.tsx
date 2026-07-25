@@ -260,7 +260,7 @@ function MembersPage() {
               <div className="px-4 -mt-8 pb-4 flex flex-col flex-1">
                 <div className="relative w-fit">
                   <img
-                    src={p.avatar_url || "/default-avatar.png"}
+                    src={p.avatar_url || "/default-avatar.webp"}
                     alt=""
                     className="size-16 rounded-2xl object-cover ring-4 ring-surface"
                   />
