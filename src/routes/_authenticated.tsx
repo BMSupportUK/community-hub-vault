@@ -208,7 +208,7 @@ function AuthLayout() {
               >
                 <Shield className="size-4" />
                 <span className="hidden xl:inline">Moderation</span>
-                <ModerationPendingBadge />
+                <DeferUntilIdle><ModerationPendingBadge /></DeferUntilIdle>
               </Link>
             )}
             {isAdmin && (
@@ -220,7 +220,7 @@ function AuthLayout() {
               >
                 <Receipt className="size-4" />
                 <span className="hidden xl:inline">Shop Admin</span>
-                <PendingOrdersBadge />
+                <DeferUntilIdle><PendingOrdersBadge /></DeferUntilIdle>
               </button>
             )}
             {isAdmin && (
