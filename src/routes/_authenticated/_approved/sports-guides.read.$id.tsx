@@ -214,13 +214,7 @@ function ReadPage() {
                 These are not guaranteed and no reports allowed to source.
               </div>
             )}
-            {blog.image_url && (
-              <img
-                src={blog.image_url}
-                alt={blog.title}
-                className="max-h-32 md:max-h-40 w-auto mx-auto rounded-2xl border border-purple-500/30 object-contain"
-              />
-            )}
+            {/* Header image intentionally hidden in the reader per user request. */}
             {blog.excerpt && (
               <p className="text-base text-purple-100/80 italic line-clamp-2">{blog.excerpt}</p>
             )}
