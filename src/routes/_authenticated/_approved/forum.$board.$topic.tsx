@@ -250,13 +250,6 @@ function prepareForumPostBodyForSubmit(raw: string): string {
   return markPreparedForumPostBody(prepareForumPostBody(normalized, { skipDomParserFallback: true }));
 }
 
-function nextPaint(): Promise<void> {
-  if (typeof window === "undefined") return Promise.resolve();
-  return new Promise((resolve) => {
-    window.requestAnimationFrame(() => window.setTimeout(resolve, 0));
-  });
-}
-
 function escapeForumQuoteText(text: string): string {
   return text.replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch] ?? ch);
 }
@@ -552,7 +545,6 @@ function TopicPage() {
     submittingRef.current = true;
     setSubmitting(true);
     setReply("");
-    await nextPaint();
     const body = prepareForumPostBodyForSubmit(raw);
     const { data, error } = await supabase
       .from("forum_posts")
