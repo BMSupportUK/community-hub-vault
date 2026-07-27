@@ -11,7 +11,7 @@ import { HtmlEditor } from "@/components/ui/html-editor";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ForumPostBody } from "@/components/app/ForumPostBody";
 import { ForumPostReactions } from "@/components/app/ForumPostReactions";
-import { isPreparedForumPostBody, prepareForumPostBody } from "@/lib/forum-embeds";
+import { isPreparedForumPostBody, normalizeForumPostInput, prepareForumPostBody } from "@/lib/forum-embeds";
 import { useMentionCandidates, type MentionCandidate } from "@/hooks/use-mention-candidates";
 import { useFanBlocks } from "@/hooks/use-fan-blocks";
 import { toast } from "sonner";
@@ -265,8 +265,9 @@ function shouldShowInsertedReply(currentPage: number, replyCountBeforeInsert: nu
 }
 
 function prepareForumPostBodyForSubmit(raw: string): string {
-  if (isPreparedForumPostBody(raw)) return raw;
-  return prepareForumPostBody(raw, { skipDomParserFallback: true });
+  const normalized = normalizeForumPostInput(raw);
+  if (isPreparedForumPostBody(normalized)) return normalized;
+  return prepareForumPostBody(normalized, { skipDomParserFallback: true });
 }
 
 function escapeForumQuoteText(text: string): string {
@@ -558,7 +559,7 @@ function TopicPage() {
   const submitReply = async () => {
     if (!user || !topic) return;
     if (submittingRef.current) return;
-    const raw = reply.trim();
+    const raw = normalizeForumPostInput(reply.trim());
     const replySnapshot = reply;
     if (raw.length < 1 || raw === "<p><br></p>") return;
     submittingRef.current = true;

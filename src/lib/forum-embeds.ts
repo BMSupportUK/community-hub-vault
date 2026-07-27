@@ -8,6 +8,8 @@ const TWEET_RE = /^https?:\/\/(?:www\.|m\.|mobile\.|web\.)?(?:twitter|x)\.com\/(
 const SKIP_PREVIEW_RE = /^https?:\/\/(?:www\.|m\.|mobile\.|web\.)?(?:twitter\.com|x\.com|youtube\.com|youtu\.be)\//i;
 const HTTP_URL_RE = /https?:\/\/[^\s<>"']+/i;
 const PREPARED_FORUM_MARKER_RE = /\bdata-(?:tweet-embed|link-preview)=/i;
+const DATA_IMAGE_SRC_RE = /\s+src=["']data:image\/[^"']+["']/gi;
+const MAX_FORUM_SUBMIT_HTML_CHARS = 120_000;
 
 type EmbedSocialOptions = {
   skipDomParserFallback?: boolean;
@@ -15,6 +17,13 @@ type EmbedSocialOptions = {
 
 export function isPreparedForumPostBody(html: string): boolean {
   return PREPARED_FORUM_MARKER_RE.test(html);
+}
+
+export function normalizeForumPostInput(html: string): string {
+  if (!html) return html;
+  const withoutInlineImages = html.replace(DATA_IMAGE_SRC_RE, "");
+  if (withoutInlineImages.length <= MAX_FORUM_SUBMIT_HTML_CHARS) return withoutInlineImages;
+  return `${withoutInlineImages.slice(0, MAX_FORUM_SUBMIT_HTML_CHARS)}<p>Message shortened because the pasted content was too large.</p>`;
 }
 
 /**
@@ -107,6 +116,7 @@ function escapeRegExp(s: string): string {
 }
 
 export function prepareForumPostBody(html: string, options: EmbedSocialOptions = {}): string {
+  html = normalizeForumPostInput(html);
   if (!html) return html;
   if (isPreparedForumPostBody(html)) return html;
   if (!/https?:\/\//i.test(html) && !/(?:twitter-tweet|fb-post|social-embed-x)/i.test(html)) return html;
