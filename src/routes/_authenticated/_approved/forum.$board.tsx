@@ -73,6 +73,13 @@ function sortBoardTopics(a: Topic, b: Topic) {
   return new Date(b.last_post_at).getTime() - new Date(a.last_post_at).getTime();
 }
 
+function nextPaint(): Promise<void> {
+  if (typeof window === "undefined") return Promise.resolve();
+  return new Promise((resolve) => {
+    window.requestAnimationFrame(() => window.setTimeout(resolve, 0));
+  });
+}
+
 function BoardPage() {
   const { board: slug } = Route.useParams();
   const navigate = useNavigate();
@@ -274,6 +281,7 @@ function BoardPage() {
     setSubmitting(true);
     setTitle("");
     setBody("");
+    await nextPaint();
     const b = prepareForumPostBody(bRaw, { skipDomParserFallback: true });
     const { data: topic, error } = await supabase
       .from("forum_topics")

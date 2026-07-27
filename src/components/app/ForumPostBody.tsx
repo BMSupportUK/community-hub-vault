@@ -73,6 +73,7 @@ function ForumPostBodyComponent({ html, className }: { html: string; className?:
 export const ForumPostBody = memo(ForumPostBodyComponent);
 
 const HTML_CACHE_LIMIT = 160;
+const MAX_RICH_RENDER_CHARS = 30_000;
 const processedHtmlCache = new Map<string, string>();
 const safeHtmlCache = new Map<string, string>();
 
@@ -94,6 +95,9 @@ function getProcessedForumHtml(raw: string): string {
 }
 
 function getSafeForumHtml(raw: string, profanityKey: string): string {
+  if (raw.length > MAX_RICH_RENDER_CHARS) {
+    return censorHtml(sanitizeRichHtml(`${raw.slice(0, MAX_RICH_RENDER_CHARS)}<p>Message shortened because the pasted content was too large.</p>`));
+  }
   const key = `${profanityKey}\n${raw}`;
   const cached = safeHtmlCache.get(key);
   if (cached !== undefined) return cached;

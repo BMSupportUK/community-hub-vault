@@ -30,7 +30,7 @@ function exec(cmd: string, arg?: string) {
 }
 
 const DATA_IMAGE_SRC_RE = /<img\b[^>]*\bsrc=["'](data:image\/[a-z0-9.+-]+;base64,[^"']+)["'][^>]*>/i;
-const MAX_PASTED_HTML_CHARS = 120_000;
+const MAX_PASTED_HTML_CHARS = 30_000;
 
 function escapeHtml(s: string): string {
   return s.replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch] ?? ch);

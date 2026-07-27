@@ -9,7 +9,7 @@ const SKIP_PREVIEW_RE = /^https?:\/\/(?:www\.|m\.|mobile\.|web\.)?(?:twitter\.co
 const HTTP_URL_RE = /https?:\/\/[^\s<>"']+/i;
 const PREPARED_FORUM_MARKER_RE = /\bdata-(?:tweet-embed|link-preview)=/i;
 const DATA_IMAGE_SRC_RE = /\s+src=["']data:image\/[^"']+["']/gi;
-const MAX_FORUM_SUBMIT_HTML_CHARS = 120_000;
+const MAX_FORUM_SUBMIT_HTML_CHARS = 30_000;
 
 type EmbedSocialOptions = {
   skipDomParserFallback?: boolean;
