@@ -38,7 +38,8 @@ function stripInlineDataImages(html: string): string {
 // Allow safe inline HTML produced by our editor, including YouTube embeds.
 export function sanitizeRichHtml(html: string): string {
   ensureHook();
-  const safeInput = stripInlineDataImages(html.length > MAX_RICH_HTML_CHARS ? `${html.slice(0, MAX_RICH_HTML_CHARS)}<p>Message shortened because the pasted content was too large.</p>` : html);
+  const stripped = stripInlineDataImages(html);
+  const safeInput = stripped.length > MAX_RICH_HTML_CHARS ? `${stripped.slice(0, MAX_RICH_HTML_CHARS)}<p>Message shortened because the pasted content was too large.</p>` : stripped;
   return DOMPurify.sanitize(safeInput, {
     ADD_TAGS: ["iframe", "video", "source"],
     ADD_ATTR: [
