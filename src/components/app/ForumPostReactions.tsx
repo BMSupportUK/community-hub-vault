@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { memo, useEffect, useState } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { SmilePlus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -50,7 +50,7 @@ function scheduleReactionLoad(postId: string, force = false) {
   }, 25);
 }
 
-export function ForumPostReactions({
+function ForumPostReactionsComponent({
   postId,
   userId,
   canReact,
@@ -165,3 +165,5 @@ export function ForumPostReactions({
     </div>
   );
 }
+
+export const ForumPostReactions = memo(ForumPostReactionsComponent);
