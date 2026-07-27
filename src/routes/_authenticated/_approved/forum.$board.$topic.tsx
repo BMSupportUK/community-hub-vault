@@ -75,7 +75,7 @@ function TopicPage() {
   const [reply, setReply] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const submittingRef = useRef(false);
-  const [replySuccessOpen, setReplySuccessOpen] = useState(false);
+  const locallyInsertedPostIdsRef = useRef<Set<string>>(new Set());
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editText, setEditText] = useState("");
   const [historyFor, setHistoryFor] = useState<Post | null>(null);
@@ -188,9 +188,18 @@ function TopicPage() {
       if (t) clearTimeout(t);
       t = setTimeout(() => { t = null; void load(); }, 250);
     };
+    type ForumRealtimePayload = { new?: Record<string, unknown>; old?: Record<string, unknown> };
+    const schedulePostLoad = (payload: ForumRealtimePayload) => {
+      const nextId = typeof payload.new?.id === "string" ? payload.new.id : null;
+      if (nextId && locallyInsertedPostIdsRef.current.has(nextId)) {
+        locallyInsertedPostIdsRef.current.delete(nextId);
+        return;
+      }
+      scheduleLoad();
+    };
     const ch = supabase
       .channel(`forum-topic-${topicId}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "forum_posts", filter: `topic_id=eq.${topicId}` }, scheduleLoad)
+      .on("postgres_changes", { event: "*", schema: "public", table: "forum_posts", filter: `topic_id=eq.${topicId}` }, (payload) => schedulePostLoad(payload as ForumRealtimePayload))
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "forum_topics", filter: `id=eq.${topicId}` }, scheduleLoad)
       .subscribe();
     return () => { if (t) clearTimeout(t); supabase.removeChannel(ch); };
@@ -259,15 +268,35 @@ function TopicPage() {
     const body = prepareForumPostBody(raw);
     submittingRef.current = true;
     setSubmitting(true);
-    const { error } = await supabase.from("forum_posts").insert({ topic_id: topic.id, author_id: user.id, body, is_op: false });
+    const { data, error } = await supabase
+      .from("forum_posts")
+      .insert({ topic_id: topic.id, author_id: user.id, body, is_op: false })
+      .select("id, topic_id, author_id, body, quote_of, edited_at, is_op, created_at")
+      .single();
     submittingRef.current = false;
     setSubmitting(false);
     if (error) { toast.error("Couldn't post", { description: error.message }); return; }
+    const inserted = data as Post | null;
+    if (inserted) {
+      locallyInsertedPostIdsRef.current.add(inserted.id);
+      setPosts((current) => {
+        if (!current) return [inserted];
+        const withoutDuplicate = current.filter((p) => p.id !== inserted.id);
+        return [...withoutDuplicate, inserted].sort((a, b) => {
+          if (a.is_op && !b.is_op) return -1;
+          if (!a.is_op && b.is_op) return 1;
+          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+        });
+      });
+      setTopic((current) => current ? { ...current, reply_count: (current.reply_count ?? 0) + 1 } : current);
+      void loadAliases([inserted.author_id]);
+    }
     setReply("");
-    setReplySuccessOpen(true);
     setTab("reply");
     setPage(Math.max(1, Math.ceil(((topic.reply_count ?? 0) + 1) / REPLIES_PER_PAGE)));
-    // Realtime INSERT listener will refresh; no manual reload needed.
+    toast.success("Reply posted");
+    // The new post is shown immediately. Realtime refreshes other users, while
+    // this client skips its own insert event so the page does not lock up.
   };
 
   const quotePost = (p: Post) => {
@@ -666,20 +695,6 @@ function TopicPage() {
               ))}
             </ol>
           )}
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={replySuccessOpen} onOpenChange={setReplySuccessOpen}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Check className="size-5 text-emerald-500" /> Reply posted
-            </DialogTitle>
-          </DialogHeader>
-          <p className="text-sm text-muted-foreground">Your reply has been added to the topic.</p>
-          <div className="flex justify-end">
-            <Button onClick={() => setReplySuccessOpen(false)}>OK</Button>
-          </div>
         </DialogContent>
       </Dialog>
 

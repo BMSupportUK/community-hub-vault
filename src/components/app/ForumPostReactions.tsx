@@ -8,6 +8,47 @@ import { ReportButton } from "@/components/app/ReportButton";
 const EMOJIS = ["👍", "❤️", "😂", "🔥", "🎉", "😮", "😢", "⚽", "🦁"];
 
 type Row = { user_id: string; emoji: string };
+type DbRow = Row & { post_id: string };
+
+const reactionCache = new Map<string, Row[]>();
+const reactionSubscribers = new Map<string, Set<(rows: Row[]) => void>>();
+const pendingPostIds = new Set<string>();
+let pendingTimer: ReturnType<typeof setTimeout> | null = null;
+
+function notifyPost(postId: string, rows: Row[]) {
+  reactionCache.set(postId, rows);
+  reactionSubscribers.get(postId)?.forEach((listener) => listener(rows));
+}
+
+function setCachedRows(postId: string, updater: (rows: Row[]) => Row[]) {
+  notifyPost(postId, updater(reactionCache.get(postId) ?? []));
+}
+
+function scheduleReactionLoad(postId: string, force = false) {
+  if (!force && reactionCache.has(postId)) return;
+  pendingPostIds.add(postId);
+  if (pendingTimer) return;
+  pendingTimer = window.setTimeout(() => {
+    pendingTimer = null;
+    const ids = Array.from(pendingPostIds);
+    pendingPostIds.clear();
+    if (ids.length === 0) return;
+    void supabase
+      .from("forum_post_reactions")
+      .select("post_id, user_id, emoji")
+      .in("post_id", ids)
+      .then(({ data }) => {
+        const grouped = new Map<string, Row[]>();
+        ids.forEach((id) => grouped.set(id, []));
+        ((data ?? []) as DbRow[]).forEach((row) => {
+          const rows = grouped.get(row.post_id) ?? [];
+          rows.push({ user_id: row.user_id, emoji: row.emoji });
+          grouped.set(row.post_id, rows);
+        });
+        grouped.forEach((rows, id) => notifyPost(id, rows));
+      });
+  }, 25);
+}
 
 export function ForumPostReactions({
   postId,
@@ -18,24 +59,21 @@ export function ForumPostReactions({
   userId: string | null;
   canReact: boolean;
 }) {
-  const [rows, setRows] = useState<Row[]>([]);
+  const [rows, setRows] = useState<Row[]>(() => reactionCache.get(postId) ?? []);
   const [open, setOpen] = useState(false);
 
-  const load = async () => {
-    const { data } = await supabase
-      .from("forum_post_reactions")
-      .select("user_id, emoji")
-      .eq("post_id", postId);
-    setRows((data ?? []) as Row[]);
-  };
-
   useEffect(() => {
-    void load();
-    // Keep reactions cheap: the topic page can render 20+ posts at once, so a
-    // realtime channel per post creates a pile-up of subscriptions and makes
-    // posting feel frozen on busy threads. Reactions refresh on mount and after
-    // the current user toggles one.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const listener = (nextRows: Row[]) => setRows(nextRows);
+    const listeners = reactionSubscribers.get(postId) ?? new Set<(nextRows: Row[]) => void>();
+    listeners.add(listener);
+    reactionSubscribers.set(postId, listeners);
+    const cached = reactionCache.get(postId);
+    if (cached) setRows(cached);
+    scheduleReactionLoad(postId);
+    return () => {
+      listeners.delete(listener);
+      if (listeners.size === 0) reactionSubscribers.delete(postId);
+    };
   }, [postId]);
 
   const grouped = rows.reduce<Record<string, { count: number; mine: boolean }>>((acc, r) => {
@@ -50,7 +88,7 @@ export function ForumPostReactions({
     if (!userId || !canReact) return;
     const mine = grouped[emoji]?.mine;
     // optimistic
-    setRows((prev) =>
+    setCachedRows(postId, (prev) =>
       mine
         ? prev.filter((r) => !(r.user_id === userId && r.emoji === emoji))
         : [...prev, { user_id: userId, emoji }],
@@ -63,13 +101,13 @@ export function ForumPostReactions({
         .eq("user_id", userId)
         .eq("emoji", emoji);
       if (error) toast.error("Couldn't remove reaction", { description: error.message });
-      else void load();
+      else scheduleReactionLoad(postId, true);
     } else {
       const { error } = await supabase
         .from("forum_post_reactions")
         .insert({ post_id: postId, user_id: userId, emoji });
       if (error) toast.error("Couldn't react", { description: error.message });
-      else void load();
+      else scheduleReactionLoad(postId, true);
       setOpen(false);
     }
   };

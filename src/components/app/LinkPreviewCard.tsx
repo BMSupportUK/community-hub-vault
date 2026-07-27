@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link2 } from "lucide-react";
 
 type Meta = {
@@ -11,11 +11,32 @@ type Meta = {
 const cache = new Map<string, Meta>();
 
 export function LinkPreviewCard({ url, title }: { url: string; title?: string }) {
+  const ref = useRef<HTMLAnchorElement>(null);
   const [meta, setMeta] = useState<Meta | null>(() => cache.get(url) ?? null);
   const [failed, setFailed] = useState(false);
+  const [shouldLoad, setShouldLoad] = useState(() => cache.has(url));
 
   useEffect(() => {
-    if (meta) return;
+    if (shouldLoad || meta) return;
+    const el = ref.current;
+    if (!el || typeof IntersectionObserver === "undefined") {
+      const id = window.setTimeout(() => setShouldLoad(true), 600);
+      return () => window.clearTimeout(id);
+    }
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry?.isIntersecting) return;
+        setShouldLoad(true);
+        observer.disconnect();
+      },
+      { rootMargin: "280px 0px" },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [shouldLoad, meta]);
+
+  useEffect(() => {
+    if (!shouldLoad || meta) return;
     let cancelled = false;
     fetch(`/api/public/link-preview?url=${encodeURIComponent(url)}&v=2`)
       .then(async (res) => {
@@ -30,7 +51,7 @@ export function LinkPreviewCard({ url, title }: { url: string; title?: string })
       })
       .catch(() => { if (!cancelled) setFailed(true); });
     return () => { cancelled = true; };
-  }, [url, meta]);
+  }, [url, meta, shouldLoad]);
 
   let host = "";
   try { host = new URL(url).hostname.replace(/^www\./, ""); } catch { host = url; }
@@ -39,6 +60,7 @@ export function LinkPreviewCard({ url, title }: { url: string; title?: string })
 
   return (
     <a
+      ref={ref}
       href={url}
       target="_blank"
       rel="noopener noreferrer"
@@ -64,7 +86,7 @@ export function LinkPreviewCard({ url, title }: { url: string; title?: string })
         </div>
         {m?.description ? (
           <p className="mt-1.5 text-sm !text-white/75 line-clamp-2">{m.description}</p>
-        ) : !failed && !m ? (
+        ) : shouldLoad && !failed && !m ? (
           <p className="mt-1.5 text-sm !text-white/55 line-clamp-2">Loading link details…</p>
         ) : null}
       </div>
