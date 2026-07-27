@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { memo, startTransition, useCallback, useEffect, useRef, useState } from "react";
+import { memo, startTransition, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, Loader2, Pin, Lock, Quote, Reply as ReplyIcon, Pencil, Trash2, Send, History, Check, X, Ban, MessageSquare, Eye, FolderInput } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -11,7 +11,7 @@ import { HtmlEditor } from "@/components/ui/html-editor";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ForumPostBody } from "@/components/app/ForumPostBody";
 import { ForumPostReactions } from "@/components/app/ForumPostReactions";
-import { prepareForumPostBody } from "@/lib/forum-embeds";
+import { isPreparedForumPostBody, prepareForumPostBody } from "@/lib/forum-embeds";
 import { useMentionCandidates, type MentionCandidate } from "@/hooks/use-mention-candidates";
 import { useFanBlocks } from "@/hooks/use-fan-blocks";
 import { toast } from "sonner";
@@ -262,6 +262,10 @@ function runAfterPaint(task: () => void) {
 function shouldShowInsertedReply(currentPage: number, replyCountBeforeInsert: number, repliesPerPage: number) {
   const targetPage = Math.max(1, Math.ceil((replyCountBeforeInsert + 1) / repliesPerPage));
   return targetPage === currentPage;
+}
+
+function prepareForumPostBodyForSubmit(raw: string): string {
+  return prepareForumPostBody(raw, { skipDomParserFallback: isPreparedForumPostBody(raw) });
 }
 
 function TopicPage() {
@@ -536,7 +540,7 @@ function TopicPage() {
     setSubmitting(true);
     startTransition(() => setReply(""));
     await yieldToBrowser();
-    const body = prepareForumPostBody(raw);
+    const body = prepareForumPostBodyForSubmit(raw);
     const { data, error } = await supabase
       .from("forum_posts")
       .insert({ topic_id: topic.id, author_id: user.id, body, is_op: false })
@@ -596,7 +600,7 @@ function TopicPage() {
     if (!editingId) return;
     const raw = editText.trim();
     if (!raw || raw === "<p><br></p>") return;
-    const body = prepareForumPostBody(raw);
+    const body = prepareForumPostBodyForSubmit(raw);
     const { error } = await supabase.from("forum_posts").update({ body }).eq("id", editingId);
     if (error) { toast.error("Couldn't save", { description: error.message }); return; }
     setEditingId(null); setEditText("");
@@ -674,6 +678,12 @@ function TopicPage() {
       }}
     />
   );
+  const { opPost, replies } = useMemo(() => {
+    return {
+      opPost: posts.find((p) => p.is_op) ?? null,
+      replies: posts.filter((p) => !p.is_op && !blocked.has(p.author_id)),
+    };
+  }, [posts, blocked]);
 
   return (
     <div className="boro-topic-page space-y-4">
@@ -726,8 +736,6 @@ function TopicPage() {
       <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_180px] lg:grid-cols-[minmax(0,1fr)_256px] md:items-start">
         <div className="min-w-0">
       {(() => {
-        const opPost = posts.find((p) => p.is_op) ?? null;
-        const replies = posts.filter((p) => !p.is_op && !blocked.has(p.author_id));
         const totalPages = Math.max(1, Math.ceil((topic.reply_count ?? replies.length) / REPLIES_PER_PAGE));
         const safePage = Math.min(page, totalPages);
         const start = (safePage - 1) * REPLIES_PER_PAGE;
