@@ -29,6 +29,33 @@ function exec(cmd: string, arg?: string) {
   document.execCommand(cmd, false, arg);
 }
 
+const DATA_IMAGE_SRC_RE = /<img\b[^>]*\bsrc=["'](data:image\/[a-z0-9.+-]+;base64,[^"']+)["'][^>]*>/i;
+const MAX_PASTED_HTML_CHARS = 120_000;
+
+function escapeHtml(s: string): string {
+  return s.replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch] ?? ch);
+}
+
+function dataUrlToImageFile(dataUrl: string): File | null {
+  const comma = dataUrl.indexOf(",");
+  if (comma === -1) return null;
+  const meta = dataUrl.slice(0, comma);
+  const payload = dataUrl.slice(comma + 1);
+  const mime = meta.match(/^data:(image\/[a-z0-9.+-]+);base64$/i)?.[1];
+  if (!mime) return null;
+  const estimatedBytes = Math.floor((payload.length * 3) / 4);
+  if (estimatedBytes > 10 * 1024 * 1024) return null;
+  try {
+    const binary = atob(payload);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
+    const ext = mime.split("/")[1]?.replace(/[^a-z0-9]/gi, "") || "png";
+    return new File([bytes], `pasted-image.${ext}`, { type: mime });
+  } catch {
+    return null;
+  }
+}
+
 export function HtmlEditor({ value, onChange, className, placeholder, videoUpload, imageUpload, pasteTransform, mentions }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
@@ -95,6 +122,19 @@ export function HtmlEditor({ value, onChange, className, placeholder, videoUploa
   };
 
   const closeMention = () => setMention(null);
+
+  const removeInlineDataImages = () => {
+    const editor = ref.current;
+    if (!editor) return false;
+    const images = Array.from(editor.querySelectorAll<HTMLImageElement>('img[src^="data:image/"]'));
+    if (images.length === 0) return false;
+    images.forEach((img) => img.remove());
+    toast.error("That image was embedded in the message. Paste it again or use the image button so it uploads properly.");
+    const html = editor.innerHTML;
+    lastValueRef.current = html;
+    onChange(html);
+    return true;
+  };
 
   const updateMentionState = () => {
     if (!mentions || mentions.length === 0) { setMention(null); return; }
@@ -181,14 +221,49 @@ export function HtmlEditor({ value, onChange, className, placeholder, videoUploa
           return;
         }
       }
+
+      // Some Android/web clipboard paths paste images as giant base64 HTML
+      // instead of a File. If that reaches the post body, rendering/sanitizing
+      // the new post can lock the app. Upload it and insert a normal URL.
+      const pastedHtml = e.clipboardData.getData("text/html");
+      const dataImage = pastedHtml.match(DATA_IMAGE_SRC_RE)?.[1];
+      if (dataImage) {
+        e.preventDefault();
+        const file = dataUrlToImageFile(dataImage);
+        if (!file) {
+          toast.error("That pasted image is too large. Please use the image button instead.");
+          return;
+        }
+        void uploadImage(file);
+        return;
+      }
+      if (/data:image\//i.test(pastedHtml)) {
+        e.preventDefault();
+        toast.error("That pasted image format is not supported. Please use the image button.");
+        return;
+      }
     }
+
+    const clipboardHtml = e.clipboardData.getData("text/html");
+    if (clipboardHtml.length > MAX_PASTED_HTML_CHARS) {
+      const text = e.clipboardData.getData("text/plain").trim();
+      e.preventDefault();
+      if (text) {
+        ref.current?.focus();
+        exec("insertHTML", escapeHtml(text).replace(/\r?\n/g, "<br/>"));
+        handleInput();
+      }
+      toast.error("Pasted formatting was too large, so only the text was added.");
+      return;
+    }
+
     if (!pasteTransform) return;
     const text = e.clipboardData.getData("text/plain");
     if (!text) return;
     e.preventDefault();
-    const html = pasteTransform(text);
+    const transformedHtml = pasteTransform(text);
     ref.current?.focus();
-    exec("insertHTML", html);
+    exec("insertHTML", transformedHtml);
     handleInput();
   };
 
@@ -363,7 +438,7 @@ export function HtmlEditor({ value, onChange, className, placeholder, videoUploa
         ref={ref}
         contentEditable
         suppressContentEditableWarning
-        onInput={handleInput}
+        onInput={() => { if (!removeInlineDataImages()) handleInput(); }}
         onPaste={handlePaste}
         onKeyUp={() => { refreshActive(); updateMentionState(); }}
         onKeyDown={handleKeyDown}

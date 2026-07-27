@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { HtmlEditor } from "@/components/ui/html-editor";
-import { prepareForumPostBody } from "@/lib/forum-embeds";
+import { normalizeForumPostInput, prepareForumPostBody } from "@/lib/forum-embeds";
 import { useMentionCandidates } from "@/hooks/use-mention-candidates";
 import { useFanBlocks } from "@/hooks/use-fan-blocks";
 import { toast } from "sonner";
@@ -272,7 +272,7 @@ function BoardPage() {
     if (!user || !board) return;
     if (submittingRef.current) return;
     const t = title.trim();
-    const bRaw = body.trim();
+    const bRaw = normalizeForumPostInput(body.trim());
     const titleSnapshot = title;
     const bodySnapshot = body;
     if (t.length < 3) { toast.error("Title too short"); return; }

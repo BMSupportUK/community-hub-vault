@@ -28,10 +28,19 @@ function ensureHook() {
   hookInstalled = true;
 }
 
+const DATA_IMAGE_ATTR_RE = /<img\b([^>]*?)\bsrc=["']data:image\/[^"']+["']([^>]*)>/gi;
+const MAX_RICH_HTML_CHARS = 120_000;
+
+function stripInlineDataImages(html: string): string {
+  return html.replace(DATA_IMAGE_ATTR_RE, (_match, before: string, after: string) => `<img${before}${after}>`);
+}
+
 // Allow safe inline HTML produced by our editor, including YouTube embeds.
 export function sanitizeRichHtml(html: string): string {
   ensureHook();
-  return DOMPurify.sanitize(html, {
+  const stripped = stripInlineDataImages(html);
+  const safeInput = stripped.length > MAX_RICH_HTML_CHARS ? `${stripped.slice(0, MAX_RICH_HTML_CHARS)}<p>Message shortened because the pasted content was too large.</p>` : stripped;
+  return DOMPurify.sanitize(safeInput, {
     ADD_TAGS: ["iframe", "video", "source"],
     ADD_ATTR: [
       "allow",
