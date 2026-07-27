@@ -14,19 +14,6 @@ let cachedUnreadNewContent = 0;
 let cachedNavOrder: NavOrderMap = {};
 let cachedPagePerms: PagePermMap = {};
 
-function runWhenIdle(task: () => void) {
-  const w = window as Window & {
-    requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
-    cancelIdleCallback?: (id: number) => void;
-  };
-  if (typeof w.requestIdleCallback === "function") {
-    const id = w.requestIdleCallback(task, { timeout: 1200 });
-    return () => w.cancelIdleCallback?.(id);
-  }
-  const id = window.setTimeout(task, 250);
-  return () => window.clearTimeout(id);
-}
-
 interface RailItem {
   to: string;
   label: string;
@@ -74,12 +61,10 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
       cachedUnreadNewContent = count;
       setUnreadNewContent(count);
     };
-    const cancelIdle = runWhenIdle(() => {
-      void load();
-    });
+    const id = window.setTimeout(() => void load(), 250);
     return () => {
       cancelled = true;
-      cancelIdle();
+      window.clearTimeout(id);
     };
   }, [isPending, inSheet, user?.id]);
 
@@ -96,12 +81,10 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
       cachedNavOrder = map;
       setOrder(map);
     };
-    const cancelIdle = runWhenIdle(() => {
-      void loadOrder();
-    });
+    const id = window.setTimeout(() => void loadOrder(), 250);
     return () => {
       cancelled = true;
-      cancelIdle();
+      window.clearTimeout(id);
     };
   }, [inSheet]);
 
@@ -118,12 +101,10 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
       cachedPagePerms = map;
       setPagePerms(map);
     };
-    const cancelIdle = runWhenIdle(() => {
-      void loadPerms();
-    });
+    const id = window.setTimeout(() => void loadPerms(), 250);
     return () => {
       cancelled = true;
-      cancelIdle();
+      window.clearTimeout(id);
     };
   }, [inSheet]);
 

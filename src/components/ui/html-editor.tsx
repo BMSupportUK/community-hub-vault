@@ -29,7 +29,6 @@ function exec(cmd: string, arg?: string) {
   document.execCommand(cmd, false, arg);
 }
 
-const DATA_IMAGE_SRC_RE = /<img\b[^>]*\bsrc=["'](data:image\/[a-z0-9.+-]+;base64,[^"']+)["'][^>]*>/i;
 const MAX_PASTED_HTML_CHARS = 30_000;
 
 function escapeHtml(s: string): string {
@@ -54,6 +53,22 @@ function dataUrlToImageFile(dataUrl: string): File | null {
   } catch {
     return null;
   }
+}
+
+function extractDataImageUrl(html: string): string | null {
+  const marker = html.search(/data:image\//i);
+  if (marker === -1) return null;
+  const single = html.lastIndexOf("'", marker);
+  const double = html.lastIndexOf('"', marker);
+  const quoteStart = Math.max(single, double);
+  const quote = quoteStart === single ? "'" : '"';
+  if (quoteStart === -1 || marker - quoteStart > 120) return "";
+  const before = html.slice(Math.max(0, quoteStart - 12), quoteStart).toLowerCase();
+  if (!/src\s*=\s*$/.test(before)) return "";
+  const quoteEnd = html.indexOf(quote, marker);
+  if (quoteEnd === -1) return "";
+  const value = html.slice(marker, quoteEnd);
+  return value.length > 14 * 1024 * 1024 ? "" : value;
 }
 
 export function HtmlEditor({ value, onChange, className, placeholder, videoUpload, imageUpload, pasteTransform, mentions }: Props) {
@@ -102,7 +117,13 @@ export function HtmlEditor({ value, onChange, className, placeholder, videoUploa
     if (next === lastValueRef.current) return;
     lastValueRef.current = next;
     if (next === "") {
-      if (ref.current.childNodes.length > 0) ref.current.replaceChildren();
+      const editor = ref.current;
+      if (document.activeElement === editor) {
+        const selection = window.getSelection();
+        if (selection && selection.rangeCount > 0) selection.removeAllRanges();
+        editor.blur();
+      }
+      if (editor.childNodes.length > 0) editor.replaceChildren();
       closeMention();
       return;
     }
@@ -226,7 +247,7 @@ export function HtmlEditor({ value, onChange, className, placeholder, videoUploa
       // instead of a File. If that reaches the post body, rendering/sanitizing
       // the new post can lock the app. Upload it and insert a normal URL.
       const pastedHtml = e.clipboardData.getData("text/html");
-      const dataImage = pastedHtml.match(DATA_IMAGE_SRC_RE)?.[1];
+      const dataImage = extractDataImageUrl(pastedHtml);
       if (dataImage) {
         e.preventDefault();
         const file = dataUrlToImageFile(dataImage);
@@ -237,7 +258,7 @@ export function HtmlEditor({ value, onChange, className, placeholder, videoUploa
         void uploadImage(file);
         return;
       }
-      if (/data:image\//i.test(pastedHtml)) {
+      if (dataImage === "" || pastedHtml.search(/data:image\//i) !== -1) {
         e.preventDefault();
         toast.error("That pasted image format is not supported. Please use the image button.");
         return;

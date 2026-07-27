@@ -8,8 +8,8 @@ const TWEET_RE = /^https?:\/\/(?:www\.|m\.|mobile\.|web\.)?(?:twitter|x)\.com\/(
 const SKIP_PREVIEW_RE = /^https?:\/\/(?:www\.|m\.|mobile\.|web\.)?(?:twitter\.com|x\.com|youtube\.com|youtu\.be)\//i;
 const HTTP_URL_RE = /https?:\/\/[^\s<>"']+/i;
 const PREPARED_FORUM_MARKER_RE = /\bdata-(?:fz-prepared|tweet-embed|link-preview)=/i;
-const DATA_IMAGE_SRC_RE = /\s+src=["']data:image\/[^"']+["']/gi;
 const MAX_FORUM_SUBMIT_HTML_CHARS = 30_000;
+const FORUM_TRUNCATED_NOTICE = "<p>Message shortened because the pasted content was too large.</p>";
 
 type EmbedSocialOptions = {
   skipDomParserFallback?: boolean;
@@ -21,9 +21,31 @@ export function isPreparedForumPostBody(html: string): boolean {
 
 export function normalizeForumPostInput(html: string): string {
   if (!html) return html;
-  const withoutInlineImages = html.replace(DATA_IMAGE_SRC_RE, "");
-  if (withoutInlineImages.length <= MAX_FORUM_SUBMIT_HTML_CHARS) return withoutInlineImages;
-  return `${withoutInlineImages.slice(0, MAX_FORUM_SUBMIT_HTML_CHARS)}<p>Message shortened because the pasted content was too large.</p>`;
+  // Do not run regexes over multi-megabyte pasted/base64 HTML. That was the
+  // posting freeze: the submit click spent ages scanning a giant data URL and
+  // the browser only appeared to recover after the next mouse event.
+  const truncated = html.length > MAX_FORUM_SUBMIT_HTML_CHARS;
+  const slice = truncated ? html.slice(0, MAX_FORUM_SUBMIT_HTML_CHARS) : html;
+  const withoutInlineImages = stripDataImageFragments(slice);
+  return truncated ? `${withoutInlineImages}${FORUM_TRUNCATED_NOTICE}` : withoutInlineImages;
+}
+
+function stripDataImageFragments(input: string): string {
+  let out = input;
+  let marker = out.search(/data:image\//i);
+  while (marker !== -1) {
+    const imgStart = out.lastIndexOf("<img", marker);
+    const tagEnd = out.indexOf(">", marker);
+    if (imgStart !== -1) {
+      out = tagEnd === -1 ? out.slice(0, imgStart) : `${out.slice(0, imgStart)}${out.slice(tagEnd + 1)}`;
+    } else {
+      const nextSpace = out.slice(marker).search(/[\s"'<>]/);
+      const end = nextSpace === -1 ? out.length : marker + nextSpace;
+      out = `${out.slice(0, marker)}${out.slice(end)}`;
+    }
+    marker = out.search(/data:image\//i);
+  }
+  return out;
 }
 
 /**

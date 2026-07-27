@@ -1,5 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import { ArrowLeft, Loader2, Pin, Lock, Quote, Reply as ReplyIcon, Pencil, Trash2, Send, History, Check, X, Ban, MessageSquare, Eye, FolderInput } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -306,6 +307,8 @@ function TopicPage() {
   const submittingRef = useRef(false);
   const locallyInsertedPostIdsRef = useRef<Set<string>>(new Set());
   const userIdRef = useRef<string | null>(user?.id ?? null);
+  const replyBoxRef = useRef<HTMLDivElement>(null);
+  const pendingReplyScrollRef = useRef(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editText, setEditText] = useState("");
   const [historyFor, setHistoryFor] = useState<Post | null>(null);
@@ -329,6 +332,12 @@ function TopicPage() {
   useEffect(() => {
     userIdRef.current = user?.id ?? null;
   }, [user?.id]);
+
+  useEffect(() => {
+    if (tab !== "reply" || !pendingReplyScrollRef.current) return;
+    pendingReplyScrollRef.current = false;
+    replyBoxRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [tab, reply]);
 
   const startEditTitle = () => {
     if (!topic) return;
@@ -549,12 +558,14 @@ function TopicPage() {
   const submitReply = async () => {
     if (!user || !topic) return;
     if (submittingRef.current) return;
-    const raw = normalizeForumPostInput(reply.trim());
+    const raw = normalizeForumPostInput(reply).trim();
     const replySnapshot = reply;
     if (raw.length < 1 || raw === "<p><br></p>") return;
     submittingRef.current = true;
-    setSubmitting(true);
-    setReply("");
+    flushSync(() => {
+      setSubmitting(true);
+      setReply("");
+    });
     const body = prepareForumPostBodyForSubmit(raw);
     const { data, error } = await supabase
       .from("forum_posts")
@@ -562,27 +573,32 @@ function TopicPage() {
       .select("id, topic_id, author_id, body, quote_of, edited_at, is_op, created_at")
       .single();
     submittingRef.current = false;
-    setSubmitting(false);
     if (error) {
-      setReply(replySnapshot);
+      flushSync(() => {
+        setSubmitting(false);
+        setReply(replySnapshot);
+      });
       toast.error("Couldn't post", { description: error.message });
       return;
     }
     const inserted = data as Post | null;
-    if (inserted) {
-      locallyInsertedPostIdsRef.current.add(inserted.id);
-      const replyCountBeforeInsert = topic.reply_count ?? 0;
-      const showOnCurrentPage = shouldShowInsertedReply(page, replyCountBeforeInsert, REPLIES_PER_PAGE);
-      setTopic((current) => current ? { ...current, reply_count: (current.reply_count ?? 0) + 1 } : current);
-      if (showOnCurrentPage) {
-        setPosts((current) => {
-          if (!current) return [inserted];
-          const withoutDuplicate = current.filter((p) => p.id !== inserted.id);
-          return [...withoutDuplicate, inserted].sort(sortPostsForTopic);
-        });
-        void loadAliases([inserted.author_id]);
+    flushSync(() => {
+      setSubmitting(false);
+      if (inserted) {
+        locallyInsertedPostIdsRef.current.add(inserted.id);
+        const replyCountBeforeInsert = topic.reply_count ?? 0;
+        const showOnCurrentPage = shouldShowInsertedReply(page, replyCountBeforeInsert, REPLIES_PER_PAGE);
+        setTopic((current) => current ? { ...current, reply_count: (current.reply_count ?? 0) + 1 } : current);
+        if (showOnCurrentPage) {
+          setPosts((current) => {
+            if (!current) return [inserted];
+            const withoutDuplicate = current.filter((p) => p.id !== inserted.id);
+            return [...withoutDuplicate, inserted].sort(sortPostsForTopic);
+          });
+        }
       }
-    }
+    });
+    if (inserted) void loadAliases([inserted.author_id]);
     toast.success("Reply posted");
     // The new post is shown immediately. Realtime refreshes other users, while
     // this client skips its own insert event so the page does not lock up.
@@ -598,16 +614,14 @@ function TopicPage() {
 
   const replyToPost = (p: Post) => {
     quotePost(p);
+    pendingReplyScrollRef.current = true;
     setTab("reply");
-    setTimeout(() => {
-      document.getElementById("forum-reply-box")?.scrollIntoView({ behavior: "smooth", block: "center" });
-    }, 50);
   };
 
   const startEdit = (p: Post) => { setEditingId(p.id); setEditText(p.body); };
   const saveEdit = async () => {
     if (!editingId) return;
-    const raw = editText.trim();
+    const raw = normalizeForumPostInput(editText).trim();
     if (!raw || raw === "<p><br></p>") return;
     const body = prepareForumPostBodyForSubmit(raw);
     const { error } = await supabase.from("forum_posts").update({ body }).eq("id", editingId);
@@ -860,7 +874,7 @@ function TopicPage() {
               )}
 
               {canPost ? (
-                <div id="forum-reply-box" className="rounded-2xl border border-[#E11B22]/40 bg-surface-1 shadow-glow p-5 space-y-3 mt-4">
+                <div ref={replyBoxRef} id="forum-reply-box" className="rounded-2xl border border-[#E11B22]/40 bg-surface-1 shadow-glow p-5 space-y-3 mt-4">
                   <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
                     <ReplyIcon className="size-4 text-[#E11B22]" />
                     <span>Write a reply</span>
