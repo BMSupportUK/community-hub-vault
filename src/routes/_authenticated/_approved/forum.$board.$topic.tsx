@@ -20,6 +20,16 @@ import { ForumPoll } from "@/components/app/ForumPoll";
 import { censorText, useProfanityWords } from "@/lib/profanity";
 
 export const Route = createFileRoute("/_authenticated/_approved/forum/$board/$topic")({
+  head: () => ({
+    meta: [
+      { title: "Forum Topic | Boro Fan Zone" },
+      { name: "description", content: "Read and reply to a Middlesbrough supporter discussion in the Boro Fan Zone." },
+      { property: "og:title", content: "Forum Topic | Boro Fan Zone" },
+      { property: "og:description", content: "Read and reply to a Middlesbrough supporter discussion in the Boro Fan Zone." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
   component: TopicPage,
 });
 

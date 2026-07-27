@@ -19,6 +19,16 @@ import { PollDraftEditor, persistDraftPoll, type DraftPoll } from "@/components/
 import { BarChart3 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/_approved/forum/$board")({
+  head: ({ params }) => ({
+    meta: [
+      { title: `${params.board.replace(/-/g, " ")} | Boro Fan Zone` },
+      { name: "description", content: `Browse Middlesbrough supporter topics and discussions in the ${params.board.replace(/-/g, " ")} board.` },
+      { property: "og:title", content: `${params.board.replace(/-/g, " ")} | Boro Fan Zone` },
+      { property: "og:description", content: `Browse Middlesbrough supporter topics and discussions in the ${params.board.replace(/-/g, " ")} board.` },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
   component: BoardRoute,
 });
 
