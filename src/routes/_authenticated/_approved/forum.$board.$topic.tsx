@@ -246,6 +246,19 @@ function yieldToBrowser(): Promise<void> {
   });
 }
 
+function runAfterPaint(task: () => void) {
+  if (typeof window === "undefined") {
+    task();
+    return;
+  }
+  const idle = (window as Window & { requestIdleCallback?: (callback: () => void, options?: { timeout?: number }) => number }).requestIdleCallback;
+  if (idle) {
+    idle(task, { timeout: 1200 });
+    return;
+  }
+  window.setTimeout(task, 180);
+}
+
 function shouldShowInsertedReply(currentPage: number, replyCountBeforeInsert: number, repliesPerPage: number) {
   const targetPage = Math.max(1, Math.ceil((replyCountBeforeInsert + 1) / repliesPerPage));
   return targetPage === currentPage;
@@ -542,16 +555,18 @@ function TopicPage() {
       const replyCountBeforeInsert = topic.reply_count ?? 0;
       const showOnCurrentPage = shouldShowInsertedReply(page, replyCountBeforeInsert, REPLIES_PER_PAGE);
       startTransition(() => {
-        if (showOnCurrentPage) {
+        setTopic((current) => current ? { ...current, reply_count: (current.reply_count ?? 0) + 1 } : current);
+      });
+      if (showOnCurrentPage) {
+        runAfterPaint(() => {
           setPosts((current) => {
             if (!current) return [inserted];
             const withoutDuplicate = current.filter((p) => p.id !== inserted.id);
             return [...withoutDuplicate, inserted].sort(sortPostsForTopic);
           });
-        }
-        setTopic((current) => current ? { ...current, reply_count: (current.reply_count ?? 0) + 1 } : current);
-      });
-      if (showOnCurrentPage) void loadAliases([inserted.author_id]);
+          void loadAliases([inserted.author_id]);
+        });
+      }
     }
     toast.success("Reply posted");
     // The new post is shown immediately. Realtime refreshes other users, while
