@@ -55,6 +55,24 @@ type Profile = { id: string; display_name: string | null; username: string | nul
 type EditEntry = { id: string; previous_body: string; edited_at: string; edited_by: string };
 type Viewer = { user_id: string; alias: string; avatar: string };
 
+function isForumPost(value: Partial<Post> | undefined): value is Post {
+  return !!value
+    && typeof value.id === "string"
+    && typeof value.topic_id === "string"
+    && typeof value.author_id === "string"
+    && typeof value.body === "string"
+    && (value.quote_of === null || typeof value.quote_of === "string")
+    && (value.edited_at === null || typeof value.edited_at === "string")
+    && typeof value.is_op === "boolean"
+    && typeof value.created_at === "string";
+}
+
+function sortPostsForTopic(a: Post, b: Post) {
+  if (a.is_op && !b.is_op) return -1;
+  if (!a.is_op && b.is_op) return 1;
+  return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+}
+
 function TopicPage() {
   const { board: slug, topic: topicId } = Route.useParams();
   const navigate = useNavigate();
@@ -76,6 +94,7 @@ function TopicPage() {
   const [submitting, setSubmitting] = useState(false);
   const submittingRef = useRef(false);
   const locallyInsertedPostIdsRef = useRef<Set<string>>(new Set());
+  const userIdRef = useRef<string | null>(user?.id ?? null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editText, setEditText] = useState("");
   const [historyFor, setHistoryFor] = useState<Post | null>(null);
@@ -95,6 +114,10 @@ function TopicPage() {
   const isBoardMod = isStaff || (user ? moderatorIds.has(user.id) : false);
   const canPost = canEnter && !!topic && !topic.is_locked;
   const canEditTitle = !!user && !!topic && (topic.author_id === user.id || isBoardMod);
+
+  useEffect(() => {
+    userIdRef.current = user?.id ?? null;
+  }, [user?.id]);
 
   const startEditTitle = () => {
     if (!topic) return;
@@ -200,10 +223,45 @@ function TopicPage() {
     type ForumRealtimePayload = { new?: Record<string, unknown>; old?: Record<string, unknown> };
     const schedulePostLoad = (payload: ForumRealtimePayload) => {
       const nextId = typeof payload.new?.id === "string" ? payload.new.id : null;
+      const eventType = typeof (payload as { eventType?: unknown }).eventType === "string" ? (payload as { eventType: string }).eventType : null;
+      const nextAuthorId = typeof payload.new?.author_id === "string" ? payload.new.author_id : null;
+      const nextPost = payload.new as Partial<Post> | undefined;
+      const oldId = typeof payload.old?.id === "string" ? payload.old.id : null;
+
+      // The user's own INSERT can reach Realtime before the insert response
+      // returns, so the local id set is not enough. Ignore it by author too;
+      // submitReply already appends the row optimistically from the insert result.
+      if (eventType === "INSERT" && nextAuthorId && nextAuthorId === userIdRef.current) {
+        if (nextId) locallyInsertedPostIdsRef.current.delete(nextId);
+        return;
+      }
       if (nextId && locallyInsertedPostIdsRef.current.has(nextId)) {
         locallyInsertedPostIdsRef.current.delete(nextId);
         return;
       }
+
+      if (eventType === "INSERT" && isForumPost(nextPost)) {
+        setPosts((current) => {
+          if (!current) return [nextPost];
+          if (current.some((p) => p.id === nextPost.id)) return current;
+          return [...current, nextPost].sort(sortPostsForTopic);
+        });
+        setTopic((current) => current ? { ...current, reply_count: (current.reply_count ?? 0) + (nextPost.is_op ? 0 : 1) } : current);
+        void loadAliases([nextPost.author_id]);
+        return;
+      }
+
+      if (eventType === "UPDATE" && isForumPost(nextPost)) {
+        setPosts((current) => current?.map((p) => (p.id === nextPost.id ? { ...p, ...nextPost } : p)) ?? current);
+        return;
+      }
+
+      if (eventType === "DELETE" && oldId) {
+        setPosts((current) => current?.filter((p) => p.id !== oldId) ?? current);
+        setTopic((current) => current ? { ...current, reply_count: Math.max(0, (current.reply_count ?? 0) - 1) } : current);
+        return;
+      }
+
       scheduleLoad();
     };
     // The reply_count trigger fires a forum_topics UPDATE for our OWN post too.
@@ -220,7 +278,7 @@ function TopicPage() {
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "forum_topics", filter: `id=eq.${topicId}` }, (payload) => onTopicUpdate(payload as ForumRealtimePayload))
       .subscribe();
     return () => { if (t) clearTimeout(t); supabase.removeChannel(ch); };
-  }, [topicId, canEnter]);
+  }, [topicId, canEnter, loadAliases]);
 
   // Realtime presence: who is currently viewing this topic
   useEffect(() => {
@@ -299,11 +357,7 @@ function TopicPage() {
       setPosts((current) => {
         if (!current) return [inserted];
         const withoutDuplicate = current.filter((p) => p.id !== inserted.id);
-        return [...withoutDuplicate, inserted].sort((a, b) => {
-          if (a.is_op && !b.is_op) return -1;
-          if (!a.is_op && b.is_op) return 1;
-          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
-        });
+        return [...withoutDuplicate, inserted].sort(sortPostsForTopic);
       });
       setTopic((current) => current ? { ...current, reply_count: (current.reply_count ?? 0) + 1 } : current);
       void loadAliases([inserted.author_id]);
