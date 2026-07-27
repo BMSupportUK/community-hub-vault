@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { startTransition, useCallback, useEffect, useRef, useState } from "react";
 import { ArrowLeft, Loader2, Pin, Lock, Quote, Reply as ReplyIcon, Pencil, Trash2, Send, History, Check, X, Ban, MessageSquare, Eye, FolderInput } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -354,18 +354,22 @@ function TopicPage() {
     const inserted = data as Post | null;
     if (inserted) {
       locallyInsertedPostIdsRef.current.add(inserted.id);
-      setPosts((current) => {
-        if (!current) return [inserted];
-        const withoutDuplicate = current.filter((p) => p.id !== inserted.id);
-        return [...withoutDuplicate, inserted].sort(sortPostsForTopic);
+      startTransition(() => {
+        setPosts((current) => {
+          if (!current) return [inserted];
+          const withoutDuplicate = current.filter((p) => p.id !== inserted.id);
+          return [...withoutDuplicate, inserted].sort(sortPostsForTopic);
+        });
+        setTopic((current) => current ? { ...current, reply_count: (current.reply_count ?? 0) + 1 } : current);
       });
-      setTopic((current) => current ? { ...current, reply_count: (current.reply_count ?? 0) + 1 } : current);
       void loadAliases([inserted.author_id]);
     }
-    setReply("");
-    setTab("reply");
     const targetPage = Math.max(1, Math.ceil(((topic.reply_count ?? 0) + 1) / REPLIES_PER_PAGE));
-    if (targetPage !== page) setPage(targetPage);
+    startTransition(() => {
+      setReply("");
+      setTab("reply");
+      if (targetPage !== page) setPage(targetPage);
+    });
     toast.success("Reply posted");
     // The new post is shown immediately. Realtime refreshes other users, while
     // this client skips its own insert event so the page does not lock up.
