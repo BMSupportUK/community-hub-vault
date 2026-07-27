@@ -239,6 +239,13 @@ function sortPostsForTopic(a: Post, b: Post) {
   return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
 }
 
+function yieldToBrowser(): Promise<void> {
+  if (typeof window === "undefined") return Promise.resolve();
+  return new Promise((resolve) => {
+    window.requestAnimationFrame(() => window.setTimeout(resolve, 0));
+  });
+}
+
 function TopicPage() {
   const { board: slug, topic: topicId } = Route.useParams();
   const navigate = useNavigate();
@@ -505,10 +512,13 @@ function TopicPage() {
     if (!user || !topic) return;
     if (submittingRef.current) return;
     const raw = reply.trim();
+    const replySnapshot = reply;
     if (raw.length < 1 || raw === "<p><br></p>") return;
-    const body = prepareForumPostBody(raw);
     submittingRef.current = true;
     setSubmitting(true);
+    startTransition(() => setReply(""));
+    await yieldToBrowser();
+    const body = prepareForumPostBody(raw);
     const { data, error } = await supabase
       .from("forum_posts")
       .insert({ topic_id: topic.id, author_id: user.id, body, is_op: false })
@@ -516,7 +526,11 @@ function TopicPage() {
       .single();
     submittingRef.current = false;
     setSubmitting(false);
-    if (error) { toast.error("Couldn't post", { description: error.message }); return; }
+    if (error) {
+      startTransition(() => setReply(replySnapshot));
+      toast.error("Couldn't post", { description: error.message });
+      return;
+    }
     const inserted = data as Post | null;
     if (inserted) {
       locallyInsertedPostIdsRef.current.add(inserted.id);
@@ -532,7 +546,6 @@ function TopicPage() {
     }
     const targetPage = Math.max(1, Math.ceil(((topic.reply_count ?? 0) + 1) / REPLIES_PER_PAGE));
     startTransition(() => {
-      setReply("");
       setTab("reply");
       if (targetPage !== page) setPage(targetPage);
     });
