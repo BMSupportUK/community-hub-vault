@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { memo, useEffect, useState } from "react";
 import { BarChart3, Loader2, Plus, Trash2, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -16,7 +16,7 @@ type PollRow = {
 type OptionRow = { id: string; poll_id: string; label: string; sort_order: number };
 type VoteRow = { poll_id: string; option_id: string; user_id: string };
 
-export function ForumPoll({
+function ForumPollComponent({
   topicId,
   userId,
   canManage,
@@ -147,6 +147,8 @@ export function ForumPoll({
     </section>
   );
 }
+
+export const ForumPoll = memo(ForumPollComponent);
 
 export type DraftPoll = {
   question: string;
