@@ -10,14 +10,6 @@ const ApprovedDeferredExtras = lazy(() =>
 function DeferUntilIdle({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
   useEffect(() => {
-    const w = window as Window & {
-      requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
-      cancelIdleCallback?: (id: number) => void;
-    };
-    if (typeof w.requestIdleCallback === "function") {
-      const id = w.requestIdleCallback(() => setReady(true), { timeout: 1800 });
-      return () => w.cancelIdleCallback?.(id);
-    }
     const id = window.setTimeout(() => setReady(true), 500);
     return () => window.clearTimeout(id);
   }, []);

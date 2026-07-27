@@ -19,6 +19,16 @@ import { PollDraftEditor, persistDraftPoll, type DraftPoll } from "@/components/
 import { BarChart3 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/_approved/forum/$board")({
+  head: ({ params }) => ({
+    meta: [
+      { title: `${params.board.replace(/-/g, " ")} | Boro Fan Zone` },
+      { name: "description", content: `Browse Middlesbrough supporter topics and discussions in the ${params.board.replace(/-/g, " ")} board.` },
+      { property: "og:title", content: `${params.board.replace(/-/g, " ")} | Boro Fan Zone` },
+      { property: "og:description", content: `Browse Middlesbrough supporter topics and discussions in the ${params.board.replace(/-/g, " ")} board.` },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
   component: BoardRoute,
 });
 
@@ -71,13 +81,6 @@ function isTopicRow(value: Record<string, unknown> | undefined): value is Topic 
 function sortBoardTopics(a: Topic, b: Topic) {
   if (a.is_sticky !== b.is_sticky) return a.is_sticky ? -1 : 1;
   return new Date(b.last_post_at).getTime() - new Date(a.last_post_at).getTime();
-}
-
-function nextPaint(): Promise<void> {
-  if (typeof window === "undefined") return Promise.resolve();
-  return new Promise((resolve) => {
-    window.requestAnimationFrame(() => window.setTimeout(resolve, 0));
-  });
 }
 
 function BoardPage() {
@@ -281,7 +284,6 @@ function BoardPage() {
     setSubmitting(true);
     setTitle("");
     setBody("");
-    await nextPaint();
     const b = markPreparedForumPostBody(prepareForumPostBody(bRaw, { skipDomParserFallback: true }));
     const { data: topic, error } = await supabase
       .from("forum_topics")

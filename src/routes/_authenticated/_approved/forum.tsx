@@ -16,6 +16,16 @@ import boroBg from "@/assets/boro-bg.jpg";
 import { censorText, useProfanityWords } from "@/lib/profanity";
 
 export const Route = createFileRoute("/_authenticated/_approved/forum")({
+  head: () => ({
+    meta: [
+      { title: "Boro Fan Zone | BM Support" },
+      { name: "description", content: "Join the Boro Fan Zone for Middlesbrough supporter boards, match-day debate, private messages and member discussions." },
+      { property: "og:title", content: "Boro Fan Zone | BM Support" },
+      { property: "og:description", content: "Join the Boro Fan Zone for Middlesbrough supporter boards, match-day debate, private messages and member discussions." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
   component: ForumLayout,
 });
 

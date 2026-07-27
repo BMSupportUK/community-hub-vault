@@ -81,19 +81,10 @@ function RotatingAffiliateBannerComponent({
       setBanners(shuffled);
     };
 
-    const w = window as Window & {
-      requestIdleCallback?: (cb: () => void, opts?: { timeout?: number }) => number;
-      cancelIdleCallback?: (id: number) => void;
-    };
-    const idle = typeof w.requestIdleCallback === "function" ? w.requestIdleCallback.bind(w) : null;
-    const idleId = idle ? idle(() => void load(), { timeout: 1500 }) : window.setTimeout(() => void load(), 350);
+    const loadId = window.setTimeout(() => void load(), 250);
     return () => {
       cancelled = true;
-      if (idle) {
-        w.cancelIdleCallback?.(idleId as number);
-      } else {
-        window.clearTimeout(idleId as number);
-      }
+      window.clearTimeout(loadId);
     };
   }, [boardId]);
 

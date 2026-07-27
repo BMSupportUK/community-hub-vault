@@ -20,6 +20,16 @@ import { ForumPoll } from "@/components/app/ForumPoll";
 import { censorText, useProfanityWords } from "@/lib/profanity";
 
 export const Route = createFileRoute("/_authenticated/_approved/forum/$board/$topic")({
+  head: () => ({
+    meta: [
+      { title: "Forum Topic | Boro Fan Zone" },
+      { name: "description", content: "Read and reply to a Middlesbrough supporter discussion in the Boro Fan Zone." },
+      { property: "og:title", content: "Forum Topic | Boro Fan Zone" },
+      { property: "og:description", content: "Read and reply to a Middlesbrough supporter discussion in the Boro Fan Zone." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
   component: TopicPage,
 });
 
@@ -248,13 +258,6 @@ function prepareForumPostBodyForSubmit(raw: string): string {
   const normalized = normalizeForumPostInput(raw);
   if (isPreparedForumPostBody(normalized)) return normalized;
   return markPreparedForumPostBody(prepareForumPostBody(normalized, { skipDomParserFallback: true }));
-}
-
-function nextPaint(): Promise<void> {
-  if (typeof window === "undefined") return Promise.resolve();
-  return new Promise((resolve) => {
-    window.requestAnimationFrame(() => window.setTimeout(resolve, 0));
-  });
 }
 
 function escapeForumQuoteText(text: string): string {
@@ -552,7 +555,6 @@ function TopicPage() {
     submittingRef.current = true;
     setSubmitting(true);
     setReply("");
-    await nextPaint();
     const body = prepareForumPostBodyForSubmit(raw);
     const { data, error } = await supabase
       .from("forum_posts")
