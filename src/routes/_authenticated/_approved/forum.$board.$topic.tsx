@@ -12,7 +12,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ForumPostBody } from "@/components/app/ForumPostBody";
 import { ForumPostReactions } from "@/components/app/ForumPostReactions";
 import { prepareForumPostBody } from "@/lib/forum-embeds";
-import { useMentionCandidates } from "@/hooks/use-mention-candidates";
+import { useMentionCandidates, type MentionCandidate } from "@/hooks/use-mention-candidates";
 import { useFanBlocks } from "@/hooks/use-fan-blocks";
 import { toast } from "sonner";
 import { RotatingAffiliateBanner } from "@/components/app/RotatingAffiliateBanner";
@@ -54,6 +54,175 @@ type Post = {
 type Profile = { id: string; display_name: string | null; username: string | null; avatar_url: string | null };
 type EditEntry = { id: string; previous_body: string; edited_at: string; edited_by: string };
 type Viewer = { user_id: string; alias: string; avatar: string };
+
+type TopicPostArticleProps = {
+  post: Post;
+  displayIndex: number;
+  slug: string;
+  author: Profile | undefined;
+  currentUserId: string | null;
+  canPost: boolean;
+  canReact: boolean;
+  canEdit: boolean;
+  canDelete: boolean;
+  canBlock: boolean;
+  isEditing: boolean;
+  editText: string;
+  mentionCandidates: MentionCandidate[];
+  onReplyToPost: (post: Post) => void;
+  onQuotePost: (post: Post) => void;
+  onStartEdit: (post: Post) => void;
+  onCancelEdit: () => void;
+  onSaveEdit: () => void;
+  onEditTextChange: (html: string) => void;
+  onDeletePost: (post: Post) => void;
+  onOpenHistory: (post: Post) => void;
+  onBlocksChanged: () => void;
+};
+
+function TopicPostArticleComponent({
+  post,
+  displayIndex,
+  slug,
+  author,
+  currentUserId,
+  canPost,
+  canReact,
+  canEdit,
+  canDelete,
+  canBlock,
+  isEditing,
+  editText,
+  mentionCandidates,
+  onReplyToPost,
+  onQuotePost,
+  onStartEdit,
+  onCancelEdit,
+  onSaveEdit,
+  onEditTextChange,
+  onDeletePost,
+  onOpenHistory,
+  onBlocksChanged,
+}: TopicPostArticleProps) {
+  const navigate = useNavigate();
+  const name = author?.display_name || author?.username || "Someone";
+
+  return (
+    <article
+      className={`boro-topic-post rounded-xl overflow-hidden transition-shadow hover:shadow-[0_14px_42px_-14px_rgba(225,27,34,0.5)] ${
+        post.is_op
+          ? "border-[#E11B22]/65 ring-1 ring-[#E11B22]/25"
+          : "border-white/15 hover:border-[#E11B22]/45"
+      }`}
+    >
+      <header
+        className={`boro-topic-post-header grid grid-cols-[auto_1fr_auto] gap-3 px-5 py-3 items-center border-b ${
+          post.is_op ? "border-[#E11B22]/35" : "border-white/10"
+        }`}
+      >
+        <Link
+          to="/fanzone/u/$userId"
+          params={{ userId: post.author_id }}
+          className="size-8 rounded-full bg-gradient-to-br from-[#E11B22] to-[#8B0F14] grid place-items-center text-[11px] font-bold text-white overflow-hidden ring-2 ring-white/10 shadow-sm hover:ring-[#E11B22]/60 transition"
+          title={`View ${name}'s Fan Zone profile`}
+        >
+          {author?.avatar_url ? <img src={author.avatar_url} alt="" className="size-8 object-cover" loading="lazy" decoding="async" /> : name.slice(0, 1).toUpperCase()}
+        </Link>
+        <div className="min-w-0">
+          <Link
+            to="/fanzone/u/$userId"
+            params={{ userId: post.author_id }}
+            className="font-semibold text-sm text-foreground hover:text-[#E11B22] transition-colors"
+          >
+            {name}
+          </Link>
+          {post.is_op && (
+            <span className="ml-2 inline-block rounded-md bg-[#E11B22] text-white text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 align-middle shadow-sm">
+              OP
+            </span>
+          )}
+          <span className="text-muted-foreground text-[11px] ml-1.5"> · #{displayIndex} · {formatLastSeen(post.created_at)}</span>
+          {post.edited_at && (
+            <button onClick={() => onOpenHistory(post)} className="ml-2 inline-flex items-center gap-1 text-[10px] text-[#F4B400] hover:underline">
+              <History className="size-3" />edited {formatLastSeen(post.edited_at)}
+            </button>
+          )}
+        </div>
+        <div className="flex items-center gap-0.5">
+          {canPost && <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => onReplyToPost(post)} title="Reply with quote"><ReplyIcon className="size-3.5" /></Button>}
+          {canPost && <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => onQuotePost(post)} title="Quote"><Quote className="size-3.5" /></Button>}
+          {canEdit && !isEditing && <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => onStartEdit(post)} title="Edit"><Pencil className="size-3.5" /></Button>}
+          {canDelete && <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-destructive/80 hover:text-destructive" onClick={() => onDeletePost(post)} title="Delete"><Trash2 className="size-3.5" /></Button>}
+          {canBlock && (
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-7 w-7 p-0 text-muted-foreground hover:text-[#E11B22]"
+              title={`Message ${name}`}
+              onClick={async () => {
+                const { data, error } = await supabase.rpc("get_or_create_fan_dm_thread", { _other: post.author_id });
+                if (error) return toast.error("Can't message", { description: error.message });
+                navigate({ to: "/fanzone/messages/$thread", params: { thread: data as string } });
+              }}
+            >
+              <MessageSquare className="size-3.5" />
+            </Button>
+          )}
+          {canBlock && (
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-7 w-7 p-0 text-muted-foreground hover:text-[#E11B22]"
+              title="Block this member"
+              onClick={async () => {
+                if (!confirm(`Block ${name}? Their posts will be hidden and you won't be able to message each other.`)) return;
+                const { error } = await supabase.rpc("fan_zone_block", { _other: post.author_id });
+                if (error) return toast.error("Couldn't block", { description: error.message });
+                toast.success(`${name} blocked`);
+                onBlocksChanged();
+              }}
+            >
+              <Ban className="size-3.5" />
+            </Button>
+          )}
+        </div>
+      </header>
+      <div className="boro-topic-post-content px-5 py-5 sm:px-6">
+        {isEditing ? (
+          <div className="space-y-3">
+            <HtmlEditor value={editText} onChange={onEditTextChange} mentions={mentionCandidates} imageUpload={{ userId: currentUserId }} />
+            <div className="flex gap-2 justify-end">
+              <Button size="sm" variant="outline" onClick={onCancelEdit}><X className="size-3.5 mr-1" />Cancel</Button>
+              <Button size="sm" onClick={onSaveEdit}><Check className="size-3.5 mr-1" />Save</Button>
+            </div>
+          </div>
+        ) : (
+          <ForumPostBody html={post.body} className="boro-readable-copy" />
+        )}
+      </div>
+      <ForumPostReactions
+        postId={post.id}
+        userId={currentUserId}
+        canReact={canReact}
+      />
+    </article>
+  );
+}
+
+const TopicPostArticle = memo(TopicPostArticleComponent, (prev, next) => {
+  if (prev.post !== next.post) return false;
+  if (prev.displayIndex !== next.displayIndex) return false;
+  if (prev.slug !== next.slug) return false;
+  if (prev.currentUserId !== next.currentUserId) return false;
+  if (prev.canPost !== next.canPost || prev.canReact !== next.canReact || prev.canEdit !== next.canEdit || prev.canDelete !== next.canDelete || prev.canBlock !== next.canBlock) return false;
+  if (prev.isEditing !== next.isEditing) return false;
+  if (next.isEditing && (prev.editText !== next.editText || prev.mentionCandidates !== next.mentionCandidates)) return false;
+  const prevAuthor = prev.author;
+  const nextAuthor = next.author;
+  return prevAuthor?.display_name === nextAuthor?.display_name
+    && prevAuthor?.username === nextAuthor?.username
+    && prevAuthor?.avatar_url === nextAuthor?.avatar_url;
+});
 
 function isForumPost(value: Partial<Post> | undefined): value is Post {
   return !!value
