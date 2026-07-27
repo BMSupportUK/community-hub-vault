@@ -265,7 +265,32 @@ function shouldShowInsertedReply(currentPage: number, replyCountBeforeInsert: nu
 }
 
 function prepareForumPostBodyForSubmit(raw: string): string {
-  return prepareForumPostBody(raw, { skipDomParserFallback: isPreparedForumPostBody(raw) });
+  if (isPreparedForumPostBody(raw)) return raw;
+  return prepareForumPostBody(raw, { skipDomParserFallback: true });
+}
+
+function escapeForumQuoteText(text: string): string {
+  return text.replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch] ?? ch);
+}
+
+function quoteExcerptFromHtml(html: string): string {
+  const text = html
+    .replace(/<blockquote\b[^>]*>[\s\S]*?<\/blockquote>/gi, " ")
+    .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, " ")
+    .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, " ")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;|&apos;/gi, "'")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/[ \t\f\v]+/g, " ")
+    .replace(/\n\s+/g, "\n")
+    .trim();
+  const clipped = text.length > 650 ? `${text.slice(0, 650).trim()}…` : text;
+  return escapeForumQuoteText(clipped || "quoted post").replace(/\n/g, "<br/>");
 }
 
 function TopicPage() {
@@ -538,7 +563,9 @@ function TopicPage() {
     if (raw.length < 1 || raw === "<p><br></p>") return;
     submittingRef.current = true;
     setSubmitting(true);
-    startTransition(() => setReply(""));
+    startTransition(() => {
+      setReply("");
+    });
     await yieldToBrowser();
     const body = prepareForumPostBodyForSubmit(raw);
     const { data, error } = await supabase
@@ -549,7 +576,9 @@ function TopicPage() {
     submittingRef.current = false;
     setSubmitting(false);
     if (error) {
-      startTransition(() => setReply(replySnapshot));
+      startTransition(() => {
+        setReply(replySnapshot);
+      });
       toast.error("Couldn't post", { description: error.message });
       return;
     }
@@ -580,10 +609,8 @@ function TopicPage() {
   const quotePost = (p: Post) => {
     const author = profiles[p.author_id];
     const name = author?.display_name || author?.username || "someone";
-    const safeName = name.replace(/</g, "&lt;");
-    // Use the original body as-is if it's HTML; otherwise wrap as paragraph.
-    const inner = /<[a-z][\s\S]*>/i.test(p.body) ? p.body : `<p>${p.body.replace(/</g, "&lt;").replace(/\n/g, "<br/>")}</p>`;
-    const block = `<blockquote><p><strong>${safeName}</strong> wrote:</p>${inner}</blockquote><p><br/></p>`;
+    const safeName = escapeForumQuoteText(name);
+    const block = `<blockquote data-quote-of="${p.id}"><p><strong>${safeName}</strong> wrote:</p><p>${quoteExcerptFromHtml(p.body)}</p></blockquote><p><br/></p>`;
     setReply((cur) => (cur || "") + block);
   };
 

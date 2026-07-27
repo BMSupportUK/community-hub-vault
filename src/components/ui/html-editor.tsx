@@ -33,6 +33,7 @@ export function HtmlEditor({ value, onChange, className, placeholder, videoUploa
   const ref = useRef<HTMLDivElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
+  const lastValueRef = useRef(value ?? "");
   const [uploadingVideo, setUploadingVideo] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [active, setActive] = useState<Record<string, boolean>>({});
@@ -70,13 +71,25 @@ export function HtmlEditor({ value, onChange, className, placeholder, videoUploa
   // Initialize / sync external value when it changes from outside (e.g. switching record)
   useEffect(() => {
     if (!ref.current) return;
-    if (ref.current.innerHTML !== (value ?? "")) {
-      ref.current.innerHTML = value ?? "";
+    const next = value ?? "";
+    if (next === lastValueRef.current) return;
+    lastValueRef.current = next;
+    if (next === "") {
+      if (ref.current.childNodes.length > 0) ref.current.replaceChildren();
+      closeMention();
+      return;
+    }
+    if (ref.current.innerHTML !== next) {
+      ref.current.innerHTML = next;
     }
   }, [value]);
 
   const handleInput = () => {
-    if (ref.current) onChange(ref.current.innerHTML);
+    if (ref.current) {
+      const html = ref.current.innerHTML;
+      lastValueRef.current = html;
+      onChange(html);
+    }
     refreshActive();
     updateMentionState();
   };

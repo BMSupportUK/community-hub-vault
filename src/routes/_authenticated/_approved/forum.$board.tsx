@@ -284,7 +284,7 @@ function BoardPage() {
       setBody("");
     });
     await yieldToBrowser();
-    const b = prepareForumPostBody(bRaw);
+    const b = prepareForumPostBody(bRaw, { skipDomParserFallback: true });
     const { data: topic, error } = await supabase
       .from("forum_topics")
       .insert({ board_id: board.id, author_id: user.id, title: t.slice(0, 200) })

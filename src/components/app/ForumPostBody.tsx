@@ -1,6 +1,6 @@
 import { memo, useEffect, useMemo, useRef, useState, Fragment } from "react";
 import { sanitizeRichHtml } from "@/lib/sanitize-html";
-import { useLoadSocialEmbeds, embedSocialUrls, markLinkPreviews } from "@/lib/forum-embeds";
+import { useLoadSocialEmbeds, isPreparedForumPostBody, prepareForumPostBody } from "@/lib/forum-embeds";
 import { LinkPreviewCard } from "@/components/app/LinkPreviewCard";
 import { censorText, censorHtml, useProfanityWords } from "@/lib/profanity";
 
@@ -18,7 +18,7 @@ function ForumPostBodyComponent({ html, className }: { html: string; className?:
   // Re-run embed conversion at render time so posts saved before the X/FB
   // URL detector was fixed (e.g. URLs ending in `?s=20`) still hydrate into
   // proper embeds without requiring the author to edit & re-save.
-  const processed = useMemo(() => markLinkPreviews(embedSocialUrls(html)), [html]);
+  const processed = useMemo(() => getProcessedForumHtml(html), [html]);
   // Split processed HTML around tweet markers so we can render X posts via
   // a local, defensive renderer — no widgets.js, no SSR package import, no
   // disappearing iframe.
@@ -31,7 +31,7 @@ function ForumPostBodyComponent({ html, className }: { html: string; className?:
     if (!looksLikeHtml) return [];
     return segments.map((seg) => {
       if (seg.type !== "html") return seg;
-      return { type: "html", safeHtml: censorHtml(sanitizeRichHtml(seg.html)) };
+      return { type: "html", safeHtml: getSafeForumHtml(seg.html, profanityKey) };
     });
   }, [segments, looksLikeHtml, profanityKey]);
 
@@ -71,6 +71,34 @@ function ForumPostBodyComponent({ html, className }: { html: string; className?:
 }
 
 export const ForumPostBody = memo(ForumPostBodyComponent);
+
+const HTML_CACHE_LIMIT = 160;
+const processedHtmlCache = new Map<string, string>();
+const safeHtmlCache = new Map<string, string>();
+
+function remember(cache: Map<string, string>, key: string, value: string) {
+  cache.set(key, value);
+  if (cache.size <= HTML_CACHE_LIMIT) return value;
+  const first = cache.keys().next().value;
+  if (typeof first === "string") cache.delete(first);
+  return value;
+}
+
+function getProcessedForumHtml(raw: string): string {
+  const cached = processedHtmlCache.get(raw);
+  if (cached !== undefined) return cached;
+  const processed = isPreparedForumPostBody(raw)
+    ? raw
+    : prepareForumPostBody(raw, { skipDomParserFallback: true });
+  return remember(processedHtmlCache, raw, processed);
+}
+
+function getSafeForumHtml(raw: string, profanityKey: string): string {
+  const key = `${profanityKey}\n${raw}`;
+  const cached = safeHtmlCache.get(key);
+  if (cached !== undefined) return cached;
+  return remember(safeHtmlCache, key, censorHtml(sanitizeRichHtml(raw)));
+}
 
 type Segment =
   | { type: "html"; html: string }
