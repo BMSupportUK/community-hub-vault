@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { startTransition, useCallback, useEffect, useRef, useState } from "react";
+import { memo, startTransition, useCallback, useEffect, useRef, useState } from "react";
 import { ArrowLeft, Loader2, Pin, Lock, Quote, Reply as ReplyIcon, Pencil, Trash2, Send, History, Check, X, Ban, MessageSquare, Eye, FolderInput } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -58,7 +58,6 @@ type Viewer = { user_id: string; alias: string; avatar: string };
 type TopicPostArticleProps = {
   post: Post;
   displayIndex: number;
-  slug: string;
   author: Profile | undefined;
   currentUserId: string | null;
   canPost: boolean;
@@ -83,7 +82,6 @@ type TopicPostArticleProps = {
 function TopicPostArticleComponent({
   post,
   displayIndex,
-  slug,
   author,
   currentUserId,
   canPost,
@@ -212,7 +210,6 @@ function TopicPostArticleComponent({
 const TopicPostArticle = memo(TopicPostArticleComponent, (prev, next) => {
   if (prev.post !== next.post) return false;
   if (prev.displayIndex !== next.displayIndex) return false;
-  if (prev.slug !== next.slug) return false;
   if (prev.currentUserId !== next.currentUserId) return false;
   if (prev.canPost !== next.canPost || prev.canReact !== next.canReact || prev.canEdit !== next.canEdit || prev.canDelete !== next.canDelete || prev.canBlock !== next.canBlock) return false;
   if (prev.isEditing !== next.isEditing) return false;
@@ -704,112 +701,35 @@ function TopicPage() {
         const start = (safePage - 1) * REPLIES_PER_PAGE;
         const pageReplies = replies;
         const renderPost = (p: Post, i: number) => {
-                const author = profiles[p.author_id];
-                const name = author?.display_name || author?.username || "Someone";
-                const canEdit = user && (p.author_id === user.id || isBoardMod);
-                 const canDelete = user && ((p.author_id === user.id && !p.is_op) || isBoardMod);
-                 const canBlock = !!user && p.author_id !== user.id;
-                return (
-                  <article
-                    key={p.id}
-                    className={`boro-topic-post rounded-xl overflow-hidden transition-shadow hover:shadow-[0_14px_42px_-14px_rgba(225,27,34,0.5)] ${
-                      p.is_op
-                        ? "border-[#E11B22]/65 ring-1 ring-[#E11B22]/25"
-                        : "border-white/15 hover:border-[#E11B22]/45"
-                    }`}
-                  >
-                    <header
-                      className={`boro-topic-post-header grid grid-cols-[auto_1fr_auto] gap-3 px-5 py-3 items-center border-b ${
-                        p.is_op ? "border-[#E11B22]/35" : "border-white/10"
-                      }`}
-                    >
-                      <Link
-                        to="/fanzone/u/$userId"
-                        params={{ userId: p.author_id }}
-                        className="size-8 rounded-full bg-gradient-to-br from-[#E11B22] to-[#8B0F14] grid place-items-center text-[11px] font-bold text-white overflow-hidden ring-2 ring-white/10 shadow-sm hover:ring-[#E11B22]/60 transition"
-                        title={`View ${name}'s Fan Zone profile`}
-                      >
-                        {author?.avatar_url ? <img src={author.avatar_url} alt="" className="size-8 object-cover" /> : name.slice(0, 1).toUpperCase()}
-                      </Link>
-                      <div className="min-w-0">
-                        <Link
-                          to="/fanzone/u/$userId"
-                          params={{ userId: p.author_id }}
-                          className="font-semibold text-sm text-foreground hover:text-[#E11B22] transition-colors"
-                        >
-                          {name}
-                        </Link>
-                        {p.is_op && (
-                          <span className="ml-2 inline-block rounded-md bg-[#E11B22] text-white text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 align-middle shadow-sm">
-                            OP
-                          </span>
-                        )}
-                        <span className="text-muted-foreground text-[11px] ml-1.5"> · #{i + 1} · {formatLastSeen(p.created_at)}</span>
-                        {p.edited_at && (
-                          <button onClick={() => void openHistory(p)} className="ml-2 inline-flex items-center gap-1 text-[10px] text-[#F4B400] hover:underline">
-                            <History className="size-3" />edited {formatLastSeen(p.edited_at)}
-                          </button>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-0.5">
-                        {canPost && <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => replyToPost(p)} title="Reply with quote"><ReplyIcon className="size-3.5" /></Button>}
-                        {canPost && <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => quotePost(p)} title="Quote"><Quote className="size-3.5" /></Button>}
-                        {canEdit && editingId !== p.id && <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => startEdit(p)} title="Edit"><Pencil className="size-3.5" /></Button>}
-                        {canDelete && <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-destructive/80 hover:text-destructive" onClick={() => void deletePost(p)} title="Delete"><Trash2 className="size-3.5" /></Button>}
-                        {canBlock && (
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="h-7 w-7 p-0 text-muted-foreground hover:text-[#E11B22]"
-                            title={`Message ${name}`}
-                            onClick={async () => {
-                              const { data, error } = await supabase.rpc("get_or_create_fan_dm_thread", { _other: p.author_id });
-                              if (error) return toast.error("Can't message", { description: error.message });
-                              navigate({ to: "/fanzone/messages/$thread", params: { thread: data as string } });
-                            }}
-                          >
-                            <MessageSquare className="size-3.5" />
-                          </Button>
-                        )}
-                        {canBlock && (
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="h-7 w-7 p-0 text-muted-foreground hover:text-[#E11B22]"
-                            title="Block this member"
-                            onClick={async () => {
-                              if (!confirm(`Block ${name}? Their posts will be hidden and you won't be able to message each other.`)) return;
-                              const { error } = await supabase.rpc("fan_zone_block", { _other: p.author_id });
-                              if (error) return toast.error("Couldn't block", { description: error.message });
-                              toast.success(`${name} blocked`);
-                              void reloadBlocks();
-                            }}
-                          >
-                            <Ban className="size-3.5" />
-                          </Button>
-                        )}
-                      </div>
-                    </header>
-                    <div className="boro-topic-post-content px-5 py-5 sm:px-6">
-                      {editingId === p.id ? (
-                        <div className="space-y-3">
-                          <HtmlEditor value={editText} onChange={setEditText} mentions={mentionCandidates} imageUpload={{ userId: user?.id }} />
-                          <div className="flex gap-2 justify-end">
-                            <Button size="sm" variant="outline" onClick={() => setEditingId(null)}><X className="size-3.5 mr-1" />Cancel</Button>
-                            <Button size="sm" onClick={() => void saveEdit()}><Check className="size-3.5 mr-1" />Save</Button>
-                          </div>
-                        </div>
-                      ) : (
-                        <ForumPostBody html={p.body} className="boro-readable-copy" />
-                      )}
-                    </div>
-                    <ForumPostReactions
-                      postId={p.id}
-                      userId={user?.id ?? null}
-                      canReact={canEnter}
-                    />
-                  </article>
-                );
+          const canEdit = !!user && (p.author_id === user.id || isBoardMod);
+          const canDelete = !!user && ((p.author_id === user.id && !p.is_op) || isBoardMod);
+          const canBlock = !!user && p.author_id !== user.id;
+          return (
+            <TopicPostArticle
+              key={p.id}
+              post={p}
+              displayIndex={i + 1}
+              author={profiles[p.author_id]}
+              currentUserId={user?.id ?? null}
+              canPost={canPost}
+              canReact={canEnter}
+              canEdit={canEdit}
+              canDelete={canDelete}
+              canBlock={canBlock}
+              isEditing={editingId === p.id}
+              editText={editText}
+              mentionCandidates={mentionCandidates}
+              onReplyToPost={replyToPost}
+              onQuotePost={quotePost}
+              onStartEdit={startEdit}
+              onCancelEdit={() => setEditingId(null)}
+              onSaveEdit={() => void saveEdit()}
+              onEditTextChange={setEditText}
+              onDeletePost={(post) => void deletePost(post)}
+              onOpenHistory={(post) => void openHistory(post)}
+              onBlocksChanged={() => void reloadBlocks()}
+            />
+          );
         };
 
         const ViewingBox = () => (
