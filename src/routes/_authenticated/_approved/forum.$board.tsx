@@ -101,7 +101,6 @@ function BoardPage() {
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
-  const [bodyEditorKey, setBodyEditorKey] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const submittingRef = useRef(false);
   const locallyCreatedTopicsRef = useRef<Map<string, number>>(new Map());
@@ -283,7 +282,6 @@ function BoardPage() {
     startTransition(() => {
       setTitle("");
       setBody("");
-      setBodyEditorKey((key) => key + 1);
     });
     await yieldToBrowser();
     const b = prepareForumPostBody(bRaw, { skipDomParserFallback: true });
@@ -298,7 +296,6 @@ function BoardPage() {
       startTransition(() => {
         setTitle(titleSnapshot);
         setBody(bodySnapshot);
-        setBodyEditorKey((key) => key + 1);
       });
       toast.error("Couldn't create topic", { description: error?.message });
       return;
@@ -314,7 +311,6 @@ function BoardPage() {
       startTransition(() => {
         setTitle(titleSnapshot);
         setBody(bodySnapshot);
-        setBodyEditorKey((key) => key + 1);
       });
       toast.error("Couldn't post first message", { description: postErr.message });
       return;
@@ -403,7 +399,6 @@ function BoardPage() {
                 />
                 <div className="min-w-0 overflow-hidden">
                   <HtmlEditor
-                    key={bodyEditorKey}
                     value={body}
                     onChange={setBody}
                     placeholder="What's on your mind? Paste an X or Facebook URL on its own line to embed it."

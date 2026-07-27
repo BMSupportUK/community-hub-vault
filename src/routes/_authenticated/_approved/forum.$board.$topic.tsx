@@ -311,7 +311,6 @@ function TopicPage() {
   const [profiles, setProfiles] = useState<Record<string, Profile>>({});
   const [moderatorIds, setModeratorIds] = useState<Set<string>>(new Set());
   const [reply, setReply] = useState("");
-  const [replyEditorKey, setReplyEditorKey] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const submittingRef = useRef(false);
   const locallyInsertedPostIdsRef = useRef<Set<string>>(new Set());
@@ -566,7 +565,6 @@ function TopicPage() {
     setSubmitting(true);
     startTransition(() => {
       setReply("");
-      setReplyEditorKey((key) => key + 1);
     });
     await yieldToBrowser();
     const body = prepareForumPostBodyForSubmit(raw);
@@ -580,7 +578,6 @@ function TopicPage() {
     if (error) {
       startTransition(() => {
         setReply(replySnapshot);
-        setReplyEditorKey((key) => key + 1);
       });
       toast.error("Couldn't post", { description: error.message });
       return;
@@ -615,7 +612,6 @@ function TopicPage() {
     const safeName = escapeForumQuoteText(name);
     const block = `<blockquote data-quote-of="${p.id}"><p><strong>${safeName}</strong> wrote:</p><p>${quoteExcerptFromHtml(p.body)}</p></blockquote><p><br/></p>`;
     setReply((cur) => (cur || "") + block);
-    setReplyEditorKey((key) => key + 1);
   };
 
   const replyToPost = (p: Post) => {

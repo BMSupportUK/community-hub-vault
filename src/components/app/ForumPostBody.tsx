@@ -1,6 +1,6 @@
 import { memo, useEffect, useMemo, useRef, useState, Fragment } from "react";
 import { sanitizeRichHtml } from "@/lib/sanitize-html";
-import { useLoadSocialEmbeds, embedSocialUrls, isPreparedForumPostBody, markLinkPreviews } from "@/lib/forum-embeds";
+import { useLoadSocialEmbeds, isPreparedForumPostBody, prepareForumPostBody } from "@/lib/forum-embeds";
 import { LinkPreviewCard } from "@/components/app/LinkPreviewCard";
 import { censorText, censorHtml, useProfanityWords } from "@/lib/profanity";
 
@@ -89,7 +89,7 @@ function getProcessedForumHtml(raw: string): string {
   if (cached !== undefined) return cached;
   const processed = isPreparedForumPostBody(raw)
     ? raw
-    : markLinkPreviews(embedSocialUrls(raw, { skipDomParserFallback: true }));
+    : prepareForumPostBody(raw, { skipDomParserFallback: true });
   return remember(processedHtmlCache, raw, processed);
 }
 
