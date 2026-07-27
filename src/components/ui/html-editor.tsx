@@ -244,8 +244,8 @@ export function HtmlEditor({ value, onChange, className, placeholder, videoUploa
       }
     }
 
-    const html = e.clipboardData.getData("text/html");
-    if (html.length > MAX_PASTED_HTML_CHARS) {
+    const clipboardHtml = e.clipboardData.getData("text/html");
+    if (clipboardHtml.length > MAX_PASTED_HTML_CHARS) {
       const text = e.clipboardData.getData("text/plain").trim();
       e.preventDefault();
       if (text) {
@@ -261,9 +261,9 @@ export function HtmlEditor({ value, onChange, className, placeholder, videoUploa
     const text = e.clipboardData.getData("text/plain");
     if (!text) return;
     e.preventDefault();
-    const html = pasteTransform(text);
+    const transformedHtml = pasteTransform(text);
     ref.current?.focus();
-    exec("insertHTML", html);
+    exec("insertHTML", transformedHtml);
     handleInput();
   };
 
