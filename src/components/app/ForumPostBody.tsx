@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, Fragment } from "react";
+import { memo, useEffect, useMemo, useRef, useState, Fragment } from "react";
 import { sanitizeRichHtml } from "@/lib/sanitize-html";
 import { useLoadSocialEmbeds, embedSocialUrls, markLinkPreviews } from "@/lib/forum-embeds";
 import { LinkPreviewCard } from "@/components/app/LinkPreviewCard";
@@ -9,7 +9,7 @@ import { censorText, censorHtml, useProfanityWords } from "@/lib/profanity";
  * fall back to a whitespace-pre-wrap block with the original `> ` quote
  * convention preserved visually.
  */
-export function ForumPostBody({ html, className }: { html: string; className?: string }) {
+function ForumPostBodyComponent({ html, className }: { html: string; className?: string }) {
   const ref = useRef<HTMLDivElement>(null);
   // Re-render when the profanity list finishes loading or is updated.
   useProfanityWords();
@@ -58,6 +58,8 @@ export function ForumPostBody({ html, className }: { html: string; className?: s
     </div>
   );
 }
+
+export const ForumPostBody = memo(ForumPostBodyComponent);
 
 type Segment =
   | { type: "html"; html: string }
