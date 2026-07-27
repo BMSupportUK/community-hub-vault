@@ -11,8 +11,10 @@ import { censorText, censorHtml, useProfanityWords } from "@/lib/profanity";
  */
 function ForumPostBodyComponent({ html, className }: { html: string; className?: string }) {
   const ref = useRef<HTMLDivElement>(null);
-  // Re-render when the profanity list finishes loading or is updated.
-  useProfanityWords();
+  // Re-render when the profanity list finishes loading or is updated, but use
+  // a stable key so expensive censoring is memoized between parent renders.
+  const { words: profanityWords } = useProfanityWords();
+  const profanityKey = profanityWords.join("|");
   // Re-run embed conversion at render time so posts saved before the X/FB
   // URL detector was fixed (e.g. URLs ending in `?s=20`) still hydrate into
   // proper embeds without requiring the author to edit & re-save.
@@ -24,10 +26,19 @@ function ForumPostBodyComponent({ html, className }: { html: string; className?:
   useLoadSocialEmbeds(ref, [processed]);
 
   const looksLikeHtml = /<[a-z][\s\S]*>/i.test(processed);
+  const plainLines = useMemo(() => censorText(processed).split("\n"), [processed, profanityKey]);
+  const safeSegments = useMemo<RenderableSegment[]>(() => {
+    if (!looksLikeHtml) return [];
+    return segments.map((seg) => {
+      if (seg.type !== "html") return seg;
+      return { type: "html", safeHtml: censorHtml(sanitizeRichHtml(seg.html)) };
+    });
+  }, [segments, looksLikeHtml, profanityKey]);
+
   if (!looksLikeHtml) {
     return (
       <div ref={ref} className={`text-[15px] leading-relaxed whitespace-pre-wrap break-words text-foreground/90 ${className ?? ""}`}>
-        {censorText(processed).split("\n").map((line, i) =>
+        {plainLines.map((line, i) =>
           line.startsWith("> ") ? (
             <div key={i} className="border-l-3 border-primary/70 pl-4 italic text-muted-foreground my-1.5 bg-primary/5 py-1 pr-2 rounded-r">
               {line.slice(2)}
@@ -44,14 +55,14 @@ function ForumPostBodyComponent({ html, className }: { html: string; className?:
 
   return (
     <div ref={ref} className={wrapperClass}>
-      {segments.map((seg, i) =>
+      {safeSegments.map((seg, i) =>
         seg.type === "tweet" ? (
           <XPostEmbed key={`t-${i}-${seg.id}`} id={seg.id} url={seg.url} />
         ) : seg.type === "link" ? (
           <LinkPreviewCard key={`l-${i}-${seg.url}`} url={seg.url} title={seg.title} />
         ) : (
           <Fragment key={`h-${i}`}>
-            <div dangerouslySetInnerHTML={{ __html: censorHtml(sanitizeRichHtml(seg.html)) }} />
+            <div dangerouslySetInnerHTML={{ __html: seg.safeHtml }} />
           </Fragment>
         ),
       )}
@@ -63,6 +74,11 @@ export const ForumPostBody = memo(ForumPostBodyComponent);
 
 type Segment =
   | { type: "html"; html: string }
+  | { type: "tweet"; id: string; url: string }
+  | { type: "link"; url: string; title?: string };
+
+type RenderableSegment =
+  | { type: "html"; safeHtml: string }
   | { type: "tweet"; id: string; url: string }
   | { type: "link"; url: string; title?: string };
 
