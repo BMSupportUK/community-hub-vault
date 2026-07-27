@@ -883,7 +883,6 @@ function TopicPage() {
                     <span>Write a reply</span>
                   </div>
                   <HtmlEditor
-                    key={replyEditorKey}
                     value={reply}
                     onChange={setReply}
                     placeholder="What's on your mind? Paste an X or Facebook URL on its own line to embed it."
