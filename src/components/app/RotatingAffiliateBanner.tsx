@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { memo, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import advertiseLeaderboard from "@/assets/advertise-leaderboard.png";
 
@@ -16,6 +16,8 @@ type Fallback = {
   alt_text?: string | null;
 };
 
+const bannerCache = new Map<string, Banner[]>();
+
 function shuffle<T>(arr: T[]): T[] {
   const a = arr.slice();
   for (let i = a.length - 1; i > 0; i--) {
@@ -30,14 +32,16 @@ function shuffle<T>(arr: T[]): T[] {
  * The order is shuffled per page load so impressions are spread evenly
  * across visits, and the visible banner cycles every `intervalMs` ms.
  */
-export function RotatingAffiliateBanner({
+function RotatingAffiliateBannerComponent({
   fallback,
   boardId,
   intervalMs = 8000,
+  paused = false,
 }: {
   fallback?: Fallback;
   boardId?: string | null;
   intervalMs?: number;
+  paused?: boolean;
 }) {
   const [banners, setBanners] = useState<Banner[] | null>(null);
   const [index, setIndex] = useState(0);
@@ -45,7 +49,16 @@ export function RotatingAffiliateBanner({
 
   useEffect(() => {
     let cancelled = false;
-    (async () => {
+    const cacheKey = boardId ?? "__all__";
+    const cached = bannerCache.get(cacheKey);
+    if (cached) {
+      setBanners(cached);
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    const load = async () => {
       let list: Banner[] = [];
       if (boardId) {
         const { data } = await supabase
@@ -63,10 +76,20 @@ export function RotatingAffiliateBanner({
         list = (data ?? []) as Banner[];
       }
       if (cancelled) return;
-      setBanners(shuffle(list));
-    })();
+      const shuffled = shuffle(list);
+      bannerCache.set(cacheKey, shuffled);
+      setBanners(shuffled);
+    };
+
+    const idle = (window as Window & { requestIdleCallback?: (cb: () => void, opts?: { timeout?: number }) => number }).requestIdleCallback;
+    const idleId = idle ? idle(() => void load(), { timeout: 1500 }) : window.setTimeout(() => void load(), 350);
     return () => {
       cancelled = true;
+      if (idle) {
+        (window as Window & { cancelIdleCallback?: (id: number) => void }).cancelIdleCallback?.(idleId as number);
+      } else {
+        window.clearTimeout(idleId as number);
+      }
     };
   }, [boardId]);
 
@@ -84,16 +107,20 @@ export function RotatingAffiliateBanner({
   }, [banners, fallback?.image_url, fallback?.link_url, fallback?.alt_text]);
 
   useEffect(() => {
-    if (list.length <= 1) return;
+    if (paused || list.length <= 1) return;
+    let timeoutId: number | null = null;
     const id = setInterval(() => {
       setFading(true);
-      setTimeout(() => {
+      timeoutId = window.setTimeout(() => {
         setIndex((i) => (i + 1) % list.length);
         setFading(false);
       }, 350);
     }, intervalMs);
-    return () => clearInterval(id);
-  }, [list.length, intervalMs]);
+    return () => {
+      clearInterval(id);
+      if (timeoutId !== null) window.clearTimeout(timeoutId);
+    };
+  }, [paused, list.length, intervalMs]);
 
   const current = list[Math.min(index, list.length - 1)];
 
@@ -114,10 +141,13 @@ export function RotatingAffiliateBanner({
         className={`w-full aspect-[1/3] object-cover object-center block transition-opacity duration-300 ${fading ? "opacity-0" : "opacity-100"}`}
         loading="lazy"
         decoding="async"
+        fetchPriority="low"
         sizes="(max-width: 768px) 200px, 256px"
       />
     </a>
   );
 }
+
+export const RotatingAffiliateBanner = memo(RotatingAffiliateBannerComponent);
 
 export default RotatingAffiliateBanner;
