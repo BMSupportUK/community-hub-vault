@@ -54,6 +54,25 @@ type Topic = {
 };
 type Profile = { id: string; display_name: string | null; username: string | null };
 
+function isTopicRow(value: Record<string, unknown> | undefined): value is Topic {
+  return !!value
+    && typeof value.id === "string"
+    && typeof value.title === "string"
+    && typeof value.author_id === "string"
+    && typeof value.is_sticky === "boolean"
+    && typeof value.is_locked === "boolean"
+    && typeof value.view_count === "number"
+    && typeof value.reply_count === "number"
+    && typeof value.last_post_at === "string"
+    && (value.last_post_by === null || typeof value.last_post_by === "string")
+    && typeof value.created_at === "string";
+}
+
+function sortBoardTopics(a: Topic, b: Topic) {
+  if (a.is_sticky !== b.is_sticky) return a.is_sticky ? -1 : 1;
+  return new Date(b.last_post_at).getTime() - new Date(a.last_post_at).getTime();
+}
+
 function BoardPage() {
   const { board: slug } = Route.useParams();
   const navigate = useNavigate();
