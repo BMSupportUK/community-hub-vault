@@ -1,5 +1,5 @@
 import { createFileRoute, Link, Outlet, useMatches, useNavigate } from "@tanstack/react-router";
-import { startTransition, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Pin, Lock, Loader2, Plus, ArrowLeft, Eye, MessageSquare, CheckCircle2, Pencil, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -71,13 +71,6 @@ function isTopicRow(value: Record<string, unknown> | undefined): value is Topic 
 function sortBoardTopics(a: Topic, b: Topic) {
   if (a.is_sticky !== b.is_sticky) return a.is_sticky ? -1 : 1;
   return new Date(b.last_post_at).getTime() - new Date(a.last_post_at).getTime();
-}
-
-function yieldToBrowser(): Promise<void> {
-  if (typeof window === "undefined") return Promise.resolve();
-  return new Promise((resolve) => {
-    window.requestAnimationFrame(() => window.setTimeout(resolve, 0));
-  });
 }
 
 function BoardPage() {
@@ -279,11 +272,8 @@ function BoardPage() {
     if (bRaw.length < 1 || bRaw === "<p><br></p>") { toast.error("Add some body text"); return; }
     submittingRef.current = true;
     setSubmitting(true);
-    startTransition(() => {
-      setTitle("");
-      setBody("");
-    });
-    await yieldToBrowser();
+    setTitle("");
+    setBody("");
     const b = prepareForumPostBody(bRaw, { skipDomParserFallback: true });
     const { data: topic, error } = await supabase
       .from("forum_topics")
@@ -293,10 +283,8 @@ function BoardPage() {
     if (error || !topic) {
       submittingRef.current = false;
       setSubmitting(false);
-      startTransition(() => {
-        setTitle(titleSnapshot);
-        setBody(bodySnapshot);
-      });
+      setTitle(titleSnapshot);
+      setBody(bodySnapshot);
       toast.error("Couldn't create topic", { description: error?.message });
       return;
     }
@@ -308,10 +296,8 @@ function BoardPage() {
     submittingRef.current = false;
     setSubmitting(false);
     if (postErr) {
-      startTransition(() => {
-        setTitle(titleSnapshot);
-        setBody(bodySnapshot);
-      });
+      setTitle(titleSnapshot);
+      setBody(bodySnapshot);
       toast.error("Couldn't post first message", { description: postErr.message });
       return;
     }
@@ -319,21 +305,19 @@ function BoardPage() {
       const err = await persistDraftPoll(createdTopic.id, user.id, poll);
       if (err) toast.error("Poll not saved", { description: err });
     }
-    startTransition(() => {
-      setTopics((current) => {
-        if (!current) return current;
-        const withoutDuplicate = current.filter((item) => item.id !== createdTopic.id);
-        return [{ ...createdTopic, last_post_by: user.id }, ...withoutDuplicate].slice(0, PAGE_SIZE);
-      });
-      setTotalTopics((current) => current + 1);
-      setProfiles((current) => ({
-        ...current,
-        [user.id]: current[user.id] ?? { id: user.id, display_name: "You", username: null },
-      }));
-      setOpen(false);
-      setPoll(null);
-      setCreatedTopicId(createdTopic.id);
+    setTopics((current) => {
+      if (!current) return current;
+      const withoutDuplicate = current.filter((item) => item.id !== createdTopic.id);
+      return [{ ...createdTopic, last_post_by: user.id }, ...withoutDuplicate].slice(0, PAGE_SIZE);
     });
+    setTotalTopics((current) => current + 1);
+    setProfiles((current) => ({
+      ...current,
+      [user.id]: current[user.id] ?? { id: user.id, display_name: "You", username: null },
+    }));
+    setOpen(false);
+    setPoll(null);
+    setCreatedTopicId(createdTopic.id);
   };
 
   if (!canEnter) {
