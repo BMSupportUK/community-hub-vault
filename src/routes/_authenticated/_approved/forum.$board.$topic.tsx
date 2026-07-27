@@ -307,6 +307,8 @@ function TopicPage() {
   const submittingRef = useRef(false);
   const locallyInsertedPostIdsRef = useRef<Set<string>>(new Set());
   const userIdRef = useRef<string | null>(user?.id ?? null);
+  const replyBoxRef = useRef<HTMLDivElement>(null);
+  const pendingReplyScrollRef = useRef(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editText, setEditText] = useState("");
   const [historyFor, setHistoryFor] = useState<Post | null>(null);
@@ -330,6 +332,12 @@ function TopicPage() {
   useEffect(() => {
     userIdRef.current = user?.id ?? null;
   }, [user?.id]);
+
+  useEffect(() => {
+    if (tab !== "reply" || !pendingReplyScrollRef.current) return;
+    pendingReplyScrollRef.current = false;
+    replyBoxRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [tab, reply]);
 
   const startEditTitle = () => {
     if (!topic) return;
@@ -606,10 +614,8 @@ function TopicPage() {
 
   const replyToPost = (p: Post) => {
     quotePost(p);
+    pendingReplyScrollRef.current = true;
     setTab("reply");
-    setTimeout(() => {
-      document.getElementById("forum-reply-box")?.scrollIntoView({ behavior: "smooth", block: "center" });
-    }, 50);
   };
 
   const startEdit = (p: Post) => { setEditingId(p.id); setEditText(p.body); };
@@ -868,7 +874,7 @@ function TopicPage() {
               )}
 
               {canPost ? (
-                <div id="forum-reply-box" className="rounded-2xl border border-[#E11B22]/40 bg-surface-1 shadow-glow p-5 space-y-3 mt-4">
+                <div ref={replyBoxRef} id="forum-reply-box" className="rounded-2xl border border-[#E11B22]/40 bg-surface-1 shadow-glow p-5 space-y-3 mt-4">
                   <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
                     <ReplyIcon className="size-4 text-[#E11B22]" />
                     <span>Write a reply</span>

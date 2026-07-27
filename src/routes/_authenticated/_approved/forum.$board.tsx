@@ -1,7 +1,7 @@
 import { createFileRoute, Link, Outlet, useMatches, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { flushSync } from "react-dom";
-import { Pin, Lock, Loader2, Plus, ArrowLeft, Eye, MessageSquare, CheckCircle2, Pencil, Trash2 } from "lucide-react";
+import { Pin, Lock, Loader2, Plus, ArrowLeft, Eye, MessageSquare, Pencil, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useFanZoneMembership } from "@/hooks/use-fan-zone";
@@ -109,7 +109,6 @@ function BoardPage() {
   const submittingRef = useRef(false);
   const locallyCreatedTopicsRef = useRef<Map<string, number>>(new Map());
   const userIdRef = useRef<string | null>(user?.id ?? null);
-  const [createdTopicId, setCreatedTopicId] = useState<string | null>(null);
   const [editingTopic, setEditingTopic] = useState<Topic | null>(null);
   const [editTitle, setEditTitle] = useState("");
   const [savingEdit, setSavingEdit] = useState(false);
@@ -336,7 +335,12 @@ function BoardPage() {
       }));
       setOpen(false);
       setPoll(null);
-      setCreatedTopicId(createdTopic.id);
+    });
+    toast.success("Topic posted", {
+      action: {
+        label: "View post",
+        onClick: () => void navigate({ to: "/forum/$board/$topic", params: { board: slug, topic: createdTopic.id } }),
+      },
     });
   };
 
@@ -562,30 +566,6 @@ function BoardPage() {
             <Button variant="outline" onClick={() => { setEditingTopic(null); setEditTitle(""); }} disabled={savingEdit}>Cancel</Button>
             <Button onClick={() => void saveTopicEdit()} disabled={savingEdit}>
               {savingEdit ? <><Loader2 className="size-4 mr-1 animate-spin" />Saving…</> : "Save"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={!!createdTopicId} onOpenChange={(o) => { if (!o) setCreatedTopicId(null); }}>
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <CheckCircle2 className="size-5 text-emerald-500" /> Topic posted
-            </DialogTitle>
-          </DialogHeader>
-          <p className="text-sm text-muted-foreground">Your topic is live in {board.name}.</p>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setCreatedTopicId(null)}>Stay here</Button>
-            <Button
-              onClick={() => {
-                const id = createdTopicId;
-                setCreatedTopicId(null);
-                if (id) void navigate({ to: "/forum/$board/$topic", params: { board: slug, topic: id } });
-              }}
-              className="bg-gradient-to-r from-[#E11B22] to-[#8B0F14] hover:from-[#F02B30] hover:to-[#9B1118] border-0 text-white"
-            >
-              View post
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -117,7 +117,13 @@ export function HtmlEditor({ value, onChange, className, placeholder, videoUploa
     if (next === lastValueRef.current) return;
     lastValueRef.current = next;
     if (next === "") {
-      if (ref.current.childNodes.length > 0) ref.current.replaceChildren();
+      const editor = ref.current;
+      if (document.activeElement === editor) {
+        const selection = window.getSelection();
+        if (selection && selection.rangeCount > 0) selection.removeAllRanges();
+        editor.blur();
+      }
+      if (editor.childNodes.length > 0) editor.replaceChildren();
       closeMention();
       return;
     }
