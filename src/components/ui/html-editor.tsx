@@ -70,8 +70,14 @@ export function HtmlEditor({ value, onChange, className, placeholder, videoUploa
   // Initialize / sync external value when it changes from outside (e.g. switching record)
   useEffect(() => {
     if (!ref.current) return;
-    if (ref.current.innerHTML !== (value ?? "")) {
-      ref.current.innerHTML = value ?? "";
+    const next = value ?? "";
+    if (next === "") {
+      if (ref.current.childNodes.length > 0) ref.current.replaceChildren();
+      closeMention();
+      return;
+    }
+    if (ref.current.innerHTML !== next) {
+      ref.current.innerHTML = next;
     }
   }, [value]);
 

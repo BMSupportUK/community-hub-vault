@@ -107,6 +107,9 @@ function escapeRegExp(s: string): string {
 }
 
 export function prepareForumPostBody(html: string, options: EmbedSocialOptions = {}): string {
+  if (!html) return html;
+  if (isPreparedForumPostBody(html)) return html;
+  if (!/https?:\/\//i.test(html) && !/(?:twitter-tweet|fb-post|social-embed-x)/i.test(html)) return html;
   return markLinkPreviews(embedSocialUrls(html, options));
 }
 
