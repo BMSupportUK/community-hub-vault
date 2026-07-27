@@ -24,6 +24,16 @@ function isAndroidAppShell() {
 }
 
 export const Route = createFileRoute("/")({
+  head: () => ({
+    meta: [
+      { title: "BM Support | Customer Portal" },
+      { name: "description", content: "Access BM Support services, community updates, support tickets and account tools from one secure customer portal." },
+      { property: "og:title", content: "BM Support | Customer Portal" },
+      { property: "og:description", content: "Access BM Support services, community updates, support tickets and account tools from one secure customer portal." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
   beforeLoad: async () => {
     // On the native Android (Capacitor) app, skip the marketing landing page
     // entirely and send users straight to the login screen.
