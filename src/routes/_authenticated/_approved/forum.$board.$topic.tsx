@@ -706,6 +706,7 @@ function TopicPage() {
   const renderSponsorAdvert = () => (
     <RotatingAffiliateBanner
       boardId={board?.id ?? null}
+      paused={tab === "reply" || submitting || editingId !== null}
       fallback={{
         image_url: board?.affiliate_banner_url ?? null,
         link_url: board?.affiliate_banner_link ?? null,
@@ -910,9 +911,11 @@ function TopicPage() {
         );
       })()}
         </div>
-        <aside className="hidden md:block md:sticky md:top-4" aria-label="Sponsored advert">
-          {renderSponsorAdvert()}
-        </aside>
+        {tab !== "reply" && (
+          <aside className="hidden md:block md:sticky md:top-4" aria-label="Sponsored advert">
+            {renderSponsorAdvert()}
+          </aside>
+        )}
       </div>
 
       <Dialog open={!!historyFor} onOpenChange={(o) => !o && setHistoryFor(null)}>
