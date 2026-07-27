@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { memo, startTransition, useCallback, useEffect, useRef, useState } from "react";
+import { memo, startTransition, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, Loader2, Pin, Lock, Quote, Reply as ReplyIcon, Pencil, Trash2, Send, History, Check, X, Ban, MessageSquare, Eye, FolderInput } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -11,7 +11,7 @@ import { HtmlEditor } from "@/components/ui/html-editor";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ForumPostBody } from "@/components/app/ForumPostBody";
 import { ForumPostReactions } from "@/components/app/ForumPostReactions";
-import { prepareForumPostBody } from "@/lib/forum-embeds";
+import { isPreparedForumPostBody, prepareForumPostBody } from "@/lib/forum-embeds";
 import { useMentionCandidates, type MentionCandidate } from "@/hooks/use-mention-candidates";
 import { useFanBlocks } from "@/hooks/use-fan-blocks";
 import { toast } from "sonner";
@@ -237,6 +237,35 @@ function sortPostsForTopic(a: Post, b: Post) {
   if (a.is_op && !b.is_op) return -1;
   if (!a.is_op && b.is_op) return 1;
   return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+}
+
+function yieldToBrowser(): Promise<void> {
+  if (typeof window === "undefined") return Promise.resolve();
+  return new Promise((resolve) => {
+    window.requestAnimationFrame(() => window.setTimeout(resolve, 0));
+  });
+}
+
+function runAfterPaint(task: () => void) {
+  if (typeof window === "undefined") {
+    task();
+    return;
+  }
+  const idle = (window as Window & { requestIdleCallback?: (callback: () => void, options?: { timeout?: number }) => number }).requestIdleCallback;
+  if (idle) {
+    idle(task, { timeout: 1200 });
+    return;
+  }
+  window.setTimeout(task, 180);
+}
+
+function shouldShowInsertedReply(currentPage: number, replyCountBeforeInsert: number, repliesPerPage: number) {
+  const targetPage = Math.max(1, Math.ceil((replyCountBeforeInsert + 1) / repliesPerPage));
+  return targetPage === currentPage;
+}
+
+function prepareForumPostBodyForSubmit(raw: string): string {
+  return prepareForumPostBody(raw, { skipDomParserFallback: isPreparedForumPostBody(raw) });
 }
 
 function TopicPage() {
@@ -505,10 +534,13 @@ function TopicPage() {
     if (!user || !topic) return;
     if (submittingRef.current) return;
     const raw = reply.trim();
+    const replySnapshot = reply;
     if (raw.length < 1 || raw === "<p><br></p>") return;
-    const body = prepareForumPostBody(raw);
     submittingRef.current = true;
     setSubmitting(true);
+    startTransition(() => setReply(""));
+    await yieldToBrowser();
+    const body = prepareForumPostBodyForSubmit(raw);
     const { data, error } = await supabase
       .from("forum_posts")
       .insert({ topic_id: topic.id, author_id: user.id, body, is_op: false })
@@ -516,26 +548,30 @@ function TopicPage() {
       .single();
     submittingRef.current = false;
     setSubmitting(false);
-    if (error) { toast.error("Couldn't post", { description: error.message }); return; }
+    if (error) {
+      startTransition(() => setReply(replySnapshot));
+      toast.error("Couldn't post", { description: error.message });
+      return;
+    }
     const inserted = data as Post | null;
     if (inserted) {
       locallyInsertedPostIdsRef.current.add(inserted.id);
+      const replyCountBeforeInsert = topic.reply_count ?? 0;
+      const showOnCurrentPage = shouldShowInsertedReply(page, replyCountBeforeInsert, REPLIES_PER_PAGE);
       startTransition(() => {
-        setPosts((current) => {
-          if (!current) return [inserted];
-          const withoutDuplicate = current.filter((p) => p.id !== inserted.id);
-          return [...withoutDuplicate, inserted].sort(sortPostsForTopic);
-        });
         setTopic((current) => current ? { ...current, reply_count: (current.reply_count ?? 0) + 1 } : current);
       });
-      void loadAliases([inserted.author_id]);
+      if (showOnCurrentPage) {
+        runAfterPaint(() => {
+          setPosts((current) => {
+            if (!current) return [inserted];
+            const withoutDuplicate = current.filter((p) => p.id !== inserted.id);
+            return [...withoutDuplicate, inserted].sort(sortPostsForTopic);
+          });
+          void loadAliases([inserted.author_id]);
+        });
+      }
     }
-    const targetPage = Math.max(1, Math.ceil(((topic.reply_count ?? 0) + 1) / REPLIES_PER_PAGE));
-    startTransition(() => {
-      setReply("");
-      setTab("reply");
-      if (targetPage !== page) setPage(targetPage);
-    });
     toast.success("Reply posted");
     // The new post is shown immediately. Realtime refreshes other users, while
     // this client skips its own insert event so the page does not lock up.
@@ -564,7 +600,7 @@ function TopicPage() {
     if (!editingId) return;
     const raw = editText.trim();
     if (!raw || raw === "<p><br></p>") return;
-    const body = prepareForumPostBody(raw);
+    const body = prepareForumPostBodyForSubmit(raw);
     const { error } = await supabase.from("forum_posts").update({ body }).eq("id", editingId);
     if (error) { toast.error("Couldn't save", { description: error.message }); return; }
     setEditingId(null); setEditText("");
@@ -627,6 +663,14 @@ function TopicPage() {
     if (target) void navigate({ to: "/forum/$board/$topic", params: { board: target.slug, topic: topic.id } });
   };
 
+  const visiblePosts = useMemo(() => {
+    if (!posts) return { opPost: null as Post | null, replies: [] as Post[] };
+    return {
+      opPost: posts.find((p) => p.is_op) ?? null,
+      replies: posts.filter((p) => !p.is_op && !blocked.has(p.author_id)),
+    };
+  }, [posts, blocked]);
+
   if (!canEnter) return <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-6 text-sm text-center">Members only.</div>;
   if (topic === null && posts !== null) {
     return <div className="text-center text-sm text-muted-foreground">Topic not found. <Link to="/forum/$board" params={{ board: slug }} className="underline">Back to board</Link></div>;
@@ -642,6 +686,7 @@ function TopicPage() {
       }}
     />
   );
+  const { opPost, replies } = visiblePosts;
 
   return (
     <div className="boro-topic-page space-y-4">
@@ -694,8 +739,6 @@ function TopicPage() {
       <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_180px] lg:grid-cols-[minmax(0,1fr)_256px] md:items-start">
         <div className="min-w-0">
       {(() => {
-        const opPost = posts.find((p) => p.is_op) ?? null;
-        const replies = posts.filter((p) => !p.is_op && !blocked.has(p.author_id));
         const totalPages = Math.max(1, Math.ceil((topic.reply_count ?? replies.length) / REPLIES_PER_PAGE));
         const safePage = Math.min(page, totalPages);
         const start = (safePage - 1) * REPLIES_PER_PAGE;

@@ -7,6 +7,15 @@ const TWEET_RE = /^https?:\/\/(?:www\.|m\.|mobile\.|web\.)?(?:twitter|x)\.com\/(
 // instead of trying to embed them.
 const SKIP_PREVIEW_RE = /^https?:\/\/(?:www\.|m\.|mobile\.|web\.)?(?:twitter\.com|x\.com|youtube\.com|youtu\.be)\//i;
 const HTTP_URL_RE = /https?:\/\/[^\s<>"']+/i;
+const PREPARED_FORUM_MARKER_RE = /\bdata-(?:tweet-embed|link-preview)=/i;
+
+type EmbedSocialOptions = {
+  skipDomParserFallback?: boolean;
+};
+
+export function isPreparedForumPostBody(html: string): boolean {
+  return PREPARED_FORUM_MARKER_RE.test(html);
+}
 
 /**
  * Walk processed HTML and replace any standalone link (a paragraph that
@@ -97,8 +106,8 @@ function escapeRegExp(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-export function prepareForumPostBody(html: string): string {
-  return markLinkPreviews(embedSocialUrls(html));
+export function prepareForumPostBody(html: string, options: EmbedSocialOptions = {}): string {
+  return markLinkPreviews(embedSocialUrls(html, options));
 }
 
 function linkPreviewMarker(url: string, title?: string | null): string {
@@ -214,7 +223,7 @@ function htmlTextContent(html: string): string {
  *  - bare URLs that occupy an entire <p> on their own
  *  - <a> elements whose text equals the href (typical browser auto-link paste)
  */
-export function embedSocialUrls(html: string): string {
+export function embedSocialUrls(html: string, options: EmbedSocialOptions = {}): string {
   if (!html) return html;
 
   // Migrate legacy embed markup (old blockquote.twitter-tweet shells, including
@@ -298,7 +307,7 @@ export function embedSocialUrls(html: string): string {
     if (changed) return segments.join("");
   }
 
-  if (typeof window === "undefined") return html;
+  if (options.skipDomParserFallback || typeof window === "undefined") return html;
   const doc = new DOMParser().parseFromString(`<div id="__root">${html}</div>`, "text/html");
   const root = doc.getElementById("__root");
   if (!root) return html;
