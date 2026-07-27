@@ -55,6 +55,24 @@ type Profile = { id: string; display_name: string | null; username: string | nul
 type EditEntry = { id: string; previous_body: string; edited_at: string; edited_by: string };
 type Viewer = { user_id: string; alias: string; avatar: string };
 
+function isForumPost(value: Partial<Post> | undefined): value is Post {
+  return !!value
+    && typeof value.id === "string"
+    && typeof value.topic_id === "string"
+    && typeof value.author_id === "string"
+    && typeof value.body === "string"
+    && (value.quote_of === null || typeof value.quote_of === "string")
+    && (value.edited_at === null || typeof value.edited_at === "string")
+    && typeof value.is_op === "boolean"
+    && typeof value.created_at === "string";
+}
+
+function sortPostsForTopic(a: Post, b: Post) {
+  if (a.is_op && !b.is_op) return -1;
+  if (!a.is_op && b.is_op) return 1;
+  return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+}
+
 function TopicPage() {
   const { board: slug, topic: topicId } = Route.useParams();
   const navigate = useNavigate();
