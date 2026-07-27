@@ -1,5 +1,6 @@
 import { createFileRoute, Link, Outlet, useMatches, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import { Pin, Lock, Loader2, Plus, ArrowLeft, Eye, MessageSquare, CheckCircle2, Pencil, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -275,15 +276,17 @@ function BoardPage() {
     if (!user || !board) return;
     if (submittingRef.current) return;
     const t = title.trim();
-    const bRaw = normalizeForumPostInput(body.trim());
+    const bRaw = normalizeForumPostInput(body).trim();
     const titleSnapshot = title;
     const bodySnapshot = body;
     if (t.length < 3) { toast.error("Title too short"); return; }
     if (bRaw.length < 1 || bRaw === "<p><br></p>") { toast.error("Add some body text"); return; }
     submittingRef.current = true;
-    setSubmitting(true);
-    setTitle("");
-    setBody("");
+    flushSync(() => {
+      setSubmitting(true);
+      setTitle("");
+      setBody("");
+    });
     const b = markPreparedForumPostBody(prepareForumPostBody(bRaw, { skipDomParserFallback: true }));
     const { data: topic, error } = await supabase
       .from("forum_topics")
@@ -292,9 +295,11 @@ function BoardPage() {
       .single();
     if (error || !topic) {
       submittingRef.current = false;
-      setSubmitting(false);
-      setTitle(titleSnapshot);
-      setBody(bodySnapshot);
+      flushSync(() => {
+        setSubmitting(false);
+        setTitle(titleSnapshot);
+        setBody(bodySnapshot);
+      });
       toast.error("Couldn't create topic", { description: error?.message });
       return;
     }
@@ -304,10 +309,12 @@ function BoardPage() {
       .from("forum_posts")
       .insert({ topic_id: createdTopic.id, author_id: user.id, body: b, is_op: true });
     submittingRef.current = false;
-    setSubmitting(false);
     if (postErr) {
-      setTitle(titleSnapshot);
-      setBody(bodySnapshot);
+      flushSync(() => {
+        setSubmitting(false);
+        setTitle(titleSnapshot);
+        setBody(bodySnapshot);
+      });
       toast.error("Couldn't post first message", { description: postErr.message });
       return;
     }
@@ -315,19 +322,22 @@ function BoardPage() {
       const err = await persistDraftPoll(createdTopic.id, user.id, poll);
       if (err) toast.error("Poll not saved", { description: err });
     }
-    setTopics((current) => {
-      if (!current) return current;
-      const withoutDuplicate = current.filter((item) => item.id !== createdTopic.id);
-      return [{ ...createdTopic, last_post_by: user.id }, ...withoutDuplicate].slice(0, PAGE_SIZE);
+    flushSync(() => {
+      setSubmitting(false);
+      setTopics((current) => {
+        if (!current) return current;
+        const withoutDuplicate = current.filter((item) => item.id !== createdTopic.id);
+        return [{ ...createdTopic, last_post_by: user.id }, ...withoutDuplicate].slice(0, PAGE_SIZE);
+      });
+      setTotalTopics((current) => current + 1);
+      setProfiles((current) => ({
+        ...current,
+        [user.id]: current[user.id] ?? { id: user.id, display_name: "You", username: null },
+      }));
+      setOpen(false);
+      setPoll(null);
+      setCreatedTopicId(createdTopic.id);
     });
-    setTotalTopics((current) => current + 1);
-    setProfiles((current) => ({
-      ...current,
-      [user.id]: current[user.id] ?? { id: user.id, display_name: "You", username: null },
-    }));
-    setOpen(false);
-    setPoll(null);
-    setCreatedTopicId(createdTopic.id);
   };
 
   if (!canEnter) {

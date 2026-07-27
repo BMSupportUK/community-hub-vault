@@ -28,11 +28,6 @@ const GpsCapture = lazy(() => import("@/components/app/GpsCapture").then((m) => 
 function DeferUntilIdle({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
   useEffect(() => {
-    const w = window as unknown as { requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number };
-    if (typeof w.requestIdleCallback === "function") {
-      const id = w.requestIdleCallback(() => setReady(true), { timeout: 1500 });
-      return () => cancelIdleCallback?.(id);
-    }
     const t = window.setTimeout(() => setReady(true), 400);
     return () => window.clearTimeout(t);
   }, []);
@@ -146,12 +141,8 @@ function AuthLayout() {
         loggedRef.current = false;
       });
     };
-    const w = window as unknown as { requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number };
-    if (typeof w.requestIdleCallback === "function") {
-      w.requestIdleCallback(run, { timeout: 2000 });
-    } else {
-      window.setTimeout(run, 800);
-    }
+    const id = window.setTimeout(run, 800);
+    return () => window.clearTimeout(id);
   }, [loading, isPending, logIp]);
 
   if (loading) {
