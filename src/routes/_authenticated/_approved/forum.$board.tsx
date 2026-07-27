@@ -78,6 +78,7 @@ function BoardPage() {
   const [submitting, setSubmitting] = useState(false);
   const submittingRef = useRef(false);
   const locallyCreatedTopicsRef = useRef<Map<string, number>>(new Map());
+  const userIdRef = useRef<string | null>(user?.id ?? null);
   const [createdTopicId, setCreatedTopicId] = useState<string | null>(null);
   const [editingTopic, setEditingTopic] = useState<Topic | null>(null);
   const [editTitle, setEditTitle] = useState("");
@@ -86,6 +87,10 @@ function BoardPage() {
 
   const PAGE_SIZE = 20;
   const totalPages = Math.max(1, Math.ceil(totalTopics / PAGE_SIZE));
+
+  useEffect(() => {
+    userIdRef.current = user?.id ?? null;
+  }, [user?.id]);
 
   useEffect(() => {
     if (!canEnter) return;
@@ -134,10 +139,41 @@ function BoardPage() {
     if (!canEnter || !board) return;
     type TopicRealtimePayload = { new?: Record<string, unknown>; old?: Record<string, unknown> };
     const handleTopicChange = (payload: TopicRealtimePayload) => {
+      const eventType = typeof (payload as { eventType?: unknown }).eventType === "string" ? (payload as { eventType: string }).eventType : null;
       const id = typeof payload.new?.id === "string" ? payload.new.id : typeof payload.old?.id === "string" ? payload.old.id : null;
+      const authorId = typeof payload.new?.author_id === "string" ? payload.new.author_id : null;
       const expiresAt = id ? locallyCreatedTopicsRef.current.get(id) : undefined;
       if (expiresAt && expiresAt > Date.now()) return;
       if (id && expiresAt) locallyCreatedTopicsRef.current.delete(id);
+
+      // New-topic inserts can reach Realtime before the insert call returns.
+      // Ignore our own INSERT; submit() adds the topic locally from the DB row.
+      if (eventType === "INSERT" && authorId && authorId === userIdRef.current) return;
+
+      if (eventType === "INSERT" && isTopicRow(payload.new)) {
+        const next = payload.new;
+        setTopics((current) => {
+          if (!current || current.some((t) => t.id === next.id)) return current;
+          return [next, ...current].sort(sortBoardTopics).slice(0, PAGE_SIZE);
+        });
+        setTotalTopics((current) => current + 1);
+        void loadTopicAliases([next]);
+        return;
+      }
+
+      if (eventType === "UPDATE" && isTopicRow(payload.new)) {
+        const next = payload.new;
+        setTopics((current) => current?.map((t) => (t.id === next.id ? { ...t, ...next } : t)).sort(sortBoardTopics) ?? current);
+        void loadTopicAliases([next]);
+        return;
+      }
+
+      if (eventType === "DELETE" && id) {
+        setTopics((current) => current?.filter((t) => t.id !== id) ?? current);
+        setTotalTopics((current) => Math.max(0, current - 1));
+        return;
+      }
+
       void reloadTopics();
     };
     const ch = supabase
@@ -165,6 +201,20 @@ function BoardPage() {
       .range(from, to);
     setTotalTopics(count ?? (ts?.length ?? 0));
     setTopics((ts ?? []) as Topic[]);
+  };
+
+  const loadTopicAliases = async (rows: Topic[]) => {
+    const ids = Array.from(new Set([
+      ...rows.map((t) => t.author_id),
+      ...rows.map((t) => t.last_post_by).filter((x): x is string => !!x),
+    ]));
+    if (!ids.length) return;
+    const { data: aliases } = await supabase.rpc("fan_zone_aliases", { _ids: ids });
+    const map: Record<string, Profile> = {};
+    (aliases ?? []).forEach((a: { user_id: string; fan_alias: string | null }) => {
+      map[a.user_id] = { id: a.user_id, display_name: a.fan_alias ?? "Boro Fan", username: null };
+    });
+    setProfiles((current) => ({ ...current, ...map }));
   };
 
   const saveTopicEdit = async () => {
