@@ -7,7 +7,7 @@ const TWEET_RE = /^https?:\/\/(?:www\.|m\.|mobile\.|web\.)?(?:twitter|x)\.com\/(
 // instead of trying to embed them.
 const SKIP_PREVIEW_RE = /^https?:\/\/(?:www\.|m\.|mobile\.|web\.)?(?:twitter\.com|x\.com|youtube\.com|youtu\.be)\//i;
 const HTTP_URL_RE = /https?:\/\/[^\s<>"']+/i;
-const PREPARED_FORUM_MARKER_RE = /\bdata-(?:tweet-embed|link-preview)=/i;
+const PREPARED_FORUM_MARKER_RE = /\bdata-(?:fz-prepared|tweet-embed|link-preview)=/i;
 const DATA_IMAGE_SRC_RE = /\s+src=["']data:image\/[^"']+["']/gi;
 const MAX_FORUM_SUBMIT_HTML_CHARS = 30_000;
 
@@ -122,7 +122,16 @@ export function prepareForumPostBody(html: string, options: EmbedSocialOptions =
   if (!/https?:\/\//i.test(html) && !/(?:twitter-tweet|fb-post|social-embed-x)/i.test(html)) return html;
   const looksLikeHtml = /<[a-z][\s\S]*>/i.test(html);
   if (looksLikeHtml && !/https?:\/\//i.test(htmlTextContent(html)) && !/(?:twitter-tweet|fb-post|social-embed-x)/i.test(html)) return html;
-  return markLinkPreviews(embedSocialUrls(html, options));
+  return markPrepared(markLinkPreviews(embedSocialUrls(html, options)));
+}
+
+export function markPreparedForumPostBody(html: string): string {
+  return markPrepared(normalizeForumPostInput(html));
+}
+
+function markPrepared(html: string): string {
+  if (!html || isPreparedForumPostBody(html)) return html;
+  return `<div data-fz-prepared="1">${html}</div>`;
 }
 
 function linkPreviewMarker(url: string, title?: string | null): string {

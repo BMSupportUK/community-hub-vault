@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { HtmlEditor } from "@/components/ui/html-editor";
-import { normalizeForumPostInput, prepareForumPostBody } from "@/lib/forum-embeds";
+import { markPreparedForumPostBody, normalizeForumPostInput, prepareForumPostBody } from "@/lib/forum-embeds";
 import { useMentionCandidates } from "@/hooks/use-mention-candidates";
 import { useFanBlocks } from "@/hooks/use-fan-blocks";
 import { toast } from "sonner";
@@ -282,7 +282,7 @@ function BoardPage() {
     setTitle("");
     setBody("");
     await nextPaint();
-    const b = prepareForumPostBody(bRaw, { skipDomParserFallback: true });
+    const b = markPreparedForumPostBody(prepareForumPostBody(bRaw, { skipDomParserFallback: true }));
     const { data: topic, error } = await supabase
       .from("forum_topics")
       .insert({ board_id: board.id, author_id: user.id, title: t.slice(0, 200) })
