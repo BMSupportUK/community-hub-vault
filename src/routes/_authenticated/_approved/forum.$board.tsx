@@ -1,5 +1,5 @@
 import { createFileRoute, Link, Outlet, useMatches, useNavigate } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { startTransition, useEffect, useRef, useState } from "react";
 import { Pin, Lock, Loader2, Plus, ArrowLeft, Eye, MessageSquare, CheckCircle2, Pencil, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -71,6 +71,13 @@ function isTopicRow(value: Record<string, unknown> | undefined): value is Topic 
 function sortBoardTopics(a: Topic, b: Topic) {
   if (a.is_sticky !== b.is_sticky) return a.is_sticky ? -1 : 1;
   return new Date(b.last_post_at).getTime() - new Date(a.last_post_at).getTime();
+}
+
+function yieldToBrowser(): Promise<void> {
+  if (typeof window === "undefined") return Promise.resolve();
+  return new Promise((resolve) => {
+    window.requestAnimationFrame(() => window.setTimeout(resolve, 0));
+  });
 }
 
 function BoardPage() {
@@ -266,11 +273,18 @@ function BoardPage() {
     if (submittingRef.current) return;
     const t = title.trim();
     const bRaw = body.trim();
+    const titleSnapshot = title;
+    const bodySnapshot = body;
     if (t.length < 3) { toast.error("Title too short"); return; }
     if (bRaw.length < 1 || bRaw === "<p><br></p>") { toast.error("Add some body text"); return; }
-    const b = prepareForumPostBody(bRaw);
     submittingRef.current = true;
     setSubmitting(true);
+    startTransition(() => {
+      setTitle("");
+      setBody("");
+    });
+    await yieldToBrowser();
+    const b = prepareForumPostBody(bRaw);
     const { data: topic, error } = await supabase
       .from("forum_topics")
       .insert({ board_id: board.id, author_id: user.id, title: t.slice(0, 200) })
@@ -279,27 +293,25 @@ function BoardPage() {
     if (error || !topic) {
       submittingRef.current = false;
       setSubmitting(false);
+      startTransition(() => {
+        setTitle(titleSnapshot);
+        setBody(bodySnapshot);
+      });
       toast.error("Couldn't create topic", { description: error?.message });
       return;
     }
     const createdTopic = topic as Topic;
     locallyCreatedTopicsRef.current.set(createdTopic.id, Date.now() + 5000);
-    setTopics((current) => {
-      if (!current) return current;
-      const withoutDuplicate = current.filter((item) => item.id !== createdTopic.id);
-      return [createdTopic, ...withoutDuplicate].slice(0, PAGE_SIZE);
-    });
-    setTotalTopics((current) => current + 1);
-    setProfiles((current) => ({
-      ...current,
-      [user.id]: current[user.id] ?? { id: user.id, display_name: "You", username: null },
-    }));
     const { error: postErr } = await supabase
       .from("forum_posts")
       .insert({ topic_id: createdTopic.id, author_id: user.id, body: b, is_op: true });
     submittingRef.current = false;
     setSubmitting(false);
     if (postErr) {
+      startTransition(() => {
+        setTitle(titleSnapshot);
+        setBody(bodySnapshot);
+      });
       toast.error("Couldn't post first message", { description: postErr.message });
       return;
     }
@@ -307,8 +319,21 @@ function BoardPage() {
       const err = await persistDraftPoll(createdTopic.id, user.id, poll);
       if (err) toast.error("Poll not saved", { description: err });
     }
-    setOpen(false); setTitle(""); setBody(""); setPoll(null);
-    setCreatedTopicId(createdTopic.id);
+    startTransition(() => {
+      setTopics((current) => {
+        if (!current) return current;
+        const withoutDuplicate = current.filter((item) => item.id !== createdTopic.id);
+        return [{ ...createdTopic, last_post_by: user.id }, ...withoutDuplicate].slice(0, PAGE_SIZE);
+      });
+      setTotalTopics((current) => current + 1);
+      setProfiles((current) => ({
+        ...current,
+        [user.id]: current[user.id] ?? { id: user.id, display_name: "You", username: null },
+      }));
+      setOpen(false);
+      setPoll(null);
+      setCreatedTopicId(createdTopic.id);
+    });
   };
 
   if (!canEnter) {
