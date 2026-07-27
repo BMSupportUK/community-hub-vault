@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { memo, startTransition, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, Loader2, Pin, Lock, Quote, Reply as ReplyIcon, Pencil, Trash2, Send, History, Check, X, Ban, MessageSquare, Eye, FolderInput } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -237,26 +237,6 @@ function sortPostsForTopic(a: Post, b: Post) {
   if (a.is_op && !b.is_op) return -1;
   if (!a.is_op && b.is_op) return 1;
   return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
-}
-
-function yieldToBrowser(): Promise<void> {
-  if (typeof window === "undefined") return Promise.resolve();
-  return new Promise((resolve) => {
-    window.requestAnimationFrame(() => window.setTimeout(resolve, 0));
-  });
-}
-
-function runAfterPaint(task: () => void) {
-  if (typeof window === "undefined") {
-    task();
-    return;
-  }
-  const idle = (window as Window & { requestIdleCallback?: (callback: () => void, options?: { timeout?: number }) => number }).requestIdleCallback;
-  if (idle) {
-    idle(task, { timeout: 1200 });
-    return;
-  }
-  window.setTimeout(task, 180);
 }
 
 function shouldShowInsertedReply(currentPage: number, replyCountBeforeInsert: number, repliesPerPage: number) {
@@ -564,10 +544,7 @@ function TopicPage() {
     if (raw.length < 1 || raw === "<p><br></p>") return;
     submittingRef.current = true;
     setSubmitting(true);
-    startTransition(() => {
-      setReply("");
-    });
-    await yieldToBrowser();
+    setReply("");
     const body = prepareForumPostBodyForSubmit(raw);
     const { data, error } = await supabase
       .from("forum_posts")
@@ -577,9 +554,7 @@ function TopicPage() {
     submittingRef.current = false;
     setSubmitting(false);
     if (error) {
-      startTransition(() => {
-        setReply(replySnapshot);
-      });
+      setReply(replySnapshot);
       toast.error("Couldn't post", { description: error.message });
       return;
     }
@@ -588,18 +563,14 @@ function TopicPage() {
       locallyInsertedPostIdsRef.current.add(inserted.id);
       const replyCountBeforeInsert = topic.reply_count ?? 0;
       const showOnCurrentPage = shouldShowInsertedReply(page, replyCountBeforeInsert, REPLIES_PER_PAGE);
-      startTransition(() => {
-        setTopic((current) => current ? { ...current, reply_count: (current.reply_count ?? 0) + 1 } : current);
-      });
+      setTopic((current) => current ? { ...current, reply_count: (current.reply_count ?? 0) + 1 } : current);
       if (showOnCurrentPage) {
-        runAfterPaint(() => {
-          setPosts((current) => {
-            if (!current) return [inserted];
-            const withoutDuplicate = current.filter((p) => p.id !== inserted.id);
-            return [...withoutDuplicate, inserted].sort(sortPostsForTopic);
-          });
-          void loadAliases([inserted.author_id]);
+        setPosts((current) => {
+          if (!current) return [inserted];
+          const withoutDuplicate = current.filter((p) => p.id !== inserted.id);
+          return [...withoutDuplicate, inserted].sort(sortPostsForTopic);
         });
+        void loadAliases([inserted.author_id]);
       }
     }
     toast.success("Reply posted");
