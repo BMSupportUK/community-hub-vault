@@ -180,13 +180,22 @@ function TopicPage() {
     void supabase.rpc("forum_increment_view", { _topic: topicId });
   }, [topicId, canEnter]);
 
+  // Keep the newest `load` reachable without making it a subscription dep —
+  // otherwise every page/alias change tears down and re-subscribes the channel.
+  const loadRef = useRef(load);
+  useEffect(() => { loadRef.current = load; }, [load]);
+
   useEffect(() => {
     if (!canEnter) return;
-    void load();
+    void loadRef.current();
+  }, [topicId, canEnter, page]);
+
+  useEffect(() => {
+    if (!canEnter) return;
     let t: ReturnType<typeof setTimeout> | null = null;
     const scheduleLoad = () => {
       if (t) clearTimeout(t);
-      t = setTimeout(() => { t = null; void load(); }, 250);
+      t = setTimeout(() => { t = null; void loadRef.current(); }, 400);
     };
     type ForumRealtimePayload = { new?: Record<string, unknown>; old?: Record<string, unknown> };
     const schedulePostLoad = (payload: ForumRealtimePayload) => {
@@ -197,13 +206,21 @@ function TopicPage() {
       }
       scheduleLoad();
     };
+    // The reply_count trigger fires a forum_topics UPDATE for our OWN post too.
+    // Patch the row in place instead of reloading the whole topic (that reload
+    // was re-rendering every post and re-hydrating all embeds = the freeze).
+    const onTopicUpdate = (payload: ForumRealtimePayload) => {
+      const next = payload.new as Partial<Topic> | undefined;
+      if (!next || typeof next.id !== "string") { scheduleLoad(); return; }
+      setTopic((cur) => (cur ? { ...cur, ...next } as Topic : cur));
+    };
     const ch = supabase
       .channel(`forum-topic-${topicId}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "forum_posts", filter: `topic_id=eq.${topicId}` }, (payload) => schedulePostLoad(payload as ForumRealtimePayload))
-      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "forum_topics", filter: `id=eq.${topicId}` }, scheduleLoad)
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "forum_topics", filter: `id=eq.${topicId}` }, (payload) => onTopicUpdate(payload as ForumRealtimePayload))
       .subscribe();
     return () => { if (t) clearTimeout(t); supabase.removeChannel(ch); };
-  }, [topicId, canEnter, load]);
+  }, [topicId, canEnter]);
 
   // Realtime presence: who is currently viewing this topic
   useEffect(() => {
@@ -293,7 +310,8 @@ function TopicPage() {
     }
     setReply("");
     setTab("reply");
-    setPage(Math.max(1, Math.ceil(((topic.reply_count ?? 0) + 1) / REPLIES_PER_PAGE)));
+    const targetPage = Math.max(1, Math.ceil(((topic.reply_count ?? 0) + 1) / REPLIES_PER_PAGE));
+    if (targetPage !== page) setPage(targetPage);
     toast.success("Reply posted");
     // The new post is shown immediately. Realtime refreshes other users, while
     // this client skips its own insert event so the page does not lock up.
