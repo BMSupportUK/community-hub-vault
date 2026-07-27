@@ -77,6 +77,7 @@ function BoardPage() {
   const [body, setBody] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const submittingRef = useRef(false);
+  const locallyCreatedTopicsRef = useRef<Map<string, number>>(new Map());
   const [createdTopicId, setCreatedTopicId] = useState<string | null>(null);
   const [editingTopic, setEditingTopic] = useState<Topic | null>(null);
   const [editTitle, setEditTitle] = useState("");
@@ -131,12 +132,20 @@ function BoardPage() {
   // Live updates: refresh the topic list when topics or posts change in this board.
   useEffect(() => {
     if (!canEnter || !board) return;
+    type TopicRealtimePayload = { new?: Record<string, unknown>; old?: Record<string, unknown> };
+    const handleTopicChange = (payload: TopicRealtimePayload) => {
+      const id = typeof payload.new?.id === "string" ? payload.new.id : typeof payload.old?.id === "string" ? payload.old.id : null;
+      const expiresAt = id ? locallyCreatedTopicsRef.current.get(id) : undefined;
+      if (expiresAt && expiresAt > Date.now()) return;
+      if (id && expiresAt) locallyCreatedTopicsRef.current.delete(id);
+      void reloadTopics();
+    };
     const ch = supabase
       .channel(`forum-board-${board.id}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "forum_topics", filter: `board_id=eq.${board.id}` },
-        () => { void reloadTopics(); },
+        (payload) => handleTopicChange(payload as TopicRealtimePayload),
       )
       .subscribe();
     return () => { supabase.removeChannel(ch); };
@@ -196,7 +205,7 @@ function BoardPage() {
     const { data: topic, error } = await supabase
       .from("forum_topics")
       .insert({ board_id: board.id, author_id: user.id, title: t.slice(0, 200) })
-      .select("id")
+      .select("id, title, author_id, is_sticky, is_locked, view_count, reply_count, last_post_at, last_post_by, created_at")
       .single();
     if (error || !topic) {
       submittingRef.current = false;
@@ -204,9 +213,21 @@ function BoardPage() {
       toast.error("Couldn't create topic", { description: error?.message });
       return;
     }
+    const createdTopic = topic as Topic;
+    locallyCreatedTopicsRef.current.set(createdTopic.id, Date.now() + 5000);
+    setTopics((current) => {
+      if (!current) return current;
+      const withoutDuplicate = current.filter((item) => item.id !== createdTopic.id);
+      return [createdTopic, ...withoutDuplicate].slice(0, PAGE_SIZE);
+    });
+    setTotalTopics((current) => current + 1);
+    setProfiles((current) => ({
+      ...current,
+      [user.id]: current[user.id] ?? { id: user.id, display_name: "You", username: null },
+    }));
     const { error: postErr } = await supabase
       .from("forum_posts")
-      .insert({ topic_id: (topic as { id: string }).id, author_id: user.id, body: b, is_op: true });
+      .insert({ topic_id: createdTopic.id, author_id: user.id, body: b, is_op: true });
     submittingRef.current = false;
     setSubmitting(false);
     if (postErr) {
@@ -214,11 +235,11 @@ function BoardPage() {
       return;
     }
     if (poll) {
-      const err = await persistDraftPoll((topic as { id: string }).id, user.id, poll);
+      const err = await persistDraftPoll(createdTopic.id, user.id, poll);
       if (err) toast.error("Poll not saved", { description: err });
     }
     setOpen(false); setTitle(""); setBody(""); setPoll(null);
-    setCreatedTopicId((topic as { id: string }).id);
+    setCreatedTopicId(createdTopic.id);
   };
 
   if (!canEnter) {
