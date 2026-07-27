@@ -246,6 +246,11 @@ function yieldToBrowser(): Promise<void> {
   });
 }
 
+function shouldShowInsertedReply(currentPage: number, replyCountBeforeInsert: number, repliesPerPage: number) {
+  const targetPage = Math.max(1, Math.ceil((replyCountBeforeInsert + 1) / repliesPerPage));
+  return targetPage === currentPage;
+}
+
 function TopicPage() {
   const { board: slug, topic: topicId } = Route.useParams();
   const navigate = useNavigate();
@@ -534,21 +539,20 @@ function TopicPage() {
     const inserted = data as Post | null;
     if (inserted) {
       locallyInsertedPostIdsRef.current.add(inserted.id);
+      const replyCountBeforeInsert = topic.reply_count ?? 0;
+      const showOnCurrentPage = shouldShowInsertedReply(page, replyCountBeforeInsert, REPLIES_PER_PAGE);
       startTransition(() => {
-        setPosts((current) => {
-          if (!current) return [inserted];
-          const withoutDuplicate = current.filter((p) => p.id !== inserted.id);
-          return [...withoutDuplicate, inserted].sort(sortPostsForTopic);
-        });
+        if (showOnCurrentPage) {
+          setPosts((current) => {
+            if (!current) return [inserted];
+            const withoutDuplicate = current.filter((p) => p.id !== inserted.id);
+            return [...withoutDuplicate, inserted].sort(sortPostsForTopic);
+          });
+        }
         setTopic((current) => current ? { ...current, reply_count: (current.reply_count ?? 0) + 1 } : current);
       });
-      void loadAliases([inserted.author_id]);
+      if (showOnCurrentPage) void loadAliases([inserted.author_id]);
     }
-    const targetPage = Math.max(1, Math.ceil(((topic.reply_count ?? 0) + 1) / REPLIES_PER_PAGE));
-    startTransition(() => {
-      setTab("reply");
-      if (targetPage !== page) setPage(targetPage);
-    });
     toast.success("Reply posted");
     // The new post is shown immediately. Realtime refreshes other users, while
     // this client skips its own insert event so the page does not lock up.
