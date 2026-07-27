@@ -663,6 +663,14 @@ function TopicPage() {
     if (target) void navigate({ to: "/forum/$board/$topic", params: { board: target.slug, topic: topic.id } });
   };
 
+  const visiblePosts = useMemo(() => {
+    if (!posts) return { opPost: null as Post | null, replies: [] as Post[] };
+    return {
+      opPost: posts.find((p) => p.is_op) ?? null,
+      replies: posts.filter((p) => !p.is_op && !blocked.has(p.author_id)),
+    };
+  }, [posts, blocked]);
+
   if (!canEnter) return <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-6 text-sm text-center">Members only.</div>;
   if (topic === null && posts !== null) {
     return <div className="text-center text-sm text-muted-foreground">Topic not found. <Link to="/forum/$board" params={{ board: slug }} className="underline">Back to board</Link></div>;
@@ -678,12 +686,7 @@ function TopicPage() {
       }}
     />
   );
-  const { opPost, replies } = useMemo(() => {
-    return {
-      opPost: posts.find((p) => p.is_op) ?? null,
-      replies: posts.filter((p) => !p.is_op && !blocked.has(p.author_id)),
-    };
-  }, [posts, blocked]);
+  const { opPost, replies } = visiblePosts;
 
   return (
     <div className="boro-topic-page space-y-4">
