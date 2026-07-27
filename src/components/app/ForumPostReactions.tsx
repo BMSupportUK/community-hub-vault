@@ -13,7 +13,7 @@ type DbRow = Row & { post_id: string };
 const reactionCache = new Map<string, Row[]>();
 const reactionSubscribers = new Map<string, Set<(rows: Row[]) => void>>();
 const pendingPostIds = new Set<string>();
-let pendingTimer: ReturnType<typeof setTimeout> | null = null;
+let pendingTimer: number | null = null;
 
 function notifyPost(postId: string, rows: Row[]) {
   reactionCache.set(postId, rows);
