@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { HtmlEditor } from "@/components/ui/html-editor";
-import { normalizeForumPostInput, prepareForumPostBody } from "@/lib/forum-embeds";
+import { markPreparedForumPostBody, normalizeForumPostInput, prepareForumPostBody } from "@/lib/forum-embeds";
 import { useMentionCandidates } from "@/hooks/use-mention-candidates";
 import { useFanBlocks } from "@/hooks/use-fan-blocks";
 import { toast } from "sonner";
@@ -71,6 +71,13 @@ function isTopicRow(value: Record<string, unknown> | undefined): value is Topic 
 function sortBoardTopics(a: Topic, b: Topic) {
   if (a.is_sticky !== b.is_sticky) return a.is_sticky ? -1 : 1;
   return new Date(b.last_post_at).getTime() - new Date(a.last_post_at).getTime();
+}
+
+function nextPaint(): Promise<void> {
+  if (typeof window === "undefined") return Promise.resolve();
+  return new Promise((resolve) => {
+    window.requestAnimationFrame(() => window.setTimeout(resolve, 0));
+  });
 }
 
 function BoardPage() {
@@ -274,7 +281,8 @@ function BoardPage() {
     setSubmitting(true);
     setTitle("");
     setBody("");
-    const b = prepareForumPostBody(bRaw, { skipDomParserFallback: true });
+    await nextPaint();
+    const b = markPreparedForumPostBody(prepareForumPostBody(bRaw, { skipDomParserFallback: true }));
     const { data: topic, error } = await supabase
       .from("forum_topics")
       .insert({ board_id: board.id, author_id: user.id, title: t.slice(0, 200) })

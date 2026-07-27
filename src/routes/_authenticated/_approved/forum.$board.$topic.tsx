@@ -11,7 +11,7 @@ import { HtmlEditor } from "@/components/ui/html-editor";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ForumPostBody } from "@/components/app/ForumPostBody";
 import { ForumPostReactions } from "@/components/app/ForumPostReactions";
-import { isPreparedForumPostBody, normalizeForumPostInput, prepareForumPostBody } from "@/lib/forum-embeds";
+import { isPreparedForumPostBody, markPreparedForumPostBody, normalizeForumPostInput, prepareForumPostBody } from "@/lib/forum-embeds";
 import { useMentionCandidates, type MentionCandidate } from "@/hooks/use-mention-candidates";
 import { useFanBlocks } from "@/hooks/use-fan-blocks";
 import { toast } from "sonner";
@@ -247,7 +247,14 @@ function shouldShowInsertedReply(currentPage: number, replyCountBeforeInsert: nu
 function prepareForumPostBodyForSubmit(raw: string): string {
   const normalized = normalizeForumPostInput(raw);
   if (isPreparedForumPostBody(normalized)) return normalized;
-  return prepareForumPostBody(normalized, { skipDomParserFallback: true });
+  return markPreparedForumPostBody(prepareForumPostBody(normalized, { skipDomParserFallback: true }));
+}
+
+function nextPaint(): Promise<void> {
+  if (typeof window === "undefined") return Promise.resolve();
+  return new Promise((resolve) => {
+    window.requestAnimationFrame(() => window.setTimeout(resolve, 0));
+  });
 }
 
 function escapeForumQuoteText(text: string): string {
@@ -545,6 +552,7 @@ function TopicPage() {
     submittingRef.current = true;
     setSubmitting(true);
     setReply("");
+    await nextPaint();
     const body = prepareForumPostBodyForSubmit(raw);
     const { data, error } = await supabase
       .from("forum_posts")

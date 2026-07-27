@@ -29,7 +29,7 @@ function ensureHook() {
 }
 
 const DATA_IMAGE_ATTR_RE = /<img\b([^>]*?)\bsrc=["']data:image\/[^"']+["']([^>]*)>/gi;
-const MAX_RICH_HTML_CHARS = 120_000;
+const MAX_RICH_HTML_CHARS = 30_000;
 
 function stripInlineDataImages(html: string): string {
   return html.replace(DATA_IMAGE_ATTR_RE, (_match, before: string, after: string) => `<img${before}${after}>`);
