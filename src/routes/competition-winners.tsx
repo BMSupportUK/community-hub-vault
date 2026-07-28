@@ -3,7 +3,7 @@ import { Trophy, Medal, Award, Loader2, ArrowRight, CheckCircle2 } from "lucide-
 import { useCompetitionWinners } from "@/hooks/use-finished-competitions";
 import { COMPETITIONS } from "@/lib/competitions";
 
-export const Route = createFileRoute("/_authenticated/_approved/competition-winners")({
+export const Route = createFileRoute("/competition-winners")({
   component: CompetitionWinnersPage,
 });
 
