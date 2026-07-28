@@ -235,7 +235,7 @@ function WelcomePage() {
     navigate({ to: "/u/$username", params: { username: data.username }, search: { tab: "creds" } });
   };
 
-  const finishedCompetitions = useFinishedCompetitions();
+  
 
   type CardDef = {
     key: string;
