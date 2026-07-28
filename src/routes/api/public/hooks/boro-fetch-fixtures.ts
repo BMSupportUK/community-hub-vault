@@ -124,6 +124,15 @@ function norm(s: string) {
   return s.trim().toLowerCase().replace(/\s+/g, " ");
 }
 
+// The predictor is competitive-fixtures only. Pre-season/club friendlies and
+// any other non-competitive match must never be imported.
+function isCompetitiveCompetition(comp?: string | null): boolean {
+  const c = norm(comp ?? "");
+  if (!c) return false;
+  if (/friendl|testimonial|trophy tour|training|behind closed doors/.test(c)) return false;
+  return true;
+}
+
 // Championship 2026/27 home grounds — used to auto-populate the venue
 // for both home and away Boro fixtures. Keys are normalised team names.
 const HOME_GROUNDS: Record<string, string> = {
