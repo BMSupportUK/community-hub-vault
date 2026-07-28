@@ -493,6 +493,7 @@ function DashboardBody() {
     { to: "/admin-reviews", label: "Customer reviews", desc: "Approve, reject or delete customer feedback.", icon: Star },
     { to: "/admin-profanity", label: "Chat word filter", desc: "Manage the UK swear list and add custom blocked words.", icon: Filter },
     { to: "/admin-hero-boxes", label: "Landing hero boxes", desc: "Edit the three boxes shown on the public landing page.", icon: Sparkles },
+    { to: "/admin-packages", label: "Support packages", desc: "Edit the price boxes shown on the public packages page.", icon: Sparkles },
     { to: "/admin-blacklist", label: "Blacklist", desc: "Ban accounts by email address or IP — applied immediately and at signup.", icon: Ban },
     { to: "/admin-business-hours", label: "Business hours", desc: "Set opening hours per day. Auto-replies when orders or tickets open out of hours.", icon: Clock },
     { to: "/admin-nameplates", label: "Nameplates", desc: "Manage the catalog of decorative nameplates and assign them to members.", icon: Sparkles },
