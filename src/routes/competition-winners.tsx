@@ -2,9 +2,21 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Trophy, Medal, Award, Loader2, ArrowRight, CheckCircle2 } from "lucide-react";
 import { useCompetitionWinners } from "@/hooks/use-finished-competitions";
 import { COMPETITIONS } from "@/lib/competitions";
+import { LandingHeader } from "@/components/LandingHeader";
 
 export const Route = createFileRoute("/competition-winners")({
   component: CompetitionWinnersPage,
+  head: () => ({
+    meta: [
+      { title: "Competition Winners — BM Support Predictor Games" },
+      { name: "description", content: "Hall of fame for BM Support prediction competitions — see who won the World Cup 2026 and Boro predictor games." },
+      { property: "og:title", content: "Competition Winners — BM Support" },
+      { property: "og:description", content: "See the winners of every finished BM Support prediction competition." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { rel: "canonical", href: "https://bmsupport.uk/competition-winners" },
+    ],
+  }),
 });
 
 const placeIcon = (place: number) =>
@@ -25,7 +37,8 @@ function CompetitionWinnersPage() {
   );
 
   return (
-    <div className="h-full overflow-y-auto">
+    <div className="min-h-dvh bg-background">
+      <LandingHeader />
       <div className="mx-auto w-full max-w-5xl px-4 py-6 space-y-8">
         <header className="space-y-1">
           <h1 className="font-display text-2xl font-bold flex items-center gap-2">
