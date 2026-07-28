@@ -207,6 +207,12 @@ async function syncFixtures() {
   }
   const unique = [...dedup.values()];
 
+  // Drop friendlies / non-competitive fixtures before they ever hit the DB.
+  const competitive = unique.filter((fx) => isCompetitiveCompetition(fx.competition));
+  if (competitive.length === 0) {
+    return { ok: false, skipped: "no-competitive-fixtures-found", scrape_errors: scrapeErrors };
+  }
+
   type ExistingRow = {
     id: string;
     competition: string;
@@ -227,7 +233,7 @@ async function syncFixtures() {
   const inserted: string[] = [];
   const updated: string[] = [];
   const errors: string[] = [];
-  for (const fx of unique) {
+  for (const fx of competitive) {
     const teamKey = `${norm(fx.home_team)}|${norm(fx.away_team)}`;
     const newKickoff = new Date(fx.kickoff_at).toISOString();
     const existingRow = byTeams.get(teamKey);
