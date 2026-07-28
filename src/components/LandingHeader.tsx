@@ -4,22 +4,38 @@ import { useState } from "react";
 import { useVisitorVpn } from "@/hooks/use-visitor-vpn";
 import { VpnBlockedDialog } from "@/components/VpnBlockedDialog";
 import { ShieldAlert, Menu, X } from "lucide-react";
+import { useFinishedCompetitions } from "@/hooks/use-finished-competitions";
+import { COMPETITIONS } from "@/lib/competitions";
 
-const navItems = [
+const baseNavItems = [
   { to: "/packages", label: "Packages" },
   { to: "/faq", label: "FAQ" },
   { to: "/about", label: "About" },
   { to: "/fan-zone", label: "Boro Fan Zone Forum" },
-  { to: "/predictions", label: "World Cup 2026 Predictions Comp" },
-  { to: "/boro-predictions", label: "Boro 2026 Predictions" },
   { to: "/contact", label: "Contact us" },
 ];
+
+const COMPETITION_NAV_LABELS: Record<string, string> = {
+  wc2026: "World Cup 2026 Predictions Comp",
+  boro2026: "Boro 2026 Predictions",
+};
 
 export function LandingHeader() {
   const path = useRouterState({ select: (r) => r.location.pathname });
   const isVpn = useVisitorVpn();
   const [vpnDialogOpen, setVpnDialogOpen] = useState(false);
   const [open, setOpen] = useState(false);
+  const finished = useFinishedCompetitions();
+
+  const navItems = [
+    ...baseNavItems.slice(0, 4),
+    ...COMPETITIONS.filter((c) => !finished.includes(c.key)).map((c) => ({
+      to: c.to,
+      label: COMPETITION_NAV_LABELS[c.key] ?? c.title,
+    })),
+    { to: "/competition-winners", label: "Competition Winners" },
+    ...baseNavItems.slice(4),
+  ];
 
   return (
     <header className="relative px-4 sm:px-8 py-4 sm:py-5 flex items-center justify-between border-b border-border">
