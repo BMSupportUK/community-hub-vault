@@ -110,7 +110,7 @@ async function scrapeMonth(monthKey: string): Promise<ParsedFixture[]> {
       if (seen.has(key)) continue;
       seen.add(key);
       out.push({
-        competition: currentComp ?? "Championship",
+        competition: currentComp,
         home_team: home,
         away_team: away,
         kickoff_at: kickoff,
