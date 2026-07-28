@@ -1,0 +1,2 @@
+DELETE FROM public.boro_predictions WHERE fixture_id IN (SELECT id FROM public.boro_fixtures WHERE competition ILIKE '%friendl%' OR competition ILIKE '%testimonial%');
+DELETE FROM public.boro_fixtures WHERE competition ILIKE '%friendl%' OR competition ILIKE '%testimonial%';

@@ -110,7 +110,7 @@ async function scrapeMonth(monthKey: string): Promise<ParsedFixture[]> {
       if (seen.has(key)) continue;
       seen.add(key);
       out.push({
-        competition: currentComp ?? "Championship",
+        competition: currentComp,
         home_team: home,
         away_team: away,
         kickoff_at: kickoff,
@@ -122,6 +122,15 @@ async function scrapeMonth(monthKey: string): Promise<ParsedFixture[]> {
 
 function norm(s: string) {
   return s.trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+// The predictor is competitive-fixtures only. Pre-season/club friendlies and
+// any other non-competitive match must never be imported.
+function isCompetitiveCompetition(comp?: string | null): boolean {
+  const c = norm(comp ?? "");
+  if (!c) return false;
+  if (/friendl|testimonial|trophy tour|training|behind closed doors/.test(c)) return false;
+  return true;
 }
 
 // Championship 2026/27 home grounds — used to auto-populate the venue
@@ -198,6 +207,12 @@ async function syncFixtures() {
   }
   const unique = [...dedup.values()];
 
+  // Drop friendlies / non-competitive fixtures before they ever hit the DB.
+  const competitive = unique.filter((fx) => isCompetitiveCompetition(fx.competition));
+  if (competitive.length === 0) {
+    return { ok: false, skipped: "no-competitive-fixtures-found", scrape_errors: scrapeErrors };
+  }
+
   type ExistingRow = {
     id: string;
     competition: string;
@@ -218,7 +233,7 @@ async function syncFixtures() {
   const inserted: string[] = [];
   const updated: string[] = [];
   const errors: string[] = [];
-  for (const fx of unique) {
+  for (const fx of competitive) {
     const teamKey = `${norm(fx.home_team)}|${norm(fx.away_team)}`;
     const newKickoff = new Date(fx.kickoff_at).toISOString();
     const existingRow = byTeams.get(teamKey);
