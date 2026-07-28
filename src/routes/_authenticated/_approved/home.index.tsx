@@ -4,8 +4,6 @@ import type { RealtimeChannel } from "@supabase/supabase-js";
 import heroImg from "@/assets/member-hero.jpg";
 import eventPlaceholder from "@/assets/event-placeholder.jpg";
 import { useAuth } from "@/hooks/use-auth";
-import { useFinishedCompetitions } from "@/hooks/use-finished-competitions";
-import { COMPETITIONS } from "@/lib/competitions";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useEffect, useState, useRef } from "react";
