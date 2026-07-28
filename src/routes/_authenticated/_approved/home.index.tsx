@@ -1,11 +1,9 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { Headphones, MessageSquare, Activity, Ticket, ShoppingBag, BookOpen, UserPlus, ArrowUp, ArrowDown, Pencil, Upload, Sparkles, Image as ImageIcon, Plus, Trash2, ChevronLeft, ChevronRight, Trophy, KeyRound, Goal, Crown } from "lucide-react";
+import { Headphones, MessageSquare, Activity, Ticket, ShoppingBag, BookOpen, UserPlus, ArrowUp, ArrowDown, Pencil, Upload, Sparkles, Image as ImageIcon, Plus, Trash2, ChevronLeft, ChevronRight, Trophy, KeyRound } from "lucide-react";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import heroImg from "@/assets/member-hero.jpg";
 import eventPlaceholder from "@/assets/event-placeholder.jpg";
 import { useAuth } from "@/hooks/use-auth";
-import { useFinishedCompetitions } from "@/hooks/use-finished-competitions";
-import { COMPETITIONS } from "@/lib/competitions";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useEffect, useState, useRef } from "react";
@@ -237,7 +235,7 @@ function WelcomePage() {
     navigate({ to: "/u/$username", params: { username: data.username }, search: { tab: "creds" } });
   };
 
-  const finishedCompetitions = useFinishedCompetitions();
+  
 
   type CardDef = {
     key: string;
@@ -251,13 +249,6 @@ function WelcomePage() {
 
   const CARDS: Record<string, CardDef> = {
     community: { key: "community", icon: Trophy, title: "Boro Fan Zone", desc: "Join the conversation with fellow Middlesbrough supporters.", to: "/forum" },
-    ...Object.fromEntries(
-      COMPETITIONS.filter((c) => !finishedCompetitions.includes(c.key)).map((c) => [
-        c.key,
-        { key: c.key, icon: Goal, title: c.title, desc: c.description, to: c.to } as CardDef,
-      ]),
-    ),
-    "competition-winners": { key: "competition-winners", icon: Crown, title: "Competition Winners", desc: "See the hall of fame from every finished competition.", to: "/competition-winners" },
     tickets: { key: "tickets", icon: Ticket, title: "Support tickets", desc: "Open or follow your support requests.", to: "/tickets" },
     status: { key: "status", icon: KeyRound, title: "View Your Service Login Details", desc: "View your username and password and any other revelant app login information.", onClick: goToCredentials },
     shop: { key: "shop", icon: ShoppingBag, title: "Shop", desc: "Browse plans, Purchase or renew your subscription", to: "/shop" },
