@@ -52,6 +52,15 @@ function AdminPackagesPage() {
     load();
   };
 
+  const move = async (index: number, dir: -1 | 1) => {
+    const a = tiers[index];
+    const b = tiers[index + dir];
+    if (!a || !b) return;
+    await supabase.from("packages_tiers").update({ sort_order: b.sort_order }).eq("id", a.id);
+    await supabase.from("packages_tiers").update({ sort_order: a.sort_order }).eq("id", b.id);
+    load();
+  };
+
   return (
     <main className="flex-1 overflow-y-auto">
       <div className="max-w-4xl mx-auto px-6 py-8">
@@ -78,7 +87,7 @@ function AdminPackagesPage() {
         ) : (
           <div className="space-y-4">
             {tiers.map((t, i) => (
-              <TierEditor key={t.id} tier={t} index={i} total={tiers.length} onSaved={load} />
+              <TierEditor key={t.id} tier={t} index={i} total={tiers.length} onSaved={load} onMove={move} />
             ))}
           </div>
         )}
@@ -87,7 +96,7 @@ function AdminPackagesPage() {
   );
 }
 
-function TierEditor({ tier, index, total, onSaved }: { tier: Tier; index: number; total: number; onSaved: () => void }) {
+function TierEditor({ tier, index, total, onSaved, onMove }: { tier: Tier; index: number; total: number; onSaved: () => void; onMove: (index: number, dir: -1 | 1) => void }) {
   const [name, setName] = useState(tier.name);
   const [tagline, setTagline] = useState(tier.tagline ?? "");
   const [features, setFeatures] = useState<string[]>(tier.features ?? []);
@@ -112,11 +121,6 @@ function TierEditor({ tier, index, total, onSaved }: { tier: Tier; index: number
     onSaved();
   };
 
-  const move = async (dir: -1 | 1) => {
-    await supabase.from("packages_tiers").update({ sort_order: tier.sort_order + dir * 1.5 }).eq("id", tier.id);
-    onSaved();
-  };
-
   const remove = async () => {
     if (!confirm(`Delete "${tier.name}"?`)) return;
     const { error } = await supabase.from("packages_tiers").delete().eq("id", tier.id);
@@ -134,10 +138,10 @@ function TierEditor({ tier, index, total, onSaved }: { tier: Tier; index: number
           placeholder="Package name"
           className="flex-1 px-3 py-2 rounded-md bg-background border border-border font-semibold"
         />
-        <button disabled={index === 0} onClick={() => move(-1)} className="p-2 rounded-md border border-border hover:bg-muted disabled:opacity-30" title="Move up">
+        <button disabled={index === 0} onClick={() => onMove(index, -1)} className="p-2 rounded-md border border-border hover:bg-muted disabled:opacity-30" title="Move up">
           <ArrowUp className="size-4" />
         </button>
-        <button disabled={index === total - 1} onClick={() => move(1)} className="p-2 rounded-md border border-border hover:bg-muted disabled:opacity-30" title="Move down">
+        <button disabled={index === total - 1} onClick={() => onMove(index, 1)} className="p-2 rounded-md border border-border hover:bg-muted disabled:opacity-30" title="Move down">
           <ArrowDown className="size-4" />
         </button>
         <button onClick={remove} className="p-2 rounded-md border border-border hover:bg-muted text-destructive" title="Delete">
