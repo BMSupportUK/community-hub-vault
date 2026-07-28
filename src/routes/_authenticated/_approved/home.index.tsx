@@ -247,6 +247,13 @@ function WelcomePage() {
 
   const CARDS: Record<string, CardDef> = {
     community: { key: "community", icon: Trophy, title: "Boro Fan Zone", desc: "Join the conversation with fellow Middlesbrough supporters.", to: "/forum" },
+    ...Object.fromEntries(
+      COMPETITIONS.filter((c) => !finishedCompetitions.includes(c.key)).map((c) => [
+        c.key,
+        { key: c.key, icon: Goal, title: c.title, desc: c.description, to: c.to } as CardDef,
+      ]),
+    ),
+    "competition-winners": { key: "competition-winners", icon: Crown, title: "Competition Winners", desc: "See the hall of fame from every finished competition.", to: "/competition-winners" },
     tickets: { key: "tickets", icon: Ticket, title: "Support tickets", desc: "Open or follow your support requests.", to: "/tickets" },
     status: { key: "status", icon: KeyRound, title: "View Your Service Login Details", desc: "View your username and password and any other revelant app login information.", onClick: goToCredentials },
     shop: { key: "shop", icon: ShoppingBag, title: "Shop", desc: "Browse plans, Purchase or renew your subscription", to: "/shop" },
