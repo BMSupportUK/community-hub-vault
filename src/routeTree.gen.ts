@@ -20,6 +20,7 @@ import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as FaqRouteImport } from './routes/faq'
 import { Route as FanZoneRouteImport } from './routes/fan-zone'
 import { Route as ContactRouteImport } from './routes/contact'
+import { Route as CompetitionWinnersRouteImport } from './routes/competition-winners'
 import { Route as BoroPredictionsRouteImport } from './routes/boro-predictions'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
@@ -58,7 +59,6 @@ import { Route as AuthenticatedApprovedKnowledgeBaseRouteImport } from './routes
 import { Route as AuthenticatedApprovedInstallGuidesRouteImport } from './routes/_authenticated/_approved/install-guides'
 import { Route as AuthenticatedApprovedHomeRouteImport } from './routes/_authenticated/_approved/home'
 import { Route as AuthenticatedApprovedForumRouteImport } from './routes/_authenticated/_approved/forum'
-import { Route as AuthenticatedApprovedCompetitionWinnersRouteImport } from './routes/_authenticated/_approved/competition-winners'
 import { Route as AuthenticatedApprovedClockRouteImport } from './routes/_authenticated/_approved/clock'
 import { Route as AuthenticatedApprovedAdminTicketCategoriesRouteImport } from './routes/_authenticated/_approved/admin-ticket-categories'
 import { Route as AuthenticatedApprovedAdminStreamingDevicesRouteImport } from './routes/_authenticated/_approved/admin-streaming-devices'
@@ -169,6 +169,11 @@ const FanZoneRoute = FanZoneRouteImport.update({
 const ContactRoute = ContactRouteImport.update({
   id: '/contact',
   path: '/contact',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CompetitionWinnersRoute = CompetitionWinnersRouteImport.update({
+  id: '/competition-winners',
+  path: '/competition-winners',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BoroPredictionsRoute = BoroPredictionsRouteImport.update({
@@ -387,12 +392,6 @@ const AuthenticatedApprovedForumRoute =
   AuthenticatedApprovedForumRouteImport.update({
     id: '/forum',
     path: '/forum',
-    getParentRoute: () => AuthenticatedApprovedRoute,
-  } as any)
-const AuthenticatedApprovedCompetitionWinnersRoute =
-  AuthenticatedApprovedCompetitionWinnersRouteImport.update({
-    id: '/competition-winners',
-    path: '/competition-winners',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
 const AuthenticatedApprovedClockRoute =
@@ -733,6 +732,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/boro-predictions': typeof BoroPredictionsRoute
+  '/competition-winners': typeof CompetitionWinnersRoute
   '/contact': typeof ContactRoute
   '/fan-zone': typeof FanZoneRouteWithChildren
   '/faq': typeof FaqRoute
@@ -774,7 +774,6 @@ export interface FileRoutesByFullPath {
   '/admin-streaming-devices': typeof AuthenticatedApprovedAdminStreamingDevicesRoute
   '/admin-ticket-categories': typeof AuthenticatedApprovedAdminTicketCategoriesRoute
   '/clock': typeof AuthenticatedApprovedClockRoute
-  '/competition-winners': typeof AuthenticatedApprovedCompetitionWinnersRoute
   '/forum': typeof AuthenticatedApprovedForumRouteWithChildren
   '/home': typeof AuthenticatedApprovedHomeRouteWithChildren
   '/install-guides': typeof AuthenticatedApprovedInstallGuidesRoute
@@ -839,6 +838,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/boro-predictions': typeof BoroPredictionsRoute
+  '/competition-winners': typeof CompetitionWinnersRoute
   '/contact': typeof ContactRoute
   '/faq': typeof FaqRoute
   '/forgot-password': typeof ForgotPasswordRoute
@@ -878,7 +878,6 @@ export interface FileRoutesByTo {
   '/admin-streaming-devices': typeof AuthenticatedApprovedAdminStreamingDevicesRoute
   '/admin-ticket-categories': typeof AuthenticatedApprovedAdminTicketCategoriesRoute
   '/clock': typeof AuthenticatedApprovedClockRoute
-  '/competition-winners': typeof AuthenticatedApprovedCompetitionWinnersRoute
   '/forum': typeof AuthenticatedApprovedForumRouteWithChildren
   '/install-guides': typeof AuthenticatedApprovedInstallGuidesRoute
   '/knowledge-base': typeof AuthenticatedApprovedKnowledgeBaseRoute
@@ -944,6 +943,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/about': typeof AboutRoute
   '/boro-predictions': typeof BoroPredictionsRoute
+  '/competition-winners': typeof CompetitionWinnersRoute
   '/contact': typeof ContactRoute
   '/fan-zone': typeof FanZoneRouteWithChildren
   '/faq': typeof FaqRoute
@@ -986,7 +986,6 @@ export interface FileRoutesById {
   '/_authenticated/_approved/admin-streaming-devices': typeof AuthenticatedApprovedAdminStreamingDevicesRoute
   '/_authenticated/_approved/admin-ticket-categories': typeof AuthenticatedApprovedAdminTicketCategoriesRoute
   '/_authenticated/_approved/clock': typeof AuthenticatedApprovedClockRoute
-  '/_authenticated/_approved/competition-winners': typeof AuthenticatedApprovedCompetitionWinnersRoute
   '/_authenticated/_approved/forum': typeof AuthenticatedApprovedForumRouteWithChildren
   '/_authenticated/_approved/home': typeof AuthenticatedApprovedHomeRouteWithChildren
   '/_authenticated/_approved/install-guides': typeof AuthenticatedApprovedInstallGuidesRoute
@@ -1053,6 +1052,7 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/boro-predictions'
+    | '/competition-winners'
     | '/contact'
     | '/fan-zone'
     | '/faq'
@@ -1094,7 +1094,6 @@ export interface FileRouteTypes {
     | '/admin-streaming-devices'
     | '/admin-ticket-categories'
     | '/clock'
-    | '/competition-winners'
     | '/forum'
     | '/home'
     | '/install-guides'
@@ -1159,6 +1158,7 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/boro-predictions'
+    | '/competition-winners'
     | '/contact'
     | '/faq'
     | '/forgot-password'
@@ -1198,7 +1198,6 @@ export interface FileRouteTypes {
     | '/admin-streaming-devices'
     | '/admin-ticket-categories'
     | '/clock'
-    | '/competition-winners'
     | '/forum'
     | '/install-guides'
     | '/knowledge-base'
@@ -1263,6 +1262,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/about'
     | '/boro-predictions'
+    | '/competition-winners'
     | '/contact'
     | '/fan-zone'
     | '/faq'
@@ -1305,7 +1305,6 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/admin-streaming-devices'
     | '/_authenticated/_approved/admin-ticket-categories'
     | '/_authenticated/_approved/clock'
-    | '/_authenticated/_approved/competition-winners'
     | '/_authenticated/_approved/forum'
     | '/_authenticated/_approved/home'
     | '/_authenticated/_approved/install-guides'
@@ -1372,6 +1371,7 @@ export interface RootRouteChildren {
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   AboutRoute: typeof AboutRoute
   BoroPredictionsRoute: typeof BoroPredictionsRoute
+  CompetitionWinnersRoute: typeof CompetitionWinnersRoute
   ContactRoute: typeof ContactRoute
   FanZoneRoute: typeof FanZoneRouteWithChildren
   FaqRoute: typeof FaqRoute
@@ -1487,6 +1487,13 @@ declare module '@tanstack/react-router' {
       path: '/contact'
       fullPath: '/contact'
       preLoaderRoute: typeof ContactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/competition-winners': {
+      id: '/competition-winners'
+      path: '/competition-winners'
+      fullPath: '/competition-winners'
+      preLoaderRoute: typeof CompetitionWinnersRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/boro-predictions': {
@@ -1753,13 +1760,6 @@ declare module '@tanstack/react-router' {
       path: '/forum'
       fullPath: '/forum'
       preLoaderRoute: typeof AuthenticatedApprovedForumRouteImport
-      parentRoute: typeof AuthenticatedApprovedRoute
-    }
-    '/_authenticated/_approved/competition-winners': {
-      id: '/_authenticated/_approved/competition-winners'
-      path: '/competition-winners'
-      fullPath: '/competition-winners'
-      preLoaderRoute: typeof AuthenticatedApprovedCompetitionWinnersRouteImport
       parentRoute: typeof AuthenticatedApprovedRoute
     }
     '/_authenticated/_approved/clock': {
@@ -2264,7 +2264,6 @@ interface AuthenticatedApprovedRouteChildren {
   AuthenticatedApprovedAdminStreamingDevicesRoute: typeof AuthenticatedApprovedAdminStreamingDevicesRoute
   AuthenticatedApprovedAdminTicketCategoriesRoute: typeof AuthenticatedApprovedAdminTicketCategoriesRoute
   AuthenticatedApprovedClockRoute: typeof AuthenticatedApprovedClockRoute
-  AuthenticatedApprovedCompetitionWinnersRoute: typeof AuthenticatedApprovedCompetitionWinnersRoute
   AuthenticatedApprovedForumRoute: typeof AuthenticatedApprovedForumRouteWithChildren
   AuthenticatedApprovedHomeRoute: typeof AuthenticatedApprovedHomeRouteWithChildren
   AuthenticatedApprovedInstallGuidesRoute: typeof AuthenticatedApprovedInstallGuidesRoute
@@ -2334,8 +2333,6 @@ const AuthenticatedApprovedRouteChildren: AuthenticatedApprovedRouteChildren = {
   AuthenticatedApprovedAdminTicketCategoriesRoute:
     AuthenticatedApprovedAdminTicketCategoriesRoute,
   AuthenticatedApprovedClockRoute: AuthenticatedApprovedClockRoute,
-  AuthenticatedApprovedCompetitionWinnersRoute:
-    AuthenticatedApprovedCompetitionWinnersRoute,
   AuthenticatedApprovedForumRoute: AuthenticatedApprovedForumRouteWithChildren,
   AuthenticatedApprovedHomeRoute: AuthenticatedApprovedHomeRouteWithChildren,
   AuthenticatedApprovedInstallGuidesRoute:
@@ -2429,6 +2426,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   AboutRoute: AboutRoute,
   BoroPredictionsRoute: BoroPredictionsRoute,
+  CompetitionWinnersRoute: CompetitionWinnersRoute,
   ContactRoute: ContactRoute,
   FanZoneRoute: FanZoneRouteWithChildren,
   FaqRoute: FaqRoute,
