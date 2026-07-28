@@ -1,6 +1,8 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
-import { Home, Ticket, ShoppingBag, BookOpen, FileText, LogOut, MessageSquare, MessagesSquare, UserCircle2, Star, Trophy, Tv, Volleyball, Wrench, Goal, Users, Briefcase, MonitorPlay, Popcorn } from "lucide-react";
+import { Home, Ticket, ShoppingBag, BookOpen, FileText, LogOut, MessageSquare, MessagesSquare, UserCircle2, Star, Trophy, Tv, Volleyball, Wrench, Goal, Users, Briefcase, MonitorPlay, Popcorn, Crown, Shield } from "lucide-react";
 import { useAuth, type AppRole } from "@/hooks/use-auth";
+import { useFinishedCompetitions } from "@/hooks/use-finished-competitions";
+import { COMPETITIONS } from "@/lib/competitions";
 import { cn } from "@/lib/utils";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -32,6 +34,7 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
   const [pagePerms, setPagePerms] = useState<PagePermMap>(cachedPagePerms);
   const dragKey = useRef<string | null>(null);
   const navigate = useNavigate();
+  const finishedCompetitions = useFinishedCompetitions();
   const handleSignOut = async () => {
     await signOut();
     navigate({ to: "/login" });
@@ -137,10 +140,17 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
     { to: "/knowledge-base", label: "Knowledge base", icon: BookOpen, show: true },
     { to: "/what-to-watch", label: "What to Watch", icon: Popcorn, show: true },
     { to: "/leaderboard", label: "Referrals", icon: Trophy, show: true },
-    { to: "/predictions", label: "World Cup 2026", icon: Goal, show: true },
+    ...COMPETITIONS.map((c) => ({
+      to: c.to,
+      label: c.railLabel,
+      icon: Goal,
+      show: !finishedCompetitions.includes(c.key),
+    })),
+    { to: "/competition-winners", label: "Competition Winners", icon: Crown, show: true },
     { to: "/new-content", label: "New content", icon: Tv, show: true, badge: unreadNewContent },
     { to: "/members", label: "Members", icon: Users, show: true },
     { to: "/staff", label: "Staff", icon: Briefcase, show: true },
+    { to: "/forum", label: "Boro Fan Zone", icon: Shield, show: true },
   ];
 
   const allowedByPerms = (to: string) => {

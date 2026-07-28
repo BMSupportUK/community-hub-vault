@@ -58,6 +58,7 @@ import { Route as AuthenticatedApprovedKnowledgeBaseRouteImport } from './routes
 import { Route as AuthenticatedApprovedInstallGuidesRouteImport } from './routes/_authenticated/_approved/install-guides'
 import { Route as AuthenticatedApprovedHomeRouteImport } from './routes/_authenticated/_approved/home'
 import { Route as AuthenticatedApprovedForumRouteImport } from './routes/_authenticated/_approved/forum'
+import { Route as AuthenticatedApprovedCompetitionWinnersRouteImport } from './routes/_authenticated/_approved/competition-winners'
 import { Route as AuthenticatedApprovedClockRouteImport } from './routes/_authenticated/_approved/clock'
 import { Route as AuthenticatedApprovedAdminTicketCategoriesRouteImport } from './routes/_authenticated/_approved/admin-ticket-categories'
 import { Route as AuthenticatedApprovedAdminStreamingDevicesRouteImport } from './routes/_authenticated/_approved/admin-streaming-devices'
@@ -386,6 +387,12 @@ const AuthenticatedApprovedForumRoute =
   AuthenticatedApprovedForumRouteImport.update({
     id: '/forum',
     path: '/forum',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
+const AuthenticatedApprovedCompetitionWinnersRoute =
+  AuthenticatedApprovedCompetitionWinnersRouteImport.update({
+    id: '/competition-winners',
+    path: '/competition-winners',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
 const AuthenticatedApprovedClockRoute =
@@ -767,6 +774,7 @@ export interface FileRoutesByFullPath {
   '/admin-streaming-devices': typeof AuthenticatedApprovedAdminStreamingDevicesRoute
   '/admin-ticket-categories': typeof AuthenticatedApprovedAdminTicketCategoriesRoute
   '/clock': typeof AuthenticatedApprovedClockRoute
+  '/competition-winners': typeof AuthenticatedApprovedCompetitionWinnersRoute
   '/forum': typeof AuthenticatedApprovedForumRouteWithChildren
   '/home': typeof AuthenticatedApprovedHomeRouteWithChildren
   '/install-guides': typeof AuthenticatedApprovedInstallGuidesRoute
@@ -870,6 +878,7 @@ export interface FileRoutesByTo {
   '/admin-streaming-devices': typeof AuthenticatedApprovedAdminStreamingDevicesRoute
   '/admin-ticket-categories': typeof AuthenticatedApprovedAdminTicketCategoriesRoute
   '/clock': typeof AuthenticatedApprovedClockRoute
+  '/competition-winners': typeof AuthenticatedApprovedCompetitionWinnersRoute
   '/forum': typeof AuthenticatedApprovedForumRouteWithChildren
   '/install-guides': typeof AuthenticatedApprovedInstallGuidesRoute
   '/knowledge-base': typeof AuthenticatedApprovedKnowledgeBaseRoute
@@ -977,6 +986,7 @@ export interface FileRoutesById {
   '/_authenticated/_approved/admin-streaming-devices': typeof AuthenticatedApprovedAdminStreamingDevicesRoute
   '/_authenticated/_approved/admin-ticket-categories': typeof AuthenticatedApprovedAdminTicketCategoriesRoute
   '/_authenticated/_approved/clock': typeof AuthenticatedApprovedClockRoute
+  '/_authenticated/_approved/competition-winners': typeof AuthenticatedApprovedCompetitionWinnersRoute
   '/_authenticated/_approved/forum': typeof AuthenticatedApprovedForumRouteWithChildren
   '/_authenticated/_approved/home': typeof AuthenticatedApprovedHomeRouteWithChildren
   '/_authenticated/_approved/install-guides': typeof AuthenticatedApprovedInstallGuidesRoute
@@ -1084,6 +1094,7 @@ export interface FileRouteTypes {
     | '/admin-streaming-devices'
     | '/admin-ticket-categories'
     | '/clock'
+    | '/competition-winners'
     | '/forum'
     | '/home'
     | '/install-guides'
@@ -1187,6 +1198,7 @@ export interface FileRouteTypes {
     | '/admin-streaming-devices'
     | '/admin-ticket-categories'
     | '/clock'
+    | '/competition-winners'
     | '/forum'
     | '/install-guides'
     | '/knowledge-base'
@@ -1293,6 +1305,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/admin-streaming-devices'
     | '/_authenticated/_approved/admin-ticket-categories'
     | '/_authenticated/_approved/clock'
+    | '/_authenticated/_approved/competition-winners'
     | '/_authenticated/_approved/forum'
     | '/_authenticated/_approved/home'
     | '/_authenticated/_approved/install-guides'
@@ -1740,6 +1753,13 @@ declare module '@tanstack/react-router' {
       path: '/forum'
       fullPath: '/forum'
       preLoaderRoute: typeof AuthenticatedApprovedForumRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
+    '/_authenticated/_approved/competition-winners': {
+      id: '/_authenticated/_approved/competition-winners'
+      path: '/competition-winners'
+      fullPath: '/competition-winners'
+      preLoaderRoute: typeof AuthenticatedApprovedCompetitionWinnersRouteImport
       parentRoute: typeof AuthenticatedApprovedRoute
     }
     '/_authenticated/_approved/clock': {
@@ -2244,6 +2264,7 @@ interface AuthenticatedApprovedRouteChildren {
   AuthenticatedApprovedAdminStreamingDevicesRoute: typeof AuthenticatedApprovedAdminStreamingDevicesRoute
   AuthenticatedApprovedAdminTicketCategoriesRoute: typeof AuthenticatedApprovedAdminTicketCategoriesRoute
   AuthenticatedApprovedClockRoute: typeof AuthenticatedApprovedClockRoute
+  AuthenticatedApprovedCompetitionWinnersRoute: typeof AuthenticatedApprovedCompetitionWinnersRoute
   AuthenticatedApprovedForumRoute: typeof AuthenticatedApprovedForumRouteWithChildren
   AuthenticatedApprovedHomeRoute: typeof AuthenticatedApprovedHomeRouteWithChildren
   AuthenticatedApprovedInstallGuidesRoute: typeof AuthenticatedApprovedInstallGuidesRoute
@@ -2313,6 +2334,8 @@ const AuthenticatedApprovedRouteChildren: AuthenticatedApprovedRouteChildren = {
   AuthenticatedApprovedAdminTicketCategoriesRoute:
     AuthenticatedApprovedAdminTicketCategoriesRoute,
   AuthenticatedApprovedClockRoute: AuthenticatedApprovedClockRoute,
+  AuthenticatedApprovedCompetitionWinnersRoute:
+    AuthenticatedApprovedCompetitionWinnersRoute,
   AuthenticatedApprovedForumRoute: AuthenticatedApprovedForumRouteWithChildren,
   AuthenticatedApprovedHomeRoute: AuthenticatedApprovedHomeRouteWithChildren,
   AuthenticatedApprovedInstallGuidesRoute:
