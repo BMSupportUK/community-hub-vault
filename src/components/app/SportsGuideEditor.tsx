@@ -258,7 +258,19 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
           navigate({ to: "/sports-guides" });
           return;
         }
-        setEditing(data as Blog);
+        // Listings are auto-cleared a few hours after the last event so the
+        // public page never shows stale times. Keep a copy around so opening
+        // the editor still shows the previous listing to edit/reuse.
+        const row = data as Blog & {
+          archived_body?: string | null;
+          archived_excerpt?: string | null;
+        };
+        const restoredBody = row.body ?? row.archived_body ?? null;
+        const restoredExcerpt = row.excerpt ?? row.archived_excerpt ?? null;
+        setEditing({ ...(row as Blog), body: restoredBody, excerpt: restoredExcerpt });
+        if (!row.body && row.archived_body) {
+          toast.message("Previous listing restored — it had expired and was cleared from the public page.");
+        }
       } else {
         // Restore previously saved draft if present so users don't lose work
         // when navigating away and coming back.
