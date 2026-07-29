@@ -75,7 +75,7 @@ export function HtmlEditor({ value, onChange, className, placeholder, videoUploa
   const ref = useRef<HTMLDivElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
-  const lastValueRef = useRef(value ?? "");
+  const lastValueRef = useRef("");
   const [uploadingVideo, setUploadingVideo] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [active, setActive] = useState<Record<string, boolean>>({});
