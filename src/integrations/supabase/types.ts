@@ -3197,6 +3197,8 @@ export type Database = {
       }
       sports_blogs: {
         Row: {
+          archived_body: string | null
+          archived_excerpt: string | null
           auto_clear_at: string | null
           badge: string | null
           body: string | null
@@ -3215,6 +3217,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          archived_body?: string | null
+          archived_excerpt?: string | null
           auto_clear_at?: string | null
           badge?: string | null
           body?: string | null
@@ -3233,6 +3237,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          archived_body?: string | null
+          archived_excerpt?: string | null
           auto_clear_at?: string | null
           badge?: string | null
           body?: string | null
