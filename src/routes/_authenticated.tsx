@@ -60,17 +60,10 @@ function AuthLayout() {
   const search = useRouterState({ select: (r) => r.location.search as Record<string, unknown> });
   const shopTab = typeof search.tab === "string" ? search.tab : undefined;
   const shopView = typeof search.view === "string" ? search.view : undefined;
-  const unlockShell =
-    path.endsWith("/streaming-devices") ||
-    path.endsWith("/reviews") ||
-    (path.endsWith("/shop") &&
-      (shopTab === "vpn" ||
-        shopTab === "streaming_devices" ||
-        shopTab === "reviews" ||
-        shopTab === "app_demos" ||
-        shopView === "streaming_devices" ||
-        shopView === "reviews" ||
-        shopView === "app_demos"));
+  // Screen lock removed — the whole app scrolls naturally on every route.
+  const unlockShell = true;
+  void shopTab;
+  void shopView;
   const logIp = useServerFn(logMyIp);
   const loggedRef = useRef(false);
   const [navOpen, setNavOpen] = useState(false);
@@ -83,53 +76,18 @@ function AuthLayout() {
   };
   // Close mobile drawer on route change
   useEffect(() => { setNavOpen(false); }, [path]);
-  // Discord-style: lock the document to the viewport on desktop only so
-  // internal panels scroll instead of the whole page. On mobile (<768px)
-  // let the page scroll normally — small screens need natural scrolling.
+  // Ensure no leftover viewport lock from previous sessions/routes.
   useLayoutEffect(() => {
     const html = document.documentElement;
     const body = document.body;
-    const mq = window.matchMedia("(min-width: 768px)");
-    const prev = {
-      htmlOverflow: html.style.overflow,
-      bodyOverflow: body.style.overflow,
-      htmlHeight: html.style.height,
-      bodyHeight: body.style.height,
-      bodyPosition: body.style.position,
-      bodyWidth: body.style.width,
-    };
-    const apply = () => {
-      if (mq.matches && !unlockShell) {
-        html.classList.add("app-shell-locked");
-        html.style.overflow = "hidden";
-        body.style.overflow = "hidden";
-        html.style.height = "100dvh";
-        body.style.height = "100dvh";
-        body.style.position = "fixed";
-        body.style.width = "100%";
-      } else {
-        html.classList.remove("app-shell-locked");
-        html.style.overflow = "";
-        body.style.overflow = "";
-        html.style.height = "";
-        body.style.height = "";
-        body.style.position = "";
-        body.style.width = "";
-      }
-    };
-    apply();
-    mq.addEventListener("change", apply);
-    return () => {
-      mq.removeEventListener("change", apply);
-      html.classList.remove("app-shell-locked");
-      html.style.overflow = prev.htmlOverflow;
-      body.style.overflow = prev.bodyOverflow;
-      html.style.height = prev.htmlHeight;
-      body.style.height = prev.bodyHeight;
-      body.style.position = prev.bodyPosition;
-      body.style.width = prev.bodyWidth;
-    };
-  }, [unlockShell]);
+    html.classList.remove("app-shell-locked");
+    html.style.overflow = "";
+    body.style.overflow = "";
+    html.style.height = "";
+    body.style.height = "";
+    body.style.position = "";
+    body.style.width = "";
+  }, [path]);
 
   useEffect(() => {
     if (loading || isPending || loggedRef.current) return;
