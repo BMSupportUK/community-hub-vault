@@ -32,7 +32,7 @@ function splitSegments(html: string): string[] {
 export function pruneExpiredGuideEvents(
   html: string,
   nowMs: number = Date.now(),
-  graceMs = 2 * 60 * 60 * 1000,
+  graceMs = 10 * 60 * 60 * 1000,
 ): string {
   if (!html || !html.trim()) return html;
   const segments = splitSegments(html);
