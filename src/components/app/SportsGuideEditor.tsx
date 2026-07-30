@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { HtmlEditor } from "@/components/ui/html-editor";
 import { toast } from "sonner";
 import { findLatestEventUtcMs } from "@/lib/parse-event-times";
+import { pruneExpiredGuideEvents } from "@/lib/prune-expired-guide-events";
 
 type Category = { id: string; name: string };
 type Subcategory = { id: string; category_id: string; name: string; sort_order: number; is_default: boolean };
@@ -265,11 +266,29 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
           archived_body?: string | null;
           archived_excerpt?: string | null;
         };
-        const restoredBody = row.body ?? row.archived_body ?? null;
+        const rawBody = row.body ?? row.archived_body ?? null;
+        // Only keep events that haven't happened yet — expired listings are
+        // dropped so editing starts from the still-relevant fixtures.
+        let restoredBody = rawBody;
+        let prunedExpired = false;
+        if (rawBody) {
+          try {
+            const pruned = pruneExpiredGuideEvents(rawBody);
+            if (pruned !== rawBody) {
+              restoredBody = pruned;
+              prunedExpired = true;
+            }
+          } catch (e) {
+            console.error("[SportsGuideEditor] pruneExpiredGuideEvents failed", e);
+          }
+        }
         const restoredExcerpt = row.excerpt ?? row.archived_excerpt ?? null;
         setEditing({ ...(row as Blog), body: restoredBody, excerpt: restoredExcerpt });
         if (!row.body && row.archived_body) {
           toast.message("Previous listing restored — it had expired and was cleared from the public page.");
+        }
+        if (prunedExpired) {
+          toast.message("Expired events removed — only upcoming events are shown.");
         }
       } else {
         // Restore previously saved draft if present so users don't lose work

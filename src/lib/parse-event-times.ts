@@ -439,6 +439,11 @@ export function findLatestEventUtcMs(html: string, defaultZone = "GMT"): number 
   return findEventUtcMs(html, "latest", defaultZone);
 }
 
+/** True when a line is only a date heading (e.g. "Saturday 1 January 2026"). */
+export function isGuideDateHeading(text: string): boolean {
+  return parseGuideDate(text.trim()) !== null;
+}
+
 function parseGuideDate(text: string): string | null {
   // Strip leading/trailing timezone abbreviations (e.g. "ET 25 May 2026",
   // "25 May 2026 ET") so the date itself can still be parsed when guides
