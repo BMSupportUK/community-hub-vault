@@ -226,21 +226,7 @@ html.theme-sunset body {
 
 @layer base {
   * { border-color: var(--color-border); }
-  @media (min-width: 768px) {
-    html.app-shell-locked,
-    html.app-shell-locked body {
-      width: 100dvw !important;
-      height: 100dvh !important;
-      max-width: 100dvw !important;
-      max-height: 100dvh !important;
-      overflow: hidden !important;
-      overscroll-behavior: none !important;
-    }
-    html.app-shell-locked body {
-      position: fixed !important;
-      inset: 0 !important;
-    }
-  }
+  /* Viewport lock removed — the app scrolls naturally on all screens. */
   html, body {
     color: var(--color-foreground);
     font-family: var(--font-sans);
