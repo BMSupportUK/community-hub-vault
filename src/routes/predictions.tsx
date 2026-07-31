@@ -1517,9 +1517,9 @@ function GuestLoginCard({
 
   if (mode === "reset-request" || mode === "reset-verify") {
     return (
-      <div className="mb-6 rounded-2xl border-2 border-primary/60 bg-surface-1 p-5 shadow-md shadow-primary/10">
-        <h3 className="font-display text-lg font-bold mb-1">Reset your PIN</h3>
-        <p className="text-sm text-muted-foreground mb-4">
+      <div className="mb-6 rounded-2xl border-2 border-primary/80 bg-surface p-5 shadow-soft backdrop-blur-md">
+        <h3 className="font-display text-xl font-bold mb-1 text-foreground drop-shadow">Reset your PIN</h3>
+        <p className="text-sm text-foreground/90 mb-4">
           {mode === "reset-request"
             ? "Enter your email and we'll send a 6-digit reset code."
             : "Enter the 6-digit code from your email and choose a new 4-digit PIN."}
