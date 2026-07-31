@@ -1517,16 +1517,16 @@ function GuestLoginCard({
 
   if (mode === "reset-request" || mode === "reset-verify") {
     return (
-      <div className="mb-6 rounded-2xl border-2 border-primary/60 bg-surface-1 p-5 shadow-md shadow-primary/10">
-        <h3 className="font-display text-lg font-bold mb-1">Reset your PIN</h3>
-        <p className="text-sm text-muted-foreground mb-4">
+      <div className="mb-6 rounded-2xl border-2 border-primary/80 bg-surface p-5 shadow-soft backdrop-blur-md">
+        <h3 className="font-display text-xl font-bold mb-1 text-foreground drop-shadow">Reset your PIN</h3>
+        <p className="text-sm text-foreground/90 mb-4">
           {mode === "reset-request"
             ? "Enter your email and we'll send a 6-digit reset code."
             : "Enter the 6-digit code from your email and choose a new 4-digit PIN."}
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div>
-            <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+            <label className="text-xs font-bold uppercase tracking-wider text-foreground text-glow">
               Email
             </label>
             <Input
@@ -1541,7 +1541,7 @@ function GuestLoginCard({
           {mode === "reset-verify" && (
             <>
               <div>
-                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                <label className="text-xs font-bold uppercase tracking-wider text-foreground text-glow">
                   Reset code
                 </label>
                 <Input
@@ -1553,7 +1553,7 @@ function GuestLoginCard({
                 />
               </div>
               <div>
-                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                <label className="text-xs font-bold uppercase tracking-wider text-foreground text-glow">
                   New 4-digit PIN
                 </label>
                 <Input
@@ -1615,9 +1615,9 @@ function GuestLoginCard({
   }
 
   return (
-    <div className="mb-6 rounded-2xl border-2 border-primary/60 bg-surface-1 p-5 shadow-md shadow-primary/10">
+    <div className="mb-6 rounded-2xl border-2 border-primary/80 bg-surface p-5 shadow-soft backdrop-blur-md">
       <div className="flex items-center justify-between mb-1">
-        <h3 className="font-display text-lg font-bold">
+        <h3 className="font-display text-xl font-bold text-foreground drop-shadow">
           {mode === "signin" ? "Guest sign in" : "Register as guest"}
         </h3>
         <button
@@ -1629,7 +1629,7 @@ function GuestLoginCard({
           {mode === "signin" ? "New here? Register" : "Already registered? Sign in"}
         </button>
       </div>
-      <p className="text-sm text-muted-foreground mb-4">
+      <p className="text-sm text-foreground/90 mb-4">
         {mode === "signin"
           ? "Enter the email and 4-digit PIN you used when you registered."
           : "Pick a display name, enter your email, and choose a 4-digit PIN. Use the same email + PIN later to edit your picks."}
@@ -1637,7 +1637,7 @@ function GuestLoginCard({
       <div className={`grid grid-cols-1 gap-3 ${mode === "signin" ? "sm:grid-cols-2" : "sm:grid-cols-3"}`}>
         {mode === "register" && (
         <div>
-          <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+          <label className="text-xs font-bold uppercase tracking-wider text-foreground text-glow">
             Display name
           </label>
           <Input
@@ -1649,7 +1649,7 @@ function GuestLoginCard({
         </div>
         )}
         <div>
-          <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+          <label className="text-xs font-bold uppercase tracking-wider text-foreground text-glow">
             Email
           </label>
           <Input
@@ -1662,7 +1662,7 @@ function GuestLoginCard({
           />
         </div>
         <div>
-          <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+          <label className="text-xs font-bold uppercase tracking-wider text-foreground text-glow">
             4-digit PIN
           </label>
           <Input

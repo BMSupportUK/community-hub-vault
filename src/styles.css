@@ -1388,3 +1388,9 @@ html.boro-bg-active .min-h-screen.bg-background {
 .boro-x-embed .boro-x-action * {
   color: rgb(8, 12, 20) !important;
 }
+
+/* High-visibility text glow for labels on busy backgrounds */
+.text-glow {
+  text-shadow: 0 0 10px color-mix(in oklab, currentColor 45%, transparent);
+}
+
