@@ -124,13 +124,22 @@ function norm(s: string) {
   return s.trim().toLowerCase().replace(/\s+/g, " ");
 }
 
-// The predictor is competitive-fixtures only. Pre-season/club friendlies and
-// any other non-competitive match must never be imported.
+// The predictor is LEAGUE fixtures only. Cups (League Cup / Carabao, FA Cup,
+// EFL Trophy, play-offs), friendlies, testimonials and anything else
+// non-league must never be imported.
 function isCompetitiveCompetition(comp?: string | null): boolean {
   const c = norm(comp ?? "");
   if (!c) return false;
-  if (/friendl|testimonial|trophy tour|training|behind closed doors/.test(c)) return false;
-  return true;
+  // Explicit non-league / non-competitive exclusions
+  if (
+    /friendl|testimonial|trophy tour|training|behind closed doors|cup|carabao|efl trophy|papa|checkatrade|vertu|bristol street|play-?off|shield|europa|conference|champions league|u2\d|under[- ]?2\d|academy|youth|reserves|women/.test(
+      c,
+    )
+  ) {
+    return false;
+  }
+  // Allowlist: only recognised league competitions
+  return /championship|premier league|league one|league two|efl league|sky bet/.test(c);
 }
 
 // Championship 2026/27 home grounds — used to auto-populate the venue
