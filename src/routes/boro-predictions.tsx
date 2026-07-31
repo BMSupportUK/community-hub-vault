@@ -1216,6 +1216,8 @@ function GuestLoginCard({
   const signinValid = emailValid && /^\d{4}$/.test(pin);
   const resetValid = emailValid && /^\d{6}$/.test(resetCode) && /^\d{4}$/.test(newPin);
 
+  const fieldCls = "mt-1 border-2 border-primary/50 bg-surface-1 focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/40";
+
   if (mode === "reset-request" || mode === "reset-verify") {
     return (
       <div className="mb-6 rounded-2xl border-2 border-primary/80 bg-surface p-5 shadow-soft backdrop-blur-md">
@@ -1226,17 +1228,17 @@ function GuestLoginCard({
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div>
             <label className="text-xs font-bold uppercase tracking-wider text-foreground text-glow">Email</label>
-            <Input value={email} onChange={(e) => setEmail(e.target.value)} type="email" disabled={resetting || mode === "reset-verify"} />
+            <Input className={fieldCls} value={email} onChange={(e) => setEmail(e.target.value)} type="email" disabled={resetting || mode === "reset-verify"} />
           </div>
           {mode === "reset-verify" && (
             <>
               <div>
                 <label className="text-xs font-bold uppercase tracking-wider text-foreground text-glow">Reset code</label>
-                <Input value={resetCode} onChange={(e) => setResetCode(e.target.value.replace(/\D/g, "").slice(0, 6))} inputMode="numeric" disabled={resetting} />
+                <Input className={fieldCls} value={resetCode} onChange={(e) => setResetCode(e.target.value.replace(/\D/g, "").slice(0, 6))} inputMode="numeric" disabled={resetting} />
               </div>
               <div>
                 <label className="text-xs font-bold uppercase tracking-wider text-foreground text-glow">New PIN</label>
-                <Input value={newPin} onChange={(e) => setNewPin(e.target.value.replace(/\D/g, "").slice(0, 4))} inputMode="numeric" disabled={resetting} />
+                <Input className={fieldCls} value={newPin} onChange={(e) => setNewPin(e.target.value.replace(/\D/g, "").slice(0, 4))} inputMode="numeric" disabled={resetting} />
               </div>
             </>
           )}
@@ -1272,16 +1274,16 @@ function GuestLoginCard({
         {mode === "register" && (
           <div>
             <label className="text-xs font-bold uppercase tracking-wider text-foreground text-glow">Display name</label>
-            <Input value={displayName} onChange={(e) => setDisplayName(e.target.value.slice(0, 40))} disabled={busy} />
+            <Input className={fieldCls} value={displayName} onChange={(e) => setDisplayName(e.target.value.slice(0, 40))} disabled={busy} />
           </div>
         )}
         <div>
           <label className="text-xs font-bold uppercase tracking-wider text-foreground text-glow">Email</label>
-          <Input value={email} onChange={(e) => setEmail(e.target.value)} type="email" disabled={busy} autoComplete="email" />
+          <Input className={fieldCls} value={email} onChange={(e) => setEmail(e.target.value)} type="email" disabled={busy} autoComplete="email" />
         </div>
         <div>
           <label className="text-xs font-bold uppercase tracking-wider text-foreground text-glow">4-digit PIN</label>
-          <Input value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 4))} inputMode="numeric" disabled={busy} autoComplete="one-time-code" />
+          <Input className={fieldCls} value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 4))} inputMode="numeric" disabled={busy} autoComplete="one-time-code" />
         </div>
       </div>
       <div className="mt-4 flex items-center gap-2 justify-end">
