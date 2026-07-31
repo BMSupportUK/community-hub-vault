@@ -1,0 +1,2 @@
+DELETE FROM public.boro_predictions WHERE fixture_id IN (SELECT id FROM public.boro_fixtures WHERE competition !~* 'championship|premier league|league one|league two');
+DELETE FROM public.boro_fixtures WHERE competition !~* 'championship|premier league|league one|league two';
