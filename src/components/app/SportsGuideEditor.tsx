@@ -382,7 +382,7 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
           ? editing.subcategory
           : defaultSubName,
     };
-    // Auto-clear the body 6 hours after the latest event time listed
+    // Auto-clear the body 10 hours after the latest event time listed
     // inside the body. When no event time can be parsed, leave auto_clear_at
     // off the payload so the trigger falls back to updated_at + 24h.
     const bodyForParse = editing.body?.trim() || "";
@@ -390,7 +390,7 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
       try {
         const latestMs = findLatestEventUtcMs(bodyForParse);
         if (latestMs !== null) {
-          const clearAt = new Date(latestMs + 6 * 60 * 60 * 1000).toISOString();
+          const clearAt = new Date(latestMs + 10 * 60 * 60 * 1000).toISOString();
           payload.auto_clear_at = clearAt;
         }
       } catch (e) {
