@@ -120,19 +120,19 @@ function RotatingAffiliateBannerComponent({
   const current = list[Math.min(index, list.length - 1)];
 
   return (
-    <div className="flex w-full justify-center">
+    <div className="grid w-full min-w-0 place-items-center">
       <a
         href={current.link_url || "mailto:bmsupport2022@protonmail.com"}
         target="_blank"
         rel="noopener noreferrer sponsored"
-        className="inline-flex items-center justify-center w-fit max-w-full mx-auto rounded-xl border border-border bg-surface-1/85 overflow-hidden hover:border-[#E11B22]/70 hover:shadow-[0_8px_30px_-12px_rgba(225,27,34,0.55)] transition-all"
+        className="block w-full max-w-64 mx-auto rounded-xl border border-border bg-surface-1/85 overflow-hidden hover:border-[#E11B22]/70 hover:shadow-[0_8px_30px_-12px_rgba(225,27,34,0.55)] transition-all"
         aria-label={current.alt_text || current.name || "Sponsor"}
       >
         <img
           key={current.id}
           src={current.image_url}
           alt={current.alt_text || current.name || "Sponsor"}
-          className={`block w-auto h-auto max-w-full object-contain object-center transition-opacity duration-300 ${fading ? "opacity-0" : "opacity-100"}`}
+          className={`block w-full h-auto object-contain object-center transition-opacity duration-300 ${fading ? "opacity-0" : "opacity-100"}`}
           loading="lazy"
           decoding="async"
           fetchPriority="low"
