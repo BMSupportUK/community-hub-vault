@@ -107,6 +107,9 @@ export function HtmlEditor({ value, onChange, className, placeholder, videoUploa
       pre: block.includes("pre"),
       ul: q("insertUnorderedList"),
       ol: q("insertOrderedList"),
+      alignLeft: q("justifyLeft"),
+      alignCenter: q("justifyCenter"),
+      alignRight: q("justifyRight"),
     });
   };
 
