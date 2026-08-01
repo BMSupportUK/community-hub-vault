@@ -464,9 +464,9 @@ export function HtmlEditor({ value, onChange, className, placeholder, videoUploa
         <Btn title="Bullet list" isActive={active.ul} onClick={() => { exec("insertUnorderedList"); handleInput(); }}><List className="size-4" /></Btn>
         <Btn title="Numbered list" isActive={active.ol} onClick={() => { exec("insertOrderedList"); handleInput(); }}><ListOrdered className="size-4" /></Btn>
         <span className="mx-1 h-5 w-px bg-border" />
-        <Btn title="Align left" isActive={active.alignLeft} onClick={() => { exec("justifyLeft"); handleInput(); }}><AlignLeft className="size-4" /></Btn>
-        <Btn title="Align centre" isActive={active.alignCenter} onClick={() => { exec("justifyCenter"); handleInput(); }}><AlignCenter className="size-4" /></Btn>
-        <Btn title="Align right" isActive={active.alignRight} onClick={() => { exec("justifyRight"); handleInput(); }}><AlignRight className="size-4" /></Btn>
+        <Btn title="Align left" isActive={active.alignLeft} onClick={() => { applyAlignment(ref.current, "left"); handleInput(); refreshActive(); }}><AlignLeft className="size-4" /></Btn>
+        <Btn title="Align centre" isActive={active.alignCenter} onClick={() => { applyAlignment(ref.current, "center"); handleInput(); refreshActive(); }}><AlignCenter className="size-4" /></Btn>
+        <Btn title="Align right" isActive={active.alignRight} onClick={() => { applyAlignment(ref.current, "right"); handleInput(); refreshActive(); }}><AlignRight className="size-4" /></Btn>
         <span className="mx-1 h-5 w-px bg-border" />
         <Btn title="Link" onClick={promptLink}><Link2 className="size-4" /></Btn>
         <Btn title="Embed YouTube video" onClick={promptYouTube}><Youtube className="size-4" /></Btn>
