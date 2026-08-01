@@ -266,7 +266,7 @@ function SportsGuidesPage() {
   const filtered = useMemo(() => {
     const q = search.trim();
     return blogs.filter((b) => {
-      if (activeCat && b.category_id !== activeCat) return false;
+      if (!q && activeCat && b.category_id !== activeCat) return false;
       if (!q && activeCat && subsByCat[activeCat]?.length && subFilter && b.subcategory !== subFilter) return false;
       if (!q) return true;
       return matchesGuideSearch(
@@ -312,14 +312,13 @@ function SportsGuidesPage() {
     }, 80);
   };
 
-  // Search results scoped to the CURRENT sports guide category shown in the
-  // right panel, Discord-style. Includes a snippet of where the term matched.
+  // Search every sports guide category and include a snippet showing where
+  // the matching event or term appears.
   const searchResults = useMemo(() => {
     const q = search.trim();
     if (!q) return [] as { blog: Blog; snippet: string }[];
     const out: { blog: Blog; snippet: string }[] = [];
-    const scoped = activeCat ? blogs.filter((b) => b.category_id === activeCat) : blogs;
-    for (const b of scoped) {
+    for (const b of blogs) {
       const title = b.title ?? "";
       const excerpt = b.excerpt ?? "";
       const bodyText = guideSearchText(b.body);
@@ -338,7 +337,7 @@ function SportsGuidesPage() {
       if (snippet) out.push({ blog: b, snippet });
     }
     return out;
-  }, [blogs, search, activeCat]);
+  }, [blogs, search]);
 
   const activeCategory = categories.find((c) => c.id === activeCat);
 
