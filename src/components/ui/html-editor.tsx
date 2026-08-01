@@ -48,9 +48,7 @@ function applyAlignment(editor: HTMLElement | null, align: "left" | "center" | "
 
   if (sel && sel.rangeCount > 0) {
     const range = sel.getRangeAt(0);
-    const frag = range.cloneContents();
-    frag.querySelectorAll("img").forEach(() => {});
-    // Collect images fully inside the selection
+    // Collect images touched by the selection
     editor.querySelectorAll("img").forEach((img) => {
       if (range.intersectsNode(img)) images.add(img);
     });
