@@ -87,7 +87,9 @@ export function pruneExpiredGuideEvents(
       } catch {
         latest = null;
       }
-      if (latest !== null && latest + graceMs < nowMs) {
+      // Keep the event for the full grace period. It becomes removable only
+      // when the clock reaches its listed start time plus exactly 10 hours.
+      if (latest !== null && nowMs >= latest + graceMs) {
         removedAny = true;
       } else {
         kept.push(event);
