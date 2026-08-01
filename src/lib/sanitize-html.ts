@@ -74,6 +74,7 @@ export function sanitizeRichHtml(html: string): string {
       "data-mention-key",
       "lang",
       "dir",
+      "align",
     ],
     ALLOWED_URI_REGEXP:
       /^(?:(?:https?|mailto|tel|ftp):|[^a-z]|[a-z+.-]+(?:[^a-z+.\-:]|$))/i,
