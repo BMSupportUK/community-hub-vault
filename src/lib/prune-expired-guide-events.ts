@@ -19,9 +19,9 @@ function toLines(html: string): string[] {
   const withBreaks = html
     .replace(/<\s*br\s*\/?>/gi, "\n")
     .replace(/<\s*\/(div|p|li|h[1-6])\s*>/gi, "\n")
-    .replace(/<\s*(div|p|li|h[1-6])\b[^>]*>/gi, "\n")
     .replace(/<[^>]+>/g, "");
   return decode(withBreaks)
+    .replace(/\n{3,}/g, "\n\n")
     .split("\n")
     .map((line) => line.replace(/\u00a0/g, " ").trim());
 }
