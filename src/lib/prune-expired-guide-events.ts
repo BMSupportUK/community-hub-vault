@@ -46,6 +46,11 @@ function splitSegments(html: string): string[] {
   const trailing = html.slice(cursor);
   if (depth === 0 && trailing.trim()) segments.push(trailing.trim());
 
+  if (segments.length === 1) {
+    // Whole body wrapped in one container — look inside it.
+    const inner = segments[0].replace(/^<div\b[^>]*>/i, "").replace(/<\/div>$/i, "");
+    if (inner !== segments[0] && /<div\b/i.test(inner)) return splitSegments(inner);
+  }
   if (segments.length > 1) return segments;
   return html
     .split(/<br\s*\/?>/gi)
