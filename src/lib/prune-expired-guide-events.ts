@@ -108,8 +108,8 @@ export function pruneExpiredGuideEvents(
 
   if (!removedAny) return html;
   while (out.length && out[out.length - 1] === "<div><br></div>") out.pop();
-  // Never wipe a whole guide: if every event is expired, leave the body alone
-  // so the editor still has the previous listings to work from.
-  if (out.length === 0) return html;
+  // If every event has expired, return an empty body. Keeping the original
+  // content here resurrects every stale event when the editor is opened.
+  if (out.length === 0) return "";
   return out.join("");
 }
