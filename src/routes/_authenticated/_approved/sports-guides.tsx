@@ -30,6 +30,26 @@ function escapeRegExp(s: string) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+function guideSearchText(value: string | null | undefined) {
+  if (!value) return "";
+  const textarea = document.createElement("textarea");
+  textarea.innerHTML = value
+    .replace(/<\s*br\s*\/?>/gi, " ")
+    .replace(/<\s*\/(div|p|li|h[1-6])\s*>/gi, " ")
+    .replace(/<[^>]+>/g, " ");
+  return textarea.value
+    .replace(/\u00a0/g, " ")
+    .replace(/[–—]/g, "-")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function matchesGuideSearch(text: string, query: string) {
+  const haystack = text.toLocaleLowerCase();
+  const terms = query.toLocaleLowerCase().split(/\s+/).filter(Boolean);
+  return terms.length > 0 && terms.every((term) => haystack.includes(term));
+}
+
 function Highlight({ text, query }: { text: string; query: string }) {
   const q = query.trim();
   if (!q) return <>{text}</>;
@@ -244,15 +264,14 @@ function SportsGuidesPage() {
   }, [activeCat, subsByCat]);
 
   const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
+    const q = search.trim();
     return blogs.filter((b) => {
       if (activeCat && b.category_id !== activeCat) return false;
       if (!q && activeCat && subsByCat[activeCat]?.length && subFilter && b.subcategory !== subFilter) return false;
       if (!q) return true;
-      return (
-        b.title.toLowerCase().includes(q) ||
-        (b.excerpt ?? "").toLowerCase().includes(q) ||
-        (b.body ?? "").toLowerCase().includes(q)
+      return matchesGuideSearch(
+        [b.title, b.excerpt, guideSearchText(b.body)].filter(Boolean).join(" "),
+        q,
       );
     });
   }, [blogs, activeCat, search, subFilter, subsByCat]);
@@ -296,21 +315,22 @@ function SportsGuidesPage() {
   // Search results scoped to the CURRENT sports guide category shown in the
   // right panel, Discord-style. Includes a snippet of where the term matched.
   const searchResults = useMemo(() => {
-    const q = search.trim().toLowerCase();
+    const q = search.trim();
     if (!q) return [] as { blog: Blog; snippet: string }[];
     const out: { blog: Blog; snippet: string }[] = [];
     const scoped = activeCat ? blogs.filter((b) => b.category_id === activeCat) : blogs;
     for (const b of scoped) {
       const title = b.title ?? "";
       const excerpt = b.excerpt ?? "";
-      const bodyText = (b.body ?? "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+      const bodyText = guideSearchText(b.body);
       const haystacks = [title, excerpt, bodyText];
       let snippet = "";
       for (const h of haystacks) {
-        const i = h.toLowerCase().indexOf(q);
-        if (i >= 0) {
+        if (matchesGuideSearch(h, q)) {
+          const firstTerm = q.toLocaleLowerCase().split(/\s+/).find(Boolean) ?? "";
+          const i = Math.max(0, h.toLocaleLowerCase().indexOf(firstTerm));
           const start = Math.max(0, i - 40);
-          const end = Math.min(h.length, i + q.length + 60);
+          const end = Math.min(h.length, i + firstTerm.length + 100);
           snippet = (start > 0 ? "…" : "") + h.slice(start, end) + (end < h.length ? "…" : "");
           break;
         }
