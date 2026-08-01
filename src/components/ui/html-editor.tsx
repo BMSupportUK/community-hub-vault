@@ -29,6 +29,53 @@ function exec(cmd: string, arg?: string) {
   document.execCommand(cmd, false, arg);
 }
 
+/** Apply text alignment to the selected block(s), handling images explicitly. */
+function applyAlignment(editor: HTMLElement | null, align: "left" | "center" | "right") {
+  if (!editor) return;
+  const sel = window.getSelection();
+  const blocks = new Set<HTMLElement>();
+  const images = new Set<HTMLImageElement>();
+
+  const blockOf = (node: Node | null): HTMLElement | null => {
+    let el: HTMLElement | null = node instanceof HTMLElement ? node : node?.parentElement ?? null;
+    while (el && el !== editor) {
+      const display = window.getComputedStyle(el).display;
+      if (display !== "inline" && display !== "inline-block" && el.tagName !== "IMG") return el;
+      el = el.parentElement;
+    }
+    return el === editor ? editor : null;
+  };
+
+  if (sel && sel.rangeCount > 0) {
+    const range = sel.getRangeAt(0);
+    const frag = range.cloneContents();
+    frag.querySelectorAll("img").forEach(() => {});
+    // Collect images fully inside the selection
+    editor.querySelectorAll("img").forEach((img) => {
+      if (range.intersectsNode(img)) images.add(img);
+    });
+    const start = blockOf(range.startContainer);
+    const end = blockOf(range.endContainer);
+    if (start) blocks.add(start);
+    if (end) blocks.add(end);
+  }
+
+  if (blocks.size === 0) blocks.add(editor);
+
+  blocks.forEach((b) => {
+    b.style.textAlign = align;
+    b.querySelectorAll("img").forEach((img) => images.add(img));
+  });
+
+  images.forEach((img) => {
+    img.style.display = "block";
+    img.style.marginLeft = align === "left" ? "0" : "auto";
+    img.style.marginRight = align === "right" ? "0" : "auto";
+    const parent = img.parentElement;
+    if (parent && parent !== editor) parent.style.textAlign = align;
+  });
+}
+
 const MAX_PASTED_HTML_CHARS = 30_000;
 
 function escapeHtml(s: string): string {
