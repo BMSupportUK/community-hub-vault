@@ -11,12 +11,42 @@ function segmentText(html: string): string {
     .trim();
 }
 
-/** Split a guide body into top-level block segments, preserving their HTML. */
+/**
+ * Split a guide body into top-level block segments, preserving their HTML.
+ * Guide bodies routinely nest <div> inside <div> (one wrapper per event with
+ * time/name/channel children), and the date heading is sometimes a bare text
+ * node. A depth-aware scan is required — a non-greedy regex would cut nested
+ * blocks at the first </div> and drop bare-text headings entirely.
+ */
 function splitSegments(html: string): string[] {
-  const divs = html.match(/<div\b[^>]*>[\s\S]*?<\/div>/gi);
-  if (divs && divs.join("").replace(/\s+/g, "").length >= html.replace(/\s+/g, "").length * 0.8) {
-    return divs;
+  const segments: string[] = [];
+  const tag = /<(\/?)div\b[^>]*>/gi;
+  let depth = 0;
+  let blockStart = 0;
+  let cursor = 0;
+  let m: RegExpExecArray | null;
+  while ((m = tag.exec(html)) !== null) {
+    const isClose = m[1] === "/";
+    if (!isClose) {
+      if (depth === 0) {
+        // Any loose text/markup before this block is its own segment.
+        const loose = html.slice(cursor, m.index);
+        if (loose.trim()) segments.push(loose.trim());
+        blockStart = m.index;
+      }
+      depth++;
+    } else if (depth > 0) {
+      depth--;
+      if (depth === 0) {
+        segments.push(html.slice(blockStart, m.index + m[0].length));
+        cursor = m.index + m[0].length;
+      }
+    }
   }
+  const trailing = html.slice(cursor);
+  if (depth === 0 && trailing.trim()) segments.push(trailing.trim());
+
+  if (segments.length > 1) return segments;
   return html
     .split(/<br\s*\/?>/gi)
     .map((s) => s.trim())
