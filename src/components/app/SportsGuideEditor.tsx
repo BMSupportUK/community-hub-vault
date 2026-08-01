@@ -9,7 +9,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { HtmlEditor } from "@/components/ui/html-editor";
 import { toast } from "sonner";
-import { findLatestEventUtcMs } from "@/lib/parse-event-times";
 import { pruneExpiredGuideEvents } from "@/lib/prune-expired-guide-events";
 
 type Category = { id: string; name: string };
@@ -366,7 +365,6 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
       not_guaranteed: boolean;
       subcategory: string | null;
       sort_order?: number;
-      auto_clear_at?: string;
     } = {
       category_id: editing.category_id,
       title: editing.title.trim(),
@@ -382,21 +380,6 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
           ? editing.subcategory
           : defaultSubName,
     };
-    // Auto-clear the body 10 hours after the latest event time listed
-    // inside the body. When no event time can be parsed, leave auto_clear_at
-    // off the payload so the trigger falls back to updated_at + 24h.
-    const bodyForParse = editing.body?.trim() || "";
-    if (bodyForParse) {
-      try {
-        const latestMs = findLatestEventUtcMs(bodyForParse);
-        if (latestMs !== null) {
-          const clearAt = new Date(latestMs + 10 * 60 * 60 * 1000).toISOString();
-          payload.auto_clear_at = clearAt;
-        }
-      } catch (e) {
-        console.error("[SportsGuideEditor] findLatestEventUtcMs failed", e);
-      }
-    }
     if (!editing.id) {
       // Append to the end of the chosen category so the admin-defined order is preserved.
       const { data: maxRow } = await supabase
