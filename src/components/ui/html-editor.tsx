@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Bold, Italic, Underline, Heading1, Heading2, List, ListOrdered, Link2, Quote, Code, Undo2, Redo2, Eraser, Youtube, Minus, Film, Image as ImageIcon, Loader2 } from "lucide-react";
+import { Bold, Italic, Underline, Heading1, Heading2, List, ListOrdered, Link2, Quote, Code, Undo2, Redo2, Eraser, Youtube, Minus, Film, Image as ImageIcon, Loader2, AlignLeft, AlignCenter, AlignRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { MentionCandidate } from "@/hooks/use-mention-candidates";
@@ -416,6 +416,11 @@ export function HtmlEditor({ value, onChange, className, placeholder, videoUploa
         <span className="mx-1 h-5 w-px bg-border" />
         <Btn title="Bullet list" isActive={active.ul} onClick={() => { exec("insertUnorderedList"); handleInput(); }}><List className="size-4" /></Btn>
         <Btn title="Numbered list" isActive={active.ol} onClick={() => { exec("insertOrderedList"); handleInput(); }}><ListOrdered className="size-4" /></Btn>
+        <span className="mx-1 h-5 w-px bg-border" />
+        <Btn title="Align left" isActive={active.alignLeft} onClick={() => { exec("justifyLeft"); handleInput(); }}><AlignLeft className="size-4" /></Btn>
+        <Btn title="Align centre" isActive={active.alignCenter} onClick={() => { exec("justifyCenter"); handleInput(); }}><AlignCenter className="size-4" /></Btn>
+        <Btn title="Align right" isActive={active.alignRight} onClick={() => { exec("justifyRight"); handleInput(); }}><AlignRight className="size-4" /></Btn>
+        <span className="mx-1 h-5 w-px bg-border" />
         <Btn title="Link" onClick={promptLink}><Link2 className="size-4" /></Btn>
         <Btn title="Embed YouTube video" onClick={promptYouTube}><Youtube className="size-4" /></Btn>
         {imageUpload && (
