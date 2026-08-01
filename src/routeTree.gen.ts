@@ -101,6 +101,7 @@ import { Route as ApiPublicHooksScheduledRemindersRouteImport } from './routes/a
 import { Route as ApiPublicHooksRefreshStreamingPricesRouteImport } from './routes/api/public/hooks/refresh-streaming-prices'
 import { Route as ApiPublicHooksNowpaymentsRouteImport } from './routes/api/public/hooks/nowpayments'
 import { Route as ApiPublicHooksNotifyRouteImport } from './routes/api/public/hooks/notify'
+import { Route as ApiPublicHooksBoroPredictorInviteRouteImport } from './routes/api/public/hooks/boro-predictor-invite'
 import { Route as ApiPublicHooksBoroPredictionRemindersRouteImport } from './routes/api/public/hooks/boro-prediction-reminders'
 import { Route as ApiPublicHooksBoroFetchFixturesRouteImport } from './routes/api/public/hooks/boro-fetch-fixtures'
 import { Route as ApiPublicHooksBackupOrdersRouteImport } from './routes/api/public/hooks/backup-orders'
@@ -645,6 +646,12 @@ const ApiPublicHooksNotifyRoute = ApiPublicHooksNotifyRouteImport.update({
   path: '/api/public/hooks/notify',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHooksBoroPredictorInviteRoute =
+  ApiPublicHooksBoroPredictorInviteRouteImport.update({
+    id: '/api/public/hooks/boro-predictor-invite',
+    path: '/api/public/hooks/boro-predictor-invite',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksBoroPredictionRemindersRoute =
   ApiPublicHooksBoroPredictionRemindersRouteImport.update({
     id: '/api/public/hooks/boro-prediction-reminders',
@@ -826,6 +833,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/backup-orders': typeof ApiPublicHooksBackupOrdersRoute
   '/api/public/hooks/boro-fetch-fixtures': typeof ApiPublicHooksBoroFetchFixturesRoute
   '/api/public/hooks/boro-prediction-reminders': typeof ApiPublicHooksBoroPredictionRemindersRoute
+  '/api/public/hooks/boro-predictor-invite': typeof ApiPublicHooksBoroPredictorInviteRoute
   '/api/public/hooks/notify': typeof ApiPublicHooksNotifyRoute
   '/api/public/hooks/nowpayments': typeof ApiPublicHooksNowpaymentsRoute
   '/api/public/hooks/refresh-streaming-prices': typeof ApiPublicHooksRefreshStreamingPricesRoute
@@ -931,6 +939,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/backup-orders': typeof ApiPublicHooksBackupOrdersRoute
   '/api/public/hooks/boro-fetch-fixtures': typeof ApiPublicHooksBoroFetchFixturesRoute
   '/api/public/hooks/boro-prediction-reminders': typeof ApiPublicHooksBoroPredictionRemindersRoute
+  '/api/public/hooks/boro-predictor-invite': typeof ApiPublicHooksBoroPredictorInviteRoute
   '/api/public/hooks/notify': typeof ApiPublicHooksNotifyRoute
   '/api/public/hooks/nowpayments': typeof ApiPublicHooksNowpaymentsRoute
   '/api/public/hooks/refresh-streaming-prices': typeof ApiPublicHooksRefreshStreamingPricesRoute
@@ -1042,6 +1051,7 @@ export interface FileRoutesById {
   '/api/public/hooks/backup-orders': typeof ApiPublicHooksBackupOrdersRoute
   '/api/public/hooks/boro-fetch-fixtures': typeof ApiPublicHooksBoroFetchFixturesRoute
   '/api/public/hooks/boro-prediction-reminders': typeof ApiPublicHooksBoroPredictionRemindersRoute
+  '/api/public/hooks/boro-predictor-invite': typeof ApiPublicHooksBoroPredictorInviteRoute
   '/api/public/hooks/notify': typeof ApiPublicHooksNotifyRoute
   '/api/public/hooks/nowpayments': typeof ApiPublicHooksNowpaymentsRoute
   '/api/public/hooks/refresh-streaming-prices': typeof ApiPublicHooksRefreshStreamingPricesRoute
@@ -1152,6 +1162,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/backup-orders'
     | '/api/public/hooks/boro-fetch-fixtures'
     | '/api/public/hooks/boro-prediction-reminders'
+    | '/api/public/hooks/boro-predictor-invite'
     | '/api/public/hooks/notify'
     | '/api/public/hooks/nowpayments'
     | '/api/public/hooks/refresh-streaming-prices'
@@ -1257,6 +1268,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/backup-orders'
     | '/api/public/hooks/boro-fetch-fixtures'
     | '/api/public/hooks/boro-prediction-reminders'
+    | '/api/public/hooks/boro-predictor-invite'
     | '/api/public/hooks/notify'
     | '/api/public/hooks/nowpayments'
     | '/api/public/hooks/refresh-streaming-prices'
@@ -1367,6 +1379,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/backup-orders'
     | '/api/public/hooks/boro-fetch-fixtures'
     | '/api/public/hooks/boro-prediction-reminders'
+    | '/api/public/hooks/boro-predictor-invite'
     | '/api/public/hooks/notify'
     | '/api/public/hooks/nowpayments'
     | '/api/public/hooks/refresh-streaming-prices'
@@ -1418,6 +1431,7 @@ export interface RootRouteChildren {
   ApiPublicHooksBackupOrdersRoute: typeof ApiPublicHooksBackupOrdersRoute
   ApiPublicHooksBoroFetchFixturesRoute: typeof ApiPublicHooksBoroFetchFixturesRoute
   ApiPublicHooksBoroPredictionRemindersRoute: typeof ApiPublicHooksBoroPredictionRemindersRoute
+  ApiPublicHooksBoroPredictorInviteRoute: typeof ApiPublicHooksBoroPredictorInviteRoute
   ApiPublicHooksNotifyRoute: typeof ApiPublicHooksNotifyRoute
   ApiPublicHooksNowpaymentsRoute: typeof ApiPublicHooksNowpaymentsRoute
   ApiPublicHooksRefreshStreamingPricesRoute: typeof ApiPublicHooksRefreshStreamingPricesRoute
@@ -2083,6 +2097,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksNotifyRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/boro-predictor-invite': {
+      id: '/api/public/hooks/boro-predictor-invite'
+      path: '/api/public/hooks/boro-predictor-invite'
+      fullPath: '/api/public/hooks/boro-predictor-invite'
+      preLoaderRoute: typeof ApiPublicHooksBoroPredictorInviteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/boro-prediction-reminders': {
       id: '/api/public/hooks/boro-prediction-reminders'
       path: '/api/public/hooks/boro-prediction-reminders'
@@ -2492,6 +2513,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksBoroFetchFixturesRoute: ApiPublicHooksBoroFetchFixturesRoute,
   ApiPublicHooksBoroPredictionRemindersRoute:
     ApiPublicHooksBoroPredictionRemindersRoute,
+  ApiPublicHooksBoroPredictorInviteRoute:
+    ApiPublicHooksBoroPredictorInviteRoute,
   ApiPublicHooksNotifyRoute: ApiPublicHooksNotifyRoute,
   ApiPublicHooksNowpaymentsRoute: ApiPublicHooksNowpaymentsRoute,
   ApiPublicHooksRefreshStreamingPricesRoute:
@@ -2518,13 +2541,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
