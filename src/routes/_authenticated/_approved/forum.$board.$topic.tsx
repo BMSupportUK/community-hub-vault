@@ -908,7 +908,7 @@ function TopicPage() {
       })()}
         </div>
         {tab !== "reply" && (
-          <aside className="hidden md:block md:sticky md:top-4" aria-label="Sponsored advert">
+          <aside className="hidden md:flex md:justify-center md:sticky md:top-4" aria-label="Sponsored advert">
             {renderSponsorAdvert()}
           </aside>
         )}
