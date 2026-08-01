@@ -51,27 +51,37 @@ export function pruneExpiredGuideEvents(
   type Group = { heading: string | null; events: string[][] };
   const groups: Group[] = [];
   let current: Group = { heading: null, events: [] };
-  let block: string[] = [];
+  let event: string[] = [];
 
-  const closeBlock = () => {
-    if (block.length) current.events.push(block);
-    block = [];
+  const closeEvent = () => {
+    if (event.length) current.events.push(event);
+    event = [];
   };
 
   for (const line of lines) {
-    if (!line) {
-      closeBlock();
-      continue;
-    }
+    if (!line) continue;
     if (isGuideDateHeading(line)) {
-      closeBlock();
+      closeEvent();
       if (current.heading !== null || current.events.length) groups.push(current);
       current = { heading: line, events: [] };
       continue;
     }
-    block.push(line);
+
+    // Rich-text editors frequently wrap every row in nested divs. Their
+    // closing tags create apparent blank lines between the time, title and
+    // channel rows, so blank lines cannot reliably delimit an event. A new
+    // parsable time row is the stable boundary used by every guide format.
+    const lineContext = `${current.heading ? `${current.heading}\n` : ""}${line}`;
+    let startsEvent = false;
+    try {
+      startsEvent = findLatestEventUtcMs(lineContext) !== null;
+    } catch {
+      startsEvent = false;
+    }
+    if (startsEvent && event.length) closeEvent();
+    event.push(line);
   }
-  closeBlock();
+  closeEvent();
   if (current.heading !== null || current.events.length) groups.push(current);
 
   let removedAny = false;
