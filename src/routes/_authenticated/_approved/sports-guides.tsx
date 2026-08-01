@@ -246,7 +246,7 @@ function SportsGuidesPage() {
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return blogs.filter((b) => {
-      if (!q && activeCat && b.category_id !== activeCat) return false;
+      if (activeCat && b.category_id !== activeCat) return false;
       if (!q && activeCat && subsByCat[activeCat]?.length && subFilter && b.subcategory !== subFilter) return false;
       if (!q) return true;
       return (
@@ -293,13 +293,14 @@ function SportsGuidesPage() {
     }, 80);
   };
 
-  // Global search results (across ALL categories) shown in the right panel,
-  // Discord-style. Includes a snippet of where the term was matched.
+  // Search results scoped to the CURRENT sports guide category shown in the
+  // right panel, Discord-style. Includes a snippet of where the term matched.
   const searchResults = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return [] as { blog: Blog; snippet: string }[];
     const out: { blog: Blog; snippet: string }[] = [];
-    for (const b of blogs) {
+    const scoped = activeCat ? blogs.filter((b) => b.category_id === activeCat) : blogs;
+    for (const b of scoped) {
       const title = b.title ?? "";
       const excerpt = b.excerpt ?? "";
       const bodyText = (b.body ?? "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
@@ -317,7 +318,7 @@ function SportsGuidesPage() {
       if (snippet) out.push({ blog: b, snippet });
     }
     return out;
-  }, [blogs, search]);
+  }, [blogs, search, activeCat]);
 
   const activeCategory = categories.find((c) => c.id === activeCat);
 
