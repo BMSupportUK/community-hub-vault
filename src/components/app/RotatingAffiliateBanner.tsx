@@ -120,7 +120,7 @@ function RotatingAffiliateBannerComponent({
   const current = list[Math.min(index, list.length - 1)];
 
   return (
-    <div className="grid w-full min-w-0 place-items-center">
+    <div className="grid w-full min-w-0 place-items-center px-3">
       <a
         href={current.link_url || "mailto:bmsupport2022@protonmail.com"}
         target="_blank"
