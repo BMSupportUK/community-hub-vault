@@ -124,7 +124,7 @@ function RotatingAffiliateBannerComponent({
       href={current.link_url || "mailto:bmsupport2022@protonmail.com"}
       target="_blank"
       rel="noopener noreferrer sponsored"
-      className="block w-full max-w-[256px] mx-auto rounded-xl border border-border bg-surface-1/85 overflow-hidden hover:border-[#E11B22]/70 hover:shadow-[0_8px_30px_-12px_rgba(225,27,34,0.55)] transition-all"
+      className="flex items-center justify-center w-full max-w-[256px] mx-auto rounded-xl border border-border bg-surface-1/85 overflow-hidden hover:border-[#E11B22]/70 hover:shadow-[0_8px_30px_-12px_rgba(225,27,34,0.55)] transition-all"
       aria-label={current.alt_text || current.name || "Sponsor"}
     >
       <img
@@ -133,7 +133,7 @@ function RotatingAffiliateBannerComponent({
         alt={current.alt_text || current.name || "Sponsor"}
         width={512}
         height={1536}
-        className={`w-full aspect-[1/3] object-cover object-center block transition-opacity duration-300 ${fading ? "opacity-0" : "opacity-100"}`}
+        className={`w-full h-auto object-contain object-center block mx-auto transition-opacity duration-300 ${fading ? "opacity-0" : "opacity-100"}`}
         loading="lazy"
         decoding="async"
         fetchPriority="low"
