@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, Search, X, Pencil, Trash2, ImageIcon, GripVertical, FileText, ExternalLink, Play, Film } from "lucide-react";
+import { Plus, Search, X, Pencil, Trash2, ImageIcon, GripVertical, FileText, ExternalLink, Play, Film, Copy, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -25,6 +25,39 @@ const IG_CAT_KEY = "install-guides-active-cat";
 const IG_EDIT_KEY = "install-guides-editing";
 const IG_READ_KEY = "install-guides-reading";
 const IG_SHOW_EDITOR_KEY = "install-guides-show-editor";
+
+/** Pulls the guide password out of text like "Enter e2n4Zq to view guide". */
+function extractGuideCode(text: string | null | undefined): string | null {
+  if (!text) return null;
+  const m = text.match(/enter\s+([^\s]{3,64}?)\s+to\s+(?:view|open|read)/i);
+  return m ? m[1].replace(/[.,;:]$/, "") : null;
+}
+
+function CopyPasswordButton({ code, className = "" }: { code: string; className?: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <button
+      type="button"
+      onClick={async (e) => {
+        e.stopPropagation();
+        try {
+          await navigator.clipboard.writeText(code);
+          setCopied(true);
+          toast.success("Password copied");
+          window.setTimeout(() => setCopied(false), 1500);
+        } catch {
+          toast.error("Couldn't copy — long-press the password to copy it.");
+        }
+      }}
+      title="Copy password"
+      aria-label={`Copy password ${code}`}
+      className={`inline-flex items-center gap-1.5 shrink-0 rounded-md border border-primary/40 bg-primary/15 px-2 py-1 text-xs font-medium text-foreground hover:bg-primary/25 transition ${className}`}
+    >
+      {copied ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
+      <span className="font-mono select-all">{code}</span>
+    </button>
+  );
+}
 
 type Category = { id: string; name: string; slug: string; sort_order: number };
 type Blog = {
@@ -470,7 +503,14 @@ function InstallGuidesPage() {
                             )}
                           </div>
                           <h3 className="font-display font-semibold text-lg leading-snug text-foreground">{b.title}</h3>
-                          {b.excerpt && <p className="text-sm text-muted-foreground line-clamp-2">{b.excerpt}</p>}
+                          {b.excerpt && (
+                            <div className="flex flex-wrap items-center gap-2">
+                              <p className="text-sm text-muted-foreground line-clamp-2">{b.excerpt}</p>
+                              {extractGuideCode(b.excerpt) && (
+                                <CopyPasswordButton code={extractGuideCode(b.excerpt)!} />
+                              )}
+                            </div>
+                          )}
                           <div className="mt-auto pt-3 flex items-center gap-2">
                             {b.pdf_url ? (
                               <Button asChild size="sm" className="flex-1 bg-gradient-primary text-primary-foreground hover:opacity-90">
@@ -625,7 +665,14 @@ function InstallGuidesPage() {
                       <span className="text-xs px-2 py-1 rounded-md bg-accent/20 text-accent-foreground font-medium">{reading.badge}</span>
                     )}
                   </div>
-                  {reading.excerpt && <p className="text-muted-foreground">{reading.excerpt}</p>}
+                  {reading.excerpt && (
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="text-muted-foreground">{reading.excerpt}</p>
+                      {extractGuideCode(reading.excerpt) && (
+                        <CopyPasswordButton code={extractGuideCode(reading.excerpt)!} />
+                      )}
+                    </div>
+                  )}
                   {reading.body && <div className="whitespace-pre-wrap text-sm leading-relaxed">{reading.body}</div>}
                 </>
               )}
