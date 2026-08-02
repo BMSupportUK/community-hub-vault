@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, Search, X, Pencil, Trash2, ImageIcon, GripVertical, FileText, ExternalLink, Play, Film } from "lucide-react";
+import { Plus, Search, X, Pencil, Trash2, ImageIcon, GripVertical, FileText, ExternalLink, Play, Film, Copy, Check } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -25,6 +25,39 @@ const IG_CAT_KEY = "install-guides-active-cat";
 const IG_EDIT_KEY = "install-guides-editing";
 const IG_READ_KEY = "install-guides-reading";
 const IG_SHOW_EDITOR_KEY = "install-guides-show-editor";
+
+/** Pulls the guide password out of text like "Enter e2n4Zq to view guide". */
+function extractGuideCode(text: string | null | undefined): string | null {
+  if (!text) return null;
+  const m = text.match(/enter\s+([^\s]{3,64}?)\s+to\s+(?:view|open|read)/i);
+  return m ? m[1].replace(/[.,;:]$/, "") : null;
+}
+
+function CopyPasswordButton({ code, className = "" }: { code: string; className?: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <button
+      type="button"
+      onClick={async (e) => {
+        e.stopPropagation();
+        try {
+          await navigator.clipboard.writeText(code);
+          setCopied(true);
+          toast.success("Password copied");
+          window.setTimeout(() => setCopied(false), 1500);
+        } catch {
+          toast.error("Couldn't copy — long-press the password to copy it.");
+        }
+      }}
+      title="Copy password"
+      aria-label={`Copy password ${code}`}
+      className={`inline-flex items-center gap-1.5 shrink-0 rounded-md border border-primary/40 bg-primary/15 px-2 py-1 text-xs font-medium text-foreground hover:bg-primary/25 transition ${className}`}
+    >
+      {copied ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
+      <span className="font-mono select-all">{code}</span>
+    </button>
+  );
+}
 
 type Category = { id: string; name: string; slug: string; sort_order: number };
 type Blog = {
