@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
-import { ArrowLeft, Loader2, LifeBuoy, CreditCard, Bug, Sparkles, UserCog, Tv, Film, Save } from "lucide-react";
+import { ArrowLeft, Loader2, LifeBuoy, CreditCard, Bug, Sparkles, UserCog, Tv, Film, Save, ArrowUp, ArrowDown } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/_approved/admin-ticket-categories")({
   component: AdminTicketCategoriesPage,
@@ -28,6 +28,7 @@ function AdminTicketCategoriesPage() {
   const [cats, setCats] = useState<Cat[]>([]);
   const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState<string | null>(null);
+  const [reordering, setReordering] = useState(false);
 
   useEffect(() => {
     if (!isAdmin) return;
@@ -58,6 +59,27 @@ function AdminTicketCategoriesPage() {
     else toast.success("Saved");
   };
 
+  const move = async (index: number, dir: -1 | 1) => {
+    const target = index + dir;
+    if (target < 0 || target >= cats.length || reordering) return;
+    const next = [...cats];
+    const tmp = next[index];
+    next[index] = next[target];
+    next[target] = tmp;
+    const ordered = next.map((c, i) => ({ ...c, sort_order: i + 1 }));
+    setCats(ordered);
+    setReordering(true);
+    const results = await Promise.all(
+      ordered.map((c) =>
+        supabase.from("ticket_categories").update({ sort_order: c.sort_order }).eq("id", c.id),
+      ),
+    );
+    setReordering(false);
+    const err = results.find((r) => r.error)?.error;
+    if (err) toast.error(err.message);
+    else toast.success("Order updated");
+  };
+
   return (
     <main className="flex-1 overflow-y-auto">
       <div className="max-w-3xl mx-auto px-6 py-8">
@@ -75,7 +97,7 @@ function AdminTicketCategoriesPage() {
           </div>
         ) : (
           <div className="space-y-4">
-            {cats.map((c) => {
+            {cats.map((c, index) => {
               const Icon = ICONS[c.icon] ?? LifeBuoy;
               return (
                 <div key={c.id} className="rounded-2xl border border-border bg-surface-1 p-4">
@@ -84,6 +106,26 @@ function AdminTicketCategoriesPage() {
                       <Icon className="size-5 text-primary" />
                     </div>
                     <div className="text-xs text-muted-foreground font-mono">{c.slug}</div>
+                    <div className="ml-auto flex items-center gap-1">
+                      <button
+                        type="button"
+                        aria-label={`Move ${c.name} up`}
+                        onClick={() => move(index, -1)}
+                        disabled={index === 0 || reordering}
+                        className="size-8 grid place-items-center rounded-lg bg-surface-2 border border-border text-muted-foreground hover:text-foreground disabled:opacity-40"
+                      >
+                        <ArrowUp className="size-4" />
+                      </button>
+                      <button
+                        type="button"
+                        aria-label={`Move ${c.name} down`}
+                        onClick={() => move(index, 1)}
+                        disabled={index === cats.length - 1 || reordering}
+                        className="size-8 grid place-items-center rounded-lg bg-surface-2 border border-border text-muted-foreground hover:text-foreground disabled:opacity-40"
+                      >
+                        <ArrowDown className="size-4" />
+                      </button>
+                    </div>
                   </div>
                   <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">Name</label>
                   <input
