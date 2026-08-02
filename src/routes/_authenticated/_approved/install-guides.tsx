@@ -665,7 +665,14 @@ function InstallGuidesPage() {
                       <span className="text-xs px-2 py-1 rounded-md bg-accent/20 text-accent-foreground font-medium">{reading.badge}</span>
                     )}
                   </div>
-                  {reading.excerpt && <p className="text-muted-foreground">{reading.excerpt}</p>}
+                  {reading.excerpt && (
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="text-muted-foreground">{reading.excerpt}</p>
+                      {extractGuideCode(reading.excerpt) && (
+                        <CopyPasswordButton code={extractGuideCode(reading.excerpt)!} />
+                      )}
+                    </div>
+                  )}
                   {reading.body && <div className="whitespace-pre-wrap text-sm leading-relaxed">{reading.body}</div>}
                 </>
               )}
