@@ -3,7 +3,17 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
-import { ArrowLeft, Loader2, LifeBuoy, CreditCard, Bug, Sparkles, UserCog, Tv, Film, Save, ArrowUp, ArrowDown } from "lucide-react";
+import { ArrowLeft, Loader2, LifeBuoy, CreditCard, Bug, Sparkles, UserCog, Tv, Film, Save, ArrowUp, ArrowDown, Trash2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/_authenticated/_approved/admin-ticket-categories")({
   component: AdminTicketCategoriesPage,
@@ -29,6 +39,8 @@ function AdminTicketCategoriesPage() {
   const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState<string | null>(null);
   const [reordering, setReordering] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState<Cat | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     if (!isAdmin) return;
@@ -80,6 +92,36 @@ function AdminTicketCategoriesPage() {
     else toast.success("Order updated");
   };
 
+  const remove = async (c: Cat) => {
+    setDeleting(true);
+    const { count, error: countErr } = await supabase
+      .from("tickets")
+      .select("id", { count: "exact", head: true })
+      .eq("category_id", c.id);
+    if (countErr) {
+      setDeleting(false);
+      toast.error(countErr.message);
+      return;
+    }
+    if ((count ?? 0) > 0) {
+      setDeleting(false);
+      setPendingDelete(null);
+      toast.error(
+        `"${c.name}" still has ${count} ticket${count === 1 ? "" : "s"}. Move or archive them first.`,
+      );
+      return;
+    }
+    const { error } = await supabase.from("ticket_categories").delete().eq("id", c.id);
+    setDeleting(false);
+    setPendingDelete(null);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    setCats((prev) => prev.filter((x) => x.id !== c.id));
+    toast.success("Category removed");
+  };
+
   return (
     <main className="flex-1 overflow-y-auto">
       <div className="max-w-3xl mx-auto px-6 py-8">
@@ -125,6 +167,15 @@ function AdminTicketCategoriesPage() {
                       >
                         <ArrowDown className="size-4" />
                       </button>
+                      <button
+                        type="button"
+                        aria-label={`Remove ${c.name}`}
+                        onClick={() => setPendingDelete(c)}
+                        disabled={reordering || deleting}
+                        className="size-8 grid place-items-center rounded-lg bg-surface-2 border border-border text-muted-foreground hover:text-destructive hover:border-destructive/60 disabled:opacity-40"
+                      >
+                        <Trash2 className="size-4" />
+                      </button>
                     </div>
                   </div>
                   <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">Name</label>
@@ -160,6 +211,27 @@ function AdminTicketCategoriesPage() {
           </div>
         )}
       </div>
+
+      <AlertDialog open={!!pendingDelete} onOpenChange={(o) => { if (!o && !deleting) setPendingDelete(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove this category?</AlertDialogTitle>
+            <AlertDialogDescription>
+              "{pendingDelete?.name}" will no longer be available when members open a new
+              support ticket. Categories that still have tickets can't be removed.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={deleting}
+              onClick={(e) => { e.preventDefault(); if (pendingDelete) void remove(pendingDelete); }}
+            >
+              {deleting ? "Removing…" : "Remove"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </main>
   );
 }
