@@ -503,7 +503,14 @@ function InstallGuidesPage() {
                             )}
                           </div>
                           <h3 className="font-display font-semibold text-lg leading-snug text-foreground">{b.title}</h3>
-                          {b.excerpt && <p className="text-sm text-muted-foreground line-clamp-2">{b.excerpt}</p>}
+                          {b.excerpt && (
+                            <div className="flex flex-wrap items-center gap-2">
+                              <p className="text-sm text-muted-foreground line-clamp-2">{b.excerpt}</p>
+                              {extractGuideCode(b.excerpt) && (
+                                <CopyPasswordButton code={extractGuideCode(b.excerpt)!} />
+                              )}
+                            </div>
+                          )}
                           <div className="mt-auto pt-3 flex items-center gap-2">
                             {b.pdf_url ? (
                               <Button asChild size="sm" className="flex-1 bg-gradient-primary text-primary-foreground hover:opacity-90">
