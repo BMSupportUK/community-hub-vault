@@ -1,5 +1,5 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
-import { Home, Ticket, ShoppingBag, BookOpen, FileText, LogOut, MessageSquare, MessagesSquare, UserCircle2, Star, Trophy, Tv, Volleyball, Wrench, Goal, Users, Briefcase, MonitorPlay, Popcorn, Crown, Shield } from "lucide-react";
+import { Home, Ticket, ShoppingCart, BookOpen, FileText, LogOut, MessageSquare, MessagesSquare, UserCircle2, Star, Trophy, Tv, Volleyball, Wrench, Goal, Users, Briefcase, MonitorPlay, Popcorn, Crown, Shield } from "lucide-react";
 import { useAuth, type AppRole } from "@/hooks/use-auth";
 import { useFinishedCompetitions } from "@/hooks/use-finished-competitions";
 import { COMPETITIONS } from "@/lib/competitions";
@@ -134,7 +134,7 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
   const items: RailItem[] = [
     { to: "/home", label: "Home", icon: Home, show: true },
     { to: "/tickets", label: "Tickets", icon: Ticket, show: !hasRole("moderator") },
-    { to: "/shop", label: "Shop", icon: ShoppingBag, show: true },
+    { to: "/shop", label: "Shop", icon: ShoppingCart, show: true },
     { to: "/install-guides", label: "Install guides", icon: Wrench, show: true },
     { to: "/sports-guides", label: "Sports guides", icon: Goal, show: true },
     { to: "/knowledge-base", label: "Knowledge base", icon: BookOpen, show: true },
