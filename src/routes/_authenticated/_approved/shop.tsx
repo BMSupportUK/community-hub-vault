@@ -1563,14 +1563,6 @@ function Storefront() {
                     Browse plans hand-picked for BM Support members. Place an order in seconds —
                     we'll keep you posted every step of the way.
                   </p>
-                  <div className="mt-6 flex flex-wrap items-center gap-3">
-                    <button
-                      onClick={() => setShopTab("shop")}
-                      className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/10 backdrop-blur px-4 py-2.5 text-sm text-white hover:bg-white/15 transition"
-                    >
-                      Shop now
-                    </button>
-                  </div>
                 </div>
               </section>
 
