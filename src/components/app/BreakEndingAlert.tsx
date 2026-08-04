@@ -32,6 +32,7 @@ interface BreakRow {
 }
 
 type Stage = "warn" | "over" | null;
+const AUTO_END_AFTER_OVER = 10; // seconds past the limit before auto-ending
 
 export function BreakEndingAlert() {
   const { user, isStaff } = useAuth();
@@ -40,6 +41,7 @@ export function BreakEndingAlert() {
   const [now, setNow] = useState(() => Date.now());
   const [stage, setStage] = useState<Stage>(null);
   const shownRef = useRef<Record<string, Set<Stage>>>({});
+  const autoEndedRef = useRef<Set<string>>(new Set());
 
   // tick every second while a break is active
   useEffect(() => {
@@ -115,6 +117,33 @@ export function BreakEndingAlert() {
         gain: 2.2,
       });
     }
+  }, [active, now]);
+
+  // Auto-end the break/lunch 10 seconds after it expires if the user
+  // hasn't ended it themselves.
+  useEffect(() => {
+    if (!active) return;
+    const startMs = new Date(active.started_at).getTime();
+    const endAt = startMs + (BREAK_LIMITS[active.kind] + AUTO_END_AFTER_OVER) * 1000;
+    if (now < endAt) return;
+    if (autoEndedRef.current.has(active.id)) return;
+    autoEndedRef.current.add(active.id);
+    const id = active.id;
+    const label = active.kind === "lunch" ? "Lunch break" : "Break";
+    (async () => {
+      const { error } = await supabase
+        .from("breaks")
+        .update({ ended_at: new Date(endAt).toISOString() })
+        .eq("id", id)
+        .is("ended_at", null);
+      if (error) {
+        autoEndedRef.current.delete(id);
+        return;
+      }
+      setStage(null);
+      setActive(null);
+      toast.info(`${label} automatically ended`);
+    })();
   }, [active, now]);
 
   if (!active || !stage) return null;
