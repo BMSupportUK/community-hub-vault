@@ -1565,19 +1565,6 @@ function Storefront() {
                   </p>
                   <div className="mt-6 flex flex-wrap items-center gap-3">
                     <button
-                      onClick={() => setShowCheckout(true)}
-                      disabled={count === 0}
-                      className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-blue-600 text-white font-medium px-4 py-2.5 shadow-lg shadow-blue-500/30 disabled:opacity-50"
-                    >
-                      <ShoppingBag className="size-4" />
-                      View Cart
-                      {count > 0 && (
-                        <span className="ml-1 bg-white/20 px-1.5 rounded-full text-xs">
-                          {count}
-                        </span>
-                      )}
-                    </button>
-                    <button
                       onClick={() => setShopTab("shop")}
                       className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/10 backdrop-blur px-4 py-2.5 text-sm text-white hover:bg-white/15 transition"
                     >
