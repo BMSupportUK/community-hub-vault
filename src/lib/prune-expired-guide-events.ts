@@ -113,12 +113,14 @@ export function pruneExpiredGuideEvents(
     const kept: string[][] = [];
     for (const event of group.events) {
       const context = `${group.heading ? `${group.heading}\n` : ""}${event.join("\n")}`;
+      // The first row of a block is its time row, so read the start time from
+      // that row alone. A channel/secondary row must not extend the event's life.
+      const startContext = `${group.heading ? `${group.heading}\n` : ""}${event[0] ?? ""}`;
       let latest: number | null = null;
       try {
-        // Expiry is measured from the event's START time, so use the earliest
-        // parsable instant in the block — a channel row or secondary time must
-        // not keep an already-played event alive.
-        latest = findEarliestEventUtcMs(context, ...zoneArgs);
+        latest =
+          findEarliestEventUtcMs(startContext, ...zoneArgs) ??
+          findLatestEventUtcMs(context, ...zoneArgs);
       } catch {
         latest = null;
       }
