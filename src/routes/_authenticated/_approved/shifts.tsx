@@ -506,6 +506,8 @@ function ShiftsPage() {
                       {daySlots.map((s) => {
                         const mine = s.assigned_to === user?.id;
                         const taken = !!s.assigned_to;
+                        const shiftStartsAt = toUtcMs(s.shift_date, s.start_time);
+                        const shiftNotStarted = !isNaN(shiftStartsAt) && shiftStartsAt > Date.now();
                         return (
                           <div key={s.id} className={cn("rounded-lg p-2 border text-xs", taken ? (mine ? "bg-primary/20 border-primary/50" : "bg-surface-2 border-border") : "bg-surface/60 border-dashed border-border")}>
                             <div className="flex items-center justify-between gap-1">
@@ -516,7 +518,7 @@ function ShiftsPage() {
                             <div className="mt-1.5 flex items-center justify-between gap-1">
                               <div className="text-muted-foreground truncate">{taken ? profName(s.assigned_to) : "Open"}</div>
                               <div className="flex items-center gap-1">
-                                {!taken && canPick && !past && (
+                                {!taken && canPick && shiftNotStarted && (
                                   ((s.slot_type === "hourly" && (isMod || isAdmin)) || (s.slot_type === "shift" && isStaffOrAdmin)) && (
                                     <button onClick={() => claim(s)} className="px-2 py-0.5 rounded bg-gradient-primary text-white font-semibold">Claim</button>
                                   )
