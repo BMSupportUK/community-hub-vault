@@ -93,7 +93,7 @@ function dayLabel(d: Date) { return d.toLocaleDateString(undefined, { weekday: "
 function isDayPastOrStarted(d: Date) {
   const today = new Date(); today.setHours(0, 0, 0, 0);
   const x = new Date(d); x.setHours(0, 0, 0, 0);
-  return x.getTime() <= today.getTime();
+  return x.getTime() < today.getTime();
 }
 
 const LOCAL_TZ_KEY = "shifts_display_local_tz_v1";
