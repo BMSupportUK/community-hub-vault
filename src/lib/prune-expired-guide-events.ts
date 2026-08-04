@@ -1,4 +1,24 @@
-import { findLatestEventUtcMs, isGuideDateHeading } from "./parse-event-times";
+import { findEarliestEventUtcMs, findLatestEventUtcMs, isGuideDateHeading } from "./parse-event-times";
+
+const ZONE_TOKENS =
+  "GMT|UTC|UK|BST|CET|CEST|ET|EST|EDT|CT|CST|CDT|MT|MST|MDT|PT|PST|PDT|AEST|AEDT|JST|IST";
+
+/**
+ * Guides written from US schedules often declare the zone once ("All times ET")
+ * instead of tagging every row. Without that, bare times are read as UK time and
+ * an ET listing looks expired (or still live) at the wrong moment, so expiry has
+ * to honour the declared zone for the whole body.
+ */
+function detectBodyZone(lines: string[]): string | undefined {
+  const declared = new RegExp(`\\ball\\s+times?\\b[^a-z0-9]*(?:are|in|shown\\s+in)?[^a-z0-9]*(${ZONE_TOKENS})\\b`, "i");
+  const bare = new RegExp(`^\\(?\\s*(${ZONE_TOKENS})\\s*\\)?$`, "i");
+  for (const line of lines) {
+    if (!line) continue;
+    const hit = line.match(declared) ?? line.match(bare);
+    if (hit?.[1]) return hit[1].toUpperCase();
+  }
+  return undefined;
+}
 
 function decode(value: string): string {
   return value
@@ -47,6 +67,8 @@ export function pruneExpiredGuideEvents(
   if (!html || !html.trim()) return html;
   const lines = toLines(html);
   if (lines.length === 0) return html;
+  const bodyZone = detectBodyZone(lines);
+  const zoneArgs = bodyZone ? ([bodyZone] as const) : ([] as const);
 
   type Group = { heading: string | null; events: string[][] };
   const groups: Group[] = [];
@@ -74,7 +96,7 @@ export function pruneExpiredGuideEvents(
     const lineContext = `${current.heading ? `${current.heading}\n` : ""}${line}`;
     let startsEvent = false;
     try {
-      startsEvent = findLatestEventUtcMs(lineContext) !== null;
+      startsEvent = findLatestEventUtcMs(lineContext, ...zoneArgs) !== null;
     } catch {
       startsEvent = false;
     }
@@ -93,7 +115,10 @@ export function pruneExpiredGuideEvents(
       const context = `${group.heading ? `${group.heading}\n` : ""}${event.join("\n")}`;
       let latest: number | null = null;
       try {
-        latest = findLatestEventUtcMs(context);
+        // Expiry is measured from the event's START time, so use the earliest
+        // parsable instant in the block — a channel row or secondary time must
+        // not keep an already-played event alive.
+        latest = findEarliestEventUtcMs(context, ...zoneArgs);
       } catch {
         latest = null;
       }
