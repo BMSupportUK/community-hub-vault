@@ -6,10 +6,10 @@ import { Button } from "@/components/ui/button";
 import { FanZoneShell } from "./fan-zone";
 
 export const Route = createFileRoute("/fan-zone/$board/")({
-  validateSearch: (search) => ({
+  validateSearch: (search: Record<string, unknown>): { page?: number } => ({
     page: Math.max(1, Number(search.page) || 1),
   }),
-  loaderDeps: ({ search: { page } }) => ({ page }),
+  loaderDeps: ({ search: { page } }) => ({ page: page ?? 1 }),
   loader: ({ params, deps }) => listPublicTopics({ data: { slug: params.board, page: deps.page } }),
   staleTime: 30_000,
   component: BoardTopicsPage,

@@ -1447,7 +1447,7 @@ function Storefront() {
     if (newTicketId) {
       navigate({ to: "/tickets", search: { id: newTicketId } });
     } else {
-      navigate({ to: "/shop", search: { view: "orders", id: order.id } });
+      navigate({ to: "/shop", search: { view: "orders", id: order.id ?? undefined } });
     }
   };
 
