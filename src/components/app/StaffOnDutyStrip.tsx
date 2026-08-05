@@ -1,14 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
-import { Coffee, UtensilsCrossed, CircleDot } from "lucide-react";
+import { CircleDot } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { useRoleFlashMap, roleFlashClass, resolveAvatarUrl } from "@/lib/role-flash";
 import { DndCountdown } from "@/components/app/DndCountdown";
+import { type BreakKind, BREAK_LIMITS as STAFF_BREAK_LIMITS, breakLabel, breakIcon } from "@/lib/breaks";
 
 type StaffShift = { id: string; user_id: string; clock_in: string };
-type StaffBreak = { id: string; shift_id: string; user_id: string; kind: "break" | "lunch"; started_at: string };
+type StaffBreak = { id: string; shift_id: string; user_id: string; kind: BreakKind; started_at: string };
 type StaffProfile = { id: string; username: string | null; display_name: string | null; avatar_url: string | null };
-const STAFF_BREAK_LIMITS = { break: 15 * 60, lunch: 30 * 60 } as const;
 
 export function StaffOnDutyStrip() {
   const [shifts, setShifts] = useState<StaffShift[]>([]);
@@ -130,8 +130,8 @@ export function StaffOnDutyStrip() {
                 <div className="mt-2 flex items-center gap-1.5 text-[11px] font-medium text-white">
                   {onBreak ? (
                     <>
-                      {br!.kind === "lunch" ? <UtensilsCrossed className="size-3.5" /> : <Coffee className="size-3.5" />}
-                      <span className="capitalize">{br!.kind}</span>
+                      {(() => { const Icon = breakIcon(br!.kind); return <Icon className="size-3.5" />; })()}
+                      <span>{breakLabel(br!.kind)}</span>
                       <span className="ml-auto tabular-nums">
                         {over ? `+${fmtMinSec(-brRemain)}` : fmtMinSec(brRemain)}
                       </span>
