@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { Coffee, UtensilsCrossed, AlertTriangle, Clock } from "lucide-react";
+import { AlertTriangle, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import {
@@ -17,9 +17,8 @@ import { toast } from "sonner";
 import endLunchSfx from "@/assets/end-lunch.mp3";
 import endBreakSfx from "@/assets/end-break.mp3";
 import { playSound } from "@/lib/sound";
+import { type BreakKind, BREAK_LIMITS, breakLabel, breakIcon } from "@/lib/breaks";
 
-type BreakKind = "break" | "lunch";
-const BREAK_LIMITS: Record<BreakKind, number> = { break: 15 * 60, lunch: 30 * 60 };
 const WARN_AT = 2 * 60; // 2 minutes remaining
 
 interface BreakRow {
@@ -129,7 +128,7 @@ export function BreakEndingAlert() {
     if (autoEndedRef.current.has(active.id)) return;
     autoEndedRef.current.add(active.id);
     const id = active.id;
-    const label = active.kind === "lunch" ? "Lunch break" : "Break";
+    const label = breakLabel(active.kind);
     (async () => {
       const { error } = await supabase
         .from("breaks")
@@ -147,8 +146,8 @@ export function BreakEndingAlert() {
   }, [active, now]);
 
   if (!active || !stage) return null;
-  const label = active.kind === "lunch" ? "Lunch break" : "Break";
-  const Icon = active.kind === "lunch" ? UtensilsCrossed : Coffee;
+  const label = breakLabel(active.kind);
+  const Icon = breakIcon(active.kind);
   const elapsed = (now - new Date(active.started_at).getTime()) / 1000;
   const remaining = Math.max(0, Math.round(BREAK_LIMITS[active.kind] - elapsed));
   const overBy = Math.max(0, Math.round(elapsed - BREAK_LIMITS[active.kind]));

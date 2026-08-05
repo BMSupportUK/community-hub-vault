@@ -4536,6 +4536,7 @@ export type Database = {
       apply_blacklist_ban: { Args: { _user_id: string }; Returns: undefined }
       archive_old_closed_tickets: { Args: never; Returns: number }
       assign_pending_tickets: { Args: never; Returns: number }
+      auto_travel_home_breaks: { Args: never; Returns: undefined }
       boro_score_fixture: { Args: { _fixture_id: string }; Returns: undefined }
       can_in_channel: {
         Args: { _action: string; _channel: string; _user: string }
@@ -4909,7 +4910,7 @@ export type Database = {
         | "boro_fan_zone_member"
         | "guest"
       blacklist_kind: "email" | "ip"
-      break_kind: "break" | "lunch"
+      break_kind: "break" | "lunch" | "travel"
       fan_zone_status: "pending" | "approved" | "rejected" | "revoked"
       friendship_status: "pending" | "accepted"
       gate_status: "pending" | "approved" | "denied"
@@ -5075,7 +5076,7 @@ export const Constants = {
         "guest",
       ],
       blacklist_kind: ["email", "ip"],
-      break_kind: ["break", "lunch"],
+      break_kind: ["break", "lunch", "travel"],
       fan_zone_status: ["pending", "approved", "rejected", "revoked"],
       friendship_status: ["pending", "accepted"],
       gate_status: ["pending", "approved", "denied"],

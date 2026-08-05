@@ -1,14 +1,14 @@
 import { useEffect, useState } from "react";
-import { Coffee, UtensilsCrossed, CircleDot } from "lucide-react";
+import { CircleDot } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 import { DndCountdown } from "@/components/app/DndCountdown";
 import { useDndStatus } from "@/hooks/use-dnd";
+import { type BreakKind, BREAK_LIMITS as LIMITS, breakLabel, breakIcon } from "@/lib/breaks";
 
 type Shift = { id: string; clock_in: string };
-type Break = { id: string; kind: "break" | "lunch"; started_at: string };
-const LIMITS = { break: 15 * 60, lunch: 30 * 60 } as const;
+type Break = { id: string; kind: BreakKind; started_at: string };
 
 export function MyWorkingStatus() {
   const { user } = useAuth();
@@ -84,14 +84,14 @@ export function MyWorkingStatus() {
             : "bg-amber-500/15 text-amber-400 ring-amber-500/40"
           : "bg-emerald-500/15 text-emerald-400 ring-emerald-500/40",
       )}
-      title={brk ? `On ${brk.kind}` : "Working"}
+      title={brk ? `On ${breakLabel(brk.kind).toLowerCase()}` : "Working"}
     >
       {brk ? (
-        brk.kind === "lunch" ? <UtensilsCrossed className="size-3 sm:size-3.5" /> : <Coffee className="size-3 sm:size-3.5" />
+        (() => { const Icon = breakIcon(brk.kind); return <Icon className="size-3 sm:size-3.5" />; })()
       ) : (
         <CircleDot className="size-3 sm:size-3.5" />
       )}
-      {brk && <span className="capitalize hidden sm:inline">{brk.kind}</span>}
+      {brk && <span className="hidden sm:inline">{breakLabel(brk.kind)}</span>}
       <span className="tabular-nums opacity-90">
         {brk ? (over ? `+${fmtMS(-brRemain)}` : fmtMS(brRemain)) : fmtHM(shiftSec)}
       </span>

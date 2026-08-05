@@ -10,13 +10,11 @@ import clockBg from "@/assets/clock-bg.jpg";
 import { useServerFn } from "@tanstack/react-start";
 import { sendShiftEventPush, sendBreakEventPush } from "@/lib/push.functions";
 import { PushNotificationsToggle } from "@/components/app/PushNotificationsToggle";
+import { type BreakKind, BREAK_LIMITS, breakLabel } from "@/lib/breaks";
 
 export const Route = createFileRoute("/_authenticated/_approved/clock")({
   component: ClockPage,
 });
-
-type BreakKind = "break" | "lunch";
-const BREAK_LIMITS: Record<BreakKind, number> = { break: 15 * 60, lunch: 30 * 60 };
 
 interface Shift { id: string; user_id: string; clock_in: string; clock_out: string | null; }
 interface Break { id: string; shift_id: string; user_id: string; kind: BreakKind; started_at: string; ended_at: string | null; }
@@ -238,7 +236,7 @@ function ClockPage() {
             <div className="flex items-center justify-between gap-4 flex-wrap">
               <div>
                 <div className={cn("font-semibold", overBreak ? "text-destructive" : "text-amber-400")}>
-                  On {myBreak.kind} — {overBreak ? `over by ${fmtMin(-breakRemaining)}` : `${fmtMin(breakRemaining)} left`}
+                  On {breakLabel(myBreak.kind).toLowerCase()} — {overBreak ? `over by ${fmtMin(-breakRemaining)}` : `${fmtMin(breakRemaining)} left`}
                 </div>
                 <div className="text-sm text-muted-foreground">Elapsed {fmtMin(breakElapsed)} of {BREAK_LIMITS[myBreak.kind] / 60}m</div>
               </div>
@@ -277,7 +275,7 @@ function ClockPage() {
                         <div className="text-xs text-muted-foreground">@{p?.username ?? s.user_id.slice(0, 8)}</div>
                         {br ? (
                           <div className={cn("text-xs mt-0.5 font-medium", over ? "text-destructive" : "text-amber-400")}>
-                            {br.kind === "lunch" ? "🍽 Lunch" : "☕ Break"} · {over ? `over by ${fmtMin(-brRemain)}` : `${fmtMin(brRemain)} left`}
+                            {br.kind === "lunch" ? "🍽 Lunch" : br.kind === "travel" ? "🚗 Travelling home" : "☕ Break"} · {over ? `over by ${fmtMin(-brRemain)}` : `${fmtMin(brRemain)} left`}
                           </div>
                         ) : (
                           <div className="text-xs mt-0.5 text-emerald-400 font-medium">● Working</div>
