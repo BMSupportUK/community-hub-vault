@@ -147,7 +147,7 @@ const POLICY_KEYS = ["refund", "multi_room", "triple_room"] as const;
 type PolicyKey = (typeof POLICY_KEYS)[number];
 
 export const Route = createFileRoute("/_authenticated/_approved/shop")({
-  validateSearch: (s: Record<string, unknown>) => ({
+  validateSearch: (s: Record<string, unknown>): { view?: View | "discounts"; id?: string; scope?: "all"; tab?: string } => ({
     view: (s.view === "orders" ||
     s.view === "admin" ||
     s.view === "discounts" ||
