@@ -17,7 +17,7 @@ export const Route = createFileRoute("/fan-zone/$board/")({
 
 function BoardTopicsPage() {
   const { board: slug } = Route.useParams();
-  const { page } = Route.useSearch();
+  const { page = 1 } = Route.useSearch();
   const navigate = useNavigate();
   const state = Route.useLoaderData();
 
