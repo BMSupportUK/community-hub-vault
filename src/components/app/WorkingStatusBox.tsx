@@ -1,15 +1,15 @@
 import { useEffect, useState } from "react";
-import { Coffee, UtensilsCrossed, CircleDot, Briefcase } from "lucide-react";
+import { CircleDot, Briefcase } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 import { useDndStatus } from "@/hooks/use-dnd";
 import { Moon } from "lucide-react";
 import { DndCountdown } from "@/components/app/DndCountdown";
+import { type BreakKind, BREAK_LIMITS as LIMITS, breakLabel, breakIcon } from "@/lib/breaks";
 
 type Shift = { id: string; clock_in: string };
-type Break = { id: string; kind: "break" | "lunch"; started_at: string };
-const LIMITS = { break: 15 * 60, lunch: 30 * 60 } as const;
+type Break = { id: string; kind: BreakKind; started_at: string };
 
 export function WorkingStatusBox() {
   const { user } = useAuth();
@@ -116,7 +116,7 @@ export function WorkingStatusBox() {
           </div>
           {brk && (
             <div className="flex items-center justify-between">
-              <span className="text-muted-foreground capitalize">{brk.kind}</span>
+              <span className="text-muted-foreground">{breakLabel(brk.kind)}</span>
               <span
                 className={cn(
                   "inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 font-semibold tabular-nums ring-1",
@@ -125,7 +125,7 @@ export function WorkingStatusBox() {
                     : "bg-amber-500/15 text-amber-400 ring-amber-500/40",
                 )}
               >
-                {brk.kind === "lunch" ? <UtensilsCrossed className="size-3" /> : <Coffee className="size-3" />}
+                {(() => { const Icon = breakIcon(brk.kind); return <Icon className="size-3" />; })()}
                 {over ? `+${fmtMS(-brRemain)}` : fmtMS(brRemain)}
               </span>
             </div>
