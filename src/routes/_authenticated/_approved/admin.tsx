@@ -9,7 +9,7 @@ import { backfillVpnDetection } from "@/lib/vpn-backfill.functions";
 import { useAppTheme, setAppTheme, type AppTheme } from "@/hooks/use-app-theme";
 
 export const Route = createFileRoute("/_authenticated/_approved/admin")({
-  validateSearch: (search: Record<string, unknown>) => ({
+  validateSearch: (search: Record<string, unknown>): { next?: string } => ({
     next: typeof search.next === "string" ? (search.next as string) : undefined,
   }),
   component: AdminDashboard,

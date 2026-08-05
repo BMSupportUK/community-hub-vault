@@ -29,7 +29,7 @@ import { notifyTicketReply } from "@/lib/ticket-notify.functions";
 import { sendNewTicketPush } from "@/lib/push.functions";
 
 export const Route = createFileRoute("/_authenticated/_approved/tickets")({
-  validateSearch: (s: Record<string, unknown>) => ({
+  validateSearch: (s: Record<string, unknown>): { id?: string; view?: "mine" | "all" | "assigned"; new2fa?: 1 } => ({
     id: typeof s.id === "string" ? s.id : undefined,
     view: (s.view === "mine" || s.view === "all" || s.view === "assigned") ? s.view : undefined,
     new2fa: s.new2fa === 1 || s.new2fa === "1" ? 1 : undefined,

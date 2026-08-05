@@ -12,7 +12,7 @@ import { VpnBlockedDialog } from "@/components/VpnBlockedDialog";
 import { ShieldAlert } from "lucide-react";
 
 export const Route = createFileRoute("/signup")({
-  validateSearch: (search: Record<string, unknown>) => ({
+  validateSearch: (search: Record<string, unknown>): { invite?: string } => ({
     invite: typeof search.invite === "string" ? search.invite : undefined,
   }),
   beforeLoad: async () => {
