@@ -147,7 +147,7 @@ const POLICY_KEYS = ["refund", "multi_room", "triple_room"] as const;
 type PolicyKey = (typeof POLICY_KEYS)[number];
 
 export const Route = createFileRoute("/_authenticated/_approved/shop")({
-  validateSearch: (s: Record<string, unknown>) => ({
+  validateSearch: (s: Record<string, unknown>): { view?: View | "discounts"; id?: string; scope?: "all"; tab?: string } => ({
     view: (s.view === "orders" ||
     s.view === "admin" ||
     s.view === "discounts" ||
@@ -1447,7 +1447,7 @@ function Storefront() {
     if (newTicketId) {
       navigate({ to: "/tickets", search: { id: newTicketId } });
     } else {
-      navigate({ to: "/shop", search: { view: "orders", id: order.id } });
+      navigate({ to: "/shop", search: { view: "orders", id: order.id ?? undefined } });
     }
   };
 

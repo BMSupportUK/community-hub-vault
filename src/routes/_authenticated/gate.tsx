@@ -13,7 +13,7 @@ import ticketAudio from "@/assets/ticket-notify.mp3";
 import { playSound } from "@/lib/sound";
 
 export const Route = createFileRoute("/_authenticated/gate")({
-  validateSearch: (search: Record<string, unknown>) => ({
+  validateSearch: (search: Record<string, unknown>): { intent?: "fan-zone" | "bm-support"; invite?: string } => ({
     intent:
       search.intent === "fan-zone" || search.intent === "bm-support"
         ? (search.intent as "fan-zone" | "bm-support")

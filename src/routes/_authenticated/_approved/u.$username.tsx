@@ -33,7 +33,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { assignReferrer } from "@/lib/referrals.functions";
 
 export const Route = createFileRoute("/_authenticated/_approved/u/$username")({
-  validateSearch: (search: Record<string, unknown>) => ({
+  validateSearch: (search: Record<string, unknown>): { tab?: string; edit?: 1 } => ({
     tab: typeof search.tab === "string" ? (search.tab as string) : undefined,
     edit: search.edit ? 1 : undefined,
   }),
