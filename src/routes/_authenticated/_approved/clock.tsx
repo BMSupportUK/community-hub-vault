@@ -10,12 +10,11 @@ import clockBg from "@/assets/clock-bg.jpg";
 import { useServerFn } from "@tanstack/react-start";
 import { sendShiftEventPush, sendBreakEventPush } from "@/lib/push.functions";
 import { PushNotificationsToggle } from "@/components/app/PushNotificationsToggle";
+import { type BreakKind, BREAK_LIMITS, breakLabel } from "@/lib/breaks";
 
 export const Route = createFileRoute("/_authenticated/_approved/clock")({
   component: ClockPage,
 });
-
-import { type BreakKind, BREAK_LIMITS, breakLabel } from "@/lib/breaks";
 
 interface Shift { id: string; user_id: string; clock_in: string; clock_out: string | null; }
 interface Break { id: string; shift_id: string; user_id: string; kind: BreakKind; started_at: string; ended_at: string | null; }
