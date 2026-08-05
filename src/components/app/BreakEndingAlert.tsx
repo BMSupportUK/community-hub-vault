@@ -109,21 +109,17 @@ export function BreakEndingAlert() {
     if (remaining <= 0 && !seen.has("over")) {
       seen.add("over");
       setStage("over");
-      if (active.kind !== "travel") {
-        playSound(active.kind === "lunch" ? endLunchSfx : endBreakSfx, {
-          label: `break-over-${active.kind}`,
-          gain: 2.2,
-        });
-      }
+      playSound(active.kind === "lunch" ? endLunchSfx : endBreakSfx, {
+        label: `break-over-${active.kind}`,
+        gain: 2.2,
+      });
     } else if (remaining > 0 && remaining <= WARN_AT && !seen.has("warn") && !seen.has("over")) {
       seen.add("warn");
       setStage("warn");
-      if (active.kind !== "travel") {
-        playSound(active.kind === "lunch" ? endLunchSfx : endBreakSfx, {
-          label: `break-warn-${active.kind}`,
-          gain: 2.2,
-        });
-      }
+      playSound(active.kind === "lunch" ? endLunchSfx : endBreakSfx, {
+        label: `break-warn-${active.kind}`,
+        gain: 2.2,
+      });
     }
   }, [active, now]);
 
