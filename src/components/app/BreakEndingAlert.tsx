@@ -32,6 +32,9 @@ interface BreakRow {
 
 type Stage = "warn" | "over" | null;
 const AUTO_END_AFTER_OVER = 10; // seconds past the limit before auto-ending
+// Travel-home breaks are automatic: end them exactly on time so working
+// status is restored in real time instead of showing an over-run.
+const autoEndGrace = (kind: BreakKind) => (kind === "travel" ? 0 : AUTO_END_AFTER_OVER);
 
 export function BreakEndingAlert() {
   const { user, isStaff } = useAuth();
@@ -97,6 +100,8 @@ export function BreakEndingAlert() {
   // evaluate stage
   useEffect(() => {
     if (!active) { setStage(null); return; }
+    // No warnings/over-run prompts for automatic travel-home breaks.
+    if (active.kind === "travel") { setStage(null); return; }
     const elapsed = (now - new Date(active.started_at).getTime()) / 1000;
     const remaining = BREAK_LIMITS[active.kind] - elapsed;
     const seen = (shownRef.current[active.id] ??= new Set());
@@ -104,21 +109,17 @@ export function BreakEndingAlert() {
     if (remaining <= 0 && !seen.has("over")) {
       seen.add("over");
       setStage("over");
-      if (active.kind !== "travel") {
-        playSound(active.kind === "lunch" ? endLunchSfx : endBreakSfx, {
-          label: `break-over-${active.kind}`,
-          gain: 2.2,
-        });
-      }
+      playSound(active.kind === "lunch" ? endLunchSfx : endBreakSfx, {
+        label: `break-over-${active.kind}`,
+        gain: 2.2,
+      });
     } else if (remaining > 0 && remaining <= WARN_AT && !seen.has("warn") && !seen.has("over")) {
       seen.add("warn");
       setStage("warn");
-      if (active.kind !== "travel") {
-        playSound(active.kind === "lunch" ? endLunchSfx : endBreakSfx, {
-          label: `break-warn-${active.kind}`,
-          gain: 2.2,
-        });
-      }
+      playSound(active.kind === "lunch" ? endLunchSfx : endBreakSfx, {
+        label: `break-warn-${active.kind}`,
+        gain: 2.2,
+      });
     }
   }, [active, now]);
 
@@ -127,7 +128,7 @@ export function BreakEndingAlert() {
   useEffect(() => {
     if (!active) return;
     const startMs = new Date(active.started_at).getTime();
-    const endAt = startMs + (BREAK_LIMITS[active.kind] + AUTO_END_AFTER_OVER) * 1000;
+    const endAt = startMs + (BREAK_LIMITS[active.kind] + autoEndGrace(active.kind)) * 1000;
     if (now < endAt) return;
     if (autoEndedRef.current.has(active.id)) return;
     autoEndedRef.current.add(active.id);
