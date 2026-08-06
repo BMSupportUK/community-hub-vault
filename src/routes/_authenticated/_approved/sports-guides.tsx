@@ -313,6 +313,13 @@ function SportsGuidesPage() {
     }, 80);
   };
 
+  const handlePageChange = (nextPage: number) => {
+    setListPage(nextPage);
+    window.setTimeout(() => {
+      listingsTopRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 0);
+  };
+
   // Search every sports guide category and include a snippet showing where
   // the matching event or term appears.
   const searchResults = useMemo(() => {
