@@ -111,6 +111,7 @@ function SportsGuidesPage() {
   const [listPageCount, setListPageCount] = useState(1);
   const [listPageSlices, setListPageSlices] = useState<number[][]>([]);
   const [draggingBlog, setDraggingBlog] = useState(false);
+  const listingsTopRef = useRef<HTMLElement | null>(null);
 
   // Reset paging when the visible set changes.
   useEffect(() => {
@@ -310,6 +311,13 @@ function SportsGuidesPage() {
         .querySelector<HTMLElement>(`[data-guide-id="${id}"]`)
         ?.scrollIntoView({ behavior: "smooth", block: "center" });
     }, 80);
+  };
+
+  const handlePageChange = (nextPage: number) => {
+    setListPage(nextPage);
+    window.setTimeout(() => {
+      listingsTopRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 0);
   };
 
   // Search every sports guide category and include a snippet showing where
@@ -729,7 +737,7 @@ function SportsGuidesPage() {
                 </div>
               </aside>
 
-              <section>
+              <section ref={listingsTopRef}>
                 <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-6">
                   <div className="relative flex-1 group">
                     <div className="absolute -inset-0.5 rounded-xl bg-gradient-to-r from-fuchsia-500 via-purple-500 to-indigo-500 opacity-60 blur-sm group-focus-within:opacity-100 group-focus-within:blur-md transition-all duration-300" />
@@ -857,7 +865,7 @@ function SportsGuidesPage() {
                   </div>
                   {listPageCount > 1 && !draggingBlog && (
                     <div className="mt-3">
-                      <PaginationBar page={listPage} pageCount={listPageCount} onPageChange={setListPage} />
+                      <PaginationBar page={listPage} pageCount={listPageCount} onPageChange={handlePageChange} />
                     </div>
                   )}
                   </>
