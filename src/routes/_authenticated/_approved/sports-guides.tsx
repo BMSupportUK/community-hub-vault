@@ -111,6 +111,7 @@ function SportsGuidesPage() {
   const [listPageCount, setListPageCount] = useState(1);
   const [listPageSlices, setListPageSlices] = useState<number[][]>([]);
   const [draggingBlog, setDraggingBlog] = useState(false);
+  const listingsTopRef = useRef<HTMLElement | null>(null);
 
   // Reset paging when the visible set changes.
   useEffect(() => {
