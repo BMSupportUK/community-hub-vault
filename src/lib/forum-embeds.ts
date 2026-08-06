@@ -216,6 +216,32 @@ function tweetEmbed(url: string, id: string) {
   return `<div data-tweet-embed="${id}" data-tweet-url="${url}"></div>`;
 }
 
+const YOUTUBE_RE = /^https?:\/\/(?:www\.|m\.|music\.)?(?:youtube\.com\/(?:watch\?(?:[^#]*&)?v=|embed\/|shorts\/|live\/|v\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/i;
+const VIMEO_RE = /^https?:\/\/(?:www\.)?vimeo\.com\/(?:video\/)?(\d{6,12})/i;
+const VIDEO_FILE_RE = /^https?:\/\/[^\s"'<>]+\.(mp4|webm|ogv|ogg|mov|m4v)(?:\?[^\s"'<>]*)?$/i;
+
+function iframeVideoEmbed(src: string, title: string): string {
+  return `<div class="video-embed" style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;margin:0.75rem 0;width:100%;border-radius:0.5rem;"><iframe src="${escapeAttr(src)}" title="${escapeAttr(title)}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;"></iframe></div>`;
+}
+
+function fileVideoEmbed(src: string): string {
+  return `<div class="video-embed"><video src="${escapeAttr(src)}" controls playsinline preload="metadata" style="width:100%;max-width:100%;border-radius:0.5rem;margin:0.75rem 0;"></video></div>`;
+}
+
+/** Turn a plain video URL (YouTube / Vimeo / direct file) into a player embed. */
+function tryVideoEmbedUrl(url: string): string | null {
+  const yt = url.match(YOUTUBE_RE);
+  if (yt) {
+    const start = url.match(/[?&](?:t|start)=(\d+)/i)?.[1];
+    const src = `https://www.youtube.com/embed/${yt[1]}${start ? `?start=${start}` : ""}`;
+    return iframeVideoEmbed(src, "YouTube video");
+  }
+  const vimeo = url.match(VIMEO_RE);
+  if (vimeo) return iframeVideoEmbed(`https://player.vimeo.com/video/${vimeo[1]}`, "Vimeo video");
+  if (VIDEO_FILE_RE.test(url)) return fileVideoEmbed(url);
+  return null;
+}
+
 function tryEmbedUrl(raw: string): string | null {
   const url = decodeBasicEntities(raw)
     .trim()
@@ -223,7 +249,7 @@ function tryEmbedUrl(raw: string): string | null {
     .replace(/[)\].,!?:;]+$/g, "");
   const t = url.match(TWEET_RE);
   if (t) return tweetEmbed(url.replace(/^http:/, "https:"), t[1]);
-  return null;
+  return tryVideoEmbedUrl(url.replace(/^http:/, "https:"));
 }
 
 function embedStandaloneTweetBlocksSSR(html: string): string {
