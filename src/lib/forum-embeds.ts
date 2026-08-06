@@ -321,6 +321,18 @@ function htmlTextContent(html: string): string {
 export function embedSocialUrls(html: string, options: EmbedSocialOptions = {}): string {
   if (!html) return html;
 
+  // Editors often save pasted video URLs as anchors whose visible text is a
+  // title such as "Watch this" rather than the URL itself. Convert by href,
+  // not anchor text, so both newly-created and previously prepared posts work.
+  html = html.replace(
+    /<a\b[^>]*href=["']([^"']+)["'][^>]*>[\s\S]*?<\/a>/gi,
+    (match, href: string) => tryVideoEmbedUrl(decodeBasicEntities(href).replace(/^http:/i, "https:")) ?? match,
+  );
+  html = html.replace(
+    /<(p|div|span)\b[^>]*>\s*(<div\b[^>]*class=["'][^"']*video-embed[^"']*["'][\s\S]*?<\/div>)\s*<\/\1>/gi,
+    "$2",
+  );
+
   // Migrate legacy embed markup (old blockquote.twitter-tweet shells, including
   // the previous social-embed-x wrapper) to the app marker so X posts
   // renders them without requiring posts to be re-saved.

@@ -1,6 +1,6 @@
 import { memo, useEffect, useMemo, useRef, useState, Fragment } from "react";
 import { sanitizeRichHtml } from "@/lib/sanitize-html";
-import { useLoadSocialEmbeds, isPreparedForumPostBody, prepareForumPostBody } from "@/lib/forum-embeds";
+import { useLoadSocialEmbeds, prepareForumPostBody } from "@/lib/forum-embeds";
 import { LinkPreviewCard } from "@/components/app/LinkPreviewCard";
 import { censorText, censorHtml, useProfanityWords } from "@/lib/profanity";
 
@@ -88,9 +88,10 @@ function remember(cache: Map<string, string>, key: string, value: string) {
 function getProcessedForumHtml(raw: string): string {
   const cached = processedHtmlCache.get(raw);
   if (cached !== undefined) return cached;
-  const processed = isPreparedForumPostBody(raw)
-    ? raw
-    : prepareForumPostBody(raw, { skipDomParserFallback: true });
+  // A prepared marker only proves that an older embed pipeline handled the
+  // post. Always run the current pipeline so previously saved direct video
+  // links gain a player without needing the post to be edited and re-saved.
+  const processed = prepareForumPostBody(raw, { skipDomParserFallback: true });
   return remember(processedHtmlCache, raw, processed);
 }
 
