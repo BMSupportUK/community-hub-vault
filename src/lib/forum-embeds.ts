@@ -83,7 +83,10 @@ function markLinkPreviewsInner(html: string): string {
     const blockUrl = extractStandalonePreviewUrl(inner);
     if (blockUrl) return linkPreviewMarker(blockUrl);
 
-    const videoUrl = firstVideoUrlInText(htmlTextContent(inner));
+    const anchorVideo = Array.from(inner.matchAll(/<a\b[^>]*href=["']([^"']+)["']/gi))
+      .map((m) => decodeBasicEntities(m[1] ?? ""))
+      .find((href) => tryVideoEmbedUrl(href));
+    const videoUrl = anchorVideo ?? firstVideoUrlInText(htmlTextContent(inner));
     if (videoUrl) return `${match}${tryVideoEmbedUrl(videoUrl)}`;
     const inlineUrl = firstAnchorPreviewUrl(inner) ?? firstPreviewUrlInText(htmlTextContent(inner));
     return inlineUrl ? `${match}${linkPreviewMarker(inlineUrl)}` : match;
