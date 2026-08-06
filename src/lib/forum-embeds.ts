@@ -68,6 +68,8 @@ function markLinkPreviewsInner(html: string): string {
 
   const hasHtml = /<[a-z][\s\S]*>/i.test(html);
   if (!hasHtml) {
+    const videoUrl = firstVideoUrlInText(html);
+    if (videoUrl) return `<p>${escapeHtml(html).replace(/\n/g, "<br/>")}</p>${tryVideoEmbedUrl(videoUrl)}`;
     const url = firstPreviewUrlInText(html);
     return url ? `<p>${escapeHtml(html).replace(/\n/g, "<br/>")}</p>${linkPreviewMarker(url)}` : html;
   }
@@ -81,6 +83,8 @@ function markLinkPreviewsInner(html: string): string {
     const blockUrl = extractStandalonePreviewUrl(inner);
     if (blockUrl) return linkPreviewMarker(blockUrl);
 
+    const videoUrl = firstVideoUrlInText(htmlTextContent(inner));
+    if (videoUrl) return `${match}${tryVideoEmbedUrl(videoUrl)}`;
     const inlineUrl = firstAnchorPreviewUrl(inner) ?? firstPreviewUrlInText(htmlTextContent(inner));
     return inlineUrl ? `${match}${linkPreviewMarker(inlineUrl)}` : match;
   });
