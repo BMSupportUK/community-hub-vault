@@ -865,7 +865,7 @@ function SportsGuidesPage() {
                   </div>
                   {listPageCount > 1 && !draggingBlog && (
                     <div className="mt-3">
-                      <PaginationBar page={listPage} pageCount={listPageCount} onPageChange={setListPage} />
+                      <PaginationBar page={listPage} pageCount={listPageCount} onPageChange={handlePageChange} />
                     </div>
                   )}
                   </>
