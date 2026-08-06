@@ -156,7 +156,9 @@ function escapeRegExp(s: string): string {
 export function prepareForumPostBody(html: string, options: EmbedSocialOptions = {}): string {
   html = normalizeForumPostInput(html);
   if (!html) return html;
-  if (isPreparedForumPostBody(html)) return html;
+  // A prepared marker only means the post passed through an older version of
+  // this pipeline. Do not return early: doing so left previously saved posts
+  // as plain YouTube links after video embedding was added later.
   if (!/https?:\/\//i.test(html) && !/(?:twitter-tweet|fb-post|social-embed-x)/i.test(html)) return html;
   const looksLikeHtml = /<[a-z][\s\S]*>/i.test(html);
   if (
