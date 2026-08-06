@@ -159,7 +159,12 @@ export function prepareForumPostBody(html: string, options: EmbedSocialOptions =
   if (isPreparedForumPostBody(html)) return html;
   if (!/https?:\/\//i.test(html) && !/(?:twitter-tweet|fb-post|social-embed-x)/i.test(html)) return html;
   const looksLikeHtml = /<[a-z][\s\S]*>/i.test(html);
-  if (looksLikeHtml && !/https?:\/\//i.test(htmlTextContent(html)) && !/(?:twitter-tweet|fb-post|social-embed-x)/i.test(html)) return html;
+  if (
+    looksLikeHtml
+    && !/https?:\/\//i.test(htmlTextContent(html))
+    && !/<a\b[^>]*href=["']https?:\/\//i.test(html)
+    && !/(?:twitter-tweet|fb-post|social-embed-x)/i.test(html)
+  ) return html;
   return markPrepared(markLinkPreviews(embedSocialUrls(html, options)));
 }
 
