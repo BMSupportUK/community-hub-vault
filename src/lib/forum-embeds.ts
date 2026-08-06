@@ -86,6 +86,15 @@ function markLinkPreviewsInner(html: string): string {
   });
 }
 
+/** Mid-sentence video links keep their text but gain a player underneath. */
+function firstVideoUrlInText(text: string): string | null {
+  for (const m of text.matchAll(/https?:\/\/[^\s<>"']+/gi)) {
+    const candidate = m[0].replace(/[)\].,!?;:]+$/g, "");
+    if (tryVideoEmbedUrl(candidate)) return candidate;
+  }
+  return null;
+}
+
 /**
  * Once a URL has a link-preview card, hide the raw URL text/anchor from the
  * post body — the card already links out, so the bare URL is just noise.
