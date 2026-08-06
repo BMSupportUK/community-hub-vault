@@ -150,7 +150,8 @@ export function BreakEndingAlert() {
     })();
   }, [active, now]);
 
-  if (!active || !stage) return null;
+  // Travel-home breaks are fully automatic: never alert, never play audio.
+  if (!active || !stage || active.kind === "travel") return null;
   const label = breakLabel(active.kind);
   const Icon = breakIcon(active.kind);
   const elapsed = (now - new Date(active.started_at).getTime()) / 1000;
