@@ -737,7 +737,7 @@ function SportsGuidesPage() {
                 </div>
               </aside>
 
-              <section>
+              <section ref={listingsTopRef}>
                 <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-6">
                   <div className="relative flex-1 group">
                     <div className="absolute -inset-0.5 rounded-xl bg-gradient-to-r from-fuchsia-500 via-purple-500 to-indigo-500 opacity-60 blur-sm group-focus-within:opacity-100 group-focus-within:blur-md transition-all duration-300" />
