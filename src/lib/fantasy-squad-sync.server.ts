@@ -26,6 +26,15 @@ type PlayerRow = {
 const POSITION_ORDER: Record<FantasyPosition, number> = { gk: 0, def: 1, mid: 2, fwd: 3 };
 const LEVEL_ORDER: Record<MfcSquadLevel, number> = { first: 0, u21: 1, u18: 2 };
 
+/** Start of the tracked 2026/27 transfer window — signings on/after this date count. */
+const TRANSFER_WINDOW_START = "2026-06-01";
+const TRANSFER_WINDOW_LABEL = "2026/27";
+
+/** True when the club feed's joinDate falls inside the tracked window. */
+function joinedInWindow(joinDate: string | null): boolean {
+  return !!joinDate && joinDate >= TRANSFER_WINDOW_START;
+}
+
 /** Starting price for a brand-new signing, refined by their detailed role. */
 function defaultValueM(position: FantasyPosition, detailed: string | null, level: MfcSquadLevel = "first"): number {
   // Academy/fringe players sit in their own cheap band (£1.0m–£2.5m).
@@ -157,6 +166,7 @@ export async function syncFantasyPlayersFromClub(admin: Admin): Promise<FantasyS
     direction: "in" | "out",
     playerId: string | null,
     note: string,
+    transferDate?: string | null,
   ) {
     if (isBaseline) return;
     const { data: seen } = await admin
@@ -170,8 +180,8 @@ export async function syncFantasyPlayersFromClub(admin: Admin): Promise<FantasyS
       player_name: playerName,
       direction,
       player_id: playerId,
-      transfer_date: nowIso.slice(0, 10),
-      window_label: "2026/27",
+      transfer_date: transferDate || nowIso.slice(0, 10),
+      window_label: TRANSFER_WINDOW_LABEL,
       note,
     });
   }
@@ -200,13 +210,18 @@ export async function syncFantasyPlayersFromClub(admin: Admin): Promise<FantasyS
       if (error) continue;
       added.push(p.name);
       matchedIds.add((inserted as any).id as string);
-      if (p.squadLevel === "first") {
-        await logTransfer(p.name, "in", (inserted as any).id as string, "Added to the official first-team squad");
+      if (p.squadLevel === "first" && joinedInWindow(p.joinDate)) {
+        await logTransfer(p.name, "in", (inserted as any).id as string, "Signed for the 2026/27 season", p.joinDate);
       }
       continue;
     }
 
     matchedIds.add(row.id);
+    // Existing pool rows can still be genuine 2026/27 signings (e.g. added by an
+    // earlier sync before the feed carried a join date) — log them once.
+    if (p.squadLevel === "first" && joinedInWindow(p.joinDate)) {
+      await logTransfer(p.name, "in", row.id, "Signed for the 2026/27 season", p.joinDate);
+    }
     const changes: Record<string, unknown> = { last_seen_at: nowIso };
     if (row.mfc_player_id !== p.mfcPlayerId) changes.mfc_player_id = p.mfcPlayerId;
     if (row.name !== p.name) changes.name = p.name;
