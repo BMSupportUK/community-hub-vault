@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -555,6 +555,15 @@ function SquadBuilder({
     setSaving(true);
     try {
       await onSave({ gameweekId: gw.id, formation, starters, bench, captainId, viceId });
+      // Saved to the server — the local draft is no longer needed.
+      restoredDraftRef.current = false;
+      if (draftKey) {
+        try {
+          localStorage.removeItem(draftKey);
+        } catch {
+          /* ignore */
+        }
+      }
       toast.success("Squad saved.");
     } catch (e: any) {
       toast.error(e?.message ?? "Could not save squad");
