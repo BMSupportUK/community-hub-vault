@@ -29,6 +29,8 @@ export type MfcSquadPlayer = {
   shirtNumber: number | null;
   onLoanFrom: string | null;
   squadLevel: MfcSquadLevel;
+  /** Date the player joined the club, per the official feed (YYYY-MM-DD). */
+  joinDate: string | null;
 };
 
 export type MfcLoanedOutPlayer = {
@@ -46,6 +48,7 @@ type OptaSquadPlayer = {
   realPosition?: string | null;
   onLoanFrom?: string | null;
   leaveDate?: string | null;
+  joinDate?: string | null;
   published?: number | null;
 };
 
@@ -107,6 +110,7 @@ async function fetchSquadForTeam(teamId: string, level: MfcSquadLevel): Promise<
         shirtNumber: Number.isFinite(shirt) && shirt > 0 ? shirt : null,
         onLoanFrom: (p.onLoanFrom ?? null) || null,
         squadLevel: level,
+        joinDate: (p.joinDate ?? null) || null,
       });
     }
   }
