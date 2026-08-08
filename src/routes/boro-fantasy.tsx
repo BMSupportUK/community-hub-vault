@@ -956,6 +956,17 @@ function LeaderboardTable({ rows }: { rows: FantasyLeaderboardRow[] }) {
   if (!rows.length) {
     return <div className="rounded-2xl border border-border/60 bg-card/80 p-6 text-sm text-muted-foreground">No managers have scored yet.</div>;
   }
+  // The site owner (Dane J) plays for fun and always sits at the bottom,
+  // outside the ranked positions.
+  const isOwner = (r: FantasyLeaderboardRow) => {
+    const aliases = new Set(["dane", "danej", "dane j"]);
+    return (
+      aliases.has((r.username ?? "").trim().toLowerCase()) ||
+      aliases.has((r.displayName ?? "").trim().toLowerCase())
+    );
+  };
+  const ranked = rows.filter((r) => !isOwner(r));
+  const ownerRows = rows.filter(isOwner);
   return (
     <div className="rounded-2xl border border-border/60 bg-card/80 backdrop-blur overflow-hidden">
       <table className="w-full text-sm">
@@ -969,7 +980,7 @@ function LeaderboardTable({ rows }: { rows: FantasyLeaderboardRow[] }) {
           </tr>
         </thead>
         <tbody>
-          {rows.map((r, i) => (
+          {ranked.map((r, i) => (
             <tr key={r.entrantId} className="border-t border-border/50">
               <td className="px-3 py-2 tabular-nums">{i + 1}</td>
               <td className="px-3 py-2">
@@ -984,8 +995,29 @@ function LeaderboardTable({ rows }: { rows: FantasyLeaderboardRow[] }) {
               <td className="px-3 py-2 text-right font-bold tabular-nums text-primary">{r.totalPoints}</td>
             </tr>
           ))}
+          {ownerRows.map((r) => (
+            <tr key={r.entrantId} className="border-t-2 border-primary/30 bg-muted/30">
+              <td className="px-3 py-2 text-muted-foreground">—</td>
+              <td className="px-3 py-2">
+                <div className="font-medium">{r.teamName || "Unnamed FC"}</div>
+                <div className="text-xs text-muted-foreground">
+                  {r.displayName || r.username || "Guest"}{r.isGuest ? " · guest" : ""}
+                </div>
+                {r.email && <div className="text-[11px] text-muted-foreground">{r.email}</div>}
+                <div className="text-[11px] font-medium text-primary mt-0.5">Site owner — playing for fun</div>
+              </td>
+              <td className="px-3 py-2 text-right tabular-nums">{r.gameweeksScored}</td>
+              <td className="px-3 py-2 text-right tabular-nums text-destructive">{r.totalHits ? `−${r.totalHits}` : "0"}</td>
+              <td className="px-3 py-2 text-right font-bold tabular-nums text-primary">{r.totalPoints}</td>
+            </tr>
+          ))}
         </tbody>
       </table>
+      {ownerRows.length > 0 && (
+        <p className="border-t border-border/50 bg-muted/20 px-3 py-2 text-center text-xs text-muted-foreground">
+          Site owner plays for fun and is not ranked or eligible for prizes.
+        </p>
+      )}
     </div>
   );
 }
