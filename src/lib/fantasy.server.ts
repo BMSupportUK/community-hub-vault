@@ -45,6 +45,8 @@ export type FantasyPickDTO = {
   slotOrder: number;
   buyValueM: number;
   points: number | null;
+  /** True when this bench player was automatically subbed in for a starter who didn't play. */
+  autoSubbed?: boolean;
 };
 
 export type FantasySquadDTO = {
@@ -142,6 +144,7 @@ function mapSquad(r: any): FantasySquadDTO {
       slotOrder: p.slot_order ?? 0,
       buyValueM: Number(p.buy_value_m),
       points: p.points ?? null,
+      autoSubbed: !!p.auto_subbed,
     })),
   };
 }
@@ -234,7 +237,7 @@ export async function loadState(admin: any, owner: Owner | null): Promise<Fantas
     const { data: sq, error: sqErr } = await admin
       .from("fantasy_squads")
       .select(
-        "id, gameweek_id, formation, captain_id, vice_id, transfer_cost, points, picks:fantasy_squad_picks(player_id, is_starter, slot_order, buy_value_m, points)",
+        "id, gameweek_id, formation, captain_id, vice_id, transfer_cost, points, picks:fantasy_squad_picks(player_id, is_starter, slot_order, buy_value_m, points, auto_subbed)",
       )
       .eq(ownerCol(owner), ownerVal(owner));
     if (sqErr) throw new Error(sqErr.message);
