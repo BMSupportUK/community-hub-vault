@@ -4,7 +4,9 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Shirt, Loader2, Lock, LogOut, Crown, Star, ArrowRightLeft, Trophy, Wallet,
+  Users, Plus, Minus, X, ArrowUp, ArrowDown, ClipboardList,
 } from "lucide-react";
+import type { DragEvent as ReactDragEvent } from "react";
 import { toast } from "sonner";
 import riversideBg from "@/assets/riverside-stadium-bg.jpg";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -16,7 +18,8 @@ import { IconRail } from "@/components/app/IconRail";
 import { useAuth } from "@/hooks/use-auth";
 import {
   FANTASY_BENCH_SIZE, FANTASY_SQUAD_SIZE, FORMATION_KEYS, POSITION_ORDER,
-  POSITION_SHORT, SCORING_RULES, SQUAD_QUOTA, formationCounts,
+  POSITION_SHORT, POSITION_LABEL, SCORING_RULES, SQUAD_QUOTA, SQUAD_RULES,
+  FORMATIONS, FANTASY_BUDGET_M, FANTASY_LOCK_MINUTES, formationCounts, formationRows,
   type FantasyPosition, type FormationKey,
 } from "@/lib/fantasy-rules";
 import {
@@ -225,8 +228,9 @@ function BoroFantasyPage() {
 
           <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-6">
             <Tabs value={tab} onValueChange={setTab}>
-              <TabsList className="grid grid-cols-3 sm:grid-cols-6 w-full sm:w-auto h-auto gap-1 p-1">
+              <TabsList className="grid grid-cols-3 sm:grid-cols-7 w-full sm:w-auto h-auto gap-1 p-1">
                 <TabsTrigger value="squad">My squad</TabsTrigger>
+                <TabsTrigger value="rules">Squad rules</TabsTrigger>
                 <TabsTrigger value="gameweeks">Gameweeks</TabsTrigger>
                 <TabsTrigger value="transfers">Transfers</TabsTrigger>
                 <TabsTrigger value="leaderboard">Leaderboard</TabsTrigger>
@@ -247,6 +251,10 @@ function BoroFantasyPage() {
                     }}
                   />
                 )}
+              </TabsContent>
+
+              <TabsContent value="rules" className="mt-4">
+                <SquadRulesTab />
               </TabsContent>
 
               <TabsContent value="gameweeks" className="mt-4">
@@ -368,7 +376,7 @@ function SquadBuilder({
   const counts = formationCounts(formation);
   const byPos = (ids: string[], pos: FantasyPosition) => ids.filter((id) => playerById.get(id)?.position === pos);
   const bench = selected.filter((id) => !starters.includes(id));
-  const locked = !gw || gw.status !== "upcoming" || new Date(gw.lockAt).getTime() <= Date.now();
+  const locked = !!gw && (gw.status !== "upcoming" || new Date(gw.lockAt).getTime() <= Date.now());
 
   const problems: string[] = [];
   if (selected.length !== FANTASY_SQUAD_SIZE) problems.push(`Pick exactly ${FANTASY_SQUAD_SIZE} players (${selected.length} selected).`);
@@ -389,35 +397,76 @@ function SquadBuilder({
   if (!viceId || !starters.includes(viceId)) problems.push("Pick a vice-captain from your starting XI.");
   if (captainId && captainId === viceId) problems.push("Captain and vice-captain must be different.");
 
-  function toggleSelect(p: FantasyPlayerDTO) {
-    setSelected((prev) => {
-      if (prev.includes(p.id)) {
-        setStarters((s) => s.filter((x) => x !== p.id));
-        if (captainId === p.id) setCaptainId("");
-        if (viceId === p.id) setViceId("");
-        return prev.filter((x) => x !== p.id);
-      }
-      if (prev.length >= FANTASY_SQUAD_SIZE) {
-        toast.error(`Squad is full — ${FANTASY_SQUAD_SIZE} players max.`);
-        return prev;
-      }
-      if (byPos(prev, p.position).length >= SQUAD_QUOTA[p.position]) {
-        toast.error(`You already have ${SQUAD_QUOTA[p.position]} ${POSITION_SHORT[p.position]}s.`);
-        return prev;
-      }
-      return [...prev, p.id];
-    });
+  const editable = !locked && (canPlay || !gw);
+
+  /** Ensure the player is in the 15 — returns the new squad list, or null if not possible. */
+  function withPlayer(sel: string[], p: FantasyPlayerDTO): string[] | null {
+    if (sel.includes(p.id)) return sel;
+    if (p.status === "departed") { toast.error(`${p.name} has left the club.`); return null; }
+    if (sel.length >= FANTASY_SQUAD_SIZE) { toast.error(`Squad is full — ${FANTASY_SQUAD_SIZE} players max.`); return null; }
+    if (byPos(sel, p.position).length >= SQUAD_QUOTA[p.position]) {
+      toast.error(`You already have ${SQUAD_QUOTA[p.position]} ${POSITION_SHORT[p.position]}s.`);
+      return null;
+    }
+    return [...sel, p.id];
   }
 
-  function toggleStarter(id: string) {
-    setStarters((prev) => {
-      if (prev.includes(id)) return prev.filter((x) => x !== id);
-      if (prev.length >= 11) {
-        toast.error("Starting XI is full — drop someone first.");
-        return prev;
+  function removePlayer(id: string) {
+    if (!editable) return;
+    setSelected((prev) => prev.filter((x) => x !== id));
+    setStarters((prev) => prev.filter((x) => x !== id));
+    if (captainId === id) setCaptainId("");
+    if (viceId === id) setViceId("");
+  }
+
+  function benchPlayer(id: string) {
+    if (!editable) return;
+    setStarters((prev) => prev.filter((x) => x !== id));
+    if (captainId === id) setCaptainId("");
+    if (viceId === id) setViceId("");
+  }
+
+  /** Put a player into the XI, optionally swapping out whoever holds that slot. */
+  function startPlayer(p: FantasyPlayerDTO, replaceId?: string) {
+    if (!editable) return;
+    const sel = withPlayer(selected, p);
+    if (!sel) return;
+    let st = starters.filter((x) => x !== replaceId);
+    if (!st.includes(p.id)) {
+      const line = byPos(st, p.position);
+      const need = (counts as Record<string, number>)[p.position] ?? 0;
+      if (line.length >= need) {
+        const bumped = line[line.length - 1]!;
+        st = st.filter((x) => x !== bumped);
+        if (captainId === bumped) setCaptainId("");
+        if (viceId === bumped) setViceId("");
       }
-      return [...prev, id];
-    });
+      st = [...st, p.id];
+    }
+    if (replaceId) {
+      if (captainId === replaceId) setCaptainId("");
+      if (viceId === replaceId) setViceId("");
+    }
+    setSelected(sel);
+    setStarters(st);
+  }
+
+  /** Add a player to the bench (or squad only). */
+  function benchAdd(p: FantasyPlayerDTO) {
+    if (!editable) return;
+    const sel = withPlayer(selected, p);
+    if (!sel) return;
+    setSelected(sel);
+    setStarters((prev) => prev.filter((x) => x !== p.id));
+  }
+
+  /** Sidebar one-tap: fill an open XI slot if there is one, else the bench. */
+  function autoPick(p: FantasyPlayerDTO) {
+    if (!editable) return;
+    if (selected.includes(p.id)) { removePlayer(p.id); return; }
+    const need = (counts as Record<string, number>)[p.position] ?? 0;
+    if (starters.length < 11 && byPos(starters, p.position).length < need) startPlayer(p);
+    else benchAdd(p);
   }
 
   async function handleSave() {
@@ -433,39 +482,37 @@ function SquadBuilder({
     }
   }
 
-  if (!gw) {
-    return <div className="rounded-2xl border border-border/60 bg-card/80 p-6 text-sm text-muted-foreground">No gameweeks have been set up yet — check back soon.</div>;
-  }
-
   return (
     <div className="space-y-4">
       <div className="rounded-2xl border border-border/60 bg-card/80 backdrop-blur p-4 flex flex-wrap items-center gap-3">
         <div className="flex-1 min-w-[200px]">
-          <div className="font-semibold">GW{gw.gwNumber} — {gw.homeTeam} v {gw.awayTeam}</div>
-          <div className="text-xs text-muted-foreground">{kickoffLabel(gw.kickoffAt)} · locks {kickoffLabel(gw.lockAt)}</div>
+          {gw ? (
+            <>
+              <div className="font-semibold">GW{gw.gwNumber} — {gw.homeTeam} v {gw.awayTeam}</div>
+              <div className="text-xs text-muted-foreground">{kickoffLabel(gw.kickoffAt)} · locks {kickoffLabel(gw.lockAt)}</div>
+            </>
+          ) : (
+            <>
+              <div className="font-semibold">Pre-season — no gameweek open yet</div>
+              <div className="text-xs text-muted-foreground">Try out formations and squads now; you can save once the first gameweek opens.</div>
+            </>
+          )}
         </div>
         <div className="flex items-center gap-2 text-sm">
           <Wallet className="size-4 text-primary" />
           <span className={remaining < 0 ? "text-destructive font-bold" : "font-bold"}>{money(remaining)}</span>
           <span className="text-muted-foreground">left of {money(state.budgetM)}</span>
         </div>
-        <label className="text-sm flex items-center gap-2">
-          <span className="text-muted-foreground">Formation</span>
-          <select
-            className="h-9 rounded-lg border-2 border-primary/50 bg-background px-2 text-sm"
-            value={formation}
-            onChange={(e) => setFormation(e.target.value as FormationKey)}
-            disabled={locked || !canPlay}
-          >
-            {FORMATION_KEYS.map((f) => <option key={f} value={f}>{f}</option>)}
-          </select>
-        </label>
-        <Button onClick={handleSave} disabled={saving || locked || !canPlay || problems.length > 0}>
+        <div className="text-sm text-muted-foreground">
+          <span className="font-bold text-foreground">{selected.length}</span>/{FANTASY_SQUAD_SIZE} picked ·{" "}
+          <span className="font-bold text-foreground">{starters.length}</span>/11 starting
+        </div>
+        <Button onClick={handleSave} disabled={saving || locked || !gw || !canPlay || problems.length > 0}>
           {saving ? <Loader2 className="size-4 animate-spin" /> : "Save squad"}
         </Button>
       </div>
 
-      {!canPlay && (
+      {gw && !canPlay && (
         <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm">
           Join the game (or sign in as a guest) to save a squad — you can browse the player pool meanwhile.
         </div>
@@ -481,70 +528,328 @@ function SquadBuilder({
         </ul>
       )}
 
-      <div className="grid gap-4 md:grid-cols-2">
-        {POSITION_ORDER.map((pos) => (
-          <div key={pos} className="rounded-2xl border border-border/60 bg-card/80 backdrop-blur p-4">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="font-semibold">{POSITION_SHORT[pos]}</h3>
-              <span className="text-xs text-muted-foreground">
-                {byPos(selected, pos).length}/{SQUAD_QUOTA[pos]} picked · {byPos(starters, pos).length}/{(counts as any)[pos]} starting
-              </span>
-            </div>
-            <ul className="space-y-1">
-              {state.players.filter((p) => p.position === pos).map((p) => {
-                const isSel = selected.includes(p.id);
-                const isStart = starters.includes(p.id);
+      <div className="grid gap-4 lg:grid-cols-[300px_minmax(0,1fr)] items-start">
+        <PlayerSidebar
+          players={state.players}
+          selected={selected}
+          starters={starters}
+          counts={counts as Record<string, number>}
+          editable={editable}
+          onPick={autoPick}
+        />
+        <PitchView
+          formation={formation}
+          onFormationChange={(f) => setFormation(f)}
+          editable={editable}
+          playerById={playerById}
+          starters={starters}
+          bench={bench}
+          captainId={captainId}
+          viceId={viceId}
+          onDropStart={(playerId, replaceId) => {
+            const p = playerById.get(playerId);
+            if (p) startPlayer(p, replaceId);
+          }}
+          onDropBench={(playerId) => {
+            const p = playerById.get(playerId);
+            if (p) benchAdd(p);
+          }}
+          onBench={benchPlayer}
+          onRemove={removePlayer}
+          onCaptain={(id) => setCaptainId(id)}
+          onVice={(id) => setViceId(id)}
+        />
+      </div>
+    </div>
+  );
+}
+
+// ------------------------------------------------------------------
+// Player sidebar
+// ------------------------------------------------------------------
+const POS_TINT: Record<FantasyPosition, string> = {
+  gk: "bg-amber-500/20 text-amber-300 border-amber-500/40",
+  def: "bg-sky-500/20 text-sky-300 border-sky-500/40",
+  mid: "bg-emerald-500/20 text-emerald-300 border-emerald-500/40",
+  fwd: "bg-rose-500/20 text-rose-300 border-rose-500/40",
+};
+
+function PlayerSidebar({
+  players, selected, starters, counts, editable, onPick,
+}: {
+  players: FantasyPlayerDTO[];
+  selected: string[];
+  starters: string[];
+  counts: Record<string, number>;
+  editable: boolean;
+  onPick: (p: FantasyPlayerDTO) => void;
+}) {
+  const [filter, setFilter] = useState<"all" | FantasyPosition>("all");
+  const [q, setQ] = useState("");
+  const [sort, setSort] = useState<"value" | "name">("value");
+
+  const list = useMemo(() => {
+    const term = q.trim().toLowerCase();
+    return players
+      .filter((p) => (filter === "all" ? true : p.position === filter))
+      .filter((p) => (term ? p.name.toLowerCase().includes(term) : true))
+      .sort((a, b) =>
+        sort === "name"
+          ? a.name.localeCompare(b.name)
+          : POSITION_ORDER.indexOf(a.position) - POSITION_ORDER.indexOf(b.position) || b.valueM - a.valueM,
+      );
+  }, [players, filter, q, sort]);
+
+  return (
+    <div className="rounded-2xl border border-border/60 bg-card/85 backdrop-blur overflow-hidden lg:sticky lg:top-4">
+      <div className="p-3 border-b border-border/60 space-y-2">
+        <div className="flex items-center justify-between">
+          <h3 className="font-display font-bold flex items-center gap-2"><Users className="size-4 text-primary" /> Player list</h3>
+          <button
+            type="button"
+            onClick={() => setSort(sort === "value" ? "name" : "value")}
+            className="text-[11px] text-muted-foreground hover:text-foreground"
+          >
+            Sort: {sort === "value" ? "value" : "A–Z"}
+          </button>
+        </div>
+        <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search players…" className="h-8 border-2 border-primary/40" />
+        <div className="flex flex-wrap gap-1">
+          {(["all", ...POSITION_ORDER] as const).map((f) => (
+            <button
+              key={f}
+              type="button"
+              onClick={() => setFilter(f)}
+              className={`text-[11px] rounded-full px-2.5 py-1 border transition-colors ${
+                filter === f ? "bg-primary text-primary-foreground border-primary" : "border-border/70 text-muted-foreground hover:bg-muted/50"
+              }`}
+            >
+              {f === "all" ? "All" : POSITION_SHORT[f]}
+              {f !== "all" && (
+                <span className="ml-1 opacity-70">
+                  {selected.filter((id) => players.find((p) => p.id === id)?.position === f).length}/{SQUAD_QUOTA[f]}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+      </div>
+      <ul className="max-h-[560px] overflow-y-auto divide-y divide-border/40">
+        {list.map((p) => {
+          const isSel = selected.includes(p.id);
+          const isStart = starters.includes(p.id);
+          const full = !isSel && (counts[p.position] ?? 0) >= 0 && selected.filter((id) => players.find((x) => x.id === id)?.position === p.position).length >= SQUAD_QUOTA[p.position];
+          return (
+            <li
+              key={p.id}
+              draggable={editable && p.status !== "departed"}
+              onDragStart={(e) => { e.dataTransfer.setData("text/fantasy-player", p.id); e.dataTransfer.effectAllowed = "move"; }}
+              className={`flex items-center gap-2 px-3 py-2 text-sm ${editable ? "cursor-grab active:cursor-grabbing" : ""} ${
+                isSel ? "bg-primary/10" : full ? "opacity-50" : "hover:bg-muted/40"
+              }`}
+            >
+              <span className={`text-[10px] font-bold rounded-md border px-1.5 py-0.5 ${POS_TINT[p.position]}`}>{POSITION_SHORT[p.position]}</span>
+              <div className="min-w-0 flex-1">
+                <div className="truncate font-medium">{p.name}</div>
+                <div className="text-[11px] text-muted-foreground tabular-nums">
+                  {money(p.valueM)}
+                  {isSel && <span className="ml-1 text-primary">· {isStart ? "XI" : "bench"}</span>}
+                  {p.status !== "active" && <span className="ml-1 text-destructive uppercase">{p.status}</span>}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => onPick(p)}
+                disabled={!editable || p.status === "departed"}
+                title={isSel ? "Remove from squad" : "Add to squad"}
+                className={`shrink-0 grid place-items-center size-7 rounded-lg border transition-colors disabled:opacity-40 ${
+                  isSel ? "border-destructive/50 text-destructive hover:bg-destructive/10" : "border-primary/50 text-primary hover:bg-primary/10"
+                }`}
+              >
+                {isSel ? <Minus className="size-3.5" /> : <Plus className="size-3.5" />}
+              </button>
+            </li>
+          );
+        })}
+        {list.length === 0 && <li className="px-3 py-6 text-center text-sm text-muted-foreground">No players match.</li>}
+      </ul>
+    </div>
+  );
+}
+
+// ------------------------------------------------------------------
+// Pitch
+// ------------------------------------------------------------------
+function PitchView({
+  formation, onFormationChange, editable, playerById, starters, bench, captainId, viceId,
+  onDropStart, onDropBench, onBench, onRemove, onCaptain, onVice,
+}: {
+  formation: FormationKey;
+  onFormationChange: (f: FormationKey) => void;
+  editable: boolean;
+  playerById: Map<string, FantasyPlayerDTO>;
+  starters: string[];
+  bench: string[];
+  captainId: string;
+  viceId: string;
+  onDropStart: (playerId: string, replaceId?: string) => void;
+  onDropBench: (playerId: string) => void;
+  onBench: (id: string) => void;
+  onRemove: (id: string) => void;
+  onCaptain: (id: string) => void;
+  onVice: (id: string) => void;
+}) {
+  const rows = formationRows(formation);
+  const meta = FORMATIONS[formation];
+
+  // Distribute the starters of each position across the rows that ask for them.
+  const queues: Record<string, string[]> = {};
+  for (const pos of POSITION_ORDER) queues[pos] = starters.filter((id) => playerById.get(id)?.position === pos);
+  const rowSlots = rows.map((r) => {
+    const take: (string | null)[] = [];
+    for (let i = 0; i < r.count; i++) take.push(queues[r.pos]!.shift() ?? null);
+    return { pos: r.pos, slots: take };
+  });
+
+  const dropProps = (handler: (playerId: string) => void) => ({
+    onDragOver: (e: ReactDragEvent) => { if (editable) { e.preventDefault(); e.dataTransfer.dropEffect = "move"; } },
+    onDrop: (e: ReactDragEvent) => {
+      if (!editable) return;
+      e.preventDefault();
+      const id = e.dataTransfer.getData("text/fantasy-player");
+      if (id) handler(id);
+    },
+  });
+
+  return (
+    <div className="rounded-2xl border border-border/60 bg-card/85 backdrop-blur overflow-hidden">
+      <div className="p-3 border-b border-border/60 flex flex-wrap items-center gap-3">
+        <label className="flex items-center gap-2 text-sm">
+          <span className="text-muted-foreground">Formation</span>
+          <select
+            className="h-9 rounded-lg border-2 border-primary/50 bg-background px-2 text-sm font-semibold"
+            value={formation}
+            onChange={(e) => onFormationChange(e.target.value as FormationKey)}
+            disabled={!editable}
+          >
+            {FORMATION_KEYS.map((f) => (
+              <option key={f} value={f}>{f} — {FORMATIONS[f].label}</option>
+            ))}
+          </select>
+        </label>
+        <p className="text-xs text-muted-foreground">
+          Drag players from the list onto the pitch, or use the + button. Drop onto a shirt to swap.
+        </p>
+      </div>
+
+      <div
+        className="relative p-4 sm:p-6"
+        style={{
+          background:
+            "repeating-linear-gradient(to bottom, oklch(0.34 0.09 152) 0 44px, oklch(0.31 0.09 152) 44px 88px)",
+        }}
+      >
+        <div className="pointer-events-none absolute inset-4 sm:inset-6 rounded-xl border-2 border-white/25" aria-hidden />
+        <div className="pointer-events-none absolute left-1/2 top-4 sm:top-6 h-16 w-40 -translate-x-1/2 rounded-b-xl border-x-2 border-b-2 border-white/25" aria-hidden />
+        <div className="pointer-events-none absolute left-1/2 bottom-4 sm:bottom-6 h-16 w-40 -translate-x-1/2 rounded-t-xl border-x-2 border-t-2 border-white/25" aria-hidden />
+        <div className="relative space-y-4 sm:space-y-6 py-2">
+          {rowSlots.map((row, ri) => (
+            <div key={ri} className="flex flex-nowrap justify-center gap-1 sm:gap-2">
+              {row.slots.map((id, si) => {
+                const p = id ? playerById.get(id) : undefined;
                 return (
-                  <li key={p.id} className={`flex items-center gap-2 rounded-xl px-2 py-1.5 text-sm ${isSel ? "bg-primary/10 border border-primary/40" : "border border-transparent hover:bg-muted/40"}`}>
-                    <button
-                      type="button"
-                      className="flex-1 text-left disabled:opacity-60"
-                      onClick={() => toggleSelect(p)}
-                      disabled={locked || !canPlay || p.status === "departed"}
-                    >
-                      <span className="font-medium">{p.name}</span>
-                      {p.shirtNumber ? <span className="text-muted-foreground text-xs"> #{p.shirtNumber}</span> : null}
-                      {p.status !== "active" && (
-                        <span className="ml-2 text-[10px] uppercase rounded-full bg-destructive/20 text-destructive px-1.5 py-0.5">{p.status}</span>
-                      )}
-                    </button>
-                    <span className="text-xs tabular-nums text-muted-foreground">{money(p.valueM)}</span>
-                    {isSel && (
+                  <div
+                    key={`${ri}-${si}`}
+                    {...dropProps((dragged) => onDropStart(dragged, id ?? undefined))}
+                    draggable={editable && !!id}
+                    onDragStart={(e) => { if (id) e.dataTransfer.setData("text/fantasy-player", id); }}
+                    className={`w-[64px] sm:w-[86px] rounded-xl border px-1.5 py-2 text-center backdrop-blur-sm transition-colors ${
+                      p ? "border-white/40 bg-slate-950/70" : "border-dashed border-white/40 bg-white/10 hover:bg-white/20"
+                    }`}
+                  >
+                    {p ? (
                       <>
-                        <button
-                          type="button"
-                          onClick={() => toggleStarter(p.id)}
-                          disabled={locked || !canPlay}
-                          className={`text-[10px] rounded-full px-2 py-0.5 border ${isStart ? "bg-emerald-500/20 border-emerald-500/50 text-emerald-400" : "border-border text-muted-foreground"}`}
-                        >
-                          {isStart ? "XI" : "Bench"}
-                        </button>
-                        <button
-                          type="button"
-                          title="Captain"
-                          onClick={() => setCaptainId(p.id)}
-                          disabled={locked || !canPlay || !isStart}
-                          className={`rounded-full p-1 ${captainId === p.id ? "text-amber-400" : "text-muted-foreground/50"}`}
-                        >
-                          <Crown className="size-3.5" />
-                        </button>
-                        <button
-                          type="button"
-                          title="Vice-captain"
-                          onClick={() => setViceId(p.id)}
-                          disabled={locked || !canPlay || !isStart}
-                          className={`rounded-full p-1 ${viceId === p.id ? "text-sky-400" : "text-muted-foreground/50"}`}
-                        >
-                          <Star className="size-3.5" />
-                        </button>
+                        <div className="flex items-center justify-center gap-1">
+                          <Shirt className="size-4 text-white/80" />
+                          {captainId === p.id && <Crown className="size-3.5 text-amber-400" />}
+                          {viceId === p.id && <Star className="size-3.5 text-sky-300" />}
+                        </div>
+                        <div className="mt-1 truncate text-[11px] font-semibold text-white">{p.name}</div>
+                        <div className="text-[10px] tabular-nums text-white/70">{money(p.valueM)}</div>
+                        {editable && (
+                          <div className="mt-1 flex items-center justify-center gap-1">
+                            <button type="button" title="Captain" onClick={() => onCaptain(p.id)} className={`rounded p-0.5 ${captainId === p.id ? "text-amber-400" : "text-white/50 hover:text-white"}`}>
+                              <Crown className="size-3" />
+                            </button>
+                            <button type="button" title="Vice-captain" onClick={() => onVice(p.id)} className={`rounded p-0.5 ${viceId === p.id ? "text-sky-300" : "text-white/50 hover:text-white"}`}>
+                              <Star className="size-3" />
+                            </button>
+                            <button type="button" title="Move to bench" onClick={() => onBench(p.id)} className="rounded p-0.5 text-white/50 hover:text-white">
+                              <ArrowDown className="size-3" />
+                            </button>
+                            <button type="button" title="Remove" onClick={() => onRemove(p.id)} className="rounded p-0.5 text-white/50 hover:text-destructive">
+                              <X className="size-3" />
+                            </button>
+                          </div>
+                        )}
                       </>
+                    ) : (
+                      <div className="py-2 text-[11px] font-semibold text-white/80">
+                        <div className="mx-auto mb-1 grid size-6 place-items-center rounded-full border border-white/50">
+                          <Plus className="size-3" />
+                        </div>
+                        {POSITION_SHORT[row.pos]}
+                      </div>
                     )}
-                  </li>
+                  </div>
                 );
               })}
-            </ul>
-          </div>
-        ))}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="p-3 border-t border-border/60" {...dropProps(onDropBench)}>
+        <div className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Bench ({bench.length}/{FANTASY_BENCH_SIZE}) — first to come on, top left</div>
+        <div className="flex flex-wrap gap-2">
+          {Array.from({ length: FANTASY_BENCH_SIZE }).map((_, i) => {
+            const id = bench[i];
+            const p = id ? playerById.get(id) : undefined;
+            return (
+              <div
+                key={i}
+                {...dropProps(onDropBench)}
+                draggable={editable && !!id}
+                onDragStart={(e) => { if (id) e.dataTransfer.setData("text/fantasy-player", id); }}
+                className={`w-[64px] sm:w-[86px] rounded-xl border px-1.5 py-2 text-center text-xs ${
+                  p ? "border-border/70 bg-muted/40" : "border-dashed border-border/70 bg-muted/20 text-muted-foreground"
+                }`}
+              >
+                {p ? (
+                  <>
+                    <div className="flex items-center justify-center gap-1">
+                      <span className={`text-[10px] font-bold rounded-md border px-1 ${POS_TINT[p.position]}`}>{POSITION_SHORT[p.position]}</span>
+                    </div>
+                    <div className="mt-1 truncate font-semibold">{p.name}</div>
+                    <div className="text-[10px] tabular-nums text-muted-foreground">{money(p.valueM)}</div>
+                    {editable && (
+                      <div className="mt-1 flex items-center justify-center gap-1">
+                        <button type="button" title="Into the XI" onClick={() => onDropStart(p.id)} className="rounded p-0.5 text-muted-foreground hover:text-emerald-400">
+                          <ArrowUp className="size-3" />
+                        </button>
+                        <button type="button" title="Remove" onClick={() => onRemove(p.id)} className="rounded p-0.5 text-muted-foreground hover:text-destructive">
+                          <X className="size-3" />
+                        </button>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="py-3">Bench slot</div>
+                )}
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
@@ -685,6 +990,65 @@ function LeaderboardTable({ rows }: { rows: FantasyLeaderboardRow[] }) {
   );
 }
 
+function SquadRulesTab() {
+  return (
+    <div className="space-y-4">
+      <div className="rounded-3xl border border-primary/30 bg-gradient-primary p-5 shadow-glow">
+        <h3 className="font-display text-xl font-bold text-white flex items-center gap-2">
+          <ClipboardList className="size-5" /> Squad rules
+        </h3>
+        <p className="text-sm text-white/85 mt-1">Everything you need to know before you build your Middlesbrough side.</p>
+        <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-2">
+          {[
+            { k: "Budget", v: money(FANTASY_BUDGET_M) },
+            { k: "Squad", v: `${FANTASY_SQUAD_SIZE} players` },
+            { k: "Bench", v: `${FANTASY_BENCH_SIZE} subs` },
+            { k: "Deadline", v: `${FANTASY_LOCK_MINUTES} min pre-KO` },
+          ].map((s) => (
+            <div key={s.k} className="rounded-xl bg-white/15 ring-1 ring-white/20 px-3 py-2">
+              <div className="text-[11px] uppercase tracking-wide text-white/75">{s.k}</div>
+              <div className="font-bold text-white">{s.v}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-2">
+        {SQUAD_RULES.map((r) => (
+          <section key={r.title} className="rounded-2xl border border-border/60 bg-card/85 backdrop-blur p-4">
+            <h4 className="font-semibold text-primary">{r.title}</h4>
+            <p className="text-sm text-muted-foreground mt-1">{r.body}</p>
+          </section>
+        ))}
+      </div>
+
+      <section className="rounded-2xl border border-border/60 bg-card/85 backdrop-blur p-4">
+        <h4 className="font-semibold mb-3">Squad quotas</h4>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          {POSITION_ORDER.map((pos) => (
+            <div key={pos} className={`rounded-xl border px-3 py-2 ${POS_TINT[pos]}`}>
+              <div className="text-[11px] uppercase tracking-wide opacity-80">{POSITION_LABEL[pos]}s</div>
+              <div className="text-lg font-bold">{SQUAD_QUOTA[pos]}</div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="rounded-2xl border border-border/60 bg-card/85 backdrop-blur p-4">
+        <h4 className="font-semibold mb-3">Allowed formations</h4>
+        <ul className="grid gap-2 sm:grid-cols-2">
+          {FORMATION_KEYS.map((f) => (
+            <li key={f} className="flex items-center gap-3 rounded-xl bg-muted/30 px-3 py-2 text-sm">
+              <span className="font-bold tabular-nums text-primary w-16">{f}</span>
+              <span className="text-muted-foreground">{FORMATIONS[f].label}</span>
+            </li>
+          ))}
+        </ul>
+      </section>
+    </div>
+  );
+}
+
 function ScoringTab() {
   return (
     <div className="rounded-2xl border border-border/60 bg-card/80 backdrop-blur p-5 space-y-4">
@@ -704,8 +1068,7 @@ function ScoringTab() {
         ))}
       </ul>
       <div className="text-sm text-muted-foreground">
-        Squad rules: {FANTASY_SQUAD_SIZE} players ({SQUAD_QUOTA.gk} GK, {SQUAD_QUOTA.def} DEF, {SQUAD_QUOTA.mid} MID, {SQUAD_QUOTA.fwd} FWD),
-        a £30.0m budget and any of these formations: {FORMATION_KEYS.join(", ")}. Squads lock 30 minutes before kick-off.
+        Squad size, budget, formations and deadlines all live on the <span className="font-semibold text-foreground">Squad rules</span> tab.
       </div>
     </div>
   );
