@@ -22,6 +22,7 @@ type PlayerRow = {
   squad_level?: string | null;
   created_at?: string | null;
   status_locked?: boolean | null;
+  loan_club?: string | null;
 };
 
 const POSITION_ORDER: Record<FantasyPosition, number> = { gk: 0, def: 1, mid: 2, fwd: 3 };
@@ -70,6 +71,7 @@ export type FantasySquadSyncResult = {
   added?: string[];
   updated?: string[];
   departed?: string[];
+  loanedOut?: string[];
   error?: string;
 };
 
@@ -102,15 +104,16 @@ export async function syncFantasyPlayersFromClub(admin: Admin): Promise<FantasyS
   }
 
   const loanedOut = await fetchMfcLoanedOutPlayers().catch(() => []);
-  const loanedNames = new Set(loanedOut.map((p) => normName(p.name)));
+  const loanedClubByName = new Map(loanedOut.map((p) => [normName(p.name), p.loanClub] as const));
+  const isLoanedOut = (name: string) => loanedClubByName.has(normName(name));
 
-  // Players out on loan are not selectable.
-  const available = squad.filter((p) => !loanedNames.has(normName(p.name)));
+  // Players out on loan stay in the pool (shown struck through, unselectable).
+  const available = squad;
 
   const { data: existingRows, error: readErr } = await admin
     .from("fantasy_players")
     .select(
-      "id, name, position, shirt_number, value_m, status, sort_order, mfc_player_id, squad_level, created_at, status_locked",
+      "id, name, position, shirt_number, value_m, status, sort_order, mfc_player_id, squad_level, created_at, status_locked, loan_club",
     );
   if (readErr) return { ok: false, error: readErr.message };
   const existing = (existingRows ?? []) as PlayerRow[];
@@ -193,6 +196,8 @@ export async function syncFantasyPlayersFromClub(admin: Admin): Promise<FantasyS
     const p = ordered[i]!;
     const row = byMfcId.get(p.mfcPlayerId) ?? byName.get(normName(p.name));
     const sortOrder = i;
+    const onLoan = isLoanedOut(p.name);
+    const loanClub = loanedClubByName.get(normName(p.name)) ?? null;
 
     if (!row) {
       const { data: inserted, error } = await admin
@@ -202,7 +207,8 @@ export async function syncFantasyPlayersFromClub(admin: Admin): Promise<FantasyS
           position: p.position,
           shirt_number: p.shirtNumber,
           value_m: defaultValueM(p.position, p.detailedPosition, p.squadLevel),
-          status: "active",
+          status: onLoan ? "loaned_out" : "active",
+          loan_club: onLoan ? loanClub : null,
           sort_order: sortOrder,
           mfc_player_id: p.mfcPlayerId,
           squad_level: p.squadLevel,
@@ -213,6 +219,9 @@ export async function syncFantasyPlayersFromClub(admin: Admin): Promise<FantasyS
       if (error) continue;
       added.push(p.name);
       matchedIds.add((inserted as any).id as string);
+      if (onLoan && p.squadLevel === "first") {
+        await logTransfer(p.name, "out", (inserted as any).id as string, loanClub ? `Out on loan at ${loanClub}` : "Out on loan");
+      }
       if (p.squadLevel === "first" && joinedInWindow(p.joinDate)) {
         await logTransfer(p.name, "in", (inserted as any).id as string, "Signed for the 2026/27 season", p.joinDate);
       }
@@ -235,6 +244,22 @@ export async function syncFantasyPlayersFromClub(admin: Admin): Promise<FantasyS
       changes.status = "active";
       changes.departed_at = null;
     }
+    if (!row.status_locked) {
+      if (onLoan && row.status !== "loaned_out") {
+        changes.status = "loaned_out";
+        changes.departed_at = null;
+        changes.loan_club = loanClub;
+        if (p.squadLevel === "first") {
+          await logTransfer(p.name, "out", row.id, loanClub ? `Out on loan at ${loanClub}` : "Out on loan");
+        }
+      } else if (!onLoan && row.status === "loaned_out") {
+        // Loan over — back at the club and selectable again.
+        changes.status = "active";
+        changes.loan_club = null;
+      } else if (onLoan && (row as any).loan_club !== loanClub) {
+        changes.loan_club = loanClub;
+      }
+    }
     if ((row.sort_order ?? -1) !== sortOrder) changes.sort_order = sortOrder;
     const keys = Object.keys(changes).filter((k) => k !== "last_seen_at");
     await admin.from("fantasy_players").update(changes).eq("id", row.id);
@@ -246,6 +271,8 @@ export async function syncFantasyPlayersFromClub(admin: Admin): Promise<FantasyS
   const departed: string[] = [];
   for (const row of existing) {
     if (matchedIds.has(row.id)) continue;
+    // Out on loan, not gone: keep them in the pool, struck through.
+    if (isLoanedOut(row.name)) continue;
     if (row.status === "departed") continue;
     // Manually added players (announced signings the club feed hasn't published
     // yet) have no club player id — never auto-depart them on a feed miss.
@@ -269,5 +296,22 @@ export async function syncFantasyPlayersFromClub(admin: Admin): Promise<FantasyS
       .upsert({ key: "fantasy_squad_baseline_at", value: nowIso as any }, { onConflict: "key" });
   }
 
-  return { ok: true, squadSize: ordered.length, added, updated, departed };
+  // Reconcile the official loaned-out list against everyone we hold, including
+  // players the senior squad feed no longer lists.
+  const loanedApplied: string[] = [];
+  for (const row of existing) {
+    if (!isLoanedOut(row.name)) continue;
+    if (row.status_locked) continue;
+    const club = loanedClubByName.get(normName(row.name)) ?? null;
+    if (row.status === "loaned_out" && (row.loan_club ?? null) === club) continue;
+    const { error } = await admin
+      .from("fantasy_players")
+      .update({ status: "loaned_out", loan_club: club, departed_at: null })
+      .eq("id", row.id);
+    if (error) continue;
+    loanedApplied.push(row.name);
+    await logTransfer(row.name, "out", row.id, club ? `Out on loan at ${club}` : "Out on loan");
+  }
+
+  return { ok: true, squadSize: ordered.length, added, updated, departed, loanedOut: loanedApplied };
 }

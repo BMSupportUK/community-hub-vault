@@ -704,6 +704,7 @@ function SquadBuilder({
   function withPlayer(sel: string[], p: FantasyPlayerDTO): string[] | null {
     if (sel.includes(p.id)) return sel;
     if (p.status === "departed") { toast.error(`${p.name} has left the club.`); return null; }
+    if (p.status === "loaned_out") { toast.error(`${p.name} is out on loan${p.loanClub ? ` at ${p.loanClub}` : ""}.`); return null; }
     if (sel.length >= FANTASY_SQUAD_SIZE) { toast.error(`Squad is full — ${FANTASY_SQUAD_SIZE} players max.`); return null; }
     if (byPos(sel, p.position).length >= SQUAD_QUOTA[p.position]) {
       toast.error(`You already have ${SQUAD_QUOTA[p.position]} ${POSITION_SHORT[p.position]}s.`);
@@ -1159,7 +1160,8 @@ function PlayerSidebar({
       .filter((p) => (filter === "all" ? true : p.position === filter))
       .filter((p) => (term ? p.name.toLowerCase().includes(term) : true))
       .sort((a, b) => {
-        const gone = (a.status === "departed" ? 1 : 0) - (b.status === "departed" ? 1 : 0);
+        const unavail = (s: string) => (s === "departed" || s === "loaned_out" ? 1 : 0);
+        const gone = unavail(a.status) - unavail(b.status);
         if (gone !== 0) return gone;
         return sort === "name"
           ? a.name.localeCompare(b.name)
@@ -1209,7 +1211,7 @@ function PlayerSidebar({
           return (
             <li
               key={p.id}
-              draggable={editable && p.status !== "departed"}
+              draggable={editable && p.status !== "departed" && p.status !== "loaned_out"}
               onDragStart={(e) => { e.dataTransfer.setData("text/fantasy-player", p.id); e.dataTransfer.effectAllowed = "move"; }}
               className={`flex items-center gap-2 px-3 py-2 text-sm ${editable ? "cursor-grab active:cursor-grabbing" : ""} ${
                 isSel ? "bg-primary/10" : full ? "opacity-50" : "hover:bg-muted/40"
@@ -1217,24 +1219,34 @@ function PlayerSidebar({
             >
               <span className={`text-[10px] font-bold rounded-md border px-1.5 py-0.5 ${POS_TINT[p.position]}`}>{POSITION_SHORT[p.position]}</span>
               <div className="min-w-0 flex-1">
-                <div className={`truncate font-medium ${p.status === "departed" ? "line-through decoration-2 decoration-destructive text-muted-foreground" : ""}`}>{p.name}</div>
+                <div className={`truncate font-medium ${p.status === "departed" || p.status === "loaned_out" ? "line-through decoration-2 decoration-destructive text-muted-foreground" : ""}`}>{p.name}</div>
                 <div className="text-[11px] text-muted-foreground tabular-nums">
                   {money(p.valueM)}
                   <span className="ml-1 text-foreground/80">· {p.seasonPoints ?? 0} pts</span>
                   {isSel && <span className="ml-1 text-primary">· {isStart ? "XI" : "bench"}</span>}
-                  {p.status !== "active" && <span className="ml-1 text-destructive uppercase">{p.status}</span>}
+                  {p.status === "loaned_out" ? (
+                    <span className="ml-1 text-destructive uppercase">out on loan{p.loanClub ? ` · ${p.loanClub}` : ""}</span>
+                  ) : (
+                    p.status !== "active" && <span className="ml-1 text-destructive uppercase">{p.status}</span>
+                  )}
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => onPick(p)}
-                disabled={!editable || p.status === "departed"}
-                title={p.status === "departed" ? "Left the club — cannot be selected" : isSel ? "Remove from squad" : "Add to squad"}
+                disabled={!editable || (!isSel && (p.status === "departed" || p.status === "loaned_out"))}
+                title={
+                  p.status === "loaned_out"
+                    ? "Out on loan — cannot be selected"
+                    : p.status === "departed"
+                      ? "Left the club — cannot be selected"
+                      : isSel ? "Remove from squad" : "Add to squad"
+                }
                 className={`shrink-0 grid place-items-center size-7 rounded-lg border transition-colors disabled:opacity-40 ${
                   isSel ? "border-destructive/50 text-destructive hover:bg-destructive/10" : "border-primary/50 text-primary hover:bg-primary/10"
                 }`}
               >
-                {p.status === "departed" ? <X className="size-3.5 text-destructive" /> : isSel ? <Minus className="size-3.5" /> : <Plus className="size-3.5" />}
+                {isSel ? <Minus className="size-3.5" /> : p.status === "departed" || p.status === "loaned_out" ? <X className="size-3.5 text-destructive" /> : <Plus className="size-3.5" />}
               </button>
             </li>
           );
