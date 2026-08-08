@@ -666,53 +666,53 @@ function SquadBuilder({
 
   return (
     <div className="space-y-4">
-      <div className="rounded-2xl border border-border/60 bg-card/80 backdrop-blur p-4 flex flex-col lg:flex-row gap-4">
-        <div className="flex-1 min-w-[200px]">
-          {gw ? (
-            <>
-              <div className="font-semibold">GW{gw.gwNumber} — {gw.homeTeam} v {gw.awayTeam}</div>
-              <div className="text-xs text-muted-foreground">{kickoffLabel(gw.kickoffAt)}</div>
-            </>
-          ) : (
-            <>
-              <div className="font-semibold">Pre-season — no gameweek open yet</div>
-              <div className="text-xs text-muted-foreground">Try out formations and squads now; you can save once the first gameweek opens.</div>
-            </>
-          )}
-        </div>
-        {gw && (
-          <div className="lg:max-w-[420px]">
-            <DigitalLockCountdown lockAt={gw.lockAt} />
-          </div>
-        )}
-        {squadTab === "selector" ? (
-          <div className="flex items-center gap-2 text-sm">
-            <Wallet className="size-4 text-primary" />
-            <span className={remaining < 0 ? "text-destructive font-bold" : "font-bold"}>{money(remaining)}</span>
-            <span className="text-muted-foreground">left of {money(state.budgetM)}</span>
-          </div>
-        ) : (
-          <div className="flex items-center gap-4 text-sm text-muted-foreground">
-            <span>
-              <span className="font-bold text-foreground">{starters.length}</span>/11 picked
-            </span>
-            {existing && (hasGwPoints || existing.points !== null) && (
-              <span>
-                GW points <span className="font-bold text-primary tabular-nums">{existing.points ?? 0}</span>
-                {existing.transferCost > 0 && <span className="text-destructive text-xs"> (−{existing.transferCost})</span>}
-              </span>
+      <div className="rounded-2xl border border-border/60 bg-card/80 backdrop-blur p-4 space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+          <div className="flex-1 min-w-[200px]">
+            {gw ? (
+              <>
+                <div className="font-semibold">GW{gw.gwNumber} — {gw.homeTeam} v {gw.awayTeam}</div>
+                <div className="text-xs text-muted-foreground">{kickoffLabel(gw.kickoffAt)}</div>
+              </>
+            ) : (
+              <>
+                <div className="font-semibold">Pre-season — no gameweek open yet</div>
+                <div className="text-xs text-muted-foreground">Try out formations and squads now; you can save once the first gameweek opens.</div>
+              </>
             )}
           </div>
-        )}
-        <Button
-          onClick={handleSave}
-          variant={dirty ? "default" : "outline"}
-          className={dirty ? "" : "opacity-60"}
-          title={dirty ? undefined : "No changes to save"}
-          disabled={saving || locked || !gw || !canPlay || problems.length > 0 || !dirty}
-        >
-          {saving ? <Loader2 className="size-4 animate-spin" /> : !dirty ? "Saved" : squadTab === "xi" ? "Save starting 11" : "Save squad"}
-        </Button>
+          <div className="flex items-center gap-3">
+            {squadTab === "selector" ? (
+              <div className="flex items-center gap-2 text-sm">
+                <Wallet className="size-4 text-primary" />
+                <span className={remaining < 0 ? "text-destructive font-bold" : "font-bold"}>{money(remaining)}</span>
+                <span className="text-muted-foreground">left of {money(state.budgetM)}</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                <span>
+                  <span className="font-bold text-foreground">{starters.length}</span>/11 picked
+                </span>
+                {existing && (hasGwPoints || existing.points !== null) && (
+                  <span>
+                    GW points <span className="font-bold text-primary tabular-nums">{existing.points ?? 0}</span>
+                    {existing.transferCost > 0 && <span className="text-destructive text-xs"> (−{existing.transferCost})</span>}
+                  </span>
+                )}
+              </div>
+            )}
+            <Button
+              onClick={handleSave}
+              variant={dirty ? "default" : "outline"}
+              className={dirty ? "" : "opacity-60"}
+              title={dirty ? undefined : "No changes to save"}
+              disabled={saving || locked || !gw || !canPlay || problems.length > 0 || !dirty}
+            >
+              {saving ? <Loader2 className="size-4 animate-spin" /> : !dirty ? "Saved" : squadTab === "xi" ? "Save starting 11" : "Save squad"}
+            </Button>
+          </div>
+        </div>
+        {gw && <DigitalLockCountdown lockAt={gw.lockAt} />}
       </div>
 
       {gw && !canPlay && (
