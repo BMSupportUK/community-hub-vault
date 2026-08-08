@@ -663,6 +663,122 @@ const POS_TINT: Record<FantasyPosition, string> = {
   fwd: "bg-rose-500/20 text-rose-300 border-rose-500/40",
 };
 
+// ------------------------------------------------------------------
+// Squad pitch — the 15-man squad laid out by the position quotas
+// ------------------------------------------------------------------
+function SquadPitch({
+  playerById, selected, starters, editable, onAdd, onRemove,
+}: {
+  playerById: Map<string, FantasyPlayerDTO>;
+  selected: string[];
+  starters: string[];
+  editable: boolean;
+  onAdd: (playerId: string) => void;
+  onRemove: (playerId: string) => void;
+}) {
+  const rows = POSITION_ORDER.map((pos) => {
+    const picked = selected.filter((id) => playerById.get(id)?.position === pos);
+    const slots: (string | null)[] = [];
+    for (let i = 0; i < SQUAD_QUOTA[pos]; i++) slots.push(picked[i] ?? null);
+    return { pos, slots, filled: picked.length };
+  });
+
+  const dropProps = (pos: FantasyPosition) => ({
+    onDragOver: (e: ReactDragEvent) => {
+      if (!editable) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "move";
+    },
+    onDrop: (e: ReactDragEvent) => {
+      if (!editable) return;
+      e.preventDefault();
+      const id = e.dataTransfer.getData("text/fantasy-player");
+      const p = id ? playerById.get(id) : undefined;
+      if (p && p.position === pos) onAdd(p.id);
+    },
+  });
+
+  return (
+    <div className="rounded-2xl border border-border/60 bg-card/85 backdrop-blur overflow-hidden">
+      <div className="p-3 border-b border-border/60 flex flex-wrap items-center gap-2">
+        <h3 className="font-display font-bold text-sm">
+          Squad ({selected.length}/{FANTASY_SQUAD_SIZE})
+        </h3>
+        <p className="text-xs text-muted-foreground">
+          {SQUAD_QUOTA.gk} GK · {SQUAD_QUOTA.def} Def · {SQUAD_QUOTA.mid} Mid · {SQUAD_QUOTA.fwd} Fwd — tap a shirt to remove, or drag a player from the list into a slot.
+        </p>
+      </div>
+      <div
+        className="relative p-4 sm:p-6"
+        style={{
+          background:
+            "repeating-linear-gradient(to bottom, oklch(0.34 0.09 152) 0 44px, oklch(0.31 0.09 152) 44px 88px)",
+        }}
+      >
+        <div className="pointer-events-none absolute inset-4 sm:inset-6 rounded-xl border-2 border-white/25" aria-hidden />
+        <div className="pointer-events-none absolute left-1/2 top-4 sm:top-6 h-14 w-36 -translate-x-1/2 rounded-b-xl border-x-2 border-b-2 border-white/25" aria-hidden />
+        <div className="pointer-events-none absolute left-1/2 bottom-4 sm:bottom-6 h-14 w-36 -translate-x-1/2 rounded-t-xl border-x-2 border-t-2 border-white/25" aria-hidden />
+        <div className="relative space-y-3 sm:space-y-5 py-2">
+          {rows.map((row) => (
+            <div key={row.pos} className="space-y-1.5">
+              <div className="text-center text-[10px] font-bold uppercase tracking-wider text-white/70">
+                {POSITION_LABEL[row.pos]}s {row.filled}/{SQUAD_QUOTA[row.pos]}
+              </div>
+              <div className="flex flex-nowrap justify-center gap-1 sm:gap-2" {...dropProps(row.pos)}>
+                {row.slots.map((id, si) => {
+                  const p = id ? playerById.get(id) : undefined;
+                  const isStart = !!id && starters.includes(id);
+                  return (
+                    <div
+                      key={`${row.pos}-${si}`}
+                      {...dropProps(row.pos)}
+                      draggable={editable && !!id}
+                      onDragStart={(e) => { if (id) e.dataTransfer.setData("text/fantasy-player", id); }}
+                      className={`w-[62px] sm:w-[84px] rounded-xl border px-1.5 py-2 text-center backdrop-blur-sm transition-colors ${
+                        p ? "border-white/40 bg-slate-950/70" : "border-dashed border-white/40 bg-white/10"
+                      }`}
+                    >
+                      {p ? (
+                        <>
+                          <div className="flex items-center justify-center gap-1">
+                            <Shirt className="size-4 text-white/80" />
+                          </div>
+                          <div className="mt-1 truncate text-[11px] font-semibold text-white">{p.name}</div>
+                          <div className="text-[10px] tabular-nums text-white/70">{money(p.valueM)}</div>
+                          <div className="text-[9px] font-bold uppercase tracking-wide text-white/60">
+                            {isStart ? "XI" : "Bench"}
+                          </div>
+                          {editable && (
+                            <button
+                              type="button"
+                              title="Remove from squad"
+                              onClick={() => onRemove(p.id)}
+                              className="mt-1 rounded p-0.5 text-white/50 hover:text-destructive"
+                            >
+                              <X className="size-3" />
+                            </button>
+                          )}
+                        </>
+                      ) : (
+                        <div className="py-2 text-[11px] font-semibold text-white/80">
+                          <div className="mx-auto mb-1 grid size-6 place-items-center rounded-full border border-white/50">
+                            <Plus className="size-3" />
+                          </div>
+                          {POSITION_SHORT[row.pos]}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function PlayerSidebar({
   players, selected, starters, counts, editable, onPick,
 }: {
