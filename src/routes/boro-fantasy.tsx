@@ -397,7 +397,7 @@ function SquadBuilder({
   if (!viceId || !starters.includes(viceId)) problems.push("Pick a vice-captain from your starting XI.");
   if (captainId && captainId === viceId) problems.push("Captain and vice-captain must be different.");
 
-  const editable = canPlay && !locked;
+  const editable = !locked && (canPlay || !gw);
 
   /** Ensure the player is in the 15 — returns the new squad list, or null if not possible. */
   function withPlayer(sel: string[], p: FantasyPlayerDTO): string[] | null {
@@ -482,16 +482,21 @@ function SquadBuilder({
     }
   }
 
-  if (!gw) {
-    return <div className="rounded-2xl border border-border/60 bg-card/80 p-6 text-sm text-muted-foreground">No gameweeks have been set up yet — check back soon.</div>;
-  }
-
   return (
     <div className="space-y-4">
       <div className="rounded-2xl border border-border/60 bg-card/80 backdrop-blur p-4 flex flex-wrap items-center gap-3">
         <div className="flex-1 min-w-[200px]">
-          <div className="font-semibold">GW{gw.gwNumber} — {gw.homeTeam} v {gw.awayTeam}</div>
-          <div className="text-xs text-muted-foreground">{kickoffLabel(gw.kickoffAt)} · locks {kickoffLabel(gw.lockAt)}</div>
+          {gw ? (
+            <>
+              <div className="font-semibold">GW{gw.gwNumber} — {gw.homeTeam} v {gw.awayTeam}</div>
+              <div className="text-xs text-muted-foreground">{kickoffLabel(gw.kickoffAt)} · locks {kickoffLabel(gw.lockAt)}</div>
+            </>
+          ) : (
+            <>
+              <div className="font-semibold">Pre-season — no gameweek open yet</div>
+              <div className="text-xs text-muted-foreground">Try out formations and squads now; you can save once the first gameweek opens.</div>
+            </>
+          )}
         </div>
         <div className="flex items-center gap-2 text-sm">
           <Wallet className="size-4 text-primary" />
@@ -502,12 +507,12 @@ function SquadBuilder({
           <span className="font-bold text-foreground">{selected.length}</span>/{FANTASY_SQUAD_SIZE} picked ·{" "}
           <span className="font-bold text-foreground">{starters.length}</span>/11 starting
         </div>
-        <Button onClick={handleSave} disabled={saving || locked || !canPlay || problems.length > 0}>
+        <Button onClick={handleSave} disabled={saving || locked || !gw || !canPlay || problems.length > 0}>
           {saving ? <Loader2 className="size-4 animate-spin" /> : "Save squad"}
         </Button>
       </div>
 
-      {!canPlay && (
+      {gw && !canPlay && (
         <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm">
           Join the game (or sign in as a guest) to save a squad — you can browse the player pool meanwhile.
         </div>
