@@ -1156,14 +1156,15 @@ function PlayerSidebar({
   const list = useMemo(() => {
     const term = q.trim().toLowerCase();
     return players
-      .filter((p) => p.status !== "departed")
       .filter((p) => (filter === "all" ? true : p.position === filter))
       .filter((p) => (term ? p.name.toLowerCase().includes(term) : true))
-      .sort((a, b) =>
-        sort === "name"
+      .sort((a, b) => {
+        const gone = (a.status === "departed" ? 1 : 0) - (b.status === "departed" ? 1 : 0);
+        if (gone !== 0) return gone;
+        return sort === "name"
           ? a.name.localeCompare(b.name)
-          : POSITION_ORDER.indexOf(a.position) - POSITION_ORDER.indexOf(b.position) || b.valueM - a.valueM,
-      );
+          : POSITION_ORDER.indexOf(a.position) - POSITION_ORDER.indexOf(b.position) || b.valueM - a.valueM;
+      });
   }, [players, filter, q, sort]);
 
   return (
@@ -1216,9 +1217,10 @@ function PlayerSidebar({
             >
               <span className={`text-[10px] font-bold rounded-md border px-1.5 py-0.5 ${POS_TINT[p.position]}`}>{POSITION_SHORT[p.position]}</span>
               <div className="min-w-0 flex-1">
-                <div className="truncate font-medium">{p.name}</div>
+                <div className={`truncate font-medium ${p.status === "departed" ? "line-through decoration-2 decoration-destructive text-muted-foreground" : ""}`}>{p.name}</div>
                 <div className="text-[11px] text-muted-foreground tabular-nums">
                   {money(p.valueM)}
+                  <span className="ml-1 text-foreground/80">· {p.seasonPoints ?? 0} pts</span>
                   {isSel && <span className="ml-1 text-primary">· {isStart ? "XI" : "bench"}</span>}
                   {p.status !== "active" && <span className="ml-1 text-destructive uppercase">{p.status}</span>}
                 </div>
@@ -1227,12 +1229,12 @@ function PlayerSidebar({
                 type="button"
                 onClick={() => onPick(p)}
                 disabled={!editable || p.status === "departed"}
-                title={isSel ? "Remove from squad" : "Add to squad"}
+                title={p.status === "departed" ? "Left the club — cannot be selected" : isSel ? "Remove from squad" : "Add to squad"}
                 className={`shrink-0 grid place-items-center size-7 rounded-lg border transition-colors disabled:opacity-40 ${
                   isSel ? "border-destructive/50 text-destructive hover:bg-destructive/10" : "border-primary/50 text-primary hover:bg-primary/10"
                 }`}
               >
-                {isSel ? <Minus className="size-3.5" /> : <Plus className="size-3.5" />}
+                {p.status === "departed" ? <X className="size-3.5 text-destructive" /> : isSel ? <Minus className="size-3.5" /> : <Plus className="size-3.5" />}
               </button>
             </li>
           );

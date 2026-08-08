@@ -22,6 +22,8 @@ export type FantasyPlayerDTO = {
   valueM: number;
   status: "active" | "injured" | "suspended" | "departed";
   departedAt?: string | null;
+  /** Total fantasy points this player has earned so far this season. */
+  seasonPoints?: number;
 };
 
 export type FantasyGameweekDTO = {
@@ -150,12 +152,19 @@ function mapSquad(r: any): FantasySquadDTO {
 }
 
 export async function loadPlayers(admin: any): Promise<FantasyPlayerDTO[]> {
-  const { data, error } = await admin
-    .from("fantasy_players")
-    .select("id, name, position, shirt_number, value_m, status, departed_at")
-    .order("sort_order", { ascending: true });
+  const [{ data, error }, statsRes] = await Promise.all([
+    admin
+      .from("fantasy_players")
+      .select("id, name, position, shirt_number, value_m, status, departed_at")
+      .order("sort_order", { ascending: true }),
+    admin.from("fantasy_player_stats").select("player_id, points"),
+  ]);
   if (error) throw new Error(error.message);
-  return (data ?? []).map(mapPlayer);
+  const totals = new Map<string, number>();
+  for (const r of (statsRes?.data ?? []) as any[]) {
+    totals.set(r.player_id, (totals.get(r.player_id) ?? 0) + (Number(r.points) || 0));
+  }
+  return (data ?? []).map((r: any) => ({ ...mapPlayer(r), seasonPoints: totals.get(r.id) ?? 0 }));
 }
 
 export async function loadGameweeks(admin: any): Promise<FantasyGameweekDTO[]> {
@@ -182,13 +191,15 @@ export function pickCurrentGameweek(gws: FantasyGameweekDTO[]): string | null {
 }
 
 export async function loadState(admin: any, owner: Owner | null): Promise<FantasyStateDTO> {
-  // Departed players only remain in the returned pool when the manager already
-  // owns them, so they can see who must be replaced without cluttering the
-  // selectable player list with footballers who have left the club.
+  // Before kick-off, departed players are hidden unless already owned. Once the
+  // season has started they stay listed (struck through, unselectable) so their
+  // earned points remain visible.
   function visiblePlayers(
     all: FantasyPlayerDTO[],
     mySquads: FantasySquadDTO[],
+    seasonStarted: boolean,
   ): FantasyPlayerDTO[] {
+    if (seasonStarted) return all;
     const picked = new Set<string>();
     for (const s of mySquads) for (const p of s.picks) picked.add(p.playerId);
     return all.filter((p) => {
@@ -261,7 +272,7 @@ export async function loadState(admin: any, owner: Owner | null): Promise<Fantas
     freeTransfers,
     wildcardUsed,
     budgetM: FANTASY_BUDGET_M,
-    players: visiblePlayers(players, squads),
+    players: visiblePlayers(players, squads, isFantasySeasonStarted(gameweeks)),
     gameweeks,
     currentGameweekId: pickCurrentGameweek(gameweeks),
     squads,
