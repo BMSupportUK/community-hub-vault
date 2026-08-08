@@ -157,8 +157,9 @@ function BoroFantasyPage() {
       user
         ? stateFn({})
         : publicStateFn({ data: guest ? { email: guest.email, pin: guest.pin } : {} }),
-    staleTime: 15_000,
-    refetchInterval: 60_000,
+    staleTime: 5_000,
+    refetchInterval: 15_000,
+    refetchIntervalInBackground: true,
     refetchOnWindowFocus: true,
   });
 
