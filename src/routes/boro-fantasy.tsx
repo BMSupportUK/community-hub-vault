@@ -1156,6 +1156,7 @@ function PlayerSidebar({
   const list = useMemo(() => {
     const term = q.trim().toLowerCase();
     return players
+      .filter((p) => p.status !== "departed")
       .filter((p) => (filter === "all" ? true : p.position === filter))
       .filter((p) => (term ? p.name.toLowerCase().includes(term) : true))
       .sort((a, b) =>
