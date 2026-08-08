@@ -666,12 +666,12 @@ function SquadBuilder({
 
   return (
     <div className="space-y-4">
-      <div className="rounded-2xl border border-border/60 bg-card/80 backdrop-blur p-4 flex flex-wrap items-center gap-3">
+      <div className="rounded-2xl border border-border/60 bg-card/80 backdrop-blur p-4 flex flex-col lg:flex-row gap-4">
         <div className="flex-1 min-w-[200px]">
           {gw ? (
             <>
               <div className="font-semibold">GW{gw.gwNumber} — {gw.homeTeam} v {gw.awayTeam}</div>
-              <div className="text-xs text-muted-foreground">{kickoffLabel(gw.kickoffAt)} · locks {kickoffLabel(gw.lockAt)}</div>
+              <div className="text-xs text-muted-foreground">{kickoffLabel(gw.kickoffAt)}</div>
             </>
           ) : (
             <>
@@ -680,6 +680,11 @@ function SquadBuilder({
             </>
           )}
         </div>
+        {gw && (
+          <div className="lg:max-w-[420px]">
+            <DigitalLockCountdown lockAt={gw.lockAt} />
+          </div>
+        )}
         {squadTab === "selector" ? (
           <div className="flex items-center gap-2 text-sm">
             <Wallet className="size-4 text-primary" />
