@@ -1510,6 +1510,8 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          last_seen_at: string | null
+          mfc_player_id: string | null
           name: string
           position: string
           shirt_number: number | null
@@ -1521,6 +1523,8 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          last_seen_at?: string | null
+          mfc_player_id?: string | null
           name: string
           position: string
           shirt_number?: number | null
@@ -1532,6 +1536,8 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          last_seen_at?: string | null
+          mfc_player_id?: string | null
           name?: string
           position?: string
           shirt_number?: number | null
