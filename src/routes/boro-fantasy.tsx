@@ -705,7 +705,7 @@ function ScoringTab() {
       </ul>
       <div className="text-sm text-muted-foreground">
         Squad rules: {FANTASY_SQUAD_SIZE} players ({SQUAD_QUOTA.gk} GK, {SQUAD_QUOTA.def} DEF, {SQUAD_QUOTA.mid} MID, {SQUAD_QUOTA.fwd} FWD),
-        a £30.0m budget and any of these formations: {FORMATION_KEYS.join(", ")}. Squads lock 60 minutes before kick-off.
+        a £30.0m budget and any of these formations: {FORMATION_KEYS.join(", ")}. Squads lock 30 minutes before kick-off.
       </div>
     </div>
   );
