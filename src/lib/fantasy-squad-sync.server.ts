@@ -125,16 +125,41 @@ export async function syncFantasyPlayersFromClub(admin: Admin): Promise<FantasyS
   const updated: string[] = [];
   const matchedIds = new Set<string>();
 
-  // The transfer feed is curated: only genuine, confirmed transfers entered by
-  // an admin belong there. Squad-feed churn (a player appearing in or dropping
-  // out of the published squad list) is NOT a transfer, so this sync never
-  // writes to fantasy_club_transfers.
+  // The transfer feed logs genuine first-team movement only: a first-team
+  // player who appears in (or disappears from) the official club squad after
+  // the initial baseline snapshot. Academy churn and manually added players are
+  // never logged, and the very first baseline run logs nothing at all.
   const { data: baselineRow } = await admin
     .from("app_settings")
     .select("key")
     .eq("key", "fantasy_squad_baseline_at")
     .maybeSingle();
   const isBaseline = !baselineRow;
+
+  /** Record a club movement once — never duplicate the same player+direction. */
+  async function logTransfer(
+    playerName: string,
+    direction: "in" | "out",
+    playerId: string | null,
+    note: string,
+  ) {
+    if (isBaseline) return;
+    const { data: seen } = await admin
+      .from("fantasy_club_transfers")
+      .select("id")
+      .eq("player_name", playerName)
+      .eq("direction", direction)
+      .maybeSingle();
+    if (seen) return;
+    await admin.from("fantasy_club_transfers").insert({
+      player_name: playerName,
+      direction,
+      player_id: playerId,
+      transfer_date: nowIso.slice(0, 10),
+      window_label: "2026/27",
+      note,
+    });
+  }
 
   for (let i = 0; i < ordered.length; i++) {
     const p = ordered[i]!;
@@ -160,6 +185,9 @@ export async function syncFantasyPlayersFromClub(admin: Admin): Promise<FantasyS
       if (error) continue;
       added.push(p.name);
       matchedIds.add((inserted as any).id as string);
+      if (p.squadLevel === "first") {
+        await logTransfer(p.name, "in", (inserted as any).id as string, "Added to the official first-team squad");
+      }
       continue;
     }
 
@@ -197,6 +225,9 @@ export async function syncFantasyPlayersFromClub(admin: Admin): Promise<FantasyS
       .eq("id", row.id);
     if (error) continue;
     departed.push(row.name);
+    if ((row.squad_level ?? "first") === "first") {
+      await logTransfer(row.name, "out", row.id, "No longer in the official first-team squad");
+    }
   }
 
   if (isBaseline) {
