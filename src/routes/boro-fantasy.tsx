@@ -588,17 +588,19 @@ function SquadBuilder({
             </>
           )}
         </div>
-        <div className="flex items-center gap-2 text-sm">
-          <Wallet className="size-4 text-primary" />
-          <span className={remaining < 0 ? "text-destructive font-bold" : "font-bold"}>{money(remaining)}</span>
-          <span className="text-muted-foreground">left of {money(state.budgetM)}</span>
-        </div>
-        <div className="text-sm text-muted-foreground">
-          <span className="font-bold text-foreground">{selected.length}</span>/{FANTASY_SQUAD_SIZE} picked ·{" "}
-          <span className="font-bold text-foreground">{starters.length}</span>/11 starting
-        </div>
+        {squadTab === "selector" ? (
+          <div className="flex items-center gap-2 text-sm">
+            <Wallet className="size-4 text-primary" />
+            <span className={remaining < 0 ? "text-destructive font-bold" : "font-bold"}>{money(remaining)}</span>
+            <span className="text-muted-foreground">left of {money(state.budgetM)}</span>
+          </div>
+        ) : (
+          <div className="text-sm text-muted-foreground">
+            <span className="font-bold text-foreground">{starters.length}</span>/11 picked
+          </div>
+        )}
         <Button onClick={handleSave} disabled={saving || locked || !gw || !canPlay || problems.length > 0}>
-          {saving ? <Loader2 className="size-4 animate-spin" /> : "Save squad"}
+          {saving ? <Loader2 className="size-4 animate-spin" /> : squadTab === "xi" ? "Save starting 11" : "Save squad"}
         </Button>
       </div>
 
