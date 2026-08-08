@@ -1517,6 +1517,7 @@ export type Database = {
           position: string
           shirt_number: number | null
           sort_order: number
+          squad_level: string
           status: string
           updated_at: string
           value_m: number
@@ -1531,6 +1532,7 @@ export type Database = {
           position: string
           shirt_number?: number | null
           sort_order?: number
+          squad_level?: string
           status?: string
           updated_at?: string
           value_m?: number
@@ -1545,6 +1547,7 @@ export type Database = {
           position?: string
           shirt_number?: number | null
           sort_order?: number
+          squad_level?: string
           status?: string
           updated_at?: string
           value_m?: number
