@@ -130,6 +130,9 @@ function ForumLayout() {
             <Button asChild size="sm" className="bg-white text-[#961016] hover:bg-white/90 border-0 shadow-md justify-center col-span-2 sm:col-span-1">
               <Link to="/boro-predictions"><Trophy className="size-4 mr-1.5" />MFC 2026 Predictions</Link>
             </Button>
+            <Button asChild size="sm" className="bg-white text-[#961016] hover:bg-white/90 border-0 shadow-md justify-center col-span-2 sm:col-span-1">
+              <Link to="/boro-fantasy"><Trophy className="size-4 mr-1.5" />MFC Fantasy Manager</Link>
+            </Button>
           </div>
           <div className="hidden sm:flex size-20 rounded-full bg-white items-center justify-center shadow-lg ring-2 ring-white/50 shrink-0">
             <img
