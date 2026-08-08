@@ -1509,6 +1509,7 @@ export type Database = {
       fantasy_players: {
         Row: {
           created_at: string
+          departed_at: string | null
           id: string
           last_seen_at: string | null
           mfc_player_id: string | null
@@ -1522,6 +1523,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          departed_at?: string | null
           id?: string
           last_seen_at?: string | null
           mfc_player_id?: string | null
@@ -1535,6 +1537,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          departed_at?: string | null
           id?: string
           last_seen_at?: string | null
           mfc_player_id?: string | null
