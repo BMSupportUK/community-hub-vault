@@ -92,7 +92,6 @@ export async function syncFantasyPlayersFromClub(admin: Admin): Promise<FantasyS
 
   const loanedOut = await fetchMfcLoanedOutPlayers().catch(() => []);
   const loanedNames = new Set(loanedOut.map((p) => normName(p.name)));
-  const loanClubByName = new Map(loanedOut.map((p) => [normName(p.name), p.loanClub] as const));
 
   // Players out on loan are not selectable.
   const available = squad.filter((p) => !loanedNames.has(normName(p.name)));
@@ -126,16 +125,16 @@ export async function syncFantasyPlayersFromClub(admin: Admin): Promise<FantasyS
   const updated: string[] = [];
   const matchedIds = new Set<string>();
 
-  // The very first sync imports the whole existing squad — those players were
-  // already at the club, so nothing from a baseline run belongs in the club
-  // transfer feed. Only later runs log genuine arrivals/exits.
+  // The transfer feed is curated: only genuine, confirmed transfers entered by
+  // an admin belong there. Squad-feed churn (a player appearing in or dropping
+  // out of the published squad list) is NOT a transfer, so this sync never
+  // writes to fantasy_club_transfers.
   const { data: baselineRow } = await admin
     .from("app_settings")
     .select("key")
     .eq("key", "fantasy_squad_baseline_at")
     .maybeSingle();
   const isBaseline = !baselineRow;
-  const logTransfers = !isBaseline;
 
   for (let i = 0; i < ordered.length; i++) {
     const p = ordered[i]!;
@@ -161,25 +160,6 @@ export async function syncFantasyPlayersFromClub(admin: Admin): Promise<FantasyS
       if (error) continue;
       added.push(p.name);
       matchedIds.add((inserted as any).id as string);
-      // Log the confirmed arrival in the club transfer feed (once).
-      if (!logTransfers) continue;
-      const { data: dupe } = await admin
-        .from("fantasy_club_transfers")
-        .select("id")
-        .eq("direction", "in")
-        .ilike("player_name", p.name)
-        .limit(1);
-      if (!dupe || dupe.length === 0) {
-        await admin.from("fantasy_club_transfers").insert({
-          player_name: p.name,
-          direction: "in",
-          other_club: p.onLoanFrom,
-          window_label: null,
-          transfer_date: nowIso.slice(0, 10),
-          player_id: (inserted as any).id,
-          note: p.onLoanFrom ? "Loan signing — added automatically from mfc.co.uk" : "Added automatically from mfc.co.uk squad",
-        });
-      }
       continue;
     }
 
@@ -217,26 +197,6 @@ export async function syncFantasyPlayersFromClub(admin: Admin): Promise<FantasyS
       .eq("id", row.id);
     if (error) continue;
     departed.push(row.name);
-    if (!logTransfers) continue;
-    const { data: dupe } = await admin
-      .from("fantasy_club_transfers")
-      .select("id")
-      .eq("direction", "out")
-      .ilike("player_name", row.name)
-      .limit(1);
-    if (!dupe || dupe.length === 0) {
-      const loanClub = loanClubByName.get(normName(row.name)) ?? null;
-      await admin.from("fantasy_club_transfers").insert({
-        player_name: row.name,
-        direction: "out",
-        other_club: loanClub,
-        transfer_date: nowIso.slice(0, 10),
-        player_id: row.id,
-        note: loanClub
-          ? `Out on loan at ${loanClub} — removed automatically from mfc.co.uk squad`
-          : "No longer in the mfc.co.uk first-team squad",
-      });
-    }
   }
 
   if (isBaseline) {
