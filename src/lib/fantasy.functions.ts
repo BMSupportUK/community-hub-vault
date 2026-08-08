@@ -371,7 +371,10 @@ export const adminUpsertClubTransfer = createServerFn({ method: "POST" })
         }
       } else if (existing) {
         playerId = (existing as any).id;
-        await admin.from("fantasy_players").update({ status: "departed" }).eq("id", playerId!);
+        await admin
+          .from("fantasy_players")
+          .update({ status: "departed", departed_at: new Date().toISOString() })
+          .eq("id", playerId!);
       }
     }
 

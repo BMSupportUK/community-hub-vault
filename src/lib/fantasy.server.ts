@@ -20,6 +20,7 @@ export type FantasyPlayerDTO = {
   shirtNumber: number | null;
   valueM: number;
   status: "active" | "injured" | "suspended" | "departed";
+  departedAt?: string | null;
 };
 
 export type FantasyGameweekDTO = {
@@ -103,6 +104,7 @@ export function mapPlayer(r: any): FantasyPlayerDTO {
     shirtNumber: r.shirt_number ?? null,
     valueM: Number(r.value_m),
     status: r.status,
+    departedAt: r.departed_at ?? null,
   };
 }
 
@@ -146,7 +148,7 @@ function mapSquad(r: any): FantasySquadDTO {
 export async function loadPlayers(admin: any): Promise<FantasyPlayerDTO[]> {
   const { data, error } = await admin
     .from("fantasy_players")
-    .select("id, name, position, shirt_number, value_m, status")
+    .select("id, name, position, shirt_number, value_m, status, departed_at")
     .order("sort_order", { ascending: true });
   if (error) throw new Error(error.message);
   return (data ?? []).map(mapPlayer);
@@ -176,6 +178,25 @@ export function pickCurrentGameweek(gws: FantasyGameweekDTO[]): string | null {
 }
 
 export async function loadState(admin: any, owner: Owner | null): Promise<FantasyStateDTO> {
+  // Players who left before the season's first gameweek are pre-season exits and
+  // shouldn't clutter the pool at all. Departures during the season stay visible
+  // (flagged "departed") so managers know they must replace them.
+  function visiblePlayers(
+    all: FantasyPlayerDTO[],
+    gws: FantasyGameweekDTO[],
+    mySquads: FantasySquadDTO[],
+  ): FantasyPlayerDTO[] {
+    const seasonStart = gws.length ? new Date(gws[0]!.kickoffAt).getTime() : Date.now();
+    const picked = new Set<string>();
+    for (const s of mySquads) for (const p of s.picks) picked.add(p.playerId);
+    return all.filter((p) => {
+      if (p.status !== "departed") return true;
+      if (picked.has(p.id)) return true;
+      const left = p.departedAt ? new Date(p.departedAt).getTime() : 0;
+      return left >= seasonStart;
+    });
+  }
+
   const [players, gameweeks, clubTransfersRes] = await Promise.all([
     loadPlayers(admin),
     loadGameweeks(admin),
@@ -238,7 +259,7 @@ export async function loadState(admin: any, owner: Owner | null): Promise<Fantas
     freeTransfers,
     wildcardUsed,
     budgetM: FANTASY_BUDGET_M,
-    players,
+    players: visiblePlayers(players, gameweeks, squads),
     gameweeks,
     currentGameweekId: pickCurrentGameweek(gameweeks),
     squads,

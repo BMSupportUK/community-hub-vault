@@ -147,7 +147,10 @@ export async function syncFantasyPlayersFromClub(admin: Admin): Promise<FantasyS
     if (row.name !== p.name) changes.name = p.name;
     if (row.position !== p.position) changes.position = p.position;
     if ((row.shirt_number ?? null) !== (p.shirtNumber ?? null)) changes.shirt_number = p.shirtNumber;
-    if (row.status === "departed") changes.status = "active";
+    if (row.status === "departed") {
+      changes.status = "active";
+      changes.departed_at = null;
+    }
     if ((row.sort_order ?? -1) !== sortOrder) changes.sort_order = sortOrder;
     const keys = Object.keys(changes).filter((k) => k !== "last_seen_at");
     await admin.from("fantasy_players").update(changes).eq("id", row.id);
@@ -162,7 +165,7 @@ export async function syncFantasyPlayersFromClub(admin: Admin): Promise<FantasyS
     if (row.status === "departed") continue;
     const { error } = await admin
       .from("fantasy_players")
-      .update({ status: "departed" })
+      .update({ status: "departed", departed_at: nowIso })
       .eq("id", row.id);
     if (error) continue;
     departed.push(row.name);
