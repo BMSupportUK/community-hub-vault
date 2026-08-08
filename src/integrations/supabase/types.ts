@@ -1271,6 +1271,458 @@ export type Database = {
         }
         Relationships: []
       }
+      fantasy_club_transfers: {
+        Row: {
+          created_at: string
+          direction: string
+          fee: string | null
+          id: string
+          note: string | null
+          other_club: string | null
+          player_id: string | null
+          player_name: string
+          transfer_date: string
+          updated_at: string
+          window_label: string | null
+        }
+        Insert: {
+          created_at?: string
+          direction: string
+          fee?: string | null
+          id?: string
+          note?: string | null
+          other_club?: string | null
+          player_id?: string | null
+          player_name: string
+          transfer_date?: string
+          updated_at?: string
+          window_label?: string | null
+        }
+        Update: {
+          created_at?: string
+          direction?: string
+          fee?: string | null
+          id?: string
+          note?: string | null
+          other_club?: string | null
+          player_id?: string | null
+          player_name?: string
+          transfer_date?: string
+          updated_at?: string
+          window_label?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fantasy_club_transfers_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "fantasy_players"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fantasy_entrants: {
+        Row: {
+          created_at: string
+          free_transfers: number
+          team_name: string
+          updated_at: string
+          user_id: string
+          wildcard_used: boolean
+        }
+        Insert: {
+          created_at?: string
+          free_transfers?: number
+          team_name?: string
+          updated_at?: string
+          user_id: string
+          wildcard_used?: boolean
+        }
+        Update: {
+          created_at?: string
+          free_transfers?: number
+          team_name?: string
+          updated_at?: string
+          user_id?: string
+          wildcard_used?: boolean
+        }
+        Relationships: []
+      }
+      fantasy_gameweeks: {
+        Row: {
+          created_at: string
+          fixture_id: string
+          gw_number: number
+          id: string
+          lock_at: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          fixture_id: string
+          gw_number: number
+          id?: string
+          lock_at: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          fixture_id?: string
+          gw_number?: number
+          id?: string
+          lock_at?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fantasy_gameweeks_fixture_id_fkey"
+            columns: ["fixture_id"]
+            isOneToOne: true
+            referencedRelation: "boro_fixtures"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fantasy_guest_entrants: {
+        Row: {
+          created_at: string
+          display_name: string
+          email: string
+          free_transfers: number
+          id: string
+          pin_hash: string
+          pin_reset_expires_at: string | null
+          pin_reset_hash: string | null
+          pin_salt: string
+          team_name: string
+          updated_at: string
+          wildcard_used: boolean
+        }
+        Insert: {
+          created_at?: string
+          display_name: string
+          email: string
+          free_transfers?: number
+          id?: string
+          pin_hash: string
+          pin_reset_expires_at?: string | null
+          pin_reset_hash?: string | null
+          pin_salt: string
+          team_name?: string
+          updated_at?: string
+          wildcard_used?: boolean
+        }
+        Update: {
+          created_at?: string
+          display_name?: string
+          email?: string
+          free_transfers?: number
+          id?: string
+          pin_hash?: string
+          pin_reset_expires_at?: string | null
+          pin_reset_hash?: string | null
+          pin_salt?: string
+          team_name?: string
+          updated_at?: string
+          wildcard_used?: boolean
+        }
+        Relationships: []
+      }
+      fantasy_player_stats: {
+        Row: {
+          assists: number
+          bonus: number
+          created_at: string
+          fixture_id: string
+          goals: number
+          goals_conceded: number
+          id: string
+          minutes: number
+          own_goals: number
+          pens_missed: number
+          pens_saved: number
+          player_id: string
+          points: number
+          reds: number
+          saves: number
+          updated_at: string
+          yellows: number
+        }
+        Insert: {
+          assists?: number
+          bonus?: number
+          created_at?: string
+          fixture_id: string
+          goals?: number
+          goals_conceded?: number
+          id?: string
+          minutes?: number
+          own_goals?: number
+          pens_missed?: number
+          pens_saved?: number
+          player_id: string
+          points?: number
+          reds?: number
+          saves?: number
+          updated_at?: string
+          yellows?: number
+        }
+        Update: {
+          assists?: number
+          bonus?: number
+          created_at?: string
+          fixture_id?: string
+          goals?: number
+          goals_conceded?: number
+          id?: string
+          minutes?: number
+          own_goals?: number
+          pens_missed?: number
+          pens_saved?: number
+          player_id?: string
+          points?: number
+          reds?: number
+          saves?: number
+          updated_at?: string
+          yellows?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fantasy_player_stats_fixture_id_fkey"
+            columns: ["fixture_id"]
+            isOneToOne: false
+            referencedRelation: "boro_fixtures"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fantasy_player_stats_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "fantasy_players"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fantasy_players: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          position: string
+          shirt_number: number | null
+          sort_order: number
+          status: string
+          updated_at: string
+          value_m: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          position: string
+          shirt_number?: number | null
+          sort_order?: number
+          status?: string
+          updated_at?: string
+          value_m?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          position?: string
+          shirt_number?: number | null
+          sort_order?: number
+          status?: string
+          updated_at?: string
+          value_m?: number
+        }
+        Relationships: []
+      }
+      fantasy_squad_picks: {
+        Row: {
+          buy_value_m: number
+          id: string
+          is_starter: boolean
+          player_id: string
+          points: number | null
+          slot_order: number
+          squad_id: string
+        }
+        Insert: {
+          buy_value_m?: number
+          id?: string
+          is_starter?: boolean
+          player_id: string
+          points?: number | null
+          slot_order?: number
+          squad_id: string
+        }
+        Update: {
+          buy_value_m?: number
+          id?: string
+          is_starter?: boolean
+          player_id?: string
+          points?: number | null
+          slot_order?: number
+          squad_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fantasy_squad_picks_player_id_fkey"
+            columns: ["player_id"]
+            isOneToOne: false
+            referencedRelation: "fantasy_players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fantasy_squad_picks_squad_id_fkey"
+            columns: ["squad_id"]
+            isOneToOne: false
+            referencedRelation: "fantasy_squads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fantasy_squads: {
+        Row: {
+          captain_id: string | null
+          created_at: string
+          formation: string
+          gameweek_id: string
+          guest_id: string | null
+          id: string
+          points: number | null
+          transfer_cost: number
+          updated_at: string
+          user_id: string | null
+          vice_id: string | null
+        }
+        Insert: {
+          captain_id?: string | null
+          created_at?: string
+          formation?: string
+          gameweek_id: string
+          guest_id?: string | null
+          id?: string
+          points?: number | null
+          transfer_cost?: number
+          updated_at?: string
+          user_id?: string | null
+          vice_id?: string | null
+        }
+        Update: {
+          captain_id?: string | null
+          created_at?: string
+          formation?: string
+          gameweek_id?: string
+          guest_id?: string | null
+          id?: string
+          points?: number | null
+          transfer_cost?: number
+          updated_at?: string
+          user_id?: string | null
+          vice_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fantasy_squads_captain_id_fkey"
+            columns: ["captain_id"]
+            isOneToOne: false
+            referencedRelation: "fantasy_players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fantasy_squads_gameweek_id_fkey"
+            columns: ["gameweek_id"]
+            isOneToOne: false
+            referencedRelation: "fantasy_gameweeks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fantasy_squads_guest_id_fkey"
+            columns: ["guest_id"]
+            isOneToOne: false
+            referencedRelation: "fantasy_guest_entrants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fantasy_squads_vice_id_fkey"
+            columns: ["vice_id"]
+            isOneToOne: false
+            referencedRelation: "fantasy_players"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fantasy_transfers: {
+        Row: {
+          cost: number
+          created_at: string
+          forced: boolean
+          gameweek_id: string
+          guest_id: string | null
+          id: string
+          in_player_id: string | null
+          out_player_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          cost?: number
+          created_at?: string
+          forced?: boolean
+          gameweek_id: string
+          guest_id?: string | null
+          id?: string
+          in_player_id?: string | null
+          out_player_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          cost?: number
+          created_at?: string
+          forced?: boolean
+          gameweek_id?: string
+          guest_id?: string | null
+          id?: string
+          in_player_id?: string | null
+          out_player_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fantasy_transfers_gameweek_id_fkey"
+            columns: ["gameweek_id"]
+            isOneToOne: false
+            referencedRelation: "fantasy_gameweeks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fantasy_transfers_guest_id_fkey"
+            columns: ["guest_id"]
+            isOneToOne: false
+            referencedRelation: "fantasy_guest_entrants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fantasy_transfers_in_player_id_fkey"
+            columns: ["in_player_id"]
+            isOneToOne: false
+            referencedRelation: "fantasy_players"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fantasy_transfers_out_player_id_fkey"
+            columns: ["out_player_id"]
+            isOneToOne: false
+            referencedRelation: "fantasy_players"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       forum_board_affiliate_banners: {
         Row: {
           banner_id: string
@@ -4350,6 +4802,21 @@ export type Database = {
         }
         Relationships: []
       }
+      fantasy_leaderboard: {
+        Row: {
+          avatar_url: string | null
+          display_name: string | null
+          entrant_id: string | null
+          gameweeks_scored: number | null
+          is_guest: boolean | null
+          squads_entered: number | null
+          team_name: string | null
+          total_hits: number | null
+          total_points: number | null
+          username: string | null
+        }
+        Relationships: []
+      }
       gate_messages: {
         Row: {
           application_id: string | null
@@ -4593,6 +5060,27 @@ export type Database = {
         }[]
       }
       fan_zone_unblock: { Args: { _other: string }; Returns: undefined }
+      fantasy_calc_points: {
+        Args: {
+          _assists: number
+          _bonus: number
+          _conceded: number
+          _goals: number
+          _minutes: number
+          _own_goals: number
+          _pens_missed: number
+          _pens_saved: number
+          _pos: string
+          _reds: number
+          _saves: number
+          _yellows: number
+        }
+        Returns: number
+      }
+      fantasy_score_gameweek: {
+        Args: { _gameweek_id: string }
+        Returns: undefined
+      }
       forum_board_allows: {
         Args: { _action: string; _board: string; _user: string }
         Returns: boolean
