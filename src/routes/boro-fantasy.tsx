@@ -1118,6 +1118,58 @@ function GameweekList({ state }: { state: FantasyStateDTO }) {
 // Transfers
 // ------------------------------------------------------------------
 function TransfersTab({ state }: { state: FantasyStateDTO }) {
+  return <TransfersTabBody state={state} />;
+}
+
+function ClubTransferList({
+  title, tone, items,
+}: {
+  title: string;
+  tone: "in" | "out";
+  items: FantasyStateDTO["clubTransfers"];
+}) {
+  return (
+    <div className="rounded-xl border border-border/60 overflow-hidden">
+      <div className="px-3 py-2 border-b border-border/60 flex items-center gap-2">
+        <span
+          className={
+            "text-[10px] font-bold uppercase rounded-full px-2 py-0.5 " +
+            (tone === "in" ? "bg-emerald-500/20 text-emerald-400" : "bg-red-500/20 text-red-400")
+          }
+        >
+          {tone === "in" ? "IN" : "OUT"}
+        </span>
+        <h4 className="text-sm font-semibold">{title}</h4>
+        <span className="ml-auto text-xs text-muted-foreground">{items.length}</span>
+      </div>
+      {items.length === 0 ? (
+        <p className="px-3 py-3 text-xs text-muted-foreground">
+          {tone === "in" ? "No new signings yet this season." : "No departures yet this season."}
+        </p>
+      ) : (
+        <ul className="divide-y divide-border/50">
+          {items.map((t) => (
+            <li key={t.id} className="px-3 py-2 text-sm flex flex-wrap items-center gap-2">
+              <span className="font-medium">{t.playerName}</span>
+              {t.otherClub && (
+                <span className="text-muted-foreground text-xs">
+                  {tone === "in" ? "from" : "to"} {t.otherClub}
+                </span>
+              )}
+              {t.fee && <span className="text-muted-foreground text-xs">· {t.fee}</span>}
+              <span className="ml-auto text-xs text-muted-foreground">
+                {new Date(t.transferDate).toLocaleDateString()}
+                {t.windowLabel ? ` · ${t.windowLabel}` : ""}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+function TransfersTabBody({ state }: { state: FantasyStateDTO }) {
   const playerById = useMemo(() => new Map(state.players.map((p) => [p.id, p.name])), [state.players]);
   const signings = state.clubTransfers.filter((t) => t.direction === "in");
   const exits = state.clubTransfers.filter((t) => t.direction === "out");
