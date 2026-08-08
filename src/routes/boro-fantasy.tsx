@@ -483,6 +483,17 @@ function SquadBuilder({
     ? { title: "Starting 11 checklist", items: xiProblems }
     : { title: "Squad checklist", items: squadProblems };
 
+  // Live points for this gameweek, straight from the saved squad.
+  const pointsByPlayer = useMemo(
+    () => new Map((existing?.picks ?? []).map((p) => [p.playerId, p.points])),
+    [existing],
+  );
+  const autoSubbedIds = useMemo(
+    () => new Set((existing?.picks ?? []).filter((p) => p.autoSubbed).map((p) => p.playerId)),
+    [existing],
+  );
+  const hasGwPoints = (existing?.picks ?? []).some((p) => p.points !== null);
+
   const editable = !locked && (canPlay || !gw);
 
   /** Ensure the player is in the 15 — returns the new squad list, or null if not possible. */
@@ -600,8 +611,16 @@ function SquadBuilder({
             <span className="text-muted-foreground">left of {money(state.budgetM)}</span>
           </div>
         ) : (
-          <div className="text-sm text-muted-foreground">
-            <span className="font-bold text-foreground">{starters.length}</span>/11 picked
+          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+            <span>
+              <span className="font-bold text-foreground">{starters.length}</span>/11 picked
+            </span>
+            {existing && (hasGwPoints || existing.points !== null) && (
+              <span>
+                GW points <span className="font-bold text-primary tabular-nums">{existing.points ?? 0}</span>
+                {existing.transferCost > 0 && <span className="text-destructive text-xs"> (−{existing.transferCost})</span>}
+              </span>
+            )}
           </div>
         )}
         <Button onClick={handleSave} disabled={saving || locked || !gw || !canPlay || problems.length > 0}>
@@ -660,6 +679,8 @@ function SquadBuilder({
               bench={bench}
               captainId={captainId}
               viceId={viceId}
+              pointsByPlayer={hasGwPoints ? pointsByPlayer : undefined}
+              autoSubbedIds={autoSubbedIds}
               onDropStart={(playerId, replaceId) => {
                 const p = playerById.get(playerId);
                 if (p) startPlayer(p, replaceId);
