@@ -407,24 +407,31 @@ function SquadBuilder({
   const bench = selected.filter((id) => !starters.includes(id));
   const locked = !!gw && (gw.status !== "upcoming" || new Date(gw.lockAt).getTime() <= Date.now());
 
-  const problems: string[] = [];
-  if (selected.length !== FANTASY_SQUAD_SIZE) problems.push(`Pick exactly ${FANTASY_SQUAD_SIZE} players (${selected.length} selected).`);
+  const squadProblems: string[] = [];
+  if (selected.length !== FANTASY_SQUAD_SIZE) squadProblems.push(`Pick exactly ${FANTASY_SQUAD_SIZE} players (${selected.length} selected).`);
   for (const pos of POSITION_ORDER) {
     const n = byPos(selected, pos).length;
-    if (n !== SQUAD_QUOTA[pos]) problems.push(`${POSITION_SHORT[pos]}: need ${SQUAD_QUOTA[pos]}, have ${n}.`);
+    if (n !== SQUAD_QUOTA[pos]) squadProblems.push(`${POSITION_SHORT[pos]}: need ${SQUAD_QUOTA[pos]}, have ${n}.`);
   }
-  if (remaining < 0) problems.push(`Over budget by ${money(-remaining)}.`);
-  if (starters.length !== 11) problems.push(`Pick 11 starters (${starters.length} selected).`);
+  if (remaining < 0) squadProblems.push(`Over budget by ${money(-remaining)}.`);
+
+  const xiProblems: string[] = [];
+  if (starters.length !== 11) xiProblems.push(`Pick 11 starters (${starters.length} selected).`);
   else {
     for (const pos of POSITION_ORDER) {
       const n = byPos(starters, pos).length;
-      if (n !== (counts as any)[pos]) problems.push(`${formation}: needs ${(counts as any)[pos]} ${POSITION_SHORT[pos]} in the XI, you have ${n}.`);
+      if (n !== (counts as any)[pos]) xiProblems.push(`${formation}: needs ${(counts as any)[pos]} ${POSITION_SHORT[pos]} in the XI, you have ${n}.`);
     }
   }
-  if (bench.length !== FANTASY_BENCH_SIZE) problems.push(`Bench must be ${FANTASY_BENCH_SIZE} players.`);
-  if (!captainId || !starters.includes(captainId)) problems.push("Pick a captain from your starting XI.");
-  if (!viceId || !starters.includes(viceId)) problems.push("Pick a vice-captain from your starting XI.");
-  if (captainId && captainId === viceId) problems.push("Captain and vice-captain must be different.");
+  if (bench.length !== FANTASY_BENCH_SIZE) xiProblems.push(`Bench must be ${FANTASY_BENCH_SIZE} players.`);
+  if (!captainId || !starters.includes(captainId)) xiProblems.push("Pick a captain from your starting XI.");
+  if (!viceId || !starters.includes(viceId)) xiProblems.push("Pick a vice-captain from your starting XI.");
+  if (captainId && captainId === viceId) xiProblems.push("Captain and vice-captain must be different.");
+
+  const problems = [...squadProblems, ...xiProblems];
+  const activeChecklist = squadTab === "xi"
+    ? { title: "Starting 11 checklist", items: xiProblems, ready: "Starting 11 is valid — hit" }
+    : { title: "Squad checklist", items: squadProblems, ready: "Squad of 15 is valid — now set your Starting 11." };
 
   const editable = !locked && (canPlay || !gw);
 
