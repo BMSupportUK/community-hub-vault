@@ -26,6 +26,8 @@ export type FantasyPlayerDTO = {
   loanClub?: string | null;
   /** Parent club, when the player is at Boro on loan. */
   loanFrom?: string | null;
+  /** Which club squad the player sits in: first team, U21 or U18. */
+  squadLevel?: "first" | "u21" | "u18";
   /** Total fantasy points this player has earned so far this season. */
   seasonPoints?: number;
 };
