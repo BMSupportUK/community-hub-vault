@@ -1179,6 +1179,8 @@ function PitchView({
 // Gameweeks
 // ------------------------------------------------------------------
 function GameweekList({ state }: { state: FantasyStateDTO }) {
+  const [openId, setOpenId] = useState<string | null>(null);
+  const playerById = useMemo(() => new Map(state.players.map((p) => [p.id, p])), [state.players]);
   if (!state.gameweeks.length) {
     return <div className="rounded-2xl border border-border/60 bg-card/80 p-6 text-sm text-muted-foreground">No gameweeks yet.</div>;
   }
@@ -1186,8 +1188,28 @@ function GameweekList({ state }: { state: FantasyStateDTO }) {
     <div className="space-y-2">
       {state.gameweeks.map((g) => {
         const squad = state.squads.find((s) => s.gameweekId === g.id);
+        const open = openId === g.id;
+        const picks = [...(squad?.picks ?? [])].sort((a, b) => a.slotOrder - b.slotOrder);
+        const startersList = picks.filter((p) => p.isStarter);
+        const benchList = picks.filter((p) => !p.isStarter);
+        const row = (p: (typeof picks)[number]) => {
+          const pl = playerById.get(p.playerId);
+          return (
+            <div key={p.playerId} className="flex items-center gap-2 py-1 text-sm">
+              <span className={`text-[10px] font-bold rounded-md border px-1 ${POS_TINT[pl?.position ?? "mid"]}`}>
+                {POSITION_SHORT[pl?.position ?? "mid"]}
+              </span>
+              <span className="truncate">{pl?.name ?? "Unknown player"}</span>
+              {squad?.captainId === p.playerId && <Crown className="size-3.5 text-amber-400" />}
+              {squad?.viceId === p.playerId && <Star className="size-3.5 text-sky-300" />}
+              {p.autoSubbed && <span className="text-[10px] font-bold uppercase text-sky-400">subbed on</span>}
+              <span className="ml-auto font-bold tabular-nums text-primary">{p.points ?? "—"}</span>
+            </div>
+          );
+        };
         return (
-          <div key={g.id} className="rounded-2xl border border-border/60 bg-card/80 backdrop-blur p-4 flex flex-wrap items-center gap-3">
+          <div key={g.id} className="rounded-2xl border border-border/60 bg-card/80 backdrop-blur p-4">
+            <div className="flex flex-wrap items-center gap-3">
             <div className="w-14 text-xs font-bold text-primary">GW{g.gwNumber}</div>
             <div className="flex-1 min-w-[180px]">
               <div className="font-medium">{g.homeTeam} v {g.awayTeam}</div>
@@ -1203,6 +1225,26 @@ function GameweekList({ state }: { state: FantasyStateDTO }) {
                 <span className="font-bold text-primary">{squad.points ?? "—"}</span>
                 {squad.transferCost > 0 && <span className="text-destructive text-xs"> (−{squad.transferCost})</span>}
               </span>
+            )}
+            {squad && (
+              <Button variant="outline" size="sm" onClick={() => setOpenId(open ? null : g.id)}>
+                {open ? "Hide team" : "View team"}
+              </Button>
+            )}
+            </div>
+            {squad && open && (
+              <div className="mt-3 grid gap-4 border-t border-border/60 pt-3 sm:grid-cols-2">
+                <div>
+                  <div className="mb-1 text-xs uppercase tracking-wide text-muted-foreground">
+                    Starting 11 · {squad.formation}
+                  </div>
+                  {startersList.map(row)}
+                </div>
+                <div>
+                  <div className="mb-1 text-xs uppercase tracking-wide text-muted-foreground">Bench</div>
+                  {benchList.map(row)}
+                </div>
+              </div>
             )}
           </div>
         );
