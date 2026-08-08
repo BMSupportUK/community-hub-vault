@@ -170,7 +170,9 @@ export const adminSyncFantasyGameweeks = createServerFn({ method: "POST" })
         .delete()
         .in("fixture_id", stale.map((r: any) => r.fixture_id));
     }
-    const have = new Set((existing ?? []).map((r: any) => r.fixture_id));
+    const have = new Set(
+      (existing ?? []).filter((r: any) => leagueIds.has(r.fixture_id)).map((r: any) => r.fixture_id),
+    );
     let next = Math.max(0, ...(existing ?? []).map((r: any) => r.gw_number ?? 0)) + 1;
     const rows = (fixtures ?? [])
       .filter((f: any) => !have.has(f.id))
