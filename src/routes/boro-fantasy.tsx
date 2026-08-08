@@ -339,7 +339,11 @@ function ManagerCard({ state, name }: { state?: FantasyStateDTO; name: string | 
         </div>
         <div className="rounded-xl bg-muted/40 p-2">
           <dt className="text-[11px] text-muted-foreground">Free transfers</dt>
-          <dd className="font-bold">{state?.freeTransfers ?? 1}</dd>
+          <dd className="font-bold">
+            {state?.gameweeks && isFantasySeasonStarted(state.gameweeks)
+              ? (state?.freeTransfers ?? 1)
+              : "Unlimited"}
+          </dd>
         </div>
       </dl>
     </div>
