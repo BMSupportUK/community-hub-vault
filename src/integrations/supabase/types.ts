@@ -1556,6 +1556,7 @@ export type Database = {
       }
       fantasy_squad_picks: {
         Row: {
+          auto_subbed: boolean
           buy_value_m: number
           id: string
           is_starter: boolean
@@ -1565,6 +1566,7 @@ export type Database = {
           squad_id: string
         }
         Insert: {
+          auto_subbed?: boolean
           buy_value_m?: number
           id?: string
           is_starter?: boolean
@@ -1574,6 +1576,7 @@ export type Database = {
           squad_id: string
         }
         Update: {
+          auto_subbed?: boolean
           buy_value_m?: number
           id?: string
           is_starter?: boolean
