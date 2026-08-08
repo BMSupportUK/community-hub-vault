@@ -121,7 +121,6 @@ export const adminUpsertFantasyPlayer = createServerFn({ method: "POST" })
       status: data.status,
       ...(typeof data.sortOrder === "number" ? { sort_order: data.sortOrder } : {}),
     };
-    void 0;
     if (data.id) {
       const { error } = await admin.from("fantasy_players").update(payload).eq("id", data.id);
       if (error) throw new Error(error.message);
