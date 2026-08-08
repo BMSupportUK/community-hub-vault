@@ -22,6 +22,7 @@ import { Route as FanZoneRouteImport } from './routes/fan-zone'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as CompetitionWinnersRouteImport } from './routes/competition-winners'
 import { Route as BoroPredictionsRouteImport } from './routes/boro-predictions'
+import { Route as BoroFantasyRouteImport } from './routes/boro-fantasy'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
@@ -182,6 +183,11 @@ const CompetitionWinnersRoute = CompetitionWinnersRouteImport.update({
 const BoroPredictionsRoute = BoroPredictionsRouteImport.update({
   id: '/boro-predictions',
   path: '/boro-predictions',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BoroFantasyRoute = BoroFantasyRouteImport.update({
+  id: '/boro-fantasy',
+  path: '/boro-fantasy',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AboutRoute = AboutRouteImport.update({
@@ -752,6 +758,7 @@ const AuthenticatedApprovedFanzoneMessagesThreadRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/boro-fantasy': typeof BoroFantasyRoute
   '/boro-predictions': typeof BoroPredictionsRoute
   '/competition-winners': typeof CompetitionWinnersRoute
   '/contact': typeof ContactRoute
@@ -861,6 +868,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/boro-fantasy': typeof BoroFantasyRoute
   '/boro-predictions': typeof BoroPredictionsRoute
   '/competition-winners': typeof CompetitionWinnersRoute
   '/contact': typeof ContactRoute
@@ -969,6 +977,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/about': typeof AboutRoute
+  '/boro-fantasy': typeof BoroFantasyRoute
   '/boro-predictions': typeof BoroPredictionsRoute
   '/competition-winners': typeof CompetitionWinnersRoute
   '/contact': typeof ContactRoute
@@ -1081,6 +1090,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/about'
+    | '/boro-fantasy'
     | '/boro-predictions'
     | '/competition-winners'
     | '/contact'
@@ -1190,6 +1200,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/about'
+    | '/boro-fantasy'
     | '/boro-predictions'
     | '/competition-winners'
     | '/contact'
@@ -1297,6 +1308,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/about'
+    | '/boro-fantasy'
     | '/boro-predictions'
     | '/competition-winners'
     | '/contact'
@@ -1409,6 +1421,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   AboutRoute: typeof AboutRoute
+  BoroFantasyRoute: typeof BoroFantasyRoute
   BoroPredictionsRoute: typeof BoroPredictionsRoute
   CompetitionWinnersRoute: typeof CompetitionWinnersRoute
   ContactRoute: typeof ContactRoute
@@ -1542,6 +1555,13 @@ declare module '@tanstack/react-router' {
       path: '/boro-predictions'
       fullPath: '/boro-predictions'
       preLoaderRoute: typeof BoroPredictionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/boro-fantasy': {
+      id: '/boro-fantasy'
+      path: '/boro-fantasy'
+      fullPath: '/boro-fantasy'
+      preLoaderRoute: typeof BoroFantasyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/about': {
@@ -2490,6 +2510,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   AboutRoute: AboutRoute,
+  BoroFantasyRoute: BoroFantasyRoute,
   BoroPredictionsRoute: BoroPredictionsRoute,
   CompetitionWinnersRoute: CompetitionWinnersRoute,
   ContactRoute: ContactRoute,
@@ -2541,13 +2562,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
