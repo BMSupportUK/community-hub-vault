@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Shirt, Loader2, Lock, LogOut, Crown, Star, ArrowRightLeft, Trophy, Wallet,
-  Users, Plus, Minus, X, ArrowUp, ArrowDown, ClipboardList, Check,
+  Users, Plus, Minus, X, ArrowUp, ArrowDown, ClipboardList, Check, Pencil,
 } from "lucide-react";
 import type { DragEvent as ReactDragEvent } from "react";
 import { toast } from "sonner";
@@ -12,6 +12,9 @@ import riversideBg from "@/assets/riverside-stadium-bg.jpg";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
 import { WinnersTab } from "@/components/app/WinnersTab";
 import { LandingHeader } from "@/components/LandingHeader";
 import { IconRail } from "@/components/app/IconRail";
@@ -24,13 +27,13 @@ import {
   type FantasyPosition, type FormationKey,
 } from "@/lib/fantasy-rules";
 import {
-  getFantasyState, getFantasyLeaderboard, joinFantasyGame, saveFantasySquad,
+  getFantasyState, getFantasyLeaderboard, joinFantasyGame, saveFantasySquad, setFantasyTeamName,
   type FantasyStateDTO, type FantasyPlayerDTO, type FantasyLeaderboardRow,
 } from "@/lib/fantasy.functions";
 import {
   fantasyGuestRegister, fantasyGuestSignInExisting, getPublicFantasyState,
   getPublicFantasyLeaderboard, saveGuestFantasySquad, requestFantasyGuestPinReset,
-  resetFantasyGuestPin,
+  resetFantasyGuestPin, setGuestFantasyTeamName,
 } from "@/lib/fantasy-guest.functions";
 
 export const Route = createFileRoute("/boro-fantasy")({
@@ -145,6 +148,8 @@ function BoroFantasyPage() {
   const signInFn = useServerFn(fantasyGuestSignInExisting);
   const requestResetFn = useServerFn(requestFantasyGuestPinReset);
   const resetPinFn = useServerFn(resetFantasyGuestPin);
+  const setTeamNameFn = useServerFn(setFantasyTeamName);
+  const setGuestTeamNameFn = useServerFn(setGuestFantasyTeamName);
 
   const stateQuery = useQuery<FantasyStateDTO>({
     queryKey: ["fantasy-state", user?.id ?? null, guest?.guestId ?? null],
@@ -194,11 +199,85 @@ function BoroFantasyPage() {
   const state = stateQuery.data;
   const joined = !!state?.joined;
   const canPlay = joined && (!!user || !!guest);
+  const currentTeamName = (state?.teamName || guest?.teamName || "").trim();
+
+  const [nameDialogOpen, setNameDialogOpen] = useState(false);
+  const [nameDraft, setNameDraft] = useState("");
+  const [savingName, setSavingName] = useState(false);
+  const pendingSaveRef = useRef<{
+    payload: any;
+    resolve: () => void;
+    reject: (e: unknown) => void;
+  } | null>(null);
 
   const refresh = () => {
     qc.invalidateQueries({ queryKey: ["fantasy-state"] });
     qc.invalidateQueries({ queryKey: ["fantasy-leaderboard"] });
   };
+
+  async function doSaveSquad(payload: any) {
+    if (user) await saveFn({ data: payload });
+    else if (guest) await saveGuestFn({ data: { email: guest.email, pin: guest.pin, ...payload } });
+    else throw new Error("Sign in first.");
+    refresh();
+  }
+
+  async function persistTeamName(teamName: string) {
+    if (user) await setTeamNameFn({ data: { teamName } });
+    else if (guest) {
+      await setGuestTeamNameFn({ data: { email: guest.email, pin: guest.pin, teamName } });
+      const next = { ...guest, teamName };
+      localStorage.setItem(GUEST_KEY, JSON.stringify(next));
+      setGuest(next);
+    } else throw new Error("Sign in first.");
+  }
+
+  function openNameDialog() {
+    setNameDraft(currentTeamName);
+    setNameDialogOpen(true);
+  }
+
+  function closeNameDialog() {
+    setNameDialogOpen(false);
+    const pending = pendingSaveRef.current;
+    pendingSaveRef.current = null;
+    pending?.reject(new Error("Enter a team name to save your squad."));
+  }
+
+  async function submitTeamName() {
+    const teamName = nameDraft.trim();
+    if (!teamName) { toast.error("Enter a team name"); return; }
+    setSavingName(true);
+    const pending = pendingSaveRef.current;
+    try {
+      await persistTeamName(teamName);
+      if (pending) {
+        await doSaveSquad(pending.payload);
+        pendingSaveRef.current = null;
+        pending.resolve();
+      } else {
+        toast.success("Team name updated");
+        refresh();
+      }
+      setNameDialogOpen(false);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Could not save team name");
+    } finally {
+      setSavingName(false);
+    }
+  }
+
+  async function handleSquadSave(payload: any) {
+    if (!currentTeamName) {
+      setNameDraft("");
+      setNameDialogOpen(true);
+      await new Promise<void>((resolve, reject) => {
+        pendingSaveRef.current = { payload, resolve, reject };
+      });
+      return;
+    }
+    await doSaveSquad(payload);
+  }
 
   async function handleJoin() {
     setJoining(true);
@@ -336,12 +415,7 @@ function BoroFantasyPage() {
                   <SquadBuilder
                     state={state}
                     canPlay={canPlay}
-                    onSave={async (payload) => {
-                      if (user) await saveFn({ data: payload });
-                      else if (guest) await saveGuestFn({ data: { email: guest.email, pin: guest.pin, ...payload } });
-                      else throw new Error("Sign in first.");
-                      refresh();
-                    }}
+                    onSave={handleSquadSave}
                   />
                 )}
               </TabsContent>
@@ -377,12 +451,44 @@ function BoroFantasyPage() {
             </Tabs>
 
             <aside className="space-y-4 lg:sticky lg:top-6 lg:self-start">
-              <ManagerCard state={state} name={guest?.displayName ?? null} />
+              <ManagerCard
+                state={state}
+                name={guest?.displayName ?? null}
+                teamName={currentTeamName}
+                canEdit={canPlay}
+                onEdit={openNameDialog}
+              />
               <NextGameweekCard state={state} />
             </aside>
           </div>
         </div>
       </main>
+
+      <Dialog open={nameDialogOpen} onOpenChange={(o) => { if (!o) closeNameDialog(); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{currentTeamName ? "Edit team name" : "Name your team"}</DialogTitle>
+            <DialogDescription>
+              This is the name shown on the MFC Fantasy Manager leaderboard.
+            </DialogDescription>
+          </DialogHeader>
+          <Input
+            autoFocus
+            maxLength={40}
+            className="border-2 border-primary/50"
+            placeholder="e.g. Riverside Rovers"
+            value={nameDraft}
+            onChange={(e) => setNameDraft(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") void submitTeamName(); }}
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={closeNameDialog} disabled={savingName}>Cancel</Button>
+            <Button onClick={() => void submitTeamName()} disabled={savingName || !nameDraft.trim()}>
+              {savingName ? <Loader2 className="size-4 animate-spin" /> : pendingSaveRef.current ? "Save name & squad" : "Save name"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -390,12 +496,29 @@ function BoroFantasyPage() {
 // ------------------------------------------------------------------
 // Sidebar
 // ------------------------------------------------------------------
-function ManagerCard({ state, name }: { state?: FantasyStateDTO; name: string | null }) {
+function ManagerCard({
+  state, name, teamName, canEdit, onEdit,
+}: {
+  state?: FantasyStateDTO;
+  name: string | null;
+  teamName?: string;
+  canEdit?: boolean;
+  onEdit?: () => void;
+}) {
   const total = (state?.squads ?? []).reduce((sum, s) => sum + (s.points ?? 0), 0);
   return (
     <div className="rounded-2xl border border-border/60 bg-card/80 backdrop-blur p-4">
       <div className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Your team</div>
-      <div className="font-display text-lg font-bold">{state?.teamName || name || "Unnamed FC"}</div>
+      <div className="flex items-center gap-2">
+        <div className="font-display text-lg font-bold min-w-0 break-words">
+          {teamName || state?.teamName || name || "Unnamed FC"}
+        </div>
+        {canEdit && onEdit && (
+          <Button size="sm" variant="ghost" className="h-7 px-2 shrink-0" onClick={onEdit}>
+            <Pencil className="size-3.5 mr-1" /> Edit
+          </Button>
+        )}
+      </div>
       <dl className="mt-3 grid grid-cols-2 gap-2 text-sm">
         <div className="rounded-xl bg-muted/40 p-2">
           <dt className="text-[11px] text-muted-foreground">Total points</dt>
