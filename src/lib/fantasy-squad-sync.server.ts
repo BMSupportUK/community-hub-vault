@@ -22,6 +22,7 @@ type PlayerRow = {
   squad_level?: string | null;
   created_at?: string | null;
   status_locked?: boolean | null;
+  loan_club?: string | null;
 };
 
 const POSITION_ORDER: Record<FantasyPosition, number> = { gk: 0, def: 1, mid: 2, fwd: 3 };
@@ -111,7 +112,7 @@ export async function syncFantasyPlayersFromClub(admin: Admin): Promise<FantasyS
   const { data: existingRows, error: readErr } = await admin
     .from("fantasy_players")
     .select(
-      "id, name, position, shirt_number, value_m, status, sort_order, mfc_player_id, squad_level, created_at, status_locked",
+      "id, name, position, shirt_number, value_m, status, sort_order, mfc_player_id, squad_level, created_at, status_locked, loan_club",
     );
   if (readErr) return { ok: false, error: readErr.message };
   const existing = (existingRows ?? []) as PlayerRow[];
