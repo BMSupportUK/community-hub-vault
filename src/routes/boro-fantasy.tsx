@@ -12,6 +12,9 @@ import riversideBg from "@/assets/riverside-stadium-bg.jpg";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
 import { WinnersTab } from "@/components/app/WinnersTab";
 import { LandingHeader } from "@/components/LandingHeader";
 import { IconRail } from "@/components/app/IconRail";
@@ -24,13 +27,13 @@ import {
   type FantasyPosition, type FormationKey,
 } from "@/lib/fantasy-rules";
 import {
-  getFantasyState, getFantasyLeaderboard, joinFantasyGame, saveFantasySquad,
+  getFantasyState, getFantasyLeaderboard, joinFantasyGame, saveFantasySquad, setFantasyTeamName,
   type FantasyStateDTO, type FantasyPlayerDTO, type FantasyLeaderboardRow,
 } from "@/lib/fantasy.functions";
 import {
   fantasyGuestRegister, fantasyGuestSignInExisting, getPublicFantasyState,
   getPublicFantasyLeaderboard, saveGuestFantasySquad, requestFantasyGuestPinReset,
-  resetFantasyGuestPin,
+  resetFantasyGuestPin, setGuestFantasyTeamName,
 } from "@/lib/fantasy-guest.functions";
 
 export const Route = createFileRoute("/boro-fantasy")({
