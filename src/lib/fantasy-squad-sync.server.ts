@@ -6,7 +6,7 @@
  * and players who have left (or gone out on loan) are marked departed. Every
  * change is also logged in the club transfer feed so managers can see it.
  */
-import type { FantasyPosition, MfcSquadPlayer } from "@/lib/mfc-official-squad.server";
+import type { FantasyPosition, MfcSquadLevel, MfcSquadPlayer } from "@/lib/mfc-official-squad.server";
 
 type Admin = { from: (table: string) => any };
 
@@ -22,9 +22,18 @@ type PlayerRow = {
 };
 
 const POSITION_ORDER: Record<FantasyPosition, number> = { gk: 0, def: 1, mid: 2, fwd: 3 };
+const LEVEL_ORDER: Record<MfcSquadLevel, number> = { first: 0, u21: 1, u18: 2 };
 
 /** Starting price for a brand-new signing, refined by their detailed role. */
-function defaultValueM(position: FantasyPosition, detailed: string | null): number {
+function defaultValueM(position: FantasyPosition, detailed: string | null, level: MfcSquadLevel = "first"): number {
+  // Academy/fringe players sit in their own cheap band (£1.0m–£2.5m).
+  if (level !== "first") {
+    const u18 = level === "u18";
+    if (position === "gk") return u18 ? 1.0 : 1.5;
+    if (position === "def") return u18 ? 1.0 : 1.5;
+    if (position === "mid") return u18 ? 1.5 : 2.0;
+    return u18 ? 2.0 : 2.5;
+  }
   const d = (detailed ?? "").toLowerCase();
   if (position === "gk") return 5.0;
   if (position === "def") return d.includes("central") ? 5.0 : 4.0;
@@ -53,7 +62,9 @@ export type FantasySquadSyncResult = {
 };
 
 export async function syncFantasyPlayersFromClub(admin: Admin): Promise<FantasySquadSyncResult> {
-  const { fetchMfcSquad, fetchMfcLoanedOutPlayers } = await import("@/lib/mfc-official-squad.server");
+  const { fetchMfcSquad, fetchMfcAcademySquads, fetchMfcLoanedOutPlayers } = await import(
+    "@/lib/mfc-official-squad.server"
+  );
 
   let squad: MfcSquadPlayer[];
   try {
@@ -63,6 +74,16 @@ export async function syncFantasyPlayersFromClub(admin: Admin): Promise<FantasyS
   }
   if (squad.length < 11) {
     return { ok: false, error: `squad feed returned only ${squad.length} players — ignoring` };
+  }
+
+  // Fringe players: the Under-21 and Under-18 squads. Non-fatal on failure so a
+  // flaky academy feed can never mark the whole fringe pool as departed.
+  const academy = await fetchMfcAcademySquads().catch(() => [] as MfcSquadPlayer[]);
+  const seenIds = new Set(squad.map((p) => p.mfcPlayerId));
+  for (const p of academy) {
+    if (seenIds.has(p.mfcPlayerId)) continue; // already in the senior squad
+    seenIds.add(p.mfcPlayerId);
+    squad.push(p);
   }
 
   const loanedOut = await fetchMfcLoanedOutPlayers().catch(() => []);
@@ -89,7 +110,11 @@ export async function syncFantasyPlayersFromClub(admin: Admin): Promise<FantasyS
   const ordered = [...available].sort((a, b) => {
     const p = POSITION_ORDER[a.position] - POSITION_ORDER[b.position];
     if (p !== 0) return p;
-    return (a.shirtNumber ?? 99) - (b.shirtNumber ?? 99);
+    const l = LEVEL_ORDER[a.squadLevel] - LEVEL_ORDER[b.squadLevel];
+    if (l !== 0) return l;
+    const s = (a.shirtNumber ?? 99) - (b.shirtNumber ?? 99);
+    if (s !== 0) return s;
+    return a.name.localeCompare(b.name);
   });
 
   const nowIso = new Date().toISOString();
@@ -120,7 +145,7 @@ export async function syncFantasyPlayersFromClub(admin: Admin): Promise<FantasyS
           name: p.name,
           position: p.position,
           shirt_number: p.shirtNumber,
-          value_m: defaultValueM(p.position, p.detailedPosition),
+          value_m: defaultValueM(p.position, p.detailedPosition, p.squadLevel),
           status: "active",
           sort_order: sortOrder,
           mfc_player_id: p.mfcPlayerId,
