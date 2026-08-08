@@ -71,6 +71,7 @@ export type FantasySquadSyncResult = {
   added?: string[];
   updated?: string[];
   departed?: string[];
+  loanedOut?: string[];
   error?: string;
 };
 
