@@ -1606,7 +1606,7 @@ function LeaderboardTable({ rows }: { rows: FantasyLeaderboardRow[] }) {
             <th className="text-left px-3 py-2 w-10">#</th>
             <th className="text-left px-3 py-2">Manager</th>
             <th className="text-right px-3 py-2">GWs</th>
-            <th className="text-right px-3 py-2">Hits</th>
+            <th className="text-right px-3 py-2">Transfer Hits</th>
             <th className="text-right px-3 py-2">Points</th>
           </tr>
         </thead>
