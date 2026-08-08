@@ -92,7 +92,34 @@ function BoroFantasyPage() {
         ? stateFn({})
         : publicStateFn({ data: guest ? { email: guest.email, pin: guest.pin } : {} }),
     staleTime: 15_000,
+    refetchInterval: 60_000,
+    refetchOnWindowFocus: true,
   });
+
+  // Keep the first-team squad live: ask the server to re-check the official
+  // club squad whenever the page is opened or refocused (throttled server-side).
+  useEffect(() => {
+    let cancelled = false;
+    const ping = async () => {
+      try {
+        const res = await fetch("/api/public/hooks/fantasy-squad-sync", { method: "POST" });
+        const json = (await res.json()) as { skipped?: string; added?: string[]; departed?: string[] };
+        if (cancelled || json.skipped) return;
+        if ((json.added?.length ?? 0) + (json.departed?.length ?? 0) > 0) {
+          qc.invalidateQueries({ queryKey: ["fantasy-state"] });
+        }
+      } catch { /* ignore */ }
+    };
+    ping();
+    const onFocus = () => { void ping(); };
+    window.addEventListener("focus", onFocus);
+    const id = window.setInterval(ping, 120_000);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("focus", onFocus);
+      window.clearInterval(id);
+      };
+  }, [qc]);
   const lbQuery = useQuery<FantasyLeaderboardRow[]>({
     queryKey: ["fantasy-leaderboard", user?.id ?? null],
     queryFn: () => (user ? lbFn({}) : publicLbFn({})),
