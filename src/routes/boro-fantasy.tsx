@@ -522,13 +522,7 @@ function SquadBuilder({
           <Lock className="size-4" /> This gameweek is locked. Changes will apply to the next one.
         </div>
       )}
-      {canPlay && !locked && problems.length > 0 && (
-        <ul className="rounded-xl border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm space-y-1">
-          {problems.map((p) => <li key={p}>• {p}</li>)}
-        </ul>
-      )}
-
-      <div className="grid gap-4 lg:grid-cols-[300px_minmax(0,1fr)] items-start">
+      <div className="grid gap-4 lg:grid-cols-[300px_minmax(0,1fr)] xl:grid-cols-[300px_minmax(0,1fr)_260px] items-start">
         <PlayerSidebar
           players={state.players}
           selected={selected}
@@ -559,6 +553,47 @@ function SquadBuilder({
           onCaptain={(id) => setCaptainId(id)}
           onVice={(id) => setViceId(id)}
         />
+
+        {/* Squad checklist — lives to the right of the pitch, not above it. */}
+        <aside className="rounded-2xl border border-border/60 bg-card/85 backdrop-blur overflow-hidden xl:sticky xl:top-4">
+          <div className="p-3 border-b border-border/60 flex items-center gap-2">
+            <h3 className="font-display font-bold text-sm">Squad checklist</h3>
+            {canPlay && !locked && (
+              <span
+                className={
+                  "ml-auto rounded-full px-2 py-0.5 text-[11px] font-bold border " +
+                  (problems.length === 0
+                    ? "border-emerald-500/40 bg-emerald-500/15 text-emerald-300"
+                    : "border-destructive/40 bg-destructive/15 text-destructive")
+                }
+              >
+                {problems.length === 0 ? "Ready" : `${problems.length} to fix`}
+              </span>
+            )}
+          </div>
+          <div className="p-3 text-sm">
+            {!canPlay || locked ? (
+              <p className="text-xs text-muted-foreground">
+                {locked
+                  ? "This gameweek is locked — the checklist reopens for the next one."
+                  : "Join the game to start building a valid squad."}
+              </p>
+            ) : problems.length === 0 ? (
+              <p className="text-xs text-emerald-300">
+                Squad is valid — hit <span className="font-semibold">Save squad</span>.
+              </p>
+            ) : (
+              <ul className="space-y-1.5">
+                {problems.map((p) => (
+                  <li key={p} className="flex gap-2 text-xs leading-relaxed">
+                    <span className="mt-1 size-1.5 shrink-0 rounded-full bg-destructive" />
+                    <span className="min-w-0">{p}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </aside>
       </div>
     </div>
   );
