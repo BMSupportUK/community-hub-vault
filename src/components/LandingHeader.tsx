@@ -33,6 +33,7 @@ export function LandingHeader() {
       to: c.to,
       label: COMPETITION_NAV_LABELS[c.key] ?? c.title,
     })),
+    { to: "/boro-fantasy", label: "MFC Fantasy Manager" },
     { to: "/competition-winners", label: "Competition Winners" },
     ...baseNavItems.slice(4),
   ];

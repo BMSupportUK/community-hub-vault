@@ -1587,6 +1587,33 @@ export type Database = {
           },
         ]
       }
+      fantasy_squad_reminders: {
+        Row: {
+          created_at: string
+          entrant_id: string
+          entrant_kind: string
+          id: string
+          recipient_email: string
+          sent_date: string
+        }
+        Insert: {
+          created_at?: string
+          entrant_id: string
+          entrant_kind: string
+          id?: string
+          recipient_email: string
+          sent_date: string
+        }
+        Update: {
+          created_at?: string
+          entrant_id?: string
+          entrant_kind?: string
+          id?: string
+          recipient_email?: string
+          sent_date?: string
+        }
+        Relationships: []
+      }
       fantasy_squads: {
         Row: {
           captain_id: string | null
@@ -5126,6 +5153,17 @@ export type Database = {
           matchday_memory: string
           supporter_since: number
           user_id: string
+        }[]
+      }
+      get_fantasy_reminder_recipients: {
+        Args: never
+        Returns: {
+          display_name: string
+          entrant_id: string
+          entrant_kind: string
+          missing_count: number
+          next_kickoff_at: string
+          recipient_email: string
         }[]
       }
       get_invite_leaderboard: {

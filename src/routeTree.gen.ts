@@ -102,6 +102,7 @@ import { Route as ApiPublicHooksScheduledRemindersRouteImport } from './routes/a
 import { Route as ApiPublicHooksRefreshStreamingPricesRouteImport } from './routes/api/public/hooks/refresh-streaming-prices'
 import { Route as ApiPublicHooksNowpaymentsRouteImport } from './routes/api/public/hooks/nowpayments'
 import { Route as ApiPublicHooksNotifyRouteImport } from './routes/api/public/hooks/notify'
+import { Route as ApiPublicHooksFantasySquadRemindersRouteImport } from './routes/api/public/hooks/fantasy-squad-reminders'
 import { Route as ApiPublicHooksBoroPredictorInviteRouteImport } from './routes/api/public/hooks/boro-predictor-invite'
 import { Route as ApiPublicHooksBoroPredictionRemindersRouteImport } from './routes/api/public/hooks/boro-prediction-reminders'
 import { Route as ApiPublicHooksBoroFetchFixturesRouteImport } from './routes/api/public/hooks/boro-fetch-fixtures'
@@ -652,6 +653,12 @@ const ApiPublicHooksNotifyRoute = ApiPublicHooksNotifyRouteImport.update({
   path: '/api/public/hooks/notify',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHooksFantasySquadRemindersRoute =
+  ApiPublicHooksFantasySquadRemindersRouteImport.update({
+    id: '/api/public/hooks/fantasy-squad-reminders',
+    path: '/api/public/hooks/fantasy-squad-reminders',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksBoroPredictorInviteRoute =
   ApiPublicHooksBoroPredictorInviteRouteImport.update({
     id: '/api/public/hooks/boro-predictor-invite',
@@ -841,6 +848,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/boro-fetch-fixtures': typeof ApiPublicHooksBoroFetchFixturesRoute
   '/api/public/hooks/boro-prediction-reminders': typeof ApiPublicHooksBoroPredictionRemindersRoute
   '/api/public/hooks/boro-predictor-invite': typeof ApiPublicHooksBoroPredictorInviteRoute
+  '/api/public/hooks/fantasy-squad-reminders': typeof ApiPublicHooksFantasySquadRemindersRoute
   '/api/public/hooks/notify': typeof ApiPublicHooksNotifyRoute
   '/api/public/hooks/nowpayments': typeof ApiPublicHooksNowpaymentsRoute
   '/api/public/hooks/refresh-streaming-prices': typeof ApiPublicHooksRefreshStreamingPricesRoute
@@ -948,6 +956,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/boro-fetch-fixtures': typeof ApiPublicHooksBoroFetchFixturesRoute
   '/api/public/hooks/boro-prediction-reminders': typeof ApiPublicHooksBoroPredictionRemindersRoute
   '/api/public/hooks/boro-predictor-invite': typeof ApiPublicHooksBoroPredictorInviteRoute
+  '/api/public/hooks/fantasy-squad-reminders': typeof ApiPublicHooksFantasySquadRemindersRoute
   '/api/public/hooks/notify': typeof ApiPublicHooksNotifyRoute
   '/api/public/hooks/nowpayments': typeof ApiPublicHooksNowpaymentsRoute
   '/api/public/hooks/refresh-streaming-prices': typeof ApiPublicHooksRefreshStreamingPricesRoute
@@ -1061,6 +1070,7 @@ export interface FileRoutesById {
   '/api/public/hooks/boro-fetch-fixtures': typeof ApiPublicHooksBoroFetchFixturesRoute
   '/api/public/hooks/boro-prediction-reminders': typeof ApiPublicHooksBoroPredictionRemindersRoute
   '/api/public/hooks/boro-predictor-invite': typeof ApiPublicHooksBoroPredictorInviteRoute
+  '/api/public/hooks/fantasy-squad-reminders': typeof ApiPublicHooksFantasySquadRemindersRoute
   '/api/public/hooks/notify': typeof ApiPublicHooksNotifyRoute
   '/api/public/hooks/nowpayments': typeof ApiPublicHooksNowpaymentsRoute
   '/api/public/hooks/refresh-streaming-prices': typeof ApiPublicHooksRefreshStreamingPricesRoute
@@ -1173,6 +1183,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/boro-fetch-fixtures'
     | '/api/public/hooks/boro-prediction-reminders'
     | '/api/public/hooks/boro-predictor-invite'
+    | '/api/public/hooks/fantasy-squad-reminders'
     | '/api/public/hooks/notify'
     | '/api/public/hooks/nowpayments'
     | '/api/public/hooks/refresh-streaming-prices'
@@ -1280,6 +1291,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/boro-fetch-fixtures'
     | '/api/public/hooks/boro-prediction-reminders'
     | '/api/public/hooks/boro-predictor-invite'
+    | '/api/public/hooks/fantasy-squad-reminders'
     | '/api/public/hooks/notify'
     | '/api/public/hooks/nowpayments'
     | '/api/public/hooks/refresh-streaming-prices'
@@ -1392,6 +1404,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/boro-fetch-fixtures'
     | '/api/public/hooks/boro-prediction-reminders'
     | '/api/public/hooks/boro-predictor-invite'
+    | '/api/public/hooks/fantasy-squad-reminders'
     | '/api/public/hooks/notify'
     | '/api/public/hooks/nowpayments'
     | '/api/public/hooks/refresh-streaming-prices'
@@ -1445,6 +1458,7 @@ export interface RootRouteChildren {
   ApiPublicHooksBoroFetchFixturesRoute: typeof ApiPublicHooksBoroFetchFixturesRoute
   ApiPublicHooksBoroPredictionRemindersRoute: typeof ApiPublicHooksBoroPredictionRemindersRoute
   ApiPublicHooksBoroPredictorInviteRoute: typeof ApiPublicHooksBoroPredictorInviteRoute
+  ApiPublicHooksFantasySquadRemindersRoute: typeof ApiPublicHooksFantasySquadRemindersRoute
   ApiPublicHooksNotifyRoute: typeof ApiPublicHooksNotifyRoute
   ApiPublicHooksNowpaymentsRoute: typeof ApiPublicHooksNowpaymentsRoute
   ApiPublicHooksRefreshStreamingPricesRoute: typeof ApiPublicHooksRefreshStreamingPricesRoute
@@ -2117,6 +2131,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksNotifyRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/fantasy-squad-reminders': {
+      id: '/api/public/hooks/fantasy-squad-reminders'
+      path: '/api/public/hooks/fantasy-squad-reminders'
+      fullPath: '/api/public/hooks/fantasy-squad-reminders'
+      preLoaderRoute: typeof ApiPublicHooksFantasySquadRemindersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/boro-predictor-invite': {
       id: '/api/public/hooks/boro-predictor-invite'
       path: '/api/public/hooks/boro-predictor-invite'
@@ -2536,6 +2557,8 @@ const rootRouteChildren: RootRouteChildren = {
     ApiPublicHooksBoroPredictionRemindersRoute,
   ApiPublicHooksBoroPredictorInviteRoute:
     ApiPublicHooksBoroPredictorInviteRoute,
+  ApiPublicHooksFantasySquadRemindersRoute:
+    ApiPublicHooksFantasySquadRemindersRoute,
   ApiPublicHooksNotifyRoute: ApiPublicHooksNotifyRoute,
   ApiPublicHooksNowpaymentsRoute: ApiPublicHooksNowpaymentsRoute,
   ApiPublicHooksRefreshStreamingPricesRoute:
