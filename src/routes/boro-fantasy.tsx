@@ -769,11 +769,49 @@ function SquadBuilder({
     else benchAdd(p);
   }
 
+  /**
+   * Squad-only save: the manager just picked their 15 and hasn't set an XI yet.
+   * Auto-fill a legal starting XI (and captaincy) from the squad so the squad
+   * can be banked now and tweaked later on the Starting 11 tab.
+   */
+  function autoCompleteXI() {
+    const st: string[] = [];
+    for (const pos of POSITION_ORDER) {
+      const need = (counts as Record<string, number>)[pos] ?? 0;
+      const pool = byPos(selected, pos)
+        .slice()
+        .sort((a, b) => (playerById.get(b)?.valueM ?? 0) - (playerById.get(a)?.valueM ?? 0));
+      st.push(...pool.slice(0, need));
+    }
+    const ranked = st
+      .slice()
+      .sort((a, b) => (playerById.get(b)?.valueM ?? 0) - (playerById.get(a)?.valueM ?? 0));
+    return { starters: st, captainId: ranked[0] ?? "", viceId: ranked[1] ?? "" };
+  }
+
   async function handleSave() {
     if (!gw) return;
+    let st = starters;
+    let cap = captainId;
+    let vice = viceId;
+    const needsAutoXI = squadTab !== "xi" && xiProblems.length > 0;
+    if (needsAutoXI) {
+      const auto = autoCompleteXI();
+      if (auto.starters.length !== 11 || !auto.captainId || !auto.viceId) {
+        toast.error("Complete your squad of 15 first.");
+        return;
+      }
+      st = auto.starters;
+      cap = auto.captainId;
+      vice = auto.viceId;
+      setStarters(st);
+      setCaptainId(cap);
+      setViceId(vice);
+    }
+    const bn = selected.filter((id) => !st.includes(id));
     setSaving(true);
     try {
-      await onSave({ gameweekId: gw.id, formation, starters, bench, captainId, viceId });
+      await onSave({ gameweekId: gw.id, formation, starters: st, bench: bn, captainId: cap, viceId: vice });
       // Saved to the server — the local draft is no longer needed.
       restoredDraftRef.current = false;
       if (draftKey) {
@@ -783,7 +821,11 @@ function SquadBuilder({
           /* ignore */
         }
       }
-      toast.success("Squad saved.");
+      toast.success(
+        needsAutoXI
+          ? "Squad saved — we picked a starting 11 for you, tweak it on the Starting 11 tab."
+          : "Squad saved.",
+      );
     } catch (e: any) {
       toast.error(e?.message ?? "Could not save squad");
     } finally {
