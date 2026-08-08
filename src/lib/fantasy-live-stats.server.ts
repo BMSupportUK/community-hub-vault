@@ -265,7 +265,7 @@ export async function syncFantasyScoring(): Promise<{
 
   const { data: gws, error } = await supabaseAdmin
     .from("fantasy_gameweeks")
-    .select("id, gw_number, status, lock_at, fixture_id, boro_fixtures!inner(id, kickoff_at, home_team, away_team, status)")
+    .select("id, gw_number, status, lock_at, fixture_id, boro_fixtures!inner(id, kickoff_at, home_team, away_team, status, competition)")
     .order("gw_number", { ascending: true });
   if (error) return { ok: false, locked: 0, scored, pending, errors: [error.message] };
 
