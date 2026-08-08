@@ -55,6 +55,66 @@ const money = (m: number) => `£${m.toFixed(1)}m`;
 const kickoffLabel = (iso: string) =>
   new Date(iso).toLocaleString(undefined, { weekday: "short", day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
 
+function useNow(interval = 1000) {
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    setNow(Date.now());
+    const id = window.setInterval(() => setNow(Date.now()), interval);
+    return () => window.clearInterval(id);
+  }, [interval]);
+  return now;
+}
+
+function DigitalLockCountdown({ lockAt, label = "Locks in" }: { lockAt: string; label?: string }) {
+  const now = useNow(1000);
+  const lockMs = new Date(lockAt).getTime();
+  const remaining = lockMs - now;
+  const locked = remaining <= 0;
+  const urgent = remaining > 0 && remaining <= 60 * 60 * 1000;
+
+  const totalSeconds = Math.max(0, Math.floor(remaining / 1000));
+  const days = Math.floor(totalSeconds / 86400);
+  const hours = Math.floor((totalSeconds % 86400) / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  const unit = (value: number, suffix: string) => (
+    <div className="flex flex-col items-center min-w-[3.2rem]">
+      <div className={`relative rounded-lg px-2 py-1.5 sm:px-3 sm:py-2 border-2 font-digital text-xl sm:text-2xl font-black tabular-nums leading-none ${
+        urgent
+          ? "bg-red-600/20 border-red-400 text-red-300 shadow-[0_0_18px_rgba(248,113,113,0.55)] animate-pulse"
+          : "bg-amber-500/15 border-amber-400/70 text-amber-300 shadow-[0_0_16px_rgba(251,191,36,0.45)]"
+      }`}>
+        {value.toString().padStart(2, "0")}
+      </div>
+      <span className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-white/70 mt-1">{suffix}</span>
+    </div>
+  );
+
+  return (
+    <div className="w-full">
+      <div className={`flex items-center gap-2 mb-2 font-digital text-sm font-bold uppercase tracking-widest ${urgent ? "text-red-300" : "text-amber-300"}`}>
+        <Lock className="size-4" strokeWidth={3} />
+        {locked ? "Locked" : label}
+      </div>
+      {locked ? (
+        <div className="inline-flex items-center gap-2 rounded-lg border-2 border-red-400 bg-red-600/20 px-4 py-2 font-digital text-lg font-black text-red-200 shadow-[0_0_18px_rgba(248,113,113,0.55)]">
+          <Lock className="size-5" strokeWidth={3} /> SQUAD LOCKED
+        </div>
+      ) : (
+        <div className="flex items-start gap-2 sm:gap-3">
+          {days > 0 && unit(days, "Days")}
+          {unit(hours, "Hrs")}
+          <span className="font-digital text-2xl text-white/40 pt-2">:</span>
+          {unit(minutes, "Min")}
+          <span className="font-digital text-2xl text-white/40 pt-2">:</span>
+          {unit(seconds, "Sec")}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function Loading() {
   return <div className="py-16 grid place-items-center"><Loader2 className="size-6 animate-spin text-primary" /></div>;
 }
