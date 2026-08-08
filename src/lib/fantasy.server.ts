@@ -383,23 +383,42 @@ export async function saveSquad(admin: any, owner: Owner, input: SaveSquadInput)
   const chargeable = prevIds.length === 0 ? 0 : Math.max(0, incoming.length - departedOut);
   const transferCost = Math.max(0, chargeable - banked) * FANTASY_TRANSFER_HIT;
 
-  const { data: squadRow, error: upErr } = await admin
+  // The uniqueness on fantasy_squads is a *partial* index (one per owner kind),
+  // which ON CONFLICT can't target — find-then-update/insert instead.
+  const squadFields = {
+    formation: input.formation,
+    captain_id: input.captainId,
+    vice_id: input.viceId,
+    transfer_cost: transferCost,
+  };
+  const { data: existingSquad } = await admin
     .from("fantasy_squads")
-    .upsert(
-      {
+    .select("id")
+    .eq("gameweek_id", input.gameweekId)
+    .eq(ownerCol(owner), ownerVal(owner))
+    .maybeSingle();
+
+  let squadId: string;
+  if (existingSquad) {
+    squadId = (existingSquad as any).id as string;
+    const { error: updErr } = await admin
+      .from("fantasy_squads")
+      .update(squadFields)
+      .eq("id", squadId);
+    if (updErr) throw new Error(updErr.message);
+  } else {
+    const { data: insertedSquad, error: insErr } = await admin
+      .from("fantasy_squads")
+      .insert({
         gameweek_id: input.gameweekId,
         ...(owner.userId ? { user_id: owner.userId } : { guest_id: owner.guestId }),
-        formation: input.formation,
-        captain_id: input.captainId,
-        vice_id: input.viceId,
-        transfer_cost: transferCost,
-      },
-      { onConflict: owner.userId ? "gameweek_id,user_id" : "gameweek_id,guest_id" },
-    )
-    .select("id")
-    .single();
-  if (upErr) throw new Error(upErr.message);
-  const squadId = (squadRow as any).id as string;
+        ...squadFields,
+      })
+      .select("id")
+      .single();
+    if (insErr) throw new Error(insErr.message);
+    squadId = (insertedSquad as any).id as string;
+  }
 
   await admin.from("fantasy_squad_picks").delete().eq("squad_id", squadId);
   const rows = [
