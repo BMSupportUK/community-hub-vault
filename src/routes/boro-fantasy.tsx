@@ -362,6 +362,7 @@ function SquadBuilder({
   const [captainId, setCaptainId] = useState<string>(existing?.captainId ?? "");
   const [viceId, setViceId] = useState<string>(existing?.viceId ?? "");
   const [saving, setSaving] = useState(false);
+  const [squadTab, setSquadTab] = useState<"selector" | "xi">("selector");
 
   useEffect(() => {
     if (!existing) return;
@@ -523,40 +524,52 @@ function SquadBuilder({
           <Lock className="size-4" /> This gameweek is locked. Changes will apply to the next one.
         </div>
       )}
-      <div className="grid gap-4 lg:grid-cols-[300px_minmax(0,1fr)] xl:grid-cols-[300px_minmax(0,1fr)_260px] items-start">
-        <PlayerSidebar
-          players={state.players}
-          selected={selected}
-          starters={starters}
-          counts={counts as Record<string, number>}
-          editable={editable}
-          onPick={autoPick}
-        />
-        <PitchView
-          formation={formation}
-          onFormationChange={(f) => setFormation(f)}
-          editable={editable}
-          playerById={playerById}
-          starters={starters}
-          bench={bench}
-          captainId={captainId}
-          viceId={viceId}
-          onDropStart={(playerId, replaceId) => {
-            const p = playerById.get(playerId);
-            if (p) startPlayer(p, replaceId);
-          }}
-          onDropBench={(playerId) => {
-            const p = playerById.get(playerId);
-            if (p) benchAdd(p);
-          }}
-          onBench={benchPlayer}
-          onRemove={removePlayer}
-          onCaptain={(id) => setCaptainId(id)}
-          onVice={(id) => setViceId(id)}
-        />
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_280px] items-start">
+        <Tabs value={squadTab} onValueChange={(v) => setSquadTab(v as "selector" | "xi")}>
+          <TabsList className="grid w-full grid-cols-2 mb-4">
+            <TabsTrigger value="selector">Squad selector</TabsTrigger>
+            <TabsTrigger value="xi">Starting 11</TabsTrigger>
+          </TabsList>
 
-        {/* Squad checklist — lives to the right of the pitch, not above it. */}
-        <aside className="rounded-2xl border border-border/60 bg-card/85 backdrop-blur overflow-hidden xl:sticky xl:top-4">
+          <TabsContent value="selector" className="mt-0">
+            <PlayerSidebar
+              players={state.players}
+              selected={selected}
+              starters={starters}
+              counts={counts as Record<string, number>}
+              editable={editable}
+              onPick={autoPick}
+            />
+          </TabsContent>
+
+          <TabsContent value="xi" className="mt-0">
+            <PitchView
+              formation={formation}
+              onFormationChange={(f) => setFormation(f)}
+              editable={editable}
+              playerById={playerById}
+              starters={starters}
+              bench={bench}
+              captainId={captainId}
+              viceId={viceId}
+              onDropStart={(playerId, replaceId) => {
+                const p = playerById.get(playerId);
+                if (p) startPlayer(p, replaceId);
+              }}
+              onDropBench={(playerId) => {
+                const p = playerById.get(playerId);
+                if (p) benchAdd(p);
+              }}
+              onBench={benchPlayer}
+              onRemove={removePlayer}
+              onCaptain={(id) => setCaptainId(id)}
+              onVice={(id) => setViceId(id)}
+            />
+          </TabsContent>
+        </Tabs>
+
+        {/* Squad checklist — stays visible while switching between squad and XI tabs. */}
+        <aside className="rounded-2xl border border-border/60 bg-card/85 backdrop-blur overflow-hidden lg:sticky lg:top-4">
           <div className="p-3 border-b border-border/60 flex items-center gap-2">
             <h3 className="font-display font-bold text-sm">Squad checklist</h3>
             {canPlay && !locked && (
@@ -774,7 +787,7 @@ function PitchView({
           </select>
         </label>
         <p className="text-xs text-muted-foreground">
-          Drag players from the list onto the pitch, or use the + button. Drop onto a shirt to swap.
+          Drag players between the pitch and bench to set your XI and bench order.
         </p>
       </div>
 
