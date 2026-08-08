@@ -148,6 +148,8 @@ function BoroFantasyPage() {
   const signInFn = useServerFn(fantasyGuestSignInExisting);
   const requestResetFn = useServerFn(requestFantasyGuestPinReset);
   const resetPinFn = useServerFn(resetFantasyGuestPin);
+  const setTeamNameFn = useServerFn(setFantasyTeamName);
+  const setGuestTeamNameFn = useServerFn(setGuestFantasyTeamName);
 
   const stateQuery = useQuery<FantasyStateDTO>({
     queryKey: ["fantasy-state", user?.id ?? null, guest?.guestId ?? null],
