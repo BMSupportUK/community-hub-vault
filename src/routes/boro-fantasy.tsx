@@ -559,14 +559,27 @@ function SquadBuilder({
           </TabsList>
 
           <TabsContent value="selector" className="mt-0">
-            <PlayerSidebar
+            <div className="space-y-4">
+              <SquadPitch
+                playerById={playerById}
+                selected={selected}
+                starters={starters}
+                editable={editable}
+                onAdd={(playerId) => {
+                  const p = playerById.get(playerId);
+                  if (p && !selected.includes(p.id)) autoPick(p);
+                }}
+                onRemove={removePlayer}
+              />
+              <PlayerSidebar
               players={state.players}
               selected={selected}
               starters={starters}
               counts={counts as Record<string, number>}
               editable={editable}
               onPick={autoPick}
-            />
+              />
+            </div>
           </TabsContent>
 
           <TabsContent value="xi" className="mt-0">
