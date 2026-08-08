@@ -142,8 +142,19 @@ async function syncBoroScores() {
     scored.push(id);
   }
 
+  // Fantasy manager: pull player stats for finished fixtures and re-score the
+  // gameweeks automatically (also locks gameweeks past their deadline).
+  let fantasy: unknown = null;
+  try {
+    const { syncFantasyScoring } = await import("@/lib/fantasy-live-stats.server");
+    fantasy = await syncFantasyScoring();
+  } catch (e) {
+    fantasy = { ok: false, error: e instanceof Error ? e.message : String(e) };
+  }
+
   return {
     ok: true,
+    fantasy,
     total: live.length,
     updated,
     inserted,
