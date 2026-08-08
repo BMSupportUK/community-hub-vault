@@ -343,6 +343,15 @@ export async function saveSquad(admin: any, owner: Owner, input: SaveSquadInput)
 
   const players = await loadPlayers(admin);
   const byId = new Map(players.map((p) => [p.id, p]));
+  // Players the manager already holds may stay in the squad even if they've since
+  // gone out on loan — they just can't be newly picked.
+  const { data: heldRows } = await admin
+    .from("fantasy_squads")
+    .select("picks:fantasy_squad_picks(player_id)")
+    .eq(ownerCol(owner), ownerVal(owner));
+  const existingIds = new Set<string>(
+    ((heldRows ?? []) as any[]).flatMap((r) => (r.picks ?? []).map((p: any) => p.player_id as string)),
+  );
   for (const id of squadIds) {
     const p = byId.get(id);
     if (!p) throw new Error("One of your picks is no longer in the squad list.");
