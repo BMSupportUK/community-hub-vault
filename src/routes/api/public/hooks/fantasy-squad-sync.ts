@@ -14,7 +14,7 @@ async function run(force: boolean) {
       .select("value")
       .eq("key", SETTING_KEY)
       .maybeSingle();
-    const last = data?.value ? Date.parse(String(data.value)) : NaN;
+    const last = data?.value?.at ? Date.parse(String(data.value.at)) : NaN;
     if (Number.isFinite(last) && Date.now() - last < MIN_INTERVAL_MS) {
       return { ok: true, skipped: "throttled" };
     }
@@ -22,7 +22,7 @@ async function run(force: boolean) {
 
   await admin
     .from("app_settings")
-    .upsert({ key: SETTING_KEY, value: new Date().toISOString() }, { onConflict: "key" });
+    .upsert({ key: SETTING_KEY, value: { at: new Date().toISOString() } }, { onConflict: "key" });
 
   const { syncFantasyPlayersFromClub } = await import("@/lib/fantasy-squad-sync.server");
   return await syncFantasyPlayersFromClub(admin as never);
