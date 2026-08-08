@@ -1,0 +1,1 @@
+ALTER TABLE public.fantasy_players ADD COLUMN IF NOT EXISTS loan_from text;
