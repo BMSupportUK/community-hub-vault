@@ -847,7 +847,7 @@ function PitchView({
       <div className="p-3 border-t border-border/60" {...dropProps(onDropBench)}>
         <div className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Bench ({bench.length}/{FANTASY_BENCH_SIZE}) — first to come on, top left</div>
         <div className="flex flex-wrap gap-2">
-          {Array.from({ length: FANTASY_BENCH_SIZE }).map((_, i) => {
+          {BENCH_SLOT_LABELS.map((slotLabel, i) => {
             const id = bench[i];
             const p = id ? playerById.get(id) : undefined;
             return (
@@ -879,7 +879,7 @@ function PitchView({
                     )}
                   </>
                 ) : (
-                  <div className="py-3">Bench slot</div>
+                  <div className="py-3 font-semibold">{slotLabel}</div>
                 )}
               </div>
             );
