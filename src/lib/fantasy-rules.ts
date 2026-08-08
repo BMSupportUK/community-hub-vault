@@ -85,13 +85,19 @@ export function formationCounts(formation: string) {
   return { gk: 1, def: f.def, mid: f.mid, fwd: f.fwd };
 }
 
+/** Has the first league fixture of the season kicked off? */
+export function isFantasySeasonStarted(gameweeks: { kickoffAt: string }[]): boolean {
+  if (!gameweeks.length) return false;
+  return new Date(gameweeks[0].kickoffAt).getTime() <= Date.now();
+}
+
 /** Plain-English squad rules, rendered on the Squad rules tab. */
 export const SQUAD_RULES: { title: string; body: string }[] = [
   { title: "Budget", body: `You have £${FANTASY_BUDGET_M.toFixed(1)}m to spend on your whole squad. Player values reflect current form and importance to Middlesbrough.` },
   { title: "Squad size", body: `${FANTASY_SQUAD_SIZE} players: ${SQUAD_QUOTA.gk} goalkeepers, ${SQUAD_QUOTA.def} defenders, ${SQUAD_QUOTA.mid} midfielders and ${SQUAD_QUOTA.fwd} forwards.` },
   { title: "Starting XI & bench", body: `Name 11 starters in a legal formation, plus ${FANTASY_BENCH_SIZE} on the bench. Bench players are subbed in automatically (in bench order) if a starter plays no minutes.` },
   { title: "Captain & vice", body: "Your captain scores double. If the captain doesn't play a minute, the vice-captain doubles instead. Both must start." },
-  { title: "Transfers", body: `1 free transfer per gameweek, bankable up to ${FANTASY_MAX_BANKED_TRANSFERS}. Extra transfers cost ${FANTASY_TRANSFER_HIT} points each. Replacing a player who has left the club is always free.` },
+  { title: "Transfers", body: `Unlimited free transfers until the season starts. Once the first league fixture kicks off, you get 1 free transfer per gameweek (bankable up to ${FANTASY_MAX_BANKED_TRANSFERS}). Extra transfers cost ${FANTASY_TRANSFER_HIT} points each. Replacing a player who has left the club is always free.` },
   { title: "Deadline", body: `Squads lock ${FANTASY_LOCK_MINUTES} minutes before kick-off. After that your team is fixed for that gameweek.` },
   { title: "League games only", body: "Gameweeks are Middlesbrough league fixtures only — cup ties, play-offs and friendlies are never part of the game." },
   { title: "Scoring & prizes", body: "Only Middlesbrough players score. Points are added automatically once each match finishes — see the Scoring tab for the full breakdown." },
