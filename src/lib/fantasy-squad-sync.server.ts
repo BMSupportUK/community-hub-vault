@@ -26,11 +26,11 @@ const POSITION_ORDER: Record<FantasyPosition, number> = { gk: 0, def: 1, mid: 2,
 /** Starting price for a brand-new signing, refined by their detailed role. */
 function defaultValueM(position: FantasyPosition, detailed: string | null): number {
   const d = (detailed ?? "").toLowerCase();
-  if (position === "gk") return 4.5;
-  if (position === "def") return d.includes("central") ? 4.5 : 4.0;
-  if (position === "mid") return d.includes("attack") ? 5.5 : 5.0;
-  if (d.includes("strik")) return 6.0;
-  return 5.5;
+  if (position === "gk") return 5.0;
+  if (position === "def") return d.includes("central") ? 5.0 : 4.0;
+  if (position === "mid") return d.includes("attack") ? 6.5 : 5.5;
+  if (d.includes("strik")) return 7.5;
+  return 6.5;
 }
 
 function normName(s: string): string {

@@ -36,9 +36,9 @@ export const Route = createFileRoute("/boro-fantasy")({
   head: () => ({
     meta: [
       { title: "MFC Fantasy Manager — Middlesbrough Fantasy Football" },
-      { name: "description", content: "Build a Middlesbrough-only fantasy squad on a £30m budget, pick your formation and captain, and climb the MFC Fantasy Manager leaderboard." },
+      { name: "description", content: "Build a Middlesbrough-only fantasy squad on a £80m budget, pick your formation and captain, and climb the MFC Fantasy Manager leaderboard." },
       { property: "og:title", content: "MFC Fantasy Manager — Middlesbrough Fantasy Football" },
-      { property: "og:description", content: "Middlesbrough-only fantasy football: £30m budget, real formations, weekly scoring and prizes." },
+      { property: "og:description", content: "Middlesbrough-only fantasy football: £80m budget, real formations, weekly scoring and prizes." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -194,7 +194,7 @@ function BoroFantasyPage() {
               <div className="flex-1">
                 <h1 className="font-display text-2xl sm:text-3xl font-bold text-white">MFC Fantasy Manager</h1>
                 <p className="text-sm text-white/85">
-                  Middlesbrough only. {money(state?.budgetM ?? 30)} budget, {FANTASY_SQUAD_SIZE}-man squad, your formation, your captain.
+                  Middlesbrough only. {money(state?.budgetM ?? 80)} budget, {FANTASY_SQUAD_SIZE}-man squad, your formation, your captain.
                 </p>
               </div>
               {!user && !guest && !showGuestLogin && (
