@@ -159,7 +159,6 @@ export const adminSyncFantasyGameweeks = createServerFn({ method: "POST" })
 
 export const adminSetFantasyGameweekStatus = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
     z.object({ gameweekId: z.string().uuid(), status: z.enum(["upcoming", "locked", "final"]) }).parse(d),
   )
