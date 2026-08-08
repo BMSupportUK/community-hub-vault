@@ -174,6 +174,7 @@ export async function syncFantasyPlayersFromClub(admin: Admin): Promise<FantasyS
     playerId: string | null,
     note: string,
     transferDate?: string | null,
+    otherClub?: string | null,
   ) {
     if (isBaseline) return;
     const { data: seen } = await admin
@@ -190,6 +191,7 @@ export async function syncFantasyPlayersFromClub(admin: Admin): Promise<FantasyS
       transfer_date: transferDate || nowIso.slice(0, 10),
       window_label: TRANSFER_WINDOW_LABEL,
       note,
+      other_club: otherClub ?? null,
     });
   }
 
