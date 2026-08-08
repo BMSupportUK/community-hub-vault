@@ -200,6 +200,9 @@ export async function syncFantasyPlayersFromClub(admin: Admin): Promise<FantasyS
   for (const row of existing) {
     if (matchedIds.has(row.id)) continue;
     if (row.status === "departed") continue;
+    // Manually added players (announced signings the club feed hasn't published
+    // yet) have no club player id — never auto-depart them on a feed miss.
+    if (!row.mfc_player_id) continue;
     const { error } = await admin
       .from("fantasy_players")
       .update({ status: "departed", departed_at: nowIso })
