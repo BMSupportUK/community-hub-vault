@@ -199,11 +199,85 @@ function BoroFantasyPage() {
   const state = stateQuery.data;
   const joined = !!state?.joined;
   const canPlay = joined && (!!user || !!guest);
+  const currentTeamName = (state?.teamName || guest?.teamName || "").trim();
+
+  const [nameDialogOpen, setNameDialogOpen] = useState(false);
+  const [nameDraft, setNameDraft] = useState("");
+  const [savingName, setSavingName] = useState(false);
+  const pendingSaveRef = useRef<{
+    payload: any;
+    resolve: () => void;
+    reject: (e: unknown) => void;
+  } | null>(null);
 
   const refresh = () => {
     qc.invalidateQueries({ queryKey: ["fantasy-state"] });
     qc.invalidateQueries({ queryKey: ["fantasy-leaderboard"] });
   };
+
+  async function doSaveSquad(payload: any) {
+    if (user) await saveFn({ data: payload });
+    else if (guest) await saveGuestFn({ data: { email: guest.email, pin: guest.pin, ...payload } });
+    else throw new Error("Sign in first.");
+    refresh();
+  }
+
+  async function persistTeamName(teamName: string) {
+    if (user) await setTeamNameFn({ data: { teamName } });
+    else if (guest) {
+      await setGuestTeamNameFn({ data: { email: guest.email, pin: guest.pin, teamName } });
+      const next = { ...guest, teamName };
+      localStorage.setItem(GUEST_KEY, JSON.stringify(next));
+      setGuest(next);
+    } else throw new Error("Sign in first.");
+  }
+
+  function openNameDialog() {
+    setNameDraft(currentTeamName);
+    setNameDialogOpen(true);
+  }
+
+  function closeNameDialog() {
+    setNameDialogOpen(false);
+    const pending = pendingSaveRef.current;
+    pendingSaveRef.current = null;
+    pending?.reject(new Error("Enter a team name to save your squad."));
+  }
+
+  async function submitTeamName() {
+    const teamName = nameDraft.trim();
+    if (!teamName) { toast.error("Enter a team name"); return; }
+    setSavingName(true);
+    const pending = pendingSaveRef.current;
+    try {
+      await persistTeamName(teamName);
+      if (pending) {
+        await doSaveSquad(pending.payload);
+        pendingSaveRef.current = null;
+        pending.resolve();
+      } else {
+        toast.success("Team name updated");
+        refresh();
+      }
+      setNameDialogOpen(false);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Could not save team name");
+    } finally {
+      setSavingName(false);
+    }
+  }
+
+  async function handleSquadSave(payload: any) {
+    if (!currentTeamName) {
+      setNameDraft("");
+      setNameDialogOpen(true);
+      await new Promise<void>((resolve, reject) => {
+        pendingSaveRef.current = { payload, resolve, reject };
+      });
+      return;
+    }
+    await doSaveSquad(payload);
+  }
 
   async function handleJoin() {
     setJoining(true);
