@@ -875,7 +875,10 @@ function SquadBuilder({
               variant={dirty ? "default" : "outline"}
               className={dirty ? "" : "opacity-60"}
               title={dirty ? undefined : "No changes to save"}
-              disabled={saving || locked || !gw || !canPlay || problems.length > 0 || !dirty}
+              disabled={
+                saving || locked || !gw || !canPlay || !dirty ||
+                (squadTab === "xi" ? problems.length > 0 : squadProblems.length > 0)
+              }
             >
               {saving ? <Loader2 className="size-4 animate-spin" /> : !dirty ? "Saved" : squadTab === "xi" ? "Save starting 11" : "Save squad"}
             </Button>
