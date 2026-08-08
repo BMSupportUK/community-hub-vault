@@ -699,7 +699,7 @@ function SquadBuilder({
               <div className="space-y-2">
                 <p className="text-xs text-emerald-300">
                   {squadTab === "xi" ? (
-                    <>Starting 11 is valid — hit <span className="font-semibold">Save squad</span>.</>
+                    <>Starting 11 is valid — hit <span className="font-semibold">Save starting 11</span>.</>
                   ) : (
                     <>Squad of 15 is valid — now set your Starting 11.</>
                   )}
