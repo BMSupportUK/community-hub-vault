@@ -1219,7 +1219,14 @@ function PlayerSidebar({
             >
               <span className={`text-[10px] font-bold rounded-md border px-1.5 py-0.5 ${POS_TINT[p.position]}`}>{POSITION_SHORT[p.position]}</span>
               <div className="min-w-0 flex-1">
-                <div className={`truncate font-medium ${p.status === "departed" || p.status === "loaned_out" ? "line-through decoration-2 decoration-destructive text-muted-foreground" : ""}`}>{p.name}</div>
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <span className={`truncate font-medium ${p.status === "departed" || p.status === "loaned_out" ? "line-through decoration-2 decoration-destructive text-muted-foreground" : ""}`}>{p.name}</span>
+                  {(p.squadLevel === "u21" || p.squadLevel === "u18") && (
+                    <span className="shrink-0 rounded-md border border-sky-500/40 bg-sky-500/10 px-1 py-0.5 text-[9px] font-bold uppercase tracking-wide text-sky-500">
+                      {p.squadLevel === "u21" ? "U21" : "U18"}
+                    </span>
+                  )}
+                </div>
                 <div className="text-[11px] text-muted-foreground tabular-nums">
                   {money(p.valueM)}
                   <span className="ml-1 text-foreground/80">· {p.seasonPoints ?? 0} pts</span>
