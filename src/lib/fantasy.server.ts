@@ -20,6 +20,7 @@ export type FantasyPlayerDTO = {
   shirtNumber: number | null;
   valueM: number;
   status: "active" | "injured" | "suspended" | "departed";
+  departedAt?: string | null;
 };
 
 export type FantasyGameweekDTO = {
@@ -146,7 +147,7 @@ function mapSquad(r: any): FantasySquadDTO {
 export async function loadPlayers(admin: any): Promise<FantasyPlayerDTO[]> {
   const { data, error } = await admin
     .from("fantasy_players")
-    .select("id, name, position, shirt_number, value_m, status")
+    .select("id, name, position, shirt_number, value_m, status, departed_at")
     .order("sort_order", { ascending: true });
   if (error) throw new Error(error.message);
   return (data ?? []).map(mapPlayer);
