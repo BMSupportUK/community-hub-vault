@@ -187,7 +187,6 @@ export async function loadState(admin: any, owner: Owner | null): Promise<Fantas
   // selectable player list with footballers who have left the club.
   function visiblePlayers(
     all: FantasyPlayerDTO[],
-    gws: FantasyGameweekDTO[],
     mySquads: FantasySquadDTO[],
   ): FantasyPlayerDTO[] {
     const picked = new Set<string>();
@@ -262,7 +261,7 @@ export async function loadState(admin: any, owner: Owner | null): Promise<Fantas
     freeTransfers,
     wildcardUsed,
     budgetM: FANTASY_BUDGET_M,
-    players: visiblePlayers(players, gameweeks, squads),
+    players: visiblePlayers(players, squads),
     gameweeks,
     currentGameweekId: pickCurrentGameweek(gameweeks),
     squads,
