@@ -418,8 +418,8 @@ function NextGameweekCard({ state }: { state?: FantasyStateDTO }) {
       <div className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Next gameweek</div>
       <div className="font-semibold">GW{gw.gwNumber} — {gw.homeTeam} v {gw.awayTeam}</div>
       <div className="text-xs text-muted-foreground mt-1">{kickoffLabel(gw.kickoffAt)}</div>
-      <div className="mt-2 inline-flex items-center gap-1 text-xs rounded-full bg-amber-500/15 text-amber-400 px-2 py-1">
-        <Lock className="size-3" /> Locks {kickoffLabel(gw.lockAt)}
+      <div className="mt-3">
+        <DigitalLockCountdown lockAt={gw.lockAt} />
       </div>
     </div>
   );
