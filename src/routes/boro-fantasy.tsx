@@ -1252,8 +1252,11 @@ function TransfersTabBody({ state }: { state: FantasyStateDTO }) {
       <section className="rounded-2xl border border-border/60 bg-card/80 backdrop-blur p-4">
         <h3 className="font-semibold mb-3">Your transfers</h3>
         <p className="text-sm text-muted-foreground mb-3">
-          You get 1 free transfer each gameweek (bank up to 2). Extra transfers cost 4 points each.
-          Replacing a player who has left the club is always free.
+          {state.gameweeks && isFantasySeasonStarted(state.gameweeks) ? (
+            <>You get 1 free transfer each gameweek (bank up to 2). Extra transfers cost 4 points each. Replacing a player who has left the club is always free.</>
+          ) : (
+            <>Unlimited free transfers until the season starts. Once the first league fixture kicks off, you get 1 free transfer per gameweek (bank up to 2) and extra transfers cost 4 points each.</>
+          )}
         </p>
         {state.myTransfers.length === 0 ? (
           <p className="text-sm text-muted-foreground">No transfers made yet.</p>
