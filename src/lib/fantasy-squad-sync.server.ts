@@ -132,6 +132,7 @@ export async function syncFantasyPlayersFromClub(admin: Admin): Promise<FantasyS
       added.push(p.name);
       matchedIds.add((inserted as any).id as string);
       // Log the confirmed arrival in the club transfer feed (once).
+      if (!logTransfers) continue;
       const { data: dupe } = await admin
         .from("fantasy_club_transfers")
         .select("id")
@@ -180,6 +181,7 @@ export async function syncFantasyPlayersFromClub(admin: Admin): Promise<FantasyS
       .eq("id", row.id);
     if (error) continue;
     departed.push(row.name);
+    if (!logTransfers) continue;
     const { data: dupe } = await admin
       .from("fantasy_club_transfers")
       .select("id")
@@ -199,6 +201,12 @@ export async function syncFantasyPlayersFromClub(admin: Admin): Promise<FantasyS
           : "No longer in the mfc.co.uk first-team squad",
       });
     }
+  }
+
+  if (isBaseline) {
+    await admin
+      .from("app_settings")
+      .upsert({ key: "fantasy_squad_baseline_at", value: nowIso as any }, { onConflict: "key" });
   }
 
   return { ok: true, squadSize: ordered.length, added, updated, departed };
