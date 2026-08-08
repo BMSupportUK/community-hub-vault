@@ -97,6 +97,17 @@ export async function syncFantasyPlayersFromClub(admin: Admin): Promise<FantasyS
   const updated: string[] = [];
   const matchedIds = new Set<string>();
 
+  // The very first sync imports the whole existing squad — those players were
+  // already at the club, so nothing from a baseline run belongs in the club
+  // transfer feed. Only later runs log genuine arrivals/exits.
+  const { data: baselineRow } = await admin
+    .from("app_settings")
+    .select("key")
+    .eq("key", "fantasy_squad_baseline_at")
+    .maybeSingle();
+  const isBaseline = !baselineRow;
+  const logTransfers = !isBaseline;
+
   for (let i = 0; i < ordered.length; i++) {
     const p = ordered[i]!;
     const row = byMfcId.get(p.mfcPlayerId) ?? byName.get(normName(p.name));
