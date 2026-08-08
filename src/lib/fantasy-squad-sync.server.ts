@@ -240,7 +240,7 @@ export async function syncFantasyPlayersFromClub(admin: Admin): Promise<FantasyS
       .eq("id", row.id);
     if (error) continue;
     departed.push(row.name);
-    if ((row.squad_level ?? "first") === "first") {
+    if ((row.squad_level ?? "first") === "first" && joinedThisWindow(row)) {
       await logTransfer(row.name, "out", row.id, "No longer in the official first-team squad");
     }
   }
