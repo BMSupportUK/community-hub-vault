@@ -1192,6 +1192,7 @@ function GameweekList({ state }: { state: FantasyStateDTO }) {
         const picks = [...(squad?.picks ?? [])].sort((a, b) => a.slotOrder - b.slotOrder);
         const startersList = picks.filter((p) => p.isStarter);
         const benchList = picks.filter((p) => !p.isStarter);
+        const xiConfirmed = startersList.length === 11;
         const row = (p: (typeof picks)[number]) => {
           const pl = playerById.get(p.playerId);
           return (
@@ -1212,7 +1213,15 @@ function GameweekList({ state }: { state: FantasyStateDTO }) {
             <div className="flex flex-wrap items-center gap-3">
             <div className="w-14 text-xs font-bold text-primary">GW{g.gwNumber}</div>
             <div className="flex-1 min-w-[180px]">
-              <div className="font-medium">{g.homeTeam} v {g.awayTeam}</div>
+              <div className="font-medium flex items-center gap-1.5">
+                <span>{g.homeTeam} v {g.awayTeam}</span>
+                {xiConfirmed && (
+                  <span title="Starting 11 entered" className="inline-flex items-center gap-1 text-emerald-400">
+                    <Check className="size-4" />
+                    <span className="text-[10px] font-bold uppercase">XI in</span>
+                  </span>
+                )}
+              </div>
               <div className="text-xs text-muted-foreground">{kickoffLabel(g.kickoffAt)} · {g.competition}</div>
             </div>
             {g.homeScore !== null && g.awayScore !== null && (
