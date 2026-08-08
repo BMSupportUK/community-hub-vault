@@ -203,6 +203,8 @@ export async function loadState(admin: any, owner: Owner | null): Promise<Fantas
     admin
       .from("fantasy_club_transfers")
       .select("id, player_name, direction, other_club, fee, window_label, transfer_date, note")
+      // Only the 2026/27 season's business — the window opens 1 June 2026.
+      .gte("transfer_date", "2026-06-01")
       .order("transfer_date", { ascending: false }),
   ]);
 
