@@ -233,6 +233,8 @@ export async function syncFantasyPlayersFromClub(admin: Admin): Promise<FantasyS
           (inserted as any).id as string,
           p.onLoanFrom ? `Loan signing from ${p.onLoanFrom}` : "Signed for the 2026/27 season",
           p.joinDate,
+
+          p.onLoanFrom ?? null,
         );
       }
       continue;
@@ -248,6 +250,8 @@ export async function syncFantasyPlayersFromClub(admin: Admin): Promise<FantasyS
         row.id,
         p.onLoanFrom ? `Loan signing from ${p.onLoanFrom}` : "Signed for the 2026/27 season",
         p.joinDate,
+
+        p.onLoanFrom ?? null,
       );
     }
     const changes: Record<string, unknown> = { last_seen_at: nowIso };
