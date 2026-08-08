@@ -1519,6 +1519,7 @@ export type Database = {
           sort_order: number
           squad_level: string
           status: string
+          status_locked: boolean
           updated_at: string
           value_m: number
         }
@@ -1534,6 +1535,7 @@ export type Database = {
           sort_order?: number
           squad_level?: string
           status?: string
+          status_locked?: boolean
           updated_at?: string
           value_m?: number
         }
@@ -1549,6 +1551,7 @@ export type Database = {
           sort_order?: number
           squad_level?: string
           status?: string
+          status_locked?: boolean
           updated_at?: string
           value_m?: number
         }
