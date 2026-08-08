@@ -93,6 +93,7 @@ import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/em
 import { Route as ApiPublicHooksWcPredictionRemindersRouteImport } from './routes/api/public/hooks/wc-prediction-reminders'
 import { Route as ApiPublicHooksUserNotificationPushRouteImport } from './routes/api/public/hooks/user-notification-push'
 import { Route as ApiPublicHooksSyncWcScoresRouteImport } from './routes/api/public/hooks/sync-wc-scores'
+import { Route as ApiPublicHooksSyncFantasyScoresRouteImport } from './routes/api/public/hooks/sync-fantasy-scores'
 import { Route as ApiPublicHooksSyncBoroScoresRouteImport } from './routes/api/public/hooks/sync-boro-scores'
 import { Route as ApiPublicHooksSubscriptionExpiryRemindersRouteImport } from './routes/api/public/hooks/subscription-expiry-reminders'
 import { Route as ApiPublicHooksStatusIncidentPushRouteImport } from './routes/api/public/hooks/status-incident-push'
@@ -600,6 +601,12 @@ const ApiPublicHooksSyncWcScoresRoute =
     path: '/api/public/hooks/sync-wc-scores',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksSyncFantasyScoresRoute =
+  ApiPublicHooksSyncFantasyScoresRouteImport.update({
+    id: '/api/public/hooks/sync-fantasy-scores',
+    path: '/api/public/hooks/sync-fantasy-scores',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksSyncBoroScoresRoute =
   ApiPublicHooksSyncBoroScoresRouteImport.update({
     id: '/api/public/hooks/sync-boro-scores',
@@ -858,6 +865,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/status-incident-push': typeof ApiPublicHooksStatusIncidentPushRoute
   '/api/public/hooks/subscription-expiry-reminders': typeof ApiPublicHooksSubscriptionExpiryRemindersRoute
   '/api/public/hooks/sync-boro-scores': typeof ApiPublicHooksSyncBoroScoresRoute
+  '/api/public/hooks/sync-fantasy-scores': typeof ApiPublicHooksSyncFantasyScoresRoute
   '/api/public/hooks/sync-wc-scores': typeof ApiPublicHooksSyncWcScoresRoute
   '/api/public/hooks/user-notification-push': typeof ApiPublicHooksUserNotificationPushRoute
   '/api/public/hooks/wc-prediction-reminders': typeof ApiPublicHooksWcPredictionRemindersRoute
@@ -966,6 +974,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/status-incident-push': typeof ApiPublicHooksStatusIncidentPushRoute
   '/api/public/hooks/subscription-expiry-reminders': typeof ApiPublicHooksSubscriptionExpiryRemindersRoute
   '/api/public/hooks/sync-boro-scores': typeof ApiPublicHooksSyncBoroScoresRoute
+  '/api/public/hooks/sync-fantasy-scores': typeof ApiPublicHooksSyncFantasyScoresRoute
   '/api/public/hooks/sync-wc-scores': typeof ApiPublicHooksSyncWcScoresRoute
   '/api/public/hooks/user-notification-push': typeof ApiPublicHooksUserNotificationPushRoute
   '/api/public/hooks/wc-prediction-reminders': typeof ApiPublicHooksWcPredictionRemindersRoute
@@ -1080,6 +1089,7 @@ export interface FileRoutesById {
   '/api/public/hooks/status-incident-push': typeof ApiPublicHooksStatusIncidentPushRoute
   '/api/public/hooks/subscription-expiry-reminders': typeof ApiPublicHooksSubscriptionExpiryRemindersRoute
   '/api/public/hooks/sync-boro-scores': typeof ApiPublicHooksSyncBoroScoresRoute
+  '/api/public/hooks/sync-fantasy-scores': typeof ApiPublicHooksSyncFantasyScoresRoute
   '/api/public/hooks/sync-wc-scores': typeof ApiPublicHooksSyncWcScoresRoute
   '/api/public/hooks/user-notification-push': typeof ApiPublicHooksUserNotificationPushRoute
   '/api/public/hooks/wc-prediction-reminders': typeof ApiPublicHooksWcPredictionRemindersRoute
@@ -1193,6 +1203,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/status-incident-push'
     | '/api/public/hooks/subscription-expiry-reminders'
     | '/api/public/hooks/sync-boro-scores'
+    | '/api/public/hooks/sync-fantasy-scores'
     | '/api/public/hooks/sync-wc-scores'
     | '/api/public/hooks/user-notification-push'
     | '/api/public/hooks/wc-prediction-reminders'
@@ -1301,6 +1312,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/status-incident-push'
     | '/api/public/hooks/subscription-expiry-reminders'
     | '/api/public/hooks/sync-boro-scores'
+    | '/api/public/hooks/sync-fantasy-scores'
     | '/api/public/hooks/sync-wc-scores'
     | '/api/public/hooks/user-notification-push'
     | '/api/public/hooks/wc-prediction-reminders'
@@ -1414,6 +1426,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/status-incident-push'
     | '/api/public/hooks/subscription-expiry-reminders'
     | '/api/public/hooks/sync-boro-scores'
+    | '/api/public/hooks/sync-fantasy-scores'
     | '/api/public/hooks/sync-wc-scores'
     | '/api/public/hooks/user-notification-push'
     | '/api/public/hooks/wc-prediction-reminders'
@@ -1468,6 +1481,7 @@ export interface RootRouteChildren {
   ApiPublicHooksStatusIncidentPushRoute: typeof ApiPublicHooksStatusIncidentPushRoute
   ApiPublicHooksSubscriptionExpiryRemindersRoute: typeof ApiPublicHooksSubscriptionExpiryRemindersRoute
   ApiPublicHooksSyncBoroScoresRoute: typeof ApiPublicHooksSyncBoroScoresRoute
+  ApiPublicHooksSyncFantasyScoresRoute: typeof ApiPublicHooksSyncFantasyScoresRoute
   ApiPublicHooksSyncWcScoresRoute: typeof ApiPublicHooksSyncWcScoresRoute
   ApiPublicHooksUserNotificationPushRoute: typeof ApiPublicHooksUserNotificationPushRoute
   ApiPublicHooksWcPredictionRemindersRoute: typeof ApiPublicHooksWcPredictionRemindersRoute
@@ -2068,6 +2082,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksSyncWcScoresRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/sync-fantasy-scores': {
+      id: '/api/public/hooks/sync-fantasy-scores'
+      path: '/api/public/hooks/sync-fantasy-scores'
+      fullPath: '/api/public/hooks/sync-fantasy-scores'
+      preLoaderRoute: typeof ApiPublicHooksSyncFantasyScoresRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/sync-boro-scores': {
       id: '/api/public/hooks/sync-boro-scores'
       path: '/api/public/hooks/sync-boro-scores'
@@ -2571,6 +2592,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksSubscriptionExpiryRemindersRoute:
     ApiPublicHooksSubscriptionExpiryRemindersRoute,
   ApiPublicHooksSyncBoroScoresRoute: ApiPublicHooksSyncBoroScoresRoute,
+  ApiPublicHooksSyncFantasyScoresRoute: ApiPublicHooksSyncFantasyScoresRoute,
   ApiPublicHooksSyncWcScoresRoute: ApiPublicHooksSyncWcScoresRoute,
   ApiPublicHooksUserNotificationPushRoute:
     ApiPublicHooksUserNotificationPushRoute,
@@ -2585,13 +2607,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
