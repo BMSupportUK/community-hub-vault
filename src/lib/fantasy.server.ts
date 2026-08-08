@@ -462,7 +462,7 @@ export async function saveSquad(admin: any, owner: Owner, input: SaveSquadInput)
         ...(owner.userId ? { user_id: owner.userId } : { guest_id: owner.guestId }),
         out_player_id: outId,
         in_player_id: incoming[i] ?? null,
-        cost: forced ? 0 : i < banked ? 0 : FANTASY_TRANSFER_HIT,
+        cost: !seasonStarted || forced ? 0 : i < banked ? 0 : FANTASY_TRANSFER_HIT,
         forced: !!forced,
       });
     }
