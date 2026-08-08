@@ -754,7 +754,7 @@ function PitchView({
         <div className="pointer-events-none absolute left-1/2 bottom-4 sm:bottom-6 h-16 w-40 -translate-x-1/2 rounded-t-xl border-x-2 border-t-2 border-white/25" aria-hidden />
         <div className="relative space-y-4 sm:space-y-6 py-2">
           {rowSlots.map((row, ri) => (
-            <div key={ri} className="flex justify-center gap-2 sm:gap-4 flex-wrap">
+            <div key={ri} className="flex flex-nowrap justify-center gap-1 sm:gap-2">
               {row.slots.map((id, si) => {
                 const p = id ? playerById.get(id) : undefined;
                 return (
@@ -763,7 +763,7 @@ function PitchView({
                     {...dropProps((dragged) => onDropStart(dragged, id ?? undefined))}
                     draggable={editable && !!id}
                     onDragStart={(e) => { if (id) e.dataTransfer.setData("text/fantasy-player", id); }}
-                    className={`w-[92px] sm:w-[104px] rounded-xl border px-1.5 py-2 text-center backdrop-blur-sm transition-colors ${
+                    className={`w-[64px] sm:w-[86px] rounded-xl border px-1.5 py-2 text-center backdrop-blur-sm transition-colors ${
                       p ? "border-white/40 bg-slate-950/70" : "border-dashed border-white/40 bg-white/10 hover:bg-white/20"
                     }`}
                   >
@@ -821,7 +821,7 @@ function PitchView({
                 {...dropProps(onDropBench)}
                 draggable={editable && !!id}
                 onDragStart={(e) => { if (id) e.dataTransfer.setData("text/fantasy-player", id); }}
-                className={`w-[92px] sm:w-[104px] rounded-xl border px-1.5 py-2 text-center text-xs ${
+                className={`w-[64px] sm:w-[86px] rounded-xl border px-1.5 py-2 text-center text-xs ${
                   p ? "border-border/70 bg-muted/40" : "border-dashed border-border/70 bg-muted/20 text-muted-foreground"
                 }`}
               >
