@@ -320,6 +320,16 @@ async function syncFixtures() {
     fantasy = { ok: false, error: e instanceof Error ? e.message : String(e) };
   }
 
+  // Keep the fantasy player pool in step with the official mfc.co.uk squad —
+  // confirmed signings are added into their position, departures marked.
+  let fantasySquad: unknown = null;
+  try {
+    const { syncFantasyPlayersFromClub } = await import("@/lib/fantasy-squad-sync.server");
+    fantasySquad = await syncFantasyPlayersFromClub(supabaseAdmin as never);
+  } catch (e) {
+    fantasySquad = { ok: false, error: e instanceof Error ? e.message : String(e) };
+  }
+
   return {
     ok: true,
     source,
@@ -331,6 +341,7 @@ async function syncFixtures() {
     inserted_list: inserted,
     updated_list: updated,
     fantasy,
+    fantasy_squad: fantasySquad,
   };
 }
 
