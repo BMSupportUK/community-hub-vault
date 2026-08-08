@@ -13,8 +13,13 @@ const MFC_SQUAD_API =
 const MFC_LOANED_OUT_API =
   "https://teams.football.web.gc.middlesbroughfcservices.co.uk/v2/loaned-out-players/team/t25/";
 const MFC_TEAM_ID = "t25"; // Middlesbrough first team
+const MFC_U21_TEAM_ID = "t12939"; // Middlesbrough Under-21s
+const MFC_U18_TEAM_ID = "t7143"; // Middlesbrough Under-18s
 
 export type FantasyPosition = "gk" | "def" | "mid" | "fwd";
+
+/** Which club squad a player currently sits in. */
+export type MfcSquadLevel = "first" | "u21" | "u18";
 
 export type MfcSquadPlayer = {
   mfcPlayerId: string;
@@ -23,6 +28,7 @@ export type MfcSquadPlayer = {
   detailedPosition: string | null;
   shirtNumber: number | null;
   onLoanFrom: string | null;
+  squadLevel: MfcSquadLevel;
 };
 
 export type MfcLoanedOutPlayer = {
@@ -70,9 +76,8 @@ function displayName(p: OptaSquadPlayer): string {
   return [(p.firstName ?? "").trim(), (p.surname ?? "").trim()].filter(Boolean).join(" ").trim();
 }
 
-/** Fetch the current first-team squad from the club site. */
-export async function fetchMfcSquad(): Promise<MfcSquadPlayer[]> {
-  const res = await fetch(`${MFC_SQUAD_API}?teamID=${MFC_TEAM_ID}`, { headers: HEADERS });
+async function fetchSquadForTeam(teamId: string, level: MfcSquadLevel): Promise<MfcSquadPlayer[]> {
+  const res = await fetch(`${MFC_SQUAD_API}?teamID=${teamId}`, { headers: HEADERS });
   if (!res.ok) throw new Error(`MFC squad feed failed: HTTP ${res.status}`);
   const json = (await res.json()) as { body?: Record<string, OptaSquadPlayer[]> };
   const body = json.body ?? {};
@@ -101,10 +106,29 @@ export async function fetchMfcSquad(): Promise<MfcSquadPlayer[]> {
         detailedPosition: (p.realPosition ?? null) || null,
         shirtNumber: Number.isFinite(shirt) && shirt > 0 ? shirt : null,
         onLoanFrom: (p.onLoanFrom ?? null) || null,
+        squadLevel: level,
       });
     }
   }
   return out;
+}
+
+/** Fetch the current first-team squad from the club site. */
+export async function fetchMfcSquad(): Promise<MfcSquadPlayer[]> {
+  return fetchSquadForTeam(MFC_TEAM_ID, "first");
+}
+
+/**
+ * Fetch the academy squads (Under-21s and Under-18s). These are the fringe
+ * players who train with, and sometimes step up to, the first team. Failures
+ * are non-fatal: a missing academy feed must never wipe the pool.
+ */
+export async function fetchMfcAcademySquads(): Promise<MfcSquadPlayer[]> {
+  const [u21, u18] = await Promise.all([
+    fetchSquadForTeam(MFC_U21_TEAM_ID, "u21").catch(() => [] as MfcSquadPlayer[]),
+    fetchSquadForTeam(MFC_U18_TEAM_ID, "u18").catch(() => [] as MfcSquadPlayer[]),
+  ]);
+  return [...u21, ...u18];
 }
 
 /** Players the club currently have out on loan — not eligible for the game. */
