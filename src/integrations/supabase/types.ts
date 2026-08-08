@@ -1513,6 +1513,7 @@ export type Database = {
           id: string
           last_seen_at: string | null
           loan_club: string | null
+          loan_from: string | null
           mfc_player_id: string | null
           name: string
           position: string
@@ -1530,6 +1531,7 @@ export type Database = {
           id?: string
           last_seen_at?: string | null
           loan_club?: string | null
+          loan_from?: string | null
           mfc_player_id?: string | null
           name: string
           position: string
@@ -1547,6 +1549,7 @@ export type Database = {
           id?: string
           last_seen_at?: string | null
           loan_club?: string | null
+          loan_from?: string | null
           mfc_player_id?: string | null
           name?: string
           position?: string

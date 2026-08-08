@@ -1229,6 +1229,9 @@ function PlayerSidebar({
                   ) : (
                     p.status !== "active" && <span className="ml-1 text-destructive uppercase">{p.status}</span>
                   )}
+                  {p.status !== "loaned_out" && p.loanFrom && (
+                    <span className="ml-1 text-amber-500 uppercase">on loan from {p.loanFrom}</span>
+                  )}
                 </div>
               </div>
               <button

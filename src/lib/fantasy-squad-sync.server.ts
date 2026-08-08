@@ -23,6 +23,7 @@ type PlayerRow = {
   created_at?: string | null;
   status_locked?: boolean | null;
   loan_club?: string | null;
+  loan_from?: string | null;
 };
 
 const POSITION_ORDER: Record<FantasyPosition, number> = { gk: 0, def: 1, mid: 2, fwd: 3 };
@@ -113,7 +114,7 @@ export async function syncFantasyPlayersFromClub(admin: Admin): Promise<FantasyS
   const { data: existingRows, error: readErr } = await admin
     .from("fantasy_players")
     .select(
-      "id, name, position, shirt_number, value_m, status, sort_order, mfc_player_id, squad_level, created_at, status_locked, loan_club",
+      "id, name, position, shirt_number, value_m, status, sort_order, mfc_player_id, squad_level, created_at, status_locked, loan_club, loan_from",
     );
   if (readErr) return { ok: false, error: readErr.message };
   const existing = (existingRows ?? []) as PlayerRow[];
@@ -209,6 +210,7 @@ export async function syncFantasyPlayersFromClub(admin: Admin): Promise<FantasyS
           value_m: defaultValueM(p.position, p.detailedPosition, p.squadLevel),
           status: onLoan ? "loaned_out" : "active",
           loan_club: onLoan ? loanClub : null,
+          loan_from: p.onLoanFrom ?? null,
           sort_order: sortOrder,
           mfc_player_id: p.mfcPlayerId,
           squad_level: p.squadLevel,
@@ -223,7 +225,13 @@ export async function syncFantasyPlayersFromClub(admin: Admin): Promise<FantasyS
         await logTransfer(p.name, "out", (inserted as any).id as string, loanClub ? `Out on loan at ${loanClub}` : "Out on loan");
       }
       if (p.squadLevel === "first" && joinedInWindow(p.joinDate)) {
-        await logTransfer(p.name, "in", (inserted as any).id as string, "Signed for the 2026/27 season", p.joinDate);
+        await logTransfer(
+          p.name,
+          "in",
+          (inserted as any).id as string,
+          p.onLoanFrom ? `Loan signing from ${p.onLoanFrom}` : "Signed for the 2026/27 season",
+          p.joinDate,
+        );
       }
       continue;
     }
@@ -232,9 +240,16 @@ export async function syncFantasyPlayersFromClub(admin: Admin): Promise<FantasyS
     // Existing pool rows can still be genuine 2026/27 signings (e.g. added by an
     // earlier sync before the feed carried a join date) — log them once.
     if (p.squadLevel === "first" && joinedInWindow(p.joinDate)) {
-      await logTransfer(p.name, "in", row.id, "Signed for the 2026/27 season", p.joinDate);
+      await logTransfer(
+        p.name,
+        "in",
+        row.id,
+        p.onLoanFrom ? `Loan signing from ${p.onLoanFrom}` : "Signed for the 2026/27 season",
+        p.joinDate,
+      );
     }
     const changes: Record<string, unknown> = { last_seen_at: nowIso };
+    if ((row.loan_from ?? null) !== (p.onLoanFrom ?? null)) changes.loan_from = p.onLoanFrom ?? null;
     if (row.mfc_player_id !== p.mfcPlayerId) changes.mfc_player_id = p.mfcPlayerId;
     if (row.name !== p.name) changes.name = p.name;
     if (row.position !== p.position) changes.position = p.position;

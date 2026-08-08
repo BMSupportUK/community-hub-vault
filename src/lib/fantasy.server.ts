@@ -24,6 +24,8 @@ export type FantasyPlayerDTO = {
   departedAt?: string | null;
   /** Club the player is currently on loan at, when out on loan. */
   loanClub?: string | null;
+  /** Parent club, when the player is at Boro on loan. */
+  loanFrom?: string | null;
   /** Total fantasy points this player has earned so far this season. */
   seasonPoints?: number;
 };
@@ -113,6 +115,7 @@ export function mapPlayer(r: any): FantasyPlayerDTO {
     status: r.status,
     departedAt: r.departed_at ?? null,
     loanClub: r.loan_club ?? null,
+    loanFrom: r.loan_from ?? null,
   };
 }
 
@@ -158,7 +161,7 @@ export async function loadPlayers(admin: any): Promise<FantasyPlayerDTO[]> {
   const [{ data, error }, statsRes] = await Promise.all([
     admin
       .from("fantasy_players")
-      .select("id, name, position, shirt_number, value_m, status, departed_at, loan_club")
+      .select("id, name, position, shirt_number, value_m, status, departed_at, loan_club, loan_from")
       .order("sort_order", { ascending: true }),
     admin.from("fantasy_player_stats").select("player_id, points"),
   ]);
