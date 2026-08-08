@@ -394,12 +394,23 @@ function SquadBuilder({
   // local draft until the squad is saved.
   const draftKey = gw ? `mfc-fantasy-draft:${gw.id}` : null;
   const [draftLoaded, setDraftLoaded] = useState(false);
-  const [restoredDraft, setRestoredDraft] = useState(false);
+  const restoredDraftRef = useRef(false);
 
   useEffect(() => {
     setDraftLoaded(false);
-    setRestoredDraft(false);
-    if (!draftKey) return;
+    restoredDraftRef.current = false;
+    const applyExisting = () => {
+      if (!existing) return;
+      setFormation(existing.formation as FormationKey);
+      setSelected(existing.picks.map((p) => p.playerId));
+      setStarters(existing.picks.filter((p) => p.isStarter).map((p) => p.playerId));
+      setCaptainId(existing.captainId ?? "");
+      setViceId(existing.viceId ?? "");
+    };
+    if (!draftKey) {
+      applyExisting();
+      return;
+    }
     try {
       const raw = localStorage.getItem(draftKey);
       if (raw) {
@@ -410,14 +421,15 @@ function SquadBuilder({
           setStarters(Array.isArray(d.starters) ? d.starters : []);
           setCaptainId(d.captainId ?? "");
           setViceId(d.viceId ?? "");
-          setRestoredDraft(true);
+          restoredDraftRef.current = true;
         }
       }
     } catch {
       /* ignore corrupt drafts */
     }
+    if (!restoredDraftRef.current) applyExisting();
     setDraftLoaded(true);
-  }, [draftKey]);
+  }, [draftKey, existing?.id]);
 
   useEffect(() => {
     if (!draftKey || !draftLoaded) return;
@@ -432,16 +444,6 @@ function SquadBuilder({
       /* storage full or blocked — drafting still works in-memory */
     }
   }, [draftKey, draftLoaded, formation, selected, starters, captainId, viceId]);
-
-  useEffect(() => {
-    if (!existing) return;
-    if (restoredDraft) return; // don't clobber unsaved work
-    setFormation(existing.formation as FormationKey);
-    setSelected(existing.picks.map((p) => p.playerId));
-    setStarters(existing.picks.filter((p) => p.isStarter).map((p) => p.playerId));
-    setCaptainId(existing.captainId ?? "");
-    setViceId(existing.viceId ?? "");
-  }, [existing?.id]);
 
   const spend = selected.reduce((sum, id) => sum + (playerById.get(id)?.valueM ?? 0), 0);
   const remaining = state.budgetM - spend;
