@@ -1574,9 +1574,19 @@ function ClubTransferList({
         </p>
       ) : (
         <ul className="divide-y divide-border/50">
-          {items.map((t) => (
+          {items.map((t) => {
+            const isLoan = /loan/i.test(t.note ?? "") || /loan/i.test(t.fee ?? "");
+            return (
             <li key={t.id} className="px-3 py-2 text-sm flex flex-wrap items-center gap-2">
               <span className="font-medium">{t.playerName}</span>
+              <span
+                className={
+                  "text-[10px] font-bold uppercase rounded-full px-1.5 py-0.5 " +
+                  (isLoan ? "bg-amber-500/20 text-amber-400" : "bg-sky-500/20 text-sky-400")
+                }
+              >
+                {isLoan ? (tone === "in" ? "Loan in" : "Loan out") : "Permanent"}
+              </span>
               {t.otherClub && (
                 <span className="text-muted-foreground text-xs">
                   {tone === "in" ? "from" : "to"} {t.otherClub}
@@ -1588,7 +1598,8 @@ function ClubTransferList({
                 {t.windowLabel ? ` · ${t.windowLabel}` : ""}
               </span>
             </li>
-          ))}
+            );
+          })}
         </ul>
       )}
     </div>
