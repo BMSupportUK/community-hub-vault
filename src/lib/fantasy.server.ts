@@ -24,6 +24,8 @@ export type FantasyPlayerDTO = {
   departedAt?: string | null;
   /** Club the player is currently on loan at, when out on loan. */
   loanClub?: string | null;
+  /** Parent club, when the player is at Boro on loan. */
+  loanFrom?: string | null;
   /** Total fantasy points this player has earned so far this season. */
   seasonPoints?: number;
 };
