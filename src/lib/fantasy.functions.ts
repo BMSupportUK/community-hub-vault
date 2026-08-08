@@ -152,14 +152,27 @@ export const adminSyncFantasyGameweeks = createServerFn({ method: "POST" })
   .handler(async ({ context }) => {
     if (!(await isAdminOrManagement(context.supabase, context.userId))) throw new Error("Forbidden");
     const { getAdmin } = await import("@/lib/fantasy.server");
-    const { FANTASY_LOCK_MINUTES } = await import("@/lib/fantasy-rules");
+    const { FANTASY_LOCK_MINUTES, isFantasyLeagueCompetition } = await import("@/lib/fantasy-rules");
     const admin = await getAdmin();
-    const [{ data: fixtures, error: fxErr }, { data: existing }] = await Promise.all([
-      admin.from("boro_fixtures").select("id, kickoff_at").order("kickoff_at", { ascending: true }),
+    const [{ data: allFixtures, error: fxErr }, { data: existing }] = await Promise.all([
+      admin.from("boro_fixtures").select("id, kickoff_at, competition").order("kickoff_at", { ascending: true }),
       admin.from("fantasy_gameweeks").select("fixture_id, gw_number"),
     ]);
     if (fxErr) throw new Error(fxErr.message);
-    const have = new Set((existing ?? []).map((r: any) => r.fixture_id));
+    // League games only — cup ties, play-offs and friendlies never become gameweeks.
+    const fixtures = (allFixtures ?? []).filter((f: any) => isFantasyLeagueCompetition(f.competition));
+    const leagueIds = new Set(fixtures.map((f: any) => f.id));
+    // Clean up any gameweek that points at a non-league fixture.
+    const stale = (existing ?? []).filter((r: any) => r.fixture_id && !leagueIds.has(r.fixture_id));
+    if (stale.length) {
+      await admin
+        .from("fantasy_gameweeks")
+        .delete()
+        .in("fixture_id", stale.map((r: any) => r.fixture_id));
+    }
+    const have = new Set(
+      (existing ?? []).filter((r: any) => leagueIds.has(r.fixture_id)).map((r: any) => r.fixture_id),
+    );
     let next = Math.max(0, ...(existing ?? []).map((r: any) => r.gw_number ?? 0)) + 1;
     const rows = (fixtures ?? [])
       .filter((f: any) => !have.has(f.id))

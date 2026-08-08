@@ -1,6 +1,26 @@
 /** Shared, client-safe rules for the MFC Fantasy Manager. */
 
 export const FANTASY_BUDGET_M = 30;
+
+/**
+ * The fantasy game is league-only: cup ties, play-offs, friendlies and
+ * anything else never becomes a gameweek.
+ */
+export const FANTASY_LEAGUE_COMPETITIONS = [
+  "Championship",
+  "EFL Championship",
+  "Sky Bet Championship",
+  "Premier League",
+  "League One",
+  "League Two",
+] as const;
+
+export function isFantasyLeagueCompetition(competition: string | null | undefined): boolean {
+  const c = (competition ?? "").toLowerCase().trim();
+  if (!c) return false;
+  if (/(cup|trophy|friendl|play[- ]?off|shield|europa|champions league|conference league|papa|checkatrade)/.test(c)) return false;
+  return /championship|premier league|league one|league two|efl league/.test(c);
+}
 export const FANTASY_SQUAD_SIZE = 15;
 export const FANTASY_BENCH_SIZE = 4;
 export const FANTASY_TRANSFER_HIT = 4;
@@ -73,6 +93,7 @@ export const SQUAD_RULES: { title: string; body: string }[] = [
   { title: "Captain & vice", body: "Your captain scores double. If the captain doesn't play a minute, the vice-captain doubles instead. Both must start." },
   { title: "Transfers", body: `1 free transfer per gameweek, bankable up to ${FANTASY_MAX_BANKED_TRANSFERS}. Extra transfers cost ${FANTASY_TRANSFER_HIT} points each. Replacing a player who has left the club is always free.` },
   { title: "Deadline", body: `Squads lock ${FANTASY_LOCK_MINUTES} minutes before kick-off. After that your team is fixed for that gameweek.` },
+  { title: "League games only", body: "Gameweeks are Middlesbrough league fixtures only — cup ties, play-offs and friendlies are never part of the game." },
   { title: "Scoring & prizes", body: "Only Middlesbrough players score. Points are added automatically once each match finishes — see the Scoring tab for the full breakdown." },
 ];
 

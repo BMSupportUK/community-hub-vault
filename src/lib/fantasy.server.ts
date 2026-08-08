@@ -153,6 +153,7 @@ export async function loadPlayers(admin: any): Promise<FantasyPlayerDTO[]> {
 }
 
 export async function loadGameweeks(admin: any): Promise<FantasyGameweekDTO[]> {
+  const { isFantasyLeagueCompetition } = await import("@/lib/fantasy-rules");
   const { data, error } = await admin
     .from("fantasy_gameweeks")
     .select(
@@ -160,7 +161,10 @@ export async function loadGameweeks(admin: any): Promise<FantasyGameweekDTO[]> {
     )
     .order("gw_number", { ascending: true });
   if (error) throw new Error(error.message);
-  return (data ?? []).map(mapGameweek);
+  // League games only — never show cup ties, play-offs or friendlies.
+  return (data ?? [])
+    .filter((r: any) => isFantasyLeagueCompetition(r.fixture?.competition))
+    .map(mapGameweek);
 }
 
 /** The gameweek the manager should be picking for: first one still unlocked. */

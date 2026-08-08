@@ -265,7 +265,7 @@ export async function syncFantasyScoring(): Promise<{
 
   const { data: gws, error } = await supabaseAdmin
     .from("fantasy_gameweeks")
-    .select("id, gw_number, status, lock_at, fixture_id, boro_fixtures!inner(id, kickoff_at, home_team, away_team, status)")
+    .select("id, gw_number, status, lock_at, fixture_id, boro_fixtures!inner(id, kickoff_at, home_team, away_team, status, competition)")
     .order("gw_number", { ascending: true });
   if (error) return { ok: false, locked: 0, scored, pending, errors: [error.message] };
 
@@ -277,12 +277,15 @@ export async function syncFantasyScoring(): Promise<{
 
   const nowMs = Date.now();
   let locked = 0;
+  const { isFantasyLeagueCompetition } = await import("@/lib/fantasy-rules");
 
   for (const raw of (gws ?? []) as Array<Record<string, any>>) {
     const fx = raw['boro_fixtures'] as
-      | { id: string; kickoff_at: string; home_team: string; away_team: string; status: string }
+      | { id: string; kickoff_at: string; home_team: string; away_team: string; status: string; competition?: string | null }
       | null;
     if (!fx) continue;
+    // League games only.
+    if (!isFantasyLeagueCompetition(fx.competition)) continue;
     const finished = fx.status === "FINISHED";
 
     if (!finished) {
