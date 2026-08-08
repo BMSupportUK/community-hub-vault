@@ -192,15 +192,39 @@ function venueFor(homeTeam: string): string | null {
 
 async function syncFixtures() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { fetchMfcLeagueFixtures } = await import("@/lib/mfc-official-fixtures.server");
 
   const scraped: ParsedFixture[] = [];
   const scrapeErrors: string[] = [];
-  for (const month of SEASON_MONTHS) {
-    try {
-      const rows = await scrapeMonth(month);
-      scraped.push(...rows);
-    } catch (e) {
-      scrapeErrors.push(e instanceof Error ? e.message : String(e));
+  let source = "mfc.co.uk";
+
+  // Primary source: the club's own first-team fixture feed (mfc.co.uk). It is
+  // authoritative and updates as soon as a game is moved.
+  try {
+    const official = await fetchMfcLeagueFixtures();
+    for (const fx of official) {
+      scraped.push({
+        competition: fx.competition,
+        home_team: fx.homeTeam,
+        away_team: fx.awayTeam,
+        kickoff_at: fx.kickoffAt,
+        venue: fx.venue,
+      });
+    }
+  } catch (e) {
+    scrapeErrors.push(`mfc.co.uk: ${e instanceof Error ? e.message : String(e)}`);
+  }
+
+  // Fallback: BBC Sport monthly pages, only if the club feed gave us nothing.
+  if (scraped.length === 0) {
+    source = "bbc";
+    for (const month of SEASON_MONTHS) {
+      try {
+        const rows = await scrapeMonth(month);
+        scraped.push(...rows);
+      } catch (e) {
+        scrapeErrors.push(e instanceof Error ? e.message : String(e));
+      }
     }
   }
   if (scraped.length === 0) {
@@ -253,7 +277,7 @@ async function syncFixtures() {
         home_team: fx.home_team,
         away_team: fx.away_team,
         kickoff_at: newKickoff,
-        venue: venueFor(fx.home_team),
+        venue: fx.venue ?? venueFor(fx.home_team),
         status: "SCHEDULED",
       });
       if (error) errors.push(`insert ${fx.home_team} v ${fx.away_team}: ${error.message}`);
@@ -274,7 +298,7 @@ async function syncFixtures() {
     if (fx.competition && fx.competition !== existingRow.competition) {
       changes.competition = fx.competition;
     }
-    const expectedVenue = venueFor(fx.home_team);
+    const expectedVenue = fx.venue ?? venueFor(fx.home_team);
     if (expectedVenue && expectedVenue !== existingRow.venue) {
       changes.venue = expectedVenue;
     }
@@ -287,8 +311,18 @@ async function syncFixtures() {
     else updated.push(`${fx.home_team} v ${fx.away_team}: ${Object.keys(changes).join(",")}`);
   }
 
+  // Fixtures changed → keep fantasy gameweeks in step automatically.
+  let fantasy: unknown = null;
+  try {
+    const { syncFantasyGameweeksFromFixtures } = await import("@/lib/fantasy-gameweeks.server");
+    fantasy = await syncFantasyGameweeksFromFixtures(supabaseAdmin as never);
+  } catch (e) {
+    fantasy = { ok: false, error: e instanceof Error ? e.message : String(e) };
+  }
+
   return {
     ok: true,
+    source,
     scraped: unique.length,
     inserted: inserted.length,
     updated: updated.length,
@@ -296,6 +330,7 @@ async function syncFixtures() {
     scrape_errors: scrapeErrors,
     inserted_list: inserted,
     updated_list: updated,
+    fantasy,
   };
 }
 
