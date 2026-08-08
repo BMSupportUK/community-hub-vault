@@ -1,6 +1,6 @@
 /** Shared, client-safe rules for the MFC Fantasy Manager. */
 
-export const FANTASY_BUDGET_M = 30;
+export const FANTASY_BUDGET_M = 80;
 
 /**
  * The fantasy game is league-only: cup ties, play-offs, friendlies and
