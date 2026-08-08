@@ -987,7 +987,7 @@ function PlayerSidebar({
 // ------------------------------------------------------------------
 function PitchView({
   formation, onFormationChange, editable, playerById, starters, bench, captainId, viceId,
-  onDropStart, onDropBench, onBench, onRemove, onCaptain, onVice,
+  pointsByPlayer, autoSubbedIds, onDropStart, onDropBench, onBench, onRemove, onCaptain, onVice,
 }: {
   formation: FormationKey;
   onFormationChange: (f: FormationKey) => void;
@@ -997,6 +997,8 @@ function PitchView({
   bench: string[];
   captainId: string;
   viceId: string;
+  pointsByPlayer?: Map<string, number | null>;
+  autoSubbedIds?: Set<string>;
   onDropStart: (playerId: string, replaceId?: string) => void;
   onDropBench: (playerId: string) => void;
   onBench: (id: string) => void;
@@ -1081,6 +1083,11 @@ function PitchView({
                         </div>
                         <div className="mt-1 truncate text-[11px] font-semibold text-white">{p.name}</div>
                         <div className="text-[10px] tabular-nums text-white/70">{money(p.valueM)}</div>
+                        {pointsByPlayer?.has(p.id) && (
+                          <div className="mt-1 inline-flex items-center rounded-full border border-emerald-400/50 bg-emerald-500/20 px-1.5 text-[10px] font-bold tabular-nums text-emerald-200">
+                            {pointsByPlayer.get(p.id) ?? 0} pts
+                          </div>
+                        )}
                         {editable && (
                           <div className="mt-1 flex items-center justify-center gap-1">
                             <button type="button" title="Captain" onClick={() => onCaptain(p.id)} className={`rounded p-0.5 ${captainId === p.id ? "text-amber-400" : "text-white/50 hover:text-white"}`}>
@@ -1137,6 +1144,14 @@ function PitchView({
                     </div>
                     <div className="mt-1 truncate font-semibold">{p.name}</div>
                     <div className="text-[10px] tabular-nums text-muted-foreground">{money(p.valueM)}</div>
+                    {pointsByPlayer?.has(p.id) && (
+                      <div className="mt-1 inline-flex items-center rounded-full border border-emerald-500/40 bg-emerald-500/15 px-1.5 text-[10px] font-bold tabular-nums text-emerald-400">
+                        {pointsByPlayer.get(p.id) ?? 0} pts
+                      </div>
+                    )}
+                    {autoSubbedIds?.has(p.id) && (
+                      <div className="mt-0.5 text-[9px] font-bold uppercase text-sky-400">Subbed on</div>
+                    )}
                     {editable && (
                       <div className="mt-1 flex items-center justify-center gap-1">
                         <button type="button" title="Into the XI" onClick={() => onDropStart(p.id)} className="rounded p-0.5 text-muted-foreground hover:text-emerald-400">
