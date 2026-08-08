@@ -224,7 +224,7 @@ export async function syncFantasyPlayersFromClub(admin: Admin): Promise<FantasyS
       added.push(p.name);
       matchedIds.add((inserted as any).id as string);
       if (onLoan && p.squadLevel === "first") {
-        await logTransfer(p.name, "out", (inserted as any).id as string, loanClub ? `Out on loan at ${loanClub}` : "Out on loan");
+        await logTransfer(p.name, "out", (inserted as any).id as string, loanClub ? `Out on loan at ${loanClub}` : "Out on loan", null, loanClub);
       }
       if (p.squadLevel === "first" && joinedInWindow(p.joinDate)) {
         await logTransfer(
@@ -267,7 +267,7 @@ export async function syncFantasyPlayersFromClub(admin: Admin): Promise<FantasyS
         changes.departed_at = null;
         changes.loan_club = loanClub;
         if (p.squadLevel === "first") {
-          await logTransfer(p.name, "out", row.id, loanClub ? `Out on loan at ${loanClub}` : "Out on loan");
+          await logTransfer(p.name, "out", row.id, loanClub ? `Out on loan at ${loanClub}` : "Out on loan", null, loanClub);
         }
       } else if (!onLoan && row.status === "loaned_out") {
         // Loan over — back at the club and selectable again.
@@ -327,7 +327,7 @@ export async function syncFantasyPlayersFromClub(admin: Admin): Promise<FantasyS
       .eq("id", row.id);
     if (error) continue;
     loanedApplied.push(row.name);
-    await logTransfer(row.name, "out", row.id, club ? `Out on loan at ${club}` : "Out on loan");
+    await logTransfer(row.name, "out", row.id, club ? `Out on loan at ${club}` : "Out on loan", null, club);
   }
 
   return { ok: true, squadSize: ordered.length, added, updated, departed, loanedOut: loanedApplied };
