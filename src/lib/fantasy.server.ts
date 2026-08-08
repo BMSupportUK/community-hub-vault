@@ -178,6 +178,25 @@ export function pickCurrentGameweek(gws: FantasyGameweekDTO[]): string | null {
 }
 
 export async function loadState(admin: any, owner: Owner | null): Promise<FantasyStateDTO> {
+  // Players who left before the season's first gameweek are pre-season exits and
+  // shouldn't clutter the pool at all. Departures during the season stay visible
+  // (flagged "departed") so managers know they must replace them.
+  function visiblePlayers(
+    all: FantasyPlayerDTO[],
+    gws: FantasyGameweekDTO[],
+    mySquads: FantasySquadDTO[],
+  ): FantasyPlayerDTO[] {
+    const seasonStart = gws.length ? new Date(gws[0]!.kickoffAt).getTime() : Date.now();
+    const picked = new Set<string>();
+    for (const s of mySquads) for (const p of s.picks) picked.add(p.playerId);
+    return all.filter((p) => {
+      if (p.status !== "departed") return true;
+      if (picked.has(p.id)) return true;
+      const left = p.departedAt ? new Date(p.departedAt).getTime() : 0;
+      return left >= seasonStart;
+    });
+  }
+
   const [players, gameweeks, clubTransfersRes] = await Promise.all([
     loadPlayers(admin),
     loadGameweeks(admin),
