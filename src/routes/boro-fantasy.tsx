@@ -566,7 +566,15 @@ function SquadBuilder({
           </TabsList>
 
           <TabsContent value="selector" className="mt-0">
-            <div className="space-y-4">
+            <div className="grid gap-4 lg:grid-cols-[320px_minmax(0,1fr)] items-start">
+              <PlayerSidebar
+                players={state.players}
+                selected={selected}
+                starters={starters}
+                counts={counts as Record<string, number>}
+                editable={editable}
+                onPick={autoPick}
+              />
               <SquadPitch
                 playerById={playerById}
                 selected={selected}
@@ -577,14 +585,6 @@ function SquadBuilder({
                   if (p && !selected.includes(p.id)) autoPick(p);
                 }}
                 onRemove={removePlayer}
-              />
-              <PlayerSidebar
-              players={state.players}
-              selected={selected}
-              starters={starters}
-              counts={counts as Record<string, number>}
-              editable={editable}
-              onPick={autoPick}
               />
             </div>
           </TabsContent>
