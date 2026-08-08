@@ -20,8 +20,10 @@ export type FantasyPlayerDTO = {
   position: FantasyPosition;
   shirtNumber: number | null;
   valueM: number;
-  status: "active" | "injured" | "suspended" | "departed";
+  status: "active" | "injured" | "suspended" | "departed" | "loaned_out";
   departedAt?: string | null;
+  /** Club the player is currently on loan at, when out on loan. */
+  loanClub?: string | null;
   /** Total fantasy points this player has earned so far this season. */
   seasonPoints?: number;
 };
@@ -110,6 +112,7 @@ export function mapPlayer(r: any): FantasyPlayerDTO {
     valueM: Number(r.value_m),
     status: r.status,
     departedAt: r.departed_at ?? null,
+    loanClub: r.loan_club ?? null,
   };
 }
 
@@ -155,7 +158,7 @@ export async function loadPlayers(admin: any): Promise<FantasyPlayerDTO[]> {
   const [{ data, error }, statsRes] = await Promise.all([
     admin
       .from("fantasy_players")
-      .select("id, name, position, shirt_number, value_m, status, departed_at")
+      .select("id, name, position, shirt_number, value_m, status, departed_at, loan_club")
       .order("sort_order", { ascending: true }),
     admin.from("fantasy_player_stats").select("player_id, points"),
   ]);
@@ -344,6 +347,9 @@ export async function saveSquad(admin: any, owner: Owner, input: SaveSquadInput)
     const p = byId.get(id);
     if (!p) throw new Error("One of your picks is no longer in the squad list.");
     if (p.status === "departed") throw new Error(`${p.name} has left the club — pick a replacement.`);
+    if (p.status === "loaned_out" && !existingIds.has(id)) {
+      throw new Error(`${p.name} is out on loan — pick another player.`);
+    }
   }
 
   const quota: Record<FantasyPosition, number> = { gk: 0, def: 0, mid: 0, fwd: 0 };
@@ -392,7 +398,10 @@ export async function saveSquad(admin: any, owner: Owner, input: SaveSquadInput)
 
   // Transfers = players in the new squad that weren't in the previous one.
   // Replacing a departed player is free and doesn't count.
-  const departedOut = prevIds.filter((id) => byId.get(id)?.status === "departed").length;
+  const departedOut = prevIds.filter((id) => {
+    const s = byId.get(id)?.status;
+    return s === "departed" || s === "loaned_out";
+  }).length;
   const incoming = squadIds.filter((id) => !prevIds.includes(id));
   const outgoing = prevIds.filter((id) => !squadIds.includes(id));
   const chargeable = prevIds.length === 0 || !seasonStarted ? 0 : Math.max(0, incoming.length - departedOut);
