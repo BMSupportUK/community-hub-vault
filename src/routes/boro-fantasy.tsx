@@ -787,7 +787,7 @@ function PitchView({
           </select>
         </label>
         <p className="text-xs text-muted-foreground">
-          Drag players from the list onto the pitch, or use the + button. Drop onto a shirt to swap.
+          Drag players between the pitch and bench to set your XI and bench order.
         </p>
       </div>
 
