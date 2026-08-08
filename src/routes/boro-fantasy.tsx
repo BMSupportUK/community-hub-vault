@@ -362,6 +362,7 @@ function SquadBuilder({
   const [captainId, setCaptainId] = useState<string>(existing?.captainId ?? "");
   const [viceId, setViceId] = useState<string>(existing?.viceId ?? "");
   const [saving, setSaving] = useState(false);
+  const [squadTab, setSquadTab] = useState<"selector" | "xi">("selector");
 
   useEffect(() => {
     if (!existing) return;
