@@ -146,6 +146,17 @@ export const adminDeleteFantasyPlayer = createServerFn({ method: "POST" })
 // ------------------------------------------------------------------
 // Admin: gameweeks
 // ------------------------------------------------------------------
+/** Pull the current first-team squad from mfc.co.uk into the player pool. */
+export const adminSyncFantasyPlayersFromClub = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    if (!(await isAdminOrManagement(context.supabase, context.userId))) throw new Error("Forbidden");
+    const { getAdmin } = await import("@/lib/fantasy.server");
+    const { syncFantasyPlayersFromClub } = await import("@/lib/fantasy-squad-sync.server");
+    const admin = await getAdmin();
+    return await syncFantasyPlayersFromClub(admin as never);
+  });
+
 /** Create a gameweek for every Boro league fixture that doesn't have one yet. */
 export const adminSyncFantasyGameweeks = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
