@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -390,15 +390,60 @@ function SquadBuilder({
   const [viceId, setViceId] = useState<string>(existing?.viceId ?? "");
   const [saving, setSaving] = useState(false);
   const [squadTab, setSquadTab] = useState<"selector" | "xi">("selector");
+  // Unsaved picks survive a refresh or crash: they're kept in a per-gameweek
+  // local draft until the squad is saved.
+  const draftKey = gw ? `mfc-fantasy-draft:${gw.id}` : null;
+  const [draftLoaded, setDraftLoaded] = useState(false);
+  const restoredDraftRef = useRef(false);
 
   useEffect(() => {
-    if (!existing) return;
-    setFormation(existing.formation as FormationKey);
-    setSelected(existing.picks.map((p) => p.playerId));
-    setStarters(existing.picks.filter((p) => p.isStarter).map((p) => p.playerId));
-    setCaptainId(existing.captainId ?? "");
-    setViceId(existing.viceId ?? "");
-  }, [existing?.id]);
+    setDraftLoaded(false);
+    restoredDraftRef.current = false;
+    const applyExisting = () => {
+      if (!existing) return;
+      setFormation(existing.formation as FormationKey);
+      setSelected(existing.picks.map((p) => p.playerId));
+      setStarters(existing.picks.filter((p) => p.isStarter).map((p) => p.playerId));
+      setCaptainId(existing.captainId ?? "");
+      setViceId(existing.viceId ?? "");
+    };
+    if (!draftKey) {
+      applyExisting();
+      return;
+    }
+    try {
+      const raw = localStorage.getItem(draftKey);
+      if (raw) {
+        const d = JSON.parse(raw) as Partial<SavePayload> & { selected?: string[] };
+        if (Array.isArray(d.selected) && d.selected.length) {
+          if (d.formation) setFormation(d.formation as FormationKey);
+          setSelected(d.selected);
+          setStarters(Array.isArray(d.starters) ? d.starters : []);
+          setCaptainId(d.captainId ?? "");
+          setViceId(d.viceId ?? "");
+          restoredDraftRef.current = true;
+        }
+      }
+    } catch {
+      /* ignore corrupt drafts */
+    }
+    if (!restoredDraftRef.current) applyExisting();
+    setDraftLoaded(true);
+  }, [draftKey, existing?.id]);
+
+  useEffect(() => {
+    if (!draftKey || !draftLoaded) return;
+    try {
+      if (!selected.length) localStorage.removeItem(draftKey);
+      else
+        localStorage.setItem(
+          draftKey,
+          JSON.stringify({ formation, selected, starters, captainId, viceId, at: Date.now() }),
+        );
+    } catch {
+      /* storage full or blocked — drafting still works in-memory */
+    }
+  }, [draftKey, draftLoaded, formation, selected, starters, captainId, viceId]);
 
   const spend = selected.reduce((sum, id) => sum + (playerById.get(id)?.valueM ?? 0), 0);
   const remaining = state.budgetM - spend;
@@ -510,6 +555,15 @@ function SquadBuilder({
     setSaving(true);
     try {
       await onSave({ gameweekId: gw.id, formation, starters, bench, captainId, viceId });
+      // Saved to the server — the local draft is no longer needed.
+      restoredDraftRef.current = false;
+      if (draftKey) {
+        try {
+          localStorage.removeItem(draftKey);
+        } catch {
+          /* ignore */
+        }
+      }
       toast.success("Squad saved.");
     } catch (e: any) {
       toast.error(e?.message ?? "Could not save squad");
