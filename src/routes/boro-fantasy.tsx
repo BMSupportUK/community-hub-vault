@@ -430,8 +430,8 @@ function SquadBuilder({
 
   const problems = [...squadProblems, ...xiProblems];
   const activeChecklist = squadTab === "xi"
-    ? { title: "Starting 11 checklist", items: xiProblems, ready: "Starting 11 is valid — hit" }
-    : { title: "Squad checklist", items: squadProblems, ready: "Squad of 15 is valid — now set your Starting 11." };
+    ? { title: "Starting 11 checklist", items: xiProblems }
+    : { title: "Squad checklist", items: squadProblems };
 
   const editable = !locked && (canPlay || !gw);
 
