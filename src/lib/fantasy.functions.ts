@@ -113,14 +113,15 @@ export const adminUpsertFantasyPlayer = createServerFn({ method: "POST" })
     if (!(await isAdminOrManagement(context.supabase, context.userId))) throw new Error("Forbidden");
     const { getAdmin } = await import("@/lib/fantasy.server");
     const admin = await getAdmin();
-    const payload: Record<string, unknown> = {
+    const payload = {
       name: data.name,
       position: data.position,
       shirt_number: data.shirtNumber ?? null,
       value_m: data.valueM,
       status: data.status,
+      ...(typeof data.sortOrder === "number" ? { sort_order: data.sortOrder } : {}),
     };
-    if (typeof data.sortOrder === "number") payload["sort_order"] = data.sortOrder;
+    void 0;
     if (data.id) {
       const { error } = await admin.from("fantasy_players").update(payload).eq("id", data.id);
       if (error) throw new Error(error.message);
@@ -372,7 +373,7 @@ export const adminUpsertClubTransfer = createServerFn({ method: "POST" })
       if (data.direction === "in") {
         if (existing) {
           playerId = (existing as any).id;
-          await admin.from("fantasy_players").update({ status: "active" }).eq("id", playerId);
+          await admin.from("fantasy_players").update({ status: "active" }).eq("id", playerId!);
         } else {
           const { data: ins, error } = await admin
             .from("fantasy_players")
@@ -389,7 +390,7 @@ export const adminUpsertClubTransfer = createServerFn({ method: "POST" })
         }
       } else if (existing) {
         playerId = (existing as any).id;
-        await admin.from("fantasy_players").update({ status: "departed" }).eq("id", playerId);
+        await admin.from("fantasy_players").update({ status: "departed" }).eq("id", playerId!);
       }
     }
 
