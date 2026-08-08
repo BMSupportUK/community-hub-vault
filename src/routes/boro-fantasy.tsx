@@ -615,20 +615,20 @@ function SquadBuilder({
           </TabsContent>
         </Tabs>
 
-        {/* Squad checklist — stays visible while switching between squad and XI tabs. */}
+        {/* Checklist — scoped to the active tab (squad of 15 vs starting 11). */}
         <aside className="rounded-2xl border border-border/60 bg-card/85 backdrop-blur overflow-hidden lg:sticky lg:top-4">
           <div className="p-3 border-b border-border/60 flex items-center gap-2">
-            <h3 className="font-display font-bold text-sm">Squad checklist</h3>
+            <h3 className="font-display font-bold text-sm">{activeChecklist.title}</h3>
             {canPlay && !locked && (
               <span
                 className={
                   "ml-auto rounded-full px-2 py-0.5 text-[11px] font-bold border " +
-                  (problems.length === 0
+                  (activeChecklist.items.length === 0
                     ? "border-emerald-500/40 bg-emerald-500/15 text-emerald-300"
                     : "border-destructive/40 bg-destructive/15 text-destructive")
                 }
               >
-                {problems.length === 0 ? "Ready" : `${problems.length} to fix`}
+                {activeChecklist.items.length === 0 ? "Ready" : `${activeChecklist.items.length} to fix`}
               </span>
             )}
           </div>
@@ -639,13 +639,24 @@ function SquadBuilder({
                   ? "This gameweek is locked — the checklist reopens for the next one."
                   : "Join the game to start building a valid squad."}
               </p>
-            ) : problems.length === 0 ? (
-              <p className="text-xs text-emerald-300">
-                Squad is valid — hit <span className="font-semibold">Save squad</span>.
-              </p>
+            ) : activeChecklist.items.length === 0 ? (
+              <div className="space-y-2">
+                <p className="text-xs text-emerald-300">
+                  {squadTab === "xi" ? (
+                    <>Starting 11 is valid — hit <span className="font-semibold">Save squad</span>.</>
+                  ) : (
+                    <>Squad of 15 is valid — now set your Starting 11.</>
+                  )}
+                </p>
+                {squadTab !== "xi" && xiProblems.length > 0 && (
+                  <p className="text-[11px] text-muted-foreground">
+                    {xiProblems.length} item{xiProblems.length === 1 ? "" : "s"} left on the Starting 11 tab.
+                  </p>
+                )}
+              </div>
             ) : (
               <ul className="space-y-1.5">
-                {problems.map((p) => (
+                {activeChecklist.items.map((p) => (
                   <li key={p} className="flex gap-2 text-xs leading-relaxed">
                     <span className="mt-1 size-1.5 shrink-0 rounded-full bg-destructive" />
                     <span className="min-w-0">{p}</span>
