@@ -407,24 +407,31 @@ function SquadBuilder({
   const bench = selected.filter((id) => !starters.includes(id));
   const locked = !!gw && (gw.status !== "upcoming" || new Date(gw.lockAt).getTime() <= Date.now());
 
-  const problems: string[] = [];
-  if (selected.length !== FANTASY_SQUAD_SIZE) problems.push(`Pick exactly ${FANTASY_SQUAD_SIZE} players (${selected.length} selected).`);
+  const squadProblems: string[] = [];
+  if (selected.length !== FANTASY_SQUAD_SIZE) squadProblems.push(`Pick exactly ${FANTASY_SQUAD_SIZE} players (${selected.length} selected).`);
   for (const pos of POSITION_ORDER) {
     const n = byPos(selected, pos).length;
-    if (n !== SQUAD_QUOTA[pos]) problems.push(`${POSITION_SHORT[pos]}: need ${SQUAD_QUOTA[pos]}, have ${n}.`);
+    if (n !== SQUAD_QUOTA[pos]) squadProblems.push(`${POSITION_SHORT[pos]}: need ${SQUAD_QUOTA[pos]}, have ${n}.`);
   }
-  if (remaining < 0) problems.push(`Over budget by ${money(-remaining)}.`);
-  if (starters.length !== 11) problems.push(`Pick 11 starters (${starters.length} selected).`);
+  if (remaining < 0) squadProblems.push(`Over budget by ${money(-remaining)}.`);
+
+  const xiProblems: string[] = [];
+  if (starters.length !== 11) xiProblems.push(`Pick 11 starters (${starters.length} selected).`);
   else {
     for (const pos of POSITION_ORDER) {
       const n = byPos(starters, pos).length;
-      if (n !== (counts as any)[pos]) problems.push(`${formation}: needs ${(counts as any)[pos]} ${POSITION_SHORT[pos]} in the XI, you have ${n}.`);
+      if (n !== (counts as any)[pos]) xiProblems.push(`${formation}: needs ${(counts as any)[pos]} ${POSITION_SHORT[pos]} in the XI, you have ${n}.`);
     }
   }
-  if (bench.length !== FANTASY_BENCH_SIZE) problems.push(`Bench must be ${FANTASY_BENCH_SIZE} players.`);
-  if (!captainId || !starters.includes(captainId)) problems.push("Pick a captain from your starting XI.");
-  if (!viceId || !starters.includes(viceId)) problems.push("Pick a vice-captain from your starting XI.");
-  if (captainId && captainId === viceId) problems.push("Captain and vice-captain must be different.");
+  if (bench.length !== FANTASY_BENCH_SIZE) xiProblems.push(`Bench must be ${FANTASY_BENCH_SIZE} players.`);
+  if (!captainId || !starters.includes(captainId)) xiProblems.push("Pick a captain from your starting XI.");
+  if (!viceId || !starters.includes(viceId)) xiProblems.push("Pick a vice-captain from your starting XI.");
+  if (captainId && captainId === viceId) xiProblems.push("Captain and vice-captain must be different.");
+
+  const problems = [...squadProblems, ...xiProblems];
+  const activeChecklist = squadTab === "xi"
+    ? { title: "Starting 11 checklist", items: xiProblems }
+    : { title: "Squad checklist", items: squadProblems };
 
   const editable = !locked && (canPlay || !gw);
 
@@ -608,20 +615,20 @@ function SquadBuilder({
           </TabsContent>
         </Tabs>
 
-        {/* Squad checklist — stays visible while switching between squad and XI tabs. */}
+        {/* Checklist — scoped to the active tab (squad of 15 vs starting 11). */}
         <aside className="rounded-2xl border border-border/60 bg-card/85 backdrop-blur overflow-hidden lg:sticky lg:top-4">
           <div className="p-3 border-b border-border/60 flex items-center gap-2">
-            <h3 className="font-display font-bold text-sm">Squad checklist</h3>
+            <h3 className="font-display font-bold text-sm">{activeChecklist.title}</h3>
             {canPlay && !locked && (
               <span
                 className={
                   "ml-auto rounded-full px-2 py-0.5 text-[11px] font-bold border " +
-                  (problems.length === 0
+                  (activeChecklist.items.length === 0
                     ? "border-emerald-500/40 bg-emerald-500/15 text-emerald-300"
                     : "border-destructive/40 bg-destructive/15 text-destructive")
                 }
               >
-                {problems.length === 0 ? "Ready" : `${problems.length} to fix`}
+                {activeChecklist.items.length === 0 ? "Ready" : `${activeChecklist.items.length} to fix`}
               </span>
             )}
           </div>
@@ -632,13 +639,24 @@ function SquadBuilder({
                   ? "This gameweek is locked — the checklist reopens for the next one."
                   : "Join the game to start building a valid squad."}
               </p>
-            ) : problems.length === 0 ? (
-              <p className="text-xs text-emerald-300">
-                Squad is valid — hit <span className="font-semibold">Save squad</span>.
-              </p>
+            ) : activeChecklist.items.length === 0 ? (
+              <div className="space-y-2">
+                <p className="text-xs text-emerald-300">
+                  {squadTab === "xi" ? (
+                    <>Starting 11 is valid — hit <span className="font-semibold">Save squad</span>.</>
+                  ) : (
+                    <>Squad of 15 is valid — now set your Starting 11.</>
+                  )}
+                </p>
+                {squadTab !== "xi" && xiProblems.length > 0 && (
+                  <p className="text-[11px] text-muted-foreground">
+                    {xiProblems.length} item{xiProblems.length === 1 ? "" : "s"} left on the Starting 11 tab.
+                  </p>
+                )}
+              </div>
             ) : (
               <ul className="space-y-1.5">
-                {problems.map((p) => (
+                {activeChecklist.items.map((p) => (
                   <li key={p} className="flex gap-2 text-xs leading-relaxed">
                     <span className="mt-1 size-1.5 shrink-0 rounded-full bg-destructive" />
                     <span className="min-w-0">{p}</span>
