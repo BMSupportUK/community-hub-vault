@@ -1119,30 +1119,21 @@ function GameweekList({ state }: { state: FantasyStateDTO }) {
 // ------------------------------------------------------------------
 function TransfersTab({ state }: { state: FantasyStateDTO }) {
   const playerById = useMemo(() => new Map(state.players.map((p) => [p.id, p.name])), [state.players]);
+  const signings = state.clubTransfers.filter((t) => t.direction === "in");
+  const exits = state.clubTransfers.filter((t) => t.direction === "out");
   return (
     <div className="space-y-6">
       <section className="rounded-2xl border border-border/60 bg-card/80 backdrop-blur p-4">
-        <h3 className="font-semibold mb-3 flex items-center gap-2"><ArrowRightLeft className="size-4 text-primary" /> Middlesbrough transfer news</h3>
-        {state.clubTransfers.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No incoming or outgoing transfers logged yet.</p>
-        ) : (
-          <ul className="space-y-2">
-            {state.clubTransfers.map((t) => (
-              <li key={t.id} className="flex flex-wrap items-center gap-2 text-sm rounded-xl bg-muted/30 px-3 py-2">
-                <span className={`text-[10px] font-bold uppercase rounded-full px-2 py-0.5 ${t.direction === "in" ? "bg-emerald-500/20 text-emerald-400" : "bg-red-500/20 text-red-400"}`}>
-                  {t.direction === "in" ? "IN" : "OUT"}
-                </span>
-                <span className="font-medium">{t.playerName}</span>
-                {t.otherClub && <span className="text-muted-foreground">{t.direction === "in" ? "from" : "to"} {t.otherClub}</span>}
-                {t.fee && <span className="text-muted-foreground">· {t.fee}</span>}
-                <span className="ml-auto text-xs text-muted-foreground">
-                  {new Date(t.transferDate).toLocaleDateString()} {t.windowLabel ? `· ${t.windowLabel}` : ""}
-                </span>
-                {t.note && <div className="w-full text-xs text-muted-foreground">{t.note}</div>}
-              </li>
-            ))}
-          </ul>
-        )}
+        <h3 className="font-semibold flex items-center gap-2">
+          <ArrowRightLeft className="size-4 text-primary" /> Middlesbrough 2026/27 transfers
+        </h3>
+        <p className="text-xs text-muted-foreground mt-1 mb-3">
+          Only players signed or sold since the 2026/27 window opened — squad members already at the club are not listed.
+        </p>
+        <div className="grid gap-4 md:grid-cols-2">
+          <ClubTransferList title="Signings in" tone="in" items={signings} />
+          <ClubTransferList title="Departures" tone="out" items={exits} />
+        </div>
       </section>
 
       <section className="rounded-2xl border border-border/60 bg-card/80 backdrop-blur p-4">
