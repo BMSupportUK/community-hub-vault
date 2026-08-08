@@ -496,6 +496,22 @@ function SquadBuilder({
 
   const editable = !locked && (canPlay || !gw);
 
+  // Only highlight Save when something actually differs from the saved squad.
+  const dirty = useMemo(() => {
+    const sameSet = (a: string[], b: string[]) =>
+      a.length === b.length && [...a].sort().join(",") === [...b].sort().join(",");
+    if (!existing) return selected.length > 0;
+    const savedSelected = existing.picks.map((p) => p.playerId);
+    const savedStarters = existing.picks.filter((p) => p.isStarter).map((p) => p.playerId);
+    return (
+      existing.formation !== formation ||
+      (existing.captainId ?? "") !== captainId ||
+      (existing.viceId ?? "") !== viceId ||
+      !sameSet(savedSelected, selected) ||
+      !sameSet(savedStarters, starters)
+    );
+  }, [existing, formation, captainId, viceId, selected, starters]);
+
   /** Ensure the player is in the 15 — returns the new squad list, or null if not possible. */
   function withPlayer(sel: string[], p: FantasyPlayerDTO): string[] | null {
     if (sel.includes(p.id)) return sel;
@@ -623,8 +639,14 @@ function SquadBuilder({
             )}
           </div>
         )}
-        <Button onClick={handleSave} disabled={saving || locked || !gw || !canPlay || problems.length > 0}>
-          {saving ? <Loader2 className="size-4 animate-spin" /> : squadTab === "xi" ? "Save starting 11" : "Save squad"}
+        <Button
+          onClick={handleSave}
+          variant={dirty ? "default" : "outline"}
+          className={dirty ? "" : "opacity-60"}
+          title={dirty ? undefined : "No changes to save"}
+          disabled={saving || locked || !gw || !canPlay || problems.length > 0 || !dirty}
+        >
+          {saving ? <Loader2 className="size-4 animate-spin" /> : !dirty ? "Saved" : squadTab === "xi" ? "Save starting 11" : "Save squad"}
         </Button>
       </div>
 
