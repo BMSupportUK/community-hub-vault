@@ -92,7 +92,6 @@ export async function syncFantasyPlayersFromClub(admin: Admin): Promise<FantasyS
 
   const loanedOut = await fetchMfcLoanedOutPlayers().catch(() => []);
   const loanedNames = new Set(loanedOut.map((p) => normName(p.name)));
-  const loanClubByName = new Map(loanedOut.map((p) => [normName(p.name), p.loanClub] as const));
 
   // Players out on loan are not selectable.
   const available = squad.filter((p) => !loanedNames.has(normName(p.name)));
