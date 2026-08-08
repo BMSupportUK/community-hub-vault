@@ -194,6 +194,8 @@ export async function syncFantasyPlayersFromClub(admin: Admin): Promise<FantasyS
     const p = ordered[i]!;
     const row = byMfcId.get(p.mfcPlayerId) ?? byName.get(normName(p.name));
     const sortOrder = i;
+    const onLoan = isLoanedOut(p.name);
+    const loanClub = loanedClubByName.get(normName(p.name)) ?? null;
 
     if (!row) {
       const { data: inserted, error } = await admin
@@ -203,7 +205,8 @@ export async function syncFantasyPlayersFromClub(admin: Admin): Promise<FantasyS
           position: p.position,
           shirt_number: p.shirtNumber,
           value_m: defaultValueM(p.position, p.detailedPosition, p.squadLevel),
-          status: "active",
+          status: onLoan ? "loaned_out" : "active",
+          loan_club: onLoan ? loanClub : null,
           sort_order: sortOrder,
           mfc_player_id: p.mfcPlayerId,
           squad_level: p.squadLevel,
@@ -214,6 +217,9 @@ export async function syncFantasyPlayersFromClub(admin: Admin): Promise<FantasyS
       if (error) continue;
       added.push(p.name);
       matchedIds.add((inserted as any).id as string);
+      if (onLoan && p.squadLevel === "first") {
+        await logTransfer(p.name, "out", (inserted as any).id as string, loanClub ? `Out on loan at ${loanClub}` : "Out on loan");
+      }
       if (p.squadLevel === "first" && joinedInWindow(p.joinDate)) {
         await logTransfer(p.name, "in", (inserted as any).id as string, "Signed for the 2026/27 season", p.joinDate);
       }
@@ -235,6 +241,22 @@ export async function syncFantasyPlayersFromClub(admin: Admin): Promise<FantasyS
     if (row.status === "departed" && !row.status_locked) {
       changes.status = "active";
       changes.departed_at = null;
+    }
+    if (!row.status_locked) {
+      if (onLoan && row.status !== "loaned_out") {
+        changes.status = "loaned_out";
+        changes.departed_at = null;
+        changes.loan_club = loanClub;
+        if (p.squadLevel === "first") {
+          await logTransfer(p.name, "out", row.id, loanClub ? `Out on loan at ${loanClub}` : "Out on loan");
+        }
+      } else if (!onLoan && row.status === "loaned_out") {
+        // Loan over — back at the club and selectable again.
+        changes.status = "active";
+        changes.loan_club = null;
+      } else if (onLoan && (row as any).loan_club !== loanClub) {
+        changes.loan_club = loanClub;
+      }
     }
     if ((row.sort_order ?? -1) !== sortOrder) changes.sort_order = sortOrder;
     const keys = Object.keys(changes).filter((k) => k !== "last_seen_at");
