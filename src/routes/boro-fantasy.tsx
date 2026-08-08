@@ -48,6 +48,7 @@ export const Route = createFileRoute("/boro-fantasy")({
 
 type GuestSession = { guestId: string; email: string; pin: string; displayName: string; teamName?: string };
 const GUEST_KEY = "fantasy_guest_session";
+const BENCH_SLOT_LABELS = ["GK", "Def", "Mid", "Fwd"] as const;
 
 const money = (m: number) => `£${m.toFixed(1)}m`;
 const kickoffLabel = (iso: string) =>
