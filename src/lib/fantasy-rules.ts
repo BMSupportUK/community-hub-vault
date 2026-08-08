@@ -1,6 +1,26 @@
 /** Shared, client-safe rules for the MFC Fantasy Manager. */
 
 export const FANTASY_BUDGET_M = 30;
+
+/**
+ * The fantasy game is league-only: cup ties, play-offs, friendlies and
+ * anything else never becomes a gameweek.
+ */
+export const FANTASY_LEAGUE_COMPETITIONS = [
+  "Championship",
+  "EFL Championship",
+  "Sky Bet Championship",
+  "Premier League",
+  "League One",
+  "League Two",
+] as const;
+
+export function isFantasyLeagueCompetition(competition: string | null | undefined): boolean {
+  const c = (competition ?? "").toLowerCase().trim();
+  if (!c) return false;
+  if (/(cup|trophy|friendl|play[- ]?off|shield|europa|champions league|conference league|papa|checkatrade)/.test(c)) return false;
+  return /championship|premier league|league one|league two|efl league/.test(c);
+}
 export const FANTASY_SQUAD_SIZE = 15;
 export const FANTASY_BENCH_SIZE = 4;
 export const FANTASY_TRANSFER_HIT = 4;
