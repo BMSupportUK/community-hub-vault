@@ -19,6 +19,7 @@ type PlayerRow = {
   status: string;
   sort_order: number | null;
   mfc_player_id: string | null;
+  squad_level?: string | null;
 };
 
 const POSITION_ORDER: Record<FantasyPosition, number> = { gk: 0, def: 1, mid: 2, fwd: 3 };
@@ -79,6 +80,9 @@ export async function syncFantasyPlayersFromClub(admin: Admin): Promise<FantasyS
   // Fringe players: the Under-21 and Under-18 squads. Non-fatal on failure so a
   // flaky academy feed can never mark the whole fringe pool as departed.
   const academy = await fetchMfcAcademySquads().catch(() => [] as MfcSquadPlayer[]);
+  // If the academy feed is empty/broken we must NOT treat every fringe player as
+  // departed — skip departures for academy levels on that run instead.
+  const academyOk = academy.length > 0;
   const seenIds = new Set(squad.map((p) => p.mfcPlayerId));
   for (const p of academy) {
     if (seenIds.has(p.mfcPlayerId)) continue; // already in the senior squad
@@ -95,7 +99,7 @@ export async function syncFantasyPlayersFromClub(admin: Admin): Promise<FantasyS
 
   const { data: existingRows, error: readErr } = await admin
     .from("fantasy_players")
-    .select("id, name, position, shirt_number, value_m, status, sort_order, mfc_player_id");
+    .select("id, name, position, shirt_number, value_m, status, sort_order, mfc_player_id, squad_level");
   if (readErr) return { ok: false, error: readErr.message };
   const existing = (existingRows ?? []) as PlayerRow[];
 
@@ -149,6 +153,7 @@ export async function syncFantasyPlayersFromClub(admin: Admin): Promise<FantasyS
           status: "active",
           sort_order: sortOrder,
           mfc_player_id: p.mfcPlayerId,
+          squad_level: p.squadLevel,
           last_seen_at: nowIso,
         })
         .select("id")
@@ -183,6 +188,7 @@ export async function syncFantasyPlayersFromClub(admin: Admin): Promise<FantasyS
     if (row.mfc_player_id !== p.mfcPlayerId) changes.mfc_player_id = p.mfcPlayerId;
     if (row.name !== p.name) changes.name = p.name;
     if (row.position !== p.position) changes.position = p.position;
+    if ((row.squad_level ?? "first") !== p.squadLevel) changes.squad_level = p.squadLevel;
     if ((row.shirt_number ?? null) !== (p.shirtNumber ?? null)) changes.shirt_number = p.shirtNumber;
     if (row.status === "departed") {
       changes.status = "active";
@@ -203,6 +209,8 @@ export async function syncFantasyPlayersFromClub(admin: Admin): Promise<FantasyS
     // Manually added players (announced signings the club feed hasn't published
     // yet) have no club player id — never auto-depart them on a feed miss.
     if (!row.mfc_player_id) continue;
+    // Fringe (academy) players are only judged against a healthy academy feed.
+    if (!academyOk && (row.squad_level ?? "first") !== "first") continue;
     const { error } = await admin
       .from("fantasy_players")
       .update({ status: "departed", departed_at: nowIso })
