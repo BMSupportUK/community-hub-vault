@@ -21,6 +21,7 @@ type PlayerRow = {
   mfc_player_id: string | null;
   squad_level?: string | null;
   created_at?: string | null;
+  status_locked?: boolean | null;
 };
 
 const POSITION_ORDER: Record<FantasyPosition, number> = { gk: 0, def: 1, mid: 2, fwd: 3 };
@@ -108,7 +109,9 @@ export async function syncFantasyPlayersFromClub(admin: Admin): Promise<FantasyS
 
   const { data: existingRows, error: readErr } = await admin
     .from("fantasy_players")
-    .select("id, name, position, shirt_number, value_m, status, sort_order, mfc_player_id, squad_level, created_at");
+    .select(
+      "id, name, position, shirt_number, value_m, status, sort_order, mfc_player_id, squad_level, created_at, status_locked",
+    );
   if (readErr) return { ok: false, error: readErr.message };
   const existing = (existingRows ?? []) as PlayerRow[];
 
@@ -228,7 +231,7 @@ export async function syncFantasyPlayersFromClub(admin: Admin): Promise<FantasyS
     if (row.position !== p.position) changes.position = p.position;
     if ((row.squad_level ?? "first") !== p.squadLevel) changes.squad_level = p.squadLevel;
     if ((row.shirt_number ?? null) !== (p.shirtNumber ?? null)) changes.shirt_number = p.shirtNumber;
-    if (row.status === "departed") {
+    if (row.status === "departed" && !row.status_locked) {
       changes.status = "active";
       changes.departed_at = null;
     }
