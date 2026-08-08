@@ -104,6 +104,7 @@ export function mapPlayer(r: any): FantasyPlayerDTO {
     shirtNumber: r.shirt_number ?? null,
     valueM: Number(r.value_m),
     status: r.status,
+    departedAt: r.departed_at ?? null,
   };
 }
 
@@ -239,7 +240,7 @@ export async function loadState(admin: any, owner: Owner | null): Promise<Fantas
     freeTransfers,
     wildcardUsed,
     budgetM: FANTASY_BUDGET_M,
-    players,
+    players: visiblePlayers(players, gameweeks, squads),
     gameweeks,
     currentGameweekId: pickCurrentGameweek(gameweeks),
     squads,
