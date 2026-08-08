@@ -6,7 +6,7 @@ export const FANTASY_BENCH_SIZE = 4;
 export const FANTASY_TRANSFER_HIT = 4;
 export const FANTASY_MAX_BANKED_TRANSFERS = 2;
 /** Squad locks this many minutes before kick-off. */
-export const FANTASY_LOCK_MINUTES = 60;
+export const FANTASY_LOCK_MINUTES = 30;
 
 export type FantasyPosition = "gk" | "def" | "mid" | "fwd";
 
