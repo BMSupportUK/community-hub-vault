@@ -277,12 +277,15 @@ export async function syncFantasyScoring(): Promise<{
 
   const nowMs = Date.now();
   let locked = 0;
+  const { isFantasyLeagueCompetition } = await import("@/lib/fantasy-rules");
 
   for (const raw of (gws ?? []) as Array<Record<string, any>>) {
     const fx = raw['boro_fixtures'] as
-      | { id: string; kickoff_at: string; home_team: string; away_team: string; status: string }
+      | { id: string; kickoff_at: string; home_team: string; away_team: string; status: string; competition?: string | null }
       | null;
     if (!fx) continue;
+    // League games only.
+    if (!isFantasyLeagueCompetition(fx.competition)) continue;
     const finished = fx.status === "FINISHED";
 
     if (!finished) {
