@@ -55,6 +55,66 @@ const money = (m: number) => `£${m.toFixed(1)}m`;
 const kickoffLabel = (iso: string) =>
   new Date(iso).toLocaleString(undefined, { weekday: "short", day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
 
+function useNow(interval = 1000) {
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    setNow(Date.now());
+    const id = window.setInterval(() => setNow(Date.now()), interval);
+    return () => window.clearInterval(id);
+  }, [interval]);
+  return now;
+}
+
+function DigitalLockCountdown({ lockAt, label = "Locks in" }: { lockAt: string; label?: string }) {
+  const now = useNow(1000);
+  const lockMs = new Date(lockAt).getTime();
+  const remaining = lockMs - now;
+  const locked = remaining <= 0;
+  const urgent = remaining > 0 && remaining <= 60 * 60 * 1000;
+
+  const totalSeconds = Math.max(0, Math.floor(remaining / 1000));
+  const days = Math.floor(totalSeconds / 86400);
+  const hours = Math.floor((totalSeconds % 86400) / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  const unit = (value: number, suffix: string) => (
+    <div className="flex flex-col items-center min-w-[3.2rem]">
+      <div className={`relative rounded-lg px-2 py-1.5 sm:px-3 sm:py-2 border-2 font-digital text-xl sm:text-2xl font-black tabular-nums leading-none ${
+        urgent
+          ? "bg-red-600/20 border-red-400 text-red-300 shadow-[0_0_18px_rgba(248,113,113,0.55)] animate-pulse"
+          : "bg-amber-500/15 border-amber-400/70 text-amber-300 shadow-[0_0_16px_rgba(251,191,36,0.45)]"
+      }`}>
+        {value.toString().padStart(2, "0")}
+      </div>
+      <span className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-white/70 mt-1">{suffix}</span>
+    </div>
+  );
+
+  return (
+    <div className="w-full">
+      <div className={`flex items-center gap-2 mb-2 font-digital text-sm font-bold uppercase tracking-widest ${urgent ? "text-red-300" : "text-amber-300"}`}>
+        <Lock className="size-4" strokeWidth={3} />
+        {locked ? "Locked" : label}
+      </div>
+      {locked ? (
+        <div className="inline-flex items-center gap-2 rounded-lg border-2 border-red-400 bg-red-600/20 px-4 py-2 font-digital text-lg font-black text-red-200 shadow-[0_0_18px_rgba(248,113,113,0.55)]">
+          <Lock className="size-5" strokeWidth={3} /> SQUAD LOCKED
+        </div>
+      ) : (
+        <div className="flex items-start gap-2 sm:gap-3">
+          {days > 0 && unit(days, "Days")}
+          {unit(hours, "Hrs")}
+          <span className="font-digital text-2xl text-white/40 pt-2">:</span>
+          {unit(minutes, "Min")}
+          <span className="font-digital text-2xl text-white/40 pt-2">:</span>
+          {unit(seconds, "Sec")}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function Loading() {
   return <div className="py-16 grid place-items-center"><Loader2 className="size-6 animate-spin text-primary" /></div>;
 }
@@ -358,8 +418,8 @@ function NextGameweekCard({ state }: { state?: FantasyStateDTO }) {
       <div className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Next gameweek</div>
       <div className="font-semibold">GW{gw.gwNumber} — {gw.homeTeam} v {gw.awayTeam}</div>
       <div className="text-xs text-muted-foreground mt-1">{kickoffLabel(gw.kickoffAt)}</div>
-      <div className="mt-2 inline-flex items-center gap-1 text-xs rounded-full bg-amber-500/15 text-amber-400 px-2 py-1">
-        <Lock className="size-3" /> Locks {kickoffLabel(gw.lockAt)}
+      <div className="mt-3">
+        <DigitalLockCountdown lockAt={gw.lockAt} />
       </div>
     </div>
   );
@@ -606,48 +666,53 @@ function SquadBuilder({
 
   return (
     <div className="space-y-4">
-      <div className="rounded-2xl border border-border/60 bg-card/80 backdrop-blur p-4 flex flex-wrap items-center gap-3">
-        <div className="flex-1 min-w-[200px]">
-          {gw ? (
-            <>
-              <div className="font-semibold">GW{gw.gwNumber} — {gw.homeTeam} v {gw.awayTeam}</div>
-              <div className="text-xs text-muted-foreground">{kickoffLabel(gw.kickoffAt)} · locks {kickoffLabel(gw.lockAt)}</div>
-            </>
-          ) : (
-            <>
-              <div className="font-semibold">Pre-season — no gameweek open yet</div>
-              <div className="text-xs text-muted-foreground">Try out formations and squads now; you can save once the first gameweek opens.</div>
-            </>
-          )}
-        </div>
-        {squadTab === "selector" ? (
-          <div className="flex items-center gap-2 text-sm">
-            <Wallet className="size-4 text-primary" />
-            <span className={remaining < 0 ? "text-destructive font-bold" : "font-bold"}>{money(remaining)}</span>
-            <span className="text-muted-foreground">left of {money(state.budgetM)}</span>
-          </div>
-        ) : (
-          <div className="flex items-center gap-4 text-sm text-muted-foreground">
-            <span>
-              <span className="font-bold text-foreground">{starters.length}</span>/11 picked
-            </span>
-            {existing && (hasGwPoints || existing.points !== null) && (
-              <span>
-                GW points <span className="font-bold text-primary tabular-nums">{existing.points ?? 0}</span>
-                {existing.transferCost > 0 && <span className="text-destructive text-xs"> (−{existing.transferCost})</span>}
-              </span>
+      <div className="rounded-2xl border border-border/60 bg-card/80 backdrop-blur p-4 space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+          <div className="flex-1 min-w-[200px]">
+            {gw ? (
+              <>
+                <div className="font-semibold">GW{gw.gwNumber} — {gw.homeTeam} v {gw.awayTeam}</div>
+                <div className="text-xs text-muted-foreground">{kickoffLabel(gw.kickoffAt)}</div>
+              </>
+            ) : (
+              <>
+                <div className="font-semibold">Pre-season — no gameweek open yet</div>
+                <div className="text-xs text-muted-foreground">Try out formations and squads now; you can save once the first gameweek opens.</div>
+              </>
             )}
           </div>
-        )}
-        <Button
-          onClick={handleSave}
-          variant={dirty ? "default" : "outline"}
-          className={dirty ? "" : "opacity-60"}
-          title={dirty ? undefined : "No changes to save"}
-          disabled={saving || locked || !gw || !canPlay || problems.length > 0 || !dirty}
-        >
-          {saving ? <Loader2 className="size-4 animate-spin" /> : !dirty ? "Saved" : squadTab === "xi" ? "Save starting 11" : "Save squad"}
-        </Button>
+          <div className="flex items-center gap-3">
+            {squadTab === "selector" ? (
+              <div className="flex items-center gap-2 text-sm">
+                <Wallet className="size-4 text-primary" />
+                <span className={remaining < 0 ? "text-destructive font-bold" : "font-bold"}>{money(remaining)}</span>
+                <span className="text-muted-foreground">left of {money(state.budgetM)}</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                <span>
+                  <span className="font-bold text-foreground">{starters.length}</span>/11 picked
+                </span>
+                {existing && (hasGwPoints || existing.points !== null) && (
+                  <span>
+                    GW points <span className="font-bold text-primary tabular-nums">{existing.points ?? 0}</span>
+                    {existing.transferCost > 0 && <span className="text-destructive text-xs"> (−{existing.transferCost})</span>}
+                  </span>
+                )}
+              </div>
+            )}
+            <Button
+              onClick={handleSave}
+              variant={dirty ? "default" : "outline"}
+              className={dirty ? "" : "opacity-60"}
+              title={dirty ? undefined : "No changes to save"}
+              disabled={saving || locked || !gw || !canPlay || problems.length > 0 || !dirty}
+            >
+              {saving ? <Loader2 className="size-4 animate-spin" /> : !dirty ? "Saved" : squadTab === "xi" ? "Save starting 11" : "Save squad"}
+            </Button>
+          </div>
+        </div>
+        {gw && <DigitalLockCountdown lockAt={gw.lockAt} />}
       </div>
 
       {gw && !canPlay && (

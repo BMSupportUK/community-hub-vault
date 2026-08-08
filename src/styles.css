@@ -244,6 +244,7 @@ html.theme-sunset body {
 
 @layer utilities {
   .font-display { font-family: var(--font-display); }
+  .font-digital { font-family: "Orbitron", "Share Tech Mono", ui-monospace, monospace; letter-spacing: 0.04em; }
   .bg-gradient-primary { background: var(--gradient-primary); }
   .bg-gradient-accent { background: var(--gradient-accent); }
   .text-gradient-primary { background: var(--gradient-accent); -webkit-background-clip: text; background-clip: text; color: transparent; }
