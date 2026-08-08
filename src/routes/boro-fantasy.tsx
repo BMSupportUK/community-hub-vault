@@ -157,8 +157,9 @@ function BoroFantasyPage() {
       user
         ? stateFn({})
         : publicStateFn({ data: guest ? { email: guest.email, pin: guest.pin } : {} }),
-    staleTime: 15_000,
-    refetchInterval: 60_000,
+    staleTime: 5_000,
+    refetchInterval: 15_000,
+    refetchIntervalInBackground: true,
     refetchOnWindowFocus: true,
   });
 
@@ -1155,6 +1156,7 @@ function PlayerSidebar({
   const list = useMemo(() => {
     const term = q.trim().toLowerCase();
     return players
+      .filter((p) => p.status !== "departed")
       .filter((p) => (filter === "all" ? true : p.position === filter))
       .filter((p) => (term ? p.name.toLowerCase().includes(term) : true))
       .sort((a, b) =>
