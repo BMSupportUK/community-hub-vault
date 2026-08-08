@@ -856,7 +856,7 @@ function SquadPitch({
                       {...dropProps(row.pos)}
                       draggable={editable && !!id}
                       onDragStart={(e) => { if (id) e.dataTransfer.setData("text/fantasy-player", id); }}
-                      className={`w-[62px] sm:w-[84px] rounded-xl border px-1.5 py-2 text-center backdrop-blur-sm transition-colors ${
+                      className={`min-w-[68px] flex-1 max-w-[110px] sm:max-w-[120px] rounded-xl border px-1.5 py-2 text-center backdrop-blur-sm transition-colors ${
                         p ? "border-white/40 bg-slate-950/70" : "border-dashed border-white/40 bg-white/10"
                       }`}
                     >
@@ -865,7 +865,7 @@ function SquadPitch({
                           <div className="flex items-center justify-center gap-1">
                             <Shirt className="size-4 text-white/80" />
                           </div>
-                          <div className="mt-1 truncate text-[11px] font-semibold text-white">{p.name}</div>
+                          <div className="mt-1 text-[10px] font-semibold leading-tight text-white break-words line-clamp-2 min-h-[24px]">{p.name}</div>
                           <div className="text-[10px] tabular-nums text-white/70">{money(p.valueM)}</div>
                           <div className="text-[9px] font-bold uppercase tracking-wide text-white/60">
                             {isStart ? "XI" : "Bench"}
@@ -1092,7 +1092,7 @@ function PitchView({
                     {...dropProps((dragged) => onDropStart(dragged, id ?? undefined))}
                     draggable={editable && !!id}
                     onDragStart={(e) => { if (id) e.dataTransfer.setData("text/fantasy-player", id); }}
-                    className={`w-[64px] sm:w-[86px] rounded-xl border px-1.5 py-2 text-center backdrop-blur-sm transition-colors ${
+                    className={`min-w-[68px] flex-1 max-w-[110px] sm:max-w-[120px] rounded-xl border px-1.5 py-2 text-center backdrop-blur-sm transition-colors ${
                       p ? "border-white/40 bg-slate-950/70" : "border-dashed border-white/40 bg-white/10 hover:bg-white/20"
                     }`}
                   >
@@ -1103,7 +1103,7 @@ function PitchView({
                           {captainId === p.id && <Crown className="size-3.5 text-amber-400" />}
                           {viceId === p.id && <Star className="size-3.5 text-sky-300" />}
                         </div>
-                        <div className="mt-1 truncate text-[11px] font-semibold text-white">{p.name}</div>
+                        <div className="mt-1 text-[10px] font-semibold leading-tight text-white break-words line-clamp-2 min-h-[24px]">{p.name}</div>
                         <div className="text-[10px] tabular-nums text-white/70">{money(p.valueM)}</div>
                         {pointsByPlayer?.has(p.id) && (
                           <div className="mt-1 inline-flex items-center rounded-full border border-emerald-400/50 bg-emerald-500/20 px-1.5 text-[10px] font-bold tabular-nums text-emerald-200">
@@ -1155,7 +1155,7 @@ function PitchView({
                 {...dropProps(onDropBench)}
                 draggable={editable && !!id}
                 onDragStart={(e) => { if (id) e.dataTransfer.setData("text/fantasy-player", id); }}
-                className={`w-[64px] sm:w-[86px] rounded-xl border px-1.5 py-2 text-center text-xs ${
+                className={`min-w-[68px] flex-1 max-w-[110px] sm:max-w-[120px] rounded-xl border px-1.5 py-2 text-center text-xs ${
                   p ? "border-border/70 bg-muted/40" : "border-dashed border-border/70 bg-muted/20 text-muted-foreground"
                 }`}
               >
@@ -1164,7 +1164,7 @@ function PitchView({
                     <div className="flex items-center justify-center gap-1">
                       <span className={`text-[10px] font-bold rounded-md border px-1 ${POS_TINT[p.position]}`}>{POSITION_SHORT[p.position]}</span>
                     </div>
-                    <div className="mt-1 truncate font-semibold">{p.name}</div>
+                    <div className="mt-1 text-[10px] font-semibold leading-tight break-words line-clamp-2 min-h-[24px]">{p.name}</div>
                     <div className="text-[10px] tabular-nums text-muted-foreground">{money(p.valueM)}</div>
                     {pointsByPlayer?.has(p.id) && (
                       <div className="mt-1 inline-flex items-center rounded-full border border-emerald-500/40 bg-emerald-500/15 px-1.5 text-[10px] font-bold tabular-nums text-emerald-400">
