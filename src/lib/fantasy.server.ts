@@ -7,6 +7,7 @@ import {
   FORMATIONS,
   SQUAD_QUOTA,
   formationCounts,
+  isFantasySeasonStarted,
   type FantasyPosition,
   type FormationKey,
 } from "@/lib/fantasy-rules";
