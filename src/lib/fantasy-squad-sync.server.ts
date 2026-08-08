@@ -20,6 +20,7 @@ type PlayerRow = {
   sort_order: number | null;
   mfc_player_id: string | null;
   squad_level?: string | null;
+  created_at?: string | null;
 };
 
 const POSITION_ORDER: Record<FantasyPosition, number> = { gk: 0, def: 1, mid: 2, fwd: 3 };
@@ -98,7 +99,7 @@ export async function syncFantasyPlayersFromClub(admin: Admin): Promise<FantasyS
 
   const { data: existingRows, error: readErr } = await admin
     .from("fantasy_players")
-    .select("id, name, position, shirt_number, value_m, status, sort_order, mfc_player_id, squad_level");
+    .select("id, name, position, shirt_number, value_m, status, sort_order, mfc_player_id, squad_level, created_at");
   if (readErr) return { ok: false, error: readErr.message };
   const existing = (existingRows ?? []) as PlayerRow[];
 
@@ -125,16 +126,30 @@ export async function syncFantasyPlayersFromClub(admin: Admin): Promise<FantasyS
   const updated: string[] = [];
   const matchedIds = new Set<string>();
 
-  // The transfer feed logs genuine first-team movement only: a first-team
-  // player who appears in (or disappears from) the official club squad after
-  // the initial baseline snapshot. Academy churn and manually added players are
-  // never logged, and the very first baseline run logs nothing at all.
+  // The transfer feed logs genuine 2026/27 movement only: first-team players who
+  // join the official squad after the baseline snapshot, and players who joined
+  // during this window and then left it. Anyone who was already in the pool at
+  // baseline (i.e. left the club in an earlier season) is never logged, nor is
+  // academy churn, and the very first baseline run logs nothing at all.
   const { data: baselineRow } = await admin
     .from("app_settings")
-    .select("key")
+    .select("key, value")
     .eq("key", "fantasy_squad_baseline_at")
     .maybeSingle();
   const isBaseline = !baselineRow;
+  const baselineAt = (() => {
+    const raw = baselineRow?.value;
+    const s = typeof raw === "string" ? raw : (raw as any)?.at;
+    const t = s ? Date.parse(String(s)) : NaN;
+    return Number.isFinite(t) ? t : null;
+  })();
+
+  /** True when this pool row was created during the current tracked window. */
+  function joinedThisWindow(row: PlayerRow): boolean {
+    if (baselineAt === null) return false;
+    const t = row.created_at ? Date.parse(row.created_at) : NaN;
+    return Number.isFinite(t) && t > baselineAt;
+  }
 
   /** Record a club movement once — never duplicate the same player+direction. */
   async function logTransfer(
