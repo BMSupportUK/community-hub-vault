@@ -29,7 +29,9 @@ type EspnRosterPlayer = {
   subbedIn?: boolean;
   subbedOut?: boolean;
   athlete?: EspnAthlete;
-  position?: { abbreviation?: string };
+  // NOTE: ESPN's position field is deliberately NOT read. Positions always come
+  // from our own fantasy_players.position so scoring can't be skewed by ESPN
+  // classifying a player differently. Only raw stats are taken from ESPN.
   stats?: Array<{ name?: string; value?: number }>;
 };
 type EspnSummary = {
@@ -220,6 +222,7 @@ export async function fetchFantasyStatsForFixture(
     }
     if (minutes <= 0) continue;
 
+    // Position-dependent scoring uses OUR stored position, never ESPN's.
     const isKeeper = target.position === "gk";
     let pensSaved = 0;
     if (isKeeper && rp.starter && !gkAssigned) {
