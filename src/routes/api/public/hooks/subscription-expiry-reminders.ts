@@ -3,6 +3,7 @@ import { render } from '@react-email/render'
 import { createClient } from '@supabase/supabase-js'
 import { createFileRoute } from '@tanstack/react-router'
 import { TEMPLATES } from '@/lib/email-templates/registry'
+import { canEmailList, EMAIL_LIST_SUPPORT } from '@/lib/email-lists'
 
 const SITE_NAME = 'community-hub-vault'
 const SENDER_DOMAIN = 'notify.bmsupport.uk'
@@ -65,10 +66,9 @@ async function processKind(supabase: any, kind: Kind): Promise<{ sent: number; s
   }>) {
     try {
       const recipient = row.recipient_email
-      // Suppression check
-      const { data: suppressed } = await supabase
-        .from('suppressed_emails').select('id').eq('email', recipient.toLowerCase()).maybeSingle()
-      if (suppressed) {
+      // BM Support list check — never sends to competition-only guest addresses
+      const allowed = await canEmailList(supabase, recipient, EMAIL_LIST_SUPPORT)
+      if (!allowed) {
         // Record so we don't keep retrying this credential/expiry
         await supabase.from('subscription_expiry_reminders').insert({
           credential_id: row.credential_id, kind, expiry_at: row.expiry_at, recipient_email: recipient,
