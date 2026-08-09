@@ -3,6 +3,7 @@ import { render } from '@react-email/render'
 import { createClient } from '@supabase/supabase-js'
 import { createFileRoute } from '@tanstack/react-router'
 import { TEMPLATES } from '@/lib/email-templates/registry'
+import { canEmailList, EMAIL_LIST_COMPETITIONS } from '@/lib/email-lists'
 
 const SITE_NAME = 'BM Support'
 const SENDER_DOMAIN = 'notify.bmsupport.uk'
@@ -128,12 +129,8 @@ export const Route = createFileRoute('/api/public/hooks/boro-predictor-invite')(
 
         for (const r of recipients) {
           try {
-            const { data: suppressed } = await supabase
-              .from('suppressed_emails')
-              .select('id')
-              .eq('email', r.email.toLowerCase())
-              .maybeSingle()
-            if (suppressed) { stats.skipped++; continue }
+            const allowed = await canEmailList(supabase, r.email, EMAIL_LIST_COMPETITIONS)
+            if (!allowed) { stats.skipped++; continue }
 
             const unsubscribeToken = await ensureUnsubscribeToken(supabase, r.email)
             if (!unsubscribeToken) { stats.skipped++; continue }
