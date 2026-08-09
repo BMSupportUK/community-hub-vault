@@ -120,7 +120,7 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
         "before:content-[''] before:absolute before:inset-y-4 before:left-2 before:w-1 before:rounded-full before:bg-gradient-primary before:shadow-glow before:pointer-events-none",
         inSheet
           ? "flex h-full"
-          : "shrink-0 hidden md:flex border-r border-primary-glow/40 self-stretch h-full",
+          : "shrink-0 hidden md:flex border-r border-primary-glow/40 sticky top-0 h-dvh",
       )}>
         <RailIcon to="/gate" label="Gate" Icon={MessageSquare} active={path.startsWith("/gate")} accent />
         <div className="mt-auto" />
@@ -193,7 +193,7 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
       "after:content-[''] after:absolute after:inset-x-3 after:top-3 after:h-24 after:rounded-full after:bg-primary-glow/20 after:blur-2xl after:pointer-events-none",
       inSheet
         ? "flex h-full"
-        : "shrink-0 hidden md:flex border-r border-primary-glow/40 self-stretch h-full",
+        : "shrink-0 hidden md:flex border-r border-primary-glow/40 sticky top-0 h-dvh",
     )}>
       <Link to="/home" className="relative z-10 shrink-0 size-12 rounded-2xl bg-gradient-primary flex items-center justify-center font-display font-bold text-sm text-primary-foreground shadow-glow mb-1 ring-2 ring-primary-glow/70 hover:ring-primary-glow hover:scale-110 transition-all duration-200">
         BM
