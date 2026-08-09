@@ -110,6 +110,8 @@ export const guestSignInOrRegister = createServerFn({ method: "POST" })
       .select("id")
       .single();
     if (insErr) throw new Error(insErr.message);
+    const { registerEmailList, EMAIL_LIST_COMPETITIONS } = await import("@/lib/email-lists");
+    await registerEmailList(admin as never, data.email, EMAIL_LIST_COMPETITIONS, "wc_guest_entrants");
     return { guestId: (ins as any).id as string, displayName: data.displayName };
   });
 
