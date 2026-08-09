@@ -56,13 +56,10 @@ export const notifyTicketReply = createServerFn({ method: "POST" })
     const ownerEmail = ownerRes?.user?.email;
     if (!ownerEmail) return { ok: false, reason: "no_email" };
 
-    // Suppression check
-    const { data: suppressed } = await supabaseAdmin
-      .from("suppressed_emails")
-      .select("id")
-      .eq("email", ownerEmail.toLowerCase())
-      .maybeSingle();
-    if (suppressed) return { ok: false, reason: "suppressed" };
+    // BM Support list check (guest competition addresses never receive support mail)
+    const { canEmailList, EMAIL_LIST_SUPPORT } = await import("@/lib/email-lists");
+    const allowed = await canEmailList(supabaseAdmin as never, ownerEmail, EMAIL_LIST_SUPPORT);
+    if (!allowed) return { ok: false, reason: "suppressed" };
 
     // Display names
     const [{ data: ownerProf }, { data: staffProf }] = await Promise.all([

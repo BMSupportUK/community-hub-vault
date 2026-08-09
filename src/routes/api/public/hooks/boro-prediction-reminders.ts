@@ -3,6 +3,7 @@ import { render } from '@react-email/render'
 import { createClient } from '@supabase/supabase-js'
 import { createFileRoute } from '@tanstack/react-router'
 import { TEMPLATES } from '@/lib/email-templates/registry'
+import { canEmailList, EMAIL_LIST_COMPETITIONS } from '@/lib/email-lists'
 
 const SITE_NAME = 'community-hub-vault'
 const SENDER_DOMAIN = 'notify.bmsupport.uk'
@@ -119,10 +120,9 @@ export const Route = createFileRoute('/api/public/hooks/boro-prediction-reminder
             const recipient = r.recipient_email
             if (!recipient) { stats.skipped++; continue }
 
-            // Suppression check
-            const { data: suppressed } = await supabase
-              .from('suppressed_emails').select('id').eq('email', recipient.toLowerCase()).maybeSingle()
-            if (suppressed) { stats.skipped++; continue }
+            // Competitions list check (separate from BM Support mailings)
+            const allowed = await canEmailList(supabase, recipient, EMAIL_LIST_COMPETITIONS)
+            if (!allowed) { stats.skipped++; continue }
 
             // Dedupe — one reminder per entrant per UK day
             const { error: claimErr } = await supabase
