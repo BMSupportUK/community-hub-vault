@@ -1112,7 +1112,6 @@ function SquadBuilder({
         </div>
 
         <div className="grid gap-4 items-start lg:sticky lg:top-4">
-          {gameweekPanel}
           <ManagerCard
             state={state}
             name={name}
@@ -1120,6 +1119,7 @@ function SquadBuilder({
             canEdit={canEdit}
             onEdit={onEdit}
           />
+          {gameweekPanel}
           {gw && !gw.dateTbc && (
             <aside className="rounded-2xl border border-border/60 bg-card/85 backdrop-blur overflow-hidden p-3">
               <DigitalLockCountdown lockAt={gw.lockAt} compact />
