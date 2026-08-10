@@ -22,7 +22,7 @@ export function isFantasyLeagueCompetition(competition: string | null | undefine
 export const FANTASY_SQUAD_SIZE = 15;
 export const FANTASY_BENCH_SIZE = 4;
 /** Squad locks this many minutes before kick-off. */
-export const FANTASY_LOCK_MINUTES = 30;
+export const FANTASY_LOCK_MINUTES = 120;
 
 export type FantasyPosition = "gk" | "def" | "mid" | "fwd";
 
@@ -122,7 +122,7 @@ export const SQUAD_RULES: { title: string; body: string }[] = [
   { title: "Auto subs", body: "If a starter plays no minutes, the first eligible sub in bench order takes their place and scores instead." },
   { title: "Captain & vice", body: "Your captain scores double. If the captain doesn't play a minute, the vice-captain doubles instead. Both must start." },
   { title: "Change your team freely", body: "You can change your 11 and your bench as often as you like every gameweek — there are no transfers and no points hits." },
-  { title: "Deadline", body: `Squads lock ${FANTASY_LOCK_MINUTES} minutes before kick-off. After that your team is fixed for that gameweek.` },
+  { title: "Deadline", body: "Entries lock 2 hours before kick-off. After that your team is fixed for that gameweek." },
   { title: "League games only", body: "Gameweeks are Middlesbrough league fixtures only — cup ties, play-offs and friendlies are never part of the game." },
   { title: "Scoring & prizes", body: "Only Middlesbrough players score. Points are added automatically once each match finishes — see the Scoring tab for the full breakdown." },
 ];
