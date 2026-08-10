@@ -1442,12 +1442,9 @@ function PitchView({
 // ------------------------------------------------------------------
 // Gameweeks
 // ------------------------------------------------------------------
-function GameweekList({ state }: { state: FantasyStateDTO }) {
+function GameweekList({ state, group }: { state: FantasyStateDTO; group: FantasyCompetitionGroup }) {
   const [openId, setOpenId] = useState<string | null>(null);
   const playerById = useMemo(() => new Map(state.players.map((p) => [p.id, p])), [state.players]);
-  if (!state.gameweeks.length) {
-    return <div className="rounded-2xl border border-border/60 bg-card/80 p-6 text-sm text-muted-foreground">No gameweeks yet.</div>;
-  }
   const renderGw = (g: FantasyStateDTO["gameweeks"][number]) => {
         const squad = state.squads.find((s) => s.gameweekId === g.id);
         const open = openId === g.id;
