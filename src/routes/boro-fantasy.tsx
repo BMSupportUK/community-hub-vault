@@ -605,17 +605,6 @@ function ManagerCard({
   );
 }
 
-function NextGameweekCard({ state }: { state?: FantasyStateDTO }) {
-  const gw = (state?.gameweeks ?? []).find((g) => g.id === state?.currentGameweekId);
-  if (!gw) return null;
-  return (
-    <div className="rounded-2xl border border-border/60 bg-card/80 backdrop-blur p-4">
-      <div className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Next gameweek</div>
-      <div className="font-semibold">GW{gw.gwNumber} — {gw.homeTeam} v {gw.awayTeam}</div>
-      <div className="text-xs text-muted-foreground mt-1">{gw.dateTbc ? "Date to be confirmed" : kickoffLabel(gw.kickoffAt)}</div>
-    </div>
-  );
-}
 
 // ------------------------------------------------------------------
 // Squad builder
