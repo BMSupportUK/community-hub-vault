@@ -20,7 +20,7 @@ import { LandingHeader } from "@/components/LandingHeader";
 import { IconRail } from "@/components/app/IconRail";
 import { useAuth } from "@/hooks/use-auth";
 import {
-  FANTASY_BENCH_SIZE, FANTASY_SQUAD_SIZE, FORMATION_KEYS, POSITION_ORDER,
+  benchRulesFor, COMPETITION_BENCH_RULES, FORMATION_KEYS, POSITION_ORDER,
   POSITION_SHORT, POSITION_LABEL, SCORING_RULES, BENCH_QUOTA, SQUAD_RULES,
   FORMATIONS, formationCounts, formationRows,
   type FantasyPosition, type FormationKey,
@@ -632,16 +632,21 @@ function SquadBuilder({
   }, [draftKey, draftLoaded, formation, selected, starters, captainId, viceId]);
 
   const counts = formationCounts(formation);
-  /** Match day 11 for the chosen formation plus one sub per position. */
+  /** Bench size follows the real substitute rules of this gameweek's competition. */
+  const benchRules = useMemo(() => benchRulesFor(gw?.competition), [gw?.competition]);
+  const squadSize = 11 + benchRules.size;
+  /** Match day 11 for the chosen formation plus the bench allowance. */
   const posQuota = useMemo(() => {
     const c = counts as Record<FantasyPosition, number>;
+    const minTotal = POSITION_ORDER.reduce((n, p) => n + benchRules.min[p], 0);
+    const free = Math.max(0, benchRules.size - minTotal);
     return {
-      gk: c.gk + BENCH_QUOTA.gk,
-      def: c.def + BENCH_QUOTA.def,
-      mid: c.mid + BENCH_QUOTA.mid,
-      fwd: c.fwd + BENCH_QUOTA.fwd,
+      gk: c.gk + benchRules.min.gk + free,
+      def: c.def + benchRules.min.def + free,
+      mid: c.mid + benchRules.min.mid + free,
+      fwd: c.fwd + benchRules.min.fwd + free,
     } as Record<FantasyPosition, number>;
-  }, [formation]);
+  }, [formation, benchRules]);
   const byPos = (ids: string[], pos: FantasyPosition) => ids.filter((id) => playerById.get(id)?.position === pos);
   const bench = selected
     .filter((id) => !starters.includes(id))
@@ -660,12 +665,11 @@ function SquadBuilder({
       if (n !== (counts as any)[pos]) xiProblems.push(`${formation}: needs ${(counts as any)[pos]} ${POSITION_SHORT[pos]} in the XI, you have ${n}.`);
     }
   }
-  if (bench.length !== FANTASY_BENCH_SIZE) xiProblems.push(`Bench must be ${FANTASY_BENCH_SIZE} players — 1 GK, 1 DEF, 1 MID, 1 FWD.`);
-  else {
-    for (const pos of POSITION_ORDER) {
-      const n = byPos(bench, pos).length;
-      if (n !== BENCH_QUOTA[pos]) xiProblems.push(`Bench needs ${BENCH_QUOTA[pos]} ${POSITION_SHORT[pos]} (you have ${n}).`);
-    }
+  if (bench.length !== benchRules.size)
+    xiProblems.push(`${benchRules.competition} allows ${benchRules.size} subs — name ${benchRules.size} (you have ${bench.length}).`);
+  for (const pos of POSITION_ORDER) {
+    const n = byPos(bench, pos).length;
+    if (n < benchRules.min[pos]) xiProblems.push(`Bench needs at least ${benchRules.min[pos]} ${POSITION_SHORT[pos]} (you have ${n}).`);
   }
   if (!captainId || !starters.includes(captainId)) xiProblems.push("Pick a captain from your starting XI.");
   if (!viceId || !starters.includes(viceId)) xiProblems.push("Pick a vice-captain from your starting XI.");
