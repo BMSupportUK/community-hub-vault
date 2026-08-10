@@ -55,7 +55,7 @@ export const Route = createFileRoute("/boro-fantasy")({
 
 type GuestSession = { guestId: string; email: string; pin: string; displayName: string; teamName?: string };
 const GUEST_KEY = "fantasy_guest_session";
-const BENCH_SLOT_LABELS = ["GK", "Def", "Mid", "Fwd"] as const;
+const BENCH_SLOT_LABELS = ["Sub", "Sub", "Sub", "Sub"] as const;
 
 const kickoffLabel = (iso: string) =>
   new Date(iso).toLocaleString(undefined, { weekday: "short", day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
@@ -1399,7 +1399,7 @@ function PitchView({
                 {p ? (
                   <>
                     <div className="flex items-center justify-center gap-1">
-                      <span className={`text-[10px] font-bold rounded-md border px-1 ${POS_TINT[p.position]}`}>{POSITION_SHORT[p.position]}</span>
+                      <span className="text-[10px] font-bold rounded-md border px-1 bg-slate-700 text-white border-white/20">SUB</span>
                     </div>
                     <div className="mt-1 text-[10px] font-semibold leading-tight break-words line-clamp-2 min-h-[24px]">{p.name}</div>
                     <div className="text-[10px] tabular-nums text-muted-foreground">{p.seasonPoints ?? 0} pts</div>
