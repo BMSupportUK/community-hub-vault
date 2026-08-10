@@ -88,9 +88,11 @@ function DigitalLockCountdown({
   const seconds = totalSeconds % 60;
 
   const unit = (value: number, suffix: string) => (
-    <div className={`flex flex-col items-center ${compact ? "min-w-[2.4rem]" : "min-w-[3.2rem]"}`}>
+    <div className={`flex flex-col items-center ${compact ? "min-w-[1.7rem] sm:min-w-[2.4rem]" : "min-w-[3.2rem]"}`}>
       <div className={`relative rounded-lg border-2 font-digital font-black tabular-nums leading-none ${
-        compact ? "px-1.5 py-1 text-base" : "px-2 py-1.5 sm:px-3 sm:py-2 text-xl sm:text-2xl"
+        compact
+          ? "px-1 py-0.5 text-sm sm:px-1.5 sm:py-1 sm:text-base"
+          : "px-2 py-1.5 sm:px-3 sm:py-2 text-xl sm:text-2xl"
       } ${
         urgent
           ? "bg-red-600/20 border-red-400 text-red-300 shadow-[0_0_18px_rgba(248,113,113,0.55)] animate-pulse"
@@ -98,27 +100,27 @@ function DigitalLockCountdown({
       }`}>
         {value.toString().padStart(2, "0")}
       </div>
-      <span className={`${compact ? "text-[9px]" : "text-[10px] sm:text-[11px]"} font-semibold uppercase tracking-wider text-white/70 mt-1`}>{suffix}</span>
+      <span className={`${compact ? "text-[8px] sm:text-[9px]" : "text-[10px] sm:text-[11px]"} font-semibold uppercase tracking-wider text-white/70 mt-1`}>{suffix}</span>
     </div>
   );
 
   return (
     <div className="w-full">
-      <div className={`flex items-center gap-2 font-digital font-bold uppercase tracking-widest ${compact ? "mb-1 text-[11px]" : "mb-2 text-sm"} ${urgent ? "text-red-300" : "text-amber-300"}`}>
-        <Lock className={compact ? "size-3.5" : "size-4"} strokeWidth={3} />
+      <div className={`flex items-center gap-1.5 sm:gap-2 font-digital font-bold uppercase tracking-widest ${compact ? "mb-1 text-[10px] sm:text-[11px]" : "mb-2 text-sm"} ${urgent ? "text-red-300" : "text-amber-300"}`}>
+        <Lock className={compact ? "size-3 sm:size-3.5" : "size-4"} strokeWidth={3} />
         {locked ? "Locked" : label}
       </div>
       {locked ? (
-        <div className={`inline-flex items-center gap-2 rounded-lg border-2 border-red-400 bg-red-600/20 font-digital font-black text-red-200 shadow-[0_0_18px_rgba(248,113,113,0.55)] ${compact ? "px-2.5 py-1 text-sm" : "px-4 py-2 text-lg"}`}>
-          <Lock className={compact ? "size-4" : "size-5"} strokeWidth={3} /> SQUAD LOCKED
+        <div className={`inline-flex items-center gap-1.5 sm:gap-2 rounded-lg border-2 border-red-400 bg-red-600/20 font-digital font-black text-red-200 shadow-[0_0_18px_rgba(248,113,113,0.55)] ${compact ? "px-1.5 py-0.5 text-xs sm:px-2.5 sm:py-1 sm:text-sm" : "px-4 py-2 text-lg"}`}>
+          <Lock className={compact ? "size-3 sm:size-4" : "size-5"} strokeWidth={3} /> SQUAD LOCKED
         </div>
       ) : (
-        <div className={`flex items-start ${compact ? "gap-1.5" : "gap-2 sm:gap-3"}`}>
+        <div className={`flex items-start ${compact ? "gap-1 sm:gap-1.5" : "gap-2 sm:gap-3"}`}>
           {days > 0 && unit(days, "Days")}
           {unit(hours, "Hrs")}
-          <span className={`font-digital text-white/40 ${compact ? "text-lg pt-1" : "text-2xl pt-2"}`}>:</span>
+          <span className={`font-digital text-white/40 ${compact ? "text-base pt-0.5 sm:text-lg sm:pt-1" : "text-2xl pt-2"}`}>:</span>
           {unit(minutes, "Min")}
-          <span className={`font-digital text-white/40 ${compact ? "text-lg pt-1" : "text-2xl pt-2"}`}>:</span>
+          <span className={`font-digital text-white/40 ${compact ? "text-base pt-0.5 sm:text-lg sm:pt-1" : "text-2xl pt-2"}`}>:</span>
           {unit(seconds, "Sec")}
         </div>
       )}
@@ -1509,21 +1511,23 @@ function PitchView({
         <div className="pointer-events-none absolute inset-4 sm:inset-6 rounded-xl border-2 border-white/25" aria-hidden />
         <div className="pointer-events-none absolute left-1/2 top-4 sm:top-6 h-16 w-40 -translate-x-1/2 rounded-b-xl border-x-2 border-b-2 border-white/25" aria-hidden />
         <div className="pointer-events-none absolute left-1/2 bottom-4 sm:bottom-6 h-16 w-40 -translate-x-1/2 rounded-t-xl border-x-2 border-t-2 border-white/25" aria-hidden />
-        <div className="absolute right-3 top-3 z-10 w-44 sm:w-52 rounded-xl border border-white/30 bg-slate-950/80 p-2 shadow-lg backdrop-blur-sm">
-          <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-white/80">Formation</label>
-          <select
-            className="h-8 w-full min-w-0 rounded-lg border border-white/30 bg-slate-900/80 px-2 text-xs font-semibold text-white"
-            value={formation}
-            onChange={(e) => onFormationChange(e.target.value as FormationKey)}
-            disabled={!editable}
-          >
+        <div className="pointer-events-none absolute right-2 top-2 sm:right-3 sm:top-3 z-10 w-32 sm:w-44 rounded-lg sm:rounded-xl border border-white/30 bg-slate-950/80 p-1.5 sm:p-2 shadow-lg backdrop-blur-sm">
+          <div className="pointer-events-auto">
+            <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-white/80">Formation</label>
+            <select
+              className="h-7 sm:h-8 w-full min-w-0 rounded-lg border border-white/30 bg-slate-900/80 px-1.5 sm:px-2 text-[11px] sm:text-xs font-semibold text-white"
+              value={formation}
+              onChange={(e) => onFormationChange(e.target.value as FormationKey)}
+              disabled={!editable}
+            >
             {FORMATION_KEYS.map((f) => (
               <option key={f} value={f}>{f} — {FORMATIONS[f].label}</option>
             ))}
           </select>
+          </div>
         </div>
         {gw && !gw.dateTbc && (
-          <div className="absolute left-3 top-3 z-10 w-36 sm:w-44 rounded-xl border border-white/30 bg-slate-950/80 p-2 shadow-lg backdrop-blur-sm">
+          <div className="pointer-events-none absolute left-2 top-2 sm:left-3 sm:top-3 z-10 w-32 sm:w-44 rounded-lg sm:rounded-xl border border-white/30 bg-slate-950/80 p-1.5 sm:p-2 shadow-lg backdrop-blur-sm">
             <DigitalLockCountdown lockAt={gw.lockAt} compact />
           </div>
         )}
@@ -1565,22 +1569,26 @@ function PitchView({
                           </div>
                         )}
                         {editable && (
-                          <div className="mt-1 flex items-center justify-center gap-1">
-                            <button type="button" title="Captain" onClick={() => onCaptain(p.id)} className={`rounded p-0.5 ${captainId === p.id ? "text-amber-400" : "text-white/50 hover:text-white"}`}>
-                              <Crown className="size-3" />
-                            </button>
-                            <button type="button" title="Vice-captain" onClick={() => onVice(p.id)} className={`rounded p-0.5 ${viceId === p.id ? "text-sky-300" : "text-white/50 hover:text-white"}`}>
-                              <Star className="size-3" />
-                            </button>
-                            <button type="button" title="Swap this player" onClick={() => onSlotOpen(row.positions, slotIndex, p.id)} className="rounded p-0.5 text-white/50 hover:text-white">
-                              <ArrowRightLeft className="size-3" />
-                            </button>
-                            <button type="button" title="Move to bench" onClick={() => onBench(p.id)} className="rounded p-0.5 text-white/50 hover:text-white">
-                              <ArrowDown className="size-3" />
-                            </button>
-                            <button type="button" title="Remove" onClick={() => onRemove(p.id)} className="rounded p-0.5 text-white/50 hover:text-destructive">
-                              <X className="size-3" />
-                            </button>
+                          <div className="mt-1 flex flex-col gap-0.5 sm:flex-row sm:gap-1 items-center justify-center">
+                            <div className="flex items-center justify-center gap-0.5 sm:gap-1">
+                              <button type="button" title="Captain" onClick={() => onCaptain(p.id)} className={`rounded p-0.5 ${captainId === p.id ? "text-amber-400" : "text-white/50 hover:text-white"}`}>
+                                <Crown className="size-2.5 sm:size-3" />
+                              </button>
+                              <button type="button" title="Vice-captain" onClick={() => onVice(p.id)} className={`rounded p-0.5 ${viceId === p.id ? "text-sky-300" : "text-white/50 hover:text-white"}`}>
+                                <Star className="size-2.5 sm:size-3" />
+                              </button>
+                              <button type="button" title="Swap this player" onClick={() => onSlotOpen(row.positions, slotIndex, p.id)} className="rounded p-0.5 text-white/50 hover:text-white">
+                                <ArrowRightLeft className="size-2.5 sm:size-3" />
+                              </button>
+                            </div>
+                            <div className="flex items-center justify-center gap-0.5 sm:gap-1">
+                              <button type="button" title="Move to bench" onClick={() => onBench(p.id)} className="rounded p-0.5 text-white/50 hover:text-white">
+                                <ArrowDown className="size-2.5 sm:size-3" />
+                              </button>
+                              <button type="button" title="Remove" onClick={() => onRemove(p.id)} className="rounded p-0.5 text-white/50 hover:text-destructive">
+                                <X className="size-2.5 sm:size-3" />
+                              </button>
+                            </div>
                           </div>
                         )}
                       </>
@@ -1622,12 +1630,12 @@ function PitchView({
                     <div className="mt-1 line-clamp-2 min-h-[24px] break-words text-[10px] font-semibold leading-tight text-white">{p.name}</div>
                     <div className="text-[10px] tabular-nums text-white/70">{p.seasonPoints ?? 0} pts</div>
                     {editable && (
-                      <div className="mt-1 flex items-center justify-center gap-1">
+                      <div className="mt-1 flex items-center justify-center gap-0.5 sm:gap-1">
                         <button type="button" title="Move to bench" onClick={() => onBench(p.id)} className="rounded p-0.5 text-white/60 hover:text-white">
-                          <ArrowDown className="size-3" />
+                          <ArrowDown className="size-2.5 sm:size-3" />
                         </button>
                         <button type="button" title="Remove" onClick={() => onRemove(p.id)} className="rounded p-0.5 text-white/60 hover:text-destructive">
-                          <X className="size-3" />
+                          <X className="size-2.5 sm:size-3" />
                         </button>
                       </div>
                     )}
@@ -1678,12 +1686,12 @@ function PitchView({
                       <div className="mt-0.5 text-[9px] font-bold uppercase text-sky-400">Subbed on</div>
                     )}
                     {editable && (
-                      <div className="mt-1 flex items-center justify-center gap-1">
+                      <div className="mt-1 flex items-center justify-center gap-0.5 sm:gap-1">
                         <button type="button" title="Into the XI" onClick={() => onDropStart(p.id)} className="rounded p-0.5 text-muted-foreground hover:text-emerald-400">
-                          <ArrowUp className="size-3" />
+                          <ArrowUp className="size-2.5 sm:size-3" />
                         </button>
                         <button type="button" title="Remove" onClick={() => onRemove(p.id)} className="rounded p-0.5 text-muted-foreground hover:text-destructive">
-                          <X className="size-3" />
+                          <X className="size-2.5 sm:size-3" />
                         </button>
                       </div>
                     )}
