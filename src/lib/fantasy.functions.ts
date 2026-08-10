@@ -73,7 +73,7 @@ const saveSquadSchema = z.object({
   gameweekId: z.string().uuid(),
   formation: z.string().min(3).max(8),
   starters: z.array(z.string().uuid()).length(11),
-  bench: z.array(z.string().uuid()).length(4),
+  bench: z.array(z.string().uuid()).min(1).max(9),
   captainId: z.string().uuid(),
   viceId: z.string().uuid(),
 });
