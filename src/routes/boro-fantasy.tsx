@@ -852,8 +852,8 @@ function SquadBuilder({
     let st = starters.filter((x) => x !== replaceId);
     if (!st.includes(p.id)) {
       const line = byPos(st, p.position);
-      const need = (counts as Record<string, number>)[p.position] ?? 0;
-      if (line.length >= need) {
+      const allowed = formationPositionRange(formation)[p.position].max;
+      if (line.length >= allowed || st.length >= 11) {
         const bumped = line[line.length - 1]!;
         st = st.filter((x) => x !== bumped);
         if (captainId === bumped) setCaptainId("");
