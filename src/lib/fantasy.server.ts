@@ -392,17 +392,8 @@ export async function saveSquad(admin: any, owner: Owner, input: SaveSquadInput)
     }
   }
 
-  // The bench has to cover every position so any starter who doesn't play can be
-  // replaced like-for-like.
   if (input.bench.length !== bench.size) {
-    throw new Error(`${bench.competition} allows ${bench.size} subs — name exactly ${bench.size}, covering every position.`);
-  }
-  const benchQuota: Record<FantasyPosition, number> = { gk: 0, def: 0, mid: 0, fwd: 0 };
-  for (const id of input.bench) benchQuota[byId.get(id)!.position]++;
-  for (const pos of Object.keys(bench.min) as FantasyPosition[]) {
-    if (benchQuota[pos] < bench.min[pos]) {
-      throw new Error("Your bench must cover every position: 1 GK, 1 DEF, 1 MID and 1 FWD.");
-    }
+    throw new Error(`${bench.competition} allows ${bench.size} subs — name exactly ${bench.size}.`);
   }
 
   const xi: Record<FantasyPosition, number> = { gk: 0, def: 0, mid: 0, fwd: 0 };
