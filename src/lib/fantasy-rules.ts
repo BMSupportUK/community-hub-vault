@@ -1,7 +1,5 @@
 /** Shared, client-safe rules for the MFC Fantasy Manager. */
 
-export const FANTASY_BUDGET_M = 80;
-
 /**
  * The fantasy game is league-only: cup ties, play-offs, friendlies and
  * anything else never becomes a gameweek.
@@ -23,8 +21,6 @@ export function isFantasyLeagueCompetition(competition: string | null | undefine
 }
 export const FANTASY_SQUAD_SIZE = 15;
 export const FANTASY_BENCH_SIZE = 4;
-export const FANTASY_TRANSFER_HIT = 4;
-export const FANTASY_MAX_BANKED_TRANSFERS = 2;
 /** Squad locks this many minutes before kick-off. */
 export const FANTASY_LOCK_MINUTES = 30;
 
@@ -44,8 +40,11 @@ export const POSITION_SHORT: Record<FantasyPosition, string> = {
 };
 export const POSITION_ORDER: FantasyPosition[] = ["gk", "def", "mid", "fwd"];
 
-/** Full 15-man squad quotas. */
-export const SQUAD_QUOTA: Record<FantasyPosition, number> = { gk: 2, def: 5, mid: 5, fwd: 3 };
+/**
+ * The bench covers every position, so any starter who doesn't play can be
+ * replaced by a like-for-like sub: 1 GK, 1 DEF, 1 MID and 1 FWD.
+ */
+export const BENCH_QUOTA: Record<FantasyPosition, number> = { gk: 1, def: 1, mid: 1, fwd: 1 };
 
 export type FormationKey =
   | "4-4-2" | "4-3-3" | "4-2-3-1" | "4-1-4-1" | "4-4-1-1"
@@ -91,10 +90,7 @@ export function isFantasySeasonStarted(gameweeks: { kickoffAt: string }[]): bool
   return new Date(gameweeks[0].kickoffAt).getTime() <= Date.now();
 }
 
-/**
- * Real-world transfer windows. While a window is open managers get unlimited
- * free transfers; once it shuts they drop back to 1 free transfer a week.
- */
+/** Real-world transfer windows — shown for information on the Transfers tab. */
 export const FANTASY_TRANSFER_WINDOWS: { label: string; opensAt: string; closesAt: string }[] = [
   { label: "Summer 2026", opensAt: "2026-06-01T00:00:00Z", closesAt: "2026-09-01T22:00:00Z" },
   { label: "Winter 2027", opensAt: "2027-01-01T00:00:00Z", closesAt: "2027-02-02T23:00:00Z" },
@@ -109,17 +105,9 @@ export function currentFantasyTransferWindow(now: Date = new Date()) {
   );
 }
 
-/** True while a real transfer window is open (unlimited free transfers). */
+/** True while a real transfer window is open. */
 export function isFantasyTransferWindowOpen(now: Date = new Date()): boolean {
   return currentFantasyTransferWindow(now) !== null;
-}
-
-/** Unlimited transfers before the season starts, or while a window is open. */
-export function hasUnlimitedFantasyTransfers(
-  gameweeks: { kickoffAt: string }[],
-  now: Date = new Date(),
-): boolean {
-  return !isFantasySeasonStarted(gameweeks) || isFantasyTransferWindowOpen(now);
 }
 
 export function formatWindowDate(iso: string): string {
@@ -128,12 +116,12 @@ export function formatWindowDate(iso: string): string {
 
 /** Plain-English squad rules, rendered on the Squad rules tab. */
 export const SQUAD_RULES: { title: string; body: string }[] = [
-  { title: "Budget", body: `You have £${FANTASY_BUDGET_M.toFixed(1)}m to spend on your whole squad. Player values reflect current form and importance to Middlesbrough.` },
-  { title: "Squad size", body: `${FANTASY_SQUAD_SIZE} players: ${SQUAD_QUOTA.gk} goalkeepers, ${SQUAD_QUOTA.def} defenders, ${SQUAD_QUOTA.mid} midfielders and ${SQUAD_QUOTA.fwd} forwards.` },
-  { title: "Starting XI & bench", body: `Name 11 starters in a legal formation, plus ${FANTASY_BENCH_SIZE} on the bench. Bench players are subbed in automatically (in bench order) if a starter plays no minutes.` },
+  { title: "No budget", body: "There's no budget and no player prices — pick whoever you fancy from the current Middlesbrough squad." },
+  { title: "Match day 11", body: "Each gameweek you name a match day 11 in a legal formation. Only Middlesbrough players available for that fixture can be picked." },
+  { title: "Sub bench", body: `Name ${FANTASY_BENCH_SIZE} subs covering every position — 1 GK, 1 DEF, 1 MID and 1 FWD — so any starter who doesn't play is replaced like-for-like.` },
+  { title: "Auto subs", body: "If a starter plays no minutes, the first eligible sub in bench order takes their place and scores instead." },
   { title: "Captain & vice", body: "Your captain scores double. If the captain doesn't play a minute, the vice-captain doubles instead. Both must start." },
-  { title: "Transfers", body: `Transfers are unlimited and free while a real transfer window is open. Once the window shuts you get 1 free transfer per gameweek (bankable up to ${FANTASY_MAX_BANKED_TRANSFERS}), and extra transfers cost ${FANTASY_TRANSFER_HIT} points each. Replacing a player who has left the club is always free.` },
-  { title: "Transfer windows", body: `Summer window: unlimited free transfers until it shuts on ${formatWindowDate(FANTASY_TRANSFER_WINDOWS[0]!.closesAt)}, then 1 free transfer a week. Winter window: unlimited free transfers again from ${formatWindowDate(FANTASY_TRANSFER_WINDOWS[1]!.opensAt)} until it shuts on ${formatWindowDate(FANTASY_TRANSFER_WINDOWS[1]!.closesAt)}, then back to 1 free transfer a week.` },
+  { title: "Change your team freely", body: "You can change your 11 and your bench as often as you like every gameweek — there are no transfers and no points hits." },
   { title: "Deadline", body: `Squads lock ${FANTASY_LOCK_MINUTES} minutes before kick-off. After that your team is fixed for that gameweek.` },
   { title: "League games only", body: "Gameweeks are Middlesbrough league fixtures only — cup ties, play-offs and friendlies are never part of the game." },
   { title: "Scoring & prizes", body: "Only Middlesbrough players score. Points are added automatically once each match finishes — see the Scoring tab for the full breakdown." },
@@ -157,5 +145,4 @@ export const SCORING_RULES: { label: string; points: string }[] = [
   { label: "Own goal", points: "-2" },
   { label: "Man of the match bonus (awarded by admin)", points: "3" },
   { label: "Captain", points: "double points" },
-  { label: "Extra transfer (beyond your free one)", points: "-4" },
 ];

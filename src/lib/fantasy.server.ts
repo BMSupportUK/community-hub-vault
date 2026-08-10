@@ -1,13 +1,10 @@
 /** Server-only core for the MFC Fantasy Manager (shared by member + guest server fns). */
 import {
-  FANTASY_BUDGET_M,
-  FANTASY_MAX_BANKED_TRANSFERS,
   FANTASY_SQUAD_SIZE,
-  FANTASY_TRANSFER_HIT,
+  FANTASY_BENCH_SIZE,
+  BENCH_QUOTA,
   FORMATIONS,
-  SQUAD_QUOTA,
   formationCounts,
-  hasUnlimitedFantasyTransfers,
   isFantasySeasonStarted,
   type FantasyPosition,
   type FormationKey,
@@ -74,7 +71,6 @@ export type FantasyStateDTO = {
   teamName: string;
   freeTransfers: number;
   wildcardUsed: boolean;
-  budgetM: number;
   players: FantasyPlayerDTO[];
   gameweeks: FantasyGameweekDTO[];
   currentGameweekId: string | null;
@@ -281,7 +277,6 @@ export async function loadState(admin: any, owner: Owner | null): Promise<Fantas
     teamName,
     freeTransfers,
     wildcardUsed,
-    budgetM: FANTASY_BUDGET_M,
     players: visiblePlayers(players, squads, isFantasySeasonStarted(gameweeks)),
     gameweeks,
     currentGameweekId: pickCurrentGameweek(gameweeks),
@@ -368,11 +363,16 @@ export async function saveSquad(admin: any, owner: Owner, input: SaveSquadInput)
     }
   }
 
-  const quota: Record<FantasyPosition, number> = { gk: 0, def: 0, mid: 0, fwd: 0 };
-  for (const id of squadIds) quota[byId.get(id)!.position]++;
-  for (const pos of Object.keys(SQUAD_QUOTA) as FantasyPosition[]) {
-    if (quota[pos] !== SQUAD_QUOTA[pos]) {
-      throw new Error(`Your squad needs exactly ${SQUAD_QUOTA.gk} GK, ${SQUAD_QUOTA.def} DEF, ${SQUAD_QUOTA.mid} MID and ${SQUAD_QUOTA.fwd} FWD.`);
+  // The bench has to cover every position so any starter who doesn't play can be
+  // replaced like-for-like.
+  if (input.bench.length !== FANTASY_BENCH_SIZE) {
+    throw new Error(`Name ${FANTASY_BENCH_SIZE} subs — one goalkeeper, one defender, one midfielder and one forward.`);
+  }
+  const benchQuota: Record<FantasyPosition, number> = { gk: 0, def: 0, mid: 0, fwd: 0 };
+  for (const id of input.bench) benchQuota[byId.get(id)!.position]++;
+  for (const pos of Object.keys(BENCH_QUOTA) as FantasyPosition[]) {
+    if (benchQuota[pos] !== BENCH_QUOTA[pos]) {
+      throw new Error("Your bench must cover every position: 1 GK, 1 DEF, 1 MID and 1 FWD.");
     }
   }
 
@@ -383,46 +383,9 @@ export async function saveSquad(admin: any, owner: Owner, input: SaveSquadInput)
     throw new Error(`Your XI doesn't match ${input.formation}: needs 1 GK, ${need.def} DEF, ${need.mid} MID, ${need.fwd} FWD.`);
   }
 
-  const spend = squadIds.reduce((sum, id) => sum + byId.get(id)!.valueM, 0);
-  if (spend > FANTASY_BUDGET_M + 1e-6) {
-    throw new Error(`Over budget: £${spend.toFixed(1)}m of £${FANTASY_BUDGET_M.toFixed(1)}m.`);
-  }
-
-  // Previous gameweek squad (for transfer counting)
-  const { data: prevRows } = await admin
-    .from("fantasy_squads")
-    .select("id, gameweek_id, picks:fantasy_squad_picks(player_id), gameweek:fantasy_gameweeks!inner(gw_number)")
-    .eq(ownerCol(owner), ownerVal(owner));
-  const prevList = (prevRows ?? [])
-    .filter((r: any) => r.gameweek_id !== input.gameweekId)
-    .sort((a: any, b: any) => (b.gameweek?.gw_number ?? 0) - (a.gameweek?.gw_number ?? 0));
-  const prev = prevList[0] ?? null;
-  const prevIds: string[] = prev ? (prev.picks ?? []).map((p: any) => p.player_id) : [];
-
-  const entTable = owner.userId ? "fantasy_entrants" : "fantasy_guest_entrants";
-  const entIdCol = owner.userId ? "user_id" : "id";
-  const { data: ent } = await admin
-    .from(entTable)
-    .select("free_transfers")
-    .eq(entIdCol, ownerVal(owner))
-    .maybeSingle();
-  const banked = (ent as any)?.free_transfers ?? 1;
-
-  const allGameweeks = await loadGameweeks(admin);
-  // Unlimited free transfers before the season starts and while a real
-  // transfer window is open; otherwise 1 free transfer a week.
-  const unlimited = hasUnlimitedFantasyTransfers(allGameweeks);
-
-  // Transfers = players in the new squad that weren't in the previous one.
-  // Replacing a departed player is free and doesn't count.
-  const departedOut = prevIds.filter((id) => {
-    const s = byId.get(id)?.status;
-    return s === "departed" || s === "loaned_out";
-  }).length;
-  const incoming = squadIds.filter((id) => !prevIds.includes(id));
-  const outgoing = prevIds.filter((id) => !squadIds.includes(id));
-  const chargeable = prevIds.length === 0 || unlimited ? 0 : Math.max(0, incoming.length - departedOut);
-  const transferCost = unlimited ? 0 : Math.max(0, chargeable - banked) * FANTASY_TRANSFER_HIT;
+  // No budget and no transfers: managers rebuild their match day 11 and bench
+  // freely every gameweek, so nothing is ever charged.
+  const transferCost = 0;
 
   // The uniqueness on fantasy_squads is a *partial* index (one per owner kind),
   // which ON CONFLICT can't target — find-then-update/insert instead.
@@ -481,57 +444,22 @@ export async function saveSquad(admin: any, owner: Owner, input: SaveSquadInput)
   const { error: pickErr } = await admin.from("fantasy_squad_picks").insert(rows);
   if (pickErr) throw new Error(pickErr.message);
 
-  // Record the transfer moves for this gameweek (replace previous log for it)
+  // No transfer log any more: team changes are free and unlimited.
   await admin
     .from("fantasy_transfers")
     .delete()
     .eq("gameweek_id", input.gameweekId)
     .eq(ownerCol(owner), ownerVal(owner));
-  if (prevIds.length) {
-    const pairs = Math.max(incoming.length, outgoing.length);
-    const logs = [];
-    for (let i = 0; i < pairs; i++) {
-      const outId = outgoing[i] ?? null;
-      const forced = outId ? byId.get(outId)?.status === "departed" : false;
-      logs.push({
-        gameweek_id: input.gameweekId,
-        ...(owner.userId ? { user_id: owner.userId } : { guest_id: owner.guestId }),
-        out_player_id: outId,
-        in_player_id: incoming[i] ?? null,
-        cost: unlimited || forced ? 0 : i < banked ? 0 : FANTASY_TRANSFER_HIT,
-        forced: !!forced,
-      });
-    }
-    if (logs.length) await admin.from("fantasy_transfers").insert(logs);
-  }
 
-  return { ok: true, transferCost, spendM: Number(spend.toFixed(1)), transfersMade: chargeable };
+  return { ok: true, transferCost, transfersMade: 0 };
 }
 
-/** Called when a gameweek locks: bank unused free transfers (max 2), reset to 1 otherwise. */
-export async function rollFreeTransfers(admin: any, gameweekId: string) {
-  const { data: squads } = await admin
-    .from("fantasy_squads")
-    .select("user_id, guest_id")
-    .eq("gameweek_id", gameweekId);
-  for (const s of squads ?? []) {
-    const isUser = !!(s as any).user_id;
-    const table = isUser ? "fantasy_entrants" : "fantasy_guest_entrants";
-    const idCol = isUser ? "user_id" : "id";
-    const id = isUser ? (s as any).user_id : (s as any).guest_id;
-    if (!id) continue;
-    const { data: ent } = await admin.from(table).select("free_transfers").eq(idCol, id).maybeSingle();
-    const banked = (ent as any)?.free_transfers ?? 1;
-    const { count } = await admin
-      .from("fantasy_transfers")
-      .select("id", { count: "exact", head: true })
-      .eq("gameweek_id", gameweekId)
-      .eq(isUser ? "user_id" : "guest_id", id)
-      .eq("forced", false);
-    const used = count ?? 0;
-    const next = Math.max(1, Math.min(FANTASY_MAX_BANKED_TRANSFERS, banked - used + 1));
-    await admin.from(table).update({ free_transfers: next }).eq(idCol, id);
-  }
+/**
+ * Kept for the gameweek-lock hook. Transfers were removed from the game, so
+ * there is nothing to bank or charge any more.
+ */
+export async function rollFreeTransfers(_admin: any, _gameweekId: string) {
+  return;
 }
 
 export type FantasyLeaderboardRow = {

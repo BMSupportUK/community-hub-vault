@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  Shirt, Loader2, Lock, LogOut, Crown, Star, ArrowRightLeft, Trophy, Wallet,
+  Shirt, Loader2, Lock, LogOut, Crown, Star, ArrowRightLeft, Trophy,
   Users, Plus, Minus, X, ArrowUp, ArrowDown, ClipboardList, Check, Pencil,
 } from "lucide-react";
 import type { DragEvent as ReactDragEvent } from "react";
@@ -21,11 +21,8 @@ import { IconRail } from "@/components/app/IconRail";
 import { useAuth } from "@/hooks/use-auth";
 import {
   FANTASY_BENCH_SIZE, FANTASY_SQUAD_SIZE, FORMATION_KEYS, POSITION_ORDER,
-  POSITION_SHORT, POSITION_LABEL, SCORING_RULES, SQUAD_QUOTA, SQUAD_RULES,
-  FORMATIONS, FANTASY_BUDGET_M, FANTASY_LOCK_MINUTES, formationCounts, formationRows,
-  hasUnlimitedFantasyTransfers,
-  currentFantasyTransferWindow,
-  formatWindowDate,
+  POSITION_SHORT, POSITION_LABEL, SCORING_RULES, BENCH_QUOTA, SQUAD_RULES,
+  FORMATIONS, FANTASY_LOCK_MINUTES, formationCounts, formationRows,
   type FantasyPosition, type FormationKey,
 } from "@/lib/fantasy-rules";
 import {
@@ -42,9 +39,9 @@ export const Route = createFileRoute("/boro-fantasy")({
   head: () => ({
     meta: [
       { title: "MFC Fantasy Manager — Middlesbrough Fantasy Football" },
-      { name: "description", content: "Build a Middlesbrough-only fantasy squad on a £80m budget, pick your formation and captain, and climb the MFC Fantasy Manager leaderboard." },
+      { name: "description", content: "Name a Middlesbrough match day 11 and a sub bench covering every position, pick your formation and captain, and climb the MFC Fantasy Manager leaderboard." },
       { property: "og:title", content: "MFC Fantasy Manager — Middlesbrough Fantasy Football" },
-      { property: "og:description", content: "Middlesbrough-only fantasy football: £80m budget, real formations, weekly scoring and prizes." },
+      { property: "og:description", content: "Middlesbrough-only fantasy football: no budget, real formations, a full sub bench, weekly scoring and prizes." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -56,7 +53,6 @@ type GuestSession = { guestId: string; email: string; pin: string; displayName: 
 const GUEST_KEY = "fantasy_guest_session";
 const BENCH_SLOT_LABELS = ["GK", "Def", "Mid", "Fwd"] as const;
 
-const money = (m: number) => `£${m.toFixed(1)}m`;
 const kickoffLabel = (iso: string) =>
   new Date(iso).toLocaleString(undefined, { weekday: "short", day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
 
@@ -341,7 +337,7 @@ function BoroFantasyPage() {
               <div className="flex-1">
                 <h1 className="font-display text-2xl sm:text-3xl font-bold text-white">MFC Fantasy Manager</h1>
                 <p className="text-sm text-white/85">
-                  Middlesbrough only. {money(state?.budgetM ?? 80)} budget, {FANTASY_SQUAD_SIZE}-man squad, your formation, your captain.
+                  Middlesbrough only. No budget — name your match day 11, a sub for every position, your formation and your captain.
                 </p>
               </div>
               {!user && !guest && !showGuestLogin && (
@@ -528,12 +524,8 @@ function ManagerCard({
           <dd className="font-bold text-primary">{total}</dd>
         </div>
         <div className="rounded-xl bg-muted/40 p-2">
-          <dt className="text-[11px] text-muted-foreground">Free transfers</dt>
-          <dd className="font-bold">
-            {state?.gameweeks && !hasUnlimitedFantasyTransfers(state.gameweeks)
-              ? (state?.freeTransfers ?? 1)
-              : "Unlimited"}
-          </dd>
+          <dt className="text-[11px] text-muted-foreground">Team changes</dt>
+          <dd className="font-bold">Unlimited</dd>
         </div>
       </dl>
     </div>
@@ -584,7 +576,6 @@ function SquadBuilder({
   const [captainId, setCaptainId] = useState<string>(existing?.captainId ?? "");
   const [viceId, setViceId] = useState<string>(existing?.viceId ?? "");
   const [saving, setSaving] = useState(false);
-  const [squadTab, setSquadTab] = useState<"selector" | "xi">("selector");
   // Unsaved picks survive a refresh or crash: they're kept in a per-gameweek
   // local draft until the squad is saved.
   const draftKey = gw ? `mfc-fantasy-draft:${gw.id}` : null;
@@ -640,20 +631,26 @@ function SquadBuilder({
     }
   }, [draftKey, draftLoaded, formation, selected, starters, captainId, viceId]);
 
-  const spend = selected.reduce((sum, id) => sum + (playerById.get(id)?.valueM ?? 0), 0);
-  const remaining = state.budgetM - spend;
   const counts = formationCounts(formation);
+  /** Match day 11 for the chosen formation plus one sub per position. */
+  const posQuota = useMemo(() => {
+    const c = counts as Record<FantasyPosition, number>;
+    return {
+      gk: c.gk + BENCH_QUOTA.gk,
+      def: c.def + BENCH_QUOTA.def,
+      mid: c.mid + BENCH_QUOTA.mid,
+      fwd: c.fwd + BENCH_QUOTA.fwd,
+    } as Record<FantasyPosition, number>;
+  }, [formation]);
   const byPos = (ids: string[], pos: FantasyPosition) => ids.filter((id) => playerById.get(id)?.position === pos);
-  const bench = selected.filter((id) => !starters.includes(id));
+  const bench = selected
+    .filter((id) => !starters.includes(id))
+    .sort(
+      (a, b) =>
+        POSITION_ORDER.indexOf(playerById.get(a)?.position ?? "gk") -
+        POSITION_ORDER.indexOf(playerById.get(b)?.position ?? "gk"),
+    );
   const locked = !!gw && (gw.status !== "upcoming" || new Date(gw.lockAt).getTime() <= Date.now());
-
-  const squadProblems: string[] = [];
-  if (selected.length !== FANTASY_SQUAD_SIZE) squadProblems.push(`Pick exactly ${FANTASY_SQUAD_SIZE} players (${selected.length} selected).`);
-  for (const pos of POSITION_ORDER) {
-    const n = byPos(selected, pos).length;
-    if (n !== SQUAD_QUOTA[pos]) squadProblems.push(`${POSITION_SHORT[pos]}: need ${SQUAD_QUOTA[pos]}, have ${n}.`);
-  }
-  if (remaining < 0) squadProblems.push(`Over budget by ${money(-remaining)}.`);
 
   const xiProblems: string[] = [];
   if (starters.length !== 11) xiProblems.push(`Pick 11 starters (${starters.length} selected).`);
@@ -663,15 +660,19 @@ function SquadBuilder({
       if (n !== (counts as any)[pos]) xiProblems.push(`${formation}: needs ${(counts as any)[pos]} ${POSITION_SHORT[pos]} in the XI, you have ${n}.`);
     }
   }
-  if (bench.length !== FANTASY_BENCH_SIZE) xiProblems.push(`Bench must be ${FANTASY_BENCH_SIZE} players.`);
+  if (bench.length !== FANTASY_BENCH_SIZE) xiProblems.push(`Bench must be ${FANTASY_BENCH_SIZE} players — 1 GK, 1 DEF, 1 MID, 1 FWD.`);
+  else {
+    for (const pos of POSITION_ORDER) {
+      const n = byPos(bench, pos).length;
+      if (n !== BENCH_QUOTA[pos]) xiProblems.push(`Bench needs ${BENCH_QUOTA[pos]} ${POSITION_SHORT[pos]} (you have ${n}).`);
+    }
+  }
   if (!captainId || !starters.includes(captainId)) xiProblems.push("Pick a captain from your starting XI.");
   if (!viceId || !starters.includes(viceId)) xiProblems.push("Pick a vice-captain from your starting XI.");
   if (captainId && captainId === viceId) xiProblems.push("Captain and vice-captain must be different.");
 
-  const problems = [...squadProblems, ...xiProblems];
-  const activeChecklist = squadTab === "xi"
-    ? { title: "Starting 11 checklist", items: xiProblems }
-    : { title: "Squad checklist", items: squadProblems };
+  const problems = xiProblems;
+  const activeChecklist = { title: "Match day 11 checklist", items: xiProblems };
 
   // Live points for this gameweek, straight from the saved squad.
   const pointsByPlayer = useMemo(
@@ -708,8 +709,8 @@ function SquadBuilder({
     if (p.status === "departed") { toast.error(`${p.name} has left the club.`); return null; }
     if (p.status === "loaned_out") { toast.error(`${p.name} is out on loan${p.loanClub ? ` at ${p.loanClub}` : ""}.`); return null; }
     if (sel.length >= FANTASY_SQUAD_SIZE) { toast.error(`Squad is full — ${FANTASY_SQUAD_SIZE} players max.`); return null; }
-    if (byPos(sel, p.position).length >= SQUAD_QUOTA[p.position]) {
-      toast.error(`You already have ${SQUAD_QUOTA[p.position]} ${POSITION_SHORT[p.position]}s.`);
+    if (byPos(sel, p.position).length >= posQuota[p.position]) {
+      toast.error(`${formation} only needs ${posQuota[p.position]} ${POSITION_SHORT[p.position]}s (11 + 1 sub).`);
       return null;
     }
     return [...sel, p.id];
@@ -773,23 +774,19 @@ function SquadBuilder({
     else benchAdd(p);
   }
 
-  /**
-   * Squad-only save: the manager just picked their 15 and hasn't set an XI yet.
-   * Auto-fill a legal starting XI (and captaincy) from the squad so the squad
-   * can be banked now and tweaked later on the Starting 11 tab.
-   */
+  /** Fill any gaps in the match day 11 (and captaincy) from the players picked. */
   function autoCompleteXI() {
     const st: string[] = [];
     for (const pos of POSITION_ORDER) {
       const need = (counts as Record<string, number>)[pos] ?? 0;
       const pool = byPos(selected, pos)
         .slice()
-        .sort((a, b) => (playerById.get(b)?.valueM ?? 0) - (playerById.get(a)?.valueM ?? 0));
+        .sort((a, b) => (playerById.get(b)?.seasonPoints ?? 0) - (playerById.get(a)?.seasonPoints ?? 0));
       st.push(...pool.slice(0, need));
     }
     const ranked = st
       .slice()
-      .sort((a, b) => (playerById.get(b)?.valueM ?? 0) - (playerById.get(a)?.valueM ?? 0));
+      .sort((a, b) => (playerById.get(b)?.seasonPoints ?? 0) - (playerById.get(a)?.seasonPoints ?? 0));
     return { starters: st, captainId: ranked[0] ?? "", viceId: ranked[1] ?? "" };
   }
 
@@ -798,7 +795,7 @@ function SquadBuilder({
     let st = starters;
     let cap = captainId;
     let vice = viceId;
-    const needsAutoXI = squadTab !== "xi" && xiProblems.length > 0;
+    const needsAutoXI = starters.length !== 11;
     if (needsAutoXI) {
       const auto = autoCompleteXI();
       if (auto.starters.length !== 11 || !auto.captainId || !auto.viceId) {
@@ -827,8 +824,8 @@ function SquadBuilder({
       }
       toast.success(
         needsAutoXI
-          ? "Squad saved — we picked a starting 11 for you, tweak it on the Starting 11 tab."
-          : "Squad saved.",
+          ? "Saved — we completed your match day 11, tweak it any time before the deadline."
+          : "Match day 11 saved.",
       );
     } catch (e: any) {
       toast.error(e?.message ?? "Could not save squad");
@@ -855,36 +852,27 @@ function SquadBuilder({
             )}
           </div>
           <div className="flex items-center gap-3">
-            {squadTab === "selector" ? (
-              <div className="flex items-center gap-2 text-sm">
-                <Wallet className="size-4 text-primary" />
-                <span className={remaining < 0 ? "text-destructive font-bold" : "font-bold"}>{money(remaining)}</span>
-                <span className="text-muted-foreground">left of {money(state.budgetM)}</span>
-              </div>
-            ) : (
-              <div className="flex items-center gap-4 text-sm text-muted-foreground">
+            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+              <span>
+                <span className="font-bold text-foreground">{starters.length}</span>/11 picked
+              </span>
+              <span>
+                bench <span className="font-bold text-foreground">{bench.length}</span>/{FANTASY_BENCH_SIZE}
+              </span>
+              {existing && (hasGwPoints || existing.points !== null) && (
                 <span>
-                  <span className="font-bold text-foreground">{starters.length}</span>/11 picked
+                  GW points <span className="font-bold text-primary tabular-nums">{existing.points ?? 0}</span>
                 </span>
-                {existing && (hasGwPoints || existing.points !== null) && (
-                  <span>
-                    GW points <span className="font-bold text-primary tabular-nums">{existing.points ?? 0}</span>
-                    {existing.transferCost > 0 && <span className="text-destructive text-xs"> (−{existing.transferCost})</span>}
-                  </span>
-                )}
-              </div>
-            )}
+              )}
+            </div>
             <Button
               onClick={handleSave}
               variant={dirty ? "default" : "outline"}
               className={dirty ? "" : "opacity-60"}
               title={dirty ? undefined : "No changes to save"}
-              disabled={
-                saving || locked || !gw || !canPlay || !dirty ||
-                (squadTab === "xi" ? problems.length > 0 : squadProblems.length > 0)
-              }
+              disabled={saving || locked || !gw || !canPlay || !dirty || problems.length > 0}
             >
-              {saving ? <Loader2 className="size-4 animate-spin" /> : !dirty ? "Saved" : squadTab === "xi" ? "Save starting 11" : "Save squad"}
+              {saving ? <Loader2 className="size-4 animate-spin" /> : !dirty ? "Saved" : "Save match day 11"}
             </Button>
           </div>
         </div>
@@ -902,38 +890,16 @@ function SquadBuilder({
         </div>
       )}
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_280px] items-start">
-        <Tabs value={squadTab} onValueChange={(v) => setSquadTab(v as "selector" | "xi")}>
-          <TabsList className="grid w-full grid-cols-2 mb-4">
-            <TabsTrigger value="selector">Squad selector</TabsTrigger>
-            <TabsTrigger value="xi">Starting 11</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="selector" className="mt-0">
-            <div className="grid gap-4 lg:grid-cols-[320px_minmax(0,1fr)] items-start">
-              <PlayerSidebar
-                players={state.players}
-                selected={selected}
-                starters={starters}
-                counts={counts as Record<string, number>}
-                editable={editable}
-                onPick={autoPick}
-              />
-              <SquadPitch
-                playerById={playerById}
-                selected={selected}
-                starters={starters}
-                editable={editable}
-                onAdd={(playerId) => {
-                  const p = playerById.get(playerId);
-                  if (p && !selected.includes(p.id)) autoPick(p);
-                }}
-                onRemove={removePlayer}
-              />
-            </div>
-          </TabsContent>
-
-          <TabsContent value="xi" className="mt-0">
-            <PitchView
+        <div className="grid gap-4 xl:grid-cols-[320px_minmax(0,1fr)] items-start">
+          <PlayerSidebar
+            players={state.players}
+            selected={selected}
+            starters={starters}
+            quota={posQuota}
+            editable={editable}
+            onPick={autoPick}
+          />
+          <PitchView
               formation={formation}
               onFormationChange={(f) => setFormation(f)}
               editable={editable}
@@ -956,9 +922,8 @@ function SquadBuilder({
               onRemove={removePlayer}
               onCaptain={(id) => setCaptainId(id)}
               onVice={(id) => setViceId(id)}
-            />
-          </TabsContent>
-        </Tabs>
+          />
+        </div>
 
         {/* Checklist — scoped to the active tab (squad of 15 vs starting 11). */}
         <aside className="rounded-2xl border border-border/60 bg-card/85 backdrop-blur overflow-hidden lg:sticky lg:top-4">
@@ -985,20 +950,9 @@ function SquadBuilder({
                   : "Join the game to start building a valid squad."}
               </p>
             ) : activeChecklist.items.length === 0 ? (
-              <div className="space-y-2">
-                <p className="text-xs text-emerald-300">
-                  {squadTab === "xi" ? (
-                    <>Starting 11 is valid — hit <span className="font-semibold">Save starting 11</span>.</>
-                  ) : (
-                    <>Squad of 15 is valid — now set your Starting 11.</>
-                  )}
-                </p>
-                {squadTab !== "xi" && xiProblems.length > 0 && (
-                  <p className="text-[11px] text-muted-foreground">
-                    {xiProblems.length} item{xiProblems.length === 1 ? "" : "s"} left on the Starting 11 tab.
-                  </p>
-                )}
-              </div>
+              <p className="text-xs text-emerald-300">
+                Match day 11 and bench are valid — hit <span className="font-semibold">Save match day 11</span>.
+              </p>
             ) : (
               <ul className="space-y-1.5">
                 {activeChecklist.items.map((p) => (
@@ -1026,135 +980,19 @@ const POS_TINT: Record<FantasyPosition, string> = {
   fwd: "bg-rose-500/20 text-rose-300 border-rose-500/40",
 };
 
-// ------------------------------------------------------------------
-// Squad pitch — the 15-man squad laid out by the position quotas
-// ------------------------------------------------------------------
-function SquadPitch({
-  playerById, selected, starters, editable, onAdd, onRemove,
-}: {
-  playerById: Map<string, FantasyPlayerDTO>;
-  selected: string[];
-  starters: string[];
-  editable: boolean;
-  onAdd: (playerId: string) => void;
-  onRemove: (playerId: string) => void;
-}) {
-  const rows = POSITION_ORDER.map((pos) => {
-    const picked = selected.filter((id) => playerById.get(id)?.position === pos);
-    const slots: (string | null)[] = [];
-    for (let i = 0; i < SQUAD_QUOTA[pos]; i++) slots.push(picked[i] ?? null);
-    return { pos, slots, filled: picked.length };
-  });
-
-  const dropProps = (pos: FantasyPosition) => ({
-    onDragOver: (e: ReactDragEvent) => {
-      if (!editable) return;
-      e.preventDefault();
-      e.dataTransfer.dropEffect = "move";
-    },
-    onDrop: (e: ReactDragEvent) => {
-      if (!editable) return;
-      e.preventDefault();
-      const id = e.dataTransfer.getData("text/fantasy-player");
-      const p = id ? playerById.get(id) : undefined;
-      if (p && p.position === pos) onAdd(p.id);
-    },
-  });
-
-  return (
-    <div className="rounded-2xl border border-border/60 bg-card/85 backdrop-blur overflow-hidden">
-      <div className="p-3 border-b border-border/60 flex flex-wrap items-center gap-2">
-        <h3 className="font-display font-bold text-sm">
-          Squad ({selected.length}/{FANTASY_SQUAD_SIZE})
-        </h3>
-        <p className="text-xs text-muted-foreground">
-          {SQUAD_QUOTA.gk} GK · {SQUAD_QUOTA.def} Def · {SQUAD_QUOTA.mid} Mid · {SQUAD_QUOTA.fwd} Fwd — tap a shirt to remove, or drag a player from the list into a slot.
-        </p>
-      </div>
-      <div
-        className="relative p-4 sm:p-6"
-        style={{
-          background:
-            "repeating-linear-gradient(to bottom, oklch(0.34 0.09 152) 0 44px, oklch(0.31 0.09 152) 44px 88px)",
-        }}
-      >
-        <div className="pointer-events-none absolute inset-4 sm:inset-6 rounded-xl border-2 border-white/25" aria-hidden />
-        <div className="pointer-events-none absolute left-1/2 top-4 sm:top-6 h-14 w-36 -translate-x-1/2 rounded-b-xl border-x-2 border-b-2 border-white/25" aria-hidden />
-        <div className="pointer-events-none absolute left-1/2 bottom-4 sm:bottom-6 h-14 w-36 -translate-x-1/2 rounded-t-xl border-x-2 border-t-2 border-white/25" aria-hidden />
-        <div className="relative space-y-3 sm:space-y-5 py-2">
-          {rows.map((row) => (
-            <div key={row.pos} className="space-y-1.5">
-              <div className="text-center text-[10px] font-bold uppercase tracking-wider text-white/70">
-                {POSITION_LABEL[row.pos]}s {row.filled}/{SQUAD_QUOTA[row.pos]}
-              </div>
-              <div className="flex flex-nowrap justify-center gap-1 sm:gap-2" {...dropProps(row.pos)}>
-                {row.slots.map((id, si) => {
-                  const p = id ? playerById.get(id) : undefined;
-                  const isStart = !!id && starters.includes(id);
-                  return (
-                    <div
-                      key={`${row.pos}-${si}`}
-                      {...dropProps(row.pos)}
-                      draggable={editable && !!id}
-                      onDragStart={(e) => { if (id) e.dataTransfer.setData("text/fantasy-player", id); }}
-                      className={`min-w-[68px] flex-1 max-w-[110px] sm:max-w-[120px] rounded-xl border px-1.5 py-2 text-center backdrop-blur-sm transition-colors ${
-                        p ? "border-white/40 bg-slate-950/70" : "border-dashed border-white/40 bg-white/10"
-                      }`}
-                    >
-                      {p ? (
-                        <>
-                          <div className="flex items-center justify-center gap-1">
-                            <Shirt className="size-4 text-white/80" />
-                          </div>
-                          <div className="mt-1 text-[10px] font-semibold leading-tight text-white break-words line-clamp-2 min-h-[24px]">{p.name}</div>
-                          <div className="text-[10px] tabular-nums text-white/70">{money(p.valueM)}</div>
-                          <div className="text-[9px] font-bold uppercase tracking-wide text-white/60">
-                            {isStart ? "XI" : "Bench"}
-                          </div>
-                          {editable && (
-                            <button
-                              type="button"
-                              title="Remove from squad"
-                              onClick={() => onRemove(p.id)}
-                              className="mt-1 rounded p-0.5 text-white/50 hover:text-destructive"
-                            >
-                              <X className="size-3" />
-                            </button>
-                          )}
-                        </>
-                      ) : (
-                        <div className="py-2 text-[11px] font-semibold text-white/80">
-                          <div className="mx-auto mb-1 grid size-6 place-items-center rounded-full border border-white/50">
-                            <Plus className="size-3" />
-                          </div>
-                          {POSITION_SHORT[row.pos]}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function PlayerSidebar({
-  players, selected, starters, counts, editable, onPick,
+  players, selected, starters, quota, editable, onPick,
 }: {
   players: FantasyPlayerDTO[];
   selected: string[];
   starters: string[];
-  counts: Record<string, number>;
+  quota: Record<FantasyPosition, number>;
   editable: boolean;
   onPick: (p: FantasyPlayerDTO) => void;
 }) {
   const [filter, setFilter] = useState<"all" | FantasyPosition>("all");
   const [q, setQ] = useState("");
-  const [sort, setSort] = useState<"value" | "name">("value");
+  const [sort, setSort] = useState<"points" | "name">("points");
 
   const list = useMemo(() => {
     const term = q.trim().toLowerCase();
@@ -1167,7 +1005,8 @@ function PlayerSidebar({
         if (gone !== 0) return gone;
         return sort === "name"
           ? a.name.localeCompare(b.name)
-          : POSITION_ORDER.indexOf(a.position) - POSITION_ORDER.indexOf(b.position) || b.valueM - a.valueM;
+          : POSITION_ORDER.indexOf(a.position) - POSITION_ORDER.indexOf(b.position) ||
+            (b.seasonPoints ?? 0) - (a.seasonPoints ?? 0);
       });
   }, [players, filter, q, sort]);
 
@@ -1178,10 +1017,10 @@ function PlayerSidebar({
           <h3 className="font-display font-bold flex items-center gap-2"><Users className="size-4 text-primary" /> Player list</h3>
           <button
             type="button"
-            onClick={() => setSort(sort === "value" ? "name" : "value")}
+            onClick={() => setSort(sort === "points" ? "name" : "points")}
             className="text-[11px] text-muted-foreground hover:text-foreground"
           >
-            Sort: {sort === "value" ? "value" : "A–Z"}
+            Sort: {sort === "points" ? "points" : "A–Z"}
           </button>
         </div>
         <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search players…" className="h-8 border-2 border-primary/40" />
@@ -1198,7 +1037,7 @@ function PlayerSidebar({
               {f === "all" ? "All" : POSITION_SHORT[f]}
               {f !== "all" && (
                 <span className="ml-1 opacity-70">
-                  {selected.filter((id) => players.find((p) => p.id === id)?.position === f).length}/{SQUAD_QUOTA[f]}
+                  {selected.filter((id) => players.find((p) => p.id === id)?.position === f).length}/{quota[f]}
                 </span>
               )}
             </button>
@@ -1209,7 +1048,9 @@ function PlayerSidebar({
         {list.map((p) => {
           const isSel = selected.includes(p.id);
           const isStart = starters.includes(p.id);
-          const full = !isSel && (counts[p.position] ?? 0) >= 0 && selected.filter((id) => players.find((x) => x.id === id)?.position === p.position).length >= SQUAD_QUOTA[p.position];
+          const full =
+            !isSel &&
+            selected.filter((id) => players.find((x) => x.id === id)?.position === p.position).length >= quota[p.position];
           return (
             <li
               key={p.id}
@@ -1230,8 +1071,7 @@ function PlayerSidebar({
                   )}
                 </div>
                 <div className="text-[11px] text-muted-foreground tabular-nums">
-                  {money(p.valueM)}
-                  <span className="ml-1 text-foreground/80">· {p.seasonPoints ?? 0} pts</span>
+                  <span className="text-foreground/80">{p.seasonPoints ?? 0} pts</span>
                   {isSel && <span className="ml-1 text-primary">· {isStart ? "XI" : "bench"}</span>}
                   {p.status === "loaned_out" ? (
                     <span className="ml-1 text-destructive uppercase">out on loan{p.loanClub ? ` · ${p.loanClub}` : ""}</span>
@@ -1374,7 +1214,7 @@ function PitchView({
                           {viceId === p.id && <Star className="size-3.5 text-sky-300" />}
                         </div>
                         <div className="mt-1 text-[10px] font-semibold leading-tight text-white break-words line-clamp-2 min-h-[24px]">{p.name}</div>
-                        <div className="text-[10px] tabular-nums text-white/70">{money(p.valueM)}</div>
+                        <div className="text-[10px] tabular-nums text-white/70">{p.seasonPoints ?? 0} pts</div>
                         {pointsByPlayer?.has(p.id) && (
                           <div className="mt-1 inline-flex items-center rounded-full border border-emerald-400/50 bg-emerald-500/20 px-1.5 text-[10px] font-bold tabular-nums text-emerald-200">
                             {pointsByPlayer.get(p.id) ?? 0} pts
@@ -1431,7 +1271,7 @@ function PitchView({
                       <span className={`rounded-md border px-1 text-[10px] font-bold ${POS_TINT[p.position]}`}>{POSITION_SHORT[p.position]}</span>
                     </div>
                     <div className="mt-1 line-clamp-2 min-h-[24px] break-words text-[10px] font-semibold leading-tight text-white">{p.name}</div>
-                    <div className="text-[10px] tabular-nums text-white/70">{money(p.valueM)}</div>
+                    <div className="text-[10px] tabular-nums text-white/70">{p.seasonPoints ?? 0} pts</div>
                     {editable && (
                       <div className="mt-1 flex items-center justify-center gap-1">
                         <button type="button" title="Move to bench" onClick={() => onBench(p.id)} className="rounded p-0.5 text-white/60 hover:text-white">
@@ -1472,7 +1312,7 @@ function PitchView({
                       <span className={`text-[10px] font-bold rounded-md border px-1 ${POS_TINT[p.position]}`}>{POSITION_SHORT[p.position]}</span>
                     </div>
                     <div className="mt-1 text-[10px] font-semibold leading-tight break-words line-clamp-2 min-h-[24px]">{p.name}</div>
-                    <div className="text-[10px] tabular-nums text-muted-foreground">{money(p.valueM)}</div>
+                    <div className="text-[10px] tabular-nums text-muted-foreground">{p.seasonPoints ?? 0} pts</div>
                     {pointsByPlayer?.has(p.id) && (
                       <div className="mt-1 inline-flex items-center rounded-full border border-emerald-500/40 bg-emerald-500/15 px-1.5 text-[10px] font-bold tabular-nums text-emerald-400">
                         {pointsByPlayer.get(p.id) ?? 0} pts
@@ -1677,20 +1517,12 @@ function TransfersTabBody({ state }: { state: FantasyStateDTO }) {
       </section>
 
       <section className="rounded-2xl border border-border/60 bg-card/80 backdrop-blur p-4">
-        <h3 className="font-semibold mb-3">Your transfers</h3>
+        <h3 className="font-semibold mb-3">Your team changes</h3>
         <p className="text-sm text-muted-foreground mb-3">
-          {state.gameweeks && !hasUnlimitedFantasyTransfers(state.gameweeks) ? (
-            <>The transfer window is shut, so you get 1 free transfer each gameweek (bank up to 2). Extra transfers cost 4 points each. Replacing a player who has left the club is always free. Transfers go unlimited again when the next window opens.</>
-          ) : (
-            <>
-              {currentFantasyTransferWindow()
-                ? <>The {currentFantasyTransferWindow()!.label} window is open — unlimited free transfers until it shuts on {formatWindowDate(currentFantasyTransferWindow()!.closesAt)}, then 1 free transfer a week (bank up to 2, extras cost 4 points).</>
-                : <>Unlimited free transfers until the season starts. After that, transfers are unlimited while a transfer window is open and 1 a week once it shuts.</>}
-            </>
-          )}
+          There are no fantasy transfers any more: pick a fresh match day 11 and bench every gameweek, free and unlimited, right up to each deadline.
         </p>
         {state.myTransfers.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No transfers made yet.</p>
+          <p className="text-sm text-muted-foreground">Nothing to show — team changes are free.</p>
         ) : (
           <ul className="space-y-1 text-sm">
             {state.myTransfers.map((t) => (
@@ -1793,9 +1625,9 @@ function SquadRulesTab() {
         <p className="text-sm text-white/85 mt-1">Everything you need to know before you build your Middlesbrough side.</p>
         <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-2">
           {[
-            { k: "Budget", v: money(FANTASY_BUDGET_M) },
-            { k: "Squad", v: `${FANTASY_SQUAD_SIZE} players` },
-            { k: "Bench", v: `${FANTASY_BENCH_SIZE} subs` },
+            { k: "Budget", v: "None" },
+            { k: "Match day", v: "11 players" },
+            { k: "Bench", v: `${FANTASY_BENCH_SIZE} subs (1 per pos)` },
             { k: "Deadline", v: `${FANTASY_LOCK_MINUTES} min pre-KO` },
           ].map((s) => (
             <div key={s.k} className="rounded-xl bg-white/15 ring-1 ring-white/20 px-3 py-2">
@@ -1816,12 +1648,15 @@ function SquadRulesTab() {
       </div>
 
       <section className="rounded-2xl border border-border/60 bg-card/85 backdrop-blur p-4">
-        <h4 className="font-semibold mb-3">Squad quotas</h4>
+        <h4 className="font-semibold mb-3">Bench cover</h4>
+        <p className="text-sm text-muted-foreground mb-3">
+          Your bench carries one sub for every position, so any starter who doesn't play is replaced like-for-like.
+        </p>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           {POSITION_ORDER.map((pos) => (
             <div key={pos} className={`rounded-xl border px-3 py-2 ${POS_TINT[pos]}`}>
-              <div className="text-[11px] uppercase tracking-wide opacity-80">{POSITION_LABEL[pos]}s</div>
-              <div className="text-lg font-bold">{SQUAD_QUOTA[pos]}</div>
+              <div className="text-[11px] uppercase tracking-wide opacity-80">{POSITION_LABEL[pos]} sub</div>
+              <div className="text-lg font-bold">{BENCH_QUOTA[pos]}</div>
             </div>
           ))}
         </div>
