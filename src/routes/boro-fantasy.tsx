@@ -764,7 +764,9 @@ function SquadBuilder({
 
   // Position pop-box picker: either filling/swapping an XI slot, or a bench slot.
   const [picker, setPicker] = useState<
-    { mode: "xi"; pos: FantasyPosition; replaceId?: string } | { mode: "bench" } | null
+    | { mode: "xi"; pos: FantasyPosition; replaceId?: string }
+    | { mode: "bench"; benchIndex: number }
+    | null
   >(null);
 
   // Only highlight Save when something actually differs from the saved squad.
