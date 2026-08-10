@@ -1274,7 +1274,7 @@ function PitchView({
   minutesByPlayer?: Map<string, number | null>;
   autoSubbedIds?: Set<string>;
   onSlotOpen: (pos: FantasyPosition, replaceId?: string) => void;
-  onBenchSlotOpen: () => void;
+  onBenchSlotOpen: (benchIndex: number) => void;
   onDropStart: (playerId: string, replaceId?: string) => void;
   onDropBench: (playerId: string) => void;
   onBench: (id: string) => void;
