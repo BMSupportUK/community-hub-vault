@@ -670,7 +670,16 @@ function SquadBuilder({
     setDraftLoaded(false);
     restoredDraftRef.current = false;
     const applyExisting = () => {
-      if (!existing) return;
+      if (!existing) {
+        // No saved squad for this gameweek — start from a clean sheet rather
+        // than carrying over the previous week's picks.
+        setFormation("4-4-2");
+        setSelected([]);
+        setStarters([]);
+        setCaptainId("");
+        setViceId("");
+        return;
+      }
       setFormation(existing.formation as FormationKey);
       setSelected(existing.picks.map((p) => p.playerId));
       setStarters(existing.picks.filter((p) => p.isStarter).map((p) => p.playerId));
@@ -679,6 +688,7 @@ function SquadBuilder({
     };
     if (!draftKey) {
       applyExisting();
+      setDraftLoaded(true);
       return;
     }
     try {
@@ -699,7 +709,7 @@ function SquadBuilder({
     }
     if (!restoredDraftRef.current) applyExisting();
     setDraftLoaded(true);
-  }, [draftKey, existing?.id]);
+  }, [draftKey, existing?.id, gwId]);
 
   useEffect(() => {
     if (!draftKey || !draftLoaded) return;
