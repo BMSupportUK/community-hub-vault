@@ -1570,10 +1570,9 @@ function PitchView({
                   </>
                 ) : (
                   <div className="py-3 font-semibold">
-                    <div className="mx-auto mb-1 grid size-6 place-items-center rounded-full border border-border/70">
+                    <div className="mx-auto grid size-6 place-items-center rounded-full border border-border/70">
                       <Plus className="size-3" />
                     </div>
-                    {slotLabel}
                   </div>
                 )}
               </div>
