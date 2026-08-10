@@ -19,8 +19,9 @@ export function isFantasyLeagueCompetition(competition: string | null | undefine
   if (/(cup|trophy|friendl|play[- ]?off|shield|europa|champions league|conference league|papa|checkatrade)/.test(c)) return false;
   return /championship|premier league|league one|league two|efl league/.test(c);
 }
-export const FANTASY_SQUAD_SIZE = 15;
-export const FANTASY_BENCH_SIZE = 4;
+/** Default bench size (EFL competitions name 7 subs). */
+export const FANTASY_BENCH_SIZE = 7;
+export const FANTASY_SQUAD_SIZE = 11 + FANTASY_BENCH_SIZE;
 /** Squad locks this many minutes before kick-off. */
 export const FANTASY_LOCK_MINUTES = 120;
 
@@ -41,10 +42,47 @@ export const POSITION_SHORT: Record<FantasyPosition, string> = {
 export const POSITION_ORDER: FantasyPosition[] = ["gk", "def", "mid", "fwd"];
 
 /**
- * The bench covers every position, so any starter who doesn't play can be
- * replaced by a like-for-like sub: 1 GK, 1 DEF, 1 MID and 1 FWD.
+ * The bench must cover every position, so any starter who doesn't play can be
+ * replaced like-for-like: at least 1 GK, 1 DEF, 1 MID and 1 FWD.
  */
 export const BENCH_QUOTA: Record<FantasyPosition, number> = { gk: 1, def: 1, mid: 1, fwd: 1 };
+
+/**
+ * Real competitions allow different numbers of named substitutes, so the bench
+ * size follows the competition of that gameweek's fixture.
+ */
+export type BenchRules = {
+  /** Exact number of subs a manager names. */
+  size: number;
+  /** Minimum subs per position (the rest are free choice). */
+  min: Record<FantasyPosition, number>;
+  /** Competition label these rules came from. */
+  competition: string;
+};
+
+const COMPETITION_BENCH_SIZE: { test: RegExp; size: number }[] = [
+  { test: /premier league/, size: 9 },
+  { test: /championship/, size: 7 },
+  { test: /league one|league two|efl league/, size: 7 },
+];
+
+export function benchRulesFor(competition: string | null | undefined): BenchRules {
+  const c = (competition ?? "").toLowerCase().trim();
+  const size = COMPETITION_BENCH_SIZE.find((r) => r.test.test(c))?.size ?? FANTASY_BENCH_SIZE;
+  return { size, min: { ...BENCH_QUOTA }, competition: competition?.trim() || "Championship" };
+}
+
+/** Total squad size (XI + bench) for a competition. */
+export function squadSizeFor(competition: string | null | undefined): number {
+  return 11 + benchRulesFor(competition).size;
+}
+
+/** Named substitutes allowed per competition, for the rules tab. */
+export const COMPETITION_BENCH_RULES: { competition: string; subs: number }[] = [
+  { competition: "Sky Bet Championship", subs: benchRulesFor("Championship").size },
+  { competition: "League One / League Two", subs: benchRulesFor("League One").size },
+  { competition: "Premier League", subs: benchRulesFor("Premier League").size },
+];
 
 export type FormationKey =
   | "4-4-2" | "4-3-3" | "4-2-3-1" | "4-1-4-1" | "4-4-1-1"
@@ -118,7 +156,7 @@ export function formatWindowDate(iso: string): string {
 export const SQUAD_RULES: { title: string; body: string }[] = [
   { title: "No budget", body: "There's no budget and no player prices — pick whoever you fancy from the current Middlesbrough squad." },
   { title: "Match day 11", body: "Each gameweek you name a match day 11 in a legal formation. Only Middlesbrough players available for that fixture can be picked." },
-  { title: "Sub bench", body: `Name ${FANTASY_BENCH_SIZE} subs covering every position — 1 GK, 1 DEF, 1 MID and 1 FWD — so any starter who doesn't play is replaced like-for-like.` },
+  { title: "Sub bench", body: `Your bench matches the real competition's named-substitute allowance — ${COMPETITION_BENCH_RULES.map((r) => `${r.competition}: ${r.subs} subs`).join(", ")}. It must always cover every position (at least 1 GK, 1 DEF, 1 MID and 1 FWD) so any starter who doesn't play is replaced like-for-like.` },
   { title: "Auto subs", body: "If a starter plays no minutes, the first eligible sub in bench order takes their place and scores instead." },
   { title: "Captain & vice", body: "Your captain scores double. If the captain doesn't play a minute, the vice-captain doubles instead. Both must start." },
   { title: "Change your team freely", body: "You can change your 11 and your bench as often as you like every gameweek — there are no transfers and no points hits." },

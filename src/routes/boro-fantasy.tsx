@@ -20,7 +20,7 @@ import { LandingHeader } from "@/components/LandingHeader";
 import { IconRail } from "@/components/app/IconRail";
 import { useAuth } from "@/hooks/use-auth";
 import {
-  FANTASY_BENCH_SIZE, FANTASY_SQUAD_SIZE, FORMATION_KEYS, POSITION_ORDER,
+  benchRulesFor, COMPETITION_BENCH_RULES, FORMATION_KEYS, POSITION_ORDER,
   POSITION_SHORT, POSITION_LABEL, SCORING_RULES, BENCH_QUOTA, SQUAD_RULES,
   FORMATIONS, formationCounts, formationRows,
   type FantasyPosition, type FormationKey,
@@ -632,16 +632,21 @@ function SquadBuilder({
   }, [draftKey, draftLoaded, formation, selected, starters, captainId, viceId]);
 
   const counts = formationCounts(formation);
-  /** Match day 11 for the chosen formation plus one sub per position. */
+  /** Bench size follows the real substitute rules of this gameweek's competition. */
+  const benchRules = useMemo(() => benchRulesFor(gw?.competition), [gw?.competition]);
+  const squadSize = 11 + benchRules.size;
+  /** Match day 11 for the chosen formation plus the bench allowance. */
   const posQuota = useMemo(() => {
     const c = counts as Record<FantasyPosition, number>;
+    const minTotal = POSITION_ORDER.reduce((n, p) => n + benchRules.min[p], 0);
+    const free = Math.max(0, benchRules.size - minTotal);
     return {
-      gk: c.gk + BENCH_QUOTA.gk,
-      def: c.def + BENCH_QUOTA.def,
-      mid: c.mid + BENCH_QUOTA.mid,
-      fwd: c.fwd + BENCH_QUOTA.fwd,
+      gk: c.gk + benchRules.min.gk + free,
+      def: c.def + benchRules.min.def + free,
+      mid: c.mid + benchRules.min.mid + free,
+      fwd: c.fwd + benchRules.min.fwd + free,
     } as Record<FantasyPosition, number>;
-  }, [formation]);
+  }, [formation, benchRules]);
   const byPos = (ids: string[], pos: FantasyPosition) => ids.filter((id) => playerById.get(id)?.position === pos);
   const bench = selected
     .filter((id) => !starters.includes(id))
@@ -660,12 +665,11 @@ function SquadBuilder({
       if (n !== (counts as any)[pos]) xiProblems.push(`${formation}: needs ${(counts as any)[pos]} ${POSITION_SHORT[pos]} in the XI, you have ${n}.`);
     }
   }
-  if (bench.length !== FANTASY_BENCH_SIZE) xiProblems.push(`Bench must be ${FANTASY_BENCH_SIZE} players — 1 GK, 1 DEF, 1 MID, 1 FWD.`);
-  else {
-    for (const pos of POSITION_ORDER) {
-      const n = byPos(bench, pos).length;
-      if (n !== BENCH_QUOTA[pos]) xiProblems.push(`Bench needs ${BENCH_QUOTA[pos]} ${POSITION_SHORT[pos]} (you have ${n}).`);
-    }
+  if (bench.length !== benchRules.size)
+    xiProblems.push(`${benchRules.competition} allows ${benchRules.size} subs — name ${benchRules.size} (you have ${bench.length}).`);
+  for (const pos of POSITION_ORDER) {
+    const n = byPos(bench, pos).length;
+    if (n < benchRules.min[pos]) xiProblems.push(`Bench needs at least ${benchRules.min[pos]} ${POSITION_SHORT[pos]} (you have ${n}).`);
   }
   if (!captainId || !starters.includes(captainId)) xiProblems.push("Pick a captain from your starting XI.");
   if (!viceId || !starters.includes(viceId)) xiProblems.push("Pick a vice-captain from your starting XI.");
@@ -708,9 +712,9 @@ function SquadBuilder({
     if (sel.includes(p.id)) return sel;
     if (p.status === "departed") { toast.error(`${p.name} has left the club.`); return null; }
     if (p.status === "loaned_out") { toast.error(`${p.name} is out on loan${p.loanClub ? ` at ${p.loanClub}` : ""}.`); return null; }
-    if (sel.length >= FANTASY_SQUAD_SIZE) { toast.error(`Squad is full — ${FANTASY_SQUAD_SIZE} players max.`); return null; }
+    if (sel.length >= squadSize) { toast.error(`Squad is full — ${squadSize} players max (11 + ${benchRules.size} subs).`); return null; }
     if (byPos(sel, p.position).length >= posQuota[p.position]) {
-      toast.error(`${formation} only needs ${posQuota[p.position]} ${POSITION_SHORT[p.position]}s (11 + 1 sub).`);
+      toast.error(`${formation} only needs ${posQuota[p.position]} ${POSITION_SHORT[p.position]}s (XI + bench).`);
       return null;
     }
     return [...sel, p.id];
@@ -857,7 +861,7 @@ function SquadBuilder({
                 <span className="font-bold text-foreground">{starters.length}</span>/11 picked
               </span>
               <span>
-                bench <span className="font-bold text-foreground">{bench.length}</span>/{FANTASY_BENCH_SIZE}
+                bench <span className="font-bold text-foreground">{bench.length}</span>/{benchRules.size}
               </span>
               {existing && (hasGwPoints || existing.points !== null) && (
                 <span>
@@ -908,6 +912,7 @@ function SquadBuilder({
               bench={bench}
               captainId={captainId}
               viceId={viceId}
+              benchSize={benchRules.size}
               pointsByPlayer={hasGwPoints ? pointsByPlayer : undefined}
               autoSubbedIds={autoSubbedIds}
               onDropStart={(playerId, replaceId) => {
@@ -1114,7 +1119,7 @@ function PlayerSidebar({
 // ------------------------------------------------------------------
 function PitchView({
   formation, onFormationChange, editable, playerById, starters, bench, captainId, viceId,
-  pointsByPlayer, autoSubbedIds, onDropStart, onDropBench, onBench, onRemove, onCaptain, onVice,
+  benchSize, pointsByPlayer, autoSubbedIds, onDropStart, onDropBench, onBench, onRemove, onCaptain, onVice,
 }: {
   formation: FormationKey;
   onFormationChange: (f: FormationKey) => void;
@@ -1124,6 +1129,7 @@ function PitchView({
   bench: string[];
   captainId: string;
   viceId: string;
+  benchSize: number;
   pointsByPlayer?: Map<string, number | null>;
   autoSubbedIds?: Set<string>;
   onDropStart: (playerId: string, replaceId?: string) => void;
@@ -1291,9 +1297,9 @@ function PitchView({
       </div>
 
       <div className="p-3 border-t border-border/60" {...dropProps(onDropBench)}>
-        <div className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Bench ({bench.length}/{FANTASY_BENCH_SIZE}) — first to come on, top left</div>
+        <div className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Bench ({bench.length}/{benchSize}) — first to come on, top left</div>
         <div className="flex flex-wrap gap-2">
-          {Array.from({ length: Math.max(BENCH_SLOT_LABELS.length, bench.length) }, (_, i) => BENCH_SLOT_LABELS[i] ?? "Sub").map((slotLabel, i) => {
+          {Array.from({ length: Math.max(benchSize, bench.length) }, (_, i) => BENCH_SLOT_LABELS[i] ?? "Sub").map((slotLabel, i) => {
             const id = bench[i];
             const p = id ? playerById.get(id) : undefined;
             return (
@@ -1627,7 +1633,7 @@ function SquadRulesTab() {
           {[
             { k: "Budget", v: "None" },
             { k: "Match day", v: "11 players" },
-            { k: "Bench", v: `${FANTASY_BENCH_SIZE} subs (1 per pos)` },
+            { k: "Bench", v: "Per competition" },
             { k: "Deadline", v: "2 hours pre-KO" },
           ].map((s) => (
             <div key={s.k} className="rounded-xl bg-white/15 ring-1 ring-white/20 px-3 py-2">
@@ -1650,8 +1656,18 @@ function SquadRulesTab() {
       <section className="rounded-2xl border border-border/60 bg-card/85 backdrop-blur p-4">
         <h4 className="font-semibold mb-3">Bench cover</h4>
         <p className="text-sm text-muted-foreground mb-3">
-          Your bench carries one sub for every position, so any starter who doesn't play is replaced like-for-like.
+          The number of subs you name matches the real competition's substitute rules, and your bench must always
+          cover every position so any starter who doesn't play is replaced like-for-like.
         </p>
+        <div className="grid gap-2 sm:grid-cols-3 mb-3">
+          {COMPETITION_BENCH_RULES.map((r) => (
+            <div key={r.competition} className="rounded-xl border border-border/60 bg-muted/30 px-3 py-2">
+              <div className="text-[11px] uppercase tracking-wide text-muted-foreground">{r.competition}</div>
+              <div className="font-bold">{r.subs} subs</div>
+            </div>
+          ))}
+        </div>
+        <div className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Minimum cover</div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           {POSITION_ORDER.map((pos) => (
             <div key={pos} className={`rounded-xl border px-3 py-2 ${POS_TINT[pos]}`}>

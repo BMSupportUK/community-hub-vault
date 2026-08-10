@@ -1,8 +1,6 @@
 /** Server-only core for the MFC Fantasy Manager (shared by member + guest server fns). */
 import {
-  FANTASY_SQUAD_SIZE,
-  FANTASY_BENCH_SIZE,
-  BENCH_QUOTA,
+  benchRulesFor,
   FORMATIONS,
   formationCounts,
   isFantasySeasonStarted,
@@ -323,7 +321,7 @@ export type SaveSquadInput = {
 export async function saveSquad(admin: any, owner: Owner, input: SaveSquadInput) {
   const { data: gwRow, error: gwErr } = await admin
     .from("fantasy_gameweeks")
-    .select("id, gw_number, lock_at, status")
+    .select("id, gw_number, lock_at, status, fixture:boro_fixtures!inner(competition)")
     .eq("id", input.gameweekId)
     .maybeSingle();
   if (gwErr) throw new Error(gwErr.message);
@@ -334,8 +332,9 @@ export async function saveSquad(admin: any, owner: Owner, input: SaveSquadInput)
 
   const squadIds = [...input.starters, ...input.bench];
   if (new Set(squadIds).size !== squadIds.length) throw new Error("Duplicate players in your squad.");
-  if (squadIds.length !== FANTASY_SQUAD_SIZE) {
-    throw new Error(`Pick exactly ${FANTASY_SQUAD_SIZE} players (11 starters + 4 subs).`);
+  const bench = benchRulesFor((gwRow as any).fixture?.competition);
+  if (squadIds.length !== 11 + bench.size) {
+    throw new Error(`Pick exactly ${11 + bench.size} players (11 starters + ${bench.size} subs).`);
   }
   if (input.starters.length !== 11) throw new Error("Your starting XI must have 11 players.");
   if (!FORMATIONS[input.formation as FormationKey]) throw new Error("Unknown formation.");
@@ -365,13 +364,13 @@ export async function saveSquad(admin: any, owner: Owner, input: SaveSquadInput)
 
   // The bench has to cover every position so any starter who doesn't play can be
   // replaced like-for-like.
-  if (input.bench.length !== FANTASY_BENCH_SIZE) {
-    throw new Error(`Name ${FANTASY_BENCH_SIZE} subs — one goalkeeper, one defender, one midfielder and one forward.`);
+  if (input.bench.length !== bench.size) {
+    throw new Error(`${bench.competition} allows ${bench.size} subs — name exactly ${bench.size}, covering every position.`);
   }
   const benchQuota: Record<FantasyPosition, number> = { gk: 0, def: 0, mid: 0, fwd: 0 };
   for (const id of input.bench) benchQuota[byId.get(id)!.position]++;
-  for (const pos of Object.keys(BENCH_QUOTA) as FantasyPosition[]) {
-    if (benchQuota[pos] !== BENCH_QUOTA[pos]) {
+  for (const pos of Object.keys(bench.min) as FantasyPosition[]) {
+    if (benchQuota[pos] < bench.min[pos]) {
       throw new Error("Your bench must cover every position: 1 GK, 1 DEF, 1 MID and 1 FWD.");
     }
   }
