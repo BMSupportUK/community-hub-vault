@@ -1151,6 +1151,7 @@ function SquadBuilder({
             teamName={teamName}
             canEdit={canEdit}
             onEdit={onEdit}
+            gameweekId={gwId}
           />
           {gameweekPanel}
         {/* Checklist — scoped to the active tab (squad of 15 vs starting 11). */}
