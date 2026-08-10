@@ -915,9 +915,9 @@ function SquadBuilder({
             )}
             {openGameweeks.length > 1 && (
               <div className="mt-2 flex items-center gap-2">
-                <span className="text-[11px] uppercase tracking-wide text-muted-foreground">Gameweek</span>
+                <span className="text-[11px] uppercase tracking-wide text-muted-foreground shrink-0">Gameweek</span>
                 <Select value={gwId} onValueChange={setGwId}>
-                  <SelectTrigger className="h-8 w-[260px] text-xs">
+                  <SelectTrigger className="h-8 min-w-0 flex-1 text-xs [&>span]:truncate">
                     <SelectValue placeholder="Pick a gameweek" />
                   </SelectTrigger>
                   <SelectContent>
