@@ -1330,6 +1330,11 @@ function PitchView({
                         {pointsByPlayer.get(p.id) ?? 0} pts
                       </div>
                     )}
+                    {minutesByPlayer?.has(p.id) && (
+                      <div className="mt-0.5 text-[10px] font-semibold tabular-nums text-muted-foreground">
+                        {(minutesByPlayer.get(p.id) ?? 0) > 0 ? `${minutesByPlayer.get(p.id)}′ played` : "Didn't play"}
+                      </div>
+                    )}
                     {autoSubbedIds?.has(p.id) && (
                       <div className="mt-0.5 text-[9px] font-bold uppercase text-sky-400">Subbed on</div>
                     )}
