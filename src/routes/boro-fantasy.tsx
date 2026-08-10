@@ -1012,7 +1012,12 @@ function SquadBuilder({
     const ranked = st
       .filter(Boolean)
       .sort((a, b) => (playerById.get(b!)?.seasonPoints ?? 0) - (playerById.get(a!)?.seasonPoints ?? 0));
-    return { starters: st, bench: bn, captainId: ranked[0] ?? "", viceId: ranked[1] ?? "" };
+    // Keep the manager's own picks — only fill blanks.
+    const keepCap = captainId && st.includes(captainId) ? captainId : "";
+    let keepVice = viceId && st.includes(viceId) && viceId !== keepCap ? viceId : "";
+    const cap = keepCap || (ranked.find((id) => id !== keepVice) ?? "");
+    if (!keepVice) keepVice = ranked.find((id) => id !== cap) ?? "";
+    return { starters: st, bench: bn, captainId: cap, viceId: keepVice };
   }
 
   async function handleSave() {
@@ -1022,7 +1027,14 @@ function SquadBuilder({
     let cap = captainId;
     let vice = viceId;
     const filledCount = starters.filter(Boolean).length;
-    const needsAutoXI = filledCount !== 11 || bench.filter(Boolean).length !== benchRules.size || selected.length !== 15;
+    const needsAutoXI =
+      filledCount !== 11 ||
+      bench.filter(Boolean).length !== benchRules.size ||
+      !cap ||
+      !vice ||
+      cap === vice ||
+      !starters.includes(cap) ||
+      !starters.includes(vice);
     if (needsAutoXI) {
       const auto = autoCompleteXI();
       if (auto.starters.filter(Boolean).length !== 11 || !auto.captainId || !auto.viceId || auto.bench.filter(Boolean).length !== benchRules.size) {
