@@ -499,13 +499,6 @@ function BoroFantasyPage() {
             </Tabs>
 
             <aside className="space-y-4 lg:sticky lg:top-6 lg:self-start">
-              <ManagerCard
-                state={state}
-                name={guest?.displayName ?? null}
-                teamName={currentTeamName}
-                canEdit={canPlay}
-                onEdit={openNameDialog}
-              />
               <NextGameweekCard state={state} />
             </aside>
           </div>
