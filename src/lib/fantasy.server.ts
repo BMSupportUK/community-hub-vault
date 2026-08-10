@@ -408,9 +408,10 @@ export async function saveSquad(admin: any, owner: Owner, input: SaveSquadInput)
     .maybeSingle();
   const banked = (ent as any)?.free_transfers ?? 1;
 
-  // Unlimited free transfers until the first league fixture of the season kicks off.
   const allGameweeks = await loadGameweeks(admin);
-  const seasonStarted = isFantasySeasonStarted(allGameweeks);
+  // Unlimited free transfers before the season starts and while a real
+  // transfer window is open; otherwise 1 free transfer a week.
+  const unlimited = hasUnlimitedFantasyTransfers(allGameweeks);
 
   // Transfers = players in the new squad that weren't in the previous one.
   // Replacing a departed player is free and doesn't count.
@@ -420,8 +421,8 @@ export async function saveSquad(admin: any, owner: Owner, input: SaveSquadInput)
   }).length;
   const incoming = squadIds.filter((id) => !prevIds.includes(id));
   const outgoing = prevIds.filter((id) => !squadIds.includes(id));
-  const chargeable = prevIds.length === 0 || !seasonStarted ? 0 : Math.max(0, incoming.length - departedOut);
-  const transferCost = seasonStarted ? Math.max(0, chargeable - banked) * FANTASY_TRANSFER_HIT : 0;
+  const chargeable = prevIds.length === 0 || unlimited ? 0 : Math.max(0, incoming.length - departedOut);
+  const transferCost = unlimited ? 0 : Math.max(0, chargeable - banked) * FANTASY_TRANSFER_HIT;
 
   // The uniqueness on fantasy_squads is a *partial* index (one per owner kind),
   // which ON CONFLICT can't target — find-then-update/insert instead.
@@ -497,7 +498,7 @@ export async function saveSquad(admin: any, owner: Owner, input: SaveSquadInput)
         ...(owner.userId ? { user_id: owner.userId } : { guest_id: owner.guestId }),
         out_player_id: outId,
         in_player_id: incoming[i] ?? null,
-        cost: !seasonStarted || forced ? 0 : i < banked ? 0 : FANTASY_TRANSFER_HIT,
+        cost: unlimited || forced ? 0 : i < banked ? 0 : FANTASY_TRANSFER_HIT,
         forced: !!forced,
       });
     }
