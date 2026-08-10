@@ -1,0 +1,1 @@
+ALTER TABLE public.boro_fixtures ADD COLUMN IF NOT EXISTS date_tbc boolean NOT NULL DEFAULT false;
