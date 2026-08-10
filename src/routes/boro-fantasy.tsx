@@ -1405,7 +1405,7 @@ function PitchView({
   onRemove: (id: string) => void;
   onCaptain: (id: string) => void;
   onVice: (id: string) => void;
-  gw?: FantasyGameweekDTO;
+  gw?: FantasyGameweekDTO | null;
 }) {
   const rows = formationRows(formation);
   const meta = FORMATIONS[formation];
