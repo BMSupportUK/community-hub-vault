@@ -160,7 +160,9 @@ function isExcludedFixture(fx: ParsedFixture): boolean {
   const isLeague = /championship|premier league|league one|league two|efl league|sky bet/.test(comp);
   if (isLeague) return false;
   const teams = `${norm(fx.home_team)} ${norm(fx.away_team)}`;
-  if (teams.includes("wrexham")) return true;
+  // The League Cup first-round tie with Wrexham (7 Aug 2026) has been played —
+  // skip that one tie only, not any future Wrexham cup draw.
+  if (teams.includes("wrexham") && fx.kickoff_at.slice(0, 10) === "2026-08-07") return true;
   // Newly drawn ties carry a provisional date — keep them even if that
   // placeholder date sits in the past.
   if (fx.date_tbc) return false;
