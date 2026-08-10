@@ -957,7 +957,7 @@ function SquadBuilder({
   return (
     <div className="space-y-4">
       <div className="rounded-2xl border border-border/60 bg-card/80 backdrop-blur p-4 space-y-3">
-        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+        <div className="flex flex-col lg:flex-row lg:items-start gap-3">
           <div className="flex-1 min-w-[200px]">
             {gw ? (
               <>
