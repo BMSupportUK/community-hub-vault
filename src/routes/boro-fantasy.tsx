@@ -25,7 +25,7 @@ import { useAuth } from "@/hooks/use-auth";
 import {
   benchRulesFor, COMPETITION_BENCH_RULES, FORMATION_KEYS, POSITION_ORDER,
   POSITION_SHORT, POSITION_LABEL, SCORING_RULES, SQUAD_RULES,
-  FORMATIONS, formationCounts, formationRows,
+  FORMATIONS, formationCounts, formationRows, formationPositionRange, rowPositions, slotPositionLabel,
   fantasyCompetitionGroup, FANTASY_GROUP_LABEL,
   type FantasyPosition, type FormationKey, type FantasyCompetitionGroup,
 } from "@/lib/fantasy-rules";
@@ -721,13 +721,13 @@ function SquadBuilder({
   const squadSize = 11 + benchRules.size;
   /** Match day 11 for the chosen formation plus the full bench allowance (no minimum cover). */
   const posQuota = useMemo(() => {
-    const c = counts as Record<FantasyPosition, number>;
+    const r = formationPositionRange(formation);
     return {
       // One starting GK + one replacement GK (sub 1). Other positions can fill the rest of the bench.
-      gk: c.gk + 1,
-      def: c.def + benchRules.size,
-      mid: c.mid + benchRules.size,
-      fwd: c.fwd + benchRules.size,
+      gk: r.gk.max + 1,
+      def: r.def.max + benchRules.size,
+      mid: r.mid.max + benchRules.size,
+      fwd: r.fwd.max + benchRules.size,
     } as Record<FantasyPosition, number>;
   }, [formation, benchRules]);
   const byPos = (ids: string[], pos: FantasyPosition) => ids.filter((id) => playerById.get(id)?.position === pos);
@@ -743,9 +743,16 @@ function SquadBuilder({
   const xiProblems: string[] = [];
   if (starters.length !== 11) xiProblems.push(`Pick 11 starters (${starters.length} selected).`);
   else {
+    const range = formationPositionRange(formation);
     for (const pos of POSITION_ORDER) {
       const n = byPos(starters, pos).length;
-      if (n !== (counts as any)[pos]) xiProblems.push(`${formation}: needs ${(counts as any)[pos]} ${POSITION_SHORT[pos]} in the XI, you have ${n}.`);
+      const { min, max } = range[pos];
+      if (n < min || n > max)
+        xiProblems.push(
+          min === max
+            ? `${formation}: needs ${min} ${POSITION_SHORT[pos]} in the XI, you have ${n}.`
+            : `${formation}: needs ${min}–${max} ${POSITION_SHORT[pos]} in the XI, you have ${n}.`,
+        );
     }
   }
   if (bench.length !== benchRules.size)
@@ -782,7 +789,7 @@ function SquadBuilder({
 
   // Position pop-box picker: either filling/swapping an XI slot, or a bench slot.
   const [picker, setPicker] = useState<
-    | { mode: "xi"; pos: FantasyPosition; replaceId?: string }
+    | { mode: "xi"; positions: FantasyPosition[]; replaceId?: string }
     | { mode: "bench"; benchIndex: number }
     | null
   >(null);
