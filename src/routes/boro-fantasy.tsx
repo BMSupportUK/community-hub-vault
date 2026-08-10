@@ -662,11 +662,17 @@ function SquadBuilder({
   const [saving, setSaving] = useState(false);
   // Unsaved picks survive a refresh or crash: they're kept in a per-gameweek
   // local draft until the squad is saved.
-  const draftKey = gw ? `mfc-fantasy-draft:${gw.id}` : null;
+  // v2 invalidates drafts polluted by the old gameweek-switch race, which
+  // could write the previous week's players under a future gameweek key.
+  const draftKey = gw ? `mfc-fantasy-draft-v2:${gw.id}` : null;
   const [draftLoaded, setDraftLoaded] = useState(false);
   const restoredDraftRef = useRef(false);
+  const skipNextDraftSaveRef = useRef(false);
 
   useEffect(() => {
+    // State updates below apply on the next render. Prevent the save effect in
+    // this same commit from persisting the previous gameweek's state.
+    skipNextDraftSaveRef.current = true;
     setDraftLoaded(false);
     restoredDraftRef.current = false;
     const applyExisting = () => {
@@ -713,6 +719,10 @@ function SquadBuilder({
 
   useEffect(() => {
     if (!draftKey || !draftLoaded) return;
+    if (skipNextDraftSaveRef.current) {
+      skipNextDraftSaveRef.current = false;
+      return;
+    }
     try {
       if (!selected.length) localStorage.removeItem(draftKey);
       else
