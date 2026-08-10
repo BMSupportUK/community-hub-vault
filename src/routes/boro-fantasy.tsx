@@ -873,6 +873,23 @@ function SquadBuilder({
                 <div className="text-xs text-muted-foreground">Try out formations and squads now; you can save once the first gameweek opens.</div>
               </>
             )}
+            {openGameweeks.length > 1 && (
+              <div className="mt-2 flex items-center gap-2">
+                <span className="text-[11px] uppercase tracking-wide text-muted-foreground">Gameweek</span>
+                <Select value={gwId} onValueChange={setGwId}>
+                  <SelectTrigger className="h-8 w-[260px] text-xs">
+                    <SelectValue placeholder="Pick a gameweek" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {openGameweeks.map((g) => (
+                      <SelectItem key={g.id} value={g.id}>
+                        GW{g.gwNumber} — {g.homeTeam} v {g.awayTeam} ({kickoffLabel(g.kickoffAt)})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </div>
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-4 text-sm text-muted-foreground">
