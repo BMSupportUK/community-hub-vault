@@ -401,7 +401,7 @@ function BoroFantasyPage() {
             <Tabs value={tab} onValueChange={setTab}>
               <TabsList className="grid grid-cols-3 sm:grid-cols-7 w-full sm:w-auto h-auto gap-1 p-1">
                 <TabsTrigger value="squad">My squad</TabsTrigger>
-                <TabsTrigger value="rules">Squad rules</TabsTrigger>
+                <TabsTrigger value="rules">Game rules</TabsTrigger>
                 <TabsTrigger value="gameweeks">Gameweeks</TabsTrigger>
                 <TabsTrigger value="transfers">Transfers</TabsTrigger>
                 <TabsTrigger value="leaderboard">Leaderboard</TabsTrigger>
@@ -1645,9 +1645,9 @@ function SquadRulesTab() {
     <div className="space-y-4">
       <div className="rounded-3xl border border-primary/30 bg-gradient-primary p-5 shadow-glow">
         <h3 className="font-display text-xl font-bold text-white flex items-center gap-2">
-          <ClipboardList className="size-5" /> Squad rules
+          <ClipboardList className="size-5" /> Game rules
         </h3>
-        <p className="text-sm text-white/85 mt-1">Everything you need to know before you build your Middlesbrough side.</p>
+        <p className="text-sm text-white/85 mt-1">Everything you need to know before you pick your Middlesbrough side.</p>
         <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-2">
           {[
             { k: "Budget", v: "None" },
@@ -1747,7 +1747,7 @@ function ScoringTab() {
         </table>
       </div>
       <div className="text-sm text-muted-foreground">
-        Squad size, budget, formations and deadlines all live on the <span className="font-semibold text-foreground">Squad rules</span> tab.
+        Formations, bench sizes, scoring and deadlines all live on the <span className="font-semibold text-foreground">Game rules</span> tab.
       </div>
     </div>
   );
