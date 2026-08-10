@@ -541,15 +541,43 @@ function BoroFantasyPage() {
 // Sidebar
 // ------------------------------------------------------------------
 function ManagerCard({
-  state, name, teamName, canEdit, onEdit,
+  state, name, teamName, canEdit, onEdit, compact,
 }: {
   state?: FantasyStateDTO;
   name: string | null;
   teamName?: string;
   canEdit?: boolean;
   onEdit?: () => void;
+  compact?: boolean;
 }) {
   const total = (state?.squads ?? []).reduce((sum, s) => sum + (s.points ?? 0), 0);
+  if (compact) {
+    return (
+      <div className="rounded-2xl border-2 border-primary/40 bg-gradient-to-br from-primary/20 via-primary/10 to-card/80 p-3 shadow-glow backdrop-blur">
+        <div className="flex items-center gap-2">
+          <div className="grid size-10 place-items-center rounded-full bg-primary text-primary-foreground shadow-lg">
+            <Trophy className="size-5" />
+          </div>
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5">
+              <span className="font-display text-base font-bold truncate">
+                {teamName || state?.teamName || name || "Unnamed FC"}
+              </span>
+              {canEdit && onEdit && (
+                <Button size="sm" variant="ghost" className="h-6 px-1.5 shrink-0" onClick={onEdit}>
+                  <Pencil className="size-3" />
+                </Button>
+              )}
+            </div>
+            <div className="flex items-center gap-3 text-xs">
+              <span className="font-bold text-primary">{total} pts</span>
+              <span className="text-muted-foreground">Changes unlimited</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="rounded-2xl border border-border/60 bg-card/80 backdrop-blur p-4">
       <div className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Your team</div>
