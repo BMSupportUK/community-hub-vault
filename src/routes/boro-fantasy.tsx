@@ -1469,6 +1469,11 @@ function PitchView({
             ))}
           </select>
         </div>
+        {gw && !gw.dateTbc && (
+          <div className="absolute left-3 top-3 z-10 w-36 sm:w-44 rounded-xl border border-white/30 bg-slate-950/80 p-2 shadow-lg backdrop-blur-sm">
+            <DigitalLockCountdown lockAt={gw.lockAt} compact />
+          </div>
+        )}
         <div className="relative space-y-4 sm:space-y-6 py-2">
           {rowSlots.map((row, ri) => (
             <div key={ri} className="flex flex-nowrap justify-center gap-1 sm:gap-2">
