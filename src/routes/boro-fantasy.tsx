@@ -985,6 +985,61 @@ function SquadBuilder({
     });
   }
 
+  /** Put a player on an exact bench slot (from the sub pop-box) — never shuffle others. */
+  function benchAssign(p: FantasyPlayerDTO, benchIndex: number) {
+    if (!editable) return;
+    if (benchIndex === 0 && p.position !== "gk") {
+      toast.error("Sub 1 is reserved for the replacement goalkeeper.");
+      return;
+    }
+    if (benchIndex > 0 && p.position === "gk") {
+      toast.error("Goalkeepers go in the Sub 1 slot.");
+      return;
+    }
+    const occupant = bench[benchIndex] && bench[benchIndex] !== p.id ? bench[benchIndex]! : null;
+    let sel = withPlayer(
+      occupant ? selected.filter((x) => x !== occupant) : selected,
+      p,
+    );
+    if (!sel) return;
+    if (occupant) {
+      if (captainId === occupant) setCaptainId("");
+      if (viceId === occupant) setViceId("");
+    }
+    setSelected(sel);
+    // Free the player from wherever they already sat.
+    setStarters((prev) => prev.map((x) => (x === p.id ? null : x)));
+    if (captainId === p.id) setCaptainId("");
+    if (viceId === p.id) setViceId("");
+    setBench((prev) => {
+      const next = prev.map((x) => (x === p.id ? null : x));
+      next[benchIndex] = p.id;
+      return next;
+    });
+  }
+
+  function benchAddByIdLegacy(id: string) {
+    setBench((prev) => {
+      const p = playerById.get(id);
+      if (!p) return prev;
+      // Sub 1 is reserved for goalkeepers.
+      if (p.position === "gk") {
+        if (prev[0] && prev[0] !== id) {
+          toast.error("Sub 1 is reserved for the replacement goalkeeper.");
+          return prev;
+        }
+        const next = [...prev];
+        next[0] = id;
+        return next;
+      }
+      const empty = prev.findIndex((x, i) => x === null && i > 0);
+      if (empty === -1) return prev;
+      const next = [...prev];
+      next[empty] = id;
+      return next;
+    });
+  }
+
   /** Fill any gaps in the match day 11, bench and captaincy from the players picked. */
   function autoCompleteXI() {
     const st = [...starters];
