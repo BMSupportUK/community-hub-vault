@@ -145,5 +145,4 @@ export const SCORING_RULES: { label: string; points: string }[] = [
   { label: "Own goal", points: "-2" },
   { label: "Man of the match bonus (awarded by admin)", points: "3" },
   { label: "Captain", points: "double points" },
-  { label: "Extra transfer (beyond your free one)", points: "-4" },
 ];
