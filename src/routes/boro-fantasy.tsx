@@ -104,8 +104,32 @@ function DigitalLockCountdown({
     </div>
   );
 
+  if (compact) {
+    return (
+      <div className="w-full min-w-0 overflow-hidden">
+        <div className={`flex items-center gap-1 font-digital font-bold uppercase tracking-wide text-[9px] sm:text-[10px] ${urgent ? "text-red-300" : "text-amber-300"}`}>
+          <Lock className="size-2.5 sm:size-3 shrink-0" strokeWidth={3} />
+          <span className="truncate">{locked ? "Locked" : label}</span>
+        </div>
+        <div
+          className={`mt-1 w-full rounded-md border-2 px-1 py-0.5 text-center font-digital font-black tabular-nums leading-none text-[11px] sm:text-sm ${
+            urgent
+              ? "bg-red-600/20 border-red-400 text-red-300 shadow-[0_0_14px_rgba(248,113,113,0.5)] animate-pulse"
+              : "bg-amber-500/15 border-amber-400/70 text-amber-300 shadow-[0_0_12px_rgba(251,191,36,0.4)]"
+          }`}
+        >
+          {locked
+            ? "LOCKED"
+            : `${days > 0 ? `${days}d ` : ""}${hours.toString().padStart(2, "0")}:${minutes
+                .toString()
+                .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`}
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="w-full">
+    <div className="w-full min-w-0">
       <div className={`flex items-center gap-1.5 sm:gap-2 font-digital font-bold uppercase tracking-widest ${compact ? "mb-1 text-[10px] sm:text-[11px]" : "mb-2 text-sm"} ${urgent ? "text-red-300" : "text-amber-300"}`}>
         <Lock className={compact ? "size-3 sm:size-3.5" : "size-4"} strokeWidth={3} />
         {locked ? "Locked" : label}
