@@ -576,7 +576,6 @@ function SquadBuilder({
   const [captainId, setCaptainId] = useState<string>(existing?.captainId ?? "");
   const [viceId, setViceId] = useState<string>(existing?.viceId ?? "");
   const [saving, setSaving] = useState(false);
-  const [squadTab, setSquadTab] = useState<"selector" | "xi">("selector");
   // Unsaved picks survive a refresh or crash: they're kept in a per-gameweek
   // local draft until the squad is saved.
   const draftKey = gw ? `mfc-fantasy-draft:${gw.id}` : null;
@@ -644,7 +643,13 @@ function SquadBuilder({
     } as Record<FantasyPosition, number>;
   }, [formation]);
   const byPos = (ids: string[], pos: FantasyPosition) => ids.filter((id) => playerById.get(id)?.position === pos);
-  const bench = selected.filter((id) => !starters.includes(id));
+  const bench = selected
+    .filter((id) => !starters.includes(id))
+    .sort(
+      (a, b) =>
+        POSITION_ORDER.indexOf(playerById.get(a)?.position ?? "gk") -
+        POSITION_ORDER.indexOf(playerById.get(b)?.position ?? "gk"),
+    );
   const locked = !!gw && (gw.status !== "upcoming" || new Date(gw.lockAt).getTime() <= Date.now());
 
   const xiProblems: string[] = [];
@@ -769,23 +774,19 @@ function SquadBuilder({
     else benchAdd(p);
   }
 
-  /**
-   * Squad-only save: the manager just picked their 15 and hasn't set an XI yet.
-   * Auto-fill a legal starting XI (and captaincy) from the squad so the squad
-   * can be banked now and tweaked later on the Starting 11 tab.
-   */
+  /** Fill any gaps in the match day 11 (and captaincy) from the players picked. */
   function autoCompleteXI() {
     const st: string[] = [];
     for (const pos of POSITION_ORDER) {
       const need = (counts as Record<string, number>)[pos] ?? 0;
       const pool = byPos(selected, pos)
         .slice()
-        .sort((a, b) => (playerById.get(b)?.valueM ?? 0) - (playerById.get(a)?.valueM ?? 0));
+        .sort((a, b) => (playerById.get(b)?.seasonPoints ?? 0) - (playerById.get(a)?.seasonPoints ?? 0));
       st.push(...pool.slice(0, need));
     }
     const ranked = st
       .slice()
-      .sort((a, b) => (playerById.get(b)?.valueM ?? 0) - (playerById.get(a)?.valueM ?? 0));
+      .sort((a, b) => (playerById.get(b)?.seasonPoints ?? 0) - (playerById.get(a)?.seasonPoints ?? 0));
     return { starters: st, captainId: ranked[0] ?? "", viceId: ranked[1] ?? "" };
   }
 
@@ -794,7 +795,7 @@ function SquadBuilder({
     let st = starters;
     let cap = captainId;
     let vice = viceId;
-    const needsAutoXI = squadTab !== "xi" && xiProblems.length > 0;
+    const needsAutoXI = starters.length !== 11;
     if (needsAutoXI) {
       const auto = autoCompleteXI();
       if (auto.starters.length !== 11 || !auto.captainId || !auto.viceId) {
@@ -949,20 +950,9 @@ function SquadBuilder({
                   : "Join the game to start building a valid squad."}
               </p>
             ) : activeChecklist.items.length === 0 ? (
-              <div className="space-y-2">
-                <p className="text-xs text-emerald-300">
-                  {squadTab === "xi" ? (
-                    <>Starting 11 is valid — hit <span className="font-semibold">Save starting 11</span>.</>
-                  ) : (
-                    <>Squad of 15 is valid — now set your Starting 11.</>
-                  )}
-                </p>
-                {squadTab !== "xi" && xiProblems.length > 0 && (
-                  <p className="text-[11px] text-muted-foreground">
-                    {xiProblems.length} item{xiProblems.length === 1 ? "" : "s"} left on the Starting 11 tab.
-                  </p>
-                )}
-              </div>
+              <p className="text-xs text-emerald-300">
+                Match day 11 and bench are valid — hit <span className="font-semibold">Save match day 11</span>.
+              </p>
             ) : (
               <ul className="space-y-1.5">
                 {activeChecklist.items.map((p) => (
