@@ -888,8 +888,6 @@ function SquadBuilder({
     setSelected((prev) => prev.filter((x) => x !== id));
     setStarters((prev) => prev.map((x) => (x === id ? null : x)));
     setBench((prev) => prev.map((x) => (x === id ? null : x)));
-    if (captainId === id) setCaptainId("");
-    if (viceId === id) setViceId("");
   }
 
   function benchPlayer(id: string) {
@@ -902,8 +900,6 @@ function SquadBuilder({
     }
     setStarters((prev) => prev.map((x) => (x === id ? null : x)));
     benchAddById(id);
-    if (captainId === id) setCaptainId("");
-    if (viceId === id) setViceId("");
   }
 
   /** Put a player into the XI, optionally swapping out whoever holds that slot. */
