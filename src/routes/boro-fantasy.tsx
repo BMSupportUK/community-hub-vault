@@ -838,9 +838,14 @@ function SquadBuilder({
     setStarters(st);
   }
 
-  /** Add a player to the bench (or squad only). */
+  /** Add a player to the bench (or squad only). Sub 1 is reserved for the replacement GK. */
   function benchAdd(p: FantasyPlayerDTO) {
     if (!editable) return;
+    const benchHasGk = byPos(selected, "gk").some((id) => !starters.includes(id));
+    if (p.position !== "gk" && !benchHasGk) {
+      toast.error("Sub 1 must be the replacement goalkeeper — pick a GK first.");
+      return;
+    }
     const sel = withPlayer(selected, p);
     if (!sel) return;
     setSelected(sel);
