@@ -1109,6 +1109,19 @@ function SquadBuilder({
             canEdit={canEdit}
             onEdit={onEdit}
           />
+          <label className="flex items-center gap-2 text-sm">
+            <span className="text-muted-foreground">Formation</span>
+            <select
+              className="h-9 min-w-0 flex-1 rounded-lg border-2 border-primary/50 bg-background px-2 text-sm font-semibold"
+              value={formation}
+              onChange={(e) => setFormation(e.target.value as FormationKey)}
+              disabled={!editable}
+            >
+              {FORMATION_KEYS.map((f) => (
+                <option key={f} value={f}>{f} — {FORMATIONS[f].label}</option>
+              ))}
+            </select>
+          </label>
         {/* Checklist — scoped to the active tab (squad of 15 vs starting 11). */}
         <aside className="rounded-2xl border border-border/60 bg-card/85 backdrop-blur overflow-hidden">
           <div className="p-3 border-b border-border/60 flex items-center gap-2">
@@ -1385,21 +1398,8 @@ function PitchView({
   return (
     <div className="rounded-2xl border border-border/60 bg-card/85 backdrop-blur overflow-hidden">
       <div className="p-3 border-b border-border/60 flex flex-wrap items-center gap-3">
-        <label className="flex items-center gap-2 text-sm">
-          <span className="text-muted-foreground">Formation</span>
-          <select
-            className="h-9 rounded-lg border-2 border-primary/50 bg-background px-2 text-sm font-semibold"
-            value={formation}
-            onChange={(e) => onFormationChange(e.target.value as FormationKey)}
-            disabled={!editable}
-          >
-            {FORMATION_KEYS.map((f) => (
-              <option key={f} value={f}>{f} — {FORMATIONS[f].label}</option>
-            ))}
-          </select>
-        </label>
         <p className="text-xs text-muted-foreground">
-          Tap any slot to pick a player from the pop-up list, or drag players between the pitch and bench.
+          Tap any slot to pick a player from the pop-up list.
         </p>
       </div>
 
