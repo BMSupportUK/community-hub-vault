@@ -17,6 +17,7 @@ type ParsedFixture = {
   away_team: string;
   kickoff_at: string; // ISO
   venue?: string | null;
+  date_tbc?: boolean;
 };
 
 const MONTH_NAMES: Record<string, number> = {
@@ -144,13 +145,15 @@ function isCompetitiveCompetition(comp?: string | null): boolean {
   );
 }
 
-// The Wrexham cup tie has already been played and must not be re-imported.
 function isExcludedFixture(fx: ParsedFixture): boolean {
   const comp = norm(fx.competition ?? "");
   const isLeague = /championship|premier league|league one|league two|efl league|sky bet/.test(comp);
   if (isLeague) return false;
   const teams = `${norm(fx.home_team)} ${norm(fx.away_team)}`;
   if (teams.includes("wrexham")) return true;
+  // Newly drawn ties carry a provisional date — keep them even if that
+  // placeholder date sits in the past.
+  if (fx.date_tbc) return false;
   // Any other non-league tie that has already kicked off is historic.
   return new Date(fx.kickoff_at).getTime() < Date.now();
 }
@@ -205,16 +208,18 @@ function venueFor(homeTeam: string): string | null {
 
 async function syncFixtures() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const { fetchMfcLeagueFixtures } = await import("@/lib/mfc-official-fixtures.server");
+  const { fetchMfcCompetitiveFixtures } = await import("@/lib/mfc-official-fixtures.server");
 
   const scraped: ParsedFixture[] = [];
   const scrapeErrors: string[] = [];
   let source = "mfc.co.uk";
 
   // Primary source: the club's own first-team fixture feed (mfc.co.uk). It is
-  // authoritative and updates as soon as a game is moved.
+  // authoritative and updates as soon as a game is moved — and it lists cup and
+  // play-off ties from the moment the draw is made, with the date flagged TBC
+  // until it's confirmed.
   try {
-    const official = await fetchMfcLeagueFixtures();
+    const official = await fetchMfcCompetitiveFixtures();
     for (const fx of official) {
       scraped.push({
         competition: fx.competition,
@@ -222,6 +227,7 @@ async function syncFixtures() {
         away_team: fx.awayTeam,
         kickoff_at: fx.kickoffAt,
         venue: fx.venue,
+        date_tbc: fx.dateTbc === true,
       });
     }
   } catch (e) {
@@ -270,10 +276,11 @@ async function syncFixtures() {
     kickoff_at: string;
     venue: string | null;
     status: string;
+    date_tbc: boolean | null;
   };
   const { data: existing } = await supabaseAdmin
     .from("boro_fixtures")
-    .select("id, competition, home_team, away_team, kickoff_at, venue, status");
+    .select("id, competition, home_team, away_team, kickoff_at, venue, status, date_tbc");
   const byTeams = new Map<string, ExistingRow>();
   for (const f of (existing ?? []) as ExistingRow[]) {
     byTeams.set(`${norm(f.home_team)}|${norm(f.away_team)}`, f);
@@ -295,6 +302,7 @@ async function syncFixtures() {
         kickoff_at: newKickoff,
         venue: fx.venue ?? venueFor(fx.home_team),
         status: "SCHEDULED",
+        date_tbc: fx.date_tbc === true,
       });
       if (error) errors.push(`insert ${fx.home_team} v ${fx.away_team}: ${error.message}`);
       else inserted.push(`${fx.home_team} v ${fx.away_team} @ ${newKickoff}`);
@@ -307,9 +315,16 @@ async function syncFixtures() {
       kickoff_at?: string;
       competition?: string;
       venue?: string | null;
+      date_tbc?: boolean;
     } = {};
     if (new Date(existingRow.kickoff_at).toISOString() !== newKickoff) {
       changes.kickoff_at = newKickoff;
+    }
+    // Flip TBC off as soon as the club confirm a date (and back on if a
+    // confirmed tie loses its date again).
+    const tbc = fx.date_tbc === true;
+    if ((existingRow.date_tbc ?? false) !== tbc) {
+      changes.date_tbc = tbc;
     }
     if (fx.competition && fx.competition !== existingRow.competition) {
       changes.competition = fx.competition;

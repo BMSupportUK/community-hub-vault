@@ -11,7 +11,13 @@ type Admin = {
   from: (table: string) => any;
 };
 
-type FixtureRow = { id: string; kickoff_at: string; competition: string | null; status: string | null };
+type FixtureRow = {
+  id: string;
+  kickoff_at: string;
+  competition: string | null;
+  status: string | null;
+  date_tbc?: boolean | null;
+};
 type GwRow = { id: string; fixture_id: string | null; gw_number: number | null; lock_at: string | null; status: string | null };
 
 function lockFor(kickoffIso: string): string {
@@ -26,7 +32,10 @@ export function isPostponedFixture(status: string | null | undefined): boolean {
 
 export async function syncFantasyGameweeksFromFixtures(admin: Admin) {
   const [{ data: allFixtures, error: fxErr }, { data: existing, error: gwErr }] = await Promise.all([
-    admin.from("boro_fixtures").select("id, kickoff_at, competition, status").order("kickoff_at", { ascending: true }),
+    admin
+      .from("boro_fixtures")
+      .select("id, kickoff_at, competition, status, date_tbc")
+      .order("kickoff_at", { ascending: true }),
     admin.from("fantasy_gameweeks").select("id, fixture_id, gw_number, lock_at, status"),
   ]);
   if (fxErr) throw new Error(fxErr.message);
@@ -39,8 +48,8 @@ export async function syncFantasyGameweeksFromFixtures(admin: Admin) {
   const fixtures = ((allFixtures ?? []) as FixtureRow[])
     .filter((f) => isFantasyLeagueCompetition(f.competition))
     .sort((a, b) => {
-      const pa = isPostponedFixture(a.status) ? 1 : 0;
-      const pb = isPostponedFixture(b.status) ? 1 : 0;
+      const pa = isPostponedFixture(a.status) || a.date_tbc ? 1 : 0;
+      const pb = isPostponedFixture(b.status) || b.date_tbc ? 1 : 0;
       if (pa !== pb) return pa - pb;
       return new Date(a.kickoff_at).getTime() - new Date(b.kickoff_at).getTime();
     });

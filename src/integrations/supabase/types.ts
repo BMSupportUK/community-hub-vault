@@ -246,6 +246,7 @@ export type Database = {
           away_team: string
           competition: string
           created_at: string
+          date_tbc: boolean
           home_reds: number
           home_score: number | null
           home_team: string
@@ -264,6 +265,7 @@ export type Database = {
           away_team: string
           competition?: string
           created_at?: string
+          date_tbc?: boolean
           home_reds?: number
           home_score?: number | null
           home_team: string
@@ -282,6 +284,7 @@ export type Database = {
           away_team?: string
           competition?: string
           created_at?: string
+          date_tbc?: boolean
           home_reds?: number
           home_score?: number | null
           home_team?: string

@@ -41,6 +41,8 @@ export type FantasyGameweekDTO = {
   homeScore: number | null;
   awayScore: number | null;
   fixtureStatus: string;
+  /** Tie drawn but date/kick-off not confirmed yet. */
+  dateTbc?: boolean;
 };
 
 export type FantasyPickDTO = {
@@ -134,6 +136,7 @@ export function mapGameweek(r: any): FantasyGameweekDTO {
     homeScore: f.home_score ?? null,
     awayScore: f.away_score ?? null,
     fixtureStatus: f.status ?? "SCHEDULED",
+    dateTbc: f.date_tbc === true,
   };
 }
 
@@ -178,7 +181,7 @@ export async function loadGameweeks(admin: any): Promise<FantasyGameweekDTO[]> {
   const { data, error } = await admin
     .from("fantasy_gameweeks")
     .select(
-      "id, gw_number, fixture_id, lock_at, status, fixture:boro_fixtures!inner(competition, home_team, away_team, kickoff_at, home_score, away_score, status)",
+      "id, gw_number, fixture_id, lock_at, status, fixture:boro_fixtures!inner(competition, home_team, away_team, kickoff_at, home_score, away_score, status, date_tbc)",
     )
     .order("gw_number", { ascending: true });
   if (error) throw new Error(error.message);
@@ -196,6 +199,7 @@ export function pickCurrentGameweek(gws: FantasyGameweekDTO[]): string | null {
     (g) =>
       g.status === "upcoming" &&
       new Date(g.lockAt).getTime() > now &&
+      !g.dateTbc &&
       !/postpon|cancel|abandon|suspend/i.test(g.fixtureStatus ?? ""),
   );
   if (open) return open.id;
