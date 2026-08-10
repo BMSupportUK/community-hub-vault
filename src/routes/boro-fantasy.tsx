@@ -1149,6 +1149,7 @@ function SquadBuilder({
             )}
           </div>
         </aside>
+        </div>
       </div>
 
       <PlayerPickerDialog
