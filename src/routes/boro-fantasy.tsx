@@ -1633,7 +1633,7 @@ function SquadRulesTab() {
           {[
             { k: "Budget", v: "None" },
             { k: "Match day", v: "11 players" },
-            { k: "Bench", v: `${FANTASY_BENCH_SIZE} subs (1 per pos)` },
+            { k: "Bench", v: "Per competition" },
             { k: "Deadline", v: "2 hours pre-KO" },
           ].map((s) => (
             <div key={s.k} className="rounded-xl bg-white/15 ring-1 ring-white/20 px-3 py-2">
@@ -1656,8 +1656,18 @@ function SquadRulesTab() {
       <section className="rounded-2xl border border-border/60 bg-card/85 backdrop-blur p-4">
         <h4 className="font-semibold mb-3">Bench cover</h4>
         <p className="text-sm text-muted-foreground mb-3">
-          Your bench carries one sub for every position, so any starter who doesn't play is replaced like-for-like.
+          The number of subs you name matches the real competition's substitute rules, and your bench must always
+          cover every position so any starter who doesn't play is replaced like-for-like.
         </p>
+        <div className="grid gap-2 sm:grid-cols-3 mb-3">
+          {COMPETITION_BENCH_RULES.map((r) => (
+            <div key={r.competition} className="rounded-xl border border-border/60 bg-muted/30 px-3 py-2">
+              <div className="text-[11px] uppercase tracking-wide text-muted-foreground">{r.competition}</div>
+              <div className="font-bold">{r.subs} subs</div>
+            </div>
+          ))}
+        </div>
+        <div className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Minimum cover</div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           {POSITION_ORDER.map((pos) => (
             <div key={pos} className={`rounded-xl border px-3 py-2 ${POS_TINT[pos]}`}>
