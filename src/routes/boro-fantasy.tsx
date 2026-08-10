@@ -1305,6 +1305,11 @@ function PitchView({
     return { pos: r.pos, slots: take };
   });
 
+  // Starters that don't fit the chosen formation (e.g. after switching shape) would
+  // otherwise vanish from the pitch — show them in an overflow row so all 15 of the
+  // squad are always visible and moveable.
+  const overflow = POSITION_ORDER.flatMap((pos) => queues[pos] ?? []);
+
   const dropProps = (handler: (playerId: string) => void) => ({
     onDragOver: (e: ReactDragEvent) => { if (editable) { e.preventDefault(); e.dataTransfer.dropEffect = "move"; } },
     onDrop: (e: ReactDragEvent) => {
@@ -1406,12 +1411,49 @@ function PitchView({
             </div>
           ))}
         </div>
+        {overflow.length > 0 && (
+          <div className="relative mt-4 rounded-xl border border-amber-400/60 bg-amber-500/15 p-2">
+            <div className="mb-2 text-[10px] font-bold uppercase tracking-wide text-amber-200">
+              Not in this formation — move to the bench or swap into a slot
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {overflow.map((id) => {
+                const p = playerById.get(id);
+                if (!p) return null;
+                return (
+                  <div
+                    key={id}
+                    draggable={editable}
+                    onDragStart={(e) => e.dataTransfer.setData("text/fantasy-player", id)}
+                    className="min-w-[68px] max-w-[120px] flex-1 rounded-xl border border-white/40 bg-slate-950/70 px-1.5 py-2 text-center"
+                  >
+                    <div className="flex items-center justify-center gap-1">
+                      <span className={`rounded-md border px-1 text-[10px] font-bold ${POS_TINT[p.position]}`}>{POSITION_SHORT[p.position]}</span>
+                    </div>
+                    <div className="mt-1 line-clamp-2 min-h-[24px] break-words text-[10px] font-semibold leading-tight text-white">{p.name}</div>
+                    <div className="text-[10px] tabular-nums text-white/70">{money(p.valueM)}</div>
+                    {editable && (
+                      <div className="mt-1 flex items-center justify-center gap-1">
+                        <button type="button" title="Move to bench" onClick={() => onBench(p.id)} className="rounded p-0.5 text-white/60 hover:text-white">
+                          <ArrowDown className="size-3" />
+                        </button>
+                        <button type="button" title="Remove" onClick={() => onRemove(p.id)} className="rounded p-0.5 text-white/60 hover:text-destructive">
+                          <X className="size-3" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="p-3 border-t border-border/60" {...dropProps(onDropBench)}>
         <div className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Bench ({bench.length}/{FANTASY_BENCH_SIZE}) — first to come on, top left</div>
         <div className="flex flex-wrap gap-2">
-          {BENCH_SLOT_LABELS.map((slotLabel, i) => {
+          {Array.from({ length: Math.max(BENCH_SLOT_LABELS.length, bench.length) }, (_, i) => BENCH_SLOT_LABELS[i] ?? "Sub").map((slotLabel, i) => {
             const id = bench[i];
             const p = id ? playerById.get(id) : undefined;
             return (
