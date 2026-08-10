@@ -15,6 +15,9 @@ import { Input } from "@/components/ui/input";
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
 import { WinnersTab } from "@/components/app/WinnersTab";
 import { LandingHeader } from "@/components/LandingHeader";
 import { IconRail } from "@/components/app/IconRail";
@@ -567,7 +570,21 @@ function SquadBuilder({
   canPlay: boolean;
   onSave: (p: SavePayload) => Promise<void>;
 }) {
-  const gw = state.gameweeks.find((g) => g.id === state.currentGameweekId) ?? null;
+  // Managers can work ahead: any gameweek that's still open (upcoming and not
+  // past its lock time) can be picked from the dropdown.
+  const openGameweeks = useMemo(
+    () =>
+      state.gameweeks
+        .filter((g) => g.status === "upcoming" && new Date(g.lockAt).getTime() > Date.now())
+        .sort((a, b) => new Date(a.kickoffAt).getTime() - new Date(b.kickoffAt).getTime()),
+    [state.gameweeks],
+  );
+  const [gwId, setGwId] = useState<string>(state.currentGameweekId ?? "");
+  useEffect(() => {
+    const valid = state.gameweeks.some((g) => g.id === gwId);
+    if (!valid) setGwId(state.currentGameweekId ?? openGameweeks[0]?.id ?? "");
+  }, [state.currentGameweekId, state.gameweeks, openGameweeks, gwId]);
+  const gw = state.gameweeks.find((g) => g.id === gwId) ?? null;
   const existing = gw ? state.squads.find((s) => s.gameweekId === gw.id) : undefined;
   const playerById = useMemo(() => new Map(state.players.map((p) => [p.id, p])), [state.players]);
 
