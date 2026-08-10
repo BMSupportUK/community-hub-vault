@@ -1272,8 +1272,15 @@ function SquadBuilder({
               }}
               onBench={benchPlayer}
               onRemove={removePlayer}
-              onCaptain={(id) => setCaptainId(id)}
-              onVice={(id) => setViceId(id)}
+              onCaptain={(id) => {
+                setCaptainId(id);
+                // A player can't wear both armbands.
+                if (viceId === id) setViceId("");
+              }}
+              onVice={(id) => {
+                setViceId(id);
+                if (captainId === id) setCaptainId("");
+              }}
               gw={gw}
           />
         </div>
