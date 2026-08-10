@@ -1029,7 +1029,7 @@ function SquadBuilder({
               minutesByPlayer={minutesByPlayer.size ? minutesByPlayer : undefined}
               autoSubbedIds={autoSubbedIds}
               onSlotOpen={(pos, replaceId) => setPicker({ mode: "xi", pos, replaceId })}
-              onBenchSlotOpen={() => setPicker({ mode: "bench" })}
+              onBenchSlotOpen={(benchIndex) => setPicker({ mode: "bench", benchIndex })}
               onDropStart={(playerId, replaceId) => {
                 const p = playerById.get(playerId);
                 if (p) startPlayer(p, replaceId);
