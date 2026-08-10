@@ -16,8 +16,12 @@ export const FANTASY_LEAGUE_COMPETITIONS = [
 export function isFantasyLeagueCompetition(competition: string | null | undefined): boolean {
   const c = (competition ?? "").toLowerCase().trim();
   if (!c) return false;
-  if (/(cup|trophy|friendl|play[- ]?off|shield|europa|champions league|conference league|papa|checkatrade)/.test(c)) return false;
-  return /championship|premier league|league one|league two|efl league/.test(c);
+  // Friendlies and non-first-team games are never gameweeks.
+  if (/friendl|testimonial|trophy tour|u2\d|under[- ]?2\d|academy|youth|reserves|women/.test(c)) return false;
+  // League games, cup ties and play-offs all count.
+  return /championship|premier league|league one|league two|efl league|sky bet|carabao|league cup|fa cup|efl trophy|papa|vertu|bristol street|checkatrade|play[- ]?off/.test(
+    c,
+  );
 }
 /** Default bench size (EFL competitions name 7 subs). */
 export const FANTASY_BENCH_SIZE = 7;
