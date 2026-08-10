@@ -264,7 +264,7 @@ async function syncFixtures() {
   // monthly pages if BBC pre-list the next match).
   const dedup = new Map<string, ParsedFixture>();
   for (const fx of scraped) {
-    const key = `${norm(fx.home_team)}|${norm(fx.away_team)}|${new Date(fx.kickoff_at).toISOString().slice(0, 10)}`;
+    const key = `${compBucket(fx.competition)}|${norm(fx.home_team)}|${norm(fx.away_team)}|${new Date(fx.kickoff_at).toISOString().slice(0, 10)}`;
     if (!dedup.has(key)) dedup.set(key, fx);
   }
   const unique = [...dedup.values()];
@@ -293,14 +293,14 @@ async function syncFixtures() {
     .select("id, competition, home_team, away_team, kickoff_at, venue, status, date_tbc");
   const byTeams = new Map<string, ExistingRow>();
   for (const f of (existing ?? []) as ExistingRow[]) {
-    byTeams.set(`${norm(f.home_team)}|${norm(f.away_team)}`, f);
+    byTeams.set(`${compBucket(f.competition)}|${norm(f.home_team)}|${norm(f.away_team)}`, f);
   }
 
   const inserted: string[] = [];
   const updated: string[] = [];
   const errors: string[] = [];
   for (const fx of competitive) {
-    const teamKey = `${norm(fx.home_team)}|${norm(fx.away_team)}`;
+    const teamKey = `${compBucket(fx.competition)}|${norm(fx.home_team)}|${norm(fx.away_team)}`;
     const newKickoff = new Date(fx.kickoff_at).toISOString();
     const existingRow = byTeams.get(teamKey);
 
