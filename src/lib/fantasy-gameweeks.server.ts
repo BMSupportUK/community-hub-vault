@@ -26,7 +26,7 @@ export async function syncFantasyGameweeksFromFixtures(admin: Admin) {
   if (fxErr) throw new Error(fxErr.message);
   if (gwErr) throw new Error(gwErr.message);
 
-  // League games only — cups, play-offs and friendlies are never gameweeks.
+  // Competitive fixtures only — league, cups and play-offs; no friendlies.
   const fixtures = ((allFixtures ?? []) as FixtureRow[])
     .filter((f) => isFantasyLeagueCompetition(f.competition))
     .sort((a, b) => new Date(a.kickoff_at).getTime() - new Date(b.kickoff_at).getTime());

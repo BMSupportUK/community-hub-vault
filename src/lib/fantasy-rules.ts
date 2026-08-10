@@ -16,8 +16,12 @@ export const FANTASY_LEAGUE_COMPETITIONS = [
 export function isFantasyLeagueCompetition(competition: string | null | undefined): boolean {
   const c = (competition ?? "").toLowerCase().trim();
   if (!c) return false;
-  if (/(cup|trophy|friendl|play[- ]?off|shield|europa|champions league|conference league|papa|checkatrade)/.test(c)) return false;
-  return /championship|premier league|league one|league two|efl league/.test(c);
+  // Friendlies and non-first-team games are never gameweeks.
+  if (/friendl|testimonial|trophy tour|u2\d|under[- ]?2\d|academy|youth|reserves|women/.test(c)) return false;
+  // League games, cup ties and play-offs all count.
+  return /championship|premier league|league one|league two|efl league|sky bet|carabao|league cup|fa cup|efl trophy|papa|vertu|bristol street|checkatrade|play[- ]?off/.test(
+    c,
+  );
 }
 /** Default bench size (EFL competitions name 7 subs). */
 export const FANTASY_BENCH_SIZE = 7;
@@ -161,7 +165,7 @@ export const SQUAD_RULES: { title: string; body: string }[] = [
   { title: "Captain & vice", body: "Your captain scores double. If the captain doesn't play a minute, the vice-captain doubles instead. Both must start." },
   { title: "Change your team freely", body: "You can change your 11 and your bench as often as you like every gameweek — there are no transfers and no points hits." },
   { title: "Deadline", body: "Entries lock 2 hours before kick-off. After that your team is fixed for that gameweek." },
-  { title: "League games only", body: "Gameweeks are Middlesbrough league fixtures only — cup ties, play-offs and friendlies are never part of the game." },
+  { title: "Competitive games only", body: "Gameweeks cover every competitive Middlesbrough first-team fixture — league games, cup ties and play-offs. Friendlies, testimonials and academy games are never part of the game." },
   { title: "Game time on show", body: "Once a match finishes the pitch view shows how many minutes each of your players actually played, so you can see who started, who came on and who didn't feature." },
   { title: "Scoring & prizes", body: "Only Middlesbrough players score. Points are added automatically once each match finishes — see the Scoring tab for the full breakdown." },
 ];
