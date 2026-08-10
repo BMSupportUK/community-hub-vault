@@ -46,6 +46,8 @@ export const FANTASY_BENCH_SIZE = 7;
 export const FANTASY_SQUAD_SIZE = 11 + FANTASY_BENCH_SIZE;
 /** Squad locks this many minutes before kick-off. */
 export const FANTASY_LOCK_MINUTES = 120;
+/** The bench must always include at least this many goalkeepers. */
+export const FANTASY_BENCH_MIN_GK = 1;
 
 export type FantasyPosition = "gk" | "def" | "mid" | "fwd";
 
@@ -64,18 +66,20 @@ export const POSITION_SHORT: Record<FantasyPosition, string> = {
 export const POSITION_ORDER: FantasyPosition[] = ["gk", "def", "mid", "fwd"];
 
 /**
- * Bench cover applies to Championship and cup games only. There is no minimum
- * position cover — the manager picks their own 11 and subs.
+ * Bench cover applies to Championship and cup games only. The manager picks
+ * their own 11 and subs, with the single requirement of a back-up goalkeeper.
  */
 export type BenchRules = {
   /** Exact number of subs a manager names. */
   size: number;
   /** Competition label these rules came from. */
   competition: string;
+  /** Minimum goalkeepers required on the bench. */
+  minGk: number;
 };
 
 export function benchRulesFor(competition: string | null | undefined): BenchRules {
-  return { size: FANTASY_BENCH_SIZE, competition: competition?.trim() || "Championship" };
+  return { size: FANTASY_BENCH_SIZE, competition: competition?.trim() || "Championship", minGk: FANTASY_BENCH_MIN_GK };
 }
 
 /** Total squad size (XI + bench) for a competition. */
@@ -161,7 +165,7 @@ export function formatWindowDate(iso: string): string {
 export const SQUAD_RULES: { title: string; body: string }[] = [
   { title: "No budget", body: "There's no budget and no player prices — pick whoever you fancy from the current Middlesbrough squad." },
   { title: "Match day 11", body: "Each gameweek you name a match day 11 in a legal formation. Only Middlesbrough players available for that fixture can be picked — departed and loaned-out players can't be selected." },
-  { title: "Sub bench", body: `Bench cover applies to Championship and cup games — name ${FANTASY_BENCH_SIZE} subs. You pick your own 11 and subs, so there's no minimum position cover.` },
+  { title: "Sub bench", body: `Bench cover applies to Championship and cup games — name ${FANTASY_BENCH_SIZE} subs, and at least ${FANTASY_BENCH_MIN_GK} of them must be a goalkeeper. Otherwise you pick your own 11 and subs, with no other position cover.` },
   { title: "Subs score too", body: "Any starter who doesn't play scores 0. A sub who comes on is scored on the sub points system (+1 for coming on, +1 for 30+ minutes, +1 for a goal or assist) on top of their match stats — unless they play most of the game (60+ minutes), when they're scored exactly like a starter with no sub bonuses. Either way the points are added to your gameweek total. Subs who stay on the bench score 0." },
   { title: "Captain & vice", body: "Your captain scores double. If the captain doesn't play a minute, the vice-captain doubles instead. Both must start." },
   { title: "Change your team freely", body: "You can change your 11 and your bench as often as you like every gameweek — there are no transfers and no points hits." },
