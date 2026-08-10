@@ -1382,7 +1382,7 @@ function PlayerPickerDialog({
 function PitchView({
   formation, onFormationChange, editable, playerById, starters, bench, captainId, viceId,
   benchSize, pointsByPlayer, minutesByPlayer, autoSubbedIds, onDropStart, onDropBench, onBench, onRemove, onCaptain, onVice,
-  onSlotOpen, onBenchSlotOpen,
+  onSlotOpen, onBenchSlotOpen, gw,
 }: {
   formation: FormationKey;
   onFormationChange: (f: FormationKey) => void;
@@ -1404,6 +1404,7 @@ function PitchView({
   onRemove: (id: string) => void;
   onCaptain: (id: string) => void;
   onVice: (id: string) => void;
+  gw?: FantasyGameweekDTO;
 }) {
   const rows = formationRows(formation);
   const meta = FORMATIONS[formation];
