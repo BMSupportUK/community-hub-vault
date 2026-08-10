@@ -55,7 +55,7 @@ export const Route = createFileRoute("/boro-fantasy")({
 
 type GuestSession = { guestId: string; email: string; pin: string; displayName: string; teamName?: string };
 const GUEST_KEY = "fantasy_guest_session";
-const BENCH_SLOT_LABELS = ["Sub", "Sub", "Sub", "Sub"] as const;
+const BENCH_SLOT_LABELS = ["Replacement GK", "Sub", "Sub", "Sub"] as const;
 
 const kickoffLabel = (iso: string) =>
   new Date(iso).toLocaleString(undefined, { weekday: "short", day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
@@ -705,7 +705,8 @@ function SquadBuilder({
   const posQuota = useMemo(() => {
     const c = counts as Record<FantasyPosition, number>;
     return {
-      gk: c.gk + benchRules.size,
+      // One starting GK + one replacement GK (sub 1). Other positions can fill the rest of the bench.
+      gk: c.gk + 1,
       def: c.def + benchRules.size,
       mid: c.mid + benchRules.size,
       fwd: c.fwd + benchRules.size,
@@ -763,7 +764,9 @@ function SquadBuilder({
 
   // Position pop-box picker: either filling/swapping an XI slot, or a bench slot.
   const [picker, setPicker] = useState<
-    { mode: "xi"; pos: FantasyPosition; replaceId?: string } | { mode: "bench" } | null
+    | { mode: "xi"; pos: FantasyPosition; replaceId?: string }
+    | { mode: "bench"; benchIndex: number }
+    | null
   >(null);
 
   // Only highlight Save when something actually differs from the saved squad.
@@ -805,6 +808,12 @@ function SquadBuilder({
 
   function benchPlayer(id: string) {
     if (!editable) return;
+    const p = playerById.get(id);
+    const benchHasGk = byPos(selected, "gk").some((x) => x !== id && !starters.includes(x));
+    if (p && p.position !== "gk" && !benchHasGk) {
+      toast.error("Sub 1 must be the replacement goalkeeper — pick a GK first.");
+      return;
+    }
     setStarters((prev) => prev.filter((x) => x !== id));
     if (captainId === id) setCaptainId("");
     if (viceId === id) setViceId("");
@@ -835,9 +844,14 @@ function SquadBuilder({
     setStarters(st);
   }
 
-  /** Add a player to the bench (or squad only). */
+  /** Add a player to the bench (or squad only). Sub 1 is reserved for the replacement GK. */
   function benchAdd(p: FantasyPlayerDTO) {
     if (!editable) return;
+    const benchHasGk = byPos(selected, "gk").some((id) => !starters.includes(id));
+    if (p.position !== "gk" && !benchHasGk) {
+      toast.error("Sub 1 must be the replacement goalkeeper — pick a GK first.");
+      return;
+    }
     const sel = withPlayer(selected, p);
     if (!sel) return;
     setSelected(sel);
@@ -1026,7 +1040,7 @@ function SquadBuilder({
               minutesByPlayer={minutesByPlayer.size ? minutesByPlayer : undefined}
               autoSubbedIds={autoSubbedIds}
               onSlotOpen={(pos, replaceId) => setPicker({ mode: "xi", pos, replaceId })}
-              onBenchSlotOpen={() => setPicker({ mode: "bench" })}
+              onBenchSlotOpen={(benchIndex) => setPicker({ mode: "bench", benchIndex })}
               onDropStart={(playerId, replaceId) => {
                 const p = playerById.get(playerId);
                 if (p) startPlayer(p, replaceId);
@@ -1089,11 +1103,19 @@ function SquadBuilder({
         onOpenChange={(o) => { if (!o) setPicker(null); }}
         players={state.players}
         selected={selected}
-        position={picker && picker.mode === "xi" ? picker.pos : undefined}
+        position={
+          picker && picker.mode === "xi"
+            ? picker.pos
+            : picker && picker.mode === "bench" && picker.benchIndex === 0
+              ? "gk"
+              : undefined
+        }
         title={
           picker && picker.mode === "xi"
             ? `Pick a ${POSITION_LABEL[picker.pos] ?? POSITION_SHORT[picker.pos]}`
-            : "Pick a substitute"
+            : picker && picker.mode === "bench" && picker.benchIndex === 0
+              ? "Pick a replacement goalkeeper"
+              : "Pick a substitute"
         }
         onPick={(p) => {
           if (!picker) return;
@@ -1271,7 +1293,7 @@ function PitchView({
   minutesByPlayer?: Map<string, number | null>;
   autoSubbedIds?: Set<string>;
   onSlotOpen: (pos: FantasyPosition, replaceId?: string) => void;
-  onBenchSlotOpen: () => void;
+  onBenchSlotOpen: (benchIndex: number) => void;
   onDropStart: (playerId: string, replaceId?: string) => void;
   onDropBench: (playerId: string) => void;
   onBench: (id: string) => void;
@@ -1458,7 +1480,7 @@ function PitchView({
                 {...dropProps(onDropBench)}
                 draggable={editable && !!id}
                 onDragStart={(e) => { if (id) e.dataTransfer.setData("text/fantasy-player", id); }}
-                onClick={() => { if (editable && !id) onBenchSlotOpen(); }}
+                onClick={() => { if (editable && !id) onBenchSlotOpen(i); }}
                 role={editable && !id ? "button" : undefined}
                 className={`min-w-[68px] flex-1 max-w-[110px] sm:max-w-[120px] rounded-xl border px-1.5 py-2 text-center text-xs ${
                   p ? "border-border/70 bg-muted/40" : "cursor-pointer border-dashed border-border/70 bg-muted/20 text-muted-foreground hover:bg-muted/40"
