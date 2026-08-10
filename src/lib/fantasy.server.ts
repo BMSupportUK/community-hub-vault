@@ -51,6 +51,8 @@ export type FantasyPickDTO = {
   points: number | null;
   /** True when this bench player was automatically subbed in for a starter who didn't play. */
   autoSubbed?: boolean;
+  /** Minutes the player actually played in this gameweek's fixture (null = no stats yet). */
+  minutes?: number | null;
 };
 
 export type FantasySquadDTO = {
