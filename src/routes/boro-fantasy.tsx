@@ -22,7 +22,7 @@ import { useAuth } from "@/hooks/use-auth";
 import {
   FANTASY_BENCH_SIZE, FANTASY_SQUAD_SIZE, FORMATION_KEYS, POSITION_ORDER,
   POSITION_SHORT, POSITION_LABEL, SCORING_RULES, BENCH_QUOTA, SQUAD_RULES,
-  FORMATIONS, FANTASY_LOCK_MINUTES, formationCounts, formationRows,
+  FORMATIONS, formationCounts, formationRows,
   type FantasyPosition, type FormationKey,
 } from "@/lib/fantasy-rules";
 import {
