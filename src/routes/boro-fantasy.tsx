@@ -31,7 +31,7 @@ import {
 } from "@/lib/fantasy-rules";
 import {
   getFantasyState, getFantasyLeaderboard, joinFantasyGame, saveFantasySquad, setFantasyTeamName,
-  type FantasyStateDTO, type FantasyPlayerDTO, type FantasyLeaderboardRow,
+  type FantasyStateDTO, type FantasyPlayerDTO, type FantasyLeaderboardRow, type FantasyGameweekDTO,
 } from "@/lib/fantasy.functions";
 import {
   fantasyGuestRegister, fantasyGuestSignInExisting, getPublicFantasyState,
