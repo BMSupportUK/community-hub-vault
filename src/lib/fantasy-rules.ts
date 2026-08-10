@@ -95,8 +95,8 @@ export const COMPETITION_BENCH_RULES: { competition: string; subs: number }[] = 
 
 export type FormationKey =
   | "4-4-2" | "4-3-3" | "4-2-3-1" | "4-1-4-1" | "4-4-1-1"
-  | "3-5-2" | "3-4-3"
-  | "5-3-2" | "5-4-1" | "4-5-1";
+  | "5-3-2" | "5-4-1";
+
 
 /**
  * A pitch row: how many of a position sit on that line (goalkeeper first).
@@ -128,12 +128,10 @@ export const FORMATIONS: Record<
   "4-2-3-1": { def: 4, mid: 5, fwd: 1, label: "Double pivot, No.10", rows: [{ pos: "gk", count: 1 }, { pos: "def", count: 4 }, { pos: "mid", count: 2 }, { pos: "mid", count: 3, alt: "fwd" }, { pos: "fwd", count: 1 }] },
   "4-1-4-1": { def: 4, mid: 5, fwd: 1, label: "Holding midfielder", rows: [{ pos: "gk", count: 1 }, { pos: "def", count: 4 }, { pos: "mid", count: 1 }, { pos: "mid", count: 4 }, { pos: "fwd", count: 1 }] },
   "4-4-1-1": { def: 4, mid: 4, fwd: 2, label: "Second striker in the hole", rows: [{ pos: "gk", count: 1 }, { pos: "def", count: 4 }, { pos: "mid", count: 4 }, { pos: "fwd", count: 1 }, { pos: "fwd", count: 1 }] },
-  "3-5-2": { def: 3, mid: 5, fwd: 2, label: "Wing-backs, two up top", rows: [{ pos: "gk", count: 1 }, { pos: "def", count: 3 }, { pos: "mid", count: 5 }, { pos: "fwd", count: 2 }] },
-  "3-4-3": { def: 3, mid: 4, fwd: 3, label: "Attacking back three", rows: [{ pos: "gk", count: 1 }, { pos: "def", count: 3 }, { pos: "mid", count: 4 }, { pos: "fwd", count: 3 }] },
   "5-3-2": { def: 5, mid: 3, fwd: 2, label: "Solid five at the back", rows: [{ pos: "gk", count: 1 }, { pos: "def", count: 5 }, { pos: "mid", count: 3 }, { pos: "fwd", count: 2 }] },
   "5-4-1": { def: 5, mid: 4, fwd: 1, label: "Low block, lone striker", rows: [{ pos: "gk", count: 1 }, { pos: "def", count: 5 }, { pos: "mid", count: 4 }, { pos: "fwd", count: 1 }] },
-  "4-5-1": { def: 4, mid: 5, fwd: 1, label: "Packed midfield", rows: [{ pos: "gk", count: 1 }, { pos: "def", count: 4 }, { pos: "mid", count: 5 }, { pos: "fwd", count: 1 }] },
 };
+
 export const FORMATION_KEYS = Object.keys(FORMATIONS) as FormationKey[];
 
 export function formationRows(formation: string): FormationRow[] {
