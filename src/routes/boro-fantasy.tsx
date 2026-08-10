@@ -724,6 +724,9 @@ function SquadBuilder({
   }
   if (bench.length !== benchRules.size)
     xiProblems.push(`${benchRules.competition} allows ${benchRules.size} subs — name ${benchRules.size} (you have ${bench.length}).`);
+  const benchGkCount = byPos(bench, "gk").length;
+  if (benchGkCount < benchRules.minGk)
+    xiProblems.push(`Your bench needs at least ${benchRules.minGk} goalkeeper (you have ${benchGkCount}).`);
   if (!captainId || !starters.includes(captainId)) xiProblems.push("Pick a captain from your starting XI.");
   if (!viceId || !starters.includes(viceId)) xiProblems.push("Pick a vice-captain from your starting XI.");
   if (captainId && captainId === viceId) xiProblems.push("Captain and vice-captain must be different.");
