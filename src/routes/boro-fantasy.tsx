@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Shirt, Loader2, Lock, LogOut, Crown, Star, ArrowRightLeft, Trophy,
-  Users, Plus, X, ArrowUp, ArrowDown, ClipboardList, Check, Pencil,
+  Users, Plus, X, ArrowUp, ArrowDown, ClipboardList, Check, Pencil, Trash2,
 } from "lucide-react";
 import type { DragEvent as ReactDragEvent } from "react";
 import { toast } from "sonner";
@@ -15,6 +15,10 @@ import { Input } from "@/components/ui/input";
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
@@ -31,6 +35,7 @@ import {
 } from "@/lib/fantasy-rules";
 import {
   getFantasyState, getFantasyLeaderboard, joinFantasyGame, saveFantasySquad, setFantasyTeamName,
+  adminRemoveFantasyEntrant,
   type FantasyStateDTO, type FantasyPlayerDTO, type FantasyLeaderboardRow, type FantasyGameweekDTO,
 } from "@/lib/fantasy.functions";
 import {
