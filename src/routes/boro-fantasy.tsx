@@ -930,10 +930,16 @@ function SquadBuilder({
 
     // Bump the current occupant of the target slot to the bench if there is one.
     const bumped = st[idx];
+    let nextSel = sel;
     if (bumped) {
       if (captainId === bumped) setCaptainId("");
       if (viceId === bumped) setViceId("");
-      benchAddById(bumped);
+      // Only bench the displaced player if there is room; otherwise drop them
+      // from the squad rather than leaving them selected with no slot.
+      const bumpedPlayer = playerById.get(bumped);
+      const roomOnBench = bumpedPlayer?.position === "gk" ? !bench[0] || bench[0] === bumped : bench.some((x, i) => x === null && i > 0);
+      if (roomOnBench) benchAddById(bumped);
+      else nextSel = nextSel.filter((x) => x !== bumped);
     }
 
     // If replacing a specific player, clear their captaincy/vice.
@@ -943,7 +949,7 @@ function SquadBuilder({
     }
 
     st[idx] = p.id;
-    setSelected(sel);
+    setSelected(nextSel);
     setStarters(st);
   }
 
