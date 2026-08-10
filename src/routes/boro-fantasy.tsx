@@ -1102,6 +1102,7 @@ function SquadBuilder({
         </div>
 
         <div className="grid gap-4 items-start lg:sticky lg:top-4">
+          {gameweekPanel}
           <ManagerCard
             state={state}
             name={name}
