@@ -23,7 +23,8 @@ import {
   benchRulesFor, COMPETITION_BENCH_RULES, FORMATION_KEYS, POSITION_ORDER,
   POSITION_SHORT, POSITION_LABEL, SCORING_RULES, BENCH_QUOTA, SQUAD_RULES,
   FORMATIONS, formationCounts, formationRows,
-  type FantasyPosition, type FormationKey,
+  fantasyCompetitionGroup, FANTASY_GROUP_LABEL,
+  type FantasyPosition, type FormationKey, type FantasyCompetitionGroup,
 } from "@/lib/fantasy-rules";
 import {
   getFantasyState, getFantasyLeaderboard, joinFantasyGame, saveFantasySquad, setFantasyTeamName,
@@ -1378,9 +1379,7 @@ function GameweekList({ state }: { state: FantasyStateDTO }) {
   if (!state.gameweeks.length) {
     return <div className="rounded-2xl border border-border/60 bg-card/80 p-6 text-sm text-muted-foreground">No gameweeks yet.</div>;
   }
-  return (
-    <div className="space-y-2">
-      {state.gameweeks.map((g) => {
+  const renderGw = (g: FantasyStateDTO["gameweeks"][number]) => {
         const squad = state.squads.find((s) => s.gameweekId === g.id);
         const open = openId === g.id;
         const picks = [...(squad?.picks ?? [])].sort((a, b) => a.slotOrder - b.slotOrder);
@@ -1450,6 +1449,32 @@ function GameweekList({ state }: { state: FantasyStateDTO }) {
               </div>
             )}
           </div>
+        );
+  };
+
+  const groups: FantasyCompetitionGroup[] = ["league", "cup", "playoff"];
+  return (
+    <div className="space-y-6">
+      {groups.map((key) => {
+        const items = state.gameweeks.filter((g) => fantasyCompetitionGroup(g.competition) === key);
+        return (
+          <section key={key}>
+            <h4 className="mb-2 flex items-center gap-2 text-sm font-semibold text-primary">
+              {FANTASY_GROUP_LABEL[key]}
+              <span className="text-xs font-normal text-muted-foreground">{items.length}</span>
+            </h4>
+            {items.length === 0 ? (
+              <div className="rounded-2xl border border-border/60 bg-card/60 p-4 text-xs text-muted-foreground">
+                {key === "league"
+                  ? "No league gameweeks yet."
+                  : key === "cup"
+                    ? "No cup ties arranged yet — they're added automatically as soon as the draw is made."
+                    : "No play-off games yet — they're added automatically if Boro qualify."}
+              </div>
+            ) : (
+              <div className="space-y-2">{items.map(renderGw)}</div>
+            )}
+          </section>
         );
       })}
     </div>
