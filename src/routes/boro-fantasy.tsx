@@ -541,7 +541,7 @@ function BoroFantasyPage() {
 // Sidebar
 // ------------------------------------------------------------------
 function ManagerCard({
-  state, name, teamName, canEdit, onEdit, compact,
+  state, name, teamName, canEdit, onEdit, compact, gameweekId,
 }: {
   state?: FantasyStateDTO;
   name: string | null;
@@ -549,8 +549,13 @@ function ManagerCard({
   canEdit?: boolean;
   onEdit?: () => void;
   compact?: boolean;
+  gameweekId?: string;
 }) {
   const total = (state?.squads ?? []).reduce((sum, s) => sum + (s.points ?? 0), 0);
+  const selectedSquad = gameweekId
+    ? state?.squads?.find((s) => s.gameweekId === gameweekId)
+    : undefined;
+  const gamePoints = selectedSquad ? (selectedSquad.points ?? 0) : 0;
   if (compact) {
     return (
       <div className="rounded-2xl border-2 border-primary/40 bg-gradient-to-br from-primary/20 via-primary/10 to-card/80 p-3 shadow-glow backdrop-blur">
@@ -571,7 +576,7 @@ function ManagerCard({
             </div>
             <div className="flex items-center gap-3 text-xs">
               <span className="font-bold text-primary">{total} pts</span>
-              <span className="text-muted-foreground">Changes unlimited</span>
+              <span className="text-muted-foreground">{gamePoints} game pts</span>
             </div>
           </div>
         </div>
@@ -597,8 +602,8 @@ function ManagerCard({
           <dd className="font-bold text-primary">{total}</dd>
         </div>
         <div className="rounded-xl bg-muted/40 p-2">
-          <dt className="text-[11px] text-muted-foreground">Team changes</dt>
-          <dd className="font-bold">Unlimited</dd>
+          <dt className="text-[11px] text-muted-foreground">Game Pts Earned</dt>
+          <dd className="font-bold text-primary">{gamePoints}</dd>
         </div>
       </dl>
     </div>
