@@ -396,6 +396,11 @@ export async function saveSquad(admin: any, owner: Owner, input: SaveSquadInput)
     throw new Error(`${bench.competition} allows ${bench.size} subs — name exactly ${bench.size}.`);
   }
 
+  const benchGk = input.bench.filter((id) => byId.get(id)?.position === "gk").length;
+  if (benchGk < bench.minGk) {
+    throw new Error(`Your bench must include at least ${bench.minGk} goalkeeper.`);
+  }
+
   const xi: Record<FantasyPosition, number> = { gk: 0, def: 0, mid: 0, fwd: 0 };
   for (const id of input.starters) xi[byId.get(id)!.position]++;
   const need = formationCounts(input.formation);
