@@ -1628,12 +1628,12 @@ function PitchView({
                     <div className="mt-1 line-clamp-2 min-h-[24px] break-words text-[10px] font-semibold leading-tight text-white">{p.name}</div>
                     <div className="text-[10px] tabular-nums text-white/70">{p.seasonPoints ?? 0} pts</div>
                     {editable && (
-                      <div className="mt-1 flex items-center justify-center gap-1">
+                      <div className="mt-1 flex items-center justify-center gap-0.5 sm:gap-1">
                         <button type="button" title="Move to bench" onClick={() => onBench(p.id)} className="rounded p-0.5 text-white/60 hover:text-white">
-                          <ArrowDown className="size-3" />
+                          <ArrowDown className="size-2.5 sm:size-3" />
                         </button>
                         <button type="button" title="Remove" onClick={() => onRemove(p.id)} className="rounded p-0.5 text-white/60 hover:text-destructive">
-                          <X className="size-3" />
+                          <X className="size-2.5 sm:size-3" />
                         </button>
                       </div>
                     )}
