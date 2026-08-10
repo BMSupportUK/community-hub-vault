@@ -23,7 +23,8 @@ import {
   benchRulesFor, COMPETITION_BENCH_RULES, FORMATION_KEYS, POSITION_ORDER,
   POSITION_SHORT, POSITION_LABEL, SCORING_RULES, BENCH_QUOTA, SQUAD_RULES,
   FORMATIONS, formationCounts, formationRows,
-  type FantasyPosition, type FormationKey,
+  fantasyCompetitionGroup, FANTASY_GROUP_LABEL,
+  type FantasyPosition, type FormationKey, type FantasyCompetitionGroup,
 } from "@/lib/fantasy-rules";
 import {
   getFantasyState, getFantasyLeaderboard, joinFantasyGame, saveFantasySquad, setFantasyTeamName,
