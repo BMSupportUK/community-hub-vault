@@ -637,11 +637,15 @@ type SavePayload = {
 };
 
 function SquadBuilder({
-  state, canPlay, onSave,
+  state, canPlay, onSave, name, teamName, canEdit, onEdit,
 }: {
   state: FantasyStateDTO;
   canPlay: boolean;
   onSave: (p: SavePayload) => Promise<void>;
+  name: string | null;
+  teamName: string;
+  canEdit: boolean;
+  onEdit: () => void;
 }) {
   // Managers can work ahead: any gameweek that's still open (upcoming and not
   // past its lock time) can be picked from the dropdown.
