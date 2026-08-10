@@ -1069,7 +1069,7 @@ function SquadBuilder({
           <Lock className="size-4" /> This gameweek is locked. Changes will apply to the next one.
         </div>
       )}
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_280px] items-start">
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px] items-start">
         <div className="grid gap-4 items-start">
           <PitchView
               formation={formation}
