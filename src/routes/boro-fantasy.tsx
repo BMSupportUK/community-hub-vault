@@ -1703,14 +1703,28 @@ function ScoringTab() {
           (in bench order) when a starter plays zero minutes. If your captain doesn't play, the vice-captain doubles instead.
         </p>
       </div>
-      <ul className="divide-y divide-border/50">
-        {SCORING_RULES.map((r) => (
-          <li key={r.label} className="flex items-center justify-between py-2 text-sm">
-            <span>{r.label}</span>
-            <span className="font-bold tabular-nums text-primary">{r.points}</span>
-          </li>
-        ))}
-      </ul>
+      <div className="overflow-x-auto -mx-2 px-2">
+        <table className="w-full min-w-[520px] text-sm">
+          <thead>
+            <tr className="text-left text-xs uppercase tracking-wide text-muted-foreground border-b border-border/60">
+              <th className="py-2 pr-3 font-semibold">Action</th>
+              <th className="py-2 px-3 font-semibold whitespace-nowrap">Min game time</th>
+              <th className="py-2 px-3 font-semibold text-right whitespace-nowrap">Match day 11</th>
+              <th className="py-2 pl-3 font-semibold text-right whitespace-nowrap">Subs</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border/50">
+            {SCORING_RULES.map((r) => (
+              <tr key={r.label}>
+                <td className="py-2 pr-3">{r.label}</td>
+                <td className="py-2 px-3 text-muted-foreground tabular-nums whitespace-nowrap">{r.minTime}</td>
+                <td className="py-2 px-3 text-right font-bold tabular-nums text-primary">{r.starter}</td>
+                <td className="py-2 pl-3 text-right font-bold tabular-nums text-primary">{r.sub}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
       <div className="text-sm text-muted-foreground">
         Squad size, budget, formations and deadlines all live on the <span className="font-semibold text-foreground">Squad rules</span> tab.
       </div>

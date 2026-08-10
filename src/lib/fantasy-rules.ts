@@ -165,28 +165,34 @@ export const SQUAD_RULES: { title: string; body: string }[] = [
   { title: "Scoring & prizes", body: "Only Middlesbrough players score. Points are added automatically once each match finishes — see the Scoring tab for the full breakdown." },
 ];
 
-export const SCORING_RULES: { label: string; points: string }[] = [
-  { label: "Played up to 60 minutes", points: "1" },
-  { label: "Played 60+ minutes", points: "2" },
-  { label: "Named starter who doesn't play", points: "0" },
-  { label: "Sub comes off the bench (appearance)", points: "+1" },
-  { label: "Sub plays 30+ minutes", points: "+1" },
-  { label: "Sub scores or assists", points: "+1" },
-  { label: "Sub plays 60+ minutes (most of the game)", points: "scored as a starter, no sub bonuses" },
-  { label: "Sub who stays on the bench", points: "0" },
-  { label: "Goal — goalkeeper or defender", points: "6" },
-  { label: "Goal — midfielder", points: "5" },
-  { label: "Goal — forward", points: "4" },
-  { label: "Assist", points: "3" },
-  { label: "Clean sheet — goalkeeper or defender (60+ mins)", points: "4" },
-  { label: "Clean sheet — midfielder (60+ mins)", points: "1" },
-  { label: "Every 3 saves — goalkeeper", points: "1" },
-  { label: "Penalty save", points: "5" },
-  { label: "Penalty miss", points: "-2" },
-  { label: "Every 2 goals conceded — goalkeeper or defender", points: "-1" },
-  { label: "Yellow card", points: "-1" },
-  { label: "Red card", points: "-3" },
-  { label: "Own goal", points: "-2" },
-  { label: "Man of the match bonus (awarded by admin)", points: "3" },
-  { label: "Captain", points: "double points" },
+/**
+ * Scoring split into columns: what the action is, the minimum game time needed
+ * for it, then what a match day 11 starter earns and what a sub earns.
+ */
+export const SCORING_RULES: {
+  label: string;
+  minTime: string;
+  starter: string;
+  sub: string;
+}[] = [
+  { label: "Appearance", minTime: "1+ min", starter: "1", sub: "1" },
+  { label: "Played most of the game", minTime: "60+ mins", starter: "2", sub: "2 (scored as a starter — no sub bonuses)" },
+  { label: "Impact sub — time on the pitch", minTime: "30+ mins", starter: "—", sub: "+1" },
+  { label: "Impact sub — goal or assist", minTime: "1+ min", starter: "—", sub: "+1" },
+  { label: "Named but doesn't get on", minTime: "0 mins", starter: "0", sub: "0" },
+  { label: "Goal — goalkeeper or defender", minTime: "1+ min", starter: "6", sub: "6" },
+  { label: "Goal — midfielder", minTime: "1+ min", starter: "5", sub: "5" },
+  { label: "Goal — forward", minTime: "1+ min", starter: "4", sub: "4" },
+  { label: "Assist", minTime: "1+ min", starter: "3", sub: "3" },
+  { label: "Clean sheet — goalkeeper or defender", minTime: "60+ mins", starter: "4", sub: "4" },
+  { label: "Clean sheet — midfielder", minTime: "60+ mins", starter: "1", sub: "1" },
+  { label: "Every 3 saves — goalkeeper", minTime: "1+ min", starter: "1", sub: "1" },
+  { label: "Penalty save", minTime: "1+ min", starter: "5", sub: "5" },
+  { label: "Penalty miss", minTime: "1+ min", starter: "-2", sub: "-2" },
+  { label: "Every 2 goals conceded — goalkeeper or defender", minTime: "1+ min", starter: "-1", sub: "-1" },
+  { label: "Yellow card", minTime: "1+ min", starter: "-1", sub: "-1" },
+  { label: "Red card", minTime: "1+ min", starter: "-3", sub: "-3" },
+  { label: "Own goal", minTime: "1+ min", starter: "-2", sub: "-2" },
+  { label: "Man of the match bonus (awarded by admin)", minTime: "1+ min", starter: "3", sub: "3" },
+  { label: "Captain (vice if captain doesn't play)", minTime: "1+ min", starter: "double points", sub: "—" },
 ];
