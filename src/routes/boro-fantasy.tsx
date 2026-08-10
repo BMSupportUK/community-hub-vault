@@ -1020,7 +1020,7 @@ function SquadBuilder({
                 </Select>
               </div>
             )}
-            {gw && (
+            {gw && !gw.dateTbc && (
               <div className="mt-3">
                 <DigitalLockCountdown lockAt={gw.lockAt} compact />
               </div>
