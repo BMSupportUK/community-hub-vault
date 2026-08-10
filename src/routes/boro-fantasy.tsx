@@ -912,6 +912,7 @@ function SquadBuilder({
               bench={bench}
               captainId={captainId}
               viceId={viceId}
+              benchSize={benchRules.size}
               pointsByPlayer={hasGwPoints ? pointsByPlayer : undefined}
               autoSubbedIds={autoSubbedIds}
               onDropStart={(playerId, replaceId) => {
