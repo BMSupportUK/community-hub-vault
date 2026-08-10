@@ -42,10 +42,47 @@ export const POSITION_SHORT: Record<FantasyPosition, string> = {
 export const POSITION_ORDER: FantasyPosition[] = ["gk", "def", "mid", "fwd"];
 
 /**
- * The bench covers every position, so any starter who doesn't play can be
- * replaced by a like-for-like sub: 1 GK, 1 DEF, 1 MID and 1 FWD.
+ * The bench must cover every position, so any starter who doesn't play can be
+ * replaced like-for-like: at least 1 GK, 1 DEF, 1 MID and 1 FWD.
  */
 export const BENCH_QUOTA: Record<FantasyPosition, number> = { gk: 1, def: 1, mid: 1, fwd: 1 };
+
+/**
+ * Real competitions allow different numbers of named substitutes, so the bench
+ * size follows the competition of that gameweek's fixture.
+ */
+export type BenchRules = {
+  /** Exact number of subs a manager names. */
+  size: number;
+  /** Minimum subs per position (the rest are free choice). */
+  min: Record<FantasyPosition, number>;
+  /** Competition label these rules came from. */
+  competition: string;
+};
+
+const COMPETITION_BENCH_SIZE: { test: RegExp; size: number }[] = [
+  { test: /premier league/, size: 9 },
+  { test: /championship/, size: 7 },
+  { test: /league one|league two|efl league/, size: 7 },
+];
+
+export function benchRulesFor(competition: string | null | undefined): BenchRules {
+  const c = (competition ?? "").toLowerCase().trim();
+  const size = COMPETITION_BENCH_SIZE.find((r) => r.test.test(c))?.size ?? FANTASY_BENCH_SIZE;
+  return { size, min: { ...BENCH_QUOTA }, competition: competition?.trim() || "Championship" };
+}
+
+/** Total squad size (XI + bench) for a competition. */
+export function squadSizeFor(competition: string | null | undefined): number {
+  return 11 + benchRulesFor(competition).size;
+}
+
+/** Named substitutes allowed per competition, for the rules tab. */
+export const COMPETITION_BENCH_RULES: { competition: string; subs: number }[] = [
+  { competition: "Sky Bet Championship", subs: benchRulesFor("Championship").size },
+  { competition: "League One / League Two", subs: benchRulesFor("League One").size },
+  { competition: "Premier League", subs: benchRulesFor("Premier League").size },
+];
 
 export type FormationKey =
   | "4-4-2" | "4-3-3" | "4-2-3-1" | "4-1-4-1" | "4-4-1-1"
