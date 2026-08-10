@@ -324,6 +324,30 @@ export async function syncFantasyScoring(): Promise<{
         if (lockErr) errors.push(`lock gw${raw['gw_number']}: ${lockErr.message}`);
         else locked += 1;
       }
+
+      // In-play: pull whatever ESPN has so far so the pitch view and points
+      // update minute-by-minute during the game. The gameweek stays "locked"
+      // (not final) until the fixture actually finishes.
+      const koMs = Date.parse(fx.kickoff_at);
+      const inPlayWindow =
+        Number.isFinite(koMs) && nowMs >= koMs - 5 * 60_000 && nowMs <= koMs + 4 * 3600_000;
+      if (!inPlayWindow) continue;
+
+      const liveRows = await fetchFantasyStatsForFixture(fx, players, { live: true });
+      if (!liveRows || liveRows.length === 0) continue;
+
+      const { error: liveUpErr } = await supabaseAdmin
+        .from("fantasy_player_stats")
+        .upsert(liveRows as never, { onConflict: "fixture_id,player_id" });
+      if (liveUpErr) {
+        errors.push(`live stats gw${raw['gw_number']}: ${liveUpErr.message}`);
+        continue;
+      }
+      const { error: liveScoreErr } = await supabaseAdmin.rpc("fantasy_score_gameweek" as never, {
+        _gameweek_id: raw['id'],
+      } as never);
+      if (liveScoreErr) errors.push(`live score gw${raw['gw_number']}: ${liveScoreErr.message}`);
+      else live.push(`gw${raw['gw_number']} (${liveRows.length} players)`);
       continue;
     }
 
