@@ -2,7 +2,8 @@
 import {
   benchRulesFor,
   FORMATIONS,
-  formationCounts,
+  formationPositionRange,
+  POSITION_SHORT,
   isFantasySeasonStarted,
   type FantasyPosition,
   type FormationKey,
@@ -407,9 +408,19 @@ export async function saveSquad(admin: any, owner: Owner, input: SaveSquadInput)
 
   const xi: Record<FantasyPosition, number> = { gk: 0, def: 0, mid: 0, fwd: 0 };
   for (const id of input.starters) xi[byId.get(id)!.position]++;
-  const need = formationCounts(input.formation);
-  if (xi.gk !== need.gk || xi.def !== need.def || xi.mid !== need.mid || xi.fwd !== need.fwd) {
-    throw new Error(`Your XI doesn't match ${input.formation}: needs 1 GK, ${need.def} DEF, ${need.mid} MID, ${need.fwd} FWD.`);
+  // Flexible rows (e.g. the three behind the striker in 4-2-3-1) accept either
+  // position, so validate against the allowed range rather than exact counts.
+  const range = formationPositionRange(input.formation);
+  for (const pos of ["gk", "def", "mid", "fwd"] as FantasyPosition[]) {
+    const n = xi[pos];
+    const { min, max } = range[pos];
+    if (n < min || n > max) {
+      throw new Error(
+        min === max
+          ? `Your XI doesn't match ${input.formation}: needs ${min} ${POSITION_SHORT[pos]}, you have ${n}.`
+          : `Your XI doesn't match ${input.formation}: needs ${min}–${max} ${POSITION_SHORT[pos]}, you have ${n}.`,
+      );
+    }
   }
 
   // No budget and no transfers: managers rebuild their match day 11 and bench
