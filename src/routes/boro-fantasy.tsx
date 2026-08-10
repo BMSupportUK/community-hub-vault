@@ -1003,11 +1003,17 @@ function SquadBuilder({
             <Button
               onClick={handleSave}
               variant={dirty ? "default" : "outline"}
-              className={dirty ? "" : "opacity-60"}
+              className={
+                dirty && problems.length === 0
+                  ? "bg-gradient-primary text-white shadow-glow ring-2 ring-primary/60 animate-pulse"
+                  : dirty
+                    ? ""
+                    : "opacity-60"
+              }
               title={dirty ? undefined : "No changes to save"}
               disabled={saving || locked || !gw || !canPlay || !dirty || problems.length > 0}
             >
-              {saving ? <Loader2 className="size-4 animate-spin" /> : !dirty ? "Saved" : "Save match day 11"}
+              {saving ? <Loader2 className="size-4 animate-spin" /> : !dirty ? "Saved" : "Save Matchday Squad"}
             </Button>
           </div>
         </div>
@@ -1082,7 +1088,7 @@ function SquadBuilder({
               </p>
             ) : activeChecklist.items.length === 0 ? (
               <p className="text-xs text-emerald-300">
-                Match day 11 and bench are valid — hit <span className="font-semibold">Save match day 11</span>.
+                Match day 11 and bench are valid — hit <span className="font-semibold">Save Matchday Squad</span>.
               </p>
             ) : (
               <ul className="space-y-1.5">
