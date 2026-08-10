@@ -7,6 +7,7 @@ import {
   FORMATIONS,
   SQUAD_QUOTA,
   formationCounts,
+  hasUnlimitedFantasyTransfers,
   isFantasySeasonStarted,
   type FantasyPosition,
   type FormationKey,
