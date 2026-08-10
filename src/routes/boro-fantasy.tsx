@@ -1699,8 +1699,10 @@ function ScoringTab() {
       <div>
         <h3 className="font-display text-lg font-bold flex items-center gap-2"><Trophy className="size-4 text-primary" /> How scoring works</h3>
         <p className="text-sm text-muted-foreground mt-1">
-          Only Middlesbrough players score. Your starting XI counts; bench players are subbed in automatically
-          (in bench order) when a starter plays zero minutes. If your captain doesn't play, the vice-captain doubles instead.
+          Only Middlesbrough players score. Any player in your match day 11 who doesn't get on the pitch scores 0.
+          Subs who come off the bench score too and their points are added to your total — under 60 minutes they use the
+          sub scoring column below, and if they play 60 minutes or more they're scored exactly like a match day 11 player.
+          If your captain doesn't play a minute, the vice-captain doubles instead.
         </p>
       </div>
       <div className="overflow-x-auto -mx-2 px-2">
