@@ -705,7 +705,8 @@ function SquadBuilder({
   const posQuota = useMemo(() => {
     const c = counts as Record<FantasyPosition, number>;
     return {
-      gk: c.gk + benchRules.size,
+      // One starting GK + one replacement GK (sub 1). Other positions can fill the rest of the bench.
+      gk: c.gk + 1,
       def: c.def + benchRules.size,
       mid: c.mid + benchRules.size,
       fwd: c.fwd + benchRules.size,
