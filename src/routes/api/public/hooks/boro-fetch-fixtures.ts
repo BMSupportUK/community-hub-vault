@@ -125,6 +125,16 @@ function norm(s: string) {
   return s.trim().toLowerCase().replace(/\s+/g, " ");
 }
 
+// League / cup / play-off bucket for a competition name. Two ties between the
+// same two clubs in different competitions are different fixtures, so the
+// bucket is part of the identity key.
+function compBucket(comp?: string | null): "league" | "playoff" | "cup" {
+  const c = norm(comp ?? "");
+  if (/play-?off/.test(c)) return "playoff";
+  if (/championship|premier league|league one|league two|efl league|sky bet/.test(c)) return "league";
+  return "cup";
+}
+
 // Competitive first-team fixtures only: league games, cup ties (Carabao/League
 // Cup, FA Cup, EFL Trophy) and play-offs. Friendlies, testimonials, tours,
 // academy/youth/women's games must never be imported.
