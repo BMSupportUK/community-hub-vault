@@ -152,16 +152,17 @@ export function formatWindowDate(iso: string): string {
   return new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
 }
 
-/** Plain-English squad rules, rendered on the Squad rules tab. */
+/** Plain-English game rules, rendered on the Game rules tab. */
 export const SQUAD_RULES: { title: string; body: string }[] = [
   { title: "No budget", body: "There's no budget and no player prices — pick whoever you fancy from the current Middlesbrough squad." },
-  { title: "Match day 11", body: "Each gameweek you name a match day 11 in a legal formation. Only Middlesbrough players available for that fixture can be picked." },
-  { title: "Sub bench", body: `Your bench matches the real competition's named-substitute allowance — ${COMPETITION_BENCH_RULES.map((r) => `${r.competition}: ${r.subs} subs`).join(", ")}. It must always cover every position (at least 1 GK, 1 DEF, 1 MID and 1 FWD) so any starter who doesn't play is replaced like-for-like.` },
+  { title: "Match day 11", body: "Each gameweek you name a match day 11 in a legal formation. Only Middlesbrough players available for that fixture can be picked — departed and loaned-out players can't be selected." },
+  { title: "Sub bench", body: `Your bench matches the real competition's named-substitute allowance — ${COMPETITION_BENCH_RULES.map((r) => `${r.competition}: ${r.subs} subs`).join(", ")}. It must always cover every position (at least 1 GK, 1 DEF, 1 MID and 1 FWD).` },
   { title: "Subs score too", body: "Any starter who doesn't play scores 0. A sub who comes on is scored on the sub points system (+1 for coming on, +1 for 30+ minutes, +1 for a goal or assist) on top of their match stats — unless they play most of the game (60+ minutes), when they're scored exactly like a starter with no sub bonuses. Either way the points are added to your gameweek total. Subs who stay on the bench score 0." },
   { title: "Captain & vice", body: "Your captain scores double. If the captain doesn't play a minute, the vice-captain doubles instead. Both must start." },
   { title: "Change your team freely", body: "You can change your 11 and your bench as often as you like every gameweek — there are no transfers and no points hits." },
   { title: "Deadline", body: "Entries lock 2 hours before kick-off. After that your team is fixed for that gameweek." },
   { title: "League games only", body: "Gameweeks are Middlesbrough league fixtures only — cup ties, play-offs and friendlies are never part of the game." },
+  { title: "Game time on show", body: "Once a match finishes the pitch view shows how many minutes each of your players actually played, so you can see who started, who came on and who didn't feature." },
   { title: "Scoring & prizes", body: "Only Middlesbrough players score. Points are added automatically once each match finishes — see the Scoring tab for the full breakdown." },
 ];
 
