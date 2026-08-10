@@ -777,6 +777,13 @@ function SquadBuilder({
     }
   }, [draftKey, draftLoaded, formation, selected, starters, bench, captainId, viceId]);
 
+  // Captain and vice-captain are the manager's choice and are never reassigned by
+  // the app. They are only cleared when that player is no longer in the XI.
+  useEffect(() => {
+    if (captainId && !starters.includes(captainId)) setCaptainId("");
+    if (viceId && !starters.includes(viceId)) setViceId("");
+  }, [starters, captainId, viceId]);
+
   const counts = formationCounts(formation);
   /** Bench size follows the real substitute rules of this gameweek's competition. */
   const benchRules = useMemo(() => benchRulesFor(gw?.competition), [gw?.competition]);
@@ -888,8 +895,6 @@ function SquadBuilder({
     setSelected((prev) => prev.filter((x) => x !== id));
     setStarters((prev) => prev.map((x) => (x === id ? null : x)));
     setBench((prev) => prev.map((x) => (x === id ? null : x)));
-    if (captainId === id) setCaptainId("");
-    if (viceId === id) setViceId("");
   }
 
   function benchPlayer(id: string) {
@@ -902,12 +907,10 @@ function SquadBuilder({
     }
     setStarters((prev) => prev.map((x) => (x === id ? null : x)));
     benchAddById(id);
-    if (captainId === id) setCaptainId("");
-    if (viceId === id) setViceId("");
   }
 
   /** Put a player into the XI, optionally swapping out whoever holds that slot. */
-  function startPlayer(p: FantasyPlayerDTO, slotIndex?: number, replaceId?: string) {
+  function startPlayer(p: FantasyPlayerDTO, slotIndex?: number, _replaceId?: string) {
     if (!editable) return;
     const sel = withPlayer(selected, p);
     if (!sel) return;
@@ -932,20 +935,12 @@ function SquadBuilder({
     const bumped = st[idx];
     let nextSel = sel;
     if (bumped) {
-      if (captainId === bumped) setCaptainId("");
-      if (viceId === bumped) setViceId("");
       // Only bench the displaced player if there is room; otherwise drop them
       // from the squad rather than leaving them selected with no slot.
       const bumpedPlayer = playerById.get(bumped);
       const roomOnBench = bumpedPlayer?.position === "gk" ? !bench[0] || bench[0] === bumped : bench.some((x, i) => x === null && i > 0);
       if (roomOnBench) benchAddById(bumped);
       else nextSel = nextSel.filter((x) => x !== bumped);
-    }
-
-    // If replacing a specific player, clear their captaincy/vice.
-    if (replaceId) {
-      if (captainId === replaceId) setCaptainId("");
-      if (viceId === replaceId) setViceId("");
     }
 
     st[idx] = p.id;
@@ -997,20 +992,14 @@ function SquadBuilder({
       return;
     }
     const occupant = bench[benchIndex] && bench[benchIndex] !== p.id ? bench[benchIndex]! : null;
-    let sel = withPlayer(
+    const sel = withPlayer(
       occupant ? selected.filter((x) => x !== occupant) : selected,
       p,
     );
     if (!sel) return;
-    if (occupant) {
-      if (captainId === occupant) setCaptainId("");
-      if (viceId === occupant) setViceId("");
-    }
     setSelected(sel);
     // Free the player from wherever they already sat.
     setStarters((prev) => prev.map((x) => (x === p.id ? null : x)));
-    if (captainId === p.id) setCaptainId("");
-    if (viceId === p.id) setViceId("");
     setBench((prev) => {
       const next = prev.map((x) => (x === p.id ? null : x));
       next[benchIndex] = p.id;
@@ -1283,8 +1272,15 @@ function SquadBuilder({
               }}
               onBench={benchPlayer}
               onRemove={removePlayer}
-              onCaptain={(id) => setCaptainId(id)}
-              onVice={(id) => setViceId(id)}
+              onCaptain={(id) => {
+                setCaptainId(id);
+                // A player can't wear both armbands.
+                if (viceId === id) setViceId("");
+              }}
+              onVice={(id) => {
+                setViceId(id);
+                if (captainId === id) setCaptainId("");
+              }}
               gw={gw}
           />
         </div>
