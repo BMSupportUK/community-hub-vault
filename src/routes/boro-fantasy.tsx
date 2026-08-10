@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Shirt, Loader2, Lock, LogOut, Crown, Star, ArrowRightLeft, Trophy,
-  Users, Plus, Minus, X, ArrowUp, ArrowDown, ClipboardList, Check, Pencil,
+  Users, Plus, X, ArrowUp, ArrowDown, ClipboardList, Check, Pencil,
 } from "lucide-react";
 import type { DragEvent as ReactDragEvent } from "react";
 import { toast } from "sonner";
