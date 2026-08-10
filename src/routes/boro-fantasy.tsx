@@ -1577,6 +1577,9 @@ function PitchView({
                     <div className="mx-auto grid size-6 place-items-center rounded-full border border-border/70">
                       <Plus className="size-3" />
                     </div>
+                    <div className="mt-1 text-[10px] font-bold uppercase tracking-wide">
+                      {i === 0 ? "GK" : "ANY"}
+                    </div>
                   </div>
                 )}
               </div>
