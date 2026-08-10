@@ -1523,7 +1523,7 @@ function PitchView({
           </select>
         </div>
         {gw && !gw.dateTbc && (
-          <div className="absolute left-3 top-3 z-10 w-36 sm:w-44 rounded-xl border border-white/30 bg-slate-950/80 p-2 shadow-lg backdrop-blur-sm">
+          <div className="absolute left-2 top-2 sm:left-3 sm:top-3 z-10 w-32 sm:w-44 rounded-lg sm:rounded-xl border border-white/30 bg-slate-950/80 p-1.5 sm:p-2 shadow-lg backdrop-blur-sm">
             <DigitalLockCountdown lockAt={gw.lockAt} compact />
           </div>
         )}
