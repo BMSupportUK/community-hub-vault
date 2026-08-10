@@ -1072,132 +1072,137 @@ const POS_TINT: Record<FantasyPosition, string> = {
   fwd: "bg-rose-500/20 text-rose-300 border-rose-500/40",
 };
 
-function PlayerSidebar({
-  players, selected, starters, quota, editable, onPick,
+type PickerLevel = "first" | "u21" | "u18";
+
+function levelOf(p: FantasyPlayerDTO): PickerLevel {
+  return p.squadLevel === "u21" ? "u21" : p.squadLevel === "u18" ? "u18" : "first";
+}
+
+/**
+ * Pop-box player picker. Opened from an XI slot (filtered to that position) or a
+ * bench slot (every remaining player), split into First team / U21 / U18 tabs.
+ */
+function PlayerPickerDialog({
+  open, onOpenChange, players, selected, position, title, onPick,
 }: {
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
   players: FantasyPlayerDTO[];
   selected: string[];
-  starters: string[];
-  quota: Record<FantasyPosition, number>;
-  editable: boolean;
+  position?: FantasyPosition;
+  title: string;
   onPick: (p: FantasyPlayerDTO) => void;
 }) {
-  const [filter, setFilter] = useState<"all" | FantasyPosition>("all");
   const [q, setQ] = useState("");
-  const [sort, setSort] = useState<"points" | "name">("points");
+  const [level, setLevel] = useState<PickerLevel>("first");
+  useEffect(() => { if (open) { setQ(""); setLevel("first"); } }, [open]);
 
-  const list = useMemo(() => {
+  const pool = useMemo(() => {
     const term = q.trim().toLowerCase();
     return players
-      .filter((p) => (filter === "all" ? true : p.position === filter))
+      .filter((p) => !selected.includes(p.id))
+      .filter((p) => (position ? p.position === position : true))
       .filter((p) => (term ? p.name.toLowerCase().includes(term) : true))
       .sort((a, b) => {
         const unavail = (s: string) => (s === "departed" || s === "loaned_out" ? 1 : 0);
         const gone = unavail(a.status) - unavail(b.status);
         if (gone !== 0) return gone;
-        return sort === "name"
-          ? a.name.localeCompare(b.name)
-          : POSITION_ORDER.indexOf(a.position) - POSITION_ORDER.indexOf(b.position) ||
-            (b.seasonPoints ?? 0) - (a.seasonPoints ?? 0);
+        return (
+          POSITION_ORDER.indexOf(a.position) - POSITION_ORDER.indexOf(b.position) ||
+          (b.seasonPoints ?? 0) - (a.seasonPoints ?? 0)
+        );
       });
-  }, [players, filter, q, sort]);
+  }, [players, selected, position, q]);
+
+  const groups: Record<PickerLevel, FantasyPlayerDTO[]> = useMemo(() => {
+    const g: Record<PickerLevel, FantasyPlayerDTO[]> = { first: [], u21: [], u18: [] };
+    for (const p of pool) g[levelOf(p)].push(p);
+    return g;
+  }, [pool]);
+
+  const list = groups[level];
 
   return (
-    <div className="rounded-2xl border border-border/60 bg-card/85 backdrop-blur overflow-hidden lg:sticky lg:top-4">
-      <div className="p-3 border-b border-border/60 space-y-2">
-        <div className="flex items-center justify-between">
-          <h3 className="font-display font-bold flex items-center gap-2"><Users className="size-4 text-primary" /> Player list</h3>
-          <button
-            type="button"
-            onClick={() => setSort(sort === "points" ? "name" : "points")}
-            className="text-[11px] text-muted-foreground hover:text-foreground"
-          >
-            Sort: {sort === "points" ? "points" : "A–Z"}
-          </button>
-        </div>
-        <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search players…" className="h-8 border-2 border-primary/40" />
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Users className="size-4 text-primary" /> {title}
+          </DialogTitle>
+          <DialogDescription>Tap a player to put them straight into the slot.</DialogDescription>
+        </DialogHeader>
+        <Input
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder="Search players…"
+          className="h-9 border-2 border-primary/40"
+        />
         <div className="flex flex-wrap gap-1">
-          {(["all", ...POSITION_ORDER] as const).map((f) => (
+          {(["first", "u21", "u18"] as const).map((l) => (
             <button
-              key={f}
+              key={l}
               type="button"
-              onClick={() => setFilter(f)}
+              onClick={() => setLevel(l)}
               className={`text-[11px] rounded-full px-2.5 py-1 border transition-colors ${
-                filter === f ? "bg-primary text-primary-foreground border-primary" : "border-border/70 text-muted-foreground hover:bg-muted/50"
+                level === l
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "border-border/70 text-muted-foreground hover:bg-muted/50"
               }`}
             >
-              {f === "all" ? "All" : POSITION_SHORT[f]}
-              {f !== "all" && (
-                <span className="ml-1 opacity-70">
-                  {selected.filter((id) => players.find((p) => p.id === id)?.position === f).length}/{quota[f]}
-                </span>
-              )}
+              {l === "first" ? "First team" : l === "u21" ? "U21" : "U18"}
+              <span className="ml-1 opacity-70">{groups[l].length}</span>
             </button>
           ))}
         </div>
-      </div>
-      <ul className="max-h-[560px] overflow-y-auto divide-y divide-border/40">
-        {list.map((p) => {
-          const isSel = selected.includes(p.id);
-          const isStart = starters.includes(p.id);
-          const full =
-            !isSel &&
-            selected.filter((id) => players.find((x) => x.id === id)?.position === p.position).length >= quota[p.position];
-          return (
-            <li
-              key={p.id}
-              draggable={editable && p.status !== "departed" && p.status !== "loaned_out"}
-              onDragStart={(e) => { e.dataTransfer.setData("text/fantasy-player", p.id); e.dataTransfer.effectAllowed = "move"; }}
-              className={`flex items-center gap-2 px-3 py-2 text-sm ${editable ? "cursor-grab active:cursor-grabbing" : ""} ${
-                isSel ? "bg-primary/10" : full ? "opacity-50" : "hover:bg-muted/40"
-              }`}
-            >
-              <span className={`text-[10px] font-bold rounded-md border px-1.5 py-0.5 ${POS_TINT[p.position]}`}>{POSITION_SHORT[p.position]}</span>
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-1.5 min-w-0">
-                  <span className={`truncate font-medium ${p.status === "departed" || p.status === "loaned_out" ? "line-through decoration-2 decoration-destructive text-muted-foreground" : ""}`}>{p.name}</span>
-                  {(p.squadLevel === "u21" || p.squadLevel === "u18") && (
-                    <span className="shrink-0 rounded-md border border-sky-500/40 bg-sky-500/10 px-1 py-0.5 text-[9px] font-bold uppercase tracking-wide text-sky-500">
-                      {p.squadLevel === "u21" ? "U21" : "U18"}
+        <ul className="max-h-[50vh] overflow-y-auto divide-y divide-border/40 rounded-xl border border-border/60">
+          {list.map((p) => {
+            const unavailable = p.status === "departed" || p.status === "loaned_out";
+            return (
+              <li key={p.id} className="flex items-center gap-2 px-3 py-2 text-sm">
+                <span className={`text-[10px] font-bold rounded-md border px-1.5 py-0.5 ${POS_TINT[p.position]}`}>
+                  {POSITION_SHORT[p.position]}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <span className={`truncate font-medium ${unavailable ? "line-through decoration-2 decoration-destructive text-muted-foreground" : ""}`}>
+                      {p.name}
                     </span>
-                  )}
+                    {(p.squadLevel === "u21" || p.squadLevel === "u18") && (
+                      <span className="shrink-0 rounded-md border border-sky-500/40 bg-sky-500/10 px-1 py-0.5 text-[9px] font-bold uppercase tracking-wide text-sky-500">
+                        {p.squadLevel === "u21" ? "U21" : "U18"}
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-[11px] text-muted-foreground tabular-nums">
+                    <span className="text-foreground/80">{p.seasonPoints ?? 0} pts</span>
+                    {p.status === "loaned_out" ? (
+                      <span className="ml-1 text-destructive uppercase">out on loan{p.loanClub ? ` · ${p.loanClub}` : ""}</span>
+                    ) : (
+                      p.status !== "active" && <span className="ml-1 text-destructive uppercase">{p.status}</span>
+                    )}
+                    {p.status !== "loaned_out" && p.loanFrom && (
+                      <span className="ml-1 text-amber-500 uppercase">on loan from {p.loanFrom}</span>
+                    )}
+                  </div>
                 </div>
-                <div className="text-[11px] text-muted-foreground tabular-nums">
-                  <span className="text-foreground/80">{p.seasonPoints ?? 0} pts</span>
-                  {isSel && <span className="ml-1 text-primary">· {isStart ? "XI" : "bench"}</span>}
-                  {p.status === "loaned_out" ? (
-                    <span className="ml-1 text-destructive uppercase">out on loan{p.loanClub ? ` · ${p.loanClub}` : ""}</span>
-                  ) : (
-                    p.status !== "active" && <span className="ml-1 text-destructive uppercase">{p.status}</span>
-                  )}
-                  {p.status !== "loaned_out" && p.loanFrom && (
-                    <span className="ml-1 text-amber-500 uppercase">on loan from {p.loanFrom}</span>
-                  )}
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => onPick(p)}
-                disabled={!editable || (!isSel && (p.status === "departed" || p.status === "loaned_out"))}
-                title={
-                  p.status === "loaned_out"
-                    ? "Out on loan — cannot be selected"
-                    : p.status === "departed"
-                      ? "Left the club — cannot be selected"
-                      : isSel ? "Remove from squad" : "Add to squad"
-                }
-                className={`shrink-0 grid place-items-center size-7 rounded-lg border transition-colors disabled:opacity-40 ${
-                  isSel ? "border-destructive/50 text-destructive hover:bg-destructive/10" : "border-primary/50 text-primary hover:bg-primary/10"
-                }`}
-              >
-                {isSel ? <Minus className="size-3.5" /> : p.status === "departed" || p.status === "loaned_out" ? <X className="size-3.5 text-destructive" /> : <Plus className="size-3.5" />}
-              </button>
-            </li>
-          );
-        })}
-        {list.length === 0 && <li className="px-3 py-6 text-center text-sm text-muted-foreground">No players match.</li>}
-      </ul>
-    </div>
+                <button
+                  type="button"
+                  onClick={() => onPick(p)}
+                  disabled={unavailable}
+                  title={unavailable ? "Not available for selection" : "Put in this slot"}
+                  className="shrink-0 grid place-items-center size-7 rounded-lg border border-primary/50 text-primary transition-colors hover:bg-primary/10 disabled:opacity-40"
+                >
+                  {unavailable ? <X className="size-3.5 text-destructive" /> : <Plus className="size-3.5" />}
+                </button>
+              </li>
+            );
+          })}
+          {list.length === 0 && (
+            <li className="px-3 py-6 text-center text-sm text-muted-foreground">No players available here.</li>
+          )}
+        </ul>
+      </DialogContent>
+    </Dialog>
   );
 }
 
