@@ -1420,6 +1420,11 @@ function GameweekList({ state }: { state: FantasyStateDTO }) {
             {g.homeScore !== null && g.awayScore !== null && (
               <div className="font-bold tabular-nums">{g.homeScore}–{g.awayScore}</div>
             )}
+            {/postpon|cancel|abandon|suspend/i.test(g.fixtureStatus ?? "") && (
+              <span className="text-[10px] font-bold uppercase rounded-full px-2 py-0.5 border border-amber-400/60 bg-amber-400/10 text-amber-300">
+                Called off — new date TBC
+              </span>
+            )}
             <span className="text-[10px] uppercase rounded-full px-2 py-0.5 border border-border text-muted-foreground">{g.status}</span>
             {squad && (
               <span className="text-sm">
