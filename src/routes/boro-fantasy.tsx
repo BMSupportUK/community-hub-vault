@@ -204,6 +204,37 @@ function BoroFantasyPage() {
   const canPlay = joined && (!!user || !!guest);
   const currentTeamName = (state?.teamName || guest?.teamName || "").trim();
 
+  // Live match? Pull ESPN in-play stats and refresh the pitch view every 30s so
+  // each player's minutes and points update while the game is being played.
+  const liveMatch = useMemo(() => {
+    const now = Date.now();
+    return (state?.gameweeks ?? []).some((g) => {
+      if (g.status === "final") return false;
+      const ko = Date.parse(g.kickoffAt);
+      return Number.isFinite(ko) && now >= ko && now <= ko + 3.5 * 3600_000;
+    });
+  }, [state?.gameweeks]);
+
+  useEffect(() => {
+    if (!liveMatch) return;
+    let cancelled = false;
+    const tick = async () => {
+      try {
+        await fetch("/api/public/hooks/sync-fantasy-scores", { method: "POST" });
+        if (!cancelled) {
+          qc.invalidateQueries({ queryKey: ["fantasy-state"] });
+          qc.invalidateQueries({ queryKey: ["fantasy-leaderboard"] });
+        }
+      } catch { /* ignore */ }
+    };
+    void tick();
+    const id = window.setInterval(tick, 30_000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(id);
+    };
+  }, [liveMatch, qc]);
+
   const [nameDialogOpen, setNameDialogOpen] = useState(false);
   const [nameDraft, setNameDraft] = useState("");
   const [savingName, setSavingName] = useState(false);

@@ -44,6 +44,11 @@ type EspnSummary = {
   header?: {
     competitions?: Array<{
       competitors?: Array<{ homeAway?: string; score?: string; team?: { displayName?: string } }>;
+      status?: {
+        clock?: number;
+        displayClock?: string;
+        type?: { state?: string; completed?: boolean; name?: string };
+      };
     }>;
   };
 };
@@ -121,6 +126,7 @@ async function findEspnEventId(fixture: {
 export async function fetchFantasyStatsForFixture(
   fixture: { id: string; kickoff_at: string; home_team: string; away_team: string },
   players: Array<{ id: string; name: string; position: string }>,
+  opts?: { live?: boolean },
 ): Promise<FantasyStatRow[] | null> {
   const found = await findEspnEventId(fixture);
   if (!found) return null;
@@ -137,6 +143,21 @@ export async function fetchFantasyStatsForFixture(
 
   const boroSide = (summary.rosters ?? []).find((r) => BORO_RE.test(r.team?.displayName ?? ""));
   if (!boroSide?.roster?.length) return null;
+
+  // How far into the match are we? Used so in-play minutes reflect the live
+  // clock instead of assuming a full 90.
+  const status = summary.header?.competitions?.[0]?.status;
+  const completed = !!status?.type?.completed || (status?.type?.state ?? "") === "post";
+  const clockMinute = (() => {
+    const dc = status?.displayClock ?? "";
+    const m = /(\d+)/.exec(dc);
+    if (m?.[1]) return Math.min(120, parseInt(m[1], 10));
+    const v = status?.clock;
+    if (typeof v === "number" && v > 0) return Math.min(120, Math.round(v / 60));
+    return 0;
+  })();
+  const liveMode = !!opts?.live && !completed;
+  const nowMinute = liveMode && clockMinute > 0 ? clockMinute : 90;
 
   // Goals conceded by Boro in this match, from the header scoreline.
   const comps = summary.header?.competitions?.[0]?.competitors ?? [];
@@ -215,10 +236,13 @@ export async function fetchFantasyStatsForFixture(
 
     let minutes = 0;
     if (rp.starter) {
-      minutes = rp.subbedOut ? Math.min(90, subOutMinute.get(athleteId) ?? 90) : 90;
+      minutes = rp.subbedOut
+        ? Math.min(nowMinute, subOutMinute.get(athleteId) ?? nowMinute)
+        : nowMinute;
     } else {
       const inAt = subInMinute.get(athleteId);
-      minutes = inAt != null ? Math.max(1, 90 - inAt) : appearances > 0 ? 1 : 0;
+      const cameOff = rp.subbedOut ? Math.min(nowMinute, subOutMinute.get(athleteId) ?? nowMinute) : nowMinute;
+      minutes = inAt != null ? Math.max(1, cameOff - inAt) : appearances > 0 ? 1 : 0;
     }
     if (minutes <= 0) continue;
 
@@ -258,24 +282,26 @@ export async function syncFantasyScoring(): Promise<{
   ok: boolean;
   locked: number;
   scored: string[];
+  live: string[];
   pending: string[];
   errors: string[];
 }> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const errors: string[] = [];
   const scored: string[] = [];
+  const live: string[] = [];
   const pending: string[] = [];
 
   const { data: gws, error } = await supabaseAdmin
     .from("fantasy_gameweeks")
     .select("id, gw_number, status, lock_at, fixture_id, boro_fixtures!inner(id, kickoff_at, home_team, away_team, status, competition)")
     .order("gw_number", { ascending: true });
-  if (error) return { ok: false, locked: 0, scored, pending, errors: [error.message] };
+  if (error) return { ok: false, locked: 0, scored, live, pending, errors: [error.message] };
 
   const { data: playerRows, error: pErr } = await supabaseAdmin
     .from("fantasy_players")
     .select("id, name, position");
-  if (pErr) return { ok: false, locked: 0, scored, pending, errors: [pErr.message] };
+  if (pErr) return { ok: false, locked: 0, scored, live, pending, errors: [pErr.message] };
   const players = (playerRows ?? []) as Array<{ id: string; name: string; position: string }>;
 
   const nowMs = Date.now();
@@ -300,6 +326,30 @@ export async function syncFantasyScoring(): Promise<{
         if (lockErr) errors.push(`lock gw${raw['gw_number']}: ${lockErr.message}`);
         else locked += 1;
       }
+
+      // In-play: pull whatever ESPN has so far so the pitch view and points
+      // update minute-by-minute during the game. The gameweek stays "locked"
+      // (not final) until the fixture actually finishes.
+      const koMs = Date.parse(fx.kickoff_at);
+      const inPlayWindow =
+        Number.isFinite(koMs) && nowMs >= koMs - 5 * 60_000 && nowMs <= koMs + 4 * 3600_000;
+      if (!inPlayWindow) continue;
+
+      const liveRows = await fetchFantasyStatsForFixture(fx, players, { live: true });
+      if (!liveRows || liveRows.length === 0) continue;
+
+      const { error: liveUpErr } = await supabaseAdmin
+        .from("fantasy_player_stats")
+        .upsert(liveRows as never, { onConflict: "fixture_id,player_id" });
+      if (liveUpErr) {
+        errors.push(`live stats gw${raw['gw_number']}: ${liveUpErr.message}`);
+        continue;
+      }
+      const { error: liveScoreErr } = await supabaseAdmin.rpc("fantasy_score_gameweek" as never, {
+        _gameweek_id: raw['id'],
+      } as never);
+      if (liveScoreErr) errors.push(`live score gw${raw['gw_number']}: ${liveScoreErr.message}`);
+      else live.push(`gw${raw['gw_number']} (${liveRows.length} players)`);
       continue;
     }
 
@@ -339,5 +389,5 @@ export async function syncFantasyScoring(): Promise<{
     scored.push(`gw${raw['gw_number']} (${rows.length} players)`);
   }
 
-  return { ok: errors.length === 0, locked, scored, pending, errors };
+  return { ok: errors.length === 0, locked, scored, live, pending, errors };
 }
