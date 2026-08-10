@@ -21,7 +21,7 @@ import { IconRail } from "@/components/app/IconRail";
 import { useAuth } from "@/hooks/use-auth";
 import {
   benchRulesFor, COMPETITION_BENCH_RULES, FORMATION_KEYS, POSITION_ORDER,
-  POSITION_SHORT, POSITION_LABEL, SCORING_RULES, BENCH_QUOTA, SQUAD_RULES,
+  POSITION_SHORT, POSITION_LABEL, SCORING_RULES, SQUAD_RULES,
   FORMATIONS, formationCounts, formationRows,
   fantasyCompetitionGroup, FANTASY_GROUP_LABEL,
   type FantasyPosition, type FormationKey, type FantasyCompetitionGroup,
@@ -636,16 +636,14 @@ function SquadBuilder({
   /** Bench size follows the real substitute rules of this gameweek's competition. */
   const benchRules = useMemo(() => benchRulesFor(gw?.competition), [gw?.competition]);
   const squadSize = 11 + benchRules.size;
-  /** Match day 11 for the chosen formation plus the bench allowance. */
+  /** Match day 11 for the chosen formation plus the full bench allowance (no minimum cover). */
   const posQuota = useMemo(() => {
     const c = counts as Record<FantasyPosition, number>;
-    const minTotal = POSITION_ORDER.reduce((n, p) => n + benchRules.min[p], 0);
-    const free = Math.max(0, benchRules.size - minTotal);
     return {
-      gk: c.gk + benchRules.min.gk + free,
-      def: c.def + benchRules.min.def + free,
-      mid: c.mid + benchRules.min.mid + free,
-      fwd: c.fwd + benchRules.min.fwd + free,
+      gk: c.gk + benchRules.size,
+      def: c.def + benchRules.size,
+      mid: c.mid + benchRules.size,
+      fwd: c.fwd + benchRules.size,
     } as Record<FantasyPosition, number>;
   }, [formation, benchRules]);
   const byPos = (ids: string[], pos: FantasyPosition) => ids.filter((id) => playerById.get(id)?.position === pos);
@@ -668,10 +666,6 @@ function SquadBuilder({
   }
   if (bench.length !== benchRules.size)
     xiProblems.push(`${benchRules.competition} allows ${benchRules.size} subs — name ${benchRules.size} (you have ${bench.length}).`);
-  for (const pos of POSITION_ORDER) {
-    const n = byPos(bench, pos).length;
-    if (n < benchRules.min[pos]) xiProblems.push(`Bench needs at least ${benchRules.min[pos]} ${POSITION_SHORT[pos]} (you have ${n}).`);
-  }
   if (!captainId || !starters.includes(captainId)) xiProblems.push("Pick a captain from your starting XI.");
   if (!viceId || !starters.includes(viceId)) xiProblems.push("Pick a vice-captain from your starting XI.");
   if (captainId && captainId === viceId) xiProblems.push("Captain and vice-captain must be different.");
@@ -1705,23 +1699,14 @@ function SquadRulesTab() {
       <section className="rounded-2xl border border-border/60 bg-card/85 backdrop-blur p-4">
         <h4 className="font-semibold mb-3">Bench cover</h4>
         <p className="text-sm text-muted-foreground mb-3">
-          The number of subs you name matches the real competition's substitute rules, and your bench must always
-          cover every position so any starter who doesn't play is replaced like-for-like.
+          Bench cover applies to Championship games and cup games only. You choose your own 11 and subs, so there's
+          no minimum position cover to worry about.
         </p>
-        <div className="grid gap-2 sm:grid-cols-3 mb-3">
+        <div className="grid gap-2 sm:grid-cols-2">
           {COMPETITION_BENCH_RULES.map((r) => (
             <div key={r.competition} className="rounded-xl border border-border/60 bg-muted/30 px-3 py-2">
               <div className="text-[11px] uppercase tracking-wide text-muted-foreground">{r.competition}</div>
               <div className="font-bold">{r.subs} subs</div>
-            </div>
-          ))}
-        </div>
-        <div className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Minimum cover</div>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-          {POSITION_ORDER.map((pos) => (
-            <div key={pos} className={`rounded-xl border px-3 py-2 ${POS_TINT[pos]}`}>
-              <div className="text-[11px] uppercase tracking-wide opacity-80">{POSITION_LABEL[pos]} sub</div>
-              <div className="text-lg font-bold">{BENCH_QUOTA[pos]}</div>
             </div>
           ))}
         </div>
