@@ -222,7 +222,7 @@ export async function syncFantasyPlayersFromClub(admin: Admin): Promise<FantasyS
     const row = byMfcId.get(p.mfcPlayerId) ?? byName.get(normName(p.name));
     const sortOrder = i;
     const onLoan = isLoanedOut(p.name);
-    const loanClub = loanedClubByName.get(normName(p.name)) ?? null;
+    const loanClub = loanClubFor(p.name) ?? null;
 
     if (!row) {
       const { data: inserted, error } = await admin
@@ -345,7 +345,7 @@ export async function syncFantasyPlayersFromClub(admin: Admin): Promise<FantasyS
   for (const row of existing) {
     if (!isLoanedOut(row.name)) continue;
     if (row.status_locked) continue;
-    const club = loanedClubByName.get(normName(row.name)) ?? null;
+    const club = loanClubFor(row.name) ?? null;
     if (row.status === "loaned_out" && (row.loan_club ?? null) === club) continue;
     const { error } = await admin
       .from("fantasy_players")
