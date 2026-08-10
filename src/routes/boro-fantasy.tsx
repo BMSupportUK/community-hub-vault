@@ -1619,10 +1619,17 @@ function GameweekList({ state, group }: { state: FantasyStateDTO; group: Fantasy
                   </span>
                 )}
               </div>
-              <div className="text-xs text-muted-foreground">{kickoffLabel(g.kickoffAt)} · {g.competition}</div>
+              <div className="text-xs text-muted-foreground">
+                {g.dateTbc ? "Date to be confirmed" : kickoffLabel(g.kickoffAt)} · {g.competition}
+              </div>
             </div>
             {g.homeScore !== null && g.awayScore !== null && (
               <div className="font-bold tabular-nums">{g.homeScore}–{g.awayScore}</div>
+            )}
+            {g.dateTbc && (
+              <span className="text-[10px] font-bold uppercase rounded-full px-2 py-0.5 border border-sky-400/60 bg-sky-400/10 text-sky-300">
+                Drawn — date TBC
+              </span>
             )}
             {/postpon|cancel|abandon|suspend/i.test(g.fixtureStatus ?? "") && (
               <span className="text-[10px] font-bold uppercase rounded-full px-2 py-0.5 border border-amber-400/60 bg-amber-400/10 text-amber-300">
