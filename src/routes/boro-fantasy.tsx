@@ -1523,32 +1523,25 @@ function GameweekList({ state, group }: { state: FantasyStateDTO; group: Fantasy
         );
   };
 
-  const groups: FantasyCompetitionGroup[] = ["league", "cup", "playoff"];
+  const items = state.gameweeks.filter((g) => fantasyCompetitionGroup(g.competition) === group);
   return (
-    <div className="space-y-6">
-      {groups.map((key) => {
-        const items = state.gameweeks.filter((g) => fantasyCompetitionGroup(g.competition) === key);
-        return (
-          <section key={key}>
-            <h4 className="mb-2 flex items-center gap-2 text-sm font-semibold text-primary">
-              {FANTASY_GROUP_LABEL[key]}
-              <span className="text-xs font-normal text-muted-foreground">{items.length}</span>
-            </h4>
-            {items.length === 0 ? (
-              <div className="rounded-2xl border border-border/60 bg-card/60 p-4 text-xs text-muted-foreground">
-                {key === "league"
-                  ? "No league gameweeks yet."
-                  : key === "cup"
-                    ? "No cup ties arranged yet — they're added automatically as soon as the draw is made."
-                    : "No play-off games yet — they're added automatically if Boro qualify."}
-              </div>
-            ) : (
-              <div className="space-y-2">{items.map(renderGw)}</div>
-            )}
-          </section>
-        );
-      })}
-    </div>
+    <section>
+      <h4 className="mb-2 flex items-center gap-2 text-sm font-semibold text-primary">
+        {FANTASY_GROUP_LABEL[group]}
+        <span className="text-xs font-normal text-muted-foreground">{items.length}</span>
+      </h4>
+      {items.length === 0 ? (
+        <div className="rounded-2xl border border-border/60 bg-card/60 p-4 text-xs text-muted-foreground">
+          {group === "league"
+            ? "No league gameweeks yet."
+            : group === "cup"
+              ? "No cup ties arranged yet — they're added automatically as soon as the draw is made."
+              : "No play-off games yet — they're added automatically if Boro qualify."}
+        </div>
+      ) : (
+        <div className="space-y-2">{items.map(renderGw)}</div>
+      )}
+    </section>
   );
 }
 
