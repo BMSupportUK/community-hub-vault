@@ -1074,7 +1074,7 @@ function SquadBuilder({
               pointsByPlayer={hasGwPoints ? pointsByPlayer : undefined}
               minutesByPlayer={minutesByPlayer.size ? minutesByPlayer : undefined}
               autoSubbedIds={autoSubbedIds}
-              onSlotOpen={(pos, replaceId) => setPicker({ mode: "xi", pos, replaceId })}
+              onSlotOpen={(positions, replaceId) => setPicker({ mode: "xi", positions, replaceId })}
               onBenchSlotOpen={(benchIndex) => setPicker({ mode: "bench", benchIndex })}
               onDropStart={(playerId, replaceId) => {
                 const p = playerById.get(playerId);
@@ -1164,16 +1164,16 @@ function SquadBuilder({
         onOpenChange={(o) => { if (!o) setPicker(null); }}
         players={state.players}
         selected={selected}
-        position={
+        positions={
           picker && picker.mode === "xi"
-            ? picker.pos
+            ? picker.positions
             : picker && picker.mode === "bench" && picker.benchIndex === 0
-              ? "gk"
+              ? ["gk"]
               : undefined
         }
         title={
           picker && picker.mode === "xi"
-            ? `Pick a ${POSITION_LABEL[picker.pos] ?? POSITION_SHORT[picker.pos]}`
+            ? `Pick a ${picker.positions.map((p) => POSITION_LABEL[p] ?? POSITION_SHORT[p]).join(" or ")}`
             : picker && picker.mode === "bench" && picker.benchIndex === 0
               ? "Pick a replacement goalkeeper"
               : "Pick a substitute"
