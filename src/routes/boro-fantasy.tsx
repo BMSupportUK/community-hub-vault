@@ -1749,14 +1749,36 @@ function ScoringTab() {
           If your captain doesn't play a minute, the vice-captain doubles instead.
         </p>
       </div>
+      <Tabs defaultValue="starters">
+        <TabsList className="w-full grid grid-cols-2">
+          <TabsTrigger value="starters">Match day 11</TabsTrigger>
+          <TabsTrigger value="subs">Subs</TabsTrigger>
+        </TabsList>
+        <TabsContent value="starters" className="mt-4">
+          <ScoringBreakdown column="starter" note="Points for players named in your match day 11. A starter who doesn't get on the pitch scores 0." />
+        </TabsContent>
+        <TabsContent value="subs" className="mt-4">
+          <ScoringBreakdown column="sub" note="Points for players who come off the bench under 60 minutes. A sub who plays 60 minutes or more is scored on the match day 11 column instead. Unused subs score 0." />
+        </TabsContent>
+      </Tabs>
+      <div className="text-sm text-muted-foreground">
+        Formations, bench sizes, scoring and deadlines all live on the <span className="font-semibold text-foreground">Game rules</span> tab.
+      </div>
+    </div>
+  );
+}
+
+function ScoringBreakdown({ column, note }: { column: "starter" | "sub"; note: string }) {
+  return (
+    <div className="space-y-3">
+      <p className="text-xs text-muted-foreground">{note}</p>
       <div className="overflow-x-auto -mx-2 px-2">
-        <table className="w-full min-w-[520px] text-sm">
+        <table className="w-full min-w-[380px] text-sm">
           <thead>
             <tr className="text-left text-xs uppercase tracking-wide text-muted-foreground border-b border-border/60">
               <th className="py-2 pr-3 font-semibold">Action</th>
               <th className="py-2 px-3 font-semibold whitespace-nowrap">Min game time</th>
-              <th className="py-2 px-3 font-semibold text-right whitespace-nowrap">Match day 11</th>
-              <th className="py-2 pl-3 font-semibold text-right whitespace-nowrap">Subs</th>
+              <th className="py-2 pl-3 font-semibold text-right whitespace-nowrap">Points</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border/50">
@@ -1764,15 +1786,11 @@ function ScoringTab() {
               <tr key={r.label}>
                 <td className="py-2 pr-3">{r.label}</td>
                 <td className="py-2 px-3 text-muted-foreground tabular-nums whitespace-nowrap">{r.minTime}</td>
-                <td className="py-2 px-3 text-right font-bold tabular-nums text-primary">{r.starter}</td>
-                <td className="py-2 pl-3 text-right font-bold tabular-nums text-primary">{r.sub}</td>
+                <td className="py-2 pl-3 text-right font-bold tabular-nums text-primary">{column === "starter" ? r.starter : r.sub}</td>
               </tr>
             ))}
           </tbody>
         </table>
-      </div>
-      <div className="text-sm text-muted-foreground">
-        Formations, bench sizes, scoring and deadlines all live on the <span className="font-semibold text-foreground">Game rules</span> tab.
       </div>
     </div>
   );
