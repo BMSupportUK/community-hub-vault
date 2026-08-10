@@ -124,22 +124,35 @@ function norm(s: string) {
   return s.trim().toLowerCase().replace(/\s+/g, " ");
 }
 
-// The predictor is LEAGUE fixtures only. Cups (League Cup / Carabao, FA Cup,
-// EFL Trophy, play-offs), friendlies, testimonials and anything else
-// non-league must never be imported.
+// Competitive first-team fixtures only: league games, cup ties (Carabao/League
+// Cup, FA Cup, EFL Trophy) and play-offs. Friendlies, testimonials, tours,
+// academy/youth/women's games must never be imported.
 function isCompetitiveCompetition(comp?: string | null): boolean {
   const c = norm(comp ?? "");
   if (!c) return false;
-  // Explicit non-league / non-competitive exclusions
+  // Explicit non-competitive / non-first-team exclusions
   if (
-    /friendl|testimonial|trophy tour|training|behind closed doors|cup|carabao|efl trophy|papa|checkatrade|vertu|bristol street|play-?off|shield|europa|conference|champions league|u2\d|under[- ]?2\d|academy|youth|reserves|women/.test(
+    /friendl|testimonial|trophy tour|training|behind closed doors|u2\d|under[- ]?2\d|academy|youth|reserves|women/.test(
       c,
     )
   ) {
     return false;
   }
-  // Allowlist: only recognised league competitions
-  return /championship|premier league|league one|league two|efl league|sky bet/.test(c);
+  // Allowlist: recognised league, cup and play-off competitions
+  return /championship|premier league|league one|league two|efl league|sky bet|carabao|league cup|fa cup|efl trophy|papa|vertu|bristol street|checkatrade|play-?off/.test(
+    c,
+  );
+}
+
+// The Wrexham cup tie has already been played and must not be re-imported.
+function isExcludedFixture(fx: ParsedFixture): boolean {
+  const comp = norm(fx.competition ?? "");
+  const isLeague = /championship|premier league|league one|league two|efl league|sky bet/.test(comp);
+  if (isLeague) return false;
+  const teams = `${norm(fx.home_team)} ${norm(fx.away_team)}`;
+  if (teams.includes("wrexham")) return true;
+  // Any other non-league tie that has already kicked off is historic.
+  return new Date(fx.kickoff_at).getTime() < Date.now();
 }
 
 // Championship 2026/27 home grounds — used to auto-populate the venue
