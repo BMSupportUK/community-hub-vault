@@ -1141,6 +1141,7 @@ function SquadBuilder({
               onRemove={removePlayer}
               onCaptain={(id) => setCaptainId(id)}
               onVice={(id) => setViceId(id)}
+              gw={gw}
           />
         </div>
 
