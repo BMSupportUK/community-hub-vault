@@ -1567,22 +1567,26 @@ function PitchView({
                           </div>
                         )}
                         {editable && (
-                          <div className="mt-1 flex items-center justify-center gap-1">
-                            <button type="button" title="Captain" onClick={() => onCaptain(p.id)} className={`rounded p-0.5 ${captainId === p.id ? "text-amber-400" : "text-white/50 hover:text-white"}`}>
-                              <Crown className="size-3" />
-                            </button>
-                            <button type="button" title="Vice-captain" onClick={() => onVice(p.id)} className={`rounded p-0.5 ${viceId === p.id ? "text-sky-300" : "text-white/50 hover:text-white"}`}>
-                              <Star className="size-3" />
-                            </button>
-                            <button type="button" title="Swap this player" onClick={() => onSlotOpen(row.positions, slotIndex, p.id)} className="rounded p-0.5 text-white/50 hover:text-white">
-                              <ArrowRightLeft className="size-3" />
-                            </button>
-                            <button type="button" title="Move to bench" onClick={() => onBench(p.id)} className="rounded p-0.5 text-white/50 hover:text-white">
-                              <ArrowDown className="size-3" />
-                            </button>
-                            <button type="button" title="Remove" onClick={() => onRemove(p.id)} className="rounded p-0.5 text-white/50 hover:text-destructive">
-                              <X className="size-3" />
-                            </button>
+                          <div className="mt-1 flex flex-col gap-0.5 sm:flex-row sm:gap-1 items-center justify-center">
+                            <div className="flex items-center justify-center gap-0.5 sm:gap-1">
+                              <button type="button" title="Captain" onClick={() => onCaptain(p.id)} className={`rounded p-0.5 ${captainId === p.id ? "text-amber-400" : "text-white/50 hover:text-white"}`}>
+                                <Crown className="size-2.5 sm:size-3" />
+                              </button>
+                              <button type="button" title="Vice-captain" onClick={() => onVice(p.id)} className={`rounded p-0.5 ${viceId === p.id ? "text-sky-300" : "text-white/50 hover:text-white"}`}>
+                                <Star className="size-2.5 sm:size-3" />
+                              </button>
+                              <button type="button" title="Swap this player" onClick={() => onSlotOpen(row.positions, slotIndex, p.id)} className="rounded p-0.5 text-white/50 hover:text-white">
+                                <ArrowRightLeft className="size-2.5 sm:size-3" />
+                              </button>
+                            </div>
+                            <div className="flex items-center justify-center gap-0.5 sm:gap-1">
+                              <button type="button" title="Move to bench" onClick={() => onBench(p.id)} className="rounded p-0.5 text-white/50 hover:text-white">
+                                <ArrowDown className="size-2.5 sm:size-3" />
+                              </button>
+                              <button type="button" title="Remove" onClick={() => onRemove(p.id)} className="rounded p-0.5 text-white/50 hover:text-destructive">
+                                <X className="size-2.5 sm:size-3" />
+                              </button>
+                            </div>
                           </div>
                         )}
                       </>
