@@ -1195,11 +1195,6 @@ function SquadBuilder({
             )}
           </div>
         </aside>
-          {gw && !gw.dateTbc && (
-            <aside className="rounded-2xl border border-border/60 bg-card/85 backdrop-blur overflow-hidden p-3 text-center">
-              <DigitalLockCountdown lockAt={gw.lockAt} compact />
-            </aside>
-          )}
         </div>
       </div>
 
