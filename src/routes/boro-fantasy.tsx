@@ -620,6 +620,13 @@ function SquadBuilder({
         .sort((a, b) => new Date(a.kickoffAt).getTime() - new Date(b.kickoffAt).getTime()),
     [state.gameweeks],
   );
+  const openByGroup = useMemo(() => {
+    const by = { league: [] as typeof openGameweeks, cup: [] as typeof openGameweeks, playoff: [] as typeof openGameweeks };
+    for (const g of openGameweeks) {
+      by[fantasyCompetitionGroup(g.competition)].push(g);
+    }
+    return by;
+  }, [openGameweeks]);
   const [gwId, setGwId] = useState<string>(state.currentGameweekId ?? "");
   useEffect(() => {
     const valid = state.gameweeks.some((g) => g.id === gwId);
