@@ -504,9 +504,6 @@ function BoroFantasyPage() {
               </TabsContent>
             </Tabs>
 
-            <aside className="space-y-4 lg:sticky lg:top-6 lg:self-start">
-              <NextGameweekCard state={state} />
-            </aside>
           </div>
         </div>
       </main>
