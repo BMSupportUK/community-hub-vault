@@ -1747,7 +1747,7 @@ function ScoringTab() {
         </table>
       </div>
       <div className="text-sm text-muted-foreground">
-        Squad size, budget, formations and deadlines all live on the <span className="font-semibold text-foreground">Game rules</span> tab.
+        Formations, bench sizes, scoring and deadlines all live on the <span className="font-semibold text-foreground">Game rules</span> tab.
       </div>
     </div>
   );
