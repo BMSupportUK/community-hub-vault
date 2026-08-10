@@ -434,10 +434,12 @@ function BoroFantasyPage() {
 
           <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-6">
             <Tabs value={tab} onValueChange={setTab}>
-              <TabsList className="grid grid-cols-3 sm:grid-cols-7 w-full sm:w-auto h-auto gap-1 p-1">
+              <TabsList className="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-9 w-full h-auto gap-1 p-1">
                 <TabsTrigger value="squad">My squad</TabsTrigger>
                 <TabsTrigger value="rules">Game rules</TabsTrigger>
-                <TabsTrigger value="gameweeks">Gameweeks</TabsTrigger>
+                <TabsTrigger value="gameweeks">League games</TabsTrigger>
+                <TabsTrigger value="cup">Cup games</TabsTrigger>
+                <TabsTrigger value="playoff">Play-off games</TabsTrigger>
                 <TabsTrigger value="transfers">Transfers</TabsTrigger>
                 <TabsTrigger value="leaderboard">Leaderboard</TabsTrigger>
                 <TabsTrigger value="scoring">Scoring</TabsTrigger>
@@ -459,7 +461,15 @@ function BoroFantasyPage() {
               </TabsContent>
 
               <TabsContent value="gameweeks" className="mt-4">
-                {stateQuery.isLoading || !state ? <Loading /> : <GameweekList state={state} />}
+                {stateQuery.isLoading || !state ? <Loading /> : <GameweekList state={state} group="league" />}
+              </TabsContent>
+
+              <TabsContent value="cup" className="mt-4">
+                {stateQuery.isLoading || !state ? <Loading /> : <GameweekList state={state} group="cup" />}
+              </TabsContent>
+
+              <TabsContent value="playoff" className="mt-4">
+                {stateQuery.isLoading || !state ? <Loading /> : <GameweekList state={state} group="playoff" />}
               </TabsContent>
 
               <TabsContent value="transfers" className="mt-4">
@@ -1432,12 +1442,9 @@ function PitchView({
 // ------------------------------------------------------------------
 // Gameweeks
 // ------------------------------------------------------------------
-function GameweekList({ state }: { state: FantasyStateDTO }) {
+function GameweekList({ state, group }: { state: FantasyStateDTO; group: FantasyCompetitionGroup }) {
   const [openId, setOpenId] = useState<string | null>(null);
   const playerById = useMemo(() => new Map(state.players.map((p) => [p.id, p])), [state.players]);
-  if (!state.gameweeks.length) {
-    return <div className="rounded-2xl border border-border/60 bg-card/80 p-6 text-sm text-muted-foreground">No gameweeks yet.</div>;
-  }
   const renderGw = (g: FantasyStateDTO["gameweeks"][number]) => {
         const squad = state.squads.find((s) => s.gameweekId === g.id);
         const open = openId === g.id;
@@ -1516,32 +1523,25 @@ function GameweekList({ state }: { state: FantasyStateDTO }) {
         );
   };
 
-  const groups: FantasyCompetitionGroup[] = ["league", "cup", "playoff"];
+  const items = state.gameweeks.filter((g) => fantasyCompetitionGroup(g.competition) === group);
   return (
-    <div className="space-y-6">
-      {groups.map((key) => {
-        const items = state.gameweeks.filter((g) => fantasyCompetitionGroup(g.competition) === key);
-        return (
-          <section key={key}>
-            <h4 className="mb-2 flex items-center gap-2 text-sm font-semibold text-primary">
-              {FANTASY_GROUP_LABEL[key]}
-              <span className="text-xs font-normal text-muted-foreground">{items.length}</span>
-            </h4>
-            {items.length === 0 ? (
-              <div className="rounded-2xl border border-border/60 bg-card/60 p-4 text-xs text-muted-foreground">
-                {key === "league"
-                  ? "No league gameweeks yet."
-                  : key === "cup"
-                    ? "No cup ties arranged yet — they're added automatically as soon as the draw is made."
-                    : "No play-off games yet — they're added automatically if Boro qualify."}
-              </div>
-            ) : (
-              <div className="space-y-2">{items.map(renderGw)}</div>
-            )}
-          </section>
-        );
-      })}
-    </div>
+    <section>
+      <h4 className="mb-2 flex items-center gap-2 text-sm font-semibold text-primary">
+        {FANTASY_GROUP_LABEL[group]}
+        <span className="text-xs font-normal text-muted-foreground">{items.length}</span>
+      </h4>
+      {items.length === 0 ? (
+        <div className="rounded-2xl border border-border/60 bg-card/60 p-4 text-xs text-muted-foreground">
+          {group === "league"
+            ? "No league gameweeks yet."
+            : group === "cup"
+              ? "No cup ties arranged yet — they're added automatically as soon as the draw is made."
+              : "No play-off games yet — they're added automatically if Boro qualify."}
+        </div>
+      ) : (
+        <div className="space-y-2">{items.map(renderGw)}</div>
+      )}
+    </section>
   );
 }
 
