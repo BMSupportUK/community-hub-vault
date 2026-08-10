@@ -45,7 +45,7 @@ export const Route = createFileRoute("/boro-fantasy")({
       { title: "MFC Fantasy Manager — Middlesbrough Fantasy Football" },
       { name: "description", content: "Name a Middlesbrough match day 11 and a sub bench covering every position, pick your formation and captain, and climb the MFC Fantasy Manager leaderboard." },
       { property: "og:title", content: "MFC Fantasy Manager — Middlesbrough Fantasy Football" },
-      { property: "og:description", content: "Middlesbrough-only fantasy football: no budget, real formations, a full sub bench, weekly scoring and prizes." },
+      { property: "og:description", content: "Middlesbrough-only fantasy football: real formations, a full sub bench, weekly scoring and prizes." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -372,7 +372,7 @@ function BoroFantasyPage() {
               <div className="flex-1">
                 <h1 className="font-display text-2xl sm:text-3xl font-bold text-white">MFC Fantasy Manager</h1>
                 <p className="text-sm text-white/85">
-                  Middlesbrough only. No budget — name your match day 11, a sub for every position, your formation and your captain.
+                  Middlesbrough only — name your match day 11, your sub bench, your formation and your captain.
                 </p>
               </div>
               {!user && !guest && !showGuestLogin && (
@@ -1834,7 +1834,6 @@ function SquadRulesTab() {
         <p className="text-sm text-white/85 mt-1">Everything you need to know before you pick your Middlesbrough side.</p>
         <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-2">
           {[
-            { k: "Budget", v: "None" },
             { k: "Match day", v: "11 players" },
             { k: "Bench", v: "Per competition" },
             { k: "Deadline", v: "2 hours pre-KO" },
