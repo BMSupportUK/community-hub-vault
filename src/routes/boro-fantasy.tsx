@@ -1386,7 +1386,7 @@ function SquadBuilder({
         onPick={(p) => {
           if (!picker) return;
           if (picker.mode === "xi") startPlayer(p, picker.slotIndex, picker.replaceId);
-          else benchAdd(p);
+          else benchAssign(p, picker.benchIndex);
           setPicker(null);
         }}
       />
