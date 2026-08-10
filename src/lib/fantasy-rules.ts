@@ -163,12 +163,10 @@ export function formatWindowDate(iso: string): string {
 
 /** Plain-English game rules, rendered on the Game rules tab. */
 export const SQUAD_RULES: { title: string; body: string }[] = [
-  { title: "No budget", body: "There's no budget and no player prices — pick whoever you fancy from the current Middlesbrough squad." },
   { title: "Match day 11", body: "Each gameweek you name a match day 11 in a legal formation. Only Middlesbrough players available for that fixture can be picked — departed and loaned-out players can't be selected." },
   { title: "Sub bench", body: `Bench cover applies to Championship and cup games — name ${FANTASY_BENCH_SIZE} subs. Sub 1 must be the replacement goalkeeper, and at least ${FANTASY_BENCH_MIN_GK} goalkeeper must be on the bench. Otherwise you pick your own 11 and outfield subs, with no other position cover.` },
   { title: "Subs score too", body: "Any starter who doesn't play scores 0. A sub who comes on is scored on the sub points system (+1 for coming on, +1 for 30+ minutes, +1 for a goal or assist) on top of their match stats — unless they play most of the game (60+ minutes), when they're scored exactly like a starter with no sub bonuses. Either way the points are added to your gameweek total. Subs who stay on the bench score 0." },
   { title: "Captain & vice", body: "Your captain scores double. If the captain doesn't play a minute, the vice-captain doubles instead. Both must start." },
-  { title: "Change your team freely", body: "You can change your 11 and your bench as often as you like every gameweek — there are no transfers and no points hits." },
   { title: "Deadline", body: "Entries lock 2 hours before kick-off. After that your team is fixed for that gameweek." },
   { title: "Competitive games only", body: "Gameweeks cover every competitive Middlesbrough first-team fixture — league games, cup ties and play-offs. Friendlies, testimonials and academy games are never part of the game." },
   { title: "Game time on show", body: "Once a match finishes the pitch view shows how many minutes each of your players actually played, so you can see who started, who came on and who didn't feature." },
