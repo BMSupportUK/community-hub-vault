@@ -854,10 +854,12 @@ function SquadBuilder({
       const line = byPos(st, p.position);
       const allowed = formationPositionRange(formation)[p.position].max;
       if (line.length >= allowed || st.length >= 11) {
-        const bumped = line[line.length - 1]!;
-        st = st.filter((x) => x !== bumped);
-        if (captainId === bumped) setCaptainId("");
-        if (viceId === bumped) setViceId("");
+        const bumped = line[line.length - 1] ?? st[st.length - 1];
+        if (bumped) {
+          st = st.filter((x) => x !== bumped);
+          if (captainId === bumped) setCaptainId("");
+          if (viceId === bumped) setViceId("");
+        }
       }
       st = [...st, p.id];
     }
