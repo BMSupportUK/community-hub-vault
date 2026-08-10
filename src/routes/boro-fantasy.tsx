@@ -1684,12 +1684,12 @@ function PitchView({
                       <div className="mt-0.5 text-[9px] font-bold uppercase text-sky-400">Subbed on</div>
                     )}
                     {editable && (
-                      <div className="mt-1 flex items-center justify-center gap-1">
+                      <div className="mt-1 flex items-center justify-center gap-0.5 sm:gap-1">
                         <button type="button" title="Into the XI" onClick={() => onDropStart(p.id)} className="rounded p-0.5 text-muted-foreground hover:text-emerald-400">
-                          <ArrowUp className="size-3" />
+                          <ArrowUp className="size-2.5 sm:size-3" />
                         </button>
                         <button type="button" title="Remove" onClick={() => onRemove(p.id)} className="rounded p-0.5 text-muted-foreground hover:text-destructive">
-                          <X className="size-3" />
+                          <X className="size-2.5 sm:size-3" />
                         </button>
                       </div>
                     )}
