@@ -1401,12 +1401,6 @@ function PitchView({
 
   return (
     <div className="rounded-2xl border border-border/60 bg-card/85 backdrop-blur overflow-hidden">
-      <div className="p-3 border-b border-border/60 flex flex-wrap items-center gap-3">
-        <p className="text-xs text-muted-foreground">
-          Tap any slot to pick a player from the pop-up list.
-        </p>
-      </div>
-
       <div
         className="relative p-4 sm:p-6"
         style={{
