@@ -133,6 +133,39 @@ export const adminUpsertFantasyPlayer = createServerFn({ method: "POST" })
     return { ok: true, id: (row as any).id as string };
   });
 
+/**
+ * Admin/management: remove a manager (member or guest) from the fantasy game.
+ * Deletes their entry, squads, picks and transfers so they drop off the leaderboard.
+ */
+export const adminRemoveFantasyEntrant = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({ entrantId: z.string().uuid(), isGuest: z.boolean() }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    if (!(await isAdminOrManagement(context.supabase, context.userId))) throw new Error("Forbidden");
+    const { getAdmin } = await import("@/lib/fantasy.server");
+    const admin = await getAdmin();
+    const col = data.isGuest ? "guest_id" : "user_id";
+
+    // Squad picks hang off squads, so clear those first.
+    const { data: squads } = await admin.from("fantasy_squads").select("id").eq(col, data.entrantId);
+    const squadIds = ((squads ?? []) as any[]).map((s) => s.id as string);
+    if (squadIds.length) {
+      const { error: pickErr } = await admin.from("fantasy_squad_picks").delete().in("squad_id", squadIds);
+      if (pickErr) throw new Error(pickErr.message);
+    }
+    for (const table of ["fantasy_transfers", "fantasy_squads"] as const) {
+      const { error } = await admin.from(table).delete().eq(col, data.entrantId);
+      if (error) throw new Error(error.message);
+    }
+    const { error } = data.isGuest
+      ? await admin.from("fantasy_guest_entrants").delete().eq("id", data.entrantId)
+      : await admin.from("fantasy_entrants").delete().eq("user_id", data.entrantId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
 export const adminDeleteFantasyPlayer = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
