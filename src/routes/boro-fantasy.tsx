@@ -930,10 +930,16 @@ function SquadBuilder({
 
     // Bump the current occupant of the target slot to the bench if there is one.
     const bumped = st[idx];
+    let nextSel = sel;
     if (bumped) {
       if (captainId === bumped) setCaptainId("");
       if (viceId === bumped) setViceId("");
-      benchAddById(bumped);
+      // Only bench the displaced player if there is room; otherwise drop them
+      // from the squad rather than leaving them selected with no slot.
+      const bumpedPlayer = playerById.get(bumped);
+      const roomOnBench = bumpedPlayer?.position === "gk" ? !bench[0] || bench[0] === bumped : bench.some((x, i) => x === null && i > 0);
+      if (roomOnBench) benchAddById(bumped);
+      else nextSel = nextSel.filter((x) => x !== bumped);
     }
 
     // If replacing a specific player, clear their captaincy/vice.
@@ -943,7 +949,7 @@ function SquadBuilder({
     }
 
     st[idx] = p.id;
-    setSelected(sel);
+    setSelected(nextSel);
     setStarters(st);
   }
 
@@ -975,6 +981,39 @@ function SquadBuilder({
       if (empty === -1) return prev;
       const next = [...prev];
       next[empty] = id;
+      return next;
+    });
+  }
+
+  /** Put a player on an exact bench slot (from the sub pop-box) — never shuffle others. */
+  function benchAssign(p: FantasyPlayerDTO, benchIndex: number) {
+    if (!editable) return;
+    if (benchIndex === 0 && p.position !== "gk") {
+      toast.error("Sub 1 is reserved for the replacement goalkeeper.");
+      return;
+    }
+    if (benchIndex > 0 && p.position === "gk") {
+      toast.error("Goalkeepers go in the Sub 1 slot.");
+      return;
+    }
+    const occupant = bench[benchIndex] && bench[benchIndex] !== p.id ? bench[benchIndex]! : null;
+    let sel = withPlayer(
+      occupant ? selected.filter((x) => x !== occupant) : selected,
+      p,
+    );
+    if (!sel) return;
+    if (occupant) {
+      if (captainId === occupant) setCaptainId("");
+      if (viceId === occupant) setViceId("");
+    }
+    setSelected(sel);
+    // Free the player from wherever they already sat.
+    setStarters((prev) => prev.map((x) => (x === p.id ? null : x)));
+    if (captainId === p.id) setCaptainId("");
+    if (viceId === p.id) setViceId("");
+    setBench((prev) => {
+      const next = prev.map((x) => (x === p.id ? null : x));
+      next[benchIndex] = p.id;
       return next;
     });
   }
@@ -1325,7 +1364,7 @@ function SquadBuilder({
         onPick={(p) => {
           if (!picker) return;
           if (picker.mode === "xi") startPlayer(p, picker.slotIndex, picker.replaceId);
-          else benchAdd(p);
+          else benchAssign(p, picker.benchIndex);
           setPicker(null);
         }}
       />
