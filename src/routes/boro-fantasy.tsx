@@ -1378,9 +1378,7 @@ function GameweekList({ state }: { state: FantasyStateDTO }) {
   if (!state.gameweeks.length) {
     return <div className="rounded-2xl border border-border/60 bg-card/80 p-6 text-sm text-muted-foreground">No gameweeks yet.</div>;
   }
-  return (
-    <div className="space-y-2">
-      {state.gameweeks.map((g) => {
+  const renderGw = (g: FantasyStateDTO["gameweeks"][number]) => {
         const squad = state.squads.find((s) => s.gameweekId === g.id);
         const open = openId === g.id;
         const picks = [...(squad?.picks ?? [])].sort((a, b) => a.slotOrder - b.slotOrder);
