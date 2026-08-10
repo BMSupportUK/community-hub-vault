@@ -1896,7 +1896,6 @@ function LeaderboardTable({ rows }: { rows: FantasyLeaderboardRow[] }) {
             <th className="text-left px-3 py-2 w-10">#</th>
             <th className="text-left px-3 py-2">Manager</th>
             <th className="text-right px-3 py-2">GWs</th>
-            <th className="text-right px-3 py-2">Transfer Hits</th>
             <th className="text-right px-3 py-2">Points</th>
           </tr>
         </thead>
@@ -1912,7 +1911,6 @@ function LeaderboardTable({ rows }: { rows: FantasyLeaderboardRow[] }) {
                 {r.email && <div className="text-[11px] text-muted-foreground">{r.email}</div>}
               </td>
               <td className="px-3 py-2 text-right tabular-nums">{r.gameweeksScored}</td>
-              <td className="px-3 py-2 text-right tabular-nums text-destructive">{r.totalHits ? `−${r.totalHits}` : "0"}</td>
               <td className="px-3 py-2 text-right font-bold tabular-nums text-primary">{r.totalPoints}</td>
             </tr>
           ))}
@@ -1928,7 +1926,6 @@ function LeaderboardTable({ rows }: { rows: FantasyLeaderboardRow[] }) {
                 <div className="text-[11px] font-medium text-primary mt-0.5">Site owner — playing for fun</div>
               </td>
               <td className="px-3 py-2 text-right tabular-nums">{r.gameweeksScored}</td>
-              <td className="px-3 py-2 text-right tabular-nums text-destructive">{r.totalHits ? `−${r.totalHits}` : "0"}</td>
               <td className="px-3 py-2 text-right font-bold tabular-nums text-primary">{r.totalPoints}</td>
             </tr>
           ))}
