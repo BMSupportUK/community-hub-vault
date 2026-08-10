@@ -44,6 +44,11 @@ type EspnSummary = {
   header?: {
     competitions?: Array<{
       competitors?: Array<{ homeAway?: string; score?: string; team?: { displayName?: string } }>;
+      status?: {
+        clock?: number;
+        displayClock?: string;
+        type?: { state?: string; completed?: boolean; name?: string };
+      };
     }>;
   };
 };
