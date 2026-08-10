@@ -182,7 +182,7 @@ export async function loadGameweeks(admin: any): Promise<FantasyGameweekDTO[]> {
     )
     .order("gw_number", { ascending: true });
   if (error) throw new Error(error.message);
-  // League games only — never show cup ties, play-offs or friendlies.
+  // Competitive fixtures only — league, cup and play-off games; no friendlies.
   return (data ?? [])
     .filter((r: any) => isFantasyLeagueCompetition(r.fixture?.competition))
     .map(mapGameweek);
