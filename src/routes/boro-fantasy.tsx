@@ -1353,7 +1353,7 @@ function PitchView({
   pointsByPlayer?: Map<string, number | null>;
   minutesByPlayer?: Map<string, number | null>;
   autoSubbedIds?: Set<string>;
-  onSlotOpen: (pos: FantasyPosition, replaceId?: string) => void;
+  onSlotOpen: (positions: FantasyPosition[], replaceId?: string) => void;
   onBenchSlotOpen: (benchIndex: number) => void;
   onDropStart: (playerId: string, replaceId?: string) => void;
   onDropBench: (playerId: string) => void;
@@ -1368,10 +1368,21 @@ function PitchView({
   // Distribute the starters of each position across the rows that ask for them.
   const queues: Record<string, string[]> = {};
   for (const pos of POSITION_ORDER) queues[pos] = starters.filter((id) => playerById.get(id)?.position === pos);
-  const rowSlots = rows.map((r) => {
-    const take: (string | null)[] = [];
-    for (let i = 0; i < r.count; i++) take.push(queues[r.pos]!.shift() ?? null);
-    return { pos: r.pos, slots: take };
+  // Fixed rows claim their players first, then flexible rows take whatever is left
+  // from either of the positions they allow.
+  const rowSlots: { positions: FantasyPosition[]; slots: (string | null)[] }[] = rows.map((r) => ({
+    positions: rowPositions(r),
+    slots: Array.from({ length: r.count }, () => null as string | null),
+  }));
+  rows.forEach((r, ri) => {
+    if (r.alt) return;
+    for (let i = 0; i < r.count; i++) rowSlots[ri]!.slots[i] = queues[r.pos]!.shift() ?? null;
+  });
+  rows.forEach((r, ri) => {
+    if (!r.alt) return;
+    for (let i = 0; i < r.count; i++) {
+      rowSlots[ri]!.slots[i] = queues[r.pos]!.shift() ?? queues[r.alt]!.shift() ?? null;
+    }
   });
 
   // Starters that don't fit the chosen formation (e.g. after switching shape) would
@@ -1412,7 +1423,7 @@ function PitchView({
                     {...dropProps((dragged) => onDropStart(dragged, id ?? undefined))}
                     draggable={editable && !!id}
                     onDragStart={(e) => { if (id) e.dataTransfer.setData("text/fantasy-player", id); }}
-                    onClick={() => { if (editable && !id) onSlotOpen(row.pos); }}
+                    onClick={() => { if (editable && !id) onSlotOpen(row.positions); }}
                     role={editable && !id ? "button" : undefined}
                     className={`min-w-[68px] flex-1 max-w-[110px] sm:max-w-[120px] rounded-xl border px-1.5 py-2 text-center backdrop-blur-sm transition-colors ${
                       p ? "border-white/40 bg-slate-950/70" : "cursor-pointer border-dashed border-white/40 bg-white/10 hover:bg-white/20"
@@ -1445,7 +1456,7 @@ function PitchView({
                             <button type="button" title="Vice-captain" onClick={() => onVice(p.id)} className={`rounded p-0.5 ${viceId === p.id ? "text-sky-300" : "text-white/50 hover:text-white"}`}>
                               <Star className="size-3" />
                             </button>
-                            <button type="button" title="Swap this player" onClick={() => onSlotOpen(row.pos, p.id)} className="rounded p-0.5 text-white/50 hover:text-white">
+                            <button type="button" title="Swap this player" onClick={() => onSlotOpen(row.positions, p.id)} className="rounded p-0.5 text-white/50 hover:text-white">
                               <ArrowRightLeft className="size-3" />
                             </button>
                             <button type="button" title="Move to bench" onClick={() => onBench(p.id)} className="rounded p-0.5 text-white/50 hover:text-white">
@@ -1461,6 +1472,9 @@ function PitchView({
                       <div className="py-2 text-[11px] font-semibold text-white/80">
                         <div className="mx-auto grid size-6 place-items-center rounded-full border border-white/50">
                           <Plus className="size-3" />
+                        </div>
+                        <div className="mt-1 text-[10px] font-bold uppercase tracking-wide text-white/85">
+                          {slotPositionLabel(row.positions)}
                         </div>
                       </div>
                     )}
