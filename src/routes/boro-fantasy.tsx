@@ -687,6 +687,13 @@ function SquadBuilder({
     () => new Set((existing?.picks ?? []).filter((p) => p.autoSubbed).map((p) => p.playerId)),
     [existing],
   );
+  // Game time played in this gameweek's fixture, once any stats are in.
+  const minutesByPlayer = useMemo(() => {
+    const picks = existing?.picks ?? [];
+    const hasStats = picks.some((p) => p.minutes !== null && p.minutes !== undefined);
+    if (!hasStats) return new Map<string, number>();
+    return new Map(picks.map((p) => [p.playerId, p.minutes ?? 0]));
+  }, [existing]);
   const hasGwPoints = (existing?.picks ?? []).some((p) => p.points !== null);
 
   const editable = !locked && (canPlay || !gw);
@@ -914,6 +921,7 @@ function SquadBuilder({
               viceId={viceId}
               benchSize={benchRules.size}
               pointsByPlayer={hasGwPoints ? pointsByPlayer : undefined}
+              minutesByPlayer={minutesByPlayer.size ? minutesByPlayer : undefined}
               autoSubbedIds={autoSubbedIds}
               onDropStart={(playerId, replaceId) => {
                 const p = playerById.get(playerId);
@@ -1119,7 +1127,7 @@ function PlayerSidebar({
 // ------------------------------------------------------------------
 function PitchView({
   formation, onFormationChange, editable, playerById, starters, bench, captainId, viceId,
-  benchSize, pointsByPlayer, autoSubbedIds, onDropStart, onDropBench, onBench, onRemove, onCaptain, onVice,
+  benchSize, pointsByPlayer, minutesByPlayer, autoSubbedIds, onDropStart, onDropBench, onBench, onRemove, onCaptain, onVice,
 }: {
   formation: FormationKey;
   onFormationChange: (f: FormationKey) => void;
@@ -1131,6 +1139,7 @@ function PitchView({
   viceId: string;
   benchSize: number;
   pointsByPlayer?: Map<string, number | null>;
+  minutesByPlayer?: Map<string, number | null>;
   autoSubbedIds?: Set<string>;
   onDropStart: (playerId: string, replaceId?: string) => void;
   onDropBench: (playerId: string) => void;
@@ -1224,6 +1233,11 @@ function PitchView({
                         {pointsByPlayer?.has(p.id) && (
                           <div className="mt-1 inline-flex items-center rounded-full border border-emerald-400/50 bg-emerald-500/20 px-1.5 text-[10px] font-bold tabular-nums text-emerald-200">
                             {pointsByPlayer.get(p.id) ?? 0} pts
+                          </div>
+                        )}
+                        {minutesByPlayer?.has(p.id) && (
+                          <div className="mt-0.5 text-[10px] font-semibold tabular-nums text-white/80">
+                            {(minutesByPlayer.get(p.id) ?? 0) > 0 ? `${minutesByPlayer.get(p.id)}′ played` : "Didn't play"}
                           </div>
                         )}
                         {editable && (
@@ -1322,6 +1336,11 @@ function PitchView({
                     {pointsByPlayer?.has(p.id) && (
                       <div className="mt-1 inline-flex items-center rounded-full border border-emerald-500/40 bg-emerald-500/15 px-1.5 text-[10px] font-bold tabular-nums text-emerald-400">
                         {pointsByPlayer.get(p.id) ?? 0} pts
+                      </div>
+                    )}
+                    {minutesByPlayer?.has(p.id) && (
+                      <div className="mt-0.5 text-[10px] font-semibold tabular-nums text-muted-foreground">
+                        {(minutesByPlayer.get(p.id) ?? 0) > 0 ? `${minutesByPlayer.get(p.id)}′ played` : "Didn't play"}
                       </div>
                     )}
                     {autoSubbedIds?.has(p.id) && (

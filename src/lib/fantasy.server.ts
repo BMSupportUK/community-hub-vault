@@ -51,6 +51,8 @@ export type FantasyPickDTO = {
   points: number | null;
   /** True when this bench player was automatically subbed in for a starter who didn't play. */
   autoSubbed?: boolean;
+  /** Minutes the player actually played in this gameweek's fixture (null = no stats yet). */
+  minutes?: number | null;
 };
 
 export type FantasySquadDTO = {
@@ -253,6 +255,28 @@ export async function loadState(admin: any, owner: Owner | null): Promise<Fantas
       .eq(ownerCol(owner), ownerVal(owner));
     if (sqErr) throw new Error(sqErr.message);
     squads = (sq ?? []).map(mapSquad);
+
+    // Minutes played, so the pitch view can show each player's game time.
+    const fixtureByGw = new Map(gameweeks.map((g) => [g.id, g.fixtureId]));
+    const fixtureIds = [...new Set(squads.map((s) => fixtureByGw.get(s.gameweekId)).filter(Boolean))] as string[];
+    if (fixtureIds.length) {
+      const { data: mins } = await admin
+        .from("fantasy_player_stats")
+        .select("fixture_id, player_id, minutes")
+        .in("fixture_id", fixtureIds);
+      const minMap = new Map<string, number>();
+      for (const r of (mins ?? []) as any[]) minMap.set(`${r.fixture_id}:${r.player_id}`, Number(r.minutes) || 0);
+      squads = squads.map((s) => {
+        const fx = fixtureByGw.get(s.gameweekId);
+        return {
+          ...s,
+          picks: s.picks.map((p) => ({
+            ...p,
+            minutes: fx ? (minMap.get(`${fx}:${p.playerId}`) ?? null) : null,
+          })),
+        };
+      });
+    }
 
     const { data: tr } = await admin
       .from("fantasy_transfers")
