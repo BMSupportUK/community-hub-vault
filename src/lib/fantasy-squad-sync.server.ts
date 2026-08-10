@@ -66,6 +66,25 @@ function normName(s: string): string {
     .trim();
 }
 
+/**
+ * The club's feeds are not consistent about first names (the loan list says
+ * "Fin Munroe" while the squad feed says "Finley Munroe"). Match on surname
+ * plus a first-name prefix so short forms still line up.
+ */
+function nameParts(s: string): { first: string; last: string } {
+  const bits = normName(s).split(" ").filter(Boolean);
+  return { first: bits[0] ?? "", last: bits.length > 1 ? bits[bits.length - 1]! : "" };
+}
+
+function samePerson(a: string, b: string): boolean {
+  if (normName(a) === normName(b)) return true;
+  const x = nameParts(a);
+  const y = nameParts(b);
+  if (!x.last || !y.last || x.last !== y.last) return false;
+  if (!x.first || !y.first) return true;
+  return x.first.startsWith(y.first) || y.first.startsWith(x.first);
+}
+
 export type FantasySquadSyncResult = {
   ok: boolean;
   squadSize?: number;
