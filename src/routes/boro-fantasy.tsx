@@ -1096,7 +1096,13 @@ function SquadBuilder({
             canEdit={canEdit}
             onEdit={onEdit}
           />
+          {gw && !gw.dateTbc && (
+            <aside className="rounded-2xl border border-border/60 bg-card/85 backdrop-blur overflow-hidden p-3">
+              <DigitalLockCountdown lockAt={gw.lockAt} compact />
+            </aside>
+          )}
           <aside className="rounded-2xl border border-border/60 bg-card/85 backdrop-blur overflow-hidden">
+
             <div className="p-3 border-b border-border/60">
               <h3 className="font-display font-bold text-sm">Formation</h3>
             </div>
