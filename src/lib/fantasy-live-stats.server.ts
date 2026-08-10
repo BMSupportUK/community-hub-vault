@@ -126,6 +126,7 @@ async function findEspnEventId(fixture: {
 export async function fetchFantasyStatsForFixture(
   fixture: { id: string; kickoff_at: string; home_team: string; away_team: string },
   players: Array<{ id: string; name: string; position: string }>,
+  opts?: { live?: boolean },
 ): Promise<FantasyStatRow[] | null> {
   const found = await findEspnEventId(fixture);
   if (!found) return null;
@@ -142,6 +143,21 @@ export async function fetchFantasyStatsForFixture(
 
   const boroSide = (summary.rosters ?? []).find((r) => BORO_RE.test(r.team?.displayName ?? ""));
   if (!boroSide?.roster?.length) return null;
+
+  // How far into the match are we? Used so in-play minutes reflect the live
+  // clock instead of assuming a full 90.
+  const status = summary.header?.competitions?.[0]?.status;
+  const completed = !!status?.type?.completed || (status?.type?.state ?? "") === "post";
+  const clockMinute = (() => {
+    const dc = status?.displayClock ?? "";
+    const m = /(\d+)/.exec(dc);
+    if (m?.[1]) return Math.min(120, parseInt(m[1], 10));
+    const v = status?.clock;
+    if (typeof v === "number" && v > 0) return Math.min(120, Math.round(v / 60));
+    return 0;
+  })();
+  const liveMode = !!opts?.live && !completed;
+  const nowMinute = liveMode && clockMinute > 0 ? clockMinute : 90;
 
   // Goals conceded by Boro in this match, from the header scoreline.
   const comps = summary.header?.competitions?.[0]?.competitors ?? [];
