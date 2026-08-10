@@ -22,7 +22,7 @@ import { useAuth } from "@/hooks/use-auth";
 import {
   FANTASY_BENCH_SIZE, FANTASY_SQUAD_SIZE, FORMATION_KEYS, POSITION_ORDER,
   POSITION_SHORT, POSITION_LABEL, SCORING_RULES, BENCH_QUOTA, SQUAD_RULES,
-  FORMATIONS, FANTASY_LOCK_MINUTES, formationCounts, formationRows,
+  FORMATIONS, formationCounts, formationRows,
   type FantasyPosition, type FormationKey,
 } from "@/lib/fantasy-rules";
 import {
@@ -1628,7 +1628,7 @@ function SquadRulesTab() {
             { k: "Budget", v: "None" },
             { k: "Match day", v: "11 players" },
             { k: "Bench", v: `${FANTASY_BENCH_SIZE} subs (1 per pos)` },
-            { k: "Deadline", v: `${FANTASY_LOCK_MINUTES} min pre-KO` },
+            { k: "Deadline", v: "2 hours pre-KO" },
           ].map((s) => (
             <div key={s.k} className="rounded-xl bg-white/15 ring-1 ring-white/20 px-3 py-2">
               <div className="text-[11px] uppercase tracking-wide text-white/75">{s.k}</div>
