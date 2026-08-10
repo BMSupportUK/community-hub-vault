@@ -1022,6 +1022,14 @@ function SquadBuilder({
               </div>
             )}
           </div>
+          <ManagerCard
+            compact
+            state={state}
+            name={name}
+            teamName={teamName}
+            canEdit={canEdit}
+            onEdit={onEdit}
+          />
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-4 text-sm text-muted-foreground">
               <span>
