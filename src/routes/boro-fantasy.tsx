@@ -808,6 +808,12 @@ function SquadBuilder({
 
   function benchPlayer(id: string) {
     if (!editable) return;
+    const p = playerById.get(id);
+    const benchHasGk = byPos(selected, "gk").some((x) => x !== id && !starters.includes(x));
+    if (p && p.position !== "gk" && !benchHasGk) {
+      toast.error("Sub 1 must be the replacement goalkeeper — pick a GK first.");
+      return;
+    }
     setStarters((prev) => prev.filter((x) => x !== id));
     if (captainId === id) setCaptainId("");
     if (viceId === id) setViceId("");
