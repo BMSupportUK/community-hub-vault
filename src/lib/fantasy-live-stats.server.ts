@@ -282,24 +282,26 @@ export async function syncFantasyScoring(): Promise<{
   ok: boolean;
   locked: number;
   scored: string[];
+  live: string[];
   pending: string[];
   errors: string[];
 }> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const errors: string[] = [];
   const scored: string[] = [];
+  const live: string[] = [];
   const pending: string[] = [];
 
   const { data: gws, error } = await supabaseAdmin
     .from("fantasy_gameweeks")
     .select("id, gw_number, status, lock_at, fixture_id, boro_fixtures!inner(id, kickoff_at, home_team, away_team, status, competition)")
     .order("gw_number", { ascending: true });
-  if (error) return { ok: false, locked: 0, scored, pending, errors: [error.message] };
+  if (error) return { ok: false, locked: 0, scored, live, pending, errors: [error.message] };
 
   const { data: playerRows, error: pErr } = await supabaseAdmin
     .from("fantasy_players")
     .select("id, name, position");
-  if (pErr) return { ok: false, locked: 0, scored, pending, errors: [pErr.message] };
+  if (pErr) return { ok: false, locked: 0, scored, live, pending, errors: [pErr.message] };
   const players = (playerRows ?? []) as Array<{ id: string; name: string; position: string }>;
 
   const nowMs = Date.now();
@@ -387,5 +389,5 @@ export async function syncFantasyScoring(): Promise<{
     scored.push(`gw${raw['gw_number']} (${rows.length} players)`);
   }
 
-  return { ok: errors.length === 0, locked, scored, pending, errors };
+  return { ok: errors.length === 0, locked, scored, live, pending, errors };
 }
