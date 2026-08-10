@@ -834,15 +834,6 @@ function SquadBuilder({
     setStarters((prev) => prev.filter((x) => x !== p.id));
   }
 
-  /** Sidebar one-tap: fill an open XI slot if there is one, else the bench. */
-  function autoPick(p: FantasyPlayerDTO) {
-    if (!editable) return;
-    if (selected.includes(p.id)) { removePlayer(p.id); return; }
-    const need = (counts as Record<string, number>)[p.position] ?? 0;
-    if (starters.length < 11 && byPos(starters, p.position).length < need) startPlayer(p);
-    else benchAdd(p);
-  }
-
   /** Fill any gaps in the match day 11 (and captaincy) from the players picked. */
   function autoCompleteXI() {
     const st: string[] = [];
