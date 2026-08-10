@@ -609,7 +609,7 @@ function NextGameweekCard({ state }: { state?: FantasyStateDTO }) {
     <div className="rounded-2xl border border-border/60 bg-card/80 backdrop-blur p-4">
       <div className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Next gameweek</div>
       <div className="font-semibold">GW{gw.gwNumber} — {gw.homeTeam} v {gw.awayTeam}</div>
-      <div className="text-xs text-muted-foreground mt-1">{kickoffLabel(gw.kickoffAt)}</div>
+      <div className="text-xs text-muted-foreground mt-1">{gw.dateTbc ? "Date to be confirmed" : kickoffLabel(gw.kickoffAt)}</div>
       <div className="mt-3">
         <DigitalLockCountdown lockAt={gw.lockAt} />
       </div>
@@ -955,7 +955,7 @@ function SquadBuilder({
             {gw ? (
               <>
                 <div className="font-semibold">GW{gw.gwNumber} — {gw.homeTeam} v {gw.awayTeam}</div>
-                <div className="text-xs text-muted-foreground">{kickoffLabel(gw.kickoffAt)}</div>
+                <div className="text-xs text-muted-foreground">{gw.dateTbc ? "Date to be confirmed" : kickoffLabel(gw.kickoffAt)}</div>
               </>
             ) : (
               <>
@@ -973,7 +973,7 @@ function SquadBuilder({
                   <SelectContent>
                     {openByGroup.league.map((g) => (
                       <SelectItem key={g.id} value={g.id}>
-                        GW{g.gwNumber} — {g.homeTeam} v {g.awayTeam} ({kickoffLabel(g.kickoffAt)})
+                        GW{g.gwNumber} — {g.homeTeam} v {g.awayTeam} ({g.dateTbc ? "date TBC" : kickoffLabel(g.kickoffAt)})
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -990,7 +990,7 @@ function SquadBuilder({
                   <SelectContent>
                     {openByGroup.cup.map((g) => (
                       <SelectItem key={g.id} value={g.id}>
-                        GW{g.gwNumber} — {g.homeTeam} v {g.awayTeam} ({kickoffLabel(g.kickoffAt)})
+                        GW{g.gwNumber} — {g.homeTeam} v {g.awayTeam} ({g.dateTbc ? "date TBC" : kickoffLabel(g.kickoffAt)})
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -1007,7 +1007,7 @@ function SquadBuilder({
                   <SelectContent>
                     {openByGroup.playoff.map((g) => (
                       <SelectItem key={g.id} value={g.id}>
-                        GW{g.gwNumber} — {g.homeTeam} v {g.awayTeam} ({kickoffLabel(g.kickoffAt)})
+                        GW{g.gwNumber} — {g.homeTeam} v {g.awayTeam} ({g.dateTbc ? "date TBC" : kickoffLabel(g.kickoffAt)})
                       </SelectItem>
                     ))}
                   </SelectContent>
