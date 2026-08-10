@@ -619,8 +619,8 @@ function ManagerCard({
               )}
             </div>
             <div className="flex items-center gap-3 text-xs">
-              <span className="font-bold text-primary">{total} pts</span>
-              <span className="text-muted-foreground">{gamePoints} game pts</span>
+              <span className="font-bold text-primary">{gamePoints} wk pts</span>
+              <span className="text-muted-foreground">{total} total pts</span>
             </div>
           </div>
         </div>
@@ -642,12 +642,12 @@ function ManagerCard({
       </div>
       <dl className="mt-3 grid grid-cols-2 gap-2 text-sm">
         <div className="rounded-xl bg-muted/40 p-2">
-          <dt className="text-[11px] text-muted-foreground">Total points</dt>
-          <dd className="font-bold text-primary">{total}</dd>
+          <dt className="text-[11px] text-muted-foreground">Week Game Pts Earned</dt>
+          <dd className="font-bold text-primary">{gamePoints}</dd>
         </div>
         <div className="rounded-xl bg-muted/40 p-2">
-          <dt className="text-[11px] text-muted-foreground">Game Pts Earned</dt>
-          <dd className="font-bold text-primary">{gamePoints}</dd>
+          <dt className="text-[11px] text-muted-foreground">Total points</dt>
+          <dd className="font-bold text-primary">{total}</dd>
         </div>
       </dl>
     </div>
