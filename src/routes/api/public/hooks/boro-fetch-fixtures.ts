@@ -125,6 +125,16 @@ function norm(s: string) {
   return s.trim().toLowerCase().replace(/\s+/g, " ");
 }
 
+// League / cup / play-off bucket for a competition name. Two ties between the
+// same two clubs in different competitions are different fixtures, so the
+// bucket is part of the identity key.
+function compBucket(comp?: string | null): "league" | "playoff" | "cup" {
+  const c = norm(comp ?? "");
+  if (/play-?off/.test(c)) return "playoff";
+  if (/championship|premier league|league one|league two|efl league|sky bet/.test(c)) return "league";
+  return "cup";
+}
+
 // Competitive first-team fixtures only: league games, cup ties (Carabao/League
 // Cup, FA Cup, EFL Trophy) and play-offs. Friendlies, testimonials, tours,
 // academy/youth/women's games must never be imported.
@@ -150,7 +160,9 @@ function isExcludedFixture(fx: ParsedFixture): boolean {
   const isLeague = /championship|premier league|league one|league two|efl league|sky bet/.test(comp);
   if (isLeague) return false;
   const teams = `${norm(fx.home_team)} ${norm(fx.away_team)}`;
-  if (teams.includes("wrexham")) return true;
+  // The League Cup first-round tie with Wrexham (7 Aug 2026) has been played —
+  // skip that one tie only, not any future Wrexham cup draw.
+  if (teams.includes("wrexham") && fx.kickoff_at.slice(0, 10) === "2026-08-07") return true;
   // Newly drawn ties carry a provisional date — keep them even if that
   // placeholder date sits in the past.
   if (fx.date_tbc) return false;
@@ -254,7 +266,7 @@ async function syncFixtures() {
   // monthly pages if BBC pre-list the next match).
   const dedup = new Map<string, ParsedFixture>();
   for (const fx of scraped) {
-    const key = `${norm(fx.home_team)}|${norm(fx.away_team)}|${new Date(fx.kickoff_at).toISOString().slice(0, 10)}`;
+    const key = `${compBucket(fx.competition)}|${norm(fx.home_team)}|${norm(fx.away_team)}|${new Date(fx.kickoff_at).toISOString().slice(0, 10)}`;
     if (!dedup.has(key)) dedup.set(key, fx);
   }
   const unique = [...dedup.values()];
@@ -283,14 +295,14 @@ async function syncFixtures() {
     .select("id, competition, home_team, away_team, kickoff_at, venue, status, date_tbc");
   const byTeams = new Map<string, ExistingRow>();
   for (const f of (existing ?? []) as ExistingRow[]) {
-    byTeams.set(`${norm(f.home_team)}|${norm(f.away_team)}`, f);
+    byTeams.set(`${compBucket(f.competition)}|${norm(f.home_team)}|${norm(f.away_team)}`, f);
   }
 
   const inserted: string[] = [];
   const updated: string[] = [];
   const errors: string[] = [];
   for (const fx of competitive) {
-    const teamKey = `${norm(fx.home_team)}|${norm(fx.away_team)}`;
+    const teamKey = `${compBucket(fx.competition)}|${norm(fx.home_team)}|${norm(fx.away_team)}`;
     const newKickoff = new Date(fx.kickoff_at).toISOString();
     const existingRow = byTeams.get(teamKey);
 
