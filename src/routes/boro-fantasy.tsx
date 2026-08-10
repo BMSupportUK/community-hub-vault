@@ -798,9 +798,13 @@ function SquadBuilder({
   // Captain and vice-captain are the manager's choice and are never reassigned by
   // the app. They are only cleared when that player is no longer in the XI.
   useEffect(() => {
+    // On refresh the saved captaincy arrives before the saved XI has been copied
+    // into local slot state. Do not reconcile during that hydration render or the
+    // still-empty starter array will incorrectly clear both saved armbands.
+    if (!draftLoaded) return;
     if (captainId && !starters.includes(captainId)) setCaptainId("");
     if (viceId && !starters.includes(viceId)) setViceId("");
-  }, [starters, captainId, viceId]);
+  }, [draftLoaded, starters, captainId, viceId]);
 
   const counts = formationCounts(formation);
   /** Bench size follows the real substitute rules of this gameweek's competition. */
