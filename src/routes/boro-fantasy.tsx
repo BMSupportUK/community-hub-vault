@@ -617,8 +617,8 @@ function ManagerCard({
 type SavePayload = {
   gameweekId: string;
   formation: string;
-  starters: string[];
-  bench: string[];
+  starters: (string | null)[];
+  bench: (string | null)[];
   captainId: string;
   viceId: string;
 };
@@ -661,7 +661,8 @@ function SquadBuilder({
 
   const [formation, setFormation] = useState<FormationKey>((existing?.formation as FormationKey) ?? "4-4-2");
   const [selected, setSelected] = useState<string[]>(existing ? existing.picks.map((p) => p.playerId) : []);
-  const [starters, setStarters] = useState<string[]>(existing ? existing.picks.filter((p) => p.isStarter).map((p) => p.playerId) : []);
+  const [starters, setStarters] = useState<(string | null)[]>(Array(11).fill(null));
+  const [bench, setBench] = useState<(string | null)[]>([]);
   const [captainId, setCaptainId] = useState<string>(existing?.captainId ?? "");
   const [viceId, setViceId] = useState<string>(existing?.viceId ?? "");
   const [saving, setSaving] = useState(false);
@@ -686,14 +687,23 @@ function SquadBuilder({
         // than carrying over the previous week's picks.
         setFormation("4-4-2");
         setSelected([]);
-        setStarters([]);
+        setStarters(Array(11).fill(null));
+        setBench(Array(benchRulesFor(gw?.competition).size).fill(null));
         setCaptainId("");
         setViceId("");
         return;
       }
       setFormation(existing.formation as FormationKey);
       setSelected(existing.picks.map((p) => p.playerId));
-      setStarters(existing.picks.filter((p) => p.isStarter).map((p) => p.playerId));
+      const size = benchRulesFor(gw?.competition).size;
+      const st = Array(11).fill(null) as (string | null)[];
+      const bn = Array(size).fill(null) as (string | null)[];
+      for (const p of existing.picks) {
+        if (p.isStarter && p.slotOrder >= 0 && p.slotOrder < 11) st[p.slotOrder] = p.playerId;
+        else if (!p.isStarter && p.slotOrder >= 0 && p.slotOrder < size) bn[p.slotOrder] = p.playerId;
+      }
+      setStarters(st);
+      setBench(bn);
       setCaptainId(existing.captainId ?? "");
       setViceId(existing.viceId ?? "");
     };
@@ -709,7 +719,8 @@ function SquadBuilder({
         if (Array.isArray(d.selected) && d.selected.length) {
           if (d.formation) setFormation(d.formation as FormationKey);
           setSelected(d.selected);
-          setStarters(Array.isArray(d.starters) ? d.starters : []);
+          setStarters(Array.isArray(d.starters) && d.starters.length === 11 ? d.starters : Array(11).fill(null));
+          setBench(Array.isArray(d.bench) && d.bench.length === benchRulesFor(gw?.competition).size ? d.bench : Array(benchRulesFor(gw?.competition).size).fill(null));
           setCaptainId(d.captainId ?? "");
           setViceId(d.viceId ?? "");
           restoredDraftRef.current = true;
@@ -733,12 +744,12 @@ function SquadBuilder({
       else
         localStorage.setItem(
           draftKey,
-          JSON.stringify({ formation, selected, starters, captainId, viceId, at: Date.now() }),
+          JSON.stringify({ formation, selected, starters, bench, captainId, viceId, at: Date.now() }),
         );
     } catch {
       /* storage full or blocked — drafting still works in-memory */
     }
-  }, [draftKey, draftLoaded, formation, selected, starters, captainId, viceId]);
+  }, [draftKey, draftLoaded, formation, selected, starters, bench, captainId, viceId]);
 
   const counts = formationCounts(formation);
   /** Bench size follows the real substitute rules of this gameweek's competition. */
@@ -755,18 +766,15 @@ function SquadBuilder({
       fwd: r.fwd.max + benchRules.size,
     } as Record<FantasyPosition, number>;
   }, [formation, benchRules]);
-  const byPos = (ids: string[], pos: FantasyPosition) => ids.filter((id) => playerById.get(id)?.position === pos);
-  const bench = selected
-    .filter((id) => !starters.includes(id))
-    .sort(
-      (a, b) =>
-        POSITION_ORDER.indexOf(playerById.get(a)?.position ?? "gk") -
-        POSITION_ORDER.indexOf(playerById.get(b)?.position ?? "gk"),
-    );
+  const byPos = (ids: (string | null)[], pos: FantasyPosition) => ids.filter((id): id is string => !!id && playerById.get(id)?.position === pos);
+  const benchHasGk = (sel: string[], st: (string | null)[], excludeId?: string) =>
+    byPos(sel.filter((id) => id !== excludeId && !st.includes(id)) as (string | null)[], "gk").length > 0;
+
   const locked = !!gw && (gw.status !== "upcoming" || new Date(gw.lockAt).getTime() <= Date.now());
 
   const xiProblems: string[] = [];
-  if (starters.length !== 11) xiProblems.push(`Pick 11 starters (${starters.length} selected).`);
+  const starterCount = starters.filter(Boolean).length;
+  if (starterCount !== 11) xiProblems.push(`Pick 11 starters (${starterCount} selected).`);
   else {
     const range = formationPositionRange(formation);
     for (const pos of POSITION_ORDER) {
@@ -780,8 +788,9 @@ function SquadBuilder({
         );
     }
   }
-  if (bench.length !== benchRules.size)
-    xiProblems.push(`${benchRules.competition} allows ${benchRules.size} subs — name ${benchRules.size} (you have ${bench.length}).`);
+  const benchCount = bench.filter(Boolean).length;
+  if (benchCount !== benchRules.size)
+    xiProblems.push(`${benchRules.competition} allows ${benchRules.size} subs — name ${benchRules.size} (you have ${benchCount}).`);
   const benchGkCount = byPos(bench, "gk").length;
   if (benchGkCount < benchRules.minGk)
     xiProblems.push(`Your bench needs at least ${benchRules.minGk} goalkeeper (you have ${benchGkCount}).`);
@@ -814,15 +823,15 @@ function SquadBuilder({
 
   // Position pop-box picker: either filling/swapping an XI slot, or a bench slot.
   const [picker, setPicker] = useState<
-    | { mode: "xi"; positions: FantasyPosition[]; replaceId?: string }
+    | { mode: "xi"; positions: FantasyPosition[]; slotIndex: number; replaceId?: string }
     | { mode: "bench"; benchIndex: number }
     | null
   >(null);
 
   // Only highlight Save when something actually differs from the saved squad.
   const dirty = useMemo(() => {
-    const sameSet = (a: string[], b: string[]) =>
-      a.length === b.length && [...a].sort().join(",") === [...b].sort().join(",");
+    const sameSet = (a: string[], b: (string | null)[]) =>
+      a.length === b.filter(Boolean).length && [...a].sort().join(",") === [...b.filter(Boolean)].sort().join(",");
     if (!existing) return selected.length > 0;
     const savedSelected = existing.picks.map((p) => p.playerId);
     const savedStarters = existing.picks.filter((p) => p.isStarter).map((p) => p.playerId);
@@ -851,7 +860,8 @@ function SquadBuilder({
   function removePlayer(id: string) {
     if (!editable) return;
     setSelected((prev) => prev.filter((x) => x !== id));
-    setStarters((prev) => prev.filter((x) => x !== id));
+    setStarters((prev) => prev.map((x) => (x === id ? null : x)));
+    setBench((prev) => prev.map((x) => (x === id ? null : x)));
     if (captainId === id) setCaptainId("");
     if (viceId === id) setViceId("");
   }
@@ -859,96 +869,152 @@ function SquadBuilder({
   function benchPlayer(id: string) {
     if (!editable) return;
     const p = playerById.get(id);
-    const benchHasGk = byPos(selected, "gk").some((x) => x !== id && !starters.includes(x));
-    if (p && p.position !== "gk" && !benchHasGk) {
+    if (!p) return;
+    if (p.position !== "gk" && !benchHasGk(selected, starters, id)) {
       toast.error("Sub 1 must be the replacement goalkeeper — pick a GK first.");
       return;
     }
-    setStarters((prev) => prev.filter((x) => x !== id));
+    setStarters((prev) => prev.map((x) => (x === id ? null : x)));
+    benchAddById(id);
     if (captainId === id) setCaptainId("");
     if (viceId === id) setViceId("");
   }
 
   /** Put a player into the XI, optionally swapping out whoever holds that slot. */
-  function startPlayer(p: FantasyPlayerDTO, replaceId?: string) {
+  function startPlayer(p: FantasyPlayerDTO, slotIndex?: number, replaceId?: string) {
     if (!editable) return;
     const sel = withPlayer(selected, p);
     if (!sel) return;
-    let st = starters.filter((x) => x !== replaceId);
-    if (!st.includes(p.id)) {
-      const line = byPos(st, p.position);
-      const allowed = formationPositionRange(formation)[p.position].max;
-      if (line.length >= allowed || st.length >= 11) {
-        const bumped = line[line.length - 1] ?? st[st.length - 1];
-        if (bumped) {
-          st = st.filter((x) => x !== bumped);
-          if (captainId === bumped) setCaptainId("");
-          if (viceId === bumped) setViceId("");
-        }
-      }
-      st = [...st, p.id];
+
+    const st = [...starters];
+    const targetIdx = typeof slotIndex === "number" && slotIndex >= 0 && slotIndex < 11 ? slotIndex : st.indexOf(null);
+    const idx = targetIdx >= 0 ? targetIdx : st.indexOf(null);
+    if (idx === -1) return;
+
+    // Remove the player from anywhere else they were already assigned.
+    const existingSlot = st.indexOf(p.id);
+    if (existingSlot !== -1) st[existingSlot] = null;
+    setBench((prev) => {
+      const i = prev.indexOf(p.id);
+      if (i === -1) return prev;
+      const next = [...prev];
+      next[i] = null;
+      return next;
+    });
+
+    // Bump the current occupant of the target slot to the bench if there is one.
+    const bumped = st[idx];
+    if (bumped) {
+      if (captainId === bumped) setCaptainId("");
+      if (viceId === bumped) setViceId("");
+      benchAddById(bumped);
     }
+
+    // If replacing a specific player, clear their captaincy/vice.
     if (replaceId) {
       if (captainId === replaceId) setCaptainId("");
       if (viceId === replaceId) setViceId("");
     }
+
+    st[idx] = p.id;
     setSelected(sel);
     setStarters(st);
   }
 
-  /** Add a player to the bench (or squad only). Sub 1 is reserved for the replacement GK. */
+  /** Add a player to the bench into the first empty slot. Sub 1 is reserved for the replacement GK. */
   function benchAdd(p: FantasyPlayerDTO) {
     if (!editable) return;
-    const benchHasGk = byPos(selected, "gk").some((id) => !starters.includes(id));
-    if (p.position !== "gk" && !benchHasGk) {
-      toast.error("Sub 1 must be the replacement goalkeeper — pick a GK first.");
-      return;
-    }
     const sel = withPlayer(selected, p);
     if (!sel) return;
     setSelected(sel);
-    setStarters((prev) => prev.filter((x) => x !== p.id));
+    setStarters((prev) => prev.map((x) => (x === p.id ? null : x)));
+    benchAddById(p.id);
   }
 
-  /** Fill any gaps in the match day 11 (and captaincy) from the players picked. */
+  function benchAddById(id: string) {
+    setBench((prev) => {
+      const p = playerById.get(id);
+      if (!p) return prev;
+      // Sub 1 is reserved for goalkeepers.
+      if (p.position === "gk") {
+        if (prev[0] && prev[0] !== id) {
+          toast.error("Sub 1 is reserved for the replacement goalkeeper.");
+          return prev;
+        }
+        const next = [...prev];
+        next[0] = id;
+        return next;
+      }
+      const empty = prev.findIndex((x, i) => x === null && i > 0);
+      if (empty === -1) return prev;
+      const next = [...prev];
+      next[empty] = id;
+      return next;
+    });
+  }
+
+  /** Fill any gaps in the match day 11, bench and captaincy from the players picked. */
   function autoCompleteXI() {
-    const st: string[] = [];
-    for (const pos of POSITION_ORDER) {
-      const need = (counts as Record<string, number>)[pos] ?? 0;
-      const pool = byPos(selected, pos)
-        .slice()
-        .sort((a, b) => (playerById.get(b)?.seasonPoints ?? 0) - (playerById.get(a)?.seasonPoints ?? 0));
-      st.push(...pool.slice(0, need));
+    const st = [...starters];
+    let pool = selected.filter((id) => !st.includes(id));
+    for (let i = 0; i < st.length; i++) {
+      if (st[i]) continue;
+      const row = formationRows(formation).find((r) => i >= r.startIndex && i < r.startIndex + r.count);
+      const allowed = row ? rowPositions(row) : POSITION_ORDER;
+      const pick = allowed
+        .flatMap((pos) => pool.filter((id) => playerById.get(id)?.position === pos))
+        .sort((a, b) => (playerById.get(b)?.seasonPoints ?? 0) - (playerById.get(a)?.seasonPoints ?? 0))[0];
+      if (pick) {
+        st[i] = pick;
+        pool = pool.filter((id) => id !== pick);
+      }
+    }
+    const bn = [...bench];
+    // Ensure Sub 1 is a goalkeeper if possible.
+    if (!bn[0]) {
+      const gk = pool.find((id) => playerById.get(id)?.position === "gk");
+      if (gk) { bn[0] = gk; pool = pool.filter((id) => id !== gk); }
+    }
+    for (let i = 0; i < bn.length; i++) {
+      if (bn[i]) continue;
+      const pick = pool[0];
+      if (pick) {
+        bn[i] = pick;
+        pool = pool.filter((id) => id !== pick);
+      }
     }
     const ranked = st
-      .slice()
-      .sort((a, b) => (playerById.get(b)?.seasonPoints ?? 0) - (playerById.get(a)?.seasonPoints ?? 0));
-    return { starters: st, captainId: ranked[0] ?? "", viceId: ranked[1] ?? "" };
+      .filter(Boolean)
+      .sort((a, b) => (playerById.get(b!)?.seasonPoints ?? 0) - (playerById.get(a!)?.seasonPoints ?? 0));
+    return { starters: st, bench: bn, captainId: ranked[0] ?? "", viceId: ranked[1] ?? "" };
   }
 
   async function handleSave() {
     if (!gw) return;
     let st = starters;
+    let bn = bench;
     let cap = captainId;
     let vice = viceId;
-    const needsAutoXI = starters.length !== 11;
+    const filledCount = starters.filter(Boolean).length;
+    const needsAutoXI = filledCount !== 11 || bench.filter(Boolean).length !== benchRules.size || selected.length !== 15;
     if (needsAutoXI) {
       const auto = autoCompleteXI();
-      if (auto.starters.length !== 11 || !auto.captainId || !auto.viceId) {
+      if (auto.starters.filter(Boolean).length !== 11 || !auto.captainId || !auto.viceId || auto.bench.filter(Boolean).length !== benchRules.size) {
         toast.error("Complete your squad of 15 first.");
         return;
       }
       st = auto.starters;
+      bn = auto.bench;
       cap = auto.captainId;
       vice = auto.viceId;
       setStarters(st);
+      setBench(bn);
       setCaptainId(cap);
       setViceId(vice);
     }
-    const bn = selected.filter((id) => !st.includes(id));
     setSaving(true);
     try {
-      await onSave({ gameweekId: gw.id, formation, starters: st, bench: bn, captainId: cap, viceId: vice });
+      await onSave({ gameweekId: gw.id, formation, starters: st as string[], bench: bn as string[], captainId: cap, viceId: vice });
       // Saved to the server — the local draft is no longer needed.
       restoredDraftRef.current = false;
       if (draftKey) {
@@ -1119,6 +1185,7 @@ function SquadBuilder({
               onFormationChange={(f) => setFormation(f)}
               editable={editable}
               playerById={playerById}
+              selected={selected}
               starters={starters}
               bench={bench}
               captainId={captainId}
@@ -1127,11 +1194,11 @@ function SquadBuilder({
               pointsByPlayer={hasGwPoints ? pointsByPlayer : undefined}
               minutesByPlayer={minutesByPlayer.size ? minutesByPlayer : undefined}
               autoSubbedIds={autoSubbedIds}
-              onSlotOpen={(positions, replaceId) => setPicker({ mode: "xi", positions, replaceId })}
+              onSlotOpen={(positions, slotIndex, replaceId) => setPicker({ mode: "xi", positions, slotIndex, replaceId })}
               onBenchSlotOpen={(benchIndex) => setPicker({ mode: "bench", benchIndex })}
-              onDropStart={(playerId, replaceId) => {
+              onDropStart={(playerId, slotIndex, replaceId) => {
                 const p = playerById.get(playerId);
-                if (p) startPlayer(p, replaceId);
+                if (p) startPlayer(p, slotIndex, replaceId);
               }}
               onDropBench={(playerId) => {
                 const p = playerById.get(playerId);
@@ -1219,7 +1286,7 @@ function SquadBuilder({
         }
         onPick={(p) => {
           if (!picker) return;
-          if (picker.mode === "xi") startPlayer(p, picker.replaceId);
+          if (picker.mode === "xi") startPlayer(p, picker.slotIndex, picker.replaceId);
           else benchAdd(p);
           setPicker(null);
         }}
@@ -1376,7 +1443,7 @@ function PlayerPickerDialog({
 // Pitch
 // ------------------------------------------------------------------
 function PitchView({
-  formation, onFormationChange, editable, playerById, starters, bench, captainId, viceId,
+  formation, onFormationChange, editable, playerById, selected, starters, bench, captainId, viceId,
   benchSize, pointsByPlayer, minutesByPlayer, autoSubbedIds, onDropStart, onDropBench, onBench, onRemove, onCaptain, onVice,
   onSlotOpen, onBenchSlotOpen, gw,
 }: {
@@ -1384,17 +1451,18 @@ function PitchView({
   onFormationChange: (f: FormationKey) => void;
   editable: boolean;
   playerById: Map<string, FantasyPlayerDTO>;
-  starters: string[];
-  bench: string[];
+  selected: string[];
+  starters: (string | null)[];
+  bench: (string | null)[];
   captainId: string;
   viceId: string;
   benchSize: number;
   pointsByPlayer?: Map<string, number | null>;
   minutesByPlayer?: Map<string, number | null>;
   autoSubbedIds?: Set<string>;
-  onSlotOpen: (positions: FantasyPosition[], replaceId?: string) => void;
+  onSlotOpen: (positions: FantasyPosition[], slotIndex: number, replaceId?: string) => void;
   onBenchSlotOpen: (benchIndex: number) => void;
-  onDropStart: (playerId: string, replaceId?: string) => void;
+  onDropStart: (playerId: string, slotIndex?: number, replaceId?: string) => void;
   onDropBench: (playerId: string) => void;
   onBench: (id: string) => void;
   onRemove: (id: string) => void;
@@ -1403,32 +1471,21 @@ function PitchView({
   gw?: FantasyGameweekDTO | null;
 }) {
   const rows = formationRows(formation);
-  const meta = FORMATIONS[formation];
 
-  // Distribute the starters of each position across the rows that ask for them.
-  const queues: Record<string, string[]> = {};
-  for (const pos of POSITION_ORDER) queues[pos] = starters.filter((id) => playerById.get(id)?.position === pos);
-  // Fixed rows claim their players first, then flexible rows take whatever is left
-  // from either of the positions they allow.
-  const rowSlots: { positions: FantasyPosition[]; slots: (string | null)[] }[] = rows.map((r) => ({
-    positions: rowPositions(r),
-    slots: Array.from({ length: r.count }, () => null as string | null),
-  }));
-  rows.forEach((r, ri) => {
-    if (r.alt) return;
-    for (let i = 0; i < r.count; i++) rowSlots[ri]!.slots[i] = queues[r.pos]!.shift() ?? null;
-  });
-  rows.forEach((r, ri) => {
-    if (!r.alt) return;
-    for (let i = 0; i < r.count; i++) {
-      rowSlots[ri]!.slots[i] = queues[r.pos]!.shift() ?? queues[r.alt]!.shift() ?? null;
-    }
+  // Starters are stored as a fixed-length array mapped directly to pitch slots
+  // (row order, left-to-right). This keeps every player in the same slot when
+  // another is removed, rather than sliding everyone across to fill the gap.
+  let slotIdx = 0;
+  const rowSlots: { positions: FantasyPosition[]; startIndex: number; slots: (string | null)[] }[] = rows.map((r) => {
+    const slots = starters.slice(slotIdx, slotIdx + r.count);
+    const startIndex = slotIdx;
+    slotIdx += r.count;
+    return { positions: rowPositions(r), startIndex, slots };
   });
 
-  // Starters that don't fit the chosen formation (e.g. after switching shape) would
-  // otherwise vanish from the pitch — show them in an overflow row so all 15 of the
-  // squad are always visible and moveable.
-  const overflow = POSITION_ORDER.flatMap((pos) => queues[pos] ?? []);
+  // Any selected player not currently assigned to a slot appears in the overflow row.
+  const assigned = new Set([...starters.filter(Boolean), ...bench.filter(Boolean)] as string[]);
+  const overflow = selected.filter((id) => !assigned.has(id));
 
   const dropProps = (handler: (playerId: string) => void) => ({
     onDragOver: (e: ReactDragEvent) => { if (editable) { e.preventDefault(); e.dataTransfer.dropEffect = "move"; } },
@@ -1475,13 +1532,14 @@ function PitchView({
             <div key={ri} className="flex flex-nowrap justify-center gap-1 sm:gap-2">
               {row.slots.map((id, si) => {
                 const p = id ? playerById.get(id) : undefined;
+                const slotIndex = row.startIndex + si;
                 return (
                   <div
                     key={`${ri}-${si}`}
-                    {...dropProps((dragged) => onDropStart(dragged, id ?? undefined))}
+                    {...dropProps((dragged) => onDropStart(dragged, slotIndex, id ?? undefined))}
                     draggable={editable && !!id}
                     onDragStart={(e) => { if (id) e.dataTransfer.setData("text/fantasy-player", id); }}
-                    onClick={() => { if (editable && !id) onSlotOpen(row.positions); }}
+                    onClick={() => { if (editable && !id) onSlotOpen(row.positions, slotIndex); }}
                     role={editable && !id ? "button" : undefined}
                     className={`min-w-[68px] flex-1 max-w-[110px] sm:max-w-[120px] rounded-xl border px-1.5 py-2 text-center backdrop-blur-sm transition-colors ${
                       p ? "border-white/40 bg-slate-950/70" : "cursor-pointer border-dashed border-white/40 bg-white/10 hover:bg-white/20"
@@ -1514,7 +1572,7 @@ function PitchView({
                             <button type="button" title="Vice-captain" onClick={() => onVice(p.id)} className={`rounded p-0.5 ${viceId === p.id ? "text-sky-300" : "text-white/50 hover:text-white"}`}>
                               <Star className="size-3" />
                             </button>
-                            <button type="button" title="Swap this player" onClick={() => onSlotOpen(row.positions, p.id)} className="rounded p-0.5 text-white/50 hover:text-white">
+                            <button type="button" title="Swap this player" onClick={() => onSlotOpen(row.positions, slotIndex, p.id)} className="rounded p-0.5 text-white/50 hover:text-white">
                               <ArrowRightLeft className="size-3" />
                             </button>
                             <button type="button" title="Move to bench" onClick={() => onBench(p.id)} className="rounded p-0.5 text-white/50 hover:text-white">

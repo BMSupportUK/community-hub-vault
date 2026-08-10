@@ -103,7 +103,7 @@ export type FormationKey =
  * `alt` marks a flexible line — either position can fill those slots
  * (e.g. the three behind the striker in 4-2-3-1 can be midfielders or forwards).
  */
-export type FormationRow = { pos: FantasyPosition; count: number; alt?: FantasyPosition };
+export type FormationRow = { pos: FantasyPosition; count: number; alt?: FantasyPosition; startIndex: number };
 
 /** Every position allowed on a given pitch row. */
 export function rowPositions(row: FormationRow): FantasyPosition[] {
@@ -121,7 +121,7 @@ export function slotPositionLabel(positions: FantasyPosition[]): string {
  */
 export const FORMATIONS: Record<
   FormationKey,
-  { def: number; mid: number; fwd: number; label: string; rows: FormationRow[] }
+  { def: number; mid: number; fwd: number; label: string; rows: Omit<FormationRow, "startIndex">[] }
 > = {
   "4-4-2": { def: 4, mid: 4, fwd: 2, label: "Classic flat back four", rows: [{ pos: "gk", count: 1 }, { pos: "def", count: 4 }, { pos: "mid", count: 4 }, { pos: "fwd", count: 2 }] },
   "4-3-3": { def: 4, mid: 3, fwd: 3, label: "Front-three press", rows: [{ pos: "gk", count: 1 }, { pos: "def", count: 4 }, { pos: "mid", count: 3 }, { pos: "fwd", count: 3 }] },
@@ -134,8 +134,15 @@ export const FORMATIONS: Record<
 
 export const FORMATION_KEYS = Object.keys(FORMATIONS) as FormationKey[];
 
+/** Convert a formation key into pitch rows from back to front, with absolute slot offsets. */
 export function formationRows(formation: string): FormationRow[] {
-  return (FORMATIONS[formation as FormationKey] ?? FORMATIONS["4-4-2"]).rows;
+  const rows = (FORMATIONS[formation as FormationKey] ?? FORMATIONS["4-4-2"]).rows;
+  let startIndex = 0;
+  return rows.map((r) => {
+    const row = { ...r, startIndex };
+    startIndex += r.count;
+    return row;
+  });
 }
 
 export function formationCounts(formation: string) {
