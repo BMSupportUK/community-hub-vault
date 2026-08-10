@@ -824,8 +824,8 @@ function SquadBuilder({
       }
       toast.success(
         needsAutoXI
-          ? "Squad saved — we picked a starting 11 for you, tweak it on the Starting 11 tab."
-          : "Squad saved.",
+          ? "Saved — we completed your match day 11, tweak it any time before the deadline."
+          : "Match day 11 saved.",
       );
     } catch (e: any) {
       toast.error(e?.message ?? "Could not save squad");
