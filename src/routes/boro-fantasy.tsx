@@ -751,6 +751,11 @@ function SquadBuilder({
 
   const editable = !locked && (canPlay || !gw);
 
+  // Position pop-box picker: either filling/swapping an XI slot, or a bench slot.
+  const [picker, setPicker] = useState<
+    { mode: "xi"; pos: FantasyPosition; replaceId?: string } | { mode: "bench" } | null
+  >(null);
+
   // Only highlight Save when something actually differs from the saved squad.
   const dirty = useMemo(() => {
     const sameSet = (a: string[], b: string[]) =>
@@ -971,15 +976,7 @@ function SquadBuilder({
         </div>
       )}
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_280px] items-start">
-        <div className="grid gap-4 xl:grid-cols-[320px_minmax(0,1fr)] items-start">
-          <PlayerSidebar
-            players={state.players}
-            selected={selected}
-            starters={starters}
-            quota={posQuota}
-            editable={editable}
-            onPick={autoPick}
-          />
+        <div className="grid gap-4 items-start">
           <PitchView
               formation={formation}
               onFormationChange={(f) => setFormation(f)}
@@ -993,6 +990,8 @@ function SquadBuilder({
               pointsByPlayer={hasGwPoints ? pointsByPlayer : undefined}
               minutesByPlayer={minutesByPlayer.size ? minutesByPlayer : undefined}
               autoSubbedIds={autoSubbedIds}
+              onSlotOpen={(pos, replaceId) => setPicker({ mode: "xi", pos, replaceId })}
+              onBenchSlotOpen={() => setPicker({ mode: "bench" })}
               onDropStart={(playerId, replaceId) => {
                 const p = playerById.get(playerId);
                 if (p) startPlayer(p, replaceId);
@@ -1049,6 +1048,25 @@ function SquadBuilder({
           </div>
         </aside>
       </div>
+
+      <PlayerPickerDialog
+        open={!!picker}
+        onOpenChange={(o) => { if (!o) setPicker(null); }}
+        players={state.players}
+        selected={selected}
+        position={picker && picker.mode === "xi" ? picker.pos : undefined}
+        title={
+          picker && picker.mode === "xi"
+            ? `Pick a ${POSITION_LABEL[picker.pos] ?? POSITION_SHORT[picker.pos]}`
+            : "Pick a substitute"
+        }
+        onPick={(p) => {
+          if (!picker) return;
+          if (picker.mode === "xi") startPlayer(p, picker.replaceId);
+          else benchAdd(p);
+          setPicker(null);
+        }}
+      />
     </div>
   );
 }
