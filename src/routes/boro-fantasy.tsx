@@ -965,13 +965,26 @@ function SquadBuilder({
     }
   }
 
+  const gwSaved = !!existing;
+
   const gameweekPanel = (
     <div className="rounded-2xl border border-border/60 bg-card/80 backdrop-blur p-4 space-y-3">
         <div className="flex flex-col gap-3">
           <div className="min-w-0">
             {gw ? (
               <>
-                <div className="font-semibold">GW{gw.gwNumber} — {gw.homeTeam} v {gw.awayTeam}</div>
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold">GW{gw.gwNumber} — {gw.homeTeam} v {gw.awayTeam}</span>
+                  {gwSaved ? (
+                    <span className="inline-flex items-center rounded-full bg-emerald-500/15 px-1.5 py-0.5 text-emerald-400" title="Match day squad saved">
+                      <Check className="size-3.5" strokeWidth={3} />
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center rounded-full bg-destructive/15 px-1.5 py-0.5 text-destructive" title="No squad saved yet">
+                      <X className="size-3.5" strokeWidth={3} />
+                    </span>
+                  )}
+                </div>
                 <div className="text-xs text-muted-foreground">{gw.dateTbc ? "Date to be confirmed" : kickoffLabel(gw.kickoffAt)}</div>
               </>
             ) : (
