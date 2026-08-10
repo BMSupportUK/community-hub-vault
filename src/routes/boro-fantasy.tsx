@@ -31,7 +31,7 @@ import {
 } from "@/lib/fantasy-rules";
 import {
   getFantasyState, getFantasyLeaderboard, joinFantasyGame, saveFantasySquad, setFantasyTeamName,
-  type FantasyStateDTO, type FantasyPlayerDTO, type FantasyLeaderboardRow,
+  type FantasyStateDTO, type FantasyPlayerDTO, type FantasyLeaderboardRow, type FantasyGameweekDTO,
 } from "@/lib/fantasy.functions";
 import {
   fantasyGuestRegister, fantasyGuestSignInExisting, getPublicFantasyState,
@@ -1141,6 +1141,7 @@ function SquadBuilder({
               onRemove={removePlayer}
               onCaptain={(id) => setCaptainId(id)}
               onVice={(id) => setViceId(id)}
+              gw={gw}
           />
         </div>
 
@@ -1194,11 +1195,6 @@ function SquadBuilder({
             )}
           </div>
         </aside>
-          {gw && !gw.dateTbc && (
-            <aside className="rounded-2xl border border-border/60 bg-card/85 backdrop-blur overflow-hidden p-3 text-center">
-              <DigitalLockCountdown lockAt={gw.lockAt} compact />
-            </aside>
-          )}
         </div>
       </div>
 
@@ -1382,7 +1378,7 @@ function PlayerPickerDialog({
 function PitchView({
   formation, onFormationChange, editable, playerById, starters, bench, captainId, viceId,
   benchSize, pointsByPlayer, minutesByPlayer, autoSubbedIds, onDropStart, onDropBench, onBench, onRemove, onCaptain, onVice,
-  onSlotOpen, onBenchSlotOpen,
+  onSlotOpen, onBenchSlotOpen, gw,
 }: {
   formation: FormationKey;
   onFormationChange: (f: FormationKey) => void;
@@ -1404,6 +1400,7 @@ function PitchView({
   onRemove: (id: string) => void;
   onCaptain: (id: string) => void;
   onVice: (id: string) => void;
+  gw?: FantasyGameweekDTO | null;
 }) {
   const rows = formationRows(formation);
   const meta = FORMATIONS[formation];
@@ -1468,6 +1465,11 @@ function PitchView({
             ))}
           </select>
         </div>
+        {gw && !gw.dateTbc && (
+          <div className="absolute left-3 top-3 z-10 w-36 sm:w-44 rounded-xl border border-white/30 bg-slate-950/80 p-2 shadow-lg backdrop-blur-sm">
+            <DigitalLockCountdown lockAt={gw.lockAt} compact />
+          </div>
+        )}
         <div className="relative space-y-4 sm:space-y-6 py-2">
           {rowSlots.map((row, ri) => (
             <div key={ri} className="flex flex-nowrap justify-center gap-1 sm:gap-2">
