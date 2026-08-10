@@ -1118,7 +1118,7 @@ function PlayerSidebar({
 // ------------------------------------------------------------------
 function PitchView({
   formation, onFormationChange, editable, playerById, starters, bench, captainId, viceId,
-  pointsByPlayer, autoSubbedIds, onDropStart, onDropBench, onBench, onRemove, onCaptain, onVice,
+  benchSize, pointsByPlayer, autoSubbedIds, onDropStart, onDropBench, onBench, onRemove, onCaptain, onVice,
 }: {
   formation: FormationKey;
   onFormationChange: (f: FormationKey) => void;
@@ -1128,6 +1128,7 @@ function PitchView({
   bench: string[];
   captainId: string;
   viceId: string;
+  benchSize: number;
   pointsByPlayer?: Map<string, number | null>;
   autoSubbedIds?: Set<string>;
   onDropStart: (playerId: string, replaceId?: string) => void;
