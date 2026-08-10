@@ -903,7 +903,7 @@ function SquadBuilder({
   }
 
   /** Put a player into the XI, optionally swapping out whoever holds that slot. */
-  function startPlayer(p: FantasyPlayerDTO, slotIndex?: number, replaceId?: string) {
+  function startPlayer(p: FantasyPlayerDTO, slotIndex?: number, _replaceId?: string) {
     if (!editable) return;
     const sel = withPlayer(selected, p);
     if (!sel) return;
