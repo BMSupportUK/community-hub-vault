@@ -1018,28 +1018,6 @@ function SquadBuilder({
     });
   }
 
-  function benchAddByIdLegacy(id: string) {
-    setBench((prev) => {
-      const p = playerById.get(id);
-      if (!p) return prev;
-      // Sub 1 is reserved for goalkeepers.
-      if (p.position === "gk") {
-        if (prev[0] && prev[0] !== id) {
-          toast.error("Sub 1 is reserved for the replacement goalkeeper.");
-          return prev;
-        }
-        const next = [...prev];
-        next[0] = id;
-        return next;
-      }
-      const empty = prev.findIndex((x, i) => x === null && i > 0);
-      if (empty === -1) return prev;
-      const next = [...prev];
-      next[empty] = id;
-      return next;
-    });
-  }
-
   /** Fill any gaps in the match day 11, bench and captaincy from the players picked. */
   function autoCompleteXI() {
     const st = [...starters];
