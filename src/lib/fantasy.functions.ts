@@ -159,10 +159,9 @@ export const adminRemoveFantasyEntrant = createServerFn({ method: "POST" })
       const { error } = await admin.from(table).delete().eq(col, data.entrantId);
       if (error) throw new Error(error.message);
     }
-    const { error } = await admin
-      .from(data.isGuest ? "fantasy_guest_entrants" : "fantasy_entrants")
-      .delete()
-      .eq(data.isGuest ? "id" : "user_id", data.entrantId);
+    const { error } = data.isGuest
+      ? await admin.from("fantasy_guest_entrants").delete().eq("id", data.entrantId)
+      : await admin.from("fantasy_entrants").delete().eq("user_id", data.entrantId);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
