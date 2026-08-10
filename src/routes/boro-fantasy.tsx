@@ -1511,14 +1511,15 @@ function PitchView({
         <div className="pointer-events-none absolute inset-4 sm:inset-6 rounded-xl border-2 border-white/25" aria-hidden />
         <div className="pointer-events-none absolute left-1/2 top-4 sm:top-6 h-16 w-40 -translate-x-1/2 rounded-b-xl border-x-2 border-b-2 border-white/25" aria-hidden />
         <div className="pointer-events-none absolute left-1/2 bottom-4 sm:bottom-6 h-16 w-40 -translate-x-1/2 rounded-t-xl border-x-2 border-t-2 border-white/25" aria-hidden />
-        <div className="absolute right-2 top-2 sm:right-3 sm:top-3 z-10 w-32 sm:w-44 rounded-lg sm:rounded-xl border border-white/30 bg-slate-950/80 p-1.5 sm:p-2 shadow-lg backdrop-blur-sm">
-          <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-white/80">Formation</label>
-          <select
-            className="h-7 sm:h-8 w-full min-w-0 rounded-lg border border-white/30 bg-slate-900/80 px-1.5 sm:px-2 text-[11px] sm:text-xs font-semibold text-white"
-            value={formation}
-            onChange={(e) => onFormationChange(e.target.value as FormationKey)}
-            disabled={!editable}
-          >
+        <div className="pointer-events-none absolute right-2 top-2 sm:right-3 sm:top-3 z-10 w-32 sm:w-44 rounded-lg sm:rounded-xl border border-white/30 bg-slate-950/80 p-1.5 sm:p-2 shadow-lg backdrop-blur-sm">
+          <div className="pointer-events-auto">
+            <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-white/80">Formation</label>
+            <select
+              className="h-7 sm:h-8 w-full min-w-0 rounded-lg border border-white/30 bg-slate-900/80 px-1.5 sm:px-2 text-[11px] sm:text-xs font-semibold text-white"
+              value={formation}
+              onChange={(e) => onFormationChange(e.target.value as FormationKey)}
+              disabled={!editable}
+            >
             {FORMATION_KEYS.map((f) => (
               <option key={f} value={f}>{f} — {FORMATIONS[f].label}</option>
             ))}
