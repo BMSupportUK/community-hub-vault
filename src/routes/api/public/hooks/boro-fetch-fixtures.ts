@@ -253,8 +253,11 @@ async function syncFixtures() {
   }
   const unique = [...dedup.values()];
 
-  // Drop friendlies / non-competitive fixtures before they ever hit the DB.
-  const competitive = unique.filter((fx) => isCompetitiveCompetition(fx.competition));
+  // Drop friendlies / non-competitive fixtures (and already-played cup ties)
+  // before they ever hit the DB.
+  const competitive = unique.filter(
+    (fx) => isCompetitiveCompetition(fx.competition) && !isExcludedFixture(fx),
+  );
   if (competitive.length === 0) {
     return { ok: false, skipped: "no-competitive-fixtures-found", scrape_errors: scrapeErrors };
   }
