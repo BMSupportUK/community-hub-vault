@@ -452,6 +452,10 @@ function BoroFantasyPage() {
                     state={state}
                     canPlay={canPlay}
                     onSave={handleSquadSave}
+                    name={guest?.displayName ?? null}
+                    teamName={currentTeamName}
+                    canEdit={canPlay}
+                    onEdit={openNameDialog}
                   />
                 )}
               </TabsContent>
@@ -495,13 +499,6 @@ function BoroFantasyPage() {
             </Tabs>
 
             <aside className="space-y-4 lg:sticky lg:top-6 lg:self-start">
-              <ManagerCard
-                state={state}
-                name={guest?.displayName ?? null}
-                teamName={currentTeamName}
-                canEdit={canPlay}
-                onEdit={openNameDialog}
-              />
               <NextGameweekCard state={state} />
             </aside>
           </div>
@@ -541,15 +538,43 @@ function BoroFantasyPage() {
 // Sidebar
 // ------------------------------------------------------------------
 function ManagerCard({
-  state, name, teamName, canEdit, onEdit,
+  state, name, teamName, canEdit, onEdit, compact,
 }: {
   state?: FantasyStateDTO;
   name: string | null;
   teamName?: string;
   canEdit?: boolean;
   onEdit?: () => void;
+  compact?: boolean;
 }) {
   const total = (state?.squads ?? []).reduce((sum, s) => sum + (s.points ?? 0), 0);
+  if (compact) {
+    return (
+      <div className="rounded-2xl border-2 border-primary/40 bg-gradient-to-br from-primary/20 via-primary/10 to-card/80 p-3 shadow-glow backdrop-blur">
+        <div className="flex items-center gap-2">
+          <div className="grid size-10 place-items-center rounded-full bg-primary text-primary-foreground shadow-lg">
+            <Trophy className="size-5" />
+          </div>
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5">
+              <span className="font-display text-base font-bold truncate">
+                {teamName || state?.teamName || name || "Unnamed FC"}
+              </span>
+              {canEdit && onEdit && (
+                <Button size="sm" variant="ghost" className="h-6 px-1.5 shrink-0" onClick={onEdit}>
+                  <Pencil className="size-3" />
+                </Button>
+              )}
+            </div>
+            <div className="flex items-center gap-3 text-xs">
+              <span className="font-bold text-primary">{total} pts</span>
+              <span className="text-muted-foreground">Changes unlimited</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="rounded-2xl border border-border/60 bg-card/80 backdrop-blur p-4">
       <div className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Your team</div>
@@ -605,11 +630,15 @@ type SavePayload = {
 };
 
 function SquadBuilder({
-  state, canPlay, onSave,
+  state, canPlay, onSave, name, teamName, canEdit, onEdit,
 }: {
   state: FantasyStateDTO;
   canPlay: boolean;
   onSave: (p: SavePayload) => Promise<void>;
+  name: string | null;
+  teamName: string;
+  canEdit: boolean;
+  onEdit: () => void;
 }) {
   // Managers can work ahead: any gameweek that's still open (upcoming and not
   // past its lock time) can be picked from the dropdown.
@@ -921,7 +950,7 @@ function SquadBuilder({
   return (
     <div className="space-y-4">
       <div className="rounded-2xl border border-border/60 bg-card/80 backdrop-blur p-4 space-y-3">
-        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+        <div className="flex flex-col lg:flex-row lg:items-start gap-3">
           <div className="flex-1 min-w-[200px]">
             {gw ? (
               <>
@@ -986,6 +1015,14 @@ function SquadBuilder({
               </div>
             )}
           </div>
+          <ManagerCard
+            compact
+            state={state}
+            name={name}
+            teamName={teamName}
+            canEdit={canEdit}
+            onEdit={onEdit}
+          />
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-4 text-sm text-muted-foreground">
               <span>
