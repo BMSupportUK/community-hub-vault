@@ -236,10 +236,13 @@ export async function fetchFantasyStatsForFixture(
 
     let minutes = 0;
     if (rp.starter) {
-      minutes = rp.subbedOut ? Math.min(90, subOutMinute.get(athleteId) ?? 90) : 90;
+      minutes = rp.subbedOut
+        ? Math.min(nowMinute, subOutMinute.get(athleteId) ?? nowMinute)
+        : nowMinute;
     } else {
       const inAt = subInMinute.get(athleteId);
-      minutes = inAt != null ? Math.max(1, 90 - inAt) : appearances > 0 ? 1 : 0;
+      const cameOff = rp.subbedOut ? Math.min(nowMinute, subOutMinute.get(athleteId) ?? nowMinute) : nowMinute;
+      minutes = inAt != null ? Math.max(1, cameOff - inAt) : appearances > 0 ? 1 : 0;
     }
     if (minutes <= 0) continue;
 
