@@ -15,6 +15,9 @@ import { Input } from "@/components/ui/input";
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
 import { WinnersTab } from "@/components/app/WinnersTab";
 import { LandingHeader } from "@/components/LandingHeader";
 import { IconRail } from "@/components/app/IconRail";
@@ -567,7 +570,21 @@ function SquadBuilder({
   canPlay: boolean;
   onSave: (p: SavePayload) => Promise<void>;
 }) {
-  const gw = state.gameweeks.find((g) => g.id === state.currentGameweekId) ?? null;
+  // Managers can work ahead: any gameweek that's still open (upcoming and not
+  // past its lock time) can be picked from the dropdown.
+  const openGameweeks = useMemo(
+    () =>
+      state.gameweeks
+        .filter((g) => g.status === "upcoming" && new Date(g.lockAt).getTime() > Date.now())
+        .sort((a, b) => new Date(a.kickoffAt).getTime() - new Date(b.kickoffAt).getTime()),
+    [state.gameweeks],
+  );
+  const [gwId, setGwId] = useState<string>(state.currentGameweekId ?? "");
+  useEffect(() => {
+    const valid = state.gameweeks.some((g) => g.id === gwId);
+    if (!valid) setGwId(state.currentGameweekId ?? openGameweeks[0]?.id ?? "");
+  }, [state.currentGameweekId, state.gameweeks, openGameweeks, gwId]);
+  const gw = state.gameweeks.find((g) => g.id === gwId) ?? null;
   const existing = gw ? state.squads.find((s) => s.gameweekId === gw.id) : undefined;
   const playerById = useMemo(() => new Map(state.players.map((p) => [p.id, p])), [state.players]);
 
@@ -855,6 +872,23 @@ function SquadBuilder({
                 <div className="font-semibold">Pre-season — no gameweek open yet</div>
                 <div className="text-xs text-muted-foreground">Try out formations and squads now; you can save once the first gameweek opens.</div>
               </>
+            )}
+            {openGameweeks.length > 1 && (
+              <div className="mt-2 flex items-center gap-2">
+                <span className="text-[11px] uppercase tracking-wide text-muted-foreground">Gameweek</span>
+                <Select value={gwId} onValueChange={setGwId}>
+                  <SelectTrigger className="h-8 w-[260px] text-xs">
+                    <SelectValue placeholder="Pick a gameweek" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {openGameweeks.map((g) => (
+                      <SelectItem key={g.id} value={g.id}>
+                        GW{g.gwNumber} — {g.homeTeam} v {g.awayTeam} ({kickoffLabel(g.kickoffAt)})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             )}
           </div>
           <div className="flex items-center gap-3">
