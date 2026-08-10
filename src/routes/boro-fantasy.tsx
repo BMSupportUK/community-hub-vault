@@ -23,7 +23,9 @@ import {
   FANTASY_BENCH_SIZE, FANTASY_SQUAD_SIZE, FORMATION_KEYS, POSITION_ORDER,
   POSITION_SHORT, POSITION_LABEL, SCORING_RULES, SQUAD_QUOTA, SQUAD_RULES,
   FORMATIONS, FANTASY_BUDGET_M, FANTASY_LOCK_MINUTES, formationCounts, formationRows,
-  isFantasySeasonStarted,
+  hasUnlimitedFantasyTransfers,
+  currentFantasyTransferWindow,
+  formatWindowDate,
   type FantasyPosition, type FormationKey,
 } from "@/lib/fantasy-rules";
 import {
@@ -528,7 +530,7 @@ function ManagerCard({
         <div className="rounded-xl bg-muted/40 p-2">
           <dt className="text-[11px] text-muted-foreground">Free transfers</dt>
           <dd className="font-bold">
-            {state?.gameweeks && isFantasySeasonStarted(state.gameweeks)
+            {state?.gameweeks && !hasUnlimitedFantasyTransfers(state.gameweeks)
               ? (state?.freeTransfers ?? 1)
               : "Unlimited"}
           </dd>
@@ -1635,10 +1637,14 @@ function TransfersTabBody({ state }: { state: FantasyStateDTO }) {
       <section className="rounded-2xl border border-border/60 bg-card/80 backdrop-blur p-4">
         <h3 className="font-semibold mb-3">Your transfers</h3>
         <p className="text-sm text-muted-foreground mb-3">
-          {state.gameweeks && isFantasySeasonStarted(state.gameweeks) ? (
-            <>You get 1 free transfer each gameweek (bank up to 2). Extra transfers cost 4 points each. Replacing a player who has left the club is always free.</>
+          {state.gameweeks && !hasUnlimitedFantasyTransfers(state.gameweeks) ? (
+            <>The transfer window is shut, so you get 1 free transfer each gameweek (bank up to 2). Extra transfers cost 4 points each. Replacing a player who has left the club is always free. Transfers go unlimited again when the next window opens.</>
           ) : (
-            <>Unlimited free transfers until the season starts. Once the first league fixture kicks off, you get 1 free transfer per gameweek (bank up to 2) and extra transfers cost 4 points each.</>
+            <>
+              {currentFantasyTransferWindow()
+                ? <>The {currentFantasyTransferWindow()!.label} window is open — unlimited free transfers until it shuts on {formatWindowDate(currentFantasyTransferWindow()!.closesAt)}, then 1 free transfer a week (bank up to 2, extras cost 4 points).</>
+                : <>Unlimited free transfers until the season starts. After that, transfers are unlimited while a transfer window is open and 1 a week once it shuts.</>}
+            </>
           )}
         </p>
         {state.myTransfers.length === 0 ? (
