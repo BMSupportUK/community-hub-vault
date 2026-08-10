@@ -70,7 +70,11 @@ function useNow(interval = 1000) {
   return now;
 }
 
-function DigitalLockCountdown({ lockAt, label = "Locks in" }: { lockAt: string; label?: string }) {
+function DigitalLockCountdown({
+  lockAt,
+  label = "Locks in",
+  compact,
+}: { lockAt: string; label?: string; compact?: boolean }) {
   const now = useNow(1000);
   const lockMs = new Date(lockAt).getTime();
   const remaining = lockMs - now;
@@ -84,35 +88,37 @@ function DigitalLockCountdown({ lockAt, label = "Locks in" }: { lockAt: string; 
   const seconds = totalSeconds % 60;
 
   const unit = (value: number, suffix: string) => (
-    <div className="flex flex-col items-center min-w-[3.2rem]">
-      <div className={`relative rounded-lg px-2 py-1.5 sm:px-3 sm:py-2 border-2 font-digital text-xl sm:text-2xl font-black tabular-nums leading-none ${
+    <div className={`flex flex-col items-center ${compact ? "min-w-[2.4rem]" : "min-w-[3.2rem]"}`}>
+      <div className={`relative rounded-lg border-2 font-digital font-black tabular-nums leading-none ${
+        compact ? "px-1.5 py-1 text-base" : "px-2 py-1.5 sm:px-3 sm:py-2 text-xl sm:text-2xl"
+      } ${
         urgent
           ? "bg-red-600/20 border-red-400 text-red-300 shadow-[0_0_18px_rgba(248,113,113,0.55)] animate-pulse"
           : "bg-amber-500/15 border-amber-400/70 text-amber-300 shadow-[0_0_16px_rgba(251,191,36,0.45)]"
       }`}>
         {value.toString().padStart(2, "0")}
       </div>
-      <span className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-white/70 mt-1">{suffix}</span>
+      <span className={`${compact ? "text-[9px]" : "text-[10px] sm:text-[11px]"} font-semibold uppercase tracking-wider text-white/70 mt-1`}>{suffix}</span>
     </div>
   );
 
   return (
     <div className="w-full">
-      <div className={`flex items-center gap-2 mb-2 font-digital text-sm font-bold uppercase tracking-widest ${urgent ? "text-red-300" : "text-amber-300"}`}>
-        <Lock className="size-4" strokeWidth={3} />
+      <div className={`flex items-center gap-2 font-digital font-bold uppercase tracking-widest ${compact ? "mb-1 text-[11px]" : "mb-2 text-sm"} ${urgent ? "text-red-300" : "text-amber-300"}`}>
+        <Lock className={compact ? "size-3.5" : "size-4"} strokeWidth={3} />
         {locked ? "Locked" : label}
       </div>
       {locked ? (
-        <div className="inline-flex items-center gap-2 rounded-lg border-2 border-red-400 bg-red-600/20 px-4 py-2 font-digital text-lg font-black text-red-200 shadow-[0_0_18px_rgba(248,113,113,0.55)]">
-          <Lock className="size-5" strokeWidth={3} /> SQUAD LOCKED
+        <div className={`inline-flex items-center gap-2 rounded-lg border-2 border-red-400 bg-red-600/20 font-digital font-black text-red-200 shadow-[0_0_18px_rgba(248,113,113,0.55)] ${compact ? "px-2.5 py-1 text-sm" : "px-4 py-2 text-lg"}`}>
+          <Lock className={compact ? "size-4" : "size-5"} strokeWidth={3} /> SQUAD LOCKED
         </div>
       ) : (
-        <div className="flex items-start gap-2 sm:gap-3">
+        <div className={`flex items-start ${compact ? "gap-1.5" : "gap-2 sm:gap-3"}`}>
           {days > 0 && unit(days, "Days")}
           {unit(hours, "Hrs")}
-          <span className="font-digital text-2xl text-white/40 pt-2">:</span>
+          <span className={`font-digital text-white/40 ${compact ? "text-lg pt-1" : "text-2xl pt-2"}`}>:</span>
           {unit(minutes, "Min")}
-          <span className="font-digital text-2xl text-white/40 pt-2">:</span>
+          <span className={`font-digital text-white/40 ${compact ? "text-lg pt-1" : "text-2xl pt-2"}`}>:</span>
           {unit(seconds, "Sec")}
         </div>
       )}
@@ -1014,15 +1020,12 @@ function SquadBuilder({
                 </Select>
               </div>
             )}
+            {gw && (
+              <div className="mt-3">
+                <DigitalLockCountdown lockAt={gw.lockAt} compact />
+              </div>
+            )}
           </div>
-          <ManagerCard
-            compact
-            state={state}
-            name={name}
-            teamName={teamName}
-            canEdit={canEdit}
-            onEdit={onEdit}
-          />
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-4 text-sm text-muted-foreground">
               <span>
@@ -1054,7 +1057,6 @@ function SquadBuilder({
             </Button>
           </div>
         </div>
-        {gw && <DigitalLockCountdown lockAt={gw.lockAt} />}
       </div>
 
       {gw && !canPlay && (
@@ -1099,8 +1101,16 @@ function SquadBuilder({
           />
         </div>
 
+        <div className="grid gap-4 items-start lg:sticky lg:top-4">
+          <ManagerCard
+            state={state}
+            name={name}
+            teamName={teamName}
+            canEdit={canEdit}
+            onEdit={onEdit}
+          />
         {/* Checklist — scoped to the active tab (squad of 15 vs starting 11). */}
-        <aside className="rounded-2xl border border-border/60 bg-card/85 backdrop-blur overflow-hidden lg:sticky lg:top-4">
+        <aside className="rounded-2xl border border-border/60 bg-card/85 backdrop-blur overflow-hidden">
           <div className="p-3 border-b border-border/60 flex items-center gap-2">
             <h3 className="font-display font-bold text-sm">{activeChecklist.title}</h3>
             {canPlay && !locked && (
@@ -1139,6 +1149,7 @@ function SquadBuilder({
             )}
           </div>
         </aside>
+        </div>
       </div>
 
       <PlayerPickerDialog
