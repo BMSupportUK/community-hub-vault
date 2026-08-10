@@ -2031,7 +2031,47 @@ function TransfersTabBody({ state }: { state: FantasyStateDTO }) {
 // ------------------------------------------------------------------
 // Leaderboard + scoring
 // ------------------------------------------------------------------
-function LeaderboardTable({ rows }: { rows: FantasyLeaderboardRow[] }) {
+function LeaderboardTable({
+  rows,
+  canRemove = false,
+  onRemove,
+}: {
+  rows: FantasyLeaderboardRow[];
+  canRemove?: boolean;
+  onRemove?: (row: FantasyLeaderboardRow) => Promise<void>;
+}) {
+  // Admin/management only: confirm before a manager is taken off the board.
+  const [pending, setPending] = useState<FantasyLeaderboardRow | null>(null);
+  const [removing, setRemoving] = useState(false);
+  const confirmRemove = async () => {
+    if (!pending || !onRemove) return;
+    setRemoving(true);
+    try {
+      await onRemove(pending);
+      toast.success(`${pending.teamName || pending.displayName || "Manager"} removed from the game.`);
+      setPending(null);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Could not remove that manager.");
+    } finally {
+      setRemoving(false);
+    }
+  };
+  const removeButton = (r: FantasyLeaderboardRow) =>
+    canRemove ? (
+      <td className="px-2 py-2 text-right">
+        <Button
+          type="button"
+          size="icon"
+          variant="ghost"
+          className="size-8 text-destructive hover:bg-destructive/10"
+          title="Remove this manager from the game"
+          aria-label={`Remove ${r.teamName || r.displayName || "manager"} from the game`}
+          onClick={() => setPending(r)}
+        >
+          <Trash2 className="size-4" />
+        </Button>
+      </td>
+    ) : null;
   if (!rows.length) {
     return <div className="rounded-2xl border border-border/60 bg-card/80 p-6 text-sm text-muted-foreground">No managers have scored yet.</div>;
   }
@@ -2055,6 +2095,7 @@ function LeaderboardTable({ rows }: { rows: FantasyLeaderboardRow[] }) {
             <th className="text-left px-3 py-2">Manager</th>
             <th className="text-right px-3 py-2">GWs</th>
             <th className="text-right px-3 py-2">Points</th>
+            {canRemove && <th className="px-2 py-2 w-10 sr-only">Remove</th>}
           </tr>
         </thead>
         <tbody>
@@ -2070,6 +2111,7 @@ function LeaderboardTable({ rows }: { rows: FantasyLeaderboardRow[] }) {
               </td>
               <td className="px-3 py-2 text-right tabular-nums">{r.gameweeksScored}</td>
               <td className="px-3 py-2 text-right font-bold tabular-nums text-primary">{r.totalPoints}</td>
+              {removeButton(r)}
             </tr>
           ))}
           {ownerRows.map((r) => (
@@ -2085,6 +2127,7 @@ function LeaderboardTable({ rows }: { rows: FantasyLeaderboardRow[] }) {
               </td>
               <td className="px-3 py-2 text-right tabular-nums">{r.gameweeksScored}</td>
               <td className="px-3 py-2 text-right font-bold tabular-nums text-primary">{r.totalPoints}</td>
+              {removeButton(r)}
             </tr>
           ))}
         </tbody>
@@ -2094,6 +2137,34 @@ function LeaderboardTable({ rows }: { rows: FantasyLeaderboardRow[] }) {
           Site owner plays for fun and is not ranked or eligible for prizes.
         </p>
       )}
+      <AlertDialog open={!!pending} onOpenChange={(o) => { if (!o && !removing) setPending(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove this manager?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {pending && (
+                <>
+                  <span className="font-semibold text-foreground">{pending.teamName || "Unnamed FC"}</span>
+                  {" — "}
+                  {pending.displayName || pending.username || "Guest"}
+                  {pending.isGuest ? " (guest)" : ""} will be deleted from MFC Fantasy Manager, along with
+                  their squads, transfers and {pending.totalPoints} points. This can't be undone.
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={removing}>Keep manager</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={removing}
+              onClick={(e) => { e.preventDefault(); void confirmRemove(); }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {removing ? <Loader2 className="size-4 animate-spin" /> : "Remove manager"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
