@@ -928,20 +928,12 @@ function SquadBuilder({
     const bumped = st[idx];
     let nextSel = sel;
     if (bumped) {
-      if (captainId === bumped) setCaptainId("");
-      if (viceId === bumped) setViceId("");
       // Only bench the displaced player if there is room; otherwise drop them
       // from the squad rather than leaving them selected with no slot.
       const bumpedPlayer = playerById.get(bumped);
       const roomOnBench = bumpedPlayer?.position === "gk" ? !bench[0] || bench[0] === bumped : bench.some((x, i) => x === null && i > 0);
       if (roomOnBench) benchAddById(bumped);
       else nextSel = nextSel.filter((x) => x !== bumped);
-    }
-
-    // If replacing a specific player, clear their captaincy/vice.
-    if (replaceId) {
-      if (captainId === replaceId) setCaptainId("");
-      if (viceId === replaceId) setViceId("");
     }
 
     st[idx] = p.id;
@@ -993,20 +985,14 @@ function SquadBuilder({
       return;
     }
     const occupant = bench[benchIndex] && bench[benchIndex] !== p.id ? bench[benchIndex]! : null;
-    let sel = withPlayer(
+    const sel = withPlayer(
       occupant ? selected.filter((x) => x !== occupant) : selected,
       p,
     );
     if (!sel) return;
-    if (occupant) {
-      if (captainId === occupant) setCaptainId("");
-      if (viceId === occupant) setViceId("");
-    }
     setSelected(sel);
     // Free the player from wherever they already sat.
     setStarters((prev) => prev.map((x) => (x === p.id ? null : x)));
-    if (captainId === p.id) setCaptainId("");
-    if (viceId === p.id) setViceId("");
     setBench((prev) => {
       const next = prev.map((x) => (x === p.id ? null : x));
       next[benchIndex] = p.id;
