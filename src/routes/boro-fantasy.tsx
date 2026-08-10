@@ -1212,6 +1212,7 @@ function PlayerPickerDialog({
 function PitchView({
   formation, onFormationChange, editable, playerById, starters, bench, captainId, viceId,
   benchSize, pointsByPlayer, minutesByPlayer, autoSubbedIds, onDropStart, onDropBench, onBench, onRemove, onCaptain, onVice,
+  onSlotOpen, onBenchSlotOpen,
 }: {
   formation: FormationKey;
   onFormationChange: (f: FormationKey) => void;
@@ -1225,6 +1226,8 @@ function PitchView({
   pointsByPlayer?: Map<string, number | null>;
   minutesByPlayer?: Map<string, number | null>;
   autoSubbedIds?: Set<string>;
+  onSlotOpen: (pos: FantasyPosition, replaceId?: string) => void;
+  onBenchSlotOpen: () => void;
   onDropStart: (playerId: string, replaceId?: string) => void;
   onDropBench: (playerId: string) => void;
   onBench: (id: string) => void;
@@ -1276,7 +1279,7 @@ function PitchView({
           </select>
         </label>
         <p className="text-xs text-muted-foreground">
-          Drag players between the pitch and bench to set your XI and bench order.
+          Tap any slot to pick a player from the pop-up list, or drag players between the pitch and bench.
         </p>
       </div>
 
