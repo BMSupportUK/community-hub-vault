@@ -687,16 +687,13 @@ function SquadBuilder({
     () => new Set((existing?.picks ?? []).filter((p) => p.autoSubbed).map((p) => p.playerId)),
     [existing],
   );
-  // Game time played in this gameweek's fixture, once stats are in.
-  const minutesByPlayer = useMemo(
-    () =>
-      new Map(
-        (existing?.picks ?? [])
-          .filter((p) => p.minutes !== null && p.minutes !== undefined)
-          .map((p) => [p.playerId, p.minutes as number]),
-      ),
-    [existing],
-  );
+  // Game time played in this gameweek's fixture, once any stats are in.
+  const minutesByPlayer = useMemo(() => {
+    const picks = existing?.picks ?? [];
+    const hasStats = picks.some((p) => p.minutes !== null && p.minutes !== undefined);
+    if (!hasStats) return new Map<string, number>();
+    return new Map(picks.map((p) => [p.playerId, p.minutes ?? 0]));
+  }, [existing]);
   const hasGwPoints = (existing?.picks ?? []).some((p) => p.points !== null);
 
   const editable = !locked && (canPlay || !gw);
