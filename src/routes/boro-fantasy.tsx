@@ -520,7 +520,18 @@ function BoroFantasyPage() {
               </TabsContent>
 
               <TabsContent value="leaderboard" className="mt-4">
-                {lbQuery.isLoading ? <Loading /> : <LeaderboardTable rows={lbQuery.data ?? []} />}
+                {lbQuery.isLoading ? (
+                  <Loading />
+                ) : (
+                  <LeaderboardTable
+                    rows={lbQuery.data ?? []}
+                    canRemove={canManageEntrants}
+                    onRemove={async (row) => {
+                      await removeEntrantFn({ data: { entrantId: row.entrantId, isGuest: row.isGuest } });
+                      await qc.invalidateQueries({ queryKey: ["fantasy-leaderboard"] });
+                    }}
+                  />
+                )}
               </TabsContent>
 
               <TabsContent value="scoring" className="mt-4">
