@@ -191,7 +191,13 @@ export async function loadGameweeks(admin: any): Promise<FantasyGameweekDTO[]> {
 /** The gameweek the manager should be picking for: first one still unlocked. */
 export function pickCurrentGameweek(gws: FantasyGameweekDTO[]): string | null {
   const now = Date.now();
-  const open = gws.find((g) => g.status === "upcoming" && new Date(g.lockAt).getTime() > now);
+  // Skip anything called off — it isn't the next game until a new date lands.
+  const open = gws.find(
+    (g) =>
+      g.status === "upcoming" &&
+      new Date(g.lockAt).getTime() > now &&
+      !/postpon|cancel|abandon|suspend/i.test(g.fixtureStatus ?? ""),
+  );
   if (open) return open.id;
   return gws.length ? (gws[gws.length - 1]!.id) : null;
 }
