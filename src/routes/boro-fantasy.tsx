@@ -1449,6 +1449,19 @@ function PitchView({
         <div className="pointer-events-none absolute inset-4 sm:inset-6 rounded-xl border-2 border-white/25" aria-hidden />
         <div className="pointer-events-none absolute left-1/2 top-4 sm:top-6 h-16 w-40 -translate-x-1/2 rounded-b-xl border-x-2 border-b-2 border-white/25" aria-hidden />
         <div className="pointer-events-none absolute left-1/2 bottom-4 sm:bottom-6 h-16 w-40 -translate-x-1/2 rounded-t-xl border-x-2 border-t-2 border-white/25" aria-hidden />
+        <div className="absolute right-3 top-3 z-10 w-44 sm:w-52 rounded-xl border border-white/30 bg-slate-950/80 p-2 shadow-lg backdrop-blur-sm">
+          <label className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-white/80">Formation</label>
+          <select
+            className="h-8 w-full min-w-0 rounded-lg border border-white/30 bg-slate-900/80 px-2 text-xs font-semibold text-white"
+            value={formation}
+            onChange={(e) => onFormationChange(e.target.value as FormationKey)}
+            disabled={!editable}
+          >
+            {FORMATION_KEYS.map((f) => (
+              <option key={f} value={f}>{f} — {FORMATIONS[f].label}</option>
+            ))}
+          </select>
+        </div>
         <div className="relative space-y-4 sm:space-y-6 py-2">
           {rowSlots.map((row, ri) => (
             <div key={ri} className="flex flex-nowrap justify-center gap-1 sm:gap-2">
