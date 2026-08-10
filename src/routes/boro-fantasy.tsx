@@ -23,7 +23,6 @@ import {
   FANTASY_BENCH_SIZE, FANTASY_SQUAD_SIZE, FORMATION_KEYS, POSITION_ORDER,
   POSITION_SHORT, POSITION_LABEL, SCORING_RULES, SQUAD_QUOTA, SQUAD_RULES,
   FORMATIONS, FANTASY_BUDGET_M, FANTASY_LOCK_MINUTES, formationCounts, formationRows,
-  isFantasySeasonStarted,
   hasUnlimitedFantasyTransfers,
   currentFantasyTransferWindow,
   formatWindowDate,
