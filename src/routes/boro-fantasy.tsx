@@ -955,11 +955,10 @@ function SquadBuilder({
     }
   }
 
-  return (
-    <div className="space-y-4">
-      <div className="rounded-2xl border border-border/60 bg-card/80 backdrop-blur p-4 space-y-3">
-        <div className="flex flex-col lg:flex-row lg:items-start gap-3">
-          <div className="flex-1 min-w-[200px]">
+  const gameweekPanel = (
+    <div className="rounded-2xl border border-border/60 bg-card/80 backdrop-blur p-4 space-y-3">
+        <div className="flex flex-col gap-3">
+          <div className="min-w-0">
             {gw ? (
               <>
                 <div className="font-semibold">GW{gw.gwNumber} — {gw.homeTeam} v {gw.awayTeam}</div>
@@ -1023,8 +1022,8 @@ function SquadBuilder({
               </div>
             )}
           </div>
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+          <div className="flex flex-col gap-2">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
               <span>
                 <span className="font-bold text-foreground">{starters.length}</span>/11 picked
               </span>
@@ -1041,11 +1040,11 @@ function SquadBuilder({
               onClick={handleSave}
               variant={dirty ? "default" : "outline"}
               className={
-                dirty && problems.length === 0
+                "w-full " + (dirty && problems.length === 0
                   ? "bg-gradient-primary text-white shadow-glow ring-2 ring-primary/60 animate-pulse"
                   : dirty
                     ? ""
-                    : "opacity-60"
+                    : "opacity-60")
               }
               title={dirty ? undefined : "No changes to save"}
               disabled={saving || locked || !gw || !canPlay || !dirty || problems.length > 0}
@@ -1054,7 +1053,11 @@ function SquadBuilder({
             </Button>
           </div>
         </div>
-      </div>
+    </div>
+  );
+
+  return (
+    <div className="space-y-4">
 
       {gw && !canPlay && (
         <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm">
