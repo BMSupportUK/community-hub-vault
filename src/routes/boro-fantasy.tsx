@@ -162,7 +162,8 @@ function Loading() {
 }
 
 function BoroFantasyPage() {
-  const { user } = useAuth();
+  const { user, hasAny } = useAuth();
+  const canManageEntrants = !!user && hasAny(["admin", "management"]);
   const qc = useQueryClient();
   const [tab, setTab] = useState("squad");
   const [guest, setGuest] = useState<GuestSession | null>(null);
@@ -189,6 +190,7 @@ function BoroFantasyPage() {
   const resetPinFn = useServerFn(resetFantasyGuestPin);
   const setTeamNameFn = useServerFn(setFantasyTeamName);
   const setGuestTeamNameFn = useServerFn(setGuestFantasyTeamName);
+  const removeEntrantFn = useServerFn(adminRemoveFantasyEntrant);
 
   const stateQuery = useQuery<FantasyStateDTO>({
     queryKey: ["fantasy-state", user?.id ?? null, guest?.guestId ?? null],
