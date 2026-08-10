@@ -66,6 +66,25 @@ function normName(s: string): string {
     .trim();
 }
 
+/**
+ * The club's feeds are not consistent about first names (the loan list says
+ * "Fin Munroe" while the squad feed says "Finley Munroe"). Match on surname
+ * plus a first-name prefix so short forms still line up.
+ */
+function nameParts(s: string): { first: string; last: string } {
+  const bits = normName(s).split(" ").filter(Boolean);
+  return { first: bits[0] ?? "", last: bits.length > 1 ? bits[bits.length - 1]! : "" };
+}
+
+function samePerson(a: string, b: string): boolean {
+  if (normName(a) === normName(b)) return true;
+  const x = nameParts(a);
+  const y = nameParts(b);
+  if (!x.last || !y.last || x.last !== y.last) return false;
+  if (!x.first || !y.first) return true;
+  return x.first.startsWith(y.first) || y.first.startsWith(x.first);
+}
+
 export type FantasySquadSyncResult = {
   ok: boolean;
   squadSize?: number;
@@ -105,8 +124,11 @@ export async function syncFantasyPlayersFromClub(admin: Admin): Promise<FantasyS
   }
 
   const loanedOut = await fetchMfcLoanedOutPlayers().catch(() => []);
-  const loanedClubByName = new Map(loanedOut.map((p) => [normName(p.name), p.loanClub] as const));
-  const isLoanedOut = (name: string) => loanedClubByName.has(normName(name));
+  const loanClubFor = (name: string): string | null | undefined => {
+    const hit = loanedOut.find((p) => samePerson(p.name, name));
+    return hit ? hit.loanClub : undefined;
+  };
+  const isLoanedOut = (name: string) => loanClubFor(name) !== undefined;
 
   // Players out on loan stay in the pool (shown struck through, unselectable).
   const available = squad;
@@ -200,7 +222,7 @@ export async function syncFantasyPlayersFromClub(admin: Admin): Promise<FantasyS
     const row = byMfcId.get(p.mfcPlayerId) ?? byName.get(normName(p.name));
     const sortOrder = i;
     const onLoan = isLoanedOut(p.name);
-    const loanClub = loanedClubByName.get(normName(p.name)) ?? null;
+    const loanClub = loanClubFor(p.name) ?? null;
 
     if (!row) {
       const { data: inserted, error } = await admin
@@ -323,7 +345,7 @@ export async function syncFantasyPlayersFromClub(admin: Admin): Promise<FantasyS
   for (const row of existing) {
     if (!isLoanedOut(row.name)) continue;
     if (row.status_locked) continue;
-    const club = loanedClubByName.get(normName(row.name)) ?? null;
+    const club = loanClubFor(row.name) ?? null;
     if (row.status === "loaned_out" && (row.loan_club ?? null) === club) continue;
     const { error } = await admin
       .from("fantasy_players")
