@@ -23,6 +23,24 @@ export function isFantasyLeagueCompetition(competition: string | null | undefine
     c,
   );
 }
+
+export type FantasyCompetitionGroup = "league" | "cup" | "playoff";
+
+/** Which gameweek section a fixture belongs in on the Gameweeks tab. */
+export function fantasyCompetitionGroup(
+  competition: string | null | undefined,
+): FantasyCompetitionGroup {
+  const c = (competition ?? "").toLowerCase().trim();
+  if (/play[- ]?off/.test(c)) return "playoff";
+  if (/cup|trophy|papa|vertu|bristol street|checkatrade|shield/.test(c)) return "cup";
+  return "league";
+}
+
+export const FANTASY_GROUP_LABEL: Record<FantasyCompetitionGroup, string> = {
+  league: "League games",
+  cup: "Cup games",
+  playoff: "Play-off games",
+};
 /** Default bench size (EFL competitions name 7 subs). */
 export const FANTASY_BENCH_SIZE = 7;
 export const FANTASY_SQUAD_SIZE = 11 + FANTASY_BENCH_SIZE;
