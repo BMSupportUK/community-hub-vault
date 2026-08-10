@@ -19,8 +19,9 @@ export function isFantasyLeagueCompetition(competition: string | null | undefine
   if (/(cup|trophy|friendl|play[- ]?off|shield|europa|champions league|conference league|papa|checkatrade)/.test(c)) return false;
   return /championship|premier league|league one|league two|efl league/.test(c);
 }
-export const FANTASY_SQUAD_SIZE = 15;
-export const FANTASY_BENCH_SIZE = 4;
+/** Default bench size (EFL competitions name 7 subs). */
+export const FANTASY_BENCH_SIZE = 7;
+export const FANTASY_SQUAD_SIZE = 11 + FANTASY_BENCH_SIZE;
 /** Squad locks this many minutes before kick-off. */
 export const FANTASY_LOCK_MINUTES = 120;
 
