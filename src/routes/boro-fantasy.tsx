@@ -1305,6 +1305,11 @@ function PitchView({
     return { pos: r.pos, slots: take };
   });
 
+  // Starters that don't fit the chosen formation (e.g. after switching shape) would
+  // otherwise vanish from the pitch — show them in an overflow row so all 15 of the
+  // squad are always visible and moveable.
+  const overflow = POSITION_ORDER.flatMap((pos) => queues[pos] ?? []);
+
   const dropProps = (handler: (playerId: string) => void) => ({
     onDragOver: (e: ReactDragEvent) => { if (editable) { e.preventDefault(); e.dataTransfer.dropEffect = "move"; } },
     onDrop: (e: ReactDragEvent) => {
