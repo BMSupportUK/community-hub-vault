@@ -25,7 +25,7 @@ import { useAuth } from "@/hooks/use-auth";
 import {
   benchRulesFor, COMPETITION_BENCH_RULES, FORMATION_KEYS, POSITION_ORDER,
   POSITION_SHORT, POSITION_LABEL, SCORING_RULES, SQUAD_RULES,
-  FORMATIONS, formationCounts, formationRows,
+  FORMATIONS, formationCounts, formationRows, formationPositionRange, rowPositions, slotPositionLabel,
   fantasyCompetitionGroup, FANTASY_GROUP_LABEL,
   type FantasyPosition, type FormationKey, type FantasyCompetitionGroup,
 } from "@/lib/fantasy-rules";
@@ -721,13 +721,13 @@ function SquadBuilder({
   const squadSize = 11 + benchRules.size;
   /** Match day 11 for the chosen formation plus the full bench allowance (no minimum cover). */
   const posQuota = useMemo(() => {
-    const c = counts as Record<FantasyPosition, number>;
+    const r = formationPositionRange(formation);
     return {
       // One starting GK + one replacement GK (sub 1). Other positions can fill the rest of the bench.
-      gk: c.gk + 1,
-      def: c.def + benchRules.size,
-      mid: c.mid + benchRules.size,
-      fwd: c.fwd + benchRules.size,
+      gk: r.gk.max + 1,
+      def: r.def.max + benchRules.size,
+      mid: r.mid.max + benchRules.size,
+      fwd: r.fwd.max + benchRules.size,
     } as Record<FantasyPosition, number>;
   }, [formation, benchRules]);
   const byPos = (ids: string[], pos: FantasyPosition) => ids.filter((id) => playerById.get(id)?.position === pos);
@@ -743,9 +743,16 @@ function SquadBuilder({
   const xiProblems: string[] = [];
   if (starters.length !== 11) xiProblems.push(`Pick 11 starters (${starters.length} selected).`);
   else {
+    const range = formationPositionRange(formation);
     for (const pos of POSITION_ORDER) {
       const n = byPos(starters, pos).length;
-      if (n !== (counts as any)[pos]) xiProblems.push(`${formation}: needs ${(counts as any)[pos]} ${POSITION_SHORT[pos]} in the XI, you have ${n}.`);
+      const { min, max } = range[pos];
+      if (n < min || n > max)
+        xiProblems.push(
+          min === max
+            ? `${formation}: needs ${min} ${POSITION_SHORT[pos]} in the XI, you have ${n}.`
+            : `${formation}: needs ${min}–${max} ${POSITION_SHORT[pos]} in the XI, you have ${n}.`,
+        );
     }
   }
   if (bench.length !== benchRules.size)
@@ -782,7 +789,7 @@ function SquadBuilder({
 
   // Position pop-box picker: either filling/swapping an XI slot, or a bench slot.
   const [picker, setPicker] = useState<
-    | { mode: "xi"; pos: FantasyPosition; replaceId?: string }
+    | { mode: "xi"; positions: FantasyPosition[]; replaceId?: string }
     | { mode: "bench"; benchIndex: number }
     | null
   >(null);
@@ -845,12 +852,14 @@ function SquadBuilder({
     let st = starters.filter((x) => x !== replaceId);
     if (!st.includes(p.id)) {
       const line = byPos(st, p.position);
-      const need = (counts as Record<string, number>)[p.position] ?? 0;
-      if (line.length >= need) {
-        const bumped = line[line.length - 1]!;
-        st = st.filter((x) => x !== bumped);
-        if (captainId === bumped) setCaptainId("");
-        if (viceId === bumped) setViceId("");
+      const allowed = formationPositionRange(formation)[p.position].max;
+      if (line.length >= allowed || st.length >= 11) {
+        const bumped = line[line.length - 1] ?? st[st.length - 1];
+        if (bumped) {
+          st = st.filter((x) => x !== bumped);
+          if (captainId === bumped) setCaptainId("");
+          if (viceId === bumped) setViceId("");
+        }
       }
       st = [...st, p.id];
     }
@@ -1067,7 +1076,7 @@ function SquadBuilder({
               pointsByPlayer={hasGwPoints ? pointsByPlayer : undefined}
               minutesByPlayer={minutesByPlayer.size ? minutesByPlayer : undefined}
               autoSubbedIds={autoSubbedIds}
-              onSlotOpen={(pos, replaceId) => setPicker({ mode: "xi", pos, replaceId })}
+              onSlotOpen={(positions, replaceId) => setPicker({ mode: "xi", positions, replaceId })}
               onBenchSlotOpen={(benchIndex) => setPicker({ mode: "bench", benchIndex })}
               onDropStart={(playerId, replaceId) => {
                 const p = playerById.get(playerId);
@@ -1157,16 +1166,16 @@ function SquadBuilder({
         onOpenChange={(o) => { if (!o) setPicker(null); }}
         players={state.players}
         selected={selected}
-        position={
+        positions={
           picker && picker.mode === "xi"
-            ? picker.pos
+            ? picker.positions
             : picker && picker.mode === "bench" && picker.benchIndex === 0
-              ? "gk"
+              ? ["gk"]
               : undefined
         }
         title={
           picker && picker.mode === "xi"
-            ? `Pick a ${POSITION_LABEL[picker.pos] ?? POSITION_SHORT[picker.pos]}`
+            ? `Pick a ${picker.positions.map((p) => POSITION_LABEL[p] ?? POSITION_SHORT[p]).join(" or ")}`
             : picker && picker.mode === "bench" && picker.benchIndex === 0
               ? "Pick a replacement goalkeeper"
               : "Pick a substitute"
@@ -1203,13 +1212,13 @@ function levelOf(p: FantasyPlayerDTO): PickerLevel {
  * bench slot (every remaining player), split into First team / U21 / U18 tabs.
  */
 function PlayerPickerDialog({
-  open, onOpenChange, players, selected, position, title, onPick,
+  open, onOpenChange, players, selected, positions, title, onPick,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
   players: FantasyPlayerDTO[];
   selected: string[];
-  position?: FantasyPosition;
+  positions?: FantasyPosition[];
   title: string;
   onPick: (p: FantasyPlayerDTO) => void;
 }) {
@@ -1221,7 +1230,7 @@ function PlayerPickerDialog({
     const term = q.trim().toLowerCase();
     return players
       .filter((p) => !selected.includes(p.id))
-      .filter((p) => (position ? p.position === position : true))
+      .filter((p) => (positions?.length ? positions.includes(p.position) : true))
       .filter((p) => (term ? p.name.toLowerCase().includes(term) : true))
       .sort((a, b) => {
         const unavail = (s: string) => (s === "departed" || s === "loaned_out" ? 1 : 0);
@@ -1232,7 +1241,7 @@ function PlayerPickerDialog({
           (b.seasonPoints ?? 0) - (a.seasonPoints ?? 0)
         );
       });
-  }, [players, selected, position, q]);
+  }, [players, selected, positions, q]);
 
   const groups: Record<PickerLevel, FantasyPlayerDTO[]> = useMemo(() => {
     const g: Record<PickerLevel, FantasyPlayerDTO[]> = { first: [], u21: [], u18: [] };
@@ -1346,7 +1355,7 @@ function PitchView({
   pointsByPlayer?: Map<string, number | null>;
   minutesByPlayer?: Map<string, number | null>;
   autoSubbedIds?: Set<string>;
-  onSlotOpen: (pos: FantasyPosition, replaceId?: string) => void;
+  onSlotOpen: (positions: FantasyPosition[], replaceId?: string) => void;
   onBenchSlotOpen: (benchIndex: number) => void;
   onDropStart: (playerId: string, replaceId?: string) => void;
   onDropBench: (playerId: string) => void;
@@ -1361,10 +1370,21 @@ function PitchView({
   // Distribute the starters of each position across the rows that ask for them.
   const queues: Record<string, string[]> = {};
   for (const pos of POSITION_ORDER) queues[pos] = starters.filter((id) => playerById.get(id)?.position === pos);
-  const rowSlots = rows.map((r) => {
-    const take: (string | null)[] = [];
-    for (let i = 0; i < r.count; i++) take.push(queues[r.pos]!.shift() ?? null);
-    return { pos: r.pos, slots: take };
+  // Fixed rows claim their players first, then flexible rows take whatever is left
+  // from either of the positions they allow.
+  const rowSlots: { positions: FantasyPosition[]; slots: (string | null)[] }[] = rows.map((r) => ({
+    positions: rowPositions(r),
+    slots: Array.from({ length: r.count }, () => null as string | null),
+  }));
+  rows.forEach((r, ri) => {
+    if (r.alt) return;
+    for (let i = 0; i < r.count; i++) rowSlots[ri]!.slots[i] = queues[r.pos]!.shift() ?? null;
+  });
+  rows.forEach((r, ri) => {
+    if (!r.alt) return;
+    for (let i = 0; i < r.count; i++) {
+      rowSlots[ri]!.slots[i] = queues[r.pos]!.shift() ?? queues[r.alt]!.shift() ?? null;
+    }
   });
 
   // Starters that don't fit the chosen formation (e.g. after switching shape) would
@@ -1405,7 +1425,7 @@ function PitchView({
                     {...dropProps((dragged) => onDropStart(dragged, id ?? undefined))}
                     draggable={editable && !!id}
                     onDragStart={(e) => { if (id) e.dataTransfer.setData("text/fantasy-player", id); }}
-                    onClick={() => { if (editable && !id) onSlotOpen(row.pos); }}
+                    onClick={() => { if (editable && !id) onSlotOpen(row.positions); }}
                     role={editable && !id ? "button" : undefined}
                     className={`min-w-[68px] flex-1 max-w-[110px] sm:max-w-[120px] rounded-xl border px-1.5 py-2 text-center backdrop-blur-sm transition-colors ${
                       p ? "border-white/40 bg-slate-950/70" : "cursor-pointer border-dashed border-white/40 bg-white/10 hover:bg-white/20"
@@ -1438,7 +1458,7 @@ function PitchView({
                             <button type="button" title="Vice-captain" onClick={() => onVice(p.id)} className={`rounded p-0.5 ${viceId === p.id ? "text-sky-300" : "text-white/50 hover:text-white"}`}>
                               <Star className="size-3" />
                             </button>
-                            <button type="button" title="Swap this player" onClick={() => onSlotOpen(row.pos, p.id)} className="rounded p-0.5 text-white/50 hover:text-white">
+                            <button type="button" title="Swap this player" onClick={() => onSlotOpen(row.positions, p.id)} className="rounded p-0.5 text-white/50 hover:text-white">
                               <ArrowRightLeft className="size-3" />
                             </button>
                             <button type="button" title="Move to bench" onClick={() => onBench(p.id)} className="rounded p-0.5 text-white/50 hover:text-white">
@@ -1454,6 +1474,9 @@ function PitchView({
                       <div className="py-2 text-[11px] font-semibold text-white/80">
                         <div className="mx-auto grid size-6 place-items-center rounded-full border border-white/50">
                           <Plus className="size-3" />
+                        </div>
+                        <div className="mt-1 text-[10px] font-bold uppercase tracking-wide text-white/85">
+                          {slotPositionLabel(row.positions)}
                         </div>
                       </div>
                     )}
@@ -1555,6 +1578,9 @@ function PitchView({
                   <div className="py-3 font-semibold">
                     <div className="mx-auto grid size-6 place-items-center rounded-full border border-border/70">
                       <Plus className="size-3" />
+                    </div>
+                    <div className="mt-1 text-[10px] font-bold uppercase tracking-wide">
+                      {i === 0 ? "GK" : "ANY"}
                     </div>
                   </div>
                 )}
