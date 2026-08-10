@@ -712,9 +712,9 @@ function SquadBuilder({
     if (sel.includes(p.id)) return sel;
     if (p.status === "departed") { toast.error(`${p.name} has left the club.`); return null; }
     if (p.status === "loaned_out") { toast.error(`${p.name} is out on loan${p.loanClub ? ` at ${p.loanClub}` : ""}.`); return null; }
-    if (sel.length >= FANTASY_SQUAD_SIZE) { toast.error(`Squad is full — ${FANTASY_SQUAD_SIZE} players max.`); return null; }
+    if (sel.length >= squadSize) { toast.error(`Squad is full — ${squadSize} players max (11 + ${benchRules.size} subs).`); return null; }
     if (byPos(sel, p.position).length >= posQuota[p.position]) {
-      toast.error(`${formation} only needs ${posQuota[p.position]} ${POSITION_SHORT[p.position]}s (11 + 1 sub).`);
+      toast.error(`${formation} only needs ${posQuota[p.position]} ${POSITION_SHORT[p.position]}s (XI + bench).`);
       return null;
     }
     return [...sel, p.id];
@@ -861,7 +861,7 @@ function SquadBuilder({
                 <span className="font-bold text-foreground">{starters.length}</span>/11 picked
               </span>
               <span>
-                bench <span className="font-bold text-foreground">{bench.length}</span>/{FANTASY_BENCH_SIZE}
+                bench <span className="font-bold text-foreground">{bench.length}</span>/{benchRules.size}
               </span>
               {existing && (hasGwPoints || existing.points !== null) && (
                 <span>
