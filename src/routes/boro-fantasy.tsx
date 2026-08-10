@@ -1304,8 +1304,10 @@ function PitchView({
                     {...dropProps((dragged) => onDropStart(dragged, id ?? undefined))}
                     draggable={editable && !!id}
                     onDragStart={(e) => { if (id) e.dataTransfer.setData("text/fantasy-player", id); }}
+                    onClick={() => { if (editable && !id) onSlotOpen(row.pos); }}
+                    role={editable && !id ? "button" : undefined}
                     className={`min-w-[68px] flex-1 max-w-[110px] sm:max-w-[120px] rounded-xl border px-1.5 py-2 text-center backdrop-blur-sm transition-colors ${
-                      p ? "border-white/40 bg-slate-950/70" : "border-dashed border-white/40 bg-white/10 hover:bg-white/20"
+                      p ? "border-white/40 bg-slate-950/70" : "cursor-pointer border-dashed border-white/40 bg-white/10 hover:bg-white/20"
                     }`}
                   >
                     {p ? (
@@ -1334,6 +1336,9 @@ function PitchView({
                             </button>
                             <button type="button" title="Vice-captain" onClick={() => onVice(p.id)} className={`rounded p-0.5 ${viceId === p.id ? "text-sky-300" : "text-white/50 hover:text-white"}`}>
                               <Star className="size-3" />
+                            </button>
+                            <button type="button" title="Swap this player" onClick={() => onSlotOpen(row.pos, p.id)} className="rounded p-0.5 text-white/50 hover:text-white">
+                              <ArrowRightLeft className="size-3" />
                             </button>
                             <button type="button" title="Move to bench" onClick={() => onBench(p.id)} className="rounded p-0.5 text-white/50 hover:text-white">
                               <ArrowDown className="size-3" />
@@ -1409,8 +1414,10 @@ function PitchView({
                 {...dropProps(onDropBench)}
                 draggable={editable && !!id}
                 onDragStart={(e) => { if (id) e.dataTransfer.setData("text/fantasy-player", id); }}
+                onClick={() => { if (editable && !id) onBenchSlotOpen(); }}
+                role={editable && !id ? "button" : undefined}
                 className={`min-w-[68px] flex-1 max-w-[110px] sm:max-w-[120px] rounded-xl border px-1.5 py-2 text-center text-xs ${
-                  p ? "border-border/70 bg-muted/40" : "border-dashed border-border/70 bg-muted/20 text-muted-foreground"
+                  p ? "border-border/70 bg-muted/40" : "cursor-pointer border-dashed border-border/70 bg-muted/20 text-muted-foreground hover:bg-muted/40"
                 }`}
               >
                 {p ? (
@@ -1445,7 +1452,12 @@ function PitchView({
                     )}
                   </>
                 ) : (
-                  <div className="py-3 font-semibold">{slotLabel}</div>
+                  <div className="py-3 font-semibold">
+                    <div className="mx-auto mb-1 grid size-6 place-items-center rounded-full border border-border/70">
+                      <Plus className="size-3" />
+                    </div>
+                    {slotLabel}
+                  </div>
                 )}
               </div>
             );
