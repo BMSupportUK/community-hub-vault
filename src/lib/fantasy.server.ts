@@ -1,8 +1,6 @@
 /** Server-only core for the MFC Fantasy Manager (shared by member + guest server fns). */
 import {
-  FANTASY_SQUAD_SIZE,
-  FANTASY_BENCH_SIZE,
-  BENCH_QUOTA,
+  benchRulesFor,
   FORMATIONS,
   formationCounts,
   isFantasySeasonStarted,
