@@ -106,16 +106,16 @@ function DigitalLockCountdown({
 
   if (compact) {
     return (
-      <div className="w-full min-w-0 overflow-hidden">
+      <div className="w-full min-w-0 overflow-hidden rounded-md">
         <div className={`flex items-center gap-1 font-digital font-bold uppercase tracking-wide text-[9px] sm:text-[10px] ${urgent ? "text-red-300" : "text-amber-300"}`}>
           <Lock className="size-2.5 sm:size-3 shrink-0" strokeWidth={3} />
           <span className="truncate">{locked ? "Locked" : label}</span>
         </div>
         <div
-          className={`mt-1 w-full rounded-md border-2 px-1 py-0.5 text-center font-digital font-black tabular-nums leading-none text-[11px] sm:text-sm ${
+          className={`mt-1 box-border block w-full min-w-0 overflow-hidden whitespace-nowrap rounded-md border-2 px-1 py-0.5 text-center font-digital font-black tabular-nums leading-none text-[10px] sm:text-xs ${
             urgent
-              ? "bg-red-600/20 border-red-400 text-red-300 shadow-[0_0_14px_rgba(248,113,113,0.5)] animate-pulse"
-              : "bg-amber-500/15 border-amber-400/70 text-amber-300 shadow-[0_0_12px_rgba(251,191,36,0.4)]"
+              ? "bg-red-600/20 border-red-400 text-red-300 animate-pulse"
+              : "bg-amber-500/15 border-amber-400/70 text-amber-300"
           }`}
         >
           {locked
@@ -1551,7 +1551,7 @@ function PitchView({
           </div>
         </div>
         {gw && !gw.dateTbc && (
-          <div className="pointer-events-none absolute left-2 top-2 sm:left-3 sm:top-3 z-10 w-32 sm:w-44 rounded-lg sm:rounded-xl border border-white/30 bg-slate-950/80 p-1.5 sm:p-2 shadow-lg backdrop-blur-sm">
+          <div className="pointer-events-none absolute left-4 top-4 sm:left-6 sm:top-6 z-10 box-border w-28 max-w-[calc(50%-1.25rem)] overflow-hidden rounded-lg border border-white/30 bg-slate-950/80 p-1.5 sm:w-40 sm:max-w-[calc(50%-2rem)] sm:rounded-xl sm:p-2 shadow-lg backdrop-blur-sm">
             <DigitalLockCountdown lockAt={gw.lockAt} compact />
           </div>
         )}
