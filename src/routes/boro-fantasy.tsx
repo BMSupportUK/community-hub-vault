@@ -1092,11 +1092,19 @@ function SquadBuilder({
         onOpenChange={(o) => { if (!o) setPicker(null); }}
         players={state.players}
         selected={selected}
-        position={picker && picker.mode === "xi" ? picker.pos : undefined}
+        position={
+          picker && picker.mode === "xi"
+            ? picker.pos
+            : picker && picker.mode === "bench" && picker.benchIndex === 0
+              ? "gk"
+              : undefined
+        }
         title={
           picker && picker.mode === "xi"
             ? `Pick a ${POSITION_LABEL[picker.pos] ?? POSITION_SHORT[picker.pos]}`
-            : "Pick a substitute"
+            : picker && picker.mode === "bench" && picker.benchIndex === 0
+              ? "Pick a replacement goalkeeper"
+              : "Pick a substitute"
         }
         onPick={(p) => {
           if (!picker) return;
