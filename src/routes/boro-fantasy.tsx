@@ -777,6 +777,13 @@ function SquadBuilder({
     }
   }, [draftKey, draftLoaded, formation, selected, starters, bench, captainId, viceId]);
 
+  // Captain and vice-captain are the manager's choice and are never reassigned by
+  // the app. They are only cleared when that player is no longer in the XI.
+  useEffect(() => {
+    if (captainId && !starters.includes(captainId)) setCaptainId("");
+    if (viceId && !starters.includes(viceId)) setViceId("");
+  }, [starters, captainId, viceId]);
+
   const counts = formationCounts(formation);
   /** Bench size follows the real substitute rules of this gameweek's competition. */
   const benchRules = useMemo(() => benchRulesFor(gw?.competition), [gw?.competition]);
