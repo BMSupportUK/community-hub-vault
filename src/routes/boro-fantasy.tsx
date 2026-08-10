@@ -1101,8 +1101,16 @@ function SquadBuilder({
           />
         </div>
 
+        <div className="grid gap-4 items-start lg:sticky lg:top-4">
+          <ManagerCard
+            state={state}
+            name={name}
+            teamName={teamName}
+            canEdit={canEdit}
+            onEdit={onEdit}
+          />
         {/* Checklist — scoped to the active tab (squad of 15 vs starting 11). */}
-        <aside className="rounded-2xl border border-border/60 bg-card/85 backdrop-blur overflow-hidden lg:sticky lg:top-4">
+        <aside className="rounded-2xl border border-border/60 bg-card/85 backdrop-blur overflow-hidden">
           <div className="p-3 border-b border-border/60 flex items-center gap-2">
             <h3 className="font-display font-bold text-sm">{activeChecklist.title}</h3>
             {canPlay && !locked && (
