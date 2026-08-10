@@ -452,6 +452,10 @@ function BoroFantasyPage() {
                     state={state}
                     canPlay={canPlay}
                     onSave={handleSquadSave}
+                    name={guest?.displayName ?? null}
+                    teamName={currentTeamName}
+                    canEdit={canPlay}
+                    onEdit={openNameDialog}
                   />
                 )}
               </TabsContent>
