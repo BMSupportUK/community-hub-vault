@@ -144,7 +144,9 @@ export const saveGuestFantasySquad = createServerFn({ method: "POST" })
         gameweekId: z.string().uuid(),
         formation: z.string().min(3).max(8),
         starters: z.array(z.string().uuid()).length(11),
-        bench: z.array(z.string().uuid()).min(1).max(9),
+        // saveSquad validates the exact bench size from the gameweek's
+        // competition; keeping a second fixed limit here caused stale errors.
+        bench: z.array(z.string().uuid()),
         captainId: z.string().uuid(),
         viceId: z.string().uuid(),
       })

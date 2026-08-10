@@ -73,7 +73,9 @@ const saveSquadSchema = z.object({
   gameweekId: z.string().uuid(),
   formation: z.string().min(3).max(8),
   starters: z.array(z.string().uuid()).length(11),
-  bench: z.array(z.string().uuid()).min(1).max(9),
+  // Competition-specific bench size is validated in saveSquad against the
+  // selected gameweek. Do not hard-code it in this RPC boundary.
+  bench: z.array(z.string().uuid()),
   captainId: z.string().uuid(),
   viceId: z.string().uuid(),
 });
