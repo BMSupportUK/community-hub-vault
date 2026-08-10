@@ -1210,13 +1210,13 @@ function levelOf(p: FantasyPlayerDTO): PickerLevel {
  * bench slot (every remaining player), split into First team / U21 / U18 tabs.
  */
 function PlayerPickerDialog({
-  open, onOpenChange, players, selected, position, title, onPick,
+  open, onOpenChange, players, selected, positions, title, onPick,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
   players: FantasyPlayerDTO[];
   selected: string[];
-  position?: FantasyPosition;
+  positions?: FantasyPosition[];
   title: string;
   onPick: (p: FantasyPlayerDTO) => void;
 }) {
@@ -1228,7 +1228,7 @@ function PlayerPickerDialog({
     const term = q.trim().toLowerCase();
     return players
       .filter((p) => !selected.includes(p.id))
-      .filter((p) => (position ? p.position === position : true))
+      .filter((p) => (positions?.length ? positions.includes(p.position) : true))
       .filter((p) => (term ? p.name.toLowerCase().includes(term) : true))
       .sort((a, b) => {
         const unavail = (s: string) => (s === "departed" || s === "loaned_out" ? 1 : 0);
@@ -1239,7 +1239,7 @@ function PlayerPickerDialog({
           (b.seasonPoints ?? 0) - (a.seasonPoints ?? 0)
         );
       });
-  }, [players, selected, position, q]);
+  }, [players, selected, positions, q]);
 
   const groups: Record<PickerLevel, FantasyPlayerDTO[]> = useMemo(() => {
     const g: Record<PickerLevel, FantasyPlayerDTO[]> = { first: [], u21: [], u18: [] };
