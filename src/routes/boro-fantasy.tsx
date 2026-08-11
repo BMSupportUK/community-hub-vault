@@ -898,6 +898,27 @@ function SquadBuilder({
   if (!captainId || !starters.includes(captainId)) xiProblems.push("Pick a captain from your starting XI.");
   if (!viceId || !starters.includes(viceId)) xiProblems.push("Pick a vice-captain from your starting XI.");
   if (captainId && captainId === viceId) xiProblems.push("Captain and vice-captain must be different.");
+  // Dual-position starters on a flexible slot must be told which role they score in.
+  {
+    const rowsForSlots = formationRows(formation);
+    const undecided: string[] = [];
+    starters.forEach((id, slotIndex) => {
+      if (!id) return;
+      const p = playerById.get(id);
+      if (!p) return;
+      const row = rowsForSlots.find((r) => slotIndex >= r.startIndex && slotIndex < r.startIndex + r.count);
+      if (!row) return;
+      const allowed = rowPositions(row);
+      const eligible = playerPositions(p).filter((pos) => allowed.includes(pos));
+      if (eligible.length > 1 && !(slotPositions[slotIndex] && eligible.includes(slotPositions[slotIndex]!))) {
+        undecided.push(p.name);
+      }
+    });
+    if (undecided.length)
+      xiProblems.push(
+        `Choose the scoring position for ${undecided.join(", ")} — tap the "Scores As" buttons on their card.`,
+      );
+  }
 
   const problems = xiProblems;
   const activeChecklist = { title: "Match Day Squad Checklist", items: xiProblems };
@@ -1895,9 +1916,10 @@ function PitchView({
                             resolveSlotPosition(row.positions, p) ??
                             p.position;
                           if (eligible.length > 1 && editable && onSlotPosition) {
-                            return (
-                              <div className="mt-1 flex items-center justify-center gap-0.5">
-                                {eligible.map((pos) => (
+                             return (
+                               <div className="mt-1 flex flex-wrap items-center justify-center gap-x-1 gap-y-0.5">
+                                 <span className="text-[9px] font-bold uppercase tracking-wide text-white/60">Scores As</span>
+                                 {eligible.map((pos) => (
                                   <button
                                     key={pos}
                                     type="button"
