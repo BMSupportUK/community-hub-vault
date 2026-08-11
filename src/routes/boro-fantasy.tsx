@@ -1234,7 +1234,7 @@ function SquadBuilder({
                         return (
                           <SelectItem key={g.id} value={g.id}>
                             <span className={gLocked ? "line-through text-destructive" : ""}>
-                              GW{g.gwNumber}{g.dateTbc ? " (TBC)" : ""} — {g.homeTeam} v {g.awayTeam} ({gwDateLabel(g)})
+                              GW{g.gwNumber} — {g.homeTeam} v {g.awayTeam} ({gwDateLabel(g)})
                               {gLocked && <span className="ml-1 text-[10px] text-destructive font-semibold">(locked)</span>}
                             </span>
                           </SelectItem>
