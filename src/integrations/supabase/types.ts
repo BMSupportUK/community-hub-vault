@@ -1538,6 +1538,7 @@ export type Database = {
       }
       fantasy_players: {
         Row: {
+          alt_position: string | null
           created_at: string
           departed_at: string | null
           id: string
@@ -1563,6 +1564,7 @@ export type Database = {
           value_m: number
         }
         Insert: {
+          alt_position?: string | null
           created_at?: string
           departed_at?: string | null
           id?: string
@@ -1588,6 +1590,7 @@ export type Database = {
           value_m?: number
         }
         Update: {
+          alt_position?: string | null
           created_at?: string
           departed_at?: string | null
           id?: string
