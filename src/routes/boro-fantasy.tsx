@@ -1619,6 +1619,8 @@ function PitchView({
   gw?: FantasyGameweekDTO | null;
 }) {
   const rows = formationRows(formation);
+  /** 25-man squad restriction applies to league games only — cup ties are open. */
+  const leagueGame = gw ? fantasyCompetitionGroup(gw.competition) === "league" : true;
 
   // Starters are stored as a fixed-length array mapped directly to pitch slots
   // (row order, left-to-right). This keeps every player in the same slot when
