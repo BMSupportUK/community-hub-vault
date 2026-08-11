@@ -1876,7 +1876,7 @@ function PitchView({
                     className="min-w-[68px] max-w-[120px] flex-1 rounded-xl border border-white/40 bg-slate-950/70 px-1.5 py-2 text-center"
                   >
                     <div className="flex items-center justify-center gap-1">
-                      <span className={`rounded-md border px-1 text-[10px] font-bold ${POS_TINT[p.position]}`}>{POSITION_SHORT[p.position]}</span>
+                      <span className={`rounded-md border px-1 text-[10px] font-bold ${POS_TINT[p.position]}`}>{playerPositionLabel(p)}</span>
                       <ShirtNumber n={p.shirtNumber} className="text-white" />
                       <InjuryIcon p={p} kickoffAt={gwKickoff} />
                     </div>
@@ -1994,7 +1994,7 @@ function GameweekList({ state, group }: { state: FantasyStateDTO; group: Fantasy
           return (
             <div key={p.playerId} className="flex items-center gap-2 py-1 text-sm">
               <span className={`text-[10px] font-bold rounded-md border px-1 ${POS_TINT[pl?.position ?? "mid"]}`}>
-                {POSITION_SHORT[pl?.position ?? "mid"]}
+                {pl ? playerPositionLabel(pl) : POSITION_SHORT["mid"]}
               </span>
               <span className="truncate">{pl?.name ?? "Unknown player"}</span>
               {squad?.captainId === p.playerId && <Crown className="size-3.5 text-amber-400" />}
