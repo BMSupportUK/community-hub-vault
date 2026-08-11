@@ -177,6 +177,7 @@ function mapSquad(r: any): FantasySquadDTO {
       slotOrder: p.slot_order ?? 0,
       buyValueM: Number(p.buy_value_m),
       points: p.points ?? null,
+      pickedPosition: (p.picked_position ?? null) as FantasyPosition | null,
       autoSubbed: !!p.auto_subbed,
     })),
   };
@@ -282,7 +283,7 @@ export async function loadState(admin: any, owner: Owner | null): Promise<Fantas
     const { data: sq, error: sqErr } = await admin
       .from("fantasy_squads")
       .select(
-        "id, gameweek_id, formation, captain_id, vice_id, transfer_cost, points, picks:fantasy_squad_picks(player_id, is_starter, slot_order, buy_value_m, points, auto_subbed)",
+        "id, gameweek_id, formation, captain_id, vice_id, transfer_cost, points, picks:fantasy_squad_picks(player_id, is_starter, slot_order, buy_value_m, points, auto_subbed, picked_position)",
       )
       .eq(ownerCol(owner), ownerVal(owner));
     if (sqErr) throw new Error(sqErr.message);
@@ -371,6 +372,13 @@ export type SaveSquadInput = {
   bench: string[];
   captainId: string;
   viceId: string;
+  /**
+   * Optional per-slot scoring position for the XI (11 entries, same order as
+   * `starters`). Used on flexible slots where the manager chooses which of a
+   * two-position player's roles he plays. Anything invalid is resolved from the
+   * formation instead.
+   */
+  starterPositions?: (FantasyPosition | null)[];
 };
 
 /** Validate + persist a squad for one gameweek, applying transfer costs. */
