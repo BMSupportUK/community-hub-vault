@@ -897,7 +897,13 @@ export const adminSaveFantasyScoringRules = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => scoringSaveSchema.parse(d))
   .handler(async ({ data, context }) => {
-    if (!(await isAdminOrManagement(context.supabase, context.userId))) throw new Error("Forbidden");
+    // Points scoring is admin-only, not management.
+    const { data: roleRows } = await context.supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", context.userId);
+    const isAdmin = ((roleRows ?? []) as any[]).some((r) => r.role === "admin");
+    if (!isAdmin) throw new Error("Forbidden");
     const { getAdmin } = await import("@/lib/fantasy.server");
     const admin = await getAdmin();
 
