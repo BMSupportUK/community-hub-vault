@@ -1674,6 +1674,51 @@ export type Database = {
         }
         Relationships: []
       }
+      fantasy_scoring_rules: {
+        Row: {
+          created_at: string
+          enabled: boolean
+          halves_for_subs: boolean
+          key: string
+          label: string
+          per_n: number
+          points: number
+          positions: string[] | null
+          sort_order: number
+          special: string | null
+          stat_column: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          enabled?: boolean
+          halves_for_subs?: boolean
+          key: string
+          label: string
+          per_n?: number
+          points?: number
+          positions?: string[] | null
+          sort_order?: number
+          special?: string | null
+          stat_column?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          enabled?: boolean
+          halves_for_subs?: boolean
+          key?: string
+          label?: string
+          per_n?: number
+          points?: number
+          positions?: string[] | null
+          sort_order?: number
+          special?: string | null
+          stat_column?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       fantasy_squad_picks: {
         Row: {
           auto_subbed: boolean

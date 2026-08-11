@@ -503,6 +503,7 @@ function DashboardBody() {
     { to: "/admin-fan-zone", label: "Boro Fan Zone", desc: "Approve, reject or revoke fan-zone access for Middlesbrough F.C. supporters.", icon: Trophy },
     { to: "/admin-predictions", label: "World Cup predictions", desc: "Manage fixtures, scores, leaderboard and prize settings for the 2026 predictions game.", icon: Trophy },
     { to: "/admin-fantasy-motm", label: "Fantasy Man of the Match", desc: "Award the 3-point Man of the Match bonus for each MFC Fantasy Manager gameweek.", icon: Trophy },
+    { to: "/admin-fantasy-scoring", label: "Fantasy points scoring", desc: "Change or remove the points awarded for every match stat in the MFC Fantasy Manager.", icon: Trophy, adminOnly: true },
     { to: "/admin-fantasy-injuries", label: "Fantasy injuries", desc: "Flag injured, doubtful or suspended players in the MFC Fantasy Manager squad lists.", icon: Trophy },
     { to: "/admin-fantasy-squad-numbers", label: "Fantasy squad numbers", desc: "List every player in the MFC Fantasy Manager and set or change their squad number.", icon: Trophy },
     { to: "/admin-forum", label: "Forum boards", desc: "Create boards, pin/lock them, and assign board-specific moderators.", icon: MessageSquare },
