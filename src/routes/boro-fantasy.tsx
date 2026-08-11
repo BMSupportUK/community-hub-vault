@@ -29,7 +29,7 @@ import { IconRail } from "@/components/app/IconRail";
 import { useAuth } from "@/hooks/use-auth";
 import {
   benchRulesFor, COMPETITION_BENCH_RULES, FORMATION_KEYS, POSITION_ORDER,
-  POSITION_SHORT, POSITION_LABEL, SCORING_RULES, SQUAD_RULES,
+  POSITION_SHORT, POSITION_LABEL, SCORING_RULES, SQUAD_RULES, STAT_KEY,
   FORMATIONS, formationCounts, formationRows, formationPositionRange, rowPositions, slotPositionLabel,
   playerPositions, playerPositionLabel, xiFitsFormation, resolveSlotPosition,
   fantasyCompetitionGroup, FANTASY_GROUP_LABEL,
