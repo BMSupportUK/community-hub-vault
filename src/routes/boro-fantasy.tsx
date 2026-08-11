@@ -2357,16 +2357,27 @@ function TransfersTabBody({ state }: { state: FantasyStateDTO }) {
 // ------------------------------------------------------------------
 function LeaderboardTable({
   rows,
+  gameweeks = [],
   canRemove = false,
   onRemove,
 }: {
   rows: FantasyLeaderboardRow[];
+  gameweeks?: FantasyGameweekDTO[];
   canRemove?: boolean;
   onRemove?: (row: FantasyLeaderboardRow) => Promise<void>;
 }) {
   // Admin/management only: confirm before a manager is taken off the board.
   const [pending, setPending] = useState<FantasyLeaderboardRow | null>(null);
   const [removing, setRemoving] = useState(false);
+  // Squad viewer: only gameweeks that have already locked can be inspected.
+  const [viewing, setViewing] = useState<FantasyLeaderboardRow | null>(null);
+  const lockedGws = useMemo(
+    () =>
+      gameweeks
+        .filter((g) => g.status !== "upcoming" || new Date(g.lockAt).getTime() <= Date.now())
+        .sort((a, b) => b.gwNumber - a.gwNumber),
+    [gameweeks],
+  );
   const confirmRemove = async () => {
     if (!pending || !onRemove) return;
     setRemoving(true);
@@ -2396,6 +2407,22 @@ function LeaderboardTable({
         </Button>
       </td>
     ) : null;
+  const squadCell = (r: FantasyLeaderboardRow) => (
+    <td className="px-3 py-2 text-right">
+      <Button
+        type="button"
+        size="sm"
+        variant="outline"
+        className="h-8 gap-1.5 text-xs"
+        disabled={!lockedGws.length}
+        title={lockedGws.length ? "View this manager's squad for a locked gameweek" : "No gameweeks have locked yet"}
+        onClick={() => setViewing(r)}
+      >
+        <Users className="size-3.5" />
+        Squad
+      </Button>
+    </td>
+  );
   if (!rows.length) {
     return <div className="rounded-2xl border border-border/60 bg-card/80 p-6 text-sm text-muted-foreground">No managers have scored yet.</div>;
   }
@@ -2419,6 +2446,7 @@ function LeaderboardTable({
             <th className="text-left px-3 py-2">Manager</th>
             <th className="text-right px-3 py-2">GWs</th>
             <th className="text-right px-3 py-2">Points</th>
+            <th className="text-right px-3 py-2">Squad</th>
             {canRemove && <th className="px-2 py-2 w-10 sr-only">Remove</th>}
           </tr>
         </thead>
@@ -2435,6 +2463,7 @@ function LeaderboardTable({
               </td>
               <td className="px-3 py-2 text-right tabular-nums">{r.gameweeksScored}</td>
               <td className="px-3 py-2 text-right font-bold tabular-nums text-primary">{r.totalPoints}</td>
+              {squadCell(r)}
               {removeButton(r)}
             </tr>
           ))}
@@ -2451,6 +2480,7 @@ function LeaderboardTable({
               </td>
               <td className="px-3 py-2 text-right tabular-nums">{r.gameweeksScored}</td>
               <td className="px-3 py-2 text-right font-bold tabular-nums text-primary">{r.totalPoints}</td>
+              {squadCell(r)}
               {removeButton(r)}
             </tr>
           ))}
