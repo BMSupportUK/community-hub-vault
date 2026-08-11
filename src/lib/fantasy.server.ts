@@ -494,6 +494,20 @@ export async function saveSquad(admin: any, owner: Owner, input: SaveSquadInput)
   }
 
   await admin.from("fantasy_squad_picks").delete().eq("squad_id", squadId);
+  // Each XI slot records the position the player is scored in, so a
+  // two-position player scores as whatever role he was picked in.
+  const slotPosByIndex: FantasyPosition[][] = [];
+  for (const row of formationRows(input.formation)) {
+    const positions = rowPositions(row);
+    for (let i = 0; i < row.count; i++) slotPosByIndex.push(positions);
+  }
+  const pickedPositionFor = (playerId: string, index: number): FantasyPosition => {
+    const player = byId.get(playerId)!;
+    const slot = slotPosByIndex[index] ?? [player.position];
+    const chosen = input.starterPositions?.[index] ?? null;
+    if (chosen && slot.includes(chosen) && playerPositions(player).includes(chosen)) return chosen;
+    return resolveSlotPosition(slot, player) ?? player.position;
+  };
   const rows = [
     ...input.starters.map((id, i) => ({
       squad_id: squadId,
@@ -501,6 +515,7 @@ export async function saveSquad(admin: any, owner: Owner, input: SaveSquadInput)
       is_starter: true,
       slot_order: i,
       buy_value_m: byId.get(id)!.valueM,
+      picked_position: pickedPositionFor(id, i),
     })),
     ...input.bench.map((id, i) => ({
       squad_id: squadId,
@@ -508,6 +523,7 @@ export async function saveSquad(admin: any, owner: Owner, input: SaveSquadInput)
       is_starter: false,
       slot_order: i,
       buy_value_m: byId.get(id)!.valueM,
+      picked_position: byId.get(id)!.position,
     })),
   ];
   const { error: pickErr } = await admin.from("fantasy_squad_picks").insert(rows);
