@@ -1424,6 +1424,20 @@ function outOf25(p: FantasyPlayerDTO): boolean {
 }
 
 /**
+ * Injuries are stamped with an expected return date. When picking a squad for a
+ * future gameweek, a player whose return date falls on or before that kick-off
+ * is expected back for that game — so we shouldn't scream OUT at the manager.
+ */
+function injuryClearedBy(p: FantasyPlayerDTO, kickoffAt?: string | null): boolean {
+  if ((p.injuryStatus ?? "none") === "none") return false;
+  if (!p.injuryReturn || !kickoffAt) return false;
+  const back = Date.parse(p.injuryReturn);
+  const ko = Date.parse(kickoffAt);
+  if (!Number.isFinite(back) || !Number.isFinite(ko)) return false;
+  return back <= ko;
+}
+
+/**
  * Injury / suspension flag. Shown on the pitch, bench and player picker.
  * Injured players stay selectable — the icon is a warning, not a block.
  */
@@ -1431,14 +1445,31 @@ function InjuryIcon({
   p,
   className = "",
   label = true,
+  kickoffAt,
 }: {
   p: FantasyPlayerDTO;
   className?: string;
   /** Show the wording next to the icon (off where the row already spells it out). */
   label?: boolean;
+  /** Kick-off of the gameweek being picked — used to fade flags they're due back for. */
+  kickoffAt?: string | null;
 }) {
   const s = p.injuryStatus ?? "none";
   if (s === "none") return null;
+  const cleared = injuryClearedBy(p, kickoffAt);
+  if (cleared) {
+    const t = `Due back ${p.injuryReturn} — expected available for this game${p.injuryNote ? ` (${p.injuryNote})` : ""}`;
+    return (
+      <span
+        title={t}
+        aria-label={t}
+        className={`inline-flex shrink-0 items-center gap-0.5 rounded-md border border-emerald-300 bg-emerald-600 px-1 py-[1px] text-[9px] font-extrabold uppercase leading-none tracking-wide text-white shadow-sm ${className}`}
+      >
+        <Check className="size-2.5" strokeWidth={3} />
+        BACK
+      </span>
+    );
+  }
   const bits = [
     s === "suspended" ? "Suspended" : s === "doubtful" ? "Doubtful" : "Injured — out",
     p.injuryNote || null,
