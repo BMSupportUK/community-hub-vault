@@ -1355,6 +1355,7 @@ function SquadBuilder({
         onOpenChange={(o) => { if (!o) setPicker(null); }}
         players={state.players}
         selected={selected}
+        leagueGame={isLeagueGw}
         positions={
           picker && picker.mode === "xi"
             ? picker.positions
