@@ -472,6 +472,93 @@ export const adminSetFantasyMotm = createServerFn({ method: "POST" })
 // ------------------------------------------------------------------
 // Admin: real club transfer feed
 // ------------------------------------------------------------------
+
+// ------------------------------------------------------------------
+// Admin: injuries / suspensions
+// ------------------------------------------------------------------
+export type FantasyInjuryPlayer = {
+  id: string;
+  name: string;
+  position: string;
+  squadLevel: string;
+  status: string;
+  injuryStatus: "none" | "doubtful" | "out" | "suspended";
+  injuryNote: string | null;
+  injuryReturn: string | null;
+  injurySource: "feed" | "admin" | null;
+  injuryUpdatedAt: string | null;
+};
+
+export const getFantasyInjuries = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<FantasyInjuryPlayer[]> => {
+    setResponseHeader("cache-control", "no-store, max-age=0");
+    if (!(await isAdminOrManagement(context.supabase, context.userId))) throw new Error("Forbidden");
+    const { getAdmin } = await import("@/lib/fantasy.server");
+    const admin = await getAdmin();
+    const { data, error } = await admin
+      .from("fantasy_players")
+      .select(
+        "id, name, position, squad_level, status, injury_status, injury_note, injury_return, injury_source, injury_updated_at",
+      )
+      .order("sort_order", { ascending: true });
+    if (error) throw new Error(error.message);
+    return ((data ?? []) as any[]).map((p) => ({
+      id: p.id,
+      name: p.name,
+      position: p.position,
+      squadLevel: p.squad_level ?? "first",
+      status: p.status,
+      injuryStatus: (p.injury_status ?? "none") as FantasyInjuryPlayer["injuryStatus"],
+      injuryNote: p.injury_note ?? null,
+      injuryReturn: p.injury_return ?? null,
+      injurySource: (p.injury_source ?? null) as FantasyInjuryPlayer["injurySource"],
+      injuryUpdatedAt: p.injury_updated_at ?? null,
+    }));
+  });
+
+export const adminSetFantasyInjury = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        playerId: z.string().uuid(),
+        injuryStatus: z.enum(["none", "doubtful", "out", "suspended"]),
+        note: z.string().trim().max(120).nullable().optional(),
+        expectedReturn: z.string().trim().max(60).nullable().optional(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    if (!(await isAdminOrManagement(context.supabase, context.userId))) throw new Error("Forbidden");
+    const { getAdmin } = await import("@/lib/fantasy.server");
+    const admin = await getAdmin();
+    const clear = data.injuryStatus === "none";
+    const { error } = await admin
+      .from("fantasy_players")
+      .update({
+        injury_status: data.injuryStatus,
+        injury_note: clear ? null : (data.note?.trim() || null),
+        injury_return: clear ? null : (data.expectedReturn?.trim() || null),
+        injury_source: clear ? null : "admin",
+        injury_updated_at: new Date().toISOString(),
+      } as never)
+      .eq("id", data.playerId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+/** Pull the latest injuries straight from the official EFL Fantasy feed. */
+export const adminSyncFantasyInjuries = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    if (!(await isAdminOrManagement(context.supabase, context.userId))) throw new Error("Forbidden");
+    const { getAdmin } = await import("@/lib/fantasy.server");
+    const admin = await getAdmin();
+    const { syncFantasyInjuriesFromEfl } = await import("@/lib/efl-fantasy-injuries.server");
+    return await syncFantasyInjuriesFromEfl(admin as never);
+  });
+
 const clubTransferSchema = z.object({
   id: z.string().uuid().optional(),
   playerName: z.string().trim().min(1).max(60),
