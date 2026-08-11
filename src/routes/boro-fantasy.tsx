@@ -71,6 +71,18 @@ const kickoffLabel = (iso: string) =>
 const isPostponedGw = (g: { fixtureStatus?: string | null }) =>
   /postpon|cancel|abandon|suspend/i.test(g.fixtureStatus ?? "");
 
+/** Week-commencing label for cup/play-off ties whose exact date isn't confirmed yet. */
+const wcLabel = (iso: string) => {
+  const d = new Date(iso);
+  const day = d.getDay();
+  d.setDate(d.getDate() - ((day + 6) % 7)); // back to Monday
+  return `w/c ${d.toLocaleDateString(undefined, { day: "2-digit", month: "short" })}`;
+};
+
+/** How a gameweek's date should read: exact kick-off, or "w/c <date> (TBC)" when unconfirmed. */
+const gwDateLabel = (g: { kickoffAt: string; dateTbc?: boolean }) =>
+  g.dateTbc ? `${wcLabel(g.kickoffAt)} (TBC)` : kickoffLabel(g.kickoffAt);
+
 function useNow(interval = 1000) {
   const [now, setNow] = useState(Date.now());
   useEffect(() => {
