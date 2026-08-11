@@ -2191,6 +2191,9 @@ function GameweekList({ state, group }: { state: FantasyStateDTO; group: Fantasy
   };
 
   const items = state.gameweeks.filter((g) => fantasyCompetitionGroup(g.competition) === group);
+  // Postponed ties sit in their own block at the bottom until a new date is confirmed.
+  const scheduled = items.filter((g) => !isPostponedGw(g));
+  const postponed = items.filter((g) => isPostponedGw(g));
   return (
     <section>
       <h4 className="mb-2 flex items-center gap-2 text-sm font-semibold text-primary">
@@ -2206,7 +2209,18 @@ function GameweekList({ state, group }: { state: FantasyStateDTO; group: Fantasy
               : "No play-off games yet — they're added automatically if Boro qualify."}
         </div>
       ) : (
-        <div className="space-y-2">{items.map(renderGw)}</div>
+        <div className="space-y-2">
+          {scheduled.map(renderGw)}
+          {postponed.length > 0 && (
+            <div className="space-y-2 pt-2">
+              <h5 className="flex items-center gap-2 border-t border-amber-400/30 pt-3 text-xs font-bold uppercase tracking-wide text-amber-300">
+                Postponed — awaiting new date
+                <span className="font-normal normal-case text-muted-foreground">{postponed.length}</span>
+              </h5>
+              {postponed.map(renderGw)}
+            </div>
+          )}
+        </div>
       )}
     </section>
   );
