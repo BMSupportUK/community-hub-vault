@@ -3,8 +3,11 @@ import {
   benchRulesFor,
   FORMATIONS,
   formationPositionRange,
+  formationRows,
   POSITION_SHORT,
   playerPositions,
+  resolveSlotPosition,
+  rowPositions,
   xiFitsFormation,
   type FantasyPosition,
   type FormationKey,
@@ -62,6 +65,8 @@ export type FantasyPickDTO = {
   slotOrder: number;
   buyValueM: number;
   points: number | null;
+  /** The position this player is scored in for this squad (slot position). */
+  pickedPosition?: FantasyPosition | null;
   /** True when this bench player was automatically subbed in for a starter who didn't play. */
   autoSubbed?: boolean;
   /** Minutes the player actually played in this gameweek's fixture (null = no stats yet). */
@@ -172,6 +177,7 @@ function mapSquad(r: any): FantasySquadDTO {
       slotOrder: p.slot_order ?? 0,
       buyValueM: Number(p.buy_value_m),
       points: p.points ?? null,
+      pickedPosition: (p.picked_position ?? null) as FantasyPosition | null,
       autoSubbed: !!p.auto_subbed,
     })),
   };
@@ -277,7 +283,7 @@ export async function loadState(admin: any, owner: Owner | null): Promise<Fantas
     const { data: sq, error: sqErr } = await admin
       .from("fantasy_squads")
       .select(
-        "id, gameweek_id, formation, captain_id, vice_id, transfer_cost, points, picks:fantasy_squad_picks(player_id, is_starter, slot_order, buy_value_m, points, auto_subbed)",
+        "id, gameweek_id, formation, captain_id, vice_id, transfer_cost, points, picks:fantasy_squad_picks(player_id, is_starter, slot_order, buy_value_m, points, auto_subbed, picked_position)",
       )
       .eq(ownerCol(owner), ownerVal(owner));
     if (sqErr) throw new Error(sqErr.message);
@@ -366,6 +372,13 @@ export type SaveSquadInput = {
   bench: string[];
   captainId: string;
   viceId: string;
+  /**
+   * Optional per-slot scoring position for the XI (11 entries, same order as
+   * `starters`). Used on flexible slots where the manager chooses which of a
+   * two-position player's roles he plays. Anything invalid is resolved from the
+   * formation instead.
+   */
+  starterPositions?: (FantasyPosition | null)[];
 };
 
 /** Validate + persist a squad for one gameweek, applying transfer costs. */
@@ -481,6 +494,20 @@ export async function saveSquad(admin: any, owner: Owner, input: SaveSquadInput)
   }
 
   await admin.from("fantasy_squad_picks").delete().eq("squad_id", squadId);
+  // Each XI slot records the position the player is scored in, so a
+  // two-position player scores as whatever role he was picked in.
+  const slotPosByIndex: FantasyPosition[][] = [];
+  for (const row of formationRows(input.formation)) {
+    const positions = rowPositions(row);
+    for (let i = 0; i < row.count; i++) slotPosByIndex.push(positions);
+  }
+  const pickedPositionFor = (playerId: string, index: number): FantasyPosition => {
+    const player = byId.get(playerId)!;
+    const slot = slotPosByIndex[index] ?? [player.position];
+    const chosen = input.starterPositions?.[index] ?? null;
+    if (chosen && slot.includes(chosen) && playerPositions(player).includes(chosen)) return chosen;
+    return resolveSlotPosition(slot, player) ?? player.position;
+  };
   const rows = [
     ...input.starters.map((id, i) => ({
       squad_id: squadId,
@@ -488,6 +515,7 @@ export async function saveSquad(admin: any, owner: Owner, input: SaveSquadInput)
       is_starter: true,
       slot_order: i,
       buy_value_m: byId.get(id)!.valueM,
+      picked_position: pickedPositionFor(id, i),
     })),
     ...input.bench.map((id, i) => ({
       squad_id: squadId,
@@ -495,6 +523,7 @@ export async function saveSquad(admin: any, owner: Owner, input: SaveSquadInput)
       is_starter: false,
       slot_order: i,
       buy_value_m: byId.get(id)!.valueM,
+      picked_position: byId.get(id)!.position,
     })),
   ];
   const { error: pickErr } = await admin.from("fantasy_squad_picks").insert(rows);

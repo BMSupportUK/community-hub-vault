@@ -31,7 +31,7 @@ import {
   benchRulesFor, COMPETITION_BENCH_RULES, FORMATION_KEYS, POSITION_ORDER,
   POSITION_SHORT, POSITION_LABEL, SCORING_RULES, SQUAD_RULES,
   FORMATIONS, formationCounts, formationRows, formationPositionRange, rowPositions, slotPositionLabel,
-  playerPositions, playerPositionLabel, xiFitsFormation,
+  playerPositions, playerPositionLabel, xiFitsFormation, resolveSlotPosition,
   fantasyCompetitionGroup, FANTASY_GROUP_LABEL,
   type FantasyPosition, type FormationKey, type FantasyCompetitionGroup,
 } from "@/lib/fantasy-rules";
@@ -652,6 +652,8 @@ type SavePayload = {
   bench: (string | null)[];
   captainId: string;
   viceId: string;
+  /** Chosen scoring position per XI slot (dual-position players on flexible slots). */
+  starterPositions?: (FantasyPosition | null)[];
 };
 
 function SquadBuilder({
@@ -695,6 +697,11 @@ function SquadBuilder({
   const [formation, setFormation] = useState<FormationKey>((existing?.formation as FormationKey) ?? "4-4-2");
   const [selected, setSelected] = useState<string[]>(existing ? existing.picks.map((p) => p.playerId) : []);
   const [starters, setStarters] = useState<(string | null)[]>(Array(11).fill(null));
+  /**
+   * Which of a two-position player's roles he plays in each XI slot. Only
+   * flexible slots ever differ from the default; null means "work it out".
+   */
+  const [slotPositions, setSlotPositions] = useState<(FantasyPosition | null)[]>(Array(11).fill(null));
   const [bench, setBench] = useState<(string | null)[]>([]);
   const [captainId, setCaptainId] = useState<string>(existing?.captainId ?? "");
   const [viceId, setViceId] = useState<string>(existing?.viceId ?? "");
@@ -721,6 +728,7 @@ function SquadBuilder({
         setFormation("4-4-2");
         setSelected([]);
         setStarters(Array(11).fill(null));
+        setSlotPositions(Array(11).fill(null));
         setBench(Array(benchRulesFor(gw?.competition).size).fill(null));
         setCaptainId("");
         setViceId("");
@@ -731,11 +739,16 @@ function SquadBuilder({
       const size = benchRulesFor(gw?.competition).size;
       const st = Array(11).fill(null) as (string | null)[];
       const bn = Array(size).fill(null) as (string | null)[];
+      const sp = Array(11).fill(null) as (FantasyPosition | null)[];
       for (const p of existing.picks) {
-        if (p.isStarter && p.slotOrder >= 0 && p.slotOrder < 11) st[p.slotOrder] = p.playerId;
+        if (p.isStarter && p.slotOrder >= 0 && p.slotOrder < 11) {
+          st[p.slotOrder] = p.playerId;
+          sp[p.slotOrder] = (p.pickedPosition ?? null) as FantasyPosition | null;
+        }
         else if (!p.isStarter && p.slotOrder >= 0 && p.slotOrder < size) bn[p.slotOrder] = p.playerId;
       }
       setStarters(st);
+      setSlotPositions(sp);
       setBench(bn);
       setCaptainId(existing.captainId ?? "");
       setViceId(existing.viceId ?? "");
@@ -753,6 +766,11 @@ function SquadBuilder({
           if (d.formation) setFormation(d.formation as FormationKey);
           setSelected(d.selected);
           setStarters(Array.isArray(d.starters) && d.starters.length === 11 ? d.starters : Array(11).fill(null));
+          setSlotPositions(
+            Array.isArray(d.starterPositions) && d.starterPositions.length === 11
+              ? d.starterPositions
+              : Array(11).fill(null),
+          );
           setBench(Array.isArray(d.bench) && d.bench.length === benchRulesFor(gw?.competition).size ? d.bench : Array(benchRulesFor(gw?.competition).size).fill(null));
           setCaptainId(d.captainId ?? "");
           setViceId(d.viceId ?? "");
@@ -777,12 +795,12 @@ function SquadBuilder({
       else
         localStorage.setItem(
           draftKey,
-          JSON.stringify({ formation, selected, starters, bench, captainId, viceId, at: Date.now() }),
+          JSON.stringify({ formation, selected, starters, starterPositions: slotPositions, bench, captainId, viceId, at: Date.now() }),
         );
     } catch {
       /* storage full or blocked — drafting still works in-memory */
     }
-  }, [draftKey, draftLoaded, formation, selected, starters, bench, captainId, viceId]);
+  }, [draftKey, draftLoaded, formation, selected, starters, slotPositions, bench, captainId, viceId]);
 
   // Captain and vice-captain are the manager's choice and are never reassigned by
   // the app. They are only cleared when that player is no longer in the XI.
@@ -1116,7 +1134,15 @@ function SquadBuilder({
     }
     setSaving(true);
     try {
-      await onSave({ gameweekId: gw.id, formation, starters: st as string[], bench: bn as string[], captainId: cap, viceId: vice });
+      await onSave({
+        gameweekId: gw.id,
+        formation,
+        starters: st as string[],
+        bench: bn as string[],
+        captainId: cap,
+        viceId: vice,
+        starterPositions: slotPositions,
+      });
       // Saved to the server — the local draft is no longer needed.
       restoredDraftRef.current = false;
       if (draftKey) {
@@ -1294,6 +1320,14 @@ function SquadBuilder({
               playerById={playerById}
               selected={selected}
               starters={starters}
+              slotPositions={slotPositions}
+              onSlotPosition={(slotIndex, position) =>
+                setSlotPositions((prev) => {
+                  const next = [...prev];
+                  next[slotIndex] = position;
+                  return next;
+                })
+              }
               bench={bench}
               captainId={captainId}
               viceId={viceId}
@@ -1685,7 +1719,7 @@ function PlayerPickerDialog({
 // Pitch
 // ------------------------------------------------------------------
 function PitchView({
-  formation, onFormationChange, editable, playerById, selected, starters, bench, captainId, viceId,
+  formation, onFormationChange, editable, playerById, selected, starters, slotPositions, onSlotPosition, bench, captainId, viceId,
   benchSize, pointsByPlayer, minutesByPlayer, autoSubbedIds, onDropStart, onDropBench, onBench, onRemove, onCaptain, onVice,
   onSlotOpen, onBenchSlotOpen, gw,
 }: {
@@ -1695,6 +1729,8 @@ function PitchView({
   playerById: Map<string, FantasyPlayerDTO>;
   selected: string[];
   starters: (string | null)[];
+  slotPositions?: (FantasyPosition | null)[];
+  onSlotPosition?: (slotIndex: number, position: FantasyPosition) => void;
   bench: (string | null)[];
   captainId: string;
   viceId: string;
@@ -1803,6 +1839,42 @@ function PitchView({
                           <InjuryIcon p={p} kickoffAt={gwKickoff} />
                         </div>
                         <div className="mt-1 text-[10px] font-semibold leading-tight text-white break-words line-clamp-2 min-h-[24px]">{p.name}</div>
+                        {(() => {
+                          // Two-position players are scored in the role of the slot
+                          // they fill; on a flexible slot the manager picks which.
+                          const eligible = playerPositions(p).filter((pos) => row.positions.includes(pos));
+                          const chosen = slotPositions?.[slotIndex] ?? null;
+                          const scoringAs =
+                            (chosen && eligible.includes(chosen) ? chosen : null) ??
+                            resolveSlotPosition(row.positions, p) ??
+                            p.position;
+                          if (eligible.length > 1 && editable && onSlotPosition) {
+                            return (
+                              <div className="mt-1 flex items-center justify-center gap-0.5">
+                                {eligible.map((pos) => (
+                                  <button
+                                    key={pos}
+                                    type="button"
+                                    title={`Score ${p.name} as a ${POSITION_LABEL[pos].toLowerCase()}`}
+                                    onClick={() => onSlotPosition(slotIndex, pos)}
+                                    className={`rounded border px-1 text-[9px] font-bold uppercase ${
+                                      scoringAs === pos
+                                        ? "border-emerald-400/70 bg-emerald-500/25 text-emerald-100"
+                                        : "border-white/30 bg-white/5 text-white/60 hover:text-white"
+                                    }`}
+                                  >
+                                    {POSITION_SHORT[pos]}
+                                  </button>
+                                ))}
+                              </div>
+                            );
+                          }
+                          return (
+                            <div className="mt-0.5 text-[9px] font-bold uppercase tracking-wide text-white/60">
+                              Scores as {POSITION_SHORT[scoringAs]}
+                            </div>
+                          );
+                        })()}
                         {leagueGame && outOf25(p) && (
                           <div className="text-[9px] font-bold uppercase leading-tight text-amber-300">
                             Not in 25-man matchday squad

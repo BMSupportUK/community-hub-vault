@@ -263,7 +263,9 @@ export async function fetchFantasyStatsForFixture(
       saves: statVal(rp, "saves"),
       pens_saved: pensSaved,
       pens_missed: pensMissed.get(athleteId) ?? 0,
-      goals_conceded: target.position === "gk" || target.position === "def" ? conceded : 0,
+      // Always store the real goals conceded: whether it costs points depends on
+      // the position the manager picked the player in, decided when scoring.
+      goals_conceded: conceded,
       yellows: statVal(rp, "yellowCards"),
       reds: statVal(rp, "redCards"),
       own_goals: statVal(rp, "ownGoals"),

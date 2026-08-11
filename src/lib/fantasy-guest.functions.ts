@@ -149,6 +149,7 @@ export const saveGuestFantasySquad = createServerFn({ method: "POST" })
         bench: z.array(z.string().uuid()),
         captainId: z.string().uuid(),
         viceId: z.string().uuid(),
+        starterPositions: z.array(z.enum(["gk", "def", "mid", "fwd"]).nullable()).length(11).optional(),
       })
       .parse(d),
   )
@@ -163,6 +164,7 @@ export const saveGuestFantasySquad = createServerFn({ method: "POST" })
       bench: data.bench,
       captainId: data.captainId,
       viceId: data.viceId,
+      starterPositions: data.starterPositions,
     });
   });
 
