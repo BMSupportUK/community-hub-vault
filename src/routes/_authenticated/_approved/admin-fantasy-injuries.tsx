@@ -202,6 +202,14 @@ function AdminFantasyInjuriesPage() {
                     </Button>
                   ))}
                 </div>
+                <Button
+                  size="sm"
+                  className="w-full"
+                  disabled={busy === p.id}
+                  onClick={() => apply(p, p.injuryStatus as (typeof STATUSES)[number])}
+                >
+                  {busy === p.id ? <Loader2 className="size-4 animate-spin" /> : "Save injury details"}
+                </Button>
                 <label className="flex items-center gap-2 text-xs text-muted-foreground">
                   <input
                     type="checkbox"
