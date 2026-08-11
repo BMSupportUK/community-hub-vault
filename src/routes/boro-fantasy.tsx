@@ -1311,7 +1311,7 @@ function SquadBuilder({
           <Lock className="size-4" /> This gameweek is locked. Changes will apply to the next one.
         </div>
       )}
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px] items-start">
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_300px] xl:grid-cols-[minmax(0,1fr)_300px_320px] items-start">
         <div className="grid gap-4 items-start">
           <PitchView
               formation={formation}
@@ -1331,19 +1331,13 @@ function SquadBuilder({
               bench={bench}
               captainId={captainId}
               viceId={viceId}
-              benchSize={benchRules.size}
               pointsByPlayer={hasGwPoints ? pointsByPlayer : undefined}
               minutesByPlayer={minutesByPlayer.size ? minutesByPlayer : undefined}
               autoSubbedIds={autoSubbedIds}
               onSlotOpen={(positions, slotIndex, replaceId) => setPicker({ mode: "xi", positions, slotIndex, replaceId })}
-              onBenchSlotOpen={(benchIndex) => setPicker({ mode: "bench", benchIndex })}
               onDropStart={(playerId, slotIndex, replaceId) => {
                 const p = playerById.get(playerId);
                 if (p) startPlayer(p, slotIndex, replaceId);
-              }}
-              onDropBench={(playerId) => {
-                const p = playerById.get(playerId);
-                if (p) benchAdd(p);
               }}
               onBench={benchPlayer}
               onRemove={removePlayer}
@@ -1360,16 +1354,8 @@ function SquadBuilder({
           />
         </div>
 
-        <div className="grid gap-4 items-start lg:sticky lg:top-4">
-          <ManagerCard
-            state={state}
-            name={name}
-            teamName={teamName}
-            canEdit={canEdit}
-            onEdit={onEdit}
-            gameweekId={gwId}
-          />
-          {gameweekPanel}
+        {/* Column 2 — match day checklist and the subs bench, right of the pitch. */}
+        <div className="grid gap-4 items-start">
         {/* Checklist — scoped to the active tab (squad of 15 vs starting 11). */}
         <aside className="rounded-2xl border border-border/60 bg-card/85 backdrop-blur overflow-hidden">
           <div className="p-3 border-b border-border/60 flex items-center gap-2">
@@ -1410,6 +1396,39 @@ function SquadBuilder({
             )}
           </div>
         </aside>
+          <BenchPanel
+            editable={editable}
+            playerById={playerById}
+            bench={bench}
+            benchSize={benchRules.size}
+            pointsByPlayer={hasGwPoints ? pointsByPlayer : undefined}
+            minutesByPlayer={minutesByPlayer.size ? minutesByPlayer : undefined}
+            autoSubbedIds={autoSubbedIds}
+            onDropStart={(playerId) => {
+              const p = playerById.get(playerId);
+              if (p) startPlayer(p);
+            }}
+            onDropBench={(playerId) => {
+              const p = playerById.get(playerId);
+              if (p) benchAdd(p);
+            }}
+            onRemove={removePlayer}
+            onBenchSlotOpen={(benchIndex) => setPicker({ mode: "bench", benchIndex })}
+            gw={gw}
+          />
+        </div>
+
+        {/* Column 3 — your team card and the gameweek picker / save panel. */}
+        <div className="grid gap-4 items-start xl:sticky xl:top-4">
+          <ManagerCard
+            state={state}
+            name={name}
+            teamName={teamName}
+            canEdit={canEdit}
+            onEdit={onEdit}
+            gameweekId={gwId}
+          />
+          {gameweekPanel}
         </div>
       </div>
 
