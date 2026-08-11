@@ -1623,6 +1623,7 @@ export type Database = {
           buy_value_m: number
           id: string
           is_starter: boolean
+          picked_position: string | null
           player_id: string
           points: number | null
           slot_order: number
@@ -1633,6 +1634,7 @@ export type Database = {
           buy_value_m?: number
           id?: string
           is_starter?: boolean
+          picked_position?: string | null
           player_id: string
           points?: number | null
           slot_order?: number
@@ -1643,6 +1645,7 @@ export type Database = {
           buy_value_m?: number
           id?: string
           is_starter?: boolean
+          picked_position?: string | null
           player_id?: string
           points?: number | null
           slot_order?: number
