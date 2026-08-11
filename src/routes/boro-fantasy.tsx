@@ -682,6 +682,9 @@ function SquadBuilder({
         .sort((a, b) => (a.gwNumber ?? 0) - (b.gwNumber ?? 0)),
     [state.gameweeks],
   );
+  // Called-off games drop to the bottom under their own header until a new date is confirmed.
+  const scheduledGameweeks = useMemo(() => openGameweeks.filter((g) => !isPostponedGw(g)), [openGameweeks]);
+  const postponedGameweeks = useMemo(() => openGameweeks.filter((g) => isPostponedGw(g)), [openGameweeks]);
   const [gwId, setGwId] = useState<string>(state.currentGameweekId ?? "");
   useEffect(() => {
     const valid = state.gameweeks.some((g) => g.id === gwId);
