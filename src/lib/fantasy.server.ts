@@ -3,8 +3,11 @@ import {
   benchRulesFor,
   FORMATIONS,
   formationPositionRange,
+  formationRows,
   POSITION_SHORT,
   playerPositions,
+  resolveSlotPosition,
+  rowPositions,
   xiFitsFormation,
   type FantasyPosition,
   type FormationKey,
@@ -62,6 +65,8 @@ export type FantasyPickDTO = {
   slotOrder: number;
   buyValueM: number;
   points: number | null;
+  /** The position this player is scored in for this squad (slot position). */
+  pickedPosition?: FantasyPosition | null;
   /** True when this bench player was automatically subbed in for a starter who didn't play. */
   autoSubbed?: boolean;
   /** Minutes the player actually played in this gameweek's fixture (null = no stats yet). */
