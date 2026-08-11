@@ -2061,7 +2061,7 @@ function BenchPanel({
                 {p ? (
                   <>
                     <div className="flex items-center justify-center gap-1">
-                      <Shirt className="size-5 text-white/90" />
+                      <Shirt className={`size-5 ${p.position === "gk" ? "text-emerald-400" : "text-red-500"}`} />
                       <ShirtNumber n={p.shirtNumber} className="text-[10px] font-black text-white border-white/60" />
                       <InjuryIcon p={p} kickoffAt={gwKickoff} />
                     </div>
