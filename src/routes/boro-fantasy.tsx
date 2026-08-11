@@ -1510,7 +1510,7 @@ function InjuryIcon({
  * bench slot (every remaining player), split into First team / U21 / U18 tabs.
  */
 function PlayerPickerDialog({
-  open, onOpenChange, players, selected, positions, title, onPick, leagueGame = true,
+  open, onOpenChange, players, selected, positions, title, onPick, leagueGame = true, kickoffAt,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
@@ -1521,6 +1521,8 @@ function PlayerPickerDialog({
   onPick: (p: FantasyPlayerDTO) => void;
   /** League games only use the 25-man squad; cup ties are open to anyone. */
   leagueGame?: boolean;
+  /** Kick-off of the gameweek being picked, so injuries they're due back for read as available. */
+  kickoffAt?: string | null;
 }) {
   const [q, setQ] = useState("");
   const [level, setLevel] = useState<PickerLevel>("first");
@@ -1591,7 +1593,7 @@ function PlayerPickerDialog({
                       {p.name}
                     </span>
                     <ShirtNumber n={p.shirtNumber} />
-                    <InjuryIcon p={p} />
+                    <InjuryIcon p={p} kickoffAt={kickoffAt} />
                     {(p.squadLevel === "u21" || p.squadLevel === "u18") && (
                       <span className="shrink-0 rounded-md border border-sky-500/40 bg-sky-500/10 px-1 py-0.5 text-[9px] font-bold uppercase tracking-wide text-sky-500">
                         {p.squadLevel === "u21" ? "U21" : "U18"}
@@ -1608,13 +1610,17 @@ function PlayerPickerDialog({
                     {p.status !== "loaned_out" && p.loanFrom && (
                       <span className="ml-1 text-amber-500 uppercase">on loan from {p.loanFrom}</span>
                     )}
-                    {(p.injuryStatus ?? "none") !== "none" && (
+                    {(p.injuryStatus ?? "none") !== "none" && (injuryClearedBy(p, kickoffAt) ? (
+                      <span className="ml-1 uppercase text-emerald-500">
+                        due back {p.injuryReturn} · expected available
+                      </span>
+                    ) : (
                       <span className={`ml-1 uppercase ${p.injuryStatus === "doubtful" ? "text-amber-500" : "text-red-500"}`}>
                         {p.injuryStatus === "suspended" ? "suspended" : p.injuryStatus === "doubtful" ? "doubtful" : "injured"}
                         {p.injuryNote ? ` · ${p.injuryNote}` : ""}
                         {p.injuryReturn ? ` · back ${p.injuryReturn}` : ""}
                       </span>
-                    )}
+                    ))}
                   </div>
                   {leagueGame && outOf25(p) && (
                     <div className="text-[10px] font-semibold uppercase leading-tight text-amber-500">
