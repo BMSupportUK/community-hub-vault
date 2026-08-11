@@ -67,6 +67,10 @@ const BENCH_SLOT_LABELS = ["Sub GK", "Sub", "Sub", "Sub"] as const;
 const kickoffLabel = (iso: string) =>
   new Date(iso).toLocaleString(undefined, { weekday: "short", day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
 
+/** Called off (postponed/cancelled/abandoned/suspended) — parked until a new date lands. */
+const isPostponedGw = (g: { fixtureStatus?: string | null }) =>
+  /postpon|cancel|abandon|suspend/i.test(g.fixtureStatus ?? "");
+
 function useNow(interval = 1000) {
   const [now, setNow] = useState(Date.now());
   useEffect(() => {
