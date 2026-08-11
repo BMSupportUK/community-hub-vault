@@ -573,6 +573,79 @@ export const adminSetFantasyInjury = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+// ------------------------------------------------------------------
+// Admin: squad numbers
+// ------------------------------------------------------------------
+export type FantasySquadNumberPlayer = {
+  id: string;
+  name: string;
+  position: string;
+  squadLevel: string;
+  status: string;
+  shirtNumber: number | null;
+  shirtNumberLocked: boolean;
+};
+
+/** Every player in the game pool, with their squad number, for the admin editor. */
+export const getFantasySquadNumbers = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<FantasySquadNumberPlayer[]> => {
+    setResponseHeader("cache-control", "no-store, max-age=0");
+    if (!(await isAdminOrManagement(context.supabase, context.userId))) throw new Error("Forbidden");
+    const { getAdmin } = await import("@/lib/fantasy.server");
+    const admin = await getAdmin();
+    const { data, error } = await admin
+      .from("fantasy_players")
+      .select("id, name, position, squad_level, status, shirt_number, shirt_number_locked")
+      .in("status", ["active", "injured", "suspended", "loaned_out"])
+      .order("sort_order", { ascending: true });
+    if (error) throw new Error(error.message);
+    return ((data ?? []) as any[]).map((p) => ({
+      id: p.id,
+      name: p.name,
+      position: p.position,
+      squadLevel: p.squad_level ?? "first",
+      status: p.status,
+      shirtNumber: p.shirt_number ?? null,
+      shirtNumberLocked: p.shirt_number_locked === true,
+    }));
+  });
+
+/** Admin: set (or clear) a player's squad number. Manual numbers are locked so
+ *  the automatic club squad sync never overwrites them. */
+export const adminSetFantasyShirtNumber = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        playerId: z.string().uuid(),
+        shirtNumber: z.number().int().min(1).max(99).nullable(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    if (!(await isAdminOrManagement(context.supabase, context.userId))) throw new Error("Forbidden");
+    const { getAdmin } = await import("@/lib/fantasy.server");
+    const admin = await getAdmin();
+    if (data.shirtNumber != null) {
+      const { data: clash } = await admin
+        .from("fantasy_players")
+        .select("id, name")
+        .eq("shirt_number", data.shirtNumber)
+        .in("status", ["active", "injured", "suspended", "loaned_out"])
+        .neq("id", data.playerId)
+        .limit(1);
+      const other = ((clash ?? []) as any[])[0];
+      if (other) throw new Error(`No${data.shirtNumber} is already taken by ${other.name}`);
+    }
+    const { error } = await admin
+      .from("fantasy_players")
+      .update({ shirt_number: data.shirtNumber, shirt_number_locked: true } as never)
+      .eq("id", data.playerId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
 /** Pull the latest injuries straight from the official EFL Fantasy feed. */
 export const adminSyncFantasyInjuries = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])

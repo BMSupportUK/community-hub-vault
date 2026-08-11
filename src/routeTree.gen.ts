@@ -75,6 +75,7 @@ import { Route as AuthenticatedApprovedAdminNotificationsRouteImport } from './r
 import { Route as AuthenticatedApprovedAdminNameplatesRouteImport } from './routes/_authenticated/_approved/admin-nameplates'
 import { Route as AuthenticatedApprovedAdminHeroBoxesRouteImport } from './routes/_authenticated/_approved/admin-hero-boxes'
 import { Route as AuthenticatedApprovedAdminForumRouteImport } from './routes/_authenticated/_approved/admin-forum'
+import { Route as AuthenticatedApprovedAdminFantasySquadNumbersRouteImport } from './routes/_authenticated/_approved/admin-fantasy-squad-numbers'
 import { Route as AuthenticatedApprovedAdminFantasyMotmRouteImport } from './routes/_authenticated/_approved/admin-fantasy-motm'
 import { Route as AuthenticatedApprovedAdminFantasyInjuriesRouteImport } from './routes/_authenticated/_approved/admin-fantasy-injuries'
 import { Route as AuthenticatedApprovedAdminFanZoneRouteImport } from './routes/_authenticated/_approved/admin-fan-zone'
@@ -498,6 +499,12 @@ const AuthenticatedApprovedAdminForumRoute =
     path: '/admin-forum',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
+const AuthenticatedApprovedAdminFantasySquadNumbersRoute =
+  AuthenticatedApprovedAdminFantasySquadNumbersRouteImport.update({
+    id: '/admin-fantasy-squad-numbers',
+    path: '/admin-fantasy-squad-numbers',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
 const AuthenticatedApprovedAdminFantasyMotmRoute =
   AuthenticatedApprovedAdminFantasyMotmRouteImport.update({
     id: '/admin-fantasy-motm',
@@ -825,6 +832,7 @@ export interface FileRoutesByFullPath {
   '/admin-fan-zone': typeof AuthenticatedApprovedAdminFanZoneRoute
   '/admin-fantasy-injuries': typeof AuthenticatedApprovedAdminFantasyInjuriesRoute
   '/admin-fantasy-motm': typeof AuthenticatedApprovedAdminFantasyMotmRoute
+  '/admin-fantasy-squad-numbers': typeof AuthenticatedApprovedAdminFantasySquadNumbersRoute
   '/admin-forum': typeof AuthenticatedApprovedAdminForumRoute
   '/admin-hero-boxes': typeof AuthenticatedApprovedAdminHeroBoxesRoute
   '/admin-nameplates': typeof AuthenticatedApprovedAdminNameplatesRoute
@@ -938,6 +946,7 @@ export interface FileRoutesByTo {
   '/admin-fan-zone': typeof AuthenticatedApprovedAdminFanZoneRoute
   '/admin-fantasy-injuries': typeof AuthenticatedApprovedAdminFantasyInjuriesRoute
   '/admin-fantasy-motm': typeof AuthenticatedApprovedAdminFantasyMotmRoute
+  '/admin-fantasy-squad-numbers': typeof AuthenticatedApprovedAdminFantasySquadNumbersRoute
   '/admin-forum': typeof AuthenticatedApprovedAdminForumRoute
   '/admin-hero-boxes': typeof AuthenticatedApprovedAdminHeroBoxesRoute
   '/admin-nameplates': typeof AuthenticatedApprovedAdminNameplatesRoute
@@ -1055,6 +1064,7 @@ export interface FileRoutesById {
   '/_authenticated/_approved/admin-fan-zone': typeof AuthenticatedApprovedAdminFanZoneRoute
   '/_authenticated/_approved/admin-fantasy-injuries': typeof AuthenticatedApprovedAdminFantasyInjuriesRoute
   '/_authenticated/_approved/admin-fantasy-motm': typeof AuthenticatedApprovedAdminFantasyMotmRoute
+  '/_authenticated/_approved/admin-fantasy-squad-numbers': typeof AuthenticatedApprovedAdminFantasySquadNumbersRoute
   '/_authenticated/_approved/admin-forum': typeof AuthenticatedApprovedAdminForumRoute
   '/_authenticated/_approved/admin-hero-boxes': typeof AuthenticatedApprovedAdminHeroBoxesRoute
   '/_authenticated/_approved/admin-nameplates': typeof AuthenticatedApprovedAdminNameplatesRoute
@@ -1172,6 +1182,7 @@ export interface FileRouteTypes {
     | '/admin-fan-zone'
     | '/admin-fantasy-injuries'
     | '/admin-fantasy-motm'
+    | '/admin-fantasy-squad-numbers'
     | '/admin-forum'
     | '/admin-hero-boxes'
     | '/admin-nameplates'
@@ -1285,6 +1296,7 @@ export interface FileRouteTypes {
     | '/admin-fan-zone'
     | '/admin-fantasy-injuries'
     | '/admin-fantasy-motm'
+    | '/admin-fantasy-squad-numbers'
     | '/admin-forum'
     | '/admin-hero-boxes'
     | '/admin-nameplates'
@@ -1401,6 +1413,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/admin-fan-zone'
     | '/_authenticated/_approved/admin-fantasy-injuries'
     | '/_authenticated/_approved/admin-fantasy-motm'
+    | '/_authenticated/_approved/admin-fantasy-squad-numbers'
     | '/_authenticated/_approved/admin-forum'
     | '/_authenticated/_approved/admin-hero-boxes'
     | '/_authenticated/_approved/admin-nameplates'
@@ -1996,6 +2009,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedApprovedAdminForumRouteImport
       parentRoute: typeof AuthenticatedApprovedRoute
     }
+    '/_authenticated/_approved/admin-fantasy-squad-numbers': {
+      id: '/_authenticated/_approved/admin-fantasy-squad-numbers'
+      path: '/admin-fantasy-squad-numbers'
+      fullPath: '/admin-fantasy-squad-numbers'
+      preLoaderRoute: typeof AuthenticatedApprovedAdminFantasySquadNumbersRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
     '/_authenticated/_approved/admin-fantasy-motm': {
       id: '/_authenticated/_approved/admin-fantasy-motm'
       path: '/admin-fantasy-motm'
@@ -2437,6 +2457,7 @@ interface AuthenticatedApprovedRouteChildren {
   AuthenticatedApprovedAdminFanZoneRoute: typeof AuthenticatedApprovedAdminFanZoneRoute
   AuthenticatedApprovedAdminFantasyInjuriesRoute: typeof AuthenticatedApprovedAdminFantasyInjuriesRoute
   AuthenticatedApprovedAdminFantasyMotmRoute: typeof AuthenticatedApprovedAdminFantasyMotmRoute
+  AuthenticatedApprovedAdminFantasySquadNumbersRoute: typeof AuthenticatedApprovedAdminFantasySquadNumbersRoute
   AuthenticatedApprovedAdminForumRoute: typeof AuthenticatedApprovedAdminForumRoute
   AuthenticatedApprovedAdminHeroBoxesRoute: typeof AuthenticatedApprovedAdminHeroBoxesRoute
   AuthenticatedApprovedAdminNameplatesRoute: typeof AuthenticatedApprovedAdminNameplatesRoute
@@ -2500,6 +2521,8 @@ const AuthenticatedApprovedRouteChildren: AuthenticatedApprovedRouteChildren = {
     AuthenticatedApprovedAdminFantasyInjuriesRoute,
   AuthenticatedApprovedAdminFantasyMotmRoute:
     AuthenticatedApprovedAdminFantasyMotmRoute,
+  AuthenticatedApprovedAdminFantasySquadNumbersRoute:
+    AuthenticatedApprovedAdminFantasySquadNumbersRoute,
   AuthenticatedApprovedAdminForumRoute: AuthenticatedApprovedAdminForumRoute,
   AuthenticatedApprovedAdminHeroBoxesRoute:
     AuthenticatedApprovedAdminHeroBoxesRoute,

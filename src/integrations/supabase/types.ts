@@ -1554,6 +1554,7 @@ export type Database = {
           name: string
           position: string
           shirt_number: number | null
+          shirt_number_locked: boolean
           sort_order: number
           squad_level: string
           status: string
@@ -1578,6 +1579,7 @@ export type Database = {
           name: string
           position: string
           shirt_number?: number | null
+          shirt_number_locked?: boolean
           sort_order?: number
           squad_level?: string
           status?: string
@@ -1602,6 +1604,7 @@ export type Database = {
           name?: string
           position?: string
           shirt_number?: number | null
+          shirt_number_locked?: boolean
           sort_order?: number
           squad_level?: string
           status?: string
