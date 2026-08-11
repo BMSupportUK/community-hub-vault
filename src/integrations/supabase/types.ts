@@ -5187,29 +5187,54 @@ export type Database = {
         }[]
       }
       fan_zone_unblock: { Args: { _other: string }; Returns: undefined }
-      fantasy_calc_points: {
-        Args: {
-          _assists: number
-          _bonus: number
-          _conceded: number
-          _fouls_committed?: number
-          _fouls_suffered?: number
-          _goals: number
-          _minutes: number
-          _offsides?: number
-          _own_goals: number
-          _pens_missed: number
-          _pens_saved: number
-          _pos: string
-          _reds: number
-          _saves: number
-          _shots?: number
-          _shots_faced?: number
-          _shots_on_target?: number
-          _yellows: number
-        }
-        Returns: number
-      }
+      fantasy_calc_points:
+        | {
+            Args: {
+              _assists: number
+              _bonus: number
+              _conceded: number
+              _fouls_committed?: number
+              _fouls_suffered?: number
+              _goals: number
+              _minutes: number
+              _offsides?: number
+              _own_goals: number
+              _pens_missed: number
+              _pens_saved: number
+              _pos: string
+              _reds: number
+              _saves: number
+              _shots?: number
+              _shots_faced?: number
+              _shots_on_target?: number
+              _yellows: number
+            }
+            Returns: number
+          }
+        | {
+            Args: {
+              _assists: number
+              _bonus: number
+              _conceded: number
+              _fouls_committed?: number
+              _fouls_suffered?: number
+              _goals: number
+              _minutes: number
+              _offsides?: number
+              _own_goals: number
+              _pens_missed: number
+              _pens_saved: number
+              _pos: string
+              _reds: number
+              _saves: number
+              _shots?: number
+              _shots_faced?: number
+              _shots_on_target?: number
+              _started?: boolean
+              _yellows: number
+            }
+            Returns: number
+          }
       fantasy_score_gameweek: {
         Args: { _gameweek_id: string }
         Returns: undefined
