@@ -41,6 +41,9 @@ import {
   type FantasyStateDTO, type FantasyPlayerDTO, type FantasyLeaderboardRow, type FantasyGameweekDTO,
 } from "@/lib/fantasy.functions";
 import {
+  getEntrantFantasySquad, type EntrantSquadViewDTO,
+} from "@/lib/fantasy-squad-view.functions";
+import {
   fantasyGuestRegister, fantasyGuestSignInExisting, getPublicFantasyState,
   getPublicFantasyLeaderboard, saveGuestFantasySquad, requestFantasyGuestPinReset,
   resetFantasyGuestPin, setGuestFantasyTeamName,
@@ -528,6 +531,7 @@ function BoroFantasyPage() {
                 ) : (
                   <LeaderboardTable
                     rows={lbQuery.data ?? []}
+                    gameweeks={state?.gameweeks ?? []}
                     canRemove={canManageEntrants}
                     onRemove={async (row) => {
                       await removeEntrantFn({ data: { entrantId: row.entrantId, isGuest: row.isGuest } });
@@ -2354,16 +2358,27 @@ function TransfersTabBody({ state }: { state: FantasyStateDTO }) {
 // ------------------------------------------------------------------
 function LeaderboardTable({
   rows,
+  gameweeks = [],
   canRemove = false,
   onRemove,
 }: {
   rows: FantasyLeaderboardRow[];
+  gameweeks?: FantasyGameweekDTO[];
   canRemove?: boolean;
   onRemove?: (row: FantasyLeaderboardRow) => Promise<void>;
 }) {
   // Admin/management only: confirm before a manager is taken off the board.
   const [pending, setPending] = useState<FantasyLeaderboardRow | null>(null);
   const [removing, setRemoving] = useState(false);
+  // Squad viewer: only gameweeks that have already locked can be inspected.
+  const [viewing, setViewing] = useState<FantasyLeaderboardRow | null>(null);
+  const lockedGws = useMemo(
+    () =>
+      gameweeks
+        .filter((g) => g.status !== "upcoming" || new Date(g.lockAt).getTime() <= Date.now())
+        .sort((a, b) => b.gwNumber - a.gwNumber),
+    [gameweeks],
+  );
   const confirmRemove = async () => {
     if (!pending || !onRemove) return;
     setRemoving(true);
@@ -2393,6 +2408,22 @@ function LeaderboardTable({
         </Button>
       </td>
     ) : null;
+  const squadCell = (r: FantasyLeaderboardRow) => (
+    <td className="px-3 py-2 text-right">
+      <Button
+        type="button"
+        size="sm"
+        variant="outline"
+        className="h-8 gap-1.5 text-xs"
+        disabled={!lockedGws.length}
+        title={lockedGws.length ? "View this manager's squad for a locked gameweek" : "No gameweeks have locked yet"}
+        onClick={() => setViewing(r)}
+      >
+        <Users className="size-3.5" />
+        Squad
+      </Button>
+    </td>
+  );
   if (!rows.length) {
     return <div className="rounded-2xl border border-border/60 bg-card/80 p-6 text-sm text-muted-foreground">No managers have scored yet.</div>;
   }
@@ -2416,6 +2447,7 @@ function LeaderboardTable({
             <th className="text-left px-3 py-2">Manager</th>
             <th className="text-right px-3 py-2">GWs</th>
             <th className="text-right px-3 py-2">Points</th>
+            <th className="text-right px-3 py-2">Squad</th>
             {canRemove && <th className="px-2 py-2 w-10 sr-only">Remove</th>}
           </tr>
         </thead>
@@ -2432,6 +2464,7 @@ function LeaderboardTable({
               </td>
               <td className="px-3 py-2 text-right tabular-nums">{r.gameweeksScored}</td>
               <td className="px-3 py-2 text-right font-bold tabular-nums text-primary">{r.totalPoints}</td>
+              {squadCell(r)}
               {removeButton(r)}
             </tr>
           ))}
@@ -2448,6 +2481,7 @@ function LeaderboardTable({
               </td>
               <td className="px-3 py-2 text-right tabular-nums">{r.gameweeksScored}</td>
               <td className="px-3 py-2 text-right font-bold tabular-nums text-primary">{r.totalPoints}</td>
+              {squadCell(r)}
               {removeButton(r)}
             </tr>
           ))}
@@ -2486,7 +2520,124 @@ function LeaderboardTable({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      <EntrantSquadDialog
+        row={viewing}
+        gameweeks={lockedGws}
+        onClose={() => setViewing(null)}
+      />
     </div>
+  );
+}
+
+/** View a rival manager's squad for any gameweek that has already locked. */
+function EntrantSquadDialog({
+  row,
+  gameweeks,
+  onClose,
+}: {
+  row: FantasyLeaderboardRow | null;
+  gameweeks: FantasyGameweekDTO[];
+  onClose: () => void;
+}) {
+  const squadFn = useServerFn(getEntrantFantasySquad);
+  const [gwId, setGwId] = useState<string>("");
+  useEffect(() => {
+    if (row) setGwId(gameweeks[0]?.id ?? "");
+  }, [row, gameweeks]);
+
+  const query = useQuery<EntrantSquadViewDTO>({
+    queryKey: ["fantasy-entrant-squad", row?.entrantId ?? null, gwId],
+    queryFn: () =>
+      squadFn({ data: { entrantId: row!.entrantId, isGuest: row!.isGuest, gameweekId: gwId } }),
+    enabled: !!row && !!gwId,
+    staleTime: 10_000,
+  });
+
+  const gw = gameweeks.find((g) => g.id === gwId) ?? null;
+  const data = query.data;
+  const starters = (data?.picks ?? []).filter((p) => p.isStarter);
+  const bench = (data?.picks ?? []).filter((p) => !p.isStarter);
+
+  const pickRow = (p: EntrantSquadViewDTO["picks"][number], idx: number) => (
+    <li key={p.playerId} className="flex items-center gap-2 border-t border-border/40 px-3 py-2 first:border-t-0">
+      <span className="w-5 text-xs tabular-nums text-muted-foreground">{idx + 1}</span>
+      <Shirt className={`size-4 shrink-0 ${p.position === "gk" ? "text-emerald-400" : "text-red-500"}`} />
+      <span className="w-7 text-xs tabular-nums text-muted-foreground">
+        {p.shirtNumber ? `#${p.shirtNumber}` : "—"}
+      </span>
+      <span className="min-w-0 flex-1 truncate text-sm font-medium">{p.name}</span>
+      {p.isCaptain && <Crown className="size-3.5 text-amber-400" aria-label="Captain" />}
+      {p.isVice && <Star className="size-3.5 text-sky-400" aria-label="Vice captain" />}
+      {p.autoSubbed && (
+        <span className="rounded bg-primary/15 px-1.5 py-0.5 text-[10px] font-semibold text-primary">SUB IN</span>
+      )}
+      <span className="w-14 shrink-0 text-right text-[11px] uppercase text-muted-foreground">
+        {POSITION_SHORT[(p.pickedPosition ?? p.position) as FantasyPosition]}
+      </span>
+      <span className="w-10 shrink-0 text-right text-sm font-bold tabular-nums text-primary">
+        {p.points ?? "—"}
+      </span>
+    </li>
+  );
+
+  return (
+    <Dialog open={!!row} onOpenChange={(o) => { if (!o) onClose(); }}>
+      <DialogContent className="sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>{row?.teamName || "Unnamed FC"} — match day squad</DialogTitle>
+          <DialogDescription>
+            {row?.displayName || row?.username || "Guest"} · squads are only visible once the gameweek has locked.
+          </DialogDescription>
+        </DialogHeader>
+
+        <Select value={gwId} onValueChange={setGwId}>
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Choose a locked gameweek" />
+          </SelectTrigger>
+          <SelectContent>
+            {gameweeks.map((g) => (
+              <SelectItem key={g.id} value={g.id}>
+                GW{g.gwNumber} — {g.homeTeam} v {g.awayTeam}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        {query.isLoading ? (
+          <div className="flex items-center justify-center py-8"><Loader2 className="size-5 animate-spin" /></div>
+        ) : query.error ? (
+          <p className="rounded-lg border border-border/60 bg-muted/30 p-4 text-sm text-muted-foreground">
+            {(query.error as any)?.message ?? "Could not load that squad."}
+          </p>
+        ) : !data?.found ? (
+          <p className="rounded-lg border border-border/60 bg-muted/30 p-4 text-sm text-muted-foreground">
+            No squad was submitted for {gw ? `GW${gw.gwNumber}` : "this gameweek"}.
+          </p>
+        ) : (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between rounded-lg border border-border/60 bg-muted/30 px-3 py-2 text-xs">
+              <span className="font-semibold uppercase tracking-wide text-muted-foreground">
+                Formation {data.formation ?? "—"}
+              </span>
+              <span>
+                Hits <span className="font-bold tabular-nums">{data.transferCost}</span> · Points{" "}
+                <span className="font-bold tabular-nums text-primary">{data.points ?? "—"}</span>
+              </span>
+            </div>
+            <div>
+              <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Starting 11</p>
+              <ul className="rounded-lg border border-border/60 bg-card/60">{starters.map(pickRow)}</ul>
+            </div>
+            {bench.length > 0 && (
+              <div>
+                <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Bench</p>
+                <ul className="rounded-lg border border-border/60 bg-card/60">{bench.map(pickRow)}</ul>
+              </div>
+            )}
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 }
 
