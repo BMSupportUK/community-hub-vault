@@ -279,7 +279,7 @@ export const SQUAD_RULES: { title: string; body: string }[] = [
   { title: "Competitive games only", body: "Gameweeks cover every competitive Middlesbrough first-team fixture — league games, cup ties and play-offs — in date order, with cup ties slotted into the gameweek their date falls in. Friendlies, testimonials and academy games are never part of the game." },
   { title: "Game time on show", body: "Once a match finishes the pitch view shows how many minutes each of your players actually played, so you can see who started, who came on and who didn't feature." },
   { title: "Leaderboard", body: "Points are added automatically once each match finishes and totals run all season on the Leaderboard tab. Once a gameweek is locked you can open any rival's squad for that gameweek from the leaderboard." },
-  { title: "Scoring & prizes", body: "Only Middlesbrough players score. Winners are announced on the Winners tab at the end of the season — see the Scoring tab for the full points breakdown." },
+  { title: "Scoring & prizes", body: "Only Middlesbrough players score. Every point is built from the stats in the official ESPN match report player stats table — goals, assists, shots, shots on target, saves, shots faced, goals against, fouls committed, fouls suffered, offsides, cards and own goals — so points are worked out automatically and can be checked against the match report. Winners are announced on the Winners tab at the end of the season — see the Scoring tab for the full points breakdown and a key to every stat." },
 ];
 
 /**
@@ -303,7 +303,12 @@ export const SCORING_RULES: {
   { label: "Assist", minTime: "1+ sec", starter: "3", sub: "3" },
   { label: "Clean sheet — goalkeeper or defender", minTime: "60+ mins", starter: "4", sub: "4" },
   { label: "Clean sheet — midfielder", minTime: "60+ mins", starter: "1", sub: "1" },
+  { label: "Shot on target (that isn't a goal)", minTime: "1+ sec", starter: "1", sub: "1" },
+  { label: "Every 3 fouls suffered (fouls won)", minTime: "1+ sec", starter: "1", sub: "1" },
+  { label: "Every 3 fouls committed", minTime: "1+ sec", starter: "-1", sub: "-1" },
+  { label: "Every 2 offsides", minTime: "1+ sec", starter: "-1", sub: "-1" },
   { label: "Every 3 saves — goalkeeper", minTime: "1+ sec", starter: "1", sub: "1" },
+  { label: "Every 5 shots faced — goalkeeper", minTime: "1+ sec", starter: "1", sub: "1" },
   { label: "Penalty save", minTime: "1+ sec", starter: "5", sub: "5" },
   { label: "Penalty miss", minTime: "1+ sec", starter: "-2", sub: "-2" },
   { label: "Every 2 goals conceded — goalkeeper or defender", minTime: "1+ sec", starter: "-1", sub: "-1" },
@@ -312,4 +317,28 @@ export const SCORING_RULES: {
   { label: "Own goal", minTime: "1+ sec", starter: "-2", sub: "-2" },
   { label: "Man of the match bonus (awarded by admin)", minTime: "1+ sec", starter: "3", sub: "3" },
   { label: "Captain (vice if captain doesn't play)", minTime: "1+ sec", starter: "double points", sub: "—" },
+];
+
+/**
+ * Key to the match stats the points are built from. These are exactly the
+ * stats published in the official ESPN match report "player stats" table, so
+ * anyone can check a player's points against the match report.
+ */
+export const STAT_KEY: { stat: string; means: string }[] = [
+  { stat: "Appearances", means: "The player featured in the match — either started or came off the bench." },
+  { stat: "Substitute Appearances", means: "The player came on from the bench rather than starting." },
+  { stat: "Total Goals", means: "Goals scored by the player." },
+  { stat: "Assists", means: "Passes or touches that directly set up a team-mate's goal." },
+  { stat: "Shots", means: "Every attempt at goal, on or off target." },
+  { stat: "Shots On Goal", means: "Attempts on target — saved, blocked on the line or scored." },
+  { stat: "Shots Faced", means: "Goalkeepers only: attempts on target the keeper had to deal with." },
+  { stat: "Saves", means: "Goalkeepers only: shots on target kept out." },
+  { stat: "Goals Against", means: "Goals Middlesbrough conceded while the player was on the pitch." },
+  { stat: "Fouls Committed", means: "Free kicks given away by the player." },
+  { stat: "Fouls Suffered", means: "Free kicks the player won by being fouled." },
+  { stat: "Offsides", means: "Times the player was flagged offside." },
+  { stat: "Yellow Cards", means: "Cautions received." },
+  { stat: "Red Cards", means: "Sending off — straight red or two yellows." },
+  { stat: "Own Goals", means: "Goals the player put into their own net." },
+  { stat: "Minutes", means: "Time on the pitch, worked out from the starting 11 and the substitution clock." },
 ];

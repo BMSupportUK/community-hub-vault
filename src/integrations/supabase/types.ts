@@ -1467,10 +1467,13 @@ export type Database = {
           bonus: number
           created_at: string
           fixture_id: string
+          fouls_committed: number
+          fouls_suffered: number
           goals: number
           goals_conceded: number
           id: string
           minutes: number
+          offsides: number
           own_goals: number
           pens_missed: number
           pens_saved: number
@@ -1478,6 +1481,9 @@ export type Database = {
           points: number
           reds: number
           saves: number
+          shots: number
+          shots_faced: number
+          shots_on_target: number
           updated_at: string
           yellows: number
         }
@@ -1486,10 +1492,13 @@ export type Database = {
           bonus?: number
           created_at?: string
           fixture_id: string
+          fouls_committed?: number
+          fouls_suffered?: number
           goals?: number
           goals_conceded?: number
           id?: string
           minutes?: number
+          offsides?: number
           own_goals?: number
           pens_missed?: number
           pens_saved?: number
@@ -1497,6 +1506,9 @@ export type Database = {
           points?: number
           reds?: number
           saves?: number
+          shots?: number
+          shots_faced?: number
+          shots_on_target?: number
           updated_at?: string
           yellows?: number
         }
@@ -1505,10 +1517,13 @@ export type Database = {
           bonus?: number
           created_at?: string
           fixture_id?: string
+          fouls_committed?: number
+          fouls_suffered?: number
           goals?: number
           goals_conceded?: number
           id?: string
           minutes?: number
+          offsides?: number
           own_goals?: number
           pens_missed?: number
           pens_saved?: number
@@ -1516,6 +1531,9 @@ export type Database = {
           points?: number
           reds?: number
           saves?: number
+          shots?: number
+          shots_faced?: number
+          shots_on_target?: number
           updated_at?: string
           yellows?: number
         }
@@ -5174,14 +5192,20 @@ export type Database = {
           _assists: number
           _bonus: number
           _conceded: number
+          _fouls_committed?: number
+          _fouls_suffered?: number
           _goals: number
           _minutes: number
+          _offsides?: number
           _own_goals: number
           _pens_missed: number
           _pens_saved: number
           _pos: string
           _reds: number
           _saves: number
+          _shots?: number
+          _shots_faced?: number
+          _shots_on_target?: number
           _yellows: number
         }
         Returns: number

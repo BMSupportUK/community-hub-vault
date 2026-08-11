@@ -67,6 +67,12 @@ export type FantasyStatRow = {
   reds: number;
   own_goals: number;
   bonus: number;
+  shots: number;
+  shots_on_target: number;
+  shots_faced: number;
+  fouls_committed: number;
+  fouls_suffered: number;
+  offsides: number;
 };
 
 function statVal(p: EspnRosterPlayer, name: string): number {
@@ -269,6 +275,13 @@ export async function fetchFantasyStatsForFixture(
       yellows: statVal(rp, "yellowCards"),
       reds: statVal(rp, "redCards"),
       own_goals: statVal(rp, "ownGoals"),
+      // Straight from ESPN's match report "player stats" table.
+      shots: statVal(rp, "totalShots"),
+      shots_on_target: statVal(rp, "shotsOnTarget"),
+      shots_faced: statVal(rp, "shotsFaced"),
+      fouls_committed: statVal(rp, "foulsCommitted"),
+      fouls_suffered: statVal(rp, "foulsSuffered"),
+      offsides: statVal(rp, "offsides"),
       bonus: 0,
     });
   }
