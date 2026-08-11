@@ -299,6 +299,7 @@ export const SCORING_RULES: {
   { label: "G — Goals", minTime: "1+ sec", starter: "6 GK/DEF, 5 MID, 4 FWD", sub: "3 GK/DEF, 2.5 MID, 2 FWD" },
   { label: "A — Assists", minTime: "1+ sec", starter: "3 pts", sub: "1.5 pts" },
   { label: "Clean sheet (60+ mins)", minTime: "60+ mins", starter: "4 GK/DEF, 1 MID", sub: "2 GK/DEF, 0.5 MID" },
+  { label: "Clean sheet (under 60 mins)", minTime: "1+ sec", starter: "2 GK/DEF, 0.5 MID", sub: "1 GK/DEF, 0.25 MID" },
   { label: "Penalties", minTime: "1+ sec", starter: "+5 saved, −2 missed", sub: "+2.5 saved, −1 missed" },
   { label: "Cards", minTime: "1+ sec", starter: "−1 yellow, −3 red", sub: "−0.5 yellow, −1.5 red" },
   { label: "OG — Own goals", minTime: "1+ sec", starter: "−2 pts", sub: "−1 pt" },
