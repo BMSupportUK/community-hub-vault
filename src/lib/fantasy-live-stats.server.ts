@@ -311,6 +311,20 @@ export async function fetchFantasyStatsForFixture(
       fouls_committed: statVal(rp, "foulsCommitted"),
       fouls_suffered: statVal(rp, "foulsSuffered"),
       offsides: statVal(rp, "offsides"),
+      // Extended stats, read by the abbreviation ESPN prints in the report.
+      accurate_long_balls: abbrVal(rp, "AC.LONG"),
+      accurate_passes: abbrVal(rp, "AC.PASS"),
+      passes: abbrVal(rp, "PASS"),
+      pass_pct: abbrVal(rp, "PASS%"),
+      big_chances_created: abbrVal(rp, "BCC"),
+      big_chances_missed: abbrVal(rp, "BCM"),
+      crosses_claimed: abbrVal(rp, "CC"),
+      unclaimed_crosses: abbrVal(rp, "UC"),
+      defensive_interventions: abbrVal(rp, "DINT"),
+      duels_won: abbrVal(rp, "DUELW"),
+      keeper_sweepers: abbrVal(rp, "KS"),
+      shots_on_goal_against: abbrVal(rp, "SOGA"),
+      touches: abbrVal(rp, "TCH"),
       bonus: 0,
     });
   }
