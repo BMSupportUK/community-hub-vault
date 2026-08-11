@@ -2056,7 +2056,7 @@ function BenchPanel({
                 }`}
               >
                 <div className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground/80 mb-1">
-                  {i === 0 ? "Replacement GK" : `Sub ${i}`}
+                  {i === 0 ? "Sub GK" : `Sub ${i}`}
                 </div>
                 {p ? (
                   <>
