@@ -1587,6 +1587,7 @@ function PlayerPickerDialog({
                       <span className={`ml-1 uppercase ${p.injuryStatus === "doubtful" ? "text-amber-500" : "text-red-500"}`}>
                         {p.injuryStatus === "suspended" ? "suspended" : p.injuryStatus === "doubtful" ? "doubtful" : "injured"}
                         {p.injuryNote ? ` · ${p.injuryNote}` : ""}
+                        {p.injuryReturn ? ` · back ${p.injuryReturn}` : ""}
                       </span>
                     )}
                   </div>
