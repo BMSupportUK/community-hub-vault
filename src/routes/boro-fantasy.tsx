@@ -5,6 +5,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Shirt, Loader2, Lock, LogOut, Crown, Star, ArrowRightLeft, Trophy,
   Users, Plus, X, ArrowUp, ArrowDown, ClipboardList, Check, Pencil, Trash2,
+  Cross, AlertTriangle, Ban,
 } from "lucide-react";
 import type { DragEvent as ReactDragEvent } from "react";
 import { toast } from "sonner";
@@ -894,6 +895,10 @@ function SquadBuilder({
       toast.error(`${formation} only needs ${posQuota[p.position]} ${POSITION_SHORT[p.position]}s (XI + bench).`);
       return null;
     }
+    if ((p.injuryStatus ?? "none") !== "none") {
+      const label = p.injuryStatus === "suspended" ? "suspended" : p.injuryStatus === "doubtful" ? "a doubt" : "injured";
+      toast.warning(`${p.name} is ${label}${p.injuryNote ? ` (${p.injuryNote})` : ""} — pick at your own risk.`);
+    }
     return [...sel, p.id];
   }
 
@@ -1392,6 +1397,30 @@ function levelOf(p: FantasyPlayerDTO): PickerLevel {
 }
 
 /**
+ * Injury / suspension flag. Shown on the pitch, bench and player picker.
+ * Injured players stay selectable — the icon is a warning, not a block.
+ */
+function InjuryIcon({ p, className = "" }: { p: FantasyPlayerDTO; className?: string }) {
+  const s = p.injuryStatus ?? "none";
+  if (s === "none") return null;
+  const bits = [
+    s === "suspended" ? "Suspended" : s === "doubtful" ? "Doubtful" : "Injured — out",
+    p.injuryNote || null,
+    p.injuryReturn ? `Expected back: ${p.injuryReturn}` : null,
+    p.injurySource === "admin" ? "(set by admin)" : p.injurySource === "feed" ? "(EFL Fantasy feed)" : null,
+  ].filter(Boolean);
+  const title = bits.join(" · ");
+  const cls =
+    s === "doubtful" ? "text-amber-400" : s === "suspended" ? "text-rose-400" : "text-red-500";
+  const Icon = s === "suspended" ? Ban : s === "doubtful" ? AlertTriangle : Cross;
+  return (
+    <span title={title} aria-label={title} className="inline-flex shrink-0 items-center">
+      <Icon className={`size-3.5 ${cls} ${className}`} strokeWidth={3} />
+    </span>
+  );
+}
+
+/**
  * Pop-box player picker. Opened from an XI slot (filtered to that position) or a
  * bench slot (every remaining player), split into First team / U21 / U18 tabs.
  */
@@ -1480,6 +1509,7 @@ function PlayerPickerDialog({
                     <span className={`truncate font-medium ${unavailable ? "line-through decoration-2 decoration-destructive text-muted-foreground" : ""}`}>
                       {p.name}
                     </span>
+                    <InjuryIcon p={p} />
                     {(p.squadLevel === "u21" || p.squadLevel === "u18") && (
                       <span className="shrink-0 rounded-md border border-sky-500/40 bg-sky-500/10 px-1 py-0.5 text-[9px] font-bold uppercase tracking-wide text-sky-500">
                         {p.squadLevel === "u21" ? "U21" : "U18"}
@@ -1495,6 +1525,12 @@ function PlayerPickerDialog({
                     )}
                     {p.status !== "loaned_out" && p.loanFrom && (
                       <span className="ml-1 text-amber-500 uppercase">on loan from {p.loanFrom}</span>
+                    )}
+                    {(p.injuryStatus ?? "none") !== "none" && (
+                      <span className={`ml-1 uppercase ${p.injuryStatus === "doubtful" ? "text-amber-500" : "text-red-500"}`}>
+                        {p.injuryStatus === "suspended" ? "suspended" : p.injuryStatus === "doubtful" ? "doubtful" : "injured"}
+                        {p.injuryNote ? ` · ${p.injuryNote}` : ""}
+                      </span>
                     )}
                   </div>
                 </div>
@@ -1633,6 +1669,7 @@ function PitchView({
                           <Shirt className="size-4 text-white/80" />
                           {captainId === p.id && <Crown className="size-3.5 text-amber-400" />}
                           {viceId === p.id && <Star className="size-3.5 text-sky-300" />}
+                          <InjuryIcon p={p} />
                         </div>
                         <div className="mt-1 text-[10px] font-semibold leading-tight text-white break-words line-clamp-2 min-h-[24px]">{p.name}</div>
                         <div className="text-[10px] tabular-nums text-white/70">{p.seasonPoints ?? 0} pts</div>
@@ -1704,6 +1741,7 @@ function PitchView({
                   >
                     <div className="flex items-center justify-center gap-1">
                       <span className={`rounded-md border px-1 text-[10px] font-bold ${POS_TINT[p.position]}`}>{POSITION_SHORT[p.position]}</span>
+                      <InjuryIcon p={p} />
                     </div>
                     <div className="mt-1 line-clamp-2 min-h-[24px] break-words text-[10px] font-semibold leading-tight text-white">{p.name}</div>
                     <div className="text-[10px] tabular-nums text-white/70">{p.seasonPoints ?? 0} pts</div>
@@ -1747,6 +1785,7 @@ function PitchView({
                   <>
                     <div className="flex items-center justify-center gap-1">
                       <span className="text-[10px] font-bold rounded-md border px-1 bg-slate-700 text-white border-white/20">SUB</span>
+                      <InjuryIcon p={p} />
                     </div>
                     <div className="mt-1 text-[10px] font-semibold leading-tight break-words line-clamp-2 min-h-[24px]">{p.name}</div>
                     <div className="text-[10px] tabular-nums text-muted-foreground">{p.seasonPoints ?? 0} pts</div>

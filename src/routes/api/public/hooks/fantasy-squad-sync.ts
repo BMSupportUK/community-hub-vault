@@ -25,7 +25,18 @@ async function run(force: boolean) {
     .upsert({ key: SETTING_KEY, value: { at: new Date().toISOString() } }, { onConflict: "key" });
 
   const { syncFantasyPlayersFromClub } = await import("@/lib/fantasy-squad-sync.server");
-  return await syncFantasyPlayersFromClub(admin as never);
+  const squad = await syncFantasyPlayersFromClub(admin as never);
+
+  // Injury/suspension flags from the official EFL Fantasy feed.
+  let injuries: unknown = null;
+  try {
+    const { syncFantasyInjuriesFromEfl } = await import("@/lib/efl-fantasy-injuries.server");
+    injuries = await syncFantasyInjuriesFromEfl(admin as never);
+  } catch (e) {
+    injuries = { ok: false, error: e instanceof Error ? e.message : String(e) };
+  }
+
+  return { ...squad, injuries };
 }
 
 export const Route = createFileRoute("/api/public/hooks/fantasy-squad-sync")({

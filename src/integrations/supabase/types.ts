@@ -1541,6 +1541,11 @@ export type Database = {
           created_at: string
           departed_at: string | null
           id: string
+          injury_note: string | null
+          injury_return: string | null
+          injury_source: string | null
+          injury_status: string
+          injury_updated_at: string | null
           last_seen_at: string | null
           loan_club: string | null
           loan_from: string | null
@@ -1559,6 +1564,11 @@ export type Database = {
           created_at?: string
           departed_at?: string | null
           id?: string
+          injury_note?: string | null
+          injury_return?: string | null
+          injury_source?: string | null
+          injury_status?: string
+          injury_updated_at?: string | null
           last_seen_at?: string | null
           loan_club?: string | null
           loan_from?: string | null
@@ -1577,6 +1587,11 @@ export type Database = {
           created_at?: string
           departed_at?: string | null
           id?: string
+          injury_note?: string | null
+          injury_return?: string | null
+          injury_source?: string | null
+          injury_status?: string
+          injury_updated_at?: string | null
           last_seen_at?: string | null
           loan_club?: string | null
           loan_from?: string | null
