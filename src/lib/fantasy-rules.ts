@@ -297,7 +297,6 @@ export const SCORING_RULES: {
   { label: "Named but doesn't get on", minTime: "0 mins", starter: "0", sub: "0" },
   { label: "Captain (vice if captain doesn't play)", minTime: "1+ sec", starter: "double points", sub: "double points" },
   { label: "G — Goals", minTime: "1+ sec", starter: "6 GK/DEF, 5 MID, 4 FWD", sub: "Half points" },
-  { label: "A — Assists", minTime: "1+ sec", starter: "3 pts", sub: "1.5 pts" },
   { label: "Clean sheet (60+ mins)", minTime: "60+ mins", starter: "4 GK/DEF, 1 MID", sub: "Half points" },
   { label: "Penalties", minTime: "1+ sec", starter: "+5 saved, −2 missed", sub: "Half points" },
   { label: "Cards", minTime: "1+ sec", starter: "−1 yellow, −3 red", sub: "Half points" },
