@@ -3081,7 +3081,9 @@ function ScoringBreakdown({
 }) {
   const rows = SCORING_RULES.filter((r) => {
     const value = column === "starter" ? r.starter : r.sub;
-    return value.trim() !== "—" && value.trim() !== "";
+    const included = value.trim() !== "—" && value.trim() !== "";
+    if (column === "sub" && r.label.startsWith("Captain (vice")) return false;
+    return included;
   }).map((r) => ({ label: r.label, minTime: r.minTime, points: column === "starter" ? r.starter : r.sub }));
   return (
     <div className="space-y-3">
