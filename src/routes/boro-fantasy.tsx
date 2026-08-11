@@ -1119,7 +1119,9 @@ function SquadBuilder({
     }
   }
 
-  const gwSaved = !!existing;
+  // Green tick only when the saved squad matches what's on the pitch right now —
+  // any unsaved change flips it back to a red cross until it's saved again.
+  const gwSaved = !!existing && !dirty;
 
   const gameweekPanel = (
     <div className="rounded-2xl border border-border/60 bg-card/80 backdrop-blur p-4 space-y-3">
@@ -1134,7 +1136,10 @@ function SquadBuilder({
                       <Check className="size-3.5" strokeWidth={3} />
                     </span>
                   ) : (
-                    <span className="inline-flex items-center rounded-full bg-destructive/15 px-1.5 py-0.5 text-destructive" title="No squad saved yet">
+                    <span
+                      className="inline-flex items-center rounded-full bg-destructive/15 px-1.5 py-0.5 text-destructive"
+                      title={existing ? "Unsaved changes — save your match day squad" : "No squad saved yet"}
+                    >
                       <X className="size-3.5" strokeWidth={3} />
                     </span>
                   )}
