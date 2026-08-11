@@ -279,7 +279,7 @@ export const SQUAD_RULES: { title: string; body: string }[] = [
   { title: "Competitive games only", body: "Gameweeks cover every competitive Middlesbrough first-team fixture — league games, cup ties and play-offs — in date order, with cup ties slotted into the gameweek their date falls in. Friendlies, testimonials and academy games are never part of the game." },
   { title: "Game time on show", body: "Once a match finishes the pitch view shows how many minutes each of your players actually played, so you can see who started, who came on and who didn't feature." },
   { title: "Leaderboard", body: "Points are added automatically once each match finishes and totals run all season on the Leaderboard tab. Once a gameweek is locked you can open any rival's squad for that gameweek from the leaderboard." },
-  { title: "Scoring & prizes", body: "Only Middlesbrough players score. Every point is built from the stats in the official ESPN match report player stats table — goals, assists, shots, shots on goal, passes and pass accuracy, accurate long balls, big chances created and missed, touches, duels won, defensive interventions, saves, shots on goal against, crosses claimed and unclaimed, keeper sweepers, goals conceded, fouls, offsides, cards and own goals — so points are worked out automatically and can be checked against the match report. Starters score the full amount and subs score half. Winners are announced on the Winners tab at the end of the season — see the Scoring tab for the full points breakdown and a key to every stat." },
+  { title: "Scoring & prizes", body: "Only Middlesbrough players score. Every point is built from the stats in the official ESPN match report player stats table — goals, assists, shots, shots on goal, passes, accurate long balls, big chances created and missed, touches, duels won, defensive interventions, saves, shots on goal against, crosses claimed and unclaimed, keeper sweepers, goals conceded, fouls, cards and own goals — so points are worked out automatically and can be checked against the match report. Starters score the full amount and subs score half. Winners are announced on the Winners tab at the end of the season — see the Scoring tab for the full points breakdown and a key to every stat." },
 ];
 
 /**
@@ -312,7 +312,6 @@ export const SCORING_RULES: {
   { label: "Every 3 defensive interventions (DINT)", minTime: "1+ sec", starter: "1", sub: "0.5" },
   { label: "Every 3 fouls suffered (FA)", minTime: "1+ sec", starter: "1", sub: "0.5" },
   { label: "Every 3 fouls committed (FC)", minTime: "1+ sec", starter: "-1", sub: "-0.5" },
-  { label: "Every 2 offsides", minTime: "1+ sec", starter: "-1", sub: "-0.5" },
   { label: "Every 3 saves (SV) — goalkeeper", minTime: "1+ sec", starter: "1", sub: "0.5" },
   { label: "Every 5 shots on goal against (SOGA) — goalkeeper", minTime: "1+ sec", starter: "1", sub: "0.5" },
   { label: "Cross claimed (CC) — goalkeeper", minTime: "1+ sec", starter: "1", sub: "0.5" },
@@ -356,7 +355,6 @@ export const STAT_KEY: { stat: string; means: string }[] = [
   { stat: "DINT — Defensive Interventions", means: "Tackles, interceptions, blocks and clearances combined." },
   { stat: "FC — Fouls Committed", means: "Free kicks given away by the player." },
   { stat: "FA — Fouls Suffered", means: "Free kicks the player won by being fouled." },
-  { stat: "Offsides", means: "Times the player was flagged offside." },
   { stat: "Yellow Cards", means: "Cautions received." },
   { stat: "Red Cards", means: "Sending off — straight red or two yellows." },
   { stat: "Own Goals", means: "Goals the player put into their own net." },
