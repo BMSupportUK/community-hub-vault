@@ -2156,7 +2156,8 @@ function BenchPanel({
                       // two-position sub lets the manager choose which.
                       const eligible = playerPositions(p);
                       const chosen = benchPositions?.[i] ?? null;
-                      const scoringAs = chosen && eligible.includes(chosen) ? chosen : p.position;
+                      const explicit = chosen && eligible.includes(chosen) ? chosen : null;
+                      const scoringAs = explicit ?? p.position;
                       if (eligible.length > 1 && editable && onBenchPosition) {
                         return (
                           <div className="mt-1 flex flex-wrap items-center justify-center gap-x-1 gap-y-0.5">
@@ -2170,7 +2171,7 @@ function BenchPanel({
                                 title={`Score ${p.name} as a ${POSITION_LABEL[pos].toLowerCase()}`}
                                 onClick={(e) => { e.stopPropagation(); onBenchPosition(i, pos); }}
                                 className={`rounded border px-1 text-[9px] font-bold uppercase ${
-                                  scoringAs === pos
+                                  explicit === pos
                                     ? "border-emerald-500/70 bg-emerald-500/20 text-emerald-400"
                                     : "border-border/70 bg-muted/30 text-muted-foreground hover:text-foreground"
                                 }`}
