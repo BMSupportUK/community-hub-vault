@@ -870,7 +870,7 @@ function SquadBuilder({
   if (captainId && captainId === viceId) xiProblems.push("Captain and vice-captain must be different.");
 
   const problems = xiProblems;
-  const activeChecklist = { title: "Match day 11 checklist", items: xiProblems };
+  const activeChecklist = { title: "Match Day Squad Checklist", items: xiProblems };
 
   // Live points for this gameweek, straight from the saved squad.
   const pointsByPlayer = useMemo(
