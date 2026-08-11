@@ -1541,6 +1541,7 @@ export type Database = {
           created_at: string
           departed_at: string | null
           id: string
+          in_25_squad: boolean
           injury_note: string | null
           injury_return: string | null
           injury_source: string | null
@@ -1564,6 +1565,7 @@ export type Database = {
           created_at?: string
           departed_at?: string | null
           id?: string
+          in_25_squad?: boolean
           injury_note?: string | null
           injury_return?: string | null
           injury_source?: string | null
@@ -1587,6 +1589,7 @@ export type Database = {
           created_at?: string
           departed_at?: string | null
           id?: string
+          in_25_squad?: boolean
           injury_note?: string | null
           injury_return?: string | null
           injury_source?: string | null
