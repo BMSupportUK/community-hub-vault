@@ -895,6 +895,10 @@ function SquadBuilder({
       toast.error(`${formation} only needs ${posQuota[p.position]} ${POSITION_SHORT[p.position]}s (XI + bench).`);
       return null;
     }
+    if ((p.injuryStatus ?? "none") !== "none") {
+      const label = p.injuryStatus === "suspended" ? "suspended" : p.injuryStatus === "doubtful" ? "a doubt" : "injured";
+      toast.warning(`${p.name} is ${label}${p.injuryNote ? ` (${p.injuryNote})` : ""} — pick at your own risk.`);
+    }
     return [...sel, p.id];
   }
 
