@@ -1975,8 +1975,44 @@ function PitchView({
         )}
       </div>
 
-      <div className="p-3 border-t border-border/60" {...dropProps(onDropBench)}>
-        <div className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Bench ({bench.length}/{benchSize})</div>
+    </div>
+  );
+}
+
+/** Substitutes panel — lives beside the pitch so it can sit in its own column. */
+function BenchPanel({
+  editable, playerById, bench, benchSize, pointsByPlayer, minutesByPlayer, autoSubbedIds,
+  onDropStart, onDropBench, onRemove, onBenchSlotOpen, gw,
+}: {
+  editable: boolean;
+  playerById: Map<string, FantasyPlayerDTO>;
+  bench: (string | null)[];
+  benchSize: number;
+  pointsByPlayer?: Map<string, number | null>;
+  minutesByPlayer?: Map<string, number | null>;
+  autoSubbedIds?: Set<string>;
+  onDropStart: (playerId: string) => void;
+  onDropBench: (playerId: string) => void;
+  onRemove: (id: string) => void;
+  onBenchSlotOpen: (benchIndex: number) => void;
+  gw?: FantasyGameweekDTO | null;
+}) {
+  const leagueGame = gw ? fantasyCompetitionGroup(gw.competition) === "league" : true;
+  const gwKickoff = gw ? gw.kickoffAt : null;
+  const dropProps = (handler: (playerId: string) => void) => ({
+    onDragOver: (e: ReactDragEvent) => { if (editable) { e.preventDefault(); e.dataTransfer.dropEffect = "move"; } },
+    onDrop: (e: ReactDragEvent) => {
+      if (!editable) return;
+      e.preventDefault();
+      const id = e.dataTransfer.getData("text/fantasy-player");
+      if (id) handler(id);
+    },
+  });
+
+  return (
+    <div className="rounded-2xl border border-border/60 bg-card/85 backdrop-blur overflow-hidden">
+      <div className="p-3" {...dropProps(onDropBench)}>
+        <div className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Bench ({bench.filter(Boolean).length}/{benchSize})</div>
         <div className="flex flex-wrap gap-2">
           {Array.from({ length: Math.max(benchSize, bench.length) }, (_, i) => BENCH_SLOT_LABELS[i] ?? "Sub").map((slotLabel, i) => {
             const id = bench[i];
