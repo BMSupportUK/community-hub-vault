@@ -31,7 +31,7 @@ import {
   benchRulesFor, COMPETITION_BENCH_RULES, FORMATION_KEYS, POSITION_ORDER,
   POSITION_SHORT, POSITION_LABEL, SCORING_RULES, SQUAD_RULES,
   FORMATIONS, formationCounts, formationRows, formationPositionRange, rowPositions, slotPositionLabel,
-  playerPositions, playerPositionLabel, xiFitsFormation,
+  playerPositions, playerPositionLabel, xiFitsFormation, resolveSlotPosition,
   fantasyCompetitionGroup, FANTASY_GROUP_LABEL,
   type FantasyPosition, type FormationKey, type FantasyCompetitionGroup,
 } from "@/lib/fantasy-rules";
@@ -1134,7 +1134,15 @@ function SquadBuilder({
     }
     setSaving(true);
     try {
-      await onSave({ gameweekId: gw.id, formation, starters: st as string[], bench: bn as string[], captainId: cap, viceId: vice });
+      await onSave({
+        gameweekId: gw.id,
+        formation,
+        starters: st as string[],
+        bench: bn as string[],
+        captainId: cap,
+        viceId: vice,
+        starterPositions: slotPositions,
+      });
       // Saved to the server — the local draft is no longer needed.
       restoredDraftRef.current = false;
       if (draftKey) {
