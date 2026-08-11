@@ -1969,7 +1969,15 @@ function PitchView({
         </div>
         {gw && !gw.dateTbc && (
           <div className="pointer-events-none absolute left-5 top-5 sm:left-8 sm:top-8 z-10 box-border w-28 max-w-[calc(50%-1.25rem)] overflow-hidden rounded-lg border border-white/30 bg-slate-950/80 p-1.5 sm:w-40 sm:max-w-[calc(50%-2rem)] sm:rounded-xl sm:p-2 shadow-lg backdrop-blur-sm">
-            <DigitalLockCountdown lockAt={gw.lockAt} compact />
+            <DigitalLockCountdown
+              lockAt={gw.lockAt}
+              swapDeadlineAt={
+                formationLocked
+                  ? new Date(new Date(gw.kickoffAt).getTime() - FANTASY_FINAL_SWAP_MINUTES * 60_000).toISOString()
+                  : null
+              }
+              compact
+            />
           </div>
         )}
         <div className="relative space-y-4 sm:space-y-6 py-2">
