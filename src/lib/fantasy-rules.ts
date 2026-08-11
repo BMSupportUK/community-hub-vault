@@ -116,6 +116,19 @@ export function slotPositionLabel(positions: FantasyPosition[]): string {
 }
 
 /**
+ * Which position a player is actually scored in when he fills a given pitch
+ * slot: his main listed position when the slot allows it, otherwise his second
+ * position. Returns null when he can't play in that slot at all.
+ */
+export function resolveSlotPosition(
+  slot: FantasyPosition[],
+  player: { position: FantasyPosition; altPosition?: FantasyPosition | null },
+): FantasyPosition | null {
+  const allowed = playerPositions(player).filter((p) => slot.includes(p));
+  return allowed[0] ?? null;
+}
+
+/**
  * Every position a player can be picked in: their listed position plus an
  * optional second position (e.g. a forward who can also play in midfield).
  */
