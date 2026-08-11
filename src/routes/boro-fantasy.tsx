@@ -615,10 +615,10 @@ function ManagerCard({
     );
   }
   return (
-    <div className="rounded-2xl border border-border/60 bg-card/80 backdrop-blur p-4">
+    <div className="min-w-0 overflow-hidden rounded-2xl border border-border/60 bg-card/80 p-4 backdrop-blur">
       <div className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Your team</div>
-      <div className="flex items-center gap-2">
-        <div className="font-display text-lg font-bold min-w-0 break-words">
+      <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
+        <div className="min-w-0 break-words font-display text-lg font-bold leading-tight">
           {teamName || state?.teamName || name || "Unnamed FC"}
         </div>
         {canEdit && onEdit && (
@@ -627,13 +627,13 @@ function ManagerCard({
           </Button>
         )}
       </div>
-      <dl className="mt-3 grid grid-cols-2 gap-2 text-sm">
-        <div className="rounded-xl bg-muted/40 p-2">
-          <dt className="text-[11px] text-muted-foreground">Week Game Pts Earned</dt>
+      <dl className="mt-3 grid min-w-0 grid-cols-2 gap-2 text-sm">
+        <div className="min-w-0 rounded-xl bg-muted/40 p-2">
+          <dt className="break-words text-[11px] leading-tight text-muted-foreground">Week Game Pts Earned</dt>
           <dd className="font-bold text-primary">{gamePoints}</dd>
         </div>
-        <div className="rounded-xl bg-muted/40 p-2">
-          <dt className="text-[11px] text-muted-foreground">Total points</dt>
+        <div className="min-w-0 rounded-xl bg-muted/40 p-2">
+          <dt className="break-words text-[11px] leading-tight text-muted-foreground">Total points</dt>
           <dd className="font-bold text-primary">{total}</dd>
         </div>
       </dl>
@@ -1169,13 +1169,13 @@ function SquadBuilder({
   const gwSaved = !!existing && !dirty;
 
   const gameweekPanel = (
-    <div className="rounded-2xl border border-border/60 bg-card/80 backdrop-blur p-4 space-y-3">
+    <div className="min-w-0 overflow-hidden rounded-2xl border border-border/60 bg-card/80 p-4 backdrop-blur space-y-3">
         <div className="flex flex-col gap-3">
           <div className="min-w-0">
             {gw ? (
               <>
-                <div className="flex items-center gap-2">
-                  <span className="font-semibold">GW{gw.gwNumber} — {gw.homeTeam} v {gw.awayTeam}</span>
+                <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-start gap-2">
+                  <span className="min-w-0 break-words font-semibold leading-snug">GW{gw.gwNumber} — {gw.homeTeam} v {gw.awayTeam}</span>
                   {gwSaved ? (
                     <span className="inline-flex items-center rounded-full bg-emerald-500/15 px-1.5 py-0.5 text-emerald-400" title="Match day squad saved">
                       <Check className="size-3.5" strokeWidth={3} />
@@ -1311,8 +1311,8 @@ function SquadBuilder({
           <Lock className="size-4" /> This gameweek is locked. Changes will apply to the next one.
         </div>
       )}
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_300px] xl:grid-cols-[minmax(0,1fr)_300px_320px] items-stretch">
-        <div className="grid gap-4 items-stretch h-full">
+      <div className="grid min-w-0 items-stretch gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,300px)] xl:grid-cols-[minmax(0,1fr)_minmax(0,300px)_minmax(0,320px)]">
+        <div className="grid min-w-0 gap-4 items-stretch h-full">
           <PitchView
               formation={formation}
               onFormationChange={(f) => setFormation(f)}
@@ -1355,7 +1355,7 @@ function SquadBuilder({
         </div>
 
         {/* Column 2 — match day checklist and the subs bench, right of the pitch. */}
-        <div className="grid gap-4 items-stretch h-full">
+        <div className="grid min-w-0 gap-4 items-stretch h-full">
         {/* Checklist — scoped to the active tab (squad of 15 vs starting 11). */}
         <aside className="rounded-2xl border border-border/60 bg-card/85 backdrop-blur overflow-hidden">
           <div className="p-3 border-b border-border/60 flex items-center gap-2">
@@ -1419,7 +1419,7 @@ function SquadBuilder({
         </div>
 
         {/* Column 3 — your team card and the gameweek picker / save panel. */}
-        <div className="grid gap-4 items-stretch h-full">
+        <div className="grid min-w-0 gap-4 items-stretch h-full">
           <ManagerCard
             state={state}
             name={name}
