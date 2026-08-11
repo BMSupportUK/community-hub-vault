@@ -306,7 +306,7 @@ export const SCORING_RULES: {
  */
 export const STAT_KEY: { stat: string; means: string }[] = [
   { stat: "G — Goals", means: "Goals scored: 6 pts for a keeper or defender, 5 for a midfielder, 4 for a forward." },
-  { stat: "A — Assists", means: "Outfield players: passes or touches that directly set up a team-mate's goal. 3 pts." },
+  { stat: "A — Assists", means: "All positions: passes or touches that directly set up a team-mate's goal. 3 pts." },
   { stat: "Clean sheet", means: "No goals conceded while on the pitch for 60 minutes or more. Keepers and defenders earn 4 pts, midfielders earn 1 pt." },
   { stat: "Cards", means: "Yellow card -1 pt, red card -3 pts." },
   { stat: "Penalties", means: "Penalty saved by a keeper +5 pts, penalty missed -2 pts." },
