@@ -1427,7 +1427,16 @@ function outOf25(p: FantasyPlayerDTO): boolean {
  * Injury / suspension flag. Shown on the pitch, bench and player picker.
  * Injured players stay selectable — the icon is a warning, not a block.
  */
-function InjuryIcon({ p, className = "" }: { p: FantasyPlayerDTO; className?: string }) {
+function InjuryIcon({
+  p,
+  className = "",
+  label = true,
+}: {
+  p: FantasyPlayerDTO;
+  className?: string;
+  /** Show the wording next to the icon (off where the row already spells it out). */
+  label?: boolean;
+}) {
   const s = p.injuryStatus ?? "none";
   if (s === "none") return null;
   const bits = [
@@ -1437,12 +1446,30 @@ function InjuryIcon({ p, className = "" }: { p: FantasyPlayerDTO; className?: st
     p.injurySource === "admin" ? "(set by admin)" : p.injurySource === "feed" ? "(EFL Fantasy feed)" : null,
   ].filter(Boolean);
   const title = bits.join(" · ");
-  const cls =
-    s === "doubtful" ? "text-amber-400" : s === "suspended" ? "text-rose-400" : "text-red-500";
   const Icon = s === "suspended" ? Ban : s === "doubtful" ? AlertTriangle : Cross;
+  const short = s === "suspended" ? "SUSP" : s === "doubtful" ? "DOUBT" : "OUT";
+  // Loud, readable badge — a tooltip-only icon was too easy to miss.
+  const tint =
+    s === "doubtful"
+      ? "bg-amber-500 text-black border-amber-300"
+      : s === "suspended"
+        ? "bg-rose-600 text-white border-rose-300"
+        : "bg-red-600 text-white border-red-300";
+  if (!label) {
+    return (
+      <span title={title} aria-label={title} className="inline-flex shrink-0 items-center">
+        <Icon className={`size-3.5 ${s === "doubtful" ? "text-amber-400" : s === "suspended" ? "text-rose-400" : "text-red-500"} ${className}`} strokeWidth={3} />
+      </span>
+    );
+  }
   return (
-    <span title={title} aria-label={title} className="inline-flex shrink-0 items-center">
-      <Icon className={`size-3.5 ${cls} ${className}`} strokeWidth={3} />
+    <span
+      title={title}
+      aria-label={title}
+      className={`inline-flex shrink-0 items-center gap-0.5 rounded-md border px-1 py-[1px] text-[9px] font-extrabold uppercase leading-none tracking-wide shadow-sm ${tint} ${className}`}
+    >
+      <Icon className="size-2.5" strokeWidth={3} />
+      {short}
     </span>
   );
 }
