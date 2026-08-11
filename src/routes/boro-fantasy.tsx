@@ -34,6 +34,7 @@ import {
   playerPositions, playerPositionLabel, xiFitsFormation, resolveSlotPosition,
   fantasyCompetitionGroup, FANTASY_GROUP_LABEL,
   FANTASY_FINAL_SWAP_MINUTES,
+  FANTASY_BENCH_SIZE, FANTASY_SQUAD_SIZE, FANTASY_LOCK_MINUTES,
   type FantasyPosition, type FormationKey, type FantasyCompetitionGroup,
 } from "@/lib/fantasy-rules";
 import {
@@ -2840,12 +2841,13 @@ function SquadRulesTab() {
         <h3 className="font-display text-xl font-bold text-white flex items-center gap-2">
           <ClipboardList className="size-5" /> Game rules
         </h3>
-        <p className="text-sm text-white/85 mt-1">Everything you need to know before you pick your Middlesbrough side.</p>
+        <p className="text-sm text-white/85 mt-1">Everything you need to know before you pick your Middlesbrough side. No budget, no player prices, no transfer limits — just pick the best Boro team every gameweek.</p>
         <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-2">
           {[
             { k: "Match day", v: "11 players" },
-            { k: "Bench", v: "Per competition" },
-            { k: "Deadline", v: "2 hours pre-KO" },
+            { k: "Bench", v: `${FANTASY_BENCH_SIZE} subs (Sub 1 = GK)` },
+            { k: "Deadline", v: `${FANTASY_LOCK_MINUTES / 60} hours pre-KO` },
+            { k: "Sub swaps until", v: `${FANTASY_FINAL_SWAP_MINUTES} mins pre-KO` },
           ].map((s) => (
             <div key={s.k} className="rounded-xl bg-white/15 ring-1 ring-white/20 px-3 py-2">
               <div className="text-[11px] uppercase tracking-wide text-white/75">{s.k}</div>
@@ -2867,8 +2869,8 @@ function SquadRulesTab() {
       <section className="rounded-2xl border border-border/60 bg-card/85 backdrop-blur p-4">
         <h4 className="font-semibold mb-3">Bench cover</h4>
         <p className="text-sm text-muted-foreground mb-3">
-          Bench cover applies to Championship games and cup games only. You choose your own 11 and subs, so there's
-          no minimum position cover to worry about.
+          You name {FANTASY_BENCH_SIZE} subs in every competition, for a {FANTASY_SQUAD_SIZE}-man squad. Sub 1 is reserved for
+          your replacement goalkeeper; the rest of the bench is entirely your call, with no other position cover required.
         </p>
         <div className="grid gap-2 sm:grid-cols-2">
           {COMPETITION_BENCH_RULES.map((r) => (
@@ -2901,10 +2903,11 @@ function ScoringTab() {
       <div>
         <h3 className="font-display text-lg font-bold flex items-center gap-2"><Trophy className="size-4 text-primary" /> How scoring works</h3>
         <p className="text-sm text-muted-foreground mt-1">
-          Only Middlesbrough players score. Any player in your match day 11 who doesn't get on the pitch scores 0.
+          Only Middlesbrough players score, and only in competitive fixtures. Any player in your match day 11 who doesn't get on the pitch scores 0.
           Subs who come off the bench score too and their points are added to your total — under 60 minutes they use the
           sub scoring column below, and if they play 60 minutes or more they're scored exactly like a match day 11 player.
-          If your captain doesn't play a minute, the vice-captain doubles instead.
+          Your captain scores double, and if he doesn't play a minute the vice-captain doubles instead. Players who cover two
+          positions score in the position you selected for them.
         </p>
       </div>
       <Tabs defaultValue="starters">
@@ -2920,7 +2923,7 @@ function ScoringTab() {
         </TabsContent>
       </Tabs>
       <div className="text-sm text-muted-foreground">
-        Formations, bench sizes, scoring and deadlines all live on the <span className="font-semibold text-foreground">Game rules</span> tab.
+        Formations, bench rules, deadlines and the late sub-swap window all live on the <span className="font-semibold text-foreground">Game rules</span> tab.
       </div>
     </div>
   );
