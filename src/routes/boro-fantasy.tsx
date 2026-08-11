@@ -673,16 +673,15 @@ function SquadBuilder({
     () =>
       state.gameweeks
         .filter((g) => g.status === "upcoming" && new Date(g.lockAt).getTime() > Date.now())
-        .sort((a, b) => new Date(a.kickoffAt).getTime() - new Date(b.kickoffAt).getTime()),
+        // Gameweek numbers already run chronologically (cup/play-off ties slot
+        // into the main running order once a date is allocated), with any
+        // date-TBC ties parked at the end — so one list covers everything.
+        .sort((a, b) => {
+          if (!!a.dateTbc !== !!b.dateTbc) return a.dateTbc ? 1 : -1;
+          return (a.gwNumber ?? 0) - (b.gwNumber ?? 0);
+        }),
     [state.gameweeks],
   );
-  const openByGroup = useMemo(() => {
-    const by = { league: [] as typeof openGameweeks, cup: [] as typeof openGameweeks, playoff: [] as typeof openGameweeks };
-    for (const g of openGameweeks) {
-      by[fantasyCompetitionGroup(g.competition)].push(g);
-    }
-    return by;
-  }, [openGameweeks]);
   const [gwId, setGwId] = useState<string>(state.currentGameweekId ?? "");
   useEffect(() => {
     const valid = state.gameweeks.some((g) => g.id === gwId);
