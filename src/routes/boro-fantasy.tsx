@@ -883,7 +883,12 @@ function SquadBuilder({
   const benchHasGk = (sel: string[], st: (string | null)[], excludeId?: string) =>
     byPos(sel.filter((id) => id !== excludeId && !st.includes(id)) as (string | null)[], "gk").length > 0;
 
-  const locked = !!gw && (gw.status !== "upcoming" || new Date(gw.lockAt).getTime() <= Date.now());
+  // Two-stage deadline: at the lock the 18 named players are fixed, but subs can
+  // still be swapped into the XI until 10 minutes before kick-off.
+  const swapDeadlineMs = gw ? new Date(gw.kickoffAt).getTime() - FANTASY_FINAL_SWAP_MINUTES * 60_000 : 0;
+  const pastLock = !!gw && new Date(gw.lockAt).getTime() <= Date.now();
+  const swapOnly = !!gw && gw.status === "upcoming" && pastLock && Date.now() < swapDeadlineMs && !!existing;
+  const locked = !!gw && (gw.status !== "upcoming" || (pastLock && !swapOnly));
 
   const xiProblems: string[] = [];
   const starterCount = starters.filter(Boolean).length;
