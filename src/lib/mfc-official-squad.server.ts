@@ -118,10 +118,10 @@ async function fetchSquadForTeam(teamId: string, level: MfcSquadLevel): Promise<
 }
 
 /**
- * The club feed occasionally leaves a stale shirt number on a new arrival, so two
- * players end up sharing one number (e.g. a summer signing inheriting a number
- * that is already taken). The longest-serving player keeps it — per the official
- * squad list the newcomer is simply unnumbered until the club confirm one.
+ * The club feed sometimes leaves last season's number on a player whose shirt has
+ * since been reassigned, so two players share one number. The club always gives it
+ * to the most recent arrival, so they keep it and the stale record is unnumbered
+ * until the club confirm a new one — matching the official squad list.
  */
 function dedupeShirtNumbers(players: MfcSquadPlayer[]): MfcSquadPlayer[] {
   const byNumber = new Map<number, MfcSquadPlayer[]>();
@@ -134,7 +134,7 @@ function dedupeShirtNumbers(players: MfcSquadPlayer[]): MfcSquadPlayer[] {
   for (const [, list] of byNumber) {
     if (list.length < 2) continue;
     const rank = (p: MfcSquadPlayer) => (p.joinDate ? Date.parse(p.joinDate) : 0) || 0;
-    const keeper = list.reduce((a, b) => (rank(a) <= rank(b) ? a : b));
+    const keeper = list.reduce((a, b) => (rank(a) >= rank(b) ? a : b));
     for (const p of list) if (p !== keeper) p.shirtNumber = null;
   }
   return players;
