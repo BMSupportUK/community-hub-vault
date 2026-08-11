@@ -1895,9 +1895,10 @@ function PitchView({
                             resolveSlotPosition(row.positions, p) ??
                             p.position;
                           if (eligible.length > 1 && editable && onSlotPosition) {
-                            return (
-                              <div className="mt-1 flex items-center justify-center gap-0.5">
-                                {eligible.map((pos) => (
+                             return (
+                               <div className="mt-1 flex flex-wrap items-center justify-center gap-x-1 gap-y-0.5">
+                                 <span className="text-[9px] font-bold uppercase tracking-wide text-white/60">Scores As</span>
+                                 {eligible.map((pos) => (
                                   <button
                                     key={pos}
                                     type="button"
