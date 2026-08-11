@@ -384,7 +384,11 @@ export const getFantasyMotmData = createServerFn({ method: "GET" })
         .from("fantasy_gameweeks")
         .select("id, gw_number, fixture_id, status, boro_fixtures!inner(home_team, away_team, competition, kickoff_at, date_tbc)")
         .order("gw_number", { ascending: true }),
-      admin.from("fantasy_players").select("id, name, position, squad_level").order("sort_order", { ascending: true }),
+      admin
+        .from("fantasy_players")
+        .select("id, name, position, squad_level")
+        .in("status", ["active", "injured", "suspended"])
+        .order("sort_order", { ascending: true }),
       admin.from("fantasy_player_stats").select("fixture_id, player_id, bonus, minutes"),
     ]);
     const byFixture = new Map<string, { motm: string | null; played: string[] }>();
@@ -502,6 +506,7 @@ export const getFantasyInjuries = createServerFn({ method: "GET" })
       .select(
         "id, name, position, squad_level, status, injury_status, injury_note, injury_return, injury_source, injury_updated_at, in_25_squad",
       )
+      .in("status", ["active", "injured", "suspended"])
       .order("sort_order", { ascending: true });
     if (error) throw new Error(error.message);
     return ((data ?? []) as any[]).map((p) => ({

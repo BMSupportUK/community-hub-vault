@@ -51,7 +51,7 @@ function AdminFantasyMotmPage() {
 
   const players = useMemo(() => {
     let list = data?.players ?? [];
-    if (selected && onlyPlayed && selected.playedPlayerIds.length) {
+    if (selected && onlyPlayed) {
       const played = new Set(selected.playedPlayerIds);
       list = list.filter((p) => played.has(p.id) || p.id === selected.motmPlayerId);
     }
