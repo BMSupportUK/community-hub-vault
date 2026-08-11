@@ -78,7 +78,15 @@ type Flag = { status: InjuryStatus; note: string | null; ret: string | null };
 
 function flagFor(p: EflPlayer): Flag {
   const raw = (p.status ?? "").toLowerCase();
+  // The feed keeps stale entries around after a player is back. If the expected
+  // end date has already passed, treat them as fit rather than flagging them.
+  const past = (d: string | null | undefined) => {
+    if (!d) return false;
+    const t = Date.parse(d);
+    return Number.isFinite(t) && t <= Date.now();
+  };
   if (raw === "suspended" || p.suspensionDetails) {
+    if (past(p.suspensionDetails?.expectedEndDate)) return { status: "none", note: null, ret: null };
     return {
       status: "suspended",
       note: p.suspensionDetails?.type ?? "Suspended",
@@ -87,6 +95,7 @@ function flagFor(p: EflPlayer): Flag {
   }
   if (raw === "injured" || p.injuryDetails) {
     const det = p.injuryDetails ?? null;
+    if (past(det?.expectedEndDate ?? det?.endDate)) return { status: "none", note: null, ret: null };
     return { status: severity(det), note: det?.type ?? "Injured", ret: fmtDate(det?.expectedEndDate ?? null) };
   }
   return { status: "none", note: null, ret: null };

@@ -897,7 +897,7 @@ function SquadBuilder({
       toast.error(`${formation} only needs ${posQuota[p.position]} ${POSITION_SHORT[p.position]}s (XI + bench).`);
       return null;
     }
-    if ((p.injuryStatus ?? "none") !== "none" && !injuryClearedBy(p, gw && !gw.dateTbc ? gw.kickoffAt : null)) {
+    if ((p.injuryStatus ?? "none") !== "none" && !injuryClearedBy(p, gw ? gw.kickoffAt : null)) {
       const label = p.injuryStatus === "suspended" ? "suspended" : p.injuryStatus === "doubtful" ? "a doubt" : "injured";
       toast.warning(`${p.name} is ${label}${p.injuryNote ? ` (${p.injuryNote})` : ""} — pick at your own risk.`);
     }
@@ -1361,7 +1361,7 @@ function SquadBuilder({
         players={state.players}
         selected={selected}
         leagueGame={isLeagueGw}
-        kickoffAt={gw && !gw.dateTbc ? gw.kickoffAt : null}
+        kickoffAt={gw ? gw.kickoffAt : null}
         positions={
           picker && picker.mode === "xi"
             ? picker.positions
@@ -1428,13 +1428,20 @@ function outOf25(p: FantasyPlayerDTO): boolean {
  * Injuries are stamped with an expected return date. When picking a squad for a
  * future gameweek, a player whose return date falls on or before that kick-off
  * is expected back for that game — so we shouldn't scream OUT at the manager.
+ *
+ * A return date that has already been and gone counts as cleared too: the feed
+ * lags behind reality, and a flag whose own return date is in the past must
+ * never keep showing OUT.
  */
 function injuryClearedBy(p: FantasyPlayerDTO, kickoffAt?: string | null): boolean {
   if ((p.injuryStatus ?? "none") === "none") return false;
-  if (!p.injuryReturn || !kickoffAt) return false;
+  if (!p.injuryReturn) return false;
   const back = Date.parse(p.injuryReturn);
+  if (!Number.isFinite(back)) return false;
+  if (back <= Date.now()) return true;
+  if (!kickoffAt) return false;
   const ko = Date.parse(kickoffAt);
-  if (!Number.isFinite(back) || !Number.isFinite(ko)) return false;
+  if (!Number.isFinite(ko)) return false;
   return back <= ko;
 }
 
@@ -1683,7 +1690,7 @@ function PitchView({
   /** 25-man squad restriction applies to league games only — cup ties are open. */
   const leagueGame = gw ? fantasyCompetitionGroup(gw.competition) === "league" : true;
   /** Kick-off of this gameweek — injuries with an earlier return date read as available. */
-  const gwKickoff = gw && !gw.dateTbc ? gw.kickoffAt : null;
+  const gwKickoff = gw ? gw.kickoffAt : null;
 
   // Starters are stored as a fixed-length array mapped directly to pitch slots
   // (row order, left-to-right). This keeps every player in the same slot when
