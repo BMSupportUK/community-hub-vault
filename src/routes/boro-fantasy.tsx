@@ -2179,7 +2179,11 @@ function PitchView({
                           {viceId === p.id && <Star className="size-3.5 text-sky-300" />}
                           <InjuryIcon p={p} kickoffAt={gwKickoff} />
                         </div>
-                        <div className="mt-1 text-[10px] font-semibold leading-tight text-white break-words line-clamp-2 min-h-[24px]">{p.name}</div>
+                        <PlayerNameButton
+                          playerId={p.id}
+                          name={p.name}
+                          className="mt-1 block text-center text-[10px] font-semibold leading-tight text-white break-words line-clamp-2 min-h-[24px]"
+                        />
                         {(() => {
                           // Two-position players are scored in the role of the slot
                           // they fill; on a flexible slot the manager must pick which.
@@ -2293,7 +2297,11 @@ function PitchView({
                       <ShirtNumber n={p.shirtNumber} className="text-white" />
                       <InjuryIcon p={p} kickoffAt={gwKickoff} />
                     </div>
-                    <div className="mt-1 line-clamp-2 min-h-[24px] break-words text-[10px] font-semibold leading-tight text-white">{p.name}</div>
+                    <PlayerNameButton
+                      playerId={p.id}
+                      name={p.name}
+                      className="mt-1 block text-center line-clamp-2 min-h-[24px] break-words text-[10px] font-semibold leading-tight text-white"
+                    />
                     {leagueGame && outOf25(p) && (
                       <div className="text-[9px] font-bold uppercase leading-tight text-amber-300">Not in 25-man matchday squad</div>
                     )}
