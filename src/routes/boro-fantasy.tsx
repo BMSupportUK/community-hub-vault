@@ -21,7 +21,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+  Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { WinnersTab } from "@/components/app/WinnersTab";
 import { LandingHeader } from "@/components/LandingHeader";
@@ -66,6 +66,10 @@ const BENCH_SLOT_LABELS = ["Sub GK", "Sub", "Sub", "Sub"] as const;
 
 const kickoffLabel = (iso: string) =>
   new Date(iso).toLocaleString(undefined, { weekday: "short", day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
+
+/** Called off (postponed/cancelled/abandoned/suspended) — parked until a new date lands. */
+const isPostponedGw = (g: { fixtureStatus?: string | null }) =>
+  /postpon|cancel|abandon|suspend/i.test(g.fixtureStatus ?? "");
 
 function useNow(interval = 1000) {
   const [now, setNow] = useState(Date.now());
@@ -678,6 +682,9 @@ function SquadBuilder({
         .sort((a, b) => (a.gwNumber ?? 0) - (b.gwNumber ?? 0)),
     [state.gameweeks],
   );
+  // Called-off games drop to the bottom under their own header until a new date is confirmed.
+  const scheduledGameweeks = useMemo(() => openGameweeks.filter((g) => !isPostponedGw(g)), [openGameweeks]);
+  const postponedGameweeks = useMemo(() => openGameweeks.filter((g) => isPostponedGw(g)), [openGameweeks]);
   const [gwId, setGwId] = useState<string>(state.currentGameweekId ?? "");
   useEffect(() => {
     const valid = state.gameweeks.some((g) => g.id === gwId);
@@ -1209,17 +1216,32 @@ function SquadBuilder({
                     <SelectValue placeholder="Pick a gameweek" />
                   </SelectTrigger>
                   <SelectContent>
-                    {openGameweeks.map((g) => {
-                      const gLocked = g.status !== "upcoming" || new Date(g.lockAt).getTime() <= Date.now();
+                    {(() => {
+                      const item = (g: (typeof openGameweeks)[number]) => {
+                        const gLocked = g.status !== "upcoming" || new Date(g.lockAt).getTime() <= Date.now();
+                        return (
+                          <SelectItem key={g.id} value={g.id}>
+                            <span className={gLocked ? "line-through text-destructive" : ""}>
+                              GW{g.gwNumber}{g.dateTbc ? " (TBC)" : ""} — {g.homeTeam} v {g.awayTeam} ({g.dateTbc ? `${kickoffLabel(g.kickoffAt)} — TBC` : kickoffLabel(g.kickoffAt)})
+                              {gLocked && <span className="ml-1 text-[10px] text-destructive font-semibold">(locked)</span>}
+                            </span>
+                          </SelectItem>
+                        );
+                      };
                       return (
-                        <SelectItem key={g.id} value={g.id}>
-                          <span className={gLocked ? "line-through text-destructive" : ""}>
-                            GW{g.gwNumber}{g.dateTbc ? " (TBC)" : ""} — {g.homeTeam} v {g.awayTeam} ({g.dateTbc ? `${kickoffLabel(g.kickoffAt)} — TBC` : kickoffLabel(g.kickoffAt)})
-                            {gLocked && <span className="ml-1 text-[10px] text-destructive font-semibold">(locked)</span>}
-                          </span>
-                        </SelectItem>
+                        <>
+                          {scheduledGameweeks.map(item)}
+                          {postponedGameweeks.length > 0 && (
+                            <SelectGroup>
+                              <SelectLabel className="text-[10px] font-bold uppercase tracking-wide text-amber-300">
+                                Postponed — awaiting new date
+                              </SelectLabel>
+                              {postponedGameweeks.map(item)}
+                            </SelectGroup>
+                          )}
+                        </>
                       );
-                    })}
+                    })()}
                   </SelectContent>
                 </Select>
               </div>
@@ -2169,6 +2191,9 @@ function GameweekList({ state, group }: { state: FantasyStateDTO; group: Fantasy
   };
 
   const items = state.gameweeks.filter((g) => fantasyCompetitionGroup(g.competition) === group);
+  // Postponed ties sit in their own block at the bottom until a new date is confirmed.
+  const scheduled = items.filter((g) => !isPostponedGw(g));
+  const postponed = items.filter((g) => isPostponedGw(g));
   return (
     <section>
       <h4 className="mb-2 flex items-center gap-2 text-sm font-semibold text-primary">
@@ -2184,7 +2209,18 @@ function GameweekList({ state, group }: { state: FantasyStateDTO; group: Fantasy
               : "No play-off games yet — they're added automatically if Boro qualify."}
         </div>
       ) : (
-        <div className="space-y-2">{items.map(renderGw)}</div>
+        <div className="space-y-2">
+          {scheduled.map(renderGw)}
+          {postponed.length > 0 && (
+            <div className="space-y-2 pt-2">
+              <h5 className="flex items-center gap-2 border-t border-amber-400/30 pt-3 text-xs font-bold uppercase tracking-wide text-amber-300">
+                Postponed — awaiting new date
+                <span className="font-normal normal-case text-muted-foreground">{postponed.length}</span>
+              </h5>
+              {postponed.map(renderGw)}
+            </div>
+          )}
+        </div>
       )}
     </section>
   );
