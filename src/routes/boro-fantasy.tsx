@@ -1844,12 +1844,12 @@ function PitchView({
                     onDragStart={(e) => { if (id) e.dataTransfer.setData("text/fantasy-player", id); }}
                     onClick={() => { if (editable && !id) onSlotOpen(row.positions, slotIndex); }}
                     role={editable && !id ? "button" : undefined}
-                    className={`min-w-0 flex-1 basis-0 max-w-[104px] sm:max-w-[132px] rounded-xl border px-1.5 py-2 text-center shadow-lg shadow-black/30 backdrop-blur-sm transition-all ${
+                    className={`min-w-0 flex-1 basis-0 max-w-[104px] sm:max-w-[132px] rounded-xl border border-y-white/20 px-1.5 py-2 text-center shadow-lg shadow-black/30 backdrop-blur-sm transition-all ${
                       isGkRow ? "" : ""
                     } ${
                       p
-                        ? "border-white/25 bg-gradient-to-b from-slate-900/85 to-slate-950/90 ring-1 ring-inset ring-white/5 hover:border-white/40"
-                        : "cursor-pointer border-dashed border-white/35 bg-white/[0.07] hover:border-white/60 hover:bg-white/[0.14]"
+                        ? "border-l-[3px] border-r-[3px] border-l-white/35 border-r-white/35 bg-gradient-to-b from-slate-900/85 to-slate-950/90 ring-1 ring-inset ring-white/5 hover:border-l-white/55 hover:border-r-white/55"
+                        : "cursor-pointer border-dashed border-l-2 border-r-2 border-l-white/40 border-r-white/40 bg-white/[0.07] hover:border-l-white/70 hover:border-r-white/70 hover:bg-white/[0.14]"
                     }`}
                   >
                     {p ? (
