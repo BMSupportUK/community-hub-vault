@@ -42,20 +42,12 @@ export async function syncFantasyGameweeksFromFixtures(admin: Admin) {
   if (gwErr) throw new Error(gwErr.message);
 
   // Competitive fixtures only — league, cups and play-offs; no friendlies.
-  // Running order: playable fixtures in kickoff order first, then anything that
-  // has been postponed/called off (no confirmed date), so gameweek numbers always
-  // read chronologically for the games that are actually on.
+  // Always use the fixture's allocated/provisional kickoff for running order.
+  // A TBC, postponed or newly drawn fixture must keep its chronological slot;
+  // when its date is confirmed or changed the full list is renumbered again.
   const fixtures = ((allFixtures ?? []) as FixtureRow[])
     .filter((f) => isFantasyLeagueCompetition(f.competition))
-    .sort((a, b) => {
-      // Cup ties and play-off games slot into the running order at whatever
-      // date they've been given, even if the kick-off time is still to be
-      // confirmed. Only fixtures called off with no date at all drop to the end.
-      const pa = isPostponedFixture(a.status) ? 1 : 0;
-      const pb = isPostponedFixture(b.status) ? 1 : 0;
-      if (pa !== pb) return pa - pb;
-      return new Date(a.kickoff_at).getTime() - new Date(b.kickoff_at).getTime();
-    });
+    .sort((a, b) => new Date(a.kickoff_at).getTime() - new Date(b.kickoff_at).getTime());
   const leagueIds = new Set(fixtures.map((f) => f.id));
   const gws = (existing ?? []) as GwRow[];
 
