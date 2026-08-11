@@ -2926,7 +2926,7 @@ function ScoringTab() {
           <ScoringBreakdown column="starter" note="Points for players named in your match day 11. A starter who doesn't get on the pitch scores 0." />
         </TabsContent>
         <TabsContent value="subs" className="mt-4">
-          <ScoringBreakdown column="sub" note="Points for players who come off the bench under 60 minutes. A sub who plays 60 minutes or more is scored on the match day 11 column instead. Unused subs score 0." />
+          <ScoringBreakdown column="sub" note="Points for players who come off your bench: 1 point for getting on, then half points for every match stat. The stat points are added up first, then halved and rounded. Unused subs score 0." />
         </TabsContent>
       </Tabs>
       <div className="rounded-xl border border-border/60 bg-background/40 p-4">
