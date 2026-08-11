@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -40,7 +40,9 @@ import {
 import {
   getFantasyState, getFantasyLeaderboard, joinFantasyGame, saveFantasySquad, setFantasyTeamName,
   adminRemoveFantasyEntrant,
+  getFantasyPlayerBreakdown,
   type FantasyStateDTO, type FantasyPlayerDTO, type FantasyLeaderboardRow, type FantasyGameweekDTO,
+  type FantasyPlayerBreakdown,
 } from "@/lib/fantasy.functions";
 import {
   getEntrantFantasySquad, type EntrantSquadViewDTO,
@@ -62,8 +64,166 @@ export const Route = createFileRoute("/boro-fantasy")({
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
-  component: BoroFantasyPage,
+  component: FantasyPageWithStats,
 });
+
+// ------------------------------------------------------------------
+// Player stats pop-up: tap any player's name to see their per-match
+// ESPN stat lines and the points those stats earned.
+// ------------------------------------------------------------------
+const PlayerStatsCtx = createContext<(playerId: string) => void>(() => {});
+
+/** Clickable player name that opens the stats pop-up. */
+function PlayerNameButton({
+  playerId,
+  name,
+  className = "",
+}: {
+  playerId: string;
+  name: string;
+  className?: string;
+}) {
+  const open = useContext(PlayerStatsCtx);
+  return (
+    <button
+      type="button"
+      title={`${name} — view stats and points`}
+      onClick={(e) => { e.stopPropagation(); open(playerId); }}
+      className={`w-full text-left underline-offset-2 hover:underline ${className}`}
+    >
+      {name}
+    </button>
+  );
+}
+
+const PLAYER_STAT_LABELS: Record<string, string> = {
+  minutes: "Minutes",
+  goals: "G — Goals",
+  assists: "A — Assists",
+  shots: "SHOT — Shots",
+  shots_on_target: "SOG — Shots on goal",
+  shots_faced: "Shots faced",
+  shots_on_goal_against: "SOGA — Shots on goal against",
+  saves: "SV — Saves",
+  pens_saved: "Penalties saved",
+  pens_missed: "Penalties missed",
+  goals_conceded: "GA — Goals conceded",
+  passes: "PASS — Passes",
+  accurate_passes: "AC.PASS — Accurate passes",
+  accurate_long_balls: "AC.LONG — Accurate long balls",
+  big_chances_created: "BCC — Big chances created",
+  big_chances_missed: "BCM — Big chances missed",
+  touches: "TCH — Touches",
+  duels_won: "DUELW — Duels won",
+  defensive_interventions: "DINT — Defensive interventions",
+  crosses_claimed: "CC — Crosses claimed",
+  unclaimed_crosses: "UC — Unclaimed crosses",
+  keeper_sweepers: "KS — Keeper sweepers",
+  fouls_committed: "FC — Fouls committed",
+  fouls_suffered: "FA — Fouls suffered",
+  offsides: "Offsides",
+  yellows: "Yellow cards",
+  reds: "Red cards",
+  own_goals: "Own goals",
+  bonus: "Bonus",
+};
+
+function PlayerStatsDialog({ playerId, onClose }: { playerId: string | null; onClose: () => void }) {
+  const fn = useServerFn(getFantasyPlayerBreakdown);
+  const query = useQuery<FantasyPlayerBreakdown>({
+    queryKey: ["fantasy-player-breakdown", playerId],
+    queryFn: () => fn({ data: { playerId: playerId! } }),
+    enabled: !!playerId,
+  });
+  const data = query.data;
+  const matches = data?.matches ?? [];
+  const statKeys = useMemo(
+    () => Object.keys(PLAYER_STAT_LABELS).filter((k) => matches.some((m) => (m.stats[k] ?? 0) !== 0)),
+    [matches],
+  );
+
+  return (
+    <Dialog open={!!playerId} onOpenChange={(o) => { if (!o) onClose(); }}>
+      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Shirt className="size-4 text-red-500" />
+            {data?.name ?? "Player stats"}
+          </DialogTitle>
+          <DialogDescription>
+            Match-by-match stats from the ESPN match report and the points they earned.
+          </DialogDescription>
+        </DialogHeader>
+
+        {query.isPending ? (
+          <div className="flex items-center gap-2 py-6 text-sm text-muted-foreground">
+            <Loader2 className="size-4 animate-spin" /> Loading stats…
+          </div>
+        ) : query.isError ? (
+          <p className="py-4 text-sm text-destructive">Couldn't load this player's stats.</p>
+        ) : matches.length === 0 ? (
+          <p className="py-4 text-sm text-muted-foreground">
+            No stats recorded yet — they'll appear here once this player features in a scored game week.
+          </p>
+        ) : (
+          <>
+            <div className="mb-2 flex items-center justify-between rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm">
+              <span className="font-semibold">Season total</span>
+              <span className="font-bold tabular-nums">{data?.totalPoints ?? 0} pts</span>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[420px] text-left text-xs">
+                <thead>
+                  <tr className="border-b border-border text-[11px] uppercase tracking-wide text-muted-foreground">
+                    <th className="py-2 pr-2">Stat</th>
+                    {matches.map((m) => (
+                      <th key={m.fixtureId} className="px-2 py-2 text-center">
+                        <div className="font-bold text-foreground">
+                          {m.gwNumber != null ? `GW${m.gwNumber}` : "—"}
+                        </div>
+                        <div className="font-normal normal-case">{m.label}</div>
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {statKeys.map((k) => (
+                    <tr key={k} className="border-b border-border/60">
+                      <td className="py-1.5 pr-2 text-muted-foreground">{PLAYER_STAT_LABELS[k]}</td>
+                      {matches.map((m) => (
+                        <td key={m.fixtureId} className="px-2 py-1.5 text-center tabular-nums">
+                          {m.stats[k] ?? 0}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                  <tr className="bg-muted/40">
+                    <td className="py-2 pr-2 font-bold">Points earned</td>
+                    {matches.map((m) => (
+                      <td key={m.fixtureId} className="px-2 py-2 text-center font-bold tabular-nums text-primary">
+                        {m.points}
+                      </td>
+                    ))}
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function FantasyPageWithStats() {
+  const [statsPlayerId, setStatsPlayerId] = useState<string | null>(null);
+  return (
+    <PlayerStatsCtx.Provider value={setStatsPlayerId}>
+      <BoroFantasyPage />
+      <PlayerStatsDialog playerId={statsPlayerId} onClose={() => setStatsPlayerId(null)} />
+    </PlayerStatsCtx.Provider>
+  );
+}
 
 type GuestSession = { guestId: string; email: string; pin: string; displayName: string; teamName?: string };
 const GUEST_KEY = "fantasy_guest_session";
