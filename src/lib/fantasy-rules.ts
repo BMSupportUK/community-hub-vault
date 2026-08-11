@@ -296,6 +296,13 @@ export const SCORING_RULES: {
   { label: "Appearance — comes on from your bench", minTime: "1+ sec", starter: "—", sub: "1" },
   { label: "Named but doesn't get on", minTime: "0 mins", starter: "0", sub: "0" },
   { label: "Captain (vice if captain doesn't play)", minTime: "1+ sec", starter: "double points", sub: "double points" },
+  { label: "G — Goals", minTime: "1+ sec", starter: "6 GK/DEF, 5 MID, 4 FWD", sub: "Half points" },
+  { label: "A — Assists", minTime: "1+ sec", starter: "3 pts", sub: "1.5 pts" },
+  { label: "Clean sheet (60+ mins)", minTime: "60+ mins", starter: "4 GK/DEF, 1 MID", sub: "Half points" },
+  { label: "Penalties", minTime: "1+ sec", starter: "+5 saved, −2 missed", sub: "Half points" },
+  { label: "Cards", minTime: "1+ sec", starter: "−1 yellow, −3 red", sub: "Half points" },
+  { label: "OG — Own goals", minTime: "1+ sec", starter: "−2 pts", sub: "−1 pt" },
+  { label: "MOTM bonus", minTime: "1+ sec", starter: "1 pt", sub: "0.5 pt" },
 ];
 
 /**
@@ -314,27 +321,11 @@ export const STAT_KEY: {
   byPosition?: Partial<Record<FantasyPosition, string>>;
 }[] = [
   {
-    stat: "G — Goals",
-    means: "Goals scored.",
-    positions: ["gk", "def", "mid", "fwd"],
-    byPosition: { gk: "6 pts", def: "6 pts", mid: "5 pts", fwd: "4 pts" },
-  },
-  {
     stat: "A — Assists",
     means: "Passes or touches that directly set up a team-mate's goal.",
-    positions: ["gk", "def", "mid", "fwd"],
+    positions: ["def", "mid", "fwd"],
     points: "3 pts",
   },
-  {
-    stat: "Clean sheet",
-    means: "No goals conceded while on the pitch for 60 minutes or more.",
-    positions: ["gk", "def", "mid"],
-    byPosition: { gk: "4 pts", def: "4 pts", mid: "1 pt" },
-  },
-  { stat: "Cards", means: "Yellow card and red card.", positions: ["gk", "def", "mid", "fwd"], points: "−1 / −3 pts" },
-  { stat: "Penalties", means: "Penalty saved by a keeper and penalty missed.", positions: ["gk", "def", "mid", "fwd"], points: "+5 / −2 pts" },
-  { stat: "OG — Own goals", means: "Goals put into your own net.", positions: ["gk", "def", "mid", "fwd"], points: "−2 pts" },
-  { stat: "MOTM bonus", means: "Bonus points added for standout / man-of-the-match performances.", positions: ["gk", "def", "mid", "fwd"], points: "1 pt" },
   { stat: "SHOT — Shots", means: "Every attempt at goal, on or off target.", positions: ["def", "mid", "fwd"], points: "1 pt" },
   { stat: "SOG — Shots on Goal", means: "Attempts on target — saved, blocked on the line or scored.", positions: ["def", "mid", "fwd"], points: "1 pt" },
   { stat: "BCC — Big Chances Created", means: "Passes that handed a team-mate a clear scoring chance.", positions: ["def", "mid", "fwd"], points: "3 pts" },
