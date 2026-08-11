@@ -2909,7 +2909,8 @@ function ScoringTab() {
       <div>
         <h3 className="font-display text-lg font-bold flex items-center gap-2"><Trophy className="size-4 text-primary" /> How scoring works</h3>
         <p className="text-sm text-muted-foreground mt-1">
-          Only Middlesbrough players score, and only in competitive fixtures. Any player in your match day 11 who doesn't get on the pitch scores 0.
+          Every point comes straight off the official ESPN match report — the same player stats table you can check yourself after
+          the game — so nothing is entered by hand. Only Middlesbrough players score, and only in competitive fixtures. Any player in your match day 11 who doesn't get on the pitch scores 0.
           Subs who come off the bench score too and their points are added to your total — under 60 minutes they use the
           sub scoring column below, and if they play 60 minutes or more they're scored exactly like a match day 11 player.
           Your captain scores double, and if he doesn't play a minute the vice-captain doubles instead. Players who cover two
@@ -2928,6 +2929,20 @@ function ScoringTab() {
           <ScoringBreakdown column="sub" note="Points for players who come off the bench under 60 minutes. A sub who plays 60 minutes or more is scored on the match day 11 column instead. Unused subs score 0." />
         </TabsContent>
       </Tabs>
+      <div className="rounded-xl border border-border/60 bg-background/40 p-4">
+        <h4 className="font-display text-sm font-bold uppercase tracking-wide">Stat key</h4>
+        <p className="text-xs text-muted-foreground mt-1">
+          The stats above are recorded in the ESPN match report under <span className="font-semibold text-foreground">player stats</span>. Here's what each one means:
+        </p>
+        <dl className="mt-3 grid gap-x-6 gap-y-2 sm:grid-cols-2">
+          {STAT_KEY.map((k) => (
+            <div key={k.stat} className="text-xs">
+              <dt className="font-semibold text-foreground">{k.stat}</dt>
+              <dd className="text-muted-foreground">{k.means}</dd>
+            </div>
+          ))}
+        </dl>
+      </div>
       <div className="text-sm text-muted-foreground">
         Formations, bench rules, deadlines and the late sub-swap window all live on the <span className="font-semibold text-foreground">Game rules</span> tab.
       </div>
