@@ -390,13 +390,42 @@ export type SaveSquadInput = {
 export async function saveSquad(admin: any, owner: Owner, input: SaveSquadInput) {
   const { data: gwRow, error: gwErr } = await admin
     .from("fantasy_gameweeks")
-    .select("id, gw_number, lock_at, status, fixture:boro_fixtures!inner(competition)")
+    .select("id, gw_number, lock_at, status, fixture:boro_fixtures!inner(competition, kickoff_at)")
     .eq("id", input.gameweekId)
     .maybeSingle();
   if (gwErr) throw new Error(gwErr.message);
   if (!gwRow) throw new Error("Gameweek not found.");
-  if ((gwRow as any).status !== "upcoming" || new Date((gwRow as any).lock_at).getTime() <= Date.now()) {
+  // Between the lock and the final-swap cut-off the manager may only reshuffle
+  // the squad he already named: bench players can swap into the XI, but no new
+  // players may come in or go out.
+  const nowMs = Date.now();
+  const lockMs = new Date((gwRow as any).lock_at).getTime();
+  const kickoffIso = (gwRow as any).fixture?.kickoff_at ?? (gwRow as any).lock_at;
+  const swapDeadlineMs =
+    new Date(kickoffIso).getTime() - FANTASY_FINAL_SWAP_MINUTES * 60_000;
+  const swapOnly = (gwRow as any).status === "upcoming" && nowMs > lockMs && nowMs < swapDeadlineMs;
+  if ((gwRow as any).status !== "upcoming" || (nowMs > lockMs && !swapOnly)) {
     throw new Error("This gameweek is locked — squad changes are closed.");
+  }
+  if (swapOnly) {
+    const { data: lockedSquad } = await admin
+      .from("fantasy_squads")
+      .select("picks:fantasy_squad_picks(player_id)")
+      .eq("gameweek_id", input.gameweekId)
+      .eq(ownerCol(owner), ownerVal(owner))
+      .maybeSingle();
+    const named = new Set<string>(
+      (((lockedSquad as any)?.picks ?? []) as any[]).map((p) => p.player_id as string),
+    );
+    if (!named.size) {
+      throw new Error("This gameweek is locked — squad changes are closed.");
+    }
+    const submitted = [...input.starters, ...input.bench];
+    if (submitted.length !== named.size || submitted.some((id) => !named.has(id))) {
+      throw new Error(
+        `The gameweek has locked — you can only swap subs into your XI now, not change players. Swaps close ${FANTASY_FINAL_SWAP_MINUTES} minutes before kick-off.`,
+      );
+    }
   }
 
   const squadIds = [...input.starters, ...input.bench];
