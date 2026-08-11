@@ -1320,14 +1320,6 @@ function SquadBuilder({
               playerById={playerById}
               selected={selected}
               starters={starters}
-              slotPositions={slotPositions}
-              onSlotPosition={(slotIndex, position) =>
-                setSlotPositions((prev) => {
-                  const next = [...prev];
-                  next[slotIndex] = position;
-                  return next;
-                })
-              }
               bench={bench}
               captainId={captainId}
               viceId={viceId}
