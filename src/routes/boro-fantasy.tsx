@@ -2565,8 +2565,8 @@ function EntrantSquadDialog({
         {p.shirtNumber ? `#${p.shirtNumber}` : "—"}
       </span>
       <span className="min-w-0 flex-1 truncate text-sm font-medium">{p.name}</span>
-      {p.isCaptain && <Crown className="size-3.5 text-amber-400" title="Captain" />}
-      {p.isVice && <Star className="size-3.5 text-sky-400" title="Vice captain" />}
+      {p.isCaptain && <Crown className="size-3.5 text-amber-400" aria-label="Captain" />}
+      {p.isVice && <Star className="size-3.5 text-sky-400" aria-label="Vice captain" />}
       {p.autoSubbed && (
         <span className="rounded bg-primary/15 px-1.5 py-0.5 text-[10px] font-semibold text-primary">SUB IN</span>
       )}
