@@ -41,6 +41,9 @@ import {
   type FantasyStateDTO, type FantasyPlayerDTO, type FantasyLeaderboardRow, type FantasyGameweekDTO,
 } from "@/lib/fantasy.functions";
 import {
+  getEntrantFantasySquad, type EntrantSquadViewDTO,
+} from "@/lib/fantasy-squad-view.functions";
+import {
   fantasyGuestRegister, fantasyGuestSignInExisting, getPublicFantasyState,
   getPublicFantasyLeaderboard, saveGuestFantasySquad, requestFantasyGuestPinReset,
   resetFantasyGuestPin, setGuestFantasyTeamName,
