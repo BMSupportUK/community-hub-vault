@@ -1437,6 +1437,7 @@ function SquadBuilder({
           <PitchView
               formation={formation}
               onFormationChange={(f) => setFormation(f)}
+              formationLocked={swapOnly}
               editable={editable}
               playerById={playerById}
               selected={selected}
@@ -1868,12 +1869,13 @@ function PlayerPickerDialog({
 // Pitch
 // ------------------------------------------------------------------
 function PitchView({
-  formation, onFormationChange, editable, playerById, selected, starters, slotPositions, onSlotPosition, bench, captainId, viceId,
+  formation, onFormationChange, formationLocked = false, editable, playerById, selected, starters, slotPositions, onSlotPosition, bench, captainId, viceId,
   pointsByPlayer, minutesByPlayer, autoSubbedIds, onDropStart, onBench, onRemove, onCaptain, onVice,
   onSlotOpen, gw,
 }: {
   formation: FormationKey;
   onFormationChange: (f: FormationKey) => void;
+  formationLocked?: boolean;
   editable: boolean;
   playerById: Map<string, FantasyPlayerDTO>;
   selected: string[];
@@ -1944,12 +1946,15 @@ function PitchView({
               className="h-7 sm:h-8 w-full min-w-0 rounded-lg border border-white/30 bg-slate-900/80 px-1.5 sm:px-2 text-[11px] sm:text-xs font-semibold text-white"
               value={formation}
               onChange={(e) => onFormationChange(e.target.value as FormationKey)}
-              disabled={!editable}
+              disabled={!editable || formationLocked}
             >
             {FORMATION_KEYS.map((f) => (
               <option key={f} value={f}>{f} — {FORMATIONS[f].label}</option>
             ))}
           </select>
+            {formationLocked && (
+              <p className="mt-1 text-[9px] font-semibold uppercase tracking-wide text-amber-300">Formation locked</p>
+            )}
           </div>
         </div>
         {gw && !gw.dateTbc && (
