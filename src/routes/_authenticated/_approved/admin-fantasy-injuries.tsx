@@ -111,19 +111,6 @@ function AdminFantasyInjuriesPage() {
     }
   };
 
-  const unusedRunSync = async () => {
-    setSyncing(true);
-    try {
-      await sync();
-      toast.success("Pulled the latest injuries from the EFL Fantasy feed");
-      await qc.invalidateQueries({ queryKey: ["fantasy-injuries"] });
-    } catch (e: any) {
-      toast.error(e?.message ?? "Sync failed");
-    } finally {
-      setSyncing(false);
-    }
-  };
-
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
@@ -135,11 +122,13 @@ function AdminFantasyInjuriesPage() {
       </div>
       <header className="space-y-1">
         <h1 className="font-display text-2xl flex items-center gap-2">
-          <Cross className="size-6 text-destructive" /> Fantasy injuries
+          <Cross className="size-6 text-destructive" /> Fantasy injuries &amp; 25-man squad
         </h1>
         <p className="text-sm text-muted-foreground">
           Flag players as doubtful, injured or suspended. An icon shows on the pitch view and in the player picker —
           managers can still pick them, at their own risk. Anything you set here overrides the automatic feed.
+          Untick <span className="font-semibold">In 25-man squad</span> for senior players left out of the club's
+          official 25 — they're then flagged for league games (cup ties are open to everyone).
         </p>
       </header>
 
@@ -213,6 +202,17 @@ function AdminFantasyInjuriesPage() {
                     </Button>
                   ))}
                 </div>
+                <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <input
+                    type="checkbox"
+                    className="size-4 accent-primary"
+                    checked={p.in25Squad}
+                    disabled={busy === p.id}
+                    onChange={() => toggle25(p)}
+                  />
+                  In 25-man matchday squad
+                  {p.squadLevel !== "first" && <span className="opacity-70">(academy — always eligible)</span>}
+                </label>
               </div>
             );
           })}
