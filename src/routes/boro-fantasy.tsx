@@ -1281,16 +1281,28 @@ function SquadBuilder({
               onClick={handleSave}
               variant={dirty ? "default" : "outline"}
               className={
-                "w-full " + (dirty && problems.length === 0
-                  ? "bg-gradient-primary text-white shadow-glow ring-2 ring-primary/60 animate-pulse"
-                  : dirty
-                    ? ""
-                    : "opacity-60")
+                "w-full " + (locked
+                  ? "border-destructive/60 bg-destructive/10 text-destructive opacity-100"
+                  : dirty && problems.length === 0
+                    ? "bg-gradient-primary text-white shadow-glow ring-2 ring-primary/60 animate-pulse"
+                    : dirty
+                      ? ""
+                      : "opacity-60")
               }
-              title={dirty ? undefined : "No changes to save"}
+              title={locked ? "This gameweek is locked" : dirty ? undefined : "No changes to save"}
               disabled={saving || locked || !gw || !canPlay || !dirty || problems.length > 0}
             >
-              {saving ? <Loader2 className="size-4 animate-spin" /> : !dirty ? "Saved" : "Save Matchday Squad"}
+              {saving ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : locked ? (
+                <>
+                  <Lock className="size-4 mr-2" /> Game Week Now Locked
+                </>
+              ) : !dirty ? (
+                "Saved"
+              ) : (
+                "Save Matchday Squad"
+              )}
             </Button>
           </div>
         </div>
