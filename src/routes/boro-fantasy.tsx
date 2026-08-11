@@ -2105,7 +2105,10 @@ function GameweekList({ state, group }: { state: FantasyStateDTO; group: Fantasy
         return (
           <div key={g.id} className="rounded-2xl border border-border/60 bg-card/80 backdrop-blur p-4">
             <div className="flex flex-wrap items-center gap-3">
-            <div className="w-14 text-xs font-bold text-primary">GW{g.gwNumber}</div>
+            <div className="w-14 text-xs font-bold text-primary">
+              GW{g.gwNumber}
+              {g.dateTbc && <span className="block text-[10px] font-bold uppercase text-sky-300">TBC</span>}
+            </div>
             <div className="flex-1 min-w-[180px]">
               <div className="font-medium flex items-center gap-1.5">
                 <span>{g.homeTeam} v {g.awayTeam}</span>
@@ -2117,7 +2120,7 @@ function GameweekList({ state, group }: { state: FantasyStateDTO; group: Fantasy
                 )}
               </div>
               <div className="text-xs text-muted-foreground">
-                {g.dateTbc ? "Date to be confirmed" : kickoffLabel(g.kickoffAt)} · {g.competition}
+                {g.dateTbc ? `${kickoffLabel(g.kickoffAt)} — to be confirmed` : kickoffLabel(g.kickoffAt)} · {g.competition}
               </div>
             </div>
             {g.homeScore !== null && g.awayScore !== null && (
