@@ -673,13 +673,9 @@ function SquadBuilder({
     () =>
       state.gameweeks
         .filter((g) => g.status === "upcoming" && new Date(g.lockAt).getTime() > Date.now())
-        // Gameweek numbers already run chronologically (cup/play-off ties slot
-        // into the main running order once a date is allocated), with any
-        // date-TBC ties parked at the end — so one list covers everything.
-        .sort((a, b) => {
-          if (!!a.dateTbc !== !!b.dateTbc) return a.dateTbc ? 1 : -1;
-          return (a.gwNumber ?? 0) - (b.gwNumber ?? 0);
-        }),
+        // Gameweek numbers run chronologically across league, cup and play-off
+        // games, so one ordered list covers everything.
+        .sort((a, b) => (a.gwNumber ?? 0) - (b.gwNumber ?? 0)),
     [state.gameweeks],
   );
   const [gwId, setGwId] = useState<string>(state.currentGameweekId ?? "");

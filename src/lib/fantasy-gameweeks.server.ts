@@ -48,8 +48,11 @@ export async function syncFantasyGameweeksFromFixtures(admin: Admin) {
   const fixtures = ((allFixtures ?? []) as FixtureRow[])
     .filter((f) => isFantasyLeagueCompetition(f.competition))
     .sort((a, b) => {
-      const pa = isPostponedFixture(a.status) || a.date_tbc ? 1 : 0;
-      const pb = isPostponedFixture(b.status) || b.date_tbc ? 1 : 0;
+      // Cup ties and play-off games slot into the running order at whatever
+      // date they've been given, even if the kick-off time is still to be
+      // confirmed. Only fixtures called off with no date at all drop to the end.
+      const pa = isPostponedFixture(a.status) ? 1 : 0;
+      const pb = isPostponedFixture(b.status) ? 1 : 0;
       if (pa !== pb) return pa - pb;
       return new Date(a.kickoff_at).getTime() - new Date(b.kickoff_at).getTime();
     });
