@@ -4,7 +4,6 @@ import {
   FORMATIONS,
   formationPositionRange,
   POSITION_SHORT,
-  isFantasySeasonStarted,
   type FantasyPosition,
   type FormationKey,
 } from "@/lib/fantasy-rules";
@@ -222,19 +221,17 @@ export function pickCurrentGameweek(gws: FantasyGameweekDTO[]): string | null {
 }
 
 export async function loadState(admin: any, owner: Owner | null): Promise<FantasyStateDTO> {
-  // Before kick-off, departed players are hidden unless already owned. Once the
-  // season has started they stay listed (struck through, unselectable) so their
-  // earned points remain visible.
+  // Only current game players belong in the selection pool. Keep an unavailable
+  // player solely when this manager has a historical saved pick referencing them,
+  // so past gameweek points still render without listing them as a new option.
   function visiblePlayers(
     all: FantasyPlayerDTO[],
     mySquads: FantasySquadDTO[],
-    seasonStarted: boolean,
   ): FantasyPlayerDTO[] {
-    if (seasonStarted) return all;
     const picked = new Set<string>();
     for (const s of mySquads) for (const p of s.picks) picked.add(p.playerId);
     return all.filter((p) => {
-      if (p.status !== "departed") return true;
+      if (p.status === "active" || p.status === "injured" || p.status === "suspended") return true;
       return picked.has(p.id);
     });
   }
@@ -324,7 +321,7 @@ export async function loadState(admin: any, owner: Owner | null): Promise<Fantas
     teamName,
     freeTransfers,
     wildcardUsed,
-    players: visiblePlayers(players, squads, isFantasySeasonStarted(gameweeks)),
+    players: visiblePlayers(players, squads),
     gameweeks,
     currentGameweekId: pickCurrentGameweek(gameweeks),
     squads,

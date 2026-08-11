@@ -1498,18 +1498,14 @@ function PlayerPickerDialog({
   const pool = useMemo(() => {
     const term = q.trim().toLowerCase();
     return players
+      .filter((p) => p.status !== "departed" && p.status !== "loaned_out")
       .filter((p) => !selected.includes(p.id))
       .filter((p) => (positions?.length ? positions.includes(p.position) : true))
       .filter((p) => (term ? p.name.toLowerCase().includes(term) : true))
-      .sort((a, b) => {
-        const unavail = (s: string) => (s === "departed" || s === "loaned_out" ? 1 : 0);
-        const gone = unavail(a.status) - unavail(b.status);
-        if (gone !== 0) return gone;
-        return (
+      .sort((a, b) =>
           POSITION_ORDER.indexOf(a.position) - POSITION_ORDER.indexOf(b.position) ||
           (b.seasonPoints ?? 0) - (a.seasonPoints ?? 0)
-        );
-      });
+      );
   }, [players, selected, positions, q]);
 
   const groups: Record<PickerLevel, FantasyPlayerDTO[]> = useMemo(() => {
@@ -1553,16 +1549,14 @@ function PlayerPickerDialog({
           ))}
         </div>
         <ul className="max-h-[50vh] overflow-y-auto divide-y divide-border/40 rounded-xl border border-border/60">
-          {list.map((p) => {
-            const unavailable = p.status === "departed" || p.status === "loaned_out";
-            return (
+          {list.map((p) => (
               <li key={p.id} className="flex items-center gap-2 px-3 py-2 text-sm">
                 <span className={`text-[10px] font-bold rounded-md border px-1.5 py-0.5 ${POS_TINT[p.position]}`}>
                   {POSITION_SHORT[p.position]}
                 </span>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-1.5 min-w-0">
-                    <span className={`truncate font-medium ${unavailable ? "line-through decoration-2 decoration-destructive text-muted-foreground" : ""}`}>
+                    <span className="truncate font-medium">
                       {p.name}
                     </span>
                     <ShirtNumber n={p.shirtNumber} />
@@ -1600,15 +1594,13 @@ function PlayerPickerDialog({
                 <button
                   type="button"
                   onClick={() => onPick(p)}
-                  disabled={unavailable}
-                  title={unavailable ? "Not available for selection" : "Put in this slot"}
-                  className="shrink-0 grid place-items-center size-7 rounded-lg border border-primary/50 text-primary transition-colors hover:bg-primary/10 disabled:opacity-40"
+                  title="Put in this slot"
+                  className="shrink-0 grid place-items-center size-7 rounded-lg border border-primary/50 text-primary transition-colors hover:bg-primary/10"
                 >
-                  {unavailable ? <X className="size-3.5 text-destructive" /> : <Plus className="size-3.5" />}
+                  <Plus className="size-3.5" />
                 </button>
               </li>
-            );
-          })}
+          ))}
           {list.length === 0 && (
             <li className="px-3 py-6 text-center text-sm text-muted-foreground">No players available here.</li>
           )}
