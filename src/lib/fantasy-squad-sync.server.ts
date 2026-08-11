@@ -283,7 +283,13 @@ export async function syncFantasyPlayersFromClub(admin: Admin): Promise<FantasyS
     if (row.name !== p.name) changes.name = p.name;
     if (row.position !== p.position) changes.position = p.position;
     if ((row.squad_level ?? "first") !== p.squadLevel) changes.squad_level = p.squadLevel;
-    if (!(row as any).shirt_number_locked && (row.shirt_number ?? null) !== (p.shirtNumber ?? null)) {
+    // The academy feeds carry no shirt numbers, so never let a null from the feed
+    // wipe a number we already hold — only write a real number the club publish.
+    if (
+      !(row as any).shirt_number_locked &&
+      p.shirtNumber != null &&
+      (row.shirt_number ?? null) !== p.shirtNumber
+    ) {
       changes.shirt_number = p.shirtNumber;
     }
     if (row.status === "departed" && !row.status_locked) {
