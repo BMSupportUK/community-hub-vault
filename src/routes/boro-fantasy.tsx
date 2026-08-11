@@ -2055,12 +2055,19 @@ function BenchPanel({
                     : "cursor-pointer border-dashed border-l-[3px] border-r-[3px] border-l-border/60 border-r-border/60 bg-muted/20 text-muted-foreground hover:bg-muted/40"
                 }`}
               >
+                <div className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground/80 mb-1">
+                  {i === 0 ? "Replacement GK" : `Sub ${i}`}
+                </div>
                 {p ? (
                   <>
-                    <div className="flex items-center justify-center gap-1">
-                      <span className="text-[10px] font-bold rounded-md border px-1 bg-slate-700 text-white border-white/20">SUB</span>
-                      <ShirtNumber n={p.shirtNumber} />
-                      <InjuryIcon p={p} kickoffAt={gwKickoff} />
+                    <div className="flex flex-col items-center justify-center gap-0.5">
+                      <div className="relative grid size-8 place-items-center rounded-lg bg-gradient-to-b from-slate-800 to-slate-950 ring-1 ring-inset ring-white/10">
+                        <Shirt className="size-5 text-white/90" />
+                        <ShirtNumber n={p.shirtNumber} className="absolute text-[9px] font-black text-white border-white/60" />
+                      </div>
+                      <div className="flex items-center justify-center gap-1">
+                        <InjuryIcon p={p} kickoffAt={gwKickoff} />
+                      </div>
                     </div>
                     <div className="mt-1.5 text-[10px] font-semibold leading-tight break-words line-clamp-2 min-h-[24px]">{p.name}</div>
                     {leagueGame && outOf25(p) && (
@@ -2092,11 +2099,11 @@ function BenchPanel({
                     )}
                   </>
                 ) : (
-                  <div className="py-3 font-semibold">
-                    <div className="mx-auto grid size-6 place-items-center rounded-full border border-border/70">
-                      <Plus className="size-3" />
+                  <div className="py-2 font-semibold">
+                    <div className="mx-auto grid size-8 place-items-center rounded-lg bg-muted/30 border border-border/70">
+                      <Plus className="size-4" />
                     </div>
-                    <div className="mt-1 text-[10px] font-bold uppercase tracking-wide">
+                    <div className="mt-1 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
                       {i === 0 ? "GK" : "ANY"}
                     </div>
                   </div>
