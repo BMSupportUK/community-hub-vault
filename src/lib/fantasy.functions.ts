@@ -354,6 +354,122 @@ export const adminRescoreFantasy = createServerFn({ method: "POST" })
   });
 
 // ------------------------------------------------------------------
+// Admin: Man of the match
+// ------------------------------------------------------------------
+export const MOTM_BONUS = 3;
+
+export type FantasyMotmGameweek = {
+  gameweekId: string;
+  gwNumber: number;
+  fixtureId: string;
+  label: string;
+  competition: string;
+  kickoffAt: string;
+  dateTbc: boolean;
+  status: string;
+  motmPlayerId: string | null;
+  playedPlayerIds: string[];
+};
+export type FantasyMotmPlayer = { id: string; name: string; position: string; squadLevel: string };
+
+export const getFantasyMotmData = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<{ gameweeks: FantasyMotmGameweek[]; players: FantasyMotmPlayer[] }> => {
+    setResponseHeader("cache-control", "no-store, max-age=0");
+    if (!(await isAdminOrManagement(context.supabase, context.userId))) throw new Error("Forbidden");
+    const { getAdmin } = await import("@/lib/fantasy.server");
+    const admin = await getAdmin();
+    const [{ data: gws }, { data: players }, { data: stats }] = await Promise.all([
+      admin
+        .from("fantasy_gameweeks")
+        .select("id, gw_number, fixture_id, status, boro_fixtures!inner(home_team, away_team, competition, kickoff_at, date_tbc)")
+        .order("gw_number", { ascending: true }),
+      admin.from("fantasy_players").select("id, name, position, squad_level").order("sort_order", { ascending: true }),
+      admin.from("fantasy_player_stats").select("fixture_id, player_id, bonus, minutes"),
+    ]);
+    const byFixture = new Map<string, { motm: string | null; played: string[] }>();
+    for (const s of (stats ?? []) as any[]) {
+      const entry = byFixture.get(s.fixture_id) ?? { motm: null, played: [] };
+      if ((s.bonus ?? 0) >= MOTM_BONUS) entry.motm = s.player_id;
+      if ((s.minutes ?? 0) > 0) entry.played.push(s.player_id);
+      byFixture.set(s.fixture_id, entry);
+    }
+    return {
+      gameweeks: ((gws ?? []) as any[]).map((g) => {
+        const f = g.boro_fixtures;
+        const e = byFixture.get(g.fixture_id);
+        return {
+          gameweekId: g.id,
+          gwNumber: g.gw_number,
+          fixtureId: g.fixture_id,
+          label: `${f.home_team} v ${f.away_team}`,
+          competition: f.competition,
+          kickoffAt: f.kickoff_at,
+          dateTbc: !!f.date_tbc,
+          status: g.status,
+          motmPlayerId: e?.motm ?? null,
+          playedPlayerIds: e?.played ?? [],
+        };
+      }),
+      players: ((players ?? []) as any[]).map((p) => ({
+        id: p.id,
+        name: p.name,
+        position: p.position,
+        squadLevel: p.squad_level ?? "first",
+      })),
+    };
+  });
+
+export const adminSetFantasyMotm = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        gameweekId: z.string().uuid(),
+        fixtureId: z.string().uuid(),
+        playerId: z.string().uuid().nullable(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    if (!(await isAdminOrManagement(context.supabase, context.userId))) throw new Error("Forbidden");
+    const { getAdmin } = await import("@/lib/fantasy.server");
+    const admin = await getAdmin();
+    // Clear any existing man-of-the-match bonus for this fixture
+    const { error: clearErr } = await admin
+      .from("fantasy_player_stats")
+      .update({ bonus: 0 } as never)
+      .eq("fixture_id", data.fixtureId)
+      .gt("bonus", 0);
+    if (clearErr) throw new Error(clearErr.message);
+    if (data.playerId) {
+      const { data: existing } = await admin
+        .from("fantasy_player_stats")
+        .select("id")
+        .eq("fixture_id", data.fixtureId)
+        .eq("player_id", data.playerId)
+        .maybeSingle();
+      if (existing) {
+        const { error } = await admin
+          .from("fantasy_player_stats")
+          .update({ bonus: MOTM_BONUS } as never)
+          .eq("id", (existing as any).id);
+        if (error) throw new Error(error.message);
+      } else {
+        const { error } = await admin
+          .from("fantasy_player_stats")
+          .insert({ fixture_id: data.fixtureId, player_id: data.playerId, bonus: MOTM_BONUS } as never);
+        if (error) throw new Error(error.message);
+      }
+    }
+    const { error: scoreErr } = await admin.rpc("fantasy_score_gameweek" as never, {
+      _gameweek_id: data.gameweekId,
+    } as never);
+    if (scoreErr) throw new Error(scoreErr.message);
+    return { ok: true };
+  });
+
+// ------------------------------------------------------------------
 // Admin: real club transfer feed
 // ------------------------------------------------------------------
 const clubTransferSchema = z.object({

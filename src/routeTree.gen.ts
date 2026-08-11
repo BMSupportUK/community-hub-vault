@@ -75,6 +75,7 @@ import { Route as AuthenticatedApprovedAdminNotificationsRouteImport } from './r
 import { Route as AuthenticatedApprovedAdminNameplatesRouteImport } from './routes/_authenticated/_approved/admin-nameplates'
 import { Route as AuthenticatedApprovedAdminHeroBoxesRouteImport } from './routes/_authenticated/_approved/admin-hero-boxes'
 import { Route as AuthenticatedApprovedAdminForumRouteImport } from './routes/_authenticated/_approved/admin-forum'
+import { Route as AuthenticatedApprovedAdminFantasyMotmRouteImport } from './routes/_authenticated/_approved/admin-fantasy-motm'
 import { Route as AuthenticatedApprovedAdminFanZoneRouteImport } from './routes/_authenticated/_approved/admin-fan-zone'
 import { Route as AuthenticatedApprovedAdminDnsRouteImport } from './routes/_authenticated/_approved/admin-dns'
 import { Route as AuthenticatedApprovedAdminCredentialsRouteImport } from './routes/_authenticated/_approved/admin-credentials'
@@ -496,6 +497,12 @@ const AuthenticatedApprovedAdminForumRoute =
     path: '/admin-forum',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
+const AuthenticatedApprovedAdminFantasyMotmRoute =
+  AuthenticatedApprovedAdminFantasyMotmRouteImport.update({
+    id: '/admin-fantasy-motm',
+    path: '/admin-fantasy-motm',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
 const AuthenticatedApprovedAdminFanZoneRoute =
   AuthenticatedApprovedAdminFanZoneRouteImport.update({
     id: '/admin-fan-zone',
@@ -809,6 +816,7 @@ export interface FileRoutesByFullPath {
   '/admin-credentials': typeof AuthenticatedApprovedAdminCredentialsRoute
   '/admin-dns': typeof AuthenticatedApprovedAdminDnsRoute
   '/admin-fan-zone': typeof AuthenticatedApprovedAdminFanZoneRoute
+  '/admin-fantasy-motm': typeof AuthenticatedApprovedAdminFantasyMotmRoute
   '/admin-forum': typeof AuthenticatedApprovedAdminForumRoute
   '/admin-hero-boxes': typeof AuthenticatedApprovedAdminHeroBoxesRoute
   '/admin-nameplates': typeof AuthenticatedApprovedAdminNameplatesRoute
@@ -920,6 +928,7 @@ export interface FileRoutesByTo {
   '/admin-credentials': typeof AuthenticatedApprovedAdminCredentialsRoute
   '/admin-dns': typeof AuthenticatedApprovedAdminDnsRoute
   '/admin-fan-zone': typeof AuthenticatedApprovedAdminFanZoneRoute
+  '/admin-fantasy-motm': typeof AuthenticatedApprovedAdminFantasyMotmRoute
   '/admin-forum': typeof AuthenticatedApprovedAdminForumRoute
   '/admin-hero-boxes': typeof AuthenticatedApprovedAdminHeroBoxesRoute
   '/admin-nameplates': typeof AuthenticatedApprovedAdminNameplatesRoute
@@ -1035,6 +1044,7 @@ export interface FileRoutesById {
   '/_authenticated/_approved/admin-credentials': typeof AuthenticatedApprovedAdminCredentialsRoute
   '/_authenticated/_approved/admin-dns': typeof AuthenticatedApprovedAdminDnsRoute
   '/_authenticated/_approved/admin-fan-zone': typeof AuthenticatedApprovedAdminFanZoneRoute
+  '/_authenticated/_approved/admin-fantasy-motm': typeof AuthenticatedApprovedAdminFantasyMotmRoute
   '/_authenticated/_approved/admin-forum': typeof AuthenticatedApprovedAdminForumRoute
   '/_authenticated/_approved/admin-hero-boxes': typeof AuthenticatedApprovedAdminHeroBoxesRoute
   '/_authenticated/_approved/admin-nameplates': typeof AuthenticatedApprovedAdminNameplatesRoute
@@ -1150,6 +1160,7 @@ export interface FileRouteTypes {
     | '/admin-credentials'
     | '/admin-dns'
     | '/admin-fan-zone'
+    | '/admin-fantasy-motm'
     | '/admin-forum'
     | '/admin-hero-boxes'
     | '/admin-nameplates'
@@ -1261,6 +1272,7 @@ export interface FileRouteTypes {
     | '/admin-credentials'
     | '/admin-dns'
     | '/admin-fan-zone'
+    | '/admin-fantasy-motm'
     | '/admin-forum'
     | '/admin-hero-boxes'
     | '/admin-nameplates'
@@ -1375,6 +1387,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/admin-credentials'
     | '/_authenticated/_approved/admin-dns'
     | '/_authenticated/_approved/admin-fan-zone'
+    | '/_authenticated/_approved/admin-fantasy-motm'
     | '/_authenticated/_approved/admin-forum'
     | '/_authenticated/_approved/admin-hero-boxes'
     | '/_authenticated/_approved/admin-nameplates'
@@ -1970,6 +1983,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedApprovedAdminForumRouteImport
       parentRoute: typeof AuthenticatedApprovedRoute
     }
+    '/_authenticated/_approved/admin-fantasy-motm': {
+      id: '/_authenticated/_approved/admin-fantasy-motm'
+      path: '/admin-fantasy-motm'
+      fullPath: '/admin-fantasy-motm'
+      preLoaderRoute: typeof AuthenticatedApprovedAdminFantasyMotmRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
     '/_authenticated/_approved/admin-fan-zone': {
       id: '/_authenticated/_approved/admin-fan-zone'
       path: '/admin-fan-zone'
@@ -2395,6 +2415,7 @@ interface AuthenticatedApprovedRouteChildren {
   AuthenticatedApprovedAdminCredentialsRoute: typeof AuthenticatedApprovedAdminCredentialsRoute
   AuthenticatedApprovedAdminDnsRoute: typeof AuthenticatedApprovedAdminDnsRoute
   AuthenticatedApprovedAdminFanZoneRoute: typeof AuthenticatedApprovedAdminFanZoneRoute
+  AuthenticatedApprovedAdminFantasyMotmRoute: typeof AuthenticatedApprovedAdminFantasyMotmRoute
   AuthenticatedApprovedAdminForumRoute: typeof AuthenticatedApprovedAdminForumRoute
   AuthenticatedApprovedAdminHeroBoxesRoute: typeof AuthenticatedApprovedAdminHeroBoxesRoute
   AuthenticatedApprovedAdminNameplatesRoute: typeof AuthenticatedApprovedAdminNameplatesRoute
@@ -2454,6 +2475,8 @@ const AuthenticatedApprovedRouteChildren: AuthenticatedApprovedRouteChildren = {
   AuthenticatedApprovedAdminDnsRoute: AuthenticatedApprovedAdminDnsRoute,
   AuthenticatedApprovedAdminFanZoneRoute:
     AuthenticatedApprovedAdminFanZoneRoute,
+  AuthenticatedApprovedAdminFantasyMotmRoute:
+    AuthenticatedApprovedAdminFantasyMotmRoute,
   AuthenticatedApprovedAdminForumRoute: AuthenticatedApprovedAdminForumRoute,
   AuthenticatedApprovedAdminHeroBoxesRoute:
     AuthenticatedApprovedAdminHeroBoxesRoute,
@@ -2629,13 +2652,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
