@@ -113,6 +113,12 @@ function DigitalLockCountdown({
   const minutes = Math.floor((totalSeconds % 3600) / 60);
   const seconds = totalSeconds % 60;
 
+  const lockDate = new Date(lockAt).toLocaleDateString(undefined, {
+    weekday: "short",
+    day: "2-digit",
+    month: "short",
+  });
+
   const unit = (value: number, suffix: string) => (
     <div className={`flex flex-col items-center ${compact ? "min-w-[1.7rem] sm:min-w-[2.4rem]" : "min-w-[3.2rem]"}`}>
       <div className={`relative rounded-lg border-2 font-digital font-black tabular-nums leading-none ${
@@ -132,13 +138,12 @@ function DigitalLockCountdown({
 
   if (compact) {
     return (
-      <div className="w-full min-w-0 overflow-hidden rounded-md">
-        <div className={`flex items-center gap-1 font-digital font-bold uppercase tracking-wide text-[9px] sm:text-[10px] ${urgent ? "text-red-300" : "text-amber-300"}`}>
-          <Lock className="size-2.5 sm:size-3 shrink-0" strokeWidth={3} />
-          <span className="truncate">{locked ? "Locked" : label}</span>
+      <div className="w-full min-w-0 overflow-hidden rounded-md text-center">
+        <div className="truncate text-[10px] sm:text-[11px] font-bold uppercase tracking-wide text-white/90">
+          {lockDate}
         </div>
         <div
-          className={`mt-1 box-border block w-full min-w-0 overflow-hidden whitespace-nowrap rounded-md border-2 px-1 py-0.5 text-center font-digital font-black tabular-nums leading-none text-[10px] sm:text-xs ${
+          className={`mt-0.5 box-border block w-full min-w-0 overflow-hidden whitespace-nowrap rounded-md border-2 px-1 py-0.5 text-center font-digital font-black tabular-nums leading-none text-[10px] sm:text-xs ${
             urgent
               ? "bg-red-600/20 border-red-400 text-red-300 animate-pulse"
               : "bg-amber-500/15 border-amber-400/70 text-amber-300"
@@ -150,22 +155,25 @@ function DigitalLockCountdown({
                 .toString()
                 .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`}
         </div>
+        <div className={`mt-0.5 flex items-center justify-center gap-1 font-digital font-bold uppercase tracking-wide text-[9px] sm:text-[10px] ${urgent ? "text-red-300" : "text-amber-300"}`}>
+          <Lock className="size-2.5 sm:size-3 shrink-0" strokeWidth={3} />
+          <span className="truncate">{locked ? "Locked" : label}</span>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="w-full min-w-0">
-      <div className={`flex items-center gap-1.5 sm:gap-2 font-digital font-bold uppercase tracking-widest ${compact ? "mb-1 text-[10px] sm:text-[11px]" : "mb-2 text-sm"} ${urgent ? "text-red-300" : "text-amber-300"}`}>
-        <Lock className={compact ? "size-3 sm:size-3.5" : "size-4"} strokeWidth={3} />
-        {locked ? "Locked" : label}
+    <div className="w-full min-w-0 text-center">
+      <div className="mb-1 text-sm font-bold uppercase tracking-wide text-white/90">
+        {lockDate}
       </div>
       {locked ? (
         <div className={`inline-flex items-center gap-1.5 sm:gap-2 rounded-lg border-2 border-red-400 bg-red-600/20 font-digital font-black text-red-200 shadow-[0_0_18px_rgba(248,113,113,0.55)] ${compact ? "px-1.5 py-0.5 text-xs sm:px-2.5 sm:py-1 sm:text-sm" : "px-4 py-2 text-lg"}`}>
           <Lock className={compact ? "size-3 sm:size-4" : "size-5"} strokeWidth={3} /> SQUAD LOCKED
         </div>
       ) : (
-        <div className={`flex items-start ${compact ? "gap-1 sm:gap-1.5" : "gap-2 sm:gap-3"}`}>
+        <div className={`flex items-start justify-center ${compact ? "gap-1 sm:gap-1.5" : "gap-2 sm:gap-3"}`}>
           {days > 0 && unit(days, "Days")}
           {unit(hours, "Hrs")}
           <span className={`font-digital text-white/40 ${compact ? "text-base pt-0.5 sm:text-lg sm:pt-1" : "text-2xl pt-2"}`}>:</span>
@@ -174,6 +182,10 @@ function DigitalLockCountdown({
           {unit(seconds, "Sec")}
         </div>
       )}
+      <div className={`mt-1 flex items-center justify-center gap-1.5 sm:gap-2 font-digital font-bold uppercase tracking-widest ${compact ? "text-[10px] sm:text-[11px]" : "text-sm"} ${urgent ? "text-red-300" : "text-amber-300"}`}>
+        <Lock className={compact ? "size-3 sm:size-3.5" : "size-4"} strokeWidth={3} />
+        {locked ? "Locked" : label}
+      </div>
     </div>
   );
 }
