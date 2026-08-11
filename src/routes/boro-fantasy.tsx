@@ -3147,6 +3147,9 @@ function ScoringBreakdown({
     ? rules
         .filter((r) => r.enabled)
         .filter((r) => (column === "starter" ? r.special !== "appearance_sub" : r.special !== "appearance_start"))
+        // Stat-column rules are explained in the Stat key below, so keep the
+        // main scoring list to appearances and captain-only multipliers.
+        .filter((r) => r.statColumn === null)
         .map((r) => {
           const halve = column === "sub" && r.halvesForSubs;
           const value = halve ? r.points / 2 : r.points;
