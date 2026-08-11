@@ -474,14 +474,14 @@ function BoroFantasyPage() {
           )}
 
           <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-6">
-            <Tabs value={tab} onValueChange={setTab}>
-              <TabsList className="grid grid-cols-3 sm:grid-cols-6 w-full h-auto gap-1 p-1">
-                <TabsTrigger value="squad">My squad</TabsTrigger>
-                <TabsTrigger value="rules">Game rules</TabsTrigger>
-                <TabsTrigger value="transfers">Transfers</TabsTrigger>
-                <TabsTrigger value="leaderboard">Leaderboard</TabsTrigger>
-                <TabsTrigger value="scoring">Scoring</TabsTrigger>
-                <TabsTrigger value="winners">Winners</TabsTrigger>
+            <Tabs value={tab} onValueChange={setTab} className="w-full">
+              <TabsList className="grid grid-cols-3 sm:grid-cols-6 w-full h-auto gap-0 p-0 rounded-none">
+                <TabsTrigger value="squad" className="w-full rounded-none">My squad</TabsTrigger>
+                <TabsTrigger value="rules" className="w-full rounded-none">Game rules</TabsTrigger>
+                <TabsTrigger value="transfers" className="w-full rounded-none">Transfers</TabsTrigger>
+                <TabsTrigger value="leaderboard" className="w-full rounded-none">Leaderboard</TabsTrigger>
+                <TabsTrigger value="scoring" className="w-full rounded-none">Scoring</TabsTrigger>
+                <TabsTrigger value="winners" className="w-full rounded-none">Winners</TabsTrigger>
               </TabsList>
 
               <TabsContent value="squad" className="mt-4">
