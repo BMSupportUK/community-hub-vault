@@ -62,7 +62,7 @@ export const Route = createFileRoute("/boro-fantasy")({
 
 type GuestSession = { guestId: string; email: string; pin: string; displayName: string; teamName?: string };
 const GUEST_KEY = "fantasy_guest_session";
-const BENCH_SLOT_LABELS = ["Replacement GK", "Sub", "Sub", "Sub"] as const;
+const BENCH_SLOT_LABELS = ["Sub GK", "Sub", "Sub", "Sub"] as const;
 
 const kickoffLabel = (iso: string) =>
   new Date(iso).toLocaleString(undefined, { weekday: "short", day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
