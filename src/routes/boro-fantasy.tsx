@@ -1665,6 +1665,7 @@ function PitchView({
                           <Shirt className="size-4 text-white/80" />
                           {captainId === p.id && <Crown className="size-3.5 text-amber-400" />}
                           {viceId === p.id && <Star className="size-3.5 text-sky-300" />}
+                          <InjuryIcon p={p} />
                         </div>
                         <div className="mt-1 text-[10px] font-semibold leading-tight text-white break-words line-clamp-2 min-h-[24px]">{p.name}</div>
                         <div className="text-[10px] tabular-nums text-white/70">{p.seasonPoints ?? 0} pts</div>
@@ -1736,6 +1737,7 @@ function PitchView({
                   >
                     <div className="flex items-center justify-center gap-1">
                       <span className={`rounded-md border px-1 text-[10px] font-bold ${POS_TINT[p.position]}`}>{POSITION_SHORT[p.position]}</span>
+                      <InjuryIcon p={p} />
                     </div>
                     <div className="mt-1 line-clamp-2 min-h-[24px] break-words text-[10px] font-semibold leading-tight text-white">{p.name}</div>
                     <div className="text-[10px] tabular-nums text-white/70">{p.seasonPoints ?? 0} pts</div>
@@ -1779,6 +1781,7 @@ function PitchView({
                   <>
                     <div className="flex items-center justify-center gap-1">
                       <span className="text-[10px] font-bold rounded-md border px-1 bg-slate-700 text-white border-white/20">SUB</span>
+                      <InjuryIcon p={p} />
                     </div>
                     <div className="mt-1 text-[10px] font-semibold leading-tight break-words line-clamp-2 min-h-[24px]">{p.name}</div>
                     <div className="text-[10px] tabular-nums text-muted-foreground">{p.seasonPoints ?? 0} pts</div>
