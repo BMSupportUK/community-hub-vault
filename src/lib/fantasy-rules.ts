@@ -270,7 +270,7 @@ export const SQUAD_RULES: { title: string; body: string }[] = [
   { title: "Match day 11", body: "Each gameweek you name a match day 11 in one of the allowed formations. Only Middlesbrough players available for that fixture can be picked — players who have left the club or gone out on loan can't be selected. Players who join on loan are available and are flagged as loan signings in the player list." },
   { title: "Sub bench", body: `Name ${FANTASY_BENCH_SIZE} subs alongside your 11, for a ${FANTASY_SQUAD_SIZE}-man squad. Sub 1 is reserved for your replacement goalkeeper, so at least ${FANTASY_BENCH_MIN_GK} goalkeeper is always on the bench. The rest of the bench is your call — there is no other position cover to worry about.` },
   { title: "Every gameweek is a fresh pick", body: "Squads don't carry over. Each gameweek starts blank until you pick it, and until the deadline you can change your 11, your bench, your formation, your captain and your vice as often as you like — all free, with no transfer limits or point hits." },
-  { title: "Subs score too", body: "Any starter who doesn't play scores 0. A sub who comes on is scored on the sub points system (+1 for coming on, +1 for 30+ minutes, +1 for a goal or assist) on top of their match stats — unless they play most of the game (60+ minutes), when they're scored exactly like a starter with no sub bonuses. Either way the points are added to your gameweek total. Subs who stay on the bench score 0." },
+  { title: "Subs score too", body: "Appearance points depend on where you named the player: anyone in your match day 11 who features earns 2 points, and a sub who comes off your bench earns 1 point. Everything else — goals, assists, cards, shots, fouls and the rest of the ESPN match stats — is scored exactly the same either way, and the points are added to your gameweek total. Starters who don't play and subs who stay on the bench score 0." },
   { title: "Captain & vice", body: "Your captain scores double. If the captain doesn't play a minute, the vice-captain doubles instead. Both must start." },
   { title: "Two-position players", body: "Some players can play in two positions (for example a forward who can also play in midfield). For those players you must choose the position they score in — nothing is picked for you. A midfield choice pays midfielder points (5 a goal, plus the midfielder clean-sheet point), a forward choice pays forward points. This applies to bench players as well as starters, and your squad can't be saved until every dual-position player has a scoring position selected." },
   { title: "Injuries & availability", body: "Injured, doubtful and suspended players stay pickable but are flagged with a warning — pick them at your own risk, because a player who doesn't feature scores 0. For league games, players outside the club's registered 25-man squad are also flagged." },
@@ -292,10 +292,8 @@ export const SCORING_RULES: {
   starter: string;
   sub: string;
 }[] = [
-  { label: "Appearance", minTime: "1+ sec", starter: "1", sub: "1" },
-  { label: "Played most of the game", minTime: "60+ mins", starter: "2", sub: "2 (scored as a starter — no sub bonuses)" },
-  { label: "Impact sub — time on the pitch", minTime: "30+ mins", starter: "—", sub: "+1" },
-  { label: "Impact sub — goal or assist", minTime: "1+ sec", starter: "—", sub: "+1" },
+  { label: "Appearance — named in your match day 11", minTime: "1+ sec", starter: "2", sub: "—" },
+  { label: "Appearance — comes on from your bench", minTime: "1+ sec", starter: "—", sub: "1" },
   { label: "Named but doesn't get on", minTime: "0 mins", starter: "0", sub: "0" },
   { label: "Goal — goalkeeper or defender", minTime: "1+ sec", starter: "6", sub: "6" },
   { label: "Goal — midfielder", minTime: "1+ sec", starter: "5", sub: "5" },
