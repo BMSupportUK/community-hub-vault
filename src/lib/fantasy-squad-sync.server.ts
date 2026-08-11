@@ -15,6 +15,7 @@ type PlayerRow = {
   name: string;
   position: string;
   shirt_number: number | null;
+  shirt_number_locked?: boolean | null;
   value_m: number | string;
   status: string;
   sort_order: number | null;
