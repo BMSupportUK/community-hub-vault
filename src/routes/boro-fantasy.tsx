@@ -1212,7 +1212,7 @@ function SquadBuilder({
                   )}
                 </div>
                 <div className="text-xs text-muted-foreground">
-                  {gw.dateTbc ? `${kickoffLabel(gw.kickoffAt)} — date/time still to be confirmed` : kickoffLabel(gw.kickoffAt)}
+                  {gw.dateTbc ? `${wcLabel(gw.kickoffAt)} (TBC) — date/time still to be confirmed` : kickoffLabel(gw.kickoffAt)}
                 </div>
               </>
             ) : (
@@ -1234,7 +1234,7 @@ function SquadBuilder({
                         return (
                           <SelectItem key={g.id} value={g.id}>
                             <span className={gLocked ? "line-through text-destructive" : ""}>
-                              GW{g.gwNumber}{g.dateTbc ? " (TBC)" : ""} — {g.homeTeam} v {g.awayTeam} ({g.dateTbc ? `${kickoffLabel(g.kickoffAt)} — TBC` : kickoffLabel(g.kickoffAt)})
+                              GW{g.gwNumber}{g.dateTbc ? " (TBC)" : ""} — {g.homeTeam} v {g.awayTeam} ({gwDateLabel(g)})
                               {gLocked && <span className="ml-1 text-[10px] text-destructive font-semibold">(locked)</span>}
                             </span>
                           </SelectItem>
@@ -2154,7 +2154,7 @@ function GameweekList({ state, group }: { state: FantasyStateDTO; group: Fantasy
                 )}
               </div>
               <div className="text-xs text-muted-foreground">
-                {g.dateTbc ? `${kickoffLabel(g.kickoffAt)} — to be confirmed` : kickoffLabel(g.kickoffAt)} · {g.competition}
+                {gwDateLabel(g)} · {g.competition}
               </div>
             </div>
             {g.homeScore !== null && g.awayScore !== null && (
