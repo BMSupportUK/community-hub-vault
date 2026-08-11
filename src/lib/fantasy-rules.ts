@@ -308,42 +308,46 @@ export const STAT_KEY: {
   stat: string;
   means: string;
   positions: FantasyPosition[];
+  /** Point value shown next to the stat label (uniform across positions). */
+  points?: string;
+  /** Per-position point value override, shown instead of `points` when present. */
   byPosition?: Partial<Record<FantasyPosition, string>>;
 }[] = [
   {
     stat: "G — Goals",
-    means: "Goals scored: 6 pts for a keeper or defender, 5 for a midfielder, 4 for a forward.",
+    means: "Goals scored.",
     positions: ["gk", "def", "mid", "fwd"],
     byPosition: { gk: "6 pts", def: "6 pts", mid: "5 pts", fwd: "4 pts" },
   },
   {
     stat: "A — Assists",
-    means: "All positions: passes or touches that directly set up a team-mate's goal. 3 pts.",
+    means: "Passes or touches that directly set up a team-mate's goal.",
     positions: ["gk", "def", "mid", "fwd"],
+    points: "3 pts",
   },
   {
     stat: "Clean sheet",
-    means: "No goals conceded while on the pitch for 60 minutes or more. Keepers and defenders earn 4 pts, midfielders earn 1 pt.",
+    means: "No goals conceded while on the pitch for 60 minutes or more.",
     positions: ["gk", "def", "mid"],
     byPosition: { gk: "4 pts", def: "4 pts", mid: "1 pt" },
   },
-  { stat: "Cards", means: "Yellow card -1 pt, red card -3 pts.", positions: ["gk", "def", "mid", "fwd"] },
-  { stat: "Penalties", means: "Penalty saved by a keeper +5 pts, penalty missed -2 pts.", positions: ["gk", "def", "mid", "fwd"] },
-  { stat: "OG — Own goals", means: "Goals put into your own net: -2 pts each.", positions: ["gk", "def", "mid", "fwd"] },
-  { stat: "MOTM bonus", means: "Bonus points added for standout / man-of-the-match performances.", positions: ["gk", "def", "mid", "fwd"] },
-  { stat: "SHOT — Shots", means: "Outfield players: every attempt at goal, on or off target. 1 pt per shot.", positions: ["def", "mid", "fwd"] },
-  { stat: "SOG — Shots on Goal", means: "Outfield players: attempts on target — saved, blocked on the line or scored. 1 pt each.", positions: ["def", "mid", "fwd"] },
-  { stat: "BCC — Big Chances Created", means: "Outfield players: passes that handed a team-mate a clear scoring chance. 3 pts each.", positions: ["def", "mid", "fwd"] },
-  { stat: "BCM — Big Chances Missed", means: "Outfield players: clear scoring chances the player failed to convert. -2 pts each.", positions: ["def", "mid", "fwd"] },
-  { stat: "DUELW — Duels Won", means: "Outfield players: ground and aerial contests the player came out on top of. 1 pt per duel won.", positions: ["def", "mid", "fwd"] },
-  { stat: "DINT — Defensive Interventions", means: "Outfield players: tackles, interceptions, blocks and clearances combined. 1 pt per intervention.", positions: ["def", "mid", "fwd"] },
-  { stat: "SOGA — Shots on Goal Against", means: "Goalkeepers only: attempts on target the keeper had to deal with. 1 pt per shot faced.", positions: ["gk"] },
-  { stat: "SV — Saves", means: "Goalkeepers only: shots on target kept out. 1 pt per save.", positions: ["gk"] },
-  { stat: "GA — Goals Conceded", means: "Goalkeepers only: goals Middlesbrough conceded while the keeper was on the pitch. -1 pt per goal conceded.", positions: ["gk"] },
-  { stat: "CC — Crosses Claimed", means: "Goalkeepers only: crosses into the box the keeper gathered cleanly. 1 pt each.", positions: ["gk"] },
-  { stat: "UC — Unclaimed Crosses", means: "Goalkeepers only: crosses the keeper went for but failed to gather. -1 pt each.", positions: ["gk"] },
-  { stat: "KS — Keeper Sweepers", means: "Goalkeepers only: times the keeper came out of the area to clear the danger. 1 pt each.", positions: ["gk"] },
-  { stat: "PASS — Passes", means: "Goalkeepers only: total passes attempted by the keeper. 1 pt per pass.", positions: ["gk"] },
-  { stat: "AC.LONG — Accurate Long Balls", means: "Goalkeepers only: long passes (over roughly 30 yards) that found a team-mate. 1 pt per accurate long ball.", positions: ["gk"] },
-  { stat: "AC.PASS — Accurate Passes", means: "All positions: passes that found a team-mate. 1 pt per accurate pass.", positions: ["gk", "def", "mid", "fwd"] },
+  { stat: "Cards", means: "Yellow card and red card.", positions: ["gk", "def", "mid", "fwd"], points: "−1 / −3 pts" },
+  { stat: "Penalties", means: "Penalty saved by a keeper and penalty missed.", positions: ["gk", "def", "mid", "fwd"], points: "+5 / −2 pts" },
+  { stat: "OG — Own goals", means: "Goals put into your own net.", positions: ["gk", "def", "mid", "fwd"], points: "−2 pts" },
+  { stat: "MOTM bonus", means: "Bonus points added for standout / man-of-the-match performances.", positions: ["gk", "def", "mid", "fwd"], points: "1 pt" },
+  { stat: "SHOT — Shots", means: "Every attempt at goal, on or off target.", positions: ["def", "mid", "fwd"], points: "1 pt" },
+  { stat: "SOG — Shots on Goal", means: "Attempts on target — saved, blocked on the line or scored.", positions: ["def", "mid", "fwd"], points: "1 pt" },
+  { stat: "BCC — Big Chances Created", means: "Passes that handed a team-mate a clear scoring chance.", positions: ["def", "mid", "fwd"], points: "3 pts" },
+  { stat: "BCM — Big Chances Missed", means: "Clear scoring chances the player failed to convert.", positions: ["def", "mid", "fwd"], points: "−2 pts" },
+  { stat: "DUELW — Duels Won", means: "Ground and aerial contests the player came out on top of.", positions: ["def", "mid", "fwd"], points: "1 pt" },
+  { stat: "DINT — Defensive Interventions", means: "Tackles, interceptions, blocks and clearances combined.", positions: ["def", "mid", "fwd"], points: "1 pt" },
+  { stat: "SOGA — Shots on Goal Against", means: "Attempts on target the keeper had to deal with.", positions: ["gk"], points: "1 pt" },
+  { stat: "SV — Saves", means: "Shots on target kept out.", positions: ["gk"], points: "1 pt" },
+  { stat: "GA — Goals Conceded", means: "Goals Middlesbrough conceded while the keeper was on the pitch.", positions: ["gk"], points: "−1 pt" },
+  { stat: "CC — Crosses Claimed", means: "Crosses into the box the keeper gathered cleanly.", positions: ["gk"], points: "1 pt" },
+  { stat: "UC — Unclaimed Crosses", means: "Crosses the keeper went for but failed to gather.", positions: ["gk"], points: "−1 pt" },
+  { stat: "KS — Keeper Sweepers", means: "Times the keeper came out of the area to clear the danger.", positions: ["gk"], points: "1 pt" },
+  { stat: "PASS — Passes", means: "Total passes attempted by the keeper.", positions: ["gk"], points: "1 pt" },
+  { stat: "AC.LONG — Accurate Long Balls", means: "Long passes (over roughly 30 yards) that found a team-mate.", positions: ["gk"], points: "1 pt" },
+  { stat: "AC.PASS — Accurate Passes", means: "Passes that found a team-mate.", positions: ["gk", "def", "mid", "fwd"], points: "1 pt" },
 ];
