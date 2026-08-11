@@ -1880,7 +1880,7 @@ function PlayerPickerDialog({
 // Pitch
 // ------------------------------------------------------------------
 function PitchView({
-  formation, onFormationChange, formationLocked = false, editable, playerById, selected, starters, slotPositions, onSlotPosition, bench, captainId, viceId,
+  formation, onFormationChange, formationLocked = false, editable, dragEnabled = false, playerById, selected, starters, slotPositions, onSlotPosition, bench, captainId, viceId,
   pointsByPlayer, minutesByPlayer, autoSubbedIds, onDropStart, onBench, onRemove, onCaptain, onVice,
   onSlotOpen, gw,
 }: {
@@ -1888,6 +1888,8 @@ function PitchView({
   onFormationChange: (f: FormationKey) => void;
   formationLocked?: boolean;
   editable: boolean;
+  /** Drag and drop is only for late sub swaps, after the first lock. */
+  dragEnabled?: boolean;
   playerById: Map<string, FantasyPlayerDTO>;
   selected: string[];
   starters: (string | null)[];
@@ -1929,9 +1931,9 @@ function PitchView({
   const overflow = selected.filter((id) => !assigned.has(id));
 
   const dropProps = (handler: (playerId: string) => void) => ({
-    onDragOver: (e: ReactDragEvent) => { if (editable) { e.preventDefault(); e.dataTransfer.dropEffect = "move"; } },
+    onDragOver: (e: ReactDragEvent) => { if (dragEnabled) { e.preventDefault(); e.dataTransfer.dropEffect = "move"; } },
     onDrop: (e: ReactDragEvent) => {
-      if (!editable) return;
+      if (!dragEnabled) return;
       e.preventDefault();
       const id = e.dataTransfer.getData("text/fantasy-player");
       if (id) handler(id);
