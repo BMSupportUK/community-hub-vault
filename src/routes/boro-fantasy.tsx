@@ -1170,7 +1170,15 @@ function SquadBuilder({
             {gw ? (
               <>
                 <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-start gap-2">
-                  <span className="min-w-0 break-words font-semibold leading-snug">GW{gw.gwNumber} — {gw.homeTeam} v {gw.awayTeam}</span>
+                  <span className="min-w-0 break-words font-semibold leading-snug">
+                    GW{gw.gwNumber}
+                    {gw.dateTbc && (
+                      <span className="ml-1 rounded-full border border-sky-400/60 bg-sky-400/10 px-1.5 py-0.5 align-middle text-[10px] font-bold uppercase text-sky-300">
+                        TBC
+                      </span>
+                    )}{" "}
+                    — {gw.homeTeam} v {gw.awayTeam}
+                  </span>
                   {gwSaved ? (
                     <span className="inline-flex items-center rounded-full bg-emerald-500/15 px-1.5 py-0.5 text-emerald-400" title="Match day squad saved">
                       <Check className="size-3.5" strokeWidth={3} />
@@ -1184,7 +1192,9 @@ function SquadBuilder({
                     </span>
                   )}
                 </div>
-                <div className="text-xs text-muted-foreground">{gw.dateTbc ? "Date to be confirmed" : kickoffLabel(gw.kickoffAt)}</div>
+                <div className="text-xs text-muted-foreground">
+                  {gw.dateTbc ? `${kickoffLabel(gw.kickoffAt)} — date/time still to be confirmed` : kickoffLabel(gw.kickoffAt)}
+                </div>
               </>
             ) : (
               <>
@@ -1192,7 +1202,7 @@ function SquadBuilder({
                 <div className="text-xs text-muted-foreground">Try out formations and squads now; you can save once the first gameweek opens.</div>
               </>
             )}
-            {openGameweeks.length > 1 && (
+            {openGameweeks.length > 0 && (
               <div className="mt-2">
                 <Select value={gwId} onValueChange={setGwId}>
                   <SelectTrigger className="h-8 w-full text-xs [&>span]:truncate">
@@ -1204,7 +1214,7 @@ function SquadBuilder({
                       return (
                         <SelectItem key={g.id} value={g.id}>
                           <span className={gLocked ? "line-through text-destructive" : ""}>
-                            GW{g.gwNumber} — {g.homeTeam} v {g.awayTeam} ({g.dateTbc ? "date TBC" : kickoffLabel(g.kickoffAt)})
+                            GW{g.gwNumber}{g.dateTbc ? " (TBC)" : ""} — {g.homeTeam} v {g.awayTeam} ({g.dateTbc ? `${kickoffLabel(g.kickoffAt)} — TBC` : kickoffLabel(g.kickoffAt)})
                             {gLocked && <span className="ml-1 text-[10px] text-destructive font-semibold">(locked)</span>}
                           </span>
                         </SelectItem>
