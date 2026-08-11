@@ -1505,6 +1505,7 @@ function PlayerPickerDialog({
                     <span className={`truncate font-medium ${unavailable ? "line-through decoration-2 decoration-destructive text-muted-foreground" : ""}`}>
                       {p.name}
                     </span>
+                    <InjuryIcon p={p} />
                     {(p.squadLevel === "u21" || p.squadLevel === "u18") && (
                       <span className="shrink-0 rounded-md border border-sky-500/40 bg-sky-500/10 px-1 py-0.5 text-[9px] font-bold uppercase tracking-wide text-sky-500">
                         {p.squadLevel === "u21" ? "U21" : "U18"}
@@ -1520,6 +1521,12 @@ function PlayerPickerDialog({
                     )}
                     {p.status !== "loaned_out" && p.loanFrom && (
                       <span className="ml-1 text-amber-500 uppercase">on loan from {p.loanFrom}</span>
+                    )}
+                    {(p.injuryStatus ?? "none") !== "none" && (
+                      <span className={`ml-1 uppercase ${p.injuryStatus === "doubtful" ? "text-amber-500" : "text-red-500"}`}>
+                        {p.injuryStatus === "suspended" ? "suspended" : p.injuryStatus === "doubtful" ? "doubtful" : "injured"}
+                        {p.injuryNote ? ` · ${p.injuryNote}` : ""}
+                      </span>
                     )}
                   </div>
                 </div>
