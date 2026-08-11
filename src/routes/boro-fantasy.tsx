@@ -897,7 +897,7 @@ function SquadBuilder({
       toast.error(`${formation} only needs ${posQuota[p.position]} ${POSITION_SHORT[p.position]}s (XI + bench).`);
       return null;
     }
-    if ((p.injuryStatus ?? "none") !== "none") {
+    if ((p.injuryStatus ?? "none") !== "none" && !injuryClearedBy(p, gw && !gw.dateTbc ? gw.kickoffAt : null)) {
       const label = p.injuryStatus === "suspended" ? "suspended" : p.injuryStatus === "doubtful" ? "a doubt" : "injured";
       toast.warning(`${p.name} is ${label}${p.injuryNote ? ` (${p.injuryNote})` : ""} — pick at your own risk.`);
     }
@@ -1361,6 +1361,7 @@ function SquadBuilder({
         players={state.players}
         selected={selected}
         leagueGame={isLeagueGw}
+        kickoffAt={gw && !gw.dateTbc ? gw.kickoffAt : null}
         positions={
           picker && picker.mode === "xi"
             ? picker.positions
@@ -1424,6 +1425,20 @@ function outOf25(p: FantasyPlayerDTO): boolean {
 }
 
 /**
+ * Injuries are stamped with an expected return date. When picking a squad for a
+ * future gameweek, a player whose return date falls on or before that kick-off
+ * is expected back for that game — so we shouldn't scream OUT at the manager.
+ */
+function injuryClearedBy(p: FantasyPlayerDTO, kickoffAt?: string | null): boolean {
+  if ((p.injuryStatus ?? "none") === "none") return false;
+  if (!p.injuryReturn || !kickoffAt) return false;
+  const back = Date.parse(p.injuryReturn);
+  const ko = Date.parse(kickoffAt);
+  if (!Number.isFinite(back) || !Number.isFinite(ko)) return false;
+  return back <= ko;
+}
+
+/**
  * Injury / suspension flag. Shown on the pitch, bench and player picker.
  * Injured players stay selectable — the icon is a warning, not a block.
  */
@@ -1431,14 +1446,31 @@ function InjuryIcon({
   p,
   className = "",
   label = true,
+  kickoffAt,
 }: {
   p: FantasyPlayerDTO;
   className?: string;
   /** Show the wording next to the icon (off where the row already spells it out). */
   label?: boolean;
+  /** Kick-off of the gameweek being picked — used to fade flags they're due back for. */
+  kickoffAt?: string | null;
 }) {
   const s = p.injuryStatus ?? "none";
   if (s === "none") return null;
+  const cleared = injuryClearedBy(p, kickoffAt);
+  if (cleared) {
+    const t = `Due back ${p.injuryReturn} — expected available for this game${p.injuryNote ? ` (${p.injuryNote})` : ""}`;
+    return (
+      <span
+        title={t}
+        aria-label={t}
+        className={`inline-flex shrink-0 items-center gap-0.5 rounded-md border border-emerald-300 bg-emerald-600 px-1 py-[1px] text-[9px] font-extrabold uppercase leading-none tracking-wide text-white shadow-sm ${className}`}
+      >
+        <Check className="size-2.5" strokeWidth={3} />
+        BACK
+      </span>
+    );
+  }
   const bits = [
     s === "suspended" ? "Suspended" : s === "doubtful" ? "Doubtful" : "Injured — out",
     p.injuryNote || null,
@@ -1479,7 +1511,7 @@ function InjuryIcon({
  * bench slot (every remaining player), split into First team / U21 / U18 tabs.
  */
 function PlayerPickerDialog({
-  open, onOpenChange, players, selected, positions, title, onPick, leagueGame = true,
+  open, onOpenChange, players, selected, positions, title, onPick, leagueGame = true, kickoffAt,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
@@ -1490,6 +1522,8 @@ function PlayerPickerDialog({
   onPick: (p: FantasyPlayerDTO) => void;
   /** League games only use the 25-man squad; cup ties are open to anyone. */
   leagueGame?: boolean;
+  /** Kick-off of the gameweek being picked, so injuries they're due back for read as available. */
+  kickoffAt?: string | null;
 }) {
   const [q, setQ] = useState("");
   const [level, setLevel] = useState<PickerLevel>("first");
@@ -1560,7 +1594,7 @@ function PlayerPickerDialog({
                       {p.name}
                     </span>
                     <ShirtNumber n={p.shirtNumber} />
-                    <InjuryIcon p={p} />
+                    <InjuryIcon p={p} kickoffAt={kickoffAt} />
                     {(p.squadLevel === "u21" || p.squadLevel === "u18") && (
                       <span className="shrink-0 rounded-md border border-sky-500/40 bg-sky-500/10 px-1 py-0.5 text-[9px] font-bold uppercase tracking-wide text-sky-500">
                         {p.squadLevel === "u21" ? "U21" : "U18"}
@@ -1577,13 +1611,17 @@ function PlayerPickerDialog({
                     {p.status !== "loaned_out" && p.loanFrom && (
                       <span className="ml-1 text-amber-500 uppercase">on loan from {p.loanFrom}</span>
                     )}
-                    {(p.injuryStatus ?? "none") !== "none" && (
+                    {(p.injuryStatus ?? "none") !== "none" && (injuryClearedBy(p, kickoffAt) ? (
+                      <span className="ml-1 uppercase text-emerald-500">
+                        due back {p.injuryReturn} · expected available
+                      </span>
+                    ) : (
                       <span className={`ml-1 uppercase ${p.injuryStatus === "doubtful" ? "text-amber-500" : "text-red-500"}`}>
                         {p.injuryStatus === "suspended" ? "suspended" : p.injuryStatus === "doubtful" ? "doubtful" : "injured"}
                         {p.injuryNote ? ` · ${p.injuryNote}` : ""}
                         {p.injuryReturn ? ` · back ${p.injuryReturn}` : ""}
                       </span>
-                    )}
+                    ))}
                   </div>
                   {leagueGame && outOf25(p) && (
                     <div className="text-[10px] font-semibold uppercase leading-tight text-amber-500">
@@ -1644,6 +1682,8 @@ function PitchView({
   const rows = formationRows(formation);
   /** 25-man squad restriction applies to league games only — cup ties are open. */
   const leagueGame = gw ? fantasyCompetitionGroup(gw.competition) === "league" : true;
+  /** Kick-off of this gameweek — injuries with an earlier return date read as available. */
+  const gwKickoff = gw && !gw.dateTbc ? gw.kickoffAt : null;
 
   // Starters are stored as a fixed-length array mapped directly to pitch slots
   // (row order, left-to-right). This keeps every player in the same slot when
@@ -1727,7 +1767,7 @@ function PitchView({
                           <ShirtNumber n={p.shirtNumber} className="text-white" />
                           {captainId === p.id && <Crown className="size-3.5 text-amber-400" />}
                           {viceId === p.id && <Star className="size-3.5 text-sky-300" />}
-                          <InjuryIcon p={p} />
+                          <InjuryIcon p={p} kickoffAt={gwKickoff} />
                         </div>
                         <div className="mt-1 text-[10px] font-semibold leading-tight text-white break-words line-clamp-2 min-h-[24px]">{p.name}</div>
                         {leagueGame && outOf25(p) && (
@@ -1805,7 +1845,7 @@ function PitchView({
                     <div className="flex items-center justify-center gap-1">
                       <span className={`rounded-md border px-1 text-[10px] font-bold ${POS_TINT[p.position]}`}>{POSITION_SHORT[p.position]}</span>
                       <ShirtNumber n={p.shirtNumber} className="text-white" />
-                      <InjuryIcon p={p} />
+                      <InjuryIcon p={p} kickoffAt={gwKickoff} />
                     </div>
                     <div className="mt-1 line-clamp-2 min-h-[24px] break-words text-[10px] font-semibold leading-tight text-white">{p.name}</div>
                     {leagueGame && outOf25(p) && (
@@ -1853,7 +1893,7 @@ function PitchView({
                     <div className="flex items-center justify-center gap-1">
                       <span className="text-[10px] font-bold rounded-md border px-1 bg-slate-700 text-white border-white/20">SUB</span>
                       <ShirtNumber n={p.shirtNumber} />
-                      <InjuryIcon p={p} />
+                      <InjuryIcon p={p} kickoffAt={gwKickoff} />
                     </div>
                     <div className="mt-1 text-[10px] font-semibold leading-tight break-words line-clamp-2 min-h-[24px]">{p.name}</div>
                     {leagueGame && outOf25(p) && (
