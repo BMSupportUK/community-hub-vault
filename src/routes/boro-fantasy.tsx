@@ -2394,7 +2394,11 @@ function BenchPanel({
                       <ShirtNumber n={p.shirtNumber} className="text-[10px] font-black text-white border-white/60" />
                       <InjuryIcon p={p} kickoffAt={gwKickoff} />
                     </div>
-                    <div className="mt-1.5 text-[10px] font-semibold leading-tight break-words line-clamp-2 min-h-[24px]">{p.name}</div>
+                    <PlayerNameButton
+                      playerId={p.id}
+                      name={p.name}
+                      className="mt-1.5 block text-center text-[10px] font-semibold leading-tight break-words line-clamp-2 min-h-[24px]"
+                    />
                     {(() => {
                       // Subs are scored in the role they were named in; a
                       // two-position sub lets the manager choose which.
