@@ -473,7 +473,7 @@ function BoroFantasyPage() {
             </div>
           )}
 
-          <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-6">
+          <div className="w-full">
             <Tabs value={tab} onValueChange={setTab} className="w-full">
               <TabsList className="grid grid-cols-3 sm:grid-cols-6 w-full h-auto gap-0 p-0 rounded-none">
                 <TabsTrigger value="squad" className="w-full rounded-none">My squad</TabsTrigger>
