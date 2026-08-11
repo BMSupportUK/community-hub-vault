@@ -2519,7 +2519,124 @@ function LeaderboardTable({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      <EntrantSquadDialog
+        row={viewing}
+        gameweeks={lockedGws}
+        onClose={() => setViewing(null)}
+      />
     </div>
+  );
+}
+
+/** View a rival manager's squad for any gameweek that has already locked. */
+function EntrantSquadDialog({
+  row,
+  gameweeks,
+  onClose,
+}: {
+  row: FantasyLeaderboardRow | null;
+  gameweeks: FantasyGameweekDTO[];
+  onClose: () => void;
+}) {
+  const squadFn = useServerFn(getEntrantFantasySquad);
+  const [gwId, setGwId] = useState<string>("");
+  useEffect(() => {
+    if (row) setGwId(gameweeks[0]?.id ?? "");
+  }, [row, gameweeks]);
+
+  const query = useQuery<EntrantSquadViewDTO>({
+    queryKey: ["fantasy-entrant-squad", row?.entrantId ?? null, gwId],
+    queryFn: () =>
+      squadFn({ data: { entrantId: row!.entrantId, isGuest: row!.isGuest, gameweekId: gwId } }),
+    enabled: !!row && !!gwId,
+    staleTime: 10_000,
+  });
+
+  const gw = gameweeks.find((g) => g.id === gwId) ?? null;
+  const data = query.data;
+  const starters = (data?.picks ?? []).filter((p) => p.isStarter);
+  const bench = (data?.picks ?? []).filter((p) => !p.isStarter);
+
+  const pickRow = (p: EntrantSquadViewDTO["picks"][number], idx: number) => (
+    <li key={p.playerId} className="flex items-center gap-2 border-t border-border/40 px-3 py-2 first:border-t-0">
+      <span className="w-5 text-xs tabular-nums text-muted-foreground">{idx + 1}</span>
+      <Shirt className={`size-4 shrink-0 ${p.position === "gk" ? "text-emerald-400" : "text-red-500"}`} />
+      <span className="w-7 text-xs tabular-nums text-muted-foreground">
+        {p.shirtNumber ? `#${p.shirtNumber}` : "—"}
+      </span>
+      <span className="min-w-0 flex-1 truncate text-sm font-medium">{p.name}</span>
+      {p.isCaptain && <Crown className="size-3.5 text-amber-400" title="Captain" />}
+      {p.isVice && <Star className="size-3.5 text-sky-400" title="Vice captain" />}
+      {p.autoSubbed && (
+        <span className="rounded bg-primary/15 px-1.5 py-0.5 text-[10px] font-semibold text-primary">SUB IN</span>
+      )}
+      <span className="w-14 shrink-0 text-right text-[11px] uppercase text-muted-foreground">
+        {POSITION_SHORT[(p.pickedPosition ?? p.position) as FantasyPosition]}
+      </span>
+      <span className="w-10 shrink-0 text-right text-sm font-bold tabular-nums text-primary">
+        {p.points ?? "—"}
+      </span>
+    </li>
+  );
+
+  return (
+    <Dialog open={!!row} onOpenChange={(o) => { if (!o) onClose(); }}>
+      <DialogContent className="sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>{row?.teamName || "Unnamed FC"} — match day squad</DialogTitle>
+          <DialogDescription>
+            {row?.displayName || row?.username || "Guest"} · squads are only visible once the gameweek has locked.
+          </DialogDescription>
+        </DialogHeader>
+
+        <Select value={gwId} onValueChange={setGwId}>
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Choose a locked gameweek" />
+          </SelectTrigger>
+          <SelectContent>
+            {gameweeks.map((g) => (
+              <SelectItem key={g.id} value={g.id}>
+                GW{g.gwNumber} — {g.homeTeam} v {g.awayTeam}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        {query.isLoading ? (
+          <div className="flex items-center justify-center py-8"><Loader2 className="size-5 animate-spin" /></div>
+        ) : query.error ? (
+          <p className="rounded-lg border border-border/60 bg-muted/30 p-4 text-sm text-muted-foreground">
+            {(query.error as any)?.message ?? "Could not load that squad."}
+          </p>
+        ) : !data?.found ? (
+          <p className="rounded-lg border border-border/60 bg-muted/30 p-4 text-sm text-muted-foreground">
+            No squad was submitted for {gw ? `GW${gw.gwNumber}` : "this gameweek"}.
+          </p>
+        ) : (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between rounded-lg border border-border/60 bg-muted/30 px-3 py-2 text-xs">
+              <span className="font-semibold uppercase tracking-wide text-muted-foreground">
+                Formation {data.formation ?? "—"}
+              </span>
+              <span>
+                Hits <span className="font-bold tabular-nums">{data.transferCost}</span> · Points{" "}
+                <span className="font-bold tabular-nums text-primary">{data.points ?? "—"}</span>
+              </span>
+            </div>
+            <div>
+              <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Starting 11</p>
+              <ul className="rounded-lg border border-border/60 bg-card/60">{starters.map(pickRow)}</ul>
+            </div>
+            {bench.length > 0 && (
+              <div>
+                <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Bench</p>
+                <ul className="rounded-lg border border-border/60 bg-card/60">{bench.map(pickRow)}</ul>
+              </div>
+            )}
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 }
 
