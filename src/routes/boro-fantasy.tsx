@@ -473,12 +473,9 @@ function BoroFantasyPage() {
 
           <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-6">
             <Tabs value={tab} onValueChange={setTab}>
-              <TabsList className="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-9 w-full h-auto gap-1 p-1">
+              <TabsList className="grid grid-cols-3 sm:grid-cols-6 w-full h-auto gap-1 p-1">
                 <TabsTrigger value="squad">My squad</TabsTrigger>
                 <TabsTrigger value="rules">Game rules</TabsTrigger>
-                <TabsTrigger value="gameweeks">League games</TabsTrigger>
-                <TabsTrigger value="cup">Cup games</TabsTrigger>
-                <TabsTrigger value="playoff">Play-off games</TabsTrigger>
                 <TabsTrigger value="transfers">Transfers</TabsTrigger>
                 <TabsTrigger value="leaderboard">Leaderboard</TabsTrigger>
                 <TabsTrigger value="scoring">Scoring</TabsTrigger>
@@ -501,18 +498,6 @@ function BoroFantasyPage() {
 
               <TabsContent value="rules" className="mt-4">
                 <SquadRulesTab />
-              </TabsContent>
-
-              <TabsContent value="gameweeks" className="mt-4">
-                {stateQuery.isLoading || !state ? <Loading /> : <GameweekList state={state} group="league" />}
-              </TabsContent>
-
-              <TabsContent value="cup" className="mt-4">
-                {stateQuery.isLoading || !state ? <Loading /> : <GameweekList state={state} group="cup" />}
-              </TabsContent>
-
-              <TabsContent value="playoff" className="mt-4">
-                {stateQuery.isLoading || !state ? <Loading /> : <GameweekList state={state} group="playoff" />}
               </TabsContent>
 
               <TabsContent value="transfers" className="mt-4">
