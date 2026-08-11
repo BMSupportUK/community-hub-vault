@@ -1431,7 +1431,6 @@ function SquadBuilder({
           {gameweekPanel}
         </div>
       </div>
-      </div>
 
       <PlayerPickerDialog
         open={!!picker}
