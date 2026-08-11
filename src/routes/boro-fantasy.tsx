@@ -1022,9 +1022,17 @@ function SquadBuilder({
 
   function removePlayer(id: string) {
     if (!editable) return;
+    const slotIdx = starters.indexOf(id);
+    const benchIdx = bench.indexOf(id);
     setSelected((prev) => prev.filter((x) => x !== id));
     setStarters((prev) => prev.map((x) => (x === id ? null : x)));
     setBench((prev) => prev.map((x) => (x === id ? null : x)));
+    if (slotIdx !== -1) {
+      setSlotPositions((prev) => { const next = [...prev]; next[slotIdx] = null; return next; });
+    }
+    if (benchIdx !== -1) {
+      setBenchPositions((prev) => { const next = [...prev]; next[benchIdx] = null; return next; });
+    }
   }
 
   function benchPlayer(id: string) {
@@ -1035,7 +1043,11 @@ function SquadBuilder({
       toast.error("Sub 1 must be the replacement goalkeeper — pick a GK first.");
       return;
     }
+    const slotIdx = starters.indexOf(id);
     setStarters((prev) => prev.map((x) => (x === id ? null : x)));
+    if (slotIdx !== -1) {
+      setSlotPositions((prev) => { const next = [...prev]; next[slotIdx] = null; return next; });
+    }
     benchAddById(id);
   }
 
@@ -1052,12 +1064,16 @@ function SquadBuilder({
 
     // Remove the player from anywhere else they were already assigned.
     const existingSlot = st.indexOf(p.id);
-    if (existingSlot !== -1) st[existingSlot] = null;
+    if (existingSlot !== -1) {
+      st[existingSlot] = null;
+      setSlotPositions((prev) => { const next = [...prev]; next[existingSlot] = null; return next; });
+    }
     setBench((prev) => {
       const i = prev.indexOf(p.id);
       if (i === -1) return prev;
       const next = [...prev];
       next[i] = null;
+      setBenchPositions((bp) => { const bnext = [...bp]; bnext[i] = null; return bnext; });
       return next;
     });
 
@@ -1076,6 +1092,8 @@ function SquadBuilder({
     st[idx] = p.id;
     setSelected(nextSel);
     setStarters(st);
+    // The manager must explicitly choose the scoring position for this slot.
+    setSlotPositions((prev) => { const next = [...prev]; next[idx] = null; return next; });
   }
 
   /** Add a player to the bench into the first empty slot. Sub 1 is reserved for the replacement GK. */
@@ -1083,31 +1101,36 @@ function SquadBuilder({
     if (!editable) return;
     const sel = withPlayer(selected, p);
     if (!sel) return;
+    const slotIdx = starters.indexOf(p.id);
     setSelected(sel);
     setStarters((prev) => prev.map((x) => (x === p.id ? null : x)));
+    if (slotIdx !== -1) {
+      setSlotPositions((prev) => { const next = [...prev]; next[slotIdx] = null; return next; });
+    }
     benchAddById(p.id);
   }
 
   function benchAddById(id: string) {
-    setBench((prev) => {
-      const p = playerById.get(id);
-      if (!p) return prev;
-      // Sub 1 is reserved for goalkeepers.
-      if (p.position === "gk") {
-        if (prev[0] && prev[0] !== id) {
-          toast.error("Sub 1 is reserved for the replacement goalkeeper.");
-          return prev;
-        }
-        const next = [...prev];
-        next[0] = id;
-        return next;
+    const p = playerById.get(id);
+    if (!p) return;
+    let targetIndex = -1;
+    if (p.position === "gk") {
+      if (bench[0] && bench[0] !== id) {
+        toast.error("Sub 1 is reserved for the replacement goalkeeper.");
+        return;
       }
-      const empty = prev.findIndex((x, i) => x === null && i > 0);
-      if (empty === -1) return prev;
+      targetIndex = 0;
+    } else {
+      targetIndex = bench.findIndex((x, i) => x === null && i > 0);
+      if (targetIndex === -1) return;
+    }
+    setBench((prev) => {
       const next = [...prev];
-      next[empty] = id;
+      next[targetIndex] = id;
       return next;
     });
+    // Make the manager explicitly pick a scoring position for this bench slot.
+    setBenchPositions((prev) => { const next = [...prev]; next[targetIndex] = null; return next; });
   }
 
   /** Put a player on an exact bench slot (from the sub pop-box) — never shuffle others. */
@@ -1948,13 +1971,11 @@ function PitchView({
                         <div className="mt-1 text-[10px] font-semibold leading-tight text-white break-words line-clamp-2 min-h-[24px]">{p.name}</div>
                         {(() => {
                           // Two-position players are scored in the role of the slot
-                          // they fill; on a flexible slot the manager picks which.
+                          // they fill; on a flexible slot the manager must pick which.
                           const eligible = playerPositions(p).filter((pos) => row.positions.includes(pos));
                           const chosen = slotPositions?.[slotIndex] ?? null;
-                          const scoringAs =
-                            (chosen && eligible.includes(chosen) ? chosen : null) ??
-                            resolveSlotPosition(row.positions, p) ??
-                            p.position;
+                          const explicit = chosen && eligible.includes(chosen) ? chosen : null;
+                          const scoringAs = explicit ?? resolveSlotPosition(row.positions, p) ?? p.position;
                           if (eligible.length > 1 && editable && onSlotPosition) {
                              return (
                                 <div className="mt-1 flex flex-wrap items-center justify-center gap-x-1 gap-y-0.5">
@@ -1966,7 +1987,7 @@ function PitchView({
                                     title={`Score ${p.name} as a ${POSITION_LABEL[pos].toLowerCase()}`}
                                     onClick={() => onSlotPosition(slotIndex, pos)}
                                     className={`rounded border px-1 text-[9px] font-bold uppercase ${
-                                      scoringAs === pos
+                                      explicit === pos
                                         ? "border-emerald-400/70 bg-emerald-500/25 text-emerald-100"
                                         : "border-white/30 bg-white/5 text-white/60 hover:text-white"
                                     }`}
@@ -2158,7 +2179,8 @@ function BenchPanel({
                       // two-position sub lets the manager choose which.
                       const eligible = playerPositions(p);
                       const chosen = benchPositions?.[i] ?? null;
-                      const scoringAs = chosen && eligible.includes(chosen) ? chosen : p.position;
+                      const explicit = chosen && eligible.includes(chosen) ? chosen : null;
+                      const scoringAs = explicit ?? p.position;
                       if (eligible.length > 1 && editable && onBenchPosition) {
                         return (
                           <div className="mt-1 flex flex-wrap items-center justify-center gap-x-1 gap-y-0.5">
@@ -2172,7 +2194,7 @@ function BenchPanel({
                                 title={`Score ${p.name} as a ${POSITION_LABEL[pos].toLowerCase()}`}
                                 onClick={(e) => { e.stopPropagation(); onBenchPosition(i, pos); }}
                                 className={`rounded border px-1 text-[9px] font-bold uppercase ${
-                                  scoringAs === pos
+                                  explicit === pos
                                     ? "border-emerald-500/70 bg-emerald-500/20 text-emerald-400"
                                     : "border-border/70 bg-muted/30 text-muted-foreground hover:text-foreground"
                                 }`}
