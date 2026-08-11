@@ -411,7 +411,7 @@ export async function saveSquad(admin: any, owner: Owner, input: SaveSquadInput)
   if (swapOnly) {
     const { data: lockedSquad } = await admin
       .from("fantasy_squads")
-      .select("picks:fantasy_squad_picks(player_id)")
+      .select("formation, picks:fantasy_squad_picks(player_id)")
       .eq("gameweek_id", input.gameweekId)
       .eq(ownerCol(owner), ownerVal(owner))
       .maybeSingle();
@@ -425,6 +425,11 @@ export async function saveSquad(admin: any, owner: Owner, input: SaveSquadInput)
     if (submitted.length !== named.size || submitted.some((id) => !named.has(id))) {
       throw new Error(
         `The gameweek has locked — you can only swap subs into your XI now, not change players. Swaps close ${FANTASY_FINAL_SWAP_MINUTES} minutes before kick-off.`,
+      );
+    }
+    if ((lockedSquad as any).formation && input.formation !== (lockedSquad as any).formation) {
+      throw new Error(
+        `The gameweek has locked — your formation is fixed at ${(lockedSquad as any).formation}. You can only swap subs into your XI now.`,
       );
     }
   }
