@@ -1450,6 +1450,7 @@ function SquadBuilder({
               onFormationChange={(f) => setFormation(f)}
               formationLocked={swapOnly}
               editable={editable}
+              dragEnabled={editable && swapOnly}
               playerById={playerById}
               selected={selected}
               starters={starters}
@@ -1531,6 +1532,7 @@ function SquadBuilder({
         </aside>
           <BenchPanel
             editable={editable}
+            dragEnabled={editable && swapOnly}
             playerById={playerById}
             bench={bench}
             benchPositions={benchPositions}
@@ -1880,7 +1882,7 @@ function PlayerPickerDialog({
 // Pitch
 // ------------------------------------------------------------------
 function PitchView({
-  formation, onFormationChange, formationLocked = false, editable, playerById, selected, starters, slotPositions, onSlotPosition, bench, captainId, viceId,
+  formation, onFormationChange, formationLocked = false, editable, dragEnabled = false, playerById, selected, starters, slotPositions, onSlotPosition, bench, captainId, viceId,
   pointsByPlayer, minutesByPlayer, autoSubbedIds, onDropStart, onBench, onRemove, onCaptain, onVice,
   onSlotOpen, gw,
 }: {
@@ -1888,6 +1890,8 @@ function PitchView({
   onFormationChange: (f: FormationKey) => void;
   formationLocked?: boolean;
   editable: boolean;
+  /** Drag and drop is only for late sub swaps, after the first lock. */
+  dragEnabled?: boolean;
   playerById: Map<string, FantasyPlayerDTO>;
   selected: string[];
   starters: (string | null)[];
@@ -1929,9 +1933,9 @@ function PitchView({
   const overflow = selected.filter((id) => !assigned.has(id));
 
   const dropProps = (handler: (playerId: string) => void) => ({
-    onDragOver: (e: ReactDragEvent) => { if (editable) { e.preventDefault(); e.dataTransfer.dropEffect = "move"; } },
+    onDragOver: (e: ReactDragEvent) => { if (dragEnabled) { e.preventDefault(); e.dataTransfer.dropEffect = "move"; } },
     onDrop: (e: ReactDragEvent) => {
-      if (!editable) return;
+      if (!dragEnabled) return;
       e.preventDefault();
       const id = e.dataTransfer.getData("text/fantasy-player");
       if (id) handler(id);
@@ -1994,7 +1998,7 @@ function PitchView({
                   <div
                     key={`${ri}-${si}`}
                     {...dropProps((dragged) => onDropStart(dragged, slotIndex, id ?? undefined))}
-                    draggable={editable && !!id}
+                    draggable={dragEnabled && !!id}
                     onDragStart={(e) => { if (id) e.dataTransfer.setData("text/fantasy-player", id); }}
                     onClick={() => { if (editable && !id) onSlotOpen(row.positions, slotIndex); }}
                     role={editable && !id ? "button" : undefined}
@@ -2120,7 +2124,7 @@ function PitchView({
                 return (
                   <div
                     key={id}
-                    draggable={editable}
+                    draggable={dragEnabled}
                     onDragStart={(e) => e.dataTransfer.setData("text/fantasy-player", id)}
                     className="min-w-[68px] max-w-[120px] flex-1 rounded-xl border border-white/40 bg-slate-950/70 px-1.5 py-2 text-center"
                   >
@@ -2158,10 +2162,12 @@ function PitchView({
 
 /** Substitutes panel — lives beside the pitch so it can sit in its own column. */
 function BenchPanel({
-  editable, playerById, bench, benchPositions, onBenchPosition, benchSize, pointsByPlayer, minutesByPlayer, autoSubbedIds,
+  editable, dragEnabled = false, playerById, bench, benchPositions, onBenchPosition, benchSize, pointsByPlayer, minutesByPlayer, autoSubbedIds,
   onDropStart, onDropBench, onRemove, onBenchSlotOpen, gw,
 }: {
   editable: boolean;
+  /** Drag and drop is only for late sub swaps, after the first lock. */
+  dragEnabled?: boolean;
   playerById: Map<string, FantasyPlayerDTO>;
   bench: (string | null)[];
   benchPositions?: (FantasyPosition | null)[];
@@ -2179,9 +2185,9 @@ function BenchPanel({
   const leagueGame = gw ? fantasyCompetitionGroup(gw.competition) === "league" : true;
   const gwKickoff = gw ? gw.kickoffAt : null;
   const dropProps = (handler: (playerId: string) => void) => ({
-    onDragOver: (e: ReactDragEvent) => { if (editable) { e.preventDefault(); e.dataTransfer.dropEffect = "move"; } },
+    onDragOver: (e: ReactDragEvent) => { if (dragEnabled) { e.preventDefault(); e.dataTransfer.dropEffect = "move"; } },
     onDrop: (e: ReactDragEvent) => {
-      if (!editable) return;
+      if (!dragEnabled) return;
       e.preventDefault();
       const id = e.dataTransfer.getData("text/fantasy-player");
       if (id) handler(id);
@@ -2200,7 +2206,7 @@ function BenchPanel({
               <div
                 key={i}
                 {...dropProps(onDropBench)}
-                draggable={editable && !!id}
+                draggable={dragEnabled && !!id}
                 onDragStart={(e) => { if (id) e.dataTransfer.setData("text/fantasy-player", id); }}
                 onClick={() => { if (editable && !id) onBenchSlotOpen(i); }}
                 role={editable && !id ? "button" : undefined}
