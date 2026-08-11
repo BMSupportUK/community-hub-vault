@@ -1840,39 +1840,16 @@ function PitchView({
                         </div>
                         <div className="mt-1 text-[10px] font-semibold leading-tight text-white break-words line-clamp-2 min-h-[24px]">{p.name}</div>
                         {(() => {
-                          // Two-position players are scored in the role of the slot
-                          // they fill; on a flexible slot the manager picks which.
-                          const eligible = playerPositions(p).filter((pos) => row.positions.includes(pos));
-                          const chosen = slotPositions?.[slotIndex] ?? null;
-                          const scoringAs =
-                            (chosen && eligible.includes(chosen) ? chosen : null) ??
-                            resolveSlotPosition(row.positions, p) ??
-                            p.position;
-                          if (eligible.length > 1 && editable && onSlotPosition) {
-                            return (
-                              <div className="mt-1 flex items-center justify-center gap-0.5">
-                                {eligible.map((pos) => (
-                                  <button
-                                    key={pos}
-                                    type="button"
-                                    title={`Score ${p.name} as a ${POSITION_LABEL[pos].toLowerCase()}`}
-                                    onClick={() => onSlotPosition(slotIndex, pos)}
-                                    className={`rounded border px-1 text-[9px] font-bold uppercase ${
-                                      scoringAs === pos
-                                        ? "border-emerald-400/70 bg-emerald-500/25 text-emerald-100"
-                                        : "border-white/30 bg-white/5 text-white/60 hover:text-white"
-                                    }`}
-                                  >
-                                    {POSITION_SHORT[pos]}
-                                  </button>
-                                ))}
-                              </div>
-                            );
-                          }
+                          // A two-position player is scored automatically in the
+                          // role of the slot he was dropped into — a forward put in
+                          // midfield picks up midfield points.
+                          const scoringAs = resolveSlotPosition(row.positions, p) ?? p.position;
                           return (
-                            <div className="mt-0.5 text-[9px] font-bold uppercase tracking-wide text-white/60">
-                              Scores as {POSITION_SHORT[scoringAs]}
-                            </div>
+                            playerPositions(p).length > 1 ? (
+                              <div className="mt-0.5 text-[9px] font-bold uppercase tracking-wide text-white/60">
+                                Scores as {POSITION_SHORT[scoringAs]}
+                              </div>
+                            ) : null
                           );
                         })()}
                         {leagueGame && outOf25(p) && (
