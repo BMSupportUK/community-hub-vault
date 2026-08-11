@@ -107,7 +107,8 @@ function AdminFantasySquadNumbersPage() {
 
       <p className="text-sm text-muted-foreground">
         Every player in the MFC Fantasy Manager pool. Set or change a squad number here and it is
-        locked — the automatic club squad sync will never overwrite it. Leave blank for no number.
+        locked — the automatic club squad sync will never overwrite it. Enter "-" (or leave blank) to
+        clear the number, meaning the player is not in the squad numbers.
       </p>
 
       <Input
