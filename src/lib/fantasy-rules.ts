@@ -116,6 +116,47 @@ export function slotPositionLabel(positions: FantasyPosition[]): string {
 }
 
 /**
+ * Every position a player can be picked in: their listed position plus an
+ * optional second position (e.g. a forward who can also play in midfield).
+ */
+export function playerPositions(p: {
+  position: FantasyPosition;
+  altPosition?: FantasyPosition | null;
+}): FantasyPosition[] {
+  return p.altPosition && p.altPosition !== p.position ? [p.position, p.altPosition] : [p.position];
+}
+
+/** Short badge label for a player, showing a second position when they have one. */
+export function playerPositionLabel(p: {
+  position: FantasyPosition;
+  altPosition?: FantasyPosition | null;
+}): string {
+  return playerPositions(p).map((x) => POSITION_SHORT[x]).join("/");
+}
+
+/**
+ * Can these 11 players be arranged into the formation? Dual-position players
+ * can fill either of their lines, so the shape is checked by trying every
+ * assignment rather than counting listed positions.
+ */
+export function xiFitsFormation(formation: string, sets: FantasyPosition[][]): boolean {
+  const range = formationPositionRange(formation);
+  const order: FantasyPosition[] = ["gk", "def", "mid", "fwd"];
+  const counts: Record<FantasyPosition, number> = { gk: 0, def: 0, mid: 0, fwd: 0 };
+  const dfs = (i: number): boolean => {
+    if (i === sets.length) return order.every((pos) => counts[pos] >= range[pos].min && counts[pos] <= range[pos].max);
+    for (const pos of sets[i]) {
+      if (counts[pos] >= range[pos].max) continue;
+      counts[pos]++;
+      if (dfs(i + 1)) return true;
+      counts[pos]--;
+    }
+    return false;
+  };
+  return dfs(0);
+}
+
+/**
  * Outfield shape of the starting XI (always 1 GK).
  * `rows` describes how the XI is drawn on the pitch, back to front.
  */
