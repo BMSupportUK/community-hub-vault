@@ -67,7 +67,9 @@ export const getEntrantFantasySquad = createServerFn({ method: "GET" })
     if (!squad) return { found: false, formation: null, points: null, transferCost: 0, picks: [] };
 
     const s = squad as any;
-    const ids = [...new Set((s.picks ?? []).map((p: any) => p.player_id as string))];
+    const ids: string[] = [
+      ...new Set(((s.picks ?? []) as any[]).map((p) => p.player_id as string)),
+    ];
     const { data: players } = ids.length
       ? await admin.from("fantasy_players").select("id, name, shirt_number, position").in("id", ids)
       : { data: [] as any[] };
