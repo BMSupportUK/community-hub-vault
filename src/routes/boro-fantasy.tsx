@@ -2075,12 +2075,14 @@ function PitchView({
 
 /** Substitutes panel — lives beside the pitch so it can sit in its own column. */
 function BenchPanel({
-  editable, playerById, bench, benchSize, pointsByPlayer, minutesByPlayer, autoSubbedIds,
+  editable, playerById, bench, benchPositions, onBenchPosition, benchSize, pointsByPlayer, minutesByPlayer, autoSubbedIds,
   onDropStart, onDropBench, onRemove, onBenchSlotOpen, gw,
 }: {
   editable: boolean;
   playerById: Map<string, FantasyPlayerDTO>;
   bench: (string | null)[];
+  benchPositions?: (FantasyPosition | null)[];
+  onBenchPosition?: (index: number, pos: FantasyPosition) => void;
   benchSize: number;
   pointsByPlayer?: Map<string, number | null>;
   minutesByPlayer?: Map<string, number | null>;
@@ -2136,6 +2138,42 @@ function BenchPanel({
                       <InjuryIcon p={p} kickoffAt={gwKickoff} />
                     </div>
                     <div className="mt-1.5 text-[10px] font-semibold leading-tight break-words line-clamp-2 min-h-[24px]">{p.name}</div>
+                    {(() => {
+                      // Subs are scored in the role they were named in; a
+                      // two-position sub lets the manager choose which.
+                      const eligible = playerPositions(p);
+                      const chosen = benchPositions?.[i] ?? null;
+                      const scoringAs = chosen && eligible.includes(chosen) ? chosen : p.position;
+                      if (eligible.length > 1 && editable && onBenchPosition) {
+                        return (
+                          <div className="mt-1 flex flex-wrap items-center justify-center gap-x-1 gap-y-0.5">
+                            <span className="text-[9px] font-bold uppercase tracking-wide text-muted-foreground/80">
+                              Scores As (Please Select Scoring Position)
+                            </span>
+                            {eligible.map((pos) => (
+                              <button
+                                key={pos}
+                                type="button"
+                                title={`Score ${p.name} as a ${POSITION_LABEL[pos].toLowerCase()}`}
+                                onClick={(e) => { e.stopPropagation(); onBenchPosition(i, pos); }}
+                                className={`rounded border px-1 text-[9px] font-bold uppercase ${
+                                  scoringAs === pos
+                                    ? "border-emerald-500/70 bg-emerald-500/20 text-emerald-400"
+                                    : "border-border/70 bg-muted/30 text-muted-foreground hover:text-foreground"
+                                }`}
+                              >
+                                {POSITION_SHORT[pos]}
+                              </button>
+                            ))}
+                          </div>
+                        );
+                      }
+                      return (
+                        <div className="mt-0.5 text-[9px] font-bold uppercase tracking-wide text-muted-foreground/80">
+                          Scores as {POSITION_SHORT[scoringAs]}
+                        </div>
+                      );
+                    })()}
                     {leagueGame && outOf25(p) && (
                       <div className="text-[9px] font-bold uppercase leading-tight text-amber-500">Not in 25-man matchday squad</div>
                     )}
