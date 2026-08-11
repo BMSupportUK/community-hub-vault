@@ -3103,10 +3103,10 @@ function ScoringTab() {
           <TabsTrigger value="subs">Subs</TabsTrigger>
         </TabsList>
         <TabsContent value="starters" className="mt-4">
-          <ScoringBreakdown column="starter" rules={liveRules} note="Points for players named in your match day 11. A starter who doesn't get on the pitch scores 0." />
+          <ScoringBreakdown column="starter" rules={liveRules} note="Points for players named in your match day 11. A starter who doesn't get on the pitch scores 0. Every match-stat point is listed in the Stat key below." />
         </TabsContent>
         <TabsContent value="subs" className="mt-4">
-          <ScoringBreakdown column="sub" rules={liveRules} note="Points for players who come off your bench: 1 point for getting on, then half points for every match stat. The stat points are added up first, then halved and rounded. Unused subs score 0." />
+          <ScoringBreakdown column="sub" rules={liveRules} note="Points for players who come off your bench: 1 point for getting on, then half points for every match stat. The stat points are added up first, then halved and rounded. Unused subs score 0. Every match-stat point is listed in the Stat key below." />
         </TabsContent>
       </Tabs>
       <div className="rounded-xl border border-border/60 bg-background/40 p-4">
@@ -3147,6 +3147,9 @@ function ScoringBreakdown({
     ? rules
         .filter((r) => r.enabled)
         .filter((r) => (column === "starter" ? r.special !== "appearance_sub" : r.special !== "appearance_start"))
+        // Stat-column rules are explained in the Stat key below, so keep the
+        // main scoring list to appearances and captain-only multipliers.
+        .filter((r) => r.statColumn === null)
         .map((r) => {
           const halve = column === "sub" && r.halvesForSubs;
           const value = halve ? r.points / 2 : r.points;
