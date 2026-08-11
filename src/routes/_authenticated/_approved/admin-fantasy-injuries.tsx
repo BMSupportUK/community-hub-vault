@@ -11,6 +11,7 @@ import {
   getFantasyInjuries,
   adminSetFantasyInjury,
   adminSyncFantasyInjuries,
+  adminSetFantasyIn25Squad,
   type FantasyInjuryPlayer,
 } from "@/lib/fantasy.functions";
 
@@ -44,6 +45,7 @@ function AdminFantasyInjuriesPage() {
   const load = useServerFn(getFantasyInjuries);
   const save = useServerFn(adminSetFantasyInjury);
   const sync = useServerFn(adminSyncFantasyInjuries);
+  const setIn25 = useServerFn(adminSetFantasyIn25Squad);
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
@@ -82,6 +84,34 @@ function AdminFantasyInjuriesPage() {
   };
 
   const runSync = async () => {
+    setSyncing(true);
+    try {
+      await sync();
+      toast.success("Pulled the latest injuries from the EFL Fantasy feed");
+      await qc.invalidateQueries({ queryKey: ["fantasy-injuries"] });
+    } catch (e: any) {
+      toast.error(e?.message ?? "Sync failed");
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  const toggle25 = async (p: FantasyInjuryPlayer) => {
+    setBusy(p.id);
+    try {
+      await setIn25({ data: { playerId: p.id, in25Squad: !p.in25Squad } });
+      toast.success(
+        p.in25Squad ? `${p.name} removed from the 25-man squad` : `${p.name} named in the 25-man squad`,
+      );
+      await qc.invalidateQueries({ queryKey: ["fantasy-injuries"] });
+    } catch (e: any) {
+      toast.error(e?.message ?? "Could not save");
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const unusedRunSync = async () => {
     setSyncing(true);
     try {
       await sync();
