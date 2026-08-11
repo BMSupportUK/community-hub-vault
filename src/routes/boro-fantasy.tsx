@@ -2049,8 +2049,8 @@ function BenchPanel({
                 onDragStart={(e) => { if (id) e.dataTransfer.setData("text/fantasy-player", id); }}
                 onClick={() => { if (editable && !id) onBenchSlotOpen(i); }}
                 role={editable && !id ? "button" : undefined}
-                className={`min-w-[68px] flex-1 max-w-[110px] sm:max-w-[120px] rounded-xl border px-1.5 py-2 text-center text-xs ${
-                  p ? "border-border/70 bg-muted/40" : "cursor-pointer border-dashed border-border/70 bg-muted/20 text-muted-foreground hover:bg-muted/40"
+                className={`min-w-[68px] flex-1 max-w-[110px] sm:max-w-[120px] rounded-xl border border-y-border/50 px-1.5 py-2 text-center text-xs ${
+                  p ? "border-l-2 border-r-2 border-l-border/80 border-r-border/80 bg-muted/40" : "cursor-pointer border-dashed border-l-2 border-r-2 border-l-border/60 border-r-border/60 bg-muted/20 text-muted-foreground hover:bg-muted/40"
                 }`}
               >
                 {p ? (
