@@ -443,12 +443,24 @@ export const adminSetFantasyMotm = createServerFn({ method: "POST" })
       .gt("bonus", 0);
     if (clearErr) throw new Error(clearErr.message);
     if (data.playerId) {
-      const { error } = await admin
+      const { data: existing } = await admin
         .from("fantasy_player_stats")
-        .upsert({ fixture_id: data.fixtureId, player_id: data.playerId, bonus: MOTM_BONUS } as never, {
-          onConflict: "fixture_id,player_id",
-        });
-      if (error) throw new Error(error.message);
+        .select("id")
+        .eq("fixture_id", data.fixtureId)
+        .eq("player_id", data.playerId)
+        .maybeSingle();
+      if (existing) {
+        const { error } = await admin
+          .from("fantasy_player_stats")
+          .update({ bonus: MOTM_BONUS } as never)
+          .eq("id", (existing as any).id);
+        if (error) throw new Error(error.message);
+      } else {
+        const { error } = await admin
+          .from("fantasy_player_stats")
+          .insert({ fixture_id: data.fixtureId, player_id: data.playerId, bonus: MOTM_BONUS } as never);
+        if (error) throw new Error(error.message);
+      }
     }
     const { error: scoreErr } = await admin.rpc("fantasy_score_gameweek" as never, {
       _gameweek_id: data.gameweekId,
