@@ -1450,6 +1450,7 @@ function SquadBuilder({
               onFormationChange={(f) => setFormation(f)}
               formationLocked={swapOnly}
               editable={editable}
+              dragEnabled={editable && swapOnly}
               playerById={playerById}
               selected={selected}
               starters={starters}
@@ -1531,6 +1532,7 @@ function SquadBuilder({
         </aside>
           <BenchPanel
             editable={editable}
+            dragEnabled={editable && swapOnly}
             playerById={playerById}
             bench={bench}
             benchPositions={benchPositions}
