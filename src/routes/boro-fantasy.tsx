@@ -1823,7 +1823,7 @@ function PitchView({
           </div>
         </div>
         {gw && !gw.dateTbc && (
-          <div className="pointer-events-none absolute left-4 top-4 sm:left-6 sm:top-6 z-10 box-border w-28 max-w-[calc(50%-1.25rem)] overflow-hidden rounded-lg border border-white/30 bg-slate-950/80 p-1.5 sm:w-40 sm:max-w-[calc(50%-2rem)] sm:rounded-xl sm:p-2 shadow-lg backdrop-blur-sm">
+          <div className="pointer-events-none absolute left-5 top-5 sm:left-8 sm:top-8 z-10 box-border w-28 max-w-[calc(50%-1.25rem)] overflow-hidden rounded-lg border border-white/30 bg-slate-950/80 p-1.5 sm:w-40 sm:max-w-[calc(50%-2rem)] sm:rounded-xl sm:p-2 shadow-lg backdrop-blur-sm">
             <DigitalLockCountdown lockAt={gw.lockAt} compact />
           </div>
         )}
