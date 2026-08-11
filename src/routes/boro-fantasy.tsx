@@ -1311,8 +1311,8 @@ function SquadBuilder({
           <Lock className="size-4" /> This gameweek is locked. Changes will apply to the next one.
         </div>
       )}
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_300px] xl:grid-cols-[minmax(0,1fr)_300px_320px] items-start">
-        <div className="grid gap-4 items-start">
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_300px] xl:grid-cols-[minmax(0,1fr)_300px_320px] items-stretch">
+        <div className="grid gap-4 items-stretch h-full">
           <PitchView
               formation={formation}
               onFormationChange={(f) => setFormation(f)}
@@ -1355,7 +1355,7 @@ function SquadBuilder({
         </div>
 
         {/* Column 2 — match day checklist and the subs bench, right of the pitch. */}
-        <div className="grid gap-4 items-start">
+        <div className="grid gap-4 items-stretch h-full">
         {/* Checklist — scoped to the active tab (squad of 15 vs starting 11). */}
         <aside className="rounded-2xl border border-border/60 bg-card/85 backdrop-blur overflow-hidden">
           <div className="p-3 border-b border-border/60 flex items-center gap-2">
@@ -1419,7 +1419,7 @@ function SquadBuilder({
         </div>
 
         {/* Column 3 — your team card and the gameweek picker / save panel. */}
-        <div className="grid gap-4 items-start xl:sticky xl:top-4">
+        <div className="grid gap-4 items-stretch h-full">
           <ManagerCard
             state={state}
             name={name}
