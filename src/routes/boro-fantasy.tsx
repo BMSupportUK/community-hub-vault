@@ -1399,6 +1399,27 @@ function levelOf(p: FantasyPlayerDTO): PickerLevel {
   return p.squadLevel === "u21" ? "u21" : p.squadLevel === "u18" ? "u18" : "first";
 }
 
+/** Squad number badge, shown next to the player everywhere they appear. */
+function ShirtNumber({ n, className = "" }: { n: number | null | undefined; className?: string }) {
+  if (!n) return null;
+  return (
+    <span
+      title={`Squad number ${n}`}
+      className={`shrink-0 rounded-md border border-current/40 px-1 text-[10px] font-bold tabular-nums opacity-90 ${className}`}
+    >
+      {n}
+    </span>
+  );
+}
+
+/**
+ * Senior (first-team) players who aren't on the club's official 25-man list.
+ * Academy players are under the age limit, so they're always eligible.
+ */
+function outOf25(p: FantasyPlayerDTO): boolean {
+  return (p.squadLevel ?? "first") === "first" && p.in25Squad === false;
+}
+
 /**
  * Injury / suspension flag. Shown on the pitch, bench and player picker.
  * Injured players stay selectable — the icon is a warning, not a block.
