@@ -2037,7 +2037,7 @@ function BenchPanel({
     <div className="rounded-2xl border border-border/60 bg-card/85 backdrop-blur overflow-hidden">
       <div className="p-3" {...dropProps(onDropBench)}>
         <div className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Bench ({bench.filter(Boolean).length}/{benchSize})</div>
-        <div className="flex flex-wrap gap-2">
+        <div className="grid grid-cols-3 gap-2">
           {Array.from({ length: Math.max(benchSize, bench.length) }, (_, i) => BENCH_SLOT_LABELS[i] ?? "Sub").map((slotLabel, i) => {
             const id = bench[i];
             const p = id ? playerById.get(id) : undefined;
@@ -2049,8 +2049,10 @@ function BenchPanel({
                 onDragStart={(e) => { if (id) e.dataTransfer.setData("text/fantasy-player", id); }}
                 onClick={() => { if (editable && !id) onBenchSlotOpen(i); }}
                 role={editable && !id ? "button" : undefined}
-                className={`min-w-[68px] flex-1 max-w-[110px] sm:max-w-[120px] rounded-xl border border-y-border/50 px-1.5 py-2 text-center text-xs ${
-                  p ? "border-l-2 border-r-2 border-l-border/80 border-r-border/80 bg-muted/40" : "cursor-pointer border-dashed border-l-2 border-r-2 border-l-border/60 border-r-border/60 bg-muted/20 text-muted-foreground hover:bg-muted/40"
+                className={`rounded-xl border px-1.5 py-2.5 text-center text-xs transition-colors ${
+                  p
+                    ? "border-l-[3px] border-r-[3px] border-l-primary/70 border-r-primary/70 bg-gradient-to-b from-muted/60 to-muted/30 shadow-sm"
+                    : "cursor-pointer border-dashed border-l-[3px] border-r-[3px] border-l-border/60 border-r-border/60 bg-muted/20 text-muted-foreground hover:bg-muted/40"
                 }`}
               >
                 {p ? (
@@ -2060,7 +2062,7 @@ function BenchPanel({
                       <ShirtNumber n={p.shirtNumber} />
                       <InjuryIcon p={p} kickoffAt={gwKickoff} />
                     </div>
-                    <div className="mt-1 text-[10px] font-semibold leading-tight break-words line-clamp-2 min-h-[24px]">{p.name}</div>
+                    <div className="mt-1.5 text-[10px] font-semibold leading-tight break-words line-clamp-2 min-h-[24px]">{p.name}</div>
                     {leagueGame && outOf25(p) && (
                       <div className="text-[9px] font-bold uppercase leading-tight text-amber-500">Not in 25-man matchday squad</div>
                     )}
@@ -2079,7 +2081,7 @@ function BenchPanel({
                       <div className="mt-0.5 text-[9px] font-bold uppercase text-sky-400">Subbed on</div>
                     )}
                     {editable && (
-                      <div className="mt-1 flex items-center justify-center gap-0.5 sm:gap-1">
+                      <div className="mt-1.5 flex items-center justify-center gap-0.5 sm:gap-1">
                         <button type="button" title="Into the XI" onClick={() => onDropStart(p.id)} className="rounded p-0.5 text-muted-foreground hover:text-emerald-400">
                           <ArrowUp className="size-2.5 sm:size-3" />
                         </button>
