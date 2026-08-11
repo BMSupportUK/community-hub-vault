@@ -32,7 +32,7 @@ type EspnRosterPlayer = {
   // NOTE: ESPN's position field is deliberately NOT read. Positions always come
   // from our own fantasy_players.position so scoring can't be skewed by ESPN
   // classifying a player differently. Only raw stats are taken from ESPN.
-  stats?: Array<{ name?: string; value?: number }>;
+  stats?: Array<{ name?: string; abbreviation?: string; value?: number; displayValue?: string }>;
 };
 type EspnSummary = {
   rosters?: Array<{
@@ -73,11 +73,40 @@ export type FantasyStatRow = {
   fouls_committed: number;
   fouls_suffered: number;
   offsides: number;
+  // Extended ESPN match-report player stats (0 when the feed omits them).
+  accurate_long_balls: number;
+  accurate_passes: number;
+  passes: number;
+  pass_pct: number;
+  big_chances_created: number;
+  big_chances_missed: number;
+  crosses_claimed: number;
+  unclaimed_crosses: number;
+  defensive_interventions: number;
+  duels_won: number;
+  keeper_sweepers: number;
+  shots_on_goal_against: number;
+  touches: number;
 };
 
 function statVal(p: EspnRosterPlayer, name: string): number {
   const s = (p.stats ?? []).find((x) => x.name === name);
   return typeof s?.value === "number" ? Math.round(s.value) : 0;
+}
+
+/**
+ * Read a stat by the abbreviation ESPN prints in the match report player stats
+ * table (A, TCH, AC.PASS, BCC, DUELW …). Falls back to the raw display value
+ * so percentage columns like PASS% still come through.
+ */
+function abbrVal(p: EspnRosterPlayer, abbr: string): number {
+  const s = (p.stats ?? []).find(
+    (x) => (x.abbreviation ?? "").toUpperCase() === abbr.toUpperCase(),
+  );
+  if (!s) return 0;
+  if (typeof s.value === "number") return Math.round(s.value * 10) / 10;
+  const n = parseFloat((s.displayValue ?? "").replace("%", ""));
+  return Number.isFinite(n) ? n : 0;
 }
 
 function eventMinute(ev: EspnEvent): number {
