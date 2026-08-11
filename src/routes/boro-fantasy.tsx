@@ -2160,10 +2160,12 @@ function PitchView({
 
 /** Substitutes panel — lives beside the pitch so it can sit in its own column. */
 function BenchPanel({
-  editable, playerById, bench, benchPositions, onBenchPosition, benchSize, pointsByPlayer, minutesByPlayer, autoSubbedIds,
+  editable, dragEnabled = false, playerById, bench, benchPositions, onBenchPosition, benchSize, pointsByPlayer, minutesByPlayer, autoSubbedIds,
   onDropStart, onDropBench, onRemove, onBenchSlotOpen, gw,
 }: {
   editable: boolean;
+  /** Drag and drop is only for late sub swaps, after the first lock. */
+  dragEnabled?: boolean;
   playerById: Map<string, FantasyPlayerDTO>;
   bench: (string | null)[];
   benchPositions?: (FantasyPosition | null)[];
@@ -2181,9 +2183,9 @@ function BenchPanel({
   const leagueGame = gw ? fantasyCompetitionGroup(gw.competition) === "league" : true;
   const gwKickoff = gw ? gw.kickoffAt : null;
   const dropProps = (handler: (playerId: string) => void) => ({
-    onDragOver: (e: ReactDragEvent) => { if (editable) { e.preventDefault(); e.dataTransfer.dropEffect = "move"; } },
+    onDragOver: (e: ReactDragEvent) => { if (dragEnabled) { e.preventDefault(); e.dataTransfer.dropEffect = "move"; } },
     onDrop: (e: ReactDragEvent) => {
-      if (!editable) return;
+      if (!dragEnabled) return;
       e.preventDefault();
       const id = e.dataTransfer.getData("text/fantasy-player");
       if (id) handler(id);
@@ -2202,7 +2204,7 @@ function BenchPanel({
               <div
                 key={i}
                 {...dropProps(onDropBench)}
-                draggable={editable && !!id}
+                draggable={dragEnabled && !!id}
                 onDragStart={(e) => { if (id) e.dataTransfer.setData("text/fantasy-player", id); }}
                 onClick={() => { if (editable && !id) onBenchSlotOpen(i); }}
                 role={editable && !id ? "button" : undefined}
