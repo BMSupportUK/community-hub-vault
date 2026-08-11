@@ -100,11 +100,18 @@ function useNow(interval = 1000) {
 function DigitalLockCountdown({
   lockAt,
   label = "Locks in",
+  swapDeadlineAt,
   compact,
-}: { lockAt: string; label?: string; compact?: boolean }) {
+}: { lockAt: string; label?: string; swapDeadlineAt?: string | null; compact?: boolean }) {
   const now = useNow(1000);
   const lockMs = new Date(lockAt).getTime();
-  const remaining = lockMs - now;
+  const swapMs = swapDeadlineAt ? new Date(swapDeadlineAt).getTime() : null;
+  // Once the first deadline passes the timer re-targets the sub-swap cut-off so
+  // managers can see how long they have left to shuffle their named 18.
+  const swapPhase = now >= lockMs && swapMs !== null && now < swapMs;
+  const targetMs = swapPhase ? (swapMs as number) : lockMs;
+  const activeLabel = swapPhase ? "Sub swaps close in" : label;
+  const remaining = targetMs - now;
   const locked = remaining <= 0;
   const urgent = remaining > 0 && remaining <= 60 * 60 * 1000;
 
@@ -114,11 +121,13 @@ function DigitalLockCountdown({
   const minutes = Math.floor((totalSeconds % 3600) / 60);
   const seconds = totalSeconds % 60;
 
-  const lockDate = new Date(lockAt).toLocaleDateString(undefined, {
-    weekday: "short",
-    day: "2-digit",
-    month: "short",
-  });
+  const lockDate = swapPhase
+    ? new Date(targetMs).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })
+    : new Date(lockAt).toLocaleDateString(undefined, {
+        weekday: "short",
+        day: "2-digit",
+        month: "short",
+      });
 
   const unit = (value: number, suffix: string) => (
     <div className={`flex flex-col items-center ${compact ? "min-w-[1.7rem] sm:min-w-[2.4rem]" : "min-w-[3.2rem]"}`}>
@@ -158,7 +167,7 @@ function DigitalLockCountdown({
         </div>
         <div className={`mt-0.5 flex items-center justify-center gap-1 font-digital font-bold uppercase tracking-wide text-[9px] sm:text-[10px] ${urgent ? "text-red-300" : "text-amber-300"}`}>
           <Lock className="size-2.5 sm:size-3 shrink-0" strokeWidth={3} />
-          <span className="truncate">{locked ? "Locked" : label}</span>
+          <span className="truncate">{locked ? "Locked" : activeLabel}</span>
         </div>
       </div>
     );
@@ -886,9 +895,10 @@ function SquadBuilder({
 
   // Two-stage deadline: at the lock the 18 named players are fixed, but subs can
   // still be swapped into the XI until 10 minutes before kick-off.
+  const nowTick = useNow(1000);
   const swapDeadlineMs = gw ? new Date(gw.kickoffAt).getTime() - FANTASY_FINAL_SWAP_MINUTES * 60_000 : 0;
-  const pastLock = !!gw && new Date(gw.lockAt).getTime() <= Date.now();
-  const swapOnly = !!gw && gw.status === "upcoming" && pastLock && Date.now() < swapDeadlineMs && !!existing;
+  const pastLock = !!gw && new Date(gw.lockAt).getTime() <= nowTick;
+  const swapOnly = !!gw && gw.status === "upcoming" && pastLock && nowTick < swapDeadlineMs && !!existing;
   const locked = !!gw && (gw.status !== "upcoming" || (pastLock && !swapOnly));
 
   const xiProblems: string[] = [];
@@ -1959,7 +1969,15 @@ function PitchView({
         </div>
         {gw && !gw.dateTbc && (
           <div className="pointer-events-none absolute left-5 top-5 sm:left-8 sm:top-8 z-10 box-border w-28 max-w-[calc(50%-1.25rem)] overflow-hidden rounded-lg border border-white/30 bg-slate-950/80 p-1.5 sm:w-40 sm:max-w-[calc(50%-2rem)] sm:rounded-xl sm:p-2 shadow-lg backdrop-blur-sm">
-            <DigitalLockCountdown lockAt={gw.lockAt} compact />
+            <DigitalLockCountdown
+              lockAt={gw.lockAt}
+              swapDeadlineAt={
+                formationLocked
+                  ? new Date(new Date(gw.kickoffAt).getTime() - FANTASY_FINAL_SWAP_MINUTES * 60_000).toISOString()
+                  : null
+              }
+              compact
+            />
           </div>
         )}
         <div className="relative space-y-4 sm:space-y-6 py-2">
