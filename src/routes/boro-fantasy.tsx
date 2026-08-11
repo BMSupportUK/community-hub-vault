@@ -3095,16 +3095,16 @@ function ScoringTab() {
           <TabsTrigger value="subs">Subs</TabsTrigger>
         </TabsList>
         <TabsContent value="starters" className="mt-4">
-          <ScoringBreakdown column="starter" note="Points for players named in your match day 11. A starter who doesn't get on the pitch scores 0. Every match-stat point is listed in the Stat key below." />
+          <ScoringBreakdown column="starter" note="Points for players named in your match day 11. A starter who doesn't get on the pitch scores 0. Every match-stat point is listed in the Position bonus points section below." />
         </TabsContent>
         <TabsContent value="subs" className="mt-4">
-          <ScoringBreakdown column="sub" note="Points for players who come off your bench: 1 point for getting on, then half points for every match stat. The stat points are added up first, then halved and rounded. Unused subs score 0. Every match-stat point is listed in the Stat key below." />
+          <ScoringBreakdown column="sub" note="Points for players who come off your bench: 1 point for getting on, then half points for every match stat. The stat points are added up first, then halved and rounded. Unused subs score 0. Every match-stat point is listed in the Position bonus points section below." />
         </TabsContent>
       </Tabs>
       <div className="rounded-xl border border-border/60 bg-background/40 p-4">
-        <h4 className="font-display text-sm font-bold uppercase tracking-wide">Stat key</h4>
+        <h4 className="font-display text-sm font-bold uppercase tracking-wide">Position bonus points</h4>
         <p className="text-xs text-muted-foreground mt-1">
-          The stats below are recorded in the ESPN match report under <span className="font-semibold text-foreground">player stats</span>. Pick a position to see exactly what that player type can score.
+          The stats below are recorded in the ESPN match report under <span className="font-semibold text-foreground">player stats</span>. Pick a position to see exactly what that player type can score. These bonus points are added to your total automatically once the match finishes and the stats are confirmed.
         </p>
         <Tabs defaultValue="gk" className="mt-3">
           <TabsList className="w-full grid grid-cols-4">
