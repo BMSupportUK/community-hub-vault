@@ -41,8 +41,10 @@ import {
   getFantasyState, getFantasyLeaderboard, joinFantasyGame, saveFantasySquad, setFantasyTeamName,
   adminRemoveFantasyEntrant,
   getFantasyPlayerBreakdown,
+  getFantasyScoringRules,
   type FantasyStateDTO, type FantasyPlayerDTO, type FantasyLeaderboardRow, type FantasyGameweekDTO,
   type FantasyPlayerBreakdown,
+  type FantasyScoringRule,
 } from "@/lib/fantasy.functions";
 import {
   getEntrantFantasySquad, type EntrantSquadViewDTO,
