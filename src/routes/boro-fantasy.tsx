@@ -1565,7 +1565,9 @@ function PlayerPickerDialog({
     return players
       .filter((p) => p.status !== "departed" && p.status !== "loaned_out")
       .filter((p) => !selected.includes(p.id))
-      .filter((p) => (positions?.length ? positions.includes(p.position) : true))
+      .filter((p) =>
+        positions?.length ? playerPositions(p).some((pos) => positions.includes(pos)) : true,
+      )
       .filter((p) => (term ? p.name.toLowerCase().includes(term) : true))
       .sort((a, b) =>
           POSITION_ORDER.indexOf(a.position) - POSITION_ORDER.indexOf(b.position) ||
@@ -1617,7 +1619,7 @@ function PlayerPickerDialog({
           {list.map((p) => (
               <li key={p.id} className="flex items-center gap-2 px-3 py-2 text-sm">
                 <span className={`text-[10px] font-bold rounded-md border px-1.5 py-0.5 ${POS_TINT[p.position]}`}>
-                  {POSITION_SHORT[p.position]}
+                  {playerPositionLabel(p)}
                 </span>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-1.5 min-w-0">
