@@ -279,7 +279,7 @@ export const SQUAD_RULES: { title: string; body: string }[] = [
   { title: "Competitive games only", body: "Gameweeks cover every competitive Middlesbrough first-team fixture — league games, cup ties and play-offs — in date order, with cup ties slotted into the gameweek their date falls in. Friendlies, testimonials and academy games are never part of the game." },
   { title: "Game time on show", body: "Once a match finishes the pitch view shows how many minutes each of your players actually played, so you can see who started, who came on and who didn't feature." },
   { title: "Leaderboard", body: "Points are added automatically once each match finishes and totals run all season on the Leaderboard tab. Once a gameweek is locked you can open any rival's squad for that gameweek from the leaderboard." },
-  { title: "Scoring & prizes", body: "Only Middlesbrough players score. Every point is built from the stats in the official ESPN match report player stats table — goals, assists, shots, shots on goal, passes, accurate long balls, big chances created and missed, touches, duels won, defensive interventions, saves, shots on goal against, crosses claimed and unclaimed, keeper sweepers, goals conceded, fouls, cards and own goals — so points are worked out automatically and can be checked against the match report. Starters score the full amount and subs score half. Winners are announced on the Winners tab at the end of the season — see the Scoring tab for the full points breakdown and a key to every stat." },
+  { title: "Scoring & prizes", body: "Only Middlesbrough players score. Every point is built from the stats in the official ESPN match report — goals, assists, shots, saves, goals conceded and clean sheets, penalties, cards and own goals — so points are worked out automatically and can be checked against the match report. Starters score the full amount and subs score half. Winners are announced on the Winners tab at the end of the season — see the Scoring tab for the full points breakdown and a key to every stat." },
 ];
 
 /**
@@ -333,19 +333,7 @@ export const STAT_KEY: {
     positions: ["def", "mid", "fwd"],
     points: "3 pts",
   },
-  { stat: "SHOT — Shots", means: "Every attempt at goal, on or off target.", positions: ["def", "mid", "fwd"], points: "1 pt" },
-  { stat: "SOG — Shots on Goal", means: "Attempts on target — saved, blocked on the line or scored.", positions: ["def", "mid", "fwd"], points: "1 pt" },
-  { stat: "BCC — Big Chances Created", means: "Passes that handed a team-mate a clear scoring chance.", positions: ["def", "mid", "fwd"], points: "3 pts" },
-  { stat: "BCM — Big Chances Missed", means: "Clear scoring chances the player failed to convert.", positions: ["def", "mid", "fwd"], points: "−2 pts" },
-  { stat: "DUELW — Duels Won", means: "Ground and aerial contests the player came out on top of.", positions: ["def", "mid", "fwd"], points: "1 pt" },
-  { stat: "DINT — Defensive Interventions", means: "Tackles, interceptions, blocks and clearances combined.", positions: ["def", "mid", "fwd"], points: "1 pt" },
-  { stat: "SOGA — Shots on Goal Against", means: "Attempts on target the keeper had to deal with.", positions: ["gk"], points: "1 pt" },
   { stat: "SV — Saves", means: "Shots on target kept out.", positions: ["gk"], points: "1 pt" },
   { stat: "GA — Goals Conceded", means: "Goals Middlesbrough conceded while the keeper was on the pitch.", positions: ["gk"], points: "−1 pt" },
-  { stat: "CC — Crosses Claimed", means: "Crosses into the box the keeper gathered cleanly.", positions: ["gk"], points: "1 pt" },
-  { stat: "UC — Unclaimed Crosses", means: "Crosses the keeper went for but failed to gather.", positions: ["gk"], points: "−1 pt" },
-  { stat: "KS — Keeper Sweepers", means: "Times the keeper came out of the area to clear the danger.", positions: ["gk"], points: "1 pt" },
-  { stat: "PASS — Passes", means: "Total passes attempted by the keeper.", positions: ["gk"], points: "1 pt" },
-  { stat: "AC.LONG — Accurate Long Balls", means: "Long passes (over roughly 30 yards) that found a team-mate.", positions: ["gk"], points: "1 pt" },
-  { stat: "AC.PASS — Accurate Passes", means: "Passes that found a team-mate.", positions: ["gk", "def", "mid", "fwd"], points: "1 pt" },
+  { stat: "SHOT — Shots", means: "Every attempt at goal, on or off target.", positions: ["def", "mid", "fwd"], points: "1 pt" },
 ];
