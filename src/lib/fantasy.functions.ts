@@ -837,3 +837,93 @@ export const getFantasyPlayerBreakdown = createServerFn({ method: "GET" })
     const admin = await getAdmin();
     return buildPlayerBreakdown(admin, data.playerId);
   });
+
+// ------------------------------------------------------------------
+// Scoring rules (admin editable, publicly readable)
+// ------------------------------------------------------------------
+export type FantasyScoringRule = {
+  key: string;
+  label: string;
+  statColumn: string | null;
+  perN: number;
+  points: number;
+  positions: string[] | null;
+  special: string | null;
+  halvesForSubs: boolean;
+  enabled: boolean;
+  sortOrder: number;
+};
+
+export const getFantasyScoringRules = createServerFn({ method: "GET" }).handler(
+  async (): Promise<FantasyScoringRule[]> => {
+    setResponseHeader("cache-control", "no-store, max-age=0");
+    const { getAdmin } = await import("@/lib/fantasy.server");
+    const admin = await getAdmin();
+    const { data, error } = await admin
+      .from("fantasy_scoring_rules")
+      .select("key, label, stat_column, per_n, points, positions, special, halves_for_subs, enabled, sort_order")
+      .order("sort_order", { ascending: true });
+    if (error) throw new Error(error.message);
+    return ((data ?? []) as any[]).map((r) => ({
+      key: r.key as string,
+      label: r.label as string,
+      statColumn: (r.stat_column ?? null) as string | null,
+      perN: Number(r.per_n ?? 1),
+      points: Number(r.points ?? 0),
+      positions: (r.positions ?? null) as string[] | null,
+      special: (r.special ?? null) as string | null,
+      halvesForSubs: !!r.halves_for_subs,
+      enabled: !!r.enabled,
+      sortOrder: Number(r.sort_order ?? 0),
+    }));
+  },
+);
+
+const scoringSaveSchema = z.object({
+  updates: z
+    .array(
+      z.object({
+        key: z.string().min(1).max(80),
+        perN: z.number().int().min(1).max(200),
+        points: z.number().min(-50).max(50),
+        enabled: z.boolean(),
+      }),
+    )
+    .max(200),
+  removals: z.array(z.string().min(1).max(80)).max(200).optional(),
+});
+
+export const adminSaveFantasyScoringRules = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => scoringSaveSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    if (!(await isAdminOrManagement(context.supabase, context.userId))) throw new Error("Forbidden");
+    const { getAdmin } = await import("@/lib/fantasy.server");
+    const admin = await getAdmin();
+
+    for (const u of data.updates) {
+      const { error } = await admin
+        .from("fantasy_scoring_rules")
+        .update({ per_n: u.perN, points: u.points, enabled: u.enabled } as never)
+        .eq("key", u.key);
+      if (error) throw new Error(error.message);
+    }
+
+    if (data.removals?.length) {
+      const { error } = await admin.from("fantasy_scoring_rules").delete().in("key", data.removals);
+      if (error) throw new Error(error.message);
+    }
+
+    // Re-score every gameweek that already has stats so the change applies to
+    // points already on the board.
+    const { data: gws } = await admin
+      .from("fantasy_gameweeks")
+      .select("id, status")
+      .in("status", ["locked", "final"]);
+    let rescored = 0;
+    for (const g of ((gws ?? []) as any[])) {
+      const { error } = await admin.rpc("fantasy_score_gameweek" as never, { _gameweek_id: g.id } as never);
+      if (!error) rescored += 1;
+    }
+    return { ok: true, rescored };
+  });
