@@ -289,8 +289,6 @@ export const getFantasyFixtureStats = createServerFn({ method: "GET" })
 const statSchema = z.object({
   gameweekId: z.string().uuid(),
   fixtureId: z.string().uuid(),
-  gameweekId: z.string().uuid(),
-  fixtureId: z.string().uuid(),
   rows: z
     .array(
       z.object({
