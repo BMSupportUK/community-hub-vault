@@ -897,7 +897,7 @@ function SquadBuilder({
       toast.error(`${formation} only needs ${posQuota[p.position]} ${POSITION_SHORT[p.position]}s (XI + bench).`);
       return null;
     }
-    if ((p.injuryStatus ?? "none") !== "none") {
+    if ((p.injuryStatus ?? "none") !== "none" && !injuryClearedBy(p, gw && !gw.dateTbc ? gw.kickoffAt : null)) {
       const label = p.injuryStatus === "suspended" ? "suspended" : p.injuryStatus === "doubtful" ? "a doubt" : "injured";
       toast.warning(`${p.name} is ${label}${p.injuryNote ? ` (${p.injuryNote})` : ""} — pick at your own risk.`);
     }
@@ -1361,6 +1361,7 @@ function SquadBuilder({
         players={state.players}
         selected={selected}
         leagueGame={isLeagueGw}
+        kickoffAt={gw && !gw.dateTbc ? gw.kickoffAt : null}
         positions={
           picker && picker.mode === "xi"
             ? picker.positions
@@ -1681,6 +1682,8 @@ function PitchView({
   const rows = formationRows(formation);
   /** 25-man squad restriction applies to league games only — cup ties are open. */
   const leagueGame = gw ? fantasyCompetitionGroup(gw.competition) === "league" : true;
+  /** Kick-off of this gameweek — injuries with an earlier return date read as available. */
+  const gwKickoff = gw && !gw.dateTbc ? gw.kickoffAt : null;
 
   // Starters are stored as a fixed-length array mapped directly to pitch slots
   // (row order, left-to-right). This keeps every player in the same slot when
@@ -1764,7 +1767,7 @@ function PitchView({
                           <ShirtNumber n={p.shirtNumber} className="text-white" />
                           {captainId === p.id && <Crown className="size-3.5 text-amber-400" />}
                           {viceId === p.id && <Star className="size-3.5 text-sky-300" />}
-                          <InjuryIcon p={p} />
+                          <InjuryIcon p={p} kickoffAt={gwKickoff} />
                         </div>
                         <div className="mt-1 text-[10px] font-semibold leading-tight text-white break-words line-clamp-2 min-h-[24px]">{p.name}</div>
                         {leagueGame && outOf25(p) && (
@@ -1842,7 +1845,7 @@ function PitchView({
                     <div className="flex items-center justify-center gap-1">
                       <span className={`rounded-md border px-1 text-[10px] font-bold ${POS_TINT[p.position]}`}>{POSITION_SHORT[p.position]}</span>
                       <ShirtNumber n={p.shirtNumber} className="text-white" />
-                      <InjuryIcon p={p} />
+                      <InjuryIcon p={p} kickoffAt={gwKickoff} />
                     </div>
                     <div className="mt-1 line-clamp-2 min-h-[24px] break-words text-[10px] font-semibold leading-tight text-white">{p.name}</div>
                     {leagueGame && outOf25(p) && (
@@ -1890,7 +1893,7 @@ function PitchView({
                     <div className="flex items-center justify-center gap-1">
                       <span className="text-[10px] font-bold rounded-md border px-1 bg-slate-700 text-white border-white/20">SUB</span>
                       <ShirtNumber n={p.shirtNumber} />
-                      <InjuryIcon p={p} />
+                      <InjuryIcon p={p} kickoffAt={gwKickoff} />
                     </div>
                     <div className="mt-1 text-[10px] font-semibold leading-tight break-words line-clamp-2 min-h-[24px]">{p.name}</div>
                     {leagueGame && outOf25(p) && (
