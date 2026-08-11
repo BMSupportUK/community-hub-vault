@@ -933,6 +933,21 @@ function SquadBuilder({
       xiProblems.push(
         `Choose the scoring position for ${undecided.join(", ")} — tap the "Scores As" buttons on their card.`,
       );
+    // Same for two-position subs on the bench.
+    const benchUndecided: string[] = [];
+    bench.forEach((id, i) => {
+      if (!id) return;
+      const p = playerById.get(id);
+      if (!p) return;
+      const eligible = playerPositions(p);
+      if (eligible.length > 1 && !(benchPositions[i] && eligible.includes(benchPositions[i]!))) {
+        benchUndecided.push(p.name);
+      }
+    });
+    if (benchUndecided.length)
+      xiProblems.push(
+        `Choose the scoring position for your subs ${benchUndecided.join(", ")} — tap the "Scores As" buttons on their bench card.`,
+      );
   }
 
   const problems = xiProblems;
