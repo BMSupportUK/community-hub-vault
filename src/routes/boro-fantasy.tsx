@@ -31,6 +31,7 @@ import {
   benchRulesFor, COMPETITION_BENCH_RULES, FORMATION_KEYS, POSITION_ORDER,
   POSITION_SHORT, POSITION_LABEL, SCORING_RULES, SQUAD_RULES,
   FORMATIONS, formationCounts, formationRows, formationPositionRange, rowPositions, slotPositionLabel,
+  playerPositions, playerPositionLabel, xiFitsFormation,
   fantasyCompetitionGroup, FANTASY_GROUP_LABEL,
   type FantasyPosition, type FormationKey, type FantasyCompetitionGroup,
 } from "@/lib/fantasy-rules";
@@ -810,6 +811,12 @@ function SquadBuilder({
     } as Record<FantasyPosition, number>;
   }, [formation, benchRules]);
   const byPos = (ids: (string | null)[], pos: FantasyPosition) => ids.filter((id): id is string => !!id && playerById.get(id)?.position === pos);
+  /** Ids eligible for a position, counting a player's optional second position. */
+  const eligibleFor = (ids: (string | null)[], pos: FantasyPosition) =>
+    ids.filter((id): id is string => {
+      const p = id ? playerById.get(id) : null;
+      return !!p && playerPositions(p).includes(pos);
+    });
   const benchHasGk = (sel: string[], st: (string | null)[], excludeId?: string) =>
     byPos(sel.filter((id) => id !== excludeId && !st.includes(id)) as (string | null)[], "gk").length > 0;
 
@@ -820,15 +827,18 @@ function SquadBuilder({
   if (starterCount !== 11) xiProblems.push(`Pick 11 starters (${starterCount} selected).`);
   else {
     const range = formationPositionRange(formation);
-    for (const pos of POSITION_ORDER) {
-      const n = byPos(starters, pos).length;
-      const { min, max } = range[pos];
-      if (n < min || n > max)
-        xiProblems.push(
-          min === max
-            ? `${formation}: needs ${min} ${POSITION_SHORT[pos]} in the XI, you have ${n}.`
-            : `${formation}: needs ${min}–${max} ${POSITION_SHORT[pos]} in the XI, you have ${n}.`,
-        );
+    const sets = starters
+      .filter((id): id is string => !!id)
+      .map((id) => playerPositions(playerById.get(id)!));
+    if (!xiFitsFormation(formation, sets)) {
+      const shape = POSITION_ORDER.filter((pos) => range[pos].max > 0)
+        .map((pos) =>
+          range[pos].min === range[pos].max
+            ? `${range[pos].min} ${POSITION_SHORT[pos]}`
+            : `${range[pos].min}–${range[pos].max} ${POSITION_SHORT[pos]}`,
+        )
+        .join(", ");
+      xiProblems.push(`${formation}: your XI doesn't fit — needs ${shape}.`);
     }
   }
   const benchCount = bench.filter(Boolean).length;
@@ -893,8 +903,12 @@ function SquadBuilder({
     if (p.status === "departed") { toast.error(`${p.name} has left the club.`); return null; }
     if (p.status === "loaned_out") { toast.error(`${p.name} is out on loan${p.loanClub ? ` at ${p.loanClub}` : ""}.`); return null; }
     if (sel.length >= squadSize) { toast.error(`Squad is full — ${squadSize} players max (11 + ${benchRules.size} subs).`); return null; }
-    if (byPos(sel, p.position).length >= posQuota[p.position]) {
-      toast.error(`${formation} only needs ${posQuota[p.position]} ${POSITION_SHORT[p.position]}s (XI + bench).`);
+    // A dual-position player only blocks if every position they cover is full.
+    const roomInAnyPosition = playerPositions(p).some(
+      (pos) => eligibleFor(sel, pos).length < posQuota[pos],
+    );
+    if (!roomInAnyPosition) {
+      toast.error(`${formation} only needs ${posQuota[p.position]} ${playerPositionLabel(p)}s (XI + bench).`);
       return null;
     }
     if ((p.injuryStatus ?? "none") !== "none" && !injuryClearedBy(p, gw ? gw.kickoffAt : null)) {
@@ -1033,7 +1047,12 @@ function SquadBuilder({
       const row = formationRows(formation).find((r) => i >= r.startIndex && i < r.startIndex + r.count);
       const allowed = row ? rowPositions(row) : POSITION_ORDER;
       const pick = allowed
-        .flatMap((pos) => pool.filter((id) => playerById.get(id)?.position === pos))
+        .flatMap((pos) =>
+          pool.filter((id) => {
+            const pl = playerById.get(id);
+            return !!pl && playerPositions(pl).includes(pos);
+          }),
+        )
         .sort((a, b) => (playerById.get(b)?.seasonPoints ?? 0) - (playerById.get(a)?.seasonPoints ?? 0))[0];
       if (pick) {
         st[i] = pick;
@@ -1546,7 +1565,9 @@ function PlayerPickerDialog({
     return players
       .filter((p) => p.status !== "departed" && p.status !== "loaned_out")
       .filter((p) => !selected.includes(p.id))
-      .filter((p) => (positions?.length ? positions.includes(p.position) : true))
+      .filter((p) =>
+        positions?.length ? playerPositions(p).some((pos) => positions.includes(pos)) : true,
+      )
       .filter((p) => (term ? p.name.toLowerCase().includes(term) : true))
       .sort((a, b) =>
           POSITION_ORDER.indexOf(a.position) - POSITION_ORDER.indexOf(b.position) ||
@@ -1598,7 +1619,7 @@ function PlayerPickerDialog({
           {list.map((p) => (
               <li key={p.id} className="flex items-center gap-2 px-3 py-2 text-sm">
                 <span className={`text-[10px] font-bold rounded-md border px-1.5 py-0.5 ${POS_TINT[p.position]}`}>
-                  {POSITION_SHORT[p.position]}
+                  {playerPositionLabel(p)}
                 </span>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-1.5 min-w-0">
@@ -1855,7 +1876,7 @@ function PitchView({
                     className="min-w-[68px] max-w-[120px] flex-1 rounded-xl border border-white/40 bg-slate-950/70 px-1.5 py-2 text-center"
                   >
                     <div className="flex items-center justify-center gap-1">
-                      <span className={`rounded-md border px-1 text-[10px] font-bold ${POS_TINT[p.position]}`}>{POSITION_SHORT[p.position]}</span>
+                      <span className={`rounded-md border px-1 text-[10px] font-bold ${POS_TINT[p.position]}`}>{playerPositionLabel(p)}</span>
                       <ShirtNumber n={p.shirtNumber} className="text-white" />
                       <InjuryIcon p={p} kickoffAt={gwKickoff} />
                     </div>
@@ -1973,7 +1994,7 @@ function GameweekList({ state, group }: { state: FantasyStateDTO; group: Fantasy
           return (
             <div key={p.playerId} className="flex items-center gap-2 py-1 text-sm">
               <span className={`text-[10px] font-bold rounded-md border px-1 ${POS_TINT[pl?.position ?? "mid"]}`}>
-                {POSITION_SHORT[pl?.position ?? "mid"]}
+                {pl ? playerPositionLabel(pl) : POSITION_SHORT["mid"]}
               </span>
               <span className="truncate">{pl?.name ?? "Unknown player"}</span>
               {squad?.captainId === p.playerId && <Crown className="size-3.5 text-amber-400" />}

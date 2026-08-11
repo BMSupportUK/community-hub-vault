@@ -4,6 +4,8 @@ import {
   FORMATIONS,
   formationPositionRange,
   POSITION_SHORT,
+  playerPositions,
+  xiFitsFormation,
   type FantasyPosition,
   type FormationKey,
 } from "@/lib/fantasy-rules";
@@ -14,6 +16,8 @@ export type FantasyPlayerDTO = {
   id: string;
   name: string;
   position: FantasyPosition;
+  /** Optional second position the player can be picked in. */
+  altPosition?: FantasyPosition | null;
   shirtNumber: number | null;
   valueM: number;
   status: "active" | "injured" | "suspended" | "departed" | "loaned_out";
@@ -118,6 +122,7 @@ export function mapPlayer(r: any): FantasyPlayerDTO {
     id: r.id,
     name: r.name,
     position: r.position,
+    altPosition: (r.alt_position ?? null) as FantasyPosition | null,
     shirtNumber: r.shirt_number ?? null,
     valueM: Number(r.value_m),
     status: r.status,
@@ -177,7 +182,7 @@ export async function loadPlayers(admin: any): Promise<FantasyPlayerDTO[]> {
     admin
       .from("fantasy_players")
       .select(
-        "id, name, position, shirt_number, value_m, status, departed_at, loan_club, loan_from, squad_level, injury_status, injury_note, injury_return, injury_source, in_25_squad",
+        "id, name, position, alt_position, shirt_number, value_m, status, departed_at, loan_club, loan_from, squad_level, injury_status, injury_note, injury_return, injury_source, in_25_squad",
       )
       .order("sort_order", { ascending: true }),
     admin.from("fantasy_player_stats").select("player_id, points"),
@@ -417,21 +422,21 @@ export async function saveSquad(admin: any, owner: Owner, input: SaveSquadInput)
     throw new Error(`Your bench must include at least ${bench.minGk} goalkeeper.`);
   }
 
-  const xi: Record<FantasyPosition, number> = { gk: 0, def: 0, mid: 0, fwd: 0 };
-  for (const id of input.starters) xi[byId.get(id)!.position]++;
-  // Flexible rows (e.g. the three behind the striker in 4-2-3-1) accept either
-  // position, so validate against the allowed range rather than exact counts.
+  // Flexible rows (e.g. the three behind the striker in 4-2-3-1) and players with
+  // a second position both widen the shape, so check the XI can be arranged into
+  // the formation rather than counting listed positions.
   const range = formationPositionRange(input.formation);
-  for (const pos of ["gk", "def", "mid", "fwd"] as FantasyPosition[]) {
-    const n = xi[pos];
-    const { min, max } = range[pos];
-    if (n < min || n > max) {
-      throw new Error(
-        min === max
-          ? `Your XI doesn't match ${input.formation}: needs ${min} ${POSITION_SHORT[pos]}, you have ${n}.`
-          : `Your XI doesn't match ${input.formation}: needs ${min}–${max} ${POSITION_SHORT[pos]}, you have ${n}.`,
-      );
-    }
+  const sets = input.starters.map((id) => playerPositions(byId.get(id)!));
+  if (!xiFitsFormation(input.formation, sets)) {
+    const shape = (["gk", "def", "mid", "fwd"] as FantasyPosition[])
+      .filter((pos) => range[pos].max > 0)
+      .map((pos) =>
+        range[pos].min === range[pos].max
+          ? `${range[pos].min} ${POSITION_SHORT[pos]}`
+          : `${range[pos].min}–${range[pos].max} ${POSITION_SHORT[pos]}`,
+      )
+      .join(", ");
+    throw new Error(`Your XI doesn't match ${input.formation}: needs ${shape}.`);
   }
 
   // No budget and no transfers: managers rebuild their match day 11 and bench
