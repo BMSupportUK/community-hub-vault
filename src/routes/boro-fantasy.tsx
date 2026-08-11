@@ -1948,13 +1948,11 @@ function PitchView({
                         <div className="mt-1 text-[10px] font-semibold leading-tight text-white break-words line-clamp-2 min-h-[24px]">{p.name}</div>
                         {(() => {
                           // Two-position players are scored in the role of the slot
-                          // they fill; on a flexible slot the manager picks which.
+                          // they fill; on a flexible slot the manager must pick which.
                           const eligible = playerPositions(p).filter((pos) => row.positions.includes(pos));
                           const chosen = slotPositions?.[slotIndex] ?? null;
-                          const scoringAs =
-                            (chosen && eligible.includes(chosen) ? chosen : null) ??
-                            resolveSlotPosition(row.positions, p) ??
-                            p.position;
+                          const explicit = chosen && eligible.includes(chosen) ? chosen : null;
+                          const scoringAs = explicit ?? resolveSlotPosition(row.positions, p) ?? p.position;
                           if (eligible.length > 1 && editable && onSlotPosition) {
                              return (
                                 <div className="mt-1 flex flex-wrap items-center justify-center gap-x-1 gap-y-0.5">
@@ -1966,7 +1964,7 @@ function PitchView({
                                     title={`Score ${p.name} as a ${POSITION_LABEL[pos].toLowerCase()}`}
                                     onClick={() => onSlotPosition(slotIndex, pos)}
                                     className={`rounded border px-1 text-[9px] font-bold uppercase ${
-                                      scoringAs === pos
+                                      explicit === pos
                                         ? "border-emerald-400/70 bg-emerald-500/25 text-emerald-100"
                                         : "border-white/30 bg-white/5 text-white/60 hover:text-white"
                                     }`}
