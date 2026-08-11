@@ -1428,7 +1428,7 @@ function InjuryIcon({ p, className = "" }: { p: FantasyPlayerDTO; className?: st
  * bench slot (every remaining player), split into First team / U21 / U18 tabs.
  */
 function PlayerPickerDialog({
-  open, onOpenChange, players, selected, positions, title, onPick,
+  open, onOpenChange, players, selected, positions, title, onPick, leagueGame = true,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
@@ -1437,6 +1437,8 @@ function PlayerPickerDialog({
   positions?: FantasyPosition[];
   title: string;
   onPick: (p: FantasyPlayerDTO) => void;
+  /** League games only use the 25-man squad; cup ties are open to anyone. */
+  leagueGame?: boolean;
 }) {
   const [q, setQ] = useState("");
   const [level, setLevel] = useState<PickerLevel>("first");
@@ -1512,6 +1514,7 @@ function PlayerPickerDialog({
                     <span className={`truncate font-medium ${unavailable ? "line-through decoration-2 decoration-destructive text-muted-foreground" : ""}`}>
                       {p.name}
                     </span>
+                    <ShirtNumber n={p.shirtNumber} />
                     <InjuryIcon p={p} />
                     {(p.squadLevel === "u21" || p.squadLevel === "u18") && (
                       <span className="shrink-0 rounded-md border border-sky-500/40 bg-sky-500/10 px-1 py-0.5 text-[9px] font-bold uppercase tracking-wide text-sky-500">
@@ -1536,6 +1539,11 @@ function PlayerPickerDialog({
                       </span>
                     )}
                   </div>
+                  {leagueGame && outOf25(p) && (
+                    <div className="text-[10px] font-semibold uppercase leading-tight text-amber-500">
+                      Not included in 25-man matchday squad
+                    </div>
+                  )}
                 </div>
                 <button
                   type="button"
