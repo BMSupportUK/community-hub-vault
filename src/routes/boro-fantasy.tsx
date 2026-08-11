@@ -1720,8 +1720,8 @@ function PlayerPickerDialog({
 // ------------------------------------------------------------------
 function PitchView({
   formation, onFormationChange, editable, playerById, selected, starters, slotPositions, onSlotPosition, bench, captainId, viceId,
-  benchSize, pointsByPlayer, minutesByPlayer, autoSubbedIds, onDropStart, onDropBench, onBench, onRemove, onCaptain, onVice,
-  onSlotOpen, onBenchSlotOpen, gw,
+  pointsByPlayer, minutesByPlayer, autoSubbedIds, onDropStart, onBench, onRemove, onCaptain, onVice,
+  onSlotOpen, gw,
 }: {
   formation: FormationKey;
   onFormationChange: (f: FormationKey) => void;
@@ -1734,14 +1734,11 @@ function PitchView({
   bench: (string | null)[];
   captainId: string;
   viceId: string;
-  benchSize: number;
   pointsByPlayer?: Map<string, number | null>;
   minutesByPlayer?: Map<string, number | null>;
   autoSubbedIds?: Set<string>;
   onSlotOpen: (positions: FantasyPosition[], slotIndex: number, replaceId?: string) => void;
-  onBenchSlotOpen: (benchIndex: number) => void;
   onDropStart: (playerId: string, slotIndex?: number, replaceId?: string) => void;
-  onDropBench: (playerId: string) => void;
   onBench: (id: string) => void;
   onRemove: (id: string) => void;
   onCaptain: (id: string) => void;
