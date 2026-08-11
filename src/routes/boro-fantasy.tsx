@@ -686,6 +686,8 @@ function SquadBuilder({
     if (!valid) setGwId(state.currentGameweekId ?? openGameweeks[0]?.id ?? "");
   }, [state.currentGameweekId, state.gameweeks, openGameweeks, gwId]);
   const gw = state.gameweeks.find((g) => g.id === gwId) ?? null;
+  /** League games are restricted to the club's 25-man squad; cup ties are open to anyone. */
+  const isLeagueGw = gw ? fantasyCompetitionGroup(gw.competition) === "league" : true;
   const existing = gw ? state.squads.find((s) => s.gameweekId === gw.id) : undefined;
   const playerById = useMemo(() => new Map(state.players.map((p) => [p.id, p])), [state.players]);
 
