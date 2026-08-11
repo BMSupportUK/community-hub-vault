@@ -2252,6 +2252,10 @@ function ScoringTab() {
 }
 
 function ScoringBreakdown({ column, note }: { column: "starter" | "sub"; note: string }) {
+  const rows = SCORING_RULES.filter((r) => {
+    const value = column === "starter" ? r.starter : r.sub;
+    return value.trim() !== "—" && value.trim() !== "";
+  });
   return (
     <div className="space-y-3">
       <p className="text-xs text-muted-foreground">{note}</p>
@@ -2265,7 +2269,7 @@ function ScoringBreakdown({ column, note }: { column: "starter" | "sub"; note: s
             </tr>
           </thead>
           <tbody className="divide-y divide-border/50">
-            {SCORING_RULES.map((r) => (
+            {rows.map((r) => (
               <tr key={r.label}>
                 <td className="py-2 pr-3">{r.label}</td>
                 <td className="py-2 px-3 text-muted-foreground tabular-nums whitespace-nowrap">{r.minTime}</td>
