@@ -1828,8 +1828,11 @@ function PitchView({
           </div>
         )}
         <div className="relative space-y-4 sm:space-y-6 py-2">
-          {rowSlots.map((row, ri) => (
-            <div key={ri} className="flex flex-nowrap justify-center gap-1 sm:gap-2">
+          {rowSlots.map((row, ri) => {
+            // The keeper stays centred; outfield rows spread across the full pitch width.
+            const isGkRow = row.positions.length === 1 && row.positions[0] === "gk";
+            return (
+            <div key={ri} className={`flex flex-nowrap gap-1 sm:gap-2 ${isGkRow ? "justify-center" : "w-full justify-between"}`}>
               {row.slots.map((id, si) => {
                 const p = id ? playerById.get(id) : undefined;
                 const slotIndex = row.startIndex + si;
@@ -1841,7 +1844,9 @@ function PitchView({
                     onDragStart={(e) => { if (id) e.dataTransfer.setData("text/fantasy-player", id); }}
                     onClick={() => { if (editable && !id) onSlotOpen(row.positions, slotIndex); }}
                     role={editable && !id ? "button" : undefined}
-                    className={`min-w-[68px] flex-1 max-w-[110px] sm:max-w-[120px] rounded-xl border px-1.5 py-2 text-center backdrop-blur-sm transition-colors ${
+                    className={`min-w-[68px] flex-1 rounded-xl border px-1.5 py-2 text-center backdrop-blur-sm transition-colors ${
+                      isGkRow ? "max-w-[110px] sm:max-w-[120px]" : ""
+                    } ${
                       p ? "border-white/40 bg-slate-950/70" : "cursor-pointer border-dashed border-white/40 bg-white/10 hover:bg-white/20"
                     }`}
                   >
@@ -1945,7 +1950,8 @@ function PitchView({
                 );
               })}
             </div>
-          ))}
+            );
+          })}
         </div>
         {overflow.length > 0 && (
           <div className="relative mt-4 rounded-xl border border-amber-400/60 bg-amber-500/15 p-2">
