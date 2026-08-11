@@ -1216,17 +1216,32 @@ function SquadBuilder({
                     <SelectValue placeholder="Pick a gameweek" />
                   </SelectTrigger>
                   <SelectContent>
-                    {openGameweeks.map((g) => {
-                      const gLocked = g.status !== "upcoming" || new Date(g.lockAt).getTime() <= Date.now();
+                    {(() => {
+                      const item = (g: (typeof openGameweeks)[number]) => {
+                        const gLocked = g.status !== "upcoming" || new Date(g.lockAt).getTime() <= Date.now();
+                        return (
+                          <SelectItem key={g.id} value={g.id}>
+                            <span className={gLocked ? "line-through text-destructive" : ""}>
+                              GW{g.gwNumber}{g.dateTbc ? " (TBC)" : ""} — {g.homeTeam} v {g.awayTeam} ({g.dateTbc ? `${kickoffLabel(g.kickoffAt)} — TBC` : kickoffLabel(g.kickoffAt)})
+                              {gLocked && <span className="ml-1 text-[10px] text-destructive font-semibold">(locked)</span>}
+                            </span>
+                          </SelectItem>
+                        );
+                      };
                       return (
-                        <SelectItem key={g.id} value={g.id}>
-                          <span className={gLocked ? "line-through text-destructive" : ""}>
-                            GW{g.gwNumber}{g.dateTbc ? " (TBC)" : ""} — {g.homeTeam} v {g.awayTeam} ({g.dateTbc ? `${kickoffLabel(g.kickoffAt)} — TBC` : kickoffLabel(g.kickoffAt)})
-                            {gLocked && <span className="ml-1 text-[10px] text-destructive font-semibold">(locked)</span>}
-                          </span>
-                        </SelectItem>
+                        <>
+                          {scheduledGameweeks.map(item)}
+                          {postponedGameweeks.length > 0 && (
+                            <SelectGroup>
+                              <SelectLabel className="text-[10px] font-bold uppercase tracking-wide text-amber-300">
+                                Postponed — awaiting new date
+                              </SelectLabel>
+                              {postponedGameweeks.map(item)}
+                            </SelectGroup>
+                          )}
+                        </>
                       );
-                    })}
+                    })()}
                   </SelectContent>
                 </Select>
               </div>
