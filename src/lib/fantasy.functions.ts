@@ -580,6 +580,8 @@ export type FantasySquadNumberPlayer = {
   id: string;
   name: string;
   position: string;
+  /** Optional second position the player can also be picked in. */
+  altPosition: string | null;
   squadLevel: string;
   status: string;
   shirtNumber: number | null;
@@ -596,7 +598,7 @@ export const getFantasySquadNumbers = createServerFn({ method: "GET" })
     const admin = await getAdmin();
     const { data, error } = await admin
       .from("fantasy_players")
-      .select("id, name, position, squad_level, status, shirt_number, shirt_number_locked")
+      .select("id, name, position, alt_position, squad_level, status, shirt_number, shirt_number_locked")
       .in("status", ["active", "injured", "suspended", "loaned_out"])
       .order("sort_order", { ascending: true });
     if (error) throw new Error(error.message);
@@ -604,6 +606,7 @@ export const getFantasySquadNumbers = createServerFn({ method: "GET" })
       id: p.id,
       name: p.name,
       position: p.position,
+      altPosition: p.alt_position ?? null,
       squadLevel: p.squad_level ?? "first",
       status: p.status,
       shirtNumber: p.shirt_number ?? null,
@@ -641,6 +644,39 @@ export const adminSetFantasyShirtNumber = createServerFn({ method: "POST" })
     const { error } = await admin
       .from("fantasy_players")
       .update({ shirt_number: data.shirtNumber, shirt_number_locked: true } as never)
+      .eq("id", data.playerId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+/** Admin: give a player an extra position (or clear it) so they can be picked in two positions. */
+export const adminSetFantasyAltPosition = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        playerId: z.string().uuid(),
+        altPosition: z.enum(["gk", "def", "mid", "fwd"]).nullable(),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    if (!(await isAdminOrManagement(context.supabase, context.userId))) throw new Error("Forbidden");
+    const { getAdmin } = await import("@/lib/fantasy.server");
+    const admin = await getAdmin();
+    const { data: player, error: readErr } = await admin
+      .from("fantasy_players")
+      .select("position")
+      .eq("id", data.playerId)
+      .maybeSingle();
+    if (readErr) throw new Error(readErr.message);
+    if (!player) throw new Error("Player not found");
+    if (data.altPosition && data.altPosition === (player as any).position) {
+      throw new Error("That is already the player's main position.");
+    }
+    const { error } = await admin
+      .from("fantasy_players")
+      .update({ alt_position: data.altPosition } as never)
       .eq("id", data.playerId);
     if (error) throw new Error(error.message);
     return { ok: true };
