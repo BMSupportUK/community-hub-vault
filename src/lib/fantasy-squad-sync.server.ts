@@ -136,7 +136,7 @@ export async function syncFantasyPlayersFromClub(admin: Admin): Promise<FantasyS
   const { data: existingRows, error: readErr } = await admin
     .from("fantasy_players")
     .select(
-      "id, name, position, shirt_number, value_m, status, sort_order, mfc_player_id, squad_level, created_at, status_locked, loan_club, loan_from",
+      "id, name, position, shirt_number, shirt_number_locked, value_m, status, sort_order, mfc_player_id, squad_level, created_at, status_locked, loan_club, loan_from",
     );
   if (readErr) return { ok: false, error: readErr.message };
   const existing = (existingRows ?? []) as PlayerRow[];
@@ -282,7 +282,9 @@ export async function syncFantasyPlayersFromClub(admin: Admin): Promise<FantasyS
     if (row.name !== p.name) changes.name = p.name;
     if (row.position !== p.position) changes.position = p.position;
     if ((row.squad_level ?? "first") !== p.squadLevel) changes.squad_level = p.squadLevel;
-    if ((row.shirt_number ?? null) !== (p.shirtNumber ?? null)) changes.shirt_number = p.shirtNumber;
+    if (!(row as any).shirt_number_locked && (row.shirt_number ?? null) !== (p.shirtNumber ?? null)) {
+      changes.shirt_number = p.shirtNumber;
+    }
     if (row.status === "departed" && !row.status_locked) {
       changes.status = "active";
       changes.departed_at = null;
