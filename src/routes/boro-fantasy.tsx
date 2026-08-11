@@ -1996,7 +1996,7 @@ function PitchView({
                   <div
                     key={`${ri}-${si}`}
                     {...dropProps((dragged) => onDropStart(dragged, slotIndex, id ?? undefined))}
-                    draggable={editable && !!id}
+                    draggable={dragEnabled && !!id}
                     onDragStart={(e) => { if (id) e.dataTransfer.setData("text/fantasy-player", id); }}
                     onClick={() => { if (editable && !id) onSlotOpen(row.positions, slotIndex); }}
                     role={editable && !id ? "button" : undefined}
@@ -2122,7 +2122,7 @@ function PitchView({
                 return (
                   <div
                     key={id}
-                    draggable={editable}
+                    draggable={dragEnabled}
                     onDragStart={(e) => e.dataTransfer.setData("text/fantasy-player", id)}
                     className="min-w-[68px] max-w-[120px] flex-1 rounded-xl border border-white/40 bg-slate-950/70 px-1.5 py-2 text-center"
                   >
