@@ -2060,14 +2060,10 @@ function BenchPanel({
                 </div>
                 {p ? (
                   <>
-                    <div className="flex flex-col items-center justify-center gap-0.5">
-                      <div className="relative grid size-8 place-items-center rounded-lg bg-gradient-to-b from-slate-800 to-slate-950 ring-1 ring-inset ring-white/10">
-                        <Shirt className="size-5 text-white/90" />
-                        <ShirtNumber n={p.shirtNumber} className="absolute text-[9px] font-black text-white border-white/60" />
-                      </div>
-                      <div className="flex items-center justify-center gap-1">
-                        <InjuryIcon p={p} kickoffAt={gwKickoff} />
-                      </div>
+                    <div className="flex items-center justify-center gap-1">
+                      <Shirt className="size-5 text-white/90" />
+                      <ShirtNumber n={p.shirtNumber} className="text-[10px] font-black text-white border-white/60" />
+                      <InjuryIcon p={p} kickoffAt={gwKickoff} />
                     </div>
                     <div className="mt-1.5 text-[10px] font-semibold leading-tight break-words line-clamp-2 min-h-[24px]">{p.name}</div>
                     {leagueGame && outOf25(p) && (
