@@ -895,9 +895,10 @@ function SquadBuilder({
 
   // Two-stage deadline: at the lock the 18 named players are fixed, but subs can
   // still be swapped into the XI until 10 minutes before kick-off.
+  const nowTick = useNow(1000);
   const swapDeadlineMs = gw ? new Date(gw.kickoffAt).getTime() - FANTASY_FINAL_SWAP_MINUTES * 60_000 : 0;
-  const pastLock = !!gw && new Date(gw.lockAt).getTime() <= Date.now();
-  const swapOnly = !!gw && gw.status === "upcoming" && pastLock && Date.now() < swapDeadlineMs && !!existing;
+  const pastLock = !!gw && new Date(gw.lockAt).getTime() <= nowTick;
+  const swapOnly = !!gw && gw.status === "upcoming" && pastLock && nowTick < swapDeadlineMs && !!existing;
   const locked = !!gw && (gw.status !== "upcoming" || (pastLock && !swapOnly));
 
   const xiProblems: string[] = [];
