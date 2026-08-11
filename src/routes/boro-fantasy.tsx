@@ -62,7 +62,7 @@ export const Route = createFileRoute("/boro-fantasy")({
 
 type GuestSession = { guestId: string; email: string; pin: string; displayName: string; teamName?: string };
 const GUEST_KEY = "fantasy_guest_session";
-const BENCH_SLOT_LABELS = ["Replacement GK", "Sub", "Sub", "Sub"] as const;
+const BENCH_SLOT_LABELS = ["Sub GK", "Sub", "Sub", "Sub"] as const;
 
 const kickoffLabel = (iso: string) =>
   new Date(iso).toLocaleString(undefined, { weekday: "short", day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
@@ -2056,7 +2056,7 @@ function BenchPanel({
                 }`}
               >
                 <div className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground/80 mb-1">
-                  {i === 0 ? "Replacement GK" : `Sub ${i}`}
+                  {i === 0 ? "Sub GK" : `Sub ${i}`}
                 </div>
                 {p ? (
                   <>
