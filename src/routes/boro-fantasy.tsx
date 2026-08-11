@@ -686,6 +686,8 @@ type SavePayload = {
   viceId: string;
   /** Chosen scoring position per XI slot (dual-position players on flexible slots). */
   starterPositions?: (FantasyPosition | null)[];
+  /** Chosen scoring position per bench slot (dual-position subs). */
+  benchPositions?: (FantasyPosition | null)[];
 };
 
 function SquadBuilder({
@@ -733,6 +735,8 @@ function SquadBuilder({
    */
   const [slotPositions, setSlotPositions] = useState<(FantasyPosition | null)[]>(Array(11).fill(null));
   const [bench, setBench] = useState<(string | null)[]>([]);
+  /** Which role a two-position sub is scored in; null means his main position. */
+  const [benchPositions, setBenchPositions] = useState<(FantasyPosition | null)[]>([]);
   const [captainId, setCaptainId] = useState<string>(existing?.captainId ?? "");
   const [viceId, setViceId] = useState<string>(existing?.viceId ?? "");
   const [saving, setSaving] = useState(false);
@@ -760,6 +764,7 @@ function SquadBuilder({
         setStarters(Array(11).fill(null));
         setSlotPositions(Array(11).fill(null));
         setBench(Array(benchRulesFor(gw?.competition).size).fill(null));
+        setBenchPositions(Array(benchRulesFor(gw?.competition).size).fill(null));
         setCaptainId("");
         setViceId("");
         return;
@@ -770,16 +775,21 @@ function SquadBuilder({
       const st = Array(11).fill(null) as (string | null)[];
       const bn = Array(size).fill(null) as (string | null)[];
       const sp = Array(11).fill(null) as (FantasyPosition | null)[];
+      const bp = Array(size).fill(null) as (FantasyPosition | null)[];
       for (const p of existing.picks) {
         if (p.isStarter && p.slotOrder >= 0 && p.slotOrder < 11) {
           st[p.slotOrder] = p.playerId;
           sp[p.slotOrder] = (p.pickedPosition ?? null) as FantasyPosition | null;
         }
-        else if (!p.isStarter && p.slotOrder >= 0 && p.slotOrder < size) bn[p.slotOrder] = p.playerId;
+        else if (!p.isStarter && p.slotOrder >= 0 && p.slotOrder < size) {
+          bn[p.slotOrder] = p.playerId;
+          bp[p.slotOrder] = (p.pickedPosition ?? null) as FantasyPosition | null;
+        }
       }
       setStarters(st);
       setSlotPositions(sp);
       setBench(bn);
+      setBenchPositions(bp);
       setCaptainId(existing.captainId ?? "");
       setViceId(existing.viceId ?? "");
     };
@@ -802,6 +812,11 @@ function SquadBuilder({
               : Array(11).fill(null),
           );
           setBench(Array.isArray(d.bench) && d.bench.length === benchRulesFor(gw?.competition).size ? d.bench : Array(benchRulesFor(gw?.competition).size).fill(null));
+          setBenchPositions(
+            Array.isArray(d.benchPositions) && d.benchPositions.length === benchRulesFor(gw?.competition).size
+              ? d.benchPositions
+              : Array(benchRulesFor(gw?.competition).size).fill(null),
+          );
           setCaptainId(d.captainId ?? "");
           setViceId(d.viceId ?? "");
           restoredDraftRef.current = true;
@@ -825,12 +840,12 @@ function SquadBuilder({
       else
         localStorage.setItem(
           draftKey,
-          JSON.stringify({ formation, selected, starters, starterPositions: slotPositions, bench, captainId, viceId, at: Date.now() }),
+          JSON.stringify({ formation, selected, starters, starterPositions: slotPositions, bench, benchPositions, captainId, viceId, at: Date.now() }),
         );
     } catch {
       /* storage full or blocked — drafting still works in-memory */
     }
-  }, [draftKey, draftLoaded, formation, selected, starters, slotPositions, bench, captainId, viceId]);
+  }, [draftKey, draftLoaded, formation, selected, starters, slotPositions, bench, benchPositions, captainId, viceId]);
 
   // Captain and vice-captain are the manager's choice and are never reassigned by
   // the app. They are only cleared when that player is no longer in the XI.
@@ -917,6 +932,21 @@ function SquadBuilder({
     if (undecided.length)
       xiProblems.push(
         `Choose the scoring position for ${undecided.join(", ")} — tap the "Scores As" buttons on their card.`,
+      );
+    // Same for two-position subs on the bench.
+    const benchUndecided: string[] = [];
+    bench.forEach((id, i) => {
+      if (!id) return;
+      const p = playerById.get(id);
+      if (!p) return;
+      const eligible = playerPositions(p);
+      if (eligible.length > 1 && !(benchPositions[i] && eligible.includes(benchPositions[i]!))) {
+        benchUndecided.push(p.name);
+      }
+    });
+    if (benchUndecided.length)
+      xiProblems.push(
+        `Choose the scoring position for your subs ${benchUndecided.join(", ")} — tap the "Scores As" buttons on their bench card.`,
       );
   }
 
@@ -1193,6 +1223,7 @@ function SquadBuilder({
         captainId: cap,
         viceId: vice,
         starterPositions: slotPositions,
+        benchPositions,
       });
       // Saved to the server — the local draft is no longer needed.
       restoredDraftRef.current = false;
@@ -1444,6 +1475,15 @@ function SquadBuilder({
             editable={editable}
             playerById={playerById}
             bench={bench}
+            benchPositions={benchPositions}
+            onBenchPosition={(index, pos) =>
+              setBenchPositions((prev) => {
+                const next = [...prev];
+                while (next.length <= index) next.push(null);
+                next[index] = pos;
+                return next;
+              })
+            }
             benchSize={benchRules.size}
             pointsByPlayer={hasGwPoints ? pointsByPlayer : undefined}
             minutesByPlayer={minutesByPlayer.size ? minutesByPlayer : undefined}
@@ -2050,12 +2090,14 @@ function PitchView({
 
 /** Substitutes panel — lives beside the pitch so it can sit in its own column. */
 function BenchPanel({
-  editable, playerById, bench, benchSize, pointsByPlayer, minutesByPlayer, autoSubbedIds,
+  editable, playerById, bench, benchPositions, onBenchPosition, benchSize, pointsByPlayer, minutesByPlayer, autoSubbedIds,
   onDropStart, onDropBench, onRemove, onBenchSlotOpen, gw,
 }: {
   editable: boolean;
   playerById: Map<string, FantasyPlayerDTO>;
   bench: (string | null)[];
+  benchPositions?: (FantasyPosition | null)[];
+  onBenchPosition?: (index: number, pos: FantasyPosition) => void;
   benchSize: number;
   pointsByPlayer?: Map<string, number | null>;
   minutesByPlayer?: Map<string, number | null>;
@@ -2111,6 +2153,42 @@ function BenchPanel({
                       <InjuryIcon p={p} kickoffAt={gwKickoff} />
                     </div>
                     <div className="mt-1.5 text-[10px] font-semibold leading-tight break-words line-clamp-2 min-h-[24px]">{p.name}</div>
+                    {(() => {
+                      // Subs are scored in the role they were named in; a
+                      // two-position sub lets the manager choose which.
+                      const eligible = playerPositions(p);
+                      const chosen = benchPositions?.[i] ?? null;
+                      const scoringAs = chosen && eligible.includes(chosen) ? chosen : p.position;
+                      if (eligible.length > 1 && editable && onBenchPosition) {
+                        return (
+                          <div className="mt-1 flex flex-wrap items-center justify-center gap-x-1 gap-y-0.5">
+                            <span className="text-[9px] font-bold uppercase tracking-wide text-muted-foreground/80">
+                              Scores As (Please Select Scoring Position)
+                            </span>
+                            {eligible.map((pos) => (
+                              <button
+                                key={pos}
+                                type="button"
+                                title={`Score ${p.name} as a ${POSITION_LABEL[pos].toLowerCase()}`}
+                                onClick={(e) => { e.stopPropagation(); onBenchPosition(i, pos); }}
+                                className={`rounded border px-1 text-[9px] font-bold uppercase ${
+                                  scoringAs === pos
+                                    ? "border-emerald-500/70 bg-emerald-500/20 text-emerald-400"
+                                    : "border-border/70 bg-muted/30 text-muted-foreground hover:text-foreground"
+                                }`}
+                              >
+                                {POSITION_SHORT[pos]}
+                              </button>
+                            ))}
+                          </div>
+                        );
+                      }
+                      return (
+                        <div className="mt-0.5 text-[9px] font-bold uppercase tracking-wide text-muted-foreground/80">
+                          Scores as {POSITION_SHORT[scoringAs]}
+                        </div>
+                      );
+                    })()}
                     {leagueGame && outOf25(p) && (
                       <div className="text-[9px] font-bold uppercase leading-tight text-amber-500">Not in 25-man matchday squad</div>
                     )}

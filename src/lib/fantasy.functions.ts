@@ -81,6 +81,8 @@ const saveSquadSchema = z.object({
   // Chosen scoring position per XI slot; only flexible slots ever differ from
   // the default resolved from the formation.
   starterPositions: z.array(z.enum(["gk", "def", "mid", "fwd"]).nullable()).length(11).optional(),
+  // Chosen scoring position per bench slot for two-position subs.
+  benchPositions: z.array(z.enum(["gk", "def", "mid", "fwd"]).nullable()).optional(),
 });
 
 export const saveFantasySquad = createServerFn({ method: "POST" })

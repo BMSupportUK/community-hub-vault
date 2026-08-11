@@ -379,6 +379,11 @@ export type SaveSquadInput = {
    * formation instead.
    */
   starterPositions?: (FantasyPosition | null)[];
+  /**
+   * Optional per-slot scoring position for the bench (same order as `bench`).
+   * Lets a manager choose which role a two-position sub is scored in.
+   */
+  benchPositions?: (FantasyPosition | null)[];
 };
 
 /** Validate + persist a squad for one gameweek, applying transfer costs. */
@@ -523,7 +528,12 @@ export async function saveSquad(admin: any, owner: Owner, input: SaveSquadInput)
       is_starter: false,
       slot_order: i,
       buy_value_m: byId.get(id)!.valueM,
-      picked_position: byId.get(id)!.position,
+      picked_position: (() => {
+        const player = byId.get(id)!;
+        const chosen = input.benchPositions?.[i] ?? null;
+        if (chosen && playerPositions(player).includes(chosen)) return chosen;
+        return player.position;
+      })(),
     })),
   ];
   const { error: pickErr } = await admin.from("fantasy_squad_picks").insert(rows);
