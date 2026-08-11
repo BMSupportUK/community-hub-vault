@@ -65,10 +65,11 @@ function AdminFantasySquadNumbersPage() {
   const apply = async (p: FantasySquadNumberPlayer) => {
     const raw = draftOf(p).trim();
     let num: number | null = null;
-    if (raw) {
+    const isDash = /^[-–—]+$/.test(raw);
+    if (raw && !isDash) {
       const n = Number(raw);
       if (!Number.isInteger(n) || n < 1 || n > 99) {
-        toast.error("Squad number must be a whole number between 1 and 99");
+        toast.error("Squad number must be a whole number between 1 and 99, or - for no number");
         return;
       }
       num = n;
@@ -145,7 +146,7 @@ function AdminFantasySquadNumbersPage() {
                       value={draftOf(p)}
                       onChange={(e) => setDrafts((d) => ({ ...d, [p.id]: e.target.value }))}
                       inputMode="numeric"
-                      placeholder="No."
+                      placeholder="No. or -"
                       className="w-20"
                     />
                     <Button size="sm" disabled={busy === p.id} onClick={() => apply(p)}>
