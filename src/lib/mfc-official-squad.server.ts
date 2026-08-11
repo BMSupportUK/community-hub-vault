@@ -114,7 +114,30 @@ async function fetchSquadForTeam(teamId: string, level: MfcSquadLevel): Promise<
       });
     }
   }
-  return out;
+  return dedupeShirtNumbers(out);
+}
+
+/**
+ * The club feed sometimes leaves last season's number on a player whose shirt has
+ * since been reassigned, so two players share one number. The club always gives it
+ * to the most recent arrival, so they keep it and the stale record is unnumbered
+ * until the club confirm a new one — matching the official squad list.
+ */
+function dedupeShirtNumbers(players: MfcSquadPlayer[]): MfcSquadPlayer[] {
+  const byNumber = new Map<number, MfcSquadPlayer[]>();
+  for (const p of players) {
+    if (p.shirtNumber == null) continue;
+    const list = byNumber.get(p.shirtNumber) ?? [];
+    list.push(p);
+    byNumber.set(p.shirtNumber, list);
+  }
+  for (const [, list] of byNumber) {
+    if (list.length < 2) continue;
+    const rank = (p: MfcSquadPlayer) => (p.joinDate ? Date.parse(p.joinDate) : 0) || 0;
+    const keeper = list.reduce((a, b) => (rank(a) >= rank(b) ? a : b));
+    for (const p of list) if (p !== keeper) p.shirtNumber = null;
+  }
+  return players;
 }
 
 /** Fetch the current first-team squad from the club site. */
