@@ -27,6 +27,11 @@ export type FantasyPlayerDTO = {
   squadLevel?: "first" | "u21" | "u18";
   /** Total fantasy points this player has earned so far this season. */
   seasonPoints?: number;
+  /** Injury/suspension flag: shown as an icon, but the player stays selectable. */
+  injuryStatus?: "none" | "doubtful" | "out" | "suspended";
+  injuryNote?: string | null;
+  injuryReturn?: string | null;
+  injurySource?: "feed" | "admin" | null;
 };
 
 export type FantasyGameweekDTO = {
@@ -119,6 +124,10 @@ export function mapPlayer(r: any): FantasyPlayerDTO {
     loanClub: r.loan_club ?? null,
     loanFrom: r.loan_from ?? null,
     squadLevel: (r.squad_level ?? "first") as "first" | "u21" | "u18",
+    injuryStatus: (r.injury_status ?? "none") as "none" | "doubtful" | "out" | "suspended",
+    injuryNote: r.injury_note ?? null,
+    injuryReturn: r.injury_return ?? null,
+    injurySource: (r.injury_source ?? null) as "feed" | "admin" | null,
   };
 }
 
@@ -165,7 +174,9 @@ export async function loadPlayers(admin: any): Promise<FantasyPlayerDTO[]> {
   const [{ data, error }, statsRes] = await Promise.all([
     admin
       .from("fantasy_players")
-      .select("id, name, position, shirt_number, value_m, status, departed_at, loan_club, loan_from, squad_level")
+      .select(
+        "id, name, position, shirt_number, value_m, status, departed_at, loan_club, loan_from, squad_level, injury_status, injury_note, injury_return, injury_source",
+      )
       .order("sort_order", { ascending: true }),
     admin.from("fantasy_player_stats").select("player_id, points"),
   ]);
