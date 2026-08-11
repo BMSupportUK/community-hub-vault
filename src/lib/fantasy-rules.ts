@@ -330,34 +330,32 @@ export const SCORING_RULES: {
 ];
 
 /**
- * Key to the match stats the points are built from. These are exactly the
- * stats published in the official ESPN match report "player stats" table, so
- * anyone can check a player's points against the match report.
+ * Key to the match stats the points are built from. Only stats that actually
+ * earn points are listed. These match the columns in the official ESPN match
+ * report "player stats" table, so anyone can check a player's points against
+ * the match report.
  */
 export const STAT_KEY: { stat: string; means: string }[] = [
-  { stat: "Appearances", means: "The player featured in the match — either started or came off the bench." },
-  { stat: "Substitute Appearances", means: "The player came on from the bench rather than starting." },
-  { stat: "A — Assists", means: "Outfield players: passes or touches that directly set up a team-mate's goal." },
   { stat: "G — Goals", means: "Goals scored: 6 pts for a keeper or defender, 5 for a midfielder, 4 for a forward." },
-  { stat: "Clean sheet", means: "No goals conceded while on the pitch for 60 minutes or more." },
-  { stat: "Cards", means: "Yellow card -1, red card -3." },
-  { stat: "Penalties", means: "Penalty saved by a keeper +5, penalty missed -2." },
-  { stat: "OG — Own goals", means: "Goals put into your own net: -2 each." },
+  { stat: "A — Assists", means: "Outfield players: passes or touches that directly set up a team-mate's goal." },
+  { stat: "Clean sheet", means: "No goals conceded while on the pitch for 60 minutes or more. Keepers and defenders earn 4 pts, midfielders earn 1 pt." },
+  { stat: "Cards", means: "Yellow card -1 pt, red card -3 pts." },
+  { stat: "Penalties", means: "Penalty saved by a keeper +5 pts, penalty missed -2 pts." },
+  { stat: "OG — Own goals", means: "Goals put into your own net: -2 pts each." },
   { stat: "MOTM bonus", means: "Bonus points added for standout / man-of-the-match performances." },
-  { stat: "SHOT — Shots", means: "Outfield players: every attempt at goal, on or off target." },
-  { stat: "SOG — Shots on Goal", means: "Outfield players: attempts on target — saved, blocked on the line or scored." },
-  { stat: "BCC — Big Chances Created", means: "Outfield players: passes that handed a team-mate a clear scoring chance." },
-  { stat: "BCM — Big Chances Missed", means: "Outfield players: clear scoring chances the player failed to convert." },
-  { stat: "DUELW — Duels Won", means: "Outfield players: ground and aerial contests the player came out on top of." },
-  { stat: "DINT — Defensive Interventions", means: "Outfield players: tackles, interceptions, blocks and clearances combined." },
-  { stat: "SOGA — Shots on Goal Against", means: "Goalkeepers only: attempts on target the keeper had to deal with." },
-  { stat: "SV — Saves", means: "Goalkeepers only: shots on target kept out." },
-  { stat: "GA — Goals Conceded", means: "Goalkeepers only: goals Middlesbrough conceded while the keeper was on the pitch." },
-  { stat: "CC — Crosses Claimed", means: "Goalkeepers only: crosses into the box the keeper gathered cleanly." },
-  { stat: "UC — Unclaimed Crosses", means: "Goalkeepers only: crosses the keeper went for but failed to gather." },
-  { stat: "KS — Keeper Sweepers", means: "Goalkeepers only: times the keeper came out of the area to clear the danger." },
-  { stat: "PASS — Passes", means: "Goalkeepers only: total passes attempted by the keeper." },
-  { stat: "AC.LONG — Accurate Long Balls", means: "Goalkeepers only: long passes (over roughly 30 yards) that found a team-mate." },
-  { stat: "AC.PASS — Accurate Passes", means: "All positions: passes that found a team-mate." },
-  { stat: "Minutes", means: "Time on the pitch, worked out from the starting 11 and the substitution clock." },
+  { stat: "SHOT — Shots", means: "Outfield players: every attempt at goal, on or off target. 1 pt per 3 shots." },
+  { stat: "SOG — Shots on Goal", means: "Outfield players: attempts on target — saved, blocked on the line or scored. 1 pt each." },
+  { stat: "BCC — Big Chances Created", means: "Outfield players: passes that handed a team-mate a clear scoring chance. 3 pts each." },
+  { stat: "BCM — Big Chances Missed", means: "Outfield players: clear scoring chances the player failed to convert. -2 pts each." },
+  { stat: "DUELW — Duels Won", means: "Outfield players: ground and aerial contests the player came out on top of. 1 pt per 4 duels won." },
+  { stat: "DINT — Defensive Interventions", means: "Outfield players: tackles, interceptions, blocks and clearances combined. 1 pt per 3 interventions." },
+  { stat: "SOGA — Shots on Goal Against", means: "Goalkeepers only: attempts on target the keeper had to deal with. 1 pt per 5 faced." },
+  { stat: "SV — Saves", means: "Goalkeepers only: shots on target kept out. 1 pt per 3 saves." },
+  { stat: "GA — Goals Conceded", means: "Goalkeepers only: goals Middlesbrough conceded while the keeper was on the pitch. -1 pt per 2 conceded." },
+  { stat: "CC — Crosses Claimed", means: "Goalkeepers only: crosses into the box the keeper gathered cleanly. 1 pt each." },
+  { stat: "UC — Unclaimed Crosses", means: "Goalkeepers only: crosses the keeper went for but failed to gather. -1 pt each." },
+  { stat: "KS — Keeper Sweepers", means: "Goalkeepers only: times the keeper came out of the area to clear the danger. 1 pt each." },
+  { stat: "PASS — Passes", means: "Goalkeepers only: total passes attempted by the keeper. 1 pt per 30 passes." },
+  { stat: "AC.LONG — Accurate Long Balls", means: "Goalkeepers only: long passes (over roughly 30 yards) that found a team-mate. 1 pt per 3 accurate long balls." },
+  { stat: "AC.PASS — Accurate Passes", means: "All positions: passes that found a team-mate. 1 pt per 20 accurate passes." },
 ];
