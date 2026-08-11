@@ -901,6 +901,9 @@ function SquadBuilder({
       const label = p.injuryStatus === "suspended" ? "suspended" : p.injuryStatus === "doubtful" ? "a doubt" : "injured";
       toast.warning(`${p.name} is ${label}${p.injuryNote ? ` (${p.injuryNote})` : ""} — pick at your own risk.`);
     }
+    if (isLeagueGw && outOf25(p)) {
+      toast.warning(`${p.name} is not included in the 25-man matchday squad for league games.`);
+    }
     return [...sel, p.id];
   }
 
