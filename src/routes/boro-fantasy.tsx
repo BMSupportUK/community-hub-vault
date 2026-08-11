@@ -1830,7 +1830,7 @@ function PitchView({
         <div className="relative space-y-4 sm:space-y-6 py-2">
           {rowSlots.map((row, ri) => {
             // The keeper stays centred; outfield rows spread across the full pitch width.
-            const isGkRow = row.positions.length === 1 && row.positions[0] === "GK";
+            const isGkRow = row.positions.length === 1 && row.positions[0] === "gk";
             return (
             <div key={ri} className={`flex flex-nowrap gap-1 sm:gap-2 ${isGkRow ? "justify-center" : "w-full justify-between"}`}>
               {row.slots.map((id, si) => {
