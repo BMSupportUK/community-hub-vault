@@ -29,7 +29,7 @@ import { IconRail } from "@/components/app/IconRail";
 import { useAuth } from "@/hooks/use-auth";
 import {
   benchRulesFor, COMPETITION_BENCH_RULES, FORMATION_KEYS, POSITION_ORDER,
-  POSITION_SHORT, POSITION_LABEL, SCORING_RULES, SQUAD_RULES, STAT_KEY,
+  POSITION_SHORT, POSITION_LABEL, SCORING_RULES, SQUAD_RULES,
   FORMATIONS, formationCounts, formationRows, formationPositionRange, rowPositions, slotPositionLabel,
   playerPositions, playerPositionLabel, xiFitsFormation, resolveSlotPosition,
   fantasyCompetitionGroup, FANTASY_GROUP_LABEL,
@@ -3059,49 +3059,14 @@ function ScoringTab() {
           <TabsTrigger value="subs">Subs</TabsTrigger>
         </TabsList>
         <TabsContent value="starters" className="mt-4">
-          <ScoringBreakdown column="starter" note="Points for players named in your match day 11. A starter who doesn't get on the pitch scores 0. Every match-stat point is listed in the Position bonus points section below." />
+          <ScoringBreakdown column="starter" note="Points for players named in your match day 11. A starter who doesn't get on the pitch scores 0. Every match stat is taken from the official ESPN match report and added automatically once the game is finished and the stats are confirmed." />
         </TabsContent>
         <TabsContent value="subs" className="mt-4">
-          <ScoringBreakdown column="sub" note="Points for players who come off your bench: 1 point for getting on, then half points for every match stat. The stat points are added up first, then halved and rounded. Unused subs score 0. Every match-stat point is listed in the Position bonus points section below." />
+          <ScoringBreakdown column="sub" note="Points for players who come off your bench: 1 point for getting on, then half points for every match stat. The stat points are added up first, then halved and rounded. Unused subs score 0." />
         </TabsContent>
       </Tabs>
-      <div className="rounded-xl border border-border/60 bg-background/40 p-4">
-        <h4 className="font-display text-sm font-bold uppercase tracking-wide">Position bonus points</h4>
-        <p className="text-xs text-muted-foreground mt-1">
-          The stats below are recorded in the ESPN match report under <span className="font-semibold text-foreground">player stats</span>. Pick a position to see exactly what that player type can score. These bonus points are added to your total automatically once the match finishes and the stats are confirmed.
-        </p>
-        <Tabs defaultValue="gk" className="mt-3">
-          <TabsList className="w-full grid grid-cols-4">
-            {POSITION_ORDER.map((pos) => (
-              <TabsTrigger key={pos} value={pos}>{POSITION_SHORT[pos]}</TabsTrigger>
-            ))}
-          </TabsList>
-          {POSITION_ORDER.map((pos) => (
-            <TabsContent key={pos} value={pos} className="mt-3">
-              <dl className="grid gap-x-6 gap-y-2 sm:grid-cols-2">
-                {STAT_KEY.filter((k) => k.positions.includes(pos)).map((k) => {
-                  const pointsBadge = k.byPosition?.[pos] ?? k.points;
-                  return (
-                    <div key={k.stat} className="text-xs">
-                      <dt className="font-semibold text-foreground inline-flex items-center flex-wrap gap-1.5">
-                        {k.stat}
-                        {pointsBadge ? (
-                          <span className="inline-flex items-center rounded-full bg-purple-500/10 px-1.5 py-0.5 text-[10px] font-bold text-purple-400">
-                            {pointsBadge}
-                          </span>
-                        ) : null}
-                      </dt>
-                      <dd className="text-muted-foreground">{k.means}</dd>
-                    </div>
-                  );
-                })}
-              </dl>
-            </TabsContent>
-          ))}
-        </Tabs>
-      </div>
       <div className="text-sm text-muted-foreground">
-        Formations, bench rules, deadlines and the late sub-swap window all live on the <span className="font-semibold text-foreground">Game rules</span> tab.
+        Formations, bench rules and the deadline all live on the <span className="font-semibold text-foreground">Game rules</span> tab.
       </div>
     </div>
   );
