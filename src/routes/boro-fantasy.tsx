@@ -31,6 +31,7 @@ import {
   benchRulesFor, COMPETITION_BENCH_RULES, FORMATION_KEYS, POSITION_ORDER,
   POSITION_SHORT, POSITION_LABEL, SCORING_RULES, SQUAD_RULES,
   FORMATIONS, formationCounts, formationRows, formationPositionRange, rowPositions, slotPositionLabel,
+  playerPositions, playerPositionLabel, xiFitsFormation,
   fantasyCompetitionGroup, FANTASY_GROUP_LABEL,
   type FantasyPosition, type FormationKey, type FantasyCompetitionGroup,
 } from "@/lib/fantasy-rules";
@@ -810,6 +811,12 @@ function SquadBuilder({
     } as Record<FantasyPosition, number>;
   }, [formation, benchRules]);
   const byPos = (ids: (string | null)[], pos: FantasyPosition) => ids.filter((id): id is string => !!id && playerById.get(id)?.position === pos);
+  /** Ids eligible for a position, counting a player's optional second position. */
+  const eligibleFor = (ids: (string | null)[], pos: FantasyPosition) =>
+    ids.filter((id): id is string => {
+      const p = id ? playerById.get(id) : null;
+      return !!p && playerPositions(p).includes(pos);
+    });
   const benchHasGk = (sel: string[], st: (string | null)[], excludeId?: string) =>
     byPos(sel.filter((id) => id !== excludeId && !st.includes(id)) as (string | null)[], "gk").length > 0;
 
@@ -820,15 +827,18 @@ function SquadBuilder({
   if (starterCount !== 11) xiProblems.push(`Pick 11 starters (${starterCount} selected).`);
   else {
     const range = formationPositionRange(formation);
-    for (const pos of POSITION_ORDER) {
-      const n = byPos(starters, pos).length;
-      const { min, max } = range[pos];
-      if (n < min || n > max)
-        xiProblems.push(
-          min === max
-            ? `${formation}: needs ${min} ${POSITION_SHORT[pos]} in the XI, you have ${n}.`
-            : `${formation}: needs ${min}–${max} ${POSITION_SHORT[pos]} in the XI, you have ${n}.`,
-        );
+    const sets = starters
+      .filter((id): id is string => !!id)
+      .map((id) => playerPositions(playerById.get(id)!));
+    if (!xiFitsFormation(formation, sets)) {
+      const shape = POSITION_ORDER.filter((pos) => range[pos].max > 0)
+        .map((pos) =>
+          range[pos].min === range[pos].max
+            ? `${range[pos].min} ${POSITION_SHORT[pos]}`
+            : `${range[pos].min}–${range[pos].max} ${POSITION_SHORT[pos]}`,
+        )
+        .join(", ");
+      xiProblems.push(`${formation}: your XI doesn't fit — needs ${shape}.`);
     }
   }
   const benchCount = bench.filter(Boolean).length;
@@ -893,8 +903,12 @@ function SquadBuilder({
     if (p.status === "departed") { toast.error(`${p.name} has left the club.`); return null; }
     if (p.status === "loaned_out") { toast.error(`${p.name} is out on loan${p.loanClub ? ` at ${p.loanClub}` : ""}.`); return null; }
     if (sel.length >= squadSize) { toast.error(`Squad is full — ${squadSize} players max (11 + ${benchRules.size} subs).`); return null; }
-    if (byPos(sel, p.position).length >= posQuota[p.position]) {
-      toast.error(`${formation} only needs ${posQuota[p.position]} ${POSITION_SHORT[p.position]}s (XI + bench).`);
+    // A dual-position player only blocks if every position they cover is full.
+    const roomInAnyPosition = playerPositions(p).some(
+      (pos) => eligibleFor(sel, pos).length < posQuota[pos],
+    );
+    if (!roomInAnyPosition) {
+      toast.error(`${formation} only needs ${posQuota[p.position]} ${playerPositionLabel(p)}s (XI + bench).`);
       return null;
     }
     if ((p.injuryStatus ?? "none") !== "none" && !injuryClearedBy(p, gw ? gw.kickoffAt : null)) {
@@ -1033,7 +1047,12 @@ function SquadBuilder({
       const row = formationRows(formation).find((r) => i >= r.startIndex && i < r.startIndex + r.count);
       const allowed = row ? rowPositions(row) : POSITION_ORDER;
       const pick = allowed
-        .flatMap((pos) => pool.filter((id) => playerById.get(id)?.position === pos))
+        .flatMap((pos) =>
+          pool.filter((id) => {
+            const pl = playerById.get(id);
+            return !!pl && playerPositions(pl).includes(pos);
+          }),
+        )
         .sort((a, b) => (playerById.get(b)?.seasonPoints ?? 0) - (playerById.get(a)?.seasonPoints ?? 0))[0];
       if (pick) {
         st[i] = pick;
