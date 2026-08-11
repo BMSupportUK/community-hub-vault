@@ -3112,16 +3112,34 @@ function ScoringTab() {
       <div className="rounded-xl border border-border/60 bg-background/40 p-4">
         <h4 className="font-display text-sm font-bold uppercase tracking-wide">Stat key</h4>
         <p className="text-xs text-muted-foreground mt-1">
-          The stats above are recorded in the ESPN match report under <span className="font-semibold text-foreground">player stats</span>. Here's what each one means:
+          The stats below are recorded in the ESPN match report under <span className="font-semibold text-foreground">player stats</span>. Pick a position to see exactly what that player type can score.
         </p>
-        <dl className="mt-3 grid gap-x-6 gap-y-2 sm:grid-cols-2">
-          {STAT_KEY.map((k) => (
-            <div key={k.stat} className="text-xs">
-              <dt className="font-semibold text-foreground">{k.stat}</dt>
-              <dd className="text-muted-foreground">{k.means}</dd>
-            </div>
+        <Tabs defaultValue="gk" className="mt-3">
+          <TabsList className="w-full grid grid-cols-4">
+            {POSITION_ORDER.map((pos) => (
+              <TabsTrigger key={pos} value={pos}>{POSITION_SHORT[pos]}</TabsTrigger>
+            ))}
+          </TabsList>
+          {POSITION_ORDER.map((pos) => (
+            <TabsContent key={pos} value={pos} className="mt-3">
+              <dl className="grid gap-x-6 gap-y-2 sm:grid-cols-2">
+                {STAT_KEY.filter((k) => k.positions.includes(pos)).map((k) => (
+                  <div key={k.stat} className="text-xs">
+                    <dt className="font-semibold text-foreground">
+                      {k.stat}
+                      {k.byPosition?.[pos] ? (
+                        <span className="ml-1.5 inline-flex items-center rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] text-primary">
+                          {k.byPosition[pos]}
+                        </span>
+                      ) : null}
+                    </dt>
+                    <dd className="text-muted-foreground">{k.means}</dd>
+                  </div>
+                ))}
+              </dl>
+            </TabsContent>
           ))}
-        </dl>
+        </Tabs>
       </div>
       <div className="text-sm text-muted-foreground">
         Formations, bench rules, deadlines and the late sub-swap window all live on the <span className="font-semibold text-foreground">Game rules</span> tab.
