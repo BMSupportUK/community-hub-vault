@@ -295,37 +295,6 @@ export const SCORING_RULES: {
   { label: "Appearance — named in your match day 11", minTime: "1+ sec", starter: "2", sub: "—" },
   { label: "Appearance — comes on from your bench", minTime: "1+ sec", starter: "—", sub: "1" },
   { label: "Named but doesn't get on", minTime: "0 mins", starter: "0", sub: "0" },
-  // Goals, clean sheets, discipline and bonus
-  { label: "Goal scored — goalkeeper or defender", minTime: "1+ sec", starter: "6", sub: "3" },
-  { label: "Goal scored — midfielder", minTime: "1+ sec", starter: "5", sub: "2.5" },
-  { label: "Goal scored — forward", minTime: "1+ sec", starter: "4", sub: "2" },
-  { label: "Clean sheet — goalkeeper or defender", minTime: "60+ mins", starter: "4", sub: "2" },
-  { label: "Clean sheet — midfielder", minTime: "60+ mins", starter: "1", sub: "0.5" },
-  { label: "Penalty saved — goalkeeper", minTime: "1+ sec", starter: "5", sub: "2.5" },
-  { label: "Penalty missed", minTime: "1+ sec", starter: "-2", sub: "-1" },
-  { label: "Yellow card", minTime: "1+ sec", starter: "-1", sub: "-0.5" },
-  { label: "Red card", minTime: "1+ sec", starter: "-3", sub: "-1.5" },
-  { label: "Own goal", minTime: "1+ sec", starter: "-2", sub: "-1" },
-  { label: "Man of the match bonus", minTime: "1+ sec", starter: "1", sub: "0.5" },
-  // Outfield players (defenders, midfielders, forwards)
-  { label: "Assist (A) — outfield", minTime: "1+ sec", starter: "3", sub: "1.5" },
-  { label: "Shot on goal that isn't a goal (SOG) — outfield", minTime: "1+ sec", starter: "1", sub: "0.5" },
-  { label: "Every 3 shots (SHOT) — outfield", minTime: "1+ sec", starter: "1", sub: "0.5" },
-  { label: "Big chance created (BCC) — outfield", minTime: "1+ sec", starter: "3", sub: "1.5" },
-  { label: "Big chance missed (BCM) — outfield", minTime: "1+ sec", starter: "-2", sub: "-1" },
-  { label: "Every 3 defensive interventions (DINT) — outfield", minTime: "1+ sec", starter: "1", sub: "0.5" },
-  { label: "Every 4 duels won (DUELW) — outfield", minTime: "1+ sec", starter: "1", sub: "0.5" },
-  // Goalkeepers
-  { label: "Every 2 goals conceded (GA) — goalkeeper", minTime: "1+ sec", starter: "-1", sub: "-0.5" },
-  { label: "Every 3 saves (SV) — goalkeeper", minTime: "1+ sec", starter: "1", sub: "0.5" },
-  { label: "Every 5 shots on goal against (SOGA) — goalkeeper", minTime: "1+ sec", starter: "1", sub: "0.5" },
-  { label: "Cross claimed (CC) — goalkeeper", minTime: "1+ sec", starter: "1", sub: "0.5" },
-  { label: "Unclaimed cross (UC) — goalkeeper", minTime: "1+ sec", starter: "-1", sub: "-0.5" },
-  { label: "Keeper sweeper (KS) — goalkeeper", minTime: "1+ sec", starter: "1", sub: "0.5" },
-  { label: "Every 3 accurate long balls (AC.LONG) — goalkeeper", minTime: "1+ sec", starter: "1", sub: "0.5" },
-  { label: "Every 30 passes (PASS) — goalkeeper", minTime: "1+ sec", starter: "1", sub: "0.5" },
-  // Every position
-  { label: "Every 20 accurate passes (AC.PASS) — all positions", minTime: "1+ sec", starter: "1", sub: "0.5" },
   { label: "Captain (vice if captain doesn't play)", minTime: "1+ sec", starter: "double points", sub: "double points" },
 ];
 
