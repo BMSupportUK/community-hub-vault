@@ -32,6 +32,8 @@ export type FantasyPlayerDTO = {
   injuryNote?: string | null;
   injuryReturn?: string | null;
   injurySource?: "feed" | "admin" | null;
+  /** Named in the club's official 25-man matchday squad (league games only). */
+  in25Squad?: boolean;
 };
 
 export type FantasyGameweekDTO = {
@@ -128,6 +130,7 @@ export function mapPlayer(r: any): FantasyPlayerDTO {
     injuryNote: r.injury_note ?? null,
     injuryReturn: r.injury_return ?? null,
     injurySource: (r.injury_source ?? null) as "feed" | "admin" | null,
+    in25Squad: r.in_25_squad !== false,
   };
 }
 
@@ -175,7 +178,7 @@ export async function loadPlayers(admin: any): Promise<FantasyPlayerDTO[]> {
     admin
       .from("fantasy_players")
       .select(
-        "id, name, position, shirt_number, value_m, status, departed_at, loan_club, loan_from, squad_level, injury_status, injury_note, injury_return, injury_source",
+        "id, name, position, shirt_number, value_m, status, departed_at, loan_club, loan_from, squad_level, injury_status, injury_note, injury_return, injury_source, in_25_squad",
       )
       .order("sort_order", { ascending: true }),
     admin.from("fantasy_player_stats").select("player_id, points"),
