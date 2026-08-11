@@ -473,18 +473,18 @@ function BoroFantasyPage() {
             </div>
           )}
 
-          <div className="w-full">
+          <div className="w-full overflow-hidden rounded-xl border border-border/60 bg-background/45 backdrop-blur-sm">
             <Tabs value={tab} onValueChange={setTab} className="w-full">
-              <TabsList className="grid grid-cols-3 sm:grid-cols-6 w-full h-auto gap-0 p-0 rounded-none">
-                <TabsTrigger value="squad" className="w-full rounded-none">My squad</TabsTrigger>
-                <TabsTrigger value="rules" className="w-full rounded-none">Game rules</TabsTrigger>
-                <TabsTrigger value="transfers" className="w-full rounded-none">Transfers</TabsTrigger>
-                <TabsTrigger value="leaderboard" className="w-full rounded-none">Leaderboard</TabsTrigger>
-                <TabsTrigger value="scoring" className="w-full rounded-none">Scoring</TabsTrigger>
-                <TabsTrigger value="winners" className="w-full rounded-none">Winners</TabsTrigger>
+              <TabsList className="grid grid-cols-3 sm:grid-cols-6 w-full h-auto gap-0 p-0 rounded-none border-b border-border/60 bg-background/70">
+                <TabsTrigger value="squad" className="w-full rounded-none border-r border-border/40 last:border-r-0">My squad</TabsTrigger>
+                <TabsTrigger value="rules" className="w-full rounded-none border-r border-border/40 last:border-r-0">Game rules</TabsTrigger>
+                <TabsTrigger value="transfers" className="w-full rounded-none border-r border-border/40 last:border-r-0">Transfers</TabsTrigger>
+                <TabsTrigger value="leaderboard" className="w-full rounded-none border-r border-border/40 last:border-r-0">Leaderboard</TabsTrigger>
+                <TabsTrigger value="scoring" className="w-full rounded-none border-r border-border/40 last:border-r-0">Scoring</TabsTrigger>
+                <TabsTrigger value="winners" className="w-full rounded-none border-r border-border/40 last:border-r-0">Winners</TabsTrigger>
               </TabsList>
 
-              <TabsContent value="squad" className="mt-4">
+              <TabsContent value="squad" className="mt-4 px-0">
                 {stateQuery.isLoading || !state ? <Loading /> : (
                   <SquadBuilder
                     state={state}
