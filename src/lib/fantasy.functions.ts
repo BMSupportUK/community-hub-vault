@@ -487,6 +487,7 @@ export type FantasyInjuryPlayer = {
   injuryReturn: string | null;
   injurySource: "feed" | "admin" | null;
   injuryUpdatedAt: string | null;
+  in25Squad: boolean;
 };
 
 export const getFantasyInjuries = createServerFn({ method: "GET" })
@@ -499,7 +500,7 @@ export const getFantasyInjuries = createServerFn({ method: "GET" })
     const { data, error } = await admin
       .from("fantasy_players")
       .select(
-        "id, name, position, squad_level, status, injury_status, injury_note, injury_return, injury_source, injury_updated_at",
+        "id, name, position, squad_level, status, injury_status, injury_note, injury_return, injury_source, injury_updated_at, in_25_squad",
       )
       .order("sort_order", { ascending: true });
     if (error) throw new Error(error.message);
@@ -514,7 +515,26 @@ export const getFantasyInjuries = createServerFn({ method: "GET" })
       injuryReturn: p.injury_return ?? null,
       injurySource: (p.injury_source ?? null) as FantasyInjuryPlayer["injurySource"],
       injuryUpdatedAt: p.injury_updated_at ?? null,
+      in25Squad: p.in_25_squad !== false,
     }));
+  });
+
+/** Admin: name (or drop) a player in the club's official 25-man matchday squad. */
+export const adminSetFantasyIn25Squad = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({ playerId: z.string().uuid(), in25Squad: z.boolean() }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    if (!(await isAdminOrManagement(context.supabase, context.userId))) throw new Error("Forbidden");
+    const { getAdmin } = await import("@/lib/fantasy.server");
+    const admin = await getAdmin();
+    const { error } = await admin
+      .from("fantasy_players")
+      .update({ in_25_squad: data.in25Squad } as never)
+      .eq("id", data.playerId);
+    if (error) throw new Error(error.message);
+    return { ok: true };
   });
 
 export const adminSetFantasyInjury = createServerFn({ method: "POST" })

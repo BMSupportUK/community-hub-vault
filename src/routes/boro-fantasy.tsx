@@ -686,6 +686,8 @@ function SquadBuilder({
     if (!valid) setGwId(state.currentGameweekId ?? openGameweeks[0]?.id ?? "");
   }, [state.currentGameweekId, state.gameweeks, openGameweeks, gwId]);
   const gw = state.gameweeks.find((g) => g.id === gwId) ?? null;
+  /** League games are restricted to the club's 25-man squad; cup ties are open to anyone. */
+  const isLeagueGw = gw ? fantasyCompetitionGroup(gw.competition) === "league" : true;
   const existing = gw ? state.squads.find((s) => s.gameweekId === gw.id) : undefined;
   const playerById = useMemo(() => new Map(state.players.map((p) => [p.id, p])), [state.players]);
 
@@ -898,6 +900,9 @@ function SquadBuilder({
     if ((p.injuryStatus ?? "none") !== "none") {
       const label = p.injuryStatus === "suspended" ? "suspended" : p.injuryStatus === "doubtful" ? "a doubt" : "injured";
       toast.warning(`${p.name} is ${label}${p.injuryNote ? ` (${p.injuryNote})` : ""} — pick at your own risk.`);
+    }
+    if (isLeagueGw && outOf25(p)) {
+      toast.warning(`${p.name} is not included in the 25-man matchday squad for league games.`);
     }
     return [...sel, p.id];
   }
@@ -1355,6 +1360,7 @@ function SquadBuilder({
         onOpenChange={(o) => { if (!o) setPicker(null); }}
         players={state.players}
         selected={selected}
+        leagueGame={isLeagueGw}
         positions={
           picker && picker.mode === "xi"
             ? picker.positions
@@ -1396,6 +1402,27 @@ function levelOf(p: FantasyPlayerDTO): PickerLevel {
   return p.squadLevel === "u21" ? "u21" : p.squadLevel === "u18" ? "u18" : "first";
 }
 
+/** Squad number badge, shown next to the player everywhere they appear. */
+function ShirtNumber({ n, className = "" }: { n: number | null | undefined; className?: string }) {
+  if (!n) return null;
+  return (
+    <span
+      title={`Squad number ${n}`}
+      className={`shrink-0 rounded-md border border-current/40 px-1 text-[10px] font-bold tabular-nums opacity-90 ${className}`}
+    >
+      {n}
+    </span>
+  );
+}
+
+/**
+ * Senior (first-team) players who aren't on the club's official 25-man list.
+ * Academy players are under the age limit, so they're always eligible.
+ */
+function outOf25(p: FantasyPlayerDTO): boolean {
+  return (p.squadLevel ?? "first") === "first" && p.in25Squad === false;
+}
+
 /**
  * Injury / suspension flag. Shown on the pitch, bench and player picker.
  * Injured players stay selectable — the icon is a warning, not a block.
@@ -1425,7 +1452,7 @@ function InjuryIcon({ p, className = "" }: { p: FantasyPlayerDTO; className?: st
  * bench slot (every remaining player), split into First team / U21 / U18 tabs.
  */
 function PlayerPickerDialog({
-  open, onOpenChange, players, selected, positions, title, onPick,
+  open, onOpenChange, players, selected, positions, title, onPick, leagueGame = true,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
@@ -1434,6 +1461,8 @@ function PlayerPickerDialog({
   positions?: FantasyPosition[];
   title: string;
   onPick: (p: FantasyPlayerDTO) => void;
+  /** League games only use the 25-man squad; cup ties are open to anyone. */
+  leagueGame?: boolean;
 }) {
   const [q, setQ] = useState("");
   const [level, setLevel] = useState<PickerLevel>("first");
@@ -1509,6 +1538,7 @@ function PlayerPickerDialog({
                     <span className={`truncate font-medium ${unavailable ? "line-through decoration-2 decoration-destructive text-muted-foreground" : ""}`}>
                       {p.name}
                     </span>
+                    <ShirtNumber n={p.shirtNumber} />
                     <InjuryIcon p={p} />
                     {(p.squadLevel === "u21" || p.squadLevel === "u18") && (
                       <span className="shrink-0 rounded-md border border-sky-500/40 bg-sky-500/10 px-1 py-0.5 text-[9px] font-bold uppercase tracking-wide text-sky-500">
@@ -1533,6 +1563,11 @@ function PlayerPickerDialog({
                       </span>
                     )}
                   </div>
+                  {leagueGame && outOf25(p) && (
+                    <div className="text-[10px] font-semibold uppercase leading-tight text-amber-500">
+                      Not included in 25-man matchday squad
+                    </div>
+                  )}
                 </div>
                 <button
                   type="button"
@@ -1587,6 +1622,8 @@ function PitchView({
   gw?: FantasyGameweekDTO | null;
 }) {
   const rows = formationRows(formation);
+  /** 25-man squad restriction applies to league games only — cup ties are open. */
+  const leagueGame = gw ? fantasyCompetitionGroup(gw.competition) === "league" : true;
 
   // Starters are stored as a fixed-length array mapped directly to pitch slots
   // (row order, left-to-right). This keeps every player in the same slot when
@@ -1667,11 +1704,17 @@ function PitchView({
                       <>
                         <div className="flex items-center justify-center gap-1">
                           <Shirt className="size-4 text-white/80" />
+                          <ShirtNumber n={p.shirtNumber} className="text-white" />
                           {captainId === p.id && <Crown className="size-3.5 text-amber-400" />}
                           {viceId === p.id && <Star className="size-3.5 text-sky-300" />}
                           <InjuryIcon p={p} />
                         </div>
                         <div className="mt-1 text-[10px] font-semibold leading-tight text-white break-words line-clamp-2 min-h-[24px]">{p.name}</div>
+                        {leagueGame && outOf25(p) && (
+                          <div className="text-[9px] font-bold uppercase leading-tight text-amber-300">
+                            Not in 25-man matchday squad
+                          </div>
+                        )}
                         <div className="text-[10px] tabular-nums text-white/70">{p.seasonPoints ?? 0} pts</div>
                         {pointsByPlayer?.has(p.id) && (
                           <div className="mt-1 inline-flex items-center rounded-full border border-emerald-400/50 bg-emerald-500/20 px-1.5 text-[10px] font-bold tabular-nums text-emerald-200">
@@ -1741,9 +1784,13 @@ function PitchView({
                   >
                     <div className="flex items-center justify-center gap-1">
                       <span className={`rounded-md border px-1 text-[10px] font-bold ${POS_TINT[p.position]}`}>{POSITION_SHORT[p.position]}</span>
+                      <ShirtNumber n={p.shirtNumber} className="text-white" />
                       <InjuryIcon p={p} />
                     </div>
                     <div className="mt-1 line-clamp-2 min-h-[24px] break-words text-[10px] font-semibold leading-tight text-white">{p.name}</div>
+                    {leagueGame && outOf25(p) && (
+                      <div className="text-[9px] font-bold uppercase leading-tight text-amber-300">Not in 25-man matchday squad</div>
+                    )}
                     <div className="text-[10px] tabular-nums text-white/70">{p.seasonPoints ?? 0} pts</div>
                     {editable && (
                       <div className="mt-1 flex items-center justify-center gap-0.5 sm:gap-1">
@@ -1785,9 +1832,13 @@ function PitchView({
                   <>
                     <div className="flex items-center justify-center gap-1">
                       <span className="text-[10px] font-bold rounded-md border px-1 bg-slate-700 text-white border-white/20">SUB</span>
+                      <ShirtNumber n={p.shirtNumber} />
                       <InjuryIcon p={p} />
                     </div>
                     <div className="mt-1 text-[10px] font-semibold leading-tight break-words line-clamp-2 min-h-[24px]">{p.name}</div>
+                    {leagueGame && outOf25(p) && (
+                      <div className="text-[9px] font-bold uppercase leading-tight text-amber-500">Not in 25-man matchday squad</div>
+                    )}
                     <div className="text-[10px] tabular-nums text-muted-foreground">{p.seasonPoints ?? 0} pts</div>
                     {pointsByPlayer?.has(p.id) && (
                       <div className="mt-1 inline-flex items-center rounded-full border border-emerald-500/40 bg-emerald-500/15 px-1.5 text-[10px] font-bold tabular-nums text-emerald-400">

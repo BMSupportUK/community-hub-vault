@@ -11,6 +11,7 @@ import {
   getFantasyInjuries,
   adminSetFantasyInjury,
   adminSyncFantasyInjuries,
+  adminSetFantasyIn25Squad,
   type FantasyInjuryPlayer,
 } from "@/lib/fantasy.functions";
 
@@ -44,6 +45,7 @@ function AdminFantasyInjuriesPage() {
   const load = useServerFn(getFantasyInjuries);
   const save = useServerFn(adminSetFantasyInjury);
   const sync = useServerFn(adminSyncFantasyInjuries);
+  const setIn25 = useServerFn(adminSetFantasyIn25Squad);
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
@@ -94,6 +96,21 @@ function AdminFantasyInjuriesPage() {
     }
   };
 
+  const toggle25 = async (p: FantasyInjuryPlayer) => {
+    setBusy(p.id);
+    try {
+      await setIn25({ data: { playerId: p.id, in25Squad: !p.in25Squad } });
+      toast.success(
+        p.in25Squad ? `${p.name} removed from the 25-man squad` : `${p.name} named in the 25-man squad`,
+      );
+      await qc.invalidateQueries({ queryKey: ["fantasy-injuries"] });
+    } catch (e: any) {
+      toast.error(e?.message ?? "Could not save");
+    } finally {
+      setBusy(null);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
@@ -105,11 +122,13 @@ function AdminFantasyInjuriesPage() {
       </div>
       <header className="space-y-1">
         <h1 className="font-display text-2xl flex items-center gap-2">
-          <Cross className="size-6 text-destructive" /> Fantasy injuries
+          <Cross className="size-6 text-destructive" /> Fantasy injuries &amp; 25-man squad
         </h1>
         <p className="text-sm text-muted-foreground">
           Flag players as doubtful, injured or suspended. An icon shows on the pitch view and in the player picker —
           managers can still pick them, at their own risk. Anything you set here overrides the automatic feed.
+          Untick <span className="font-semibold">In 25-man squad</span> for senior players left out of the club's
+          official 25 — they're then flagged for league games (cup ties are open to everyone).
         </p>
       </header>
 
@@ -183,6 +202,17 @@ function AdminFantasyInjuriesPage() {
                     </Button>
                   ))}
                 </div>
+                <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <input
+                    type="checkbox"
+                    className="size-4 accent-primary"
+                    checked={p.in25Squad}
+                    disabled={busy === p.id}
+                    onChange={() => toggle25(p)}
+                  />
+                  In 25-man matchday squad
+                  {p.squadLevel !== "first" && <span className="opacity-70">(academy — always eligible)</span>}
+                </label>
               </div>
             );
           })}
