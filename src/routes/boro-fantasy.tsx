@@ -531,6 +531,7 @@ function BoroFantasyPage() {
                 ) : (
                   <LeaderboardTable
                     rows={lbQuery.data ?? []}
+                    gameweeks={state?.gameweeks ?? []}
                     canRemove={canManageEntrants}
                     onRemove={async (row) => {
                       await removeEntrantFn({ data: { entrantId: row.entrantId, isGuest: row.isGuest } });
