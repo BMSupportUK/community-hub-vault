@@ -76,7 +76,7 @@ const wcLabel = (iso: string) => {
   const d = new Date(iso);
   const day = d.getDay();
   d.setDate(d.getDate() - ((day + 6) % 7)); // back to Monday
-  return `w/c ${d.toLocaleDateString(undefined, { day: "2-digit", month: "short" })}`;
+  return `w/c ${d.toLocaleDateString("en-GB", { day: "numeric", month: "short" })}`;
 };
 
 /** How a gameweek's date should read: exact kick-off, or "w/c <date> (TBC)" when unconfirmed. */
