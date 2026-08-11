@@ -3123,19 +3123,22 @@ function ScoringTab() {
           {POSITION_ORDER.map((pos) => (
             <TabsContent key={pos} value={pos} className="mt-3">
               <dl className="grid gap-x-6 gap-y-2 sm:grid-cols-2">
-                {STAT_KEY.filter((k) => k.positions.includes(pos)).map((k) => (
-                  <div key={k.stat} className="text-xs">
-                    <dt className="font-semibold text-foreground">
-                      {k.stat}
-                      {k.byPosition?.[pos] ? (
-                        <span className="ml-1.5 inline-flex items-center rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] text-primary">
-                          {k.byPosition[pos]}
-                        </span>
-                      ) : null}
-                    </dt>
-                    <dd className="text-muted-foreground">{k.means}</dd>
-                  </div>
-                ))}
+                {STAT_KEY.filter((k) => k.positions.includes(pos)).map((k) => {
+                  const pointsBadge = k.byPosition?.[pos] ?? k.points;
+                  return (
+                    <div key={k.stat} className="text-xs">
+                      <dt className="font-semibold text-foreground inline-flex items-center flex-wrap gap-1.5">
+                        {k.stat}
+                        {pointsBadge ? (
+                          <span className="inline-flex items-center rounded-full bg-purple-500/10 px-1.5 py-0.5 text-[10px] font-bold text-purple-400">
+                            {pointsBadge}
+                          </span>
+                        ) : null}
+                      </dt>
+                      <dd className="text-muted-foreground">{k.means}</dd>
+                    </div>
+                  );
+                })}
               </dl>
             </TabsContent>
           ))}
