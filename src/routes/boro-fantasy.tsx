@@ -1423,6 +1423,15 @@ function SquadBuilder({
           <Lock className="size-4" /> This gameweek is locked. Changes will apply to the next one.
         </div>
       )}
+      {swapOnly && (
+        <div className="rounded-xl border border-amber-500/50 bg-amber-500/10 px-4 py-3 text-sm flex items-center gap-2">
+          <Lock className="size-4 text-amber-500" />
+          <span>
+            Deadline passed — your 18 named players are fixed. You can still swap subs with your match day 11
+            (and adjust formation, captain and vice) until {FANTASY_FINAL_SWAP_MINUTES} minutes before kick-off.
+          </span>
+        </div>
+      )}
       <div className="rounded-3xl border border-primary/30 shadow-glow bg-gradient-primary p-4 grid min-w-0 items-stretch gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,300px)] xl:grid-cols-[minmax(0,1fr)_minmax(0,300px)_minmax(0,320px)]">
         <div className="grid min-w-0 gap-4 items-stretch h-full">
           <PitchView
