@@ -1320,6 +1320,14 @@ function SquadBuilder({
               playerById={playerById}
               selected={selected}
               starters={starters}
+              slotPositions={slotPositions}
+              onSlotPosition={(slotIndex, position) =>
+                setSlotPositions((prev) => {
+                  const next = [...prev];
+                  next[slotIndex] = position;
+                  return next;
+                })
+              }
               bench={bench}
               captainId={captainId}
               viceId={viceId}
@@ -1711,7 +1719,7 @@ function PlayerPickerDialog({
 // Pitch
 // ------------------------------------------------------------------
 function PitchView({
-  formation, onFormationChange, editable, playerById, selected, starters, bench, captainId, viceId,
+  formation, onFormationChange, editable, playerById, selected, starters, slotPositions, onSlotPosition, bench, captainId, viceId,
   benchSize, pointsByPlayer, minutesByPlayer, autoSubbedIds, onDropStart, onDropBench, onBench, onRemove, onCaptain, onVice,
   onSlotOpen, onBenchSlotOpen, gw,
 }: {
@@ -1721,6 +1729,8 @@ function PitchView({
   playerById: Map<string, FantasyPlayerDTO>;
   selected: string[];
   starters: (string | null)[];
+  slotPositions?: (FantasyPosition | null)[];
+  onSlotPosition?: (slotIndex: number, position: FantasyPosition) => void;
   bench: (string | null)[];
   captainId: string;
   viceId: string;
@@ -1830,16 +1840,39 @@ function PitchView({
                         </div>
                         <div className="mt-1 text-[10px] font-semibold leading-tight text-white break-words line-clamp-2 min-h-[24px]">{p.name}</div>
                         {(() => {
-                          // A two-position player is scored automatically in the
-                          // role of the slot he was dropped into — a forward put in
-                          // midfield picks up midfield points.
-                          const scoringAs = resolveSlotPosition(row.positions, p) ?? p.position;
-                          return (
-                            playerPositions(p).length > 1 ? (
-                              <div className="mt-0.5 text-[9px] font-bold uppercase tracking-wide text-white/60">
-                                Scores as {POSITION_SHORT[scoringAs]}
+                          // Two-position players are scored in the role of the slot
+                          // they fill; on a flexible slot the manager picks which.
+                          const eligible = playerPositions(p).filter((pos) => row.positions.includes(pos));
+                          const chosen = slotPositions?.[slotIndex] ?? null;
+                          const scoringAs =
+                            (chosen && eligible.includes(chosen) ? chosen : null) ??
+                            resolveSlotPosition(row.positions, p) ??
+                            p.position;
+                          if (eligible.length > 1 && editable && onSlotPosition) {
+                            return (
+                              <div className="mt-1 flex items-center justify-center gap-0.5">
+                                {eligible.map((pos) => (
+                                  <button
+                                    key={pos}
+                                    type="button"
+                                    title={`Score ${p.name} as a ${POSITION_LABEL[pos].toLowerCase()}`}
+                                    onClick={() => onSlotPosition(slotIndex, pos)}
+                                    className={`rounded border px-1 text-[9px] font-bold uppercase ${
+                                      scoringAs === pos
+                                        ? "border-emerald-400/70 bg-emerald-500/25 text-emerald-100"
+                                        : "border-white/30 bg-white/5 text-white/60 hover:text-white"
+                                    }`}
+                                  >
+                                    {POSITION_SHORT[pos]}
+                                  </button>
+                                ))}
                               </div>
-                            ) : null
+                            );
+                          }
+                          return (
+                            <div className="mt-0.5 text-[9px] font-bold uppercase tracking-wide text-white/60">
+                              Scores as {POSITION_SHORT[scoringAs]}
+                            </div>
                           );
                         })()}
                         {leagueGame && outOf25(p) && (
