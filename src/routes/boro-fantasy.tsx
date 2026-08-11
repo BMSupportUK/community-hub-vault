@@ -3147,9 +3147,10 @@ function ScoringBreakdown({
     ? rules
         .filter((r) => r.enabled)
         .filter((r) => (column === "starter" ? r.special !== "appearance_sub" : r.special !== "appearance_start"))
-        // Stat-column rules and clean-sheet rules are explained in the Stat key below, so keep the
-        // main scoring list to appearances and captain-only multipliers.
-        .filter((r) => r.statColumn === null && r.special !== "clean_sheet")
+        // Stat-column rules and derived stat-key rules (clean sheets, SOG, SOGA, etc.)
+        // are explained in the Stat key below, so keep the main scoring list to
+        // appearances and captain-only multipliers.
+        .filter((r) => r.statColumn === null && (r.special === null || r.special === "appearance_start" || r.special === "appearance_sub"))
         .map((r) => {
           const halve = column === "sub" && r.halvesForSubs;
           const value = halve ? r.points / 2 : r.points;
