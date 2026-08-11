@@ -1463,18 +1463,28 @@ export type Database = {
       }
       fantasy_player_stats: {
         Row: {
+          accurate_long_balls: number
+          accurate_passes: number
           assists: number
+          big_chances_created: number
+          big_chances_missed: number
           bonus: number
           created_at: string
+          crosses_claimed: number
+          defensive_interventions: number
+          duels_won: number
           fixture_id: string
           fouls_committed: number
           fouls_suffered: number
           goals: number
           goals_conceded: number
           id: string
+          keeper_sweepers: number
           minutes: number
           offsides: number
           own_goals: number
+          pass_pct: number
+          passes: number
           pens_missed: number
           pens_saved: number
           player_id: string
@@ -1483,23 +1493,36 @@ export type Database = {
           saves: number
           shots: number
           shots_faced: number
+          shots_on_goal_against: number
           shots_on_target: number
+          touches: number
+          unclaimed_crosses: number
           updated_at: string
           yellows: number
         }
         Insert: {
+          accurate_long_balls?: number
+          accurate_passes?: number
           assists?: number
+          big_chances_created?: number
+          big_chances_missed?: number
           bonus?: number
           created_at?: string
+          crosses_claimed?: number
+          defensive_interventions?: number
+          duels_won?: number
           fixture_id: string
           fouls_committed?: number
           fouls_suffered?: number
           goals?: number
           goals_conceded?: number
           id?: string
+          keeper_sweepers?: number
           minutes?: number
           offsides?: number
           own_goals?: number
+          pass_pct?: number
+          passes?: number
           pens_missed?: number
           pens_saved?: number
           player_id: string
@@ -1508,23 +1531,36 @@ export type Database = {
           saves?: number
           shots?: number
           shots_faced?: number
+          shots_on_goal_against?: number
           shots_on_target?: number
+          touches?: number
+          unclaimed_crosses?: number
           updated_at?: string
           yellows?: number
         }
         Update: {
+          accurate_long_balls?: number
+          accurate_passes?: number
           assists?: number
+          big_chances_created?: number
+          big_chances_missed?: number
           bonus?: number
           created_at?: string
+          crosses_claimed?: number
+          defensive_interventions?: number
+          duels_won?: number
           fixture_id?: string
           fouls_committed?: number
           fouls_suffered?: number
           goals?: number
           goals_conceded?: number
           id?: string
+          keeper_sweepers?: number
           minutes?: number
           offsides?: number
           own_goals?: number
+          pass_pct?: number
+          passes?: number
           pens_missed?: number
           pens_saved?: number
           player_id?: string
@@ -1533,7 +1569,10 @@ export type Database = {
           saves?: number
           shots?: number
           shots_faced?: number
+          shots_on_goal_against?: number
           shots_on_target?: number
+          touches?: number
+          unclaimed_crosses?: number
           updated_at?: string
           yellows?: number
         }
@@ -5235,6 +5274,14 @@ export type Database = {
             }
             Returns: number
           }
+      fantasy_points_for: {
+        Args: {
+          _pos: string
+          _started: boolean
+          s: Database["public"]["Tables"]["fantasy_player_stats"]["Row"]
+        }
+        Returns: number
+      }
       fantasy_score_gameweek: {
         Args: { _gameweek_id: string }
         Returns: undefined
