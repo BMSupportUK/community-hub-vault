@@ -33,6 +33,7 @@ import {
   FORMATIONS, formationCounts, formationRows, formationPositionRange, rowPositions, slotPositionLabel,
   playerPositions, playerPositionLabel, xiFitsFormation, resolveSlotPosition,
   fantasyCompetitionGroup, FANTASY_GROUP_LABEL,
+  FANTASY_FINAL_SWAP_MINUTES,
   type FantasyPosition, type FormationKey, type FantasyCompetitionGroup,
 } from "@/lib/fantasy-rules";
 import {
@@ -1004,6 +1005,10 @@ function SquadBuilder({
   /** Ensure the player is in the 15 — returns the new squad list, or null if not possible. */
   function withPlayer(sel: string[], p: FantasyPlayerDTO): string[] | null {
     if (sel.includes(p.id)) return sel;
+    if (swapOnly) {
+      toast.error(`The gameweek has locked — you can only swap your named subs into the XI now (until ${FANTASY_FINAL_SWAP_MINUTES} minutes before kick-off).`);
+      return null;
+    }
     if (p.status === "departed") { toast.error(`${p.name} has left the club.`); return null; }
     if (p.status === "loaned_out") { toast.error(`${p.name} is out on loan${p.loanClub ? ` at ${p.loanClub}` : ""}.`); return null; }
     if (sel.length >= squadSize) { toast.error(`Squad is full — ${squadSize} players max (11 + ${benchRules.size} subs).`); return null; }
@@ -1027,6 +1032,10 @@ function SquadBuilder({
 
   function removePlayer(id: string) {
     if (!editable) return;
+    if (swapOnly) {
+      toast.error("The gameweek has locked — your 18 named players are fixed. You can still swap subs into the XI.");
+      return;
+    }
     const slotIdx = starters.indexOf(id);
     const benchIdx = bench.indexOf(id);
     setSelected((prev) => prev.filter((x) => x !== id));
