@@ -673,16 +673,15 @@ function SquadBuilder({
     () =>
       state.gameweeks
         .filter((g) => g.status === "upcoming" && new Date(g.lockAt).getTime() > Date.now())
-        .sort((a, b) => new Date(a.kickoffAt).getTime() - new Date(b.kickoffAt).getTime()),
+        // Gameweek numbers already run chronologically (cup/play-off ties slot
+        // into the main running order once a date is allocated), with any
+        // date-TBC ties parked at the end — so one list covers everything.
+        .sort((a, b) => {
+          if (!!a.dateTbc !== !!b.dateTbc) return a.dateTbc ? 1 : -1;
+          return (a.gwNumber ?? 0) - (b.gwNumber ?? 0);
+        }),
     [state.gameweeks],
   );
-  const openByGroup = useMemo(() => {
-    const by = { league: [] as typeof openGameweeks, cup: [] as typeof openGameweeks, playoff: [] as typeof openGameweeks };
-    for (const g of openGameweeks) {
-      by[fantasyCompetitionGroup(g.competition)].push(g);
-    }
-    return by;
-  }, [openGameweeks]);
   const [gwId, setGwId] = useState<string>(state.currentGameweekId ?? "");
   useEffect(() => {
     const valid = state.gameweeks.some((g) => g.id === gwId);
@@ -1197,58 +1196,14 @@ function SquadBuilder({
                 <div className="text-xs text-muted-foreground">Try out formations and squads now; you can save once the first gameweek opens.</div>
               </>
             )}
-            {openByGroup.league.length > 1 && (
+            {openGameweeks.length > 1 && (
               <div className="mt-2">
                 <Select value={gwId} onValueChange={setGwId}>
                   <SelectTrigger className="h-8 w-full text-xs [&>span]:truncate">
-                    <SelectValue placeholder="Pick a league gameweek" />
+                    <SelectValue placeholder="Pick a gameweek" />
                   </SelectTrigger>
                   <SelectContent>
-                    {openByGroup.league.map((g) => {
-                      const gLocked = g.status !== "upcoming" || new Date(g.lockAt).getTime() <= Date.now();
-                      return (
-                        <SelectItem key={g.id} value={g.id}>
-                          <span className={gLocked ? "line-through text-destructive" : ""}>
-                            GW{g.gwNumber} — {g.homeTeam} v {g.awayTeam} ({g.dateTbc ? "date TBC" : kickoffLabel(g.kickoffAt)})
-                            {gLocked && <span className="ml-1 text-[10px] text-destructive font-semibold">(locked)</span>}
-                          </span>
-                        </SelectItem>
-                      );
-                    })}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-            {openByGroup.cup.length > 0 && (
-              <div className="mt-2">
-                <Select value={openByGroup.cup.some((g) => g.id === gwId) ? gwId : ""} onValueChange={setGwId}>
-                  <SelectTrigger className="h-8 w-full text-xs [&>span]:truncate">
-                    <SelectValue placeholder="Pick a cup gameweek" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {openByGroup.cup.map((g) => {
-                      const gLocked = g.status !== "upcoming" || new Date(g.lockAt).getTime() <= Date.now();
-                      return (
-                        <SelectItem key={g.id} value={g.id}>
-                          <span className={gLocked ? "line-through text-destructive" : ""}>
-                            GW{g.gwNumber} — {g.homeTeam} v {g.awayTeam} ({g.dateTbc ? "date TBC" : kickoffLabel(g.kickoffAt)})
-                            {gLocked && <span className="ml-1 text-[10px] text-destructive font-semibold">(locked)</span>}
-                          </span>
-                        </SelectItem>
-                      );
-                    })}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-            {openByGroup.playoff.length > 0 && (
-              <div className="mt-2">
-                <Select value={openByGroup.playoff.some((g) => g.id === gwId) ? gwId : ""} onValueChange={setGwId}>
-                  <SelectTrigger className="h-8 w-full text-xs [&>span]:truncate">
-                    <SelectValue placeholder="Pick a play-off gameweek" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {openByGroup.playoff.map((g) => {
+                    {openGameweeks.map((g) => {
                       const gLocked = g.status !== "upcoming" || new Date(g.lockAt).getTime() <= Date.now();
                       return (
                         <SelectItem key={g.id} value={g.id}>
