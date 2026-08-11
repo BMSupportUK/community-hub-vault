@@ -41,10 +41,8 @@ import {
   getFantasyState, getFantasyLeaderboard, joinFantasyGame, saveFantasySquad, setFantasyTeamName,
   adminRemoveFantasyEntrant,
   getFantasyPlayerBreakdown,
-  getFantasyScoringRules,
   type FantasyStateDTO, type FantasyPlayerDTO, type FantasyLeaderboardRow, type FantasyGameweekDTO,
   type FantasyPlayerBreakdown,
-  type FantasyScoringRule,
 } from "@/lib/fantasy.functions";
 import {
   getEntrantFantasySquad, type EntrantSquadViewDTO,
@@ -3078,12 +3076,6 @@ function SquadRulesTab() {
 }
 
 function ScoringTab() {
-  const loadRules = useServerFn(getFantasyScoringRules);
-  const { data: liveRules } = useQuery({
-    queryKey: ["fantasy-scoring-rules"],
-    queryFn: () => loadRules(),
-    staleTime: 60_000,
-  });
   return (
     <div className="rounded-2xl border border-border/60 bg-card/80 backdrop-blur p-5 space-y-4">
       <div>
@@ -3103,10 +3095,10 @@ function ScoringTab() {
           <TabsTrigger value="subs">Subs</TabsTrigger>
         </TabsList>
         <TabsContent value="starters" className="mt-4">
-          <ScoringBreakdown column="starter" rules={liveRules} note="Points for players named in your match day 11. A starter who doesn't get on the pitch scores 0. Every match-stat point is listed in the Stat key below." />
+          <ScoringBreakdown column="starter" note="Points for players named in your match day 11. A starter who doesn't get on the pitch scores 0. Every match-stat point is listed in the Stat key below." />
         </TabsContent>
         <TabsContent value="subs" className="mt-4">
-          <ScoringBreakdown column="sub" rules={liveRules} note="Points for players who come off your bench: 1 point for getting on, then half points for every match stat. The stat points are added up first, then halved and rounded. Unused subs score 0. Every match-stat point is listed in the Stat key below." />
+          <ScoringBreakdown column="sub" note="Points for players who come off your bench: 1 point for getting on, then half points for every match stat. The stat points are added up first, then halved and rounded. Unused subs score 0. Every match-stat point is listed in the Stat key below." />
         </TabsContent>
       </Tabs>
       <div className="rounded-xl border border-border/60 bg-background/40 p-4">
@@ -3154,37 +3146,14 @@ function ScoringTab() {
 function ScoringBreakdown({
   column,
   note,
-  rules,
 }: {
   column: "starter" | "sub";
   note: string;
-  rules?: FantasyScoringRule[] | undefined;
 }) {
-  const fmt = (n: number) => {
-    const rounded = Math.round(n * 100) / 100;
-    return `${rounded > 0 ? "+" : ""}${rounded}`;
-  };
-  const rows = rules?.length
-    ? rules
-        .filter((r) => r.enabled)
-        .filter((r) => (column === "starter" ? r.special !== "appearance_sub" : r.special !== "appearance_start"))
-        // Stat-column rules and derived stat-key rules (clean sheets, SOG, SOGA, etc.)
-        // are explained in the Stat key below, so keep the main scoring list to
-        // appearances and captain-only multipliers.
-        .filter((r) => r.statColumn === null && (r.special === null || r.special === "appearance_start" || r.special === "appearance_sub"))
-        .map((r) => {
-          const halve = column === "sub" && r.halvesForSubs;
-          const value = halve ? r.points / 2 : r.points;
-          return {
-            label: r.perN > 1 ? `${r.label} — per ${r.perN}` : r.label,
-            minTime: "1+ sec",
-            points: fmt(value),
-          };
-        })
-    : SCORING_RULES.filter((r) => {
-        const value = column === "starter" ? r.starter : r.sub;
-        return value.trim() !== "—" && value.trim() !== "";
-      }).map((r) => ({ label: r.label, minTime: r.minTime, points: column === "starter" ? r.starter : r.sub }));
+  const rows = SCORING_RULES.filter((r) => {
+    const value = column === "starter" ? r.starter : r.sub;
+    return value.trim() !== "—" && value.trim() !== "";
+  }).map((r) => ({ label: r.label, minTime: r.minTime, points: column === "starter" ? r.starter : r.sub }));
   return (
     <div className="space-y-3">
       <p className="text-xs text-muted-foreground">{note}</p>
