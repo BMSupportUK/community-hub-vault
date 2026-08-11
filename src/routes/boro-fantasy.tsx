@@ -100,11 +100,18 @@ function useNow(interval = 1000) {
 function DigitalLockCountdown({
   lockAt,
   label = "Locks in",
+  swapDeadlineAt,
   compact,
-}: { lockAt: string; label?: string; compact?: boolean }) {
+}: { lockAt: string; label?: string; swapDeadlineAt?: string | null; compact?: boolean }) {
   const now = useNow(1000);
   const lockMs = new Date(lockAt).getTime();
-  const remaining = lockMs - now;
+  const swapMs = swapDeadlineAt ? new Date(swapDeadlineAt).getTime() : null;
+  // Once the first deadline passes the timer re-targets the sub-swap cut-off so
+  // managers can see how long they have left to shuffle their named 18.
+  const swapPhase = now >= lockMs && swapMs !== null && now < swapMs;
+  const targetMs = swapPhase ? (swapMs as number) : lockMs;
+  const activeLabel = swapPhase ? "Sub swaps close in" : label;
+  const remaining = targetMs - now;
   const locked = remaining <= 0;
   const urgent = remaining > 0 && remaining <= 60 * 60 * 1000;
 
@@ -114,11 +121,13 @@ function DigitalLockCountdown({
   const minutes = Math.floor((totalSeconds % 3600) / 60);
   const seconds = totalSeconds % 60;
 
-  const lockDate = new Date(lockAt).toLocaleDateString(undefined, {
-    weekday: "short",
-    day: "2-digit",
-    month: "short",
-  });
+  const lockDate = swapPhase
+    ? new Date(targetMs).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })
+    : new Date(lockAt).toLocaleDateString(undefined, {
+        weekday: "short",
+        day: "2-digit",
+        month: "short",
+      });
 
   const unit = (value: number, suffix: string) => (
     <div className={`flex flex-col items-center ${compact ? "min-w-[1.7rem] sm:min-w-[2.4rem]" : "min-w-[3.2rem]"}`}>
@@ -158,7 +167,7 @@ function DigitalLockCountdown({
         </div>
         <div className={`mt-0.5 flex items-center justify-center gap-1 font-digital font-bold uppercase tracking-wide text-[9px] sm:text-[10px] ${urgent ? "text-red-300" : "text-amber-300"}`}>
           <Lock className="size-2.5 sm:size-3 shrink-0" strokeWidth={3} />
-          <span className="truncate">{locked ? "Locked" : label}</span>
+          <span className="truncate">{locked ? "Locked" : activeLabel}</span>
         </div>
       </div>
     );
