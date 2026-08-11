@@ -2020,7 +2020,7 @@ function PitchView({
   onFormationChange: (f: FormationKey) => void;
   formationLocked?: boolean;
   editable: boolean;
-  /** Drag and drop is only for late sub swaps, after the first lock. */
+  /** Drag and drop is enabled while the gameweek is still open. */
   dragEnabled?: boolean;
   playerById: Map<string, FantasyPlayerDTO>;
   selected: string[];
@@ -2299,7 +2299,7 @@ function BenchPanel({
   onDropStart, onDropBench, onRemove, onBenchSlotOpen, gw,
 }: {
   editable: boolean;
-  /** Drag and drop is only for late sub swaps, after the first lock. */
+  /** Drag and drop is enabled while the gameweek is still open. */
   dragEnabled?: boolean;
   playerById: Map<string, FantasyPlayerDTO>;
   bench: (string | null)[];
