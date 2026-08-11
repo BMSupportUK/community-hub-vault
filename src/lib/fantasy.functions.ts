@@ -808,3 +808,32 @@ export const adminDeleteFantasyEntrant = createServerFn({ method: "POST" })
     }
     return { ok: true };
   });
+
+export type FantasyPlayerMatchStats = {
+  fixtureId: string;
+  gwNumber: number | null;
+  label: string;
+  kickoffAt: string | null;
+  points: number;
+  stats: Record<string, number>;
+};
+
+export type FantasyPlayerBreakdown = {
+  name: string;
+  position: string;
+  altPosition: string | null;
+  shirtNumber: number | null;
+  totalPoints: number;
+  matches: FantasyPlayerMatchStats[];
+};
+
+/** Per-match ESPN stat lines and points earned for one player (public read). */
+export const getFantasyPlayerBreakdown = createServerFn({ method: "GET" })
+  .inputValidator((d: unknown) => z.object({ playerId: z.string().uuid() }).parse(d))
+  .handler(async ({ data }): Promise<FantasyPlayerBreakdown> => {
+    setResponseHeader("cache-control", "no-store, max-age=0");
+    const { getAdmin } = await import("@/lib/fantasy.server");
+    const { buildPlayerBreakdown } = await import("@/lib/fantasy-player-stats.server");
+    const admin = await getAdmin();
+    return buildPlayerBreakdown(admin, data.playerId);
+  });
