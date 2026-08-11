@@ -10,8 +10,16 @@ import { Input } from "@/components/ui/input";
 import {
   getFantasySquadNumbers,
   adminSetFantasyShirtNumber,
+  adminSetFantasyAltPosition,
   type FantasySquadNumberPlayer,
 } from "@/lib/fantasy.functions";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export const Route = createFileRoute("/_authenticated/_approved/admin-fantasy-squad-numbers")({
   head: () => ({
@@ -37,9 +45,11 @@ function AdminFantasySquadNumbersPage() {
   const isAdmin = hasAny(["admin", "management"]);
   const load = useServerFn(getFantasySquadNumbers);
   const save = useServerFn(adminSetFantasyShirtNumber);
+  const saveAlt = useServerFn(adminSetFantasyAltPosition);
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
+  const [altBusy, setAltBusy] = useState<string | null>(null);
   const [drafts, setDrafts] = useState<Record<string, string>>({});
 
   const { data, isLoading } = useQuery({
@@ -92,6 +102,25 @@ function AdminFantasySquadNumbersPage() {
     }
   };
 
+  const applyAlt = async (p: FantasySquadNumberPlayer, value: string) => {
+    const next = value === "none" ? null : (value as "gk" | "def" | "mid" | "fwd");
+    setAltBusy(p.id);
+    try {
+      await saveAlt({ data: { playerId: p.id, altPosition: next } });
+      toast.success(
+        next
+          ? `${p.name} can now also be picked as ${POS_LABEL[next]}`
+          : `Removed ${p.name}'s extra position`,
+      );
+      await qc.invalidateQueries({ queryKey: ["fantasy-squad-numbers"] });
+      await qc.invalidateQueries({ queryKey: ["fantasy"] });
+    } catch (e: any) {
+      toast.error(e?.message ?? "Could not save");
+    } finally {
+      setAltBusy(null);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
@@ -109,6 +138,10 @@ function AdminFantasySquadNumbersPage() {
         Every player in the MFC Fantasy Manager pool. Set or change a squad number here and it is
         locked — the automatic club squad sync will never overwrite it. Enter "-" (or leave blank) to
         clear the number, meaning the player is not in the squad numbers.
+      </p>
+      <p className="text-sm text-muted-foreground">
+        Use the extra position dropdown to let a player be picked in a second position (for example a
+        forward who can also play in midfield). Choose "None" to remove it.
       </p>
 
       <Input
@@ -139,10 +172,34 @@ function AdminFantasySquadNumbersPage() {
                       {p.name}
                       <span className="ml-2 text-xs text-muted-foreground">
                         {POS_LABEL[p.position] ?? p.position}
+                        {p.altPosition ? ` / ${POS_LABEL[p.altPosition] ?? p.altPosition}` : ""}
                         {p.status === "loaned_out" ? " · on loan" : ""}
                         {p.shirtNumberLocked ? " · locked" : ""}
                       </span>
                     </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground">Extra</span>
+                      <Select
+                        value={p.altPosition ?? "none"}
+                        disabled={altBusy === p.id}
+                        onValueChange={(v) => applyAlt(p, v)}
+                      >
+                        <SelectTrigger className="w-28">
+                          <SelectValue placeholder="None" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">None</SelectItem>
+                          {(["gk", "def", "mid", "fwd"] as const)
+                            .filter((pos) => pos !== p.position)
+                            .map((pos) => (
+                              <SelectItem key={pos} value={pos}>
+                                {POS_LABEL[pos]}
+                              </SelectItem>
+                            ))}
+                        </SelectContent>
+                      </Select>
+                      {altBusy === p.id ? <Loader2 className="size-4 animate-spin" /> : null}
+                    </div>
                     <Input
                       value={draftOf(p)}
                       onChange={(e) => setDrafts((d) => ({ ...d, [p.id]: e.target.value }))}
