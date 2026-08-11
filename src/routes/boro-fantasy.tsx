@@ -1950,7 +1950,8 @@ function PitchView({
                 );
               })}
             </div>
-          ))}
+            );
+          })}
         </div>
         {overflow.length > 0 && (
           <div className="relative mt-4 rounded-xl border border-amber-400/60 bg-amber-500/15 p-2">
