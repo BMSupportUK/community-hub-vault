@@ -1428,13 +1428,20 @@ function outOf25(p: FantasyPlayerDTO): boolean {
  * Injuries are stamped with an expected return date. When picking a squad for a
  * future gameweek, a player whose return date falls on or before that kick-off
  * is expected back for that game — so we shouldn't scream OUT at the manager.
+ *
+ * A return date that has already been and gone counts as cleared too: the feed
+ * lags behind reality, and a flag whose own return date is in the past must
+ * never keep showing OUT.
  */
 function injuryClearedBy(p: FantasyPlayerDTO, kickoffAt?: string | null): boolean {
   if ((p.injuryStatus ?? "none") === "none") return false;
-  if (!p.injuryReturn || !kickoffAt) return false;
+  if (!p.injuryReturn) return false;
   const back = Date.parse(p.injuryReturn);
+  if (!Number.isFinite(back)) return false;
+  if (back <= Date.now()) return true;
+  if (!kickoffAt) return false;
   const ko = Date.parse(kickoffAt);
-  if (!Number.isFinite(back) || !Number.isFinite(ko)) return false;
+  if (!Number.isFinite(ko)) return false;
   return back <= ko;
 }
 
