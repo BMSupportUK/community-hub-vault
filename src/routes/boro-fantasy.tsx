@@ -33,7 +33,6 @@ import {
   FORMATIONS, formationCounts, formationRows, formationPositionRange, rowPositions, slotPositionLabel,
   playerPositions, playerPositionLabel, xiFitsFormation, resolveSlotPosition,
   fantasyCompetitionGroup, FANTASY_GROUP_LABEL,
-  FANTASY_FINAL_SWAP_MINUTES,
   FANTASY_BENCH_SIZE, FANTASY_SQUAD_SIZE, FANTASY_LOCK_MINUTES,
   type FantasyPosition, type FormationKey, type FantasyCompetitionGroup,
 } from "@/lib/fantasy-rules";
@@ -261,17 +260,12 @@ function useNow(interval = 1000) {
 function DigitalLockCountdown({
   lockAt,
   label = "Locks in",
-  swapDeadlineAt,
   compact,
-}: { lockAt: string; label?: string; swapDeadlineAt?: string | null; compact?: boolean }) {
+}: { lockAt: string; label?: string; compact?: boolean }) {
   const now = useNow(1000);
   const lockMs = new Date(lockAt).getTime();
-  const swapMs = swapDeadlineAt ? new Date(swapDeadlineAt).getTime() : null;
-  // Once the first deadline passes the timer re-targets the sub-swap cut-off so
-  // managers can see how long they have left to shuffle their named 18.
-  const swapPhase = now >= lockMs && swapMs !== null && now < swapMs;
-  const targetMs = swapPhase ? (swapMs as number) : lockMs;
-  const activeLabel = swapPhase ? "Sub swaps close in" : label;
+  const targetMs = lockMs;
+  const activeLabel = label;
   const remaining = targetMs - now;
   const locked = remaining <= 0;
   const urgent = remaining > 0 && remaining <= 60 * 60 * 1000;
@@ -282,13 +276,11 @@ function DigitalLockCountdown({
   const minutes = Math.floor((totalSeconds % 3600) / 60);
   const seconds = totalSeconds % 60;
 
-  const lockDate = swapPhase
-    ? new Date(targetMs).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })
-    : new Date(lockAt).toLocaleDateString(undefined, {
-        weekday: "short",
-        day: "2-digit",
-        month: "short",
-      });
+  const lockDate = new Date(lockAt).toLocaleDateString(undefined, {
+    weekday: "short",
+    day: "2-digit",
+    month: "short",
+  });
 
   const unit = (value: number, suffix: string) => (
     <div className={`flex flex-col items-center ${compact ? "min-w-[1.7rem] sm:min-w-[2.4rem]" : "min-w-[3.2rem]"}`}>
@@ -1054,13 +1046,9 @@ function SquadBuilder({
   const benchHasGk = (sel: string[], st: (string | null)[], excludeId?: string) =>
     byPos(sel.filter((id) => id !== excludeId && !st.includes(id)) as (string | null)[], "gk").length > 0;
 
-  // Two-stage deadline: at the lock the 18 named players are fixed, but subs can
-  // still be swapped into the XI until 10 minutes before kick-off.
   const nowTick = useNow(1000);
-  const swapDeadlineMs = gw ? new Date(gw.kickoffAt).getTime() - FANTASY_FINAL_SWAP_MINUTES * 60_000 : 0;
   const pastLock = !!gw && new Date(gw.lockAt).getTime() <= nowTick;
-  const swapOnly = !!gw && gw.status === "upcoming" && pastLock && nowTick < swapDeadlineMs && !!existing;
-  const locked = !!gw && (gw.status !== "upcoming" || (pastLock && !swapOnly));
+  const locked = !!gw && (gw.status !== "upcoming" || pastLock);
 
   const xiProblems: string[] = [];
   const starterCount = starters.filter(Boolean).length;
@@ -1176,10 +1164,6 @@ function SquadBuilder({
   /** Ensure the player is in the 15 — returns the new squad list, or null if not possible. */
   function withPlayer(sel: string[], p: FantasyPlayerDTO): string[] | null {
     if (sel.includes(p.id)) return sel;
-    if (swapOnly) {
-      toast.error(`The gameweek has locked — you can only swap your named subs into the XI now (until ${FANTASY_FINAL_SWAP_MINUTES} minutes before kick-off).`);
-      return null;
-    }
     if (p.status === "departed") { toast.error(`${p.name} has left the club.`); return null; }
     if (p.status === "loaned_out") { toast.error(`${p.name} is out on loan${p.loanClub ? ` at ${p.loanClub}` : ""}.`); return null; }
     if (sel.length >= squadSize) { toast.error(`Squad is full — ${squadSize} players max (11 + ${benchRules.size} subs).`); return null; }
@@ -1203,10 +1187,6 @@ function SquadBuilder({
 
   function removePlayer(id: string) {
     if (!editable) return;
-    if (swapOnly) {
-      toast.error("The gameweek has locked — your 18 named players are fixed. You can still swap subs into the XI.");
-      return;
-    }
     const slotIdx = starters.indexOf(id);
     const benchIdx = bench.indexOf(id);
     setSelected((prev) => prev.filter((x) => x !== id));
@@ -1594,23 +1574,13 @@ function SquadBuilder({
           <Lock className="size-4" /> This gameweek is locked. Changes will apply to the next one.
         </div>
       )}
-      {swapOnly && (
-        <div className="rounded-xl border border-amber-500/50 bg-amber-500/10 px-4 py-3 text-sm flex items-center gap-2">
-          <Lock className="size-4 text-amber-500" />
-          <span>
-            Deadline passed — your 18 named players are fixed. You can still swap subs with your match day 11
-            (and adjust formation, captain and vice) until {FANTASY_FINAL_SWAP_MINUTES} minutes before kick-off.
-          </span>
-        </div>
-      )}
       <div className="rounded-3xl border border-primary/30 shadow-glow bg-gradient-primary p-4 grid min-w-0 items-stretch gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,300px)] xl:grid-cols-[minmax(0,1fr)_minmax(0,300px)_minmax(0,320px)]">
         <div className="grid min-w-0 gap-4 items-stretch h-full">
           <PitchView
               formation={formation}
               onFormationChange={(f) => setFormation(f)}
-              formationLocked={swapOnly}
               editable={editable}
-              dragEnabled={editable && swapOnly}
+              dragEnabled={editable}
               playerById={playerById}
               selected={selected}
               starters={starters}
@@ -1692,7 +1662,7 @@ function SquadBuilder({
         </aside>
           <BenchPanel
             editable={editable}
-            dragEnabled={editable && swapOnly}
+            dragEnabled={editable}
             playerById={playerById}
             bench={bench}
             benchPositions={benchPositions}
@@ -2136,11 +2106,6 @@ function PitchView({
           <div className="pointer-events-none absolute left-5 top-5 sm:left-8 sm:top-8 z-10 box-border w-28 max-w-[calc(50%-1.25rem)] overflow-hidden rounded-lg border border-white/30 bg-slate-950/80 p-1.5 sm:w-40 sm:max-w-[calc(50%-2rem)] sm:rounded-xl sm:p-2 shadow-lg backdrop-blur-sm">
             <DigitalLockCountdown
               lockAt={gw.lockAt}
-              swapDeadlineAt={
-                formationLocked
-                  ? new Date(new Date(gw.kickoffAt).getTime() - FANTASY_FINAL_SWAP_MINUTES * 60_000).toISOString()
-                  : null
-              }
               compact
             />
           </div>
@@ -3025,7 +2990,6 @@ function SquadRulesTab() {
             { k: "Match day", v: "11 players" },
             { k: "Bench", v: `${FANTASY_BENCH_SIZE} subs (Sub 1 = GK)` },
             { k: "Deadline", v: `${FANTASY_LOCK_MINUTES / 60} hours pre-KO` },
-            { k: "Sub swaps until", v: `${FANTASY_FINAL_SWAP_MINUTES} mins pre-KO` },
           ].map((s) => (
             <div key={s.k} className="rounded-xl bg-white/15 ring-1 ring-white/20 px-3 py-2">
               <div className="text-[11px] uppercase tracking-wide text-white/75">{s.k}</div>
