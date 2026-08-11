@@ -1393,6 +1393,30 @@ function levelOf(p: FantasyPlayerDTO): PickerLevel {
 }
 
 /**
+ * Injury / suspension flag. Shown on the pitch, bench and player picker.
+ * Injured players stay selectable — the icon is a warning, not a block.
+ */
+function InjuryIcon({ p, className = "" }: { p: FantasyPlayerDTO; className?: string }) {
+  const s = p.injuryStatus ?? "none";
+  if (s === "none") return null;
+  const bits = [
+    s === "suspended" ? "Suspended" : s === "doubtful" ? "Doubtful" : "Injured — out",
+    p.injuryNote || null,
+    p.injuryReturn ? `Expected back: ${p.injuryReturn}` : null,
+    p.injurySource === "admin" ? "(set by admin)" : p.injurySource === "feed" ? "(EFL Fantasy feed)" : null,
+  ].filter(Boolean);
+  const title = bits.join(" · ");
+  const cls =
+    s === "doubtful" ? "text-amber-400" : s === "suspended" ? "text-rose-400" : "text-red-500";
+  const Icon = s === "suspended" ? Ban : s === "doubtful" ? AlertTriangle : Cross;
+  return (
+    <span title={title} aria-label={title} className="inline-flex shrink-0 items-center">
+      <Icon className={`size-3.5 ${cls} ${className}`} strokeWidth={3} />
+    </span>
+  );
+}
+
+/**
  * Pop-box player picker. Opened from an XI slot (filtered to that position) or a
  * bench slot (every remaining player), split into First team / U21 / U18 tabs.
  */
