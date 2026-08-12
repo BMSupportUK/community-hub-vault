@@ -3148,14 +3148,13 @@ function ScoringTab() {
       <div>
         <h3 className="font-display text-lg font-bold flex items-center gap-2"><Trophy className="size-4 text-primary" /> How scoring works</h3>
         <p className="text-sm text-muted-foreground mt-1">
-          Match stats are taken from the official ESPN match report — the same player stats table you can check yourself after
-          the game — and added automatically once the fixture is finished and the stats are confirmed. Appearance, substitute,
-          captain, clean-sheet and bonus points are then calculated by our scoring engine on top of those stats, so nothing
-          is entered by hand. Only Middlesbrough players score, and only in competitive fixtures. Any player in your match day 11
-          who doesn't get on the pitch scores 0. Subs who come off the bench score too and their points are added to your total —
-          under 60 minutes they use the sub scoring column below, and if they play 60 minutes or more they're scored exactly like
-          a match day 11 player. Your captain scores double, and if he doesn't play a minute the vice-captain doubles instead.
-          Players who cover two positions score in the position you selected for them.
+          ESPN supplies the available player match stats, such as goals, assists, shots, saves and goals conceded. Our game then
+          combines those stats with its own scoring rules for appearances, substitutes, captains, clean sheets, penalties, cards,
+          own goals and bonuses. Points are updated once the fixture has finished and all stats and bonuses have been confirmed.
+          Only Middlesbrough players score, and only in competitive fixtures. A player in your match day 11 who doesn't get on the
+          pitch scores 0. Subs who play score too: under 60 minutes they use the sub scoring column below, while 60 minutes or more
+          is scored at the full match day 11 rate. Your captain scores double, and if he doesn't play a minute the vice-captain
+          doubles instead. Players who cover two positions score in the position you selected for them.
         </p>
       </div>
       <Tabs defaultValue="starters">
@@ -3164,7 +3163,7 @@ function ScoringTab() {
           <TabsTrigger value="subs">Subs</TabsTrigger>
         </TabsList>
         <TabsContent value="starters" className="mt-4">
-          <ScoringBreakdown column="starter" note="Points for players named in your match day 11. A starter who doesn't get on the pitch scores 0. Every match stat is taken from the official ESPN match report and added automatically once the game is finished and the stats are confirmed." />
+          <ScoringBreakdown column="starter" note="Points for players named in your match day 11. A starter who doesn't get on the pitch scores 0. ESPN match stats and the game's own scoring rules are combined once the fixture is finished and all stats and bonuses have been confirmed." />
         </TabsContent>
         <TabsContent value="subs" className="mt-4">
           <ScoringBreakdown column="sub" note="Points for players who come off your bench: 1 point for getting on, then half points for every match stat. The stat points are added up first, then halved and rounded. Unused subs score 0." />
