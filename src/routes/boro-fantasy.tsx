@@ -34,6 +34,7 @@ import {
   playerPositions, playerPositionLabel, xiFitsFormation, resolveSlotPosition,
   fantasyCompetitionGroup, FANTASY_GROUP_LABEL,
   FANTASY_BENCH_SIZE, FANTASY_SQUAD_SIZE, FANTASY_LOCK_MINUTES,
+  PLAYER_STAT_META, statPointsPer,
   type FantasyPosition, type FormationKey, type FantasyCompetitionGroup,
 } from "@/lib/fantasy-rules";
 import {
@@ -95,37 +96,23 @@ function PlayerNameButton({
   );
 }
 
-const PLAYER_STAT_LABELS: Record<string, string> = {
-  minutes: "Minutes",
-  goals: "G — Goals",
-  assists: "A — Assists",
-  shots: "SHOT — Shots",
-  shots_on_target: "SOG — Shots on goal",
-  shots_faced: "Shots faced",
-  shots_on_goal_against: "SOGA — Shots on goal against",
-  saves: "SV — Saves",
-  pens_saved: "Penalties saved",
-  pens_missed: "Penalties missed",
-  goals_conceded: "GA — Goals conceded",
-  passes: "PASS — Passes",
-  accurate_passes: "AC.PASS — Accurate passes",
-  accurate_long_balls: "AC.LONG — Accurate long balls",
-  big_chances_created: "BCC — Big chances created",
-  big_chances_missed: "BCM — Big chances missed",
-  touches: "TCH — Touches",
-  duels_won: "DUELW — Duels won",
-  defensive_interventions: "DINT — Defensive interventions",
-  crosses_claimed: "CC — Crosses claimed",
-  unclaimed_crosses: "UC — Unclaimed crosses",
-  keeper_sweepers: "KS — Keeper sweepers",
-  fouls_committed: "FC — Fouls committed",
-  fouls_suffered: "FA — Fouls suffered",
-  offsides: "Offsides",
-  yellows: "Yellow cards",
-  reds: "Red cards",
-  own_goals: "Own goals",
-  bonus: "Bonus",
-};
+/** ESPN-style abbreviation + plain-English label for every stat we read. */
+const PLAYER_STAT_LABELS: Record<string, string> = Object.fromEntries(
+  Object.entries(PLAYER_STAT_META).map(([k, m]) => [k, `${m.abbr} — ${m.means}`]),
+);
+const STAT_KEYS_ALL = Object.keys(PLAYER_STAT_META);
+
+/** Small purple abbreviation chip, ESPN style. */
+function AbbrChip({ abbr, title }: { abbr: string; title?: string }) {
+  return (
+    <span
+      title={title}
+      className="inline-flex shrink-0 items-center rounded border border-purple-500/40 bg-purple-500/10 px-1.5 py-px text-[10px] font-bold uppercase tracking-wide text-purple-400"
+    >
+      {abbr}
+    </span>
+  );
+}
 
 function PlayerStatsDialog({ playerId, onClose }: { playerId: string | null; onClose: () => void }) {
   const fn = useServerFn(getFantasyPlayerBreakdown);
@@ -137,8 +124,26 @@ function PlayerStatsDialog({ playerId, onClose }: { playerId: string | null; onC
   const data = query.data;
   const matches = data?.matches ?? [];
   const statKeys = useMemo(
-    () => Object.keys(PLAYER_STAT_LABELS).filter((k) => matches.some((m) => (m.stats[k] ?? 0) !== 0)),
+    () => STAT_KEYS_ALL.filter((k) => matches.some((m) => (m.stats[k] ?? 0) !== 0)),
     [matches],
+  );
+  const pos = ((data?.position || "mid") as FantasyPosition);
+  /** Season totals per stat, with the points each one is worth. */
+  const seasonRows = useMemo(
+    () =>
+      STAT_KEYS_ALL.map((k) => {
+        const total = matches.reduce((s, m) => s + (m.stats[k] ?? 0), 0);
+        const rate = statPointsPer(k, pos);
+        return {
+          key: k,
+          abbr: PLAYER_STAT_META[k]!.abbr,
+          means: PLAYER_STAT_META[k]!.means,
+          total,
+          rate,
+          points: rate == null ? null : Math.round(total * rate * 100) / 100,
+        };
+      }),
+    [matches, pos],
   );
 
   return (
@@ -150,7 +155,7 @@ function PlayerStatsDialog({ playerId, onClose }: { playerId: string | null; onC
             {data?.name ?? "Player stats"}
           </DialogTitle>
           <DialogDescription>
-            Match-by-match stats from the ESPN match report and the points they earned.
+          Every abbreviation we score on, the ESPN match-report stats behind them and the points earned.
           </DialogDescription>
         </DialogHeader>
 
@@ -160,16 +165,55 @@ function PlayerStatsDialog({ playerId, onClose }: { playerId: string | null; onC
           </div>
         ) : query.isError ? (
           <p className="py-4 text-sm text-destructive">Couldn't load this player's stats.</p>
-        ) : matches.length === 0 ? (
-          <p className="py-4 text-sm text-muted-foreground">
-            No stats recorded yet — they'll appear here once this player features in a scored game week.
-          </p>
         ) : (
           <>
+            {matches.length === 0 && (
+              <p className="rounded-lg border border-border bg-muted/30 p-3 text-sm text-muted-foreground">
+                No stats recorded yet — the table below fills in automatically once this player features
+                in a finished game week and ESPN confirm the match stats.
+              </p>
+            )}
             <div className="mb-2 flex items-center justify-between rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm">
               <span className="font-semibold">Season total</span>
               <span className="font-bold tabular-nums">{data?.totalPoints ?? 0} pts</span>
             </div>
+
+            <div className="space-y-2">
+              <h4 className="text-sm font-bold">Abbreviations &amp; points</h4>
+              <p className="text-xs text-muted-foreground">
+                Points shown are what a match day 11 starter earns as a{" "}
+                {POSITION_LABEL[pos].toLowerCase()}. Subs earn half. Stats with no points are ESPN
+                match-report extras, shown for information only.
+              </p>
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[380px] text-left text-xs">
+                  <thead>
+                    <tr className="border-b border-border text-[11px] uppercase tracking-wide text-muted-foreground">
+                      <th className="py-2 pr-2">Abbr</th>
+                      <th className="py-2 pr-2">Means</th>
+                      <th className="px-2 py-2 text-right">Season</th>
+                      <th className="py-2 pl-2 text-right">Pts</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {seasonRows.map((r) => (
+                      <tr key={r.key} className="border-b border-border/60">
+                        <td className="py-1.5 pr-2"><AbbrChip abbr={r.abbr} title={r.means} /></td>
+                        <td className="py-1.5 pr-2 text-muted-foreground">{r.means}</td>
+                        <td className="px-2 py-1.5 text-right tabular-nums">{r.total}</td>
+                        <td className="py-1.5 pl-2 text-right font-bold tabular-nums text-primary">
+                          {r.points == null ? "—" : r.points}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {matches.length > 0 && (
+            <div className="mt-4 space-y-2">
+            <h4 className="text-sm font-bold">Match by match</h4>
             <div className="overflow-x-auto">
               <table className="w-full min-w-[420px] text-left text-xs">
                 <thead>
@@ -188,7 +232,12 @@ function PlayerStatsDialog({ playerId, onClose }: { playerId: string | null; onC
                 <tbody>
                   {statKeys.map((k) => (
                     <tr key={k} className="border-b border-border/60">
-                      <td className="py-1.5 pr-2 text-muted-foreground">{PLAYER_STAT_LABELS[k]}</td>
+                      <td className="py-1.5 pr-2 text-muted-foreground">
+                        <span className="flex items-center gap-1.5">
+                          <AbbrChip abbr={PLAYER_STAT_META[k]!.abbr} title={PLAYER_STAT_META[k]!.means} />
+                          <span>{PLAYER_STAT_META[k]!.means}</span>
+                        </span>
+                      </td>
                       {matches.map((m) => (
                         <td key={m.fixtureId} className="px-2 py-1.5 text-center tabular-nums">
                           {m.stats[k] ?? 0}
@@ -207,6 +256,8 @@ function PlayerStatsDialog({ playerId, onClose }: { playerId: string | null; onC
                 </tbody>
               </table>
             </div>
+            </div>
+            )}
           </>
         )}
       </DialogContent>
@@ -3084,7 +3135,7 @@ function ScoringBreakdown({
     const included = value.trim() !== "—" && value.trim() !== "";
     if (column === "sub" && r.label.startsWith("Captain (vice")) return false;
     return included;
-  }).map((r) => ({ label: r.label, minTime: r.minTime, points: column === "starter" ? r.starter : r.sub }));
+  }).map((r) => ({ abbr: r.abbr, label: r.label, minTime: r.minTime, points: column === "starter" ? r.starter : r.sub }));
   return (
     <div className="space-y-3">
       <p className="text-xs text-muted-foreground">{note}</p>
@@ -3092,6 +3143,7 @@ function ScoringBreakdown({
         <table className="w-full min-w-[380px] text-sm">
           <thead>
             <tr className="text-left text-xs uppercase tracking-wide text-muted-foreground border-b border-border/60">
+              <th className="py-2 pr-3 font-semibold">Abbr</th>
               <th className="py-2 pr-3 font-semibold">Action</th>
               <th className="py-2 px-3 font-semibold whitespace-nowrap">Min game time</th>
               <th className="py-2 pl-3 font-semibold text-right whitespace-nowrap">Points</th>
@@ -3099,7 +3151,8 @@ function ScoringBreakdown({
           </thead>
           <tbody className="divide-y divide-border/50">
             {rows.map((r) => (
-              <tr key={r.label}>
+              <tr key={`${r.abbr}-${r.label}`}>
+                <td className="py-2 pr-3"><AbbrChip abbr={r.abbr} title={r.label} /></td>
                 <td className="py-2 pr-3">{r.label}</td>
                 <td className="py-2 px-3 text-muted-foreground tabular-nums whitespace-nowrap">{r.minTime}</td>
                 <td className="py-2 pl-3 text-right font-bold tabular-nums text-primary">{r.points}</td>
