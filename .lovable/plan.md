@@ -1,31 +1,19 @@
-# Duels won (DUELW) is missing from the stats feed — not a forwards bug
+# Fix the "How scoring works" text on the Scoring tab
 
-## What I checked
+## Problem
+The intro paragraph on the Scoring tab wrongly says minutes decide which column a player scores from ("Subs who play score too: under 60 minutes they use the sub scoring column below, while 60 minutes or more is scored at the full match day 11 rate").
 
-I pulled the live stats feed for a real Middlesbrough Championship match and listed every stat it returns for every player in the squad (keeper, defenders, midfielders, forwards, subs). Every player gets exactly the same stat set:
+That is not the game's rule. The rule is: **where you named the player decides the rate** — anyone in the match day 11 scores full points, anyone who comes off the bench scores half. Minutes only matter for the clean-sheet rows (60+ mins vs under 60 mins).
 
-```text
-APP, FC, FA, OG, RC, SUB, YC, GA, SV, SHF, A, OF, SOG, G, SHOT
-```
+## Change
+Rewrite that sentence in the Scoring tab intro so it reads correctly:
 
-There is no DUELW for anybody — forwards included. I also tried the alternative match-report endpoints (web API summary, the match page, the CDN match feed) and searched them for "DUELW" / "duel": the value does not exist in any of them for Championship games. It only appears on ESPN's rendered match report for selected competitions.
+- Match day 11 players who feature score the full rate — 2 points for the appearance plus full points for every match stat.
+- Subs who come off the bench score 1 point for the appearance plus half points for every stat, no matter how many minutes they play.
+- Starters who don't get on, and unused subs, score 0.
+- Minutes only affect the clean-sheet rows (60+ mins pays more than under 60 mins).
 
-The same applies to the other extended stats the bonus system reads: TCH (touches), AC.PASS, AC.LONG, PASS, PASS%, BCC, BCM, DINT, CC, UC, KS, SOGA. All of those currently resolve to 0 for every player, so those bonus rows can never score.
+Nothing else in the paragraph changes; captain/vice and dual-position wording stay as they are. No point values, database rules or scoring engine changes — this is text only.
 
-I also checked the stats table: it is empty (no 26/27 match has been played yet), so nothing has been recorded either way so far.
-
-## What actually can be scored from the current feed
-
-Minutes, goals, assists, saves, shots, shots on goal, shots faced, fouls for/against, offsides, cards, own goals, goals conceded (so clean sheets), penalties missed/saved from the timeline.
-
-## Options
-
-1. Trim the bonus list to what the feed really provides — remove or hide DUELW, TCH, AC.PASS, AC.LONG, PASS, BCC, BCM, DINT, CC, UC, KS, SOGA from Position bonus points, and rebuild the position tabs around the stats that do arrive (shots, shots on goal, shots faced, fouls, offsides, saves). Nothing silently scores zero.
-2. Keep the rules but mark unavailable stats — leave the rules in place, flag the ones with no data source as "not currently tracked" in the UI so expectations are clear, and let them start scoring if a feed appears.
-3. Add a second data provider for advanced stats — a paid/keyed football data API (e.g. API-Football / Sportmonks-style) that exposes duels, touches and passing per player, used only to fill the extended columns while ESPN keeps supplying goals/cards/minutes. Needs an API key and a monthly cost.
-4. Enter the extended stats by hand — an admin screen to type duels won, touches, passes etc. per player after each game, then re-score the gameweek.
-
-## Technical notes
-
-- Parsing lives in `src/lib/fantasy-live-stats.server.ts`; extended stats are read with `abbrVal(rp, "DUELW")` etc., which returns 0 when the abbreviation is absent — that is why the failure is silent rather than an error.
-- The rule list and UI copy live in `src/lib/fantasy-rules.ts` and `src/routes/boro-fantasy.tsx`; scoring itself is the `fantasy_points_for` Postgres function driven by `fantasy_scoring_rules`, so disabling a rule there is enough to stop it counting.
+## Technical detail
+Single edit to the `ScoringTab` intro paragraph in `src/routes/boro-fantasy.tsx` (around lines 3151-3159).
