@@ -96,37 +96,23 @@ function PlayerNameButton({
   );
 }
 
-const PLAYER_STAT_LABELS: Record<string, string> = {
-  minutes: "Minutes",
-  goals: "G — Goals",
-  assists: "A — Assists",
-  shots: "SHOT — Shots",
-  shots_on_target: "SOG — Shots on goal",
-  shots_faced: "Shots faced",
-  shots_on_goal_against: "SOGA — Shots on goal against",
-  saves: "SV — Saves",
-  pens_saved: "Penalties saved",
-  pens_missed: "Penalties missed",
-  goals_conceded: "GA — Goals conceded",
-  passes: "PASS — Passes",
-  accurate_passes: "AC.PASS — Accurate passes",
-  accurate_long_balls: "AC.LONG — Accurate long balls",
-  big_chances_created: "BCC — Big chances created",
-  big_chances_missed: "BCM — Big chances missed",
-  touches: "TCH — Touches",
-  duels_won: "DUELW — Duels won",
-  defensive_interventions: "DINT — Defensive interventions",
-  crosses_claimed: "CC — Crosses claimed",
-  unclaimed_crosses: "UC — Unclaimed crosses",
-  keeper_sweepers: "KS — Keeper sweepers",
-  fouls_committed: "FC — Fouls committed",
-  fouls_suffered: "FA — Fouls suffered",
-  offsides: "Offsides",
-  yellows: "Yellow cards",
-  reds: "Red cards",
-  own_goals: "Own goals",
-  bonus: "Bonus",
-};
+/** ESPN-style abbreviation + plain-English label for every stat we read. */
+const PLAYER_STAT_LABELS: Record<string, string> = Object.fromEntries(
+  Object.entries(PLAYER_STAT_META).map(([k, m]) => [k, `${m.abbr} — ${m.means}`]),
+);
+const STAT_KEYS_ALL = Object.keys(PLAYER_STAT_META);
+
+/** Small purple abbreviation chip, ESPN style. */
+function AbbrChip({ abbr, title }: { abbr: string; title?: string }) {
+  return (
+    <span
+      title={title}
+      className="inline-flex shrink-0 items-center rounded border border-purple-500/40 bg-purple-500/10 px-1.5 py-px text-[10px] font-bold uppercase tracking-wide text-purple-400"
+    >
+      {abbr}
+    </span>
+  );
+}
 
 function PlayerStatsDialog({ playerId, onClose }: { playerId: string | null; onClose: () => void }) {
   const fn = useServerFn(getFantasyPlayerBreakdown);
