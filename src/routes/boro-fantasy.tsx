@@ -3096,12 +3096,14 @@ function ScoringTab() {
       <div>
         <h3 className="font-display text-lg font-bold flex items-center gap-2"><Trophy className="size-4 text-primary" /> How scoring works</h3>
         <p className="text-sm text-muted-foreground mt-1">
-          Every point comes straight off the official ESPN match report — the same player stats table you can check yourself after
-          the game — so nothing is entered by hand. Only Middlesbrough players score, and only in competitive fixtures. Any player in your match day 11 who doesn't get on the pitch scores 0.
-          Subs who come off the bench score too and their points are added to your total — under 60 minutes they use the
-          sub scoring column below, and if they play 60 minutes or more they're scored exactly like a match day 11 player.
-          Your captain scores double, and if he doesn't play a minute the vice-captain doubles instead. Players who cover two
-          positions score in the position you selected for them.
+          Match stats are taken from the official ESPN match report — the same player stats table you can check yourself after
+          the game — and added automatically once the fixture is finished and the stats are confirmed. Appearance, substitute,
+          captain, clean-sheet and bonus points are then calculated by our scoring engine on top of those stats, so nothing
+          is entered by hand. Only Middlesbrough players score, and only in competitive fixtures. Any player in your match day 11
+          who doesn't get on the pitch scores 0. Subs who come off the bench score too and their points are added to your total —
+          under 60 minutes they use the sub scoring column below, and if they play 60 minutes or more they're scored exactly like
+          a match day 11 player. Your captain scores double, and if he doesn't play a minute the vice-captain doubles instead.
+          Players who cover two positions score in the position you selected for them.
         </p>
       </div>
       <Tabs defaultValue="starters">
