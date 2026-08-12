@@ -1490,6 +1490,7 @@ function SquadBuilder({
   const gwSaved = !!existing && !dirty;
 
   const gameweekPanel = (
+    // Live score / clock and the two status lines shown under the fixture.
     <div className="min-w-0 overflow-hidden rounded-2xl border border-border/60 bg-card/80 p-4 backdrop-blur space-y-3">
         <div className="flex flex-col gap-3">
           <div className="min-w-0">
@@ -1580,6 +1581,57 @@ function SquadBuilder({
                 </span>
               )}
             </div>
+            {gw && (() => {
+              const fs = (gw.fixtureStatus ?? "").toUpperCase();
+              const finished = fs === "FINISHED" || gw.status === "final";
+              const live = fs === "IN_PLAY" || fs === "LIVE" || fs === "PAUSED";
+              const hasScore = gw.homeScore !== null && gw.awayScore !== null;
+              const clock =
+                fs === "PAUSED"
+                  ? "HT"
+                  : gw.minute != null
+                    ? `${gw.minute}'${gw.minuteAdded ? `+${gw.minuteAdded}` : ""}`
+                    : null;
+              const pointsReady = finished && hasGwPoints;
+              return (
+                <div className="space-y-1.5 rounded-xl border border-border/60 bg-muted/20 px-3 py-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+                      {live ? "Live score" : finished ? "Full time" : "Kick-off to come"}
+                    </span>
+                    <span className="flex items-center gap-2">
+                      <span className="font-bold tabular-nums text-foreground">
+                        {hasScore ? `${gw.homeScore} — ${gw.awayScore}` : "– — –"}
+                      </span>
+                      {live && (
+                        <span className="rounded-full bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-bold text-emerald-400 tabular-nums">
+                          {clock ?? "LIVE"}
+                        </span>
+                      )}
+                      {finished && (
+                        <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-bold text-muted-foreground">FT</span>
+                      )}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between gap-2 text-xs">
+                    <span>{finished ? "Game is finished" : "Game not finished yet"}</span>
+                    {finished ? (
+                      <Check className="size-4 text-emerald-400" strokeWidth={3} />
+                    ) : (
+                      <X className="size-4 text-destructive" strokeWidth={3} />
+                    )}
+                  </div>
+                  <div className="flex items-center justify-between gap-2 text-xs">
+                    <span>{pointsReady ? "Points updated" : "Points waiting to be updated"}</span>
+                    {pointsReady ? (
+                      <Check className="size-4 text-emerald-400" strokeWidth={3} />
+                    ) : (
+                      <X className="size-4 text-destructive" strokeWidth={3} />
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
             <Button
               onClick={handleSave}
               variant={dirty ? "default" : "outline"}
