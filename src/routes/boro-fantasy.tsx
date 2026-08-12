@@ -3153,8 +3153,8 @@ function ScoringTab() {
           combines those stats with its own scoring rules for appearances, substitutes, captains, clean sheets, penalties, cards,
           own goals and bonuses. Points are updated once the fixture has finished and all stats and bonuses have been confirmed.
           Only Middlesbrough players score, and only in competitive fixtures. A player in your match day 11 who doesn't get on the
-          pitch scores 0. Subs who play score too: under 60 minutes they use the sub scoring column below, while 60 minutes or more
-          is scored at the full match day 11 rate. Your captain scores double, and if he doesn't play a minute the vice-captain
+          pitch scores 0. Where you named a player is all that matters: your match day 11 earn the full points, and a sub who comes
+          off the bench always earns half — no matter how long he plays. Your captain scores double, and if he doesn't play a minute the vice-captain
           doubles instead. Players who cover two positions score in the position you selected for them.
         </p>
       </div>
