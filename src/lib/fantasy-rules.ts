@@ -282,33 +282,84 @@ export const SQUAD_RULES: { title: string; body: string }[] = [
  * for it, then what a match day 11 starter earns and what a sub earns.
  */
 export const SCORING_RULES: {
+  /** Short ESPN-style code shown next to the points. */
+  abbr: string;
   label: string;
   minTime: string;
   starter: string;
   sub: string;
 }[] = [
-  { label: "Appearance — named in your match day 11", minTime: "1+ sec", starter: "2", sub: "—" },
-  { label: "Appearance — comes on from your bench", minTime: "1+ sec", starter: "—", sub: "1" },
-  { label: "Named but doesn't get on", minTime: "0 mins", starter: "0", sub: "0" },
-  { label: "Captain (vice if captain doesn't play)", minTime: "1+ sec", starter: "double points", sub: "double points" },
-  { label: "G — Goal scored — goalkeeper or defender", minTime: "1+ sec", starter: "6 pts", sub: "3 pts" },
-  { label: "G — Goal scored — midfielder", minTime: "1+ sec", starter: "5 pts", sub: "2.5 pts" },
-  { label: "G — Goal scored — forward", minTime: "1+ sec", starter: "4 pts", sub: "2 pts" },
-  { label: "A — Assists", minTime: "1+ sec", starter: "3 pts", sub: "1.5 pts" },
-  { label: "SHOT — Shots (any attempt at goal, on or off target)", minTime: "1+ sec", starter: "1 pt", sub: "0.5 pt" },
-  { label: "SV — Saves — goalkeeper", minTime: "1+ sec", starter: "1 pt", sub: "0.5 pt" },
-  { label: "GA — Goal conceded — goalkeeper", minTime: "1+ sec", starter: "−1 pt", sub: "−0.5 pt" },
-  { label: "Clean sheet (60+ mins) — goalkeeper or defender", minTime: "60+ mins", starter: "4 pts", sub: "2 pts" },
-  { label: "Clean sheet (60+ mins) — midfielder", minTime: "60+ mins", starter: "1 pt", sub: "0.5 pt" },
-  { label: "Clean sheet (under 60 mins) — goalkeeper or defender", minTime: "60- mins", starter: "2 pts", sub: "1 pt" },
-  { label: "Clean sheet (under 60 mins) — midfielder", minTime: "60- mins", starter: "0.5 pt", sub: "0.25 pt" },
-  { label: "Penalty saved — goalkeeper", minTime: "1+ sec", starter: "+5 pts", sub: "+2.5 pts" },
-  { label: "Penalty missed", minTime: "1+ sec", starter: "−2 pts", sub: "−1 pt" },
-  { label: "Yellow card", minTime: "1+ sec", starter: "−1 pt", sub: "−0.5 pt" },
-  { label: "Red card", minTime: "1+ sec", starter: "−3 pts", sub: "−1.5 pts" },
-  { label: "OG — Own goals", minTime: "1+ sec", starter: "−2 pts", sub: "−1 pt" },
-  { label: "MOTM bonus", minTime: "1+ sec", starter: "1 pt", sub: "0.5 pt" },
+  { abbr: "APP", label: "Appearance — named in your match day 11", minTime: "1+ sec", starter: "2", sub: "—" },
+  { abbr: "SUB", label: "Appearance — comes on from your bench", minTime: "1+ sec", starter: "—", sub: "1" },
+  { abbr: "DNP", label: "Named but doesn't get on", minTime: "0 mins", starter: "0", sub: "0" },
+  { abbr: "C", label: "Captain (vice if captain doesn't play)", minTime: "1+ sec", starter: "double points", sub: "double points" },
+  { abbr: "G", label: "Goal scored — goalkeeper or defender", minTime: "1+ sec", starter: "6 pts", sub: "3 pts" },
+  { abbr: "G", label: "Goal scored — midfielder", minTime: "1+ sec", starter: "5 pts", sub: "2.5 pts" },
+  { abbr: "G", label: "Goal scored — forward", minTime: "1+ sec", starter: "4 pts", sub: "2 pts" },
+  { abbr: "A", label: "Assists", minTime: "1+ sec", starter: "3 pts", sub: "1.5 pts" },
+  { abbr: "SHOT", label: "Shots (any attempt at goal, on or off target)", minTime: "1+ sec", starter: "1 pt", sub: "0.5 pt" },
+  { abbr: "SV", label: "Saves — goalkeeper", minTime: "1+ sec", starter: "1 pt", sub: "0.5 pt" },
+  { abbr: "GA", label: "Goal conceded — goalkeeper", minTime: "1+ sec", starter: "−1 pt", sub: "−0.5 pt" },
+  { abbr: "CS", label: "Clean sheet (60+ mins) — goalkeeper or defender", minTime: "60+ mins", starter: "4 pts", sub: "2 pts" },
+  { abbr: "CS", label: "Clean sheet (60+ mins) — midfielder", minTime: "60+ mins", starter: "1 pt", sub: "0.5 pt" },
+  { abbr: "CS-", label: "Clean sheet (under 60 mins) — goalkeeper or defender", minTime: "60- mins", starter: "2 pts", sub: "1 pt" },
+  { abbr: "CS-", label: "Clean sheet (under 60 mins) — midfielder", minTime: "60- mins", starter: "0.5 pt", sub: "0.25 pt" },
+  { abbr: "PS", label: "Penalty saved — goalkeeper", minTime: "1+ sec", starter: "+5 pts", sub: "+2.5 pts" },
+  { abbr: "PM", label: "Penalty missed", minTime: "1+ sec", starter: "−2 pts", sub: "−1 pt" },
+  { abbr: "YC", label: "Yellow card", minTime: "1+ sec", starter: "−1 pt", sub: "−0.5 pt" },
+  { abbr: "RC", label: "Red card", minTime: "1+ sec", starter: "−3 pts", sub: "−1.5 pts" },
+  { abbr: "OG", label: "Own goals", minTime: "1+ sec", starter: "−2 pts", sub: "−1 pt" },
+  { abbr: "MOTM", label: "Man of the match bonus", minTime: "1+ sec", starter: "1 pt", sub: "0.5 pt" },
 ];
+
+/**
+ * Every stat column we read from the ESPN match report, with its ESPN-style
+ * abbreviation, what it means and what a match day 11 starter earns for each
+ * one (subs earn half). Stats with no point value are shown for information
+ * only, exactly as ESPN lists them.
+ */
+export const PLAYER_STAT_META: Record<
+  string,
+  { abbr: string; means: string; points?: Partial<Record<FantasyPosition, number>> | number }
+> = {
+  minutes: { abbr: "MIN", means: "Minutes played" },
+  goals: { abbr: "G", means: "Goals scored", points: { gk: 6, def: 6, mid: 5, fwd: 4 } },
+  assists: { abbr: "A", means: "Assists", points: 3 },
+  shots: { abbr: "SHOT", means: "Shots — any attempt at goal", points: 1 },
+  shots_on_target: { abbr: "SOG", means: "Shots on goal" },
+  shots_faced: { abbr: "SF", means: "Shots faced" },
+  shots_on_goal_against: { abbr: "SOGA", means: "Shots on goal against" },
+  saves: { abbr: "SV", means: "Saves", points: { gk: 1 } },
+  pens_saved: { abbr: "PS", means: "Penalties saved", points: { gk: 5 } },
+  pens_missed: { abbr: "PM", means: "Penalties missed", points: -2 },
+  goals_conceded: { abbr: "GA", means: "Goals conceded", points: { gk: -1 } },
+  passes: { abbr: "PASS", means: "Passes attempted" },
+  accurate_passes: { abbr: "AC.PASS", means: "Accurate passes" },
+  accurate_long_balls: { abbr: "AC.LONG", means: "Accurate long balls" },
+  big_chances_created: { abbr: "BCC", means: "Big chances created" },
+  big_chances_missed: { abbr: "BCM", means: "Big chances missed" },
+  touches: { abbr: "TCH", means: "Touches" },
+  duels_won: { abbr: "DUELW", means: "Duels won" },
+  defensive_interventions: { abbr: "DINT", means: "Defensive interventions" },
+  crosses_claimed: { abbr: "CC", means: "Crosses claimed" },
+  unclaimed_crosses: { abbr: "UC", means: "Unclaimed crosses" },
+  keeper_sweepers: { abbr: "KS", means: "Keeper sweepers" },
+  fouls_committed: { abbr: "FC", means: "Fouls committed" },
+  fouls_suffered: { abbr: "FA", means: "Fouls suffered" },
+  offsides: { abbr: "OFF", means: "Offsides" },
+  yellows: { abbr: "YC", means: "Yellow cards", points: -1 },
+  reds: { abbr: "RC", means: "Red cards", points: -3 },
+  own_goals: { abbr: "OG", means: "Own goals", points: -2 },
+  bonus: { abbr: "MOTM", means: "Man of the match bonus", points: 1 },
+};
+
+/** Points a starter earns per unit of a stat, for the player profile table. */
+export function statPointsPer(key: string, position: FantasyPosition): number | null {
+  const meta = PLAYER_STAT_META[key];
+  if (!meta?.points) return null;
+  if (typeof meta.points === "number") return meta.points;
+  return meta.points[position] ?? null;
+}
 
 /**
  * Key to the match stats the points are built from. Only stats that actually
