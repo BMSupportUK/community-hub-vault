@@ -1490,9 +1490,47 @@ function SquadBuilder({
   const gwSaved = !!existing && !dirty;
 
   const gameweekPanel = (
-    // Live score / clock and the two status lines shown under the fixture.
+    // Gameweek picker sits at the top so switching weeks is obvious before reading fixture details.
     <div className="min-w-0 overflow-hidden rounded-2xl border border-border/60 bg-card/80 p-4 backdrop-blur space-y-3">
         <div className="flex flex-col gap-3">
+          {openGameweeks.length > 0 && (
+            <div>
+              <Select value={gwId} onValueChange={setGwId}>
+                <SelectTrigger className="h-9 w-full text-xs [&>span]:truncate">
+                  <SelectValue placeholder="Pick a gameweek" />
+                </SelectTrigger>
+                <SelectContent>
+                  {(() => {
+                    const item = (g: (typeof openGameweeks)[number]) => {
+                      const gLocked = g.status !== "upcoming" || new Date(g.lockAt).getTime() <= Date.now();
+                      return (
+                        <SelectItem key={g.id} value={g.id}>
+                          <span className={gLocked ? "line-through text-destructive" : ""}>
+                            GW{g.gwNumber} — {g.homeTeam} v {g.awayTeam} ({gwDateLabel(g)})
+                            {gLocked && <span className="ml-1 text-[10px] text-destructive font-semibold">(locked)</span>}
+                          </span>
+                        </SelectItem>
+                      );
+                    };
+                    return (
+                      <>
+                        {scheduledGameweeks.map(item)}
+                        {postponedGameweeks.length > 0 && (
+                          <SelectGroup>
+                            <SelectLabel className="text-[10px] font-bold uppercase tracking-wide text-amber-300">
+                              Postponed — awaiting new date
+                            </SelectLabel>
+                            {postponedGameweeks.map(item)}
+                          </SelectGroup>
+                        )}
+                      </>
+                    );
+                  })()}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
           <div className="min-w-0">
             {gw ? (
               <>
@@ -1528,43 +1566,6 @@ function SquadBuilder({
                 <div className="font-semibold">Pre-season — no gameweek open yet</div>
                 <div className="text-xs text-muted-foreground">Try out formations and squads now; you can save once the first gameweek opens.</div>
               </>
-            )}
-            {openGameweeks.length > 0 && (
-              <div className="mt-2">
-                <Select value={gwId} onValueChange={setGwId}>
-                  <SelectTrigger className="h-8 w-full text-xs [&>span]:truncate">
-                    <SelectValue placeholder="Pick a gameweek" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {(() => {
-                      const item = (g: (typeof openGameweeks)[number]) => {
-                        const gLocked = g.status !== "upcoming" || new Date(g.lockAt).getTime() <= Date.now();
-                        return (
-                          <SelectItem key={g.id} value={g.id}>
-                            <span className={gLocked ? "line-through text-destructive" : ""}>
-                              GW{g.gwNumber} — {g.homeTeam} v {g.awayTeam} ({gwDateLabel(g)})
-                              {gLocked && <span className="ml-1 text-[10px] text-destructive font-semibold">(locked)</span>}
-                            </span>
-                          </SelectItem>
-                        );
-                      };
-                      return (
-                        <>
-                          {scheduledGameweeks.map(item)}
-                          {postponedGameweeks.length > 0 && (
-                            <SelectGroup>
-                              <SelectLabel className="text-[10px] font-bold uppercase tracking-wide text-amber-300">
-                                Postponed — awaiting new date
-                              </SelectLabel>
-                              {postponedGameweeks.map(item)}
-                            </SelectGroup>
-                          )}
-                        </>
-                      );
-                    })()}
-                  </SelectContent>
-                </Select>
-              </div>
             )}
           </div>
           <div className="flex flex-col gap-2">
