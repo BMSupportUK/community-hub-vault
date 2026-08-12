@@ -3135,7 +3135,7 @@ function ScoringBreakdown({
     const included = value.trim() !== "—" && value.trim() !== "";
     if (column === "sub" && r.label.startsWith("Captain (vice")) return false;
     return included;
-  }).map((r) => ({ label: r.label, minTime: r.minTime, points: column === "starter" ? r.starter : r.sub }));
+  }).map((r) => ({ abbr: r.abbr, label: r.label, minTime: r.minTime, points: column === "starter" ? r.starter : r.sub }));
   return (
     <div className="space-y-3">
       <p className="text-xs text-muted-foreground">{note}</p>
@@ -3143,6 +3143,7 @@ function ScoringBreakdown({
         <table className="w-full min-w-[380px] text-sm">
           <thead>
             <tr className="text-left text-xs uppercase tracking-wide text-muted-foreground border-b border-border/60">
+              <th className="py-2 pr-3 font-semibold">Abbr</th>
               <th className="py-2 pr-3 font-semibold">Action</th>
               <th className="py-2 px-3 font-semibold whitespace-nowrap">Min game time</th>
               <th className="py-2 pl-3 font-semibold text-right whitespace-nowrap">Points</th>
@@ -3150,7 +3151,8 @@ function ScoringBreakdown({
           </thead>
           <tbody className="divide-y divide-border/50">
             {rows.map((r) => (
-              <tr key={r.label}>
+              <tr key={`${r.abbr}-${r.label}`}>
+                <td className="py-2 pr-3"><AbbrChip abbr={r.abbr} title={r.label} /></td>
                 <td className="py-2 pr-3">{r.label}</td>
                 <td className="py-2 px-3 text-muted-foreground tabular-nums whitespace-nowrap">{r.minTime}</td>
                 <td className="py-2 pl-3 text-right font-bold tabular-nums text-primary">{r.points}</td>
