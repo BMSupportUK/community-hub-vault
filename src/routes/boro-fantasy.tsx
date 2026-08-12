@@ -89,7 +89,7 @@ function PlayerNameButton({
       type="button"
       title={`${name} — view stats and points`}
       onClick={(e) => { e.stopPropagation(); open(playerId); }}
-      className={`w-full text-left underline-offset-2 hover:underline ${className}`}
+      className={`w-full text-center underline-offset-2 hover:underline ${className}`}
     >
       {name}
     </button>
