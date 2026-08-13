@@ -70,7 +70,7 @@ function BoardTopicsPage() {
                       </Link>
                     </div>
                     <div className="mt-2 text-[11px] text-white/60 flex items-center gap-2 flex-wrap">
-                      <span>by <Link to="/fanzone/u/$userId" params={{ userId: t.author_id }} className="text-white/90 hover:text-[#E11B22] hover:underline">{t.author_alias}</Link></span>
+                      <span>by <Link to="/fan-zone/u/$userId" params={{ userId: t.author_id }} className="text-white/90 hover:text-[#E11B22] hover:underline">{t.author_alias}</Link></span>
                       <span className="text-white/30">·</span>
                       <span><RelativeTime iso={t.created_at} /></span>
                       <span className="ml-auto inline-flex items-center gap-3">

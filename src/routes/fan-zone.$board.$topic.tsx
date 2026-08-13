@@ -89,7 +89,7 @@ function PostCard({ post: p }: { post: PublicPost }) {
     <div className={`rounded-xl border p-4 sm:p-5 ${p.is_pinned && !p.is_op ? "border-amber-400/40 bg-amber-400/5" : "border-white/10 bg-white/5"}`}>
       <header className="flex items-center gap-2.5 mb-3">
         <Link
-          to="/fanzone/u/$userId"
+          to="/fan-zone/u/$userId"
           params={{ userId: p.author_id }}
           className="shrink-0"
           aria-label={`${p.author_alias}'s Boro Fan Zone profile`}
@@ -104,7 +104,7 @@ function PostCard({ post: p }: { post: PublicPost }) {
         </Link>
         <div className="min-w-0">
           <Link
-            to="/fanzone/u/$userId"
+            to="/fan-zone/u/$userId"
             params={{ userId: p.author_id }}
             className="block text-sm font-semibold text-white truncate hover:text-[#E11B22] hover:underline"
           >

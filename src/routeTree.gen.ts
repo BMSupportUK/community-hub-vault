@@ -36,6 +36,7 @@ import { Route as AuthenticatedAccountRejectedRouteImport } from './routes/_auth
 import { Route as AuthenticatedApprovedRouteImport } from './routes/_authenticated/_approved'
 import { Route as FanZoneBoardIndexRouteImport } from './routes/fan-zone.$board.index'
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
+import { Route as FanZoneUUserIdRouteImport } from './routes/fan-zone.u.$userId'
 import { Route as FanZoneBoardTopicRouteImport } from './routes/fan-zone.$board.$topic'
 import { Route as ApiPublicTweetImageRouteImport } from './routes/api/public/tweet-image'
 import { Route as ApiPublicTweetRouteImport } from './routes/api/public/tweet'
@@ -268,6 +269,11 @@ const LovableEmailSuppressionRoute = LovableEmailSuppressionRouteImport.update({
   id: '/lovable/email/suppression',
   path: '/lovable/email/suppression',
   getParentRoute: () => rootRouteImport,
+} as any)
+const FanZoneUUserIdRoute = FanZoneUUserIdRouteImport.update({
+  id: '/u/$userId',
+  path: '/u/$userId',
+  getParentRoute: () => FanZoneRoute,
 } as any)
 const FanZoneBoardTopicRoute = FanZoneBoardTopicRouteImport.update({
   id: '/$topic',
@@ -930,6 +936,7 @@ export interface FileRoutesByFullPath {
   '/api/public/tweet': typeof ApiPublicTweetRoute
   '/api/public/tweet-image': typeof ApiPublicTweetImageRoute
   '/fan-zone/$board/$topic': typeof FanZoneBoardTopicRoute
+  '/fan-zone/u/$userId': typeof FanZoneUUserIdRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/fan-zone/$board/': typeof FanZoneBoardIndexRoute
   '/fanzone/blocks': typeof AuthenticatedApprovedFanzoneBlocksRoute
@@ -1051,6 +1058,7 @@ export interface FileRoutesByTo {
   '/api/public/tweet': typeof ApiPublicTweetRoute
   '/api/public/tweet-image': typeof ApiPublicTweetImageRoute
   '/fan-zone/$board/$topic': typeof FanZoneBoardTopicRoute
+  '/fan-zone/u/$userId': typeof FanZoneUUserIdRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/fan-zone/$board': typeof FanZoneBoardIndexRoute
   '/fanzone/blocks': typeof AuthenticatedApprovedFanzoneBlocksRoute
@@ -1178,6 +1186,7 @@ export interface FileRoutesById {
   '/api/public/tweet': typeof ApiPublicTweetRoute
   '/api/public/tweet-image': typeof ApiPublicTweetImageRoute
   '/fan-zone/$board/$topic': typeof FanZoneBoardTopicRoute
+  '/fan-zone/u/$userId': typeof FanZoneUUserIdRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/fan-zone/$board/': typeof FanZoneBoardIndexRoute
   '/_authenticated/_approved/fanzone/blocks': typeof AuthenticatedApprovedFanzoneBlocksRoute
@@ -1304,6 +1313,7 @@ export interface FileRouteTypes {
     | '/api/public/tweet'
     | '/api/public/tweet-image'
     | '/fan-zone/$board/$topic'
+    | '/fan-zone/u/$userId'
     | '/lovable/email/suppression'
     | '/fan-zone/$board/'
     | '/fanzone/blocks'
@@ -1425,6 +1435,7 @@ export interface FileRouteTypes {
     | '/api/public/tweet'
     | '/api/public/tweet-image'
     | '/fan-zone/$board/$topic'
+    | '/fan-zone/u/$userId'
     | '/lovable/email/suppression'
     | '/fan-zone/$board'
     | '/fanzone/blocks'
@@ -1551,6 +1562,7 @@ export interface FileRouteTypes {
     | '/api/public/tweet'
     | '/api/public/tweet-image'
     | '/fan-zone/$board/$topic'
+    | '/fan-zone/u/$userId'
     | '/lovable/email/suppression'
     | '/fan-zone/$board/'
     | '/_authenticated/_approved/fanzone/blocks'
@@ -1845,6 +1857,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/lovable/email/suppression'
       preLoaderRoute: typeof LovableEmailSuppressionRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/fan-zone/u/$userId': {
+      id: '/fan-zone/u/$userId'
+      path: '/u/$userId'
+      fullPath: '/fan-zone/u/$userId'
+      preLoaderRoute: typeof FanZoneUUserIdRouteImport
+      parentRoute: typeof FanZoneRoute
     }
     '/fan-zone/$board/$topic': {
       id: '/fan-zone/$board/$topic'
@@ -2800,11 +2819,13 @@ const FanZoneBoardRouteWithChildren = FanZoneBoardRoute._addFileChildren(
 interface FanZoneRouteChildren {
   FanZoneBoardRoute: typeof FanZoneBoardRouteWithChildren
   FanZoneIndexRoute: typeof FanZoneIndexRoute
+  FanZoneUUserIdRoute: typeof FanZoneUUserIdRoute
 }
 
 const FanZoneRouteChildren: FanZoneRouteChildren = {
   FanZoneBoardRoute: FanZoneBoardRouteWithChildren,
   FanZoneIndexRoute: FanZoneIndexRoute,
+  FanZoneUUserIdRoute: FanZoneUUserIdRoute,
 }
 
 const FanZoneRouteWithChildren =
