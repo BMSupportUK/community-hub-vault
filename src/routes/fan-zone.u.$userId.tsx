@@ -84,6 +84,10 @@ function PublicFanProfilePage() {
                       : "Boro Fan Zone member"}
                     {p.supporter_since ? <> · Boro fan since <span className="font-semibold">{p.supporter_since}</span></> : null}
                   </div>
+                  <div className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-black/25 px-2 py-0.5 text-[11px] font-medium text-white/90">
+                    <Clock className="size-3" />
+                    Last active <RelativeTime iso={p.last_seen_at} />
+                  </div>
                 </div>
               </div>
             </div>
