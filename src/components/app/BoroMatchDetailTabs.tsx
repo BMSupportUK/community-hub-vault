@@ -81,14 +81,14 @@ export function BoroMatchDetailTabs({
   live,
   kickoff,
 }: {
-  eventId: string;
+  eventId: string | null;
   slug?: string | null;
   live: boolean;
   kickoff?: string | null;
 }) {
   const fetchDetail = useServerFn(getBoroMatchDetail);
   const [detail, setDetail] = useState<MatchDetailDTO | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!!eventId);
   const [showMoreStats, setShowMoreStats] = useState(false);
   const [now, setNow] = useState(() => Date.now());
 
@@ -106,6 +106,11 @@ export function BoroMatchDetailTabs({
   useEffect(() => {
     let cancelled = false;
     let timer: number | undefined;
+    if (!eventId) {
+      setLoading(false);
+      setDetail(null);
+      return;
+    }
     const run = async () => {
       try {
         const d = await fetchDetail({ data: { eventId, slug: slug ?? undefined } });
@@ -195,7 +200,8 @@ export function BoroMatchDetailTabs({
         ) : (
           <div className="space-y-1.5">
             <p className="rounded-lg border border-white/10 bg-white/5 p-3 text-sm text-white/60">
-              Feed is live and waiting — goals, cards, penalties and subs post here the second they happen.
+              Awaiting match action — recording starts at kick-off. Goals, cards, penalties and subs post here the
+              second they happen.
             </p>
             {["Goals", "Cards", "Penalties", "Substitutions"].map((l) => (
               <div
@@ -246,6 +252,9 @@ export function BoroMatchDetailTabs({
           </div>
         ) : (
           <div className="overflow-hidden rounded-lg border border-dashed border-white/10">
+            <div className="border-b border-white/10 bg-white/5 px-3 py-2 text-[12px] text-white/60">
+              Awaiting stats — recording starts at kick-off.
+            </div>
             <table className="w-full text-sm">
               <thead className="bg-white/5 text-[11px] uppercase tracking-wider text-white/50">
                 <tr>
@@ -322,7 +331,8 @@ export function BoroMatchDetailTabs({
         ) : (
           <div className="space-y-3">
             <p className="rounded-lg border border-white/10 bg-white/5 p-3 text-sm text-white/60">
-              Line-ups usually land about an hour before kick-off. Player stat columns below are ready and fill in live.
+              Awaiting line-ups — published about an hour before kick-off. Player stat columns below are ready and fill
+              in live.
             </p>
             <div className="grid gap-4 lg:grid-cols-2">
               {["Home", "Away"].map((side) => (

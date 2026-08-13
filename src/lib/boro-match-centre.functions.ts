@@ -214,8 +214,13 @@ export const getBoroMatchCentre = createServerFn({ method: "GET" }).handler(
       }
       if (!dto.nextFixtureManual) {
         const nf = live.nextFixture ?? nextFromDb;
-        if (nf) patch.next_fixture = nf;
+        if (nf) patch.next_fixture = await withEspnEvent(nf);
         else if (invalidCachedNext) patch.next_fixture = null;
+      }
+      // A manually-set or previously cached fixture may predate the ESPN
+      // lookup: top it up so the match centre tabs have a feed to poll.
+      if (dto.nextFixtureManual && dto.nextFixture && !dto.nextFixture.eventId) {
+        patch.next_fixture = await withEspnEvent(dto.nextFixture);
       }
       if (!dto.leaguePositionManual && standings) patch.league_position = standings;
       await supabaseAdmin
@@ -336,6 +341,56 @@ async function fetchEspnCompetition(slug: string): Promise<Array<{
   if (!res.ok) throw new Error(`ESPN ${slug} ${res.status}`);
   const json = (await res.json()) as { events?: unknown[] };
   return (json.events ?? []) as never;
+}
+
+/**
+ * Find the ESPN event for a fixture we only know about from our own tables
+ * (or a manual admin entry) so the match centre tabs have a Gamecast feed to
+ * poll before kick-off. Matches on kick-off date + team names across the
+ * competitions Boro play in.
+ */
+async function withEspnEvent(nf: NextFixture): Promise<NextFixture> {
+  if (nf.eventId) return nf;
+  const ko = Date.parse(nf.kickoff);
+  if (!Number.isFinite(ko)) return nf;
+  const dates = [-1, 0, 1].map((off) => {
+    const d = new Date(ko + off * 86_400_000);
+    return `${d.getUTCFullYear()}${String(d.getUTCMonth() + 1).padStart(2, "0")}${String(d.getUTCDate()).padStart(2, "0")}`;
+  });
+  const norm = (s: string) => s.toLowerCase().replace(/[^a-z]/g, "");
+  const wanted = [norm(nf.home), norm(nf.away)];
+  for (const c of ESPN_COMPETITIONS) {
+    for (const date of dates) {
+      try {
+        const res = await fetch(
+          `https://site.api.espn.com/apis/site/v2/sports/soccer/${c.slug}/scoreboard?dates=${date}&limit=200`,
+          { headers: { accept: "application/json" } },
+        );
+        if (!res.ok) continue;
+        const json = (await res.json()) as { events?: any[] };
+        for (const ev of json.events ?? []) {
+          const comp = ev?.competitions?.[0];
+          const cs: any[] = comp?.competitors ?? [];
+          const names = cs.map((x) => norm(String(x?.team?.displayName ?? "")));
+          const hit = wanted.every((w) => names.some((n) => n.includes(w) || w.includes(n)));
+          if (!hit || !ev?.id) continue;
+          if (Math.abs(Date.parse(ev.date) - ko) > 2 * 86_400_000) continue;
+          const homeC = cs.find((x) => x?.homeAway === "home") ?? cs[0];
+          const awayC = cs.find((x) => x?.homeAway === "away") ?? cs[1];
+          return {
+            ...nf,
+            eventId: String(ev.id),
+            espnSlug: c.slug,
+            homeLogo: nf.homeLogo ?? espnLogo(homeC?.team?.id ?? null),
+            awayLogo: nf.awayLogo ?? espnLogo(awayC?.team?.id ?? null),
+          };
+        }
+      } catch {
+        // try the next feed
+      }
+    }
+  }
+  return nf;
 }
 
 async function fetchEspnBoro(): Promise<{
