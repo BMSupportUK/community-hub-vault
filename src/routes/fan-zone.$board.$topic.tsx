@@ -32,6 +32,10 @@ function TopicReadPage() {
     );
   }
 
+  const posts = data.posts as PublicPost[];
+  const op = posts.find((p) => p.is_op) ?? null;
+  const replies = posts.filter((p) => !p.is_op);
+
   return (
     <FanZoneShell>
       <Button asChild variant="ghost" size="sm" className="-ml-2 mb-2 text-white/80 hover:text-white">
