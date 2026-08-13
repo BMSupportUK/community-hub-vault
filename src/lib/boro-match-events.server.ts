@@ -18,7 +18,7 @@ const WINDOW_AFTER_MS = 4 * 60 * 60 * 1000; // keep watching 4h after KO
 
 type ParsedEvent = EspnMatchEvent;
 
-async function findEspnEvent(fx: FixtureLite): Promise<{ eventId: string; slug: string } | null> {
+export async function findEspnEvent(fx: FixtureLite): Promise<{ eventId: string; slug: string } | null> {
   const ko = new Date(fx.kickoff_at);
   const dates = [-1, 0, 1].map((off) => {
     const d = new Date(ko.getTime() + off * 86_400_000);
