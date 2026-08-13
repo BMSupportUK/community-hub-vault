@@ -180,12 +180,15 @@ export function buildLiveBlock(fx: FixtureLite, json: any): string {
   }, {});
   const state = String(comp?.status?.type?.state ?? "pre");
   const parts: string[] = [LIVE_START];
-  parts.push(`<p><strong>Live — ${esc(home)} ${esc(scores["home"] ?? "0")} - ${esc(scores["away"] ?? "0")} ${esc(away)}</strong>`);
-  if (norm.status) parts.push(` <em>${esc(norm.status)}</em>`);
-  parts.push(`</p>`);
   if (state === "pre") {
-    parts.push(`<p>Not kicked off yet — this section updates automatically once the game starts.</p>`);
+    parts.push(`<p><strong>Live updates</strong></p>`);
+    parts.push(
+      `<p>Kick-off ${esc(londonKickoff(fx.kickoff_at))} (UK). This section updates automatically with the score, scorers, cards and key stats once the game starts.</p>`,
+    );
   } else {
+    parts.push(
+      `<p><strong>Live — ${esc(home)} ${esc(scores["home"] ?? "0")} - ${esc(scores["away"] ?? "0")} ${esc(away)}</strong>${norm.status ? ` <em>${esc(norm.status)}</em>` : ""}</p>`,
+    );
     const goals = goalLines(norm.events);
     if (goals.length) {
       parts.push(`<p><strong>Goals</strong></p><ul>${goals.map((g) => `<li>${esc(g)}</li>`).join("")}</ul>`);
