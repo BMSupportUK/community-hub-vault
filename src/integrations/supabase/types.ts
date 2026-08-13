@@ -371,6 +371,59 @@ export type Database = {
         }
         Relationships: []
       }
+      boro_match_event_posts: {
+        Row: {
+          clock: string | null
+          created_at: string
+          event_key: string
+          fingerprint: string
+          fixture_id: string
+          id: string
+          kind: string
+          post_id: string | null
+          revision: number
+          summary: string
+          topic_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          clock?: string | null
+          created_at?: string
+          event_key: string
+          fingerprint: string
+          fixture_id: string
+          id?: string
+          kind: string
+          post_id?: string | null
+          revision?: number
+          summary: string
+          topic_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          clock?: string | null
+          created_at?: string
+          event_key?: string
+          fingerprint?: string
+          fixture_id?: string
+          id?: string
+          kind?: string
+          post_id?: string | null
+          revision?: number
+          summary?: string
+          topic_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "boro_match_event_posts_fixture_id_fkey"
+            columns: ["fixture_id"]
+            isOneToOne: false
+            referencedRelation: "boro_fixtures"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       boro_prediction_reminders: {
         Row: {
           entrant_id: string
