@@ -266,6 +266,35 @@ function replaceLiveBlock(body: string, block: string): string {
   return `${body.slice(0, start)}${block}${body.slice(end + LIVE_END.length)}`;
 }
 
+export function buildFullTimeBody(fx: FixtureLite, json: any): string {
+  const norm = normaliseEspnSummary(json);
+  const comp = json?.header?.competitions?.[0];
+  const home = norm.home ?? fx.home_team;
+  const away = norm.away ?? fx.away_team;
+  const scores = (comp?.competitors ?? []).reduce((acc: Record<string, string>, c: any) => {
+    acc[c?.homeAway ?? ""] = String(c?.score ?? "0");
+    return acc;
+  }, {});
+  const goals = goalLines(norm.events);
+  const cards = norm.events
+    .filter((e) => e.kind === "yellow" || e.kind === "red")
+    .map((e) => describeEspnEvent(e));
+  const rows = teamStatRows(json);
+  const parts = [
+    `<p><strong>Full-time — ${esc(home)} ${esc(scores["home"] ?? "0")} - ${esc(scores["away"] ?? "0")} ${esc(away)}</strong></p>`,
+  ];
+  const pens = norm.events.filter((e) => e.kind === "shootout-scored" || e.kind === "shootout-missed");
+  if (pens.length) {
+    parts.push(
+      `<p><strong>Penalty shootout</strong></p><ul>${pens.map((e) => `<li>${esc(describeEspnEvent(e))}</li>`).join("")}</ul>`,
+    );
+  }
+  if (goals.length) parts.push(`<p><strong>Goals</strong></p><ul>${goals.map((g) => `<li>${esc(g)}</li>`).join("")}</ul>`);
+  if (cards.length) parts.push(`<p><strong>Cards</strong></p><ul>${cards.map((c) => `<li>${esc(c)}</li>`).join("")}</ul>`);
+  if (rows.length) parts.push(`<p><strong>Full-time stats</strong></p>${statsTable(rows, home, away)}`);
+  return parts.join("\n");
+}
+
 /** Strip a legacy inline live block out of the preview reply. */
 function stripLiveBlock(body: string): string {
   const start = body.indexOf(LIVE_START);
@@ -280,6 +309,13 @@ function isHalfTime(json: any): boolean {
   return /half\s*time|halftime|\bht\b/.test(detail);
 }
 
+function isFullTime(json: any): boolean {
+  const st = json?.header?.competitions?.[0]?.status;
+  const state = String(st?.type?.state ?? "").toLowerCase();
+  const detail = String(st?.type?.shortDetail ?? st?.type?.detail ?? st?.type?.description ?? "").toLowerCase();
+  return state === "post" || st?.type?.completed === true || /full\s*time|\bft\b|final/.test(detail);
+}
+
 export type ThreadSyncResult = {
   ok: boolean;
   fixture?: string;
@@ -288,6 +324,7 @@ export type ThreadSyncResult = {
   previewPosted: boolean;
   liveUpdated: boolean;
   halfTimePosted: boolean;
+  fullTimePosted: boolean;
   skipped: string[];
   error?: string;
 };
@@ -301,6 +338,7 @@ export async function syncBoroMatchThread(opts?: { ignoreWindow?: boolean }): Pr
     previewPosted: false,
     liveUpdated: false,
     halfTimePosted: false,
+    fullTimePosted: false,
     skipped,
   };
   const now = Date.now();
@@ -360,7 +398,7 @@ export async function syncBoroMatchThread(opts?: { ignoreWindow?: boolean }): Pr
     .from("boro_match_event_posts")
     .select("id, event_key, post_id, fingerprint, revision")
     .eq("fixture_id", fx.id)
-    .in("event_key", ["preview", "halftime", "live"]);
+    .in("event_key", ["preview", "halftime", "fulltime", "live"]);
   const byKey = new Map(
     ((logged ?? []) as Array<{ id: string; event_key: string; post_id: string; fingerprint: string; revision: number }>).map(
       (r) => [r.event_key, r],
@@ -370,6 +408,7 @@ export async function syncBoroMatchThread(opts?: { ignoreWindow?: boolean }): Pr
   let previewPosted = false;
   let liveUpdated = false;
   let halfTimePosted = false;
+  let fullTimePosted = false;
 
   const preview = byKey.get("preview");
   if (!preview) {
@@ -483,5 +522,39 @@ export async function syncBoroMatchThread(opts?: { ignoreWindow?: boolean }): Pr
     }
   }
 
-  return { ...base, fixture: label, topic: topic.title, status, previewPosted, liveUpdated, halfTimePosted };
+  if (!byKey.get("fulltime") && isFullTime(json)) {
+    const body = buildFullTimeBody(fx, json);
+    const { data: post, error: postErr } = await supabaseAdmin
+      .from("forum_posts")
+      .insert({ topic_id: topic.id, author_id: authorId, body })
+      .select("id")
+      .single();
+    if (postErr) skipped.push(`full-time post failed: ${postErr.message}`);
+    else {
+      fullTimePosted = true;
+      const { error: logErr } = await supabaseAdmin.from("boro_match_event_posts").insert({
+        fixture_id: fx.id,
+        topic_id: topic.id,
+        post_id: post.id,
+        event_key: "fulltime",
+        kind: "fulltime",
+        clock: "FT",
+        summary: `Full-time — ${label}`,
+        fingerprint: "fulltime",
+        revision: 0,
+      });
+      if (logErr) skipped.push(`full-time log failed: ${logErr.message}`);
+    }
+  }
+
+  return {
+    ...base,
+    fixture: label,
+    topic: topic.title,
+    status,
+    previewPosted,
+    liveUpdated,
+    halfTimePosted,
+    fullTimePosted,
+  };
 }

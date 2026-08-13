@@ -5,7 +5,7 @@
 // deleted again in one call.
 
 import type { FixtureLite } from "@/lib/boro-team-sheet.server";
-import { buildPreviewBody, buildLiveBlock, buildHalfTimeBody } from "@/lib/boro-match-thread.server";
+import { buildPreviewBody, buildLiveBlock, buildHalfTimeBody, buildFullTimeBody } from "@/lib/boro-match-thread.server";
 import { buildEventBody } from "@/lib/boro-match-events.server";
 import { normaliseEspnSummary, type EspnMatchEvent } from "@/lib/boro-espn-events";
 
@@ -52,7 +52,7 @@ function statBlock(values: Record<string, string>) {
 }
 
 /** A synthetic ESPN Gamecast payload good enough to drive every builder. */
-export function demoSummary(fx: FixtureLite, state: "pre" | "live" | "ht") {
+export function demoSummary(fx: FixtureLite, state: "pre" | "live" | "ht" | "ft") {
   const details =
     state === "pre"
       ? []
@@ -130,6 +130,8 @@ export function demoSummary(fx: FixtureLite, state: "pre" | "live" | "ht") {
       ? { state: "pre", shortDetail: "Scheduled", detail: "Scheduled", description: "Scheduled" }
       : state === "ht"
         ? { state: "in", shortDetail: "HT", detail: "Half Time", description: "Half Time" }
+        : state === "ft"
+        ? { state: "post", completed: true, shortDetail: "FT", detail: "Full Time", description: "Full Time" }
         : { state: "in", shortDetail: "70'", detail: "2nd Half", description: "In Progress" };
 
   const homeScore = state === "pre" ? "0" : state === "ht" ? "1" : "2";
@@ -321,6 +323,7 @@ export async function postBoroDemoPosts(topicId?: string): Promise<DemoResult> {
   const live = demoSummary(fx, "live");
   const pre = demoSummary(fx, "pre");
   const ht = demoSummary(fx, "ht");
+  const ft = demoSummary(fx, "ft");
 
   // 1. Pinned live block (refreshed in place during a real game).
   await add("pinned live block", buildLiveBlock(fx, live), true);
@@ -341,6 +344,8 @@ export async function postBoroDemoPosts(topicId?: string): Promise<DemoResult> {
   if (events[0]) await add("event correction", buildEventBody(events[0], fx, true));
   // 5. Half-time summary.
   await add("half-time summary", buildHalfTimeBody(fx, ht));
+  // 6. Full-time summary.
+  await add("full-time summary", buildFullTimeBody(fx, ft));
 
   return { ok: true, topic: topic.title, posted };
 }
