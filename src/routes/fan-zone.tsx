@@ -26,7 +26,7 @@ export function FanZoneShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="boro-theme min-h-screen bg-background">
       <LandingHeader />
-      <div className="relative w-full px-4 sm:px-6 lg:px-10 py-6 max-w-7xl mx-auto">
+      <div className="relative w-full px-4 sm:px-6 lg:px-10 py-6">
         <header className="relative mb-6 overflow-hidden rounded-2xl border border-[#E11B22]/40 shadow-[0_10px_40px_-10px_rgba(225,27,34,0.55)]">
           <div
             className="absolute inset-0 bg-cover bg-center"
