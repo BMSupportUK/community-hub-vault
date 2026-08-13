@@ -272,7 +272,6 @@ export function buildPreviewBody(fx: FixtureLite, json: any): string {
     );
   }
 
-  parts.push(buildLiveBlock(fx, json));
   parts.push(`<p><em>Auto-filled from the ESPN Gamecast.</em></p>`);
   return parts.join("\n");
 }
@@ -301,6 +300,14 @@ function replaceLiveBlock(body: string, block: string): string {
   const end = body.indexOf(LIVE_END);
   if (start === -1 || end === -1) return `${body}\n${block}`;
   return `${body.slice(0, start)}${block}${body.slice(end + LIVE_END.length)}`;
+}
+
+/** Strip a legacy inline live block out of the preview reply. */
+function stripLiveBlock(body: string): string {
+  const start = body.indexOf(LIVE_START);
+  const end = body.indexOf(LIVE_END);
+  if (start === -1 || end === -1) return body;
+  return `${body.slice(0, start)}${body.slice(end + LIVE_END.length)}`;
 }
 
 function isHalfTime(json: any): boolean {
@@ -389,7 +396,7 @@ export async function syncBoroMatchThread(opts?: { ignoreWindow?: boolean }): Pr
     .from("boro_match_event_posts")
     .select("id, event_key, post_id, fingerprint, revision")
     .eq("fixture_id", fx.id)
-    .in("event_key", ["preview", "halftime"]);
+    .in("event_key", ["preview", "halftime", "live"]);
   const byKey = new Map(
     ((logged ?? []) as Array<{ id: string; event_key: string; post_id: string; fingerprint: string; revision: number }>).map(
       (r) => [r.event_key, r],
@@ -425,7 +432,8 @@ export async function syncBoroMatchThread(opts?: { ignoreWindow?: boolean }): Pr
       if (logErr) skipped.push(`preview log failed: ${logErr.message}`);
     }
   } else {
-    // Refresh the live block in place (and back-fill line-ups once ESPN has them).
+    // Back-fill line-ups once ESPN has them, and strip any legacy inline live block
+    // (the live block now lives in its own pinned reply at the top).
     const { data: existing } = await supabaseAdmin
       .from("forum_posts")
       .select("body")
@@ -435,15 +443,56 @@ export async function syncBoroMatchThread(opts?: { ignoreWindow?: boolean }): Pr
       const hasXi = /XI<\/strong>/.test(existing.body);
       const rebuilt = !hasXi && (rosterXi(json, "home")?.xi.length ?? 0) > 0
         ? buildPreviewBody(fx, json)
-        : replaceLiveBlock(existing.body, buildLiveBlock(fx, json));
+        : stripLiveBlock(existing.body);
       if (rebuilt !== existing.body) {
         const { error: upErr } = await supabaseAdmin
           .from("forum_posts")
           .update({ body: rebuilt })
           .eq("id", preview.post_id);
-        if (upErr) skipped.push(`live refresh failed: ${upErr.message}`);
-        else liveUpdated = true;
+        if (upErr) skipped.push(`preview refresh failed: ${upErr.message}`);
       }
+    }
+  }
+
+  // Pinned live block reply — always sits at the top of the replies, refreshed in place.
+  const live = byKey.get("live");
+  const liveBody = `<p><strong>📌 Live match block — ${esc(label)}</strong></p>\n${buildLiveBlock(fx, json)}`;
+  if (!live) {
+    const { data: post, error: postErr } = await supabaseAdmin
+      .from("forum_posts")
+      .insert({ topic_id: topic.id, author_id: authorId, body: liveBody, is_pinned: true })
+      .select("id")
+      .single();
+    if (postErr) skipped.push(`live post failed: ${postErr.message}`);
+    else {
+      liveUpdated = true;
+      const { error: logErr } = await supabaseAdmin.from("boro_match_event_posts").insert({
+        fixture_id: fx.id,
+        topic_id: topic.id,
+        post_id: post.id,
+        event_key: "live",
+        kind: "live",
+        clock: null,
+        summary: `Live block — ${label}`,
+        fingerprint: "live",
+        revision: 0,
+      });
+      if (logErr) skipped.push(`live log failed: ${logErr.message}`);
+    }
+  } else {
+    const { data: existingLive } = await supabaseAdmin
+      .from("forum_posts")
+      .select("body, is_pinned")
+      .eq("id", live.post_id)
+      .maybeSingle();
+    const next = existingLive?.body ? replaceLiveBlock(existingLive.body, buildLiveBlock(fx, json)) : liveBody;
+    if (next !== existingLive?.body || existingLive?.is_pinned !== true) {
+      const { error: upErr } = await supabaseAdmin
+        .from("forum_posts")
+        .update({ body: next, is_pinned: true })
+        .eq("id", live.post_id);
+      if (upErr) skipped.push(`live refresh failed: ${upErr.message}`);
+      else liveUpdated = true;
     }
   }
 

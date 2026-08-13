@@ -60,6 +60,7 @@ type Post = {
   quote_of: string | null;
   edited_at: string | null;
   is_op: boolean;
+  is_pinned?: boolean;
   created_at: string;
 };
 type Profile = { id: string; display_name: string | null; username: string | null; avatar_url: string | null };
@@ -121,12 +122,14 @@ function TopicPostArticleComponent({
       className={`boro-topic-post rounded-xl overflow-hidden transition-shadow hover:shadow-[0_14px_42px_-14px_rgba(225,27,34,0.5)] ${
         post.is_op
           ? "border-[#E11B22]/65 ring-1 ring-[#E11B22]/25"
-          : "border-white/15 hover:border-[#E11B22]/45"
+          : post.is_pinned
+            ? "border-[#F4B400]/60 ring-1 ring-[#F4B400]/25"
+            : "border-white/15 hover:border-[#E11B22]/45"
       }`}
     >
       <header
         className={`boro-topic-post-header grid grid-cols-[auto_1fr_auto] gap-3 px-5 py-3 items-center border-b ${
-          post.is_op ? "border-[#E11B22]/35" : "border-white/10"
+          post.is_op ? "border-[#E11B22]/35" : post.is_pinned ? "border-[#F4B400]/30" : "border-white/10"
         }`}
       >
         <Link
@@ -150,7 +153,14 @@ function TopicPostArticleComponent({
               OP
             </span>
           )}
-          <span className="text-muted-foreground text-[11px] ml-1.5"> · #{displayIndex} · {formatLastSeen(post.created_at)}</span>
+          {!post.is_op && post.is_pinned && (
+            <span className="ml-2 inline-flex items-center gap-1 rounded-md bg-[#F4B400] text-black text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 align-middle shadow-sm">
+              <Pin className="size-2.5" />Pinned
+            </span>
+          )}
+          <span className="text-muted-foreground text-[11px] ml-1.5">
+            {displayIndex > 0 ? ` · #${displayIndex}` : ""} · {formatLastSeen(post.created_at)}
+          </span>
           {post.edited_at && (
             <button onClick={() => onOpenHistory(post)} className="ml-2 inline-flex items-center gap-1 text-[10px] text-[#F4B400] hover:underline">
               <History className="size-3" />edited {formatLastSeen(post.edited_at)}
@@ -247,6 +257,8 @@ function isForumPost(value: Partial<Post> | undefined): value is Post {
 function sortPostsForTopic(a: Post, b: Post) {
   if (a.is_op && !b.is_op) return -1;
   if (!a.is_op && b.is_op) return 1;
+  if (a.is_pinned && !b.is_pinned) return -1;
+  if (!a.is_pinned && b.is_pinned) return 1;
   return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
 }
 
@@ -398,20 +410,29 @@ function TopicPage() {
     const to = from + REPLIES_PER_PAGE - 1;
     const { data: opRows } = await supabase
       .from("forum_posts")
-      .select("id, topic_id, author_id, body, quote_of, edited_at, is_op, created_at")
+      .select("id, topic_id, author_id, body, quote_of, edited_at, is_op, is_pinned, created_at")
       .eq("topic_id", topicId)
       .eq("is_op", true)
       .order("created_at")
       .limit(1);
-    const { data: replyRows } = await supabase
+    const { data: pinnedRows } = await supabase
       .from("forum_posts")
-      .select("id, topic_id, author_id, body, quote_of, edited_at, is_op, created_at")
+      .select("id, topic_id, author_id, body, quote_of, edited_at, is_op, is_pinned, created_at")
       .eq("topic_id", topicId)
       .eq("is_op", false)
+      .eq("is_pinned", true)
+      .order("created_at");
+    const { data: replyRows } = await supabase
+      .from("forum_posts")
+      .select("id, topic_id, author_id, body, quote_of, edited_at, is_op, is_pinned, created_at")
+      .eq("topic_id", topicId)
+      .eq("is_op", false)
+      .eq("is_pinned", false)
       .order("created_at")
       .range(from, to);
     const list = [
       ...((opRows ?? []) as Post[]),
+      ...((pinnedRows ?? []) as Post[]),
       ...((replyRows ?? []) as Post[]),
     ];
     setPosts(list);
@@ -570,7 +591,7 @@ function TopicPage() {
     const { data, error } = await supabase
       .from("forum_posts")
       .insert({ topic_id: topic.id, author_id: user.id, body, is_op: false })
-      .select("id, topic_id, author_id, body, quote_of, edited_at, is_op, created_at")
+      .select("id, topic_id, author_id, body, quote_of, edited_at, is_op, is_pinned, created_at")
       .single();
     submittingRef.current = false;
     if (error) {
@@ -687,10 +708,11 @@ function TopicPage() {
   };
 
   const visiblePosts = useMemo(() => {
-    if (!posts) return { opPost: null as Post | null, replies: [] as Post[] };
+    if (!posts) return { opPost: null as Post | null, replies: [] as Post[], pinnedReplies: [] as Post[] };
     return {
       opPost: posts.find((p) => p.is_op) ?? null,
-      replies: posts.filter((p) => !p.is_op && !blocked.has(p.author_id)),
+      replies: posts.filter((p) => !p.is_op && !p.is_pinned && !blocked.has(p.author_id)),
+      pinnedReplies: posts.filter((p) => !p.is_op && p.is_pinned && !blocked.has(p.author_id)),
     };
   }, [posts, blocked]);
 
@@ -710,7 +732,7 @@ function TopicPage() {
       }}
     />
   );
-  const { opPost, replies } = visiblePosts;
+  const { opPost, replies, pinnedReplies } = visiblePosts;
 
   return (
     <div className="boro-topic-page space-y-4">
@@ -855,7 +877,8 @@ function TopicPage() {
             </TabsContent>
 
             <TabsContent value="reply" className="space-y-3 mt-3">
-              {pageReplies.length === 0 ? (
+              {pinnedReplies.map((p) => renderPost(p, 0))}
+              {pageReplies.length === 0 && pinnedReplies.length === 0 ? (
                 <div className="text-sm text-muted-foreground text-center py-6">No replies yet.</div>
               ) : (
                 pageReplies.map((p, idx) => renderPost(p, start + idx + 1))
