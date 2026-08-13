@@ -30,6 +30,15 @@ function FanZoneProfilePage() {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const [myLastSeen, setMyLastSeen] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    void (async () => {
+      const { data } = await supabase.from("profiles").select("last_seen_at").eq("id", user.id).maybeSingle();
+      setMyLastSeen((data as { last_seen_at: string | null } | null)?.last_seen_at ?? null);
+    })();
+  }, [user?.id]);
 
   useEffect(() => {
     setAlias(info?.fanAlias ?? "");
