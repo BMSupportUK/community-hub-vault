@@ -1287,6 +1287,10 @@ html.boro-bg-active body > * {
 html.boro-bg-active .min-h-screen.bg-background {
   background-color: transparent !important;
 }
+/* Member app shell uses min-h-dvh — make it transparent too */
+html.boro-bg-active .min-h-dvh.bg-background {
+  background-color: transparent !important;
+}
 /* Single legibility overlay applied by the page component */
 .boro-page-backdrop {
   background: rgba(5, 10, 20, 0.40);
