@@ -14,6 +14,8 @@ export type PublicBoard = {
   topic_count: number;
   post_count: number;
   last_post_at: string | null;
+  last_topic_title: string | null;
+  last_poster_alias: string | null;
 };
 
 export type PublicTopicRow = {
