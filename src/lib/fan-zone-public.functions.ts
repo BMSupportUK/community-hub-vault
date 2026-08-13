@@ -378,13 +378,14 @@ export const getPublicFanProfile = createServerFn({ method: "GET" })
   .inputValidator((d) => z.object({ userId: z.string().uuid() }).parse(d))
   .handler(async ({ data }): Promise<PublicFanProfile | null> => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const [memberRes, profileRes, roleRes] = await Promise.all([
+    const [memberRes, roleRes] = await Promise.all([
       supabaseAdmin
         .from("fan_zone_members")
-        .select("user_id, fan_alias, fan_avatar_url, bio, supporter_since, fav_player, matchday_memory, created_at, status")
+        .select(
+          "user_id, fan_alias, fan_avatar_url, bio, supporter_since, fav_player, matchday_memory, created_at, status, is_private",
+        )
         .eq("user_id", data.userId)
         .maybeSingle(),
-      Promise.resolve({ data: null }),
       supabaseAdmin
         .from("user_roles")
         .select("role")
@@ -403,18 +404,17 @@ export const getPublicFanProfile = createServerFn({ method: "GET" })
           matchday_memory: string | null;
           created_at: string | null;
           status: string | null;
+          is_private: boolean | null;
         }
-      | null;
-    const prof = profileRes.data as
-      | { display_name: string | null; username: string | null; is_private: boolean | null }
       | null;
     const isStaff = ((roleRes.data ?? []) as Array<{ role: string }>).length > 0;
 
     // Only Fan Zone members (or listed staff) have a Fan Zone profile.
     if (!isStaff && (!m || m.status !== "approved")) return null;
 
-    const isPrivate = !!prof?.is_private;
-    const alias = m?.fan_alias?.trim() || prof?.display_name?.trim() || prof?.username?.trim() || "Boro Fan";
+    // Fan Zone identity + privacy only — the BM Support profile is kept separate.
+    const isPrivate = !!m?.is_private;
+    const alias = m?.fan_alias?.trim() || "Boro Fan";
 
     if (isPrivate) {
       return {
