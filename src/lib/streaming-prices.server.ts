@@ -13,6 +13,7 @@ type ScrapeResult = {
   currency: string;
   availability: string | null;
   source_url: string;
+  delisted?: boolean;
 };
 
 type PriceHit = {
@@ -117,11 +118,18 @@ async function scrapeBrandStorePrice(url: string): Promise<ScrapeResult> {
   const j = body.data?.json ?? body.json ?? {};
   const meta = body.data?.metadata ?? body.metadata ?? {};
   const metaBlob = JSON.stringify(meta);
-  // A retired/removed product redirects to the store's 404 page — treat as out of stock.
+  // A retired/removed product redirects to the store's 404 page. It must be
+  // removed from the catalogue, not presented as an out-of-stock product.
   const isMissingPage =
     meta["statusCode"] === 404 || /errors\/404|\b404 - /i.test(metaBlob);
   if (isMissingPage) {
-    return { price_cents: null, currency: "GBP", availability: "Out of stock", source_url: url };
+    return {
+      price_cents: null,
+      currency: "GBP",
+      availability: "Delisted",
+      source_url: url,
+      delisted: true,
+    };
   }
   const price = typeof j.price === "number" && j.price >= 5 && j.price <= 2000 ? j.price : null;
   return {
@@ -377,6 +385,13 @@ export async function refreshAllStreamingPrices(): Promise<{
       // Official brand stores (e.g. Xiaomi) are locked to their own site.
       if (isBrandStoreOnlyUrl(d.amazon_url)) {
         const r = await scrapeBrandStorePrice(d.amazon_url);
+        if (r.delisted) {
+          const { error: hideErr } = await supabaseAdmin
+            .from("streaming_devices")
+            .update({ is_active: false })
+            .eq("id", d.id);
+          if (hideErr) throw new Error(hideErr.message);
+        }
         const { error: brandErr } = await supabaseAdmin
           .from("streaming_device_prices")
           .upsert({
