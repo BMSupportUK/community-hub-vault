@@ -481,7 +481,12 @@ function BoardPage() {
                       <span className="inline-flex items-center justify-center size-4 rounded-full bg-[#E11B22]/20 text-[#E11B22] text-[9px] font-bold uppercase">
                         {authorName.charAt(0)}
                       </span>
-                      by <span className="text-foreground font-medium">{authorName}</span>
+                      by <Link
+                        to="/fanzone/u/$userId"
+                        params={{ userId: t.author_id }}
+                        className="text-foreground font-medium hover:text-[#E11B22] hover:underline"
+                        onClick={(event) => event.stopPropagation()}
+                      >{authorName}</Link>
                       <span className="text-border">•</span>
                       <span>{formatLastSeen(t.created_at)}</span>
                     </div>
@@ -495,7 +500,12 @@ function BoardPage() {
                         {t.view_count}
                       </span>
                       <span className="truncate ml-0.5">
-                        last by <span className="text-foreground font-medium">{lastName}</span>
+                        last by {t.last_post_by ? <Link
+                          to="/fanzone/u/$userId"
+                          params={{ userId: t.last_post_by }}
+                          className="text-foreground font-medium hover:text-[#E11B22] hover:underline"
+                          onClick={(event) => event.stopPropagation()}
+                        >{lastName}</Link> : <span className="text-foreground font-medium">{lastName}</span>}
                         <span className="text-border mx-1">•</span>
                         {formatLastSeen(t.last_post_at)}
                       </span>

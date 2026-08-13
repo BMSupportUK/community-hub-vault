@@ -313,7 +313,12 @@ function BoardsIndex() {
                     {b.last_post_at && (
                       <span className="shrink-0 text-right">
                         {formatLastSeen(b.last_post_at)}
-                        {posterName ? <> · <span className="text-foreground">{posterName}</span></> : null}
+                        {posterName && b.last_post_by ? <> · <Link
+                          to="/fanzone/u/$userId"
+                          params={{ userId: b.last_post_by }}
+                          className="text-foreground hover:text-[#E11B22] hover:underline"
+                          onClick={(event) => event.stopPropagation()}
+                        >{posterName}</Link></> : null}
                       </span>
                     )}
                   </div>

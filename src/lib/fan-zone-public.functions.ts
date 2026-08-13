@@ -16,6 +16,7 @@ export type PublicBoard = {
   last_post_at: string | null;
   last_topic_title: string | null;
   last_poster_alias: string | null;
+  last_poster_id: string | null;
 };
 
 export type PublicTopicRow = {
@@ -28,6 +29,7 @@ export type PublicTopicRow = {
   last_post_at: string;
   created_at: string;
   author_alias: string;
+  author_id: string;
 };
 
 export type PublicPost = {
@@ -161,6 +163,7 @@ export const listPublicBoards = createServerFn({ method: "GET" }).handler(async 
     last_post_at: b.last_post_at,
     last_topic_title: lastTitles[b.id] ?? null,
     last_poster_alias: b.last_post_by ? aliases[b.last_post_by]?.alias ?? "Boro Fan" : null,
+    last_poster_id: b.last_post_by,
   })) as PublicBoard[];
 });
 
@@ -169,6 +172,7 @@ export type PublicForumStats = {
   replies: number;
   members: number;
   latest_member: string | null;
+  latest_member_id: string | null;
 };
 
 export type PublicStaffMember = {
@@ -224,7 +228,7 @@ export const getPublicForumStats = createServerFn({ method: "GET" }).handler(asy
       .eq("status", "approved"),
     supabaseAdmin
       .from("fan_zone_members")
-      .select("fan_alias, decided_at")
+      .select("user_id, fan_alias, decided_at")
       .eq("status", "approved")
       .order("decided_at", { ascending: false, nullsFirst: false })
       .limit(1)
@@ -236,6 +240,7 @@ export const getPublicForumStats = createServerFn({ method: "GET" }).handler(asy
     replies: rows.reduce((s, b) => s + Math.max(0, (b.post_count || 0) - (b.topic_count || 0)), 0),
     members: memberCount.count ?? 0,
     latest_member: (latest.data as { fan_alias: string | null } | null)?.fan_alias?.trim() || null,
+    latest_member_id: (latest.data as { user_id: string } | null)?.user_id ?? null,
   };
 });
 
@@ -284,6 +289,7 @@ export const listPublicTopics = createServerFn({ method: "GET" })
         last_post_at: t.last_post_at,
         created_at: t.created_at,
         author_alias: aliases[t.author_id]?.alias ?? "Boro Fan",
+        author_id: t.author_id,
       })) as PublicTopicRow[],
       total: count ?? list.length,
       page: data.page,

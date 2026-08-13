@@ -98,8 +98,13 @@ function FanZoneBoardsPage() {
                           {b.last_post_at && (
                             <span className="shrink-0 text-right">
                               <RelativeTime iso={b.last_post_at} />
-                              {b.last_poster_alias ? (
-                                <> · <span className="text-foreground">{b.last_poster_alias}</span></>
+                              {b.last_poster_alias && b.last_poster_id ? (
+                                <> · <Link
+                                  to="/fanzone/u/$userId"
+                                  params={{ userId: b.last_poster_id }}
+                                  className="text-foreground hover:text-[#E11B22] hover:underline"
+                                  onClick={(event) => event.stopPropagation()}
+                                >{b.last_poster_alias}</Link></>
                               ) : null}
                             </span>
                           )}
@@ -142,7 +147,13 @@ function GuestForumStats() {
         <StatRow label="Members" value={stats ? fmt(stats.members) : "…"} />
         <div className="flex items-center justify-between gap-3 px-4 py-2.5 text-sm">
           <dt className="text-muted-foreground">Latest member:</dt>
-          <dd className="font-semibold text-[#E11B22] truncate">{stats?.latest_member ?? "—"}</dd>
+          <dd className="font-semibold text-[#E11B22] truncate">
+            {stats?.latest_member && stats.latest_member_id ? (
+              <Link to="/fanzone/u/$userId" params={{ userId: stats.latest_member_id }} className="hover:underline">
+                {stats.latest_member}
+              </Link>
+            ) : "—"}
+          </dd>
         </div>
       </dl>
     </div>
@@ -174,7 +185,11 @@ function GuestStaffBox() {
       <ul className="p-2 space-y-1.5">
         {members.map((m) => (
           <li key={`${m.user_id}-${m.role}`}>
-            <div className="flex items-center gap-2.5 rounded-lg border border-white/[0.12] bg-white/[0.08] px-2.5 py-2">
+            <Link
+              to="/fanzone/u/$userId"
+              params={{ userId: m.user_id }}
+              className="flex items-center gap-2.5 rounded-lg border border-white/[0.12] bg-white/[0.08] px-2.5 py-2 hover:border-[#E11B22]/60 hover:bg-white/[0.12] transition-colors"
+            >
               <div className="relative shrink-0">
                 {m.fan_avatar_url ? (
                   <img
@@ -196,7 +211,7 @@ function GuestStaffBox() {
                   {m.role === "admin" ? "Admin" : "Moderator"}
                 </div>
               </div>
-            </div>
+            </Link>
           </li>
         ))}
       </ul>

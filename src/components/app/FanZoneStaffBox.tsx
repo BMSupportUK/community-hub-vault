@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "@tanstack/react-router";
 import { Shield, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { DndCountdown } from "@/components/app/DndCountdown";
@@ -81,7 +82,11 @@ export function FanZoneStaffBox() {
             </div>
           );
           return (
-            <li key={`${m.user_id}-${m.role}`}>{inner}</li>
+            <li key={`${m.user_id}-${m.role}`}>
+              <Link to="/fanzone/u/$userId" params={{ userId: m.user_id }} aria-label={`View ${name}'s profile`}>
+                {inner}
+              </Link>
+            </li>
           );
         })}
       </ul>
