@@ -14,7 +14,6 @@ export const Route = createFileRoute("/fan-zone")({
 
 export function FanZoneShell({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
-  const navigate = useNavigate();
   useEffect(() => {
     const html = document.documentElement;
     html.style.setProperty("--boro-bg-image", `url(${boroBg})`);
