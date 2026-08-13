@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Goal, Square, RefreshCw, Users, Activity } from "lucide-react";
+import { Goal, Square, RefreshCw } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   getBoroMatchDetail,
   type MatchDetailDTO,
@@ -99,11 +100,14 @@ export function BoroMatchDetailTabs({
   }
 
   return (
-    <div className="space-y-6">
-      <section>
-        <h3 className="mb-2 flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-white/60">
-          <Activity className="size-3.5 text-[#E11B22]" /> Match action
-        </h3>
+    <Tabs defaultValue="action" className="w-full">
+      <TabsList className="grid w-full grid-cols-3 bg-white/5">
+        <TabsTrigger value="action">Match action</TabsTrigger>
+        <TabsTrigger value="stats">Game stats</TabsTrigger>
+        <TabsTrigger value="lineups">Line-ups</TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="action" className="mt-4">
         {detail?.events.length ? (
           <ul className="space-y-1.5">
             {detail.events.map((ev, i) => (
@@ -129,10 +133,9 @@ export function BoroMatchDetailTabs({
             No goals or cards recorded yet — this fills in live as the game unfolds.
           </p>
         )}
-      </section>
+      </TabsContent>
 
-      <section>
-        <h3 className="mb-2 text-xs font-black uppercase tracking-[0.18em] text-white/60">Game stats</h3>
+      <TabsContent value="stats" className="mt-4">
         {detail?.teamStats.length ? (
           <div className="overflow-hidden rounded-lg border border-white/10">
             <table className="w-full text-sm">
@@ -159,12 +162,9 @@ export function BoroMatchDetailTabs({
             Team stats appear once the match is under way.
           </p>
         )}
-      </section>
+      </TabsContent>
 
-      <section>
-        <h3 className="mb-2 flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-white/60">
-          <Users className="size-3.5 text-[#E11B22]" /> Line-ups &amp; player stats
-        </h3>
+      <TabsContent value="lineups" className="mt-4">
         {teams.home || teams.away ? (
           <div className="grid gap-4 lg:grid-cols-2">
             {[teams.home, teams.away].map((t, idx) =>
@@ -210,7 +210,7 @@ export function BoroMatchDetailTabs({
             Line-ups are published about an hour before kick-off and update live.
           </p>
         )}
-      </section>
-    </div>
+      </TabsContent>
+    </Tabs>
   );
 }
