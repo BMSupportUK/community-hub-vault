@@ -101,25 +101,6 @@ export function FanZoneShell({ children }: { children: React.ReactNode }) {
             </div>
           </div>
         </header>
-        {!user && (
-          <div className="mb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-amber-500/30 bg-black/55 backdrop-blur-md px-4 py-3 shadow-2xl">
-            <p className="text-sm text-amber-100/90">
-              You're viewing the Boro Fan Zone as a guest. Sign in or request access to post, react and join polls.
-            </p>
-            <div className="flex gap-2">
-              <Button size="sm" variant="outline" onClick={() => navigate({ to: "/login" })}>
-                <LogIn className="size-4 mr-1.5" /> Sign in
-              </Button>
-              <Button
-                size="sm"
-                className="bg-red-600 text-white hover:bg-red-500"
-                onClick={() => navigate({ to: "/signup" })}
-              >
-                Join BM Support
-              </Button>
-            </div>
-          </div>
-        )}
         <BoroLiveMatchStrip />
         <div className="rounded-2xl border border-white/15 bg-black/62 backdrop-blur-md p-5 sm:p-7 shadow-2xl">
           {children}
