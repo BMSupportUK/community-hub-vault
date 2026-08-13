@@ -115,12 +115,7 @@ export function BoroLiveMatchStrip() {
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        aria-label="Open Boro match centre"
-        className="group mb-5 w-full overflow-hidden rounded-xl border border-[#E11B22]/45 bg-black/70 backdrop-blur-md shadow-[0_10px_30px_-14px_rgba(225,27,34,0.6)] text-left transition hover:border-[#E11B22]/80"
-      >
+      <div className="group mb-5 w-full overflow-hidden rounded-xl border border-[#E11B22]/45 bg-black/70 backdrop-blur-md shadow-[0_10px_30px_-14px_rgba(225,27,34,0.6)] text-left transition hover:border-[#E11B22]/80">
         <div className="flex items-stretch">
           <div className="flex items-center gap-1.5 px-3 py-2.5 bg-gradient-to-b from-[#E11B22] to-[#8B0F14] text-white shrink-0">
             {live?.inPlay ? (
@@ -194,10 +189,18 @@ export function BoroLiveMatchStrip() {
               </span>
             )}
 
-            <ChevronRight className="size-4 text-white/50 shrink-0 group-hover:text-white transition" />
+            <button
+              type="button"
+              onClick={() => setOpen(true)}
+              className="shrink-0 inline-flex items-center gap-1.5 rounded-lg bg-[#E11B22] px-2.5 py-1.5 text-xs font-bold text-white shadow hover:bg-[#c41820] transition"
+            >
+              <span className="hidden sm:inline">View match centre</span>
+              <span className="sm:hidden">View</span>
+              <ChevronRight className="size-3.5" />
+            </button>
           </div>
         </div>
-      </button>
+      </div>
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="fixed left-1/2 top-1/2 z-[101] -translate-x-1/2 -translate-y-1/2 max-w-md w-[calc(100%-2rem)] max-h-[85vh] overflow-y-auto p-0 border border-[#E11B22]/50 bg-black/90 backdrop-blur-md shadow-2xl">
