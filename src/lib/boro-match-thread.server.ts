@@ -272,7 +272,6 @@ export function buildPreviewBody(fx: FixtureLite, json: any): string {
     );
   }
 
-  parts.push(buildLiveBlock(fx, json));
   parts.push(`<p><em>Auto-filled from the ESPN Gamecast.</em></p>`);
   return parts.join("\n");
 }
@@ -301,6 +300,14 @@ function replaceLiveBlock(body: string, block: string): string {
   const end = body.indexOf(LIVE_END);
   if (start === -1 || end === -1) return `${body}\n${block}`;
   return `${body.slice(0, start)}${block}${body.slice(end + LIVE_END.length)}`;
+}
+
+/** Strip a legacy inline live block out of the preview reply. */
+function stripLiveBlock(body: string): string {
+  const start = body.indexOf(LIVE_START);
+  const end = body.indexOf(LIVE_END);
+  if (start === -1 || end === -1) return body;
+  return `${body.slice(0, start)}${body.slice(end + LIVE_END.length)}`;
 }
 
 function isHalfTime(json: any): boolean {
