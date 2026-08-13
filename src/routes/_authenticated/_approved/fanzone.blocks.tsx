@@ -56,9 +56,11 @@ function BlocksPage() {
         <ul className="space-y-2">
           {rows.map((r) => (
             <li key={r.blocked_id} className="flex items-center gap-3 rounded-xl border border-border bg-surface-1 p-3">
-              <img src={r.fan_avatar_url} alt="" className="size-10 rounded-full object-cover ring-2 ring-white/10" />
+              <Link to="/fanzone/u/$userId" params={{ userId: r.blocked_id }} className="shrink-0">
+                <img src={r.fan_avatar_url} alt="" className="size-10 rounded-full object-cover ring-2 ring-white/10" />
+              </Link>
               <div className="flex-1 min-w-0">
-                <div className="font-semibold text-sm truncate">{r.fan_alias}</div>
+                <Link to="/fanzone/u/$userId" params={{ userId: r.blocked_id }} className="block font-semibold text-sm truncate hover:text-[#E11B22] hover:underline">{r.fan_alias}</Link>
                 <div className="text-[11px] text-muted-foreground">Blocked {new Date(r.created_at).toLocaleDateString()}</div>
               </div>
               <Button size="sm" variant="outline" disabled={busy === r.blocked_id} onClick={() => void unblock(r.blocked_id)}>

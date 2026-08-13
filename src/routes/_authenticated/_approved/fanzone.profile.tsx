@@ -571,9 +571,11 @@ function IgnoredPanel() {
         <ul className="space-y-2">
           {rows.map((r) => (
             <li key={r.blocked_id} className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 p-3">
-              <img src={r.fan_avatar_url || boroDefaultAvatar} alt="" className="size-10 rounded-full object-cover ring-2 ring-white/10" />
+              <Link to="/fanzone/u/$userId" params={{ userId: r.blocked_id }} className="shrink-0">
+                <img src={r.fan_avatar_url || boroDefaultAvatar} alt="" className="size-10 rounded-full object-cover ring-2 ring-white/10" />
+              </Link>
               <div className="flex-1 min-w-0">
-                <div className="font-semibold text-sm truncate">{r.fan_alias || "Boro fan"}</div>
+                <Link to="/fanzone/u/$userId" params={{ userId: r.blocked_id }} className="block font-semibold text-sm truncate hover:text-[#E11B22] hover:underline">{r.fan_alias || "Boro fan"}</Link>
                 <div className="text-[11px] text-white/60">Ignored {new Date(r.created_at).toLocaleDateString()}</div>
               </div>
               <Button size="sm" variant="outline" disabled={busy === r.blocked_id} onClick={() => void unblock(r.blocked_id)} className="bg-white/10 border-white/30 text-white hover:bg-white/20">

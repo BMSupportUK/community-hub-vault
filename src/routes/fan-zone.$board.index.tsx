@@ -53,11 +53,7 @@ function BoardTopicsPage() {
             <ul className="mt-5 space-y-2.5">
               {state.topics.map((t: PublicTopicRow) => (
                 <li key={t.id}>
-                  <Link
-                    to="/fan-zone/$board/$topic"
-                    params={{ board: slug, topic: t.id }}
-                    className="block rounded-xl border border-white/10 bg-white/5 hover:border-[#E11B22]/60 hover:bg-white/10 p-4 transition-colors"
-                  >
+                  <article className="rounded-xl border border-white/10 bg-white/5 hover:border-[#E11B22]/60 hover:bg-white/10 p-4 transition-colors">
                     <div className="flex items-center gap-2 flex-wrap">
                       {t.is_sticky && (
                         <span className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[10px] font-bold uppercase">
@@ -69,10 +65,12 @@ function BoardTopicsPage() {
                           <Lock className="size-2.5" /> Locked
                         </span>
                       )}
-                      <span className="font-display font-semibold text-white">{t.title}</span>
+                      <Link to="/fan-zone/$board/$topic" params={{ board: slug, topic: t.id }} className="font-display font-semibold text-white hover:text-[#E11B22]">
+                        {t.title}
+                      </Link>
                     </div>
                     <div className="mt-2 text-[11px] text-white/60 flex items-center gap-2 flex-wrap">
-                      <span>by <span className="text-white/90">{t.author_alias}</span></span>
+                      <span>by <Link to="/fanzone/u/$userId" params={{ userId: t.author_id }} className="text-white/90 hover:text-[#E11B22] hover:underline">{t.author_alias}</Link></span>
                       <span className="text-white/30">·</span>
                       <span><RelativeTime iso={t.created_at} /></span>
                       <span className="ml-auto inline-flex items-center gap-3">
@@ -80,7 +78,7 @@ function BoardTopicsPage() {
                         <span className="inline-flex items-center gap-1"><Eye className="size-3" />{t.view_count}</span>
                       </span>
                     </div>
-                  </Link>
+                  </article>
                 </li>
               ))}
             </ul>

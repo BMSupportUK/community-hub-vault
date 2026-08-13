@@ -287,7 +287,9 @@ function AdminForumPage() {
                         const name = p?.display_name || p?.username || m.user_id.slice(0, 6);
                         return (
                           <li key={m.user_id} className="inline-flex items-center gap-1 text-xs rounded-full bg-surface-2 border border-border px-2 py-0.5">
-                            {name}
+                             <Link to="/fanzone/u/$userId" params={{ userId: m.user_id }} className="hover:text-[#E11B22] hover:underline">
+                               {name}
+                             </Link>
                             <button onClick={() => void removeMod(b.id, m.user_id)} className="text-muted-foreground hover:text-destructive"><X className="size-3" /></button>
                           </li>
                         );

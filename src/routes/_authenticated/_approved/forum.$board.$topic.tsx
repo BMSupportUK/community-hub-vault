@@ -855,9 +855,11 @@ function TopicPage() {
                 {viewers.map((v) => {
                   const isMe = user && v.user_id === user.id;
                   return (
-                    <div
+                    <Link
                       key={v.user_id}
-                        className="flex items-center gap-1.5 rounded-full border border-border/60 bg-surface-1/40 pl-1 pr-2.5 py-0.5"
+                      to="/fanzone/u/$userId"
+                      params={{ userId: v.user_id }}
+                      className="flex items-center gap-1.5 rounded-full border border-border/60 bg-surface-1/40 pl-1 pr-2.5 py-0.5 hover:border-[#E11B22]/60"
                     >
                       {v.avatar ? (
                         <img src={v.avatar} alt="" className="size-6 rounded-full object-cover" />
@@ -870,7 +872,7 @@ function TopicPage() {
                         {v.alias}{isMe ? " (you)" : ""}
                       </span>
                       <span className="size-1.5 rounded-full bg-emerald-500" />
-                    </div>
+                    </Link>
                   );
                 })}
               </div>

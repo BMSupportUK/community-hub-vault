@@ -267,10 +267,8 @@ function BoardsIndex() {
         const posterName = poster?.display_name || poster?.username || (b.last_post_by ? "someone" : null);
         const lastTopic = lastTopics[b.id];
         return (
-          <Link
+          <article
               key={b.id}
-              to="/forum/$board"
-              params={{ board: b.slug }}
               className="boro-board-card group flex flex-col rounded-xl hover:border-[#E11B22]/80 hover:shadow-[0_16px_38px_-14px_rgba(225,27,34,0.7)] hover:-translate-y-[2px] transition-all overflow-hidden relative h-full"
             >
               <span
@@ -286,7 +284,9 @@ function BoardsIndex() {
                     <div className="flex items-center gap-1.5">
                       {b.is_pinned && <Pin className="size-3.5 text-[#F4B400] shrink-0" />}
                       {b.is_locked && <Lock className="size-3.5 text-muted-foreground shrink-0" />}
-                      <h3 className="font-display font-bold truncate group-hover:text-[#E11B22] transition-colors">{b.name}</h3>
+                       <h3 className="font-display font-bold truncate group-hover:text-[#E11B22] transition-colors">
+                         <Link to="/forum/$board" params={{ board: b.slug }} className="hover:underline">{b.name}</Link>
+                       </h3>
                       <ChevronRight className="size-4 ml-auto text-muted-foreground/40 group-hover:text-[#E11B22] group-hover:translate-x-0.5 transition-all shrink-0" />
                     </div>
                     <p className="text-xs text-muted-foreground line-clamp-2 mt-1">{b.description}</p>
@@ -313,13 +313,17 @@ function BoardsIndex() {
                     {b.last_post_at && (
                       <span className="shrink-0 text-right">
                         {formatLastSeen(b.last_post_at)}
-                        {posterName ? <> · <span className="text-foreground">{posterName}</span></> : null}
+                        {posterName && b.last_post_by ? <> · <Link
+                          to="/fanzone/u/$userId"
+                          params={{ userId: b.last_post_by }}
+                          className="text-foreground hover:text-[#E11B22] hover:underline"
+                        >{posterName}</Link></> : null}
                       </span>
                     )}
                   </div>
                 )}
               </div>
-            </Link>
+            </article>
         );
         })}
           <div className="grid gap-4 md:grid-cols-2 items-stretch sm:col-span-2">

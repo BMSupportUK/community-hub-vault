@@ -50,10 +50,8 @@ function FanZoneBoardsPage() {
               {boards.map((b) => {
                 const Icon = getIcon(b.icon);
                 return (
-                  <Link
+                  <article
                     key={b.id}
-                    to="/fan-zone/$board"
-                    params={{ board: b.slug }}
                     className="boro-board-card group flex flex-col rounded-xl hover:border-[#E11B22]/80 hover:shadow-[0_16px_38px_-14px_rgba(225,27,34,0.7)] hover:-translate-y-[2px] transition-all overflow-hidden relative h-full"
                   >
                     <span
@@ -69,9 +67,9 @@ function FanZoneBoardsPage() {
                           <div className="flex items-center gap-1.5">
                             {b.is_pinned && <Pin className="size-3.5 text-[#F4B400] shrink-0" />}
                             {b.is_locked && <Lock className="size-3.5 text-muted-foreground shrink-0" />}
-                            <h2 className="font-display font-bold truncate group-hover:text-[#E11B22] transition-colors">
-                              {b.name}
-                            </h2>
+                             <h2 className="font-display font-bold truncate group-hover:text-[#E11B22] transition-colors">
+                               <Link to="/fan-zone/$board" params={{ board: b.slug }} className="hover:underline">{b.name}</Link>
+                             </h2>
                             <ChevronRight className="size-4 ml-auto text-muted-foreground/40 group-hover:text-[#E11B22] group-hover:translate-x-0.5 transition-all shrink-0" />
                           </div>
                           <p className="text-xs text-muted-foreground line-clamp-2 mt-1">{b.description}</p>
@@ -98,15 +96,19 @@ function FanZoneBoardsPage() {
                           {b.last_post_at && (
                             <span className="shrink-0 text-right">
                               <RelativeTime iso={b.last_post_at} />
-                              {b.last_poster_alias ? (
-                                <> · <span className="text-foreground">{b.last_poster_alias}</span></>
+                              {b.last_poster_alias && b.last_poster_id ? (
+                                <> · <Link
+                                  to="/fanzone/u/$userId"
+                                  params={{ userId: b.last_poster_id }}
+                                  className="text-foreground hover:text-[#E11B22] hover:underline"
+                                >{b.last_poster_alias}</Link></>
                               ) : null}
                             </span>
                           )}
                         </div>
                       )}
                     </div>
-                  </Link>
+                  </article>
                 );
               })}
               <div className="grid gap-4 md:grid-cols-2 items-stretch sm:col-span-2">
@@ -142,7 +144,13 @@ function GuestForumStats() {
         <StatRow label="Members" value={stats ? fmt(stats.members) : "…"} />
         <div className="flex items-center justify-between gap-3 px-4 py-2.5 text-sm">
           <dt className="text-muted-foreground">Latest member:</dt>
-          <dd className="font-semibold text-[#E11B22] truncate">{stats?.latest_member ?? "—"}</dd>
+          <dd className="font-semibold text-[#E11B22] truncate">
+            {stats?.latest_member && stats.latest_member_id ? (
+              <Link to="/fanzone/u/$userId" params={{ userId: stats.latest_member_id }} className="hover:underline">
+                {stats.latest_member}
+              </Link>
+            ) : "—"}
+          </dd>
         </div>
       </dl>
     </div>
@@ -174,7 +182,11 @@ function GuestStaffBox() {
       <ul className="p-2 space-y-1.5">
         {members.map((m) => (
           <li key={`${m.user_id}-${m.role}`}>
-            <div className="flex items-center gap-2.5 rounded-lg border border-white/[0.12] bg-white/[0.08] px-2.5 py-2">
+            <Link
+              to="/fanzone/u/$userId"
+              params={{ userId: m.user_id }}
+              className="flex items-center gap-2.5 rounded-lg border border-white/[0.12] bg-white/[0.08] px-2.5 py-2 hover:border-[#E11B22]/60 hover:bg-white/[0.12] transition-colors"
+            >
               <div className="relative shrink-0">
                 {m.fan_avatar_url ? (
                   <img
@@ -196,7 +208,7 @@ function GuestStaffBox() {
                   {m.role === "admin" ? "Admin" : "Moderator"}
                 </div>
               </div>
-            </div>
+            </Link>
           </li>
         ))}
       </ul>
