@@ -401,7 +401,7 @@ export async function postManualTeamSheet(input: {
   });
   const { data: post, error: postErr } = await supabaseAdmin
     .from("forum_posts")
-    .insert({ topic_id: topic.id, author_id: topic.author_id, body })
+    .insert({ topic_id: topic.id, author_id: (await getMatchDayAuthorId()) ?? topic.author_id, body })
     .select("id")
     .single();
   if (postErr) return { ok: false, posted: 0, skipped: [], error: postErr.message };
