@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { listPublicBoards, type PublicBoard } from "@/lib/fan-zone-public.functions";
 import { getIcon } from "@/components/app/IconPicker";
 import { Lock, Pin, MessageSquare, ChevronRight } from "lucide-react";
-import { formatLastSeen } from "@/lib/relative-time";
+import { RelativeTime } from "@/components/app/RelativeTime";
 import { BoroMatchCentreBox } from "@/components/app/BoroMatchCentreBox";
 import { FanZoneShell } from "./fan-zone";
 
@@ -77,7 +77,7 @@ function FanZoneBoardsPage() {
                       <span className="text-white/30">·</span>
                       <span className="font-bold text-white">{Math.max(0, b.post_count - b.topic_count)}</span> replies
                     </span>
-                    {b.last_post_at ? <span>{formatLastSeen(b.last_post_at)}</span> : <span className="italic">No posts yet</span>}
+                    {b.last_post_at ? <span><RelativeTime iso={b.last_post_at} /></span> : <span className="italic">No posts yet</span>}
                   </div>
                 </div>
               </Link>

@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Lock, Pin, MessageSquare, Eye, ArrowLeft } from "lucide-react";
 import { listPublicTopics, type PublicTopicRow } from "@/lib/fan-zone-public.functions";
-import { formatLastSeen } from "@/lib/relative-time";
+import { RelativeTime } from "@/components/app/RelativeTime";
 import { Button } from "@/components/ui/button";
 import { FanZoneShell } from "./fan-zone";
 
@@ -74,7 +74,7 @@ function BoardTopicsPage() {
                     <div className="mt-2 text-[11px] text-white/60 flex items-center gap-2 flex-wrap">
                       <span>by <span className="text-white/90">{t.author_alias}</span></span>
                       <span className="text-white/30">·</span>
-                      <span>{formatLastSeen(t.created_at)}</span>
+                      <span><RelativeTime iso={t.created_at} /></span>
                       <span className="ml-auto inline-flex items-center gap-3">
                         <span className="inline-flex items-center gap-1"><MessageSquare className="size-3 text-[#E11B22]" />{t.reply_count}</span>
                         <span className="inline-flex items-center gap-1"><Eye className="size-3" />{t.view_count}</span>

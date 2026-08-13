@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Lock, Pin, ArrowLeft } from "lucide-react";
 import { getPublicTopic, type PublicPost } from "@/lib/fan-zone-public.functions";
 import { ForumPostBody } from "@/components/app/ForumPostBody";
-import { formatLastSeen } from "@/lib/relative-time";
+import { RelativeTime } from "@/components/app/RelativeTime";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { FanZoneShell } from "./fan-zone";
@@ -48,7 +48,7 @@ function TopicReadPage() {
         {data.topic.is_locked && <Lock className="size-4 text-white/50" />}
         <h1 className="font-display text-xl sm:text-2xl font-bold text-white">{data.topic.title}</h1>
       </div>
-      <p className="text-xs text-white/60 mt-1">Started {formatLastSeen(data.topic.created_at)} · {data.topic.reply_count} replies · {data.topic.view_count} views</p>
+      <p className="text-xs text-white/60 mt-1">Started <RelativeTime iso={data.topic.created_at} /> · {data.topic.reply_count} replies · {data.topic.view_count} views</p>
 
       <Tabs defaultValue="posts" className="w-full mt-5">
         <TabsList>
@@ -97,7 +97,7 @@ function PostCard({ post: p }: { post: PublicPost }) {
         )}
         <div className="min-w-0">
           <div className="text-sm font-semibold text-white truncate">{p.author_alias}</div>
-          <div className="text-[11px] text-white/50">{formatLastSeen(p.created_at)}{p.is_op ? " · Original post" : ""}</div>
+          <div className="text-[11px] text-white/50"><RelativeTime iso={p.created_at} />{p.is_op ? " · Original post" : ""}</div>
         </div>
         {p.is_pinned && !p.is_op && (
           <span className="ml-auto inline-flex items-center gap-1 rounded-full border border-amber-400/40 bg-amber-400/10 px-2 py-0.5 text-[10px] font-semibold text-amber-200">
