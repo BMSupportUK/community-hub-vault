@@ -73,21 +73,31 @@ export function FanZoneShell({ children }: { children: React.ReactNode }) {
                 Up the Boro — boards, banter & match-day debate.
               </p>
             </div>
-            <div className="sm:self-center flex flex-col sm:flex-row gap-2">
-              <Link
-                to="/boro-predictions"
-                className="inline-flex items-center gap-2 rounded-lg bg-white/95 px-4 py-2.5 text-sm font-bold text-[#961016] shadow-lg ring-1 ring-white/40 hover:bg-white transition"
-              >
-                <Trophy className="size-4" />
-                MFC 2026 Predictions
-              </Link>
-              <Link
-                to="/boro-fantasy"
-                className="inline-flex items-center gap-2 rounded-lg bg-[#E11B22]/90 px-4 py-2.5 text-sm font-bold text-white shadow-lg ring-1 ring-white/30 hover:bg-[#E11B22] transition"
-              >
-                <Users className="size-4" />
-                MFC Fantasy Manager
-              </Link>
+            <div className="sm:self-center flex flex-col gap-2.5">
+              {!user && (
+                <div className="rounded-lg border border-amber-400/60 bg-amber-500/25 backdrop-blur-sm px-3.5 py-2.5 shadow-[0_0_20px_rgba(251,191,36,0.35)]">
+                  <span className="inline-flex items-start gap-2 text-xs sm:text-sm font-semibold text-amber-50 leading-snug">
+                    <Info className="size-4 text-amber-300 shrink-0 mt-0.5" />
+                    You're viewing the Boro Fan Zone as a guest. Sign in or request access to post, react and join polls.
+                  </span>
+                </div>
+              )}
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Link
+                  to="/boro-predictions"
+                  className="inline-flex items-center gap-2 rounded-lg bg-white/95 px-4 py-2.5 text-sm font-bold text-[#961016] shadow-lg ring-1 ring-white/40 hover:bg-white transition"
+                >
+                  <Trophy className="size-4" />
+                  MFC 2026 Predictions
+                </Link>
+                <Link
+                  to="/boro-fantasy"
+                  className="inline-flex items-center gap-2 rounded-lg bg-[#E11B22]/90 px-4 py-2.5 text-sm font-bold text-white shadow-lg ring-1 ring-white/30 hover:bg-[#E11B22] transition"
+                >
+                  <Users className="size-4" />
+                  MFC Fantasy Manager
+                </Link>
+              </div>
             </div>
           </div>
         </header>
