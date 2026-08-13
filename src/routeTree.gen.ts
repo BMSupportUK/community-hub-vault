@@ -104,6 +104,7 @@ import { Route as ApiPublicHooksStatusIncidentPushRouteImport } from './routes/a
 import { Route as ApiPublicHooksStaffNotificationPushRouteImport } from './routes/api/public/hooks/staff-notification-push'
 import { Route as ApiPublicHooksSquareInvoiceRouteImport } from './routes/api/public/hooks/square-invoice'
 import { Route as ApiPublicHooksScheduledRemindersRouteImport } from './routes/api/public/hooks/scheduled-reminders'
+import { Route as ApiPublicHooksRefreshStreamingStockRouteImport } from './routes/api/public/hooks/refresh-streaming-stock'
 import { Route as ApiPublicHooksRefreshStreamingPricesRouteImport } from './routes/api/public/hooks/refresh-streaming-prices'
 import { Route as ApiPublicHooksNowpaymentsRouteImport } from './routes/api/public/hooks/nowpayments'
 import { Route as ApiPublicHooksNotifyRouteImport } from './routes/api/public/hooks/notify'
@@ -673,6 +674,12 @@ const ApiPublicHooksScheduledRemindersRoute =
     path: '/api/public/hooks/scheduled-reminders',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksRefreshStreamingStockRoute =
+  ApiPublicHooksRefreshStreamingStockRouteImport.update({
+    id: '/api/public/hooks/refresh-streaming-stock',
+    path: '/api/public/hooks/refresh-streaming-stock',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksRefreshStreamingPricesRoute =
   ApiPublicHooksRefreshStreamingPricesRouteImport.update({
     id: '/api/public/hooks/refresh-streaming-prices',
@@ -907,6 +914,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/notify': typeof ApiPublicHooksNotifyRoute
   '/api/public/hooks/nowpayments': typeof ApiPublicHooksNowpaymentsRoute
   '/api/public/hooks/refresh-streaming-prices': typeof ApiPublicHooksRefreshStreamingPricesRoute
+  '/api/public/hooks/refresh-streaming-stock': typeof ApiPublicHooksRefreshStreamingStockRoute
   '/api/public/hooks/scheduled-reminders': typeof ApiPublicHooksScheduledRemindersRoute
   '/api/public/hooks/square-invoice': typeof ApiPublicHooksSquareInvoiceRoute
   '/api/public/hooks/staff-notification-push': typeof ApiPublicHooksStaffNotificationPushRoute
@@ -1022,6 +1030,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/notify': typeof ApiPublicHooksNotifyRoute
   '/api/public/hooks/nowpayments': typeof ApiPublicHooksNowpaymentsRoute
   '/api/public/hooks/refresh-streaming-prices': typeof ApiPublicHooksRefreshStreamingPricesRoute
+  '/api/public/hooks/refresh-streaming-stock': typeof ApiPublicHooksRefreshStreamingStockRoute
   '/api/public/hooks/scheduled-reminders': typeof ApiPublicHooksScheduledRemindersRoute
   '/api/public/hooks/square-invoice': typeof ApiPublicHooksSquareInvoiceRoute
   '/api/public/hooks/staff-notification-push': typeof ApiPublicHooksStaffNotificationPushRoute
@@ -1143,6 +1152,7 @@ export interface FileRoutesById {
   '/api/public/hooks/notify': typeof ApiPublicHooksNotifyRoute
   '/api/public/hooks/nowpayments': typeof ApiPublicHooksNowpaymentsRoute
   '/api/public/hooks/refresh-streaming-prices': typeof ApiPublicHooksRefreshStreamingPricesRoute
+  '/api/public/hooks/refresh-streaming-stock': typeof ApiPublicHooksRefreshStreamingStockRoute
   '/api/public/hooks/scheduled-reminders': typeof ApiPublicHooksScheduledRemindersRoute
   '/api/public/hooks/square-invoice': typeof ApiPublicHooksSquareInvoiceRoute
   '/api/public/hooks/staff-notification-push': typeof ApiPublicHooksStaffNotificationPushRoute
@@ -1263,6 +1273,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/notify'
     | '/api/public/hooks/nowpayments'
     | '/api/public/hooks/refresh-streaming-prices'
+    | '/api/public/hooks/refresh-streaming-stock'
     | '/api/public/hooks/scheduled-reminders'
     | '/api/public/hooks/square-invoice'
     | '/api/public/hooks/staff-notification-push'
@@ -1378,6 +1389,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/notify'
     | '/api/public/hooks/nowpayments'
     | '/api/public/hooks/refresh-streaming-prices'
+    | '/api/public/hooks/refresh-streaming-stock'
     | '/api/public/hooks/scheduled-reminders'
     | '/api/public/hooks/square-invoice'
     | '/api/public/hooks/staff-notification-push'
@@ -1498,6 +1510,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/notify'
     | '/api/public/hooks/nowpayments'
     | '/api/public/hooks/refresh-streaming-prices'
+    | '/api/public/hooks/refresh-streaming-stock'
     | '/api/public/hooks/scheduled-reminders'
     | '/api/public/hooks/square-invoice'
     | '/api/public/hooks/staff-notification-push'
@@ -1555,6 +1568,7 @@ export interface RootRouteChildren {
   ApiPublicHooksNotifyRoute: typeof ApiPublicHooksNotifyRoute
   ApiPublicHooksNowpaymentsRoute: typeof ApiPublicHooksNowpaymentsRoute
   ApiPublicHooksRefreshStreamingPricesRoute: typeof ApiPublicHooksRefreshStreamingPricesRoute
+  ApiPublicHooksRefreshStreamingStockRoute: typeof ApiPublicHooksRefreshStreamingStockRoute
   ApiPublicHooksScheduledRemindersRoute: typeof ApiPublicHooksScheduledRemindersRoute
   ApiPublicHooksSquareInvoiceRoute: typeof ApiPublicHooksSquareInvoiceRoute
   ApiPublicHooksStaffNotificationPushRoute: typeof ApiPublicHooksStaffNotificationPushRoute
@@ -2239,6 +2253,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksScheduledRemindersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/refresh-streaming-stock': {
+      id: '/api/public/hooks/refresh-streaming-stock'
+      path: '/api/public/hooks/refresh-streaming-stock'
+      fullPath: '/api/public/hooks/refresh-streaming-stock'
+      preLoaderRoute: typeof ApiPublicHooksRefreshStreamingStockRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/refresh-streaming-prices': {
       id: '/api/public/hooks/refresh-streaming-prices'
       path: '/api/public/hooks/refresh-streaming-prices'
@@ -2720,6 +2741,8 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksNowpaymentsRoute: ApiPublicHooksNowpaymentsRoute,
   ApiPublicHooksRefreshStreamingPricesRoute:
     ApiPublicHooksRefreshStreamingPricesRoute,
+  ApiPublicHooksRefreshStreamingStockRoute:
+    ApiPublicHooksRefreshStreamingStockRoute,
   ApiPublicHooksScheduledRemindersRoute: ApiPublicHooksScheduledRemindersRoute,
   ApiPublicHooksSquareInvoiceRoute: ApiPublicHooksSquareInvoiceRoute,
   ApiPublicHooksStaffNotificationPushRoute:

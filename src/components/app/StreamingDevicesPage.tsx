@@ -275,10 +275,13 @@ export function StreamingDevicesPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("streaming_device_prices")
-        .select("device_id, price_cents, currency, availability, source_url, scraped_at");
+        .select("device_id, price_cents, currency, availability, source_url, scraped_at, stock_checked_at");
       if (error) throw error;
       return (data ?? []) as Price[];
     },
+    // Stock status is refreshed server-side every few minutes; keep the page live.
+    refetchInterval: 60_000,
+    refetchOnWindowFocus: true,
   });
 
   const ratingsQuery = useQuery({
