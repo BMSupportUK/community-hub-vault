@@ -113,21 +113,6 @@ function refereeOf(json: any): string | null {
   return (ref ?? officials[0])?.displayName ?? null;
 }
 
-function rosterXi(json: any, homeAway: "home" | "away"): { name: string; xi: string[]; subs: string[] } | null {
-  const r = (json?.rosters ?? []).find((x: any) => x?.homeAway === homeAway);
-  if (!r) return null;
-  const players: any[] = r?.roster ?? [];
-  const label = (p: any) => {
-    const name = p?.athlete?.displayName ?? p?.athlete?.shortName;
-    if (!name) return null;
-    const pos = p?.position?.abbreviation ? ` (${p.position.abbreviation})` : "";
-    return `${name}${pos}`;
-  };
-  const xi = players.filter((p) => p?.starter).map(label).filter(Boolean) as string[];
-  const subs = players.filter((p) => !p?.starter).map(label).filter(Boolean) as string[];
-  return { name: r?.team?.displayName ?? "", xi, subs };
-}
-
 function teamStatRows(json: any): Array<{ label: string; home: string; away: string }> {
   const teams: any[] = json?.boxscore?.teams ?? [];
   const home = teams.find((t: any) => t?.homeAway === "home") ?? teams[0];
