@@ -58,14 +58,28 @@ export function BoroMatchDetailTabs({
   eventId,
   slug,
   live,
+  kickoff,
 }: {
   eventId: string;
   slug?: string | null;
   live: boolean;
+  kickoff?: string | null;
 }) {
   const fetchDetail = useServerFn(getBoroMatchDetail);
   const [detail, setDetail] = useState<MatchDetailDTO | null>(null);
   const [loading, setLoading] = useState(true);
+  const [now, setNow] = useState(() => Date.now());
+
+  const koMs = kickoff ? Date.parse(kickoff) : NaN;
+  const minsToKo = Number.isFinite(koMs) ? Math.round((koMs - now) / 60000) : null;
+  const preMatch = !live && minsToKo !== null && minsToKo > -5;
+  // Within 3 hours of kick-off we poll hard so line-ups/stats land the moment ESPN publishes them.
+  const armed = live || (preMatch && minsToKo! <= 180);
+
+  useEffect(() => {
+    const t = window.setInterval(() => setNow(Date.now()), 30_000);
+    return () => window.clearInterval(t);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -79,7 +93,7 @@ export function BoroMatchDetailTabs({
         console.error(e);
       } finally {
         if (!cancelled) setLoading(false);
-        if (!cancelled) timer = window.setTimeout(run, live ? 20_000 : 5 * 60_000);
+        if (!cancelled) timer = window.setTimeout(run, live ? 20_000 : armed ? 60_000 : 5 * 60_000);
       }
     };
     void run();
@@ -87,7 +101,7 @@ export function BoroMatchDetailTabs({
       cancelled = true;
       if (timer) window.clearTimeout(timer);
     };
-  }, [eventId, slug, live]);
+  }, [eventId, slug, live, armed]);
 
   const teams = useMemo(() => {
     const home = detail?.lineups.find((l) => l.teamId === detail?.homeTeamId) ?? detail?.lineups[0] ?? null;
@@ -99,8 +113,27 @@ export function BoroMatchDetailTabs({
     return <div className="py-8 text-center text-sm text-white/50">Loading match data…</div>;
   }
 
+  const koLabel =
+    minsToKo === null
+      ? null
+      : minsToKo > 90
+        ? `Kick-off in ${Math.floor(minsToKo / 60)}h ${minsToKo % 60}m`
+        : minsToKo > 0
+          ? `Kick-off in ${minsToKo}m`
+          : "Kick-off imminent";
+
   return (
-    <Tabs defaultValue="action" className="w-full">
+    <Tabs defaultValue={live ? "action" : preMatch ? "lineups" : "action"} className="w-full">
+      {!live && preMatch && (
+        <div className="mb-3 flex flex-wrap items-center gap-2 rounded-lg border border-[#E11B22]/40 bg-[#E11B22]/10 px-3 py-2 text-[11px] font-bold uppercase tracking-wider text-red-200">
+          <span className="relative flex size-2">
+            <span className="absolute inline-flex size-full animate-ping rounded-full bg-red-300/80" />
+            <span className="relative inline-flex size-2 rounded-full bg-red-300" />
+          </span>
+          Armed and ready — stats start recording at kick-off
+          {koLabel && <span className="ml-auto normal-case tracking-normal text-white/70">{koLabel}</span>}
+        </div>
+      )}
       <TabsList className="grid w-full grid-cols-3 bg-white/5">
         <TabsTrigger value="action">Match action</TabsTrigger>
         <TabsTrigger value="stats">Game stats</TabsTrigger>
