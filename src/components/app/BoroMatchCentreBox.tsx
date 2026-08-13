@@ -129,6 +129,19 @@ export function BoroMatchCentreBox() {
   };
   useEffect(() => {
     void load();
+    // Keep the card live: poll so the next fixture only rolls over to the
+    // following game once the listed one has actually finished.
+    const id = window.setInterval(() => {
+      void load();
+    }, 60_000);
+    const onVisible = () => {
+      if (document.visibilityState === "visible") void load();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      window.clearInterval(id);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
   }, []);
 
   if (loading) {
