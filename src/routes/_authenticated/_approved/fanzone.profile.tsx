@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, ImagePlus, Loader2, Save, UserMinus, ShieldOff, ThumbsUp, ThumbsDown, MessageSquare, FileText, Users, Award } from "lucide-react";
+import { ArrowLeft, ImagePlus, Loader2, Save, UserMinus, ShieldOff, ThumbsUp, ThumbsDown, MessageSquare, FileText, Users, Award, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -133,6 +133,7 @@ function FanZoneProfilePage() {
               <TabsTrigger value="profile" className="data-[state=active]:bg-[#E11B22] data-[state=active]:text-white text-white/70">Profile</TabsTrigger>
               <TabsTrigger value="friends" className="data-[state=active]:bg-[#E11B22] data-[state=active]:text-white text-white/70">Friends</TabsTrigger>
               <TabsTrigger value="ignored" className="data-[state=active]:bg-[#E11B22] data-[state=active]:text-white text-white/70">Ignored</TabsTrigger>
+              <TabsTrigger value="privacy" className="data-[state=active]:bg-[#E11B22] data-[state=active]:text-white text-white/70">Privacy</TabsTrigger>
             </TabsList>
 
             <TabsContent value="profile">
@@ -255,6 +256,10 @@ function FanZoneProfilePage() {
 
             <TabsContent value="ignored">
               <IgnoredPanel />
+            </TabsContent>
+
+            <TabsContent value="privacy">
+              <PrivacyPanel userId={user!.id} />
             </TabsContent>
             </Tabs>
             <aside className="space-y-4 lg:sticky lg:top-6 self-start">
