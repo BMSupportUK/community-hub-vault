@@ -88,15 +88,28 @@ function PostCard({ post: p }: { post: PublicPost }) {
   return (
     <div className={`rounded-xl border p-4 sm:p-5 ${p.is_pinned && !p.is_op ? "border-amber-400/40 bg-amber-400/5" : "border-white/10 bg-white/5"}`}>
       <header className="flex items-center gap-2.5 mb-3">
-        {p.author_avatar ? (
-          <img src={p.author_avatar} alt="" className="size-8 rounded-full object-cover ring-1 ring-white/20" />
-        ) : (
-          <div className="size-8 rounded-full bg-[#E11B22]/30 grid place-items-center text-[11px] font-bold text-white ring-1 ring-white/20">
-            {p.author_alias.charAt(0)}
-          </div>
-        )}
+        <Link
+          to="/fanzone/u/$userId"
+          params={{ userId: p.author_id }}
+          className="shrink-0"
+          aria-label={`${p.author_alias}'s Boro Fan Zone profile`}
+        >
+          {p.author_avatar ? (
+            <img src={p.author_avatar} alt="" className="size-8 rounded-full object-cover ring-1 ring-white/20 hover:ring-[#E11B22]" />
+          ) : (
+            <div className="size-8 rounded-full bg-[#E11B22]/30 grid place-items-center text-[11px] font-bold text-white ring-1 ring-white/20 hover:ring-[#E11B22]">
+              {p.author_alias.charAt(0)}
+            </div>
+          )}
+        </Link>
         <div className="min-w-0">
-          <div className="text-sm font-semibold text-white truncate">{p.author_alias}</div>
+          <Link
+            to="/fanzone/u/$userId"
+            params={{ userId: p.author_id }}
+            className="block text-sm font-semibold text-white truncate hover:text-[#E11B22] hover:underline"
+          >
+            {p.author_alias}
+          </Link>
           <div className="text-[11px] text-white/50"><RelativeTime iso={p.created_at} />{p.is_op ? " · Original post" : ""}</div>
         </div>
         {p.is_pinned && !p.is_op && (
