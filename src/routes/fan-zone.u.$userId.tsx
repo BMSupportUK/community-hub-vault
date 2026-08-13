@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import boroDefaultAvatar from "@/assets/boro-default-avatar.png";
 import { FanZoneShell } from "./fan-zone";
 import { FanRoleBadge } from "@/components/app/FanRoleBadge";
+import { RelativeTime } from "@/components/app/RelativeTime";
 
 export const Route = createFileRoute("/fan-zone/u/$userId")({
   loader: ({ params }) => getPublicFanProfile({ data: { userId: params.userId } }),
