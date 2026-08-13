@@ -58,14 +58,28 @@ export function BoroMatchDetailTabs({
   eventId,
   slug,
   live,
+  kickoff,
 }: {
   eventId: string;
   slug?: string | null;
   live: boolean;
+  kickoff?: string | null;
 }) {
   const fetchDetail = useServerFn(getBoroMatchDetail);
   const [detail, setDetail] = useState<MatchDetailDTO | null>(null);
   const [loading, setLoading] = useState(true);
+  const [now, setNow] = useState(() => Date.now());
+
+  const koMs = kickoff ? Date.parse(kickoff) : NaN;
+  const minsToKo = Number.isFinite(koMs) ? Math.round((koMs - now) / 60000) : null;
+  const preMatch = !live && minsToKo !== null && minsToKo > -5;
+  // Within 3 hours of kick-off we poll hard so line-ups/stats land the moment ESPN publishes them.
+  const armed = live || (preMatch && minsToKo! <= 180);
+
+  useEffect(() => {
+    const t = window.setInterval(() => setNow(Date.now()), 30_000);
+    return () => window.clearInterval(t);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -79,7 +93,7 @@ export function BoroMatchDetailTabs({
         console.error(e);
       } finally {
         if (!cancelled) setLoading(false);
-        if (!cancelled) timer = window.setTimeout(run, live ? 20_000 : 5 * 60_000);
+        if (!cancelled) timer = window.setTimeout(run, live ? 20_000 : armed ? 60_000 : 5 * 60_000);
       }
     };
     void run();
@@ -87,7 +101,7 @@ export function BoroMatchDetailTabs({
       cancelled = true;
       if (timer) window.clearTimeout(timer);
     };
-  }, [eventId, slug, live]);
+  }, [eventId, slug, live, armed]);
 
   const teams = useMemo(() => {
     const home = detail?.lineups.find((l) => l.teamId === detail?.homeTeamId) ?? detail?.lineups[0] ?? null;
@@ -99,8 +113,27 @@ export function BoroMatchDetailTabs({
     return <div className="py-8 text-center text-sm text-white/50">Loading match data…</div>;
   }
 
+  const koLabel =
+    minsToKo === null
+      ? null
+      : minsToKo > 90
+        ? `Kick-off in ${Math.floor(minsToKo / 60)}h ${minsToKo % 60}m`
+        : minsToKo > 0
+          ? `Kick-off in ${minsToKo}m`
+          : "Kick-off imminent";
+
   return (
-    <Tabs defaultValue="action" className="w-full">
+    <Tabs defaultValue={live ? "action" : preMatch ? "lineups" : "action"} className="w-full">
+      {!live && preMatch && (
+        <div className="mb-3 flex flex-wrap items-center gap-2 rounded-lg border border-[#E11B22]/40 bg-[#E11B22]/10 px-3 py-2 text-[11px] font-bold uppercase tracking-wider text-red-200">
+          <span className="relative flex size-2">
+            <span className="absolute inline-flex size-full animate-ping rounded-full bg-red-300/80" />
+            <span className="relative inline-flex size-2 rounded-full bg-red-300" />
+          </span>
+          Armed and ready — stats start recording at kick-off
+          {koLabel && <span className="ml-auto normal-case tracking-normal text-white/70">{koLabel}</span>}
+        </div>
+      )}
       <TabsList className="grid w-full grid-cols-3 bg-white/5">
         <TabsTrigger value="action">Match action</TabsTrigger>
         <TabsTrigger value="stats">Game stats</TabsTrigger>
@@ -129,9 +162,20 @@ export function BoroMatchDetailTabs({
             ))}
           </ul>
         ) : (
-          <p className="rounded-lg border border-white/10 bg-white/5 p-3 text-sm text-white/50">
-            No goals or cards recorded yet — this fills in live as the game unfolds.
-          </p>
+          <div className="space-y-1.5">
+            <p className="rounded-lg border border-white/10 bg-white/5 p-3 text-sm text-white/60">
+              Feed is live and waiting — goals, cards, penalties and subs post here the second they happen.
+            </p>
+            {["Goals", "Cards", "Penalties", "Substitutions"].map((l) => (
+              <div
+                key={l}
+                className="flex items-center gap-3 rounded-lg border border-dashed border-white/10 bg-white/[0.03] px-3 py-2 text-sm"
+              >
+                <span className="w-12 shrink-0 tabular-nums text-xs font-bold text-white/25">--'</span>
+                <span className="flex-1 text-white/35">{l} — awaiting first entry</span>
+              </div>
+            ))}
+          </div>
         )}
       </TabsContent>
 
@@ -158,9 +202,36 @@ export function BoroMatchDetailTabs({
             </table>
           </div>
         ) : (
-          <p className="rounded-lg border border-white/10 bg-white/5 p-3 text-sm text-white/50">
-            Team stats appear once the match is under way.
-          </p>
+          <div className="overflow-hidden rounded-lg border border-dashed border-white/10">
+            <table className="w-full text-sm">
+              <thead className="bg-white/5 text-[11px] uppercase tracking-wider text-white/50">
+                <tr>
+                  <th className="px-3 py-2 text-left">Home</th>
+                  <th className="px-3 py-2 text-center">Stat</th>
+                  <th className="px-3 py-2 text-right">Away</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[
+                  "Possession",
+                  "Shots",
+                  "Shots on target",
+                  "Corners",
+                  "Fouls",
+                  "Offsides",
+                  "Yellow cards",
+                  "Red cards",
+                  "Saves",
+                ].map((label) => (
+                  <tr key={label} className="border-t border-white/5">
+                    <td className="px-3 py-1.5 text-left font-bold tabular-nums text-white/30">–</td>
+                    <td className="px-3 py-1.5 text-center text-white/45">{label}</td>
+                    <td className="px-3 py-1.5 text-right font-bold tabular-nums text-white/30">–</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </TabsContent>
 
@@ -206,9 +277,49 @@ export function BoroMatchDetailTabs({
             )}
           </div>
         ) : (
-          <p className="rounded-lg border border-white/10 bg-white/5 p-3 text-sm text-white/50">
-            Line-ups are published about an hour before kick-off and update live.
-          </p>
+          <div className="space-y-3">
+            <p className="rounded-lg border border-white/10 bg-white/5 p-3 text-sm text-white/60">
+              Line-ups usually land about an hour before kick-off. Player stat columns below are ready and fill in live.
+            </p>
+            <div className="grid gap-4 lg:grid-cols-2">
+              {["Home", "Away"].map((side) => (
+                <div key={side} className="overflow-hidden rounded-lg border border-dashed border-white/10">
+                  <div className="bg-white/5 px-3 py-2 text-sm font-bold text-white/50">{side} XI</div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-[12px]">
+                      <thead className="text-[10px] uppercase text-white/40">
+                        <tr>
+                          <th className="px-3 py-1.5 text-left">Player</th>
+                          {STAT_COLUMNS.map((c) => (
+                            <th key={c.key} className="px-1.5 py-1.5 text-center">
+                              {c.label}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {Array.from({ length: 11 }).map((_, i) => (
+                          <tr key={i} className="border-t border-white/5">
+                            <td className="py-1.5 pr-2">
+                              <span className="inline-flex items-center gap-2">
+                                <span className="w-6 text-right text-[11px] tabular-nums text-white/25">{i + 1}</span>
+                                <span className="h-3 w-24 rounded bg-white/10" />
+                              </span>
+                            </td>
+                            {STAT_COLUMNS.map((c) => (
+                              <td key={c.key} className="px-1.5 py-1.5 text-center text-white/20">
+                                –
+                              </td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         )}
       </TabsContent>
     </Tabs>
