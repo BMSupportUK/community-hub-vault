@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import boroHero from "@/assets/boro-hero.jpg";
 import boroBadge from "@/assets/boro-fan-zone-badge.png";
 import boroBg from "@/assets/boro-bg.jpg";
+import { BoroLiveMatchStrip } from "@/components/app/BoroLiveMatchStrip";
 
 export const Route = createFileRoute("/fan-zone")({
   component: () => <Outlet />,
@@ -102,6 +103,7 @@ export function FanZoneShell({ children }: { children: React.ReactNode }) {
             </div>
           </div>
         )}
+        <BoroLiveMatchStrip />
         <div className="rounded-2xl border border-white/15 bg-black/62 backdrop-blur-md p-5 sm:p-7 shadow-2xl">
           {children}
         </div>

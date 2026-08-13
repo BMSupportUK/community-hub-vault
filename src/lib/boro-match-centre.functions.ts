@@ -46,6 +46,20 @@ export type LeagueTableRow = {
   isBoro?: boolean;
 };
 
+export type LiveMatch = {
+  kickoff: string;
+  competition: string;
+  home: string;
+  away: string;
+  homeScore: number;
+  awayScore: number;
+  statusDetail: string;
+  clock: string | null;
+  inPlay: boolean;
+  homeLogo?: string | null;
+  awayLogo?: string | null;
+};
+
 export type MatchCentreDTO = {
   lastResult: LastResult | null;
   nextFixture: NextFixture | null;
@@ -55,9 +69,14 @@ export type MatchCentreDTO = {
   leaguePositionManual: boolean;
   fetchedAt: string | null;
   updatedAt: string | null;
+  liveMatch?: LiveMatch | null;
 };
 
 const BORO_TEAM_RE = /\bmiddles(?:brough|borough)\b|\bboro\b/i;
+
+// In-memory (per worker instance) cache of the in-play match so short-lived
+// cache hits can still render the live strip without another ESPN round trip.
+let liveMatchCache: { at: number; value: LiveMatch | null } | null = null;
 
 function isBoroMatch(match: { home?: string | null; away?: string | null } | null | undefined) {
   return !!match && (BORO_TEAM_RE.test(match.home ?? "") || BORO_TEAM_RE.test(match.away ?? ""));
@@ -100,13 +119,20 @@ export const getBoroMatchCentre = createServerFn({ method: "GET" }).handler(
       Number.isFinite(koMs) &&
       Date.now() >= koMs - 15 * 60 * 1000 &&
       Date.now() <= koMs + 5 * 60 * 60 * 1000;
-    const maxAgeMs = liveWindow ? 60 * 1000 : 30 * 60 * 1000;
+    // While a game is in play refresh every ~20s so the live strip ticks along.
+    const maxAgeMs = liveWindow ? 20 * 1000 : 30 * 60 * 1000;
     const stale =
       !dto.fetchedAt || Date.now() - new Date(dto.fetchedAt).getTime() > maxAgeMs;
     const needsFetch =
       (stale || invalidCachedNext || invalidCachedLast) &&
       (!dto.lastResultManual || !dto.nextFixtureManual || !dto.leaguePositionManual);
-    if (!needsFetch) return dto;
+    if (!needsFetch) {
+      const cached =
+        liveMatchCache && Date.now() - liveMatchCache.at < 60 * 1000
+          ? liveMatchCache.value
+          : null;
+      return { ...dto, liveMatch: cached };
+    }
     try {
       const [live, standings] = await Promise.all([
         fetchEspnBoro(),
@@ -195,10 +221,11 @@ export const getBoroMatchCentre = createServerFn({ method: "GET" }).handler(
         .select("*")
         .eq("id", "singleton")
         .maybeSingle();
-      return rowToDto(fresh);
+      liveMatchCache = { at: Date.now(), value: live.liveMatch ?? null };
+      return { ...rowToDto(fresh), liveMatch: live.liveMatch ?? null };
     } catch (e) {
       console.error("[boro-match-centre] ESPN fetch failed", e);
-      return dto;
+      return { ...dto, liveMatch: liveMatchCache?.value ?? null };
     }
   },
 );
@@ -290,7 +317,10 @@ type EspnCompetitor = {
 async function fetchEspnCompetition(slug: string): Promise<Array<{
   date: string;
   competitions: Array<{ competitors: EspnCompetitor[]; venue?: { fullName?: string } }>;
-  status?: { type?: { completed?: boolean } };
+  status?: {
+    displayClock?: string;
+    type?: { completed?: boolean; state?: string; detail?: string; shortDetail?: string; description?: string };
+  };
 }>> {
   const url =
     slug === "eng.2"
@@ -305,6 +335,7 @@ async function fetchEspnCompetition(slug: string): Promise<Array<{
 async function fetchEspnBoro(): Promise<{
   lastResult: LastResult | null;
   nextFixture: NextFixture | null;
+  liveMatch: LiveMatch | null;
 }> {
   const results = await Promise.all(
     ESPN_COMPETITIONS.map(async (c) => {
@@ -327,7 +358,10 @@ async function fetchEspnBoro(): Promise<{
     }>;
     season?: { slug?: string };
     seasonType?: { name?: string };
-    status?: { type?: { completed?: boolean } };
+    status?: {
+      displayClock?: string;
+      type?: { completed?: boolean; state?: string; detail?: string; shortDetail?: string; description?: string };
+    };
     };
   }>;
 
@@ -375,6 +409,10 @@ async function fetchEspnBoro(): Promise<{
         // until the feed reports full time (fall back to a 4h safety window
         // in case the feed never flips the flag).
         completed: !!e.status?.type?.completed || t < now - 4 * 60 * 60 * 1000,
+        state: e.status?.type?.state ?? null,
+        statusDetail:
+          e.status?.type?.shortDetail ?? e.status?.type?.detail ?? e.status?.type?.description ?? null,
+        clock: e.status?.displayClock ?? null,
       };
     })
     .filter((x): x is NonNullable<typeof x> => x !== null && isBoroMatch(x))
@@ -412,7 +450,28 @@ async function fetchEspnBoro(): Promise<{
       }
     : null;
 
-  return { lastResult, nextFixture };
+  const liveRaw = parsed.find(
+    (p) =>
+      !p.completed &&
+      (p.state === "in" || (p.t <= now && p.t > now - 4 * 60 * 60 * 1000)),
+  );
+  const liveMatch: LiveMatch | null = liveRaw
+    ? {
+        kickoff: liveRaw.iso,
+        competition: liveRaw.competition,
+        home: liveRaw.home,
+        away: liveRaw.away,
+        homeScore: liveRaw.homeScore ?? 0,
+        awayScore: liveRaw.awayScore ?? 0,
+        statusDetail: liveRaw.statusDetail ?? "Live",
+        clock: liveRaw.clock ?? null,
+        inPlay: liveRaw.state === "in" || liveRaw.t <= now,
+        homeLogo: espnLogo(liveRaw.homeId),
+        awayLogo: espnLogo(liveRaw.awayId),
+      }
+    : null;
+
+  return { lastResult, nextFixture, liveMatch };
 }
 
 const overrideSchema = z.object({
