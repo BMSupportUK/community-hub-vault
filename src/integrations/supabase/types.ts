@@ -4196,6 +4196,7 @@ export type Database = {
           price_range_currency: string
           price_range_high_cents: number | null
           price_range_low_cents: number | null
+          price_watch_url: string | null
           sideload_notes: string | null
           sort_order: number
           specs: Json
@@ -4214,6 +4215,7 @@ export type Database = {
           price_range_currency?: string
           price_range_high_cents?: number | null
           price_range_low_cents?: number | null
+          price_watch_url?: string | null
           sideload_notes?: string | null
           sort_order?: number
           specs?: Json
@@ -4232,6 +4234,7 @@ export type Database = {
           price_range_currency?: string
           price_range_high_cents?: number | null
           price_range_low_cents?: number | null
+          price_watch_url?: string | null
           sideload_notes?: string | null
           sort_order?: number
           specs?: Json
