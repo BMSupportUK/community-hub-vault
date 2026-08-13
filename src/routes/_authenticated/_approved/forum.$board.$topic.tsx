@@ -875,7 +875,8 @@ function TopicPage() {
             </TabsContent>
 
             <TabsContent value="reply" className="space-y-3 mt-3">
-              {pageReplies.length === 0 ? (
+              {pinnedReplies.map((p) => renderPost(p, 0))}
+              {pageReplies.length === 0 && pinnedReplies.length === 0 ? (
                 <div className="text-sm text-muted-foreground text-center py-6">No replies yet.</div>
               ) : (
                 pageReplies.map((p, idx) => renderPost(p, start + idx + 1))
