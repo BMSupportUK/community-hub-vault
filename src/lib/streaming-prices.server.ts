@@ -188,10 +188,13 @@ async function scrapeBrandStorePrice(url: string): Promise<ScrapeResult> {
   const notifyOnly = /notify\s*me|email\s*me\s*when|notify\s*when\s*available|out\s*of\s*stock|sold\s*out|coming\s*soon/i.test(
     markdown ?? "",
   );
+  // The buy page is the authoritative signal (product pages always say "Buy Now").
+  const buyPage = await brandStoreBuyPageAvailability(url);
   return {
     price_cents: price !== null ? Math.round(price * 100) : null,
     currency: "GBP",
-    availability: notifyOnly ? "Out of stock" : normalizeAvailability(j.availability),
+    availability:
+      buyPage ?? (notifyOnly ? "Out of stock" : normalizeAvailability(j.availability)),
     source_url: url,
   };
 }
