@@ -471,13 +471,13 @@ export function StreamingDevicesPage() {
                   <DialogTrigger asChild>
                     <button
                       type="button"
-                      className="flex w-full self-stretch items-center justify-center overflow-hidden rounded-xl border border-border bg-surface-2 p-4 cursor-zoom-in transition hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-ring lg:h-full lg:min-h-0 lg:[contain:size]"
+                      className="relative flex w-full self-stretch items-center justify-center overflow-hidden rounded-xl border border-border bg-surface-2 p-4 cursor-zoom-in transition hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-ring lg:min-h-0"
                       aria-label="Open compatibility chart"
                     >
                       <img
                         src={firestickCompatibility.url}
                         alt="Fire TV Stick compatibility chart"
-                        className="block h-auto max-h-full w-auto max-w-full object-contain"
+                        className="block h-auto max-h-full w-auto max-w-full object-contain lg:absolute lg:inset-12 lg:m-auto lg:max-h-[calc(100%-6rem)] lg:max-w-[calc(100%-6rem)]"
                         loading="lazy"
                       />
                     </button>
