@@ -113,15 +113,6 @@ function refereeOf(json: any): string | null {
   return (ref ?? officials[0])?.displayName ?? null;
 }
 
-function broadcastOf(json: any): string | null {
-  const list: any[] = json?.broadcasts ?? json?.header?.competitions?.[0]?.broadcasts ?? [];
-  const names = list
-    .map((b: any) => b?.media?.shortName ?? b?.names?.[0] ?? b?.shortName)
-    .filter(Boolean)
-    .map(String);
-  return names.length ? Array.from(new Set(names)).join(", ") : null;
-}
-
 function rosterXi(json: any, homeAway: "home" | "away"): { name: string; xi: string[]; subs: string[] } | null {
   const r = (json?.rosters ?? []).find((x: any) => x?.homeAway === homeAway);
   if (!r) return null;
