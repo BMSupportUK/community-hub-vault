@@ -224,6 +224,12 @@ export function UserAvatarMenu({ variant = "header" }: { variant?: "header" | "b
               </Link>
             </DropdownMenuItem>
           ) : null}
+          <DropdownMenuItem asChild className="cursor-pointer">
+            <Link to="/fanzone/profile">
+              <Settings className="size-4 mr-2" />
+              Fan Zone profile &amp; settings
+            </Link>
+          </DropdownMenuItem>
           <DropdownMenuItem
             onSelect={(e) => {
               e.preventDefault();
