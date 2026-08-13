@@ -122,9 +122,10 @@ function TopicPostArticleComponent({
 }: TopicPostArticleProps) {
   const navigate = useNavigate();
   const name = author?.display_name || author?.username || "Someone";
-  const profileLink = author?.username
-    ? ({ to: "/u/$username", params: { username: author.username } } as const)
-    : ({ to: "/fanzone/u/$userId", params: { userId: post.author_id } } as const);
+  const profileLink = {
+    to: "/fanzone/u/$userId",
+    params: { userId: post.author_id },
+  } as const;
 
   return (
     <article
