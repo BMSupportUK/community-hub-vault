@@ -254,6 +254,7 @@ export type SyncResult = {
 
 export async function syncBoroTeamSheet(opts?: { ignoreWindow?: boolean }): Promise<SyncResult> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { getMatchDayAuthorId } = await import("@/lib/boro-bot-author.server");
   const skipped: string[] = [];
   const now = Date.now();
 
@@ -324,7 +325,7 @@ export async function syncBoroTeamSheet(opts?: { ignoreWindow?: boolean }): Prom
 
     const { data: post, error: postErr } = await supabaseAdmin
       .from("forum_posts")
-      .insert({ topic_id: topic.id, author_id: topic.author_id, body })
+      .insert({ topic_id: topic.id, author_id: (await getMatchDayAuthorId()) ?? topic.author_id, body })
       .select("id")
       .single();
     if (postErr) {
@@ -358,6 +359,7 @@ export async function postManualTeamSheet(input: {
   sourceUrl?: string | null;
 }): Promise<SyncResult> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { getMatchDayAuthorId } = await import("@/lib/boro-bot-author.server");
   const now = Date.now();
 
   const { data: fixtures } = await supabaseAdmin
