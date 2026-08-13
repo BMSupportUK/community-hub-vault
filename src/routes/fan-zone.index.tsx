@@ -3,6 +3,7 @@ import { listPublicBoards, type PublicBoard } from "@/lib/fan-zone-public.functi
 import { getIcon } from "@/components/app/IconPicker";
 import { Lock, Pin, MessageSquare, ChevronRight } from "lucide-react";
 import { formatLastSeen } from "@/lib/relative-time";
+import { BoroMatchCentreBox } from "@/components/app/BoroMatchCentreBox";
 import { FanZoneShell } from "./fan-zone";
 
 export const Route = createFileRoute("/fan-zone/")({
@@ -30,6 +31,8 @@ function FanZoneBoardsPage() {
   const boards = Route.useLoaderData() as PublicBoard[];
   return (
     <FanZoneShell>
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px] items-start">
+        <div className="min-w-0">
       <h1 className="font-display text-2xl sm:text-3xl font-black text-white">Boro Fan Zone — boards</h1>
       <p className="mt-1 text-sm text-white/70">
         Browse supporter-led boards. Posting, reactions and polls require a member account.
@@ -39,7 +42,7 @@ function FanZoneBoardsPage() {
           No boards yet.
         </div>
       ) : (
-        <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-5 grid gap-3 sm:grid-cols-2">
           {boards.map((b) => {
             const Icon = getIcon(b.icon);
             return (
