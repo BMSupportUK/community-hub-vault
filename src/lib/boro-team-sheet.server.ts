@@ -154,10 +154,32 @@ export type FixtureLite = {
   competition: string;
 };
 
-const BORO_RE = /\bmiddles(?:brough|borough)\b|\bboro\b/i;
+const BORO_RE = /\bmiddles(?:brough|borough)\b|\bboro\b|\bmfc\b/i;
 
 function opponentOf(fx: FixtureLite): string {
   return BORO_RE.test(fx.home_team) ? fx.away_team : fx.home_team;
+}
+
+function opponentTokens(name: string): string[] {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\b(fc|afc|cf|the)\b/g, " ")
+    .split(/\s+/)
+    .filter(
+      (w) =>
+        w.length >= 4 &&
+        !["united", "city", "town", "rovers", "county", "albion", "athletic", "wanderers"].includes(w),
+    );
+}
+
+// Titles can be "Boro v Lincoln City …" (home) or "Lincoln City v Boro …" (away).
+function titleMentionsBothSides(title: string, fx: FixtureLite): boolean {
+  const clean = title.toLowerCase();
+  if (!BORO_RE.test(clean)) return false;
+  const tokens = opponentTokens(opponentOf(fx));
+  if (tokens.length === 0) return false;
+  return tokens.some((w) => clean.includes(w));
 }
 
 function dateKeys(iso: string): string[] {
