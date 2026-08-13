@@ -12,6 +12,21 @@ import { PLAYER_STAT_COLUMNS, describeEspnEvent } from "@/lib/boro-espn-events";
 
 const STAT_COLUMNS = PLAYER_STAT_COLUMNS;
 
+type ActionGroup = {
+  value: string;
+  label: string;
+  emptyLabel: string;
+  kinds?: MatchEventItem["kind"][];
+};
+
+const ACTION_GROUPS: ActionGroup[] = [
+  { value: "all", label: "All", emptyLabel: "Match action" },
+  { value: "goals", label: "Goals", emptyLabel: "Goals", kinds: ["goal", "own-goal", "penalty"] },
+  { value: "cards", label: "Cards", emptyLabel: "Cards", kinds: ["yellow", "red"] },
+  { value: "pens", label: "Pens", emptyLabel: "Penalties", kinds: ["penalty", "penalty-missed"] },
+  { value: "subs", label: "Subs", emptyLabel: "Substitutions", kinds: ["sub"] },
+];
+
 function EventIcon({ kind }: { kind: MatchEventItem["kind"] }) {
   if (kind === "yellow") return <Square className="size-3.5 fill-amber-400 text-amber-400" />;
   if (kind === "red") return <Square className="size-3.5 fill-red-500 text-red-500" />;
@@ -171,49 +186,73 @@ export function BoroMatchDetailTabs({
       </TabsList>
 
       <TabsContent value="action" className="mt-4">
-        {detail?.events.length ? (
-          <div className="space-y-3">
-            <ul className="space-y-1.5">
-              {detail.events.map((ev, i) => (
-                <EventRow key={`${ev.key}-${i}`} ev={ev} home={detail.home} away={detail.away} />
-              ))}
-            </ul>
-            {detail.shootout.length > 0 && (
-              <div className="rounded-lg border border-amber-400/40 bg-amber-400/10 p-3">
-                <div className="mb-2 text-[11px] font-black uppercase tracking-wider text-amber-200">
-                  Penalty shootout
-                </div>
-                <ul className="space-y-1">
-                  {detail.shootout.map((ev, i) => (
-                    <li key={`${ev.key}-${i}`} className="flex items-center gap-2 text-sm text-white">
-                      <span className={ev.kind === "shootout-scored" ? "text-emerald-300" : "text-red-300"}>
-                        {ev.kind === "shootout-scored" ? "\u2714" : "\u2716"}
-                      </span>
-                      <span className="min-w-0 flex-1 truncate">{ev.players[0] ?? ev.shortText}</span>
-                      <span className="shrink-0 text-[11px] text-white/60">{ev.teamName ?? ""}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </div>
-        ) : (
-          <div className="space-y-1.5">
-            <p className="rounded-lg border border-white/10 bg-white/5 p-3 text-sm text-white/60">
-              Awaiting match action — recording starts at kick-off. Goals, cards, penalties and subs post here the
-              second they happen.
-            </p>
-            {["Goals", "Cards", "Penalties", "Substitutions"].map((l) => (
-              <div
-                key={l}
-                className="flex items-center gap-3 rounded-lg border border-dashed border-white/10 bg-white/[0.03] px-3 py-2 text-sm"
-              >
-                <span className="w-12 shrink-0 tabular-nums text-xs font-bold text-white/25">--'</span>
-                <span className="flex-1 text-white/35">{l} — awaiting first entry</span>
-              </div>
-            ))}
-          </div>
-        )}
+        <Tabs defaultValue="all" className="w-full">
+          <TabsList className="grid w-full grid-cols-5 bg-white/5">
+            {ACTION_GROUPS.map((g) => {
+              const count =
+                g.value === "pens"
+                  ? (detail?.events.filter((e) => g.kinds!.includes(e.kind)).length ?? 0) +
+                    (detail?.shootout.length ?? 0)
+                  : g.kinds
+                    ? (detail?.events.filter((e) => g.kinds!.includes(e.kind)).length ?? 0)
+                    : (detail?.events.length ?? 0);
+              return (
+                <TabsTrigger key={g.value} value={g.value} className="text-[11px] sm:text-xs">
+                  {g.label}
+                  {count > 0 && (
+                    <span className="ml-1 rounded bg-white/15 px-1 text-[10px] font-bold tabular-nums">{count}</span>
+                  )}
+                </TabsTrigger>
+              );
+            })}
+          </TabsList>
+
+          {ACTION_GROUPS.map((g) => {
+            const rows = g.kinds
+              ? (detail?.events.filter((e) => g.kinds!.includes(e.kind)) ?? [])
+              : (detail?.events ?? []);
+            const shootout = g.value === "all" || g.value === "pens" ? (detail?.shootout ?? []) : [];
+            const empty = rows.length === 0 && shootout.length === 0;
+            return (
+              <TabsContent key={g.value} value={g.value} className="mt-3">
+                {empty ? (
+                  <div className="flex items-center gap-3 rounded-lg border border-dashed border-white/10 bg-white/[0.03] px-3 py-3 text-sm">
+                    <span className="w-12 shrink-0 tabular-nums text-xs font-bold text-white/25">--&apos;</span>
+                    <span className="flex-1 text-white/45">{g.emptyLabel} — awaiting first entry</span>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {rows.length > 0 && (
+                      <ul className="space-y-1.5">
+                        {rows.map((ev, i) => (
+                          <EventRow key={`${ev.key}-${i}`} ev={ev} home={detail?.home ?? null} away={detail?.away ?? null} />
+                        ))}
+                      </ul>
+                    )}
+                    {shootout.length > 0 && (
+                      <div className="rounded-lg border border-amber-400/40 bg-amber-400/10 p-3">
+                        <div className="mb-2 text-[11px] font-black uppercase tracking-wider text-amber-200">
+                          Penalty shootout
+                        </div>
+                        <ul className="space-y-1">
+                          {shootout.map((ev, i) => (
+                            <li key={`${ev.key}-${i}`} className="flex items-center gap-2 text-sm text-white">
+                              <span className={ev.kind === "shootout-scored" ? "text-emerald-300" : "text-red-300"}>
+                                {ev.kind === "shootout-scored" ? "\u2714" : "\u2716"}
+                              </span>
+                              <span className="min-w-0 flex-1 truncate">{ev.players[0] ?? ev.shortText}</span>
+                              <span className="shrink-0 text-[11px] text-white/60">{ev.teamName ?? ""}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </TabsContent>
+            );
+          })}
+        </Tabs>
       </TabsContent>
 
       <TabsContent value="stats" className="mt-4">
