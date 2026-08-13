@@ -115,6 +115,7 @@ import { Route as ApiPublicHooksDeviceReleaseWatchRouteImport } from './routes/a
 import { Route as ApiPublicHooksBoroTeamSheetRouteImport } from './routes/api/public/hooks/boro-team-sheet'
 import { Route as ApiPublicHooksBoroPredictorInviteRouteImport } from './routes/api/public/hooks/boro-predictor-invite'
 import { Route as ApiPublicHooksBoroPredictionRemindersRouteImport } from './routes/api/public/hooks/boro-prediction-reminders'
+import { Route as ApiPublicHooksBoroMatchThreadRouteImport } from './routes/api/public/hooks/boro-match-thread'
 import { Route as ApiPublicHooksBoroMatchEventsRouteImport } from './routes/api/public/hooks/boro-match-events'
 import { Route as ApiPublicHooksBoroFetchFixturesRouteImport } from './routes/api/public/hooks/boro-fetch-fixtures'
 import { Route as ApiPublicHooksBackupOrdersRouteImport } from './routes/api/public/hooks/backup-orders'
@@ -742,6 +743,12 @@ const ApiPublicHooksBoroPredictionRemindersRoute =
     path: '/api/public/hooks/boro-prediction-reminders',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksBoroMatchThreadRoute =
+  ApiPublicHooksBoroMatchThreadRouteImport.update({
+    id: '/api/public/hooks/boro-match-thread',
+    path: '/api/public/hooks/boro-match-thread',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksBoroMatchEventsRoute =
   ApiPublicHooksBoroMatchEventsRouteImport.update({
     id: '/api/public/hooks/boro-match-events',
@@ -929,6 +936,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/backup-orders': typeof ApiPublicHooksBackupOrdersRoute
   '/api/public/hooks/boro-fetch-fixtures': typeof ApiPublicHooksBoroFetchFixturesRoute
   '/api/public/hooks/boro-match-events': typeof ApiPublicHooksBoroMatchEventsRoute
+  '/api/public/hooks/boro-match-thread': typeof ApiPublicHooksBoroMatchThreadRoute
   '/api/public/hooks/boro-prediction-reminders': typeof ApiPublicHooksBoroPredictionRemindersRoute
   '/api/public/hooks/boro-predictor-invite': typeof ApiPublicHooksBoroPredictorInviteRoute
   '/api/public/hooks/boro-team-sheet': typeof ApiPublicHooksBoroTeamSheetRoute
@@ -1048,6 +1056,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/backup-orders': typeof ApiPublicHooksBackupOrdersRoute
   '/api/public/hooks/boro-fetch-fixtures': typeof ApiPublicHooksBoroFetchFixturesRoute
   '/api/public/hooks/boro-match-events': typeof ApiPublicHooksBoroMatchEventsRoute
+  '/api/public/hooks/boro-match-thread': typeof ApiPublicHooksBoroMatchThreadRoute
   '/api/public/hooks/boro-prediction-reminders': typeof ApiPublicHooksBoroPredictionRemindersRoute
   '/api/public/hooks/boro-predictor-invite': typeof ApiPublicHooksBoroPredictorInviteRoute
   '/api/public/hooks/boro-team-sheet': typeof ApiPublicHooksBoroTeamSheetRoute
@@ -1173,6 +1182,7 @@ export interface FileRoutesById {
   '/api/public/hooks/backup-orders': typeof ApiPublicHooksBackupOrdersRoute
   '/api/public/hooks/boro-fetch-fixtures': typeof ApiPublicHooksBoroFetchFixturesRoute
   '/api/public/hooks/boro-match-events': typeof ApiPublicHooksBoroMatchEventsRoute
+  '/api/public/hooks/boro-match-thread': typeof ApiPublicHooksBoroMatchThreadRoute
   '/api/public/hooks/boro-prediction-reminders': typeof ApiPublicHooksBoroPredictionRemindersRoute
   '/api/public/hooks/boro-predictor-invite': typeof ApiPublicHooksBoroPredictorInviteRoute
   '/api/public/hooks/boro-team-sheet': typeof ApiPublicHooksBoroTeamSheetRoute
@@ -1297,6 +1307,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/backup-orders'
     | '/api/public/hooks/boro-fetch-fixtures'
     | '/api/public/hooks/boro-match-events'
+    | '/api/public/hooks/boro-match-thread'
     | '/api/public/hooks/boro-prediction-reminders'
     | '/api/public/hooks/boro-predictor-invite'
     | '/api/public/hooks/boro-team-sheet'
@@ -1416,6 +1427,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/backup-orders'
     | '/api/public/hooks/boro-fetch-fixtures'
     | '/api/public/hooks/boro-match-events'
+    | '/api/public/hooks/boro-match-thread'
     | '/api/public/hooks/boro-prediction-reminders'
     | '/api/public/hooks/boro-predictor-invite'
     | '/api/public/hooks/boro-team-sheet'
@@ -1540,6 +1552,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/backup-orders'
     | '/api/public/hooks/boro-fetch-fixtures'
     | '/api/public/hooks/boro-match-events'
+    | '/api/public/hooks/boro-match-thread'
     | '/api/public/hooks/boro-prediction-reminders'
     | '/api/public/hooks/boro-predictor-invite'
     | '/api/public/hooks/boro-team-sheet'
@@ -1600,6 +1613,7 @@ export interface RootRouteChildren {
   ApiPublicHooksBackupOrdersRoute: typeof ApiPublicHooksBackupOrdersRoute
   ApiPublicHooksBoroFetchFixturesRoute: typeof ApiPublicHooksBoroFetchFixturesRoute
   ApiPublicHooksBoroMatchEventsRoute: typeof ApiPublicHooksBoroMatchEventsRoute
+  ApiPublicHooksBoroMatchThreadRoute: typeof ApiPublicHooksBoroMatchThreadRoute
   ApiPublicHooksBoroPredictionRemindersRoute: typeof ApiPublicHooksBoroPredictionRemindersRoute
   ApiPublicHooksBoroPredictorInviteRoute: typeof ApiPublicHooksBoroPredictorInviteRoute
   ApiPublicHooksBoroTeamSheetRoute: typeof ApiPublicHooksBoroTeamSheetRoute
@@ -2371,6 +2385,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksBoroPredictionRemindersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/boro-match-thread': {
+      id: '/api/public/hooks/boro-match-thread'
+      path: '/api/public/hooks/boro-match-thread'
+      fullPath: '/api/public/hooks/boro-match-thread'
+      preLoaderRoute: typeof ApiPublicHooksBoroMatchThreadRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/boro-match-events': {
       id: '/api/public/hooks/boro-match-events'
       path: '/api/public/hooks/boro-match-events'
@@ -2795,6 +2816,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksBackupOrdersRoute: ApiPublicHooksBackupOrdersRoute,
   ApiPublicHooksBoroFetchFixturesRoute: ApiPublicHooksBoroFetchFixturesRoute,
   ApiPublicHooksBoroMatchEventsRoute: ApiPublicHooksBoroMatchEventsRoute,
+  ApiPublicHooksBoroMatchThreadRoute: ApiPublicHooksBoroMatchThreadRoute,
   ApiPublicHooksBoroPredictionRemindersRoute:
     ApiPublicHooksBoroPredictionRemindersRoute,
   ApiPublicHooksBoroPredictorInviteRoute:
