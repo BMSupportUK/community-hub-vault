@@ -118,7 +118,7 @@ function ForumLayout() {
               <Link to="/fanzone/messages"><MessageSquareText className="size-4 mr-1.5" />Inbox</Link>
             </Button>
             <Button asChild size="sm" variant="outline" className="bg-black/40 backdrop-blur border-white/30 text-white hover:bg-black/60 hover:text-white justify-center">
-              <Link to="/fanzone/profile"><UserCog className="size-4 mr-1.5" />Profile</Link>
+              <Link to="/fanzone/profile"><UserCog className="size-4 mr-1.5" />Profile &amp; Settings</Link>
             </Button>
             <Button asChild size="sm" variant="outline" className="bg-black/40 backdrop-blur border-white/30 text-white hover:bg-black/60 hover:text-white justify-center">
               <Link to="/fanzone/blocks"><Ban className="size-4 mr-1.5" />Ignore</Link>
