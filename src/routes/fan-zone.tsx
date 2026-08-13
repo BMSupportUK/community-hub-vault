@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import boroHero from "@/assets/boro-hero.jpg";
 import boroBadge from "@/assets/boro-fan-zone-badge.png";
 import boroBg from "@/assets/boro-bg.jpg";
+import { BoroLiveMatchStrip } from "@/components/app/BoroLiveMatchStrip";
 
 export const Route = createFileRoute("/fan-zone")({
   component: () => <Outlet />,
