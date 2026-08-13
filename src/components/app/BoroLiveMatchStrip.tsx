@@ -273,7 +273,12 @@ export function BoroLiveMatchStrip() {
                 )}
                 {m.eventId && (
                   <div className="mt-6">
-                    <BoroMatchDetailTabs eventId={m.eventId} slug={m.espnSlug ?? null} live={isLive} />
+                    <BoroMatchDetailTabs
+                      eventId={m.eventId}
+                      slug={m.espnSlug ?? null}
+                      live={isLive}
+                      kickoff={isFixture ? nf!.kickoff : null}
+                    />
                   </div>
                 )}
 
