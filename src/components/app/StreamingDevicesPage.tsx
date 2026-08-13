@@ -471,7 +471,7 @@ export function StreamingDevicesPage() {
                   <DialogTrigger asChild>
                     <button
                       type="button"
-                      className="rounded-xl overflow-hidden border border-border bg-surface-2 cursor-zoom-in transition hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-ring w-full flex items-center justify-center p-4 lg:sticky lg:top-1/2 lg:-translate-y-1/2 lg:self-start"
+                      className="flex h-full w-full items-center justify-center overflow-hidden rounded-xl border border-border bg-surface-2 p-4 cursor-zoom-in transition hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-ring"
                       aria-label="Open compatibility chart"
                     >
                       <img
