@@ -582,7 +582,7 @@ function TopicPage() {
     const { data, error } = await supabase
       .from("forum_posts")
       .insert({ topic_id: topic.id, author_id: user.id, body, is_op: false })
-      .select("id, topic_id, author_id, body, quote_of, edited_at, is_op, created_at")
+      .select("id, topic_id, author_id, body, quote_of, edited_at, is_op, is_pinned, created_at")
       .single();
     submittingRef.current = false;
     if (error) {
