@@ -50,10 +50,8 @@ function FanZoneBoardsPage() {
               {boards.map((b) => {
                 const Icon = getIcon(b.icon);
                 return (
-                  <Link
+                  <article
                     key={b.id}
-                    to="/fan-zone/$board"
-                    params={{ board: b.slug }}
                     className="boro-board-card group flex flex-col rounded-xl hover:border-[#E11B22]/80 hover:shadow-[0_16px_38px_-14px_rgba(225,27,34,0.7)] hover:-translate-y-[2px] transition-all overflow-hidden relative h-full"
                   >
                     <span
@@ -69,9 +67,9 @@ function FanZoneBoardsPage() {
                           <div className="flex items-center gap-1.5">
                             {b.is_pinned && <Pin className="size-3.5 text-[#F4B400] shrink-0" />}
                             {b.is_locked && <Lock className="size-3.5 text-muted-foreground shrink-0" />}
-                            <h2 className="font-display font-bold truncate group-hover:text-[#E11B22] transition-colors">
-                              {b.name}
-                            </h2>
+                             <h2 className="font-display font-bold truncate group-hover:text-[#E11B22] transition-colors">
+                               <Link to="/fan-zone/$board" params={{ board: b.slug }} className="hover:underline">{b.name}</Link>
+                             </h2>
                             <ChevronRight className="size-4 ml-auto text-muted-foreground/40 group-hover:text-[#E11B22] group-hover:translate-x-0.5 transition-all shrink-0" />
                           </div>
                           <p className="text-xs text-muted-foreground line-clamp-2 mt-1">{b.description}</p>
@@ -103,7 +101,6 @@ function FanZoneBoardsPage() {
                                   to="/fanzone/u/$userId"
                                   params={{ userId: b.last_poster_id }}
                                   className="text-foreground hover:text-[#E11B22] hover:underline"
-                                  onClick={(event) => event.stopPropagation()}
                                 >{b.last_poster_alias}</Link></>
                               ) : null}
                             </span>
@@ -111,7 +108,7 @@ function FanZoneBoardsPage() {
                         </div>
                       )}
                     </div>
-                  </Link>
+                  </article>
                 );
               })}
               <div className="grid gap-4 md:grid-cols-2 items-stretch sm:col-span-2">

@@ -457,11 +457,7 @@ function BoardPage() {
                   <div className="hidden sm:flex shrink-0 size-10 rounded-lg bg-gradient-to-br from-[#E11B22]/15 to-[#8B0F14]/10 border border-[#E11B22]/25 items-center justify-center text-[#E11B22] shadow-inner">
                     <MessageSquare className="size-4" />
                   </div>
-                  <Link
-                    to="/forum/$board/$topic"
-                    params={{ board: slug, topic: t.id }}
-                    className="flex-1 min-w-0 block focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E11B22] rounded-lg"
-                  >
+                  <div className="flex-1 min-w-0 block rounded-lg">
                     <div className="flex items-center gap-2 flex-wrap">
                       {t.is_sticky && (
                         <span className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 bg-[#F4B400]/15 text-[#F4B400] border border-[#F4B400]/30 text-[10px] font-bold uppercase tracking-wider shrink-0">
@@ -473,9 +469,9 @@ function BoardPage() {
                           <Lock className="size-2.5" />Locked
                         </span>
                       )}
-                      <span className="font-display font-semibold leading-snug text-foreground text-[15px] group-hover:text-[#E11B22] transition-colors">
+                      <Link to="/forum/$board/$topic" params={{ board: slug, topic: t.id }} className="font-display font-semibold leading-snug text-foreground text-[15px] group-hover:text-[#E11B22] hover:underline transition-colors">
                         {censorText(t.title)}
-                      </span>
+                      </Link>
                     </div>
                     <div className="text-[11px] text-muted-foreground mt-1.5 flex items-center gap-1.5">
                       <span className="inline-flex items-center justify-center size-4 rounded-full bg-[#E11B22]/20 text-[#E11B22] text-[9px] font-bold uppercase">
@@ -485,7 +481,6 @@ function BoardPage() {
                         to="/fanzone/u/$userId"
                         params={{ userId: t.author_id }}
                         className="text-foreground font-medium hover:text-[#E11B22] hover:underline"
-                        onClick={(event) => event.stopPropagation()}
                       >{authorName}</Link>
                       <span className="text-border">•</span>
                       <span>{formatLastSeen(t.created_at)}</span>
@@ -504,13 +499,12 @@ function BoardPage() {
                           to="/fanzone/u/$userId"
                           params={{ userId: t.last_post_by }}
                           className="text-foreground font-medium hover:text-[#E11B22] hover:underline"
-                          onClick={(event) => event.stopPropagation()}
                         >{lastName}</Link> : <span className="text-foreground font-medium">{lastName}</span>}
                         <span className="text-border mx-1">•</span>
                         {formatLastSeen(t.last_post_at)}
                       </span>
                     </div>
-                  </Link>
+                  </div>
                   {(canEdit || canDelete) && (
                     <div className="flex gap-1 shrink-0">
                       {canEdit && (
