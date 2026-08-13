@@ -113,30 +113,6 @@ function refereeOf(json: any): string | null {
   return (ref ?? officials[0])?.displayName ?? null;
 }
 
-function broadcastOf(json: any): string | null {
-  const list: any[] = json?.broadcasts ?? json?.header?.competitions?.[0]?.broadcasts ?? [];
-  const names = list
-    .map((b: any) => b?.media?.shortName ?? b?.names?.[0] ?? b?.shortName)
-    .filter(Boolean)
-    .map(String);
-  return names.length ? Array.from(new Set(names)).join(", ") : null;
-}
-
-function rosterXi(json: any, homeAway: "home" | "away"): { name: string; xi: string[]; subs: string[] } | null {
-  const r = (json?.rosters ?? []).find((x: any) => x?.homeAway === homeAway);
-  if (!r) return null;
-  const players: any[] = r?.roster ?? [];
-  const label = (p: any) => {
-    const name = p?.athlete?.displayName ?? p?.athlete?.shortName;
-    if (!name) return null;
-    const pos = p?.position?.abbreviation ? ` (${p.position.abbreviation})` : "";
-    return `${name}${pos}`;
-  };
-  const xi = players.filter((p) => p?.starter).map(label).filter(Boolean) as string[];
-  const subs = players.filter((p) => !p?.starter).map(label).filter(Boolean) as string[];
-  return { name: r?.team?.displayName ?? "", xi, subs };
-}
-
 function teamStatRows(json: any): Array<{ label: string; home: string; away: string }> {
   const teams: any[] = json?.boxscore?.teams ?? [];
   const home = teams.find((t: any) => t?.homeAway === "home") ?? teams[0];
@@ -219,7 +195,6 @@ export function buildPreviewBody(fx: FixtureLite, json: any): string {
 
   const venue = json?.gameInfo?.venue?.fullName ?? null;
   const city = json?.gameInfo?.venue?.address?.city ?? null;
-  const tv = broadcastOf(json);
   const ref = refereeOf(json);
   const odds = oddsLine(json);
   const h2h = headToHead(json, homeId, awayId);
@@ -230,7 +205,6 @@ export function buildPreviewBody(fx: FixtureLite, json: any): string {
   facts.push(`<li><strong>Competition:</strong> ${esc(fx.competition || (comp?.groups?.name ?? "Fixture"))}</li>`);
   facts.push(`<li><strong>Kick-off:</strong> ${esc(londonKickoff(fx.kickoff_at))} (UK)</li>`);
   if (venue) facts.push(`<li><strong>Venue:</strong> ${esc(venue)}${city ? `, ${esc(city)}` : ""}</li>`);
-  if (tv) facts.push(`<li><strong>TV / stream:</strong> ${esc(tv)}</li>`);
   if (ref) facts.push(`<li><strong>Referee:</strong> ${esc(ref)}</li>`);
   if (odds) facts.push(`<li><strong>Odds:</strong> ${esc(odds)}</li>`);
   parts.push(`<ul>${facts.join("")}</ul>`);
@@ -260,16 +234,6 @@ export function buildPreviewBody(fx: FixtureLite, json: any): string {
 
   if (h2h.length) {
     parts.push(`<p><strong>Recent meetings</strong></p><ul>${h2h.map((l) => `<li>${esc(l)}</li>`).join("")}</ul>`);
-  }
-
-  for (const side of ["home", "away"] as const) {
-    const xi = rosterXi(json, side);
-    if (!xi || xi.xi.length === 0) continue;
-    parts.push(
-      `<p><strong>${esc(xi.name)} XI</strong></p><p>${esc(xi.xi.join(", "))}</p>${
-        xi.subs.length ? `<p><em>Subs:</em> ${esc(xi.subs.join(", "))}</p>` : ""
-      }`,
-    );
   }
 
   parts.push(`<p><em>Auto-filled from the ESPN Gamecast.</em></p>`);
@@ -432,18 +396,16 @@ export async function syncBoroMatchThread(opts?: { ignoreWindow?: boolean }): Pr
       if (logErr) skipped.push(`preview log failed: ${logErr.message}`);
     }
   } else {
-    // Back-fill line-ups once ESPN has them, and strip any legacy inline live block
-    // (the live block now lives in its own pinned reply at the top).
+    // Strip any legacy inline live block, plus legacy XI / TV lines
+    // (line-ups arrive later via the official team-sheet job).
     const { data: existing } = await supabaseAdmin
       .from("forum_posts")
       .select("body")
       .eq("id", preview.post_id)
       .maybeSingle();
     if (existing?.body) {
-      const hasXi = /XI<\/strong>/.test(existing.body);
-      const rebuilt = !hasXi && (rosterXi(json, "home")?.xi.length ?? 0) > 0
-        ? buildPreviewBody(fx, json)
-        : stripLiveBlock(existing.body);
+      const legacy = /XI<\/strong>/.test(existing.body) || /TV \/ stream/.test(existing.body);
+      const rebuilt = legacy ? buildPreviewBody(fx, json) : stripLiveBlock(existing.body);
       if (rebuilt !== existing.body) {
         const { error: upErr } = await supabaseAdmin
           .from("forum_posts")
