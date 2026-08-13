@@ -360,6 +360,7 @@ export type PublicFanProfile = {
   matchday_memory: string | null;
   joined_at: string | null;
   is_private: boolean;
+  last_seen_at: string | null;
   stats: { topics: number; posts: number; friends: number; reactions: number } | null;
   staff_role: "admin" | "boro_fan_zone_moderator" | null;
 };
@@ -426,12 +427,13 @@ export const getPublicFanProfile = createServerFn({ method: "GET" })
         matchday_memory: null,
         joined_at: null,
         is_private: true,
+        last_seen_at: null,
         stats: null,
         staff_role: staffRole,
       };
     }
 
-    const [topics, posts, friends, postIds] = await Promise.all([
+    const [topics, posts, friends, postIds, seen] = await Promise.all([
       supabaseAdmin.from("forum_topics").select("id", { count: "exact", head: true }).eq("author_id", data.userId),
       supabaseAdmin.from("forum_posts").select("id", { count: "exact", head: true }).eq("author_id", data.userId),
       supabaseAdmin
@@ -440,6 +442,7 @@ export const getPublicFanProfile = createServerFn({ method: "GET" })
         .eq("status", "accepted")
         .eq("addressee_id", data.userId),
       supabaseAdmin.from("forum_posts").select("id").eq("author_id", data.userId),
+      supabaseAdmin.from("profiles").select("last_seen_at").eq("id", data.userId).maybeSingle(),
     ]);
     const ids = ((postIds.data ?? []) as Array<{ id: string }>).map((p) => p.id);
     let reactions = 0;
@@ -462,6 +465,7 @@ export const getPublicFanProfile = createServerFn({ method: "GET" })
       matchday_memory: m?.matchday_memory ?? null,
       joined_at: m?.created_at ?? null,
       is_private: false,
+      last_seen_at: (seen.data as { last_seen_at: string | null } | null)?.last_seen_at ?? null,
       stats: {
         topics: topics.count ?? 0,
         posts: posts.count ?? 0,

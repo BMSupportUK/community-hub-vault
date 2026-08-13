@@ -1,10 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowLeft, Award, FileText, Heart, Lock, MessageSquare, Quote, ThumbsUp, Users } from "lucide-react";
+import { ArrowLeft, Award, Clock, FileText, Heart, Lock, MessageSquare, Quote, ThumbsUp, Users } from "lucide-react";
 import { getPublicFanProfile } from "@/lib/fan-zone-public.functions";
 import { Button } from "@/components/ui/button";
 import boroDefaultAvatar from "@/assets/boro-default-avatar.png";
 import { FanZoneShell } from "./fan-zone";
 import { FanRoleBadge } from "@/components/app/FanRoleBadge";
+import { RelativeTime } from "@/components/app/RelativeTime";
 
 export const Route = createFileRoute("/fan-zone/u/$userId")({
   loader: ({ params }) => getPublicFanProfile({ data: { userId: params.userId } }),
@@ -82,6 +83,10 @@ function PublicFanProfilePage() {
                       ? `Member since ${new Date(p.joined_at).toLocaleDateString(undefined, { month: "short", year: "numeric" })}`
                       : "Boro Fan Zone member"}
                     {p.supporter_since ? <> · Boro fan since <span className="font-semibold">{p.supporter_since}</span></> : null}
+                  </div>
+                  <div className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-black/25 px-2 py-0.5 text-[11px] font-medium text-white/90">
+                    <Clock className="size-3" />
+                    Last active <RelativeTime iso={p.last_seen_at} />
                   </div>
                 </div>
               </div>

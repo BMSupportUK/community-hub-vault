@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import bgAsset from "@/assets/boro-fan-zone-profile-bg.jpg.asset.json";
 import { FanStatsBox, FanReputationBox } from "@/components/app/FanZoneStatsBoxes";
 import { FanRoleBadge, type FanStaffRole } from "@/components/app/FanRoleBadge";
+import { RelativeTime } from "@/components/app/RelativeTime";
 
 export const Route = createFileRoute("/_authenticated/_approved/fanzone/u/$userId")({
   component: FanProfilePage,
@@ -54,6 +55,7 @@ function FanProfilePage() {
   const [incomingBusy, setIncomingBusy] = useState(false);
   const [fanPrivate, setFanPrivate] = useState(false);
   const [staffRole, setStaffRole] = useState<FanStaffRole | null>(null);
+  const [lastSeen, setLastSeen] = useState<string | null>(null);
 
   useEffect(() => {
     void (async () => {
@@ -70,6 +72,13 @@ function FanProfilePage() {
             ? "boro_fan_zone_moderator"
             : null,
       );
+    })();
+  }, [userId]);
+
+  useEffect(() => {
+    void (async () => {
+      const { data } = await supabase.from("profiles").select("last_seen_at").eq("id", userId).maybeSingle();
+      setLastSeen((data as { last_seen_at: string | null } | null)?.last_seen_at ?? null);
     })();
   }, [userId]);
 
@@ -222,6 +231,10 @@ function FanProfilePage() {
                 <div className="text-xs opacity-80 mt-1">
                   Member since {new Date(p.joined_at).toLocaleDateString(undefined, { month: "short", year: "numeric" })}
                   {p.supporter_since ? <> · Boro fan since <span className="font-semibold">{p.supporter_since}</span></> : null}
+                </div>
+                <div className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-black/25 px-2 py-0.5 text-[11px] font-medium text-white/90">
+                  <Clock className="size-3" />
+                  Last active <RelativeTime iso={lastSeen} />
                 </div>
               </div>
             </div>
