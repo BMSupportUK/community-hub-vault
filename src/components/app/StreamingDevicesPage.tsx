@@ -153,7 +153,12 @@ function DeviceCard({
   rateDisabled?: boolean;
 }) {
   const priceLabel = price ? formatPrice(price.price_cents, price.currency) : null;
-  const listingUrl = price?.source_url || device.amazon_url;
+  // Devices sold through an official brand store (e.g. Xiaomi) always link to
+  // that store — never to a third-party retailer.
+  const brandStoreOnly = /(^|\.)(mi|xiaomi)\.com$/i.test(
+    (() => { try { return new URL(device.amazon_url).hostname.replace(/^www\./, ""); } catch { return ""; } })(),
+  );
+  const listingUrl = brandStoreOnly ? device.amazon_url : (price?.source_url || device.amazon_url);
   const retailer = retailerFromUrl(listingUrl);
   const rangeLabel = formatRange(
     device.price_range_low_cents,
