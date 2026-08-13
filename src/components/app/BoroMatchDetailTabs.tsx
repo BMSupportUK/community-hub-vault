@@ -364,93 +364,96 @@ export function BoroMatchDetailTabs({
       </TabsContent>
 
       <TabsContent value="lineups" className="mt-4">
-        {teams.home || teams.away ? (
-          <div className="grid gap-4 lg:grid-cols-2">
-            {[teams.home, teams.away].map((t, idx) =>
-              t ? (
-                <div key={idx} className="overflow-hidden rounded-lg border border-white/10">
-                  <div className="flex items-center gap-2 bg-white/5 px-3 py-2">
-                    {t.logo && <img src={t.logo} alt="" width={18} height={18} className="size-[18px]" loading="lazy" />}
-                    <span className="text-sm font-bold text-white">{t.team}</span>
-                    {t.formation && (
-                      <span className="ml-auto rounded bg-[#E11B22]/20 px-1.5 py-0.5 text-[10px] font-bold text-red-200">
-                        {t.formation}
-                      </span>
-                    )}
-                  </div>
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-[12px]">
-                      <thead className="text-[10px] uppercase text-white/40">
-                        <tr>
-                          <th className="px-3 py-1.5 text-left">Player</th>
-                          {STAT_COLUMNS.map((c) => (
-                            <th key={c.key} title={c.title} className="px-1.5 py-1.5 text-center">
-                              {c.label}
-                            </th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {t.players
-                          .slice()
-                          .sort((a, b) => Number(b.starter) - Number(a.starter))
-                          .map((p) => (
-                            <PlayerRow key={p.id} p={p} />
-                          ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              ) : null,
-            )}
-          </div>
-        ) : (
-          <div className="space-y-3">
-            <p className="rounded-lg border border-white/10 bg-white/5 p-3 text-sm text-white/60">
-              Awaiting line-ups — published about an hour before kick-off. Player stat columns below are ready and fill
-              in live.
-            </p>
-            <div className="grid gap-4 lg:grid-cols-2">
-              {["Home", "Away"].map((side) => (
-                <div key={side} className="overflow-hidden rounded-lg border border-dashed border-white/10">
-                  <div className="bg-white/5 px-3 py-2 text-sm font-bold text-white/50">{side} XI</div>
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-[12px]">
-                      <thead className="text-[10px] uppercase text-white/40">
-                        <tr>
-                          <th className="px-3 py-1.5 text-left">Player</th>
-                          {STAT_COLUMNS.map((c) => (
-                            <th key={c.key} title={c.title} className="px-1.5 py-1.5 text-center">
-                              {c.label}
-                            </th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {Array.from({ length: 11 }).map((_, i) => (
-                          <tr key={i} className="border-t border-white/5">
-                            <td className="py-1.5 pr-2">
-                              <span className="inline-flex items-center gap-2">
-                                <span className="w-6 text-right text-[11px] tabular-nums text-white/25">{i + 1}</span>
-                                <span className="h-3 w-24 rounded bg-white/10" />
-                              </span>
-                            </td>
-                            {STAT_COLUMNS.map((c) => (
-                              <td key={c.key} className="px-1.5 py-1.5 text-center text-white/20">
-                                –
-                              </td>
-                            ))}
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+        <Tabs defaultValue="home-xi" className="w-full">
+          <TabsList className="grid w-full grid-cols-2 gap-1 bg-white/5 sm:grid-cols-4">
+            <TabsTrigger value="home-xi" className="text-[11px] sm:text-xs">
+              Home XI
+            </TabsTrigger>
+            <TabsTrigger value="away-xi" className="text-[11px] sm:text-xs">
+              Away XI
+            </TabsTrigger>
+            <TabsTrigger value="home-subs" className="text-[11px] sm:text-xs">
+              Home subs
+            </TabsTrigger>
+            <TabsTrigger value="away-subs" className="text-[11px] sm:text-xs">
+              Away subs
+            </TabsTrigger>
+          </TabsList>
+          {(
+            [
+              { value: "home-xi", side: "Home", starters: true, team: teams.home },
+              { value: "away-xi", side: "Away", starters: true, team: teams.away },
+              { value: "home-subs", side: "Home", starters: false, team: teams.home },
+              { value: "away-subs", side: "Away", starters: false, team: teams.away },
+            ] as const
+          ).map((cfg) => (
+            <TabsContent key={cfg.value} value={cfg.value} className="mt-4">
+              <LineupPanel side={cfg.side} starters={cfg.starters} team={cfg.team} />
+            </TabsContent>
+          ))}
+        </Tabs>
       </TabsContent>
     </Tabs>
+  );
+}
+
+function LineupPanel({
+  side,
+  starters,
+  team,
+}: {
+  side: "Home" | "Away";
+  starters: boolean;
+  team: MatchDetailDTO["lineups"][number] | null;
+}) {
+  const label = starters ? `${side} XI` : `${side} substitutes`;
+  const players = (team?.players ?? [])
+    .filter((p) => (starters ? p.starter : !p.starter))
+    .slice()
+    .sort((a, b) => (a.jersey ?? 99) - (b.jersey ?? 99));
+
+  return (
+    <div className="space-y-3">
+      {players.length === 0 && (
+        <p className="rounded-lg border border-white/10 bg-white/5 p-3 text-sm text-white/60">
+          {starters
+            ? "Awaiting line-ups — published about an hour before kick-off. Player stat columns below are ready and fill in live."
+            : "Awaiting bench — substitutes appear with the line-ups. Stat columns below fill in live once they come on."}
+        </p>
+      )}
+      <div
+        className={`overflow-hidden rounded-lg border ${
+          players.length ? "border-white/10" : "border-dashed border-white/10"
+        }`}
+      >
+        <div className="flex items-center gap-2 bg-white/5 px-3 py-2">
+          {team?.logo && (
+            <img src={team.logo} alt="" width={18} height={18} className="size-[18px]" loading="lazy" />
+          )}
+          <span className={`text-sm font-bold ${players.length ? "text-white" : "text-white/50"}`}>
+            {team?.team ? `${team.team} — ${starters ? "starting XI" : "substitutes"}` : label}
+          </span>
+          {starters && team?.formation && (
+            <span className="ml-auto rounded bg-[#E11B22]/20 px-1.5 py-0.5 text-[10px] font-bold text-red-200">
+              {team.formation}
+            </span>
+          )}
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-[12px]">
+            <StatHead />
+            {players.length ? (
+              <tbody>
+                {players.map((p) => (
+                  <PlayerRow key={p.id} p={p} />
+                ))}
+              </tbody>
+            ) : (
+              <PlaceholderRows rows={starters ? 11 : 7} />
+            )}
+          </table>
+        </div>
+      </div>
+    </div>
   );
 }
