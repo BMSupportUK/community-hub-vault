@@ -401,20 +401,29 @@ function TopicPage() {
     const to = from + REPLIES_PER_PAGE - 1;
     const { data: opRows } = await supabase
       .from("forum_posts")
-      .select("id, topic_id, author_id, body, quote_of, edited_at, is_op, created_at")
+      .select("id, topic_id, author_id, body, quote_of, edited_at, is_op, is_pinned, created_at")
       .eq("topic_id", topicId)
       .eq("is_op", true)
       .order("created_at")
       .limit(1);
-    const { data: replyRows } = await supabase
+    const { data: pinnedRows } = await supabase
       .from("forum_posts")
-      .select("id, topic_id, author_id, body, quote_of, edited_at, is_op, created_at")
+      .select("id, topic_id, author_id, body, quote_of, edited_at, is_op, is_pinned, created_at")
       .eq("topic_id", topicId)
       .eq("is_op", false)
+      .eq("is_pinned", true)
+      .order("created_at");
+    const { data: replyRows } = await supabase
+      .from("forum_posts")
+      .select("id, topic_id, author_id, body, quote_of, edited_at, is_op, is_pinned, created_at")
+      .eq("topic_id", topicId)
+      .eq("is_op", false)
+      .eq("is_pinned", false)
       .order("created_at")
       .range(from, to);
     const list = [
       ...((opRows ?? []) as Post[]),
+      ...((pinnedRows ?? []) as Post[]),
       ...((replyRows ?? []) as Post[]),
     ];
     setPosts(list);
