@@ -87,7 +87,7 @@ async function scrapeBrandStorePrice(url: string): Promise<ScrapeResult> {
         {
           type: "json",
           prompt:
-            "This is an official brand store product page. Extract the current selling price of THIS product in GBP as a number (e.g. 49.99). Ignore accessories, bundles, crossed-out RRP and other products. Return null if no GBP price is shown. Also return a short availability string such as 'In stock' or 'Out of stock' if obvious.",
+            "This is an official brand store product page. Extract the current selling price of THIS product in GBP as a number (e.g. 49.99). Ignore accessories, bundles, crossed-out RRP and other products. Return null if no GBP price is shown. Also return availability: return exactly 'Out of stock' if the buy button is disabled or the page shows Out of stock / Sold out / Notify me / Coming soon / Temporarily unavailable / Email me when available; return exactly 'In stock' only if the product can be added to cart or bought right now; otherwise null.",
           schema: {
             type: "object",
             properties: {
@@ -115,9 +115,18 @@ async function scrapeBrandStorePrice(url: string): Promise<ScrapeResult> {
   return {
     price_cents: price !== null ? Math.round(price * 100) : null,
     currency: "GBP",
-    availability: j.availability ?? null,
+    availability: normalizeAvailability(j.availability),
     source_url: url,
   };
+}
+
+function normalizeAvailability(raw: string | null | undefined): string | null {
+  if (!raw) return null;
+  if (/out\s*of\s*stock|sold\s*out|notify\s*me|coming\s*soon|unavailable|back\s*in\s*stock/i.test(raw)) {
+    return "Out of stock";
+  }
+  if (/in\s*stock|available|add\s*to\s*(cart|bag|basket)|buy\s*now/i.test(raw)) return "In stock";
+  return raw;
 }
 
 function isRetailerUrl(url: string): boolean {
