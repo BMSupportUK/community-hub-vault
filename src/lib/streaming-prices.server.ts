@@ -72,6 +72,51 @@ export function isBrandStoreOnlyUrl(url: string): boolean {
 }
 
 /** Scrape a JS-rendered official brand store product page for its GBP price. */
+/**
+ * Xiaomi's product page always shows a "Buy Now" button; the real stock state
+ * only appears on the store's buy page, where the CTA becomes "Notify Me" when
+ * the item cannot be purchased. Returns null when the page can't be read.
+ */
+async function brandStoreBuyPageAvailability(url: string): Promise<string | null> {
+  const apiKey = process.env.FIRECRAWL_API_KEY;
+  if (!apiKey) return null;
+  const m = url.match(/^(https?:\/\/[^/]+\/[a-z-]+)\/product\/([^/?#]+)/i);
+  if (!m) return null;
+  const buyUrl = `${m[1]}/buy/product/${m[2]}/`;
+  try {
+    const res = await fetch("https://api.firecrawl.dev/v2/scrape", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        url: buyUrl,
+        onlyMainContent: false,
+        waitFor: 6000,
+        location: { country: "GB", languages: ["en-GB"] },
+        formats: ["markdown"],
+      }),
+    });
+    if (!res.ok) return null;
+    const body = (await res.json()) as {
+      data?: { markdown?: string | null; metadata?: Record<string, unknown> };
+      markdown?: string | null;
+      metadata?: Record<string, unknown>;
+    };
+    const meta = body.data?.metadata ?? body.metadata ?? {};
+    const finalUrl = String(meta["url"] ?? meta["sourceURL"] ?? "");
+    if (meta["statusCode"] === 404 || /errors\/404/i.test(finalUrl)) return null;
+    const md = body.data?.markdown ?? body.markdown ?? "";
+    if (!md) return null;
+    // "Notify Me" / "Email me when available" replaces the buy CTA => sold out.
+    if (/notify\s*me|email\s*me\s*when|sold\s*out|out\s*of\s*stock|coming\s*soon/i.test(md)) {
+      return "Out of stock";
+    }
+    if (/add\s*to\s*(cart|bag|basket)|buy\s*now|checkout/i.test(md)) return "In stock";
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 async function scrapeBrandStorePrice(url: string): Promise<ScrapeResult> {
   const apiKey = process.env.FIRECRAWL_API_KEY;
   if (!apiKey) throw new Error("FIRECRAWL_API_KEY not configured");
