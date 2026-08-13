@@ -4,6 +4,7 @@ import { getPublicFanProfile } from "@/lib/fan-zone-public.functions";
 import { Button } from "@/components/ui/button";
 import boroDefaultAvatar from "@/assets/boro-default-avatar.png";
 import { FanZoneShell } from "./fan-zone";
+import { FanRoleBadge } from "@/components/app/FanRoleBadge";
 
 export const Route = createFileRoute("/fan-zone/u/$userId")({
   loader: ({ params }) => getPublicFanProfile({ data: { userId: params.userId } }),
@@ -71,6 +72,11 @@ function PublicFanProfilePage() {
                 <div className="min-w-0">
                   <div className="text-[10px] font-bold uppercase tracking-[0.2em] opacity-80">Boro Fan Zone</div>
                   <h1 className="font-display truncate text-2xl font-black drop-shadow sm:text-3xl">{p.fan_alias}</h1>
+                  {p.staff_role && (
+                    <div className="mt-1.5">
+                      <FanRoleBadge role={p.staff_role} />
+                    </div>
+                  )}
                   <div className="mt-1 text-xs opacity-80">
                     {p.joined_at
                       ? `Member since ${new Date(p.joined_at).toLocaleDateString(undefined, { month: "short", year: "numeric" })}`
