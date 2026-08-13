@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Radio, CalendarDays, Trophy, ChevronRight } from "lucide-react";
+import { Radio, CalendarDays, Trophy, ChevronRight, X } from "lucide-react";
 import {
   getBoroMatchCentre,
   type MatchCentreDTO,
 } from "@/lib/boro-match-centre.functions";
 import { useUserTimezone } from "@/hooks/use-user-timezone";
 import { TeamKit } from "@/lib/boro-team-kits";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle, DialogClose } from "@/components/ui/dialog";
 import { BoroMatchCentreBox } from "@/components/app/BoroMatchCentreBox";
 
 function fmtKickoff(iso: string, tz: string) {
