@@ -188,8 +188,14 @@ export function BoroLiveMatchStrip() {
       </button>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-md p-0 bg-transparent border-0 shadow-none">
+        <DialogContent className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 max-w-md w-[calc(100%-2rem)] max-h-[85vh] overflow-y-auto p-0 bg-transparent border-0 shadow-none">
           <DialogTitle className="sr-only">Boro Match Centre</DialogTitle>
+          <DialogClose
+            className="absolute right-2 top-2 z-10 inline-flex items-center justify-center size-8 rounded-full bg-black/70 text-white ring-1 ring-white/25 hover:bg-black/90 transition"
+            aria-label="Close match centre"
+          >
+            <X className="size-4" />
+          </DialogClose>
           <BoroMatchCentreBox />
         </DialogContent>
       </Dialog>
