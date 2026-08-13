@@ -47,6 +47,7 @@ const TRUSTED_RETAILER_DOMAINS = [
   "amazon.co.uk", "argos.co.uk", "currys.co.uk", "johnlewis.com", "very.co.uk",
   "ao.com", "box.co.uk", "ebuyer.com", "scan.co.uk", "overclockers.co.uk",
   "world-of-satellite.co.uk", "sat25.com", "mecool.com", "formuler.tv",
+  "mi.com", "xiaomi.com",
 ];
 
 function hostOf(url: string): string {
