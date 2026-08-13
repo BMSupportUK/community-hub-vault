@@ -170,6 +170,30 @@ export type PublicForumStats = {
   latest_member: string | null;
 };
 
+export type PublicStaffMember = {
+  user_id: string;
+  role: "admin" | "boro_fan_zone_moderator";
+  fan_alias: string;
+  fan_avatar_url: string | null;
+};
+
+/** Guest-visible Fan Zone staff list (admins first, then moderators). */
+export const getPublicFanZoneStaff = createServerFn({ method: "GET" }).handler(async (): Promise<PublicStaffMember[]> => {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data } = await supabaseAdmin.rpc("fan_zone_staff_directory");
+  const out = ((data ?? []) as PublicStaffMember[]).map((r) => ({
+    user_id: r.user_id,
+    role: r.role,
+    fan_alias: r.fan_alias?.trim() || "Boro Fan",
+    fan_avatar_url: r.fan_avatar_url || null,
+  }));
+  out.sort((a, b) => {
+    if (a.role !== b.role) return a.role === "admin" ? -1 : 1;
+    return a.fan_alias.toLowerCase().localeCompare(b.fan_alias.toLowerCase());
+  });
+  return out;
+});
+
 /** Guest-visible forum statistics for the Fan Zone sidebar panel. */
 export const getPublicForumStats = createServerFn({ method: "GET" }).handler(async (): Promise<PublicForumStats> => {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
