@@ -2,7 +2,7 @@ import { createFileRoute, Link, Outlet, useNavigate } from "@tanstack/react-rout
 import { useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { LandingHeader } from "@/components/LandingHeader";
-import { LogIn, Trophy } from "lucide-react";
+import { LogIn, Trophy, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import boroHero from "@/assets/boro-hero.jpg";
 import boroBadge from "@/assets/boro-fan-zone-badge.png";
@@ -73,13 +73,20 @@ export function FanZoneShell({ children }: { children: React.ReactNode }) {
                 Up the Boro — boards, banter & match-day debate.
               </p>
             </div>
-            <div className="sm:self-center">
+            <div className="sm:self-center flex flex-col sm:flex-row gap-2">
               <Link
                 to="/boro-predictions"
                 className="inline-flex items-center gap-2 rounded-lg bg-white/95 px-4 py-2.5 text-sm font-bold text-[#961016] shadow-lg ring-1 ring-white/40 hover:bg-white transition"
               >
                 <Trophy className="size-4" />
                 MFC 2026 Predictions
+              </Link>
+              <Link
+                to="/boro-fantasy"
+                className="inline-flex items-center gap-2 rounded-lg bg-[#E11B22]/90 px-4 py-2.5 text-sm font-bold text-white shadow-lg ring-1 ring-white/30 hover:bg-[#E11B22] transition"
+              >
+                <Users className="size-4" />
+                MFC Fantasy Manager
               </Link>
             </div>
           </div>
