@@ -2,7 +2,7 @@ import { createFileRoute, Link, Outlet } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { LandingHeader } from "@/components/LandingHeader";
-import { Trophy, Users, Info } from "lucide-react";
+import { Trophy, Users, Info, Settings } from "lucide-react";
 import boroHero from "@/assets/boro-hero.jpg";
 import boroBadge from "@/assets/boro-fan-zone-badge.png";
 import boroBg from "@/assets/boro-bg.jpg";
@@ -95,6 +95,15 @@ export function FanZoneShell({ children }: { children: React.ReactNode }) {
                   <Users className="size-4" />
                   MFC Fantasy Manager
                 </Link>
+                {user && (
+                  <Link
+                    to="/fanzone/profile"
+                    className="inline-flex items-center gap-2 rounded-lg bg-white/15 px-4 py-2.5 text-sm font-bold text-white shadow-lg ring-1 ring-white/30 backdrop-blur-sm hover:bg-white/25 transition"
+                  >
+                    <Settings className="size-4" />
+                    Fan Zone settings
+                  </Link>
+                )}
               </div>
             </div>
           </div>

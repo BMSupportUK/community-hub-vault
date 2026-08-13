@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, ImagePlus, Loader2, Save, UserMinus, ShieldOff, ThumbsUp, ThumbsDown, MessageSquare, FileText, Users, Award } from "lucide-react";
+import { ArrowLeft, ImagePlus, Loader2, Save, UserMinus, ShieldOff, ThumbsUp, ThumbsDown, MessageSquare, FileText, Users, Award, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -133,6 +133,7 @@ function FanZoneProfilePage() {
               <TabsTrigger value="profile" className="data-[state=active]:bg-[#E11B22] data-[state=active]:text-white text-white/70">Profile</TabsTrigger>
               <TabsTrigger value="friends" className="data-[state=active]:bg-[#E11B22] data-[state=active]:text-white text-white/70">Friends</TabsTrigger>
               <TabsTrigger value="ignored" className="data-[state=active]:bg-[#E11B22] data-[state=active]:text-white text-white/70">Ignored</TabsTrigger>
+              <TabsTrigger value="privacy" className="data-[state=active]:bg-[#E11B22] data-[state=active]:text-white text-white/70">Privacy</TabsTrigger>
             </TabsList>
 
             <TabsContent value="profile">
@@ -256,6 +257,10 @@ function FanZoneProfilePage() {
             <TabsContent value="ignored">
               <IgnoredPanel />
             </TabsContent>
+
+            <TabsContent value="privacy">
+              <PrivacyPanel userId={user!.id} />
+            </TabsContent>
             </Tabs>
             <aside className="space-y-4 lg:sticky lg:top-6 self-start">
               <StatsBox userId={user!.id} />
@@ -269,6 +274,69 @@ function FanZoneProfilePage() {
 }
 
 type FriendRow = { user_id: string; fan_alias: string | null; fan_avatar_url: string | null; friendship_id: string };
+
+function PrivacyPanel({ userId }: { userId: string }) {
+  const [loading, setLoading] = useState(true);
+  const [isPrivate, setIsPrivate] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase.from("profiles").select("is_private").eq("id", userId).maybeSingle();
+      if (cancelled) return;
+      setIsPrivate(!!(data as any)?.is_private);
+      setLoading(false);
+    })();
+    return () => { cancelled = true; };
+  }, [userId]);
+
+  const update = async (next: boolean) => {
+    setSaving(true);
+    const { error } = await supabase.from("profiles").update({ is_private: next }).eq("id", userId);
+    setSaving(false);
+    if (error) return toast.error("Couldn't update privacy", { description: error.message });
+    setIsPrivate(next);
+    toast.success(next ? "Your profile is now private" : "Your profile is now visible to members");
+  };
+
+  return (
+    <div className="rounded-2xl border border-[#E11B22]/40 bg-black/35 backdrop-blur-md shadow-2xl text-white p-5 sm:p-6">
+      <h2 className="font-display text-xl font-bold mb-1 flex items-center gap-2"><Lock className="size-4 text-[#E11B22]" />Privacy</h2>
+      <p className="text-sm text-white/70 mb-4">
+        Control who can view your profile from the fan zone and the forums.
+      </p>
+      {loading ? (
+        <div className="grid place-items-center py-10"><Loader2 className="size-5 animate-spin text-white/70" /></div>
+      ) : (
+        <div className="space-y-4">
+          <div className="flex items-start gap-3 rounded-xl border border-white/10 bg-white/5 p-4">
+            <div className="flex-1 min-w-0">
+              <div className="font-semibold text-sm">Private profile</div>
+              <p className="text-xs text-white/60 mt-1">
+                When on, only you, your friends and admins can view your profile. Other fans see a “Private profile” notice
+                and can send you a friend request.
+              </p>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={isPrivate}
+              disabled={saving}
+              onClick={() => void update(!isPrivate)}
+              className={`relative mt-0.5 h-6 w-11 shrink-0 rounded-full transition ${isPrivate ? "bg-[#E11B22]" : "bg-white/25"} disabled:opacity-60`}
+            >
+              <span className={`absolute top-0.5 size-5 rounded-full bg-white transition-all ${isPrivate ? "left-[22px]" : "left-0.5"}`} />
+            </button>
+          </div>
+          <p className="text-[11px] text-white/50">
+            Your fan zone posts and alias stay visible either way — only your profile page is restricted.
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
 
 function FriendsPanel({ userId }: { userId: string }) {
   const [rows, setRows] = useState<FriendRow[] | null>(null);
