@@ -101,7 +101,7 @@ export function FanZoneShell({ children }: { children: React.ReactNode }) {
                     className="inline-flex items-center gap-2 rounded-lg bg-white/15 px-4 py-2.5 text-sm font-bold text-white shadow-lg ring-1 ring-white/30 backdrop-blur-sm hover:bg-white/25 transition"
                   >
                     <Settings className="size-4" />
-                    Fan Zone settings
+                    Profile & Settings
                   </Link>
                 )}
               </div>
