@@ -1,9 +1,8 @@
-import { createFileRoute, Link, Outlet, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { LandingHeader } from "@/components/LandingHeader";
-import { LogIn, Trophy, Users } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Trophy, Users, Info } from "lucide-react";
 import boroHero from "@/assets/boro-hero.jpg";
 import boroBadge from "@/assets/boro-fan-zone-badge.png";
 import boroBg from "@/assets/boro-bg.jpg";
@@ -15,7 +14,6 @@ export const Route = createFileRoute("/fan-zone")({
 
 export function FanZoneShell({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
-  const navigate = useNavigate();
   useEffect(() => {
     const html = document.documentElement;
     html.style.setProperty("--boro-bg-image", `url(${boroBg})`);
@@ -73,43 +71,34 @@ export function FanZoneShell({ children }: { children: React.ReactNode }) {
                 Up the Boro — boards, banter & match-day debate.
               </p>
             </div>
-            <div className="sm:self-center flex flex-col sm:flex-row gap-2">
-              <Link
-                to="/boro-predictions"
-                className="inline-flex items-center gap-2 rounded-lg bg-white/95 px-4 py-2.5 text-sm font-bold text-[#961016] shadow-lg ring-1 ring-white/40 hover:bg-white transition"
-              >
-                <Trophy className="size-4" />
-                MFC 2026 Predictions
-              </Link>
-              <Link
-                to="/boro-fantasy"
-                className="inline-flex items-center gap-2 rounded-lg bg-[#E11B22]/90 px-4 py-2.5 text-sm font-bold text-white shadow-lg ring-1 ring-white/30 hover:bg-[#E11B22] transition"
-              >
-                <Users className="size-4" />
-                MFC Fantasy Manager
-              </Link>
+            <div className="sm:self-center flex flex-col gap-2.5">
+              {!user && (
+                <div className="rounded-lg border border-amber-400/60 bg-amber-500/25 backdrop-blur-sm px-3.5 py-2.5 shadow-[0_0_20px_rgba(251,191,36,0.35)]">
+                  <span className="inline-flex items-start gap-2 text-xs sm:text-sm font-semibold text-amber-50 leading-snug">
+                    <Info className="size-4 text-amber-300 shrink-0 mt-0.5" />
+                    You're viewing the Boro Fan Zone as a guest. Sign in or request access to post, react and join polls.
+                  </span>
+                </div>
+              )}
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Link
+                  to="/boro-predictions"
+                  className="inline-flex items-center gap-2 rounded-lg bg-white/95 px-4 py-2.5 text-sm font-bold text-[#961016] shadow-lg ring-1 ring-white/40 hover:bg-white transition"
+                >
+                  <Trophy className="size-4" />
+                  MFC 2026 Predictions
+                </Link>
+                <Link
+                  to="/boro-fantasy"
+                  className="inline-flex items-center gap-2 rounded-lg bg-[#E11B22]/90 px-4 py-2.5 text-sm font-bold text-white shadow-lg ring-1 ring-white/30 hover:bg-[#E11B22] transition"
+                >
+                  <Users className="size-4" />
+                  MFC Fantasy Manager
+                </Link>
+              </div>
             </div>
           </div>
         </header>
-        {!user && (
-          <div className="mb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-amber-500/30 bg-black/55 backdrop-blur-md px-4 py-3 shadow-2xl">
-            <p className="text-sm text-amber-100/90">
-              You're viewing the Boro Fan Zone as a guest. Sign in or request access to post, react and join polls.
-            </p>
-            <div className="flex gap-2">
-              <Button size="sm" variant="outline" onClick={() => navigate({ to: "/login" })}>
-                <LogIn className="size-4 mr-1.5" /> Sign in
-              </Button>
-              <Button
-                size="sm"
-                className="bg-red-600 text-white hover:bg-red-500"
-                onClick={() => navigate({ to: "/signup" })}
-              >
-                Join BM Support
-              </Button>
-            </div>
-          </div>
-        )}
         <BoroLiveMatchStrip />
         <div className="rounded-2xl border border-white/15 bg-black/62 backdrop-blur-md p-5 sm:p-7 shadow-2xl">
           {children}
