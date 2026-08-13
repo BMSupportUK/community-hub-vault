@@ -93,9 +93,16 @@ export const getBoroMatchCentre = createServerFn({ method: "GET" }).handler(
       nextFixture: invalidCachedNext ? null : rawDto.nextFixture,
       lastResult: invalidCachedLast ? null : rawDto.lastResult,
     };
+    // While the listed fixture is in play (or just about to start) refresh
+    // aggressively so the card flips to the result the moment it ends.
+    const koMs = dto.nextFixture ? Date.parse(dto.nextFixture.kickoff) : NaN;
+    const liveWindow =
+      Number.isFinite(koMs) &&
+      Date.now() >= koMs - 15 * 60 * 1000 &&
+      Date.now() <= koMs + 5 * 60 * 60 * 1000;
+    const maxAgeMs = liveWindow ? 60 * 1000 : 30 * 60 * 1000;
     const stale =
-      !dto.fetchedAt ||
-      Date.now() - new Date(dto.fetchedAt).getTime() > 30 * 60 * 1000;
+      !dto.fetchedAt || Date.now() - new Date(dto.fetchedAt).getTime() > maxAgeMs;
     const needsFetch =
       (stale || invalidCachedNext || invalidCachedLast) &&
       (!dto.lastResultManual || !dto.nextFixtureManual || !dto.leaguePositionManual);
@@ -115,24 +122,29 @@ export const getBoroMatchCentre = createServerFn({ method: "GET" }).handler(
       let nextFromDb: NextFixture | null = null;
       let lastFromDb: LastResult | null = null;
       if ((!live.nextFixture && !dto.nextFixtureManual) || (!live.lastResult && !dto.lastResultManual)) {
-        const nowIso = new Date().toISOString();
+        // Include a game that has already kicked off but isn't finished.
+        const nowIso = new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString();
         const [{ data: upcoming }, { data: recent }] = await Promise.all([
           supabaseAdmin
             .from("boro_fixtures")
-            .select("competition, home_team, away_team, kickoff_at, venue")
+            .select("competition, home_team, away_team, kickoff_at, venue, status")
             .gte("kickoff_at", nowIso)
             .order("kickoff_at", { ascending: true })
             .limit(25),
           supabaseAdmin
             .from("boro_fixtures")
             .select("competition, home_team, away_team, kickoff_at, venue, home_score, away_score, status")
-            .lt("kickoff_at", nowIso)
+            .lt("kickoff_at", new Date().toISOString())
             .not("home_score", "is", null)
             .not("away_score", "is", null)
             .order("kickoff_at", { ascending: false })
             .limit(25),
         ]);
-        const u = (upcoming ?? []).find((row: any) => isBoroMatch({ home: row.home_team, away: row.away_team })) as any;
+        const u = (upcoming ?? []).find(
+          (row: any) =>
+            isBoroMatch({ home: row.home_team, away: row.away_team }) &&
+            String(row.status ?? "").toUpperCase() !== "FINISHED",
+        ) as any;
         if (u) {
           nextFromDb = {
             kickoff: new Date(u.kickoff_at).toISOString(),
