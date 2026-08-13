@@ -546,8 +546,30 @@ function ShiftsPage() {
 
           {/* MY SHIFTS */}
           <TabsContent value="mine" className="mt-6">
+            <div className="flex flex-wrap items-center gap-3 mb-4">
+              <Button variant="outline" className="bg-surface/60 border-border text-foreground hover:bg-surface-2" onClick={() => { const d = new Date(weekStart); d.setDate(d.getDate() - 7); setWeekStart(d); }}>← Prev week</Button>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="bg-surface/60 border-border text-foreground hover:bg-surface-2">
+                    <CalendarIcon className="size-4 mr-2" />
+                    Week of {dayLabel(weekStart)}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={weekStart}
+                    onSelect={(d) => d && setWeekStart(startOfWeek(d))}
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
+              <Button variant="outline" className="bg-surface/60 border-border text-foreground hover:bg-surface-2" onClick={() => { const d = new Date(weekStart); d.setDate(d.getDate() + 7); setWeekStart(d); }}>Next week →</Button>
+              <Button variant="outline" className="bg-surface/60 border-border text-foreground hover:bg-surface-2 ml-auto" onClick={() => setWeekStart(startOfWeek(new Date()))}>This week</Button>
+            </div>
             {myShifts.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-border p-12 text-center text-muted-foreground bg-surface/40">You haven't claimed any shifts this week.</div>
+              <div className="rounded-2xl border border-dashed border-border p-12 text-center text-muted-foreground bg-surface/40">No shifts claimed for the week of {dayLabel(weekStart)}.</div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {myShifts.map((s) => (
