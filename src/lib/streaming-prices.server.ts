@@ -61,6 +61,65 @@ function hostOf(url: string): string {
   catch { return ""; }
 }
 
+// Brands whose prices and buy links must ALWAYS come from their own official
+// store — never Amazon, never an open web search.
+const BRAND_STORE_ONLY_DOMAINS = ["mi.com", "xiaomi.com"];
+
+export function isBrandStoreOnlyUrl(url: string): boolean {
+  const host = hostOf(url);
+  return BRAND_STORE_ONLY_DOMAINS.some((d) => host === d || host.endsWith("." + d));
+}
+
+/** Scrape a JS-rendered official brand store product page for its GBP price. */
+async function scrapeBrandStorePrice(url: string): Promise<ScrapeResult> {
+  const apiKey = process.env.FIRECRAWL_API_KEY;
+  if (!apiKey) throw new Error("FIRECRAWL_API_KEY not configured");
+
+  const res = await fetch("https://api.firecrawl.dev/v2/scrape", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      url,
+      onlyMainContent: false,
+      waitFor: 4000,
+      location: { country: "GB", languages: ["en-GB"] },
+      formats: [
+        {
+          type: "json",
+          prompt:
+            "This is an official brand store product page. Extract the current selling price of THIS product in GBP as a number (e.g. 49.99). Ignore accessories, bundles, crossed-out RRP and other products. Return null if no GBP price is shown. Also return a short availability string such as 'In stock' or 'Out of stock' if obvious.",
+          schema: {
+            type: "object",
+            properties: {
+              price: { type: ["number", "null"] },
+              currency: { type: ["string", "null"] },
+              availability: { type: ["string", "null"] },
+            },
+          },
+        },
+      ],
+    }),
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(`Firecrawl ${res.status}: ${text.slice(0, 200)}`);
+  }
+
+  const body = (await res.json()) as {
+    data?: { json?: { price?: number | null; availability?: string | null } };
+    json?: { price?: number | null; availability?: string | null };
+  };
+  const j = body.data?.json ?? body.json ?? {};
+  const price = typeof j.price === "number" && j.price >= 5 && j.price <= 2000 ? j.price : null;
+  return {
+    price_cents: price !== null ? Math.round(price * 100) : null,
+    currency: "GBP",
+    availability: j.availability ?? null,
+    source_url: url,
+  };
+}
+
 function isRetailerUrl(url: string): boolean {
   const host = hostOf(url);
   if (!host) return false;
@@ -294,6 +353,26 @@ export async function refreshAllStreamingPrices(): Promise<{
     try {
       // An explicit price watch URL always wins, then the device's own listing
       // URL, then an open web search for the cheapest in-stock UK price.
+      // Official brand stores (e.g. Xiaomi) are locked to their own site.
+      if (isBrandStoreOnlyUrl(d.amazon_url)) {
+        const r = await scrapeBrandStorePrice(d.amazon_url);
+        const { error: brandErr } = await supabaseAdmin
+          .from("streaming_device_prices")
+          .upsert({
+            device_id: d.id,
+            price_cents: r.price_cents,
+            currency: r.currency,
+            availability: r.availability,
+            source_url: d.amazon_url,
+            scraped_at: new Date().toISOString(),
+          });
+        if (brandErr) throw new Error(brandErr.message);
+        updated++;
+        details.push({ name: d.name, ok: true, price_cents: r.price_cents });
+        await new Promise((r2) => setTimeout(r2, 1500));
+        continue;
+      }
+
       const watchUrl = d.price_watch_url || d.amazon_url;
       const isAmazonPage = hostOf(watchUrl).endsWith("amazon.co.uk");
       const isAmazonOwn =
