@@ -359,14 +359,17 @@ async function fetchEspnBoro(): Promise<{
         homeScore: score(home),
         awayScore: score(away),
         venue: comp.venue?.fullName ?? null,
-        completed: !!e.status?.type?.completed || t < now,
+        // A kicked-off game is NOT finished: keep it as the "next fixture"
+        // until the feed reports full time (fall back to a 4h safety window
+        // in case the feed never flips the flag).
+        completed: !!e.status?.type?.completed || t < now - 4 * 60 * 60 * 1000,
       };
     })
     .filter((x): x is NonNullable<typeof x> => x !== null && isBoroMatch(x))
     .sort((a, b) => a.t - b.t);
 
   const past = parsed.filter((p) => p.completed && p.homeScore !== null && p.awayScore !== null);
-  const future = parsed.filter((p) => !p.completed && p.t >= now);
+  const future = parsed.filter((p) => !p.completed);
 
   const lastRaw = past[past.length - 1];
   const nextRaw = future[0];
