@@ -1283,7 +1283,6 @@ html.boro-bg-active body > [data-radix-popper-content-wrapper],
 html.boro-bg-active body > [role="dialog"],
 html.boro-bg-active body > [data-sonner-toaster] {
   position: fixed !important;
-  z-index: auto;
 }
 @media (max-width: 768px) {
   html.boro-bg-active,
