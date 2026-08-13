@@ -214,8 +214,13 @@ export const getBoroMatchCentre = createServerFn({ method: "GET" }).handler(
       }
       if (!dto.nextFixtureManual) {
         const nf = live.nextFixture ?? nextFromDb;
-        if (nf) patch.next_fixture = nf;
+        if (nf) patch.next_fixture = await withEspnEvent(nf);
         else if (invalidCachedNext) patch.next_fixture = null;
+      }
+      // A manually-set or previously cached fixture may predate the ESPN
+      // lookup: top it up so the match centre tabs have a feed to poll.
+      if (dto.nextFixtureManual && dto.nextFixture && !dto.nextFixture.eventId) {
+        patch.next_fixture = await withEspnEvent(dto.nextFixture);
       }
       if (!dto.leaguePositionManual && standings) patch.league_position = standings;
       await supabaseAdmin
