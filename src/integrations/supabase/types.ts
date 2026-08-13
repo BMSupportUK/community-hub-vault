@@ -2406,6 +2406,7 @@ export type Database = {
           edited_by: string | null
           id: string
           is_op: boolean
+          is_pinned: boolean
           quote_of: string | null
           topic_id: string
         }
@@ -2417,6 +2418,7 @@ export type Database = {
           edited_by?: string | null
           id?: string
           is_op?: boolean
+          is_pinned?: boolean
           quote_of?: string | null
           topic_id: string
         }
@@ -2428,6 +2430,7 @@ export type Database = {
           edited_by?: string | null
           id?: string
           is_op?: boolean
+          is_pinned?: boolean
           quote_of?: string | null
           topic_id?: string
         }
