@@ -411,18 +411,16 @@ export async function syncBoroMatchThread(opts?: { ignoreWindow?: boolean }): Pr
       if (logErr) skipped.push(`preview log failed: ${logErr.message}`);
     }
   } else {
-    // Back-fill line-ups once ESPN has them, and strip any legacy inline live block
-    // (the live block now lives in its own pinned reply at the top).
+    // Strip any legacy inline live block, plus legacy XI / TV lines
+    // (line-ups arrive later via the official team-sheet job).
     const { data: existing } = await supabaseAdmin
       .from("forum_posts")
       .select("body")
       .eq("id", preview.post_id)
       .maybeSingle();
     if (existing?.body) {
-      const hasXi = /XI<\/strong>/.test(existing.body);
-      const rebuilt = !hasXi && (rosterXi(json, "home")?.xi.length ?? 0) > 0
-        ? buildPreviewBody(fx, json)
-        : stripLiveBlock(existing.body);
+      const legacy = /XI<\/strong>/.test(existing.body) || /TV \/ stream/.test(existing.body);
+      const rebuilt = legacy ? buildPreviewBody(fx, json) : stripLiveBlock(existing.body);
       if (rebuilt !== existing.body) {
         const { error: upErr } = await supabaseAdmin
           .from("forum_posts")
