@@ -283,9 +283,9 @@ function PrivacyPanel({ userId }: { userId: string }) {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const { data } = await supabase.from("fan_zone_members").select("is_private").eq("user_id", userId).maybeSingle();
+      const { data } = await supabase.rpc("fan_zone_privacy", { _ids: [userId] });
       if (cancelled) return;
-      setIsPrivate(!!(data as any)?.is_private);
+      setIsPrivate(!!(data ?? [])[0]?.is_private);
       setLoading(false);
     })();
     return () => { cancelled = true; };
@@ -293,7 +293,7 @@ function PrivacyPanel({ userId }: { userId: string }) {
 
   const update = async (next: boolean) => {
     setSaving(true);
-    const { error } = await supabase.from("fan_zone_members").update({ is_private: next }).eq("user_id", userId);
+    const { error } = await supabase.rpc("fan_zone_set_privacy", { _private: next });
     setSaving(false);
     if (error) return toast.error("Couldn't update privacy", { description: error.message });
     setIsPrivate(next);

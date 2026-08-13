@@ -22,6 +22,7 @@ type Profile = {
   fav_player: string | null;
   matchday_memory: string | null;
   joined_at: string;
+  is_private: boolean;
   is_blocked_by_me: boolean;
   has_blocked_me: boolean;
 };
@@ -59,12 +60,7 @@ function FanProfilePage() {
     if (error) { toast.error("Couldn't load profile", { description: error.message }); return; }
     const row = (data ?? [])[0] as Profile | undefined;
     setP(row ?? null);
-    const { data: fanRow } = await supabase
-      .from("fan_zone_members")
-      .select("is_private")
-      .eq("user_id", userId)
-      .maybeSingle();
-    setFanPrivate(!!fanRow?.is_private);
+    setFanPrivate(!!row?.is_private);
     if (!user?.id || user.id === userId) {
       setFriendRel({ kind: "none" });
       setIncomingRel({ kind: "none" });

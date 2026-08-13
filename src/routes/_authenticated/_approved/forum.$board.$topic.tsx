@@ -402,10 +402,7 @@ function TopicPage() {
       };
     });
     // Fan Zone privacy only — never mix in BM Support profile identity here.
-    const { data: fanRows } = await supabase
-      .from("fan_zone_members")
-      .select("user_id, is_private")
-      .in("user_id", unique);
+    const { data: fanRows } = await supabase.rpc("fan_zone_privacy", { _ids: unique });
     (fanRows ?? []).forEach((m: { user_id: string; is_private: boolean | null }) => {
       const existing = map[m.user_id] ?? { id: m.user_id, display_name: "Boro Fan", username: null, avatar_url: null };
       map[m.user_id] = { ...existing, is_private: m.is_private };

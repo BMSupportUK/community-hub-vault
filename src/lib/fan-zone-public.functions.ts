@@ -203,11 +203,8 @@ export const getPublicFanZoneStaff = createServerFn({ method: "GET" }).handler(a
   const out = rows.map((r) => ({
     user_id: r.user_id,
     role: r.role,
-    fan_alias:
-      aliases[r.user_id]?.alias ||
-      profMap[r.user_id]?.display_name?.trim() ||
-      profMap[r.user_id]?.username?.trim() ||
-      "Boro Fan",
+    // Fan Zone alias only — never the BM Support display name/username.
+    fan_alias: aliases[r.user_id]?.alias || "Boro Fan",
     fan_avatar_url: aliases[r.user_id]?.avatar || null,
   }));
   out.sort((a, b) => {
