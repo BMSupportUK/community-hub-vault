@@ -196,21 +196,26 @@ export function matchTopicToFixture(
   fx: FixtureLite,
 ): { id: string; title: string; author_id: string } | null {
   const keys = dateKeys(fx.kickoff_at);
+  const koMs = Date.parse(fx.kickoff_at);
+
+  // Strongest signal: correct date AND both teams named, in either order.
+  const byDateAndTeams = topics.find(
+    (t) => keys.some((k) => t.title.includes(k)) && titleMentionsBothSides(t.title, fx),
+  );
+  if (byDateAndTeams) return byDateAndTeams;
+
   const byDate = topics.find((t) => keys.some((k) => t.title.includes(k)));
   if (byDate) return byDate;
 
-  const opponent = opponentOf(fx).toLowerCase().replace(/\b(fc|afc|united|city|town)\b/g, "").trim();
-  const koMs = Date.parse(fx.kickoff_at);
   const candidates = topics.filter((t) => {
     const created = Date.parse(t.created_at);
     return created <= koMs + WINDOW_AFTER_MS && koMs - created <= 8 * 24 * 60 * 60 * 1000;
   });
-  const words = opponent.split(/\s+/).filter((w) => w.length >= 4);
-  const byOpponent = candidates.find((t) => {
-    const title = t.title.toLowerCase();
-    return words.length > 0 && words.some((w) => title.includes(w));
-  });
-  return byOpponent ?? null;
+  const bothSides = candidates.find((t) => titleMentionsBothSides(t.title, fx));
+  if (bothSides) return bothSides;
+
+  const words = opponentTokens(opponentOf(fx));
+  return candidates.find((t) => words.some((w) => t.title.toLowerCase().includes(w))) ?? null;
 }
 
 function escapeHtml(s: string): string {
