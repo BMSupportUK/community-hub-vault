@@ -83,6 +83,7 @@ import { Route as AuthenticatedApprovedAdminFanZoneRouteImport } from './routes/
 import { Route as AuthenticatedApprovedAdminDnsRouteImport } from './routes/_authenticated/_approved/admin-dns'
 import { Route as AuthenticatedApprovedAdminCredentialsRouteImport } from './routes/_authenticated/_approved/admin-credentials'
 import { Route as AuthenticatedApprovedAdminBusinessHoursRouteImport } from './routes/_authenticated/_approved/admin-business-hours'
+import { Route as AuthenticatedApprovedAdminBoroTeamSheetRouteImport } from './routes/_authenticated/_approved/admin-boro-team-sheet'
 import { Route as AuthenticatedApprovedAdminBlacklistRouteImport } from './routes/_authenticated/_approved/admin-blacklist'
 import { Route as AuthenticatedApprovedAdminArchivedTicketsRouteImport } from './routes/_authenticated/_approved/admin-archived-tickets'
 import { Route as AuthenticatedApprovedAdminAffiliateBannersRouteImport } from './routes/_authenticated/_approved/admin-affiliate-banners'
@@ -551,6 +552,12 @@ const AuthenticatedApprovedAdminBusinessHoursRoute =
     path: '/admin-business-hours',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
+const AuthenticatedApprovedAdminBoroTeamSheetRoute =
+  AuthenticatedApprovedAdminBoroTeamSheetRouteImport.update({
+    id: '/admin-boro-team-sheet',
+    path: '/admin-boro-team-sheet',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
 const AuthenticatedApprovedAdminBlacklistRoute =
   AuthenticatedApprovedAdminBlacklistRouteImport.update({
     id: '/admin-blacklist',
@@ -854,6 +861,7 @@ export interface FileRoutesByFullPath {
   '/admin-affiliate-banners': typeof AuthenticatedApprovedAdminAffiliateBannersRoute
   '/admin-archived-tickets': typeof AuthenticatedApprovedAdminArchivedTicketsRoute
   '/admin-blacklist': typeof AuthenticatedApprovedAdminBlacklistRoute
+  '/admin-boro-team-sheet': typeof AuthenticatedApprovedAdminBoroTeamSheetRoute
   '/admin-business-hours': typeof AuthenticatedApprovedAdminBusinessHoursRoute
   '/admin-credentials': typeof AuthenticatedApprovedAdminCredentialsRoute
   '/admin-dns': typeof AuthenticatedApprovedAdminDnsRoute
@@ -972,6 +980,7 @@ export interface FileRoutesByTo {
   '/admin-affiliate-banners': typeof AuthenticatedApprovedAdminAffiliateBannersRoute
   '/admin-archived-tickets': typeof AuthenticatedApprovedAdminArchivedTicketsRoute
   '/admin-blacklist': typeof AuthenticatedApprovedAdminBlacklistRoute
+  '/admin-boro-team-sheet': typeof AuthenticatedApprovedAdminBoroTeamSheetRoute
   '/admin-business-hours': typeof AuthenticatedApprovedAdminBusinessHoursRoute
   '/admin-credentials': typeof AuthenticatedApprovedAdminCredentialsRoute
   '/admin-dns': typeof AuthenticatedApprovedAdminDnsRoute
@@ -1094,6 +1103,7 @@ export interface FileRoutesById {
   '/_authenticated/_approved/admin-affiliate-banners': typeof AuthenticatedApprovedAdminAffiliateBannersRoute
   '/_authenticated/_approved/admin-archived-tickets': typeof AuthenticatedApprovedAdminArchivedTicketsRoute
   '/_authenticated/_approved/admin-blacklist': typeof AuthenticatedApprovedAdminBlacklistRoute
+  '/_authenticated/_approved/admin-boro-team-sheet': typeof AuthenticatedApprovedAdminBoroTeamSheetRoute
   '/_authenticated/_approved/admin-business-hours': typeof AuthenticatedApprovedAdminBusinessHoursRoute
   '/_authenticated/_approved/admin-credentials': typeof AuthenticatedApprovedAdminCredentialsRoute
   '/_authenticated/_approved/admin-dns': typeof AuthenticatedApprovedAdminDnsRoute
@@ -1216,6 +1226,7 @@ export interface FileRouteTypes {
     | '/admin-affiliate-banners'
     | '/admin-archived-tickets'
     | '/admin-blacklist'
+    | '/admin-boro-team-sheet'
     | '/admin-business-hours'
     | '/admin-credentials'
     | '/admin-dns'
@@ -1334,6 +1345,7 @@ export interface FileRouteTypes {
     | '/admin-affiliate-banners'
     | '/admin-archived-tickets'
     | '/admin-blacklist'
+    | '/admin-boro-team-sheet'
     | '/admin-business-hours'
     | '/admin-credentials'
     | '/admin-dns'
@@ -1455,6 +1467,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/admin-affiliate-banners'
     | '/_authenticated/_approved/admin-archived-tickets'
     | '/_authenticated/_approved/admin-blacklist'
+    | '/_authenticated/_approved/admin-boro-team-sheet'
     | '/_authenticated/_approved/admin-business-hours'
     | '/_authenticated/_approved/admin-credentials'
     | '/_authenticated/_approved/admin-dns'
@@ -2120,6 +2133,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedApprovedAdminBusinessHoursRouteImport
       parentRoute: typeof AuthenticatedApprovedRoute
     }
+    '/_authenticated/_approved/admin-boro-team-sheet': {
+      id: '/_authenticated/_approved/admin-boro-team-sheet'
+      path: '/admin-boro-team-sheet'
+      fullPath: '/admin-boro-team-sheet'
+      preLoaderRoute: typeof AuthenticatedApprovedAdminBoroTeamSheetRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
     '/_authenticated/_approved/admin-blacklist': {
       id: '/_authenticated/_approved/admin-blacklist'
       path: '/admin-blacklist'
@@ -2534,6 +2554,7 @@ interface AuthenticatedApprovedRouteChildren {
   AuthenticatedApprovedAdminAffiliateBannersRoute: typeof AuthenticatedApprovedAdminAffiliateBannersRoute
   AuthenticatedApprovedAdminArchivedTicketsRoute: typeof AuthenticatedApprovedAdminArchivedTicketsRoute
   AuthenticatedApprovedAdminBlacklistRoute: typeof AuthenticatedApprovedAdminBlacklistRoute
+  AuthenticatedApprovedAdminBoroTeamSheetRoute: typeof AuthenticatedApprovedAdminBoroTeamSheetRoute
   AuthenticatedApprovedAdminBusinessHoursRoute: typeof AuthenticatedApprovedAdminBusinessHoursRoute
   AuthenticatedApprovedAdminCredentialsRoute: typeof AuthenticatedApprovedAdminCredentialsRoute
   AuthenticatedApprovedAdminDnsRoute: typeof AuthenticatedApprovedAdminDnsRoute
@@ -2594,6 +2615,8 @@ const AuthenticatedApprovedRouteChildren: AuthenticatedApprovedRouteChildren = {
     AuthenticatedApprovedAdminArchivedTicketsRoute,
   AuthenticatedApprovedAdminBlacklistRoute:
     AuthenticatedApprovedAdminBlacklistRoute,
+  AuthenticatedApprovedAdminBoroTeamSheetRoute:
+    AuthenticatedApprovedAdminBoroTeamSheetRoute,
   AuthenticatedApprovedAdminBusinessHoursRoute:
     AuthenticatedApprovedAdminBusinessHoursRoute,
   AuthenticatedApprovedAdminCredentialsRoute:
