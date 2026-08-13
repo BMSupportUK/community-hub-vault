@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ExternalLink, Tv, Cpu, MemoryStick, HardDrive, Wifi, Settings, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -34,6 +34,7 @@ type Price = {
   availability: string | null;
   source_url: string | null;
   scraped_at: string;
+  stock_checked_at: string | null;
 };
 
 type RatingRow = {
@@ -161,6 +162,7 @@ function DeviceCard({
   const listingUrl = brandStoreOnly ? device.amazon_url : (price?.source_url || device.amazon_url);
   const retailer = retailerFromUrl(listingUrl);
   const outOfStock = /out\s*of\s*stock|sold\s*out|unavailable|coming\s*soon/i.test(price?.availability ?? "");
+  const inStock = !outOfStock && /in\s*stock|available/i.test(price?.availability ?? "");
   const rangeLabel = formatRange(
     device.price_range_low_cents,
     device.price_range_high_cents,
@@ -190,8 +192,15 @@ function DeviceCard({
           {price && (
             <div className="shrink-0 flex flex-col items-end gap-1">
               <Badge variant="secondary" className="text-[10px]">{relTime(price.scraped_at)}</Badge>
-              {outOfStock && (
+              {outOfStock ? (
                 <Badge variant="destructive" className="text-[10px]">Out of stock</Badge>
+              ) : inStock ? (
+                <Badge className="text-[10px] bg-emerald-600 text-white hover:bg-emerald-600">In stock</Badge>
+              ) : null}
+              {price.stock_checked_at && (
+                <span className="text-[10px] text-muted-foreground">
+                  stock checked {relTime(price.stock_checked_at)}
+                </span>
               )}
             </div>
           )}
@@ -275,10 +284,13 @@ export function StreamingDevicesPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("streaming_device_prices")
-        .select("device_id, price_cents, currency, availability, source_url, scraped_at");
+        .select("device_id, price_cents, currency, availability, source_url, scraped_at, stock_checked_at");
       if (error) throw error;
       return (data ?? []) as Price[];
     },
+    // Stock status is refreshed server-side every few minutes; keep the page live.
+    refetchInterval: 60_000,
+    refetchOnWindowFocus: true,
   });
 
   const ratingsQuery = useQuery({
@@ -291,6 +303,30 @@ export function StreamingDevicesPage() {
       return (data ?? []) as RatingRow[];
     },
   });
+
+  // Push stock/price changes straight to the page as soon as they land.
+  useEffect(() => {
+    const channel = supabase
+      .channel("streaming-device-prices-live")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "streaming_device_prices" },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["streaming-device-prices"] });
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "streaming_devices" },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["streaming-devices"] });
+        },
+      )
+      .subscribe();
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
 
   const ratingSummaryMap = useMemo(() => {
     const m = new Map<string, RatingSummary>();

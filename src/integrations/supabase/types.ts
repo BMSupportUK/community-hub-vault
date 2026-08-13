@@ -4125,6 +4125,7 @@ export type Database = {
           price_cents: number | null
           scraped_at: string
           source_url: string | null
+          stock_checked_at: string | null
         }
         Insert: {
           availability?: string | null
@@ -4133,6 +4134,7 @@ export type Database = {
           price_cents?: number | null
           scraped_at?: string
           source_url?: string | null
+          stock_checked_at?: string | null
         }
         Update: {
           availability?: string | null
@@ -4141,6 +4143,7 @@ export type Database = {
           price_cents?: number | null
           scraped_at?: string
           source_url?: string | null
+          stock_checked_at?: string | null
         }
         Relationships: [
           {
