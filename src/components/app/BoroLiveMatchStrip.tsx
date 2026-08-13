@@ -91,7 +91,6 @@ export function BoroLiveMatchStrip() {
       cancelled = true;
       if (timer) window.clearTimeout(timer);
       window.clearInterval(tick);
-      window.clearInterval(tick);
       document.removeEventListener("visibilitychange", onVisible);
     };
   }, []);
