@@ -36,6 +36,7 @@ export type PublicPost = {
   is_op: boolean;
   is_pinned: boolean;
   created_at: string;
+  author_id: string;
   author_alias: string;
   author_avatar: string | null;
 };
@@ -347,6 +348,7 @@ export const getPublicTopic = createServerFn({ method: "GET" })
         is_op: p.is_op,
         is_pinned: !!p.is_pinned,
         created_at: p.created_at,
+        author_id: p.author_id,
         author_alias: aliases[p.author_id]?.alias ?? "Boro Fan",
         author_avatar: aliases[p.author_id]?.avatar ?? null,
       })),
