@@ -81,14 +81,14 @@ export function BoroMatchDetailTabs({
   live,
   kickoff,
 }: {
-  eventId: string;
+  eventId: string | null;
   slug?: string | null;
   live: boolean;
   kickoff?: string | null;
 }) {
   const fetchDetail = useServerFn(getBoroMatchDetail);
   const [detail, setDetail] = useState<MatchDetailDTO | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!!eventId);
   const [showMoreStats, setShowMoreStats] = useState(false);
   const [now, setNow] = useState(() => Date.now());
 
@@ -106,6 +106,11 @@ export function BoroMatchDetailTabs({
   useEffect(() => {
     let cancelled = false;
     let timer: number | undefined;
+    if (!eventId) {
+      setLoading(false);
+      setDetail(null);
+      return;
+    }
     const run = async () => {
       try {
         const d = await fetchDetail({ data: { eventId, slug: slug ?? undefined } });
