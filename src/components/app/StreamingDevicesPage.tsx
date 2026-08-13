@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ExternalLink, Tv, Cpu, MemoryStick, HardDrive, Wifi, Settings, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -303,6 +303,30 @@ export function StreamingDevicesPage() {
       return (data ?? []) as RatingRow[];
     },
   });
+
+  // Push stock/price changes straight to the page as soon as they land.
+  useEffect(() => {
+    const channel = supabase
+      .channel("streaming-device-prices-live")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "streaming_device_prices" },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["streaming-device-prices"] });
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "streaming_devices" },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["streaming-devices"] });
+        },
+      )
+      .subscribe();
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
 
   const ratingSummaryMap = useMemo(() => {
     const m = new Map<string, RatingSummary>();
