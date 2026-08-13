@@ -232,3 +232,8 @@ export function useAuth() {
   if (!c) throw new Error("useAuth must be used within AuthProvider");
   return c;
 }
+
+/** Auth context when available, otherwise null (safe on guest-only trees). */
+export function useOptionalAuth() {
+  return useContext(Ctx);
+}
