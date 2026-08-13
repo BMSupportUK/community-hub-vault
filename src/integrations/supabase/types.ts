@@ -1381,6 +1381,7 @@ export type Database = {
           fan_alias: string | null
           fan_avatar_url: string | null
           fav_player: string | null
+          is_private: boolean
           matchday_memory: string | null
           note: string | null
           reason: string | null
@@ -1397,6 +1398,7 @@ export type Database = {
           fan_alias?: string | null
           fan_avatar_url?: string | null
           fav_player?: string | null
+          is_private?: boolean
           matchday_memory?: string | null
           note?: string | null
           reason?: string | null
@@ -1413,6 +1415,7 @@ export type Database = {
           fan_alias?: string | null
           fan_avatar_url?: string | null
           fav_player?: string | null
+          is_private?: boolean
           matchday_memory?: string | null
           note?: string | null
           reason?: string | null
@@ -5393,6 +5396,14 @@ export type Database = {
       }
       fan_zone_block: { Args: { _other: string }; Returns: undefined }
       fan_zone_default_avatar_url: { Args: never; Returns: string }
+      fan_zone_privacy: {
+        Args: { _ids: string[] }
+        Returns: {
+          is_private: boolean
+          user_id: string
+        }[]
+      }
+      fan_zone_set_privacy: { Args: { _private: boolean }; Returns: boolean }
       fan_zone_staff_directory: {
         Args: never
         Returns: {
@@ -5504,6 +5515,7 @@ export type Database = {
           fav_player: string
           has_blocked_me: boolean
           is_blocked_by_me: boolean
+          is_private: boolean
           joined_at: string
           matchday_memory: string
           supporter_since: number

@@ -22,6 +22,7 @@ type Profile = {
   fav_player: string | null;
   matchday_memory: string | null;
   joined_at: string;
+  is_private: boolean;
   is_blocked_by_me: boolean;
   has_blocked_me: boolean;
 };
@@ -50,7 +51,7 @@ function FanProfilePage() {
   const [incomingRel, setIncomingRel] = useState<IncomingRel>({ kind: "none" });
   const [friendBusy, setFriendBusy] = useState(false);
   const [incomingBusy, setIncomingBusy] = useState(false);
-  const [mainProfile, setMainProfile] = useState<{ username: string | null; is_private: boolean | null } | null>(null);
+  const [fanPrivate, setFanPrivate] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -59,12 +60,7 @@ function FanProfilePage() {
     if (error) { toast.error("Couldn't load profile", { description: error.message }); return; }
     const row = (data ?? [])[0] as Profile | undefined;
     setP(row ?? null);
-    const { data: main } = await supabase
-      .from("profiles")
-      .select("username, is_private")
-      .eq("id", userId)
-      .maybeSingle();
-    setMainProfile(main ?? null);
+    setFanPrivate(!!row?.is_private);
     if (!user?.id || user.id === userId) {
       setFriendRel({ kind: "none" });
       setIncomingRel({ kind: "none" });
@@ -144,7 +140,7 @@ function FanProfilePage() {
 
   const isSelf = user?.id === userId;
   const isFriend = friendRel.kind === "friends" || incomingRel.kind === "accepted";
-  const mainLocked = !!mainProfile?.is_private && !isSelf && !isStaff && !isFriend;
+  const mainLocked = fanPrivate && !isSelf && !isStaff && !isFriend;
 
   return (
     <div
@@ -176,7 +172,7 @@ function FanProfilePage() {
           </div>
           <h2 className="font-display text-xl font-bold text-white mb-2">This profile is private</h2>
           <p className="text-sm text-white/70">
-            {p.fan_alias} has chosen to keep their profile private. Send a friend request — once accepted, you'll be able
+            {p.fan_alias} has chosen to keep their Fan Zone profile private. Send a friend request — once accepted, you'll be able
             to view their full profile.
           </p>
           {!isSelf && friendRel.kind === "none" && incomingRel.kind === "none" && (

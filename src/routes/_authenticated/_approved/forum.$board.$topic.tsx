@@ -401,13 +401,11 @@ function TopicPage() {
         avatar_url: a.fan_avatar_url ?? null,
       };
     });
-    const { data: mains } = await supabase
-      .from("profiles")
-      .select("id, username, is_private")
-      .in("id", unique);
-    (mains ?? []).forEach((m: { id: string; username: string | null; is_private: boolean | null }) => {
-      const existing = map[m.id] ?? { id: m.id, display_name: "Boro Fan", username: null, avatar_url: null };
-      map[m.id] = { ...existing, username: m.username, is_private: m.is_private };
+    // Fan Zone privacy only — never mix in BM Support profile identity here.
+    const { data: fanRows } = await supabase.rpc("fan_zone_privacy", { _ids: unique });
+    (fanRows ?? []).forEach((m: { user_id: string; is_private: boolean | null }) => {
+      const existing = map[m.user_id] ?? { id: m.user_id, display_name: "Boro Fan", username: null, avatar_url: null };
+      map[m.user_id] = { ...existing, is_private: m.is_private };
     });
     setProfiles((prev) => (replace ? map : { ...prev, ...map }));
   }, []);

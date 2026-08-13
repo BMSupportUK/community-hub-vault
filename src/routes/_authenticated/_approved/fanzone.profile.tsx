@@ -283,9 +283,9 @@ function PrivacyPanel({ userId }: { userId: string }) {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const { data } = await supabase.from("profiles").select("is_private").eq("id", userId).maybeSingle();
+      const { data } = await supabase.rpc("fan_zone_privacy", { _ids: [userId] });
       if (cancelled) return;
-      setIsPrivate(!!(data as any)?.is_private);
+      setIsPrivate(!!(data ?? [])[0]?.is_private);
       setLoading(false);
     })();
     return () => { cancelled = true; };
@@ -293,18 +293,18 @@ function PrivacyPanel({ userId }: { userId: string }) {
 
   const update = async (next: boolean) => {
     setSaving(true);
-    const { error } = await supabase.from("profiles").update({ is_private: next }).eq("id", userId);
+    const { error } = await supabase.rpc("fan_zone_set_privacy", { _private: next });
     setSaving(false);
     if (error) return toast.error("Couldn't update privacy", { description: error.message });
     setIsPrivate(next);
-    toast.success(next ? "Your profile is now private" : "Your profile is now visible to members");
+    toast.success(next ? "Your Fan Zone profile is now private" : "Your Fan Zone profile is now visible to members");
   };
 
   return (
     <div className="rounded-2xl border border-[#E11B22]/40 bg-black/35 backdrop-blur-md shadow-2xl text-white p-5 sm:p-6">
       <h2 className="font-display text-xl font-bold mb-1 flex items-center gap-2"><Lock className="size-4 text-[#E11B22]" />Privacy</h2>
       <p className="text-sm text-white/70 mb-4">
-        Control who can view your profile from the fan zone and the forums.
+        Control who can view your Boro Fan Zone profile. This is separate from your BM Support profile privacy.
       </p>
       {loading ? (
         <div className="grid place-items-center py-10"><Loader2 className="size-5 animate-spin text-white/70" /></div>
@@ -312,7 +312,7 @@ function PrivacyPanel({ userId }: { userId: string }) {
         <div className="space-y-4">
           <div className="flex items-start gap-3 rounded-xl border border-white/10 bg-white/5 p-4">
             <div className="flex-1 min-w-0">
-              <div className="font-semibold text-sm">Private profile</div>
+              <div className="font-semibold text-sm">Private Fan Zone profile</div>
               <p className="text-xs text-white/60 mt-1">
                 When on, only you, your friends and admins can view your profile. Other fans see a “Private profile” notice
                 and can send you a friend request.
@@ -330,7 +330,8 @@ function PrivacyPanel({ userId }: { userId: string }) {
             </button>
           </div>
           <p className="text-[11px] text-white/50">
-            Your fan zone posts and alias stay visible either way — only your profile page is restricted.
+            Your fan zone posts and alias stay visible either way — only your Fan Zone profile page is restricted. Your BM
+            Support profile has its own separate privacy setting.
           </p>
         </div>
       )}
