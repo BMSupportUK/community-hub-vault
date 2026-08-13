@@ -317,7 +317,10 @@ type EspnCompetitor = {
 async function fetchEspnCompetition(slug: string): Promise<Array<{
   date: string;
   competitions: Array<{ competitors: EspnCompetitor[]; venue?: { fullName?: string } }>;
-  status?: { type?: { completed?: boolean } };
+  status?: {
+    displayClock?: string;
+    type?: { completed?: boolean; state?: string; detail?: string; shortDetail?: string; description?: string };
+  };
 }>> {
   const url =
     slug === "eng.2"
@@ -332,6 +335,7 @@ async function fetchEspnCompetition(slug: string): Promise<Array<{
 async function fetchEspnBoro(): Promise<{
   lastResult: LastResult | null;
   nextFixture: NextFixture | null;
+  liveMatch: LiveMatch | null;
 }> {
   const results = await Promise.all(
     ESPN_COMPETITIONS.map(async (c) => {
@@ -354,7 +358,10 @@ async function fetchEspnBoro(): Promise<{
     }>;
     season?: { slug?: string };
     seasonType?: { name?: string };
-    status?: { type?: { completed?: boolean } };
+    status?: {
+      displayClock?: string;
+      type?: { completed?: boolean; state?: string; detail?: string; shortDetail?: string; description?: string };
+    };
     };
   }>;
 
@@ -402,6 +409,10 @@ async function fetchEspnBoro(): Promise<{
         // until the feed reports full time (fall back to a 4h safety window
         // in case the feed never flips the flag).
         completed: !!e.status?.type?.completed || t < now - 4 * 60 * 60 * 1000,
+        state: e.status?.type?.state ?? null,
+        statusDetail:
+          e.status?.type?.shortDetail ?? e.status?.type?.detail ?? e.status?.type?.description ?? null,
+        clock: e.status?.displayClock ?? null,
       };
     })
     .filter((x): x is NonNullable<typeof x> => x !== null && isBoroMatch(x))
@@ -439,7 +450,28 @@ async function fetchEspnBoro(): Promise<{
       }
     : null;
 
-  return { lastResult, nextFixture };
+  const liveRaw = parsed.find(
+    (p) =>
+      !p.completed &&
+      (p.state === "in" || (p.t <= now && p.t > now - 4 * 60 * 60 * 1000)),
+  );
+  const liveMatch: LiveMatch | null = liveRaw
+    ? {
+        kickoff: liveRaw.iso,
+        competition: liveRaw.competition,
+        home: liveRaw.home,
+        away: liveRaw.away,
+        homeScore: liveRaw.homeScore ?? 0,
+        awayScore: liveRaw.awayScore ?? 0,
+        statusDetail: liveRaw.statusDetail ?? "Live",
+        clock: liveRaw.clock ?? null,
+        inPlay: liveRaw.state === "in" || liveRaw.t <= now,
+        homeLogo: espnLogo(liveRaw.homeId),
+        awayLogo: espnLogo(liveRaw.awayId),
+      }
+    : null;
+
+  return { lastResult, nextFixture, liveMatch };
 }
 
 const overrideSchema = z.object({
