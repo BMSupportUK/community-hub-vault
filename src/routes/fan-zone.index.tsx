@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { listPublicBoards, type PublicBoard } from "@/lib/fan-zone-public.functions";
 import { getIcon } from "@/components/app/IconPicker";
 import { Lock, Pin, MessageSquare, ChevronRight } from "lucide-react";
-import { formatLastSeen } from "@/lib/relative-time";
+import { RelativeTime } from "@/components/app/RelativeTime";
 import { BoroMatchCentreBox } from "@/components/app/BoroMatchCentreBox";
 import { FanZoneShell } from "./fan-zone";
 
@@ -31,7 +31,7 @@ function FanZoneBoardsPage() {
   const boards = Route.useLoaderData() as PublicBoard[];
   return (
     <FanZoneShell>
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px] items-start">
+      <div className="grid gap-5 md:grid-cols-[minmax(0,1fr)_300px] xl:grid-cols-[minmax(0,1fr)_320px] items-start">
         <div className="min-w-0">
       <h1 className="font-display text-2xl sm:text-3xl font-black text-white">Boro Fan Zone — boards</h1>
       <p className="mt-1 text-sm text-white/70">
@@ -42,7 +42,7 @@ function FanZoneBoardsPage() {
           No boards yet.
         </div>
       ) : (
-        <div className="mt-5 grid gap-3 sm:grid-cols-2">
+        <div className="mt-5 grid gap-3 sm:grid-cols-2 md:grid-cols-1 xl:grid-cols-2">
           {boards.map((b) => {
             const Icon = getIcon(b.icon);
             return (
@@ -77,7 +77,7 @@ function FanZoneBoardsPage() {
                       <span className="text-white/30">·</span>
                       <span className="font-bold text-white">{Math.max(0, b.post_count - b.topic_count)}</span> replies
                     </span>
-                    {b.last_post_at ? <span>{formatLastSeen(b.last_post_at)}</span> : <span className="italic">No posts yet</span>}
+                    {b.last_post_at ? <span><RelativeTime iso={b.last_post_at} /></span> : <span className="italic">No posts yet</span>}
                   </div>
                 </div>
               </Link>
@@ -86,7 +86,7 @@ function FanZoneBoardsPage() {
         </div>
       )}
         </div>
-        <div className="lg:sticky lg:top-4 lg:self-start">
+        <div className="md:sticky md:top-4 md:self-start">
           <BoroMatchCentreBox />
         </div>
       </div>
