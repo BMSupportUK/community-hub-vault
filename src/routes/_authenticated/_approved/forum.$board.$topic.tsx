@@ -706,10 +706,11 @@ function TopicPage() {
   };
 
   const visiblePosts = useMemo(() => {
-    if (!posts) return { opPost: null as Post | null, replies: [] as Post[] };
+    if (!posts) return { opPost: null as Post | null, replies: [] as Post[], pinnedReplies: [] as Post[] };
     return {
       opPost: posts.find((p) => p.is_op) ?? null,
-      replies: posts.filter((p) => !p.is_op && !blocked.has(p.author_id)),
+      replies: posts.filter((p) => !p.is_op && !p.is_pinned && !blocked.has(p.author_id)),
+      pinnedReplies: posts.filter((p) => !p.is_op && p.is_pinned && !blocked.has(p.author_id)),
     };
   }, [posts, blocked]);
 
@@ -729,7 +730,7 @@ function TopicPage() {
       }}
     />
   );
-  const { opPost, replies } = visiblePosts;
+  const { opPost, replies, pinnedReplies } = visiblePosts;
 
   return (
     <div className="boro-topic-page space-y-4">
