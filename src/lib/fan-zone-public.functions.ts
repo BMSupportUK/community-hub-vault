@@ -106,7 +106,7 @@ export const listPublicBoards = createServerFn({ method: "GET" }).handler(async 
     supabaseAdmin
       .from("forum_boards")
       .select(
-        "id, name, slug, description, icon, is_pinned, is_locked, topic_count, post_count, last_post_at, sort_order",
+        "id, name, slug, description, icon, is_pinned, is_locked, topic_count, post_count, last_post_at, last_post_by, sort_order",
       )
       .order("is_pinned", { ascending: false })
       .order("sort_order"),
@@ -114,9 +114,40 @@ export const listPublicBoards = createServerFn({ method: "GET" }).handler(async 
   ]);
   const { data, error } = boardsResult;
   if (error) throw error;
-  return ((data ?? []) as PublicBoard[])
-    .filter((b) => visible.has(b.id))
-    .map((b) => ({
+  type Row = {
+    id: string;
+    name: string;
+    slug: string;
+    description: string;
+    icon: string;
+    is_pinned: boolean;
+    is_locked: boolean;
+    topic_count: number;
+    post_count: number;
+    last_post_at: string | null;
+    last_post_by: string | null;
+  };
+  const rows = ((data ?? []) as unknown as Row[]).filter((b) => visible.has(b.id));
+
+  // Latest topic title per visible board + alias of the last poster.
+  const boardIds = rows.filter((b) => b.last_post_at).map((b) => b.id);
+  const lastTitles: Record<string, string> = {};
+  if (boardIds.length) {
+    const { data: topics } = await supabaseAdmin
+      .from("forum_topics")
+      .select("id, title, board_id, last_post_at")
+      .in("board_id", boardIds)
+      .order("last_post_at", { ascending: false });
+    ((topics ?? []) as Array<{ title: string; board_id: string }>).forEach((t) => {
+      if (!lastTitles[t.board_id]) lastTitles[t.board_id] = t.title;
+    });
+  }
+  const aliases = await loadAliases(
+    supabaseAdmin,
+    rows.map((b) => b.last_post_by).filter((x): x is string => !!x),
+  );
+
+  return rows.map((b) => ({
     id: b.id,
     name: b.name,
     slug: b.slug,
@@ -127,7 +158,42 @@ export const listPublicBoards = createServerFn({ method: "GET" }).handler(async 
     topic_count: b.topic_count,
     post_count: b.post_count,
     last_post_at: b.last_post_at,
+    last_topic_title: lastTitles[b.id] ?? null,
+    last_poster_alias: b.last_post_by ? aliases[b.last_post_by]?.alias ?? "Boro Fan" : null,
   })) as PublicBoard[];
+});
+
+export type PublicForumStats = {
+  threads: number;
+  replies: number;
+  members: number;
+  latest_member: string | null;
+};
+
+/** Guest-visible forum statistics for the Fan Zone sidebar panel. */
+export const getPublicForumStats = createServerFn({ method: "GET" }).handler(async (): Promise<PublicForumStats> => {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const [boards, memberCount, latest] = await Promise.all([
+    supabaseAdmin.from("forum_boards").select("topic_count, post_count"),
+    supabaseAdmin
+      .from("fan_zone_members")
+      .select("user_id", { count: "exact", head: true })
+      .eq("status", "approved"),
+    supabaseAdmin
+      .from("fan_zone_members")
+      .select("fan_alias, decided_at")
+      .eq("status", "approved")
+      .order("decided_at", { ascending: false, nullsFirst: false })
+      .limit(1)
+      .maybeSingle(),
+  ]);
+  const rows = (boards.data ?? []) as Array<{ topic_count: number; post_count: number }>;
+  return {
+    threads: rows.reduce((s, b) => s + (b.topic_count || 0), 0),
+    replies: rows.reduce((s, b) => s + Math.max(0, (b.post_count || 0) - (b.topic_count || 0)), 0),
+    members: memberCount.count ?? 0,
+    latest_member: (latest.data as { fan_alias: string | null } | null)?.fan_alias?.trim() || null,
+  };
 });
 
 export const listPublicTopics = createServerFn({ method: "GET" })
