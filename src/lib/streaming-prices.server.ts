@@ -85,6 +85,7 @@ async function scrapeBrandStorePrice(url: string): Promise<ScrapeResult> {
       waitFor: 4000,
       location: { country: "GB", languages: ["en-GB"] },
       formats: [
+        "markdown",
         {
           type: "json",
           prompt:
@@ -110,12 +111,15 @@ async function scrapeBrandStorePrice(url: string): Promise<ScrapeResult> {
   const body = (await res.json()) as {
     data?: {
       json?: { price?: number | null; availability?: string | null };
+      markdown?: string | null;
       metadata?: Record<string, unknown>;
     };
     json?: { price?: number | null; availability?: string | null };
+    markdown?: string | null;
     metadata?: Record<string, unknown>;
   };
   const j = body.data?.json ?? body.json ?? {};
+  const markdown = body.data?.markdown ?? body.markdown ?? "";
   const meta = body.data?.metadata ?? body.metadata ?? {};
   const metaBlob = JSON.stringify(meta);
   // A retired/removed product redirects to the store's 404 page. It must be
@@ -132,10 +136,17 @@ async function scrapeBrandStorePrice(url: string): Promise<ScrapeResult> {
     };
   }
   const price = typeof j.price === "number" && j.price >= 5 && j.price <= 2000 ? j.price : null;
+  // Deterministic override: the brand store swaps its buy button for a
+  // "Notify me" / "Notify me when available" / "Sold out" call-to-action when a
+  // product cannot be bought. That always means out of stock, whatever the
+  // extraction says.
+  const notifyOnly = /notify\s*me|email\s*me\s*when|notify\s*when\s*available|out\s*of\s*stock|sold\s*out|coming\s*soon/i.test(
+    markdown ?? "",
+  );
   return {
     price_cents: price !== null ? Math.round(price * 100) : null,
     currency: "GBP",
-    availability: normalizeAvailability(j.availability),
+    availability: notifyOnly ? "Out of stock" : normalizeAvailability(j.availability),
     source_url: url,
   };
 }
