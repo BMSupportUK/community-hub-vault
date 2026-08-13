@@ -186,7 +186,7 @@ export async function syncBoroMatchEvents(opts?: { ignoreWindow?: boolean }): Pr
   let updated = 0;
 
   for (const ev of events) {
-    const fingerprint = `${ev.kind}|${ev.clock ?? ""}|${ev.team ?? ""}|${ev.players.join("/")}|${ev.homeScore ?? ""}-${ev.awayScore ?? ""}`;
+    const fingerprint = `${ev.kind}|${ev.clock ?? ""}|${ev.teamName ?? ""}|${ev.players.join("/")}|${ev.homeScore ?? ""}-${ev.awayScore ?? ""}`;
     const prev = byKey.get(ev.key);
     if (prev && prev.fingerprint === fingerprint) continue;
 
