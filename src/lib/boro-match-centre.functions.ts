@@ -195,6 +195,16 @@ const ESPN_TEAM_ID = "369"; // Middlesbrough (eng.2)
 const ESPN_SCHEDULE_URL = `https://site.api.espn.com/apis/site/v2/sports/soccer/eng.2/teams/${ESPN_TEAM_ID}/schedule`;
 const ESPN_STANDINGS_URL = `https://site.api.espn.com/apis/v2/sports/soccer/eng.2/standings`;
 
+// Boro play in more than one competition — the league feed alone misses cup
+// ties (e.g. the League Cup win over Wrexham), which used to leave a stale
+// league/play-off result showing as "last result".
+const ESPN_COMPETITIONS: Array<{ slug: string; label: string }> = [
+  { slug: "eng.2", label: "Championship" },
+  { slug: "eng.league_cup", label: "Carabao Cup" },
+  { slug: "eng.fa", label: "FA Cup" },
+  { slug: "eng.trophy", label: "EFL Trophy" },
+];
+
 async function fetchEspnStandings(): Promise<LeaguePosition | null> {
   const res = await fetch(ESPN_STANDINGS_URL, { headers: { accept: "application/json" } });
   if (!res.ok) throw new Error(`ESPN standings ${res.status}`);
