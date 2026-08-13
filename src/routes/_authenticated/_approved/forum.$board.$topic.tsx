@@ -60,6 +60,7 @@ type Post = {
   quote_of: string | null;
   edited_at: string | null;
   is_op: boolean;
+  is_pinned?: boolean;
   created_at: string;
 };
 type Profile = { id: string; display_name: string | null; username: string | null; avatar_url: string | null };
@@ -247,6 +248,8 @@ function isForumPost(value: Partial<Post> | undefined): value is Post {
 function sortPostsForTopic(a: Post, b: Post) {
   if (a.is_op && !b.is_op) return -1;
   if (!a.is_op && b.is_op) return 1;
+  if (a.is_pinned && !b.is_pinned) return -1;
+  if (!a.is_pinned && b.is_pinned) return 1;
   return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
 }
 
