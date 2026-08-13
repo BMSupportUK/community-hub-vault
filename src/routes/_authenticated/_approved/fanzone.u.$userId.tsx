@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import bgAsset from "@/assets/boro-fan-zone-profile-bg.jpg.asset.json";
 import { FanStatsBox, FanReputationBox } from "@/components/app/FanZoneStatsBoxes";
+import { FanRoleBadge, type FanStaffRole } from "@/components/app/FanRoleBadge";
 
 export const Route = createFileRoute("/_authenticated/_approved/fanzone/u/$userId")({
   component: FanProfilePage,
@@ -52,6 +53,25 @@ function FanProfilePage() {
   const [friendBusy, setFriendBusy] = useState(false);
   const [incomingBusy, setIncomingBusy] = useState(false);
   const [fanPrivate, setFanPrivate] = useState(false);
+  const [staffRole, setStaffRole] = useState<FanStaffRole | null>(null);
+
+  useEffect(() => {
+    void (async () => {
+      const { data } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", userId)
+        .in("role", ["admin", "boro_fan_zone_moderator"]);
+      const roles = (data ?? []).map((r) => r.role as string);
+      setStaffRole(
+        roles.includes("admin")
+          ? "admin"
+          : roles.includes("boro_fan_zone_moderator")
+            ? "boro_fan_zone_moderator"
+            : null,
+      );
+    })();
+  }, [userId]);
 
   const load = async () => {
     setLoading(true);
@@ -194,6 +214,11 @@ function FanProfilePage() {
               <div className="min-w-0">
                 <div className="text-[10px] uppercase tracking-[0.2em] font-bold opacity-80">Boro Fan Zone</div>
                 <h1 className="font-display text-2xl sm:text-3xl font-black truncate drop-shadow">{p.fan_alias}</h1>
+                {staffRole && (
+                  <div className="mt-1.5">
+                    <FanRoleBadge role={staffRole} />
+                  </div>
+                )}
                 <div className="text-xs opacity-80 mt-1">
                   Member since {new Date(p.joined_at).toLocaleDateString(undefined, { month: "short", year: "numeric" })}
                   {p.supporter_since ? <> · Boro fan since <span className="font-semibold">{p.supporter_since}</span></> : null}
