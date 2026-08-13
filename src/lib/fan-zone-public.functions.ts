@@ -192,14 +192,7 @@ export const getPublicFanZoneStaff = createServerFn({ method: "GET" }).handler(a
   const rows = (roles ?? []) as Array<{ user_id: string; role: PublicStaffMember["role"] }>;
   if (!rows.length) return [];
   const ids = rows.map((r) => r.user_id);
-  const [aliases, profiles] = await Promise.all([
-    loadAliases(supabaseAdmin, ids),
-    supabaseAdmin.from("profiles").select("id, display_name, username").in("id", ids),
-  ]);
-  const profMap: Record<string, { display_name: string | null; username: string | null }> = {};
-  ((profiles.data ?? []) as Array<{ id: string; display_name: string | null; username: string | null }>).forEach((p) => {
-    profMap[p.id] = { display_name: p.display_name, username: p.username };
-  });
+  const aliases = await loadAliases(supabaseAdmin, ids);
   const out = rows.map((r) => ({
     user_id: r.user_id,
     role: r.role,
