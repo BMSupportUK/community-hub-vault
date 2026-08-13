@@ -162,12 +162,8 @@ function MessagesLayout() {
                       const name = m.fan_alias || "Boro Fan";
                       return (
                         <li key={m.user_id}>
-                          <button
-                            type="button"
-                            disabled={starting === m.user_id}
-                            onClick={() => void startChat(m.user_id)}
-                            className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-surface-2/60 disabled:opacity-60"
-                          >
+                          <div className="w-full flex items-center gap-2 px-3 py-2 hover:bg-surface-2/60">
+                            <Link to="/fanzone/u/$userId" params={{ userId: m.user_id }} className="shrink-0">
                             {m.fan_avatar_url ? (
                               <img src={m.fan_avatar_url} alt="" className="size-7 rounded-full object-cover" />
                             ) : (
@@ -175,11 +171,15 @@ function MessagesLayout() {
                                 {name.slice(0, 1).toUpperCase()}
                               </div>
                             )}
-                            <div className="min-w-0 flex-1">
-                              <div className="text-xs font-semibold truncate">{name}</div>
-                            </div>
-                            {starting === m.user_id && <Loader2 className="size-3.5 animate-spin text-muted-foreground" />}
-                          </button>
+                            </Link>
+                            <Link to="/fanzone/u/$userId" params={{ userId: m.user_id }} className="min-w-0 flex-1 text-xs font-semibold truncate hover:text-[#E11B22] hover:underline">
+                              {name}
+                            </Link>
+                            <Button type="button" size="sm" variant="ghost" disabled={starting === m.user_id} onClick={() => void startChat(m.user_id)}>
+                              {starting === m.user_id ? <Loader2 className="size-3.5 animate-spin" /> : <MessageSquare className="size-3.5" />}
+                              <span className="sr-only">Message {name}</span>
+                            </Button>
+                          </div>
                         </li>
                       );
                     })}
@@ -196,24 +196,21 @@ function MessagesLayout() {
             <ul className="divide-y divide-border/60 max-h-[70vh] overflow-y-auto">
               {threads.map((t) => (
                 <li key={t.thread_id}>
-                  <Link
-                    to="/fanzone/messages/$thread"
-                    params={{ thread: t.thread_id }}
-                    activeProps={{ className: "bg-[#E11B22]/10" }}
-                    className="flex items-center gap-3 px-4 py-3 hover:bg-surface-2/60 transition-colors"
-                  >
-                    <img src={t.other_avatar} alt="" className="size-10 rounded-full object-cover ring-2 ring-white/10 shrink-0" />
+                  <div className="flex items-center gap-3 px-4 py-3 hover:bg-surface-2/60 transition-colors">
+                    <Link to="/fanzone/u/$userId" params={{ userId: t.other_user_id }} className="shrink-0">
+                      <img src={t.other_avatar} alt="" className="size-10 rounded-full object-cover ring-2 ring-white/10" />
+                    </Link>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center justify-between gap-2">
-                        <span className={`text-sm font-semibold truncate ${t.unread ? "text-foreground" : ""}`}>{t.other_alias}</span>
+                        <Link to="/fanzone/u/$userId" params={{ userId: t.other_user_id }} className={`text-sm font-semibold truncate hover:text-[#E11B22] hover:underline ${t.unread ? "text-foreground" : ""}`}>{t.other_alias}</Link>
                         {t.last_message_at && <span className="text-[10px] text-muted-foreground shrink-0">{formatLastSeen(t.last_message_at)}</span>}
                       </div>
-                      <p className={`text-xs truncate ${t.unread ? "text-foreground font-medium" : "text-muted-foreground"}`}>
+                      <Link to="/fanzone/messages/$thread" params={{ thread: t.thread_id }} className={`block text-xs truncate hover:underline ${t.unread ? "text-foreground font-medium" : "text-muted-foreground"}`}>
                         {t.last_body ? censorText(t.last_body) : "No messages yet"}
-                      </p>
+                      </Link>
                     </div>
                     {t.unread && <span className="size-2 rounded-full bg-[#E11B22] shrink-0" />}
-                  </Link>
+                  </div>
                 </li>
               ))}
             </ul>

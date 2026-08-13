@@ -156,7 +156,11 @@ function ThreadPage() {
           const senderAlias = aliases[m.sender_id];
           return (
             <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"} gap-2`}>
-              {!mine && senderAlias && <img src={senderAlias.fan_avatar_url} alt="" className="size-7 rounded-full shrink-0" />}
+              {!mine && senderAlias && (
+                <Link to="/fanzone/u/$userId" params={{ userId: senderAlias.user_id }} className="shrink-0">
+                  <img src={senderAlias.fan_avatar_url} alt="" className="size-7 rounded-full" />
+                </Link>
+              )}
               <div className="flex items-end gap-1 max-w-[75%]">
                 <div className={`rounded-2xl px-3 py-2 text-sm whitespace-pre-wrap break-words shadow-sm ${mine ? "bg-gradient-to-br from-[#E11B22] to-[#8B0F14] text-white" : "bg-surface-2 border border-border"}`}>
                   <div>{censorText(m.body)}</div>
