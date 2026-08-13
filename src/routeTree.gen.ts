@@ -109,6 +109,7 @@ import { Route as ApiPublicHooksNowpaymentsRouteImport } from './routes/api/publ
 import { Route as ApiPublicHooksNotifyRouteImport } from './routes/api/public/hooks/notify'
 import { Route as ApiPublicHooksFantasySquadSyncRouteImport } from './routes/api/public/hooks/fantasy-squad-sync'
 import { Route as ApiPublicHooksFantasySquadRemindersRouteImport } from './routes/api/public/hooks/fantasy-squad-reminders'
+import { Route as ApiPublicHooksDeviceReleaseWatchRouteImport } from './routes/api/public/hooks/device-release-watch'
 import { Route as ApiPublicHooksBoroPredictorInviteRouteImport } from './routes/api/public/hooks/boro-predictor-invite'
 import { Route as ApiPublicHooksBoroPredictionRemindersRouteImport } from './routes/api/public/hooks/boro-prediction-reminders'
 import { Route as ApiPublicHooksBoroFetchFixturesRouteImport } from './routes/api/public/hooks/boro-fetch-fixtures'
@@ -701,6 +702,12 @@ const ApiPublicHooksFantasySquadRemindersRoute =
     path: '/api/public/hooks/fantasy-squad-reminders',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksDeviceReleaseWatchRoute =
+  ApiPublicHooksDeviceReleaseWatchRouteImport.update({
+    id: '/api/public/hooks/device-release-watch',
+    path: '/api/public/hooks/device-release-watch',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksBoroPredictorInviteRoute =
   ApiPublicHooksBoroPredictorInviteRouteImport.update({
     id: '/api/public/hooks/boro-predictor-invite',
@@ -894,6 +901,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/boro-fetch-fixtures': typeof ApiPublicHooksBoroFetchFixturesRoute
   '/api/public/hooks/boro-prediction-reminders': typeof ApiPublicHooksBoroPredictionRemindersRoute
   '/api/public/hooks/boro-predictor-invite': typeof ApiPublicHooksBoroPredictorInviteRoute
+  '/api/public/hooks/device-release-watch': typeof ApiPublicHooksDeviceReleaseWatchRoute
   '/api/public/hooks/fantasy-squad-reminders': typeof ApiPublicHooksFantasySquadRemindersRoute
   '/api/public/hooks/fantasy-squad-sync': typeof ApiPublicHooksFantasySquadSyncRoute
   '/api/public/hooks/notify': typeof ApiPublicHooksNotifyRoute
@@ -1008,6 +1016,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/boro-fetch-fixtures': typeof ApiPublicHooksBoroFetchFixturesRoute
   '/api/public/hooks/boro-prediction-reminders': typeof ApiPublicHooksBoroPredictionRemindersRoute
   '/api/public/hooks/boro-predictor-invite': typeof ApiPublicHooksBoroPredictorInviteRoute
+  '/api/public/hooks/device-release-watch': typeof ApiPublicHooksDeviceReleaseWatchRoute
   '/api/public/hooks/fantasy-squad-reminders': typeof ApiPublicHooksFantasySquadRemindersRoute
   '/api/public/hooks/fantasy-squad-sync': typeof ApiPublicHooksFantasySquadSyncRoute
   '/api/public/hooks/notify': typeof ApiPublicHooksNotifyRoute
@@ -1128,6 +1137,7 @@ export interface FileRoutesById {
   '/api/public/hooks/boro-fetch-fixtures': typeof ApiPublicHooksBoroFetchFixturesRoute
   '/api/public/hooks/boro-prediction-reminders': typeof ApiPublicHooksBoroPredictionRemindersRoute
   '/api/public/hooks/boro-predictor-invite': typeof ApiPublicHooksBoroPredictorInviteRoute
+  '/api/public/hooks/device-release-watch': typeof ApiPublicHooksDeviceReleaseWatchRoute
   '/api/public/hooks/fantasy-squad-reminders': typeof ApiPublicHooksFantasySquadRemindersRoute
   '/api/public/hooks/fantasy-squad-sync': typeof ApiPublicHooksFantasySquadSyncRoute
   '/api/public/hooks/notify': typeof ApiPublicHooksNotifyRoute
@@ -1247,6 +1257,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/boro-fetch-fixtures'
     | '/api/public/hooks/boro-prediction-reminders'
     | '/api/public/hooks/boro-predictor-invite'
+    | '/api/public/hooks/device-release-watch'
     | '/api/public/hooks/fantasy-squad-reminders'
     | '/api/public/hooks/fantasy-squad-sync'
     | '/api/public/hooks/notify'
@@ -1361,6 +1372,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/boro-fetch-fixtures'
     | '/api/public/hooks/boro-prediction-reminders'
     | '/api/public/hooks/boro-predictor-invite'
+    | '/api/public/hooks/device-release-watch'
     | '/api/public/hooks/fantasy-squad-reminders'
     | '/api/public/hooks/fantasy-squad-sync'
     | '/api/public/hooks/notify'
@@ -1480,6 +1492,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/boro-fetch-fixtures'
     | '/api/public/hooks/boro-prediction-reminders'
     | '/api/public/hooks/boro-predictor-invite'
+    | '/api/public/hooks/device-release-watch'
     | '/api/public/hooks/fantasy-squad-reminders'
     | '/api/public/hooks/fantasy-squad-sync'
     | '/api/public/hooks/notify'
@@ -1536,6 +1549,7 @@ export interface RootRouteChildren {
   ApiPublicHooksBoroFetchFixturesRoute: typeof ApiPublicHooksBoroFetchFixturesRoute
   ApiPublicHooksBoroPredictionRemindersRoute: typeof ApiPublicHooksBoroPredictionRemindersRoute
   ApiPublicHooksBoroPredictorInviteRoute: typeof ApiPublicHooksBoroPredictorInviteRoute
+  ApiPublicHooksDeviceReleaseWatchRoute: typeof ApiPublicHooksDeviceReleaseWatchRoute
   ApiPublicHooksFantasySquadRemindersRoute: typeof ApiPublicHooksFantasySquadRemindersRoute
   ApiPublicHooksFantasySquadSyncRoute: typeof ApiPublicHooksFantasySquadSyncRoute
   ApiPublicHooksNotifyRoute: typeof ApiPublicHooksNotifyRoute
@@ -2260,6 +2274,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksFantasySquadRemindersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/device-release-watch': {
+      id: '/api/public/hooks/device-release-watch'
+      path: '/api/public/hooks/device-release-watch'
+      fullPath: '/api/public/hooks/device-release-watch'
+      preLoaderRoute: typeof ApiPublicHooksDeviceReleaseWatchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/boro-predictor-invite': {
       id: '/api/public/hooks/boro-predictor-invite'
       path: '/api/public/hooks/boro-predictor-invite'
@@ -2691,6 +2712,7 @@ const rootRouteChildren: RootRouteChildren = {
     ApiPublicHooksBoroPredictionRemindersRoute,
   ApiPublicHooksBoroPredictorInviteRoute:
     ApiPublicHooksBoroPredictorInviteRoute,
+  ApiPublicHooksDeviceReleaseWatchRoute: ApiPublicHooksDeviceReleaseWatchRoute,
   ApiPublicHooksFantasySquadRemindersRoute:
     ApiPublicHooksFantasySquadRemindersRoute,
   ApiPublicHooksFantasySquadSyncRoute: ApiPublicHooksFantasySquadSyncRoute,
