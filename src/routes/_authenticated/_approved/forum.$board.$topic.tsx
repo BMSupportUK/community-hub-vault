@@ -158,7 +158,9 @@ function TopicPostArticleComponent({
               <Pin className="size-2.5" />Pinned
             </span>
           )}
-          <span className="text-muted-foreground text-[11px] ml-1.5"> · #{displayIndex} · {formatLastSeen(post.created_at)}</span>
+          <span className="text-muted-foreground text-[11px] ml-1.5">
+            {displayIndex > 0 ? ` · #${displayIndex}` : ""} · {formatLastSeen(post.created_at)}
+          </span>
           {post.edited_at && (
             <button onClick={() => onOpenHistory(post)} className="ml-2 inline-flex items-center gap-1 text-[10px] text-[#F4B400] hover:underline">
               <History className="size-3" />edited {formatLastSeen(post.edited_at)}
