@@ -347,7 +347,7 @@ async function fetchEspnBoro(): Promise<{
     ESPN_COMPETITIONS.map(async (c) => {
       try {
         const events = await fetchEspnCompetition(c.slug);
-        return events.map((e) => ({ e, label: c.label }));
+        return events.map((e) => ({ e, label: c.label, slug: c.slug }));
       } catch (err) {
         console.error("[boro-match-centre] ESPN competition fetch failed", c.slug, err);
         return [];
@@ -356,7 +356,9 @@ async function fetchEspnBoro(): Promise<{
   );
   const events = results.flat() as Array<{
     label: string;
+    slug: string;
     e: {
+    id?: string;
     date: string;
     competitions: Array<{
       competitors: EspnCompetitor[];
@@ -373,7 +375,7 @@ async function fetchEspnBoro(): Promise<{
 
   const now = Date.now();
   const parsed = events
-    .map(({ e, label }) => {
+    .map(({ e, label, slug }) => {
       const t = Date.parse(e.date);
       const comp = e.competitions?.[0];
       if (!comp) return null;
@@ -404,6 +406,8 @@ async function fetchEspnBoro(): Promise<{
         t,
         iso: new Date(t).toISOString(),
         competition: label,
+        eventId: e.id ?? null,
+        espnSlug: slug,
         home: home.team.displayName ?? "",
         away: away.team.displayName ?? "",
         homeId: home.team.id ?? null,
@@ -441,6 +445,8 @@ async function fetchEspnBoro(): Promise<{
         venue: lastRaw.venue,
         homeLogo: espnLogo(lastRaw.homeId),
         awayLogo: espnLogo(lastRaw.awayId),
+        eventId: lastRaw.eventId,
+        espnSlug: lastRaw.espnSlug,
       }
     : null;
 
@@ -453,6 +459,8 @@ async function fetchEspnBoro(): Promise<{
         venue: nextRaw.venue,
         homeLogo: espnLogo(nextRaw.homeId),
         awayLogo: espnLogo(nextRaw.awayId),
+        eventId: nextRaw.eventId,
+        espnSlug: nextRaw.espnSlug,
       }
     : null;
 
@@ -474,6 +482,8 @@ async function fetchEspnBoro(): Promise<{
         inPlay: liveRaw.state === "in" || liveRaw.t <= now,
         homeLogo: espnLogo(liveRaw.homeId),
         awayLogo: espnLogo(liveRaw.awayId),
+        eventId: liveRaw.eventId,
+        espnSlug: liveRaw.espnSlug,
       }
     : null;
 
