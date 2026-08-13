@@ -360,3 +360,113 @@ export const getPublicTopic = createServerFn({ method: "GET" })
       })),
     };
   });
+export type PublicFanProfile = {
+  user_id: string;
+  fan_alias: string;
+  fan_avatar_url: string | null;
+  bio: string | null;
+  supporter_since: number | null;
+  fav_player: string | null;
+  matchday_memory: string | null;
+  joined_at: string | null;
+  is_private: boolean;
+  stats: { topics: number; posts: number; friends: number; reactions: number } | null;
+};
+
+/** Guest-viewable Boro Fan Zone profile (read-only, respects the private flag). */
+export const getPublicFanProfile = createServerFn({ method: "GET" })
+  .inputValidator((d) => z.object({ userId: z.string().uuid() }).parse(d))
+  .handler(async ({ data }): Promise<PublicFanProfile | null> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const [memberRes, profileRes, roleRes] = await Promise.all([
+      supabaseAdmin
+        .from("fan_zone_members")
+        .select("user_id, fan_alias, fan_avatar_url, bio, supporter_since, fav_player, matchday_memory, created_at, status")
+        .eq("user_id", data.userId)
+        .maybeSingle(),
+      supabaseAdmin.from("profiles").select("id, display_name, username, is_private").eq("id", data.userId).maybeSingle(),
+      supabaseAdmin
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", data.userId)
+        .in("role", ["admin", "boro_fan_zone_moderator"]),
+    ]);
+
+    const m = memberRes.data as
+      | {
+          user_id: string;
+          fan_alias: string | null;
+          fan_avatar_url: string | null;
+          bio: string | null;
+          supporter_since: number | null;
+          fav_player: string | null;
+          matchday_memory: string | null;
+          created_at: string | null;
+          status: string | null;
+        }
+      | null;
+    const prof = profileRes.data as
+      | { display_name: string | null; username: string | null; is_private: boolean | null }
+      | null;
+    const isStaff = ((roleRes.data ?? []) as Array<{ role: string }>).length > 0;
+
+    // Only Fan Zone members (or listed staff) have a Fan Zone profile.
+    if (!isStaff && (!m || m.status !== "approved")) return null;
+
+    const isPrivate = !!prof?.is_private;
+    const alias = m?.fan_alias?.trim() || prof?.display_name?.trim() || prof?.username?.trim() || "Boro Fan";
+
+    if (isPrivate) {
+      return {
+        user_id: data.userId,
+        fan_alias: alias,
+        fan_avatar_url: m?.fan_avatar_url || null,
+        bio: null,
+        supporter_since: null,
+        fav_player: null,
+        matchday_memory: null,
+        joined_at: null,
+        is_private: true,
+        stats: null,
+      };
+    }
+
+    const [topics, posts, friends, postIds] = await Promise.all([
+      supabaseAdmin.from("forum_topics").select("id", { count: "exact", head: true }).eq("author_id", data.userId),
+      supabaseAdmin.from("forum_posts").select("id", { count: "exact", head: true }).eq("author_id", data.userId),
+      supabaseAdmin
+        .from("fan_zone_friendships")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "accepted")
+        .eq("addressee_id", data.userId),
+      supabaseAdmin.from("forum_posts").select("id").eq("author_id", data.userId),
+    ]);
+    const ids = ((postIds.data ?? []) as Array<{ id: string }>).map((p) => p.id);
+    let reactions = 0;
+    if (ids.length) {
+      const { count } = await supabaseAdmin
+        .from("forum_post_reactions")
+        .select("post_id", { count: "exact", head: true })
+        .in("post_id", ids)
+        .neq("user_id", data.userId);
+      reactions = count ?? 0;
+    }
+
+    return {
+      user_id: data.userId,
+      fan_alias: alias,
+      fan_avatar_url: m?.fan_avatar_url || null,
+      bio: m?.bio ?? null,
+      supporter_since: m?.supporter_since ?? null,
+      fav_player: m?.fav_player ?? null,
+      matchday_memory: m?.matchday_memory ?? null,
+      joined_at: m?.created_at ?? null,
+      is_private: false,
+      stats: {
+        topics: topics.count ?? 0,
+        posts: posts.count ?? 0,
+        friends: friends.count ?? 0,
+        reactions,
+      },
+    };
+  });
