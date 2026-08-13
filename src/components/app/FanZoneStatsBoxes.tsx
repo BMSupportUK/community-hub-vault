@@ -65,6 +65,7 @@ export function FanStatsBox({ userId }: { userId: string }) {
 }
 
 export function FanReputationBox({ userId }: { userId: string }) {
+  const profileTo = useFanProfileTo();
   const [data, setData] = useState<{ score: number; likes: number; dislikes: number; topFans: Array<{ user_id: string; alias: string | null; avatar: string | null; count: number }> } | null>(null);
 
   useEffect(() => {
