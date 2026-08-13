@@ -119,13 +119,20 @@ export const getBoroMatchCentre = createServerFn({ method: "GET" }).handler(
       Number.isFinite(koMs) &&
       Date.now() >= koMs - 15 * 60 * 1000 &&
       Date.now() <= koMs + 5 * 60 * 60 * 1000;
-    const maxAgeMs = liveWindow ? 60 * 1000 : 30 * 60 * 1000;
+    // While a game is in play refresh every ~20s so the live strip ticks along.
+    const maxAgeMs = liveWindow ? 20 * 1000 : 30 * 60 * 1000;
     const stale =
       !dto.fetchedAt || Date.now() - new Date(dto.fetchedAt).getTime() > maxAgeMs;
     const needsFetch =
       (stale || invalidCachedNext || invalidCachedLast) &&
       (!dto.lastResultManual || !dto.nextFixtureManual || !dto.leaguePositionManual);
-    if (!needsFetch) return dto;
+    if (!needsFetch) {
+      const cached =
+        liveMatchCache && Date.now() - liveMatchCache.at < 60 * 1000
+          ? liveMatchCache.value
+          : null;
+      return { ...dto, liveMatch: cached };
+    }
     try {
       const [live, standings] = await Promise.all([
         fetchEspnBoro(),
@@ -214,10 +221,11 @@ export const getBoroMatchCentre = createServerFn({ method: "GET" }).handler(
         .select("*")
         .eq("id", "singleton")
         .maybeSingle();
-      return rowToDto(fresh);
+      liveMatchCache = { at: Date.now(), value: live.liveMatch ?? null };
+      return { ...rowToDto(fresh), liveMatch: live.liveMatch ?? null };
     } catch (e) {
       console.error("[boro-match-centre] ESPN fetch failed", e);
-      return dto;
+      return { ...dto, liveMatch: liveMatchCache?.value ?? null };
     }
   },
 );
