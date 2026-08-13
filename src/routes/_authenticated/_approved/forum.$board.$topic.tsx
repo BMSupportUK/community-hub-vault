@@ -122,6 +122,9 @@ function TopicPostArticleComponent({
 }: TopicPostArticleProps) {
   const navigate = useNavigate();
   const name = author?.display_name || author?.username || "Someone";
+  const profileLink = author?.username
+    ? ({ to: "/u/$username", params: { username: author.username } } as const)
+    : ({ to: "/fanzone/u/$userId", params: { userId: post.author_id } } as const);
 
   return (
     <article
@@ -139,21 +142,25 @@ function TopicPostArticleComponent({
         }`}
       >
         <Link
-          to="/fanzone/u/$userId"
-          params={{ userId: post.author_id }}
+          {...profileLink}
           className="size-8 rounded-full bg-gradient-to-br from-[#E11B22] to-[#8B0F14] grid place-items-center text-[11px] font-bold text-white overflow-hidden ring-2 ring-white/10 shadow-sm hover:ring-[#E11B22]/60 transition"
-          title={`View ${name}'s Fan Zone profile`}
+          title={author?.is_private ? `${name}'s profile is private` : `View ${name}'s profile`}
         >
           {author?.avatar_url ? <img src={author.avatar_url} alt="" className="size-8 object-cover" loading="lazy" decoding="async" /> : name.slice(0, 1).toUpperCase()}
         </Link>
         <div className="min-w-0">
           <Link
-            to="/fanzone/u/$userId"
-            params={{ userId: post.author_id }}
-            className="font-semibold text-sm text-foreground hover:text-[#E11B22] transition-colors"
+            {...profileLink}
+            className="font-semibold text-sm text-foreground hover:text-[#E11B22] transition-colors hover:underline"
+            title={author?.is_private ? `${name}'s profile is private` : `View ${name}'s profile`}
           >
             {name}
           </Link>
+          {author?.is_private && (
+            <span className="ml-2 inline-flex items-center gap-1 rounded-md bg-white/10 text-muted-foreground text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 align-middle">
+              <Lock className="size-2.5" />Private profile
+            </span>
+          )}
           {post.is_op && (
             <span className="ml-2 inline-block rounded-md bg-[#E11B22] text-white text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 align-middle shadow-sm">
               OP
