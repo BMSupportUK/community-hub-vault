@@ -103,6 +103,7 @@ export function FanZoneShell({ children }: { children: React.ReactNode }) {
             </div>
           </div>
         )}
+        <BoroLiveMatchStrip />
         <div className="rounded-2xl border border-white/15 bg-black/62 backdrop-blur-md p-5 sm:p-7 shadow-2xl">
           {children}
         </div>
