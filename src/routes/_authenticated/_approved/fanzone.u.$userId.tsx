@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ArrowLeft, Loader2, MessageSquare, Ban, ShieldOff, Heart, Clock, Quote, UserCheck, UserPlus } from "lucide-react";
+import { ArrowLeft, Loader2, MessageSquare, Ban, ShieldOff, Heart, Clock, Quote, UserCheck, UserPlus, Lock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useFanZoneMembership } from "@/hooks/use-fan-zone";
@@ -50,6 +50,7 @@ function FanProfilePage() {
   const [incomingRel, setIncomingRel] = useState<IncomingRel>({ kind: "none" });
   const [friendBusy, setFriendBusy] = useState(false);
   const [incomingBusy, setIncomingBusy] = useState(false);
+  const [mainProfile, setMainProfile] = useState<{ username: string | null; is_private: boolean | null } | null>(null);
 
   const load = async () => {
     setLoading(true);
@@ -58,6 +59,12 @@ function FanProfilePage() {
     if (error) { toast.error("Couldn't load profile", { description: error.message }); return; }
     const row = (data ?? [])[0] as Profile | undefined;
     setP(row ?? null);
+    const { data: main } = await supabase
+      .from("profiles")
+      .select("username, is_private")
+      .eq("id", userId)
+      .maybeSingle();
+    setMainProfile(main ?? null);
     if (!user?.id || user.id === userId) {
       setFriendRel({ kind: "none" });
       setIncomingRel({ kind: "none" });
