@@ -4,6 +4,7 @@ import { getPublicTopic, type PublicPost } from "@/lib/fan-zone-public.functions
 import { ForumPostBody } from "@/components/app/ForumPostBody";
 import { formatLastSeen } from "@/lib/relative-time";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { FanZoneShell } from "./fan-zone";
 
 export const Route = createFileRoute("/fan-zone/$board/$topic")({
