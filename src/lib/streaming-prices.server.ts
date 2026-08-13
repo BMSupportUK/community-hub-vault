@@ -178,14 +178,22 @@ async function scrapeConfiguredRetailerPrice(url: string): Promise<ScrapeResult 
   });
   if (!res.ok) return null;
   const html = await res.text();
-  const price = host.endsWith("world-of-satellite.co.uk")
+  const isWorldOfSatellite = host.endsWith("world-of-satellite.co.uk");
+  const price = isWorldOfSatellite
     ? extractWorldOfSatellitePrice(html)
     : extractFirstGbpPrice(html);
   if (price === null) return null;
+  const availability = isWorldOfSatellite
+    ? extractWorldOfSatelliteAvailability(html)
+    : /out\s+of\s+stock/i.test(html)
+      ? "Out of stock"
+      : /in\s+stock/i.test(html)
+        ? "In stock"
+        : null;
   return {
     price_cents: Math.round(price * 100),
     currency: "GBP",
-    availability: /out\s+of\s+stock/i.test(html) ? "Out of stock" : /in\s+stock/i.test(html) ? "In stock" : null,
+    availability,
     source_url: pageUrl,
   };
 }
@@ -210,6 +218,15 @@ function extractWorldOfSatellitePrice(html: string): number | null {
     .filter((n) => Number.isFinite(n) && n >= 5 && n <= 2000);
   if (prices.length === 0) return null;
   return Math.min(...prices);
+}
+
+function extractWorldOfSatelliteAvailability(html: string): string | null {
+  const availabilityLabel = html.search(/Availability:/i);
+  if (availabilityLabel < 0) return null;
+  const productAvailability = html.slice(availabilityLabel, availabilityLabel + 600);
+  if (/out\s+of\s+stock|sold\s*out|pre-?order/i.test(productAvailability)) return "Out of stock";
+  if (/in\s+stock|available/i.test(productAvailability)) return "In stock";
+  return null;
 }
 
 // Scrape a single Amazon UK product page for the current GBP price.
