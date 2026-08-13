@@ -363,6 +363,8 @@ export type PublicFanProfile = {
   stats: { topics: number; posts: number; friends: number; reactions: number } | null;
 };
 
+export type FanStaffRoleValue = "admin" | "boro_fan_zone_moderator" | null;
+
 /** Guest-viewable Boro Fan Zone profile (read-only, respects the private flag). */
 export const getPublicFanProfile = createServerFn({ method: "GET" })
   .inputValidator((d) => z.object({ userId: z.string().uuid() }).parse(d))
@@ -398,6 +400,12 @@ export const getPublicFanProfile = createServerFn({ method: "GET" })
         }
       | null;
     const isStaff = ((roleRes.data ?? []) as Array<{ role: string }>).length > 0;
+    const staffRoles = ((roleRes.data ?? []) as Array<{ role: string }>).map((r) => r.role);
+    const staffRole: FanStaffRoleValue = staffRoles.includes("admin")
+      ? "admin"
+      : staffRoles.includes("boro_fan_zone_moderator")
+        ? "boro_fan_zone_moderator"
+        : null;
 
     // Only Fan Zone members (or listed staff) have a Fan Zone profile.
     if (!isStaff && (!m || m.status !== "approved")) return null;
@@ -418,6 +426,7 @@ export const getPublicFanProfile = createServerFn({ method: "GET" })
         joined_at: null,
         is_private: true,
         stats: null,
+        staff_role: staffRole,
       };
     }
 
@@ -458,5 +467,6 @@ export const getPublicFanProfile = createServerFn({ method: "GET" })
         friends: friends.count ?? 0,
         reactions,
       },
+      staff_role: staffRole,
     };
   });
