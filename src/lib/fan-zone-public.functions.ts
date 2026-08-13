@@ -361,6 +361,7 @@ export type PublicFanProfile = {
   joined_at: string | null;
   is_private: boolean;
   stats: { topics: number; posts: number; friends: number; reactions: number } | null;
+  staff_role: "admin" | "boro_fan_zone_moderator" | null;
 };
 
 export type FanStaffRoleValue = "admin" | "boro_fan_zone_moderator" | null;
