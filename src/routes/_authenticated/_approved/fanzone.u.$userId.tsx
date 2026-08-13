@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ArrowLeft, Loader2, MessageSquare, Ban, ShieldOff, Heart, Clock, Quote, UserCheck, UserPlus } from "lucide-react";
+import { ArrowLeft, Loader2, MessageSquare, Ban, ShieldOff, Heart, Clock, Quote, UserCheck, UserPlus, Lock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useFanZoneMembership } from "@/hooks/use-fan-zone";
@@ -50,6 +50,7 @@ function FanProfilePage() {
   const [incomingRel, setIncomingRel] = useState<IncomingRel>({ kind: "none" });
   const [friendBusy, setFriendBusy] = useState(false);
   const [incomingBusy, setIncomingBusy] = useState(false);
+  const [mainProfile, setMainProfile] = useState<{ username: string | null; is_private: boolean | null } | null>(null);
 
   const load = async () => {
     setLoading(true);
@@ -58,6 +59,12 @@ function FanProfilePage() {
     if (error) { toast.error("Couldn't load profile", { description: error.message }); return; }
     const row = (data ?? [])[0] as Profile | undefined;
     setP(row ?? null);
+    const { data: main } = await supabase
+      .from("profiles")
+      .select("username, is_private")
+      .eq("id", userId)
+      .maybeSingle();
+    setMainProfile(main ?? null);
     if (!user?.id || user.id === userId) {
       setFriendRel({ kind: "none" });
       setIncomingRel({ kind: "none" });
@@ -136,6 +143,8 @@ function FanProfilePage() {
   };
 
   const isSelf = user?.id === userId;
+  const isFriend = friendRel.kind === "friends" || incomingRel.kind === "accepted";
+  const mainLocked = !!mainProfile?.is_private && !isSelf && !isStaff && !isFriend;
 
   return (
     <div
@@ -160,6 +169,26 @@ function FanProfilePage() {
         <div className="grid place-items-center py-20 text-white/80"><Loader2 className="size-5 animate-spin" /></div>
       ) : !p ? (
         <div className="rounded-2xl border border-white/20 bg-black/75 backdrop-blur-md p-10 text-center text-white/80 shadow-2xl">This member's fan zone profile is not available.</div>
+      ) : mainLocked ? (
+        <div className="rounded-2xl border border-white/20 bg-black/75 backdrop-blur-md p-10 text-center text-white/80 shadow-2xl max-w-xl mx-auto">
+          <div className="mx-auto mb-3 grid size-12 place-items-center rounded-full bg-white/10">
+            <Lock className="size-5 text-amber-300" />
+          </div>
+          <h2 className="font-display text-xl font-bold text-white mb-2">This profile is private</h2>
+          <p className="text-sm text-white/70">
+            {p.fan_alias} has chosen to keep their profile private. Send a friend request — once accepted, you'll be able
+            to view their full profile.
+          </p>
+          {!isSelf && friendRel.kind === "none" && incomingRel.kind === "none" && (
+            <Button
+              className="mt-4 bg-[#E11B22] hover:bg-[#c11419] text-white"
+              disabled={friendBusy}
+              onClick={sendFriendRequest}
+            >
+              <UserPlus className="size-4 mr-1.5" />Send friend request
+            </Button>
+          )}
+        </div>
       ) : (
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px] items-start">
         <div className="rounded-2xl border border-[#E11B22]/45 bg-black/75 backdrop-blur-md shadow-2xl text-white overflow-hidden min-w-0">
