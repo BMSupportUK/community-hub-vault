@@ -2,7 +2,7 @@ import { createFileRoute, Link, Outlet, useNavigate } from "@tanstack/react-rout
 import { useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { LandingHeader } from "@/components/LandingHeader";
-import { LogIn, Trophy, Users } from "lucide-react";
+import { LogIn, Trophy, Users, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import boroHero from "@/assets/boro-hero.jpg";
 import boroBadge from "@/assets/boro-fan-zone-badge.png";
