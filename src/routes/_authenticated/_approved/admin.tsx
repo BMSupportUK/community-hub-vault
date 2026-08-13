@@ -501,6 +501,7 @@ function DashboardBody() {
     { to: "/admin-ticket-categories", label: "Ticket categories", desc: "Edit the names and descriptions of support ticket categories.", icon: LifeBuoy },
     { to: "/admin-archived-tickets", label: "Archived tickets", desc: "Browse and restore tickets auto-archived 7 days after closing.", icon: LifeBuoy },
     { to: "/admin-fan-zone", label: "Boro Fan Zone", desc: "Approve, reject or revoke fan-zone access for Middlesbrough F.C. supporters.", icon: Trophy },
+    { to: "/admin-boro-team-sheet", label: "Boro team sheets", desc: "Watch the official Middlesbrough line-up post and add it to the match day thread automatically.", icon: Trophy },
     { to: "/admin-predictions", label: "World Cup predictions", desc: "Manage fixtures, scores, leaderboard and prize settings for the 2026 predictions game.", icon: Trophy },
     { to: "/admin-fantasy-motm", label: "Fantasy Man of the Match", desc: "Award the 3-point Man of the Match bonus for each MFC Fantasy Manager gameweek.", icon: Trophy },
     { to: "/admin-fantasy-scoring", label: "Fantasy points scoring", desc: "Change or remove the points awarded for every match stat in the MFC Fantasy Manager.", icon: Trophy, adminOnly: true },

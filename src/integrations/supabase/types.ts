@@ -446,6 +446,76 @@ export type Database = {
           },
         ]
       }
+      boro_team_sheets: {
+        Row: {
+          caption: string | null
+          created_at: string
+          fixture_id: string | null
+          id: string
+          image_url: string
+          is_update: boolean
+          post_id: string | null
+          posted_at: string
+          source_url: string | null
+          status: string
+          topic_id: string | null
+          tweet_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          caption?: string | null
+          created_at?: string
+          fixture_id?: string | null
+          id?: string
+          image_url: string
+          is_update?: boolean
+          post_id?: string | null
+          posted_at?: string
+          source_url?: string | null
+          status?: string
+          topic_id?: string | null
+          tweet_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          caption?: string | null
+          created_at?: string
+          fixture_id?: string | null
+          id?: string
+          image_url?: string
+          is_update?: boolean
+          post_id?: string | null
+          posted_at?: string
+          source_url?: string | null
+          status?: string
+          topic_id?: string | null
+          tweet_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "boro_team_sheets_fixture_id_fkey"
+            columns: ["fixture_id"]
+            isOneToOne: false
+            referencedRelation: "boro_fixtures"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "boro_team_sheets_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "forum_posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "boro_team_sheets_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "forum_topics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       breaks: {
         Row: {
           ended_at: string | null

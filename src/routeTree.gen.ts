@@ -83,6 +83,7 @@ import { Route as AuthenticatedApprovedAdminFanZoneRouteImport } from './routes/
 import { Route as AuthenticatedApprovedAdminDnsRouteImport } from './routes/_authenticated/_approved/admin-dns'
 import { Route as AuthenticatedApprovedAdminCredentialsRouteImport } from './routes/_authenticated/_approved/admin-credentials'
 import { Route as AuthenticatedApprovedAdminBusinessHoursRouteImport } from './routes/_authenticated/_approved/admin-business-hours'
+import { Route as AuthenticatedApprovedAdminBoroTeamSheetRouteImport } from './routes/_authenticated/_approved/admin-boro-team-sheet'
 import { Route as AuthenticatedApprovedAdminBlacklistRouteImport } from './routes/_authenticated/_approved/admin-blacklist'
 import { Route as AuthenticatedApprovedAdminArchivedTicketsRouteImport } from './routes/_authenticated/_approved/admin-archived-tickets'
 import { Route as AuthenticatedApprovedAdminAffiliateBannersRouteImport } from './routes/_authenticated/_approved/admin-affiliate-banners'
@@ -111,6 +112,7 @@ import { Route as ApiPublicHooksNotifyRouteImport } from './routes/api/public/ho
 import { Route as ApiPublicHooksFantasySquadSyncRouteImport } from './routes/api/public/hooks/fantasy-squad-sync'
 import { Route as ApiPublicHooksFantasySquadRemindersRouteImport } from './routes/api/public/hooks/fantasy-squad-reminders'
 import { Route as ApiPublicHooksDeviceReleaseWatchRouteImport } from './routes/api/public/hooks/device-release-watch'
+import { Route as ApiPublicHooksBoroTeamSheetRouteImport } from './routes/api/public/hooks/boro-team-sheet'
 import { Route as ApiPublicHooksBoroPredictorInviteRouteImport } from './routes/api/public/hooks/boro-predictor-invite'
 import { Route as ApiPublicHooksBoroPredictionRemindersRouteImport } from './routes/api/public/hooks/boro-prediction-reminders'
 import { Route as ApiPublicHooksBoroFetchFixturesRouteImport } from './routes/api/public/hooks/boro-fetch-fixtures'
@@ -550,6 +552,12 @@ const AuthenticatedApprovedAdminBusinessHoursRoute =
     path: '/admin-business-hours',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
+const AuthenticatedApprovedAdminBoroTeamSheetRoute =
+  AuthenticatedApprovedAdminBoroTeamSheetRouteImport.update({
+    id: '/admin-boro-team-sheet',
+    path: '/admin-boro-team-sheet',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
 const AuthenticatedApprovedAdminBlacklistRoute =
   AuthenticatedApprovedAdminBlacklistRouteImport.update({
     id: '/admin-blacklist',
@@ -715,6 +723,12 @@ const ApiPublicHooksDeviceReleaseWatchRoute =
     path: '/api/public/hooks/device-release-watch',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksBoroTeamSheetRoute =
+  ApiPublicHooksBoroTeamSheetRouteImport.update({
+    id: '/api/public/hooks/boro-team-sheet',
+    path: '/api/public/hooks/boro-team-sheet',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksBoroPredictorInviteRoute =
   ApiPublicHooksBoroPredictorInviteRouteImport.update({
     id: '/api/public/hooks/boro-predictor-invite',
@@ -847,6 +861,7 @@ export interface FileRoutesByFullPath {
   '/admin-affiliate-banners': typeof AuthenticatedApprovedAdminAffiliateBannersRoute
   '/admin-archived-tickets': typeof AuthenticatedApprovedAdminArchivedTicketsRoute
   '/admin-blacklist': typeof AuthenticatedApprovedAdminBlacklistRoute
+  '/admin-boro-team-sheet': typeof AuthenticatedApprovedAdminBoroTeamSheetRoute
   '/admin-business-hours': typeof AuthenticatedApprovedAdminBusinessHoursRoute
   '/admin-credentials': typeof AuthenticatedApprovedAdminCredentialsRoute
   '/admin-dns': typeof AuthenticatedApprovedAdminDnsRoute
@@ -908,6 +923,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/boro-fetch-fixtures': typeof ApiPublicHooksBoroFetchFixturesRoute
   '/api/public/hooks/boro-prediction-reminders': typeof ApiPublicHooksBoroPredictionRemindersRoute
   '/api/public/hooks/boro-predictor-invite': typeof ApiPublicHooksBoroPredictorInviteRoute
+  '/api/public/hooks/boro-team-sheet': typeof ApiPublicHooksBoroTeamSheetRoute
   '/api/public/hooks/device-release-watch': typeof ApiPublicHooksDeviceReleaseWatchRoute
   '/api/public/hooks/fantasy-squad-reminders': typeof ApiPublicHooksFantasySquadRemindersRoute
   '/api/public/hooks/fantasy-squad-sync': typeof ApiPublicHooksFantasySquadSyncRoute
@@ -964,6 +980,7 @@ export interface FileRoutesByTo {
   '/admin-affiliate-banners': typeof AuthenticatedApprovedAdminAffiliateBannersRoute
   '/admin-archived-tickets': typeof AuthenticatedApprovedAdminArchivedTicketsRoute
   '/admin-blacklist': typeof AuthenticatedApprovedAdminBlacklistRoute
+  '/admin-boro-team-sheet': typeof AuthenticatedApprovedAdminBoroTeamSheetRoute
   '/admin-business-hours': typeof AuthenticatedApprovedAdminBusinessHoursRoute
   '/admin-credentials': typeof AuthenticatedApprovedAdminCredentialsRoute
   '/admin-dns': typeof AuthenticatedApprovedAdminDnsRoute
@@ -1024,6 +1041,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/boro-fetch-fixtures': typeof ApiPublicHooksBoroFetchFixturesRoute
   '/api/public/hooks/boro-prediction-reminders': typeof ApiPublicHooksBoroPredictionRemindersRoute
   '/api/public/hooks/boro-predictor-invite': typeof ApiPublicHooksBoroPredictorInviteRoute
+  '/api/public/hooks/boro-team-sheet': typeof ApiPublicHooksBoroTeamSheetRoute
   '/api/public/hooks/device-release-watch': typeof ApiPublicHooksDeviceReleaseWatchRoute
   '/api/public/hooks/fantasy-squad-reminders': typeof ApiPublicHooksFantasySquadRemindersRoute
   '/api/public/hooks/fantasy-squad-sync': typeof ApiPublicHooksFantasySquadSyncRoute
@@ -1085,6 +1103,7 @@ export interface FileRoutesById {
   '/_authenticated/_approved/admin-affiliate-banners': typeof AuthenticatedApprovedAdminAffiliateBannersRoute
   '/_authenticated/_approved/admin-archived-tickets': typeof AuthenticatedApprovedAdminArchivedTicketsRoute
   '/_authenticated/_approved/admin-blacklist': typeof AuthenticatedApprovedAdminBlacklistRoute
+  '/_authenticated/_approved/admin-boro-team-sheet': typeof AuthenticatedApprovedAdminBoroTeamSheetRoute
   '/_authenticated/_approved/admin-business-hours': typeof AuthenticatedApprovedAdminBusinessHoursRoute
   '/_authenticated/_approved/admin-credentials': typeof AuthenticatedApprovedAdminCredentialsRoute
   '/_authenticated/_approved/admin-dns': typeof AuthenticatedApprovedAdminDnsRoute
@@ -1146,6 +1165,7 @@ export interface FileRoutesById {
   '/api/public/hooks/boro-fetch-fixtures': typeof ApiPublicHooksBoroFetchFixturesRoute
   '/api/public/hooks/boro-prediction-reminders': typeof ApiPublicHooksBoroPredictionRemindersRoute
   '/api/public/hooks/boro-predictor-invite': typeof ApiPublicHooksBoroPredictorInviteRoute
+  '/api/public/hooks/boro-team-sheet': typeof ApiPublicHooksBoroTeamSheetRoute
   '/api/public/hooks/device-release-watch': typeof ApiPublicHooksDeviceReleaseWatchRoute
   '/api/public/hooks/fantasy-squad-reminders': typeof ApiPublicHooksFantasySquadRemindersRoute
   '/api/public/hooks/fantasy-squad-sync': typeof ApiPublicHooksFantasySquadSyncRoute
@@ -1206,6 +1226,7 @@ export interface FileRouteTypes {
     | '/admin-affiliate-banners'
     | '/admin-archived-tickets'
     | '/admin-blacklist'
+    | '/admin-boro-team-sheet'
     | '/admin-business-hours'
     | '/admin-credentials'
     | '/admin-dns'
@@ -1267,6 +1288,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/boro-fetch-fixtures'
     | '/api/public/hooks/boro-prediction-reminders'
     | '/api/public/hooks/boro-predictor-invite'
+    | '/api/public/hooks/boro-team-sheet'
     | '/api/public/hooks/device-release-watch'
     | '/api/public/hooks/fantasy-squad-reminders'
     | '/api/public/hooks/fantasy-squad-sync'
@@ -1323,6 +1345,7 @@ export interface FileRouteTypes {
     | '/admin-affiliate-banners'
     | '/admin-archived-tickets'
     | '/admin-blacklist'
+    | '/admin-boro-team-sheet'
     | '/admin-business-hours'
     | '/admin-credentials'
     | '/admin-dns'
@@ -1383,6 +1406,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/boro-fetch-fixtures'
     | '/api/public/hooks/boro-prediction-reminders'
     | '/api/public/hooks/boro-predictor-invite'
+    | '/api/public/hooks/boro-team-sheet'
     | '/api/public/hooks/device-release-watch'
     | '/api/public/hooks/fantasy-squad-reminders'
     | '/api/public/hooks/fantasy-squad-sync'
@@ -1443,6 +1467,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/admin-affiliate-banners'
     | '/_authenticated/_approved/admin-archived-tickets'
     | '/_authenticated/_approved/admin-blacklist'
+    | '/_authenticated/_approved/admin-boro-team-sheet'
     | '/_authenticated/_approved/admin-business-hours'
     | '/_authenticated/_approved/admin-credentials'
     | '/_authenticated/_approved/admin-dns'
@@ -1504,6 +1529,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/boro-fetch-fixtures'
     | '/api/public/hooks/boro-prediction-reminders'
     | '/api/public/hooks/boro-predictor-invite'
+    | '/api/public/hooks/boro-team-sheet'
     | '/api/public/hooks/device-release-watch'
     | '/api/public/hooks/fantasy-squad-reminders'
     | '/api/public/hooks/fantasy-squad-sync'
@@ -1562,6 +1588,7 @@ export interface RootRouteChildren {
   ApiPublicHooksBoroFetchFixturesRoute: typeof ApiPublicHooksBoroFetchFixturesRoute
   ApiPublicHooksBoroPredictionRemindersRoute: typeof ApiPublicHooksBoroPredictionRemindersRoute
   ApiPublicHooksBoroPredictorInviteRoute: typeof ApiPublicHooksBoroPredictorInviteRoute
+  ApiPublicHooksBoroTeamSheetRoute: typeof ApiPublicHooksBoroTeamSheetRoute
   ApiPublicHooksDeviceReleaseWatchRoute: typeof ApiPublicHooksDeviceReleaseWatchRoute
   ApiPublicHooksFantasySquadRemindersRoute: typeof ApiPublicHooksFantasySquadRemindersRoute
   ApiPublicHooksFantasySquadSyncRoute: typeof ApiPublicHooksFantasySquadSyncRoute
@@ -2106,6 +2133,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedApprovedAdminBusinessHoursRouteImport
       parentRoute: typeof AuthenticatedApprovedRoute
     }
+    '/_authenticated/_approved/admin-boro-team-sheet': {
+      id: '/_authenticated/_approved/admin-boro-team-sheet'
+      path: '/admin-boro-team-sheet'
+      fullPath: '/admin-boro-team-sheet'
+      preLoaderRoute: typeof AuthenticatedApprovedAdminBoroTeamSheetRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
     '/_authenticated/_approved/admin-blacklist': {
       id: '/_authenticated/_approved/admin-blacklist'
       path: '/admin-blacklist'
@@ -2300,6 +2334,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/hooks/device-release-watch'
       fullPath: '/api/public/hooks/device-release-watch'
       preLoaderRoute: typeof ApiPublicHooksDeviceReleaseWatchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/boro-team-sheet': {
+      id: '/api/public/hooks/boro-team-sheet'
+      path: '/api/public/hooks/boro-team-sheet'
+      fullPath: '/api/public/hooks/boro-team-sheet'
+      preLoaderRoute: typeof ApiPublicHooksBoroTeamSheetRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/hooks/boro-predictor-invite': {
@@ -2513,6 +2554,7 @@ interface AuthenticatedApprovedRouteChildren {
   AuthenticatedApprovedAdminAffiliateBannersRoute: typeof AuthenticatedApprovedAdminAffiliateBannersRoute
   AuthenticatedApprovedAdminArchivedTicketsRoute: typeof AuthenticatedApprovedAdminArchivedTicketsRoute
   AuthenticatedApprovedAdminBlacklistRoute: typeof AuthenticatedApprovedAdminBlacklistRoute
+  AuthenticatedApprovedAdminBoroTeamSheetRoute: typeof AuthenticatedApprovedAdminBoroTeamSheetRoute
   AuthenticatedApprovedAdminBusinessHoursRoute: typeof AuthenticatedApprovedAdminBusinessHoursRoute
   AuthenticatedApprovedAdminCredentialsRoute: typeof AuthenticatedApprovedAdminCredentialsRoute
   AuthenticatedApprovedAdminDnsRoute: typeof AuthenticatedApprovedAdminDnsRoute
@@ -2573,6 +2615,8 @@ const AuthenticatedApprovedRouteChildren: AuthenticatedApprovedRouteChildren = {
     AuthenticatedApprovedAdminArchivedTicketsRoute,
   AuthenticatedApprovedAdminBlacklistRoute:
     AuthenticatedApprovedAdminBlacklistRoute,
+  AuthenticatedApprovedAdminBoroTeamSheetRoute:
+    AuthenticatedApprovedAdminBoroTeamSheetRoute,
   AuthenticatedApprovedAdminBusinessHoursRoute:
     AuthenticatedApprovedAdminBusinessHoursRoute,
   AuthenticatedApprovedAdminCredentialsRoute:
@@ -2733,6 +2777,7 @@ const rootRouteChildren: RootRouteChildren = {
     ApiPublicHooksBoroPredictionRemindersRoute,
   ApiPublicHooksBoroPredictorInviteRoute:
     ApiPublicHooksBoroPredictorInviteRoute,
+  ApiPublicHooksBoroTeamSheetRoute: ApiPublicHooksBoroTeamSheetRoute,
   ApiPublicHooksDeviceReleaseWatchRoute: ApiPublicHooksDeviceReleaseWatchRoute,
   ApiPublicHooksFantasySquadRemindersRoute:
     ApiPublicHooksFantasySquadRemindersRoute,
