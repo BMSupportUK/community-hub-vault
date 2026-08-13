@@ -162,6 +162,7 @@ function DeviceCard({
   const listingUrl = brandStoreOnly ? device.amazon_url : (price?.source_url || device.amazon_url);
   const retailer = retailerFromUrl(listingUrl);
   const outOfStock = /out\s*of\s*stock|sold\s*out|unavailable|coming\s*soon/i.test(price?.availability ?? "");
+  const inStock = !outOfStock && /in\s*stock|available/i.test(price?.availability ?? "");
   const rangeLabel = formatRange(
     device.price_range_low_cents,
     device.price_range_high_cents,
