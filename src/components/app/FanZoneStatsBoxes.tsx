@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { Loader2, ThumbsUp, ThumbsDown, MessageSquare, FileText, Users, Award } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import boroDefaultAvatar from "@/assets/boro-default-avatar.png";
+import { useFanProfileTo } from "@/components/app/fan-profile-link";
 
 type Stats = { topics: number; posts: number; friends: number; reactionsReceived: number };
 
@@ -123,10 +124,10 @@ export function FanReputationBox({ userId }: { userId: string }) {
             <ul className="space-y-1.5">
               {data.topFans.map((f) => (
                 <li key={f.user_id} className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-2.5 py-1.5">
-                  <Link to="/fanzone/u/$userId" params={{ userId: f.user_id }} className="shrink-0">
+                  <Link to={profileTo} params={{ userId: f.user_id }} className="shrink-0">
                     <img src={f.avatar || boroDefaultAvatar} alt="" className="size-7 rounded-full object-cover ring-1 ring-white/10" />
                   </Link>
-                  <Link to="/fanzone/u/$userId" params={{ userId: f.user_id }} className="flex-1 min-w-0 text-xs font-semibold truncate hover:underline">
+                  <Link to={profileTo} params={{ userId: f.user_id }} className="flex-1 min-w-0 text-xs font-semibold truncate hover:underline">
                     {f.alias || "Boro fan"}
                   </Link>
                   <span className={`text-xs font-bold tabular-nums ${f.count >= 0 ? "text-emerald-300" : "text-rose-300"}`}>

@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { Shield, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { DndCountdown } from "@/components/app/DndCountdown";
+import { useFanProfileTo } from "@/components/app/fan-profile-link";
 
 type StaffMember = {
   user_id: string;
@@ -13,6 +14,7 @@ type StaffMember = {
 
 /** Side box listing Admins and Boro Fan Zone Moderators with mini cards. */
 export function FanZoneStaffBox() {
+  const profileTo = useFanProfileTo();
   const [members, setMembers] = useState<StaffMember[] | null>(null);
 
   useEffect(() => {
@@ -83,7 +85,7 @@ export function FanZoneStaffBox() {
           );
           return (
             <li key={`${m.user_id}-${m.role}`}>
-              <Link to="/fanzone/u/$userId" params={{ userId: m.user_id }} aria-label={`View ${name}'s profile`}>
+              <Link to={profileTo} params={{ userId: m.user_id }} aria-label={`View ${name}'s profile`}>
                 {inner}
               </Link>
             </li>
