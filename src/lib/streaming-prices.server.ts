@@ -380,6 +380,129 @@ async function findBestUkPrice(
   };
 }
 
+/**
+ * Stock-only check for a single product URL. Much cheaper than a full price
+ * scrape, so it can run every few minutes to keep availability live.
+ */
+async function checkStockForUrl(url: string): Promise<{
+  availability: string | null;
+  delisted: boolean;
+}> {
+  const host = hostOf(url);
+
+  // Official brand stores (Xiaomi) render stock state with JavaScript.
+  if (isBrandStoreOnlyUrl(url)) {
+    const r = await scrapeBrandStorePrice(url);
+    return { availability: r.availability, delisted: Boolean(r.delisted) };
+  }
+
+  // World of Satellite (and other configured retailers) expose stock in HTML.
+  if (host.endsWith("world-of-satellite.co.uk")) {
+    const res = await fetch(url, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (compatible; BM Support stock checker)",
+        "Accept-Language": "en-GB,en;q=0.9",
+      },
+    });
+    if (res.status === 404) return { availability: "Delisted", delisted: true };
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const html = await res.text();
+    return { availability: extractWorldOfSatelliteAvailability(html), delisted: false };
+  }
+
+  // Amazon UK (Fire TV sticks) needs a rendered scrape.
+  const apiKey = process.env.FIRECRAWL_API_KEY;
+  if (!apiKey) throw new Error("FIRECRAWL_API_KEY not configured");
+  const res = await fetch("https://api.firecrawl.dev/v2/scrape", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      url,
+      onlyMainContent: true,
+      location: { country: "GB", languages: ["en-GB"] },
+      formats: [
+        {
+          type: "json",
+          prompt:
+            "Look ONLY at the buy box / availability for THIS product (ignore related products, other sellers' listings, reviews and accessories). Return availability as exactly 'In stock' if the product itself can be added to basket or bought now, exactly 'Out of stock' if it shows Currently unavailable / Out of stock / Sold out / Temporarily out of stock / pre-order only, otherwise null.",
+          schema: {
+            type: "object",
+            properties: { availability: { type: ["string", "null"] } },
+          },
+        },
+      ],
+    }),
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(`Firecrawl ${res.status}: ${text.slice(0, 200)}`);
+  }
+  const body = (await res.json()) as {
+    data?: { json?: { availability?: string | null }; metadata?: Record<string, unknown> };
+    json?: { availability?: string | null };
+    metadata?: Record<string, unknown>;
+  };
+  const meta = body.data?.metadata ?? body.metadata ?? {};
+  if (meta["statusCode"] === 404) return { availability: "Delisted", delisted: true };
+  const raw = (body.data?.json ?? body.json ?? {}).availability;
+  return { availability: normalizeAvailability(raw), delisted: false };
+}
+
+/**
+ * Refresh availability for every active device without touching stored prices.
+ * Runs frequently (cron) so the store shows real-time stock status for World of
+ * Satellite, Fire TV and Xiaomi products.
+ */
+export async function refreshAllStreamingStock(): Promise<{
+  updated: number;
+  failed: number;
+  details: Array<{ name: string; ok: boolean; availability?: string | null; error?: string }>;
+}> {
+  const { data: devices, error } = await supabaseAdmin
+    .from("streaming_devices")
+    .select("id, amazon_url, price_watch_url, name, brand")
+    .eq("is_active", true);
+  if (error) throw new Error(error.message);
+
+  let updated = 0;
+  let failed = 0;
+  const details: Array<{ name: string; ok: boolean; availability?: string | null; error?: string }> = [];
+
+  for (const d of (devices ?? []) as DeviceRow[]) {
+    try {
+      // Xiaomi is locked to its own store; everything else prefers the watch URL.
+      const url = isBrandStoreOnlyUrl(d.amazon_url)
+        ? d.amazon_url
+        : d.price_watch_url || d.amazon_url;
+      const { availability, delisted } = await checkStockForUrl(url);
+
+      if (delisted) {
+        const { error: hideErr } = await supabaseAdmin
+          .from("streaming_devices")
+          .update({ is_active: false })
+          .eq("id", d.id);
+        if (hideErr) throw new Error(hideErr.message);
+      }
+
+      if (availability) {
+        const { error: upErr } = await supabaseAdmin
+          .from("streaming_device_prices")
+          .update({ availability, stock_checked_at: new Date().toISOString() })
+          .eq("device_id", d.id);
+        if (upErr) throw new Error(upErr.message);
+      }
+      updated++;
+      details.push({ name: d.name, ok: true, availability });
+    } catch (e) {
+      failed++;
+      details.push({ name: d.name, ok: false, error: e instanceof Error ? e.message : String(e) });
+    }
+    await new Promise((r) => setTimeout(r, 800));
+  }
+
+  return { updated, failed, details };
+}
+
 export async function refreshAllStreamingPrices(): Promise<{
   updated: number;
   failed: number;
