@@ -219,7 +219,6 @@ export function buildPreviewBody(fx: FixtureLite, json: any): string {
 
   const venue = json?.gameInfo?.venue?.fullName ?? null;
   const city = json?.gameInfo?.venue?.address?.city ?? null;
-  const tv = broadcastOf(json);
   const ref = refereeOf(json);
   const odds = oddsLine(json);
   const h2h = headToHead(json, homeId, awayId);
@@ -230,7 +229,6 @@ export function buildPreviewBody(fx: FixtureLite, json: any): string {
   facts.push(`<li><strong>Competition:</strong> ${esc(fx.competition || (comp?.groups?.name ?? "Fixture"))}</li>`);
   facts.push(`<li><strong>Kick-off:</strong> ${esc(londonKickoff(fx.kickoff_at))} (UK)</li>`);
   if (venue) facts.push(`<li><strong>Venue:</strong> ${esc(venue)}${city ? `, ${esc(city)}` : ""}</li>`);
-  if (tv) facts.push(`<li><strong>TV / stream:</strong> ${esc(tv)}</li>`);
   if (ref) facts.push(`<li><strong>Referee:</strong> ${esc(ref)}</li>`);
   if (odds) facts.push(`<li><strong>Odds:</strong> ${esc(odds)}</li>`);
   parts.push(`<ul>${facts.join("")}</ul>`);
@@ -260,16 +258,6 @@ export function buildPreviewBody(fx: FixtureLite, json: any): string {
 
   if (h2h.length) {
     parts.push(`<p><strong>Recent meetings</strong></p><ul>${h2h.map((l) => `<li>${esc(l)}</li>`).join("")}</ul>`);
-  }
-
-  for (const side of ["home", "away"] as const) {
-    const xi = rosterXi(json, side);
-    if (!xi || xi.xi.length === 0) continue;
-    parts.push(
-      `<p><strong>${esc(xi.name)} XI</strong></p><p>${esc(xi.xi.join(", "))}</p>${
-        xi.subs.length ? `<p><em>Subs:</em> ${esc(xi.subs.join(", "))}</p>` : ""
-      }`,
-    );
   }
 
   parts.push(`<p><em>Auto-filled from the ESPN Gamecast.</em></p>`);
