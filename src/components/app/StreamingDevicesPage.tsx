@@ -34,6 +34,7 @@ type Price = {
   availability: string | null;
   source_url: string | null;
   scraped_at: string;
+  stock_checked_at: string | null;
 };
 
 type RatingRow = {
