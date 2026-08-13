@@ -1381,6 +1381,7 @@ export type Database = {
           fan_alias: string | null
           fan_avatar_url: string | null
           fav_player: string | null
+          is_private: boolean
           matchday_memory: string | null
           note: string | null
           reason: string | null
@@ -1397,6 +1398,7 @@ export type Database = {
           fan_alias?: string | null
           fan_avatar_url?: string | null
           fav_player?: string | null
+          is_private?: boolean
           matchday_memory?: string | null
           note?: string | null
           reason?: string | null
@@ -1413,6 +1415,7 @@ export type Database = {
           fan_alias?: string | null
           fan_avatar_url?: string | null
           fav_player?: string | null
+          is_private?: boolean
           matchday_memory?: string | null
           note?: string | null
           reason?: string | null
