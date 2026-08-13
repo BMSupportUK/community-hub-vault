@@ -12,6 +12,8 @@ export type LastResult = {
   venue?: string | null;
   homeLogo?: string | null;
   awayLogo?: string | null;
+  eventId?: string | null;
+  espnSlug?: string | null;
 };
 export type NextFixture = {
   kickoff: string;
@@ -21,6 +23,8 @@ export type NextFixture = {
   venue?: string | null;
   homeLogo?: string | null;
   awayLogo?: string | null;
+  eventId?: string | null;
+  espnSlug?: string | null;
 };
 export type LeaguePosition = {
   competition: string;
@@ -58,6 +62,8 @@ export type LiveMatch = {
   inPlay: boolean;
   homeLogo?: string | null;
   awayLogo?: string | null;
+  eventId?: string | null;
+  espnSlug?: string | null;
 };
 
 export type MatchCentreDTO = {
