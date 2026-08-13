@@ -35,6 +35,7 @@ type DeviceRow = {
   specs: Record<string, string> | null;
   sideload_notes: string | null;
   amazon_url: string;
+  price_watch_url: string | null;
   sort_order: number;
   is_active: boolean;
 };
@@ -51,6 +52,7 @@ function emptyDraft(): Partial<DeviceRow> {
     specs: {},
     sideload_notes: "",
     amazon_url: "",
+    price_watch_url: "",
     sort_order: 100,
     is_active: true,
   };
@@ -100,6 +102,7 @@ function AdminStreamingDevicesPage() {
           specs: draft.specs ?? {},
           sideload_notes: draft.sideload_notes || null,
           amazon_url: draft.amazon_url!,
+          price_watch_url: draft.price_watch_url || null,
           sort_order: draft.sort_order ?? 100,
           is_active: draft.is_active ?? true,
         },
@@ -231,6 +234,14 @@ function AdminStreamingDevicesPage() {
               <div>
                 <Label>Fallback listing URL</Label>
                 <Input value={draft.amazon_url ?? ""} onChange={(e) => setDraft({ ...draft, amazon_url: e.target.value })} />
+              </div>
+              <div>
+                <Label>Price watch URL (optional)</Label>
+                <Input
+                  placeholder="e.g. Amazon UK product page used for price monitoring"
+                  value={draft.price_watch_url ?? ""}
+                  onChange={(e) => setDraft({ ...draft, price_watch_url: e.target.value })}
+                />
               </div>
               <div>
                 <Label>Summary</Label>

@@ -1,6 +1,12 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
-type DeviceRow = { id: string; amazon_url: string; name: string; brand: string | null };
+type DeviceRow = {
+  id: string;
+  amazon_url: string;
+  price_watch_url: string | null;
+  name: string;
+  brand: string | null;
+};
 
 type ScrapeResult = {
   price_cents: number | null;
@@ -276,7 +282,7 @@ export async function refreshAllStreamingPrices(): Promise<{
 }> {
   const { data: devices, error } = await supabaseAdmin
     .from("streaming_devices")
-    .select("id, amazon_url, name, brand")
+    .select("id, amazon_url, price_watch_url, name, brand")
     .eq("is_active", true);
   if (error) throw new Error(error.message);
 
@@ -286,13 +292,17 @@ export async function refreshAllStreamingPrices(): Promise<{
 
   for (const d of (devices ?? []) as DeviceRow[]) {
     try {
+      // An explicit price watch URL always wins, then the device's own listing
+      // URL, then an open web search for the cheapest in-stock UK price.
+      const watchUrl = d.price_watch_url || d.amazon_url;
+      const isAmazonPage = hostOf(watchUrl).endsWith("amazon.co.uk");
       const isAmazonOwn =
         (d.brand ?? "").toLowerCase() === "amazon" ||
         /fire\s*tv|fire\s*stick|firestick/i.test(d.name);
-      const configuredRetailerPrice = isAmazonOwn ? null : await scrapeConfiguredRetailerPrice(d.amazon_url);
-      const r = isAmazonOwn
-        ? await scrapeAmazonPrice(d.amazon_url)
-        : configuredRetailerPrice ?? await findBestUkPrice(d.name, d.brand, d.amazon_url);
+      const r = isAmazonPage || isAmazonOwn
+        ? await scrapeAmazonPrice(watchUrl)
+        : (await scrapeConfiguredRetailerPrice(watchUrl))
+          ?? await findBestUkPrice(d.name, d.brand, d.amazon_url);
       const { error: upErr } = await supabaseAdmin
         .from("streaming_device_prices")
         .upsert({

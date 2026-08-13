@@ -21,6 +21,7 @@ const DeviceInput = z.object({
   specs: z.record(z.string(), z.string().max(200)).default({}),
   sideload_notes: z.string().max(1000).nullable().optional(),
   amazon_url: z.string().url().max(2048),
+  price_watch_url: z.string().url().max(2048).nullable().optional(),
   sort_order: z.number().int().min(0).max(100000).default(100),
   is_active: z.boolean().default(true),
 });
@@ -39,6 +40,7 @@ export const upsertStreamingDevice = createServerFn({ method: "POST" })
       specs: data.specs ?? {},
       sideload_notes: data.sideload_notes ?? null,
       amazon_url: data.amazon_url,
+      price_watch_url: data.price_watch_url ?? null,
       sort_order: data.sort_order,
       is_active: data.is_active,
     };
