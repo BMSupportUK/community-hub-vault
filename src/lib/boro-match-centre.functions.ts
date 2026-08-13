@@ -46,6 +46,20 @@ export type LeagueTableRow = {
   isBoro?: boolean;
 };
 
+export type LiveMatch = {
+  kickoff: string;
+  competition: string;
+  home: string;
+  away: string;
+  homeScore: number;
+  awayScore: number;
+  statusDetail: string;
+  clock: string | null;
+  inPlay: boolean;
+  homeLogo?: string | null;
+  awayLogo?: string | null;
+};
+
 export type MatchCentreDTO = {
   lastResult: LastResult | null;
   nextFixture: NextFixture | null;
@@ -55,9 +69,14 @@ export type MatchCentreDTO = {
   leaguePositionManual: boolean;
   fetchedAt: string | null;
   updatedAt: string | null;
+  liveMatch?: LiveMatch | null;
 };
 
 const BORO_TEAM_RE = /\bmiddles(?:brough|borough)\b|\bboro\b/i;
+
+// In-memory (per worker instance) cache of the in-play match so short-lived
+// cache hits can still render the live strip without another ESPN round trip.
+let liveMatchCache: { at: number; value: LiveMatch | null } | null = null;
 
 function isBoroMatch(match: { home?: string | null; away?: string | null } | null | undefined) {
   return !!match && (BORO_TEAM_RE.test(match.home ?? "") || BORO_TEAM_RE.test(match.away ?? ""));
