@@ -191,8 +191,15 @@ function DeviceCard({
           {price && (
             <div className="shrink-0 flex flex-col items-end gap-1">
               <Badge variant="secondary" className="text-[10px]">{relTime(price.scraped_at)}</Badge>
-              {outOfStock && (
+              {outOfStock ? (
                 <Badge variant="destructive" className="text-[10px]">Out of stock</Badge>
+              ) : inStock ? (
+                <Badge className="text-[10px] bg-emerald-600 text-white hover:bg-emerald-600">In stock</Badge>
+              ) : null}
+              {price.stock_checked_at && (
+                <span className="text-[10px] text-muted-foreground">
+                  stock checked {relTime(price.stock_checked_at)}
+                </span>
               )}
             </div>
           )}
