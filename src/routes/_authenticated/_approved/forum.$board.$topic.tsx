@@ -122,12 +122,14 @@ function TopicPostArticleComponent({
       className={`boro-topic-post rounded-xl overflow-hidden transition-shadow hover:shadow-[0_14px_42px_-14px_rgba(225,27,34,0.5)] ${
         post.is_op
           ? "border-[#E11B22]/65 ring-1 ring-[#E11B22]/25"
-          : "border-white/15 hover:border-[#E11B22]/45"
+          : post.is_pinned
+            ? "border-[#F4B400]/60 ring-1 ring-[#F4B400]/25"
+            : "border-white/15 hover:border-[#E11B22]/45"
       }`}
     >
       <header
         className={`boro-topic-post-header grid grid-cols-[auto_1fr_auto] gap-3 px-5 py-3 items-center border-b ${
-          post.is_op ? "border-[#E11B22]/35" : "border-white/10"
+          post.is_op ? "border-[#E11B22]/35" : post.is_pinned ? "border-[#F4B400]/30" : "border-white/10"
         }`}
       >
         <Link
@@ -149,6 +151,11 @@ function TopicPostArticleComponent({
           {post.is_op && (
             <span className="ml-2 inline-block rounded-md bg-[#E11B22] text-white text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 align-middle shadow-sm">
               OP
+            </span>
+          )}
+          {!post.is_op && post.is_pinned && (
+            <span className="ml-2 inline-flex items-center gap-1 rounded-md bg-[#F4B400] text-black text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 align-middle shadow-sm">
+              <Pin className="size-2.5" />Pinned
             </span>
           )}
           <span className="text-muted-foreground text-[11px] ml-1.5"> · #{displayIndex} · {formatLastSeen(post.created_at)}</span>
