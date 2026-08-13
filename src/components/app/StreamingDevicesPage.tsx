@@ -465,19 +465,19 @@ export function StreamingDevicesPage() {
               <p className="text-sm text-muted-foreground max-w-2xl">
                 Quick reference for which Amazon Fire TV Sticks still allow sideloading.
               </p>
-              <div className="grid gap-4 grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,2.2fr)] items-start">
+              <div className="grid gap-4 grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,2.2fr)] items-stretch">
                 {fireSticks.map(renderCard)}
                 <Dialog>
                   <DialogTrigger asChild>
                     <button
                       type="button"
-                      className="rounded-xl overflow-hidden border border-border bg-surface-2 cursor-zoom-in transition hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-ring"
+                      className="rounded-xl overflow-hidden border border-border bg-surface-2 cursor-zoom-in transition hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-ring h-full flex items-center justify-center p-4"
                       aria-label="Open compatibility chart"
                     >
                       <img
                         src={firestickCompatibility.url}
                         alt="Fire TV Stick compatibility chart"
-                        className="w-full h-auto"
+                        className="max-w-full max-h-full w-auto h-auto object-contain"
                         loading="lazy"
                       />
                     </button>
