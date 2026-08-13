@@ -8,6 +8,7 @@ import {
 import { useUserTimezone } from "@/hooks/use-user-timezone";
 import { TeamKit } from "@/lib/boro-team-kits";
 import { Dialog, DialogContent, DialogTitle, DialogClose } from "@/components/ui/dialog";
+import { BoroMatchDetailTabs } from "@/components/app/BoroMatchDetailTabs";
 
 function fmtKickoff(iso: string, tz: string) {
   try {
@@ -203,7 +204,7 @@ export function BoroLiveMatchStrip() {
       </div>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="fixed left-1/2 top-1/2 z-[101] -translate-x-1/2 -translate-y-1/2 max-w-md w-[calc(100%-2rem)] max-h-[85vh] overflow-y-auto p-0 border border-[#E11B22]/50 bg-black/90 backdrop-blur-md shadow-2xl">
+        <DialogContent className="fixed left-1/2 top-1/2 z-[101] -translate-x-1/2 -translate-y-1/2 max-w-7xl w-[calc(100%-2rem)] max-h-[85vh] overflow-y-auto p-0 border border-[#E11B22]/50 bg-black/90 backdrop-blur-md shadow-2xl">
           <DialogTitle className="sr-only">Boro fixture details</DialogTitle>
           <DialogClose
             className="absolute right-2 top-2 z-10 inline-flex items-center justify-center size-8 rounded-full bg-black/70 text-white ring-1 ring-white/25 hover:bg-black/90 transition"
@@ -270,6 +271,12 @@ export function BoroLiveMatchStrip() {
                     Next up: {nf.home} v {nf.away} · {fmtKickoff(nf.kickoff, tz)}
                   </div>
                 )}
+                {m.eventId && (
+                  <div className="mt-6">
+                    <BoroMatchDetailTabs eventId={m.eventId} slug={m.espnSlug ?? null} live={isLive} />
+                  </div>
+                )}
+
                 {live && lr && (
                   <div className="mt-2 rounded-lg border border-white/10 bg-white/5 p-3 text-center text-xs text-white/70">
                     Last: {lr.home} {lr.homeScore}-{lr.awayScore} {lr.away}
