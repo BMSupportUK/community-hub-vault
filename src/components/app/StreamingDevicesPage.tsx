@@ -374,10 +374,10 @@ export function StreamingDevicesPage() {
 
         {devicesQuery.isLoading && <div className="text-muted-foreground">Loading devices…</div>}
 
-        <Tabs defaultValue="android" className="space-y-6">
+        <Tabs defaultValue="android-sticks" className="space-y-6">
           <TabsList>
-            <TabsTrigger value="android">Android Boxes</TabsTrigger>
             <TabsTrigger value="android-sticks">Android Sticks</TabsTrigger>
+            <TabsTrigger value="android">Android Boxes</TabsTrigger>
             <TabsTrigger value="amazon">Fire Sticks</TabsTrigger>
           </TabsList>
 
