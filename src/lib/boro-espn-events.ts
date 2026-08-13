@@ -253,7 +253,6 @@ export const PRIMARY_TEAM_STATS: Array<{ name: string; label: string }> = [
   { name: "saves", label: "Saves" },
   { name: "accuratePasses", label: "Accurate passes" },
   { name: "totalPasses", label: "Passes" },
-  { name: "possessionPct2", label: "" },
 ];
 
 /** Per-player stat keys ESPN actually returns in soccer rosters. */
