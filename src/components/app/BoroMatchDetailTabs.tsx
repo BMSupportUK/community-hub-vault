@@ -1,32 +1,53 @@
 import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Goal, Square, RefreshCw } from "lucide-react";
+import { Goal, Square, RefreshCw, ShieldAlert, Target, ChevronDown } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   getBoroMatchDetail,
   type MatchDetailDTO,
+  type MatchEventItem,
   type PlayerLine,
 } from "@/lib/boro-match-detail.functions";
+import { PLAYER_STAT_COLUMNS, describeEspnEvent } from "@/lib/boro-espn-events";
 
-const STAT_COLUMNS: Array<{ key: string; label: string }> = [
-  { key: "totalGoals", label: "G" },
-  { key: "goalAssists", label: "A" },
-  { key: "totalShots", label: "SH" },
-  { key: "shotsOnTarget", label: "SOT" },
-  { key: "foulsCommitted", label: "FC" },
-  { key: "foulsSuffered", label: "FS" },
-  { key: "offsides", label: "OFF" },
-  { key: "yellowCards", label: "YC" },
-  { key: "redCards", label: "RC" },
-  { key: "saves", label: "SV" },
-  { key: "goalsConceded", label: "GC" },
-];
+const STAT_COLUMNS = PLAYER_STAT_COLUMNS;
 
-function EventIcon({ kind }: { kind: string }) {
+function EventIcon({ kind }: { kind: MatchEventItem["kind"] }) {
   if (kind === "yellow") return <Square className="size-3.5 fill-amber-400 text-amber-400" />;
   if (kind === "red") return <Square className="size-3.5 fill-red-500 text-red-500" />;
   if (kind === "sub") return <RefreshCw className="size-3.5 text-emerald-300" />;
+  if (kind === "var") return <ShieldAlert className="size-3.5 text-sky-300" />;
+  if (kind === "penalty-missed" || kind === "shootout-missed")
+    return <Target className="size-3.5 text-white/50" />;
   return <Goal className="size-3.5 text-white" />;
+}
+
+function EventRow({ ev, home, away }: { ev: MatchEventItem; home: string | null; away: string | null }) {
+  const isGoal = ev.kind === "goal" || ev.kind === "penalty" || ev.kind === "own-goal";
+  return (
+    <li
+      className={`flex items-start gap-3 rounded-lg border px-3 py-2 text-sm ${
+        isGoal ? "border-[#E11B22]/45 bg-[#E11B22]/10" : "border-white/10 bg-white/5"
+      }`}
+    >
+      <span className="w-12 shrink-0 pt-0.5 tabular-nums text-xs font-bold text-amber-200">{ev.clock ?? "-"}</span>
+      <span className="pt-0.5">
+        <EventIcon kind={ev.kind} />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block font-semibold text-white">{describeEspnEvent(ev)}</span>
+        {ev.text && ev.text !== ev.shortText && (
+          <span className="mt-0.5 block text-[12px] leading-snug text-white/60">{ev.text}</span>
+        )}
+        {isGoal && ev.homeScore != null && ev.awayScore != null && (
+          <span className="mt-1 inline-block rounded bg-white/10 px-1.5 py-0.5 text-[11px] font-bold tabular-nums text-white/80">
+            {home ?? "Home"} {ev.homeScore} - {ev.awayScore} {away ?? "Away"}
+          </span>
+        )}
+      </span>
+      <span className="shrink-0 pt-0.5 text-[11px] text-white/50">{ev.teamName ?? ""}</span>
+    </li>
+  );
 }
 
 function PlayerRow({ p }: { p: PlayerLine }) {
@@ -68,6 +89,7 @@ export function BoroMatchDetailTabs({
   const fetchDetail = useServerFn(getBoroMatchDetail);
   const [detail, setDetail] = useState<MatchDetailDTO | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showMoreStats, setShowMoreStats] = useState(false);
   const [now, setNow] = useState(() => Date.now());
 
   const koMs = kickoff ? Date.parse(kickoff) : NaN;
@@ -109,6 +131,9 @@ export function BoroMatchDetailTabs({
     return { home, away };
   }, [detail]);
 
+  const primaryStats = detail?.teamStats.filter((s) => s.primary) ?? [];
+  const extraStats = detail?.teamStats.filter((s) => !s.primary) ?? [];
+
   if (loading && !detail) {
     return <div className="py-8 text-center text-sm text-white/50">Loading match data…</div>;
   }
@@ -142,25 +167,31 @@ export function BoroMatchDetailTabs({
 
       <TabsContent value="action" className="mt-4">
         {detail?.events.length ? (
-          <ul className="space-y-1.5">
-            {detail.events.map((ev, i) => (
-              <li
-                key={i}
-                className="flex items-center gap-3 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm"
-              >
-                <span className="w-12 shrink-0 tabular-nums text-xs font-bold text-amber-200">
-                  {ev.clock ?? "-"}
-                </span>
-                <EventIcon kind={ev.kind} />
-                <span className="min-w-0 flex-1 truncate text-white">
-                  {ev.players.length ? ev.players.join(" · ") : ev.text}
-                </span>
-                <span className="shrink-0 text-[11px] text-white/50">
-                  {ev.teamId === detail.homeTeamId ? detail.home : ev.teamId === detail.awayTeamId ? detail.away : ""}
-                </span>
-              </li>
-            ))}
-          </ul>
+          <div className="space-y-3">
+            <ul className="space-y-1.5">
+              {detail.events.map((ev, i) => (
+                <EventRow key={`${ev.key}-${i}`} ev={ev} home={detail.home} away={detail.away} />
+              ))}
+            </ul>
+            {detail.shootout.length > 0 && (
+              <div className="rounded-lg border border-amber-400/40 bg-amber-400/10 p-3">
+                <div className="mb-2 text-[11px] font-black uppercase tracking-wider text-amber-200">
+                  Penalty shootout
+                </div>
+                <ul className="space-y-1">
+                  {detail.shootout.map((ev, i) => (
+                    <li key={`${ev.key}-${i}`} className="flex items-center gap-2 text-sm text-white">
+                      <span className={ev.kind === "shootout-scored" ? "text-emerald-300" : "text-red-300"}>
+                        {ev.kind === "shootout-scored" ? "\u2714" : "\u2716"}
+                      </span>
+                      <span className="min-w-0 flex-1 truncate">{ev.players[0] ?? ev.shortText}</span>
+                      <span className="shrink-0 text-[11px] text-white/60">{ev.teamName ?? ""}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
         ) : (
           <div className="space-y-1.5">
             <p className="rounded-lg border border-white/10 bg-white/5 p-3 text-sm text-white/60">
@@ -180,26 +211,38 @@ export function BoroMatchDetailTabs({
       </TabsContent>
 
       <TabsContent value="stats" className="mt-4">
-        {detail?.teamStats.length ? (
-          <div className="overflow-hidden rounded-lg border border-white/10">
-            <table className="w-full text-sm">
-              <thead className="bg-white/5 text-[11px] uppercase tracking-wider text-white/50">
-                <tr>
-                  <th className="px-3 py-2 text-left">{detail.home}</th>
-                  <th className="px-3 py-2 text-center">Stat</th>
-                  <th className="px-3 py-2 text-right">{detail.away}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {detail.teamStats.map((s) => (
-                  <tr key={s.label} className="border-t border-white/5">
-                    <td className="px-3 py-1.5 text-left font-bold tabular-nums text-white">{s.home}</td>
-                    <td className="px-3 py-1.5 text-center text-white/60">{s.label}</td>
-                    <td className="px-3 py-1.5 text-right font-bold tabular-nums text-white">{s.away}</td>
+        {primaryStats.length || extraStats.length ? (
+          <div className="space-y-2">
+            <div className="overflow-hidden rounded-lg border border-white/10">
+              <table className="w-full text-sm">
+                <thead className="bg-white/5 text-[11px] uppercase tracking-wider text-white/50">
+                  <tr>
+                    <th className="px-3 py-2 text-left">{detail?.home}</th>
+                    <th className="px-3 py-2 text-center">Stat</th>
+                    <th className="px-3 py-2 text-right">{detail?.away}</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {(showMoreStats ? [...primaryStats, ...extraStats] : primaryStats).map((s) => (
+                    <tr key={s.name} className="border-t border-white/5">
+                      <td className="px-3 py-1.5 text-left font-bold tabular-nums text-white">{s.home}</td>
+                      <td className="px-3 py-1.5 text-center text-white/60">{s.label}</td>
+                      <td className="px-3 py-1.5 text-right font-bold tabular-nums text-white">{s.away}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {extraStats.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setShowMoreStats((v) => !v)}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-bold text-white/80 hover:bg-white/10 transition"
+              >
+                {showMoreStats ? "Fewer stats" : `More stats (${extraStats.length})`}
+                <ChevronDown className={`size-3.5 transition ${showMoreStats ? "rotate-180" : ""}`} />
+              </button>
+            )}
           </div>
         ) : (
           <div className="overflow-hidden rounded-lg border border-dashed border-white/10">
@@ -213,12 +256,12 @@ export function BoroMatchDetailTabs({
               </thead>
               <tbody>
                 {[
-                  "Possession",
+                  "Possession %",
                   "Shots",
                   "Shots on target",
                   "Corners",
-                  "Fouls",
                   "Offsides",
+                  "Fouls",
                   "Yellow cards",
                   "Red cards",
                   "Saves",
@@ -256,7 +299,7 @@ export function BoroMatchDetailTabs({
                         <tr>
                           <th className="px-3 py-1.5 text-left">Player</th>
                           {STAT_COLUMNS.map((c) => (
-                            <th key={c.key} className="px-1.5 py-1.5 text-center">
+                            <th key={c.key} title={c.title} className="px-1.5 py-1.5 text-center">
                               {c.label}
                             </th>
                           ))}
@@ -291,7 +334,7 @@ export function BoroMatchDetailTabs({
                         <tr>
                           <th className="px-3 py-1.5 text-left">Player</th>
                           {STAT_COLUMNS.map((c) => (
-                            <th key={c.key} className="px-1.5 py-1.5 text-center">
+                            <th key={c.key} title={c.title} className="px-1.5 py-1.5 text-center">
                               {c.label}
                             </th>
                           ))}

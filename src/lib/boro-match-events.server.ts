@@ -3,6 +3,12 @@
 // posts an updated reply whenever ESPN corrects an event it already reported.
 
 import { matchTopicToFixture, type FixtureLite } from "@/lib/boro-team-sheet.server";
+import {
+  normaliseEspnSummary,
+  isReportableEvent,
+  describeEspnEvent,
+  type EspnMatchEvent,
+} from "@/lib/boro-espn-events";
 
 const SLUGS = ["eng.2", "eng.fa", "eng.league_cup", "eng.efl_cup", "eng.trophy", "eng.efl_trophy"];
 const BORO_RE = /\bmiddles(?:brough|borough)\b|\bboro\b/i;
@@ -10,32 +16,7 @@ const BORO_RE = /\bmiddles(?:brough|borough)\b|\bboro\b/i;
 const WINDOW_BEFORE_MS = 30 * 60 * 1000; // start watching 30m before KO
 const WINDOW_AFTER_MS = 4 * 60 * 60 * 1000; // keep watching 4h after KO
 
-type ParsedEvent = {
-  key: string;
-  kind: "goal" | "own-goal" | "penalty" | "penalty-missed" | "red" | "yellow" | "sub" | "other";
-  clock: string | null;
-  team: string | null;
-  players: string[];
-  text: string;
-  homeScore: number | null;
-  awayScore: number | null;
-};
-
-function classify(d: any): ParsedEvent["kind"] {
-  const text = String(d?.type?.text ?? "").toLowerCase();
-  if (d?.ownGoal) return "own-goal";
-  if (d?.penaltyKick && d?.scoringPlay) return "penalty";
-  if (d?.penaltyKick && !d?.scoringPlay) return "penalty-missed";
-  if (d?.scoringPlay || text.includes("goal")) return "goal";
-  if (d?.redCard || text.includes("red card")) return "red";
-  if (d?.yellowCard || text.includes("yellow card")) return "yellow";
-  if (text.includes("substitution")) return "sub";
-  return "other";
-}
-
-function isReportable(kind: ParsedEvent["kind"]) {
-  return kind !== "other";
-}
+type ParsedEvent = EspnMatchEvent;
 
 async function findEspnEvent(fx: FixtureLite): Promise<{ eventId: string; slug: string } | null> {
   const ko = new Date(fx.kickoff_at);
@@ -75,30 +56,10 @@ async function fetchEvents(eventId: string, slug: string): Promise<{ events: Par
   );
   if (!res.ok) return { events: [], status: null };
   const json: any = await res.json();
-  const comp = json?.header?.competitions?.[0];
-  const competitors: any[] = comp?.competitors ?? [];
-  const nameFor = (id: string | null) =>
-    competitors.find((c) => String(c?.team?.id ?? "") === String(id ?? ""))?.team?.displayName ?? null;
-
-  const events: ParsedEvent[] = (comp?.details ?? []).map((d: any, i: number) => {
-    const added = d?.addedClock?.displayValue ? `+${d.addedClock.displayValue}` : "";
-    const players = (d?.participants ?? [])
-      .map((p: any) => p?.athlete?.displayName)
-      .filter(Boolean) as string[];
-    return {
-      key: String(d?.sequence ?? d?.id ?? `idx-${i}`),
-      kind: classify(d),
-      clock: d?.clock?.displayValue ? `${d.clock.displayValue}${added}` : null,
-      team: nameFor(d?.team?.id ?? null),
-      players,
-      text: String(d?.type?.text ?? ""),
-      homeScore: d?.homeScore != null ? Number(d.homeScore) : null,
-      awayScore: d?.awayScore != null ? Number(d.awayScore) : null,
-    };
-  });
+  const norm = normaliseEspnSummary(json);
   return {
-    events: events.filter((e) => isReportable(e.kind)),
-    status: comp?.status?.type?.shortDetail ?? comp?.status?.type?.description ?? null,
+    events: norm.events.filter((e) => isReportableEvent(e.kind)),
+    status: norm.status,
   };
 }
 
@@ -106,7 +67,7 @@ function escapeHtml(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
-const ICON: Record<ParsedEvent["kind"], string> = {
+const ICON: Partial<Record<ParsedEvent["kind"], string>> = {
   goal: "\u26bd",
   "own-goal": "\u26bd",
   penalty: "\u26bd",
@@ -117,28 +78,8 @@ const ICON: Record<ParsedEvent["kind"], string> = {
   other: "\u2022",
 };
 
-export function describeEvent(ev: ParsedEvent, fx: FixtureLite): string {
-  const min = ev.clock ? `${ev.clock}` : "";
-  const team = ev.team ?? "";
-  const who = ev.players.join(", ");
-  switch (ev.kind) {
-    case "goal":
-      return `GOAL${team ? ` for ${team}` : ""}${who ? ` — ${who}` : ""}${min ? ` (${min})` : ""}`;
-    case "own-goal":
-      return `Own goal${who ? ` — ${who}` : ""}${team ? ` (${team})` : ""}${min ? ` (${min})` : ""}`;
-    case "penalty":
-      return `PENALTY SCORED${team ? ` for ${team}` : ""}${who ? ` — ${who}` : ""}${min ? ` (${min})` : ""}`;
-    case "penalty-missed":
-      return `Penalty missed${team ? ` by ${team}` : ""}${who ? ` — ${who}` : ""}${min ? ` (${min})` : ""}`;
-    case "red":
-      return `RED CARD${who ? ` — ${who}` : ""}${team ? ` (${team})` : ""}${min ? ` (${min})` : ""}`;
-    case "yellow":
-      return `Yellow card${who ? ` — ${who}` : ""}${team ? ` (${team})` : ""}${min ? ` (${min})` : ""}`;
-    case "sub":
-      return `Substitution${team ? ` — ${team}` : ""}${who ? `: ${who}` : ""}${min ? ` (${min})` : ""}`;
-    default:
-      return `${ev.text}${min ? ` (${min})` : ""}`;
-  }
+export function describeEvent(ev: ParsedEvent, _fx: FixtureLite): string {
+  return describeEspnEvent(ev);
 }
 
 function scoreLine(ev: ParsedEvent, fx: FixtureLite): string | null {
@@ -147,11 +88,14 @@ function scoreLine(ev: ParsedEvent, fx: FixtureLite): string | null {
 }
 
 export function buildEventBody(ev: ParsedEvent, fx: FixtureLite, isUpdate: boolean): string {
-  const heading = `${ICON[ev.kind]} ${isUpdate ? "Updated: " : ""}${describeEvent(ev, fx)}`;
+  const heading = `${ICON[ev.kind] ?? "\u2022"} ${isUpdate ? "Updated: " : ""}${describeEvent(ev, fx)}`;
   const parts = [`<p><strong>${escapeHtml(heading)}</strong></p>`];
   const score = scoreLine(ev, fx);
   if (score && (ev.kind === "goal" || ev.kind === "own-goal" || ev.kind === "penalty")) {
     parts.push(`<p>${escapeHtml(score)}</p>`);
+  }
+  if (ev.text && ev.text !== ev.shortText) {
+    parts.push(`<p>${escapeHtml(ev.text)}</p>`);
   }
   if (isUpdate) {
     parts.push(`<p><em>This corrects the earlier post for this incident.</em></p>`);
@@ -242,7 +186,7 @@ export async function syncBoroMatchEvents(opts?: { ignoreWindow?: boolean }): Pr
   let updated = 0;
 
   for (const ev of events) {
-    const fingerprint = `${ev.kind}|${ev.clock ?? ""}|${ev.team ?? ""}|${ev.players.join("/")}|${ev.homeScore ?? ""}-${ev.awayScore ?? ""}`;
+    const fingerprint = `${ev.kind}|${ev.clock ?? ""}|${ev.teamName ?? ""}|${ev.players.join("/")}|${ev.homeScore ?? ""}-${ev.awayScore ?? ""}`;
     const prev = byKey.get(ev.key);
     if (prev && prev.fingerprint === fingerprint) continue;
 
