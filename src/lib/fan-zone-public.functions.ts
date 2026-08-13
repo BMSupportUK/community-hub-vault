@@ -180,12 +180,30 @@ export type PublicStaffMember = {
 /** Guest-visible Fan Zone staff list (admins first, then moderators). */
 export const getPublicFanZoneStaff = createServerFn({ method: "GET" }).handler(async (): Promise<PublicStaffMember[]> => {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const { data } = await supabaseAdmin.rpc("fan_zone_staff_directory");
-  const out = ((data ?? []) as PublicStaffMember[]).map((r) => ({
+  const { data: roles } = await supabaseAdmin
+    .from("user_roles")
+    .select("user_id, role")
+    .in("role", ["admin", "boro_fan_zone_moderator"]);
+  const rows = (roles ?? []) as Array<{ user_id: string; role: PublicStaffMember["role"] }>;
+  if (!rows.length) return [];
+  const ids = rows.map((r) => r.user_id);
+  const [aliases, profiles] = await Promise.all([
+    loadAliases(supabaseAdmin, ids),
+    supabaseAdmin.from("profiles").select("id, display_name, username").in("id", ids),
+  ]);
+  const profMap: Record<string, { display_name: string | null; username: string | null }> = {};
+  ((profiles.data ?? []) as Array<{ id: string; display_name: string | null; username: string | null }>).forEach((p) => {
+    profMap[p.id] = { display_name: p.display_name, username: p.username };
+  });
+  const out = rows.map((r) => ({
     user_id: r.user_id,
     role: r.role,
-    fan_alias: r.fan_alias?.trim() || "Boro Fan",
-    fan_avatar_url: r.fan_avatar_url || null,
+    fan_alias:
+      aliases[r.user_id]?.alias ||
+      profMap[r.user_id]?.display_name?.trim() ||
+      profMap[r.user_id]?.username?.trim() ||
+      "Boro Fan",
+    fan_avatar_url: aliases[r.user_id]?.avatar || null,
   }));
   out.sort((a, b) => {
     if (a.role !== b.role) return a.role === "admin" ? -1 : 1;
