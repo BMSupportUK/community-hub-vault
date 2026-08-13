@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, ImagePlus, Loader2, Save, UserMinus, ShieldOff, ThumbsUp, ThumbsDown, MessageSquare, FileText, Users, Award, Lock } from "lucide-react";
+import { ArrowLeft, ImagePlus, Loader2, Save, UserMinus, ShieldOff, ThumbsUp, ThumbsDown, MessageSquare, FileText, Users, Award, Lock, Clock } from "lucide-react";
+import { RelativeTime } from "@/components/app/RelativeTime";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -29,6 +30,15 @@ function FanZoneProfilePage() {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const [myLastSeen, setMyLastSeen] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    void (async () => {
+      const { data } = await supabase.from("profiles").select("last_seen_at").eq("id", user.id).maybeSingle();
+      setMyLastSeen((data as { last_seen_at: string | null } | null)?.last_seen_at ?? null);
+    })();
+  }, [user?.id]);
 
   useEffect(() => {
     setAlias(info?.fanAlias ?? "");
@@ -142,7 +152,12 @@ function FanZoneProfilePage() {
               <div className="size-20 rounded-full overflow-hidden bg-gradient-to-br from-[#E11B22] to-[#8B0F14] ring-4 ring-white/15 shrink-0">
                 <img src={editPreviewAvatar} alt="" className="size-20 object-cover" />
               </div>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-col gap-2">
+                <div className="inline-flex w-fit items-center gap-1.5 rounded-full bg-black/40 px-2 py-0.5 text-[11px] font-medium text-white/90 ring-1 ring-white/15">
+                  <Clock className="size-3" />
+                  Last active <RelativeTime iso={myLastSeen} />
+                </div>
+                <div className="flex flex-wrap gap-2">
                 <Button size="sm" variant="outline" onClick={() => fileRef.current?.click()} disabled={uploading} className="bg-white/10 border-white/30 text-white hover:bg-white/20">
                   {uploading ? <Loader2 className="size-3.5 mr-1.5 animate-spin" /> : <ImagePlus className="size-3.5 mr-1.5" />}
                   {avatarUrl ? "Replace picture" : "Upload picture"}
@@ -163,6 +178,7 @@ function FanZoneProfilePage() {
                     e.target.value = "";
                   }}
                 />
+                </div>
               </div>
             </div>
 
