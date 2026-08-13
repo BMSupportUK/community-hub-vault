@@ -63,7 +63,13 @@ type Post = {
   is_pinned?: boolean;
   created_at: string;
 };
-type Profile = { id: string; display_name: string | null; username: string | null; avatar_url: string | null };
+type Profile = {
+  id: string;
+  display_name: string | null;
+  username: string | null;
+  avatar_url: string | null;
+  is_private?: boolean | null;
+};
 type EditEntry = { id: string; previous_body: string; edited_at: string; edited_by: string };
 type Viewer = { user_id: string; alias: string; avatar: string };
 
@@ -386,6 +392,14 @@ function TopicPage() {
         username: null,
         avatar_url: a.fan_avatar_url ?? null,
       };
+    });
+    const { data: mains } = await supabase
+      .from("profiles")
+      .select("id, username, is_private")
+      .in("id", unique);
+    (mains ?? []).forEach((m: { id: string; username: string | null; is_private: boolean | null }) => {
+      const existing = map[m.id] ?? { id: m.id, display_name: "Boro Fan", username: null, avatar_url: null };
+      map[m.id] = { ...existing, username: m.username, is_private: m.is_private };
     });
     setProfiles((prev) => (replace ? map : { ...prev, ...map }));
   }, []);
