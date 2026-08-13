@@ -160,6 +160,7 @@ function DeviceCard({
   );
   const listingUrl = brandStoreOnly ? device.amazon_url : (price?.source_url || device.amazon_url);
   const retailer = retailerFromUrl(listingUrl);
+  const outOfStock = /out\s*of\s*stock|sold\s*out|unavailable|coming\s*soon/i.test(price?.availability ?? "");
   const rangeLabel = formatRange(
     device.price_range_low_cents,
     device.price_range_high_cents,
@@ -187,7 +188,12 @@ function DeviceCard({
             <h3 className="text-lg font-semibold leading-tight">{device.name}</h3>
           </div>
           {price && (
-            <Badge variant="secondary" className="shrink-0 text-[10px]">{relTime(price.scraped_at)}</Badge>
+            <div className="shrink-0 flex flex-col items-end gap-1">
+              <Badge variant="secondary" className="text-[10px]">{relTime(price.scraped_at)}</Badge>
+              {outOfStock && (
+                <Badge variant="destructive" className="text-[10px]">Out of stock</Badge>
+              )}
+            </div>
           )}
         </div>
 
@@ -220,12 +226,21 @@ function DeviceCard({
           </div>
         )}
 
-        <div className="mt-auto pt-2">
+        <div className="mt-auto pt-2 space-y-2">
+          {outOfStock && (
+            <p className="text-xs font-medium text-destructive">
+              Currently out of stock{retailer ? ` at ${retailer}` : ""} — check back soon.
+            </p>
+          )}
           {listingUrl ? (
-            <Button asChild className="w-full">
+            <Button asChild className="w-full" variant={outOfStock ? "outline" : "default"}>
               <a href={listingUrl} target="_blank" rel="sponsored noopener noreferrer">
                 <ExternalLink className="size-4" />
-                {priceLabel ? `Buying from our streaming partner — ${priceLabel}` : `Buying from our streaming partner${retailer ? ` (${retailer})` : ""}`}
+                {outOfStock
+                  ? `Out of stock — view on ${retailer || "store"}${priceLabel ? ` (${priceLabel})` : ""}`
+                  : priceLabel
+                    ? `Buying from our streaming partner — ${priceLabel}`
+                    : `Buying from our streaming partner${retailer ? ` (${retailer})` : ""}`}
               </a>
             </Button>
           ) : (
