@@ -8,7 +8,6 @@ import {
 import { useUserTimezone } from "@/hooks/use-user-timezone";
 import { TeamKit } from "@/lib/boro-team-kits";
 import { Dialog, DialogContent, DialogTitle, DialogClose } from "@/components/ui/dialog";
-import { BoroMatchCentreBox } from "@/components/app/BoroMatchCentreBox";
 
 function fmtKickoff(iso: string, tz: string) {
   try {
@@ -47,6 +46,19 @@ function Side({ name, logo }: { name: string; logo?: string | null }) {
       )}
       <span className="truncate font-semibold text-white">{name}</span>
     </span>
+  );
+}
+
+function BigSide({ name, logo }: { name: string; logo?: string | null }) {
+  return (
+    <div className="flex flex-1 flex-col items-center gap-2 min-w-0">
+      {logo ? (
+        <img src={logo} alt="" width={48} height={48} className="size-12 object-contain" loading="lazy" />
+      ) : (
+        <TeamKit team={name} size={44} />
+      )}
+      <span className="text-center text-sm font-semibold text-white leading-tight">{name}</span>
+    </div>
   );
 }
 
