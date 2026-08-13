@@ -85,6 +85,11 @@ function FanZoneBoardsPage() {
           })}
         </div>
       )}
+        </div>
+        <div className="lg:sticky lg:top-4 lg:self-start">
+          <BoroMatchCentreBox />
+        </div>
+      </div>
     </FanZoneShell>
   );
 }
