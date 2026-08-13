@@ -39,14 +39,14 @@ function FanZoneBoardsPage() {
   const boards = Route.useLoaderData() as PublicBoard[];
   return (
     <FanZoneShell>
-      <div className="boro-forum-index grid gap-4 xl:grid-cols-[1fr_280px] items-start">
+      <div className="boro-forum-index grid gap-4 md:grid-cols-[minmax(0,1fr)_280px] items-start">
         <div className="space-y-3 min-w-0">
           {boards.length === 0 ? (
             <div className="rounded-xl border border-white/10 bg-white/5 p-8 text-center text-sm text-white/70">
               No boards yet.
             </div>
           ) : (
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3">
               {boards.map((b) => {
                 const Icon = getIcon(b.icon);
                 return (
@@ -116,7 +116,7 @@ function FanZoneBoardsPage() {
             </div>
           )}
         </div>
-        <div className="xl:sticky xl:top-4 xl:self-start">
+        <div className="md:sticky md:top-4 md:self-start">
           <BoroMatchCentreBox />
         </div>
       </div>
