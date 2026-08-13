@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { MessageSquareText, Ban, BarChart3, UserCog, Users, Trophy } from "lucide-react";
 import { FanZoneStaffBox } from "@/components/app/FanZoneStaffBox";
 import { BoroMatchCentreBox } from "@/components/app/BoroMatchCentreBox";
+import { BoroLiveMatchStrip } from "@/components/app/BoroLiveMatchStrip";
 import boroHero from "@/assets/boro-hero.jpg";
 import boroBadge from "@/assets/boro-fan-zone-badge.png";
 import boroBg from "@/assets/boro-bg.jpg";
@@ -157,6 +158,9 @@ function ForumLayout() {
           </div>
         </div>
       </header>
+      <div className="mb-4">
+        <BoroLiveMatchStrip />
+      </div>
       {isNested ? <Outlet /> : <BoardsIndex />}
     </div>
   );
