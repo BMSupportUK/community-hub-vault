@@ -410,7 +410,7 @@ function LineupPanel({
   const players = (team?.players ?? [])
     .filter((p) => (starters ? p.starter : !p.starter))
     .slice()
-    .sort((a, b) => (a.jersey ?? 99) - (b.jersey ?? 99));
+    .sort((a, b) => (Number(a.jersey) || 99) - (Number(b.jersey) || 99));
 
   return (
     <div className="space-y-3">
