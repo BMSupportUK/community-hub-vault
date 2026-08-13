@@ -1,0 +1,473 @@
+// Auto-fills the Middlesbrough match day forum thread from the ESPN Gamecast:
+//  1. A single pre-match FIRST REPLY (never a new topic) by "Boro Match Day
+//     Author" ~24h before kick-off: competition, kick-off, venue, TV, league
+//     positions, form, head-to-head, odds, referee and text line-ups.
+//  2. A live block inside that same reply, refreshed in place during the game.
+//  3. A half-time reply with the score, scorers and key stats.
+// Injury / unavailable lists and "team news" placeholders are deliberately
+// excluded — the team-sheet job posts the official graphic instead.
+
+import { matchTopicToFixture, type FixtureLite } from "@/lib/boro-team-sheet.server";
+import { findEspnEvent } from "@/lib/boro-match-events.server";
+import {
+  normaliseEspnSummary,
+  describeEspnEvent,
+  PRIMARY_TEAM_STATS,
+  type EspnMatchEvent,
+} from "@/lib/boro-espn-events";
+
+const PREVIEW_BEFORE_MS = 26 * 60 * 60 * 1000; // start ~24h+ before kick-off
+const WINDOW_AFTER_MS = 5 * 60 * 60 * 1000;
+
+export const LIVE_START = "<!--boro-live-start-->";
+export const LIVE_END = "<!--boro-live-end-->";
+
+function esc(s: string): string {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+function londonKickoff(iso: string): string {
+  const d = new Date(iso);
+  return new Intl.DateTimeFormat("en-GB", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "Europe/London",
+  }).format(d);
+}
+
+type SideInfo = {
+  id: string | null;
+  name: string;
+  rank: string | null;
+  points: string | null;
+  form: string[];
+  formLines: string[];
+};
+
+function standingsFor(json: any, teamId: string | null): { rank: string | null; points: string | null } {
+  if (!teamId) return { rank: null, points: null };
+  const groups: any[] = json?.standings?.groups ?? [];
+  for (const g of groups) {
+    for (const e of g?.standings?.entries ?? []) {
+      if (String(e?.id ?? "") !== teamId) continue;
+      const stat = (name: string) =>
+        (e?.stats ?? []).find((s: any) => s?.name === name)?.displayValue ?? null;
+      const played = Number((e?.stats ?? []).find((s: any) => s?.name === "gamesPlayed")?.value ?? 0);
+      if (!played) return { rank: null, points: null };
+      return { rank: stat("rank"), points: stat("points") };
+    }
+  }
+  return { rank: null, points: null };
+}
+
+function lastFive(json: any, teamId: string | null): { form: string[]; lines: string[]; events: any[] } {
+  const block = (json?.lastFiveGames ?? []).find((b: any) => String(b?.team?.id ?? "") === String(teamId ?? ""));
+  const events: any[] = (block?.events ?? []).slice(0, 5);
+  const form = events.map((e) => String(e?.gameResult ?? "").toUpperCase()).filter(Boolean);
+  const lines = events.map((e) => {
+    const opp = e?.opponent?.displayName ?? "Opponent";
+    const at = e?.atVs === "@" ? "away at" : "home to";
+    const score = e?.score ?? `${e?.homeTeamScore ?? ""}-${e?.awayTeamScore ?? ""}`;
+    const res = String(e?.gameResult ?? "").toUpperCase();
+    const comp = e?.leagueAbbreviation ?? e?.leagueName ?? "";
+    return `${res} ${score} ${at} ${opp}${comp ? ` (${comp})` : ""}`;
+  });
+  return { form, lines, events };
+}
+
+function headToHead(json: any, homeId: string | null, awayId: string | null): string[] {
+  const { events } = lastFive(json, homeId);
+  return events
+    .filter((e) => String(e?.opponent?.id ?? "") === String(awayId ?? ""))
+    .map((e) => {
+      const d = new Date(String(e?.gameDate ?? ""));
+      const when = Number.isFinite(d.getTime())
+        ? new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "Europe/London" }).format(d)
+        : "";
+      return `${when} — ${e?.score ?? ""} (${e?.leagueAbbreviation ?? e?.leagueName ?? ""})`;
+    });
+}
+
+function oddsLine(json: any): string | null {
+  const o = (json?.odds ?? [])[0];
+  if (!o) return null;
+  const bits: string[] = [];
+  if (o.details) bits.push(String(o.details));
+  const home = o?.homeTeamOdds?.moneyLine;
+  const away = o?.awayTeamOdds?.moneyLine;
+  const draw = o?.drawOdds?.moneyLine ?? o?.drawOdds;
+  if (home != null && away != null) {
+    bits.push(`home ${home > 0 ? `+${home}` : home}${draw != null && typeof draw === "number" ? ` / draw ${draw > 0 ? `+${draw}` : draw}` : ""} / away ${away > 0 ? `+${away}` : away}`);
+  }
+  if (o.overUnder != null) bits.push(`goals line ${o.overUnder}`);
+  const provider = o?.provider?.name ? ` (${o.provider.name})` : "";
+  return bits.length ? `${bits.join(" · ")}${provider}` : null;
+}
+
+function refereeOf(json: any): string | null {
+  const officials: any[] = json?.gameInfo?.officials ?? [];
+  const ref = officials.find((x: any) => /referee/i.test(String(x?.position?.displayName ?? x?.position?.name ?? "")));
+  return (ref ?? officials[0])?.displayName ?? null;
+}
+
+function broadcastOf(json: any): string | null {
+  const list: any[] = json?.broadcasts ?? json?.header?.competitions?.[0]?.broadcasts ?? [];
+  const names = list
+    .map((b: any) => b?.media?.shortName ?? b?.names?.[0] ?? b?.shortName)
+    .filter(Boolean)
+    .map(String);
+  return names.length ? Array.from(new Set(names)).join(", ") : null;
+}
+
+function rosterXi(json: any, homeAway: "home" | "away"): { name: string; xi: string[]; subs: string[] } | null {
+  const r = (json?.rosters ?? []).find((x: any) => x?.homeAway === homeAway);
+  if (!r) return null;
+  const players: any[] = r?.roster ?? [];
+  const label = (p: any) => {
+    const name = p?.athlete?.displayName ?? p?.athlete?.shortName;
+    if (!name) return null;
+    const pos = p?.position?.abbreviation ? ` (${p.position.abbreviation})` : "";
+    return `${name}${pos}`;
+  };
+  const xi = players.filter((p) => p?.starter).map(label).filter(Boolean) as string[];
+  const subs = players.filter((p) => !p?.starter).map(label).filter(Boolean) as string[];
+  return { name: r?.team?.displayName ?? "", xi, subs };
+}
+
+function teamStatRows(json: any): Array<{ label: string; home: string; away: string }> {
+  const teams: any[] = json?.boxscore?.teams ?? [];
+  const home = teams.find((t: any) => t?.homeAway === "home") ?? teams[0];
+  const away = teams.find((t: any) => t?.homeAway === "away") ?? teams[1];
+  const get = (t: any, name: string) =>
+    (t?.statistics ?? []).find((s: any) => s?.name === name)?.displayValue ?? null;
+  const rows: Array<{ label: string; home: string; away: string }> = [];
+  for (const s of PRIMARY_TEAM_STATS) {
+    const h = get(home, s.name);
+    const a = get(away, s.name);
+    if (h == null && a == null) continue;
+    rows.push({ label: s.label, home: String(h ?? "-"), away: String(a ?? "-") });
+  }
+  return rows;
+}
+
+function goalLines(events: EspnMatchEvent[]): string[] {
+  return events
+    .filter((e) => e.kind === "goal" || e.kind === "penalty" || e.kind === "own-goal")
+    .map((e) => describeEspnEvent(e));
+}
+
+function statsTable(rows: Array<{ label: string; home: string; away: string }>, home: string, away: string): string {
+  if (!rows.length) return "";
+  const head = `<tr><th></th><th>${esc(home)}</th><th>${esc(away)}</th></tr>`;
+  const body = rows
+    .map((r) => `<tr><td>${esc(r.label)}</td><td>${esc(r.home)}</td><td>${esc(r.away)}</td></tr>`)
+    .join("");
+  return `<table><thead>${head}</thead><tbody>${body}</tbody></table>`;
+}
+
+/** The refreshed-in-place live section of the pre-match reply. */
+export function buildLiveBlock(fx: FixtureLite, json: any): string {
+  const norm = normaliseEspnSummary(json);
+  const home = norm.home ?? fx.home_team;
+  const away = norm.away ?? fx.away_team;
+  const comp = json?.header?.competitions?.[0];
+  const scores = (comp?.competitors ?? []).reduce((acc: Record<string, string>, c: any) => {
+    acc[c?.homeAway ?? ""] = String(c?.score ?? "0");
+    return acc;
+  }, {});
+  const state = String(comp?.status?.type?.state ?? "pre");
+  const parts: string[] = [LIVE_START];
+  parts.push(`<p><strong>Live — ${esc(home)} ${esc(scores["home"] ?? "0")} - ${esc(scores["away"] ?? "0")} ${esc(away)}</strong>`);
+  if (norm.status) parts.push(` <em>${esc(norm.status)}</em>`);
+  parts.push(`</p>`);
+  if (state === "pre") {
+    parts.push(`<p>Not kicked off yet — this section updates automatically once the game starts.</p>`);
+  } else {
+    const goals = goalLines(norm.events);
+    if (goals.length) {
+      parts.push(`<p><strong>Goals</strong></p><ul>${goals.map((g) => `<li>${esc(g)}</li>`).join("")}</ul>`);
+    }
+    const rows = teamStatRows(json);
+    if (rows.length) parts.push(`<p><strong>Key stats</strong></p>${statsTable(rows, home, away)}`);
+  }
+  parts.push(`<p><em>Updated ${esc(new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/London" }).format(new Date()))}</em></p>`);
+  parts.push(LIVE_END);
+  return parts.join("");
+}
+
+export function buildPreviewBody(fx: FixtureLite, json: any): string {
+  const norm = normaliseEspnSummary(json);
+  const comp = json?.header?.competitions?.[0];
+  const competitors: any[] = comp?.competitors ?? [];
+  const homeC = competitors.find((c) => c?.homeAway === "home") ?? competitors[0];
+  const awayC = competitors.find((c) => c?.homeAway === "away") ?? competitors[1];
+  const homeId = homeC?.team?.id != null ? String(homeC.team.id) : null;
+  const awayId = awayC?.team?.id != null ? String(awayC.team.id) : null;
+  const home = norm.home ?? fx.home_team;
+  const away = norm.away ?? fx.away_team;
+
+  const sides: SideInfo[] = [
+    { id: homeId, name: home, ...standingsFor(json, homeId), form: lastFive(json, homeId).form, formLines: lastFive(json, homeId).lines },
+    { id: awayId, name: away, ...standingsFor(json, awayId), form: lastFive(json, awayId).form, formLines: lastFive(json, awayId).lines },
+  ];
+
+  const venue = json?.gameInfo?.venue?.fullName ?? null;
+  const city = json?.gameInfo?.venue?.address?.city ?? null;
+  const tv = broadcastOf(json);
+  const ref = refereeOf(json);
+  const odds = oddsLine(json);
+  const h2h = headToHead(json, homeId, awayId);
+
+  const parts: string[] = [];
+  parts.push(`<p><strong>Match preview — ${esc(home)} v ${esc(away)}</strong></p>`);
+  const facts: string[] = [];
+  facts.push(`<li><strong>Competition:</strong> ${esc(fx.competition || (comp?.groups?.name ?? "Fixture"))}</li>`);
+  facts.push(`<li><strong>Kick-off:</strong> ${esc(londonKickoff(fx.kickoff_at))} (UK)</li>`);
+  if (venue) facts.push(`<li><strong>Venue:</strong> ${esc(venue)}${city ? `, ${esc(city)}` : ""}</li>`);
+  if (tv) facts.push(`<li><strong>TV / stream:</strong> ${esc(tv)}</li>`);
+  if (ref) facts.push(`<li><strong>Referee:</strong> ${esc(ref)}</li>`);
+  if (odds) facts.push(`<li><strong>Odds:</strong> ${esc(odds)}</li>`);
+  parts.push(`<ul>${facts.join("")}</ul>`);
+
+  const table = sides.filter((s) => s.rank);
+  if (table.length) {
+    parts.push(
+      `<p><strong>League standing</strong></p><ul>${table
+        .map((s) => `<li>${esc(s.name)}: ${esc(s.rank ?? "")}${s.points ? ` (${esc(s.points)} pts)` : ""}</li>`)
+        .join("")}</ul>`,
+    );
+  }
+
+  const withForm = sides.filter((s) => s.form.length);
+  if (withForm.length) {
+    parts.push(
+      `<p><strong>Form (last 5)</strong></p>${withForm
+        .map(
+          (s) =>
+            `<p>${esc(s.name)} — ${esc(s.form.join(" "))}</p><ul>${s.formLines
+              .map((l) => `<li>${esc(l)}</li>`)
+              .join("")}</ul>`,
+        )
+        .join("")}`,
+    );
+  }
+
+  if (h2h.length) {
+    parts.push(`<p><strong>Recent meetings</strong></p><ul>${h2h.map((l) => `<li>${esc(l)}</li>`).join("")}</ul>`);
+  }
+
+  for (const side of ["home", "away"] as const) {
+    const xi = rosterXi(json, side);
+    if (!xi || xi.xi.length === 0) continue;
+    parts.push(
+      `<p><strong>${esc(xi.name)} XI</strong></p><p>${esc(xi.xi.join(", "))}</p>${
+        xi.subs.length ? `<p><em>Subs:</em> ${esc(xi.subs.join(", "))}</p>` : ""
+      }`,
+    );
+  }
+
+  parts.push(buildLiveBlock(fx, json));
+  parts.push(`<p><em>Auto-filled from the ESPN Gamecast.</em></p>`);
+  return parts.join("\n");
+}
+
+export function buildHalfTimeBody(fx: FixtureLite, json: any): string {
+  const norm = normaliseEspnSummary(json);
+  const comp = json?.header?.competitions?.[0];
+  const home = norm.home ?? fx.home_team;
+  const away = norm.away ?? fx.away_team;
+  const scores = (comp?.competitors ?? []).reduce((acc: Record<string, string>, c: any) => {
+    acc[c?.homeAway ?? ""] = String(c?.score ?? "0");
+    return acc;
+  }, {});
+  const goals = goalLines(norm.events.filter((e) => (e.period ?? 1) <= 1));
+  const rows = teamStatRows(json);
+  const parts = [
+    `<p><strong>Half-time — ${esc(home)} ${esc(scores["home"] ?? "0")} - ${esc(scores["away"] ?? "0")} ${esc(away)}</strong></p>`,
+  ];
+  if (goals.length) parts.push(`<p><strong>First-half goals</strong></p><ul>${goals.map((g) => `<li>${esc(g)}</li>`).join("")}</ul>`);
+  if (rows.length) parts.push(`<p><strong>Half-time stats</strong></p>${statsTable(rows, home, away)}`);
+  return parts.join("\n");
+}
+
+function replaceLiveBlock(body: string, block: string): string {
+  const start = body.indexOf(LIVE_START);
+  const end = body.indexOf(LIVE_END);
+  if (start === -1 || end === -1) return `${body}\n${block}`;
+  return `${body.slice(0, start)}${block}${body.slice(end + LIVE_END.length)}`;
+}
+
+function isHalfTime(json: any): boolean {
+  const st = json?.header?.competitions?.[0]?.status;
+  const detail = String(st?.type?.shortDetail ?? st?.type?.detail ?? st?.type?.description ?? "").toLowerCase();
+  return /half\s*time|halftime|\bht\b/.test(detail);
+}
+
+export type ThreadSyncResult = {
+  ok: boolean;
+  fixture?: string;
+  topic?: string | null;
+  status?: string | null;
+  previewPosted: boolean;
+  liveUpdated: boolean;
+  halfTimePosted: boolean;
+  skipped: string[];
+  error?: string;
+};
+
+export async function syncBoroMatchThread(opts?: { ignoreWindow?: boolean }): Promise<ThreadSyncResult> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { getMatchDayAuthorId } = await import("@/lib/boro-bot-author.server");
+  const skipped: string[] = [];
+  const base: ThreadSyncResult = {
+    ok: true,
+    previewPosted: false,
+    liveUpdated: false,
+    halfTimePosted: false,
+    skipped,
+  };
+  const now = Date.now();
+
+  const { data: fixtures, error: fxErr } = await supabaseAdmin
+    .from("boro_fixtures")
+    .select("id, home_team, away_team, kickoff_at, competition")
+    .gte("kickoff_at", new Date(now - 12 * 60 * 60 * 1000).toISOString())
+    .lte("kickoff_at", new Date(now + 48 * 60 * 60 * 1000).toISOString())
+    .order("kickoff_at", { ascending: true })
+    .limit(10);
+  if (fxErr) return { ...base, ok: false, error: fxErr.message };
+
+  const rows = (fixtures ?? []) as FixtureLite[];
+  const fx = rows.find((row) => {
+    const ko = Date.parse(row.kickoff_at);
+    if (!Number.isFinite(ko)) return false;
+    if (opts?.ignoreWindow) return true;
+    return now >= ko - PREVIEW_BEFORE_MS && now <= ko + WINDOW_AFTER_MS;
+  });
+  if (!fx) return { ...base, skipped: ["no fixture inside the preview window"] };
+  const label = `${fx.home_team} v ${fx.away_team}`;
+
+  const { data: board } = await supabaseAdmin
+    .from("forum_boards")
+    .select("id")
+    .eq("slug", "match-day")
+    .maybeSingle();
+  if (!board?.id) return { ...base, fixture: label, skipped: ["match day board not found"] };
+
+  const { data: topics } = await supabaseAdmin
+    .from("forum_topics")
+    .select("id, title, created_at, author_id")
+    .eq("board_id", board.id)
+    .order("created_at", { ascending: false })
+    .limit(40);
+  const topic = matchTopicToFixture(
+    (topics ?? []) as Array<{ id: string; title: string; created_at: string; author_id: string }>,
+    fx,
+  );
+  if (!topic) return { ...base, fixture: label, topic: null, skipped: ["no match day thread for this fixture yet"] };
+
+  const espn = await findEspnEvent(fx);
+  if (!espn) return { ...base, fixture: label, topic: topic.title, skipped: ["no ESPN match found"] };
+
+  const res = await fetch(
+    `https://site.api.espn.com/apis/site/v2/sports/soccer/${espn.slug}/summary?event=${encodeURIComponent(espn.eventId)}`,
+    { headers: { accept: "application/json" } },
+  );
+  if (!res.ok) return { ...base, fixture: label, topic: topic.title, skipped: [`ESPN summary ${res.status}`] };
+  const json: any = await res.json();
+  const status = normaliseEspnSummary(json).status;
+
+  const authorId = (await getMatchDayAuthorId()) ?? topic.author_id;
+
+  const { data: logged } = await supabaseAdmin
+    .from("boro_match_event_posts")
+    .select("id, event_key, post_id, fingerprint, revision")
+    .eq("fixture_id", fx.id)
+    .in("event_key", ["preview", "halftime"]);
+  const byKey = new Map(
+    ((logged ?? []) as Array<{ id: string; event_key: string; post_id: string; fingerprint: string; revision: number }>).map(
+      (r) => [r.event_key, r],
+    ),
+  );
+
+  let previewPosted = false;
+  let liveUpdated = false;
+  let halfTimePosted = false;
+
+  const preview = byKey.get("preview");
+  if (!preview) {
+    const body = buildPreviewBody(fx, json);
+    const { data: post, error: postErr } = await supabaseAdmin
+      .from("forum_posts")
+      .insert({ topic_id: topic.id, author_id: authorId, body })
+      .select("id")
+      .single();
+    if (postErr) skipped.push(`preview post failed: ${postErr.message}`);
+    else {
+      previewPosted = true;
+      const { error: logErr } = await supabaseAdmin.from("boro_match_event_posts").insert({
+        fixture_id: fx.id,
+        topic_id: topic.id,
+        post_id: post.id,
+        event_key: "preview",
+        kind: "preview",
+        clock: null,
+        summary: `Match preview — ${label}`,
+        fingerprint: "preview",
+        revision: 0,
+      });
+      if (logErr) skipped.push(`preview log failed: ${logErr.message}`);
+    }
+  } else {
+    // Refresh the live block in place (and back-fill line-ups once ESPN has them).
+    const { data: existing } = await supabaseAdmin
+      .from("forum_posts")
+      .select("body")
+      .eq("id", preview.post_id)
+      .maybeSingle();
+    if (existing?.body) {
+      const hasXi = /XI<\/strong>/.test(existing.body);
+      const rebuilt = !hasXi && (rosterXi(json, "home")?.xi.length ?? 0) > 0
+        ? buildPreviewBody(fx, json)
+        : replaceLiveBlock(existing.body, buildLiveBlock(fx, json));
+      if (rebuilt !== existing.body) {
+        const { error: upErr } = await supabaseAdmin
+          .from("forum_posts")
+          .update({ body: rebuilt })
+          .eq("id", preview.post_id);
+        if (upErr) skipped.push(`live refresh failed: ${upErr.message}`);
+        else liveUpdated = true;
+      }
+    }
+  }
+
+  if (!byKey.get("halftime") && isHalfTime(json)) {
+    const body = buildHalfTimeBody(fx, json);
+    const { data: post, error: postErr } = await supabaseAdmin
+      .from("forum_posts")
+      .insert({ topic_id: topic.id, author_id: authorId, body })
+      .select("id")
+      .single();
+    if (postErr) skipped.push(`half-time post failed: ${postErr.message}`);
+    else {
+      halfTimePosted = true;
+      const { error: logErr } = await supabaseAdmin.from("boro_match_event_posts").insert({
+        fixture_id: fx.id,
+        topic_id: topic.id,
+        post_id: post.id,
+        event_key: "halftime",
+        kind: "halftime",
+        clock: "HT",
+        summary: `Half-time — ${label}`,
+        fingerprint: "halftime",
+        revision: 0,
+      });
+      if (logErr) skipped.push(`half-time log failed: ${logErr.message}`);
+    }
+  }
+
+  return { ...base, fixture: label, topic: topic.title, status, previewPosted, liveUpdated, halfTimePosted };
+}
