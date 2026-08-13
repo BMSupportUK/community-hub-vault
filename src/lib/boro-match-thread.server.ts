@@ -266,6 +266,37 @@ function replaceLiveBlock(body: string, block: string): string {
   return `${body.slice(0, start)}${block}${body.slice(end + LIVE_END.length)}`;
 }
 
+export function buildFullTimeBody(fx: FixtureLite, json: any): string {
+  const norm = normaliseEspnSummary(json);
+  const comp = json?.header?.competitions?.[0];
+  const home = norm.home ?? fx.home_team;
+  const away = norm.away ?? fx.away_team;
+  const scores = (comp?.competitors ?? []).reduce((acc: Record<string, string>, c: any) => {
+    acc[c?.homeAway ?? ""] = String(c?.score ?? "0");
+    return acc;
+  }, {});
+  const goals = goalLines(norm.events);
+  const cards = norm.events
+    .filter((e) => e.kind === "yellow" || e.kind === "red")
+    .map((e) => describeEspnEvent(e));
+  const rows = teamStatRows(json);
+  const parts = [
+    `<p><strong>Full-time — ${esc(home)} ${esc(scores["home"] ?? "0")} - ${esc(scores["away"] ?? "0")} ${esc(away)}</strong></p>`,
+  ];
+  if (norm.shootout) parts.push(`<p><strong>Penalty shootout:</strong> ${esc(norm.shootout)}</p>`);
+  if (goals.length) parts.push(`<p><strong>Goals</strong></p><ul>${goals.map((g) => `<li>${esc(g)}</li>`).join("")}</ul>`);
+  if (cards.length) parts.push(`<p><strong>Cards</strong></p><ul>${cards.map((c) => `<li>${esc(c)}</li>`).join("")}</ul>`);
+  if (rows.length) parts.push(`<p><strong>Full-time stats</strong></p>${statsTable(rows, home, away)}`);
+  return parts.join("\n");
+}
+
+function replaceLiveBlockUnused(body: string, block: string): string {
+  const start = body.indexOf(LIVE_START);
+  const end = body.indexOf(LIVE_END);
+  if (start === -1 || end === -1) return `${body}\n${block}`;
+  return `${body.slice(0, start)}${block}${body.slice(end + LIVE_END.length)}`;
+}
+
 /** Strip a legacy inline live block out of the preview reply. */
 function stripLiveBlock(body: string): string {
   const start = body.indexOf(LIVE_START);
@@ -280,6 +311,13 @@ function isHalfTime(json: any): boolean {
   return /half\s*time|halftime|\bht\b/.test(detail);
 }
 
+function isFullTime(json: any): boolean {
+  const st = json?.header?.competitions?.[0]?.status;
+  const state = String(st?.type?.state ?? "").toLowerCase();
+  const detail = String(st?.type?.shortDetail ?? st?.type?.detail ?? st?.type?.description ?? "").toLowerCase();
+  return state === "post" || st?.type?.completed === true || /full\s*time|\bft\b|final/.test(detail);
+}
+
 export type ThreadSyncResult = {
   ok: boolean;
   fixture?: string;
@@ -288,6 +326,7 @@ export type ThreadSyncResult = {
   previewPosted: boolean;
   liveUpdated: boolean;
   halfTimePosted: boolean;
+  fullTimePosted: boolean;
   skipped: string[];
   error?: string;
 };
