@@ -398,7 +398,7 @@ export async function syncBoroMatchThread(opts?: { ignoreWindow?: boolean }): Pr
     .from("boro_match_event_posts")
     .select("id, event_key, post_id, fingerprint, revision")
     .eq("fixture_id", fx.id)
-    .in("event_key", ["preview", "halftime", "live"]);
+    .in("event_key", ["preview", "halftime", "fulltime", "live"]);
   const byKey = new Map(
     ((logged ?? []) as Array<{ id: string; event_key: string; post_id: string; fingerprint: string; revision: number }>).map(
       (r) => [r.event_key, r],
@@ -408,6 +408,7 @@ export async function syncBoroMatchThread(opts?: { ignoreWindow?: boolean }): Pr
   let previewPosted = false;
   let liveUpdated = false;
   let halfTimePosted = false;
+  let fullTimePosted = false;
 
   const preview = byKey.get("preview");
   if (!preview) {
@@ -521,5 +522,39 @@ export async function syncBoroMatchThread(opts?: { ignoreWindow?: boolean }): Pr
     }
   }
 
-  return { ...base, fixture: label, topic: topic.title, status, previewPosted, liveUpdated, halfTimePosted };
+  if (!byKey.get("fulltime") && isFullTime(json)) {
+    const body = buildFullTimeBody(fx, json);
+    const { data: post, error: postErr } = await supabaseAdmin
+      .from("forum_posts")
+      .insert({ topic_id: topic.id, author_id: authorId, body })
+      .select("id")
+      .single();
+    if (postErr) skipped.push(`full-time post failed: ${postErr.message}`);
+    else {
+      fullTimePosted = true;
+      const { error: logErr } = await supabaseAdmin.from("boro_match_event_posts").insert({
+        fixture_id: fx.id,
+        topic_id: topic.id,
+        post_id: post.id,
+        event_key: "fulltime",
+        kind: "fulltime",
+        clock: "FT",
+        summary: `Full-time — ${label}`,
+        fingerprint: "fulltime",
+        revision: 0,
+      });
+      if (logErr) skipped.push(`full-time log failed: ${logErr.message}`);
+    }
+  }
+
+  return {
+    ...base,
+    fixture: label,
+    topic: topic.title,
+    status,
+    previewPosted,
+    liveUpdated,
+    halfTimePosted,
+    fullTimePosted,
+  };
 }
