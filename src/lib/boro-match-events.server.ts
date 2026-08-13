@@ -172,6 +172,7 @@ export type EventSyncResult = {
 
 export async function syncBoroMatchEvents(opts?: { ignoreWindow?: boolean }): Promise<EventSyncResult> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { getMatchDayAuthorId } = await import("@/lib/boro-bot-author.server");
   const skipped: string[] = [];
   const now = Date.now();
 
@@ -235,6 +236,8 @@ export async function syncBoroMatchEvents(opts?: { ignoreWindow?: boolean }): Pr
     ]),
   );
 
+  const authorId = (await getMatchDayAuthorId()) ?? topic.author_id;
+
   let posted = 0;
   let updated = 0;
 
@@ -247,7 +250,7 @@ export async function syncBoroMatchEvents(opts?: { ignoreWindow?: boolean }): Pr
     const body = buildEventBody(ev, fx, isUpdate);
     const { data: post, error: postErr } = await supabaseAdmin
       .from("forum_posts")
-      .insert({ topic_id: topic.id, author_id: topic.author_id, body })
+      .insert({ topic_id: topic.id, author_id: authorId, body })
       .select("id")
       .single();
     if (postErr) {
