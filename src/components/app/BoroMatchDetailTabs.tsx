@@ -65,6 +65,43 @@ function EventRow({ ev, home, away }: { ev: MatchEventItem; home: string | null;
   );
 }
 
+function StatHead() {
+  return (
+    <thead className="text-[10px] uppercase text-white/40">
+      <tr>
+        <th className="px-3 py-1.5 text-left">Player</th>
+        {STAT_COLUMNS.map((c) => (
+          <th key={c.key} title={c.title} className="px-1.5 py-1.5 text-center">
+            {c.label}
+          </th>
+        ))}
+      </tr>
+    </thead>
+  );
+}
+
+function PlaceholderRows({ rows }: { rows: number }) {
+  return (
+    <tbody>
+      {Array.from({ length: rows }).map((_, i) => (
+        <tr key={i} className="border-t border-white/5">
+          <td className="py-1.5 pr-2">
+            <span className="inline-flex items-center gap-2">
+              <span className="w-6 text-right text-[11px] tabular-nums text-white/25">{i + 1}</span>
+              <span className="h-3 w-24 rounded bg-white/10" />
+            </span>
+          </td>
+          {STAT_COLUMNS.map((c) => (
+            <td key={c.key} className="px-1.5 py-1.5 text-center text-white/20">
+              –
+            </td>
+          ))}
+        </tr>
+      ))}
+    </tbody>
+  );
+}
+
 function PlayerRow({ p }: { p: PlayerLine }) {
   return (
     <tr className="border-t border-white/5">
