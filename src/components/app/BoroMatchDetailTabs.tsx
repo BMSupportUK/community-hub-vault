@@ -12,6 +12,21 @@ import { PLAYER_STAT_COLUMNS, describeEspnEvent } from "@/lib/boro-espn-events";
 
 const STAT_COLUMNS = PLAYER_STAT_COLUMNS;
 
+type ActionGroup = {
+  value: string;
+  label: string;
+  emptyLabel: string;
+  kinds?: MatchEventItem["kind"][];
+};
+
+const ACTION_GROUPS: ActionGroup[] = [
+  { value: "all", label: "All", emptyLabel: "Match action" },
+  { value: "goals", label: "Goals", emptyLabel: "Goals", kinds: ["goal", "own-goal", "penalty"] },
+  { value: "cards", label: "Cards", emptyLabel: "Cards", kinds: ["yellow", "red"] },
+  { value: "pens", label: "Pens", emptyLabel: "Penalties", kinds: ["penalty", "penalty-missed"] },
+  { value: "subs", label: "Subs", emptyLabel: "Substitutions", kinds: ["sub"] },
+];
+
 function EventIcon({ kind }: { kind: MatchEventItem["kind"] }) {
   if (kind === "yellow") return <Square className="size-3.5 fill-amber-400 text-amber-400" />;
   if (kind === "red") return <Square className="size-3.5 fill-red-500 text-red-500" />;
