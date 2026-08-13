@@ -384,7 +384,7 @@ export const getPublicFanProfile = createServerFn({ method: "GET" })
         .select("user_id, fan_alias, fan_avatar_url, bio, supporter_since, fav_player, matchday_memory, created_at, status")
         .eq("user_id", data.userId)
         .maybeSingle(),
-      supabaseAdmin.from("profiles").select("id, display_name, username, is_private").eq("id", data.userId).maybeSingle(),
+      Promise.resolve({ data: null }),
       supabaseAdmin
         .from("user_roles")
         .select("role")
