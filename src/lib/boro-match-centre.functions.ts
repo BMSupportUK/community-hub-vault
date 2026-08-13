@@ -275,16 +275,39 @@ type EspnCompetitor = {
   score?: { value?: number; displayValue?: string } | string | number;
 };
 
+async function fetchEspnCompetition(slug: string): Promise<Array<{
+  date: string;
+  competitions: Array<{ competitors: EspnCompetitor[]; venue?: { fullName?: string } }>;
+  status?: { type?: { completed?: boolean } };
+}>> {
+  const url =
+    slug === "eng.2"
+      ? ESPN_SCHEDULE_URL
+      : `https://site.api.espn.com/apis/site/v2/sports/soccer/${slug}/teams/${ESPN_TEAM_ID}/schedule`;
+  const res = await fetch(url, { headers: { accept: "application/json" } });
+  if (!res.ok) throw new Error(`ESPN ${slug} ${res.status}`);
+  const json = (await res.json()) as { events?: unknown[] };
+  return (json.events ?? []) as never;
+}
+
 async function fetchEspnBoro(): Promise<{
   lastResult: LastResult | null;
   nextFixture: NextFixture | null;
 }> {
-  const res = await fetch(ESPN_SCHEDULE_URL, {
-    headers: { accept: "application/json" },
-  });
-  if (!res.ok) throw new Error(`ESPN ${res.status}`);
-  const json = (await res.json()) as { events?: unknown[] };
-  const events = (json.events ?? []) as Array<{
+  const results = await Promise.all(
+    ESPN_COMPETITIONS.map(async (c) => {
+      try {
+        const events = await fetchEspnCompetition(c.slug);
+        return events.map((e) => ({ e, label: c.label }));
+      } catch (err) {
+        console.error("[boro-match-centre] ESPN competition fetch failed", c.slug, err);
+        return [];
+      }
+    }),
+  );
+  const events = results.flat() as Array<{
+    label: string;
+    e: {
     date: string;
     competitions: Array<{
       competitors: EspnCompetitor[];
@@ -293,11 +316,12 @@ async function fetchEspnBoro(): Promise<{
     season?: { slug?: string };
     seasonType?: { name?: string };
     status?: { type?: { completed?: boolean } };
+    };
   }>;
 
   const now = Date.now();
   const parsed = events
-    .map((e) => {
+    .map(({ e, label }) => {
       const t = Date.parse(e.date);
       const comp = e.competitions?.[0];
       if (!comp) return null;
@@ -327,6 +351,7 @@ async function fetchEspnBoro(): Promise<{
       return {
         t,
         iso: new Date(t).toISOString(),
+        competition: label,
         home: home.team.displayName ?? "",
         away: away.team.displayName ?? "",
         homeId: home.team.id ?? null,
@@ -349,7 +374,7 @@ async function fetchEspnBoro(): Promise<{
   const lastResult: LastResult | null = lastRaw
     ? {
         date: lastRaw.iso,
-        competition: "Championship",
+        competition: lastRaw.competition,
         home: lastRaw.home,
         away: lastRaw.away,
         homeScore: lastRaw.homeScore ?? 0,
@@ -363,7 +388,7 @@ async function fetchEspnBoro(): Promise<{
   const nextFixture: NextFixture | null = nextRaw
     ? {
         kickoff: nextRaw.iso,
-        competition: "Championship",
+        competition: nextRaw.competition,
         home: nextRaw.home,
         away: nextRaw.away,
         venue: nextRaw.venue,
