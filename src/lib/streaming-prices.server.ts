@@ -107,10 +107,22 @@ async function scrapeBrandStorePrice(url: string): Promise<ScrapeResult> {
   }
 
   const body = (await res.json()) as {
-    data?: { json?: { price?: number | null; availability?: string | null } };
+    data?: {
+      json?: { price?: number | null; availability?: string | null };
+      metadata?: Record<string, unknown>;
+    };
     json?: { price?: number | null; availability?: string | null };
+    metadata?: Record<string, unknown>;
   };
   const j = body.data?.json ?? body.json ?? {};
+  const meta = body.data?.metadata ?? body.metadata ?? {};
+  const metaBlob = JSON.stringify(meta);
+  // A retired/removed product redirects to the store's 404 page — treat as out of stock.
+  const isMissingPage =
+    meta["statusCode"] === 404 || /errors\/404|\b404 - /i.test(metaBlob);
+  if (isMissingPage) {
+    return { price_cents: null, currency: "GBP", availability: "Out of stock", source_url: url };
+  }
   const price = typeof j.price === "number" && j.price >= 5 && j.price <= 2000 ? j.price : null;
   return {
     price_cents: price !== null ? Math.round(price * 100) : null,
