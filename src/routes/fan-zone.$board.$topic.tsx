@@ -4,6 +4,7 @@ import { getPublicTopic, type PublicPost } from "@/lib/fan-zone-public.functions
 import { ForumPostBody } from "@/components/app/ForumPostBody";
 import { formatLastSeen } from "@/lib/relative-time";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { FanZoneShell } from "./fan-zone";
 
 export const Route = createFileRoute("/fan-zone/$board/$topic")({
@@ -31,6 +32,10 @@ function TopicReadPage() {
     );
   }
 
+  const posts = data.posts as PublicPost[];
+  const op = posts.find((p) => p.is_op) ?? null;
+  const replies = posts.filter((p) => !p.is_op);
+
   return (
     <FanZoneShell>
       <Button asChild variant="ghost" size="sm" className="-ml-2 mb-2 text-white/80 hover:text-white">
@@ -45,26 +50,30 @@ function TopicReadPage() {
       </div>
       <p className="text-xs text-white/60 mt-1">Started {formatLastSeen(data.topic.created_at)} · {data.topic.reply_count} replies · {data.topic.view_count} views</p>
 
-      <ol className="mt-5 space-y-3">
-        {data.posts.map((p: PublicPost) => (
-          <li key={p.id} className="rounded-xl border border-white/10 bg-white/5 p-4 sm:p-5">
-            <header className="flex items-center gap-2.5 mb-3">
-              {p.author_avatar ? (
-                <img src={p.author_avatar} alt="" className="size-8 rounded-full object-cover ring-1 ring-white/20" />
-              ) : (
-                <div className="size-8 rounded-full bg-[#E11B22]/30 grid place-items-center text-[11px] font-bold text-white ring-1 ring-white/20">
-                  {p.author_alias.charAt(0)}
-                </div>
-              )}
-              <div className="min-w-0">
-                <div className="text-sm font-semibold text-white truncate">{p.author_alias}</div>
-                <div className="text-[11px] text-white/50">{formatLastSeen(p.created_at)}{p.is_op ? " · Original post" : ""}</div>
-              </div>
-            </header>
-            <ForumPostBody html={p.body} className="text-white/90" />
-          </li>
-        ))}
-      </ol>
+      <Tabs defaultValue="posts" className="w-full mt-5">
+        <TabsList>
+          <TabsTrigger value="posts">Original Post</TabsTrigger>
+          <TabsTrigger value="replies">Replies ({replies.length})</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="posts" className="space-y-3 mt-3">
+          {op ? <PostCard post={op} /> : (
+            <p className="text-sm text-white/60">No post content.</p>
+          )}
+        </TabsContent>
+
+        <TabsContent value="replies" className="space-y-3 mt-3">
+          {replies.length === 0 ? (
+            <p className="text-sm text-white/60">No replies yet.</p>
+          ) : (
+            <ol className="space-y-3">
+              {replies.map((p) => (
+                <li key={p.id}><PostCard post={p} /></li>
+              ))}
+            </ol>
+          )}
+        </TabsContent>
+      </Tabs>
 
       <div className="mt-6 rounded-xl border border-amber-500/30 bg-amber-500/5 p-4 text-sm text-amber-100/90 text-center">
         Polls, reactions and replies are visible to Boro Fan Zone members.{" "}
@@ -72,5 +81,31 @@ function TopicReadPage() {
         <Link to="/signup" className="underline font-semibold">request access</Link> to join in.
       </div>
     </FanZoneShell>
+  );
+}
+
+function PostCard({ post: p }: { post: PublicPost }) {
+  return (
+    <div className={`rounded-xl border p-4 sm:p-5 ${p.is_pinned && !p.is_op ? "border-amber-400/40 bg-amber-400/5" : "border-white/10 bg-white/5"}`}>
+      <header className="flex items-center gap-2.5 mb-3">
+        {p.author_avatar ? (
+          <img src={p.author_avatar} alt="" className="size-8 rounded-full object-cover ring-1 ring-white/20" />
+        ) : (
+          <div className="size-8 rounded-full bg-[#E11B22]/30 grid place-items-center text-[11px] font-bold text-white ring-1 ring-white/20">
+            {p.author_alias.charAt(0)}
+          </div>
+        )}
+        <div className="min-w-0">
+          <div className="text-sm font-semibold text-white truncate">{p.author_alias}</div>
+          <div className="text-[11px] text-white/50">{formatLastSeen(p.created_at)}{p.is_op ? " · Original post" : ""}</div>
+        </div>
+        {p.is_pinned && !p.is_op && (
+          <span className="ml-auto inline-flex items-center gap-1 rounded-full border border-amber-400/40 bg-amber-400/10 px-2 py-0.5 text-[10px] font-semibold text-amber-200">
+            <Pin className="size-3" /> Pinned
+          </span>
+        )}
+      </header>
+      <ForumPostBody html={p.body} className="text-white/90" />
+    </div>
   );
 }

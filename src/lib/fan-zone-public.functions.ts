@@ -32,6 +32,7 @@ export type PublicPost = {
   id: string;
   body: string;
   is_op: boolean;
+  is_pinned: boolean;
   created_at: string;
   author_alias: string;
   author_avatar: string | null;
@@ -208,15 +209,16 @@ export const getPublicTopic = createServerFn({ method: "GET" })
         .maybeSingle(),
       supabaseAdmin
         .from("forum_posts")
-        .select("id, author_id, body, is_op, created_at")
+        .select("id, author_id, body, is_op, is_pinned, created_at")
         .eq("topic_id", topic.id)
         .order("is_op", { ascending: false })
+        .order("is_pinned", { ascending: false })
         .order("created_at", { ascending: true }),
     ]);
     if (!visible.has(topic.board_id)) return null;
     const { data: bd } = boardResult;
     const { data: ps } = postsResult;
-    const list = (ps ?? []) as Array<{ id: string; author_id: string; body: string; is_op: boolean; created_at: string }>;
+    const list = (ps ?? []) as Array<{ id: string; author_id: string; body: string; is_op: boolean; is_pinned: boolean | null; created_at: string }>;
     const aliases = await loadAliases(supabaseAdmin, list.map((p) => p.author_id));
     return {
       topic: {
@@ -233,6 +235,7 @@ export const getPublicTopic = createServerFn({ method: "GET" })
         id: p.id,
         body: p.body,
         is_op: p.is_op,
+        is_pinned: !!p.is_pinned,
         created_at: p.created_at,
         author_alias: aliases[p.author_id]?.alias ?? "Boro Fan",
         author_avatar: aliases[p.author_id]?.avatar ?? null,
