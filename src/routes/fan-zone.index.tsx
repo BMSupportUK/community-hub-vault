@@ -98,7 +98,7 @@ function FanZoneBoardsPage() {
                               <RelativeTime iso={b.last_post_at} />
                               {b.last_poster_alias && b.last_poster_id ? (
                                 <> · <Link
-                                  to="/fanzone/u/$userId"
+                                  to="/fan-zone/u/$userId"
                                   params={{ userId: b.last_poster_id }}
                                   className="text-foreground hover:text-[#E11B22] hover:underline"
                                 >{b.last_poster_alias}</Link></>
@@ -146,7 +146,7 @@ function GuestForumStats() {
           <dt className="text-muted-foreground">Latest member:</dt>
           <dd className="font-semibold text-[#E11B22] truncate">
             {stats?.latest_member && stats.latest_member_id ? (
-              <Link to="/fanzone/u/$userId" params={{ userId: stats.latest_member_id }} className="hover:underline">
+              <Link to="/fan-zone/u/$userId" params={{ userId: stats.latest_member_id }} className="hover:underline">
                 {stats.latest_member}
               </Link>
             ) : "—"}
@@ -183,7 +183,7 @@ function GuestStaffBox() {
         {members.map((m) => (
           <li key={`${m.user_id}-${m.role}`}>
             <Link
-              to="/fanzone/u/$userId"
+              to="/fan-zone/u/$userId"
               params={{ userId: m.user_id }}
               className="flex items-center gap-2.5 rounded-lg border border-white/[0.12] bg-white/[0.08] px-2.5 py-2 hover:border-[#E11B22]/60 hover:bg-white/[0.12] transition-colors"
             >
