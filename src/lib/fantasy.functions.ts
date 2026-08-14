@@ -4,11 +4,13 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type {
   FantasyLeaderboardRow,
+  FantasyPreviousGwScoreDTO,
   FantasyStateDTO,
 } from "@/lib/fantasy.server";
 
 export type {
   FantasyLeaderboardRow,
+  FantasyPreviousGwScoreDTO,
   FantasyStateDTO,
   FantasyPlayerDTO,
   FantasyGameweekDTO,
@@ -42,6 +44,15 @@ export const getFantasyLeaderboard = createServerFn({ method: "GET" })
     const admin = await getAdmin();
     const canSeeEmails = await isAdminOrManagement(context.supabase, context.userId);
     return loadLeaderboard(admin, canSeeEmails);
+  });
+
+export const getFantasyPreviousGameweekScores = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async (): Promise<FantasyPreviousGwScoreDTO | null> => {
+    setResponseHeader("cache-control", "no-store, max-age=0");
+    const { getAdmin, loadPreviousGameweekScores } = await import("@/lib/fantasy.server");
+    const admin = await getAdmin();
+    return loadPreviousGameweekScores(admin);
   });
 
 // ------------------------------------------------------------------

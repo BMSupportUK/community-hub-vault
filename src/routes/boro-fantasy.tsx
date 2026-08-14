@@ -38,18 +38,18 @@ import {
   type FantasyPosition, type FormationKey, type FantasyCompetitionGroup,
 } from "@/lib/fantasy-rules";
 import {
-  getFantasyState, getFantasyLeaderboard, joinFantasyGame, saveFantasySquad, setFantasyTeamName,
+  getFantasyState, getFantasyLeaderboard, getFantasyPreviousGameweekScores, joinFantasyGame, saveFantasySquad, setFantasyTeamName,
   adminRemoveFantasyEntrant,
   getFantasyPlayerBreakdown,
   type FantasyStateDTO, type FantasyPlayerDTO, type FantasyLeaderboardRow, type FantasyGameweekDTO,
-  type FantasyPlayerBreakdown,
+  type FantasyPlayerBreakdown, type FantasyPreviousGwScoreDTO,
 } from "@/lib/fantasy.functions";
 import {
   getEntrantFantasySquad, type EntrantSquadViewDTO,
 } from "@/lib/fantasy-squad-view.functions";
 import {
   fantasyGuestRegister, fantasyGuestSignInExisting, getPublicFantasyState,
-  getPublicFantasyLeaderboard, saveGuestFantasySquad, requestFantasyGuestPinReset,
+  getPublicFantasyLeaderboard, getPublicFantasyPreviousGameweekScores, saveGuestFantasySquad, requestFantasyGuestPinReset,
   resetFantasyGuestPin, setGuestFantasyTeamName,
 } from "@/lib/fantasy-guest.functions";
 
@@ -669,6 +669,18 @@ function BoroFantasyPage() {
     refetchOnMount: "always",
   });
 
+  const prevGwFn = useServerFn(getFantasyPreviousGameweekScores);
+  const publicPrevGwFn = useServerFn(getPublicFantasyPreviousGameweekScores);
+  const prevGwQuery = useQuery<FantasyPreviousGwScoreDTO | null>({
+    queryKey: ["fantasy-previous-gw", user?.id ?? null],
+    queryFn: () => (user ? prevGwFn({}) : publicPrevGwFn({})),
+    enabled: tab === "previous-gw",
+    staleTime: 15_000,
+    refetchInterval: 60_000,
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: true,
+  });
+
   const state = stateQuery.data;
   const joined = !!state?.joined;
   const canPlay = joined && (!!user || !!guest);
@@ -694,6 +706,7 @@ function BoroFantasyPage() {
         if (!cancelled) {
           qc.invalidateQueries({ queryKey: ["fantasy-state"] });
           qc.invalidateQueries({ queryKey: ["fantasy-leaderboard"] });
+          qc.invalidateQueries({ queryKey: ["fantasy-previous-gw"] });
         }
       } catch { /* ignore */ }
     };
@@ -904,11 +917,12 @@ function BoroFantasyPage() {
 
           <div className="w-full overflow-hidden rounded-xl border border-border/60 bg-background/45 backdrop-blur-sm">
             <Tabs value={tab} onValueChange={setTab} className="w-full">
-              <TabsList className="grid grid-cols-3 sm:grid-cols-6 w-full h-auto gap-0 p-0 rounded-none border-b border-border/60 bg-background/70">
+              <TabsList className="grid grid-cols-3 sm:grid-cols-7 w-full h-auto gap-0 p-0 rounded-none border-b border-border/60 bg-background/70">
                 <TabsTrigger value="squad" className="w-full rounded-none border-r border-border/40 last:border-r-0">My squad</TabsTrigger>
                 <TabsTrigger value="rules" className="w-full rounded-none border-r border-border/40 last:border-r-0">Game rules</TabsTrigger>
                 <TabsTrigger value="transfers" className="w-full rounded-none border-r border-border/40 last:border-r-0">Transfers</TabsTrigger>
                 <TabsTrigger value="leaderboard" className="w-full rounded-none border-r border-border/40 last:border-r-0">Leaderboard</TabsTrigger>
+                <TabsTrigger value="previous-gw" className="w-full rounded-none border-r border-border/40 last:border-r-0">Previous GW</TabsTrigger>
                 <TabsTrigger value="scoring" className="w-full rounded-none border-r border-border/40 last:border-r-0">Scoring</TabsTrigger>
                 <TabsTrigger value="winners" className="w-full rounded-none border-r border-border/40 last:border-r-0">Winners</TabsTrigger>
               </TabsList>
@@ -948,6 +962,14 @@ function BoroFantasyPage() {
                       await qc.invalidateQueries({ queryKey: ["fantasy-leaderboard"] });
                     }}
                   />
+                )}
+              </TabsContent>
+
+              <TabsContent value="previous-gw" className="mt-4">
+                {prevGwQuery.isLoading ? (
+                  <Loading />
+                ) : (
+                  <PreviousGameweekTable data={prevGwQuery.data} />
                 )}
               </TabsContent>
 
@@ -3329,6 +3351,155 @@ function EntrantSquadDialog({
         )}
       </DialogContent>
     </Dialog>
+  );
+}
+
+function PreviousGameweekTable({ data }: { data: FantasyPreviousGwScoreDTO | null | undefined }) {
+  const [viewing, setViewing] = useState<FantasyPreviousGwScoreDTO["rows"][number] | null>(null);
+  const squadFn = useServerFn(getEntrantFantasySquad);
+  const squadQuery = useQuery<EntrantSquadViewDTO>({
+    queryKey: ["fantasy-previous-gw-squad", viewing?.entrantId ?? null, viewing?.gameweekId ?? null],
+    queryFn: () =>
+      squadFn({
+        data: {
+          entrantId: viewing!.entrantId,
+          isGuest: viewing!.isGuest,
+          gameweekId: viewing!.gameweekId,
+        },
+      }),
+    enabled: !!viewing,
+    staleTime: 10_000,
+  });
+
+  if (!data) {
+    return (
+      <div className="rounded-2xl border border-border/60 bg-card/80 p-6 text-sm text-muted-foreground">
+        No gameweek has been finalised yet. Check back after the next match.
+      </div>
+    );
+  }
+
+  const { gameweek, rows } = data;
+  const gwLabel = `GW${gameweek.gwNumber} — ${gameweek.homeTeam} v ${gameweek.awayTeam}`;
+
+  const pickRow = (p: EntrantSquadViewDTO["picks"][number], idx: number) => (
+    <li key={p.playerId} className="flex items-center gap-2 border-t border-border/40 px-3 py-2 first:border-t-0">
+      <span className="w-5 text-xs tabular-nums text-muted-foreground">{idx + 1}</span>
+      <Shirt className={`size-4 shrink-0 ${p.position === "gk" ? "text-emerald-400" : "text-red-500"}`} />
+      <span className="w-7 text-xs tabular-nums text-muted-foreground">
+        {p.shirtNumber ? `#${p.shirtNumber}` : "—"}
+      </span>
+      <span className="min-w-0 flex-1 truncate text-sm font-medium">{p.name}</span>
+      {p.isCaptain && <Crown className="size-3.5 text-amber-400" aria-label="Captain" />}
+      {p.isVice && <Star className="size-3.5 text-sky-400" aria-label="Vice captain" />}
+      {p.autoSubbed && (
+        <span className="rounded bg-primary/15 px-1.5 py-0.5 text-[10px] font-semibold text-primary">SUB IN</span>
+      )}
+      <span className="w-14 shrink-0 text-right text-[11px] uppercase text-muted-foreground">
+        {POSITION_SHORT[(p.pickedPosition ?? p.position) as FantasyPosition]}
+      </span>
+      <span className="w-10 shrink-0 text-right text-sm font-bold tabular-nums text-primary">
+        {p.points ?? "—"}
+      </span>
+    </li>
+  );
+
+  return (
+    <div className="rounded-2xl border border-border/60 bg-card/80 backdrop-blur overflow-hidden">
+      <div className="border-b border-border/60 bg-muted/40 px-4 py-3">
+        <h3 className="font-display text-lg font-bold">Previous gameweek</h3>
+        <p className="text-xs text-muted-foreground">{gwLabel}</p>
+      </div>
+      {!rows.length ? (
+        <div className="p-6 text-sm text-muted-foreground">No squads were entered for {gwLabel}.</div>
+      ) : (
+        <table className="w-full text-sm">
+          <thead className="bg-muted/40 text-xs uppercase text-muted-foreground">
+            <tr>
+              <th className="text-left px-3 py-2 w-10">#</th>
+              <th className="text-left px-3 py-2">Manager</th>
+              <th className="text-right px-3 py-2">Points</th>
+              <th className="text-right px-3 py-2">Squad</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((r, i) => (
+              <tr key={r.entrantId} className="border-t border-border/50">
+                <td className="px-3 py-2 tabular-nums">{i + 1}</td>
+                <td className="px-3 py-2">
+                  <div className="font-medium">{r.teamName || "Unnamed FC"}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {r.displayName || r.username || "Guest"}{r.isGuest ? " · guest" : ""}
+                  </div>
+                </td>
+                <td className="px-3 py-2 text-right font-bold tabular-nums text-primary">
+                  {r.points ?? "—"}
+                </td>
+                <td className="px-3 py-2 text-right">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="h-8 gap-1.5 text-xs"
+                    onClick={() => setViewing(r)}
+                  >
+                    <Users className="size-3.5" /> Squad
+                  </Button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+
+      <Dialog open={!!viewing} onOpenChange={(o) => { if (!o) setViewing(null); }}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{viewing?.teamName || "Unnamed FC"} — match day squad</DialogTitle>
+            <DialogDescription>
+              {viewing?.displayName || viewing?.username || "Guest"} · {gwLabel}
+            </DialogDescription>
+          </DialogHeader>
+          {squadQuery.isLoading ? (
+            <div className="flex items-center justify-center py-8"><Loader2 className="size-5 animate-spin" /></div>
+          ) : squadQuery.error ? (
+            <p className="rounded-lg border border-border/60 bg-muted/30 p-4 text-sm text-muted-foreground">
+              {(squadQuery.error as any)?.message ?? "Could not load that squad."}
+            </p>
+          ) : !squadQuery.data?.found ? (
+            <p className="rounded-lg border border-border/60 bg-muted/30 p-4 text-sm text-muted-foreground">
+              No squad was submitted for {gwLabel}.
+            </p>
+          ) : (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between rounded-lg border border-border/60 bg-muted/30 px-3 py-2 text-xs">
+                <span className="font-semibold uppercase tracking-wide text-muted-foreground">
+                  Formation {squadQuery.data.formation ?? "—"}
+                </span>
+                <span>
+                  Points{" "}
+                  <span className="font-bold tabular-nums text-primary">{squadQuery.data.points ?? "—"}</span>
+                </span>
+              </div>
+              <div>
+                <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Starting 11</p>
+                <ul className="rounded-lg border border-border/60 bg-card/60">
+                  {squadQuery.data.picks.filter((p) => p.isStarter).map(pickRow)}
+                </ul>
+              </div>
+              {squadQuery.data.picks.some((p) => !p.isStarter) && (
+                <div>
+                  <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Bench</p>
+                  <ul className="rounded-lg border border-border/60 bg-card/60">
+                    {squadQuery.data.picks.filter((p) => !p.isStarter).map(pickRow)}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 }
 
