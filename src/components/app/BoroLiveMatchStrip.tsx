@@ -101,7 +101,7 @@ export function BoroLiveMatchStrip() {
       }
     };
     document.addEventListener("visibilitychange", onVisible);
-    const tick = window.setInterval(() => setNow(Date.now()), 30_000);
+    const tick = window.setInterval(() => setNow(Date.now()), 1_000);
     return () => {
       cancelled = true;
       if (timer) window.clearTimeout(timer);
