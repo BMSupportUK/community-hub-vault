@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { formatLastSeen } from "@/lib/relative-time";
-import { censorText, useProfanityWords } from "@/lib/profanity";
+import { censorText } from "@/lib/profanity";
 
 export const Route = createFileRoute("/_authenticated/_approved/forum/search")({
   head: () => ({
@@ -84,7 +84,6 @@ function FanZoneSearchPage() {
   const [loading, setLoading] = useState(false);
   const [hits, setHits] = useState<Hit[]>([]);
   const [searched, setSearched] = useState(false);
-  const words = useProfanityWords();
 
   useEffect(() => setTerm(q), [q]);
 
@@ -254,12 +253,12 @@ function FanZoneSearchPage() {
                 <span>{formatLastSeen(hit.createdAt)}</span>
               </div>
               <div className="mt-1 font-semibold text-white">
-                <Highlight text={censorText(hit.title, words)} term={q} />
+                <Highlight text={censorText(hit.title)} term={q} />
               </div>
               {hit.snippet && (
                 <p className="mt-1 text-sm text-white/75">
                   <MessageSquare className="mr-1 inline size-3.5 align-[-2px] text-white/45" />
-                  <Highlight text={censorText(hit.snippet, words)} term={q} />
+                  <Highlight text={censorText(hit.snippet)} term={q} />
                 </p>
               )}
             </Link>
