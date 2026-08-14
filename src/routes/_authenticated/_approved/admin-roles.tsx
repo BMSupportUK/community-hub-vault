@@ -42,7 +42,6 @@ interface RoleDef {
 interface CredLite {
   id: string;
   app_login_name: string;
-  password: string;
 }
 
 interface Row {
@@ -102,7 +101,7 @@ function AdminRolesPage() {
         }),
         supabase
           .from("app_credentials")
-          .select("id, owner_id, app_login_name, password")
+          .select("id, owner_id, app_login_name")
           .order("created_at", { ascending: false }),
       ]);
     const roleMap = new Map<string, string[]>();
@@ -119,7 +118,7 @@ function AdminRolesPage() {
     const credMap = new Map<string, CredLite[]>();
     (credsData ?? []).forEach((c: any) => {
       const arr = credMap.get(c.owner_id) ?? [];
-      arr.push({ id: c.id, app_login_name: c.app_login_name, password: c.password });
+      arr.push({ id: c.id, app_login_name: c.app_login_name });
       credMap.set(c.owner_id, arr);
     });
     setRows(
