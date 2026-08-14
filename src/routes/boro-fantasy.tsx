@@ -294,7 +294,7 @@ function PlayerStatsDialog({
                 <h4 className="text-sm font-bold">Our points &amp; abbreviations</h4>
                 <p className="text-xs text-muted-foreground">
                   {asSub
-                    ? `Points shown are the sub rate for a ${POSITION_LABEL[pos].toLowerCase()} — half a starter's points, plus 1 for the appearance — and they only count if he actually comes off the bench (and is one of your first five subs on).`
+                    ? `Points shown are what a ${POSITION_LABEL[pos].toLowerCase()} earns if he comes off the bench — 1 point for the appearance plus half points on every line. Stays on the bench, or comes on after your five scoring subs, and he scores 0; starts in your match day 11 he earns 2 for the appearance and full points.`
                     : `Points shown are what a ${POSITION_LABEL[pos].toLowerCase()} earns if he plays in your match day 11 — 2 points for the appearance plus the full points on every line. Named but doesn't feature, he scores 0; off the bench he earns 1 for the appearance and half points.`}
                 </p>
                 <p className="text-xs font-semibold text-emerald-500">
