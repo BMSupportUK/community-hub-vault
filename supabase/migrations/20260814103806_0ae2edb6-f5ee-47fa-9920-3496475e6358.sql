@@ -1,0 +1,1 @@
+UPDATE public.profiles SET username = 'Boro Matchday Action', display_name = 'Boro Matchday Action' WHERE id = '91304401-78e5-4907-803e-34da8008a0a4';

@@ -1,8 +1,9 @@
 // Shared identity for anything that posts into the Boro match day threads
-// automatically, so those replies show up as "Boro Match Day Author" rather
+// automatically, so those replies show up as "Boro Matchday Action" rather
 // than under the thread starter's name.
 
-export const MATCH_DAY_AUTHOR_USERNAME = "Boro Match Day Author";
+export const MATCH_DAY_AUTHOR_USERNAME = "Boro Matchday Action";
+const LEGACY_AUTHOR_USERNAMES = ["Boro Match Day Author"];
 const MATCH_DAY_AUTHOR_EMAIL = "boro-match-day-author@bmsupport.uk";
 
 let cachedId: string | null = null;
@@ -19,10 +20,15 @@ export async function getMatchDayAuthorId(): Promise<string | null> {
   const { data: existing } = await supabaseAdmin
     .from("profiles")
     .select("id")
-    .eq("username", MATCH_DAY_AUTHOR_USERNAME)
+    .in("username", [MATCH_DAY_AUTHOR_USERNAME, ...LEGACY_AUTHOR_USERNAMES])
     .maybeSingle();
   if (existing?.id) {
     cachedId = existing.id;
+    await supabaseAdmin
+      .from("profiles")
+      .update({ username: MATCH_DAY_AUTHOR_USERNAME, display_name: MATCH_DAY_AUTHOR_USERNAME })
+      .eq("id", existing.id)
+      .neq("username", MATCH_DAY_AUTHOR_USERNAME);
     return cachedId;
   }
 
@@ -61,6 +67,11 @@ export async function getMatchDayAuthorId(): Promise<string | null> {
   }
 
   await supabaseAdmin.from("user_roles").upsert({ user_id: userId, role: "member" }, { onConflict: "user_id,role" });
+
+  await supabaseAdmin.from("fan_zone_members").upsert(
+    { user_id: userId, status: "approved", decided_at: new Date().toISOString(), fan_alias: MATCH_DAY_AUTHOR_USERNAME },
+    { onConflict: "user_id" },
+  );
 
   cachedId = userId;
   return cachedId;
