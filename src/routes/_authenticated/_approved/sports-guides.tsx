@@ -324,6 +324,7 @@ function SportsGuidesPage() {
   // Remember which guide the user opened (read/edit) so coming back from the
   // editor or reader returns to that card instead of the top of page 1.
   const rememberGuide = (id: string) => {
+    focusRestored.current = false;
     try { sessionStorage.setItem(SG_FOCUS_KEY, id); } catch { /* ignore */ }
   };
 
