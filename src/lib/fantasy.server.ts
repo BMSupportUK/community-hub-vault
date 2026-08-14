@@ -627,10 +627,10 @@ export async function loadPreviousGameweekScores(admin: any): Promise<FantasyPre
       .select("id, display_name, username, avatar_url")
       .in("id", [...userIds]);
     if (profErr) throw new Error(profErr.message);
-    const profileMap = new Map((profiles ?? []).map((p: any) => [p.id as string, p]));
+    const profileMap = new Map((profiles ?? []).map((p: any) => [p.id as string, p as any]));
     for (const r of rows) {
       if (r.isGuest) continue;
-      const p = profileMap.get(r.entrantId);
+      const p = profileMap.get(r.entrantId) as any;
       if (p) {
         r.displayName = p.display_name ?? null;
         r.username = p.username ?? null;
