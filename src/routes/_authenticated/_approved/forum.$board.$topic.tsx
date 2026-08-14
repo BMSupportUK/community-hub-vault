@@ -949,11 +949,9 @@ function TopicPage() {
         );
       })()}
         </div>
-        {tab !== "reply" && (
-          <aside className="hidden w-full min-w-0 md:grid md:place-items-center md:sticky md:top-4" aria-label="Sponsored advert">
-            {renderSponsorAdvert()}
-          </aside>
-        )}
+        <aside className="hidden w-full min-w-0 md:grid md:place-items-center md:sticky md:top-4" aria-label="Sponsored advert">
+          {renderSponsorAdvert()}
+        </aside>
       </div>
 
       <Dialog open={!!historyFor} onOpenChange={(o) => !o && setHistoryFor(null)}>
