@@ -198,9 +198,42 @@ function PlayerStatsDialog({
                 in a finished game week and ESPN confirm the match stats.
               </p>
             )}
+            <div className="space-y-2">
+              <h4 className="text-sm font-bold">Our points &amp; abbreviations</h4>
+              <p className="text-xs text-muted-foreground">
+                Points shown are what a match day 11 starter earns as a{" "}
+                {POSITION_LABEL[pos].toLowerCase()}. Subs earn half. Stats with no points are ESPN
+                match-report extras, shown for information only.
+              </p>
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[380px] text-left text-xs">
+                  <thead>
+                    <tr className="border-b border-border text-[11px] uppercase tracking-wide text-muted-foreground">
+                      <th className="py-2 pr-2">Abbr</th>
+                      <th className="py-2 pr-2">Means</th>
+                      <th className="px-2 py-2 text-right">Season</th>
+                      <th className="py-2 pl-2 text-right">Pts</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {seasonRows.map((r) => (
+                      <tr key={r.key} className="border-b border-border/60">
+                        <td className="py-1.5 pr-2"><AbbrChip abbr={r.abbr} title={r.means} /></td>
+                        <td className="py-1.5 pr-2 text-muted-foreground">{r.means}</td>
+                        <td className="px-2 py-1.5 text-right tabular-nums">{r.total}</td>
+                        <td className="py-1.5 pl-2 text-right font-bold tabular-nums text-primary">
+                          {r.points == null ? "—" : r.points}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
             {matches.length > 0 && (
               <div className="space-y-2">
-                <h4 className="text-sm font-bold">Weekly points</h4>
+                <h4 className="text-sm font-bold">Weekly points — ESPN match stats</h4>
                 <div className="overflow-x-auto">
                   <table className="w-full min-w-[420px] text-left text-xs">
                     <thead>
@@ -249,39 +282,6 @@ function PlayerStatsDialog({
             <div className="mb-2 flex items-center justify-between rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm">
               <span className="font-semibold">Season total</span>
               <span className="font-bold tabular-nums">{data?.totalPoints ?? 0} pts</span>
-            </div>
-
-            <div className="space-y-2">
-              <h4 className="text-sm font-bold">Abbreviations &amp; points</h4>
-              <p className="text-xs text-muted-foreground">
-                Points shown are what a match day 11 starter earns as a{" "}
-                {POSITION_LABEL[pos].toLowerCase()}. Subs earn half. Stats with no points are ESPN
-                match-report extras, shown for information only.
-              </p>
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[380px] text-left text-xs">
-                  <thead>
-                    <tr className="border-b border-border text-[11px] uppercase tracking-wide text-muted-foreground">
-                      <th className="py-2 pr-2">Abbr</th>
-                      <th className="py-2 pr-2">Means</th>
-                      <th className="px-2 py-2 text-right">Season</th>
-                      <th className="py-2 pl-2 text-right">Pts</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {seasonRows.map((r) => (
-                      <tr key={r.key} className="border-b border-border/60">
-                        <td className="py-1.5 pr-2"><AbbrChip abbr={r.abbr} title={r.means} /></td>
-                        <td className="py-1.5 pr-2 text-muted-foreground">{r.means}</td>
-                        <td className="px-2 py-1.5 text-right tabular-nums">{r.total}</td>
-                        <td className="py-1.5 pl-2 text-right font-bold tabular-nums text-primary">
-                          {r.points == null ? "—" : r.points}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
             </div>
           </>
         )}
