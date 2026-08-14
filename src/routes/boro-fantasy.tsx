@@ -1910,6 +1910,23 @@ function injuryClearedBy(p: FantasyPlayerDTO, kickoffAt?: string | null): boolea
 }
 
 /**
+ * Ruled out for this gameweek: flagged injured (or club status "injured") with
+ * no return date on or before kick-off. These players cannot be picked at all.
+ */
+function injuredUnavailable(p: FantasyPlayerDTO, kickoffAt?: string | null): boolean {
+  const flaggedOut = (p.injuryStatus ?? "none") === "out" || p.status === "injured";
+  return flaggedOut && !injuryClearedBy(p, kickoffAt);
+}
+
+/** True when the player can't be added to a squad for this gameweek. */
+function pickBlockedReason(p: FantasyPlayerDTO, kickoffAt?: string | null): string | null {
+  if (missingSquadNumber(p)) return `${p.name} has no squad number — not in the official squad.`;
+  if (injuredUnavailable(p, kickoffAt))
+    return `${p.name} is injured and can't be picked${p.injuryNote ? ` (${p.injuryNote})` : ""}.`;
+  return null;
+}
+
+/**
  * Injury / suspension flag. Shown on the pitch, bench and player picker.
  * Injured players stay selectable — the icon is a warning, not a block.
  */
