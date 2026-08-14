@@ -17,10 +17,10 @@ import { useAuth } from "@/hooks/use-auth";
 export function FanZoneNameGate() {
   const { user, hasAny } = useAuth();
   const info = useFanZoneMembership(user?.id ?? null);
-  const isStaff = hasAny(["admin", "management", "boro_fan_zone_moderator"]);
+  const isStaff = hasAny(["admin", "management", "staff", "moderator", "boro_fan_zone_moderator"]);
   const inZone = isStaff || info?.status === "approved" || info?.status === "pending";
   if (!user) return null;
-  return <FanZoneNamePrompt info={info} canEnter={inZone} />;
+  return <FanZoneNamePrompt info={info} canEnter={inZone} allowMissingRow={isStaff} />;
 }
 
 /**
@@ -28,8 +28,20 @@ export function FanZoneNameGate() {
  * The membership row is watched in realtime by useFanZoneMembership, so once
  * the name is saved every fan zone surface picks it up without a refresh.
  */
-export function FanZoneNamePrompt({ info, canEnter }: { info: FanZoneInfo | null; canEnter: boolean }) {
-  const needsName = canEnter && !!info && !(info.fanAlias && info.fanAlias.trim());
+export function FanZoneNamePrompt({
+  info,
+  canEnter,
+  allowMissingRow = false,
+}: {
+  info: FanZoneInfo | null;
+  canEnter: boolean;
+  allowMissingRow?: boolean;
+}) {
+  const [savedAlias, setSavedAlias] = useState<string | null>(null);
+  // Staff accounts may not have a membership row yet — still force a name.
+  const knownAlias = savedAlias ?? info?.fanAlias ?? null;
+  const hasRow = !!info || allowMissingRow;
+  const needsName = canEnter && hasRow && !(knownAlias && knownAlias.trim());
   const [name, setName] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -52,6 +64,7 @@ export function FanZoneNamePrompt({ info, canEnter }: { info: FanZoneInfo | null
     } as never);
     setSaving(false);
     if (error) return toast.error("Couldn't save your display name", { description: error.message });
+    setSavedAlias(alias);
     toast.success(`Welcome to the Fan Zone, ${alias}!`);
   };
 
