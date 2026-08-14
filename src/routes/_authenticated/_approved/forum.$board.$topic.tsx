@@ -5,6 +5,7 @@ import { ArrowLeft, Loader2, Pin, Lock, Quote, Reply as ReplyIcon, Pencil, Trash
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useFanZoneMembership } from "@/hooks/use-fan-zone";
+import { useFanAliasVersion } from "@/hooks/use-fan-alias-version";
 import { formatLastSeen } from "@/lib/relative-time";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -311,6 +312,7 @@ function TopicPage() {
   const canUseSpecialMentions = hasAny(["admin", "management", "staff", "moderator"]);
   const info = useFanZoneMembership(user?.id ?? null);
   const canEnter = isStaff || hasAny(["staff"]) || info?.status === "approved";
+  const aliasVersion = useFanAliasVersion();
   const mentionCandidates = useMentionCandidates(canUseSpecialMentions);
   const { blocked, reload: reloadBlocks } = useFanBlocks();
   useProfanityWords();
@@ -464,7 +466,7 @@ function TopicPage() {
   useEffect(() => {
     if (!canEnter) return;
     void loadRef.current();
-  }, [topicId, canEnter, page]);
+  }, [topicId, canEnter, page, aliasVersion]);
 
   useEffect(() => {
     if (!canEnter) return;

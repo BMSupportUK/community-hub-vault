@@ -11,6 +11,8 @@ import { MessageSquareText, Ban, BarChart3, UserCog, Users, Trophy } from "lucid
 import { FanZoneStaffBox } from "@/components/app/FanZoneStaffBox";
 import { BoroMatchCentreBox } from "@/components/app/BoroMatchCentreBox";
 import { BoroLiveMatchStrip } from "@/components/app/BoroLiveMatchStrip";
+import { FanZoneNamePrompt } from "@/components/app/FanZoneNamePrompt";
+import { useFanAliasVersion } from "@/hooks/use-fan-alias-version";
 import boroHero from "@/assets/boro-hero.jpg";
 import boroBadge from "@/assets/boro-fan-zone-badge.png";
 import boroBg from "@/assets/boro-bg.jpg";
@@ -50,6 +52,7 @@ function ForumLayout() {
   const isNested = matches.some((m) => m.routeId.startsWith("/_authenticated/_approved/forum/"));
   const { user, hasAny } = useAuth();
   const info = useFanZoneMembership(user?.id ?? null);
+  const canEnterZone = hasAny(["admin", "boro_fan_zone_moderator"]) || info?.status === "approved";
   const canSeeMembers =
     hasAny(["admin", "management", "boro_fan_zone_moderator", "boro_fan_zone_member"]) ||
     info?.status === "approved";
@@ -166,6 +169,7 @@ function ForumLayout() {
         <BoroLiveMatchStrip />
       </div>
       {isNested ? <Outlet /> : <BoardsIndex />}
+      <FanZoneNamePrompt info={info} canEnter={!!canEnterZone} />
     </div>
   );
 }
@@ -178,6 +182,7 @@ function BoardsIndex() {
   const [posters, setPosters] = useState<Record<string, { display_name: string | null; username: string | null }>>({});
   const [lastTopics, setLastTopics] = useState<Record<string, { id: string; title: string }>>({});
   useProfanityWords();
+  const aliasVersion = useFanAliasVersion();
 
   const canEnter = isStaff || info?.status === "approved";
   const isPending = info?.status === "pending";
@@ -217,7 +222,7 @@ function BoardsIndex() {
         setPosters(map);
       }
     })();
-  }, [canEnter]);
+  }, [canEnter, aliasVersion]);
 
   if (!canEnter && isPending) {
     return (
