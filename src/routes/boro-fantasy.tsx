@@ -303,7 +303,36 @@ function PlayerStatsDialog({
               </div>
               </TabsContent>
 
-              <TabsContent value="espn" className="space-y-2">
+              <TabsContent value="espn" className="space-y-3">
+                <h4 className="text-sm font-bold">ESPN match centre points</h4>
+                <p className="text-xs text-muted-foreground">
+                  Scored as a {POSITION_LABEL[pos].toLowerCase()} — these are the ESPN match-report
+                  stats that earn points in that role. Subs earn half.
+                </p>
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[380px] text-left text-xs">
+                    <thead>
+                      <tr className="border-b border-border text-[11px] uppercase tracking-wide text-muted-foreground">
+                        <th className="py-2 pr-2">Abbr</th>
+                        <th className="py-2 pr-2">Means</th>
+                        <th className="px-2 py-2 text-right">Season</th>
+                        <th className="py-2 pl-2 text-right">Pts</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {espnRows.map((r) => (
+                        <tr key={r.key} className="border-b border-border/60">
+                          <td className="py-1.5 pr-2"><AbbrChip abbr={r.abbr} title={r.means} /></td>
+                          <td className="py-1.5 pr-2 text-muted-foreground">{r.means}</td>
+                          <td className="px-2 py-1.5 text-right tabular-nums">{r.total}</td>
+                          <td className="py-1.5 pl-2 text-right font-bold tabular-nums text-primary">
+                            {r.points == null ? "—" : r.points}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
                 {matches.length === 0 ? (
                   <p className="rounded-lg border border-border bg-muted/30 p-3 text-sm text-muted-foreground">
                     No ESPN match stats yet — they arrive automatically from the ESPN match centre once
