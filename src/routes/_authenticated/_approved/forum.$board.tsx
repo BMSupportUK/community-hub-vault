@@ -88,6 +88,8 @@ function BoardPage() {
   const { board: slug } = Route.useParams();
   const navigate = useNavigate();
   const { user, hasAny } = useAuth();
+  const goToTopic = (topicId: string) =>
+    navigate({ to: "/forum/$board/$topic", params: { board: slug, topic: topicId } });
   const isStaff = hasAny(["admin", "boro_fan_zone_moderator"]);
   const canUseSpecialMentions = hasAny(["admin", "management", "staff", "moderator"]);
   const info = useFanZoneMembership(user?.id ?? null);
