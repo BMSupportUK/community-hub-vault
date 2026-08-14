@@ -2626,8 +2626,9 @@ function PitchView({
                             );
                           }
                           return (
-                            <div className="mt-0.5 text-[9px] font-bold uppercase tracking-wide text-white/60">
-                              Scores as {POSITION_SHORT[scoringAs]}
+                            <div className="mt-0.5 flex items-center justify-center gap-1 text-[9px] font-bold uppercase tracking-wide text-white/60">
+                              {!editable && <Lock className="size-2.5" />}
+                              {editable ? `Scores as ${POSITION_SHORT[scoringAs]}` : `Locked — scores as ${POSITION_SHORT[scoringAs]}`}
                             </div>
                           );
                         })()}
