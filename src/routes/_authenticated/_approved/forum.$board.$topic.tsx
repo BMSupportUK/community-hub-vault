@@ -738,7 +738,7 @@ function TopicPage() {
   const renderSponsorAdvert = () => (
     <RotatingAffiliateBanner
       boardId={board?.id ?? null}
-      paused={tab === "reply" || submitting || editingId !== null}
+      paused={submitting || editingId !== null}
       fallback={{
         image_url: board?.affiliate_banner_url ?? null,
         link_url: board?.affiliate_banner_link ?? null,
