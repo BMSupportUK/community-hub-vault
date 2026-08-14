@@ -564,6 +564,91 @@ export async function rollFreeTransfers(_admin: any, _gameweekId: string) {
   return;
 }
 
+export type FantasyPreviousGwRow = {
+  entrantId: string;
+  isGuest: boolean;
+  teamName: string;
+  displayName: string | null;
+  username: string | null;
+  avatarUrl: string | null;
+  gameweekId: string;
+  gameweekNumber: number;
+  fixtureLabel: string;
+  points: number | null;
+};
+
+export type FantasyPreviousGwScoreDTO = {
+  gameweek: FantasyGameweekDTO;
+  rows: FantasyPreviousGwRow[];
+};
+
+export async function loadPreviousGameweekScores(admin: any): Promise<FantasyPreviousGwScoreDTO | null> {
+  const gameweeks = await loadGameweeks(admin);
+  const previous = [...gameweeks].reverse().find((g) => g.status === "final") ?? null;
+  if (!previous) return null;
+
+  const [{ data: squads, error: sqErr }, { data: members, error: memErr }, { data: guests, error: guestErr }] = await Promise.all([
+    admin.from("fantasy_squads").select("user_id, guest_id, points").eq("gameweek_id", previous.id),
+    admin.from("fantasy_entrants").select("user_id, team_name"),
+    admin.from("fantasy_guest_entrants").select("id, team_name, display_name"),
+  ]);
+  if (sqErr) throw new Error(sqErr.message);
+  if (memErr) throw new Error(memErr.message);
+  if (guestErr) throw new Error(guestErr.message);
+
+  const memberMap = new Map((members ?? []).map((m: any) => [m.user_id as string, m]));
+  const guestMap = new Map((guests ?? []).map((g: any) => [g.id as string, g]));
+  const userIds = new Set<string>();
+  const rows: FantasyPreviousGwRow[] = [];
+
+  for (const s of squads ?? []) {
+    const isGuest = !!s.guest_id;
+    const entrantId = (isGuest ? s.guest_id : s.user_id) as string;
+    const ent = isGuest ? guestMap.get(entrantId) : memberMap.get(entrantId);
+    if (!ent) continue;
+    rows.push({
+      entrantId,
+      isGuest,
+      teamName: (ent as any).team_name ?? "My Boro XI",
+      displayName: isGuest ? ((ent as any).display_name ?? null) : null,
+      username: null,
+      avatarUrl: null,
+      gameweekId: previous.id,
+      gameweekNumber: previous.gwNumber,
+      fixtureLabel: `${previous.homeTeam} v ${previous.awayTeam}`,
+      points: s.points ?? null,
+    });
+    if (!isGuest) userIds.add(entrantId);
+  }
+
+  if (userIds.size) {
+    const { data: profiles, error: profErr } = await admin
+      .from("profiles")
+      .select("id, display_name, username, avatar_url")
+      .in("id", [...userIds]);
+    if (profErr) throw new Error(profErr.message);
+    const profileMap = new Map((profiles ?? []).map((p: any) => [p.id as string, p]));
+    for (const r of rows) {
+      if (r.isGuest) continue;
+      const p = profileMap.get(r.entrantId);
+      if (p) {
+        r.displayName = p.display_name ?? null;
+        r.username = p.username ?? null;
+        r.avatarUrl = p.avatar_url ?? null;
+      }
+    }
+  }
+
+  rows.sort((a, b) => {
+    const ap = a.points ?? -99999;
+    const bp = b.points ?? -99999;
+    if (bp !== ap) return bp - ap;
+    return (a.teamName ?? "").localeCompare(b.teamName ?? "");
+  });
+
+  return { gameweek: previous, rows };
+}
+
 export type FantasyLeaderboardRow = {
   entrantId: string;
   isGuest: boolean;
