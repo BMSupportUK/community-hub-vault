@@ -455,10 +455,10 @@ function PlayerStatsDialog({
 }
 
 function FantasyPageWithStats() {
-  const [stats, setStats] = useState<{ playerId: string; scoringAs: FantasyPosition | null } | null>(null);
+  const [stats, setStats] = useState<{ playerId: string; scoringAs: FantasyPosition | null; asSub: boolean } | null>(null);
   const open = useCallback(
-    (playerId: string, scoringAs?: FantasyPosition | null) =>
-      setStats({ playerId, scoringAs: scoringAs ?? null }),
+    (playerId: string, scoringAs?: FantasyPosition | null, asSub?: boolean) =>
+      setStats({ playerId, scoringAs: scoringAs ?? null, asSub: !!asSub }),
     [],
   );
   return (
@@ -467,6 +467,7 @@ function FantasyPageWithStats() {
       <PlayerStatsDialog
         playerId={stats?.playerId ?? null}
         scoringAs={stats?.scoringAs ?? null}
+        asSub={stats?.asSub ?? false}
         onClose={() => setStats(null)}
       />
     </PlayerStatsCtx.Provider>
