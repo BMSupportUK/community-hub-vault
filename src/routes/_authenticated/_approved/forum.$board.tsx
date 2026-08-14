@@ -396,40 +396,51 @@ function BoardPage() {
           {canPost && open && (
             <section
               aria-label={`New topic in ${board.name}`}
-              className="rounded-2xl border border-[#E11B22]/30 bg-surface-1 p-4 sm:p-5 shadow-soft min-w-0"
+              className="relative overflow-hidden rounded-2xl border-2 border-[#E11B22]/60 bg-gradient-to-br from-[#2a0a0d] via-[#1a0508] to-[#0f0204] p-1 shadow-[0_0_0_1px_rgba(225,27,34,0.3),0_12px_50px_-12px_rgba(225,27,34,0.55)] min-w-0"
             >
-              <div className="flex items-center justify-between gap-3 mb-3">
-                <h3 className="font-display text-base font-bold">New topic in {board.name}</h3>
-                <Button variant="ghost" size="sm" onClick={() => setOpen(false)} disabled={submitting}>Cancel</Button>
-              </div>
-              <div className="space-y-3 min-w-0 [&_*]:break-words">
+              <span aria-hidden className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-[#FF3B41] via-[#E11B22] to-[#8B0F14] shadow-[0_0_20px_rgba(225,27,34,0.9)]" />
+              <div className="relative pl-3 sm:pl-4 p-3 sm:p-4 space-y-3 min-w-0 [&_*]:break-words">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-[#FF3B41] to-[#8B0F14] text-white shadow-[0_6px_18px_-6px_rgba(225,27,34,0.85)]">
+                      <Pencil className="size-4" />
+                    </span>
+                    <div>
+                      <h3 className="font-display text-base font-bold text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">New topic in {board.name}</h3>
+                      <p className="text-[11px] text-[#FF9A9D]/90">Share your take — mentions, polls and media embeds supported.</p>
+                    </div>
+                  </div>
+                  <Button variant="ghost" size="sm" onClick={() => setOpen(false)} disabled={submitting} className="text-white/80 hover:bg-white/10 hover:text-white shrink-0">Cancel</Button>
+                </div>
                 <Input
                   placeholder="Topic title"
                   value={title}
                   onChange={(e) => setTitle(e.target.value.slice(0, 200))}
                   maxLength={200}
+                  className="border-white/15 bg-black/30 text-white placeholder:text-white/40 focus:border-[#E11B22] focus:ring-[#E11B22]/40 focus-visible:ring-[#E11B22]/40 focus-visible:ring-offset-0"
                 />
-                <div className="min-w-0 overflow-hidden">
+                <div className="min-w-0 overflow-hidden rounded-xl border border-white/10 bg-black/25 p-1 focus-within:border-[#E11B22]/60 focus-within:shadow-[0_0_20px_-6px_rgba(225,27,34,0.45)] transition-all">
                   <HtmlEditor
                     value={body}
                     onChange={setBody}
                     placeholder="What's on your mind? Paste an X or Facebook URL on its own line to embed it."
                     mentions={mentionCandidates}
                     imageUpload={{ userId: user?.id }}
+                    className="[--background:oklch(0.18_0.04_18)] [--border:oklch(0.35_0.05_18)] [--foreground:oklch(0.97_0.005_20)] [--muted-foreground:oklch(0.70_0.03_20)] [--primary:oklch(0.62_0.27_22)] [--primary-foreground:oklch(0.99_0.005_20)] [--accent:oklch(0.32_0.10_18)] [--accent-foreground:oklch(0.97_0.005_20)] [--popover:oklch(0.20_0.05_18)] [--popover-foreground:oklch(0.97_0.005_20)] [--muted:oklch(0.25_0.04_18)] [&_.html-editor-toolbar]:border-b-[oklch(0.35_0.05_18)] [&_.html-editor-toolbar]:bg-black/20 [&_.html-editor-editor]:text-white/95"
                   />
                 </div>
-                  {poll ? (
-                    <PollDraftEditor value={poll} onChange={setPoll} onRemove={() => setPoll(null)} />
-                  ) : (
-                    <div>
-                      <Button type="button" variant="outline" size="sm" onClick={() => setPoll({ question: "", options: ["", ""], allow_multiple: false })}>
-                        <BarChart3 className="size-4 mr-1" /> Add poll
-                      </Button>
-                    </div>
-                  )}
-                  <div className="flex justify-end">
-                  <Button onClick={submit} disabled={submitting} className="bg-gradient-to-r from-[#E11B22] to-[#8B0F14] hover:from-[#F02B30] hover:to-[#9B1118] border-0 text-white">
-                    {submitting ? <><Loader2 className="size-4 mr-1 animate-spin" />Posting…</> : "Post topic"}
+                {poll ? (
+                  <PollDraftEditor value={poll} onChange={setPoll} onRemove={() => setPoll(null)} />
+                ) : (
+                  <div>
+                    <Button type="button" variant="outline" size="sm" onClick={() => setPoll({ question: "", options: ["", ""], allow_multiple: false })} className="border-[#E11B22]/40 bg-black/20 text-white hover:bg-[#E11B22]/15 hover:text-white hover:border-[#E11B22]/70">
+                      <BarChart3 className="size-4 mr-1 text-[#FF6B70]" /> Add poll
+                    </Button>
+                  </div>
+                )}
+                <div className="flex justify-end pt-1">
+                  <Button onClick={submit} disabled={submitting} className="bg-gradient-to-r from-[#E11B22] to-[#8B0F14] hover:from-[#F02B30] hover:to-[#9B1118] border-0 text-white shadow-[0_6px_24px_-8px_rgba(225,27,34,0.7)] hover:shadow-[0_10px_32px_-8px_rgba(225,27,34,0.9)] transition-all">
+                    {submitting ? <><Loader2 className="size-4 mr-1 animate-spin" />Posting…</> : <><Plus className="size-4 mr-1" />Post topic</>}
                   </Button>
                 </div>
               </div>
