@@ -618,7 +618,7 @@ function SportsGuidesPage() {
         )}
         {b.excerpt && <p className="text-sm text-purple-200/70 line-clamp-2">{b.excerpt}</p>}
         <div className="mt-auto pt-3 flex items-center gap-2">
-          <Button size="sm" className="flex-1 bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white border-0" onClick={() => navigate({ to: "/sports-guides/read/$id", params: { id: b.id }, search: { cat: b.category_id } })}>Click to Read</Button>
+          <Button size="sm" className="flex-1 bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white border-0" onClick={() => { rememberGuide(b.id); navigate({ to: "/sports-guides/read/$id", params: { id: b.id }, search: { cat: b.category_id } }); }}>Click to Read</Button>
           <span
             aria-label={isUnread(b) ? "Unread" : "Read"}
             title={isUnread(b) ? "Unread" : "Read"}
@@ -641,7 +641,7 @@ function SportsGuidesPage() {
           </span>
           {isMod && (
             <>
-              <Button size="icon" variant="ghost" className="text-purple-200 hover:text-white hover:bg-purple-800/60" onClick={() => openEdit(b.id)}>
+              <Button size="icon" variant="ghost" className="text-purple-200 hover:text-white hover:bg-purple-800/60" onClick={() => { rememberGuide(b.id); openEdit(b.id); }}>
                 <Pencil className="size-4" />
               </Button>
               <Button size="icon" variant="ghost" className="text-purple-200 hover:text-white hover:bg-purple-800/60" onClick={() => deleteBlog(b.id)}>
@@ -927,7 +927,7 @@ function SportsGuidesPage() {
                           return (
                             <button
                               key={blog.id}
-                              onClick={() => navigate({ to: "/sports-guides/read/$id", params: { id: blog.id }, search: { cat: blog.category_id } })}
+                              onClick={() => { rememberGuide(blog.id); navigate({ to: "/sports-guides/read/$id", params: { id: blog.id }, search: { cat: blog.category_id } }); }}
                               className="w-full text-left px-4 py-3 hover:bg-purple-900/50 transition-colors block"
                             >
                               <div className="text-[10px] uppercase tracking-wider text-fuchsia-300/80 mb-1">
