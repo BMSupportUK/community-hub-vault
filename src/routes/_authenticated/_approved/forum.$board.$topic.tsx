@@ -875,12 +875,14 @@ function TopicPage() {
 
         return (
           <Tabs value={tab} onValueChange={(v) => setTab(v as "posts" | "reply")} className="w-full">
-            <ForumPoll
-              topicId={topic.id}
-              userId={user?.id ?? null}
-              canManage={isBoardMod || (!!user && topic.author_id === user.id)}
-              canVote={canPost}
-            />
+            <div className="mb-3">
+              <ForumPoll
+                topicId={topic.id}
+                userId={user?.id ?? null}
+                canManage={isBoardMod || (!!user && topic.author_id === user.id)}
+                canVote={canPost}
+              />
+            </div>
             <TabsList>
               <TabsTrigger value="posts">Original Post</TabsTrigger>
               <TabsTrigger value="reply">Replies ({topic.reply_count ?? replies.length})</TabsTrigger>
