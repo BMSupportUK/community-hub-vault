@@ -132,6 +132,15 @@ export const getPublicFantasyLeaderboard = createServerFn({ method: "GET" }).han
   },
 );
 
+export const getPublicFantasyPreviousGameweekScores = createServerFn({ method: "GET" }).handler(
+  async (): Promise<FantasyPreviousGwScoreDTO | null> => {
+    setResponseHeader("cache-control", "no-store, max-age=0");
+    const { loadPreviousGameweekScores } = await import("@/lib/fantasy.server");
+    const admin = await getAdmin();
+    return loadPreviousGameweekScores(admin);
+  },
+);
+
 // ------------------------------------------------------------------
 // Guest writes
 // ------------------------------------------------------------------
