@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Loader2, LogOut, Trophy } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { FanZoneNameGate } from "@/components/app/FanZoneNamePrompt";
 import { useFanZoneMembership } from "@/hooks/use-fan-zone";
 import { Button } from "@/components/ui/button";
 
@@ -42,6 +43,7 @@ function FanZonePendingPage() {
 
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-rose-950 via-zinc-950 to-amber-950 flex items-center justify-center px-4 py-10">
+      <FanZoneNameGate />
       <div className="w-full max-w-md">
         <button
           onClick={async () => { await signOut(); navigate({ to: "/login" }); }}

@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { ArrowLeft, Loader2, MessageSquare, Ban, ShieldOff, Heart, Clock, Quote, UserCheck, UserPlus, Lock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { FanZoneNameGate } from "@/components/app/FanZoneNamePrompt";
 import { useFanZoneMembership } from "@/hooks/use-fan-zone";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -176,6 +177,7 @@ function FanProfilePage() {
       className="boro-theme relative min-h-[calc(100vh-4rem)] w-full overflow-hidden bg-cover bg-center bg-no-repeat"
       style={{ backgroundImage: `url(${bgAsset.url})` }}
     >
+      <FanZoneNameGate />
       <div
         className="absolute inset-0"
         style={{

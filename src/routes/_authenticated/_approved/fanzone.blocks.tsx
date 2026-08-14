@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { ArrowLeft, Loader2, ShieldOff } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { FanZoneNameGate } from "@/components/app/FanZoneNamePrompt";
 import { useFanZoneMembership } from "@/hooks/use-fan-zone";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -40,6 +41,7 @@ function BlocksPage() {
 
   return (
     <div className="boro-theme max-w-2xl mx-auto px-4 sm:px-6 py-6 space-y-4">
+      <FanZoneNameGate />
       <Button asChild variant="ghost" size="sm" className="-ml-2">
         <Link to="/fanzone/messages"><ArrowLeft className="size-4 mr-1" />Back to inbox</Link>
       </Button>

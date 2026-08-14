@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, Loader2, MessageSquare, Ban, Search, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { FanZoneNameGate } from "@/components/app/FanZoneNamePrompt";
 import { useFanZoneMembership } from "@/hooks/use-fan-zone";
 import { formatLastSeen } from "@/lib/relative-time";
 import { Button } from "@/components/ui/button";
@@ -117,6 +118,7 @@ function MessagesLayout() {
       className="boro-theme flex-1 w-full min-w-0 min-h-full self-stretch overflow-y-auto bg-cover bg-center bg-no-repeat bg-fixed"
       style={{ backgroundImage: `linear-gradient(to bottom, rgba(6,8,14,0.62), rgba(6,8,14,0.76)), url(${bgAsset.url})` }}
     >
+      <FanZoneNameGate />
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6">
       <div className="flex items-center justify-between gap-3 mb-4">
         <Button asChild variant="ghost" size="sm" className="-ml-2">
