@@ -198,7 +198,13 @@ function PlayerStatsDialog({
                 in a finished game week and ESPN confirm the match stats.
               </p>
             )}
-            <div className="space-y-2">
+            <Tabs defaultValue="ours" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="ours">Our points</TabsTrigger>
+                <TabsTrigger value="espn">ESPN stats</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="ours" className="space-y-2">
               <h4 className="text-sm font-bold">Our points &amp; abbreviations</h4>
               <p className="text-xs text-muted-foreground">
                 Points shown are what a match day 11 starter earns as a{" "}
@@ -229,9 +235,19 @@ function PlayerStatsDialog({
                   </tbody>
                 </table>
               </div>
-            </div>
+              <div className="mt-3 flex items-center justify-between rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm">
+                <span className="font-semibold">Season total</span>
+                <span className="font-bold tabular-nums">{data?.totalPoints ?? 0} pts</span>
+              </div>
+              </TabsContent>
 
-            {matches.length > 0 && (
+              <TabsContent value="espn" className="space-y-2">
+                {matches.length === 0 ? (
+                  <p className="rounded-lg border border-border bg-muted/30 p-3 text-sm text-muted-foreground">
+                    No ESPN match stats yet — they arrive automatically from the ESPN match centre once
+                    this player features in a finished game week.
+                  </p>
+                ) : (
               <div className="space-y-2">
                 <h4 className="text-sm font-bold">Weekly points — ESPN match stats</h4>
                 <div className="overflow-x-auto">
@@ -277,12 +293,9 @@ function PlayerStatsDialog({
                   </table>
                 </div>
               </div>
-            )}
-
-            <div className="mb-2 flex items-center justify-between rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm">
-              <span className="font-semibold">Season total</span>
-              <span className="font-bold tabular-nums">{data?.totalPoints ?? 0} pts</span>
-            </div>
+                )}
+              </TabsContent>
+            </Tabs>
           </>
         )}
       </DialogContent>
