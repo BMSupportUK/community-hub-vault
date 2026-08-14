@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import sportsBgAsset from "@/assets/sports-bg.jpg.asset.json";
 const sportsBg = sportsBgAsset.url;
+const SG_FOCUS_KEY = "sports-guides-focus-id";
 import { PagedGrid, PaginationBar } from "@/lib/paginate-by-height";
 
 export const Route = createFileRoute("/_authenticated/_approved/sports-guides")({
@@ -319,6 +320,31 @@ function SportsGuidesPage() {
       listingsTopRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 0);
   };
+
+  // Remember which guide the user opened (read/edit) so coming back from the
+  // editor or reader returns to that card instead of the top of page 1.
+  const rememberGuide = (id: string) => {
+    try { sessionStorage.setItem(SG_FOCUS_KEY, id); } catch { /* ignore */ }
+  };
+
+  const focusRestored = useRef(false);
+  useEffect(() => {
+    if (focusRestored.current || !filtered.length) return;
+    let id: string | null = null;
+    try { id = sessionStorage.getItem(SG_FOCUS_KEY); } catch { /* ignore */ }
+    if (!id) return;
+    const targetIndex = filtered.findIndex((b) => b.id === id);
+    if (targetIndex < 0) return;
+    focusRestored.current = true;
+    try { sessionStorage.removeItem(SG_FOCUS_KEY); } catch { /* ignore */ }
+    const targetPage = listPageSlices.findIndex((slice) => slice.includes(targetIndex));
+    if (targetPage >= 0) setListPage(targetPage);
+    window.setTimeout(() => {
+      document
+        .querySelector<HTMLElement>(`[data-guide-id="${id}"]`)
+        ?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 150);
+  }, [filtered, listPageSlices]);
 
   // Search every sports guide category and include a snippet showing where
   // the matching event or term appears.
