@@ -11,7 +11,7 @@ import { MessageSquareText, Ban, BarChart3, UserCog, Users, Trophy } from "lucid
 import { FanZoneStaffBox } from "@/components/app/FanZoneStaffBox";
 import { BoroMatchCentreBox } from "@/components/app/BoroMatchCentreBox";
 import { BoroLiveMatchStrip } from "@/components/app/BoroLiveMatchStrip";
-import { FanZoneNamePrompt } from "@/components/app/FanZoneNamePrompt";
+import { FanZoneNameGate } from "@/components/app/FanZoneNamePrompt";
 import { useFanAliasVersion } from "@/hooks/use-fan-alias-version";
 import boroHero from "@/assets/boro-hero.jpg";
 import boroBadge from "@/assets/boro-fan-zone-badge.png";
@@ -169,7 +169,7 @@ function ForumLayout() {
         <BoroLiveMatchStrip />
       </div>
       {isNested ? <Outlet /> : <BoardsIndex />}
-      <FanZoneNamePrompt info={info} canEnter={!!canEnterZone} />
+      <FanZoneNameGate />
     </div>
   );
 }
