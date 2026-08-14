@@ -114,6 +114,7 @@ function MessagesLayout() {
   }
 
   return (
+      <FanZoneNameGate />
     <div
       className="boro-theme flex-1 w-full min-w-0 min-h-full self-stretch overflow-y-auto bg-cover bg-center bg-no-repeat bg-fixed"
       style={{ backgroundImage: `linear-gradient(to bottom, rgba(6,8,14,0.62), rgba(6,8,14,0.76)), url(${bgAsset.url})` }}

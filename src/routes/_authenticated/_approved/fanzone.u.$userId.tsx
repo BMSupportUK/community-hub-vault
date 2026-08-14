@@ -173,6 +173,7 @@ function FanProfilePage() {
   const mainLocked = fanPrivate && !isSelf && !isStaff && !isFriend;
 
   return (
+      <FanZoneNameGate />
     <div
       className="boro-theme relative min-h-[calc(100vh-4rem)] w-full overflow-hidden bg-cover bg-center bg-no-repeat"
       style={{ backgroundImage: `url(${bgAsset.url})` }}
