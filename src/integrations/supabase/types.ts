@@ -5403,6 +5403,13 @@ export type Database = {
           user_id: string
         }[]
       }
+      fan_zone_protected_user_ids: {
+        Args: never
+        Returns: {
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }[]
+      }
       fan_zone_set_privacy: { Args: { _private: boolean }; Returns: boolean }
       fan_zone_staff_directory: {
         Args: never
