@@ -1,5 +1,5 @@
 import { memo, useEffect, useState } from "react";
-import { BarChart3, Loader2, Plus, Trash2, X } from "lucide-react";
+import { BarChart3, CalendarClock, Loader2, Plus, Trash2, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -141,7 +141,7 @@ function ForumPollComponent({
       <div className="mt-2.5 text-[11px] text-muted-foreground flex items-center gap-2 flex-wrap">
         <span>{totalVotes} vote{totalVotes === 1 ? "" : "s"}</span>
         {poll.allow_multiple && <span>· Multiple choice</span>}
-        {closed ? <span>· Closed</span> : poll.closes_at && <span>· Closes {new Date(poll.closes_at).toLocaleDateString()}</span>}
+        {closed ? <span>· Closed {poll.closes_at ? new Date(poll.closes_at).toLocaleString() : ""}</span> : poll.closes_at && <span>· Closes {new Date(poll.closes_at).toLocaleString()}</span>}
         {!canVote && !canManage && <span>· Members only</span>}
       </div>
     </section>
