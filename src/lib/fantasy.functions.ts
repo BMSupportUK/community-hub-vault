@@ -4,11 +4,13 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type {
   FantasyLeaderboardRow,
+  FantasyPreviousGwScoreDTO,
   FantasyStateDTO,
 } from "@/lib/fantasy.server";
 
 export type {
   FantasyLeaderboardRow,
+  FantasyPreviousGwScoreDTO,
   FantasyStateDTO,
   FantasyPlayerDTO,
   FantasyGameweekDTO,
