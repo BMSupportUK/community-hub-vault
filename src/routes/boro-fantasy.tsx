@@ -1217,6 +1217,9 @@ function SquadBuilder({
     if (sel.includes(p.id)) return sel;
     if (p.status === "departed") { toast.error(`${p.name} has left the club.`); return null; }
     if (p.status === "loaned_out") { toast.error(`${p.name} is out on loan${p.loanClub ? ` at ${p.loanClub}` : ""}.`); return null; }
+    // Injured players and senior players outside the official squad are off limits.
+    const blocked = pickBlockedReason(p, gw ? gw.kickoffAt : null);
+    if (blocked) { toast.error(blocked); return null; }
     if (sel.length >= squadSize) { toast.error(`Squad is full — ${squadSize} players max (11 + ${benchRules.size} subs).`); return null; }
     // A dual-position player only blocks if every position they cover is full.
     const roomInAnyPosition = playerPositions(p).some(
@@ -1227,8 +1230,21 @@ function SquadBuilder({
       return null;
     }
     if ((p.injuryStatus ?? "none") !== "none" && !injuryClearedBy(p, gw ? gw.kickoffAt : null)) {
-      const label = p.injuryStatus === "suspended" ? "suspended" : p.injuryStatus === "doubtful" ? "a doubt" : "injured";
-      toast.warning(`${p.name} is ${label}${p.injuryNote ? ` (${p.injuryNote})` : ""} — pick at your own risk.`);
+      const doubtful = p.injuryStatus === "doubtful";
+      if (doubtful) {
+        // Doubtful players are allowed, but the manager must confirm the risk.
+        const ok = window.confirm(
+          `${p.name} is a DOUBT for this game${p.injuryNote ? `\n\n${p.injuryNote}` : ""}${
+            p.injuryReturn ? `\nExpected back: ${p.injuryReturn}` : ""
+          }\n\nPick them anyway?`,
+        );
+        if (!ok) return null;
+        toast.warning(`${p.name} picked while doubtful — at your own risk.`);
+      } else {
+        toast.warning(
+          `${p.name} is suspended${p.injuryNote ? ` (${p.injuryNote})` : ""} — pick at your own risk.`,
+        );
+      }
     }
     if (isLeagueGw && outOf25(p)) {
       toast.warning(`${p.name} is not included in the 25-man matchday squad for league games.`);
@@ -1880,6 +1896,15 @@ function outOf25(p: FantasyPlayerDTO): boolean {
 }
 
 /**
+ * A senior player with no squad number isn't in the club's official squad, so
+ * they can't be picked. Academy (U21/U18) players are exempt — they play
+ * without a first-team number.
+ */
+function missingSquadNumber(p: FantasyPlayerDTO): boolean {
+  return (p.squadLevel ?? "first") === "first" && !p.shirtNumber;
+}
+
+/**
  * Injuries are stamped with an expected return date. When picking a squad for a
  * future gameweek, a player whose return date falls on or before that kick-off
  * is expected back for that game — so we shouldn't scream OUT at the manager.
@@ -1898,6 +1923,23 @@ function injuryClearedBy(p: FantasyPlayerDTO, kickoffAt?: string | null): boolea
   const ko = Date.parse(kickoffAt);
   if (!Number.isFinite(ko)) return false;
   return back <= ko;
+}
+
+/**
+ * Ruled out for this gameweek: flagged injured (or club status "injured") with
+ * no return date on or before kick-off. These players cannot be picked at all.
+ */
+function injuredUnavailable(p: FantasyPlayerDTO, kickoffAt?: string | null): boolean {
+  const flaggedOut = (p.injuryStatus ?? "none") === "out" || p.status === "injured";
+  return flaggedOut && !injuryClearedBy(p, kickoffAt);
+}
+
+/** True when the player can't be added to a squad for this gameweek. */
+function pickBlockedReason(p: FantasyPlayerDTO, kickoffAt?: string | null): string | null {
+  if (missingSquadNumber(p)) return `${p.name} has no squad number — not in the official squad.`;
+  if (injuredUnavailable(p, kickoffAt))
+    return `${p.name} is injured and can't be picked${p.injuryNote ? ` (${p.injuryNote})` : ""}.`;
+  return null;
 }
 
 /**
@@ -2047,14 +2089,16 @@ function PlayerPickerDialog({
           ))}
         </div>
         <ul className="max-h-[50vh] overflow-y-auto divide-y divide-border/40 rounded-xl border border-border/60">
-          {list.map((p) => (
-              <li key={p.id} className="flex items-center gap-2 px-3 py-2 text-sm">
+          {list.map((p) => {
+            const blocked = pickBlockedReason(p, kickoffAt);
+            return (
+              <li key={p.id} className={`flex items-center gap-2 px-3 py-2 text-sm ${blocked ? "opacity-60" : ""}`}>
                 <span className={`text-[10px] font-bold rounded-md border px-1.5 py-0.5 ${POS_TINT[p.position]}`}>
                   {playerPositionLabel(p)}
                 </span>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-1.5 min-w-0">
-                    <span className="truncate font-medium">
+                    <span className={`truncate font-medium ${blocked ? "line-through decoration-2 decoration-red-500/80" : ""}`}>
                       {p.name}
                     </span>
                     <ShirtNumber n={p.shirtNumber} />
@@ -2092,17 +2136,29 @@ function PlayerPickerDialog({
                       Not included in 25-man matchday squad
                     </div>
                   )}
+                  {missingSquadNumber(p) && (
+                    <div className="text-[10px] font-semibold uppercase leading-tight text-red-500">
+                      No squad number — not in the official squad
+                    </div>
+                  )}
+                  {!missingSquadNumber(p) && injuredUnavailable(p, kickoffAt) && (
+                    <div className="text-[10px] font-semibold uppercase leading-tight text-red-500">
+                      Injured — cannot be picked
+                    </div>
+                  )}
                 </div>
                 <button
                   type="button"
                   onClick={() => onPick(p)}
-                  title="Put in this slot"
-                  className="shrink-0 grid place-items-center size-7 rounded-lg border border-primary/50 text-primary transition-colors hover:bg-primary/10"
+                  disabled={!!blocked}
+                  title={blocked ?? "Put in this slot"}
+                  className="shrink-0 grid place-items-center size-7 rounded-lg border border-primary/50 text-primary transition-colors hover:bg-primary/10 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
                 >
                   <Plus className="size-3.5" />
                 </button>
               </li>
-          ))}
+            );
+          })}
           {list.length === 0 && (
             <li className="px-3 py-6 text-center text-sm text-muted-foreground">No players available here.</li>
           )}
