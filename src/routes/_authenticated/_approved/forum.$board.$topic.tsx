@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { flushSync } from "react-dom";
-import { ArrowLeft, Loader2, Pin, Lock, Quote, Reply as ReplyIcon, Pencil, Trash2, Send, History, Check, X, Ban, MessageSquare, Eye, FolderInput } from "lucide-react";
+import { ArrowLeft, Loader2, Pin, Lock, Quote, Reply as ReplyIcon, Pencil, Trash2, Send, History, Check, X, MessageSquare, Eye, FolderInput } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useFanZoneMembership } from "@/hooks/use-fan-zone";
@@ -18,6 +18,7 @@ import { useFanBlocks } from "@/hooks/use-fan-blocks";
 import { toast } from "sonner";
 import { RotatingAffiliateBanner } from "@/components/app/RotatingAffiliateBanner";
 import { ForumPoll } from "@/components/app/ForumPoll";
+import { BlockUserButton } from "@/components/app/BlockUserButton";
 import { censorText, useProfanityWords } from "@/lib/profanity";
 
 export const Route = createFileRoute("/_authenticated/_approved/forum/$board/$topic")({
@@ -157,6 +158,14 @@ function TopicPostArticleComponent({
           >
             {name}
           </Link>
+          {canBlock && (
+            <BlockUserButton
+              targetId={post.author_id}
+              name={name}
+              onBlocked={onBlocksChanged}
+              className="ml-1"
+            />
+          )}
           {author?.is_private && (
             <span className="ml-2 inline-flex items-center gap-1 rounded-md bg-white/10 text-muted-foreground text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 align-middle">
               <Lock className="size-2.5" />Private profile
@@ -199,23 +208,6 @@ function TopicPostArticleComponent({
               }}
             >
               <MessageSquare className="size-3.5" />
-            </Button>
-          )}
-          {canBlock && (
-            <Button
-              size="sm"
-              variant="ghost"
-              className="h-7 w-7 p-0 text-muted-foreground hover:text-[#E11B22]"
-              title="Block this member"
-              onClick={async () => {
-                if (!confirm(`Block ${name}? Their posts will be hidden and you won't be able to message each other.`)) return;
-                const { error } = await supabase.rpc("fan_zone_block", { _other: post.author_id });
-                if (error) return toast.error("Couldn't block", { description: error.message });
-                toast.success(`${name} blocked`);
-                onBlocksChanged();
-              }}
-            >
-              <Ban className="size-3.5" />
             </Button>
           )}
         </div>
