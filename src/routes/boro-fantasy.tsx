@@ -211,6 +211,11 @@ function PlayerStatsDialog({
                 {POSITION_LABEL[pos].toLowerCase()}. Subs earn half. Stats with no points are ESPN
                 match-report extras, shown for information only.
               </p>
+              <p className="text-xs font-semibold text-emerald-500">
+                Weekly points = our own scoring (appearance, goals, assists, clean sheets, cards) plus
+                every point earned from the ESPN match stats. Both are added together — nothing is
+                counted twice.
+              </p>
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[380px] text-left text-xs">
                   <thead>
@@ -235,6 +240,36 @@ function PlayerStatsDialog({
                   </tbody>
                 </table>
               </div>
+              {matches.length > 0 && (
+                <div className="mt-3 space-y-1">
+                  <h4 className="text-sm font-bold">Weekly points</h4>
+                  <div className="overflow-x-auto">
+                    <table className="w-full min-w-[320px] text-left text-xs">
+                      <thead>
+                        <tr className="border-b border-border text-[11px] uppercase tracking-wide text-muted-foreground">
+                          <th className="py-2 pr-2">Game week</th>
+                          <th className="py-2 pl-2 text-right">Our pts + ESPN pts</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {matches.map((m) => (
+                          <tr key={m.fixtureId} className="border-b border-border/60">
+                            <td className="py-1.5 pr-2 text-muted-foreground">
+                              <span className="font-bold text-foreground">
+                                {m.gwNumber != null ? `GW${m.gwNumber}` : "—"}
+                              </span>{" "}
+                              {m.label}
+                            </td>
+                            <td className="py-1.5 pl-2 text-right font-bold tabular-nums text-primary">
+                              {m.points}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
               <div className="mt-3 flex items-center justify-between rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm">
                 <span className="font-semibold">Season total</span>
                 <span className="font-bold tabular-nums">{data?.totalPoints ?? 0} pts</span>
