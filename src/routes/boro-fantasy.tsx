@@ -243,6 +243,41 @@ function PlayerStatsDialog({
       { key: "cs-", abbr: "CS-", means: "Clean sheet (under 60 mins)", total: short, rate: rateShort, points: Math.round(short * rateShort * 100) / 100 },
     ];
   }, [matches, pos, rateMul]);
+  const weeklyPointRows = useMemo(
+    () =>
+      matches.map((match) => {
+        const minutes = match.stats.minutes ?? 0;
+        const appearance = minutes > 0 ? (asSub ? 1 : 2) : 0;
+        const ourStatPoints = scoringStatKeys(pos)
+          .filter((key) => isOurScoringStat(key) && key !== "minutes")
+          .reduce((sum, key) => {
+            const rate = scaleRate(statPointsPer(key, pos));
+            return sum + (rate == null ? 0 : (match.stats[key] ?? 0) * rate);
+          }, 0);
+        const cleanSheetRate =
+          minutes > 0 && (match.stats.goals_conceded ?? 0) === 0
+            ? scaleRate(
+                minutes >= 60
+                  ? pos === "gk" || pos === "def" ? 4 : pos === "mid" ? 1 : null
+                  : pos === "gk" || pos === "def" ? 2 : pos === "mid" ? 0.5 : null,
+              ) ?? 0
+            : 0;
+        const espnPoints = scoringStatKeys(pos)
+          .filter((key) => !isOurScoringStat(key))
+          .reduce((sum, key) => {
+            const rate = scaleRate(statPointsPer(key, pos));
+            return sum + (rate == null ? 0 : (match.stats[key] ?? 0) * rate);
+          }, 0);
+        return {
+          ...match,
+          ourPoints: Math.round((appearance + ourStatPoints + cleanSheetRate) * 100) / 100,
+          espnPoints: Math.round(espnPoints * 100) / 100,
+        };
+      }),
+    [matches, pos, asSub, rateMul],
+  );
+  const ourSeasonPoints = weeklyPointRows.reduce((sum, match) => sum + match.ourPoints, 0);
+  const espnSeasonPoints = weeklyPointRows.reduce((sum, match) => sum + match.espnPoints, 0);
 
   return (
     <Dialog open={!!playerId} onOpenChange={(o) => { if (!o) onClose(); }}>
@@ -336,19 +371,18 @@ function PlayerStatsDialog({
                     </tbody>
                   </table>
                 </div>
-                {matches.length > 0 && (
-                  <div className="mt-3 space-y-1">
-                    <h4 className="text-sm font-bold">Weekly points</h4>
+                <div className="mt-3 space-y-1">
+                    <h4 className="text-sm font-bold">Our weekly points</h4>
                     <div className="overflow-x-auto">
                       <table className="w-full min-w-[320px] text-left text-xs">
                         <thead>
                           <tr className="border-b border-border text-[11px] uppercase tracking-wide text-muted-foreground">
                             <th className="py-2 pr-2">Game week</th>
-                            <th className="py-2 pl-2 text-right">Our pts + ESPN pts</th>
+                            <th className="py-2 pl-2 text-right">Our points</th>
                           </tr>
                         </thead>
                         <tbody>
-                          {matches.map((m) => (
+                          {weeklyPointRows.map((m) => (
                             <tr key={m.fixtureId} className="border-b border-border/60">
                               <td className="py-1.5 pr-2 text-muted-foreground">
                                 <span className="font-bold text-foreground">
@@ -357,24 +391,23 @@ function PlayerStatsDialog({
                                 {m.label}
                               </td>
                               <td className="py-1.5 pl-2 text-right font-bold tabular-nums text-primary">
-                                {m.points}
+                                {m.ourPoints} pts
                               </td>
                             </tr>
                           ))}
                           <tr className="bg-muted/40">
                             <td className="py-2 pr-2 font-bold">Weekly total</td>
                             <td className="py-2 pl-2 text-right font-bold tabular-nums text-primary">
-                              {matches.reduce((s, m) => s + m.points, 0)} pts
+                              {ourSeasonPoints} pts
                             </td>
                           </tr>
                         </tbody>
                       </table>
                     </div>
                   </div>
-                )}
                 <div className="mt-3 flex items-center justify-between rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm">
-                  <span className="font-semibold">Season total</span>
-                  <span className="font-bold tabular-nums">{data?.totalPoints ?? 0} pts</span>
+                  <span className="font-semibold">Our season total</span>
+                  <span className="font-bold tabular-nums text-primary">{ourSeasonPoints} pts</span>
                 </div>
               </TabsContent>
 
@@ -423,7 +456,7 @@ function PlayerStatsDialog({
                         <thead>
                           <tr className="border-b border-border text-[11px] uppercase tracking-wide text-muted-foreground">
                             <th className="py-2 pr-2">Stat</th>
-                            {matches.map((m) => (
+                            {weeklyPointRows.map((m) => (
                               <th key={m.fixtureId} className="px-2 py-2 text-center">
                                 <div className="font-bold text-foreground">
                                   {m.gwNumber != null ? `GW${m.gwNumber}` : "—"}
@@ -456,13 +489,13 @@ function PlayerStatsDialog({
                           })}
                           <tr className="bg-muted/40">
                             <td className="py-2 pr-2 font-bold">Weekly total</td>
-                            {matches.map((m) => (
+                            {weeklyPointRows.map((m) => (
                               <td key={m.fixtureId} className="px-2 py-2 text-center font-bold tabular-nums text-primary">
-                                {m.points}
+                                {m.espnPoints} pts
                               </td>
                             ))}
                             <td className="px-2 py-2 text-right font-bold tabular-nums text-primary">
-                              {matches.reduce((s, m) => s + m.points, 0)} pts
+                              {espnSeasonPoints} pts
                             </td>
                           </tr>
                         </tbody>
@@ -470,6 +503,10 @@ function PlayerStatsDialog({
                     </div>
                   </div>
                 )}
+                <div className="mt-3 flex items-center justify-between rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm">
+                  <span className="font-semibold">ESPN season total</span>
+                  <span className="font-bold tabular-nums text-primary">{espnSeasonPoints} pts</span>
+                </div>
               </TabsContent>
             </Tabs>
           </>
@@ -714,7 +751,6 @@ function BoroFantasyPage() {
   const prevGwQuery = useQuery<FantasyPreviousGwScoreDTO | null>({
     queryKey: ["fantasy-previous-gw", user?.id ?? null],
     queryFn: () => (user ? prevGwFn({}) : publicPrevGwFn({})),
-    enabled: tab === "previous-gw",
     staleTime: 15_000,
     refetchInterval: 60_000,
     refetchIntervalInBackground: false,
@@ -996,6 +1032,7 @@ function BoroFantasyPage() {
                   <LeaderboardTable
                     rows={lbQuery.data ?? []}
                     gameweeks={state?.gameweeks ?? []}
+                    previousGameweek={prevGwQuery.data}
                     canRemove={canManageEntrants}
                     onRemove={async (row) => {
                       await removeEntrantFn({ data: { entrantId: row.entrantId, isGuest: row.isGuest } });
@@ -3113,11 +3150,13 @@ function TransfersTabBody({ state }: { state: FantasyStateDTO }) {
 function LeaderboardTable({
   rows,
   gameweeks = [],
+  previousGameweek,
   canRemove = false,
   onRemove,
 }: {
   rows: FantasyLeaderboardRow[];
   gameweeks?: FantasyGameweekDTO[];
+  previousGameweek?: FantasyPreviousGwScoreDTO | null;
   canRemove?: boolean;
   onRemove?: (row: FantasyLeaderboardRow) => Promise<void>;
 }) {
@@ -3192,6 +3231,11 @@ function LeaderboardTable({
   };
   const ranked = rows.filter((r) => !isOwner(r));
   const ownerRows = rows.filter(isOwner);
+  const previousPoints = new Map(
+    (previousGameweek?.rows ?? []).map((row) => [`${row.isGuest ? "guest" : "user"}:${row.entrantId}`, row.points]),
+  );
+  const previousPointsFor = (row: FantasyLeaderboardRow) =>
+    previousPoints.get(`${row.isGuest ? "guest" : "user"}:${row.entrantId}`) ?? "—";
   return (
     <div className="rounded-2xl border border-border/60 bg-card/80 backdrop-blur overflow-hidden">
       <table className="w-full text-sm">
@@ -3200,7 +3244,8 @@ function LeaderboardTable({
             <th className="text-left px-3 py-2 w-10">#</th>
             <th className="text-left px-3 py-2">Manager</th>
             <th className="text-right px-3 py-2">GWs</th>
-            <th className="text-right px-3 py-2">Points</th>
+            <th className="text-right px-3 py-2">Previous GW</th>
+            <th className="text-right px-3 py-2">Season points</th>
             <th className="text-right px-3 py-2">Squad</th>
             {canRemove && <th className="px-2 py-2 w-10 sr-only">Remove</th>}
           </tr>
@@ -3217,6 +3262,7 @@ function LeaderboardTable({
                 {r.email && <div className="text-[11px] text-muted-foreground">{r.email}</div>}
               </td>
               <td className="px-3 py-2 text-right tabular-nums">{r.gameweeksScored}</td>
+              <td className="px-3 py-2 text-right font-semibold tabular-nums">{previousPointsFor(r)}</td>
               <td className="px-3 py-2 text-right font-bold tabular-nums text-primary">{r.totalPoints}</td>
               {squadCell(r)}
               {removeButton(r)}
@@ -3234,6 +3280,7 @@ function LeaderboardTable({
                 <div className="text-[11px] font-medium text-primary mt-0.5">Site owner — playing for fun</div>
               </td>
               <td className="px-3 py-2 text-right tabular-nums">{r.gameweeksScored}</td>
+              <td className="px-3 py-2 text-right font-semibold tabular-nums">{previousPointsFor(r)}</td>
               <td className="px-3 py-2 text-right font-bold tabular-nums text-primary">{r.totalPoints}</td>
               {squadCell(r)}
               {removeButton(r)}
