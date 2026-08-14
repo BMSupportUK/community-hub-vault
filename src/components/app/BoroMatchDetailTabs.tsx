@@ -216,15 +216,15 @@ export function BoroMatchDetailTabs({
           {koLabel && <span className="ml-auto normal-case tracking-normal text-white/90">{koLabel}</span>}
         </div>
       )}
-      <TabsList className="grid w-full grid-cols-3 bg-white/10">
-        <TabsTrigger value="action">Match action</TabsTrigger>
-        <TabsTrigger value="stats">Game stats</TabsTrigger>
-        <TabsTrigger value="lineups">Line-ups</TabsTrigger>
+      <TabsList className="grid w-full grid-cols-3 rounded-lg border border-white/15 bg-black/60 p-1">
+        <TabsTrigger value="action" className="text-white/70 data-[state=active]:bg-[#E11B22] data-[state=active]:text-white data-[state=active]:shadow-[0_2px_10px_-2px_rgba(225,27,34,0.8)]">Match action</TabsTrigger>
+        <TabsTrigger value="stats" className="text-white/70 data-[state=active]:bg-[#E11B22] data-[state=active]:text-white data-[state=active]:shadow-[0_2px_10px_-2px_rgba(225,27,34,0.8)]">Game stats</TabsTrigger>
+        <TabsTrigger value="lineups" className="text-white/70 data-[state=active]:bg-[#E11B22] data-[state=active]:text-white data-[state=active]:shadow-[0_2px_10px_-2px_rgba(225,27,34,0.8)]">Line-ups</TabsTrigger>
       </TabsList>
 
       <TabsContent value="action" className="mt-4">
         <Tabs defaultValue="all" className="w-full">
-          <TabsList className="grid w-full grid-cols-5 bg-white/10">
+          <TabsList className="grid w-full grid-cols-5 rounded-lg border border-white/15 bg-black/60 p-1">
             {ACTION_GROUPS.map((g) => {
               const count =
                 g.value === "pens"
@@ -234,7 +234,7 @@ export function BoroMatchDetailTabs({
                     ? (detail?.events.filter((e) => g.kinds!.includes(e.kind)).length ?? 0)
                     : (detail?.events.length ?? 0);
               return (
-                <TabsTrigger key={g.value} value={g.value} className="text-[11px] sm:text-xs">
+                <TabsTrigger key={g.value} value={g.value} className="text-[11px] sm:text-xs text-white/70 data-[state=active]:bg-[#E11B22] data-[state=active]:text-white data-[state=active]:shadow-[0_2px_10px_-2px_rgba(225,27,34,0.8)]">
                   {g.label}
                   {count > 0 && (
                     <span className="ml-1 rounded bg-white/25 px-1 text-[10px] font-bold tabular-nums">{count}</span>
@@ -365,17 +365,17 @@ export function BoroMatchDetailTabs({
 
       <TabsContent value="lineups" className="mt-4">
         <Tabs defaultValue="home-xi" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 gap-1 bg-white/10 sm:grid-cols-4">
-            <TabsTrigger value="home-xi" className="text-[11px] sm:text-xs">
+          <TabsList className="grid w-full grid-cols-2 gap-1 sm:grid-cols-4 rounded-lg border border-white/15 bg-black/60 p-1">
+            <TabsTrigger value="home-xi" className="text-[11px] sm:text-xs text-white/70 data-[state=active]:bg-[#E11B22] data-[state=active]:text-white data-[state=active]:shadow-[0_2px_10px_-2px_rgba(225,27,34,0.8)]">
               Home XI
             </TabsTrigger>
-            <TabsTrigger value="away-xi" className="text-[11px] sm:text-xs">
+            <TabsTrigger value="away-xi" className="text-[11px] sm:text-xs text-white/70 data-[state=active]:bg-[#E11B22] data-[state=active]:text-white data-[state=active]:shadow-[0_2px_10px_-2px_rgba(225,27,34,0.8)]">
               Away XI
             </TabsTrigger>
-            <TabsTrigger value="home-subs" className="text-[11px] sm:text-xs">
+            <TabsTrigger value="home-subs" className="text-[11px] sm:text-xs text-white/70 data-[state=active]:bg-[#E11B22] data-[state=active]:text-white data-[state=active]:shadow-[0_2px_10px_-2px_rgba(225,27,34,0.8)]">
               Home subs
             </TabsTrigger>
-            <TabsTrigger value="away-subs" className="text-[11px] sm:text-xs">
+            <TabsTrigger value="away-subs" className="text-[11px] sm:text-xs text-white/70 data-[state=active]:bg-[#E11B22] data-[state=active]:text-white data-[state=active]:shadow-[0_2px_10px_-2px_rgba(225,27,34,0.8)]">
               Away subs
             </TabsTrigger>
           </TabsList>
