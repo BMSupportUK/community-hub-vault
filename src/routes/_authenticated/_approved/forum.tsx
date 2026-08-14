@@ -52,7 +52,6 @@ function ForumLayout() {
   const isNested = matches.some((m) => m.routeId.startsWith("/_authenticated/_approved/forum/"));
   const { user, hasAny } = useAuth();
   const info = useFanZoneMembership(user?.id ?? null);
-  const canEnterZone = hasAny(["admin", "boro_fan_zone_moderator"]) || info?.status === "approved";
   const canSeeMembers =
     hasAny(["admin", "management", "boro_fan_zone_moderator", "boro_fan_zone_member"]) ||
     info?.status === "approved";
