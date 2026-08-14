@@ -227,8 +227,8 @@ function PlayerStatsDialog({
               <h4 className="text-sm font-bold">Our points &amp; abbreviations</h4>
               <p className="text-xs text-muted-foreground">
                 Points shown are what a match day 11 starter earns as a{" "}
-                {POSITION_LABEL[pos].toLowerCase()}. Subs earn half. Stats with no points are ESPN
-                match-report extras, shown for information only.
+                {POSITION_LABEL[pos].toLowerCase()}. Subs earn half. Only our own scoring lines are
+                listed here — everything scored off the ESPN match report sits in the ESPN stats tab.
               </p>
               <p className="text-xs font-semibold text-emerald-500">
                 Weekly points = our own scoring (appearance, goals, assists, clean sheets, cards) plus
@@ -246,7 +246,7 @@ function PlayerStatsDialog({
                     </tr>
                   </thead>
                   <tbody>
-                    {seasonRows.map((r) => (
+                    {ourRows.map((r) => (
                       <tr key={r.key} className="border-b border-border/60">
                         <td className="py-1.5 pr-2"><AbbrChip abbr={r.abbr} title={r.means} /></td>
                         <td className="py-1.5 pr-2 text-muted-foreground">{r.means}</td>
