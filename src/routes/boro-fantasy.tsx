@@ -1880,6 +1880,15 @@ function outOf25(p: FantasyPlayerDTO): boolean {
 }
 
 /**
+ * A senior player with no squad number isn't in the club's official squad, so
+ * they can't be picked. Academy (U21/U18) players are exempt — they play
+ * without a first-team number.
+ */
+function missingSquadNumber(p: FantasyPlayerDTO): boolean {
+  return (p.squadLevel ?? "first") === "first" && !p.shirtNumber;
+}
+
+/**
  * Injuries are stamped with an expected return date. When picking a squad for a
  * future gameweek, a player whose return date falls on or before that kick-off
  * is expected back for that game — so we shouldn't scream OUT at the manager.
