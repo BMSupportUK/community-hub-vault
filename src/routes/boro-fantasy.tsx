@@ -1462,20 +1462,34 @@ function SquadBuilder({
   >(null);
 
   // Only highlight Save when something actually differs from the saved squad.
+  // Scoring-position choices are part of the squad, so changing them must let
+  // the manager save before the deadline and be frozen once the gameweek locks.
   const dirty = useMemo(() => {
     const sameSet = (a: string[], b: (string | null)[]) =>
       a.length === b.filter(Boolean).length && [...a].sort().join(",") === [...b.filter(Boolean)].sort().join(",");
+    const samePositions = (saved: (FantasyPosition | null)[], current: (FantasyPosition | null)[]) =>
+      saved.length === current.length && saved.every((p, i) => p === current[i]);
     if (!existing) return selected.length > 0;
     const savedSelected = existing.picks.map((p) => p.playerId);
     const savedStarters = existing.picks.filter((p) => p.isStarter).map((p) => p.playerId);
+    const savedStarterPositions = Array(11).fill(null).map((_, i) => {
+      const pick = existing.picks.find((p) => p.isStarter && p.slotOrder === i);
+      return (pick?.pickedPosition ?? null) as FantasyPosition | null;
+    });
+    const savedBenchPositions = Array(benchRules.size).fill(null).map((_, i) => {
+      const pick = existing.picks.find((p) => !p.isStarter && p.slotOrder === i);
+      return (pick?.pickedPosition ?? null) as FantasyPosition | null;
+    });
     return (
       existing.formation !== formation ||
       (existing.captainId ?? "") !== captainId ||
       (existing.viceId ?? "") !== viceId ||
       !sameSet(savedSelected, selected) ||
-      !sameSet(savedStarters, starters)
+      !sameSet(savedStarters, starters) ||
+      !samePositions(savedStarterPositions, slotPositions) ||
+      !samePositions(savedBenchPositions, benchPositions)
     );
-  }, [existing, formation, captainId, viceId, selected, starters]);
+  }, [existing, formation, captainId, viceId, selected, starters, slotPositions, benchPositions, benchRules.size]);
 
   /** Ensure the player is in the 15 — returns the new squad list, or null if not possible. */
   function withPlayer(sel: string[], p: FantasyPlayerDTO): string[] | null {
