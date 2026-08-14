@@ -60,6 +60,7 @@ export function useFanZoneMembership(userId: string | null | undefined): FanZone
 
     return () => {
       cancelled = true;
+      offLocal();
       supabase.removeChannel(ch);
     };
   }, [userId]);
