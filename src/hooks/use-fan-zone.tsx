@@ -49,6 +49,7 @@ export function useFanZoneMembership(userId: string | null | undefined): FanZone
     };
     void load();
 
+    const offLocal = onFanAliasChange(() => void load());
     const ch = supabase
       .channel(`fan-zone-${userId}-${Math.random().toString(36).slice(2)}`)
       .on(
