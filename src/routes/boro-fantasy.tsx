@@ -124,6 +124,32 @@ function AbbrChip({ abbr, title }: { abbr: string; title?: string }) {
   );
 }
 
+function formatPointRate(rate: number | null): string {
+  if (rate == null) return "";
+  if (rate === 1) return "1 pt";
+  if (rate === -1) return "−1 pt";
+  return `${rate} pts`;
+}
+
+/** Abbreviation chip plus the point value it earns for the selected role. */
+function StatAbbrLabel({
+  abbr,
+  means,
+  rate,
+}: {
+  abbr: string;
+  means: string;
+  rate?: number | null;
+}) {
+  const pts = formatPointRate(rate ?? null);
+  return (
+    <span className="flex items-center gap-1.5">
+      <AbbrChip abbr={abbr} title={means} />
+      {pts && <span className="text-[10px] font-semibold text-emerald-500">{pts}</span>}
+    </span>
+  );
+}
+
 function PlayerStatsDialog({
   playerId,
   scoringAs,
