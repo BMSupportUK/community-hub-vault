@@ -448,8 +448,8 @@ export function HtmlEditor({ value, onChange, className, placeholder, videoUploa
   };
 
   return (
-    <div className={`relative rounded-md border border-border bg-background ${className ?? ""}`}>
-      <div className="flex flex-wrap items-center gap-0.5 border-b border-border p-1">
+    <div className={`relative rounded-md border border-border bg-background html-editor-root ${className ?? ""}`}>
+      <div className="flex flex-wrap items-center gap-0.5 border-b border-border p-1 html-editor-toolbar">
         <Btn title="Bold" isActive={active.bold} onClick={() => { exec("bold"); handleInput(); }}><Bold className="size-4" /></Btn>
         <Btn title="Italic" isActive={active.italic} onClick={() => { exec("italic"); handleInput(); }}><Italic className="size-4" /></Btn>
         <Btn title="Underline" isActive={active.underline} onClick={() => { exec("underline"); handleInput(); }}><Underline className="size-4" /></Btn>
