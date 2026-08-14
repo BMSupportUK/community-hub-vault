@@ -135,7 +135,11 @@ function ForumLayout() {
               <Link to="/boro-fantasy"><Trophy className="size-4 mr-1.5" />MFC Fantasy Manager</Link>
             </Button>
           </div>
-          <div className="hidden sm:flex size-20 rounded-full bg-white items-center justify-center shadow-lg ring-2 ring-white/50 shrink-0">
+          <Link
+            to="/forum"
+            className="hidden sm:flex size-20 rounded-full bg-white items-center justify-center shadow-lg ring-2 ring-white/50 shrink-0 hover:ring-white hover:scale-105 transition-all"
+            aria-label="Back to Boro Fan Zone home"
+          >
             <img
               src={boroBadge}
               alt="Boro Fan Zone badge"
@@ -144,7 +148,7 @@ function ForumLayout() {
               className="size-[72px] object-contain"
               loading="lazy"
             />
-          </div>
+          </Link>
           <div className="flex-1 min-w-0">
             <div className="text-[10px] tracking-[0.3em] font-bold text-white/80 uppercase mb-1">
               Members only · Est. terrace
