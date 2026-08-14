@@ -13,6 +13,10 @@ import {
   MapPin,
   X,
   RefreshCw,
+  KeyRound,
+  Eye,
+  EyeOff,
+  Copy,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -38,6 +42,12 @@ interface RoleDef {
   sort_order: number;
 }
 
+interface CredLite {
+  id: string;
+  app_login_name: string;
+  password: string;
+}
+
 interface Row {
   id: string;
   username: string | null;
@@ -45,6 +55,7 @@ interface Row {
   roles: string[];
   last_ip: string | null;
   email: string | null;
+  creds: CredLite[];
 }
 
 const SYSTEM_STYLE: Record<string, string> = {
@@ -72,10 +83,11 @@ function AdminRolesPage() {
   const listEmailsFn = useServerFn(listMemberEmails);
   const [historyFor, setHistoryFor] = useState<Row | null>(null);
   const [roleFilter, setRoleFilter] = useState<string>("all");
+  const [revealed, setRevealed] = useState<Record<string, boolean>>({});
 
   const loadAll = async () => {
     setLoading(true);
-    const [{ data: profs }, { data: rolesData }, { data: defs }, { data: ipsData }, emailsRes] =
+    const [{ data: profs }, { data: rolesData }, { data: defs }, { data: ipsData }, emailsRes, { data: credsData }] =
       await Promise.all([
         supabase
           .from("profiles")
@@ -91,6 +103,10 @@ function AdminRolesPage() {
           console.warn("[admin-roles] email fetch failed", e);
           return { emails: {} as Record<string, string> };
         }),
+        supabase
+          .from("app_credentials")
+          .select("id, owner_id, app_login_name, password")
+          .order("created_at", { ascending: false }),
       ]);
     const roleMap = new Map<string, string[]>();
     (rolesData ?? []).forEach((r: any) => {
@@ -103,6 +119,12 @@ function AdminRolesPage() {
       ipMap.set(r.user_id, (r.ip as string | null) ?? null);
     });
     const emailMap = (emailsRes as { emails: Record<string, string> }).emails ?? {};
+    const credMap = new Map<string, CredLite[]>();
+    (credsData ?? []).forEach((c: any) => {
+      const arr = credMap.get(c.owner_id) ?? [];
+      arr.push({ id: c.id, app_login_name: c.app_login_name, password: c.password });
+      credMap.set(c.owner_id, arr);
+    });
     setRows(
       (profs ?? []).map((p: any) => ({
         id: p.id,
@@ -111,6 +133,7 @@ function AdminRolesPage() {
         roles: roleMap.get(p.id) ?? [],
         last_ip: ipMap.get(p.id) ?? null,
         email: emailMap[p.id] ?? null,
+        creds: credMap.get(p.id) ?? [],
       })),
     );
     setRoleDefs((defs ?? []) as RoleDef[]);
@@ -135,7 +158,8 @@ function AdminRolesPage() {
         (r.display_name ?? "").toLowerCase().includes(q) ||
         r.id.toLowerCase().includes(q) ||
         (r.email ?? "").toLowerCase().includes(q) ||
-        (r.last_ip ?? "").toLowerCase().includes(q)
+        (r.last_ip ?? "").toLowerCase().includes(q) ||
+        r.creds.some((c) => c.app_login_name.toLowerCase().includes(q))
       );
     });
   }, [rows, query, roleFilter]);
@@ -350,6 +374,58 @@ function AdminRolesPage() {
                           title={row.last_ip ?? "No IP recorded"}
                         >
                           Last IP: {row.last_ip ?? "—"}
+                        </div>
+                        <div className="mt-2 space-y-1">
+                          <div className="flex items-center gap-1 text-[10px] uppercase tracking-wide font-semibold text-muted-foreground">
+                            <KeyRound className="size-3" /> Login credentials
+                          </div>
+                          {row.creds.length === 0 ? (
+                            <div className="text-[11px] text-muted-foreground/70">
+                              None assigned
+                            </div>
+                          ) : (
+                            row.creds.map((c) => (
+                              <div
+                                key={c.id}
+                                className="flex items-center gap-1.5 rounded-md border border-border bg-surface-2 px-2 py-1 text-[11px] font-mono"
+                              >
+                                <span className="truncate max-w-[45%]" title={c.app_login_name}>
+                                  {c.app_login_name}
+                                </span>
+                                <span className="text-muted-foreground">/</span>
+                                <span className="flex-1 truncate">
+                                  {revealed[c.id]
+                                    ? c.password
+                                    : "•".repeat(Math.min(c.password?.length ?? 8, 10))}
+                                </span>
+                                <button
+                                  onClick={() =>
+                                    setRevealed((s) => ({ ...s, [c.id]: !s[c.id] }))
+                                  }
+                                  title={revealed[c.id] ? "Hide password" : "Show password"}
+                                  className="text-muted-foreground hover:text-foreground shrink-0"
+                                >
+                                  {revealed[c.id] ? (
+                                    <EyeOff className="size-3" />
+                                  ) : (
+                                    <Eye className="size-3" />
+                                  )}
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    void navigator.clipboard.writeText(
+                                      `${c.app_login_name} / ${c.password}`,
+                                    );
+                                    toast.success("Credential copied");
+                                  }}
+                                  title="Copy login and password"
+                                  className="text-muted-foreground hover:text-foreground shrink-0"
+                                >
+                                  <Copy className="size-3" />
+                                </button>
+                              </div>
+                            ))
+                          )}
                         </div>
                       </div>
                       <button
