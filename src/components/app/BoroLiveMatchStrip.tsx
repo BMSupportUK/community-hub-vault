@@ -204,7 +204,7 @@ export function BoroLiveMatchStrip() {
       </div>
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="fixed left-1/2 top-1/2 z-[101] -translate-x-1/2 -translate-y-1/2 max-w-7xl w-[calc(100%-2rem)] max-h-[85vh] overflow-y-auto p-0 border border-[#E11B22]/50 bg-black/90 backdrop-blur-md shadow-2xl">
+        <DialogContent className="fixed left-1/2 top-1/2 z-[101] -translate-x-1/2 -translate-y-1/2 max-w-7xl w-[calc(100%-2rem)] max-h-[85vh] overflow-y-auto p-0 border-2 border-[#E11B22]/70 bg-[#0B0E14] shadow-[0_30px_80px_-20px_rgba(0,0,0,0.9)]">
           <DialogTitle className="sr-only">Boro fixture details</DialogTitle>
           <DialogClose
             className="absolute right-2 top-2 z-10 inline-flex items-center justify-center size-8 rounded-full bg-black/70 text-white ring-1 ring-white/25 hover:bg-black/90 transition"
@@ -220,22 +220,22 @@ export function BoroLiveMatchStrip() {
             return (
               <div className="p-5 pt-8">
                 <div className="text-center">
-                  <div className="inline-flex items-center gap-1.5 rounded-md bg-[#E11B22]/20 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-red-200">
+                  <div className="inline-flex items-center gap-1.5 rounded-md bg-[#E11B22] px-2.5 py-1 text-[11px] font-black uppercase tracking-wider text-white">
                     {isLive ? <Radio className="size-3.5" /> : isFixture ? <CalendarDays className="size-3.5" /> : <Trophy className="size-3.5" />}
                     {isLive ? "Live now" : isFixture ? "Next fixture" : "Last result"}
                   </div>
-                  <div className="mt-1 text-xs text-white/60">{m.competition}</div>
+                  <div className="mt-1 text-xs text-white/85">{m.competition}</div>
                 </div>
 
                 <div className="mt-5 flex items-start gap-3">
                   <BigSide name={m.home} logo={m.homeLogo} />
                   <div className="shrink-0 pt-3 text-center">
                     {isFixture ? (
-                      <span className="font-display text-xl font-black text-white/60">v</span>
+                      <span className="font-display text-xl font-black text-white/85">v</span>
                     ) : (
                       <span className="font-display text-3xl font-black tabular-nums text-white">
                         {(m as { homeScore: number }).homeScore}
-                        <span className="px-1 text-white/40">-</span>
+                        <span className="px-1 text-white/70">-</span>
                         {(m as { awayScore: number }).awayScore}
                       </span>
                     )}
@@ -255,19 +255,19 @@ export function BoroLiveMatchStrip() {
                       {countdown(nf!.kickoff, now) && (
                         <div className="text-xs text-red-200">Kick-off in {countdown(nf!.kickoff, now)}</div>
                       )}
-                      {nf!.venue && <div className="text-xs text-white/60">{nf!.venue}</div>}
+                      {nf!.venue && <div className="text-xs text-white/85">{nf!.venue}</div>}
                     </>
                   )}
                   {!isLive && !isFixture && (
                     <>
-                      <div className="text-xs font-bold uppercase tracking-wider text-white/60">Full time</div>
-                      {lr!.venue && <div className="text-xs text-white/60">{lr!.venue}</div>}
+                      <div className="text-xs font-bold uppercase tracking-wider text-white/85">Full time</div>
+                      {lr!.venue && <div className="text-xs text-white/85">{lr!.venue}</div>}
                     </>
                   )}
                 </div>
 
                 {live && nf && (
-                  <div className="mt-5 rounded-lg border border-white/10 bg-white/5 p-3 text-center text-xs text-white/70">
+                  <div className="mt-5 rounded-lg border border-white/20 bg-white/10 p-3 text-center text-xs text-white/90">
                     Next up: {nf.home} v {nf.away} · {fmtKickoff(nf.kickoff, tz)}
                   </div>
                 )}
@@ -281,7 +281,7 @@ export function BoroLiveMatchStrip() {
                 </div>
 
                 {live && lr && (
-                  <div className="mt-2 rounded-lg border border-white/10 bg-white/5 p-3 text-center text-xs text-white/70">
+                  <div className="mt-2 rounded-lg border border-white/20 bg-white/10 p-3 text-center text-xs text-white/90">
                     Last: {lr.home} {lr.homeScore}-{lr.awayScore} {lr.away}
                   </div>
                 )}
