@@ -158,11 +158,14 @@ function StatAbbrLabel({
 function PlayerStatsDialog({
   playerId,
   scoringAs,
+  asSub = false,
   onClose,
 }: {
   playerId: string | null;
   /** Overrides the player's default position when he's been picked in another role. */
   scoringAs?: FantasyPosition | null;
+  /** Named on the bench — every scoring line is worth half. */
+  asSub?: boolean;
   onClose: () => void;
 }) {
   const fn = useServerFn(getFantasyPlayerBreakdown);
@@ -175,6 +178,9 @@ function PlayerStatsDialog({
   const matches = data?.matches ?? [];
   const pos = (scoringAs ?? (data?.position || "mid")) as FantasyPosition;
   const picked = !!scoringAs && scoringAs !== (data?.position as FantasyPosition | undefined);
+  /** Subs score half of every line — apply it to every rate we display. */
+  const rateMul = asSub ? 0.5 : 1;
+  const scaleRate = (r: number | null) => (r == null ? null : Math.round(r * rateMul * 100) / 100);
   /** ESPN match-centre stats that score for this role, shown in the ESPN tab. */
   const statKeys = useMemo(
     () => scoringStatKeys(pos).filter((k) => !isOurScoringStat(k) || k === "minutes"),
@@ -185,7 +191,7 @@ function PlayerStatsDialog({
     () =>
       scoringStatKeys(pos).map((k) => {
         const total = matches.reduce((s, m) => s + (m.stats[k] ?? 0), 0);
-        const rate = statPointsPer(k, pos);
+        const rate = scaleRate(statPointsPer(k, pos));
         return {
           key: k,
           abbr: PLAYER_STAT_META[k]!.abbr,
@@ -195,7 +201,7 @@ function PlayerStatsDialog({
           points: rate == null ? null : Math.round(total * rate * 100) / 100,
         };
       }),
-    [matches, pos],
+    [matches, pos, rateMul],
   );
   const ourRows = useMemo(() => seasonRows.filter((r) => isOurScoringStat(r.key)), [seasonRows]);
   const espnRows = useMemo(
@@ -204,8 +210,8 @@ function PlayerStatsDialog({
   );
   /** Clean sheets are a scoring rule, not an ESPN stat column — derive them. */
   const cleanSheetRows = useMemo(() => {
-    const rate = pos === "gk" || pos === "def" ? 4 : pos === "mid" ? 1 : null;
-    const rateShort = pos === "gk" || pos === "def" ? 2 : pos === "mid" ? 0.5 : null;
+    const rate = scaleRate(pos === "gk" || pos === "def" ? 4 : pos === "mid" ? 1 : null);
+    const rateShort = scaleRate(pos === "gk" || pos === "def" ? 2 : pos === "mid" ? 0.5 : null);
     if (rate == null || rateShort == null) return [];
     const played = matches.filter((m) => (m.stats.minutes ?? 0) > 0 && (m.stats.goals_conceded ?? 0) === 0);
     const full = played.filter((m) => (m.stats.minutes ?? 0) >= 60).length;
@@ -214,7 +220,7 @@ function PlayerStatsDialog({
       { key: "cs", abbr: "CS", means: "Clean sheet (60+ mins)", total: full, rate, points: Math.round(full * rate * 100) / 100 },
       { key: "cs-", abbr: "CS-", means: "Clean sheet (under 60 mins)", total: short, rate: rateShort, points: Math.round(short * rateShort * 100) / 100 },
     ];
-  }, [matches, pos]);
+  }, [matches, pos, rateMul]);
 
   return (
     <Dialog open={!!playerId} onOpenChange={(o) => { if (!o) onClose(); }}>
@@ -230,6 +236,11 @@ function PlayerStatsDialog({
           {picked && (
             <p className="text-xs font-semibold text-emerald-500">
               Scored as a {POSITION_LABEL[pos].toLowerCase()} — the role you selected him in.
+            </p>
+          )}
+          {asSub && (
+            <p className="text-xs font-semibold text-amber-500">
+              Named on the bench — every line below is the sub rate (half of a starter's points).
             </p>
           )}
         </DialogHeader>
