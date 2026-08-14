@@ -20,9 +20,9 @@ let inflight: Promise<Map<string, ProtectedRole>> | null = null;
 function load() {
   if (cache) return Promise.resolve(cache);
   if (!inflight) {
-    inflight = supabase
-      .rpc("fan_zone_protected_user_ids")
-      .then(({ data }) => {
+    inflight = (async () => {
+      try {
+        const { data } = await supabase.rpc("fan_zone_protected_user_ids");
         const map = new Map<string, ProtectedRole>();
         ((data ?? []) as Array<{ user_id: string; role: string }>).forEach((r) => {
           const role = r.role as ProtectedRole;
@@ -30,13 +30,13 @@ function load() {
           if (role === "admin" || !map.has(r.user_id)) map.set(r.user_id, role);
         });
         cache = map;
-        inflight = null;
         return map;
-      })
-      .catch(() => {
-        inflight = null;
+      } catch {
         return new Map<string, ProtectedRole>();
-      });
+      } finally {
+        inflight = null;
+      }
+    })();
   }
   return inflight;
 }
