@@ -114,11 +114,11 @@ function MessagesLayout() {
   }
 
   return (
-      <FanZoneNameGate />
     <div
       className="boro-theme flex-1 w-full min-w-0 min-h-full self-stretch overflow-y-auto bg-cover bg-center bg-no-repeat bg-fixed"
       style={{ backgroundImage: `linear-gradient(to bottom, rgba(6,8,14,0.62), rgba(6,8,14,0.76)), url(${bgAsset.url})` }}
     >
+      <FanZoneNameGate />
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6">
       <div className="flex items-center justify-between gap-3 mb-4">
         <Button asChild variant="ghost" size="sm" className="-ml-2">

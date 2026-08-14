@@ -42,8 +42,8 @@ function FanZonePendingPage() {
   const status = info?.status ?? "none";
 
   return (
-      <FanZoneNameGate />
     <div className="min-h-screen w-full bg-gradient-to-br from-rose-950 via-zinc-950 to-amber-950 flex items-center justify-center px-4 py-10">
+      <FanZoneNameGate />
       <div className="w-full max-w-md">
         <button
           onClick={async () => { await signOut(); navigate({ to: "/login" }); }}

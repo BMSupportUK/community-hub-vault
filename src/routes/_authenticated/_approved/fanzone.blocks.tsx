@@ -40,8 +40,8 @@ function BlocksPage() {
   if (!canEnter) return <div className="p-6 text-sm text-center">Members only.</div>;
 
   return (
-      <FanZoneNameGate />
     <div className="boro-theme max-w-2xl mx-auto px-4 sm:px-6 py-6 space-y-4">
+      <FanZoneNameGate />
       <Button asChild variant="ghost" size="sm" className="-ml-2">
         <Link to="/fanzone/messages"><ArrowLeft className="size-4 mr-1" />Back to inbox</Link>
       </Button>
