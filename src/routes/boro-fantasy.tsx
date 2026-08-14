@@ -102,6 +102,11 @@ const PLAYER_STAT_LABELS: Record<string, string> = Object.fromEntries(
 );
 const STAT_KEYS_ALL = Object.keys(PLAYER_STAT_META);
 
+/** Only the stats we actually score points on for this position (minutes kept for context). */
+function scoringStatKeys(pos: FantasyPosition) {
+  return STAT_KEYS_ALL.filter((k) => k === "minutes" || statPointsPer(k, pos) != null);
+}
+
 /** Small purple abbreviation chip, ESPN style. */
 function AbbrChip({ abbr, title }: { abbr: string; title?: string }) {
   return (
@@ -123,15 +128,15 @@ function PlayerStatsDialog({ playerId, onClose }: { playerId: string | null; onC
   });
   const data = query.data;
   const matches = data?.matches ?? [];
-  const statKeys = useMemo(
-    () => STAT_KEYS_ALL.filter((k) => matches.some((m) => (m.stats[k] ?? 0) !== 0)),
-    [matches],
-  );
   const pos = ((data?.position || "mid") as FantasyPosition);
+  const statKeys = useMemo(
+    () => scoringStatKeys(pos).filter((k) => matches.some((m) => (m.stats[k] ?? 0) !== 0)),
+    [matches, pos],
+  );
   /** Season totals per stat, with the points each one is worth. */
   const seasonRows = useMemo(
     () =>
-      STAT_KEYS_ALL.map((k) => {
+      scoringStatKeys(pos).map((k) => {
         const total = matches.reduce((s, m) => s + (m.stats[k] ?? 0), 0);
         const rate = statPointsPer(k, pos);
         return {
