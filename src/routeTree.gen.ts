@@ -125,6 +125,7 @@ import { Route as ApiPublicHooksBackupCredentialsRouteImport } from './routes/ap
 import { Route as AuthenticatedApprovedUUsernameRouteImport } from './routes/_authenticated/_approved/u.$username'
 import { Route as AuthenticatedApprovedSportsGuidesNewRouteImport } from './routes/_authenticated/_approved/sports-guides.new'
 import { Route as AuthenticatedApprovedHomeChannelRouteImport } from './routes/_authenticated/_approved/home.$channel'
+import { Route as AuthenticatedApprovedForumSearchRouteImport } from './routes/_authenticated/_approved/forum.search'
 import { Route as AuthenticatedApprovedForumBoardRouteImport } from './routes/_authenticated/_approved/forum.$board'
 import { Route as AuthenticatedApprovedFanzoneProfileRouteImport } from './routes/_authenticated/_approved/fanzone.profile'
 import { Route as AuthenticatedApprovedFanzoneMessagesRouteImport } from './routes/_authenticated/_approved/fanzone.messages'
@@ -804,6 +805,12 @@ const AuthenticatedApprovedHomeChannelRoute =
     path: '/$channel',
     getParentRoute: () => AuthenticatedApprovedHomeRoute,
   } as any)
+const AuthenticatedApprovedForumSearchRoute =
+  AuthenticatedApprovedForumSearchRouteImport.update({
+    id: '/search',
+    path: '/search',
+    getParentRoute: () => AuthenticatedApprovedForumRoute,
+  } as any)
 const AuthenticatedApprovedForumBoardRoute =
   AuthenticatedApprovedForumBoardRouteImport.update({
     id: '/$board',
@@ -943,6 +950,7 @@ export interface FileRoutesByFullPath {
   '/fanzone/messages': typeof AuthenticatedApprovedFanzoneMessagesRouteWithChildren
   '/fanzone/profile': typeof AuthenticatedApprovedFanzoneProfileRoute
   '/forum/$board': typeof AuthenticatedApprovedForumBoardRouteWithChildren
+  '/forum/search': typeof AuthenticatedApprovedForumSearchRoute
   '/home/$channel': typeof AuthenticatedApprovedHomeChannelRoute
   '/sports-guides/new': typeof AuthenticatedApprovedSportsGuidesNewRoute
   '/u/$username': typeof AuthenticatedApprovedUUsernameRoute
@@ -1065,6 +1073,7 @@ export interface FileRoutesByTo {
   '/fanzone/messages': typeof AuthenticatedApprovedFanzoneMessagesRouteWithChildren
   '/fanzone/profile': typeof AuthenticatedApprovedFanzoneProfileRoute
   '/forum/$board': typeof AuthenticatedApprovedForumBoardRouteWithChildren
+  '/forum/search': typeof AuthenticatedApprovedForumSearchRoute
   '/home/$channel': typeof AuthenticatedApprovedHomeChannelRoute
   '/sports-guides/new': typeof AuthenticatedApprovedSportsGuidesNewRoute
   '/u/$username': typeof AuthenticatedApprovedUUsernameRoute
@@ -1193,6 +1202,7 @@ export interface FileRoutesById {
   '/_authenticated/_approved/fanzone/messages': typeof AuthenticatedApprovedFanzoneMessagesRouteWithChildren
   '/_authenticated/_approved/fanzone/profile': typeof AuthenticatedApprovedFanzoneProfileRoute
   '/_authenticated/_approved/forum/$board': typeof AuthenticatedApprovedForumBoardRouteWithChildren
+  '/_authenticated/_approved/forum/search': typeof AuthenticatedApprovedForumSearchRoute
   '/_authenticated/_approved/home/$channel': typeof AuthenticatedApprovedHomeChannelRoute
   '/_authenticated/_approved/sports-guides/new': typeof AuthenticatedApprovedSportsGuidesNewRoute
   '/_authenticated/_approved/u/$username': typeof AuthenticatedApprovedUUsernameRoute
@@ -1320,6 +1330,7 @@ export interface FileRouteTypes {
     | '/fanzone/messages'
     | '/fanzone/profile'
     | '/forum/$board'
+    | '/forum/search'
     | '/home/$channel'
     | '/sports-guides/new'
     | '/u/$username'
@@ -1442,6 +1453,7 @@ export interface FileRouteTypes {
     | '/fanzone/messages'
     | '/fanzone/profile'
     | '/forum/$board'
+    | '/forum/search'
     | '/home/$channel'
     | '/sports-guides/new'
     | '/u/$username'
@@ -1569,6 +1581,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/fanzone/messages'
     | '/_authenticated/_approved/fanzone/profile'
     | '/_authenticated/_approved/forum/$board'
+    | '/_authenticated/_approved/forum/search'
     | '/_authenticated/_approved/home/$channel'
     | '/_authenticated/_approved/sports-guides/new'
     | '/_authenticated/_approved/u/$username'
@@ -2481,6 +2494,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedApprovedHomeChannelRouteImport
       parentRoute: typeof AuthenticatedApprovedHomeRoute
     }
+    '/_authenticated/_approved/forum/search': {
+      id: '/_authenticated/_approved/forum/search'
+      path: '/search'
+      fullPath: '/forum/search'
+      preLoaderRoute: typeof AuthenticatedApprovedForumSearchRouteImport
+      parentRoute: typeof AuthenticatedApprovedForumRoute
+    }
     '/_authenticated/_approved/forum/$board': {
       id: '/_authenticated/_approved/forum/$board'
       path: '/$board'
@@ -2564,12 +2584,15 @@ const AuthenticatedApprovedForumBoardRouteWithChildren =
 
 interface AuthenticatedApprovedForumRouteChildren {
   AuthenticatedApprovedForumBoardRoute: typeof AuthenticatedApprovedForumBoardRouteWithChildren
+  AuthenticatedApprovedForumSearchRoute: typeof AuthenticatedApprovedForumSearchRoute
 }
 
 const AuthenticatedApprovedForumRouteChildren: AuthenticatedApprovedForumRouteChildren =
   {
     AuthenticatedApprovedForumBoardRoute:
       AuthenticatedApprovedForumBoardRouteWithChildren,
+    AuthenticatedApprovedForumSearchRoute:
+      AuthenticatedApprovedForumSearchRoute,
   }
 
 const AuthenticatedApprovedForumRouteWithChildren =
