@@ -83,6 +83,7 @@ function AdminRolesPage() {
   const listEmailsFn = useServerFn(listMemberEmails);
   const [historyFor, setHistoryFor] = useState<Row | null>(null);
   const [roleFilter, setRoleFilter] = useState<string>("all");
+  const [revealed, setRevealed] = useState<Record<string, boolean>>({});
 
   const loadAll = async () => {
     setLoading(true);
@@ -157,7 +158,8 @@ function AdminRolesPage() {
         (r.display_name ?? "").toLowerCase().includes(q) ||
         r.id.toLowerCase().includes(q) ||
         (r.email ?? "").toLowerCase().includes(q) ||
-        (r.last_ip ?? "").toLowerCase().includes(q)
+        (r.last_ip ?? "").toLowerCase().includes(q) ||
+        r.creds.some((c) => c.app_login_name.toLowerCase().includes(q))
       );
     });
   }, [rows, query, roleFilter]);
@@ -372,6 +374,58 @@ function AdminRolesPage() {
                           title={row.last_ip ?? "No IP recorded"}
                         >
                           Last IP: {row.last_ip ?? "—"}
+                        </div>
+                        <div className="mt-2 space-y-1">
+                          <div className="flex items-center gap-1 text-[10px] uppercase tracking-wide font-semibold text-muted-foreground">
+                            <KeyRound className="size-3" /> Login credentials
+                          </div>
+                          {row.creds.length === 0 ? (
+                            <div className="text-[11px] text-muted-foreground/70">
+                              None assigned
+                            </div>
+                          ) : (
+                            row.creds.map((c) => (
+                              <div
+                                key={c.id}
+                                className="flex items-center gap-1.5 rounded-md border border-border bg-surface-2 px-2 py-1 text-[11px] font-mono"
+                              >
+                                <span className="truncate max-w-[45%]" title={c.app_login_name}>
+                                  {c.app_login_name}
+                                </span>
+                                <span className="text-muted-foreground">/</span>
+                                <span className="flex-1 truncate">
+                                  {revealed[c.id]
+                                    ? c.password
+                                    : "•".repeat(Math.min(c.password?.length ?? 8, 10))}
+                                </span>
+                                <button
+                                  onClick={() =>
+                                    setRevealed((s) => ({ ...s, [c.id]: !s[c.id] }))
+                                  }
+                                  title={revealed[c.id] ? "Hide password" : "Show password"}
+                                  className="text-muted-foreground hover:text-foreground shrink-0"
+                                >
+                                  {revealed[c.id] ? (
+                                    <EyeOff className="size-3" />
+                                  ) : (
+                                    <Eye className="size-3" />
+                                  )}
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    void navigator.clipboard.writeText(
+                                      `${c.app_login_name} / ${c.password}`,
+                                    );
+                                    toast.success("Credential copied");
+                                  }}
+                                  title="Copy login and password"
+                                  className="text-muted-foreground hover:text-foreground shrink-0"
+                                >
+                                  <Copy className="size-3" />
+                                </button>
+                              </div>
+                            ))
+                          )}
                         </div>
                       </div>
                       <button
