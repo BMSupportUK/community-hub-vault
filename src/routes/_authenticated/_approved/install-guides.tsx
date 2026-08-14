@@ -647,7 +647,7 @@ function InstallGuidesPage() {
       </div>
 
       {/* Reader */}
-      <Dialog open={!!reading} onOpenChange={(o) => !o && setReading(null)}>
+      <Dialog open={!!reading} onOpenChange={(o) => { if (!o) { setReading(null); scrollBackToGuide(); } }}>
         <DialogContent className={reading?.pdf_url ? "max-w-5xl h-[90vh] flex flex-col" : "max-w-2xl max-h-[85vh] overflow-y-auto"}>
           {reading && (
             <>
@@ -733,7 +733,7 @@ function InstallGuidesPage() {
       </Dialog>
 
       {/* Editor */}
-      <Dialog open={showEditor} onOpenChange={(o) => { if (!o) { setShowEditor(false); setEditing(null); } }}>
+      <Dialog open={showEditor} onOpenChange={(o) => { if (!o) closeEditor(); }}>
         <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editing?.id ? "Edit guide" : "Add guide"}</DialogTitle>
