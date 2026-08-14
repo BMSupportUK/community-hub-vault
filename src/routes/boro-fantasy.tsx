@@ -1984,13 +1984,14 @@ function SquadBuilder({
               selected={selected}
               starters={starters}
               slotPositions={slotPositions}
-              onSlotPosition={(slotIndex, position) =>
+              onSlotPosition={(slotIndex, position) => {
+                if (!editable) return;
                 setSlotPositions((prev) => {
                   const next = [...prev];
                   next[slotIndex] = position;
                   return next;
-                })
-              }
+                });
+              }}
               bench={bench}
               captainId={captainId}
               viceId={viceId}
