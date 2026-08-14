@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { setResponseHeader } from "@tanstack/react-start/server";
 import { z } from "zod";
 import { scryptSync, randomBytes, timingSafeEqual } from "crypto";
-import type { FantasyLeaderboardRow, FantasyStateDTO } from "@/lib/fantasy.server";
+import type { FantasyLeaderboardRow, FantasyPreviousGwScoreDTO, FantasyStateDTO } from "@/lib/fantasy.server";
 
 const emailSchema = z.string().trim().toLowerCase().email().max(255);
 const pinSchema = z.string().regex(/^\d{4}$/, "PIN must be 4 digits");
