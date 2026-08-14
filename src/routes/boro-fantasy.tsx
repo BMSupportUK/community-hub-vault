@@ -38,18 +38,18 @@ import {
   type FantasyPosition, type FormationKey, type FantasyCompetitionGroup,
 } from "@/lib/fantasy-rules";
 import {
-  getFantasyState, getFantasyLeaderboard, joinFantasyGame, saveFantasySquad, setFantasyTeamName,
+  getFantasyState, getFantasyLeaderboard, getFantasyPreviousGameweekScores, joinFantasyGame, saveFantasySquad, setFantasyTeamName,
   adminRemoveFantasyEntrant,
   getFantasyPlayerBreakdown,
   type FantasyStateDTO, type FantasyPlayerDTO, type FantasyLeaderboardRow, type FantasyGameweekDTO,
-  type FantasyPlayerBreakdown,
+  type FantasyPlayerBreakdown, type FantasyPreviousGwScoreDTO,
 } from "@/lib/fantasy.functions";
 import {
   getEntrantFantasySquad, type EntrantSquadViewDTO,
 } from "@/lib/fantasy-squad-view.functions";
 import {
   fantasyGuestRegister, fantasyGuestSignInExisting, getPublicFantasyState,
-  getPublicFantasyLeaderboard, saveGuestFantasySquad, requestFantasyGuestPinReset,
+  getPublicFantasyLeaderboard, getPublicFantasyPreviousGameweekScores, saveGuestFantasySquad, requestFantasyGuestPinReset,
   resetFantasyGuestPin, setGuestFantasyTeamName,
 } from "@/lib/fantasy-guest.functions";
 
