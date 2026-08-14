@@ -5386,6 +5386,7 @@ export type Database = {
           updated_at: string
         }[]
       }
+      fan_zone_admin_avatar: { Args: never; Returns: string }
       fan_zone_aliases: {
         Args: { _ids: string[] }
         Returns: {
