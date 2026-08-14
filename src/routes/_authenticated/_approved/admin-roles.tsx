@@ -86,7 +86,7 @@ function AdminRolesPage() {
 
   const loadAll = async () => {
     setLoading(true);
-    const [{ data: profs }, { data: rolesData }, { data: defs }, { data: ipsData }, emailsRes] =
+    const [{ data: profs }, { data: rolesData }, { data: defs }, { data: ipsData }, emailsRes, { data: credsData }] =
       await Promise.all([
         supabase
           .from("profiles")
@@ -102,6 +102,10 @@ function AdminRolesPage() {
           console.warn("[admin-roles] email fetch failed", e);
           return { emails: {} as Record<string, string> };
         }),
+        supabase
+          .from("app_credentials")
+          .select("id, owner_id, app_login_name, password")
+          .order("created_at", { ascending: false }),
       ]);
     const roleMap = new Map<string, string[]>();
     (rolesData ?? []).forEach((r: any) => {
@@ -114,6 +118,12 @@ function AdminRolesPage() {
       ipMap.set(r.user_id, (r.ip as string | null) ?? null);
     });
     const emailMap = (emailsRes as { emails: Record<string, string> }).emails ?? {};
+    const credMap = new Map<string, CredLite[]>();
+    (credsData ?? []).forEach((c: any) => {
+      const arr = credMap.get(c.owner_id) ?? [];
+      arr.push({ id: c.id, app_login_name: c.app_login_name, password: c.password });
+      credMap.set(c.owner_id, arr);
+    });
     setRows(
       (profs ?? []).map((p: any) => ({
         id: p.id,
@@ -122,6 +132,7 @@ function AdminRolesPage() {
         roles: roleMap.get(p.id) ?? [],
         last_ip: ipMap.get(p.id) ?? null,
         email: emailMap[p.id] ?? null,
+        creds: credMap.get(p.id) ?? [],
       })),
     );
     setRoleDefs((defs ?? []) as RoleDef[]);
