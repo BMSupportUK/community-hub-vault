@@ -875,18 +875,20 @@ function TopicPage() {
 
         return (
           <Tabs value={tab} onValueChange={(v) => setTab(v as "posts" | "reply")} className="w-full">
-            <TabsList>
-              <TabsTrigger value="posts">Original Post</TabsTrigger>
-              <TabsTrigger value="reply">Replies ({topic.reply_count ?? replies.length})</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="posts" className="space-y-3 mt-3">
+            <div className="mb-3">
               <ForumPoll
                 topicId={topic.id}
                 userId={user?.id ?? null}
                 canManage={isBoardMod || (!!user && topic.author_id === user.id)}
                 canVote={canPost}
               />
+            </div>
+            <TabsList>
+              <TabsTrigger value="posts">Original Post</TabsTrigger>
+              <TabsTrigger value="reply">Replies ({topic.reply_count ?? replies.length})</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="posts" className="space-y-3 mt-3">
               {opPost ? renderPost(opPost, 0) : (
                 <div className="text-sm text-muted-foreground text-center py-6">No original post.</div>
               )}
