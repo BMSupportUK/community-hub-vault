@@ -2341,6 +2341,12 @@ function PitchView({
                         <PlayerNameButton
                           playerId={p.id}
                           name={p.name}
+                          scoringAs={(() => {
+                            const eligible = playerPositions(p).filter((pos) => row.positions.includes(pos));
+                            const chosen = slotPositions?.[slotIndex] ?? null;
+                            const explicit = chosen && eligible.includes(chosen) ? chosen : null;
+                            return explicit ?? resolveSlotPosition(row.positions, p) ?? p.position;
+                          })()}
                           className="mt-1 block text-center text-[10px] font-semibold leading-tight text-white break-words line-clamp-2 min-h-[24px]"
                         />
                         {(() => {
@@ -2556,6 +2562,11 @@ function BenchPanel({
                     <PlayerNameButton
                       playerId={p.id}
                       name={p.name}
+                      scoringAs={(() => {
+                        const eligible = playerPositions(p);
+                        const chosen = benchPositions?.[i] ?? null;
+                        return (chosen && eligible.includes(chosen) ? chosen : null) ?? p.position;
+                      })()}
                       className="mt-1.5 block text-center text-[10px] font-semibold leading-tight break-words line-clamp-2 min-h-[24px]"
                     />
                     {(() => {
