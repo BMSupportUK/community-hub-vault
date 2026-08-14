@@ -155,20 +155,27 @@ async function getXPageMedia(id: string): Promise<string[]> {
     }, 3500);
     if (!res.ok) return [];
     const html = await res.text();
-    const byKey = new Map<string, string>();
-    const add = (raw: string) => {
+    const metaByKey = new Map<string, string>();
+    const inlineByKey = new Map<string, string>();
+    const add = (target: Map<string, string>, raw: string) => {
       const normalized = normalizeTweetImageUrl(decodeHtml(raw));
       if (!normalized) return;
       const key = tweetMediaKey(normalized);
-      if (!byKey.has(key)) byKey.set(key, normalized);
+      if (!target.has(key)) target.set(key, normalized);
     };
     for (const match of html.matchAll(/<meta\s+[^>]*(?:property|name)=["'](?:og:image|twitter:image)["'][^>]*content=["']([^"']+)["'][^>]*>/gi)) {
-      add(match[1] ?? "");
+      add(metaByKey, match[1] ?? "");
     }
     for (const match of html.matchAll(/https:\/\/pbs\.twimg\.com\/media\/[^"'<>\\\s]+/gi)) {
-      add(match[0] ?? "");
+      add(inlineByKey, match[0] ?? "");
     }
-    return Array.from(byKey.values()).slice(0, 4);
+    // The og:image/twitter:image meta tags are the only images X guarantees
+    // belong to THIS tweet. Inline pbs.twimg.com matches also include unrelated
+    // media (other tweets in the page payload, recommendations), which is why
+    // extra images used to appear in the card. Only fall back to a single
+    // inline match when the tweet page exposed no meta image at all.
+    if (metaByKey.size) return Array.from(metaByKey.values()).slice(0, 4);
+    return Array.from(inlineByKey.values()).slice(0, 1);
   } catch {
     return [];
   }
