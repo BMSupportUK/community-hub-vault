@@ -361,6 +361,26 @@ export const PLAYER_STAT_META: Record<
 };
 
 /** Points a starter earns per unit of a stat, for the player profile table. */
+/**
+ * Our own scoring lines — the things the fantasy game itself awards
+ * (appearance, goals, assists, cards, own goals, missed pens). Clean sheets
+ * are derived separately. Everything else that scores comes off the ESPN
+ * match centre.
+ */
+export const OUR_SCORING_STAT_KEYS = [
+  "minutes",
+  "goals",
+  "assists",
+  "pens_missed",
+  "yellows",
+  "reds",
+  "own_goals",
+] as const;
+
+export function isOurScoringStat(key: string): boolean {
+  return (OUR_SCORING_STAT_KEYS as readonly string[]).includes(key);
+}
+
 export function statPointsPer(key: string, position: FantasyPosition): number | null {
   const meta = PLAYER_STAT_META[key];
   if (!meta?.points) return null;
