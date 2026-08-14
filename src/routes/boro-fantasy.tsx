@@ -240,7 +240,10 @@ function PlayerStatsDialog({
           )}
           {asSub && (
             <p className="text-xs font-semibold text-amber-500">
-              Named on the bench — every line below is the sub rate (half of a starter's points).
+              Named on the bench — he only scores if he comes on. If he does, he earns 1 point for the
+              appearance and half points on every line below (a starter who features gets 2 for the
+              appearance and full points). Stays on the bench, or comes on after your five scoring subs,
+              and he scores 0.
             </p>
           )}
         </DialogHeader>
@@ -269,8 +272,8 @@ function PlayerStatsDialog({
                 <h4 className="text-sm font-bold">Our points &amp; abbreviations</h4>
                 <p className="text-xs text-muted-foreground">
                   {asSub
-                    ? `Points shown are the sub rate for a ${POSITION_LABEL[pos].toLowerCase()} — half of a starter's points.`
-                    : `Points shown are what a match day 11 starter earns as a ${POSITION_LABEL[pos].toLowerCase()}. Subs earn half.`}
+                    ? `Points shown are the sub rate for a ${POSITION_LABEL[pos].toLowerCase()} — half a starter's points, plus 1 for the appearance — and they only count if he actually comes off the bench (and is one of your first five subs on).`
+                    : `Points shown are what a ${POSITION_LABEL[pos].toLowerCase()} earns if he plays in your match day 11 — 2 points for the appearance plus the full points on every line. Named but doesn't feature, he scores 0; off the bench he earns 1 for the appearance and half points.`}
                 </p>
                 <p className="text-xs font-semibold text-emerald-500">
                   This tab only: appearance, goals, assists, clean sheets and cards.
