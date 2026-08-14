@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
+import { notifyFanAliasChange } from "@/lib/fan-alias-bus";
 import { useAuth } from "@/hooks/use-auth";
 import { useFanZoneMembership } from "@/hooks/use-fan-zone";
 import { toast } from "sonner";
@@ -94,6 +95,7 @@ function FanZoneProfilePage() {
     } as never);
     setSaving(false);
     if (error) return toast.error("Couldn't save", { description: error.message });
+    notifyFanAliasChange();
     toast.success("Fan zone identity updated");
   };
 
@@ -105,6 +107,7 @@ function FanZoneProfilePage() {
     setSaving(false);
     if (error) return toast.error("Couldn't clear", { description: error.message });
     setAlias(""); setAvatarUrl(""); setBio(""); setSupporterSince(""); setFavPlayer(""); setMemory("");
+    notifyFanAliasChange();
     toast.success("Reverted to your main profile");
   };
 
@@ -325,6 +328,7 @@ function PrivacyPanel({ userId }: { userId: string }) {
     setSaving(false);
     if (error) return toast.error("Couldn't update privacy", { description: error.message });
     setIsPrivate(next);
+    notifyFanAliasChange();
     toast.success(next ? "Your Fan Zone profile is now private" : "Your Fan Zone profile is now visible to members");
   };
 
@@ -398,6 +402,7 @@ function FriendsPanel({ userId }: { userId: string }) {
     const { error } = await supabase.from("fan_zone_friendships").delete().eq("id", friendshipId);
     setBusy(null);
     if (error) return toast.error("Couldn't remove friend", { description: error.message });
+    notifyFanAliasChange();
     toast.success("Friend removed");
     void load();
   };
@@ -584,6 +589,7 @@ function IgnoredPanel() {
     const { error } = await supabase.rpc("fan_zone_unblock", { _other: id });
     setBusy(null);
     if (error) return toast.error("Couldn't unblock", { description: error.message });
+    notifyFanAliasChange();
     toast.success("Unblocked");
     void load();
   };

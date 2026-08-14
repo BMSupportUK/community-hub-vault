@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Loader2, Pencil, Save, X, ImagePlus, Lock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { notifyFanAliasChange } from "@/lib/fan-alias-bus";
 import { useAuth } from "@/hooks/use-auth";
 import { useFanZoneMembership } from "@/hooks/use-fan-zone";
 import { Button } from "@/components/ui/button";
@@ -83,6 +84,7 @@ export function FanZoneAliasSettings() {
     } as never);
     setSaving(false);
     if (error) return toast.error("Couldn't save", { description: error.message });
+    notifyFanAliasChange();
     toast.success("Fan zone identity updated");
     setOpen(false);
   };
@@ -97,6 +99,7 @@ export function FanZoneAliasSettings() {
     setAlias("");
     setAvatarUrl("");
     setBio(""); setSupporterSince(""); setFavPlayer(""); setMemory("");
+    notifyFanAliasChange();
     toast.success("Reverted to your main profile");
   };
 
