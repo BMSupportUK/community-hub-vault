@@ -34,7 +34,7 @@ import {
   playerPositions, playerPositionLabel, xiFitsFormation, resolveSlotPosition,
   fantasyCompetitionGroup, FANTASY_GROUP_LABEL,
   FANTASY_BENCH_SIZE, FANTASY_SQUAD_SIZE, FANTASY_LOCK_MINUTES,
-  PLAYER_STAT_META, statPointsPer,
+  PLAYER_STAT_META, statPointsPer, isOurScoringStat,
   type FantasyPosition, type FormationKey, type FantasyCompetitionGroup,
 } from "@/lib/fantasy-rules";
 import {
@@ -144,9 +144,10 @@ function PlayerStatsDialog({
   const matches = data?.matches ?? [];
   const pos = (scoringAs ?? (data?.position || "mid")) as FantasyPosition;
   const picked = !!scoringAs && scoringAs !== (data?.position as FantasyPosition | undefined);
+  /** ESPN match-centre stats that score for this role, shown in the ESPN tab. */
   const statKeys = useMemo(
-    () => scoringStatKeys(pos).filter((k) => matches.some((m) => (m.stats[k] ?? 0) !== 0)),
-    [matches, pos],
+    () => scoringStatKeys(pos).filter((k) => !isOurScoringStat(k) || k === "minutes"),
+    [pos],
   );
   /** Season totals per stat, with the points each one is worth. */
   const seasonRows = useMemo(
@@ -164,6 +165,11 @@ function PlayerStatsDialog({
         };
       }),
     [matches, pos],
+  );
+  const ourRows = useMemo(() => seasonRows.filter((r) => isOurScoringStat(r.key)), [seasonRows]);
+  const espnRows = useMemo(
+    () => seasonRows.filter((r) => !isOurScoringStat(r.key)),
+    [seasonRows],
   );
   /** Clean sheets are a scoring rule, not an ESPN stat column — derive them. */
   const cleanSheetRows = useMemo(() => {
@@ -221,8 +227,8 @@ function PlayerStatsDialog({
               <h4 className="text-sm font-bold">Our points &amp; abbreviations</h4>
               <p className="text-xs text-muted-foreground">
                 Points shown are what a match day 11 starter earns as a{" "}
-                {POSITION_LABEL[pos].toLowerCase()}. Subs earn half. Stats with no points are ESPN
-                match-report extras, shown for information only.
+                {POSITION_LABEL[pos].toLowerCase()}. Subs earn half. Only our own scoring lines are
+                listed here — everything scored off the ESPN match report sits in the ESPN stats tab.
               </p>
               <p className="text-xs font-semibold text-emerald-500">
                 Weekly points = our own scoring (appearance, goals, assists, clean sheets, cards) plus
@@ -240,7 +246,7 @@ function PlayerStatsDialog({
                     </tr>
                   </thead>
                   <tbody>
-                    {seasonRows.map((r) => (
+                    {ourRows.map((r) => (
                       <tr key={r.key} className="border-b border-border/60">
                         <td className="py-1.5 pr-2"><AbbrChip abbr={r.abbr} title={r.means} /></td>
                         <td className="py-1.5 pr-2 text-muted-foreground">{r.means}</td>
@@ -297,7 +303,36 @@ function PlayerStatsDialog({
               </div>
               </TabsContent>
 
-              <TabsContent value="espn" className="space-y-2">
+              <TabsContent value="espn" className="space-y-3">
+                <h4 className="text-sm font-bold">ESPN match centre points</h4>
+                <p className="text-xs text-muted-foreground">
+                  Scored as a {POSITION_LABEL[pos].toLowerCase()} — these are the ESPN match-report
+                  stats that earn points in that role. Subs earn half.
+                </p>
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[380px] text-left text-xs">
+                    <thead>
+                      <tr className="border-b border-border text-[11px] uppercase tracking-wide text-muted-foreground">
+                        <th className="py-2 pr-2">Abbr</th>
+                        <th className="py-2 pr-2">Means</th>
+                        <th className="px-2 py-2 text-right">Season</th>
+                        <th className="py-2 pl-2 text-right">Pts</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {espnRows.map((r) => (
+                        <tr key={r.key} className="border-b border-border/60">
+                          <td className="py-1.5 pr-2"><AbbrChip abbr={r.abbr} title={r.means} /></td>
+                          <td className="py-1.5 pr-2 text-muted-foreground">{r.means}</td>
+                          <td className="px-2 py-1.5 text-right tabular-nums">{r.total}</td>
+                          <td className="py-1.5 pl-2 text-right font-bold tabular-nums text-primary">
+                            {r.points == null ? "—" : r.points}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
                 {matches.length === 0 ? (
                   <p className="rounded-lg border border-border bg-muted/30 p-3 text-sm text-muted-foreground">
                     No ESPN match stats yet — they arrive automatically from the ESPN match centre once
