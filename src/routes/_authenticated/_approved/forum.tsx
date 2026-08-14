@@ -355,25 +355,53 @@ function ForumStats({ boards }: { boards: Board[] }) {
   const [latest, setLatest] = useState<{ name: string; userId: string } | null>(null);
 
   useEffect(() => {
-    void (async () => {
+    let cancelled = false;
+    const load = async () => {
       const { count } = await supabase
         .from("fan_zone_members")
         .select("user_id", { count: "exact", head: true })
         .eq("status", "approved");
-      setMemberCount(count ?? 0);
+      if (!cancelled) setMemberCount(count ?? 0);
 
-      const { data: latestRow } = await supabase
+      // decided_at can be null on older approvals, so fall back to requested_at.
+      const { data: rows } = await supabase
         .from("fan_zone_members")
-        .select("user_id, fan_alias, decided_at")
+        .select("user_id, fan_alias, decided_at, requested_at")
         .eq("status", "approved")
         .order("decided_at", { ascending: false, nullsFirst: false })
-        .limit(1)
-        .maybeSingle();
-      if (latestRow?.user_id) {
-        const name = (latestRow as { fan_alias: string | null }).fan_alias || "Boro Fan";
-        setLatest({ name, userId: latestRow.user_id });
+        .order("requested_at", { ascending: false })
+        .limit(25);
+      const list = (rows ?? []) as Array<{
+        user_id: string;
+        fan_alias: string | null;
+        decided_at: string | null;
+        requested_at: string;
+      }>;
+      const newest = list
+        .slice()
+        .sort(
+          (a, b) =>
+            new Date(b.decided_at ?? b.requested_at).getTime() -
+            new Date(a.decided_at ?? a.requested_at).getTime(),
+        )[0];
+      if (!cancelled) {
+        setLatest(newest ? { name: newest.fan_alias?.trim() || "Boro Fan", userId: newest.user_id } : null);
       }
-    })();
+    };
+
+    void load();
+
+    const channel = supabase
+      .channel("forum-stats-members")
+      .on("postgres_changes", { event: "*", schema: "public", table: "fan_zone_members" }, () => {
+        void load();
+      })
+      .subscribe();
+
+    return () => {
+      cancelled = true;
+      void supabase.removeChannel(channel);
+    };
   }, []);
 
   const threads = boards.reduce((s, b) => s + (b.topic_count || 0), 0);
