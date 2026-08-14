@@ -2089,14 +2089,16 @@ function PlayerPickerDialog({
           ))}
         </div>
         <ul className="max-h-[50vh] overflow-y-auto divide-y divide-border/40 rounded-xl border border-border/60">
-          {list.map((p) => (
-              <li key={p.id} className="flex items-center gap-2 px-3 py-2 text-sm">
+          {list.map((p) => {
+            const blocked = pickBlockedReason(p, kickoffAt);
+            return (
+              <li key={p.id} className={`flex items-center gap-2 px-3 py-2 text-sm ${blocked ? "opacity-60" : ""}`}>
                 <span className={`text-[10px] font-bold rounded-md border px-1.5 py-0.5 ${POS_TINT[p.position]}`}>
                   {playerPositionLabel(p)}
                 </span>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-1.5 min-w-0">
-                    <span className="truncate font-medium">
+                    <span className={`truncate font-medium ${blocked ? "line-through decoration-2 decoration-red-500/80" : ""}`}>
                       {p.name}
                     </span>
                     <ShirtNumber n={p.shirtNumber} />
@@ -2134,17 +2136,29 @@ function PlayerPickerDialog({
                       Not included in 25-man matchday squad
                     </div>
                   )}
+                  {missingSquadNumber(p) && (
+                    <div className="text-[10px] font-semibold uppercase leading-tight text-red-500">
+                      No squad number — not in the official squad
+                    </div>
+                  )}
+                  {!missingSquadNumber(p) && injuredUnavailable(p, kickoffAt) && (
+                    <div className="text-[10px] font-semibold uppercase leading-tight text-red-500">
+                      Injured — cannot be picked
+                    </div>
+                  )}
                 </div>
                 <button
                   type="button"
                   onClick={() => onPick(p)}
-                  title="Put in this slot"
-                  className="shrink-0 grid place-items-center size-7 rounded-lg border border-primary/50 text-primary transition-colors hover:bg-primary/10"
+                  disabled={!!blocked}
+                  title={blocked ?? "Put in this slot"}
+                  className="shrink-0 grid place-items-center size-7 rounded-lg border border-primary/50 text-primary transition-colors hover:bg-primary/10 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
                 >
                   <Plus className="size-3.5" />
                 </button>
               </li>
-          ))}
+            );
+          })}
           {list.length === 0 && (
             <li className="px-3 py-6 text-center text-sm text-muted-foreground">No players available here.</li>
           )}
