@@ -965,6 +965,14 @@ function BoroFantasyPage() {
                 )}
               </TabsContent>
 
+              <TabsContent value="previous-gw" className="mt-4">
+                {prevGwQuery.isLoading ? (
+                  <Loading />
+                ) : (
+                  <PreviousGameweekTable data={prevGwQuery.data} />
+                )}
+              </TabsContent>
+
               <TabsContent value="scoring" className="mt-4">
                 <ScoringTab />
               </TabsContent>
