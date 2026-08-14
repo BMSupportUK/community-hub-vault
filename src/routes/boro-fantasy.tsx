@@ -250,83 +250,93 @@ function PlayerStatsDialog({
               </TabsList>
 
               <TabsContent value="ours" className="space-y-2">
-              <h4 className="text-sm font-bold">Our points &amp; abbreviations</h4>
-              <p className="text-xs text-muted-foreground">
-                Points shown are what a match day 11 starter earns as a{" "}
-                {POSITION_LABEL[pos].toLowerCase()}. Subs earn half. Only our own scoring lines are
-                listed here — everything scored off the ESPN match report sits in the ESPN stats tab.
-              </p>
-              <p className="text-xs font-semibold text-emerald-500">
-                Weekly points = our own scoring (appearance, goals, assists, clean sheets, cards) plus
-                every point earned from the ESPN match stats. Both are added together — nothing is
-                counted twice.
-              </p>
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[380px] text-left text-xs">
-                  <thead>
-                    <tr className="border-b border-border text-[11px] uppercase tracking-wide text-muted-foreground">
-                      <th className="py-2 pr-2">Abbr</th>
-                      <th className="py-2 pr-2">Means</th>
-                      <th className="px-2 py-2 text-right">Season</th>
-                      <th className="py-2 pl-2 text-right">Pts</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {ourRows.map((r) => (
-                      <tr key={r.key} className="border-b border-border/60">
-                        <td className="py-1.5 pr-2"><AbbrChip abbr={r.abbr} title={r.means} /></td>
-                        <td className="py-1.5 pr-2 text-muted-foreground">{r.means}</td>
-                        <td className="px-2 py-1.5 text-right tabular-nums">{r.total}</td>
-                        <td className="py-1.5 pl-2 text-right font-bold tabular-nums text-primary">
-                          {r.points == null ? "—" : r.points}
-                        </td>
+                <h4 className="text-sm font-bold">Our points &amp; abbreviations</h4>
+                <p className="text-xs text-muted-foreground">
+                  Points shown are what a match day 11 starter earns as a{" "}
+                  {POSITION_LABEL[pos].toLowerCase()}. Subs earn half. Only our own scoring lines are
+                  listed here — everything scored off the ESPN match report sits in the ESPN stats tab.
+                </p>
+                <p className="text-xs font-semibold text-emerald-500">
+                  Weekly points = our own scoring (appearance, goals, assists, clean sheets, cards) plus
+                  every point earned from the ESPN match stats. Both are added together — nothing is
+                  counted twice.
+                </p>
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[380px] text-left text-xs">
+                    <thead>
+                      <tr className="border-b border-border text-[11px] uppercase tracking-wide text-muted-foreground">
+                        <th className="py-2 pr-2">Abbr</th>
+                        <th className="py-2 pr-2">Means</th>
+                        <th className="px-2 py-2 text-right">Season</th>
+                        <th className="py-2 pl-2 text-right">Pts</th>
                       </tr>
-                    ))}
-                    {cleanSheetRows.map((r) => (
-                      <tr key={r.key} className="border-b border-border/60">
-                        <td className="py-1.5 pr-2"><AbbrChip abbr={r.abbr} title={r.means} /></td>
-                        <td className="py-1.5 pr-2 text-muted-foreground">{r.means}</td>
-                        <td className="px-2 py-1.5 text-right tabular-nums">{r.total}</td>
-                        <td className="py-1.5 pl-2 text-right font-bold tabular-nums text-primary">{r.points}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              {matches.length > 0 && (
-                <div className="mt-3 space-y-1">
-                  <h4 className="text-sm font-bold">Weekly points</h4>
-                  <div className="overflow-x-auto">
-                    <table className="w-full min-w-[320px] text-left text-xs">
-                      <thead>
-                        <tr className="border-b border-border text-[11px] uppercase tracking-wide text-muted-foreground">
-                          <th className="py-2 pr-2">Game week</th>
-                          <th className="py-2 pl-2 text-right">Our pts + ESPN pts</th>
+                    </thead>
+                    <tbody>
+                      {ourRows.map((r) => (
+                        <tr key={r.key} className="border-b border-border/60">
+                          <td className="py-1.5 pr-2">
+                            <StatAbbrLabel abbr={r.abbr} means={r.means} rate={r.rate} />
+                          </td>
+                          <td className="py-1.5 pr-2 text-muted-foreground">{r.means}</td>
+                          <td className="px-2 py-1.5 text-right tabular-nums">{r.total}</td>
+                          <td className="py-1.5 pl-2 text-right font-bold tabular-nums text-primary">
+                            {r.points == null ? "—" : r.points}
+                          </td>
                         </tr>
-                      </thead>
-                      <tbody>
-                        {matches.map((m) => (
-                          <tr key={m.fixtureId} className="border-b border-border/60">
-                            <td className="py-1.5 pr-2 text-muted-foreground">
-                              <span className="font-bold text-foreground">
-                                {m.gwNumber != null ? `GW${m.gwNumber}` : "—"}
-                              </span>{" "}
-                              {m.label}
-                            </td>
-                            <td className="py-1.5 pl-2 text-right font-bold tabular-nums text-primary">
-                              {m.points}
+                      ))}
+                      {cleanSheetRows.map((r) => (
+                        <tr key={r.key} className="border-b border-border/60">
+                          <td className="py-1.5 pr-2">
+                            <StatAbbrLabel abbr={r.abbr} means={r.means} rate={r.rate} />
+                          </td>
+                          <td className="py-1.5 pr-2 text-muted-foreground">{r.means}</td>
+                          <td className="px-2 py-1.5 text-right tabular-nums">{r.total}</td>
+                          <td className="py-1.5 pl-2 text-right font-bold tabular-nums text-primary">{r.points}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                {matches.length > 0 && (
+                  <div className="mt-3 space-y-1">
+                    <h4 className="text-sm font-bold">Weekly points</h4>
+                    <div className="overflow-x-auto">
+                      <table className="w-full min-w-[320px] text-left text-xs">
+                        <thead>
+                          <tr className="border-b border-border text-[11px] uppercase tracking-wide text-muted-foreground">
+                            <th className="py-2 pr-2">Game week</th>
+                            <th className="py-2 pl-2 text-right">Our pts + ESPN pts</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {matches.map((m) => (
+                            <tr key={m.fixtureId} className="border-b border-border/60">
+                              <td className="py-1.5 pr-2 text-muted-foreground">
+                                <span className="font-bold text-foreground">
+                                  {m.gwNumber != null ? `GW${m.gwNumber}` : "—"}
+                                </span>{" "}
+                                {m.label}
+                              </td>
+                              <td className="py-1.5 pl-2 text-right font-bold tabular-nums text-primary">
+                                {m.points}
+                              </td>
+                            </tr>
+                          ))}
+                          <tr className="bg-muted/40">
+                            <td className="py-2 pr-2 font-bold">Weekly total</td>
+                            <td className="py-2 pl-2 text-right font-bold tabular-nums text-primary">
+                              {matches.reduce((s, m) => s + m.points, 0)} pts
                             </td>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
+                )}
+                <div className="mt-3 flex items-center justify-between rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm">
+                  <span className="font-semibold">Season total</span>
+                  <span className="font-bold tabular-nums">{data?.totalPoints ?? 0} pts</span>
                 </div>
-              )}
-              <div className="mt-3 flex items-center justify-between rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm">
-                <span className="font-semibold">Season total</span>
-                <span className="font-bold tabular-nums">{data?.totalPoints ?? 0} pts</span>
-              </div>
               </TabsContent>
 
               <TabsContent value="espn" className="space-y-3">
@@ -348,7 +358,9 @@ function PlayerStatsDialog({
                     <tbody>
                       {espnRows.map((r) => (
                         <tr key={r.key} className="border-b border-border/60">
-                          <td className="py-1.5 pr-2"><AbbrChip abbr={r.abbr} title={r.means} /></td>
+                          <td className="py-1.5 pr-2">
+                            <StatAbbrLabel abbr={r.abbr} means={r.means} rate={r.rate} />
+                          </td>
                           <td className="py-1.5 pr-2 text-muted-foreground">{r.means}</td>
                           <td className="px-2 py-1.5 text-right tabular-nums">{r.total}</td>
                           <td className="py-1.5 pl-2 text-right font-bold tabular-nums text-primary">
@@ -365,51 +377,59 @@ function PlayerStatsDialog({
                     this player features in a finished game week.
                   </p>
                 ) : (
-              <div className="space-y-2">
-                <h4 className="text-sm font-bold">Weekly points — ESPN match stats</h4>
-                <div className="overflow-x-auto">
-                  <table className="w-full min-w-[420px] text-left text-xs">
-                    <thead>
-                      <tr className="border-b border-border text-[11px] uppercase tracking-wide text-muted-foreground">
-                        <th className="py-2 pr-2">Stat</th>
-                        {matches.map((m) => (
-                          <th key={m.fixtureId} className="px-2 py-2 text-center">
-                            <div className="font-bold text-foreground">
-                              {m.gwNumber != null ? `GW${m.gwNumber}` : "—"}
-                            </div>
-                            <div className="font-normal normal-case">{m.label}</div>
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {statKeys.map((k) => (
-                        <tr key={k} className="border-b border-border/60">
-                          <td className="py-1.5 pr-2 text-muted-foreground">
-                            <span className="flex items-center gap-1.5">
-                              <AbbrChip abbr={PLAYER_STAT_META[k]!.abbr} title={PLAYER_STAT_META[k]!.means} />
-                              <span>{PLAYER_STAT_META[k]!.means}</span>
-                            </span>
-                          </td>
-                          {matches.map((m) => (
-                            <td key={m.fixtureId} className="px-2 py-1.5 text-center tabular-nums">
-                              {m.stats[k] ?? 0}
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-bold">Weekly totals — ESPN match stats</h4>
+                    <div className="overflow-x-auto">
+                      <table className="w-full min-w-[420px] text-left text-xs">
+                        <thead>
+                          <tr className="border-b border-border text-[11px] uppercase tracking-wide text-muted-foreground">
+                            <th className="py-2 pr-2">Stat</th>
+                            {matches.map((m) => (
+                              <th key={m.fixtureId} className="px-2 py-2 text-center">
+                                <div className="font-bold text-foreground">
+                                  {m.gwNumber != null ? `GW${m.gwNumber}` : "—"}
+                                </div>
+                                <div className="font-normal normal-case">{m.label}</div>
+                              </th>
+                            ))}
+                            <th className="px-2 py-2 text-right">Season</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {statKeys.map((k) => {
+                            const meta = PLAYER_STAT_META[k]!;
+                            const seasonTotal = matches.reduce((s, m) => s + (m.stats[k] ?? 0), 0);
+                            return (
+                              <tr key={k} className="border-b border-border/60">
+                                <td className="py-1.5 pr-2 text-muted-foreground">
+                                  <StatAbbrLabel abbr={meta.abbr} means={meta.means} rate={statPointsPer(k, pos)} />
+                                </td>
+                                {matches.map((m) => (
+                                  <td key={m.fixtureId} className="px-2 py-1.5 text-center tabular-nums">
+                                    {m.stats[k] ?? 0}
+                                  </td>
+                                ))}
+                                <td className="px-2 py-1.5 text-right font-bold tabular-nums">
+                                  {seasonTotal}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                          <tr className="bg-muted/40">
+                            <td className="py-2 pr-2 font-bold">Weekly total</td>
+                            {matches.map((m) => (
+                              <td key={m.fixtureId} className="px-2 py-2 text-center font-bold tabular-nums text-primary">
+                                {m.points}
+                              </td>
+                            ))}
+                            <td className="px-2 py-2 text-right font-bold tabular-nums text-primary">
+                              {matches.reduce((s, m) => s + m.points, 0)} pts
                             </td>
-                          ))}
-                        </tr>
-                      ))}
-                      <tr className="bg-muted/40">
-                        <td className="py-2 pr-2 font-bold">Weekly points</td>
-                        {matches.map((m) => (
-                          <td key={m.fixtureId} className="px-2 py-2 text-center font-bold tabular-nums text-primary">
-                            {m.points}
-                          </td>
-                        ))}
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
                 )}
               </TabsContent>
             </Tabs>
