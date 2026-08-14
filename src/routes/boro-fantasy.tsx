@@ -192,6 +192,12 @@ function PlayerStatsDialog({
           <p className="py-4 text-sm text-destructive">Couldn't load this player's stats.</p>
         ) : (
           <>
+            {matches.length === 0 && (
+              <p className="rounded-lg border border-border bg-muted/30 p-3 text-sm text-muted-foreground">
+                No stats recorded yet — the tables below fill in automatically once this player features
+                in a finished game week and ESPN confirm the match stats.
+              </p>
+            )}
             {matches.length > 0 && (
               <div className="space-y-2">
                 <h4 className="text-sm font-bold">Weekly points</h4>
