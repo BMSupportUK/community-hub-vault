@@ -14,9 +14,6 @@ import {
   X,
   RefreshCw,
   KeyRound,
-  Eye,
-  EyeOff,
-  Copy,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -45,7 +42,6 @@ interface RoleDef {
 interface CredLite {
   id: string;
   app_login_name: string;
-  password: string;
 }
 
 interface Row {
@@ -83,7 +79,7 @@ function AdminRolesPage() {
   const listEmailsFn = useServerFn(listMemberEmails);
   const [historyFor, setHistoryFor] = useState<Row | null>(null);
   const [roleFilter, setRoleFilter] = useState<string>("all");
-  const [revealed, setRevealed] = useState<Record<string, boolean>>({});
+  
 
   const loadAll = async () => {
     setLoading(true);
@@ -105,7 +101,7 @@ function AdminRolesPage() {
         }),
         supabase
           .from("app_credentials")
-          .select("id, owner_id, app_login_name, password")
+          .select("id, owner_id, app_login_name")
           .order("created_at", { ascending: false }),
       ]);
     const roleMap = new Map<string, string[]>();
@@ -122,7 +118,7 @@ function AdminRolesPage() {
     const credMap = new Map<string, CredLite[]>();
     (credsData ?? []).forEach((c: any) => {
       const arr = credMap.get(c.owner_id) ?? [];
-      arr.push({ id: c.id, app_login_name: c.app_login_name, password: c.password });
+      arr.push({ id: c.id, app_login_name: c.app_login_name });
       credMap.set(c.owner_id, arr);
     });
     setRows(
@@ -377,7 +373,7 @@ function AdminRolesPage() {
                         </div>
                         <div className="mt-2 space-y-1">
                           <div className="flex items-center gap-1 text-[10px] uppercase tracking-wide font-semibold text-muted-foreground">
-                            <KeyRound className="size-3" /> Login credentials
+                            <KeyRound className="size-3" /> Login name
                           </div>
                           {row.creds.length === 0 ? (
                             <div className="text-[11px] text-muted-foreground/70">
@@ -387,42 +383,10 @@ function AdminRolesPage() {
                             row.creds.map((c) => (
                               <div
                                 key={c.id}
-                                className="flex items-center gap-1.5 rounded-md border border-border bg-surface-2 px-2 py-1 text-[11px] font-mono"
+                                className="flex items-center rounded-md border border-border bg-surface-2 px-2 py-1 text-[11px] font-mono"
+                                title={c.app_login_name}
                               >
-                                <span className="truncate max-w-[45%]" title={c.app_login_name}>
-                                  {c.app_login_name}
-                                </span>
-                                <span className="text-muted-foreground">/</span>
-                                <span className="flex-1 truncate">
-                                  {revealed[c.id]
-                                    ? c.password
-                                    : "•".repeat(Math.min(c.password?.length ?? 8, 10))}
-                                </span>
-                                <button
-                                  onClick={() =>
-                                    setRevealed((s) => ({ ...s, [c.id]: !s[c.id] }))
-                                  }
-                                  title={revealed[c.id] ? "Hide password" : "Show password"}
-                                  className="text-muted-foreground hover:text-foreground shrink-0"
-                                >
-                                  {revealed[c.id] ? (
-                                    <EyeOff className="size-3" />
-                                  ) : (
-                                    <Eye className="size-3" />
-                                  )}
-                                </button>
-                                <button
-                                  onClick={() => {
-                                    void navigator.clipboard.writeText(
-                                      `${c.app_login_name} / ${c.password}`,
-                                    );
-                                    toast.success("Credential copied");
-                                  }}
-                                  title="Copy login and password"
-                                  className="text-muted-foreground hover:text-foreground shrink-0"
-                                >
-                                  <Copy className="size-3" />
-                                </button>
+                                <span className="truncate">{c.app_login_name}</span>
                               </div>
                             ))
                           )}
