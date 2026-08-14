@@ -42,11 +42,10 @@ export function FanZoneNamePrompt({ info, canEnter }: { info: FanZoneInfo | null
   return (
     <Dialog open={needsName}>
       <DialogContent
-        showCloseButton={false}
         onEscapeKeyDown={(e) => e.preventDefault()}
         onPointerDownOutside={(e) => e.preventDefault()}
         onInteractOutside={(e) => e.preventDefault()}
-        className="border-[#E11B22]/50 bg-[#0B0E14] text-white shadow-[0_24px_70px_-20px_rgba(225,27,34,0.65)]"
+        className="[&>button]:hidden border-[#E11B22]/50 bg-[#0B0E14] text-white shadow-[0_24px_70px_-20px_rgba(225,27,34,0.65)]"
       >
         <DialogHeader>
           <DialogTitle className="font-display text-xl font-black flex items-center gap-2 text-white">
