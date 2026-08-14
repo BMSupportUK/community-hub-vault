@@ -1,5 +1,5 @@
 import { memo, useEffect, useState } from "react";
-import { BarChart3, Loader2, Plus, Trash2, X } from "lucide-react";
+import { BarChart3, CalendarClock, Loader2, Plus, Trash2, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -141,7 +141,7 @@ function ForumPollComponent({
       <div className="mt-2.5 text-[11px] text-muted-foreground flex items-center gap-2 flex-wrap">
         <span>{totalVotes} vote{totalVotes === 1 ? "" : "s"}</span>
         {poll.allow_multiple && <span>· Multiple choice</span>}
-        {closed ? <span>· Closed</span> : poll.closes_at && <span>· Closes {new Date(poll.closes_at).toLocaleDateString()}</span>}
+        {closed ? <span>· Closed {poll.closes_at ? new Date(poll.closes_at).toLocaleString() : ""}</span> : poll.closes_at && <span>· Closes {new Date(poll.closes_at).toLocaleString()}</span>}
         {!canVote && !canManage && <span>· Members only</span>}
       </div>
     </section>
@@ -154,6 +154,8 @@ export type DraftPoll = {
   question: string;
   options: string[];
   allow_multiple: boolean;
+  /** Local datetime-local string, e.g. "2026-08-20T18:30". Empty/undefined = no end time. */
+  closes_at?: string;
 };
 
 export function PollDraftEditor({ value, onChange, onRemove }: { value: DraftPoll; onChange: (next: DraftPoll) => void; onRemove: () => void }) {
@@ -165,6 +167,9 @@ export function PollDraftEditor({ value, onChange, onRemove }: { value: DraftPol
   };
   const addOption = () => update({ options: [...value.options, ""] });
   const removeOption = (i: number) => update({ options: value.options.filter((_, idx) => idx !== i) });
+  const minLocal = new Date(Date.now() + 60_000 - new Date().getTimezoneOffset() * 60_000)
+    .toISOString()
+    .slice(0, 16);
 
   return (
     <div className="rounded-xl border border-[#E11B22]/30 bg-background/60 p-3 space-y-2">
@@ -210,6 +215,28 @@ export function PollDraftEditor({ value, onChange, onRemove }: { value: DraftPol
           Allow multiple choices
         </label>
       </div>
+      <div className="space-y-1.5 pt-1 border-t border-border/60">
+        <label className="flex items-center gap-1.5 text-xs font-medium" htmlFor="poll-closes-at">
+          <CalendarClock className="size-3.5 text-[#E11B22]" /> Poll end date &amp; time (optional)
+        </label>
+        <div className="flex gap-1.5 items-center">
+          <Input
+            id="poll-closes-at"
+            type="datetime-local"
+            min={minLocal}
+            value={value.closes_at ?? ""}
+            onChange={(e) => update({ closes_at: e.target.value })}
+          />
+          {value.closes_at && (
+            <Button type="button" size="sm" variant="ghost" className="h-9 px-2" onClick={() => update({ closes_at: "" })} title="Clear end time">
+              <X className="size-3.5" />
+            </Button>
+          )}
+        </div>
+        <p className="text-[11px] text-muted-foreground">
+          {value.closes_at ? `Voting closes ${new Date(value.closes_at).toLocaleString()}` : "Leave blank to keep the poll open indefinitely."}
+        </p>
+      </div>
     </div>
   );
 }
@@ -218,9 +245,16 @@ export async function persistDraftPoll(topicId: string, userId: string, draft: D
   const question = draft.question.trim();
   const options = draft.options.map((o) => o.trim()).filter((o) => o.length > 0);
   if (!question || options.length < 2) return "Add a question and at least two options";
+  let closesAt: string | null = null;
+  if (draft.closes_at) {
+    const ms = new Date(draft.closes_at).getTime();
+    if (isNaN(ms)) return "That poll end date isn't valid";
+    if (ms <= Date.now()) return "The poll end time must be in the future";
+    closesAt = new Date(ms).toISOString();
+  }
   const { data: poll, error } = await supabase
     .from("forum_polls")
-    .insert({ topic_id: topicId, question, allow_multiple: draft.allow_multiple, created_by: userId })
+    .insert({ topic_id: topicId, question, allow_multiple: draft.allow_multiple, closes_at: closesAt, created_by: userId })
     .select("id")
     .single();
   if (error || !poll) return error?.message ?? "Couldn't create poll";
