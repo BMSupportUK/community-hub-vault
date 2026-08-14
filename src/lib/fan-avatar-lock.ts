@@ -1,5 +1,4 @@
 import { useAuth } from "@/hooks/use-auth";
-import type { Database } from "@/integrations/supabase/types";
 import moderatorAvatarAsset from "@/assets/moderator-avatar.png.asset.json";
 
 /** Fixed avatar every Fan Zone moderator uses. */
@@ -14,15 +13,13 @@ export const AVATAR_LOCKED_ROLES = [
   "boro_fan_zone_moderator",
 ] as const;
 
-type AppRole = Database["public"]["Enums"]["app_role"];
-
 const MODERATOR_ROLES = ["moderator", "boro_fan_zone_moderator"] as const;
 
 /** Whether the signed-in user's avatar is locked, and which avatar it is forced to. */
 export function useFanAvatarLock() {
   const { hasAny } = useAuth();
-  const isModerator = hasAny(MODERATOR_ROLES as unknown as AppRole[]);
-  const locked = hasAny(AVATAR_LOCKED_ROLES as unknown as AppRole[]);
+  const isModerator = hasAny([...MODERATOR_ROLES]);
+  const locked = hasAny([...AVATAR_LOCKED_ROLES]);
   return {
     locked,
     isModerator,
