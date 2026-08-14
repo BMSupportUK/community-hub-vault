@@ -1,5 +1,5 @@
 import { createFileRoute, Link, Outlet, useMatches } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { MessageSquare, Pin, Lock, Loader2, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -190,9 +190,8 @@ function BoardsIndex() {
   const canEnter = isStaff || info?.status === "approved";
   const isPending = info?.status === "pending";
 
-  useEffect(() => {
+  const loadBoards = useCallback(async () => {
     if (!canEnter) return;
-    void (async () => {
       const { data } = await supabase
         .from("forum_boards")
         .select("id, name, slug, description, icon, sort_order, is_pinned, is_locked, topic_count, post_count, last_post_at, last_post_by")
@@ -212,6 +211,8 @@ function BoardsIndex() {
           if (!byBoard[t.board_id]) byBoard[t.board_id] = { id: t.id, title: t.title };
         });
         setLastTopics(byBoard);
+      } else {
+        setLastTopics({});
       }
       const ids = Array.from(new Set(list.map((b) => b.last_post_by).filter((x): x is string => !!x)));
       if (ids.length) {
@@ -223,9 +224,34 @@ function BoardsIndex() {
           if (a.fan_alias && map[a.user_id]) map[a.user_id].display_name = a.fan_alias;
         });
         setPosters(map);
+      } else {
+        setPosters({});
       }
-    })();
-  }, [canEnter, aliasVersion]);
+  }, [canEnter]);
+
+  useEffect(() => {
+    void loadBoards();
+  }, [loadBoards, aliasVersion]);
+
+  // Keep the "Latest" post/author in sync in real time, including after deletions.
+  useEffect(() => {
+    if (!canEnter) return;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const refresh = () => {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => void loadBoards(), 400);
+    };
+    const channel = supabase
+      .channel("forum-boards-latest")
+      .on("postgres_changes", { event: "*", schema: "public", table: "forum_boards" }, refresh)
+      .on("postgres_changes", { event: "*", schema: "public", table: "forum_topics" }, refresh)
+      .on("postgres_changes", { event: "*", schema: "public", table: "forum_posts" }, refresh)
+      .subscribe();
+    return () => {
+      if (timer) clearTimeout(timer);
+      void supabase.removeChannel(channel);
+    };
+  }, [canEnter, loadBoards]);
 
   if (!canEnter && isPending) {
     return (
