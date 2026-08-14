@@ -18,7 +18,7 @@ import { useMentionCandidates, type MentionCandidate } from "@/hooks/use-mention
 import { useFanBlocks } from "@/hooks/use-fan-blocks";
 import { toast } from "sonner";
 import { RotatingAffiliateBanner } from "@/components/app/RotatingAffiliateBanner";
-import { ForumPoll } from "@/components/app/ForumPoll";
+import { ForumPoll, AddPollToTopic } from "@/components/app/ForumPoll";
 import { BlockUserButton } from "@/components/app/BlockUserButton";
 import { censorText, useProfanityWords } from "@/lib/profanity";
 
@@ -925,6 +925,9 @@ function TopicPage() {
                     mentions={mentionCandidates}
                     imageUpload={{ userId: user?.id }}
                   />
+                  {user && (isBoardMod || topic.author_id === user.id) && (
+                    <AddPollToTopic topicId={topic.id} userId={user.id} />
+                  )}
                   <div className="flex justify-end pt-1">
                     <Button
                       onClick={() => void submitReply()}
