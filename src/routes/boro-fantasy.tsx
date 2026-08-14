@@ -669,6 +669,18 @@ function BoroFantasyPage() {
     refetchOnMount: "always",
   });
 
+  const prevGwFn = useServerFn(getFantasyPreviousGameweekScores);
+  const publicPrevGwFn = useServerFn(getPublicFantasyPreviousGameweekScores);
+  const prevGwQuery = useQuery<FantasyPreviousGwScoreDTO | null>({
+    queryKey: ["fantasy-previous-gw", user?.id ?? null],
+    queryFn: () => (user ? prevGwFn({}) : publicPrevGwFn({})),
+    enabled: tab === "previous-gw",
+    staleTime: 15_000,
+    refetchInterval: 60_000,
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: true,
+  });
+
   const state = stateQuery.data;
   const joined = !!state?.joined;
   const canPlay = joined && (!!user || !!guest);
