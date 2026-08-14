@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -71,24 +71,29 @@ export const Route = createFileRoute("/boro-fantasy")({
 // Player stats pop-up: tap any player's name to see their per-match
 // ESPN stat lines and the points those stats earned.
 // ------------------------------------------------------------------
-const PlayerStatsCtx = createContext<(playerId: string) => void>(() => {});
+const PlayerStatsCtx = createContext<(playerId: string, scoringAs?: FantasyPosition | null) => void>(
+  () => {},
+);
 
 /** Clickable player name that opens the stats pop-up. */
 function PlayerNameButton({
   playerId,
   name,
   className = "",
+  scoringAs = null,
 }: {
   playerId: string;
   name: string;
   className?: string;
+  /** Position this player was selected to score in, when he covers more than one. */
+  scoringAs?: FantasyPosition | null;
 }) {
   const open = useContext(PlayerStatsCtx);
   return (
     <button
       type="button"
       title={`${name} — view stats and points`}
-      onClick={(e) => { e.stopPropagation(); open(playerId); }}
+      onClick={(e) => { e.stopPropagation(); open(playerId, scoringAs); }}
       className={`w-full text-center underline-offset-2 hover:underline ${className}`}
     >
       {name}
@@ -119,7 +124,16 @@ function AbbrChip({ abbr, title }: { abbr: string; title?: string }) {
   );
 }
 
-function PlayerStatsDialog({ playerId, onClose }: { playerId: string | null; onClose: () => void }) {
+function PlayerStatsDialog({
+  playerId,
+  scoringAs,
+  onClose,
+}: {
+  playerId: string | null;
+  /** Overrides the player's default position when he's been picked in another role. */
+  scoringAs?: FantasyPosition | null;
+  onClose: () => void;
+}) {
   const fn = useServerFn(getFantasyPlayerBreakdown);
   const query = useQuery<FantasyPlayerBreakdown>({
     queryKey: ["fantasy-player-breakdown", playerId],
@@ -128,7 +142,8 @@ function PlayerStatsDialog({ playerId, onClose }: { playerId: string | null; onC
   });
   const data = query.data;
   const matches = data?.matches ?? [];
-  const pos = ((data?.position || "mid") as FantasyPosition);
+  const pos = (scoringAs ?? (data?.position || "mid")) as FantasyPosition;
+  const picked = !!scoringAs && scoringAs !== (data?.position as FantasyPosition | undefined);
   const statKeys = useMemo(
     () => scoringStatKeys(pos).filter((k) => matches.some((m) => (m.stats[k] ?? 0) !== 0)),
     [matches, pos],
@@ -162,6 +177,11 @@ function PlayerStatsDialog({ playerId, onClose }: { playerId: string | null; onC
           <DialogDescription>
           Every abbreviation we score on, the ESPN match-report stats behind them and the points earned.
           </DialogDescription>
+          {picked && (
+            <p className="text-xs font-semibold text-emerald-500">
+              Scored as a {POSITION_LABEL[pos].toLowerCase()} — the role you selected him in.
+            </p>
+          )}
         </DialogHeader>
 
         {query.isPending ? (
@@ -271,11 +291,20 @@ function PlayerStatsDialog({ playerId, onClose }: { playerId: string | null; onC
 }
 
 function FantasyPageWithStats() {
-  const [statsPlayerId, setStatsPlayerId] = useState<string | null>(null);
+  const [stats, setStats] = useState<{ playerId: string; scoringAs: FantasyPosition | null } | null>(null);
+  const open = useCallback(
+    (playerId: string, scoringAs?: FantasyPosition | null) =>
+      setStats({ playerId, scoringAs: scoringAs ?? null }),
+    [],
+  );
   return (
-    <PlayerStatsCtx.Provider value={setStatsPlayerId}>
+    <PlayerStatsCtx.Provider value={open}>
       <BoroFantasyPage />
-      <PlayerStatsDialog playerId={statsPlayerId} onClose={() => setStatsPlayerId(null)} />
+      <PlayerStatsDialog
+        playerId={stats?.playerId ?? null}
+        scoringAs={stats?.scoringAs ?? null}
+        onClose={() => setStats(null)}
+      />
     </PlayerStatsCtx.Provider>
   );
 }
@@ -2312,6 +2341,12 @@ function PitchView({
                         <PlayerNameButton
                           playerId={p.id}
                           name={p.name}
+                          scoringAs={(() => {
+                            const eligible = playerPositions(p).filter((pos) => row.positions.includes(pos));
+                            const chosen = slotPositions?.[slotIndex] ?? null;
+                            const explicit = chosen && eligible.includes(chosen) ? chosen : null;
+                            return explicit ?? resolveSlotPosition(row.positions, p) ?? p.position;
+                          })()}
                           className="mt-1 block text-center text-[10px] font-semibold leading-tight text-white break-words line-clamp-2 min-h-[24px]"
                         />
                         {(() => {
@@ -2527,6 +2562,11 @@ function BenchPanel({
                     <PlayerNameButton
                       playerId={p.id}
                       name={p.name}
+                      scoringAs={(() => {
+                        const eligible = playerPositions(p);
+                        const chosen = benchPositions?.[i] ?? null;
+                        return (chosen && eligible.includes(chosen) ? chosen : null) ?? p.position;
+                      })()}
                       className="mt-1.5 block text-center text-[10px] font-semibold leading-tight break-words line-clamp-2 min-h-[24px]"
                     />
                     {(() => {
