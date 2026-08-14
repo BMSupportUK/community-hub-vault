@@ -104,6 +104,22 @@ function KnowledgeBasePage() {
   const [showCatEditor, setShowCatEditor] = useState(false);
   const dragCatId = useRef<string | null>(null);
   const dragArtId = useRef<string | null>(null);
+  // Remembers the article card the user opened so save/cancel/back returns there.
+  const focusArticleId = useRef<string | null>(null);
+  const scrollBackToArticle = () => {
+    const id = focusArticleId.current;
+    focusArticleId.current = null;
+    if (!id) return;
+    window.setTimeout(() => {
+      document
+        .querySelector(`[data-article-id="${id}"]`)
+        ?.scrollIntoView({ block: "center", behavior: "smooth" });
+    }, 80);
+  };
+  const closeEditor = () => {
+    setEditing(null);
+    scrollBackToArticle();
+  };
 
   // Persist UI state across screen swaps (route remounts).
   useEffect(() => { try { sessionStorage.setItem(KB_TAB_KEY, tab); } catch { /* ignore */ } }, [tab]);
@@ -277,6 +293,7 @@ function KnowledgeBasePage() {
     if (!editing.id) { try { localStorage.removeItem(KB_DRAFT_KEY); } catch { /* ignore */ } }
     setEditing(null);
     load();
+    scrollBackToArticle();
   };
 
   const deleteArticle = async (id: string) => {
@@ -372,7 +389,7 @@ function KnowledgeBasePage() {
     return (
       <main className="flex-1 overflow-y-auto bg-background">
         <div className="max-w-3xl mx-auto px-6 py-8">
-          <button onClick={() => setReading(null)} className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-6">
+          <button onClick={() => { setReading(null); scrollBackToArticle(); }} className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-6">
             <ArrowLeft className="size-4" /> Back to knowledge base
           </button>
           {reading.image_url && (
@@ -411,7 +428,7 @@ function KnowledgeBasePage() {
           )}
           {isMod && (
             <div className="mt-8 flex gap-2 border-t border-border pt-4">
-              <Button variant="secondary" onClick={() => { setEditing(reading); setReading(null); }}>
+              <Button variant="secondary" onClick={() => { focusArticleId.current = reading.id; setEditing(reading); setReading(null); }}>
                 <Pencil className="size-4 mr-1.5" /> Edit
               </Button>
               <Button variant="destructive" onClick={() => deleteArticle(reading.id)}>
@@ -420,7 +437,7 @@ function KnowledgeBasePage() {
             </div>
           )}
         </div>
-        {editing && <ArticleEditor editing={editing} setEditing={setEditing} categories={categories} onSave={saveArticle} userId={user?.id ?? null} />}
+        {editing && <ArticleEditor editing={editing} setEditing={setEditing} onClose={closeEditor} categories={categories} onSave={saveArticle} userId={user?.id ?? null} />}
       </main>
     );
   }
@@ -592,6 +609,7 @@ function KnowledgeBasePage() {
                       return (
                         <article
                           key={a.id}
+                          data-article-id={a.id}
                           draggable={isMod}
                           onDragStart={() => { dragArtId.current = a.id; }}
                           onDragOver={(e) => { if (isMod) e.preventDefault(); }}
@@ -624,13 +642,13 @@ function KnowledgeBasePage() {
                             </div>
 
                             <div className="mt-3 flex items-center justify-between pt-2 border-t border-border">
-                              <button onClick={() => setReading(a)} className="text-sm font-medium text-primary inline-flex items-center gap-1 hover:underline">
+                              <button onClick={() => { focusArticleId.current = a.id; setReading(a); }} className="text-sm font-medium text-primary inline-flex items-center gap-1 hover:underline">
                                 Read <ChevronRight className="size-3.5" />
                               </button>
                               {isMod && (
                                 <div className="flex gap-0.5 items-center">
                                   <GripVertical className="size-3.5 text-muted-foreground cursor-grab self-center" />
-                                  <button onClick={() => setEditing(a)} className="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground"><Pencil className="size-3.5" /></button>
+                                  <button onClick={() => { focusArticleId.current = a.id; setEditing(a); }} className="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground"><Pencil className="size-3.5" /></button>
                                   <button onClick={() => deleteArticle(a.id)} className="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-destructive"><Trash2 className="size-3.5" /></button>
                                 </div>
                               )}
@@ -679,7 +697,7 @@ function KnowledgeBasePage() {
         </Tabs>
       </div>
 
-      {editing && <ArticleEditor editing={editing} setEditing={setEditing} categories={categories} onSave={saveArticle} userId={user?.id ?? null} />}
+      {editing && <ArticleEditor editing={editing} setEditing={setEditing} onClose={closeEditor} categories={categories} onSave={saveArticle} userId={user?.id ?? null} />}
 
       <Dialog open={showCatEditor} onOpenChange={(o) => { if (!o) { setShowCatEditor(false); setEditingCat(null); } }}>
         <DialogContent>
@@ -712,16 +730,17 @@ function EmptyState({ text, cta }: { text: string; cta?: { label: string; onClic
 }
 
 function ArticleEditor({
-  editing, setEditing, categories, onSave, userId,
+  editing, setEditing, onClose, categories, onSave, userId,
 }: {
   editing: Article;
   setEditing: (a: Article | null) => void;
+  onClose: () => void;
   categories: Category[];
   onSave: () => void;
   userId: string | null;
 }) {
   return (
-    <Dialog open onOpenChange={(o) => { if (!o) setEditing(null); }}>
+    <Dialog open onOpenChange={(o) => { if (!o) onClose(); }}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader><DialogTitle>{editing.id ? "Edit article" : "New article"}</DialogTitle></DialogHeader>
         <div className="space-y-3">
@@ -766,7 +785,7 @@ function ArticleEditor({
           </label>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => setEditing(null)}><X className="size-4 mr-1" /> Cancel</Button>
+          <Button variant="outline" onClick={onClose}><X className="size-4 mr-1" /> Cancel</Button>
           <Button onClick={onSave}><Save className="size-4 mr-1" /> Save</Button>
         </DialogFooter>
       </DialogContent>

@@ -101,6 +101,24 @@ function InstallGuidesPage() {
   const dragBlogId = useRef<string | null>(null);
   const [playingVideo, setPlayingVideo] = useState<Blog | null>(null);
   const videoElRef = useRef<HTMLVideoElement | null>(null);
+  // Remembers which guide card the user came from so save/cancel returns there
+  // instead of dumping them at the top of the list.
+  const focusGuideId = useRef<string | null>(null);
+  const scrollBackToGuide = () => {
+    const id = focusGuideId.current;
+    focusGuideId.current = null;
+    if (!id) return;
+    window.setTimeout(() => {
+      document
+        .querySelector(`[data-guide-id="${id}"]`)
+        ?.scrollIntoView({ block: "center", behavior: "smooth" });
+    }, 80);
+  };
+  const closeEditor = () => {
+    setShowEditor(false);
+    setEditing(null);
+    scrollBackToGuide();
+  };
 
   // Persist UI state across screen swaps (route remounts).
   useEffect(() => { try { sessionStorage.setItem(IG_TAB_KEY, tab); } catch { /* ignore */ } }, [tab]);
@@ -248,6 +266,7 @@ function InstallGuidesPage() {
     setShowEditor(false);
     setEditing(null);
     load();
+    scrollBackToGuide();
   };
 
   const deleteBlog = async (id: string) => {
@@ -444,6 +463,7 @@ function InstallGuidesPage() {
                     {filtered.map((b) => (
                       <article
                         key={b.id}
+                        data-guide-id={b.id}
                         draggable={isMod}
                         onDragStart={() => { dragBlogId.current = b.id; }}
                         onDragOver={(e) => { if (isMod) e.preventDefault(); }}
@@ -524,13 +544,13 @@ function InstallGuidesPage() {
                                 </a>
                               </Button>
                             ) : (
-                              <Button size="sm" className="flex-1 bg-gradient-primary text-primary-foreground hover:opacity-90" onClick={() => setReading(b)}>
+                              <Button size="sm" className="flex-1 bg-gradient-primary text-primary-foreground hover:opacity-90" onClick={() => { focusGuideId.current = b.id; setReading(b); }}>
                                 Click to Read
                               </Button>
                             )}
                             {isMod && (
                               <>
-                                <Button size="icon" variant="ghost" className="text-violet-200 hover:bg-surface-2/80 hover:text-foreground" onClick={() => { setEditing(b); setShowEditor(true); }}>
+                                <Button size="icon" variant="ghost" className="text-violet-200 hover:bg-surface-2/80 hover:text-foreground" onClick={() => { focusGuideId.current = b.id; setEditing(b); setShowEditor(true); }}>
                                   <Pencil className="size-4" />
                                 </Button>
                                 <Button size="icon" variant="ghost" className="text-violet-200 hover:bg-surface-2/80 hover:text-foreground" onClick={() => deleteBlog(b.id)}>
@@ -627,7 +647,7 @@ function InstallGuidesPage() {
       </div>
 
       {/* Reader */}
-      <Dialog open={!!reading} onOpenChange={(o) => !o && setReading(null)}>
+      <Dialog open={!!reading} onOpenChange={(o) => { if (!o) { setReading(null); scrollBackToGuide(); } }}>
         <DialogContent className={reading?.pdf_url ? "max-w-5xl h-[90vh] flex flex-col" : "max-w-2xl max-h-[85vh] overflow-y-auto"}>
           {reading && (
             <>
@@ -713,7 +733,7 @@ function InstallGuidesPage() {
       </Dialog>
 
       {/* Editor */}
-      <Dialog open={showEditor} onOpenChange={(o) => { if (!o) { setShowEditor(false); setEditing(null); } }}>
+      <Dialog open={showEditor} onOpenChange={(o) => { if (!o) closeEditor(); }}>
         <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editing?.id ? "Edit guide" : "Add guide"}</DialogTitle>
@@ -783,7 +803,7 @@ function InstallGuidesPage() {
             </div>
           )}
           <DialogFooter>
-            <Button variant="ghost" onClick={() => { setShowEditor(false); setEditing(null); }}>
+            <Button variant="ghost" onClick={closeEditor}>
               <X className="size-4 mr-1" /> Cancel
             </Button>
             <Button onClick={saveBlog}>Save</Button>
