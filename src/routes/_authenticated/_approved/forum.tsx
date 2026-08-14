@@ -12,6 +12,7 @@ import { FanZoneStaffBox } from "@/components/app/FanZoneStaffBox";
 import { BoroMatchCentreBox } from "@/components/app/BoroMatchCentreBox";
 import { BoroLiveMatchStrip } from "@/components/app/BoroLiveMatchStrip";
 import { FanZoneNameGate } from "@/components/app/FanZoneNamePrompt";
+import { FanZoneMentionsBell } from "@/components/app/FanZoneMentionsBell";
 import { useFanAliasVersion } from "@/hooks/use-fan-alias-version";
 import boroHero from "@/assets/boro-hero.jpg";
 import boroBadge from "@/assets/boro-fan-zone-badge.png";
@@ -136,6 +137,9 @@ function ForumLayout() {
             <Button asChild size="sm" className="bg-white text-[#961016] hover:bg-white/90 border-0 shadow-md justify-center col-span-2 sm:col-span-1">
               <Link to="/boro-fantasy"><Trophy className="size-4 mr-1.5" />MFC Fantasy Manager</Link>
             </Button>
+            <div className="col-span-2 sm:col-span-1 flex justify-center sm:justify-end">
+              <FanZoneMentionsBell />
+            </div>
           </div>
           <Link
             to="/forum"
