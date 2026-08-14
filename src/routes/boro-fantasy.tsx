@@ -203,7 +203,29 @@ function PlayerStatsDialog({
       }),
     [matches, pos, rateMul],
   );
-  const ourRows = useMemo(() => seasonRows.filter((r) => isOurScoringStat(r.key)), [seasonRows]);
+  /**
+   * "Our points" lines. Minutes on their own score nothing — what we actually
+   * award is the appearance: 2 pts for a starter who features, 1 pt for a sub
+   * who comes off the bench. Show that instead of a blank MIN row.
+   */
+  const ourRows = useMemo(() => {
+    const rows = seasonRows.filter((r) => isOurScoringStat(r.key) && r.key !== "minutes");
+    const apps = matches.filter((m) => (m.stats.minutes ?? 0) > 0).length;
+    const appRate = asSub ? 1 : 2;
+    return [
+      {
+        key: "app",
+        abbr: "APP",
+        means: asSub
+          ? "Appearance — came off the bench"
+          : "Appearance — played in your match day 11",
+        total: apps,
+        rate: appRate,
+        points: Math.round(apps * appRate * 100) / 100,
+      },
+      ...rows,
+    ];
+  }, [seasonRows, matches, asSub]);
   const espnRows = useMemo(
     () => seasonRows.filter((r) => !isOurScoringStat(r.key)),
     [seasonRows],
