@@ -1,3 +1,4 @@
+import { DEFAULT_AVATAR_URL } from "@/lib/default-avatar";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -260,7 +261,7 @@ function MembersPage() {
               <div className="px-4 -mt-8 pb-4 flex flex-col flex-1">
                 <div className="relative w-fit">
                   <img
-                    src={p.avatar_url || "/default-avatar.webp"}
+                    src={p.avatar_url || DEFAULT_AVATAR_URL}
                     alt=""
                     className="size-16 rounded-2xl object-cover ring-4 ring-surface"
                   />
