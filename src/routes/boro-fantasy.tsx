@@ -2066,14 +2066,15 @@ function SquadBuilder({
             playerById={playerById}
             bench={bench}
             benchPositions={benchPositions}
-            onBenchPosition={(index, pos) =>
+            onBenchPosition={(index, pos) => {
+              if (!editable) return;
               setBenchPositions((prev) => {
                 const next = [...prev];
                 while (next.length <= index) next.push(null);
                 next[index] = pos;
                 return next;
-              })
-            }
+              });
+            }}
             benchSize={benchRules.size}
             pointsByPlayer={hasGwPoints ? pointsByPlayer : undefined}
             minutesByPlayer={minutesByPlayer.size ? minutesByPlayer : undefined}
