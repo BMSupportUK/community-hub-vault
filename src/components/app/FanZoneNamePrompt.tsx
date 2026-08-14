@@ -6,6 +6,22 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { FanZoneInfo } from "@/hooks/use-fan-zone";
+import { useFanZoneMembership } from "@/hooks/use-fan-zone";
+import { useAuth } from "@/hooks/use-auth";
+
+/**
+ * Self-contained gate: drop this on any Boro Fan Zone surface and it will ask
+ * for a display name whenever the signed-in fan has a Fan Zone relationship
+ * (approved, pending, or staff) but no Fan Zone name yet.
+ */
+export function FanZoneNameGate() {
+  const { user, hasAny } = useAuth();
+  const info = useFanZoneMembership(user?.id ?? null);
+  const isStaff = hasAny(["admin", "management", "boro_fan_zone_moderator"]);
+  const inZone = isStaff || info?.status === "approved" || info?.status === "pending";
+  if (!user) return null;
+  return <FanZoneNamePrompt info={info} canEnter={inZone} />;
+}
 
 /**
  * Forces first-time Boro Fan Zone members to choose a display name.
