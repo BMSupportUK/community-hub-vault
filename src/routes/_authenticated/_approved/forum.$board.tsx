@@ -5,6 +5,7 @@ import { Pin, Lock, Loader2, Plus, ArrowLeft, Eye, MessageSquare, Pencil, Trash2
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useFanZoneMembership } from "@/hooks/use-fan-zone";
+import { useFanAliasVersion } from "@/hooks/use-fan-alias-version";
 import { formatLastSeen } from "@/lib/relative-time";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -94,6 +95,7 @@ function BoardPage() {
   const canUseSpecialMentions = hasAny(["admin", "management", "staff", "moderator"]);
   const info = useFanZoneMembership(user?.id ?? null);
   const canEnter = isStaff || info?.status === "approved";
+  const aliasVersion = useFanAliasVersion();
   const mentionCandidates = useMentionCandidates(canUseSpecialMentions);
   const { blocked } = useFanBlocks();
   useProfanityWords();
