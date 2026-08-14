@@ -268,8 +268,9 @@ function PlayerStatsDialog({
               <TabsContent value="ours" className="space-y-2">
                 <h4 className="text-sm font-bold">Our points &amp; abbreviations</h4>
                 <p className="text-xs text-muted-foreground">
-                  Points shown are what a match day 11 starter earns as a{" "}
-                  {POSITION_LABEL[pos].toLowerCase()}. Subs earn half.
+                  {asSub
+                    ? `Points shown are the sub rate for a ${POSITION_LABEL[pos].toLowerCase()} — half of a starter's points.`
+                    : `Points shown are what a match day 11 starter earns as a ${POSITION_LABEL[pos].toLowerCase()}. Subs earn half.`}
                 </p>
                 <p className="text-xs font-semibold text-emerald-500">
                   This tab only: appearance, goals, assists, clean sheets and cards.
