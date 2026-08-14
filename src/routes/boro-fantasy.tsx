@@ -71,7 +71,9 @@ export const Route = createFileRoute("/boro-fantasy")({
 // Player stats pop-up: tap any player's name to see their per-match
 // ESPN stat lines and the points those stats earned.
 // ------------------------------------------------------------------
-const PlayerStatsCtx = createContext<(playerId: string, scoringAs?: FantasyPosition | null) => void>(
+const PlayerStatsCtx = createContext<
+  (playerId: string, scoringAs?: FantasyPosition | null, asSub?: boolean) => void
+>(
   () => {},
 );
 
@@ -81,19 +83,22 @@ function PlayerNameButton({
   name,
   className = "",
   scoringAs = null,
+  asSub = false,
 }: {
   playerId: string;
   name: string;
   className?: string;
   /** Position this player was selected to score in, when he covers more than one. */
   scoringAs?: FantasyPosition | null;
+  /** True when the player is named on the bench — subs earn half points. */
+  asSub?: boolean;
 }) {
   const open = useContext(PlayerStatsCtx);
   return (
     <button
       type="button"
       title={`${name} — view stats and points`}
-      onClick={(e) => { e.stopPropagation(); open(playerId, scoringAs); }}
+      onClick={(e) => { e.stopPropagation(); open(playerId, scoringAs, asSub); }}
       className={`w-full text-center underline-offset-2 hover:underline ${className}`}
     >
       {name}
