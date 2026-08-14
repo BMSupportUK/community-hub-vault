@@ -229,3 +229,60 @@ export async function persistDraftPoll(topicId: string, userId: string, draft: D
   if (oErr) return oErr.message;
   return null;
 }
+
+/**
+ * "Add poll" control for an existing topic (reply editor). Only renders when the
+ * topic has no poll yet.
+ */
+export function AddPollToTopic({ topicId, userId }: { topicId: string; userId: string }) {
+  const [exists, setExists] = useState<boolean | null>(null);
+  const [draft, setDraft] = useState<DraftPoll | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    void (async () => {
+      const { data } = await supabase.from("forum_polls").select("id").eq("topic_id", topicId).maybeSingle();
+      if (active) setExists(!!data);
+    })();
+    return () => { active = false; };
+  }, [topicId]);
+
+  if (exists !== false) return null;
+
+  const save = async () => {
+    if (!draft) return;
+    setSaving(true);
+    const err = await persistDraftPoll(topicId, userId, draft);
+    setSaving(false);
+    if (err) { toast.error("Couldn't add poll", { description: err }); return; }
+    toast.success("Poll added to this topic");
+    setDraft(null);
+    setExists(true);
+  };
+
+  if (!draft) {
+    return (
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        className="border-[#E11B22]/40 hover:bg-[#E11B22]/10"
+        onClick={() => setDraft({ question: "", options: ["", ""], allow_multiple: false })}
+      >
+        <BarChart3 className="size-4 mr-1 text-[#E11B22]" /> Add poll
+      </Button>
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      <PollDraftEditor value={draft} onChange={setDraft} onRemove={() => setDraft(null)} />
+      <div className="flex justify-end">
+        <Button type="button" size="sm" onClick={() => void save()} disabled={saving}>
+          {saving ? <><Loader2 className="size-4 mr-1 animate-spin" />Saving…</> : "Save poll"}
+        </Button>
+      </div>
+    </div>
+  );
+}
