@@ -1462,20 +1462,34 @@ function SquadBuilder({
   >(null);
 
   // Only highlight Save when something actually differs from the saved squad.
+  // Scoring-position choices are part of the squad, so changing them must let
+  // the manager save before the deadline and be frozen once the gameweek locks.
   const dirty = useMemo(() => {
     const sameSet = (a: string[], b: (string | null)[]) =>
       a.length === b.filter(Boolean).length && [...a].sort().join(",") === [...b.filter(Boolean)].sort().join(",");
+    const samePositions = (saved: (FantasyPosition | null)[], current: (FantasyPosition | null)[]) =>
+      saved.length === current.length && saved.every((p, i) => p === current[i]);
     if (!existing) return selected.length > 0;
     const savedSelected = existing.picks.map((p) => p.playerId);
     const savedStarters = existing.picks.filter((p) => p.isStarter).map((p) => p.playerId);
+    const savedStarterPositions = Array(11).fill(null).map((_, i) => {
+      const pick = existing.picks.find((p) => p.isStarter && p.slotOrder === i);
+      return (pick?.pickedPosition ?? null) as FantasyPosition | null;
+    });
+    const savedBenchPositions = Array(benchRules.size).fill(null).map((_, i) => {
+      const pick = existing.picks.find((p) => !p.isStarter && p.slotOrder === i);
+      return (pick?.pickedPosition ?? null) as FantasyPosition | null;
+    });
     return (
       existing.formation !== formation ||
       (existing.captainId ?? "") !== captainId ||
       (existing.viceId ?? "") !== viceId ||
       !sameSet(savedSelected, selected) ||
-      !sameSet(savedStarters, starters)
+      !sameSet(savedStarters, starters) ||
+      !samePositions(savedStarterPositions, slotPositions) ||
+      !samePositions(savedBenchPositions, benchPositions)
     );
-  }, [existing, formation, captainId, viceId, selected, starters]);
+  }, [existing, formation, captainId, viceId, selected, starters, slotPositions, benchPositions, benchRules.size]);
 
   /** Ensure the player is in the 15 — returns the new squad list, or null if not possible. */
   function withPlayer(sel: string[], p: FantasyPlayerDTO): string[] | null {
@@ -1970,13 +1984,14 @@ function SquadBuilder({
               selected={selected}
               starters={starters}
               slotPositions={slotPositions}
-              onSlotPosition={(slotIndex, position) =>
+              onSlotPosition={(slotIndex, position) => {
+                if (!editable) return;
                 setSlotPositions((prev) => {
                   const next = [...prev];
                   next[slotIndex] = position;
                   return next;
-                })
-              }
+                });
+              }}
               bench={bench}
               captainId={captainId}
               viceId={viceId}
@@ -2051,14 +2066,15 @@ function SquadBuilder({
             playerById={playerById}
             bench={bench}
             benchPositions={benchPositions}
-            onBenchPosition={(index, pos) =>
+            onBenchPosition={(index, pos) => {
+              if (!editable) return;
               setBenchPositions((prev) => {
                 const next = [...prev];
                 while (next.length <= index) next.push(null);
                 next[index] = pos;
                 return next;
-              })
-            }
+              });
+            }}
             benchSize={benchRules.size}
             pointsByPlayer={hasGwPoints ? pointsByPlayer : undefined}
             minutesByPlayer={minutesByPlayer.size ? minutesByPlayer : undefined}
@@ -2610,8 +2626,9 @@ function PitchView({
                             );
                           }
                           return (
-                            <div className="mt-0.5 text-[9px] font-bold uppercase tracking-wide text-white/60">
-                              Scores as {POSITION_SHORT[scoringAs]}
+                            <div className="mt-0.5 flex items-center justify-center gap-1 text-[9px] font-bold uppercase tracking-wide text-white/60">
+                              {!editable && <Lock className="size-2.5" />}
+                              {editable ? `Scores as ${POSITION_SHORT[scoringAs]}` : `Locked — scores as ${POSITION_SHORT[scoringAs]}`}
                             </div>
                           );
                         })()}
@@ -2833,8 +2850,9 @@ function BenchPanel({
                         );
                       }
                       return (
-                        <div className="mt-0.5 text-[9px] font-bold uppercase tracking-wide text-muted-foreground/80">
-                          Scores as {POSITION_SHORT[scoringAs]}
+                        <div className="mt-0.5 flex items-center justify-center gap-1 text-[9px] font-bold uppercase tracking-wide text-muted-foreground/80">
+                          {!editable && <Lock className="size-2.5" />}
+                          {editable ? `Scores as ${POSITION_SHORT[scoringAs]}` : `Locked — scores as ${POSITION_SHORT[scoringAs]}`}
                         </div>
                       );
                     })()}
