@@ -803,7 +803,7 @@ function InstallGuidesPage() {
             </div>
           )}
           <DialogFooter>
-            <Button variant="ghost" onClick={() => { setShowEditor(false); setEditing(null); }}>
+            <Button variant="ghost" onClick={closeEditor}>
               <X className="size-4 mr-1" /> Cancel
             </Button>
             <Button onClick={saveBlog}>Save</Button>
