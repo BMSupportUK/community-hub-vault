@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { FanZoneInfo } from "@/hooks/use-fan-zone";
-import { useFanZoneMembership } from "@/hooks/use-fan-zone";
+import { useFanZoneMembershipState } from "@/hooks/use-fan-zone";
 import { useAuth } from "@/hooks/use-auth";
 
 /**
@@ -16,11 +16,14 @@ import { useAuth } from "@/hooks/use-auth";
  * (approved, pending, or staff) but no Fan Zone name yet.
  */
 export function FanZoneNameGate() {
-  const { user, hasAny } = useAuth();
-  const info = useFanZoneMembership(user?.id ?? null);
+  const { user, hasAny, loading } = useAuth();
+  const { info, loading: infoLoading } = useFanZoneMembershipState(user?.id ?? null);
   const isStaff = hasAny(["admin", "management", "staff", "moderator", "boro_fan_zone_moderator"]);
   const inZone = isStaff || info?.status === "approved" || info?.status === "pending";
   if (!user) return null;
+  // Wait until auth roles and the membership row have actually loaded, otherwise
+  // the dialog flashes on every reload before the saved name arrives.
+  if (loading || infoLoading) return null;
   return <FanZoneNamePrompt info={info} canEnter={inZone} allowMissingRow={isStaff} />;
 }
 
