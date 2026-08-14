@@ -165,6 +165,19 @@ function PlayerStatsDialog({
       }),
     [matches, pos],
   );
+  /** Clean sheets are a scoring rule, not an ESPN stat column — derive them. */
+  const cleanSheetRows = useMemo(() => {
+    const rate = pos === "gk" || pos === "def" ? 4 : pos === "mid" ? 1 : null;
+    const rateShort = pos === "gk" || pos === "def" ? 2 : pos === "mid" ? 0.5 : null;
+    if (rate == null || rateShort == null) return [];
+    const played = matches.filter((m) => (m.stats.minutes ?? 0) > 0 && (m.stats.goals_conceded ?? 0) === 0);
+    const full = played.filter((m) => (m.stats.minutes ?? 0) >= 60).length;
+    const short = played.length - full;
+    return [
+      { key: "cs", abbr: "CS", means: "Clean sheet (60+ mins)", total: full, rate, points: Math.round(full * rate * 100) / 100 },
+      { key: "cs-", abbr: "CS-", means: "Clean sheet (under 60 mins)", total: short, rate: rateShort, points: Math.round(short * rateShort * 100) / 100 },
+    ];
+  }, [matches, pos]);
 
   return (
     <Dialog open={!!playerId} onOpenChange={(o) => { if (!o) onClose(); }}>
@@ -235,6 +248,14 @@ function PlayerStatsDialog({
                         <td className="py-1.5 pl-2 text-right font-bold tabular-nums text-primary">
                           {r.points == null ? "—" : r.points}
                         </td>
+                      </tr>
+                    ))}
+                    {cleanSheetRows.map((r) => (
+                      <tr key={r.key} className="border-b border-border/60">
+                        <td className="py-1.5 pr-2"><AbbrChip abbr={r.abbr} title={r.means} /></td>
+                        <td className="py-1.5 pr-2 text-muted-foreground">{r.means}</td>
+                        <td className="px-2 py-1.5 text-right tabular-nums">{r.total}</td>
+                        <td className="py-1.5 pl-2 text-right font-bold tabular-nums text-primary">{r.points}</td>
                       </tr>
                     ))}
                   </tbody>
