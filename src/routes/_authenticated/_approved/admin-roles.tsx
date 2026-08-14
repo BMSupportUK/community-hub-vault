@@ -13,6 +13,10 @@ import {
   MapPin,
   X,
   RefreshCw,
+  KeyRound,
+  Eye,
+  EyeOff,
+  Copy,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -38,6 +42,12 @@ interface RoleDef {
   sort_order: number;
 }
 
+interface CredLite {
+  id: string;
+  app_login_name: string;
+  password: string;
+}
+
 interface Row {
   id: string;
   username: string | null;
@@ -45,6 +55,7 @@ interface Row {
   roles: string[];
   last_ip: string | null;
   email: string | null;
+  creds: CredLite[];
 }
 
 const SYSTEM_STYLE: Record<string, string> = {
