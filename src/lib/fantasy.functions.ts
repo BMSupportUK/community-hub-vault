@@ -46,6 +46,15 @@ export const getFantasyLeaderboard = createServerFn({ method: "GET" })
     return loadLeaderboard(admin, canSeeEmails);
   });
 
+export const getFantasyPreviousGameweekScores = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async (): Promise<FantasyPreviousGwScoreDTO | null> => {
+    setResponseHeader("cache-control", "no-store, max-age=0");
+    const { getAdmin, loadPreviousGameweekScores } = await import("@/lib/fantasy.server");
+    const admin = await getAdmin();
+    return loadPreviousGameweekScores(admin);
+  });
+
 // ------------------------------------------------------------------
 // Member writes
 // ------------------------------------------------------------------
