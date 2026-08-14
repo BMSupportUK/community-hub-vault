@@ -194,10 +194,58 @@ function PlayerStatsDialog({
           <>
             {matches.length === 0 && (
               <p className="rounded-lg border border-border bg-muted/30 p-3 text-sm text-muted-foreground">
-                No stats recorded yet — the table below fills in automatically once this player features
+                No stats recorded yet — the tables below fill in automatically once this player features
                 in a finished game week and ESPN confirm the match stats.
               </p>
             )}
+            {matches.length > 0 && (
+              <div className="space-y-2">
+                <h4 className="text-sm font-bold">Weekly points</h4>
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[420px] text-left text-xs">
+                    <thead>
+                      <tr className="border-b border-border text-[11px] uppercase tracking-wide text-muted-foreground">
+                        <th className="py-2 pr-2">Stat</th>
+                        {matches.map((m) => (
+                          <th key={m.fixtureId} className="px-2 py-2 text-center">
+                            <div className="font-bold text-foreground">
+                              {m.gwNumber != null ? `GW${m.gwNumber}` : "—"}
+                            </div>
+                            <div className="font-normal normal-case">{m.label}</div>
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {statKeys.map((k) => (
+                        <tr key={k} className="border-b border-border/60">
+                          <td className="py-1.5 pr-2 text-muted-foreground">
+                            <span className="flex items-center gap-1.5">
+                              <AbbrChip abbr={PLAYER_STAT_META[k]!.abbr} title={PLAYER_STAT_META[k]!.means} />
+                              <span>{PLAYER_STAT_META[k]!.means}</span>
+                            </span>
+                          </td>
+                          {matches.map((m) => (
+                            <td key={m.fixtureId} className="px-2 py-1.5 text-center tabular-nums">
+                              {m.stats[k] ?? 0}
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                      <tr className="bg-muted/40">
+                        <td className="py-2 pr-2 font-bold">Weekly points</td>
+                        {matches.map((m) => (
+                          <td key={m.fixtureId} className="px-2 py-2 text-center font-bold tabular-nums text-primary">
+                            {m.points}
+                          </td>
+                        ))}
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
             <div className="mb-2 flex items-center justify-between rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm">
               <span className="font-semibold">Season total</span>
               <span className="font-bold tabular-nums">{data?.totalPoints ?? 0} pts</span>
@@ -235,54 +283,6 @@ function PlayerStatsDialog({
                 </table>
               </div>
             </div>
-
-            {matches.length > 0 && (
-            <div className="mt-4 space-y-2">
-            <h4 className="text-sm font-bold">Match by match</h4>
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[420px] text-left text-xs">
-                <thead>
-                  <tr className="border-b border-border text-[11px] uppercase tracking-wide text-muted-foreground">
-                    <th className="py-2 pr-2">Stat</th>
-                    {matches.map((m) => (
-                      <th key={m.fixtureId} className="px-2 py-2 text-center">
-                        <div className="font-bold text-foreground">
-                          {m.gwNumber != null ? `GW${m.gwNumber}` : "—"}
-                        </div>
-                        <div className="font-normal normal-case">{m.label}</div>
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {statKeys.map((k) => (
-                    <tr key={k} className="border-b border-border/60">
-                      <td className="py-1.5 pr-2 text-muted-foreground">
-                        <span className="flex items-center gap-1.5">
-                          <AbbrChip abbr={PLAYER_STAT_META[k]!.abbr} title={PLAYER_STAT_META[k]!.means} />
-                          <span>{PLAYER_STAT_META[k]!.means}</span>
-                        </span>
-                      </td>
-                      {matches.map((m) => (
-                        <td key={m.fixtureId} className="px-2 py-1.5 text-center tabular-nums">
-                          {m.stats[k] ?? 0}
-                        </td>
-                      ))}
-                    </tr>
-                  ))}
-                  <tr className="bg-muted/40">
-                    <td className="py-2 pr-2 font-bold">Points earned</td>
-                    {matches.map((m) => (
-                      <td key={m.fixtureId} className="px-2 py-2 text-center font-bold tabular-nums text-primary">
-                        {m.points}
-                      </td>
-                    ))}
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-            </div>
-            )}
           </>
         )}
       </DialogContent>
