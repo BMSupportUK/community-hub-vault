@@ -426,7 +426,7 @@ function BoardPage() {
                     placeholder="What's on your mind? Paste an X or Facebook URL on its own line to embed it."
                     mentions={mentionCandidates}
                     imageUpload={{ userId: user?.id }}
-                    className="[&_.html-editor-toolbar]:border-b-white/10 [&_.html-editor-toolbar]:bg-black/20 [&_.html-editor-toolbar_button]:text-white/70 [&_.html-editor-toolbar_button:hover]:bg-white/10 [&_.html-editor-toolbar_button:hover]:text-white [&_.html-editor-editor]:text-white [&_.html-editor-editor]:placeholder:text-white/40 [&_.html-editor-editor_p]:text-white/95"
+                    className="[--background:oklch(0.18_0.04_18)] [--border:oklch(0.35_0.05_18)] [--foreground:oklch(0.97_0.005_20)] [--muted-foreground:oklch(0.70_0.03_20)] [--primary:oklch(0.62_0.27_22)] [--primary-foreground:oklch(0.99_0.005_20)] [--accent:oklch(0.32_0.10_18)] [--accent-foreground:oklch(0.97_0.005_20)] [--popover:oklch(0.20_0.05_18)] [--popover-foreground:oklch(0.97_0.005_20)] [--muted:oklch(0.25_0.04_18)] [&_.html-editor-toolbar]:border-b-[oklch(0.35_0.05_18)] [&_.html-editor-toolbar]:bg-black/20 [&_.html-editor-editor]:text-white/95"
                   />
                 </div>
                 {poll ? (
