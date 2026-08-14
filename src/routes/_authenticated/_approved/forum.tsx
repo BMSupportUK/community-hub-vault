@@ -315,9 +315,13 @@ function BoardsIndex() {
                 </div>
                 {lastTopic && (
                   <div className="-mt-1 flex items-center justify-between gap-2 text-[11px] text-muted-foreground">
-                    <span className="truncate min-w-0">
+                    <Link
+                      to="/forum/$board/$topic"
+                      params={{ board: b.slug, topic: lastTopic.id }}
+                      className="truncate min-w-0 hover:text-[#E11B22] hover:underline"
+                    >
                       Latest: <span className="font-semibold text-foreground">{censorText(lastTopic.title)}</span>
-                    </span>
+                    </Link>
                     {b.last_post_at && (
                       <span className="shrink-0 text-right">
                         {formatLastSeen(b.last_post_at)}
