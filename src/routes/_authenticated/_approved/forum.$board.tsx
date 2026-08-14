@@ -454,60 +454,64 @@ function BoardPage() {
                   if (target.closest("a, button, [role='button'], input, textarea, select, label, [data-no-nav]")) return;
                   goToTopic(t.id);
                 }}
-                className="group relative rounded-xl border border-white/10 bg-[rgba(8,12,22,0.88)] backdrop-blur-md hover:border-[#E11B22]/70 hover:shadow-[0_14px_42px_-12px_rgba(225,27,34,0.6)] hover:-translate-y-[1px] transition-all overflow-hidden shadow-[0_8px_28px_-10px_rgba(0,0,0,0.7)] cursor-pointer"
+                className={`group relative rounded-xl border cursor-pointer overflow-hidden transition-all hover:-translate-y-[2px] ${
+                  t.is_sticky
+                    ? "border-[#F4B400]/45 bg-[linear-gradient(115deg,rgba(244,180,0,0.16),rgba(12,16,26,0.96)_38%,rgba(8,11,19,0.98))] shadow-[0_10px_30px_-12px_rgba(244,180,0,0.45)] hover:border-[#F4B400]/80 hover:shadow-[0_18px_48px_-12px_rgba(244,180,0,0.6)]"
+                    : "border-[#E11B22]/30 bg-[linear-gradient(115deg,rgba(225,27,34,0.18),rgba(12,16,26,0.96)_36%,rgba(8,11,19,0.98))] shadow-[0_10px_30px_-12px_rgba(0,0,0,0.85)] hover:border-[#E11B22]/80 hover:shadow-[0_18px_48px_-12px_rgba(225,27,34,0.65)]"
+                }`}
               >
                 <span
                   aria-hidden
-                  className={`absolute left-0 top-0 bottom-0 w-[3px] ${t.is_sticky ? "bg-gradient-to-b from-[#F4B400] to-[#B8860B]" : "bg-gradient-to-b from-[#E11B22] to-[#8B0F14]"} opacity-70 group-hover:opacity-100 transition-opacity`}
+                  className={`absolute left-0 top-0 bottom-0 w-[4px] ${t.is_sticky ? "bg-gradient-to-b from-[#FFD24A] via-[#F4B400] to-[#B8860B] shadow-[0_0_16px_rgba(244,180,0,0.75)]" : "bg-gradient-to-b from-[#FF3B41] via-[#E11B22] to-[#8B0F14] shadow-[0_0_16px_rgba(225,27,34,0.8)]"} transition-opacity`}
                 />
                 <div className="flex items-start gap-3 p-4 pl-5">
-                  <div className="hidden sm:flex shrink-0 size-10 rounded-lg bg-gradient-to-br from-[#E11B22]/15 to-[#8B0F14]/10 border border-[#E11B22]/25 items-center justify-center text-[#E11B22] shadow-inner">
+                  <div className={`hidden sm:flex shrink-0 size-10 rounded-lg items-center justify-center transition-transform group-hover:scale-105 ${t.is_sticky ? "bg-gradient-to-br from-[#F4B400] to-[#B8860B] text-black shadow-[0_6px_18px_-6px_rgba(244,180,0,0.8)]" : "bg-gradient-to-br from-[#FF3B41] to-[#8B0F14] text-white shadow-[0_6px_18px_-6px_rgba(225,27,34,0.85)]"}`}>
                     <MessageSquare className="size-4" />
                   </div>
                   <div className="flex-1 min-w-0 block rounded-lg">
                     <div className="flex items-center gap-2 flex-wrap">
                       {t.is_sticky && (
-                        <span className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 bg-[#F4B400]/15 text-[#F4B400] border border-[#F4B400]/30 text-[10px] font-bold uppercase tracking-wider shrink-0">
+                        <span className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 bg-[#F4B400] text-black border border-[#F4B400] shadow-[0_0_14px_-2px_rgba(244,180,0,0.8)] text-[10px] font-bold uppercase tracking-wider shrink-0">
                           <Pin className="size-2.5" />Pinned
                         </span>
                       )}
                       {t.is_locked && (
-                        <span className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 bg-muted/40 text-muted-foreground border border-border text-[10px] font-bold uppercase tracking-wider shrink-0">
+                        <span className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 bg-white/15 text-white/85 border border-white/30 text-[10px] font-bold uppercase tracking-wider shrink-0">
                           <Lock className="size-2.5" />Locked
                         </span>
                       )}
-                      <Link to="/forum/$board/$topic" params={{ board: slug, topic: t.id }} className="font-display font-semibold leading-snug text-foreground text-[15px] group-hover:text-[#E11B22] hover:underline transition-colors">
+                      <Link to="/forum/$board/$topic" params={{ board: slug, topic: t.id }} className="font-display font-bold leading-snug text-white text-[15.5px] tracking-tight group-hover:text-[#FF6B70] group-hover:[text-shadow:0_0_14px_rgba(225,27,34,0.55)] hover:underline transition-all">
                         {censorText(t.title)}
                       </Link>
                     </div>
-                    <div className="text-[11px] text-muted-foreground mt-1.5 flex items-center gap-1.5">
-                      <span className="inline-flex items-center justify-center size-4 rounded-full bg-[#E11B22]/20 text-[#E11B22] text-[9px] font-bold uppercase">
+                    <div className="text-[11px] text-white/60 mt-1.5 flex items-center gap-1.5">
+                      <span className="inline-flex items-center justify-center size-4 rounded-full bg-[#E11B22] text-white text-[9px] font-bold uppercase">
                         {authorName.charAt(0)}
                       </span>
                       by <Link
                         to="/fanzone/u/$userId"
                         params={{ userId: t.author_id }}
-                        className="text-foreground font-medium hover:text-[#E11B22] hover:underline"
+                        className="text-white font-semibold hover:text-[#FF6B70] hover:underline"
                       >{authorName}</Link>
-                      <span className="text-border">•</span>
+                      <span className="text-white/25">•</span>
                       <span>{formatLastSeen(t.created_at)}</span>
                     </div>
-                    <div className="mt-3 flex items-center gap-2 text-[11px] text-muted-foreground flex-wrap">
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-surface-2/40 border border-border/60 font-medium tabular-nums">
-                        <MessageSquare className="size-3 text-[#E11B22]" />
+                    <div className="mt-3 flex items-center gap-2 text-[11px] text-white/60 flex-wrap">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#E11B22]/20 border border-[#E11B22]/40 text-white font-semibold tabular-nums">
+                        <MessageSquare className="size-3 text-[#FF6B70]" />
                         {t.reply_count}
                       </span>
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-surface-2/40 border border-border/60 font-medium tabular-nums">
-                        <Eye className="size-3 text-muted-foreground" />
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-white/10 border border-white/20 text-white font-semibold tabular-nums">
+                        <Eye className="size-3 text-white/70" />
                         {t.view_count}
                       </span>
                       <span className="truncate ml-0.5">
                         last by {t.last_post_by ? <Link
                           to="/fanzone/u/$userId"
                           params={{ userId: t.last_post_by }}
-                          className="text-foreground font-medium hover:text-[#E11B22] hover:underline"
-                        >{lastName}</Link> : <span className="text-foreground font-medium">{lastName}</span>}
-                        <span className="text-border mx-1">•</span>
+                          className="text-white font-semibold hover:text-[#FF6B70] hover:underline"
+                        >{lastName}</Link> : <span className="text-white font-semibold">{lastName}</span>}
+                        <span className="text-white/25 mx-1">•</span>
                         {formatLastSeen(t.last_post_at)}
                       </span>
                     </div>
