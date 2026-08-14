@@ -449,7 +449,12 @@ function BoardPage() {
             return (
               <article
                 key={t.id}
-                 className="group relative rounded-xl border border-white/10 bg-[rgba(8,12,22,0.88)] backdrop-blur-md hover:border-[#E11B22]/70 hover:shadow-[0_14px_42px_-12px_rgba(225,27,34,0.6)] hover:-translate-y-[1px] transition-all overflow-hidden shadow-[0_8px_28px_-10px_rgba(0,0,0,0.7)]"
+                onClick={(e) => {
+                  const target = e.target as HTMLElement;
+                  if (target.closest("a, button, [role='button'], input, textarea, select, label, [data-no-nav]")) return;
+                  goToTopic(t.id);
+                }}
+                className="group relative rounded-xl border border-white/10 bg-[rgba(8,12,22,0.88)] backdrop-blur-md hover:border-[#E11B22]/70 hover:shadow-[0_14px_42px_-12px_rgba(225,27,34,0.6)] hover:-translate-y-[1px] transition-all overflow-hidden shadow-[0_8px_28px_-10px_rgba(0,0,0,0.7)] cursor-pointer"
               >
                 <span
                   aria-hidden
