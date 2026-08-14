@@ -163,7 +163,7 @@ function BoardPage() {
         setProfiles(map);
       }
     })();
-  }, [slug, canEnter, page]);
+  }, [slug, canEnter, page, aliasVersion]);
 
   // Live updates: refresh the topic list when topics or posts change in this board.
   useEffect(() => {

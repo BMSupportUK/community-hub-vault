@@ -182,6 +182,7 @@ function BoardsIndex() {
   const [posters, setPosters] = useState<Record<string, { display_name: string | null; username: string | null }>>({});
   const [lastTopics, setLastTopics] = useState<Record<string, { id: string; title: string }>>({});
   useProfanityWords();
+  const aliasVersion = useFanAliasVersion();
 
   const canEnter = isStaff || info?.status === "approved";
   const isPending = info?.status === "pending";
@@ -221,7 +222,7 @@ function BoardsIndex() {
         setPosters(map);
       }
     })();
-  }, [canEnter]);
+  }, [canEnter, aliasVersion]);
 
   if (!canEnter && isPending) {
     return (
