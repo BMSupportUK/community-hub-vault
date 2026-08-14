@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Loader2, Pencil, Save, X, ImagePlus } from "lucide-react";
+import { Loader2, Pencil, Save, X, ImagePlus, Lock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useFanZoneMembership } from "@/hooks/use-fan-zone";
@@ -8,12 +8,14 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import boroDefaultAvatar from "@/assets/boro-default-avatar.png";
+import { useFanAvatarLock } from "@/lib/fan-avatar-lock";
 
 /** Top-of-board card letting an approved fan zone member set an alias + avatar
  * used only inside the Boro Fan Zone. */
 export function FanZoneAliasSettings() {
   const { user, hasAny } = useAuth();
   const isStaff = hasAny(["admin", "boro_fan_zone_moderator"]);
+  const { locked: avatarLocked, forcedAvatar, lockMessage } = useFanAvatarLock();
   const info = useFanZoneMembership(user?.id ?? null);
   const [open, setOpen] = useState(false);
   const [alias, setAlias] = useState("");
@@ -28,22 +30,23 @@ export function FanZoneAliasSettings() {
 
   useEffect(() => {
     setAlias(info?.fanAlias ?? "");
-    setAvatarUrl(info?.fanAvatarUrl ?? "");
+    setAvatarUrl(forcedAvatar ?? info?.fanAvatarUrl ?? "");
     setBio(info?.bio ?? "");
     setSupporterSince(info?.supporterSince ? String(info.supporterSince) : "");
     setFavPlayer(info?.favPlayer ?? "");
     setMemory(info?.matchdayMemory ?? "");
-  }, [info?.fanAlias, info?.fanAvatarUrl, info?.bio, info?.supporterSince, info?.favPlayer, info?.matchdayMemory]);
+  }, [info?.fanAlias, info?.fanAvatarUrl, info?.bio, info?.supporterSince, info?.favPlayer, info?.matchdayMemory, forcedAvatar]);
 
   if (!user) return null;
   if (!isStaff && info?.status !== "approved") return null;
 
   const hasAlias = !!(info?.fanAlias || info?.fanAvatarUrl);
-  const previewAvatar = info?.fanAvatarUrl || boroDefaultAvatar;
-  const editPreviewAvatar = avatarUrl || boroDefaultAvatar;
+  const previewAvatar = forcedAvatar || info?.fanAvatarUrl || boroDefaultAvatar;
+  const editPreviewAvatar = forcedAvatar || avatarUrl || boroDefaultAvatar;
 
   const onPickFile = async (file: File) => {
     if (!user) return;
+    if (avatarLocked) return toast.error(lockMessage);
     if (file.size > 5 * 1024 * 1024) return toast.error("Image must be under 5MB");
     setUploading(true);
     try {
@@ -129,20 +132,29 @@ export function FanZoneAliasSettings() {
             <div className="size-14 rounded-full overflow-hidden bg-gradient-to-br from-[#E11B22] to-[#8B0F14] grid place-items-center text-white text-lg font-bold ring-2 ring-white/10 shrink-0">
               <img src={editPreviewAvatar} alt="" className="size-14 object-cover" />
             </div>
-            <div className="flex-1 flex flex-wrap gap-2">
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => fileRef.current?.click()}
-                disabled={uploading}
-              >
-                {uploading ? <Loader2 className="size-3.5 mr-1.5 animate-spin" /> : <ImagePlus className="size-3.5 mr-1.5" />}
-                {avatarUrl ? "Replace picture" : "Upload picture"}
-              </Button>
-              {avatarUrl && (
-                <Button size="sm" variant="ghost" onClick={() => setAvatarUrl("")}>
-                  Remove picture
-                </Button>
+            <div className="flex-1 flex flex-wrap gap-2 items-center">
+              {avatarLocked ? (
+                <p className="text-[11px] text-muted-foreground inline-flex items-center gap-1.5">
+                  <Lock className="size-3.5 text-[#E11B22]" />
+                  {lockMessage}
+                </p>
+              ) : (
+                <>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => fileRef.current?.click()}
+                    disabled={uploading}
+                  >
+                    {uploading ? <Loader2 className="size-3.5 mr-1.5 animate-spin" /> : <ImagePlus className="size-3.5 mr-1.5" />}
+                    {avatarUrl ? "Replace picture" : "Upload picture"}
+                  </Button>
+                  {avatarUrl && (
+                    <Button size="sm" variant="ghost" onClick={() => setAvatarUrl("")}>
+                      Remove picture
+                    </Button>
+                  )}
+                </>
               )}
               <input
                 ref={fileRef}
