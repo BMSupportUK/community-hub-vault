@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Loader2, UserCog } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { notifyFanAliasChange } from "@/lib/fan-alias-bus";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -65,6 +66,7 @@ export function FanZoneNamePrompt({
     setSaving(false);
     if (error) return toast.error("Couldn't save your display name", { description: error.message });
     setSavedAlias(alias);
+    notifyFanAliasChange();
     toast.success(`Welcome to the Fan Zone, ${alias}!`);
   };
 

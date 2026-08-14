@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { onFanAliasChange } from "@/lib/fan-alias-bus";
 
 export type FanZoneStatus = "none" | "pending" | "approved" | "rejected" | "revoked";
 
@@ -49,6 +50,7 @@ export function useFanZoneMembership(userId: string | null | undefined): FanZone
     };
     void load();
 
+    const offLocal = onFanAliasChange(() => void load());
     const ch = supabase
       .channel(`fan-zone-${userId}-${Math.random().toString(36).slice(2)}`)
       .on(
@@ -60,6 +62,7 @@ export function useFanZoneMembership(userId: string | null | undefined): FanZone
 
     return () => {
       cancelled = true;
+      offLocal();
       supabase.removeChannel(ch);
     };
   }, [userId]);
