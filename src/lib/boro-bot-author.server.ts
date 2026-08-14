@@ -68,6 +68,11 @@ export async function getMatchDayAuthorId(): Promise<string | null> {
 
   await supabaseAdmin.from("user_roles").upsert({ user_id: userId, role: "member" }, { onConflict: "user_id,role" });
 
+  await supabaseAdmin.from("fan_zone_members").upsert(
+    { user_id: userId, status: "approved", decided_at: new Date().toISOString(), fan_alias: MATCH_DAY_AUTHOR_USERNAME },
+    { onConflict: "user_id" },
+  );
+
   cachedId = userId;
   return cachedId;
 }
