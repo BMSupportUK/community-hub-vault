@@ -291,11 +291,20 @@ function PlayerStatsDialog({
 }
 
 function FantasyPageWithStats() {
-  const [statsPlayerId, setStatsPlayerId] = useState<string | null>(null);
+  const [stats, setStats] = useState<{ playerId: string; scoringAs: FantasyPosition | null } | null>(null);
+  const open = useCallback(
+    (playerId: string, scoringAs?: FantasyPosition | null) =>
+      setStats({ playerId, scoringAs: scoringAs ?? null }),
+    [],
+  );
   return (
-    <PlayerStatsCtx.Provider value={setStatsPlayerId}>
+    <PlayerStatsCtx.Provider value={open}>
       <BoroFantasyPage />
-      <PlayerStatsDialog playerId={statsPlayerId} onClose={() => setStatsPlayerId(null)} />
+      <PlayerStatsDialog
+        playerId={stats?.playerId ?? null}
+        scoringAs={stats?.scoringAs ?? null}
+        onClose={() => setStats(null)}
+      />
     </PlayerStatsCtx.Provider>
   );
 }
