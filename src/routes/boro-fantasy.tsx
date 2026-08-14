@@ -2754,6 +2754,7 @@ function BenchPanel({
                         const chosen = benchPositions?.[i] ?? null;
                         return (chosen && eligible.includes(chosen) ? chosen : null) ?? p.position;
                       })()}
+                      asSub
                       className="mt-1.5 block text-center text-[10px] font-semibold leading-tight break-words line-clamp-2 min-h-[24px]"
                     />
                     {(() => {
