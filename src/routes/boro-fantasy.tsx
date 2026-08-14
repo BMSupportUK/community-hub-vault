@@ -395,14 +395,12 @@ function PlayerStatsDialog({
                               </td>
                             </tr>
                           ))}
-                          <tr className="bg-muted/40">
-                            <td className="py-2 pr-2 font-bold">Weekly total</td>
-                            <td className="py-2 pl-2 text-right font-bold tabular-nums text-primary">
-                              {ourSeasonPoints} pts
-                            </td>
-                          </tr>
                         </tbody>
                       </table>
+                    </div>
+                    <div className="mt-3 flex items-center justify-between rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm">
+                      <span className="font-semibold">Our weekly total</span>
+                      <span className="font-bold tabular-nums text-primary">{ourSeasonPoints} pts</span>
                     </div>
                   </div>
                 <div className="mt-3 flex items-center justify-between rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm">
@@ -487,19 +485,12 @@ function PlayerStatsDialog({
                               </tr>
                             );
                           })}
-                          <tr className="bg-muted/40">
-                            <td className="py-2 pr-2 font-bold">Weekly total</td>
-                            {weeklyPointRows.map((m) => (
-                              <td key={m.fixtureId} className="px-2 py-2 text-center font-bold tabular-nums text-primary">
-                                {m.espnPoints} pts
-                              </td>
-                            ))}
-                            <td className="px-2 py-2 text-right font-bold tabular-nums text-primary">
-                              {espnSeasonPoints} pts
-                            </td>
-                          </tr>
                         </tbody>
                       </table>
+                    </div>
+                    <div className="mt-3 flex items-center justify-between rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm">
+                      <span className="font-semibold">ESPN weekly total</span>
+                      <span className="font-bold tabular-nums text-primary">{espnSeasonPoints} pts</span>
                     </div>
                   </div>
                 )}
