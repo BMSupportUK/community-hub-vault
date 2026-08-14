@@ -5394,8 +5394,10 @@ export type Database = {
           user_id: string
         }[]
       }
+      fan_zone_avatar_locked: { Args: { _user_id: string }; Returns: boolean }
       fan_zone_block: { Args: { _other: string }; Returns: undefined }
       fan_zone_default_avatar_url: { Args: never; Returns: string }
+      fan_zone_moderator_avatar: { Args: never; Returns: string }
       fan_zone_privacy: {
         Args: { _ids: string[] }
         Returns: {
