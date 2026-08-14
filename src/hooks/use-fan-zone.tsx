@@ -17,16 +17,26 @@ export type FanZoneInfo = {
   matchdayMemory: string | null;
 };
 
-/** Subscribe to the current user's Boro Fan Zone membership row. */
-export function useFanZoneMembership(userId: string | null | undefined): FanZoneInfo | null {
+/**
+ * Subscribe to the current user's Boro Fan Zone membership row.
+ * `loading` stays true until the first fetch resolves so callers don't act on
+ * a momentary "no data" state (which flashed the display-name prompt on load).
+ */
+export function useFanZoneMembershipState(userId: string | null | undefined): {
+  info: FanZoneInfo | null;
+  loading: boolean;
+} {
   const [info, setInfo] = useState<FanZoneInfo | null>(null);
+  const [loading, setLoading] = useState(!!userId);
 
   useEffect(() => {
     if (!userId) {
       setInfo(null);
+      setLoading(false);
       return;
     }
     let cancelled = false;
+    setLoading(true);
 
     const load = async () => {
       const { data } = await supabase
@@ -47,6 +57,7 @@ export function useFanZoneMembership(userId: string | null | undefined): FanZone
         favPlayer: (data?.fav_player as string | null) ?? null,
         matchdayMemory: (data?.matchday_memory as string | null) ?? null,
       });
+      setLoading(false);
     };
     void load();
 
@@ -67,5 +78,10 @@ export function useFanZoneMembership(userId: string | null | undefined): FanZone
     };
   }, [userId]);
 
-  return info;
+  return { info, loading };
+}
+
+/** Convenience wrapper for callers that only need the row. */
+export function useFanZoneMembership(userId: string | null | undefined): FanZoneInfo | null {
+  return useFanZoneMembershipState(userId).info;
 }
