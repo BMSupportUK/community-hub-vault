@@ -253,13 +253,10 @@ function PlayerStatsDialog({
                 <h4 className="text-sm font-bold">Our points &amp; abbreviations</h4>
                 <p className="text-xs text-muted-foreground">
                   Points shown are what a match day 11 starter earns as a{" "}
-                  {POSITION_LABEL[pos].toLowerCase()}. Subs earn half. Only our own scoring lines are
-                  listed here — everything scored off the ESPN match report sits in the ESPN stats tab.
+                  {POSITION_LABEL[pos].toLowerCase()}. Subs earn half.
                 </p>
                 <p className="text-xs font-semibold text-emerald-500">
-                  Weekly points = our own scoring (appearance, goals, assists, clean sheets, cards) plus
-                  every point earned from the ESPN match stats. Both are added together — nothing is
-                  counted twice.
+                  This tab only: appearance, goals, assists, clean sheets and cards.
                 </p>
                 <div className="overflow-x-auto">
                   <table className="w-full min-w-[380px] text-left text-xs">
