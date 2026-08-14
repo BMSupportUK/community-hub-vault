@@ -33,7 +33,7 @@ function EventIcon({ kind }: { kind: MatchEventItem["kind"] }) {
   if (kind === "sub") return <RefreshCw className="size-3.5 text-emerald-300" />;
   if (kind === "var") return <ShieldAlert className="size-3.5 text-sky-300" />;
   if (kind === "penalty-missed" || kind === "shootout-missed")
-    return <Target className="size-3.5 text-white/50" />;
+    return <Target className="size-3.5 text-white/75" />;
   return <Goal className="size-3.5 text-white" />;
 }
 
@@ -42,7 +42,7 @@ function EventRow({ ev, home, away }: { ev: MatchEventItem; home: string | null;
   return (
     <li
       className={`flex items-start gap-3 rounded-lg border px-3 py-2 text-sm ${
-        isGoal ? "border-[#E11B22]/45 bg-[#E11B22]/10" : "border-white/10 bg-white/5"
+        isGoal ? "border-[#E11B22]/45 bg-[#E11B22]/10" : "border-white/20 bg-white/10"
       }`}
     >
       <span className="w-12 shrink-0 pt-0.5 tabular-nums text-xs font-bold text-amber-200">{ev.clock ?? "-"}</span>
@@ -52,22 +52,22 @@ function EventRow({ ev, home, away }: { ev: MatchEventItem; home: string | null;
       <span className="min-w-0 flex-1">
         <span className="block font-semibold text-white">{describeEspnEvent(ev)}</span>
         {ev.text && ev.text !== ev.shortText && (
-          <span className="mt-0.5 block text-[12px] leading-snug text-white/60">{ev.text}</span>
+          <span className="mt-0.5 block text-[12px] leading-snug text-white/85">{ev.text}</span>
         )}
         {isGoal && ev.homeScore != null && ev.awayScore != null && (
-          <span className="mt-1 inline-block rounded bg-white/10 px-1.5 py-0.5 text-[11px] font-bold tabular-nums text-white/80">
+          <span className="mt-1 inline-block rounded bg-white/[0.16] px-1.5 py-0.5 text-[11px] font-bold tabular-nums text-white/95">
             {home ?? "Home"} {ev.homeScore} - {ev.awayScore} {away ?? "Away"}
           </span>
         )}
       </span>
-      <span className="shrink-0 pt-0.5 text-[11px] text-white/50">{ev.teamName ?? ""}</span>
+      <span className="shrink-0 pt-0.5 text-[11px] text-white/75">{ev.teamName ?? ""}</span>
     </li>
   );
 }
 
 function StatHead() {
   return (
-    <thead className="text-[10px] uppercase text-white/40">
+    <thead className="text-[10px] uppercase text-white/70">
       <tr>
         <th className="px-3 py-1.5 text-left">Player</th>
         {STAT_COLUMNS.map((c) => (
@@ -84,15 +84,15 @@ function PlaceholderRows({ rows }: { rows: number }) {
   return (
     <tbody>
       {Array.from({ length: rows }).map((_, i) => (
-        <tr key={i} className="border-t border-white/5">
+        <tr key={i} className="border-t border-white/15">
           <td className="py-1.5 pr-2">
             <span className="inline-flex items-center gap-2">
-              <span className="w-6 text-right text-[11px] tabular-nums text-white/25">{i + 1}</span>
-              <span className="h-3 w-24 rounded bg-white/10" />
+              <span className="w-6 text-right text-[11px] tabular-nums text-white/55">{i + 1}</span>
+              <span className="h-3 w-24 rounded bg-white/[0.16]" />
             </span>
           </td>
           {STAT_COLUMNS.map((c) => (
-            <td key={c.key} className="px-1.5 py-1.5 text-center text-white/20">
+            <td key={c.key} className="px-1.5 py-1.5 text-center text-white/50">
               –
             </td>
           ))}
@@ -104,13 +104,13 @@ function PlaceholderRows({ rows }: { rows: number }) {
 
 function PlayerRow({ p }: { p: PlayerLine }) {
   return (
-    <tr className="border-t border-white/5">
+    <tr className="border-t border-white/15">
       <td className="py-1.5 pr-2 whitespace-nowrap">
         <span className="inline-flex items-center gap-2">
-          <span className="w-6 text-right text-white/40 tabular-nums text-[11px]">{p.jersey ?? "-"}</span>
+          <span className="w-6 text-right text-white/70 tabular-nums text-[11px]">{p.jersey ?? "-"}</span>
           <span className="font-medium text-white">{p.name}</span>
           {p.position && (
-            <span className="rounded bg-white/10 px-1 text-[10px] font-bold uppercase text-white/60">
+            <span className="rounded bg-white/[0.16] px-1 text-[10px] font-bold uppercase text-white/85">
               {p.position}
             </span>
           )}
@@ -119,7 +119,7 @@ function PlayerRow({ p }: { p: PlayerLine }) {
         </span>
       </td>
       {STAT_COLUMNS.map((c) => (
-        <td key={c.key} className="px-1.5 py-1.5 text-center tabular-nums text-white/70">
+        <td key={c.key} className="px-1.5 py-1.5 text-center tabular-nums text-white/90">
           {p.stats[c.key] ?? "0"}
         </td>
       ))}
@@ -192,7 +192,7 @@ export function BoroMatchDetailTabs({
   const extraStats = detail?.teamStats.filter((s) => !s.primary) ?? [];
 
   if (loading && !detail) {
-    return <div className="py-8 text-center text-sm text-white/50">Loading match data…</div>;
+    return <div className="py-8 text-center text-sm text-white/75">Loading match data…</div>;
   }
 
   const koLabel =
@@ -213,10 +213,10 @@ export function BoroMatchDetailTabs({
             <span className="relative inline-flex size-2 rounded-full bg-red-300" />
           </span>
           Armed and ready — stats start recording at kick-off
-          {koLabel && <span className="ml-auto normal-case tracking-normal text-white/70">{koLabel}</span>}
+          {koLabel && <span className="ml-auto normal-case tracking-normal text-white/90">{koLabel}</span>}
         </div>
       )}
-      <TabsList className="grid w-full grid-cols-3 bg-white/5">
+      <TabsList className="grid w-full grid-cols-3 bg-white/10">
         <TabsTrigger value="action">Match action</TabsTrigger>
         <TabsTrigger value="stats">Game stats</TabsTrigger>
         <TabsTrigger value="lineups">Line-ups</TabsTrigger>
@@ -224,7 +224,7 @@ export function BoroMatchDetailTabs({
 
       <TabsContent value="action" className="mt-4">
         <Tabs defaultValue="all" className="w-full">
-          <TabsList className="grid w-full grid-cols-5 bg-white/5">
+          <TabsList className="grid w-full grid-cols-5 bg-white/10">
             {ACTION_GROUPS.map((g) => {
               const count =
                 g.value === "pens"
@@ -237,7 +237,7 @@ export function BoroMatchDetailTabs({
                 <TabsTrigger key={g.value} value={g.value} className="text-[11px] sm:text-xs">
                   {g.label}
                   {count > 0 && (
-                    <span className="ml-1 rounded bg-white/15 px-1 text-[10px] font-bold tabular-nums">{count}</span>
+                    <span className="ml-1 rounded bg-white/25 px-1 text-[10px] font-bold tabular-nums">{count}</span>
                   )}
                 </TabsTrigger>
               );
@@ -253,9 +253,9 @@ export function BoroMatchDetailTabs({
             return (
               <TabsContent key={g.value} value={g.value} className="mt-3">
                 {empty ? (
-                  <div className="flex items-center gap-3 rounded-lg border border-dashed border-white/10 bg-white/[0.03] px-3 py-3 text-sm">
-                    <span className="w-12 shrink-0 tabular-nums text-xs font-bold text-white/25">--&apos;</span>
-                    <span className="flex-1 text-white/45">{g.emptyLabel} — awaiting first entry</span>
+                  <div className="flex items-center gap-3 rounded-lg border border-dashed border-white/20 bg-white/[0.08] px-3 py-3 text-sm">
+                    <span className="w-12 shrink-0 tabular-nums text-xs font-bold text-white/55">--&apos;</span>
+                    <span className="flex-1 text-white/75">{g.emptyLabel} — awaiting first entry</span>
                   </div>
                 ) : (
                   <div className="space-y-3">
@@ -278,7 +278,7 @@ export function BoroMatchDetailTabs({
                                 {ev.kind === "shootout-scored" ? "\u2714" : "\u2716"}
                               </span>
                               <span className="min-w-0 flex-1 truncate">{ev.players[0] ?? ev.shortText}</span>
-                              <span className="shrink-0 text-[11px] text-white/60">{ev.teamName ?? ""}</span>
+                              <span className="shrink-0 text-[11px] text-white/85">{ev.teamName ?? ""}</span>
                             </li>
                           ))}
                         </ul>
@@ -295,9 +295,9 @@ export function BoroMatchDetailTabs({
       <TabsContent value="stats" className="mt-4">
         {primaryStats.length || extraStats.length ? (
           <div className="space-y-2">
-            <div className="overflow-hidden rounded-lg border border-white/10">
+            <div className="overflow-hidden rounded-lg border border-white/20">
               <table className="w-full text-sm">
-                <thead className="bg-white/5 text-[11px] uppercase tracking-wider text-white/50">
+                <thead className="bg-white/10 text-[11px] uppercase tracking-wider text-white/75">
                   <tr>
                     <th className="px-3 py-2 text-left">{detail?.home}</th>
                     <th className="px-3 py-2 text-center">Stat</th>
@@ -306,9 +306,9 @@ export function BoroMatchDetailTabs({
                 </thead>
                 <tbody>
                   {(showMoreStats ? [...primaryStats, ...extraStats] : primaryStats).map((s) => (
-                    <tr key={s.name} className="border-t border-white/5">
+                    <tr key={s.name} className="border-t border-white/15">
                       <td className="px-3 py-1.5 text-left font-bold tabular-nums text-white">{s.home}</td>
-                      <td className="px-3 py-1.5 text-center text-white/60">{s.label}</td>
+                      <td className="px-3 py-1.5 text-center text-white/85">{s.label}</td>
                       <td className="px-3 py-1.5 text-right font-bold tabular-nums text-white">{s.away}</td>
                     </tr>
                   ))}
@@ -319,7 +319,7 @@ export function BoroMatchDetailTabs({
               <button
                 type="button"
                 onClick={() => setShowMoreStats((v) => !v)}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-bold text-white/80 hover:bg-white/10 transition"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-bold text-white/95 hover:bg-white/[0.16] transition"
               >
                 {showMoreStats ? "Fewer stats" : `More stats (${extraStats.length})`}
                 <ChevronDown className={`size-3.5 transition ${showMoreStats ? "rotate-180" : ""}`} />
@@ -327,12 +327,12 @@ export function BoroMatchDetailTabs({
             )}
           </div>
         ) : (
-          <div className="overflow-hidden rounded-lg border border-dashed border-white/10">
-            <div className="border-b border-white/10 bg-white/5 px-3 py-2 text-[12px] text-white/60">
+          <div className="overflow-hidden rounded-lg border border-dashed border-white/20">
+            <div className="border-b border-white/20 bg-white/10 px-3 py-2 text-[12px] text-white/85">
               Awaiting stats — recording starts at kick-off.
             </div>
             <table className="w-full text-sm">
-              <thead className="bg-white/5 text-[11px] uppercase tracking-wider text-white/50">
+              <thead className="bg-white/10 text-[11px] uppercase tracking-wider text-white/75">
                 <tr>
                   <th className="px-3 py-2 text-left">Home</th>
                   <th className="px-3 py-2 text-center">Stat</th>
@@ -351,10 +351,10 @@ export function BoroMatchDetailTabs({
                   "Red cards",
                   "Saves",
                 ].map((label) => (
-                  <tr key={label} className="border-t border-white/5">
-                    <td className="px-3 py-1.5 text-left font-bold tabular-nums text-white/30">–</td>
-                    <td className="px-3 py-1.5 text-center text-white/45">{label}</td>
-                    <td className="px-3 py-1.5 text-right font-bold tabular-nums text-white/30">–</td>
+                  <tr key={label} className="border-t border-white/15">
+                    <td className="px-3 py-1.5 text-left font-bold tabular-nums text-white/60">–</td>
+                    <td className="px-3 py-1.5 text-center text-white/75">{label}</td>
+                    <td className="px-3 py-1.5 text-right font-bold tabular-nums text-white/60">–</td>
                   </tr>
                 ))}
               </tbody>
@@ -365,7 +365,7 @@ export function BoroMatchDetailTabs({
 
       <TabsContent value="lineups" className="mt-4">
         <Tabs defaultValue="home-xi" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 gap-1 bg-white/5 sm:grid-cols-4">
+          <TabsList className="grid w-full grid-cols-2 gap-1 bg-white/10 sm:grid-cols-4">
             <TabsTrigger value="home-xi" className="text-[11px] sm:text-xs">
               Home XI
             </TabsTrigger>
@@ -415,7 +415,7 @@ function LineupPanel({
   return (
     <div className="space-y-3">
       {players.length === 0 && (
-        <p className="rounded-lg border border-white/10 bg-white/5 p-3 text-sm text-white/60">
+        <p className="rounded-lg border border-white/20 bg-white/10 p-3 text-sm text-white/85">
           {starters
             ? "Awaiting line-ups — published about an hour before kick-off. Player stat columns below are ready and fill in live."
             : "Awaiting bench — substitutes appear with the line-ups. Stat columns below fill in live once they come on."}
@@ -423,14 +423,14 @@ function LineupPanel({
       )}
       <div
         className={`overflow-hidden rounded-lg border ${
-          players.length ? "border-white/10" : "border-dashed border-white/10"
+          players.length ? "border-white/20" : "border-dashed border-white/20"
         }`}
       >
-        <div className="flex items-center gap-2 bg-white/5 px-3 py-2">
+        <div className="flex items-center gap-2 bg-white/10 px-3 py-2">
           {team?.logo && (
             <img src={team.logo} alt="" width={18} height={18} className="size-[18px]" loading="lazy" />
           )}
-          <span className={`text-sm font-bold ${players.length ? "text-white" : "text-white/50"}`}>
+          <span className={`text-sm font-bold ${players.length ? "text-white" : "text-white/75"}`}>
             {team?.team ? `${team.team} — ${starters ? "starting XI" : "substitutes"}` : label}
           </span>
           {starters && team?.formation && (
