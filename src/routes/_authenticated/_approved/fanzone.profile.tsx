@@ -12,6 +12,7 @@ import { useFanZoneMembership } from "@/hooks/use-fan-zone";
 import { toast } from "sonner";
 import boroDefaultAvatar from "@/assets/boro-default-avatar.png";
 import bgAsset from "@/assets/boro-fan-zone-profile-bg.jpg.asset.json";
+import { useFanAvatarLock } from "@/lib/fan-avatar-lock";
 
 export const Route = createFileRoute("/_authenticated/_approved/fanzone/profile")({
   component: FanZoneProfilePage,
@@ -20,6 +21,7 @@ export const Route = createFileRoute("/_authenticated/_approved/fanzone/profile"
 function FanZoneProfilePage() {
   const { user, hasAny } = useAuth();
   const isStaff = hasAny(["admin", "boro_fan_zone_moderator"]);
+  const { locked: avatarLocked, forcedAvatar, lockMessage } = useFanAvatarLock();
   const info = useFanZoneMembership(user?.id ?? null);
   const [alias, setAlias] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
@@ -42,19 +44,20 @@ function FanZoneProfilePage() {
 
   useEffect(() => {
     setAlias(info?.fanAlias ?? "");
-    setAvatarUrl(info?.fanAvatarUrl ?? "");
+    setAvatarUrl(forcedAvatar ?? info?.fanAvatarUrl ?? "");
     setBio(info?.bio ?? "");
     setSupporterSince(info?.supporterSince ? String(info.supporterSince) : "");
     setFavPlayer(info?.favPlayer ?? "");
     setMemory(info?.matchdayMemory ?? "");
-  }, [info?.fanAlias, info?.fanAvatarUrl, info?.bio, info?.supporterSince, info?.favPlayer, info?.matchdayMemory]);
+  }, [info?.fanAlias, info?.fanAvatarUrl, info?.bio, info?.supporterSince, info?.favPlayer, info?.matchdayMemory, forcedAvatar]);
 
   const canEdit = !!user && (isStaff || info?.status === "approved");
   const hasAlias = !!(info?.fanAlias || info?.fanAvatarUrl);
-  const editPreviewAvatar = avatarUrl || boroDefaultAvatar;
+  const editPreviewAvatar = forcedAvatar || avatarUrl || boroDefaultAvatar;
 
   const onPickFile = async (file: File) => {
     if (!user) return;
+    if (avatarLocked) return toast.error(lockMessage);
     if (file.size > 5 * 1024 * 1024) return toast.error("Image must be under 5MB");
     setUploading(true);
     try {
@@ -158,14 +161,23 @@ function FanZoneProfilePage() {
                   Last active <RelativeTime iso={myLastSeen} />
                 </div>
                 <div className="flex flex-wrap gap-2">
-                <Button size="sm" variant="outline" onClick={() => fileRef.current?.click()} disabled={uploading} className="bg-white/10 border-white/30 text-white hover:bg-white/20">
-                  {uploading ? <Loader2 className="size-3.5 mr-1.5 animate-spin" /> : <ImagePlus className="size-3.5 mr-1.5" />}
-                  {avatarUrl ? "Replace picture" : "Upload picture"}
-                </Button>
-                {avatarUrl && (
-                  <Button size="sm" variant="ghost" onClick={() => setAvatarUrl("")} className="text-white/80 hover:text-white hover:bg-white/10">
-                    Remove
-                  </Button>
+                {avatarLocked ? (
+                  <p className="inline-flex items-center gap-1.5 rounded-full bg-[#E11B22]/20 px-3 py-1 text-[11px] font-semibold text-white ring-1 ring-[#E11B22]/50">
+                    <Lock className="size-3.5" />
+                    {lockMessage}
+                  </p>
+                ) : (
+                  <>
+                    <Button size="sm" variant="outline" onClick={() => fileRef.current?.click()} disabled={uploading} className="bg-white/10 border-white/30 text-white hover:bg-white/20">
+                      {uploading ? <Loader2 className="size-3.5 mr-1.5 animate-spin" /> : <ImagePlus className="size-3.5 mr-1.5" />}
+                      {avatarUrl ? "Replace picture" : "Upload picture"}
+                    </Button>
+                    {avatarUrl && (
+                      <Button size="sm" variant="ghost" onClick={() => setAvatarUrl("")} className="text-white/80 hover:text-white hover:bg-white/10">
+                        Remove
+                      </Button>
+                    )}
+                  </>
                 )}
                 <input
                   ref={fileRef}
