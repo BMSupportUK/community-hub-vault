@@ -706,6 +706,7 @@ function BoroFantasyPage() {
         if (!cancelled) {
           qc.invalidateQueries({ queryKey: ["fantasy-state"] });
           qc.invalidateQueries({ queryKey: ["fantasy-leaderboard"] });
+          qc.invalidateQueries({ queryKey: ["fantasy-previous-gw"] });
         }
       } catch { /* ignore */ }
     };
