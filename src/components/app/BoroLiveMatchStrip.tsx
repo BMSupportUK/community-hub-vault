@@ -28,13 +28,15 @@ function fmtKickoff(iso: string, tz: string) {
 function countdown(toIso: string, now: number) {
   const ms = Date.parse(toIso) - now;
   if (!Number.isFinite(ms) || ms <= 0) return null;
-  const mins = Math.floor(ms / 60000);
-  const d = Math.floor(mins / 1440);
-  const h = Math.floor((mins % 1440) / 60);
-  const m = mins % 60;
-  if (d > 0) return `${d}d ${h}h`;
-  if (h > 0) return `${h}h ${m}m`;
-  return `${m}m`;
+  const totalSeconds = Math.max(0, Math.ceil(ms / 1000));
+  const d = Math.floor(totalSeconds / 86400);
+  const h = Math.floor((totalSeconds % 86400) / 3600);
+  const m = Math.floor((totalSeconds % 3600) / 60);
+  const s = totalSeconds % 60;
+  const ss = s.toString().padStart(2, "0");
+  if (d > 0) return `${d}d ${h}h ${m}m ${ss}s`;
+  if (h > 0) return `${h}h ${m}m ${ss}s`;
+  return `${m}m ${ss}s`;
 }
 
 function Side({ name, logo }: { name: string; logo?: string | null }) {
