@@ -1217,6 +1217,9 @@ function SquadBuilder({
     if (sel.includes(p.id)) return sel;
     if (p.status === "departed") { toast.error(`${p.name} has left the club.`); return null; }
     if (p.status === "loaned_out") { toast.error(`${p.name} is out on loan${p.loanClub ? ` at ${p.loanClub}` : ""}.`); return null; }
+    // Injured players and senior players outside the official squad are off limits.
+    const blocked = pickBlockedReason(p, gw ? gw.kickoffAt : null);
+    if (blocked) { toast.error(blocked); return null; }
     if (sel.length >= squadSize) { toast.error(`Squad is full — ${squadSize} players max (11 + ${benchRules.size} subs).`); return null; }
     // A dual-position player only blocks if every position they cover is full.
     const roomInAnyPosition = playerPositions(p).some(
@@ -1227,8 +1230,21 @@ function SquadBuilder({
       return null;
     }
     if ((p.injuryStatus ?? "none") !== "none" && !injuryClearedBy(p, gw ? gw.kickoffAt : null)) {
-      const label = p.injuryStatus === "suspended" ? "suspended" : p.injuryStatus === "doubtful" ? "a doubt" : "injured";
-      toast.warning(`${p.name} is ${label}${p.injuryNote ? ` (${p.injuryNote})` : ""} — pick at your own risk.`);
+      const doubtful = p.injuryStatus === "doubtful";
+      if (doubtful) {
+        // Doubtful players are allowed, but the manager must confirm the risk.
+        const ok = window.confirm(
+          `${p.name} is a DOUBT for this game${p.injuryNote ? `\n\n${p.injuryNote}` : ""}${
+            p.injuryReturn ? `\nExpected back: ${p.injuryReturn}` : ""
+          }\n\nPick them anyway?`,
+        );
+        if (!ok) return null;
+        toast.warning(`${p.name} picked while doubtful — at your own risk.`);
+      } else {
+        toast.warning(
+          `${p.name} is suspended${p.injuryNote ? ` (${p.injuryNote})` : ""} — pick at your own risk.`,
+        );
+      }
     }
     if (isLeagueGw && outOf25(p)) {
       toast.warning(`${p.name} is not included in the 25-man matchday squad for league games.`);
