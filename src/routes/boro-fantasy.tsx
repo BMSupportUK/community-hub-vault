@@ -144,9 +144,10 @@ function PlayerStatsDialog({
   const matches = data?.matches ?? [];
   const pos = (scoringAs ?? (data?.position || "mid")) as FantasyPosition;
   const picked = !!scoringAs && scoringAs !== (data?.position as FantasyPosition | undefined);
+  /** ESPN match-centre stats that score for this role, shown in the ESPN tab. */
   const statKeys = useMemo(
-    () => scoringStatKeys(pos).filter((k) => matches.some((m) => (m.stats[k] ?? 0) !== 0)),
-    [matches, pos],
+    () => scoringStatKeys(pos).filter((k) => !isOurScoringStat(k) || k === "minutes"),
+    [pos],
   );
   /** Season totals per stat, with the points each one is worth. */
   const seasonRows = useMemo(
@@ -164,6 +165,11 @@ function PlayerStatsDialog({
         };
       }),
     [matches, pos],
+  );
+  const ourRows = useMemo(() => seasonRows.filter((r) => isOurScoringStat(r.key)), [seasonRows]);
+  const espnRows = useMemo(
+    () => seasonRows.filter((r) => !isOurScoringStat(r.key)),
+    [seasonRows],
   );
   /** Clean sheets are a scoring rule, not an ESPN stat column — derive them. */
   const cleanSheetRows = useMemo(() => {
