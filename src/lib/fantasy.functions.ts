@@ -7,6 +7,9 @@ import type {
   FantasyPreviousGwScoreDTO,
   FantasyStateDTO,
 } from "@/lib/fantasy.server";
+import type { FantasySwapHistoryRow } from "@/lib/fantasy-swap-history.server";
+
+export type { FantasySwapHistoryRow } from "@/lib/fantasy-swap-history.server";
 
 export type {
   FantasyLeaderboardRow,
