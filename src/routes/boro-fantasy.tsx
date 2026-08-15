@@ -2887,7 +2887,7 @@ function PitchView({
                           </div>
                         )}
                         <div className="text-[10px] tabular-nums text-white/70">{p.seasonPoints ?? 0} pts</div>
-                        {pointsByPlayer?.has(p.id) && (
+                        {gw?.finished && pointsByPlayer?.has(p.id) && (
                           <div className="mt-1 inline-flex items-center rounded-full border border-emerald-400/50 bg-emerald-500/20 px-1.5 text-[10px] font-bold tabular-nums text-emerald-200">
                             {pointsByPlayer.get(p.id) ?? 0} pts
                           </div>
