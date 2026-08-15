@@ -1530,6 +1530,15 @@ function SquadBuilder({
     if (!hasStats) return new Map<string, number>();
     return new Map(picks.map((p) => [p.playerId, p.minutes ?? 0]));
   }, [existing]);
+  // 0-10 match rating for this gameweek's fixture, shown beside each name.
+  const ratingByPlayer = useMemo(() => {
+    const picks = existing?.picks ?? [];
+    const map = new Map<string, number>();
+    for (const p of picks) {
+      if (p.rating !== null && p.rating !== undefined && p.rating > 0) map.set(p.playerId, p.rating);
+    }
+    return map;
+  }, [existing]);
   const hasGwPoints = (existing?.picks ?? []).some((p) => p.points !== null);
 
   const editable = !locked && (canPlay || !gw);
