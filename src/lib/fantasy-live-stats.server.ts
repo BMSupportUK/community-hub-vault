@@ -117,6 +117,39 @@ function eventMinute(ev: EspnEvent): number {
   return typeof v === "number" ? Math.max(0, Math.round(v / 60)) : 0;
 }
 
+/**
+ * Match an ESPN display name onto one of our fantasy players: exact normalised
+ * name, then surname, then "first initial + surname" disambiguation.
+ */
+export function makePlayerMatcher(players: Array<{ id: string; name: string; position: string }>) {
+  const byName = new Map<string, { id: string; position: string }>();
+  const bySurname = new Map<string, Array<{ id: string; position: string }>>();
+  for (const p of players) {
+    const n = norm(p.name);
+    byName.set(n, { id: p.id, position: p.position });
+    const surname = n.split(" ").slice(-1)[0] ?? n;
+    const list = bySurname.get(surname) ?? [];
+    list.push({ id: p.id, position: p.position });
+    bySurname.set(surname, list);
+  }
+  return (displayName: string): { id: string; position: string } | null => {
+    const n = norm(displayName);
+    const exact = byName.get(n);
+    if (exact) return exact;
+    const surname = n.split(" ").slice(-1)[0] ?? n;
+    const list = bySurname.get(surname);
+    if (list && list.length === 1) return list[0]!;
+    if (list && list.length > 1) {
+      const first = n.split(" ")[0] ?? "";
+      for (const cand of list) {
+        const candName = players.find((p) => p.id === cand.id)?.name ?? "";
+        if (norm(candName).startsWith(first.slice(0, 1))) return cand;
+      }
+    }
+    return null;
+  };
+}
+
 /** Find the ESPN event id for one of our fixtures (kickoff + opponent match). */
 async function findEspnEventId(fixture: {
   kickoff_at: string;
@@ -152,6 +185,40 @@ async function findEspnEventId(fixture: {
     }
   }
   return null;
+}
+
+/**
+ * The official Middlesbrough starting XI for a fixture, as fantasy player ids.
+ * Returns null while ESPN hasn't published the line-up yet.
+ */
+export async function fetchBoroStarterIds(
+  fixture: { kickoff_at: string; home_team: string; away_team: string },
+  players: Array<{ id: string; name: string; position: string }>,
+): Promise<string[] | null> {
+  const found = await findEspnEventId(fixture);
+  if (!found) return null;
+  let summary: EspnSummary;
+  try {
+    const res = await fetch(
+      `https://site.api.espn.com/apis/site/v2/sports/soccer/${found.league}/summary?event=${found.eventId}`,
+    );
+    if (!res.ok) return null;
+    summary = (await res.json()) as EspnSummary;
+  } catch {
+    return null;
+  }
+  const boroSide = (summary.rosters ?? []).find((r) => BORO_RE.test(r.team?.displayName ?? ""));
+  const roster = boroSide?.roster ?? [];
+  const starters = roster.filter((r) => r.starter);
+  // Guard against a half-published feed: a real XI is eleven names.
+  if (starters.length < 11) return null;
+  const match = makePlayerMatcher(players);
+  const ids: string[] = [];
+  for (const rp of starters) {
+    const hit = match(rp.athlete?.displayName ?? "");
+    if (hit && !ids.includes(hit.id)) ids.push(hit.id);
+  }
+  return ids.length >= 9 ? ids : null;
 }
 
 /**
@@ -201,34 +268,7 @@ export async function fetchFantasyStatsForFixture(
     if (!BORO_RE.test(c.team?.displayName ?? "")) conceded = parseInt(c.score ?? "0", 10) || 0;
   }
 
-  // Player lookup: exact normalised name, then surname.
-  const byName = new Map<string, { id: string; position: string }>();
-  const bySurname = new Map<string, Array<{ id: string; position: string }>>();
-  for (const p of players) {
-    const n = norm(p.name);
-    byName.set(n, { id: p.id, position: p.position });
-    const surname = n.split(" ").slice(-1)[0] ?? n;
-    const list = bySurname.get(surname) ?? [];
-    list.push({ id: p.id, position: p.position });
-    bySurname.set(surname, list);
-  }
-  const matchPlayer = (displayName: string) => {
-    const n = norm(displayName);
-    const exact = byName.get(n);
-    if (exact) return exact;
-    const surname = n.split(" ").slice(-1)[0] ?? n;
-    const list = bySurname.get(surname);
-    if (list && list.length === 1) return list[0]!;
-    // Try "first initial + surname" disambiguation.
-    if (list && list.length > 1) {
-      const first = n.split(" ")[0] ?? "";
-      for (const cand of list) {
-        const candName = players.find((p) => p.id === cand.id)?.name ?? "";
-        if (norm(candName).startsWith(first.slice(0, 1))) return cand;
-      }
-    }
-    return null;
-  };
+  const matchPlayer = makePlayerMatcher(players);
 
   // Substitution minutes + penalty events from the timeline.
   const subOutMinute = new Map<string, number>();
@@ -342,6 +382,7 @@ export async function syncFantasyScoring(): Promise<{
   scored: string[];
   live: string[];
   pending: string[];
+  swaps: string[];
   errors: string[];
 }> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -349,18 +390,30 @@ export async function syncFantasyScoring(): Promise<{
   const scored: string[] = [];
   const live: string[] = [];
   const pending: string[] = [];
+  const swaps: string[] = [];
 
   const { data: gws, error } = await supabaseAdmin
     .from("fantasy_gameweeks")
     .select("id, gw_number, status, lock_at, fixture_id, boro_fixtures!inner(id, kickoff_at, home_team, away_team, status, competition)")
     .order("gw_number", { ascending: true });
-  if (error) return { ok: false, locked: 0, scored, live, pending, errors: [error.message] };
+  if (error) return { ok: false, locked: 0, scored, live, pending, swaps, errors: [error.message] };
 
   const { data: playerRows, error: pErr } = await supabaseAdmin
     .from("fantasy_players")
     .select("id, name, position");
-  if (pErr) return { ok: false, locked: 0, scored, live, pending, errors: [pErr.message] };
+  if (pErr) return { ok: false, locked: 0, scored, live, pending, swaps, errors: [pErr.message] };
   const players = (playerRows ?? []) as Array<{ id: string; name: string; position: string }>;
+
+  // Official starting XI announced? Swap in any bench player who is starting
+  // for a picked starter who isn't, before any points are worked out.
+  try {
+    const { syncLineupSwaps } = await import("@/lib/fantasy-lineup-swap.server");
+    const res = await syncLineupSwaps();
+    if (res.error) errors.push(`lineup swaps: ${res.error}`);
+    swaps.push(...res.swaps);
+  } catch (e) {
+    errors.push(`lineup swaps: ${e instanceof Error ? e.message : String(e)}`);
+  }
 
   const nowMs = Date.now();
   let locked = 0;
@@ -447,5 +500,5 @@ export async function syncFantasyScoring(): Promise<{
     scored.push(`gw${raw['gw_number']} (${rows.length} players)`);
   }
 
-  return { ok: errors.length === 0, locked, scored, live, pending, errors };
+  return { ok: errors.length === 0, locked, scored, live, pending, swaps, errors };
 }

@@ -72,6 +72,8 @@ export type FantasyPickDTO = {
   pickedPosition?: FantasyPosition | null;
   /** True when this bench player was automatically subbed in for a starter who didn't play. */
   autoSubbed?: boolean;
+  /** Note explaining an automatic swap made when the official starting XI was announced. */
+  lineupSwapNote?: string | null;
   /** Minutes the player actually played in this gameweek's fixture (null = no stats yet). */
   minutes?: number | null;
 };
@@ -184,6 +186,7 @@ function mapSquad(r: any): FantasySquadDTO {
       points: p.points ?? null,
       pickedPosition: (p.picked_position ?? null) as FantasyPosition | null,
       autoSubbed: !!p.auto_subbed,
+      lineupSwapNote: (p.lineup_swap_note ?? null) as string | null,
     })),
   };
 }
@@ -288,7 +291,7 @@ export async function loadState(admin: any, owner: Owner | null): Promise<Fantas
     const { data: sq, error: sqErr } = await admin
       .from("fantasy_squads")
       .select(
-        "id, gameweek_id, formation, captain_id, vice_id, transfer_cost, points, picks:fantasy_squad_picks(player_id, is_starter, slot_order, buy_value_m, points, auto_subbed, picked_position)",
+        "id, gameweek_id, formation, captain_id, vice_id, transfer_cost, points, picks:fantasy_squad_picks(player_id, is_starter, slot_order, buy_value_m, points, auto_subbed, picked_position, lineup_swap_note)",
       )
       .eq(ownerCol(owner), ownerVal(owner));
     if (sqErr) throw new Error(sqErr.message);

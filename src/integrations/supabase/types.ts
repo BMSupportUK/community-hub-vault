@@ -1851,6 +1851,8 @@ export type Database = {
           buy_value_m: number
           id: string
           is_starter: boolean
+          lineup_swap_note: string | null
+          lineup_swapped_at: string | null
           picked_position: string | null
           player_id: string
           points: number | null
@@ -1862,6 +1864,8 @@ export type Database = {
           buy_value_m?: number
           id?: string
           is_starter?: boolean
+          lineup_swap_note?: string | null
+          lineup_swapped_at?: string | null
           picked_position?: string | null
           player_id: string
           points?: number | null
@@ -1873,6 +1877,8 @@ export type Database = {
           buy_value_m?: number
           id?: string
           is_starter?: boolean
+          lineup_swap_note?: string | null
+          lineup_swapped_at?: string | null
           picked_position?: string | null
           player_id?: string
           points?: number | null
