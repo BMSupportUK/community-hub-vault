@@ -1574,8 +1574,16 @@ function SquadBuilder({
     for (const p of picks) {
       if (p.rating !== null && p.rating !== undefined && p.rating > 0) map.set(p.playerId, p.rating);
     }
+    // No stats for this fixture yet (upcoming gameweek): fall back to each
+    // player's most recent match rating so the pill still shows by the name.
+    if (map.size === 0) {
+      for (const id of selected) {
+        const r = playerById.get(id)?.lastRating;
+        if (r != null && r > 0) map.set(id, r);
+      }
+    }
     return map;
-  }, [existing]);
+  }, [existing, selected, playerById]);
   const hasGwPoints = (existing?.picks ?? []).some((p) => p.points !== null);
 
   const editable = !locked && (canPlay || !gw);
