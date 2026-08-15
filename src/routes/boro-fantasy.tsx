@@ -3091,14 +3091,14 @@ function BenchPanel({
                     {leagueGame && outOf25(p) && (
                       <div className="text-[9px] font-bold uppercase leading-tight text-amber-500">Not in 25-man matchday squad</div>
                     )}
-                    <div className="text-[10px] tabular-nums text-muted-foreground">{p.seasonPoints ?? 0} pts</div>
+                    <div className={`text-[10px] tabular-nums ${onPitch ? "text-white/70" : "text-muted-foreground"}`}>{p.seasonPoints ?? 0} pts</div>
                     {pointsByPlayer?.has(p.id) && (
                       <div className="mt-1 inline-flex items-center rounded-full border border-emerald-500/40 bg-emerald-500/15 px-1.5 text-[10px] font-bold tabular-nums text-emerald-400">
                         {pointsByPlayer.get(p.id) ?? 0} pts
                       </div>
                     )}
                     {minutesByPlayer?.has(p.id) && (
-                      <div className="mt-0.5 text-[10px] font-semibold tabular-nums text-muted-foreground">
+                      <div className={`mt-0.5 text-[10px] font-semibold tabular-nums ${onPitch ? "text-white/75" : "text-muted-foreground"}`}>
                         {(minutesByPlayer.get(p.id) ?? 0) > 0 ? `${minutesByPlayer.get(p.id)}′ played` : "Didn't play"}
                       </div>
                     )}
