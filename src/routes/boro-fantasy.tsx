@@ -1443,6 +1443,18 @@ function SquadBuilder({
     () => new Set((existing?.picks ?? []).filter((p) => p.autoSubbed).map((p) => p.playerId)),
     [existing],
   );
+  // Automatic swaps made when Boro's official starting XI was announced.
+  const lineupSwapNotes = useMemo(
+    () =>
+      (existing?.picks ?? [])
+        .filter((p) => !!p.lineupSwapNote)
+        .map((p) => ({
+          name: playerById.get(p.playerId)?.name ?? "Player",
+          isStarter: p.isStarter,
+          note: p.lineupSwapNote as string,
+        })),
+    [existing, playerById],
+  );
   // Game time played in this gameweek's fixture, once any stats are in.
   const minutesByPlayer = useMemo(() => {
     const picks = existing?.picks ?? [];
@@ -1971,6 +1983,27 @@ function SquadBuilder({
       {locked && (
         <div className="rounded-xl border border-border/60 bg-muted/30 px-4 py-3 text-sm flex items-center gap-2">
           <Lock className="size-4" /> This gameweek is locked. Changes will apply to the next one.
+        </div>
+      )}
+      {lineupSwapNotes.length > 0 && (
+        <div className="rounded-xl border border-sky-500/50 bg-sky-500/10 px-4 py-3 text-sm">
+          <div className="font-bold uppercase tracking-wide text-sky-300">
+            Automatic line-up swaps
+          </div>
+          <p className="mt-1 text-xs text-muted-foreground">
+            The official Boro starting XI was announced, so like-for-like swaps were made between your
+            bench and your eleven.
+          </p>
+          <ul className="mt-2 space-y-1">
+            {lineupSwapNotes.map((s) => (
+              <li key={s.name} className="text-xs">
+                <span className={s.isStarter ? "font-semibold text-sky-300" : "font-semibold text-amber-300"}>
+                  {s.name}
+                </span>{" "}
+                — {s.note}
+              </li>
+            ))}
+          </ul>
         </div>
       )}
       <div className="rounded-3xl border border-primary/30 shadow-glow bg-gradient-primary p-4 grid min-w-0 items-stretch gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,300px)] xl:grid-cols-[minmax(0,1fr)_minmax(0,300px)_minmax(0,320px)]">
