@@ -1,39 +1,9 @@
 import { createServerFn } from "@tanstack/react-start";
 import { setResponseHeader } from "@tanstack/react-start/server";
 import { z } from "zod";
-import { scryptSync, randomBytes, timingSafeEqual } from "crypto";
+import { emailSchema, pinSchema } from "@/lib/fantasy-guest-schemas";
 import type { FantasyLeaderboardRow, FantasyPreviousGwScoreDTO, FantasyStateDTO } from "@/lib/fantasy.server";
 import type { FantasySwapHistoryRow } from "@/lib/fantasy-swap-history.server";
-
-const emailSchema = z.string().trim().toLowerCase().email().max(255);
-const pinSchema = z.string().regex(/^\d{4}$/, "PIN must be 4 digits");
-
-function hashPin(pin: string, salt: string) {
-  return scryptSync(pin, salt, 32).toString("hex");
-}
-function verifyPin(pin: string, salt: string, hash: string) {
-  const computed = Buffer.from(hashPin(pin, salt), "hex");
-  const target = Buffer.from(hash, "hex");
-  return computed.length === target.length && timingSafeEqual(computed, target);
-}
-async function getAdmin() {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  return supabaseAdmin;
-}
-async function authenticateGuest(email: string, pin: string) {
-  const admin = await getAdmin();
-  const { data, error } = await admin
-    .from("fantasy_guest_entrants")
-    .select("id, pin_salt, pin_hash, display_name, team_name")
-    .eq("email", email)
-    .maybeSingle();
-  if (error) throw new Error(error.message);
-  if (!data) throw new Error("No guest account found for that email.");
-  if (!verifyPin(pin, (data as any).pin_salt, (data as any).pin_hash)) {
-    throw new Error("Incorrect PIN.");
-  }
-  return data as any;
-}
 
 // ------------------------------------------------------------------
 // Register / sign in
@@ -41,6 +11,7 @@ async function authenticateGuest(email: string, pin: string) {
 export const fantasyGuestSignInExisting = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({ email: emailSchema, pin: pinSchema }).parse(d))
   .handler(async ({ data }) => {
+    const { getAdmin, authenticateGuest, hashPin, verifyPin, makeSalt } = await import("@/lib/fantasy-guest-auth.server");
     const g = await authenticateGuest(data.email, data.pin);
     return {
       guestId: g.id as string,
@@ -61,6 +32,7 @@ export const fantasyGuestRegister = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data }) => {
+    const { getAdmin, authenticateGuest, hashPin, verifyPin, makeSalt } = await import("@/lib/fantasy-guest-auth.server");
     const admin = await getAdmin();
     const { data: existing, error: selErr } = await admin
       .from("fantasy_guest_entrants")
@@ -82,7 +54,7 @@ export const fantasyGuestRegister = createServerFn({ method: "POST" })
         teamName: data.teamName,
       };
     }
-    const salt = randomBytes(16).toString("hex");
+    const salt = makeSalt();
     const hash = hashPin(data.pin, salt);
     const { data: ins, error: insErr } = await admin
       .from("fantasy_guest_entrants")
@@ -113,6 +85,7 @@ export const getPublicFantasyState = createServerFn({ method: "GET" })
     z.object({ email: emailSchema.optional(), pin: pinSchema.optional() }).parse(d ?? {}),
   )
   .handler(async ({ data }): Promise<FantasyStateDTO> => {
+    const { getAdmin, authenticateGuest, hashPin, verifyPin, makeSalt } = await import("@/lib/fantasy-guest-auth.server");
     setResponseHeader("cache-control", "no-store, max-age=0");
     const { loadState } = await import("@/lib/fantasy.server");
     const admin = await getAdmin();
@@ -126,6 +99,7 @@ export const getPublicFantasyState = createServerFn({ method: "GET" })
 
 export const getPublicFantasyLeaderboard = createServerFn({ method: "GET" }).handler(
   async (): Promise<FantasyLeaderboardRow[]> => {
+    const { getAdmin, authenticateGuest, hashPin, verifyPin, makeSalt } = await import("@/lib/fantasy-guest-auth.server");
     setResponseHeader("cache-control", "no-store, max-age=0");
     const { loadLeaderboard } = await import("@/lib/fantasy.server");
     const admin = await getAdmin();
@@ -135,6 +109,7 @@ export const getPublicFantasyLeaderboard = createServerFn({ method: "GET" }).han
 
 export const getPublicFantasyPreviousGameweekScores = createServerFn({ method: "GET" }).handler(
   async (): Promise<FantasyPreviousGwScoreDTO | null> => {
+    const { getAdmin, authenticateGuest, hashPin, verifyPin, makeSalt } = await import("@/lib/fantasy-guest-auth.server");
     setResponseHeader("cache-control", "no-store, max-age=0");
     const { loadPreviousGameweekScores } = await import("@/lib/fantasy.server");
     const admin = await getAdmin();
@@ -146,6 +121,7 @@ export const getPublicFantasyPreviousGameweekScores = createServerFn({ method: "
 export const getGuestFantasySwapHistory = createServerFn({ method: "GET" })
   .inputValidator((d: unknown) => z.object({ email: emailSchema, pin: pinSchema }).parse(d))
   .handler(async ({ data }): Promise<FantasySwapHistoryRow[]> => {
+    const { getAdmin, authenticateGuest, hashPin, verifyPin, makeSalt } = await import("@/lib/fantasy-guest-auth.server");
     setResponseHeader("cache-control", "no-store, max-age=0");
     const { loadSwapHistory } = await import("@/lib/fantasy-swap-history.server");
     const admin = await getAdmin();
@@ -176,6 +152,7 @@ export const saveGuestFantasySquad = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data }) => {
+    const { getAdmin, authenticateGuest, hashPin, verifyPin, makeSalt } = await import("@/lib/fantasy-guest-auth.server");
     const { saveSquad } = await import("@/lib/fantasy.server");
     const admin = await getAdmin();
     const g = await authenticateGuest(data.email, data.pin);
@@ -198,6 +175,7 @@ export const setGuestFantasyTeamName = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data }) => {
+    const { getAdmin, authenticateGuest, hashPin, verifyPin, makeSalt } = await import("@/lib/fantasy-guest-auth.server");
     const admin = await getAdmin();
     const g = await authenticateGuest(data.email, data.pin);
     const { error } = await admin
@@ -214,6 +192,7 @@ export const setGuestFantasyTeamName = createServerFn({ method: "POST" })
 export const requestFantasyGuestPinReset = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({ email: emailSchema }).parse(d))
   .handler(async ({ data }) => {
+    const { getAdmin, authenticateGuest, hashPin, verifyPin, makeSalt } = await import("@/lib/fantasy-guest-auth.server");
     const admin = await getAdmin();
     const { data: entrant } = await admin
       .from("fantasy_guest_entrants")
@@ -223,7 +202,7 @@ export const requestFantasyGuestPinReset = createServerFn({ method: "POST" })
     if (!entrant) return { ok: true };
 
     const code = String(Math.floor(100000 + Math.random() * 900000));
-    const codeSalt = randomBytes(8).toString("hex");
+    const codeSalt = makeSalt(8);
     const codeHash = `${codeSalt}:${hashPin(code, codeSalt)}`;
     const expiresAt = new Date(Date.now() + 30 * 60 * 1000).toISOString();
     const { error: updErr } = await admin
@@ -288,6 +267,7 @@ export const resetFantasyGuestPin = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data }) => {
+    const { getAdmin, authenticateGuest, hashPin, verifyPin, makeSalt } = await import("@/lib/fantasy-guest-auth.server");
     const admin = await getAdmin();
     const { data: entrant, error } = await admin
       .from("fantasy_guest_entrants")
@@ -303,12 +283,10 @@ export const resetFantasyGuestPin = createServerFn({ method: "POST" })
     }
     const [codeSalt, codeHash] = ((entrant as any).pin_reset_hash as string).split(":");
     if (!codeSalt || !codeHash) throw new Error("Invalid reset state.");
-    const computed = Buffer.from(hashPin(data.code, codeSalt), "hex");
-    const target = Buffer.from(codeHash, "hex");
-    if (computed.length !== target.length || !timingSafeEqual(computed, target)) {
+    if (!verifyPin(data.code, codeSalt, codeHash)) {
       throw new Error("Incorrect reset code.");
     }
-    const salt = randomBytes(16).toString("hex");
+    const salt = makeSalt();
     const hash = hashPin(data.newPin, salt);
     const { error: upErr } = await admin
       .from("fantasy_guest_entrants")
