@@ -366,12 +366,6 @@ export const adminSaveFantasyStats = createServerFn({ method: "POST" })
       _gameweek_id: data.gameweekId,
     } as never);
     if (scoreErr) throw new Error(scoreErr.message);
-    // Awarding man of the match is the last step of a gameweek, so close it out
-    // once a winner is set (and reopen it if the award is cleared).
-    await admin
-      .from("fantasy_gameweeks")
-      .update({ status: data.playerId ? "final" : "locked" } as never)
-      .eq("id", data.gameweekId);
     return { ok: true };
   });
 
