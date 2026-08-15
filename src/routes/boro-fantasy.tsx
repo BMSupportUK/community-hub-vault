@@ -708,6 +708,7 @@ function BoroFantasyPage() {
   const [guest, setGuest] = useState<GuestSession | null>(null);
   const [showGuestLogin, setShowGuestLogin] = useState(false);
   const [joining, setJoining] = useState(false);
+  const [markingFinished, setMarkingFinished] = useState(false);
 
   useEffect(() => {
     try {
