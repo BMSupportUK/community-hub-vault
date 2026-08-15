@@ -67,8 +67,10 @@ function AdminFantasyMotmPage() {
     setSaving(true);
     try {
       await setMotm({ data: { gameweekId: selected.gameweekId, fixtureId: selected.fixtureId, playerId } });
-      toast.success(playerId ? "Man of the match awarded (+3 pts)" : "Man of the match cleared");
+      toast.success(playerId ? "Man of the match awarded (+3 pts) — points recalculated" : "Man of the match cleared — points recalculated");
       await qc.invalidateQueries({ queryKey: ["fantasy-motm"] });
+      // Managers' squads, leaderboard and player pages all depend on the new scores.
+      await qc.invalidateQueries({ predicate: (q) => String(q.queryKey?.[0] ?? "").startsWith("fantasy") });
     } catch (e: any) {
       toast.error(e?.message ?? "Could not save");
     } finally {
