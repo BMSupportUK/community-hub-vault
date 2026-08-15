@@ -7,8 +7,7 @@ const ESPN_COMPETITIONS: Array<{ slug: string; name: string }> = [
   { slug: "eng.2", name: "Championship" },
   { slug: "eng.fa", name: "FA Cup" },
   { slug: "eng.league_cup", name: "Carabao Cup" },
-  { slug: "eng.efl_cup", name: "Carabao Cup" },
-  { slug: "eng.efl_trophy", name: "EFL Trophy" },
+  { slug: "eng.trophy", name: "EFL Trophy" },
 ];
 
 export type EspnBoroMatch = {
