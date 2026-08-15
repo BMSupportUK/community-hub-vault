@@ -384,12 +384,11 @@ export async function syncBoroMatchThread(opts?: { ignoreWindow?: boolean }): Pr
   const espn = await findEspnEvent(fx);
   if (!espn) return { ...base, fixture: label, topic: topic.title, skipped: ["no ESPN match found"] };
 
-  const res = await fetch(
+  const { espnJson } = await import("@/lib/espn-fetch");
+  const json: any = await espnJson(
     `https://site.api.espn.com/apis/site/v2/sports/soccer/${espn.slug}/summary?event=${encodeURIComponent(espn.eventId)}`,
-    { headers: { accept: "application/json" } },
   );
-  if (!res.ok) return { ...base, fixture: label, topic: topic.title, skipped: [`ESPN summary ${res.status}`] };
-  const json: any = await res.json();
+  if (!json) return { ...base, fixture: label, topic: topic.title, skipped: ["ESPN summary unavailable"] };
   const status = normaliseEspnSummary(json).status;
 
   const authorId = (await getMatchDayAuthorId()) ?? topic.author_id;
