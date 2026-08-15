@@ -2316,12 +2316,7 @@ function SquadBuilder({
           </Tabs>
         </div>
 
-        {/* Column 2 — subs bench, right of the pitch. */}
-        <div className="grid min-w-0 gap-4 items-stretch h-full">
-          {/* Bench content is rendered inside the Tabs above; this column stays as a spacer/alignment. */}
-        </div>
-
-        {/* Column 3 — your team card and the gameweek picker / save panel. */}
+        {/* Column 2 — your team card, checklist and the gameweek picker / save panel. */}
         <div className="grid min-w-0 gap-4 items-stretch h-full">
           <ManagerCard
             state={state}
@@ -2330,6 +2325,9 @@ function SquadBuilder({
             canEdit={canEdit}
             onEdit={onEdit}
             gameweekId={gwId}
+            checklist={activeChecklist}
+            locked={locked}
+            canPlay={canPlay}
           />
           {gameweekPanel}
         </div>
