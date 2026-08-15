@@ -2942,7 +2942,7 @@ function PitchView({
 /** Substitutes panel — lives beside the pitch so it can sit in its own column. */
 function BenchPanel({
   editable, dragEnabled = false, playerById, bench, benchPositions, onBenchPosition, benchSize, pointsByPlayer, minutesByPlayer, autoSubbedIds,
-  onDropStart, onDropBench, onRemove, onBenchSlotOpen, gw, ratingByPlayer,
+  onDropStart, onDropBench, onRemove, onBenchSlotOpen, gw, ratingByPlayer, variant = "panel",
 }: {
   editable: boolean;
   /** Drag and drop is enabled while the gameweek is still open. */
@@ -2961,7 +2961,10 @@ function BenchPanel({
   onRemove: (id: string) => void;
   onBenchSlotOpen: (benchIndex: number) => void;
   gw?: FantasyGameweekDTO | null;
+  /** "pitch" renders the bench on a green pitch, matching the starting XI view. */
+  variant?: "panel" | "pitch";
 }) {
+  const onPitch = variant === "pitch";
   const leagueGame = gw ? fantasyCompetitionGroup(gw.competition) === "league" : true;
   const gwKickoff = gw ? gw.kickoffAt : null;
   const dropProps = (handler: (playerId: string) => void) => ({
@@ -2976,9 +2979,25 @@ function BenchPanel({
 
   return (
     <div className="rounded-2xl border border-border/60 bg-card/85 backdrop-blur overflow-hidden">
-      <div className="p-3" {...dropProps(onDropBench)}>
-        <div className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Bench ({bench.filter(Boolean).length}/{benchSize})</div>
-        <div className="grid grid-cols-3 gap-2">
+      <div
+        className={onPitch ? "relative p-4 sm:p-6" : "p-3"}
+        style={
+          onPitch
+            ? {
+                background:
+                  "repeating-linear-gradient(to bottom, oklch(0.34 0.09 152) 0 44px, oklch(0.31 0.09 152) 44px 88px)",
+              }
+            : undefined
+        }
+        {...dropProps(onDropBench)}
+      >
+        {onPitch && (
+          <div className="pointer-events-none absolute inset-4 sm:inset-6 rounded-xl border-2 border-white/25" aria-hidden />
+        )}
+        <div className={`mb-2 text-xs font-bold uppercase tracking-wide ${onPitch ? "relative text-white/85" : "text-muted-foreground"}`}>
+          Subs bench ({bench.filter(Boolean).length}/{benchSize})
+        </div>
+        <div className={`grid gap-2 ${onPitch ? "relative grid-cols-2 gap-3 py-2 sm:grid-cols-3" : "grid-cols-3"}`}>
           {Array.from({ length: Math.max(benchSize, bench.length) }, (_, i) => BENCH_SLOT_LABELS[i] ?? "Sub").map((slotLabel, i) => {
             const id = bench[i];
             const p = id ? playerById.get(id) : undefined;
@@ -2990,13 +3009,21 @@ function BenchPanel({
                 onDragStart={(e) => { if (id) e.dataTransfer.setData("text/fantasy-player", id); }}
                 onClick={() => { if (editable && !id) onBenchSlotOpen(i); }}
                 role={editable && !id ? "button" : undefined}
-                className={`rounded-xl border px-1.5 py-2.5 text-center text-xs transition-colors ${
-                  p
-                    ? "border-l-[3px] border-r-[3px] border-l-primary/70 border-r-primary/70 bg-gradient-to-b from-muted/60 to-muted/30 shadow-sm"
-                    : "cursor-pointer border-dashed border-l-[3px] border-r-[3px] border-l-border/60 border-r-border/60 bg-muted/20 text-muted-foreground hover:bg-muted/40"
-                }`}
+                className={
+                  onPitch
+                    ? `rounded-xl border border-y-white/20 px-1.5 py-2.5 text-center text-xs shadow-lg shadow-black/30 backdrop-blur-sm transition-all ${
+                        p
+                          ? "border-l-[3px] border-r-[3px] border-l-white/35 border-r-white/35 bg-gradient-to-b from-slate-900/85 to-slate-950/90 text-white ring-1 ring-inset ring-white/5 hover:border-l-white/55 hover:border-r-white/55"
+                          : "cursor-pointer border-dashed border-l-2 border-r-2 border-l-white/40 border-r-white/40 bg-white/[0.07] text-white/80 hover:border-l-white/70 hover:border-r-white/70 hover:bg-white/[0.14]"
+                      }`
+                    : `rounded-xl border px-1.5 py-2.5 text-center text-xs transition-colors ${
+                        p
+                          ? "border-l-[3px] border-r-[3px] border-l-primary/70 border-r-primary/70 bg-gradient-to-b from-muted/60 to-muted/30 shadow-sm"
+                          : "cursor-pointer border-dashed border-l-[3px] border-r-[3px] border-l-border/60 border-r-border/60 bg-muted/20 text-muted-foreground hover:bg-muted/40"
+                      }`
+                }
               >
-                <div className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground/80 mb-1">
+                <div className={`mb-1 text-[10px] font-bold uppercase tracking-wide ${onPitch ? "text-white/70" : "text-muted-foreground/80"}`}>
                   {i === 0 ? "Sub GK" : `Sub ${i}`}
                 </div>
                 {p ? (
@@ -3015,12 +3042,12 @@ function BenchPanel({
                         return (chosen && eligible.includes(chosen) ? chosen : null) ?? p.position;
                       })()}
                       asSub
-                      className="mt-1.5 block text-center text-[10px] font-semibold leading-tight break-words line-clamp-2 min-h-[24px]"
+                      className={`mt-1.5 block text-center text-[10px] font-semibold leading-tight break-words line-clamp-2 min-h-[24px] ${onPitch ? "text-white" : ""}`}
                     />
                     {ratingByPlayer?.has(p.id) && (
                       <div className="mt-0.5 flex items-center justify-center gap-1">
-                        <span className="text-[8px] font-bold uppercase tracking-wide text-muted-foreground">Rating</span>
-                        <RatingPill rating={ratingByPlayer.get(p.id)} />
+                        <span className={`text-[8px] font-bold uppercase tracking-wide ${onPitch ? "text-white/60" : "text-muted-foreground"}`}>Rating</span>
+                        <RatingPill rating={ratingByPlayer.get(p.id)} dark={onPitch} />
                       </div>
                     )}
                     {(() => {
