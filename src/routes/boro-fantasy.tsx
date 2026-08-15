@@ -2316,48 +2316,9 @@ function SquadBuilder({
           </Tabs>
         </div>
 
-        {/* Column 2 — match day checklist and the subs bench, right of the pitch. */}
+        {/* Column 2 — subs bench, right of the pitch. */}
         <div className="grid min-w-0 gap-4 items-stretch h-full">
-        {/* Checklist — scoped to the active tab (squad of 15 vs starting 11). */}
-        <aside className="rounded-2xl border border-border/60 bg-card/85 backdrop-blur overflow-hidden">
-          <div className="p-3 border-b border-border/60 flex items-center gap-2">
-            <h3 className="font-display font-bold text-sm">{activeChecklist.title}</h3>
-            {canPlay && !locked && (
-              <span
-                className={
-                  "ml-auto rounded-full px-2 py-0.5 text-[11px] font-bold border " +
-                  (activeChecklist.items.length === 0
-                    ? "border-emerald-500/40 bg-emerald-500/15 text-emerald-300"
-                    : "border-destructive/40 bg-destructive/15 text-destructive")
-                }
-              >
-                {activeChecklist.items.length === 0 ? "Ready" : `${activeChecklist.items.length} to fix`}
-              </span>
-            )}
-          </div>
-          <div className="p-3 text-sm">
-            {!canPlay || locked ? (
-              <p className="text-xs text-muted-foreground">
-                {locked
-                  ? "This gameweek is locked — the checklist reopens for the next one."
-                  : "Join the game to start building a valid squad."}
-              </p>
-            ) : activeChecklist.items.length === 0 ? (
-              <p className="text-xs text-emerald-300">
-                Match day 11 and bench are valid — hit <span className="font-semibold">Save Matchday Squad</span>.
-              </p>
-            ) : (
-              <ul className="space-y-1.5">
-                {activeChecklist.items.map((p) => (
-                  <li key={p} className="flex gap-2 text-xs leading-relaxed">
-                    <span className="mt-1 size-1.5 shrink-0 rounded-full bg-destructive" />
-                    <span className="min-w-0">{p}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        </aside>
+          {/* Bench content is rendered inside the Tabs above; this column stays as a spacer/alignment. */}
         </div>
 
         {/* Column 3 — your team card and the gameweek picker / save panel. */}
