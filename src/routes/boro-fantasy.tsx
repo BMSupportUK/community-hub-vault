@@ -42,6 +42,7 @@ import {
   adminRemoveFantasyEntrant,
   getFantasyPlayerBreakdown,
   getFantasySwapHistory,
+  adminSetFantasyGameweekStatus,
   type FantasyStateDTO, type FantasyPlayerDTO, type FantasyLeaderboardRow, type FantasyGameweekDTO,
   type FantasyPlayerBreakdown, type FantasyPreviousGwScoreDTO, type FantasySwapHistoryRow,
 } from "@/lib/fantasy.functions";
@@ -707,6 +708,7 @@ function BoroFantasyPage() {
   const [guest, setGuest] = useState<GuestSession | null>(null);
   const [showGuestLogin, setShowGuestLogin] = useState(false);
   const [joining, setJoining] = useState(false);
+  const [markingFinished, setMarkingFinished] = useState(false);
 
   useEffect(() => {
     try {
@@ -729,6 +731,7 @@ function BoroFantasyPage() {
   const setTeamNameFn = useServerFn(setFantasyTeamName);
   const setGuestTeamNameFn = useServerFn(setGuestFantasyTeamName);
   const removeEntrantFn = useServerFn(adminRemoveFantasyEntrant);
+  const setGwStatusFn = useServerFn(adminSetFantasyGameweekStatus);
 
   const stateQuery = useQuery<FantasyStateDTO>({
     queryKey: ["fantasy-state", user?.id ?? null, guest?.guestId ?? null],
@@ -955,6 +958,19 @@ function BoroFantasyPage() {
     refresh();
   }
 
+  async function handleMarkFinished(gameweekId: string) {
+    setMarkingFinished(true);
+    try {
+      await setGwStatusFn({ data: { gameweekId, status: "final" } });
+      toast.success("Gameweek marked as finished");
+      await qc.invalidateQueries({ predicate: (q) => String(q.queryKey?.[0] ?? "").startsWith("fantasy") });
+    } catch (e: any) {
+      toast.error(e?.message ?? "Could not mark gameweek as finished");
+    } finally {
+      setMarkingFinished(false);
+    }
+  }
+
   const podium = useMemo(() => {
     const rows = lbQuery.data ?? [];
     const allFinal = (state?.gameweeks ?? []).length > 0 && (state?.gameweeks ?? []).every((g) => g.status === "final");
@@ -1080,6 +1096,9 @@ function BoroFantasyPage() {
                     onEdit={openNameDialog}
                     isMember={!!user}
                     guestCreds={guest ? { email: guest.email, pin: guest.pin } : null}
+                    canManageEntrants={canManageEntrants}
+                    onMarkFinished={handleMarkFinished}
+                    markingFinished={markingFinished}
                   />
                 )}
               </TabsContent>
@@ -1248,6 +1267,7 @@ type SavePayload = {
 
 function SquadBuilder({
   state, canPlay, onSave, name, teamName, canEdit, onEdit, isMember, guestCreds,
+  canManageEntrants, onMarkFinished, markingFinished,
 }: {
   state: FantasyStateDTO;
   canPlay: boolean;
@@ -1258,6 +1278,9 @@ function SquadBuilder({
   onEdit: () => void;
   isMember: boolean;
   guestCreds: { email: string; pin: string } | null;
+  canManageEntrants: boolean;
+  onMarkFinished: (gameweekId: string) => Promise<void>;
+  markingFinished: boolean;
 }) {
   // Every gameweek stays in the dropdown — locked and finished weeks remain
   // selectable (read-only) so managers can look back at past squads.
@@ -2100,6 +2123,19 @@ function SquadBuilder({
                       <X className="size-4 text-destructive" strokeWidth={3} />
                     )}
                   </div>
+                  {canManageEntrants && gw.status !== "final" && (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="w-full border-emerald-500/40 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20 hover:text-emerald-200"
+                      disabled={markingFinished}
+                      onClick={() => onMarkFinished(gw.id)}
+                    >
+                      {markingFinished ? <Loader2 className="size-4 mr-2 animate-spin" /> : <Check className="size-4 mr-2" />}
+                      Mark gameweek finished
+                    </Button>
+                  )}
                 </div>
               );
             })()}
