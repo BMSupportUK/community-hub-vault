@@ -2056,17 +2056,6 @@ function SquadBuilder({
                   ].filter(Boolean) as string[];
                   return (
                     <>
-                    <div
-                      className={`mt-2 inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[11px] font-semibold ${
-                        done
-                          ? "border-emerald-400/50 bg-emerald-500/15 text-emerald-300"
-                          : "border-destructive/50 bg-destructive/10 text-destructive"
-                      }`}
-                      title={done ? "All stats in and star players awarded" : `Waiting on: ${pending.join(", ")}`}
-                    >
-                      {done ? <Check className="size-3.5" strokeWidth={3} /> : <X className="size-3.5" strokeWidth={3} />}
-                      Gameweek {done ? "finished" : "in progress"}
-                    </div>
                     {(gw.stars?.length ?? 0) > 0 && (
                       <div className="mt-2 rounded-xl border border-amber-400/50 bg-amber-500/10 px-3 py-2">
                         <div className="text-[11px] font-bold uppercase tracking-wide text-amber-300">
@@ -2158,19 +2147,27 @@ function SquadBuilder({
                       <X className="size-4 text-destructive" strokeWidth={3} />
                     )}
                   </div>
-                  {canManageEntrants && gw.status !== "final" && (
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      className="w-full border-emerald-500/40 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20 hover:text-emerald-200"
-                      disabled={markingFinished}
-                      onClick={() => onMarkFinished(gw.id)}
-                    >
-                      {markingFinished ? <Loader2 className="size-4 mr-2 animate-spin" /> : <Check className="size-4 mr-2" />}
-                      Mark gameweek finished
-                    </Button>
-                  )}
+                  {(() => {
+                    const done = gw.finished === true;
+                    const pending = [
+                      !/FT|FULL|POST|FINAL/i.test(gw.fixtureStatus ?? "") && gw.status !== "final" ? "match not finished" : null,
+                      !gw.statsIn ? "stats still to come in" : null,
+                      !gw.motmAwarded ? "star players not awarded" : null,
+                    ].filter(Boolean) as string[];
+                    return (
+                      <div
+                        className={`mt-1 inline-flex w-full items-center justify-center gap-1.5 rounded-full border px-2 py-1 text-[11px] font-semibold ${
+                          done
+                            ? "border-emerald-400/50 bg-emerald-500/15 text-emerald-300"
+                            : "border-destructive/50 bg-destructive/10 text-destructive"
+                        }`}
+                        title={done ? "All stats in and star players awarded" : `Waiting on: ${pending.join(", ")}`}
+                      >
+                        {done ? <Check className="size-3.5" strokeWidth={3} /> : <X className="size-3.5" strokeWidth={3} />}
+                        Gameweek {done ? "finished" : "in progress"}
+                      </div>
+                    );
+                  })()}
                 </div>
               );
             })()}
