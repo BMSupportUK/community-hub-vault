@@ -62,9 +62,11 @@ export type FantasyGameweekDTO = {
   dateTbc?: boolean;
   /** True once player stats have landed for this fixture. */
   statsIn?: boolean;
-  /** True once an admin has awarded Man of the Match for this fixture. */
+  /** True once the star player awards have landed for this fixture. */
   motmAwarded?: boolean;
-  /** Gameweek is complete: full time + stats in + Man of the Match awarded. */
+  /** The three star players of the gameweek, best first. */
+  stars?: { playerId: string; name: string; bonus: number }[];
+  /** Gameweek is complete: full time + stats in + star players awarded. */
   finished?: boolean;
 };
 
