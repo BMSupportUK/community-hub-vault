@@ -382,6 +382,7 @@ export async function syncFantasyScoring(): Promise<{
   scored: string[];
   live: string[];
   pending: string[];
+  swaps: string[];
   errors: string[];
 }> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -389,18 +390,30 @@ export async function syncFantasyScoring(): Promise<{
   const scored: string[] = [];
   const live: string[] = [];
   const pending: string[] = [];
+  const swaps: string[] = [];
 
   const { data: gws, error } = await supabaseAdmin
     .from("fantasy_gameweeks")
     .select("id, gw_number, status, lock_at, fixture_id, boro_fixtures!inner(id, kickoff_at, home_team, away_team, status, competition)")
     .order("gw_number", { ascending: true });
-  if (error) return { ok: false, locked: 0, scored, live, pending, errors: [error.message] };
+  if (error) return { ok: false, locked: 0, scored, live, pending, swaps, errors: [error.message] };
 
   const { data: playerRows, error: pErr } = await supabaseAdmin
     .from("fantasy_players")
     .select("id, name, position");
-  if (pErr) return { ok: false, locked: 0, scored, live, pending, errors: [pErr.message] };
+  if (pErr) return { ok: false, locked: 0, scored, live, pending, swaps, errors: [pErr.message] };
   const players = (playerRows ?? []) as Array<{ id: string; name: string; position: string }>;
+
+  // Official starting XI announced? Swap in any bench player who is starting
+  // for a picked starter who isn't, before any points are worked out.
+  try {
+    const { syncLineupSwaps } = await import("@/lib/fantasy-lineup-swap.server");
+    const res = await syncLineupSwaps();
+    if (res.error) errors.push(`lineup swaps: ${res.error}`);
+    swaps.push(...res.swaps);
+  } catch (e) {
+    errors.push(`lineup swaps: ${e instanceof Error ? e.message : String(e)}`);
+  }
 
   const nowMs = Date.now();
   let locked = 0;
@@ -487,5 +500,5 @@ export async function syncFantasyScoring(): Promise<{
     scored.push(`gw${raw['gw_number']} (${rows.length} players)`);
   }
 
-  return { ok: errors.length === 0, locked, scored, live, pending, errors };
+  return { ok: errors.length === 0, locked, scored, live, pending, swaps, errors };
 }
