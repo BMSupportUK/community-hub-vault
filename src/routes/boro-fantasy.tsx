@@ -3905,11 +3905,12 @@ function GuestAccessCard({
  * squads, newest first, with the exact time it happened and the rule used.
  */
 function SwapHistoryPanel({
-  isMember, guestCreds, currentGwSwapCount,
+  isMember, guestCreds, currentGwSwapCount, currentGameweekNumber,
 }: {
   isMember: boolean;
   guestCreds: { email: string; pin: string } | null;
   currentGwSwapCount: number;
+  currentGameweekNumber?: number;
 }) {
   const memberFn = useServerFn(getFantasySwapHistory);
   const guestFn = useServerFn(getGuestFantasySwapHistory);
@@ -3928,7 +3929,13 @@ function SwapHistoryPanel({
     refetchInterval: 60_000,
   });
 
-  const rows = query.data ?? [];
+  const rows = useMemo(
+    () =>
+      currentGameweekNumber != null
+        ? (query.data ?? []).filter((r) => r.gameweek === currentGameweekNumber)
+        : (query.data ?? []),
+    [query.data, currentGameweekNumber],
+  );
   // Group by the moment the swap engine ran, so an in/out pair reads together.
   const groups = useMemo(() => {
     const map = new Map<string, FantasySwapHistoryRow[]>();
