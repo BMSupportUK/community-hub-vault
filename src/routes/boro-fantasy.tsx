@@ -730,6 +730,7 @@ function BoroFantasyPage() {
   const setTeamNameFn = useServerFn(setFantasyTeamName);
   const setGuestTeamNameFn = useServerFn(setGuestFantasyTeamName);
   const removeEntrantFn = useServerFn(adminRemoveFantasyEntrant);
+  const setGwStatusFn = useServerFn(adminSetFantasyGameweekStatus);
 
   const stateQuery = useQuery<FantasyStateDTO>({
     queryKey: ["fantasy-state", user?.id ?? null, guest?.guestId ?? null],
