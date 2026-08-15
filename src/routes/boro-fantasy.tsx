@@ -3836,3 +3836,123 @@ function GuestAccessCard({
     </div>
   );
 }
+
+/**
+ * Swap history: every automatic line-up swap ever made to this manager's
+ * squads, newest first, with the exact time it happened and the rule used.
+ */
+function SwapHistoryPanel({
+  isMember, guestCreds, currentGwSwapCount,
+}: {
+  isMember: boolean;
+  guestCreds: { email: string; pin: string } | null;
+  currentGwSwapCount: number;
+}) {
+  const memberFn = useServerFn(getFantasySwapHistory);
+  const guestFn = useServerFn(getGuestFantasySwapHistory);
+  const [open, setOpen] = useState(currentGwSwapCount > 0);
+
+  const query = useQuery<FantasySwapHistoryRow[]>({
+    queryKey: ["fantasy-swap-history", isMember ? "member" : guestCreds?.email ?? "none"],
+    queryFn: () =>
+      isMember
+        ? memberFn({})
+        : guestCreds
+          ? guestFn({ data: { email: guestCreds.email, pin: guestCreds.pin } })
+          : Promise.resolve([]),
+    enabled: isMember || !!guestCreds,
+    staleTime: 30_000,
+    refetchInterval: 60_000,
+  });
+
+  const rows = query.data ?? [];
+  // Group by the moment the swap engine ran, so an in/out pair reads together.
+  const groups = useMemo(() => {
+    const map = new Map<string, FantasySwapHistoryRow[]>();
+    for (const r of rows) {
+      const key = `${r.gameweek}|${r.swappedAt}`;
+      const list = map.get(key);
+      if (list) list.push(r);
+      else map.set(key, [r]);
+    }
+    return [...map.entries()].map(([key, list]) => ({ key, list }));
+  }, [rows]);
+
+  if (!query.isLoading && rows.length === 0) return null;
+
+  return (
+    <div className="rounded-xl border border-sky-500/50 bg-sky-500/10 px-4 py-3 text-sm">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2 font-bold uppercase tracking-wide text-sky-300">
+          <ArrowRightLeft className="size-4" /> Automatic line-up swaps
+          {rows.length > 0 && (
+            <span className="rounded-full border border-sky-400/50 bg-sky-500/20 px-2 py-0.5 text-[10px]">
+              {groups.length} {groups.length === 1 ? "swap" : "swaps"}
+            </span>
+          )}
+        </div>
+        <Button size="sm" variant="outline" onClick={() => setOpen((v) => !v)}>
+          {open ? "Hide history" : "Show history"}
+        </Button>
+      </div>
+      <p className="mt-1 text-xs text-muted-foreground">
+        When Boro's official starting eleven is announced, bench players who are starting are swapped
+        into your eleven for picked starters who aren't — like for like only.
+      </p>
+
+      {query.isLoading && (
+        <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
+          <Loader2 className="size-3 animate-spin" /> Loading your swap history…
+        </div>
+      )}
+
+      {open && !query.isLoading && (
+        <div className="mt-3 space-y-3">
+          {groups.map(({ key, list }) => {
+            const first = list[0]!;
+            return (
+              <div key={key} className="rounded-lg border border-sky-400/30 bg-background/40 p-3">
+                <div className="flex flex-wrap items-baseline justify-between gap-2">
+                  <span className="text-xs font-bold text-sky-200">
+                    GW{first.gameweek} — {first.fixture}
+                  </span>
+                  <span className="text-[11px] text-muted-foreground">
+                    Swapped {new Date(first.swappedAt).toLocaleString("en-GB", {
+                      day: "2-digit", month: "short", year: "numeric",
+                      hour: "2-digit", minute: "2-digit",
+                    })}
+                  </span>
+                </div>
+                <ul className="mt-2 space-y-2">
+                  {list.map((r) => (
+                    <li key={r.id} className="text-xs">
+                      <span className="inline-flex items-center gap-1">
+                        <span
+                          className={`rounded px-1.5 py-0.5 text-[10px] font-bold uppercase ${
+                            r.direction === "in"
+                              ? "bg-emerald-500/20 text-emerald-300"
+                              : "bg-amber-500/20 text-amber-300"
+                          }`}
+                        >
+                          {r.direction === "in" ? "In" : "Out"}
+                        </span>
+                        <span className="font-semibold">{r.playerName}</span>
+                        <span className="text-muted-foreground">
+                          · scores as {POSITION_SHORT[r.scoringPosition]}
+                        </span>
+                      </span>
+                      <div className="mt-0.5 text-muted-foreground">{r.note}</div>
+                      <div className="mt-0.5 text-[11px] italic text-sky-200/80">
+                        <span className="font-semibold not-italic">Rule:</span> {r.rule}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
