@@ -6,7 +6,7 @@
 // and the top three earn 3 / 2 / 1 bonus points. Admins can still override the
 // top pick on the admin screen, and an existing award is never overwritten.
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { STAR_BONUSES, computeStarRating, type StarRatingStats } from "@/lib/fantasy-star-rating";
+import { STAR_BONUSES, computeStarRating, isStarEligible, type StarRatingStats } from "@/lib/fantasy-star-rating";
 
 /** Points added to the top star player's score (kept for existing callers). */
 export const MOTM_BONUS = STAR_BONUSES[0];
@@ -39,6 +39,7 @@ export async function autoAwardStars(
   if (rows.some((r) => (r.bonus ?? 0) > 0)) return { awarded: false, reason: "already awarded" };
 
   const ranked = rows
+    .filter((r) => isStarEligible(r))
     .map((r) => ({ row: r, rating: computeStarRating(r), base: (r.points ?? 0) - (r.bonus ?? 0) }))
     .sort((a, b) => b.rating - a.rating || b.base - a.base || (b.row.minutes ?? 0) - (a.row.minutes ?? 0))
     .slice(0, STAR_BONUSES.length);

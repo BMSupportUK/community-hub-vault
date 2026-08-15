@@ -41,6 +41,14 @@ export type StarRatingStats = {
 const n = (v: number | null | undefined) => Number(v) || 0;
 
 /**
+ * Only players with a real say in the game can win a star: 45+ minutes, or a
+ * goal or assist off the bench.
+ */
+export function isStarEligible(s: StarRatingStats): boolean {
+  return n(s.minutes) >= 45 || n(s.goals) > 0 || n(s.assists) > 0;
+}
+
+/**
  * A 0-10 match rating for one player's performance in a fixture.
  * Scaled so a quiet 90 minutes sits around 6.0.
  */
