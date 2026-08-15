@@ -41,6 +41,8 @@ export type FantasyPlayerDTO = {
   injurySource?: "feed" | "admin" | null;
   /** Named in the club's official 25-man matchday squad (league games only). */
   in25Squad?: boolean;
+  /** 0-10 rating from this player's most recent fixture with stats (fallback display). */
+  lastRating?: number | null;
 };
 
 export type FantasyGameweekDTO = {
@@ -210,14 +212,23 @@ export async function loadPlayers(admin: any): Promise<FantasyPlayerDTO[]> {
         "id, name, position, alt_position, shirt_number, value_m, status, departed_at, loan_club, loan_from, squad_level, injury_status, injury_note, injury_return, injury_source, in_25_squad",
       )
       .order("sort_order", { ascending: true }),
-    admin.from("fantasy_player_stats").select("player_id, points"),
+    admin.from("fantasy_player_stats").select("*, fixture:boro_fixtures(kickoff_at)"),
   ]);
   if (error) throw new Error(error.message);
   const totals = new Map<string, number>();
+  const lastRating = new Map<string, { at: number; rating: number }>();
   for (const r of (statsRes?.data ?? []) as any[]) {
     totals.set(r.player_id, (totals.get(r.player_id) ?? 0) + (Number(r.points) || 0));
+    const at = new Date(r.fixture?.kickoff_at ?? 0).getTime() || 0;
+    const rating = computeStarRating(r);
+    const prev = lastRating.get(r.player_id);
+    if (rating > 0 && (!prev || at >= prev.at)) lastRating.set(r.player_id, { at, rating });
   }
-  return (data ?? []).map((r: any) => ({ ...mapPlayer(r), seasonPoints: totals.get(r.id) ?? 0 }));
+  return (data ?? []).map((r: any) => ({
+    ...mapPlayer(r),
+    seasonPoints: totals.get(r.id) ?? 0,
+    lastRating: lastRating.get(r.id)?.rating ?? null,
+  }));
 }
 
 export async function loadGameweeks(admin: any): Promise<FantasyGameweekDTO[]> {
