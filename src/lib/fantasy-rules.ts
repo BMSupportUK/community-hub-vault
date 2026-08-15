@@ -313,7 +313,7 @@ export const SCORING_RULES: {
   { abbr: "YC", label: "Yellow card", minTime: "1+ sec", starter: "−1 pt", sub: "−0.5 pt" },
   { abbr: "RC", label: "Red card", minTime: "1+ sec", starter: "−3 pts", sub: "−1.5 pts" },
   { abbr: "OG", label: "Own goals", minTime: "1+ sec", starter: "−2 pts", sub: "−1 pt" },
-  { abbr: "MOTM", label: "Man of the match bonus", minTime: "1+ sec", starter: "1 pt", sub: "0.5 pt" },
+  { abbr: "MOTM", label: "Man of the match bonus (auto-awarded to the top scoring Boro player, admin can override)", minTime: "1+ sec", starter: "3 pts", sub: "1.5 pts" },
 ];
 
 /**
