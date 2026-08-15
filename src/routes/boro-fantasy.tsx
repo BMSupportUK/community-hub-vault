@@ -1005,6 +1005,8 @@ function BoroFantasyPage() {
                     teamName={currentTeamName}
                     canEdit={canPlay}
                     onEdit={openNameDialog}
+                    isMember={!!user}
+                    guestCreds={guest ? { email: guest.email, pin: guest.pin } : null}
                   />
                 )}
               </TabsContent>
@@ -1172,7 +1174,7 @@ type SavePayload = {
 };
 
 function SquadBuilder({
-  state, canPlay, onSave, name, teamName, canEdit, onEdit,
+  state, canPlay, onSave, name, teamName, canEdit, onEdit, isMember, guestCreds,
 }: {
   state: FantasyStateDTO;
   canPlay: boolean;
@@ -1181,6 +1183,8 @@ function SquadBuilder({
   teamName: string;
   canEdit: boolean;
   onEdit: () => void;
+  isMember: boolean;
+  guestCreds: { email: string; pin: string } | null;
 }) {
   // Managers can work ahead: any gameweek that's still open (upcoming and not
   // past its lock time) can be picked from the dropdown.
@@ -1989,8 +1993,8 @@ function SquadBuilder({
       )}
       {canPlay && (
         <SwapHistoryPanel
-          isMember={!!user}
-          guestCreds={guest ? { email: guest.email, pin: guest.pin } : null}
+          isMember={isMember}
+          guestCreds={guestCreds}
           currentGwSwapCount={lineupSwapNotes.length}
         />
       )}
