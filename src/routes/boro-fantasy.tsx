@@ -729,6 +729,33 @@ function BoroFantasyPage() {
       window.clearInterval(id);
       };
   }, [qc]);
+
+  // Team news / live scoring: ask the server to re-check the official starting
+  // XI so automatic line-up swaps land on the pitch without a manual refresh.
+  useEffect(() => {
+    let cancelled = false;
+    const ping = async () => {
+      try {
+        const res = await fetch("/api/public/hooks/sync-fantasy-scores", { method: "POST" });
+        const json = (await res.json()) as { swaps?: string[]; scored?: unknown[]; live?: unknown[] };
+        if (cancelled) return;
+        if ((json.swaps?.length ?? 0) > 0 || (json.live?.length ?? 0) > 0 || (json.scored?.length ?? 0) > 0) {
+          qc.invalidateQueries({ queryKey: ["fantasy-state"] });
+          qc.invalidateQueries({ queryKey: ["fantasy-swap-history"] });
+          qc.invalidateQueries({ queryKey: ["fantasy-leaderboard"] });
+        }
+      } catch { /* ignore */ }
+    };
+    void ping();
+    const onFocus = () => { void ping(); };
+    window.addEventListener("focus", onFocus);
+    const id = window.setInterval(ping, 60_000);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("focus", onFocus);
+      window.clearInterval(id);
+    };
+  }, [qc]);
   const lbQuery = useQuery<FantasyLeaderboardRow[]>({
     queryKey: ["fantasy-leaderboard", user?.id ?? null],
     queryFn: () => (user ? lbFn({}) : publicLbFn({})),
@@ -1237,6 +1264,28 @@ function SquadBuilder({
   const [draftLoaded, setDraftLoaded] = useState(false);
   const restoredDraftRef = useRef(false);
   const skipNextDraftSaveRef = useRef(false);
+  /** Has this gameweek locked? Once it has, the server's picks are the truth. */
+  const gwLocked = !!gw && (gw.status !== "upcoming" || new Date(gw.lockAt).getTime() <= Date.now());
+  /**
+   * Fingerprint of the saved squad. Automatic line-up swaps rewrite picks
+   * server-side without changing the squad id, so the pitch has to re-hydrate
+   * whenever any pick moves.
+   */
+  const existingSig = useMemo(
+    () =>
+      existing
+        ? [
+            existing.id,
+            existing.formation,
+            existing.captainId ?? "",
+            existing.viceId ?? "",
+            ...[...existing.picks]
+              .map((p) => `${p.playerId}:${p.isStarter ? 1 : 0}:${p.slotOrder}:${p.pickedPosition ?? ""}:${p.lineupSwapNote ? 1 : 0}`)
+              .sort(),
+          ].join("|")
+        : "none",
+    [existing],
+  );
 
   useEffect(() => {
     // State updates below apply on the next render. Prevent the save effect in
@@ -1282,7 +1331,7 @@ function SquadBuilder({
       setCaptainId(existing.captainId ?? "");
       setViceId(existing.viceId ?? "");
     };
-    if (!draftKey) {
+    if (!draftKey || gwLocked) {
       applyExisting();
       setDraftLoaded(true);
       return;
@@ -1316,7 +1365,7 @@ function SquadBuilder({
     }
     if (!restoredDraftRef.current) applyExisting();
     setDraftLoaded(true);
-  }, [draftKey, existing?.id, gwId]);
+  }, [draftKey, existingSig, gwId, gwLocked]);
 
   useEffect(() => {
     if (!draftKey || !draftLoaded) return;
