@@ -1987,26 +1987,12 @@ function SquadBuilder({
           <Lock className="size-4" /> This gameweek is locked. Changes will apply to the next one.
         </div>
       )}
-      {lineupSwapNotes.length > 0 && (
-        <div className="rounded-xl border border-sky-500/50 bg-sky-500/10 px-4 py-3 text-sm">
-          <div className="font-bold uppercase tracking-wide text-sky-300">
-            Automatic line-up swaps
-          </div>
-          <p className="mt-1 text-xs text-muted-foreground">
-            The official Boro starting XI was announced, so like-for-like swaps were made between your
-            bench and your eleven.
-          </p>
-          <ul className="mt-2 space-y-1">
-            {lineupSwapNotes.map((s) => (
-              <li key={s.name} className="text-xs">
-                <span className={s.isStarter ? "font-semibold text-sky-300" : "font-semibold text-amber-300"}>
-                  {s.name}
-                </span>{" "}
-                — {s.note}
-              </li>
-            ))}
-          </ul>
-        </div>
+      {canPlay && (
+        <SwapHistoryPanel
+          isMember={!!user}
+          guestCreds={guest ? { email: guest.email, pin: guest.pin } : null}
+          currentGwSwapCount={lineupSwapNotes.length}
+        />
       )}
       <div className="rounded-3xl border border-primary/30 shadow-glow bg-gradient-primary p-4 grid min-w-0 items-stretch gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,300px)] xl:grid-cols-[minmax(0,1fr)_minmax(0,300px)_minmax(0,320px)]">
         <div className="grid min-w-0 gap-4 items-stretch h-full">
