@@ -2227,7 +2227,7 @@ function SquadBuilder({
           currentGameweekNumber={gw?.gwNumber}
         />
       )}
-      <div className="rounded-3xl border border-primary/30 shadow-glow bg-gradient-primary p-4 grid min-w-0 items-stretch gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,300px)] xl:grid-cols-[minmax(0,1fr)_minmax(0,300px)_minmax(0,320px)]">
+      <div className="rounded-3xl border border-primary/30 shadow-glow bg-gradient-primary p-4 grid min-w-0 items-stretch gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,320px)]">
         <div className="grid min-w-0 gap-4 items-stretch h-full">
           <Tabs defaultValue="xi" className="min-w-0">
             <TabsList className="w-full grid grid-cols-2">
