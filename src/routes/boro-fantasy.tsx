@@ -2158,6 +2158,12 @@ function SquadBuilder({
       )}
       <div className="rounded-3xl border border-primary/30 shadow-glow bg-gradient-primary p-4 grid min-w-0 items-stretch gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,300px)] xl:grid-cols-[minmax(0,1fr)_minmax(0,300px)_minmax(0,320px)]">
         <div className="grid min-w-0 gap-4 items-stretch h-full">
+          <Tabs defaultValue="xi" className="min-w-0">
+            <TabsList className="w-full grid grid-cols-2">
+              <TabsTrigger value="xi">Match day 11</TabsTrigger>
+              <TabsTrigger value="subs">Subs bench</TabsTrigger>
+            </TabsList>
+            <TabsContent value="xi" className="mt-3">
           <PitchView
               formation={formation}
               onFormationChange={(f) => setFormation(f)}
@@ -2200,6 +2206,43 @@ function SquadBuilder({
               }}
               gw={gw}
           />
+            </TabsContent>
+            <TabsContent value="subs" className="mt-3">
+              <BenchPanel
+                variant="pitch"
+                editable={editable}
+                dragEnabled={editable}
+                playerById={playerById}
+                bench={bench}
+                benchPositions={benchPositions}
+                onBenchPosition={(index, pos) => {
+                  if (!editable) return;
+                  setBenchPositions((prev) => {
+                    const next = [...prev];
+                    while (next.length <= index) next.push(null);
+                    next[index] = pos;
+                    return next;
+                  });
+                }}
+                benchSize={benchRules.size}
+                pointsByPlayer={hasGwPoints ? pointsByPlayer : undefined}
+                minutesByPlayer={minutesByPlayer.size ? minutesByPlayer : undefined}
+                autoSubbedIds={autoSubbedIds}
+                ratingByPlayer={ratingByPlayer.size ? ratingByPlayer : undefined}
+                onDropStart={(playerId) => {
+                  const p = playerById.get(playerId);
+                  if (p) startPlayer(p);
+                }}
+                onDropBench={(playerId) => {
+                  const p = playerById.get(playerId);
+                  if (p) benchAdd(p);
+                }}
+                onRemove={removePlayer}
+                onBenchSlotOpen={(benchIndex) => setPicker({ mode: "bench", benchIndex })}
+                gw={gw}
+              />
+            </TabsContent>
+          </Tabs>
         </div>
 
         {/* Column 2 — match day checklist and the subs bench, right of the pitch. */}
