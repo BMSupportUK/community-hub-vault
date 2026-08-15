@@ -1587,22 +1587,16 @@ function SquadBuilder({
     return new Map(picks.map((p) => [p.playerId, p.minutes ?? 0]));
   }, [existing]);
   // 0-10 match rating for this gameweek's fixture, shown beside each name.
+  // Ratings only appear once the gameweek is fully finished (FT + stats in +
+  // star players awarded) so managers aren't influenced by a live/preview score.
   const ratingByPlayer = useMemo(() => {
-    const picks = existing?.picks ?? [];
     const map = new Map<string, number>();
-    for (const p of picks) {
+    if (!gw?.finished) return map;
+    for (const p of existing?.picks ?? []) {
       if (p.rating !== null && p.rating !== undefined && p.rating > 0) map.set(p.playerId, p.rating);
     }
-    // No stats for this fixture yet (upcoming gameweek): fall back to each
-    // player's most recent match rating so the pill still shows by the name.
-    if (map.size === 0) {
-      for (const id of selected) {
-        const r = playerById.get(id)?.lastRating;
-        if (r != null && r > 0) map.set(id, r);
-      }
-    }
     return map;
-  }, [existing, selected, playerById]);
+  }, [existing?.picks, gw?.finished]);
   const hasGwPoints = (existing?.picks ?? []).some((p) => p.points !== null);
 
   const editable = !locked && (canPlay || !gw);
