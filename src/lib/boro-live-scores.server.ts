@@ -3,6 +3,8 @@
 // domestic cups so live scores and newly-drawn cup ties show up without
 // admin intervention. ESPN is keyless and updates in near real time.
 
+import { espnJson, espnDateRange } from "@/lib/espn-fetch";
+
 const ESPN_COMPETITIONS: Array<{ slug: string; name: string }> = [
   { slug: "eng.2", name: "Championship" },
   { slug: "eng.fa", name: "FA Cup" },
