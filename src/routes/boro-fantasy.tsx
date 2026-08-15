@@ -79,6 +79,31 @@ const PlayerStatsCtx = createContext<
   () => {},
 );
 
+/** 0-10 match rating pill shown beside a player's name on the pitch. */
+function RatingPill({ rating, dark = false }: { rating?: number | null; dark?: boolean }) {
+  if (rating == null || rating <= 0) return null;
+  const tone =
+    rating >= 7.5
+      ? "border-emerald-400/60 bg-emerald-500/25 text-emerald-200"
+      : rating >= 6
+        ? "border-amber-400/60 bg-amber-500/20 text-amber-200"
+        : "border-rose-400/60 bg-rose-500/20 text-rose-200";
+  const light =
+    rating >= 7.5
+      ? "border-emerald-500/50 bg-emerald-500/15 text-emerald-500"
+      : rating >= 6
+        ? "border-amber-500/50 bg-amber-500/15 text-amber-500"
+        : "border-rose-500/50 bg-rose-500/15 text-rose-500";
+  return (
+    <span
+      title={`Match rating ${rating.toFixed(1)} / 10`}
+      className={`inline-flex items-center rounded-full border px-1 text-[9px] font-black tabular-nums leading-tight ${dark ? tone : light}`}
+    >
+      {rating.toFixed(1)}
+    </span>
+  );
+}
+
 /** Clickable player name that opens the stats pop-up. */
 function PlayerNameButton({
   playerId,
