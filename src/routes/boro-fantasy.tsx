@@ -1244,6 +1244,47 @@ function ManagerCard({
           <dd className="font-bold text-primary">{total}</dd>
         </div>
       </dl>
+
+      {checklist && (
+        <div className="mt-3 rounded-xl border border-border/60 bg-muted/30 p-3">
+          <div className="mb-2 flex items-center gap-2">
+            <ClipboardList className="size-4 text-primary" />
+            <h4 className="font-display text-xs font-bold uppercase tracking-wide">{checklist.title}</h4>
+            {canPlay && !locked && (
+              <span
+                className={
+                  "ml-auto rounded-full px-2 py-0.5 text-[10px] font-bold border " +
+                  (checklist.items.length === 0
+                    ? "border-emerald-500/40 bg-emerald-500/15 text-emerald-300"
+                    : "border-destructive/40 bg-destructive/15 text-destructive")
+                }
+              >
+                {checklist.items.length === 0 ? "Ready" : `${checklist.items.length} to fix`}
+              </span>
+            )}
+          </div>
+          {!canPlay || locked ? (
+            <p className="text-xs text-muted-foreground">
+              {locked
+                ? "This gameweek is locked — the checklist reopens for the next one."
+                : "Join the game to start building a valid squad."}
+            </p>
+          ) : checklist.items.length === 0 ? (
+            <p className="text-xs text-emerald-300">
+              Match day 11 and bench are valid — hit <span className="font-semibold">Save Matchday Squad</span>.
+            </p>
+          ) : (
+            <ul className="space-y-1.5">
+              {checklist.items.map((p) => (
+                <li key={p} className="flex gap-2 text-xs leading-relaxed">
+                  <span className="mt-1 size-1.5 shrink-0 rounded-full bg-destructive" />
+                  <span className="min-w-0">{p}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
     </div>
   );
 }
