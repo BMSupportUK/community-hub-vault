@@ -958,6 +958,19 @@ function BoroFantasyPage() {
     refresh();
   }
 
+  async function handleMarkFinished(gameweekId: string) {
+    setMarkingFinished(true);
+    try {
+      await setGwStatusFn({ data: { gameweekId, status: "final" } });
+      toast.success("Gameweek marked as finished");
+      await qc.invalidateQueries({ predicate: (q) => String(q.queryKey?.[0] ?? "").startsWith("fantasy") });
+    } catch (e: any) {
+      toast.error(e?.message ?? "Could not mark gameweek as finished");
+    } finally {
+      setMarkingFinished(false);
+    }
+  }
+
   const podium = useMemo(() => {
     const rows = lbQuery.data ?? [];
     const allFinal = (state?.gameweeks ?? []).length > 0 && (state?.gameweeks ?? []).every((g) => g.status === "final");
