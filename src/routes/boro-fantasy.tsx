@@ -1186,16 +1186,20 @@ function SquadBuilder({
   isMember: boolean;
   guestCreds: { email: string; pin: string } | null;
 }) {
-  // Managers can work ahead: any gameweek that's still open (upcoming and not
-  // past its lock time) can be picked from the dropdown.
+  // Every gameweek stays in the dropdown — locked and finished weeks remain
+  // selectable (read-only) so managers can look back at past squads.
   const openGameweeks = useMemo(
     () =>
-      state.gameweeks
-        .filter((g) => g.status === "upcoming" && new Date(g.lockAt).getTime() > Date.now())
+      [...state.gameweeks]
         // Gameweek numbers run chronologically across league, cup and play-off
         // games, so one ordered list covers everything.
         .sort((a, b) => (a.gwNumber ?? 0) - (b.gwNumber ?? 0)),
     [state.gameweeks],
+  );
+  /** Still open for picks — used only to choose a sensible default selection. */
+  const selectableGameweeks = useMemo(
+    () => openGameweeks.filter((g) => g.status === "upcoming" && new Date(g.lockAt).getTime() > Date.now()),
+    [openGameweeks],
   );
   // Called-off games drop to the bottom under their own header until a new date is confirmed.
   const scheduledGameweeks = useMemo(() => openGameweeks.filter((g) => !isPostponedGw(g)), [openGameweeks]);
@@ -1203,8 +1207,8 @@ function SquadBuilder({
   const [gwId, setGwId] = useState<string>(state.currentGameweekId ?? "");
   useEffect(() => {
     const valid = state.gameweeks.some((g) => g.id === gwId);
-    if (!valid) setGwId(state.currentGameweekId ?? openGameweeks[0]?.id ?? "");
-  }, [state.currentGameweekId, state.gameweeks, openGameweeks, gwId]);
+    if (!valid) setGwId(state.currentGameweekId ?? selectableGameweeks[0]?.id ?? openGameweeks[0]?.id ?? "");
+  }, [state.currentGameweekId, state.gameweeks, selectableGameweeks, openGameweeks, gwId]);
   const gw = state.gameweeks.find((g) => g.id === gwId) ?? null;
   /** League games are restricted to the club's 25-man squad; cup ties are open to anyone. */
   const isLeagueGw = gw ? fantasyCompetitionGroup(gw.competition) === "league" : true;
