@@ -188,12 +188,6 @@ async function findEspnEventId(fixture: {
 }
 
 /**
- * Build fantasy stat rows for a finished fixture straight from ESPN.
- * Returns null when the match data isn't available yet.
- */
-export async function fetchFantasyStatsForFixture(
-
-/**
  * The official Middlesbrough starting XI for a fixture, as fantasy player ids.
  * Returns null while ESPN hasn't published the line-up yet.
  */
@@ -226,6 +220,12 @@ export async function fetchBoroStarterIds(
   }
   return ids.length >= 9 ? ids : null;
 }
+
+/**
+ * Build fantasy stat rows for a finished fixture straight from ESPN.
+ * Returns null when the match data isn't available yet.
+ */
+export async function fetchFantasyStatsForFixture(
   fixture: { id: string; kickoff_at: string; home_team: string; away_team: string },
   players: Array<{ id: string; name: string; position: string }>,
   opts?: { live?: boolean },
