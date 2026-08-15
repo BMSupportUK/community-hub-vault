@@ -1,24 +1,19 @@
 // Shared fetcher for the ESPN feeds.
 //
-// The serverless worker was getting every ESPN request refused (the live score
-// sync reported 50/50 failed fetches) because requests went out without a
-// browser user-agent and because a single sync fired more subrequests than the
-// worker allows. This helper adds the headers ESPN expects, retries once on a
-// transient failure, and never throws — callers just get null.
-
-const UA =
-  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36";
+// The live sync was reporting 50/50 failed ESPN requests: a single sync fired
+// more outbound requests than the serverless worker allows per invocation, so
+// they were all cut off. Callers now use date-range queries (a handful of
+// requests instead of ~50) and go through this helper, which retries once on a
+// transient failure and never throws — callers just get null.
+//
+// Note: ESPN rejects browser-style user-agent/referer headers with 403, so the
+// request stays plain.
 
 export async function espnJson<T = any>(url: string, tries = 2): Promise<T | null> {
   for (let attempt = 0; attempt < tries; attempt += 1) {
     try {
       const res = await fetch(url, {
-        headers: {
-          accept: "application/json, text/plain, */*",
-          "accept-language": "en-GB,en;q=0.9",
-          "user-agent": UA,
-          referer: "https://www.espn.co.uk/",
-        },
+        headers: { accept: "application/json" },
       });
       if (res.ok) return (await res.json()) as T;
       // 4xx other than 429 will not fix themselves — stop early.
