@@ -2162,6 +2162,7 @@ function SquadBuilder({
               minutesByPlayer={minutesByPlayer.size ? minutesByPlayer : undefined}
               autoSubbedIds={autoSubbedIds}
               onSlotOpen={(positions, slotIndex, replaceId) => setPicker({ mode: "xi", positions, slotIndex, replaceId })}
+              ratingByPlayer={ratingByPlayer.size ? ratingByPlayer : undefined}
               onDropStart={(playerId, slotIndex, replaceId) => {
                 const p = playerById.get(playerId);
                 if (p) startPlayer(p, slotIndex, replaceId);
@@ -2242,6 +2243,7 @@ function SquadBuilder({
             pointsByPlayer={hasGwPoints ? pointsByPlayer : undefined}
             minutesByPlayer={minutesByPlayer.size ? minutesByPlayer : undefined}
             autoSubbedIds={autoSubbedIds}
+            ratingByPlayer={ratingByPlayer.size ? ratingByPlayer : undefined}
             onDropStart={(playerId) => {
               const p = playerById.get(playerId);
               if (p) startPlayer(p);
@@ -2618,7 +2620,7 @@ function PlayerPickerDialog({
 function PitchView({
   formation, onFormationChange, formationLocked = false, editable, dragEnabled = false, playerById, selected, starters, slotPositions, onSlotPosition, bench, captainId, viceId,
   pointsByPlayer, minutesByPlayer, autoSubbedIds, onDropStart, onBench, onRemove, onCaptain, onVice,
-  onSlotOpen, gw,
+  onSlotOpen, gw, ratingByPlayer,
 }: {
   formation: FormationKey;
   onFormationChange: (f: FormationKey) => void;
@@ -2637,6 +2639,7 @@ function PitchView({
   pointsByPlayer?: Map<string, number | null>;
   minutesByPlayer?: Map<string, number | null>;
   autoSubbedIds?: Set<string>;
+  ratingByPlayer?: Map<string, number>;
   onSlotOpen: (positions: FantasyPosition[], slotIndex: number, replaceId?: string) => void;
   onDropStart: (playerId: string, slotIndex?: number, replaceId?: string) => void;
   onBench: (id: string) => void;
@@ -2759,6 +2762,12 @@ function PitchView({
                           })()}
                           className="mt-1 block text-center text-[10px] font-semibold leading-tight text-white break-words line-clamp-2 min-h-[24px]"
                         />
+                        {ratingByPlayer?.has(p.id) && (
+                          <div className="mt-0.5 flex items-center justify-center gap-1">
+                            <span className="text-[8px] font-bold uppercase tracking-wide text-white/60">Rating</span>
+                            <RatingPill rating={ratingByPlayer.get(p.id)} dark />
+                          </div>
+                        )}
                         {(() => {
                           // Two-position players are scored in the role of the slot
                           // they fill; on a flexible slot the manager must pick which.
@@ -2878,6 +2887,12 @@ function PitchView({
                       name={p.name}
                       className="mt-1 block text-center line-clamp-2 min-h-[24px] break-words text-[10px] font-semibold leading-tight text-white"
                     />
+                    {ratingByPlayer?.has(p.id) && (
+                      <div className="mt-0.5 flex items-center justify-center gap-1">
+                        <span className="text-[8px] font-bold uppercase tracking-wide text-white/60">Rating</span>
+                        <RatingPill rating={ratingByPlayer.get(p.id)} dark />
+                      </div>
+                    )}
                     {leagueGame && outOf25(p) && (
                       <div className="text-[9px] font-bold uppercase leading-tight text-amber-300">Not in 25-man matchday squad</div>
                     )}
@@ -2907,7 +2922,7 @@ function PitchView({
 /** Substitutes panel — lives beside the pitch so it can sit in its own column. */
 function BenchPanel({
   editable, dragEnabled = false, playerById, bench, benchPositions, onBenchPosition, benchSize, pointsByPlayer, minutesByPlayer, autoSubbedIds,
-  onDropStart, onDropBench, onRemove, onBenchSlotOpen, gw,
+  onDropStart, onDropBench, onRemove, onBenchSlotOpen, gw, ratingByPlayer,
 }: {
   editable: boolean;
   /** Drag and drop is enabled while the gameweek is still open. */
@@ -2920,6 +2935,7 @@ function BenchPanel({
   pointsByPlayer?: Map<string, number | null>;
   minutesByPlayer?: Map<string, number | null>;
   autoSubbedIds?: Set<string>;
+  ratingByPlayer?: Map<string, number>;
   onDropStart: (playerId: string) => void;
   onDropBench: (playerId: string) => void;
   onRemove: (id: string) => void;
@@ -2981,6 +2997,12 @@ function BenchPanel({
                       asSub
                       className="mt-1.5 block text-center text-[10px] font-semibold leading-tight break-words line-clamp-2 min-h-[24px]"
                     />
+                    {ratingByPlayer?.has(p.id) && (
+                      <div className="mt-0.5 flex items-center justify-center gap-1">
+                        <span className="text-[8px] font-bold uppercase tracking-wide text-muted-foreground">Rating</span>
+                        <RatingPill rating={ratingByPlayer.get(p.id)} />
+                      </div>
+                    )}
                     {(() => {
                       // Subs are scored in the role they were named in; a
                       // two-position sub lets the manager choose which.
