@@ -438,10 +438,6 @@ function PlayerStatsDialog({
                         </tbody>
                       </table>
                     </div>
-                    <div className="mt-3 flex items-center justify-between rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm">
-                      <span className="font-semibold">Our weekly total</span>
-                      <span className="font-bold tabular-nums text-primary">{ourSeasonPoints} pts</span>
-                    </div>
                   </div>
                 <div className="mt-3 flex items-center justify-between rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm">
                   <span className="font-semibold">Our season total</span>
