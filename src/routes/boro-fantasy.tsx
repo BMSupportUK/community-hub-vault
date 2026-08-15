@@ -1176,6 +1176,7 @@ function BoroFantasyPage() {
 // ------------------------------------------------------------------
 function ManagerCard({
   state, name, teamName, canEdit, onEdit, compact, gameweekId,
+  checklist, locked, canPlay,
 }: {
   state?: FantasyStateDTO;
   name: string | null;
@@ -1184,6 +1185,9 @@ function ManagerCard({
   onEdit?: () => void;
   compact?: boolean;
   gameweekId?: string;
+  checklist?: { title: string; items: string[] };
+  locked?: boolean;
+  canPlay?: boolean;
 }) {
   const total = (state?.squads ?? []).reduce((sum, s) => sum + (s.points ?? 0), 0);
   const selectedSquad = gameweekId
