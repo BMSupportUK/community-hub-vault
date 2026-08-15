@@ -1237,6 +1237,28 @@ function SquadBuilder({
   const [draftLoaded, setDraftLoaded] = useState(false);
   const restoredDraftRef = useRef(false);
   const skipNextDraftSaveRef = useRef(false);
+  /** Has this gameweek locked? Once it has, the server's picks are the truth. */
+  const gwLocked = !!gw && (gw.status !== "upcoming" || new Date(gw.lockAt).getTime() <= Date.now());
+  /**
+   * Fingerprint of the saved squad. Automatic line-up swaps rewrite picks
+   * server-side without changing the squad id, so the pitch has to re-hydrate
+   * whenever any pick moves.
+   */
+  const existingSig = useMemo(
+    () =>
+      existing
+        ? [
+            existing.id,
+            existing.formation,
+            existing.captainId ?? "",
+            existing.viceId ?? "",
+            ...[...existing.picks]
+              .map((p) => `${p.playerId}:${p.isStarter ? 1 : 0}:${p.slotOrder}:${p.pickedPosition ?? ""}:${p.lineupSwapNote ? 1 : 0}`)
+              .sort(),
+          ].join("|")
+        : "none",
+    [existing],
+  );
 
   useEffect(() => {
     // State updates below apply on the next render. Prevent the save effect in
@@ -1282,7 +1304,7 @@ function SquadBuilder({
       setCaptainId(existing.captainId ?? "");
       setViceId(existing.viceId ?? "");
     };
-    if (!draftKey) {
+    if (!draftKey || gwLocked) {
       applyExisting();
       setDraftLoaded(true);
       return;
@@ -1316,7 +1338,7 @@ function SquadBuilder({
     }
     if (!restoredDraftRef.current) applyExisting();
     setDraftLoaded(true);
-  }, [draftKey, existing?.id, gwId]);
+  }, [draftKey, existingSig, gwId, gwLocked]);
 
   useEffect(() => {
     if (!draftKey || !draftLoaded) return;
