@@ -1,6 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Trophy, Loader2, Lock, Check, Crown, Medal, Award, LogOut, Trash2, Pencil, Star } from "lucide-react";
+import { Trophy, Loader2, Lock, Check, Crown, Medal, Award, LogOut, Trash2, Pencil, Star, ArrowLeft } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import riversideBg from "@/assets/riverside-stadium-bg.jpg";
@@ -360,6 +360,15 @@ function BoroPredictionsPage() {
           </div>
         )}
         <div className="w-full px-4 sm:px-8 lg:px-16 py-6">
+          <div className="mb-3">
+            <Link
+              to="/forum"
+              className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur-sm transition hover:bg-white/20 hover:border-white/40"
+            >
+              <ArrowLeft className="size-3.5" />
+              Back to Fan Zone
+            </Link>
+          </div>
           <header className="rounded-3xl border border-primary/30 shadow-glow bg-gradient-primary p-6 mb-6">
             <div className="flex flex-col sm:flex-row sm:items-center gap-4">
               <div className="size-12 rounded-2xl bg-white/15 grid place-items-center ring-1 ring-white/20">

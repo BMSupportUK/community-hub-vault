@@ -1,11 +1,11 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Shirt, Loader2, Lock, LogOut, Crown, Star, ArrowRightLeft, Trophy,
   Users, Plus, X, ArrowUp, ArrowDown, ClipboardList, Check, Pencil, Trash2,
-  Cross, AlertTriangle, Ban,
+  Cross, AlertTriangle, Ban, ArrowLeft,
 } from "lucide-react";
 import type { DragEvent as ReactDragEvent } from "react";
 import { toast } from "sonner";
@@ -943,6 +943,15 @@ function BoroFantasyPage() {
           </div>
         )}
         <div className="w-full px-4 sm:px-8 lg:px-16 py-6">
+          <div className="mb-3">
+            <Link
+              to="/forum"
+              className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur-sm transition hover:bg-white/20 hover:border-white/40"
+            >
+              <ArrowLeft className="size-3.5" />
+              Back to Fan Zone
+            </Link>
+          </div>
           <header className="rounded-3xl border border-primary/30 shadow-glow bg-gradient-primary p-6 mb-6">
             <div className="flex flex-col sm:flex-row sm:items-center gap-4">
               <div className="size-12 rounded-2xl bg-white/15 grid place-items-center ring-1 ring-white/20">
