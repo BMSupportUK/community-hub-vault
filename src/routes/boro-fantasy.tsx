@@ -3888,6 +3888,7 @@ function SquadRulesTab() {
             { k: "Match day", v: "11 players" },
             { k: "Bench", v: `${FANTASY_BENCH_SIZE} subs (Sub 1 = GK)` },
             { k: "Deadline", v: `${FANTASY_LOCK_MINUTES / 60} hours pre-KO` },
+            { k: "Subs score", v: "Half points" },
           ].map((s) => (
             <div key={s.k} className="rounded-xl bg-white/15 ring-1 ring-white/20 px-3 py-2">
               <div className="text-[11px] uppercase tracking-wide text-white/75">{s.k}</div>
@@ -3949,8 +3950,8 @@ function ScoringTab() {
           Only Middlesbrough players score, and only in competitive fixtures. Where you named the player decides the rate: anyone in
           your match day 11 who features earns 2 points for the appearance plus the full points for every match stat, while a sub who
           comes off your bench earns 1 point plus half points for every stat, no matter how many minutes he plays. Starters who don't
-          get on and unused subs score 0. Only five subs can score: the five earliest subs off your bench earn points and any sub who
-          comes on after those five is locked at 0 for that gameweek. Minutes only matter for clean sheets, where 60+ minutes pays more
+          get on and unused subs score 0. Only five subs can score: if more than five of your subs feature, the five who played the most
+          minutes earn the points and any other sub is locked at 0 for that gameweek. Minutes only matter for clean sheets, where 60+ minutes pays more
           than under 60 minutes.
           Your captain scores double, and if he doesn't play a minute the vice-captain
           doubles instead. Players who cover two positions score in the position you selected for them.
@@ -3965,7 +3966,7 @@ function ScoringTab() {
           <ScoringBreakdown column="starter" note="Points for players named in your match day 11. A starter who doesn't get on the pitch scores 0. ESPN match stats and the game's own scoring rules are combined once the fixture is finished and all stats and bonuses have been confirmed." />
         </TabsContent>
         <TabsContent value="subs" className="mt-4">
-          <ScoringBreakdown column="sub" note="Points for players who come off your bench: 1 point for getting on, then half points for every match stat. The stat points are added up first, then halved and rounded. Only your five earliest subs score — any sub used after those five is locked at 0, and unused subs score 0." />
+          <ScoringBreakdown column="sub" note="Points for players who come off your bench: 1 point for getting on, then half points for every match stat. The stat points are added up first, then halved and rounded. Only five subs score — if more than five feature, the five who played the most minutes count, any other sub is locked at 0, and unused subs score 0." />
         </TabsContent>
       </Tabs>
       <div className="text-sm text-muted-foreground">
