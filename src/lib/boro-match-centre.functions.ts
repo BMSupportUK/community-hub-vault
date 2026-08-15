@@ -276,22 +276,37 @@ async function fetchEspnStandings(): Promise<LeaguePosition | null> {
   const statNum = (s: NonNullable<typeof entries[number]["stats"]>[number] | undefined) =>
     typeof s?.value === "number" ? s.value : parseInt(s?.displayValue ?? "0", 10) || 0;
 
-  const rows = entries.map((e, idx) => {
+  const raw = entries.map((e) => {
     const stats = e.stats ?? [];
     const by = (t: string) => stats.find((s) => s.type === t || s.name === t);
     const name = e.team?.shortDisplayName || e.team?.displayName || "";
+    const points = statNum(by("points"));
+    const goalDifference = statNum(by("pointdifferential") ?? by("pointDifferential"));
     return {
-      position: idx + 1,
+      // ESPN returns entries in no particular order; the authoritative
+      // position is the `rank` stat (0 when the season hasn't started).
+      rank: statNum(by("rank")),
       team: name,
       played: statNum(by("gamesplayed") ?? by("gamesPlayed")),
       won: statNum(by("wins")),
       drawn: statNum(by("ties")),
       lost: statNum(by("losses")),
-      goalDifference: statNum(by("pointdifferential") ?? by("pointDifferential")),
-      points: statNum(by("points")),
+      goalDifference,
+      points,
       isBoro: BORO_TEAM_RE.test(name),
     };
   });
+
+  // Sort by ESPN rank when present, otherwise by points then goal difference
+  // then goals scored equivalents, so the table is right immediately after a
+  // game finishes even before ESPN recomputes ranks.
+  const hasRanks = raw.some((r) => r.rank > 0);
+  raw.sort((a, b) =>
+    hasRanks
+      ? (a.rank || 999) - (b.rank || 999)
+      : b.points - a.points || b.goalDifference - a.goalDifference || a.team.localeCompare(b.team),
+  );
+  const rows = raw.map(({ rank: _rank, ...r }, idx) => ({ position: idx + 1, ...r }));
 
   const boroIdx = rows.findIndex((r) => r.isBoro);
   if (boroIdx === -1) return null;

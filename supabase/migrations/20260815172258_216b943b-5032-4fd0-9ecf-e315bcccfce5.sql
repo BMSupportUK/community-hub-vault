@@ -1,0 +1,5 @@
+update public.boro_match_centre
+set league_position = '{"competition":"EFL Championship","position":7,"played":1,"won":1,"drawn":0,"lost":0,"goalDifference":1,"points":3,"table":[{"position":5,"team":"Bolton","played":1,"won":1,"drawn":0,"lost":0,"goalDifference":1,"points":3,"isBoro":false},{"position":6,"team":"Charlton","played":1,"won":1,"drawn":0,"lost":0,"goalDifference":1,"points":3,"isBoro":false},{"position":7,"team":"Boro","played":1,"won":1,"drawn":0,"lost":0,"goalDifference":1,"points":3,"isBoro":true},{"position":8,"team":"Blackburn","played":1,"won":0,"drawn":1,"lost":0,"goalDifference":0,"points":1,"isBoro":false},{"position":9,"team":"Wolves","played":1,"won":0,"drawn":1,"lost":0,"goalDifference":0,"points":1,"isBoro":false}]}'::jsonb,
+    fetched_at = now() - interval '2 hours',
+    updated_at = now()
+where id = 'singleton';
