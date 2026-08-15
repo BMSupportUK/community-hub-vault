@@ -2874,12 +2874,11 @@ function PitchView({
                               </div>
                             );
                           }
-                          return (
+                          return editable ? (
                             <div className="mt-0.5 flex items-center justify-center gap-1 text-[9px] font-bold uppercase tracking-wide text-white/60">
-                              {!editable && <Lock className="size-2.5" />}
-                              {editable ? `Scores as ${POSITION_SHORT[scoringAs]}` : `Locked — scores as ${POSITION_SHORT[scoringAs]}`}
+                              {`Scores as ${POSITION_SHORT[scoringAs]}`}
                             </div>
-                          );
+                          ) : null;
                         })()}
                         {leagueGame && outOf25(p) && (
                           <div className="text-[9px] font-bold uppercase leading-tight text-amber-300">
@@ -2972,7 +2971,6 @@ function PitchView({
                     {leagueGame && outOf25(p) && (
                       <div className="text-[9px] font-bold uppercase leading-tight text-amber-300">Not in 25-man matchday squad</div>
                     )}
-                    <div className="text-[10px] tabular-nums text-white/70">{p.seasonPoints ?? 0} pts</div>
                     {editable && (
                       <div className="mt-1 flex items-center justify-center gap-0.5 sm:gap-1">
                         <button type="button" title="Move to bench" onClick={() => onBench(p.id)} className="rounded p-0.5 text-white/60 hover:text-white">
@@ -3137,12 +3135,11 @@ function BenchPanel({
                           </div>
                         );
                       }
-                      return (
+                      return editable ? (
                         <div className="mt-0.5 flex items-center justify-center gap-1 text-[9px] font-bold uppercase tracking-wide text-muted-foreground/80">
-                          {!editable && <Lock className="size-2.5" />}
-                          {editable ? `Scores as ${POSITION_SHORT[scoringAs]}` : `Locked — scores as ${POSITION_SHORT[scoringAs]}`}
+                          {`Scores as ${POSITION_SHORT[scoringAs]}`}
                         </div>
-                      );
+                      ) : null;
                     })()}
                     {leagueGame && outOf25(p) && (
                       <div className="text-[9px] font-bold uppercase leading-tight text-amber-500">Not in 25-man matchday squad</div>
