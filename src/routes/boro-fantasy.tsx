@@ -2341,6 +2341,14 @@ function SquadBuilder({
         </div>
       </div>
 
+      <SwapHistoryDialog
+        isMember={isMember}
+        guestCreds={guestCreds}
+        currentGameweekNumber={gw?.gwNumber}
+        open={swapDialogOpen}
+        onOpenChange={setSwapDialogOpen}
+      />
+
       <PlayerPickerDialog
         open={!!picker}
         onOpenChange={(o) => { if (!o) setPicker(null); }}
