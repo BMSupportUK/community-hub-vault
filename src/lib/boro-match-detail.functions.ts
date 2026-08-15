@@ -89,12 +89,11 @@ export const getBoroMatchDetail = createServerFn({ method: "GET" })
       fetchedAt: new Date().toISOString(),
     };
     try {
-      const res = await fetch(
+      const { espnJson } = await import("@/lib/espn-fetch");
+      const json: any = await espnJson(
         `https://site.api.espn.com/apis/site/v2/sports/soccer/${slug}/summary?event=${encodeURIComponent(data.eventId)}`,
-        { headers: { accept: "application/json" } },
       );
-      if (!res.ok) return empty;
-      const json: any = await res.json();
+      if (!json) return empty;
       const norm = normaliseEspnSummary(json);
 
       const actions = norm.events.filter((e) => isMatchAction(e.kind) && !e.shootout);

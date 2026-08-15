@@ -2,7 +2,9 @@
 // ESPN's public match summary once a fixture finishes, writes them into
 // fantasy_player_stats and re-scores the gameweek — no admin involvement.
 
-const ESPN_LEAGUES = ["eng.2", "eng.fa", "eng.league_cup", "eng.efl_cup", "eng.efl_trophy"];
+import { espnJson } from "@/lib/espn-fetch";
+
+const ESPN_LEAGUES = ["eng.2", "eng.fa", "eng.league_cup", "eng.trophy"];
 
 const BORO_RE = /\bmiddles(?:brough|borough)\b|\bboro\b/i;
 
@@ -163,13 +165,10 @@ async function findEspnEventId(fixture: {
 
   for (const league of ESPN_LEAGUES) {
     try {
-      const res = await fetch(
-        `https://site.api.espn.com/apis/site/v2/sports/soccer/${league}/scoreboard?dates=${ym}&limit=200`,
-      );
-      if (!res.ok) continue;
-      const json = (await res.json()) as {
-        events?: Array<{ id?: string; date?: string; name?: string }>;
-      };
+      const json = (await espnJson(
+        `https://site.api.espn.com/apis/site/v2/sports/soccer/${league}/scoreboard?dates=${ym}&limit=400`,
+      )) as { events?: Array<{ id?: string; date?: string; name?: string }> } | null;
+      if (!json) continue;
       for (const ev of json.events ?? []) {
         const name = ev.name ?? "";
         if (!BORO_RE.test(name)) continue;
@@ -197,16 +196,11 @@ export async function fetchBoroStarterIds(
 ): Promise<string[] | null> {
   const found = await findEspnEventId(fixture);
   if (!found) return null;
-  let summary: EspnSummary;
-  try {
-    const res = await fetch(
-      `https://site.api.espn.com/apis/site/v2/sports/soccer/${found.league}/summary?event=${found.eventId}`,
-    );
-    if (!res.ok) return null;
-    summary = (await res.json()) as EspnSummary;
-  } catch {
-    return null;
-  }
+  const summaryJson = (await espnJson(
+    `https://site.api.espn.com/apis/site/v2/sports/soccer/${found.league}/summary?event=${found.eventId}`,
+  )) as EspnSummary | null;
+  if (!summaryJson) return null;
+  const summary: EspnSummary = summaryJson;
   const boroSide = (summary.rosters ?? []).find((r) => BORO_RE.test(r.team?.displayName ?? ""));
   const roster = boroSide?.roster ?? [];
   const starters = roster.filter((r) => r.starter);
@@ -232,16 +226,11 @@ export async function fetchFantasyStatsForFixture(
 ): Promise<FantasyStatRow[] | null> {
   const found = await findEspnEventId(fixture);
   if (!found) return null;
-  let summary: EspnSummary;
-  try {
-    const res = await fetch(
-      `https://site.api.espn.com/apis/site/v2/sports/soccer/${found.league}/summary?event=${found.eventId}`,
-    );
-    if (!res.ok) return null;
-    summary = (await res.json()) as EspnSummary;
-  } catch {
-    return null;
-  }
+  const summaryJson = (await espnJson(
+    `https://site.api.espn.com/apis/site/v2/sports/soccer/${found.league}/summary?event=${found.eventId}`,
+  )) as EspnSummary | null;
+  if (!summaryJson) return null;
+  const summary: EspnSummary = summaryJson;
 
   const boroSide = (summary.rosters ?? []).find((r) => BORO_RE.test(r.team?.displayName ?? ""));
   if (!boroSide?.roster?.length) return null;

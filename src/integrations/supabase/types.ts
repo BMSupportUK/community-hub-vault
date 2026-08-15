@@ -5769,32 +5769,17 @@ export type Database = {
         }
         Returns: undefined
       }
-      wc_calc_points:
-        | {
-            Args: { ap: number; as_: number; hp: number; hs: number }
-            Returns: number
-          }
-        | {
-            Args: {
-              ap: number
-              as_: number
-              hp: number
-              hs: number
-              pen_winner?: string
-            }
-            Returns: number
-          }
-        | {
-            Args: {
-              ap: number
-              as_: number
-              hp: number
-              hs: number
-              pen_winner?: string
-              pen_winner_pred?: string
-            }
-            Returns: number
-          }
+      wc_calc_points: {
+        Args: {
+          ap: number
+          as_: number
+          hp: number
+          hs: number
+          pen_winner?: string
+          pen_winner_pred?: string
+        }
+        Returns: number
+      }
       wc_score_fixture: { Args: { _fixture_id: string }; Returns: undefined }
       wc_sync_live_scores: { Args: never; Returns: undefined }
       wc_team_matches: {
