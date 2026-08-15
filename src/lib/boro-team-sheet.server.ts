@@ -50,6 +50,8 @@ export function normalizeFancyText(input: string): string {
 
 const TEAM_SHEET_PATTERNS: RegExp[] = [
   /\byour\s+boro\s+team\b/i,
+  // Covers "Your opening day Boro 🔒", "Your Boro for tonight", etc.
+  /\byour\s+(?:[a-z0-9'’-]+\s+){0,4}boro\b/i,
   /\bteam\s*news\b/i,
   /\bline[\s-]?up\b/i,
   /\bstarting\s+xi\b/i,
@@ -92,6 +94,16 @@ function imagesFromTweet(tweet: Record<string, unknown>): string[] {
   }
   const media = (tweet.mediaDetails as Array<Record<string, unknown>> | undefined) ?? [];
   for (const m of media) {
+    if (m.type && m.type !== "photo") continue;
+    const u = normalizeImageUrl(String(m.media_url_https ?? ""));
+    if (u && !out.includes(u)) out.push(u);
+  }
+  // The syndication timeline puts media under entities/extended_entities.
+  const entityMedia = [
+    ...(((tweet.extended_entities as Record<string, unknown> | undefined)?.media as Array<Record<string, unknown>>) ?? []),
+    ...(((tweet.entities as Record<string, unknown> | undefined)?.media as Array<Record<string, unknown>>) ?? []),
+  ];
+  for (const m of entityMedia) {
     if (m.type && m.type !== "photo") continue;
     const u = normalizeImageUrl(String(m.media_url_https ?? ""));
     if (u && !out.includes(u)) out.push(u);
