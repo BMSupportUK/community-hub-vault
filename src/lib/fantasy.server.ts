@@ -1,4 +1,5 @@
 /** Server-only core for the MFC Fantasy Manager (shared by member + guest server fns). */
+import { computeStarRating } from "@/lib/fantasy-star-rating";
 import {
   benchRulesFor,
   FORMATIONS,
@@ -84,6 +85,8 @@ export type FantasyPickDTO = {
   lineupSwapNote?: string | null;
   /** Minutes the player actually played in this gameweek's fixture (null = no stats yet). */
   minutes?: number | null;
+  /** 0-10 match rating for this gameweek's fixture (null = no stats yet / didn't play). */
+  rating?: number | null;
 };
 
 export type FantasySquadDTO = {
@@ -340,10 +343,14 @@ export async function loadState(admin: any, owner: Owner | null): Promise<Fantas
     if (fixtureIds.length) {
       const { data: mins } = await admin
         .from("fantasy_player_stats")
-        .select("fixture_id, player_id, minutes")
+        .select("*")
         .in("fixture_id", fixtureIds);
       const minMap = new Map<string, number>();
-      for (const r of (mins ?? []) as any[]) minMap.set(`${r.fixture_id}:${r.player_id}`, Number(r.minutes) || 0);
+      const ratingMap = new Map<string, number>();
+      for (const r of (mins ?? []) as any[]) {
+        minMap.set(`${r.fixture_id}:${r.player_id}`, Number(r.minutes) || 0);
+        ratingMap.set(`${r.fixture_id}:${r.player_id}`, computeStarRating(r));
+      }
       squads = squads.map((s) => {
         const fx = fixtureByGw.get(s.gameweekId);
         return {
@@ -351,6 +358,7 @@ export async function loadState(admin: any, owner: Owner | null): Promise<Fantas
           picks: s.picks.map((p) => ({
             ...p,
             minutes: fx ? (minMap.get(`${fx}:${p.playerId}`) ?? null) : null,
+            rating: fx ? (ratingMap.get(`${fx}:${p.playerId}`) ?? null) : null,
           })),
         };
       });
