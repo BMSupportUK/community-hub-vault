@@ -487,6 +487,17 @@ export async function syncFantasyScoring(): Promise<{
       .update({ status: "final" } as never)
       .eq("id", raw['id']);
     scored.push(`gw${raw['gw_number']} (${rows.length} players)`);
+
+    // Full time and all stats in — source man of the match automatically from
+    // the match stats (top scoring Boro player). Admins can override it after.
+    try {
+      const { autoAwardMotm } = await import("@/lib/fantasy-motm-auto.server");
+      const res = await autoAwardMotm(fx.id, raw['id']);
+      if (res.awarded) scored.push(`gw${raw['gw_number']} MOTM auto-awarded`);
+      else if (res.reason && res.reason !== "already awarded") pending.push(`gw${raw['gw_number']} MOTM: ${res.reason}`);
+    } catch (e) {
+      errors.push(`motm gw${raw['gw_number']}: ${e instanceof Error ? e.message : String(e)}`);
+    }
   }
 
   return { ok: errors.length === 0, locked, scored, live, pending, swaps, errors };
