@@ -1382,6 +1382,7 @@ function SquadBuilder({
   const [captainId, setCaptainId] = useState<string>(existing?.captainId ?? "");
   const [viceId, setViceId] = useState<string>(existing?.viceId ?? "");
   const [saving, setSaving] = useState(false);
+  const [swapDialogOpen, setSwapDialogOpen] = useState(false);
   // Unsaved picks survive a refresh or crash: they're kept in a per-gameweek
   // local draft until the squad is saved.
   // v2 invalidates drafts polluted by the old gameweek-switch race, which
