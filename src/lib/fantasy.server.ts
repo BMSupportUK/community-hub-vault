@@ -275,19 +275,54 @@ export async function loadGameweeks(admin: any): Promise<FantasyGameweekDTO[]> {
   return rows;
 }
 
-/** The gameweek the manager should be picking for: first one still unlocked. */
-export function pickCurrentGameweek(gws: FantasyGameweekDTO[]): string | null {
-  const now = Date.now();
-  // Skip anything called off — it isn't the next game until a new date lands.
+/**
+ * The gameweek shown by default.
+ *
+ * Rule: show the gameweek belonging to the current Monday-to-Sunday week, and
+ * keep showing it until the next week starts. If that week has more than one
+ * fixture, roll onto the next fixture one day after the previous one kicked off
+ * (i.e. once it's done and dusted).
+ */
+export function pickCurrentGameweek(
+  gws: FantasyGameweekDTO[],
+  nowMs: number = Date.now(),
+): string | null {
+  const playable = (g: FantasyGameweekDTO) =>
+    !g.dateTbc && !/postpon|cancel|abandon|suspend/i.test(g.fixtureStatus ?? "");
+
+  // Monday 00:00 of the current week through the following Monday 00:00.
+  const now = new Date(nowMs);
+  const weekStart = new Date(now);
+  weekStart.setHours(0, 0, 0, 0);
+  const dow = (weekStart.getDay() + 6) % 7; // Monday = 0
+  weekStart.setDate(weekStart.getDate() - dow);
+  const weekEnd = new Date(weekStart);
+  weekEnd.setDate(weekEnd.getDate() + 7);
+
+  const thisWeek = gws
+    .filter((g) => {
+      if (!playable(g)) return false;
+      const ko = new Date(g.kickoffAt).getTime();
+      return Number.isFinite(ko) && ko >= weekStart.getTime() && ko < weekEnd.getTime();
+    })
+    .sort((a, b) => new Date(a.kickoffAt).getTime() - new Date(b.kickoffAt).getTime());
+
+  if (thisWeek.length) {
+    const DAY = 24 * 60 * 60 * 1000;
+    // Stay on the earliest fixture of the week until a day after its kick-off,
+    // then move on to the next one in the same week.
+    for (const g of thisWeek) {
+      if (nowMs < new Date(g.kickoffAt).getTime() + DAY) return g.id;
+    }
+    return thisWeek[thisWeek.length - 1]!.id;
+  }
+
+  // No fixture this week — fall back to the next one still unlocked.
   const open = gws.find(
-    (g) =>
-      g.status === "upcoming" &&
-      new Date(g.lockAt).getTime() > now &&
-      !g.dateTbc &&
-      !/postpon|cancel|abandon|suspend/i.test(g.fixtureStatus ?? ""),
+    (g) => g.status === "upcoming" && new Date(g.lockAt).getTime() > nowMs && playable(g),
   );
   if (open) return open.id;
-  return gws.length ? (gws[gws.length - 1]!.id) : null;
+  return gws.length ? gws[gws.length - 1]!.id : null;
 }
 
 export async function loadState(admin: any, owner: Owner | null): Promise<FantasyStateDTO> {
