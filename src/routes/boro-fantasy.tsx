@@ -1267,6 +1267,7 @@ type SavePayload = {
 
 function SquadBuilder({
   state, canPlay, onSave, name, teamName, canEdit, onEdit, isMember, guestCreds,
+  canManageEntrants, onMarkFinished, markingFinished,
 }: {
   state: FantasyStateDTO;
   canPlay: boolean;
@@ -1277,6 +1278,9 @@ function SquadBuilder({
   onEdit: () => void;
   isMember: boolean;
   guestCreds: { email: string; pin: string } | null;
+  canManageEntrants: boolean;
+  onMarkFinished: (gameweekId: string) => Promise<void>;
+  markingFinished: boolean;
 }) {
   // Every gameweek stays in the dropdown — locked and finished weeks remain
   // selectable (read-only) so managers can look back at past squads.
