@@ -729,6 +729,33 @@ function BoroFantasyPage() {
       window.clearInterval(id);
       };
   }, [qc]);
+
+  // Team news / live scoring: ask the server to re-check the official starting
+  // XI so automatic line-up swaps land on the pitch without a manual refresh.
+  useEffect(() => {
+    let cancelled = false;
+    const ping = async () => {
+      try {
+        const res = await fetch("/api/public/hooks/sync-fantasy-scores", { method: "POST" });
+        const json = (await res.json()) as { swaps?: string[]; scored?: unknown[]; live?: unknown[] };
+        if (cancelled) return;
+        if ((json.swaps?.length ?? 0) > 0 || (json.live?.length ?? 0) > 0 || (json.scored?.length ?? 0) > 0) {
+          qc.invalidateQueries({ queryKey: ["fantasy-state"] });
+          qc.invalidateQueries({ queryKey: ["fantasy-swap-history"] });
+          qc.invalidateQueries({ queryKey: ["fantasy-leaderboard"] });
+        }
+      } catch { /* ignore */ }
+    };
+    void ping();
+    const onFocus = () => { void ping(); };
+    window.addEventListener("focus", onFocus);
+    const id = window.setInterval(ping, 60_000);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("focus", onFocus);
+      window.clearInterval(id);
+    };
+  }, [qc]);
   const lbQuery = useQuery<FantasyLeaderboardRow[]>({
     queryKey: ["fantasy-leaderboard", user?.id ?? null],
     queryFn: () => (user ? lbFn({}) : publicLbFn({})),
