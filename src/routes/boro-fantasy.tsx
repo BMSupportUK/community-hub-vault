@@ -1096,6 +1096,9 @@ function BoroFantasyPage() {
                     onEdit={openNameDialog}
                     isMember={!!user}
                     guestCreds={guest ? { email: guest.email, pin: guest.pin } : null}
+                    canManageEntrants={canManageEntrants}
+                    onMarkFinished={handleMarkFinished}
+                    markingFinished={markingFinished}
                   />
                 )}
               </TabsContent>
