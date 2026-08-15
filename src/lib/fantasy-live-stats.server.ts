@@ -2,7 +2,9 @@
 // ESPN's public match summary once a fixture finishes, writes them into
 // fantasy_player_stats and re-scores the gameweek — no admin involvement.
 
-const ESPN_LEAGUES = ["eng.2", "eng.fa", "eng.league_cup", "eng.efl_cup", "eng.efl_trophy"];
+import { espnJson } from "@/lib/espn-fetch";
+
+const ESPN_LEAGUES = ["eng.2", "eng.fa", "eng.league_cup", "eng.trophy"];
 
 const BORO_RE = /\bmiddles(?:brough|borough)\b|\bboro\b/i;
 
