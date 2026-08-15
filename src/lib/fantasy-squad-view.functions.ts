@@ -12,6 +12,8 @@ export type EntrantSquadPickDTO = {
   slotOrder: number;
   points: number | null;
   autoSubbed: boolean;
+  /** Note explaining an automatic swap when the official XI was announced. */
+  lineupSwapNote: string | null;
   isCaptain: boolean;
   isVice: boolean;
 };
@@ -58,7 +60,7 @@ export const getEntrantFantasySquad = createServerFn({ method: "GET" })
     const { data: squad, error: sqErr } = await admin
       .from("fantasy_squads")
       .select(
-        "id, formation, captain_id, vice_id, transfer_cost, points, picks:fantasy_squad_picks(player_id, is_starter, slot_order, points, auto_subbed, picked_position)",
+        "id, formation, captain_id, vice_id, transfer_cost, points, picks:fantasy_squad_picks(player_id, is_starter, slot_order, points, auto_subbed, picked_position, lineup_swap_note)",
       )
       .eq(col, data.entrantId)
       .eq("gameweek_id", data.gameweekId)
@@ -88,6 +90,7 @@ export const getEntrantFantasySquad = createServerFn({ method: "GET" })
           slotOrder: p.slot_order ?? 0,
           points: p.points ?? null,
           autoSubbed: !!p.auto_subbed,
+          lineupSwapNote: (p.lineup_swap_note ?? null) as string | null,
           isCaptain: p.player_id === s.captain_id,
           isVice: p.player_id === s.vice_id,
         };
