@@ -58,6 +58,17 @@ export const getFantasyPreviousGameweekScores = createServerFn({ method: "GET" }
     return loadPreviousGameweekScores(admin);
   });
 
+/** Every automatic line-up swap ever applied to the signed-in manager's squads. */
+export const getFantasySwapHistory = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<FantasySwapHistoryRow[]> => {
+    setResponseHeader("cache-control", "no-store, max-age=0");
+    const { getAdmin } = await import("@/lib/fantasy.server");
+    const { loadSwapHistory } = await import("@/lib/fantasy-swap-history.server");
+    const admin = await getAdmin();
+    return loadSwapHistory(admin, { userId: context.userId });
+  });
+
 // ------------------------------------------------------------------
 // Member writes
 // ------------------------------------------------------------------
