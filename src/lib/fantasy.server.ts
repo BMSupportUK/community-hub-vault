@@ -232,25 +232,28 @@ export async function loadGameweeks(admin: any): Promise<FantasyGameweekDTO[]> {
     .map(mapGameweek);
 
   // A gameweek is only "finished" when the game is done, stats have landed and
-  // an admin has awarded Man of the Match.
+  // the three star players have been awarded.
   const fixtureIds = [...new Set(rows.map((g: FantasyGameweekDTO) => g.fixtureId).filter(Boolean))];
   if (fixtureIds.length) {
-    const MOTM_BONUS = 3;
     const { data: stats } = await admin
       .from("fantasy_player_stats")
-      .select("fixture_id, bonus")
+      .select("fixture_id, player_id, bonus, player:fantasy_players(name)")
       .in("fixture_id", fixtureIds);
-    const byFixture = new Map<string, { stats: boolean; motm: boolean }>();
+    const byFixture = new Map<string, { stats: boolean; stars: { playerId: string; name: string; bonus: number }[] }>();
     for (const s of (stats ?? []) as any[]) {
-      const e = byFixture.get(s.fixture_id) ?? { stats: false, motm: false };
+      const e = byFixture.get(s.fixture_id) ?? { stats: false, stars: [] };
       e.stats = true;
-      if ((Number(s.bonus) || 0) >= MOTM_BONUS) e.motm = true;
+      const bonus = Number(s.bonus) || 0;
+      if (bonus > 0) {
+        e.stars.push({ playerId: s.player_id, name: s.player?.name ?? "Unknown player", bonus });
+      }
       byFixture.set(s.fixture_id, e);
     }
     for (const g of rows) {
       const e = byFixture.get(g.fixtureId);
       g.statsIn = !!e?.stats;
-      g.motmAwarded = !!e?.motm;
+      g.stars = (e?.stars ?? []).sort((a, b) => b.bonus - a.bonus);
+      g.motmAwarded = (g.stars?.length ?? 0) > 0;
       const ft = /FT|FULL|POST|FINAL/i.test(g.fixtureStatus ?? "") || g.status === "final";
       g.finished = ft && g.statsIn && g.motmAwarded;
     }
