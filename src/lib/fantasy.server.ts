@@ -1,4 +1,5 @@
 /** Server-only core for the MFC Fantasy Manager (shared by member + guest server fns). */
+import { computeStarRating } from "@/lib/fantasy-star-rating";
 import {
   benchRulesFor,
   FORMATIONS,
