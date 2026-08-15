@@ -1176,7 +1176,7 @@ function BoroFantasyPage() {
 // ------------------------------------------------------------------
 function ManagerCard({
   state, name, teamName, canEdit, onEdit, compact, gameweekId,
-  checklist, locked, canPlay,
+  checklist, locked, canPlay, swapCount, onOpenSwaps,
 }: {
   state?: FantasyStateDTO;
   name: string | null;
@@ -1188,6 +1188,8 @@ function ManagerCard({
   checklist?: { title: string; items: string[] };
   locked?: boolean;
   canPlay?: boolean;
+  swapCount?: number;
+  onOpenSwaps?: () => void;
 }) {
   const total = (state?.squads ?? []).reduce((sum, s) => sum + (s.points ?? 0), 0);
   const selectedSquad = gameweekId
@@ -1285,6 +1287,20 @@ function ManagerCard({
           )}
         </div>
       )}
+      {canPlay && onOpenSwaps && (
+        <button
+          type="button"
+          onClick={onOpenSwaps}
+          className="mt-3 flex w-full items-center justify-between gap-2 rounded-xl border border-sky-500/40 bg-sky-500/10 px-3 py-2.5 text-left text-sm transition-colors hover:bg-sky-500/15"
+        >
+          <span className="flex items-center gap-2 font-semibold text-sky-300">
+            <ArrowRightLeft className="size-4" /> Automatic line-up swaps
+          </span>
+          <span className="rounded-full border border-sky-400/50 bg-sky-500/20 px-2 py-0.5 text-[11px] font-bold text-sky-200">
+            {swapCount ?? 0} {((swapCount ?? 0) === 1) ? "swap" : "swaps"}
+          </span>
+        </button>
+      )}
     </div>
   );
 }
@@ -1366,6 +1382,7 @@ function SquadBuilder({
   const [captainId, setCaptainId] = useState<string>(existing?.captainId ?? "");
   const [viceId, setViceId] = useState<string>(existing?.viceId ?? "");
   const [saving, setSaving] = useState(false);
+  const [swapDialogOpen, setSwapDialogOpen] = useState(false);
   // Unsaved picks survive a refresh or crash: they're kept in a per-gameweek
   // local draft until the squad is saved.
   // v2 invalidates drafts polluted by the old gameweek-switch race, which
@@ -2216,14 +2233,6 @@ function SquadBuilder({
           <Lock className="size-4" /> This gameweek is locked. Changes will apply to the next one.
         </div>
       )}
-      {canPlay && (
-        <SwapHistoryPanel
-          isMember={isMember}
-          guestCreds={guestCreds}
-          currentGwSwapCount={lineupSwapNotes.length}
-          currentGameweekNumber={gw?.gwNumber}
-        />
-      )}
       <div className="rounded-3xl border border-primary/30 shadow-glow bg-gradient-primary p-4 grid min-w-0 items-stretch gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,320px)]">
         <div className="grid min-w-0 gap-4 items-stretch h-full">
           <Tabs defaultValue="xi" className="min-w-0">
@@ -2325,10 +2334,20 @@ function SquadBuilder({
             checklist={activeChecklist}
             locked={locked}
             canPlay={canPlay}
+            swapCount={lineupSwapNotes.length}
+            onOpenSwaps={() => setSwapDialogOpen(true)}
           />
           {gameweekPanel}
         </div>
       </div>
+
+      <SwapHistoryDialog
+        isMember={isMember}
+        guestCreds={guestCreds}
+        currentGameweekNumber={gw?.gwNumber}
+        open={swapDialogOpen}
+        onOpenChange={setSwapDialogOpen}
+      />
 
       <PlayerPickerDialog
         open={!!picker}
@@ -4083,22 +4102,15 @@ function GuestAccessCard({
 }
 
 /**
- * Swap history: every automatic line-up swap ever made to this manager's
- * squads, newest first, with the exact time it happened and the rule used.
+ * Swap history data hook shared by the panel and the dialog.
  */
-function SwapHistoryPanel({
-  isMember, guestCreds, currentGwSwapCount, currentGameweekNumber,
-}: {
-  isMember: boolean;
-  guestCreds: { email: string; pin: string } | null;
-  currentGwSwapCount: number;
-  currentGameweekNumber?: number;
-}) {
+function useSwapHistory(
+  isMember: boolean,
+  guestCreds: { email: string; pin: string } | null,
+) {
   const memberFn = useServerFn(getFantasySwapHistory);
   const guestFn = useServerFn(getGuestFantasySwapHistory);
-  const [open, setOpen] = useState(currentGwSwapCount > 0);
-
-  const query = useQuery<FantasySwapHistoryRow[]>({
+  return useQuery<FantasySwapHistoryRow[]>({
     queryKey: ["fantasy-swap-history", isMember ? "member" : guestCreds?.email ?? "none"],
     queryFn: () =>
       isMember
@@ -4110,15 +4122,12 @@ function SwapHistoryPanel({
     staleTime: 30_000,
     refetchInterval: 60_000,
   });
+}
 
-  const rows = useMemo(
-    () =>
-      currentGameweekNumber != null
-        ? (query.data ?? []).filter((r) => r.gameweek === currentGameweekNumber)
-        : (query.data ?? []),
-    [query.data, currentGameweekNumber],
-  );
-  // Group by the moment the swap engine ran, so an in/out pair reads together.
+/**
+ * Renders the grouped swap history rows.
+ */
+function SwapHistoryList({ rows }: { rows: FantasySwapHistoryRow[] }) {
   const groups = useMemo(() => {
     const map = new Map<string, FantasySwapHistoryRow[]>();
     for (const r of rows) {
@@ -4130,88 +4139,102 @@ function SwapHistoryPanel({
     return [...map.entries()].map(([key, list]) => ({ key, list }));
   }, [rows]);
 
-  // A swap = one player in + one player out. Count the "in" legs so two
-  // changes made in the same engine run read as 2 swaps, not 1.
-  const swapCount = useMemo(() => {
-    const ins = rows.filter((r) => r.direction === "in").length;
-    return ins > 0 ? ins : Math.ceil(rows.length / 2);
-  }, [rows]);
-
-  if (!query.isLoading && rows.length === 0) return null;
+  if (rows.length === 0) {
+    return (
+      <p className="text-sm text-muted-foreground">No automatic swaps recorded for this gameweek.</p>
+    );
+  }
 
   return (
-    <div className="rounded-xl border border-sky-500/50 bg-sky-500/10 px-4 py-3 text-sm">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center gap-2 font-bold uppercase tracking-wide text-sky-300">
-          <ArrowRightLeft className="size-4" /> Automatic line-up swaps
-          {swapCount > 0 && (
-            <span className="rounded-full border border-sky-400/50 bg-sky-500/20 px-2 py-0.5 text-[10px]">
-              {swapCount} {swapCount === 1 ? "swap" : "swaps"}
-            </span>
-          )}
-        </div>
-        <Button size="sm" variant="outline" onClick={() => setOpen((v) => !v)}>
-          {open ? "Hide history" : "Show history"}
-        </Button>
-      </div>
-      <p className="mt-1 text-xs text-muted-foreground">
-        When Boro's official starting eleven is announced, bench players who are starting are swapped
-        into your eleven for picked starters who aren't — like for like only.
-      </p>
-
-      {query.isLoading && (
-        <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
-          <Loader2 className="size-3 animate-spin" /> Loading your swap history…
-        </div>
-      )}
-
-      {open && !query.isLoading && (
-        <div className="mt-3 space-y-3">
-          {groups.map(({ key, list }) => {
-            const first = list[0]!;
-            return (
-              <div key={key} className="rounded-lg border border-sky-400/30 bg-background/40 p-3">
-                <div className="flex flex-wrap items-baseline justify-between gap-2">
-                  <span className="text-xs font-bold text-sky-200">
-                    GW{first.gameweek} — {first.fixture}
+    <div className="space-y-3">
+      {groups.map(({ key, list }) => {
+        const first = list[0]!;
+        return (
+          <div key={key} className="rounded-lg border border-sky-400/30 bg-background/40 p-3">
+            <div className="flex flex-wrap items-baseline justify-between gap-2">
+              <span className="text-xs font-bold text-sky-200">
+                GW{first.gameweek} — {first.fixture}
+              </span>
+              <span className="text-[11px] text-muted-foreground">
+                Swapped {new Date(first.swappedAt).toLocaleString("en-GB", {
+                  day: "2-digit", month: "short", year: "numeric",
+                  hour: "2-digit", minute: "2-digit",
+                })}
+              </span>
+            </div>
+            <ul className="mt-2 space-y-2">
+              {list.map((r) => (
+                <li key={r.id} className="text-xs">
+                  <span className="inline-flex items-center gap-1">
+                    <span
+                      className={`rounded px-1.5 py-0.5 text-[10px] font-bold uppercase ${
+                        r.direction === "in"
+                          ? "bg-emerald-500/20 text-emerald-300"
+                          : "bg-amber-500/20 text-amber-300"
+                      }`}
+                    >
+                      {r.direction === "in" ? "In" : "Out"}
+                    </span>
+                    <span className="font-semibold">{r.playerName}</span>
+                    <span className="text-muted-foreground">
+                      · scores as {POSITION_SHORT[r.scoringPosition]}
+                    </span>
                   </span>
-                  <span className="text-[11px] text-muted-foreground">
-                    Swapped {new Date(first.swappedAt).toLocaleString("en-GB", {
-                      day: "2-digit", month: "short", year: "numeric",
-                      hour: "2-digit", minute: "2-digit",
-                    })}
-                  </span>
-                </div>
-                <ul className="mt-2 space-y-2">
-                  {list.map((r) => (
-                    <li key={r.id} className="text-xs">
-                      <span className="inline-flex items-center gap-1">
-                        <span
-                          className={`rounded px-1.5 py-0.5 text-[10px] font-bold uppercase ${
-                            r.direction === "in"
-                              ? "bg-emerald-500/20 text-emerald-300"
-                              : "bg-amber-500/20 text-amber-300"
-                          }`}
-                        >
-                          {r.direction === "in" ? "In" : "Out"}
-                        </span>
-                        <span className="font-semibold">{r.playerName}</span>
-                        <span className="text-muted-foreground">
-                          · scores as {POSITION_SHORT[r.scoringPosition]}
-                        </span>
-                      </span>
-                      <div className="mt-0.5 text-muted-foreground">{r.note}</div>
-                      <div className="mt-0.5 text-[11px] italic text-sky-200/80">
-                        <span className="font-semibold not-italic">Rule:</span> {r.rule}
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            );
-          })}
-        </div>
-      )}
+                  <div className="mt-0.5 text-muted-foreground">{r.note}</div>
+                  <div className="mt-0.5 text-[11px] italic text-sky-200/80">
+                    <span className="font-semibold not-italic">Rule:</span> {r.rule}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+        );
+      })}
     </div>
+  );
+}
+
+/**
+ * Swap history popup dialog opened from the Your team box.
+ */
+function SwapHistoryDialog({
+  isMember, guestCreds, currentGameweekNumber, open, onOpenChange,
+}: {
+  isMember: boolean;
+  guestCreds: { email: string; pin: string } | null;
+  currentGameweekNumber?: number;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const query = useSwapHistory(isMember, guestCreds);
+  const rows = useMemo(
+    () =>
+      currentGameweekNumber != null
+        ? (query.data ?? []).filter((r) => r.gameweek === currentGameweekNumber)
+        : (query.data ?? []),
+    [query.data, currentGameweekNumber],
+  );
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-xl max-h-[80vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2 text-base">
+            <ArrowRightLeft className="size-5 text-sky-300" /> Automatic line-up swaps
+          </DialogTitle>
+          <DialogDescription>
+            When Boro's official starting eleven is announced, bench players who are starting are swapped
+            into your eleven for picked starters who aren't — like for like only.
+          </DialogDescription>
+        </DialogHeader>
+        {query.isLoading ? (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Loader2 className="size-4 animate-spin" /> Loading your swap history…
+          </div>
+        ) : (
+          <SwapHistoryList rows={rows} />
+        )}
+      </DialogContent>
+    </Dialog>
   );
 }
