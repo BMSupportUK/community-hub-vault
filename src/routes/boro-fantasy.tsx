@@ -239,6 +239,9 @@ function PlayerStatsDialog({
     const rows = seasonRows.filter((r) => isOurScoringStat(r.key) && r.key !== "minutes");
     const apps = matches.filter((m) => (m.stats.minutes ?? 0) > 0).length;
     const appRate = asSub ? 1 : 2;
+    // Star player awards (3 / 2 / 1 pts) are stored as a bonus on the match line.
+    const starPoints = matches.reduce((s, m) => s + (m.stats.bonus ?? 0), 0);
+    const starWins = matches.filter((m) => (m.stats.bonus ?? 0) > 0).length;
     return [
       {
         key: "app",
@@ -251,6 +254,14 @@ function PlayerStatsDialog({
         points: Math.round(apps * appRate * 100) / 100,
       },
       ...rows,
+      {
+        key: "star",
+        abbr: "STAR",
+        means: "Star player award — ★★★ 3 pts, ★★ 2 pts, ★ 1 pt",
+        total: starWins,
+        rate: null as number | null,
+        points: Math.round(starPoints * 100) / 100,
+      },
     ];
   }, [seasonRows, matches, asSub]);
   const espnRows = useMemo(
@@ -297,7 +308,8 @@ function PlayerStatsDialog({
           }, 0);
         return {
           ...match,
-          ourPoints: Math.round((appearance + ourStatPoints + cleanSheetRate) * 100) / 100,
+          ourPoints:
+            Math.round((appearance + ourStatPoints + cleanSheetRate + (match.stats.bonus ?? 0)) * 100) / 100,
           espnPoints: Math.round(espnPoints * 100) / 100,
         };
       }),
