@@ -1287,6 +1287,20 @@ function ManagerCard({
           )}
         </div>
       )}
+      {canPlay && onOpenSwaps && (
+        <button
+          type="button"
+          onClick={onOpenSwaps}
+          className="mt-3 flex w-full items-center justify-between gap-2 rounded-xl border border-sky-500/40 bg-sky-500/10 px-3 py-2.5 text-left text-sm transition-colors hover:bg-sky-500/15"
+        >
+          <span className="flex items-center gap-2 font-semibold text-sky-300">
+            <ArrowRightLeft className="size-4" /> Automatic line-up swaps
+          </span>
+          <span className="rounded-full border border-sky-400/50 bg-sky-500/20 px-2 py-0.5 text-[11px] font-bold text-sky-200">
+            {swapCount ?? 0} {((swapCount ?? 0) === 1) ? "swap" : "swaps"}
+          </span>
+        </button>
+      )}
     </div>
   );
 }
