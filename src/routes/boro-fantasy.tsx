@@ -2334,6 +2334,8 @@ function SquadBuilder({
             checklist={activeChecklist}
             locked={locked}
             canPlay={canPlay}
+            swapCount={lineupSwapNotes.length}
+            onOpenSwaps={() => setSwapDialogOpen(true)}
           />
           {gameweekPanel}
         </div>
