@@ -2123,6 +2123,19 @@ function SquadBuilder({
                       <X className="size-4 text-destructive" strokeWidth={3} />
                     )}
                   </div>
+                  {canManageEntrants && gw.status !== "final" && (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="w-full border-emerald-500/40 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20 hover:text-emerald-200"
+                      disabled={markingFinished}
+                      onClick={() => onMarkFinished(gw.id)}
+                    >
+                      {markingFinished ? <Loader2 className="size-4 mr-2 animate-spin" /> : <Check className="size-4 mr-2" />}
+                      Mark gameweek finished
+                    </Button>
+                  )}
                 </div>
               );
             })()}
