@@ -201,34 +201,7 @@ export async function fetchFantasyStatsForFixture(
     if (!BORO_RE.test(c.team?.displayName ?? "")) conceded = parseInt(c.score ?? "0", 10) || 0;
   }
 
-  // Player lookup: exact normalised name, then surname.
-  const byName = new Map<string, { id: string; position: string }>();
-  const bySurname = new Map<string, Array<{ id: string; position: string }>>();
-  for (const p of players) {
-    const n = norm(p.name);
-    byName.set(n, { id: p.id, position: p.position });
-    const surname = n.split(" ").slice(-1)[0] ?? n;
-    const list = bySurname.get(surname) ?? [];
-    list.push({ id: p.id, position: p.position });
-    bySurname.set(surname, list);
-  }
-  const matchPlayer = (displayName: string) => {
-    const n = norm(displayName);
-    const exact = byName.get(n);
-    if (exact) return exact;
-    const surname = n.split(" ").slice(-1)[0] ?? n;
-    const list = bySurname.get(surname);
-    if (list && list.length === 1) return list[0]!;
-    // Try "first initial + surname" disambiguation.
-    if (list && list.length > 1) {
-      const first = n.split(" ")[0] ?? "";
-      for (const cand of list) {
-        const candName = players.find((p) => p.id === cand.id)?.name ?? "";
-        if (norm(candName).startsWith(first.slice(0, 1))) return cand;
-      }
-    }
-    return null;
-  };
+  const matchPlayer = makePlayerMatcher(players);
 
   // Substitution minutes + penalty events from the timeline.
   const subOutMinute = new Map<string, number>();
