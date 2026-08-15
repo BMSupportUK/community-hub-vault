@@ -41,8 +41,9 @@ import {
   getFantasyState, getFantasyLeaderboard, getFantasyPreviousGameweekScores, joinFantasyGame, saveFantasySquad, setFantasyTeamName,
   adminRemoveFantasyEntrant,
   getFantasyPlayerBreakdown,
+  getFantasySwapHistory,
   type FantasyStateDTO, type FantasyPlayerDTO, type FantasyLeaderboardRow, type FantasyGameweekDTO,
-  type FantasyPlayerBreakdown, type FantasyPreviousGwScoreDTO,
+  type FantasyPlayerBreakdown, type FantasyPreviousGwScoreDTO, type FantasySwapHistoryRow,
 } from "@/lib/fantasy.functions";
 import {
   getEntrantFantasySquad, type EntrantSquadViewDTO,
@@ -51,6 +52,7 @@ import {
   fantasyGuestRegister, fantasyGuestSignInExisting, getPublicFantasyState,
   getPublicFantasyLeaderboard, getPublicFantasyPreviousGameweekScores, saveGuestFantasySquad, requestFantasyGuestPinReset,
   resetFantasyGuestPin, setGuestFantasyTeamName,
+  getGuestFantasySwapHistory,
 } from "@/lib/fantasy-guest.functions";
 
 export const Route = createFileRoute("/boro-fantasy")({
@@ -1003,6 +1005,8 @@ function BoroFantasyPage() {
                     teamName={currentTeamName}
                     canEdit={canPlay}
                     onEdit={openNameDialog}
+                    isMember={!!user}
+                    guestCreds={guest ? { email: guest.email, pin: guest.pin } : null}
                   />
                 )}
               </TabsContent>
@@ -1170,7 +1174,7 @@ type SavePayload = {
 };
 
 function SquadBuilder({
-  state, canPlay, onSave, name, teamName, canEdit, onEdit,
+  state, canPlay, onSave, name, teamName, canEdit, onEdit, isMember, guestCreds,
 }: {
   state: FantasyStateDTO;
   canPlay: boolean;
@@ -1179,6 +1183,8 @@ function SquadBuilder({
   teamName: string;
   canEdit: boolean;
   onEdit: () => void;
+  isMember: boolean;
+  guestCreds: { email: string; pin: string } | null;
 }) {
   // Managers can work ahead: any gameweek that's still open (upcoming and not
   // past its lock time) can be picked from the dropdown.
@@ -1985,26 +1991,12 @@ function SquadBuilder({
           <Lock className="size-4" /> This gameweek is locked. Changes will apply to the next one.
         </div>
       )}
-      {lineupSwapNotes.length > 0 && (
-        <div className="rounded-xl border border-sky-500/50 bg-sky-500/10 px-4 py-3 text-sm">
-          <div className="font-bold uppercase tracking-wide text-sky-300">
-            Automatic line-up swaps
-          </div>
-          <p className="mt-1 text-xs text-muted-foreground">
-            The official Boro starting XI was announced, so like-for-like swaps were made between your
-            bench and your eleven.
-          </p>
-          <ul className="mt-2 space-y-1">
-            {lineupSwapNotes.map((s) => (
-              <li key={s.name} className="text-xs">
-                <span className={s.isStarter ? "font-semibold text-sky-300" : "font-semibold text-amber-300"}>
-                  {s.name}
-                </span>{" "}
-                — {s.note}
-              </li>
-            ))}
-          </ul>
-        </div>
+      {canPlay && (
+        <SwapHistoryPanel
+          isMember={isMember}
+          guestCreds={guestCreds}
+          currentGwSwapCount={lineupSwapNotes.length}
+        />
       )}
       <div className="rounded-3xl border border-primary/30 shadow-glow bg-gradient-primary p-4 grid min-w-0 items-stretch gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,300px)] xl:grid-cols-[minmax(0,1fr)_minmax(0,300px)_minmax(0,320px)]">
         <div className="grid min-w-0 gap-4 items-stretch h-full">
@@ -3841,6 +3833,126 @@ function GuestAccessCard({
           </>
         )}
       </div>
+    </div>
+  );
+}
+
+/**
+ * Swap history: every automatic line-up swap ever made to this manager's
+ * squads, newest first, with the exact time it happened and the rule used.
+ */
+function SwapHistoryPanel({
+  isMember, guestCreds, currentGwSwapCount,
+}: {
+  isMember: boolean;
+  guestCreds: { email: string; pin: string } | null;
+  currentGwSwapCount: number;
+}) {
+  const memberFn = useServerFn(getFantasySwapHistory);
+  const guestFn = useServerFn(getGuestFantasySwapHistory);
+  const [open, setOpen] = useState(currentGwSwapCount > 0);
+
+  const query = useQuery<FantasySwapHistoryRow[]>({
+    queryKey: ["fantasy-swap-history", isMember ? "member" : guestCreds?.email ?? "none"],
+    queryFn: () =>
+      isMember
+        ? memberFn({})
+        : guestCreds
+          ? guestFn({ data: { email: guestCreds.email, pin: guestCreds.pin } })
+          : Promise.resolve([]),
+    enabled: isMember || !!guestCreds,
+    staleTime: 30_000,
+    refetchInterval: 60_000,
+  });
+
+  const rows = query.data ?? [];
+  // Group by the moment the swap engine ran, so an in/out pair reads together.
+  const groups = useMemo(() => {
+    const map = new Map<string, FantasySwapHistoryRow[]>();
+    for (const r of rows) {
+      const key = `${r.gameweek}|${r.swappedAt}`;
+      const list = map.get(key);
+      if (list) list.push(r);
+      else map.set(key, [r]);
+    }
+    return [...map.entries()].map(([key, list]) => ({ key, list }));
+  }, [rows]);
+
+  if (!query.isLoading && rows.length === 0) return null;
+
+  return (
+    <div className="rounded-xl border border-sky-500/50 bg-sky-500/10 px-4 py-3 text-sm">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2 font-bold uppercase tracking-wide text-sky-300">
+          <ArrowRightLeft className="size-4" /> Automatic line-up swaps
+          {rows.length > 0 && (
+            <span className="rounded-full border border-sky-400/50 bg-sky-500/20 px-2 py-0.5 text-[10px]">
+              {groups.length} {groups.length === 1 ? "swap" : "swaps"}
+            </span>
+          )}
+        </div>
+        <Button size="sm" variant="outline" onClick={() => setOpen((v) => !v)}>
+          {open ? "Hide history" : "Show history"}
+        </Button>
+      </div>
+      <p className="mt-1 text-xs text-muted-foreground">
+        When Boro's official starting eleven is announced, bench players who are starting are swapped
+        into your eleven for picked starters who aren't — like for like only.
+      </p>
+
+      {query.isLoading && (
+        <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
+          <Loader2 className="size-3 animate-spin" /> Loading your swap history…
+        </div>
+      )}
+
+      {open && !query.isLoading && (
+        <div className="mt-3 space-y-3">
+          {groups.map(({ key, list }) => {
+            const first = list[0]!;
+            return (
+              <div key={key} className="rounded-lg border border-sky-400/30 bg-background/40 p-3">
+                <div className="flex flex-wrap items-baseline justify-between gap-2">
+                  <span className="text-xs font-bold text-sky-200">
+                    GW{first.gameweek} — {first.fixture}
+                  </span>
+                  <span className="text-[11px] text-muted-foreground">
+                    Swapped {new Date(first.swappedAt).toLocaleString("en-GB", {
+                      day: "2-digit", month: "short", year: "numeric",
+                      hour: "2-digit", minute: "2-digit",
+                    })}
+                  </span>
+                </div>
+                <ul className="mt-2 space-y-2">
+                  {list.map((r) => (
+                    <li key={r.id} className="text-xs">
+                      <span className="inline-flex items-center gap-1">
+                        <span
+                          className={`rounded px-1.5 py-0.5 text-[10px] font-bold uppercase ${
+                            r.direction === "in"
+                              ? "bg-emerald-500/20 text-emerald-300"
+                              : "bg-amber-500/20 text-amber-300"
+                          }`}
+                        >
+                          {r.direction === "in" ? "In" : "Out"}
+                        </span>
+                        <span className="font-semibold">{r.playerName}</span>
+                        <span className="text-muted-foreground">
+                          · scores as {POSITION_SHORT[r.scoringPosition]}
+                        </span>
+                      </span>
+                      <div className="mt-0.5 text-muted-foreground">{r.note}</div>
+                      <div className="mt-0.5 text-[11px] italic text-sky-200/80">
+                        <span className="font-semibold not-italic">Rule:</span> {r.rule}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

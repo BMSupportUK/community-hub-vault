@@ -3,6 +3,7 @@ import { setResponseHeader } from "@tanstack/react-start/server";
 import { z } from "zod";
 import { scryptSync, randomBytes, timingSafeEqual } from "crypto";
 import type { FantasyLeaderboardRow, FantasyPreviousGwScoreDTO, FantasyStateDTO } from "@/lib/fantasy.server";
+import type { FantasySwapHistoryRow } from "@/lib/fantasy-swap-history.server";
 
 const emailSchema = z.string().trim().toLowerCase().email().max(255);
 const pinSchema = z.string().regex(/^\d{4}$/, "PIN must be 4 digits");
@@ -140,6 +141,17 @@ export const getPublicFantasyPreviousGameweekScores = createServerFn({ method: "
     return loadPreviousGameweekScores(admin);
   },
 );
+
+/** Swap history for a guest manager (email + PIN identifies the entrant). */
+export const getGuestFantasySwapHistory = createServerFn({ method: "GET" })
+  .inputValidator((d: unknown) => z.object({ email: emailSchema, pin: pinSchema }).parse(d))
+  .handler(async ({ data }): Promise<FantasySwapHistoryRow[]> => {
+    setResponseHeader("cache-control", "no-store, max-age=0");
+    const { loadSwapHistory } = await import("@/lib/fantasy-swap-history.server");
+    const admin = await getAdmin();
+    const g = await authenticateGuest(data.email, data.pin);
+    return loadSwapHistory(admin, { guestId: g.id as string });
+  });
 
 // ------------------------------------------------------------------
 // Guest writes
