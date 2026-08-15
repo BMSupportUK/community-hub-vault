@@ -1964,7 +1964,7 @@ function SquadBuilder({
                           {(gw.stars ?? []).map((s, i) => (
                             <li key={s.playerId} className="flex items-center justify-between gap-3 text-xs">
                               <span className="min-w-0 truncate font-semibold text-foreground">
-                                <span className="mr-1 text-amber-300">{i === 0 ? "★" : i === 1 ? "★★" : "★★★"}</span>
+                                <span className="mr-1 text-amber-300">{i === 0 ? "★★★" : i === 1 ? "★★" : "★"}</span>
                                 {i + 1}. {s.name}
                               </span>
                               <span className="font-bold tabular-nums text-amber-300">+{s.bonus} pts</span>

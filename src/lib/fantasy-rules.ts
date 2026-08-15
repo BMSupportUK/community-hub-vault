@@ -313,7 +313,9 @@ export const SCORING_RULES: {
   { abbr: "YC", label: "Yellow card", minTime: "1+ sec", starter: "−1 pt", sub: "−0.5 pt" },
   { abbr: "RC", label: "Red card", minTime: "1+ sec", starter: "−3 pts", sub: "−1.5 pts" },
   { abbr: "OG", label: "Own goals", minTime: "1+ sec", starter: "−2 pts", sub: "−1 pt" },
-  { abbr: "MOTM", label: "Man of the match bonus (auto-awarded to the top scoring Boro player, admin can override)", minTime: "1+ sec", starter: "3 pts", sub: "1.5 pts" },
+  { abbr: "★★★", label: "Star man of the gameweek (best 0-10 match rating from the official stats, any competition)", minTime: "1+ sec", starter: "3 pts", sub: "1.5 pts" },
+  { abbr: "★★", label: "Second star player of the gameweek", minTime: "1+ sec", starter: "2 pts", sub: "1 pt" },
+  { abbr: "★", label: "Third star player of the gameweek", minTime: "1+ sec", starter: "1 pt", sub: "0.5 pt" },
 ];
 
 /**
@@ -358,7 +360,7 @@ export const PLAYER_STAT_META: Record<
   yellows: { abbr: "YC", means: "Yellow cards", points: -1 },
   reds: { abbr: "RC", means: "Red cards", points: -3 },
   own_goals: { abbr: "OG", means: "Own goals", points: -2 },
-  bonus: { abbr: "MOTM", means: "Man of the match bonus", points: 1 },
+  bonus: { abbr: "STAR", means: "Star player bonus (3 / 2 / 1 pts for the top three ratings)", points: 1 },
 };
 
 /** Points a starter earns per unit of a stat, for the player profile table. */
