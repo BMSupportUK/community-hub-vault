@@ -60,6 +60,12 @@ export type FantasyGameweekDTO = {
   minuteAdded?: number | null;
   /** Tie drawn but date/kick-off not confirmed yet. */
   dateTbc?: boolean;
+  /** True once player stats have landed for this fixture. */
+  statsIn?: boolean;
+  /** True once an admin has awarded Man of the Match for this fixture. */
+  motmAwarded?: boolean;
+  /** Gameweek is complete: full time + stats in + Man of the Match awarded. */
+  finished?: boolean;
 };
 
 export type FantasyPickDTO = {
@@ -219,9 +225,35 @@ export async function loadGameweeks(admin: any): Promise<FantasyGameweekDTO[]> {
     .order("gw_number", { ascending: true });
   if (error) throw new Error(error.message);
   // Competitive fixtures only — league, cup and play-off games; no friendlies.
-  return (data ?? [])
+  const rows = (data ?? [])
     .filter((r: any) => isFantasyLeagueCompetition(r.fixture?.competition))
     .map(mapGameweek);
+
+  // A gameweek is only "finished" when the game is done, stats have landed and
+  // an admin has awarded Man of the Match.
+  const fixtureIds = [...new Set(rows.map((g) => g.fixtureId).filter(Boolean))];
+  if (fixtureIds.length) {
+    const { MOTM_BONUS } = await import("@/lib/fantasy-rules");
+    const { data: stats } = await admin
+      .from("fantasy_player_stats")
+      .select("fixture_id, bonus")
+      .in("fixture_id", fixtureIds);
+    const byFixture = new Map<string, { stats: boolean; motm: boolean }>();
+    for (const s of (stats ?? []) as any[]) {
+      const e = byFixture.get(s.fixture_id) ?? { stats: false, motm: false };
+      e.stats = true;
+      if ((Number(s.bonus) || 0) >= MOTM_BONUS) e.motm = true;
+      byFixture.set(s.fixture_id, e);
+    }
+    for (const g of rows) {
+      const e = byFixture.get(g.fixtureId);
+      g.statsIn = !!e?.stats;
+      g.motmAwarded = !!e?.motm;
+      const ft = /FT|FULL|POST|FINAL/i.test(g.fixtureStatus ?? "") || g.status === "final";
+      g.finished = ft && g.statsIn && g.motmAwarded;
+    }
+  }
+  return rows;
 }
 
 /** The gameweek the manager should be picking for: first one still unlocked. */
