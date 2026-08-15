@@ -108,24 +108,21 @@ type EspnJson = {
  */
 export async function fetchEspnBoroLive(): Promise<EspnBoroMatch[]> {
   const debug = (globalThis as { __espnDebug?: { ok: number; bad: number; total: number } }).__espnDebug = { ok: 0, bad: 0, total: 0 };
-  const today = new Date();
-  const ym = (d: Date) =>
-    `${d.getUTCFullYear()}${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
-  // Month-level snapshots cover live matches today AND freshly drawn cup
-  // ties weeks/months out (Carabao Cup R1 in August, FA Cup R3 in January).
-  // Cloudflare Workers cap each request at 50 subrequests, so keep the
-  // total here well under that ceiling (5 comps × ~9 months ≈ 45 fetches).
-  const months: string[] = [];
-  for (let i = -1; i <= 8; i += 1) {
-    const d = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth() + i, 1));
-    months.push(ym(d));
-  }
+  // Two date-range snapshots per competition: a tight live window (so an
+  // in-play match is always picked up) and a long forward window for freshly
+  // drawn cup ties. Workers cap each request at 50 subrequests, and the old
+  // month-by-month loop burned all 50 on ESPN alone — every fetch then failed.
+  const now = Date.now();
+  const ranges = [
+    espnDateRange(now - 2 * 86_400_000, now + 3 * 86_400_000),
+    espnDateRange(now, now + 300 * 86_400_000),
+  ];
 
   const urls: Array<{ url: string; competition: string }> = [];
   for (const c of ESPN_COMPETITIONS) {
-    for (const m of months) {
+    for (const range of ranges) {
       urls.push({
-        url: `https://site.api.espn.com/apis/site/v2/sports/soccer/${c.slug}/scoreboard?dates=${m}&limit=200`,
+        url: `https://site.api.espn.com/apis/site/v2/sports/soccer/${c.slug}/scoreboard?dates=${range}&limit=400`,
         competition: c.name,
       });
     }
@@ -133,15 +130,12 @@ export async function fetchEspnBoroLive(): Promise<EspnBoroMatch[]> {
 
   const responses = await Promise.all(
     urls.map(({ url, competition }) =>
-      fetch(url, { headers: { accept: "application/json" } })
-        .then((r) => {
-          debug.total += 1;
-          if (r.ok) { debug.ok += 1; return r.json(); }
-          debug.bad += 1;
-          return { events: [] };
-        })
-        .catch(() => { debug.bad += 1; return { events: [] }; })
-        .then((json) => ({ json: json as EspnJson, competition })),
+      espnJson<EspnJson>(url).then((json) => {
+        debug.total += 1;
+        if (json) debug.ok += 1;
+        else debug.bad += 1;
+        return { json: (json ?? { events: [] }) as EspnJson, competition };
+      }),
     ),
   );
 
