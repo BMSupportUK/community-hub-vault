@@ -2287,38 +2287,6 @@ function SquadBuilder({
             )}
           </div>
         </aside>
-          <BenchPanel
-            editable={editable}
-            dragEnabled={editable}
-            playerById={playerById}
-            bench={bench}
-            benchPositions={benchPositions}
-            onBenchPosition={(index, pos) => {
-              if (!editable) return;
-              setBenchPositions((prev) => {
-                const next = [...prev];
-                while (next.length <= index) next.push(null);
-                next[index] = pos;
-                return next;
-              });
-            }}
-            benchSize={benchRules.size}
-            pointsByPlayer={hasGwPoints ? pointsByPlayer : undefined}
-            minutesByPlayer={minutesByPlayer.size ? minutesByPlayer : undefined}
-            autoSubbedIds={autoSubbedIds}
-            ratingByPlayer={ratingByPlayer.size ? ratingByPlayer : undefined}
-            onDropStart={(playerId) => {
-              const p = playerById.get(playerId);
-              if (p) startPlayer(p);
-            }}
-            onDropBench={(playerId) => {
-              const p = playerById.get(playerId);
-              if (p) benchAdd(p);
-            }}
-            onRemove={removePlayer}
-            onBenchSlotOpen={(benchIndex) => setPicker({ mode: "bench", benchIndex })}
-            gw={gw}
-          />
         </div>
 
         {/* Column 3 — your team card and the gameweek picker / save panel. */}
