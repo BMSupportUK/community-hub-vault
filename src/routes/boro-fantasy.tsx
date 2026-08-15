@@ -3948,6 +3948,13 @@ function SwapHistoryPanel({
     return [...map.entries()].map(([key, list]) => ({ key, list }));
   }, [rows]);
 
+  // A swap = one player in + one player out. Count the "in" legs so two
+  // changes made in the same engine run read as 2 swaps, not 1.
+  const swapCount = useMemo(() => {
+    const ins = rows.filter((r) => r.direction === "in").length;
+    return ins > 0 ? ins : Math.ceil(rows.length / 2);
+  }, [rows]);
+
   if (!query.isLoading && rows.length === 0) return null;
 
   return (
@@ -3955,9 +3962,9 @@ function SwapHistoryPanel({
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2 font-bold uppercase tracking-wide text-sky-300">
           <ArrowRightLeft className="size-4" /> Automatic line-up swaps
-          {rows.length > 0 && (
+          {swapCount > 0 && (
             <span className="rounded-full border border-sky-400/50 bg-sky-500/20 px-2 py-0.5 text-[10px]">
-              {groups.length} {groups.length === 1 ? "swap" : "swaps"}
+              {swapCount} {swapCount === 1 ? "swap" : "swaps"}
             </span>
           )}
         </div>
