@@ -256,10 +256,8 @@ const ESPN_COMPETITIONS: Array<{ slug: string; label: string }> = [
 ];
 
 async function fetchEspnStandings(): Promise<LeaguePosition | null> {
-  const { espnJson: espnStandingsFetch } = await import("@/lib/espn-fetch");
-  const res = await espnStandingsFetch(ESPN_STANDINGS_URL);
-  if (!res.ok) throw new Error(`ESPN standings ${res.status}`);
-  const json = (await res.json()) as {
+  const { espnJson } = await import("@/lib/espn-fetch");
+  const json = (await espnJson(ESPN_STANDINGS_URL)) as null | {
     name?: string;
     children?: Array<{
       standings?: {
@@ -271,6 +269,7 @@ async function fetchEspnStandings(): Promise<LeaguePosition | null> {
       };
     }>;
   };
+  if (!json) throw new Error("ESPN standings unavailable");
   const entries = json.children?.[0]?.standings?.entries ?? [];
   if (!entries.length) return null;
 
