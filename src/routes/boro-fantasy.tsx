@@ -41,8 +41,9 @@ import {
   getFantasyState, getFantasyLeaderboard, getFantasyPreviousGameweekScores, joinFantasyGame, saveFantasySquad, setFantasyTeamName,
   adminRemoveFantasyEntrant,
   getFantasyPlayerBreakdown,
+  getFantasySwapHistory,
   type FantasyStateDTO, type FantasyPlayerDTO, type FantasyLeaderboardRow, type FantasyGameweekDTO,
-  type FantasyPlayerBreakdown, type FantasyPreviousGwScoreDTO,
+  type FantasyPlayerBreakdown, type FantasyPreviousGwScoreDTO, type FantasySwapHistoryRow,
 } from "@/lib/fantasy.functions";
 import {
   getEntrantFantasySquad, type EntrantSquadViewDTO,
@@ -51,6 +52,7 @@ import {
   fantasyGuestRegister, fantasyGuestSignInExisting, getPublicFantasyState,
   getPublicFantasyLeaderboard, getPublicFantasyPreviousGameweekScores, saveGuestFantasySquad, requestFantasyGuestPinReset,
   resetFantasyGuestPin, setGuestFantasyTeamName,
+  getGuestFantasySwapHistory,
 } from "@/lib/fantasy-guest.functions";
 
 export const Route = createFileRoute("/boro-fantasy")({
