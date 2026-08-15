@@ -1940,20 +1940,40 @@ function SquadBuilder({
                   const pending = [
                     !/FT|FULL|POST|FINAL/i.test(gw.fixtureStatus ?? "") && gw.status !== "final" ? "match not finished" : null,
                     !gw.statsIn ? "stats still to come in" : null,
-                    !gw.motmAwarded ? "Man of the Match not awarded" : null,
+                    !gw.motmAwarded ? "star players not awarded" : null,
                   ].filter(Boolean) as string[];
                   return (
+                    <>
                     <div
                       className={`mt-2 inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[11px] font-semibold ${
                         done
                           ? "border-emerald-400/50 bg-emerald-500/15 text-emerald-300"
                           : "border-destructive/50 bg-destructive/10 text-destructive"
                       }`}
-                      title={done ? "All stats in and Man of the Match awarded" : `Waiting on: ${pending.join(", ")}`}
+                      title={done ? "All stats in and star players awarded" : `Waiting on: ${pending.join(", ")}`}
                     >
                       {done ? <Check className="size-3.5" strokeWidth={3} /> : <X className="size-3.5" strokeWidth={3} />}
                       Gameweek {done ? "finished" : "in progress"}
                     </div>
+                    {(gw.stars?.length ?? 0) > 0 && (
+                      <div className="mt-2 rounded-xl border border-amber-400/50 bg-amber-500/10 px-3 py-2">
+                        <div className="text-[11px] font-bold uppercase tracking-wide text-amber-300">
+                          Star players — GW{gw.gwNumber}
+                        </div>
+                        <ol className="mt-1 space-y-0.5">
+                          {(gw.stars ?? []).map((s, i) => (
+                            <li key={s.playerId} className="flex items-center justify-between gap-3 text-xs">
+                              <span className="min-w-0 truncate font-semibold text-foreground">
+                                <span className="mr-1 text-amber-300">{i === 0 ? "★" : i === 1 ? "★★" : "★★★"}</span>
+                                {i + 1}. {s.name}
+                              </span>
+                              <span className="font-bold tabular-nums text-amber-300">+{s.bonus} pts</span>
+                            </li>
+                          ))}
+                        </ol>
+                      </div>
+                    )}
+                    </>
                   );
                 })()}
               </>
