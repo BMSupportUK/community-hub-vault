@@ -9,8 +9,10 @@ import {
   describeEspnEvent,
   type EspnMatchEvent,
 } from "@/lib/boro-espn-events";
+import { espnJson, espnDateRange } from "@/lib/espn-fetch";
 
-const SLUGS = ["eng.2", "eng.fa", "eng.league_cup", "eng.efl_cup", "eng.trophy", "eng.efl_trophy"];
+const SLUGS = ["eng.2", "eng.fa", "eng.league_cup", "eng.trophy"];
+const ESPN_TEAM_ID = "369"; // Middlesbrough
 const BORO_RE = /\bmiddles(?:brough|borough)\b|\bboro\b/i;
 
 const WINDOW_BEFORE_MS = 30 * 60 * 1000; // start watching 30m before KO
@@ -20,42 +22,47 @@ type ParsedEvent = EspnMatchEvent;
 
 export async function findEspnEvent(fx: FixtureLite): Promise<{ eventId: string; slug: string } | null> {
   const ko = new Date(fx.kickoff_at);
-  const dates = [-1, 0, 1].map((off) => {
-    const d = new Date(ko.getTime() + off * 86_400_000);
-    return `${d.getUTCFullYear()}${String(d.getUTCMonth() + 1).padStart(2, "0")}${String(d.getUTCDate()).padStart(2, "0")}`;
-  });
-  for (const slug of SLUGS) {
-    for (const date of dates) {
-      try {
-        const res = await fetch(
-          `https://site.api.espn.com/apis/site/v2/sports/soccer/${slug}/scoreboard?dates=${date}&limit=200`,
-          { headers: { accept: "application/json" } },
-        );
-        if (!res.ok) continue;
-        const json: any = await res.json();
-        for (const ev of json?.events ?? []) {
-          const comp = ev?.competitions?.[0];
-          const names: string[] = (comp?.competitors ?? []).map((c: any) => String(c?.team?.displayName ?? ""));
-          if (!names.some((n) => BORO_RE.test(n))) continue;
-          const diff = Math.abs(Date.parse(ev.date) - ko.getTime());
-          if (diff > 3 * 86_400_000) continue;
-          if (ev?.id) return { eventId: String(ev.id), slug };
-        }
-      } catch {
-        // try the next feed
-      }
+  const range = espnDateRange(ko.getTime() - 86_400_000, ko.getTime() + 86_400_000);
+
+  const match = (json: any, slug: string) => {
+    for (const ev of json?.events ?? []) {
+      const comp = ev?.competitions?.[0];
+      const names: string[] = (comp?.competitors ?? []).map((c: any) => String(c?.team?.displayName ?? ""));
+      if (!names.some((n) => BORO_RE.test(n))) continue;
+      const diff = Math.abs(Date.parse(ev.date) - ko.getTime());
+      if (diff > 3 * 86_400_000) continue;
+      if (ev?.id) return { eventId: String(ev.id), slug };
     }
+    return null;
+  };
+
+  // Team schedule first: one request per competition and it always carries
+  // Boro's own fixtures, so a fixture is found even if the day scoreboard
+  // feed is unavailable.
+  for (const slug of SLUGS) {
+    const json = await espnJson(
+      `https://site.api.espn.com/apis/site/v2/sports/soccer/${slug}/teams/${ESPN_TEAM_ID}/schedule`,
+    );
+    const hit = match(json, slug);
+    if (hit) return hit;
   }
+
+  for (const slug of SLUGS) {
+    const json = await espnJson(
+      `https://site.api.espn.com/apis/site/v2/sports/soccer/${slug}/scoreboard?dates=${range}&limit=400`,
+    );
+    const hit = match(json, slug);
+    if (hit) return hit;
+  }
+
   return null;
 }
 
 async function fetchEvents(eventId: string, slug: string): Promise<{ events: ParsedEvent[]; status: string | null }> {
-  const res = await fetch(
+  const json: any = await espnJson(
     `https://site.api.espn.com/apis/site/v2/sports/soccer/${slug}/summary?event=${encodeURIComponent(eventId)}`,
-    { headers: { accept: "application/json" } },
   );
-  if (!res.ok) return { events: [], status: null };
-  const json: any = await res.json();
+  if (!json) return { events: [], status: null };
   const norm = normaliseEspnSummary(json);
   return {
     events: norm.events.filter((e) => isReportableEvent(e.kind)),
