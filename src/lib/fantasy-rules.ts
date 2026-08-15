@@ -392,28 +392,5 @@ export function statPointsPer(key: string, position: FantasyPosition): number | 
   return meta.points[position] ?? null;
 }
 
-/**
- * Key to the match stats the points are built from. Only stats that actually
- * earn points are listed. These match the columns in the official ESPN match
- * report "player stats" table, so anyone can check a player's points against
- * the match report.
- */
-export const STAT_KEY: {
-  stat: string;
-  means: string;
-  positions: FantasyPosition[];
-  /** Point value shown next to the stat label (uniform across positions). */
-  points?: string;
-  /** Per-position point value override, shown instead of `points` when present. */
-  byPosition?: Partial<Record<FantasyPosition, string>>;
-}[] = [
-  {
-    stat: "A — Assists",
-    means: "Passes or touches that directly set up a team-mate's goal.",
-    positions: ["def", "mid", "fwd"],
-    points: "3 pts",
-  },
-  { stat: "SV — Saves", means: "Shots on target kept out.", positions: ["gk"], points: "1 pt" },
-  { stat: "GA — Goals Conceded", means: "Goals Middlesbrough conceded while the keeper was on the pitch.", positions: ["gk"], points: "−1 pt" },
-  { stat: "SHOT — Shots", means: "Every attempt at goal, on or off target.", positions: ["def", "mid", "fwd"], points: "1 pt" },
-];
+// The live stat legend is built from PLAYER_STAT_META, which mirrors the
+// scoring rules table, so there is no separate hand-written stat key here.
