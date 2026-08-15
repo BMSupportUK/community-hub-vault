@@ -5,7 +5,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Shirt, Loader2, Lock, LogOut, Crown, Star, ArrowRightLeft, Trophy,
   Users, Plus, X, ArrowUp, ArrowDown, ClipboardList, Check, Pencil, Trash2,
-  Cross, AlertTriangle, Ban,
+  Cross, AlertTriangle, Ban, ArrowLeft,
 } from "lucide-react";
 import type { DragEvent as ReactDragEvent } from "react";
 import { toast } from "sonner";
