@@ -225,15 +225,15 @@ export async function loadGameweeks(admin: any): Promise<FantasyGameweekDTO[]> {
     .order("gw_number", { ascending: true });
   if (error) throw new Error(error.message);
   // Competitive fixtures only — league, cup and play-off games; no friendlies.
-  const rows = (data ?? [])
+  const rows: FantasyGameweekDTO[] = (data ?? [])
     .filter((r: any) => isFantasyLeagueCompetition(r.fixture?.competition))
     .map(mapGameweek);
 
   // A gameweek is only "finished" when the game is done, stats have landed and
   // an admin has awarded Man of the Match.
-  const fixtureIds = [...new Set(rows.map((g) => g.fixtureId).filter(Boolean))];
+  const fixtureIds = [...new Set(rows.map((g: FantasyGameweekDTO) => g.fixtureId).filter(Boolean))];
   if (fixtureIds.length) {
-    const { MOTM_BONUS } = await import("@/lib/fantasy-rules");
+    const MOTM_BONUS = 3;
     const { data: stats } = await admin
       .from("fantasy_player_stats")
       .select("fixture_id, bonus")
