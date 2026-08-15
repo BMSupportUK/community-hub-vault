@@ -2058,6 +2058,7 @@ function SquadBuilder({
           isMember={isMember}
           guestCreds={guestCreds}
           currentGwSwapCount={lineupSwapNotes.length}
+          currentGameweekNumber={gw?.gwNumber}
         />
       )}
       <div className="rounded-3xl border border-primary/30 shadow-glow bg-gradient-primary p-4 grid min-w-0 items-stretch gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,300px)] xl:grid-cols-[minmax(0,1fr)_minmax(0,300px)_minmax(0,320px)]">
@@ -3904,11 +3905,12 @@ function GuestAccessCard({
  * squads, newest first, with the exact time it happened and the rule used.
  */
 function SwapHistoryPanel({
-  isMember, guestCreds, currentGwSwapCount,
+  isMember, guestCreds, currentGwSwapCount, currentGameweekNumber,
 }: {
   isMember: boolean;
   guestCreds: { email: string; pin: string } | null;
   currentGwSwapCount: number;
+  currentGameweekNumber?: number;
 }) {
   const memberFn = useServerFn(getFantasySwapHistory);
   const guestFn = useServerFn(getGuestFantasySwapHistory);
@@ -3927,7 +3929,13 @@ function SwapHistoryPanel({
     refetchInterval: 60_000,
   });
 
-  const rows = query.data ?? [];
+  const rows = useMemo(
+    () =>
+      currentGameweekNumber != null
+        ? (query.data ?? []).filter((r) => r.gameweek === currentGameweekNumber)
+        : (query.data ?? []),
+    [query.data, currentGameweekNumber],
+  );
   // Group by the moment the swap engine ran, so an in/out pair reads together.
   const groups = useMemo(() => {
     const map = new Map<string, FantasySwapHistoryRow[]>();
