@@ -1176,6 +1176,7 @@ function BoroFantasyPage() {
 // ------------------------------------------------------------------
 function ManagerCard({
   state, name, teamName, canEdit, onEdit, compact, gameweekId,
+  checklist, locked, canPlay,
 }: {
   state?: FantasyStateDTO;
   name: string | null;
@@ -1184,6 +1185,9 @@ function ManagerCard({
   onEdit?: () => void;
   compact?: boolean;
   gameweekId?: string;
+  checklist?: { title: string; items: string[] };
+  locked?: boolean;
+  canPlay?: boolean;
 }) {
   const total = (state?.squads ?? []).reduce((sum, s) => sum + (s.points ?? 0), 0);
   const selectedSquad = gameweekId
@@ -1240,6 +1244,47 @@ function ManagerCard({
           <dd className="font-bold text-primary">{total}</dd>
         </div>
       </dl>
+
+      {checklist && (
+        <div className="mt-3 rounded-xl border border-border/60 bg-muted/30 p-3">
+          <div className="mb-2 flex items-center gap-2">
+            <ClipboardList className="size-4 text-primary" />
+            <h4 className="font-display text-xs font-bold uppercase tracking-wide">{checklist.title}</h4>
+            {canPlay && !locked && (
+              <span
+                className={
+                  "ml-auto rounded-full px-2 py-0.5 text-[10px] font-bold border " +
+                  (checklist.items.length === 0
+                    ? "border-emerald-500/40 bg-emerald-500/15 text-emerald-300"
+                    : "border-destructive/40 bg-destructive/15 text-destructive")
+                }
+              >
+                {checklist.items.length === 0 ? "Ready" : `${checklist.items.length} to fix`}
+              </span>
+            )}
+          </div>
+          {!canPlay || locked ? (
+            <p className="text-xs text-muted-foreground">
+              {locked
+                ? "This gameweek is locked — the checklist reopens for the next one."
+                : "Join the game to start building a valid squad."}
+            </p>
+          ) : checklist.items.length === 0 ? (
+            <p className="text-xs text-emerald-300">
+              Match day 11 and bench are valid — hit <span className="font-semibold">Save Matchday Squad</span>.
+            </p>
+          ) : (
+            <ul className="space-y-1.5">
+              {checklist.items.map((p) => (
+                <li key={p} className="flex gap-2 text-xs leading-relaxed">
+                  <span className="mt-1 size-1.5 shrink-0 rounded-full bg-destructive" />
+                  <span className="min-w-0">{p}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -2182,7 +2227,7 @@ function SquadBuilder({
           currentGameweekNumber={gw?.gwNumber}
         />
       )}
-      <div className="rounded-3xl border border-primary/30 shadow-glow bg-gradient-primary p-4 grid min-w-0 items-stretch gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,300px)] xl:grid-cols-[minmax(0,1fr)_minmax(0,300px)_minmax(0,320px)]">
+      <div className="rounded-3xl border border-primary/30 shadow-glow bg-gradient-primary p-4 grid min-w-0 items-stretch gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,320px)]">
         <div className="grid min-w-0 gap-4 items-stretch h-full">
           <Tabs defaultValue="xi" className="min-w-0">
             <TabsList className="w-full grid grid-cols-2">
@@ -2271,51 +2316,7 @@ function SquadBuilder({
           </Tabs>
         </div>
 
-        {/* Column 2 — match day checklist and the subs bench, right of the pitch. */}
-        <div className="grid min-w-0 gap-4 items-stretch h-full">
-        {/* Checklist — scoped to the active tab (squad of 15 vs starting 11). */}
-        <aside className="rounded-2xl border border-border/60 bg-card/85 backdrop-blur overflow-hidden">
-          <div className="p-3 border-b border-border/60 flex items-center gap-2">
-            <h3 className="font-display font-bold text-sm">{activeChecklist.title}</h3>
-            {canPlay && !locked && (
-              <span
-                className={
-                  "ml-auto rounded-full px-2 py-0.5 text-[11px] font-bold border " +
-                  (activeChecklist.items.length === 0
-                    ? "border-emerald-500/40 bg-emerald-500/15 text-emerald-300"
-                    : "border-destructive/40 bg-destructive/15 text-destructive")
-                }
-              >
-                {activeChecklist.items.length === 0 ? "Ready" : `${activeChecklist.items.length} to fix`}
-              </span>
-            )}
-          </div>
-          <div className="p-3 text-sm">
-            {!canPlay || locked ? (
-              <p className="text-xs text-muted-foreground">
-                {locked
-                  ? "This gameweek is locked — the checklist reopens for the next one."
-                  : "Join the game to start building a valid squad."}
-              </p>
-            ) : activeChecklist.items.length === 0 ? (
-              <p className="text-xs text-emerald-300">
-                Match day 11 and bench are valid — hit <span className="font-semibold">Save Matchday Squad</span>.
-              </p>
-            ) : (
-              <ul className="space-y-1.5">
-                {activeChecklist.items.map((p) => (
-                  <li key={p} className="flex gap-2 text-xs leading-relaxed">
-                    <span className="mt-1 size-1.5 shrink-0 rounded-full bg-destructive" />
-                    <span className="min-w-0">{p}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        </aside>
-        </div>
-
-        {/* Column 3 — your team card and the gameweek picker / save panel. */}
+        {/* Column 2 — your team card, checklist and the gameweek picker / save panel. */}
         <div className="grid min-w-0 gap-4 items-stretch h-full">
           <ManagerCard
             state={state}
@@ -2324,6 +2325,9 @@ function SquadBuilder({
             canEdit={canEdit}
             onEdit={onEdit}
             gameweekId={gwId}
+            checklist={activeChecklist}
+            locked={locked}
+            canPlay={canPlay}
           />
           {gameweekPanel}
         </div>
