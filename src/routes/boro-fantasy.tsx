@@ -42,6 +42,7 @@ import {
   adminRemoveFantasyEntrant,
   getFantasyPlayerBreakdown,
   getFantasySwapHistory,
+  adminSetFantasyGameweekStatus,
   type FantasyStateDTO, type FantasyPlayerDTO, type FantasyLeaderboardRow, type FantasyGameweekDTO,
   type FantasyPlayerBreakdown, type FantasyPreviousGwScoreDTO, type FantasySwapHistoryRow,
 } from "@/lib/fantasy.functions";
