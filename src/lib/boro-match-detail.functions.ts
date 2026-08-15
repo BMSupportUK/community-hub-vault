@@ -91,7 +91,6 @@ export const getBoroMatchDetail = createServerFn({ method: "GET" })
     try {
       const res = await fetch(
         `https://site.api.espn.com/apis/site/v2/sports/soccer/${slug}/summary?event=${encodeURIComponent(data.eventId)}`,
-        { headers: { accept: "application/json" } },
       );
       if (!res.ok) return empty;
       const json: any = await res.json();

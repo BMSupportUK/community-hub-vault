@@ -256,7 +256,8 @@ const ESPN_COMPETITIONS: Array<{ slug: string; label: string }> = [
 ];
 
 async function fetchEspnStandings(): Promise<LeaguePosition | null> {
-  const res = await fetch(ESPN_STANDINGS_URL, { headers: { accept: "application/json" } });
+  const { espnJson: espnStandingsFetch } = await import("@/lib/espn-fetch");
+  const res = await espnStandingsFetch(ESPN_STANDINGS_URL);
   if (!res.ok) throw new Error(`ESPN standings ${res.status}`);
   const json = (await res.json()) as {
     name?: string;
@@ -337,9 +338,9 @@ async function fetchEspnCompetition(slug: string): Promise<Array<{
     slug === "eng.2"
       ? ESPN_SCHEDULE_URL
       : `https://site.api.espn.com/apis/site/v2/sports/soccer/${slug}/teams/${ESPN_TEAM_ID}/schedule`;
-  const res = await fetch(url, { headers: { accept: "application/json" } });
-  if (!res.ok) throw new Error(`ESPN ${slug} ${res.status}`);
-  const json = (await res.json()) as { events?: unknown[] };
+  const { espnJson } = await import("@/lib/espn-fetch");
+  const json = (await espnJson(url)) as { events?: unknown[] } | null;
+  if (!json) throw new Error(`ESPN ${slug} unavailable`);
   return (json.events ?? []) as never;
 }
 
@@ -353,21 +354,17 @@ async function withEspnEvent(nf: NextFixture): Promise<NextFixture> {
   if (nf.eventId) return nf;
   const ko = Date.parse(nf.kickoff);
   if (!Number.isFinite(ko)) return nf;
-  const dates = [-1, 0, 1].map((off) => {
-    const d = new Date(ko + off * 86_400_000);
-    return `${d.getUTCFullYear()}${String(d.getUTCMonth() + 1).padStart(2, "0")}${String(d.getUTCDate()).padStart(2, "0")}`;
-  });
+  const { espnJson, espnDateRange } = await import("@/lib/espn-fetch");
+  const dates = [espnDateRange(ko - 86_400_000, ko + 86_400_000)];
   const norm = (s: string) => s.toLowerCase().replace(/[^a-z]/g, "");
   const wanted = [norm(nf.home), norm(nf.away)];
   for (const c of ESPN_COMPETITIONS) {
     for (const date of dates) {
       try {
-        const res = await fetch(
-          `https://site.api.espn.com/apis/site/v2/sports/soccer/${c.slug}/scoreboard?dates=${date}&limit=200`,
-          { headers: { accept: "application/json" } },
-        );
-        if (!res.ok) continue;
-        const json = (await res.json()) as { events?: any[] };
+        const json = (await espnJson(
+          `https://site.api.espn.com/apis/site/v2/sports/soccer/${c.slug}/scoreboard?dates=${date}&limit=400`,
+        )) as { events?: any[] } | null;
+        if (!json) continue;
         for (const ev of json.events ?? []) {
           const comp = ev?.competitions?.[0];
           const cs: any[] = comp?.competitors ?? [];
