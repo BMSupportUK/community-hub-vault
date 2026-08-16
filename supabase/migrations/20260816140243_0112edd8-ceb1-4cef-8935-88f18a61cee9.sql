@@ -1,0 +1,1 @@
+UPDATE public.fantasy_players SET in_25_squad = false WHERE squad_level = 'first' AND shirt_number IS NULL AND name IN ('Micah Hamilton','Alex Bangura');
