@@ -126,15 +126,17 @@ export function BoroMatchDetailTabs({
   slug,
   live,
   kickoff,
+  initialDetail,
 }: {
   eventId: string | null;
   slug?: string | null;
   live: boolean;
   kickoff?: string | null;
+  initialDetail?: MatchDetailDTO | null;
 }) {
   const [showMoreStats, setShowMoreStats] = useState(false);
-  const [detail, setDetail] = useState<MatchDetailDTO | null>(null);
-  const [loading, setLoading] = useState(!!eventId);
+  const [detail, setDetail] = useState<MatchDetailDTO | null>(initialDetail ?? null);
+  const [loading, setLoading] = useState(!!eventId && !initialDetail);
   const [now, setNow] = useState(() => Date.now());
 
   const koMs = kickoff ? Date.parse(kickoff) : NaN;
@@ -181,14 +183,16 @@ export function BoroMatchDetailTabs({
       }
     };
 
-    setDetail(null);
-    setLoading(true);
+    if (!initialDetail) {
+      setDetail(null);
+      setLoading(true);
+    }
     void load();
     return () => {
       stopped = true;
       if (timer) window.clearTimeout(timer);
     };
-  }, [eventId, slug, live, armed]);
+  }, [eventId, slug, live, armed, initialDetail]);
 
   const homeTeam = detail?.lineups.find((lineup) => lineup.teamId === detail.homeTeamId) ?? detail?.lineups[0] ?? null;
   const awayTeam = detail?.lineups.find((lineup) => lineup.teamId === detail.awayTeamId) ?? detail?.lineups[1] ?? null;
