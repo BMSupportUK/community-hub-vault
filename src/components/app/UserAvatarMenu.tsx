@@ -10,6 +10,7 @@ import {
   Check,
   Shield,
   ShieldCheck,
+  Smartphone,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -249,6 +250,16 @@ export function UserAvatarMenu({ variant = "header" }: { variant?: "header" | "b
               <ShieldCheck className="size-4 mr-2" />
               Security & 2FA
             </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild className="cursor-pointer">
+            <a
+              href="https://github.com/BMSupportUK/community-hub-vault/releases/latest/download/BMSupport.apk"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Smartphone className="size-4 mr-2" />
+              Get the Android app
+            </a>
           </DropdownMenuItem>
           {isAdmin ? (
             <DropdownMenuItem asChild className="cursor-pointer">
