@@ -16,6 +16,7 @@ import { useUserTimezone } from "@/hooks/use-user-timezone";
 import { TeamKit } from "@/lib/boro-team-kits";
 import { supabase } from "@/integrations/supabase/client";
 import { OnlineNowBox } from "@/components/app/OnlineNowBox";
+import { BoroFullLeagueTableDialog } from "@/components/app/BoroFullLeagueTableDialog";
 
 const BORO = "Middlesbrough";
 
@@ -118,6 +119,7 @@ export function BoroMatchCentreBox() {
   const [data, setData] = useState<MatchCentreDTO | null>(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
+  const [tableOpen, setTableOpen] = useState(false);
   // Sidebar-only fallback: the true next unplayed fixture, used once the
   // fixture held by the match centre has finished.
   const [upcoming, setUpcoming] = useState<NextFixture | null>(null);
@@ -191,6 +193,7 @@ export function BoroMatchCentreBox() {
   const lp = data?.leaguePosition ?? null;
 
   return (
+    <>
     <aside className="boro-solid-panel rounded-xl overflow-hidden">
       <div className="px-4 py-3 bg-gradient-to-r from-[#E11B22] to-[#8B0F14] text-white flex items-center justify-between">
         <h3 className="font-display text-sm font-bold uppercase tracking-wider flex items-center gap-2">
@@ -254,7 +257,12 @@ export function BoroMatchCentreBox() {
             )}
           </div>
           {lp?.table && lp.table.length > 0 ? (
-            <div className="overflow-hidden rounded border border-border/60">
+            <button
+              type="button"
+              onClick={() => setTableOpen(true)}
+              title="View full league table"
+              className="block w-full text-left overflow-hidden rounded border border-border/60 hover:border-[#E11B22]/70 hover:shadow-[0_0_18px_-6px_rgba(225,27,34,0.7)] transition"
+            >
               <table className="w-full text-[11px] font-mono tabular-nums">
                 <thead className="bg-surface-1 text-muted-foreground">
                   <tr>
@@ -293,7 +301,10 @@ export function BoroMatchCentreBox() {
                   })}
                 </tbody>
               </table>
-            </div>
+              <div className="px-1.5 py-1 text-[10px] text-center font-sans text-[#E11B22] font-bold bg-surface-1">
+                View full table
+              </div>
+            </button>
           ) : lp ? (
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-2">
@@ -344,6 +355,8 @@ export function BoroMatchCentreBox() {
         />
       )}
     </aside>
+    <BoroFullLeagueTableDialog open={tableOpen} onOpenChange={setTableOpen} />
+    </>
   );
 }
 
