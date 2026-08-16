@@ -284,6 +284,7 @@ export function BoroLiveMatchStrip() {
                 )}
                 <div className="mt-6">
                   <BoroMatchDetailTabs
+                    key={`match-detail-live-v2-${m.eventId ?? "unknown"}`}
                     eventId={m.eventId ?? null}
                     slug={m.espnSlug ?? null}
                     live={isLive}

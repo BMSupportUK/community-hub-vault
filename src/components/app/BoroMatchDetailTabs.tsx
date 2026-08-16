@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Goal, Square, RefreshCw, ShieldAlert, Target, ChevronDown } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { MatchDetailDTO, MatchEventItem, PlayerLine } from "@/lib/boro-match-detail.types";
@@ -132,9 +132,9 @@ export function BoroMatchDetailTabs({
   live: boolean;
   kickoff?: string | null;
 }) {
+  const [showMoreStats, setShowMoreStats] = useState(false);
   const [detail, setDetail] = useState<MatchDetailDTO | null>(null);
   const [loading, setLoading] = useState(!!eventId);
-  const [showMoreStats, setShowMoreStats] = useState(false);
   const [now, setNow] = useState(() => Date.now());
 
   const koMs = kickoff ? Date.parse(kickoff) : NaN;
@@ -148,69 +148,58 @@ export function BoroMatchDetailTabs({
     return () => window.clearInterval(t);
   }, []);
 
-  // Clear data only when switching to a different fixture (not on live/armed changes).
   useEffect(() => {
-    setDetail(null);
-  }, [eventId]);
-
-  useEffect(() => {
-    let cancelled = false;
-    let timer: number | undefined;
     if (!eventId) {
-      setLoading(false);
       setDetail(null);
+      setLoading(false);
       return;
     }
-    setLoading(true);
-    const run = async () => {
+
+    let stopped = false;
+    let timer: number | undefined;
+    const load = async () => {
+      const params = new URLSearchParams({ eventId, refresh: String(Date.now()) });
+      if (slug) params.set("slug", slug);
       try {
-        const params = new URLSearchParams({ eventId, refresh: String(Date.now()) });
-        if (slug) params.set("slug", slug);
         const response = await fetch(`/api/public/boro-match-detail?${params.toString()}`, {
           headers: { accept: "application/json" },
           cache: "no-store",
         });
         if (!response.ok) throw new Error(`Match data request failed (${response.status})`);
-        const d = (await response.json()) as MatchDetailDTO;
-        if (cancelled) return;
-        const hasMatchData = d.available || d.events.length > 0 || d.teamStats.length > 0 || d.lineups.length > 0;
-        // Never replace good data with an empty payload (transient ESPN blip).
-        setDetail((prev) => {
-          if (!hasMatchData && prev) return prev;
-          return d;
-        });
-        timer = window.setTimeout(run, hasMatchData ? (live ? 15_000 : armed ? 30_000 : 5 * 60_000) : 10_000);
-      } catch (e) {
-        console.error(e);
-        if (!cancelled) timer = window.setTimeout(run, 10_000);
-      } finally {
-        if (!cancelled) setLoading(false);
+        const next = (await response.json()) as MatchDetailDTO;
+        if (stopped) return;
+        setDetail(next);
+        setLoading(false);
+        const hasData = next.available || next.events.length > 0 || next.teamStats.length > 0 || next.lineups.length > 0;
+        timer = window.setTimeout(load, hasData ? (live ? 15_000 : armed ? 30_000 : 5 * 60_000) : 10_000);
+      } catch (error) {
+        console.error(error);
+        if (!stopped) {
+          setLoading(false);
+          timer = window.setTimeout(load, 10_000);
+        }
       }
     };
-    void run();
-    const onFocus = () => {
-      if (document.visibilityState !== "visible") return;
-      if (timer) window.clearTimeout(timer);
-      void run();
-    };
-    document.addEventListener("visibilitychange", onFocus);
-    window.addEventListener("focus", onFocus);
+
+    setDetail(null);
+    setLoading(true);
+    void load();
     return () => {
-      cancelled = true;
-      document.removeEventListener("visibilitychange", onFocus);
-      window.removeEventListener("focus", onFocus);
+      stopped = true;
       if (timer) window.clearTimeout(timer);
     };
   }, [eventId, slug, live, armed]);
 
-  const teams = useMemo(() => {
-    const home = detail?.lineups.find((l) => l.teamId === detail?.homeTeamId) ?? detail?.lineups[0] ?? null;
-    const away = detail?.lineups.find((l) => l.teamId === detail?.awayTeamId) ?? detail?.lineups[1] ?? null;
-    return { home, away };
-  }, [detail]);
+  const homeTeam = detail?.lineups.find((lineup) => lineup.teamId === detail.homeTeamId) ?? detail?.lineups[0] ?? null;
+  const awayTeam = detail?.lineups.find((lineup) => lineup.teamId === detail.awayTeamId) ?? detail?.lineups[1] ?? null;
+  const teams = { home: homeTeam, away: awayTeam };
 
   const primaryStats = detail?.teamStats.filter((s) => s.primary) ?? [];
   const extraStats = detail?.teamStats.filter((s) => !s.primary) ?? [];
+
+  if (!eventId) {
+    return <div className="py-8 text-center text-sm text-white/75">Match feed unavailable.</div>;
+  }
 
   if (loading && !detail) {
     return <div className="py-8 text-center text-sm text-white/75">Loading match data…</div>;
