@@ -34,6 +34,21 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 
   useEffect(() => {
     console.error(error);
+    // A new deploy replaces hashed asset filenames, so an open tab can request a
+    // chunk that no longer exists. Reload once (cache-busted) to pick up the new build.
+    const msg = String(error?.message ?? "");
+    const isStaleChunk =
+      /Failed to fetch dynamically imported module|Importing a module script failed|error loading dynamically imported module|Loading chunk .* failed/i.test(
+        msg,
+      );
+    if (isStaleChunk && typeof window !== "undefined") {
+      const key = "bm-stale-chunk-reloaded";
+      if (!sessionStorage.getItem(key)) {
+        sessionStorage.setItem(key, "1");
+        window.location.reload();
+        return;
+      }
+    }
     const timer = window.setTimeout(() => setShowError(true), 800);
     return () => window.clearTimeout(timer);
   }, [error]);
@@ -107,6 +122,9 @@ function RootShell({ children }: { children: React.ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   useAppTheme();
+  useEffect(() => {
+    sessionStorage.removeItem("bm-stale-chunk-reloaded");
+  }, []);
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
