@@ -59,3 +59,19 @@ jobs:
           path: BMSupport.apk
           if-no-files-found: error
           retention-days: 7
+
+      # Publishes the APK to a rolling "android-latest" release so there is a
+      # permanent, no-login direct download URL:
+      # https://github.com/<owner>/<repo>/releases/latest/download/BMSupport.apk
+      - name: Publish APK to latest release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: android-latest
+          name: BM Support Android APK (latest)
+          body: |
+            Sideload build of the BM Support Android app.
+            Direct download: BMSupport.apk below.
+          files: BMSupport.apk
+          make_latest: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
