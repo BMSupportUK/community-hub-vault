@@ -41,6 +41,7 @@ import { Route as FanZoneBoardTopicRouteImport } from './routes/fan-zone.$board.
 import { Route as ApiPublicTweetImageRouteImport } from './routes/api/public/tweet-image'
 import { Route as ApiPublicTweetRouteImport } from './routes/api/public/tweet'
 import { Route as ApiPublicLinkPreviewRouteImport } from './routes/api/public/link-preview'
+import { Route as ApiPublicBoroMatchDetailRouteImport } from './routes/api/public/boro-match-detail'
 import { Route as AuthenticatedApprovedWhatToWatchRouteImport } from './routes/_authenticated/_approved/what-to-watch'
 import { Route as AuthenticatedApprovedVpnRouteImport } from './routes/_authenticated/_approved/vpn'
 import { Route as AuthenticatedApprovedTicketsRouteImport } from './routes/_authenticated/_approved/tickets'
@@ -297,6 +298,12 @@ const ApiPublicLinkPreviewRoute = ApiPublicLinkPreviewRouteImport.update({
   path: '/api/public/link-preview',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicBoroMatchDetailRoute =
+  ApiPublicBoroMatchDetailRouteImport.update({
+    id: '/api/public/boro-match-detail',
+    path: '/api/public/boro-match-detail',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AuthenticatedApprovedWhatToWatchRoute =
   AuthenticatedApprovedWhatToWatchRouteImport.update({
     id: '/what-to-watch',
@@ -945,6 +952,7 @@ export interface FileRoutesByFullPath {
   '/tickets': typeof AuthenticatedApprovedTicketsRoute
   '/vpn': typeof AuthenticatedApprovedVpnRoute
   '/what-to-watch': typeof AuthenticatedApprovedWhatToWatchRoute
+  '/api/public/boro-match-detail': typeof ApiPublicBoroMatchDetailRoute
   '/api/public/link-preview': typeof ApiPublicLinkPreviewRoute
   '/api/public/tweet': typeof ApiPublicTweetRoute
   '/api/public/tweet-image': typeof ApiPublicTweetImageRoute
@@ -1069,6 +1077,7 @@ export interface FileRoutesByTo {
   '/tickets': typeof AuthenticatedApprovedTicketsRoute
   '/vpn': typeof AuthenticatedApprovedVpnRoute
   '/what-to-watch': typeof AuthenticatedApprovedWhatToWatchRoute
+  '/api/public/boro-match-detail': typeof ApiPublicBoroMatchDetailRoute
   '/api/public/link-preview': typeof ApiPublicLinkPreviewRoute
   '/api/public/tweet': typeof ApiPublicTweetRoute
   '/api/public/tweet-image': typeof ApiPublicTweetImageRoute
@@ -1199,6 +1208,7 @@ export interface FileRoutesById {
   '/_authenticated/_approved/tickets': typeof AuthenticatedApprovedTicketsRoute
   '/_authenticated/_approved/vpn': typeof AuthenticatedApprovedVpnRoute
   '/_authenticated/_approved/what-to-watch': typeof AuthenticatedApprovedWhatToWatchRoute
+  '/api/public/boro-match-detail': typeof ApiPublicBoroMatchDetailRoute
   '/api/public/link-preview': typeof ApiPublicLinkPreviewRoute
   '/api/public/tweet': typeof ApiPublicTweetRoute
   '/api/public/tweet-image': typeof ApiPublicTweetImageRoute
@@ -1328,6 +1338,7 @@ export interface FileRouteTypes {
     | '/tickets'
     | '/vpn'
     | '/what-to-watch'
+    | '/api/public/boro-match-detail'
     | '/api/public/link-preview'
     | '/api/public/tweet'
     | '/api/public/tweet-image'
@@ -1452,6 +1463,7 @@ export interface FileRouteTypes {
     | '/tickets'
     | '/vpn'
     | '/what-to-watch'
+    | '/api/public/boro-match-detail'
     | '/api/public/link-preview'
     | '/api/public/tweet'
     | '/api/public/tweet-image'
@@ -1581,6 +1593,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/tickets'
     | '/_authenticated/_approved/vpn'
     | '/_authenticated/_approved/what-to-watch'
+    | '/api/public/boro-match-detail'
     | '/api/public/link-preview'
     | '/api/public/tweet'
     | '/api/public/tweet-image'
@@ -1655,6 +1668,7 @@ export interface RootRouteChildren {
   SignupRoute: typeof SignupRoute
   UnsubscribeRoute: typeof UnsubscribeRoute
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
+  ApiPublicBoroMatchDetailRoute: typeof ApiPublicBoroMatchDetailRoute
   ApiPublicLinkPreviewRoute: typeof ApiPublicLinkPreviewRoute
   ApiPublicTweetRoute: typeof ApiPublicTweetRoute
   ApiPublicTweetImageRoute: typeof ApiPublicTweetImageRoute
@@ -1917,6 +1931,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/link-preview'
       fullPath: '/api/public/link-preview'
       preLoaderRoute: typeof ApiPublicLinkPreviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/boro-match-detail': {
+      id: '/api/public/boro-match-detail'
+      path: '/api/public/boro-match-detail'
+      fullPath: '/api/public/boro-match-detail'
+      preLoaderRoute: typeof ApiPublicBoroMatchDetailRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/_approved/what-to-watch': {
@@ -2893,6 +2914,7 @@ const rootRouteChildren: RootRouteChildren = {
   SignupRoute: SignupRoute,
   UnsubscribeRoute: UnsubscribeRoute,
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,
+  ApiPublicBoroMatchDetailRoute: ApiPublicBoroMatchDetailRoute,
   ApiPublicLinkPreviewRoute: ApiPublicLinkPreviewRoute,
   ApiPublicTweetRoute: ApiPublicTweetRoute,
   ApiPublicTweetImageRoute: ApiPublicTweetImageRoute,
