@@ -498,7 +498,7 @@ async function fetchEspnBoro(): Promise<{
   const future = parsed.filter((p) => !p.completed);
 
   const lastRaw = past[past.length - 1];
-  const nextRaw = future[0];
+  const nextRaw = pickWeeklyNextFixture(parsed, future, now);
 
   const lastResult: LastResult | null = lastRaw
     ? {
