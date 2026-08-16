@@ -163,16 +163,20 @@ export function BoroMatchDetailTabs({
       setDetail(null);
       return;
     }
+    setLoading(true);
+    setDetail(null);
     const run = async () => {
       try {
         const d = await fetchDetail({ data: { eventId, slug: slug ?? undefined } });
         if (cancelled) return;
         setDetail(d);
+        const hasMatchData = d.available || d.events.length > 0 || d.teamStats.length > 0 || d.lineups.length > 0;
+        timer = window.setTimeout(run, hasMatchData ? (live ? 20_000 : armed ? 60_000 : 5 * 60_000) : 10_000);
       } catch (e) {
         console.error(e);
+        if (!cancelled) timer = window.setTimeout(run, 10_000);
       } finally {
         if (!cancelled) setLoading(false);
-        if (!cancelled) timer = window.setTimeout(run, live ? 20_000 : armed ? 60_000 : 5 * 60_000);
       }
     };
     void run();
@@ -254,8 +258,14 @@ export function BoroMatchDetailTabs({
               <TabsContent key={g.value} value={g.value} className="mt-3">
                 {empty ? (
                   <div className="flex items-center gap-3 rounded-lg border border-dashed border-white/20 bg-white/[0.08] px-3 py-3 text-sm">
-                    <span className="w-12 shrink-0 tabular-nums text-xs font-bold text-white/55">--&apos;</span>
-                    <span className="flex-1 text-white/75">{g.emptyLabel} — awaiting first entry</span>
+                    {!detail?.available ? (
+                      <RefreshCw className="size-4 shrink-0 animate-spin text-red-300" />
+                    ) : (
+                      <span className="w-12 shrink-0 tabular-nums text-xs font-bold text-white/55">--&apos;</span>
+                    )}
+                    <span className="flex-1 text-white/75">
+                      {!detail?.available ? "Refreshing match data…" : `${g.emptyLabel} — awaiting first entry`}
+                    </span>
                   </div>
                 ) : (
                   <div className="space-y-3">
