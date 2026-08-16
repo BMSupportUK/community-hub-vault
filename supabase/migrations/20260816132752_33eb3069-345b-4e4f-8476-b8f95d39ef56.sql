@@ -1,0 +1,1 @@
+update public.boro_match_centre set fetched_at = null where id = 'singleton';
