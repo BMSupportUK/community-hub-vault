@@ -161,10 +161,15 @@ export function BoroMatchDetailTabs({
     let stopped = false;
     let timer: number | undefined;
     const loadDirect = async () => {
-      const directUrl = `https://site.api.espn.com/apis/site/v2/sports/soccer/${encodeURIComponent(slug || "eng.2")}/summary?event=${encodeURIComponent(eventId)}`;
-      const directResponse = await fetch(directUrl, { cache: "no-store" });
+      const sourceUrl = `http://site.api.espn.com/apis/site/v2/sports/soccer/${encodeURIComponent(slug || "eng.2")}/summary?event=${encodeURIComponent(eventId)}`;
+      const directResponse = await fetch(`https://r.jina.ai/${sourceUrl}`, {
+        headers: { accept: "application/json", "x-return-format": "text" },
+        cache: "no-store",
+      });
       if (!directResponse.ok) throw new Error(`Direct match data request failed (${directResponse.status})`);
-      return normaliseBoroMatchDetail(await directResponse.json());
+      const mirrored = await directResponse.json();
+      const raw = typeof mirrored?.data?.text === "string" ? JSON.parse(mirrored.data.text) : mirrored;
+      return normaliseBoroMatchDetail(raw);
     };
     const load = async () => {
       const params = new URLSearchParams({ eventId, refresh: String(Date.now()) });
