@@ -326,6 +326,8 @@ export function BoroMatchCentreBox() {
           )}
         </section>
 
+        <OnlineNowBox />
+
         {data?.fetchedAt && (
           <div className="text-[10px] text-muted-foreground text-center">
             Source: mfc.co.uk · updated {new Date(data.updatedAt ?? data.fetchedAt).toLocaleString()}
