@@ -111,8 +111,17 @@ export function BoroLiveMatchStrip() {
   }, []);
 
   const live = data?.liveMatch ?? null;
-  const nf = data?.nextFixture ?? null;
   const lr = data?.lastResult ?? null;
+  const rawNf = data?.nextFixture ?? null;
+  // The weekly rule holds a fixture until Monday, so a played game can still sit
+  // in nextFixture. Once it has kicked off and we have its result, show the result.
+  const nf =
+    rawNf &&
+    Date.parse(rawNf.kickoff) < now &&
+    lr &&
+    (lr.eventId ?? null) === (rawNf.eventId ?? null)
+      ? null
+      : rawNf;
 
   if (!data || (!live && !nf && !lr)) return null;
 
