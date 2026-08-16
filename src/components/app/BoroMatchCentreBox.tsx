@@ -179,7 +179,14 @@ export function BoroMatchCentreBox() {
   }
 
   const lr = data?.lastResult ?? null;
-  const nf = data?.nextFixture ?? null;
+  const held = data?.nextFixture ?? null;
+  // Only roll over once the listed game has actually finished (result recorded).
+  const heldFinished =
+    !!held &&
+    Date.parse(held.kickoff) < Date.now() &&
+    !!lr &&
+    Date.parse(lr.date) >= Date.parse(held.kickoff) - 60 * 60 * 1000;
+  const nf = heldFinished ? upcoming : held;
   const lp = data?.leaguePosition ?? null;
 
   return (
