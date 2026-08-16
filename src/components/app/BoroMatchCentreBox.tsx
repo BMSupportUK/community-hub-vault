@@ -15,6 +15,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useUserTimezone } from "@/hooks/use-user-timezone";
 import { TeamKit } from "@/lib/boro-team-kits";
 import { supabase } from "@/integrations/supabase/client";
+import { OnlineNowBox } from "@/components/app/OnlineNowBox";
 
 const BORO = "Middlesbrough";
 
