@@ -155,6 +155,11 @@ export function BoroMatchDetailTabs({
     return () => window.clearInterval(t);
   }, []);
 
+  // Clear data only when switching to a different fixture (not on live/armed changes).
+  useEffect(() => {
+    setDetail(null);
+  }, [eventId]);
+
   useEffect(() => {
     let cancelled = false;
     let timer: number | undefined;
