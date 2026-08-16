@@ -8,6 +8,20 @@ import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { UserAvatarMenu } from "@/components/app/UserAvatarMenu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import mfcBadge from "@/assets/mfc-badge.png.asset.json";
+
+/** Middlesbrough FC badge, used as the Boro Fan Zone rail icon. */
+function BoroBadgeIcon({ className }: { className?: string }) {
+  return (
+    <img
+      src={mfcBadge.url}
+      alt=""
+      aria-hidden
+      draggable={false}
+      className={cn("rounded-full object-cover", className)}
+    />
+  );
+}
 
 type PagePermMap = Record<string, string[]>;
 type NavOrderMap = Record<string, number>;
@@ -150,7 +164,7 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
     { to: "/new-content", label: "New content", icon: Tv, show: true, badge: unreadNewContent },
     { to: "/members", label: "Members", icon: Users, show: true },
     { to: "/staff", label: "Staff", icon: Briefcase, show: true },
-    { to: "/forum", label: "Boro Fan Zone", icon: Shield, show: true },
+    { to: "/forum", label: "Boro Fan Zone", icon: BoroBadgeIcon, show: true },
   ];
 
   const allowedByPerms = (to: string) => {
