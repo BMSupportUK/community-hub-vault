@@ -155,6 +155,11 @@ export function BoroMatchDetailTabs({
     return () => window.clearInterval(t);
   }, []);
 
+  // Clear data only when switching to a different fixture (not on live/armed changes).
+  useEffect(() => {
+    setDetail(null);
+  }, [eventId]);
+
   useEffect(() => {
     let cancelled = false;
     let timer: number | undefined;
@@ -164,14 +169,17 @@ export function BoroMatchDetailTabs({
       return;
     }
     setLoading(true);
-    setDetail(null);
     const run = async () => {
       try {
         const d = await fetchDetail({ data: { eventId, slug: slug ?? undefined } });
         if (cancelled) return;
-        setDetail(d);
         const hasMatchData = d.available || d.events.length > 0 || d.teamStats.length > 0 || d.lineups.length > 0;
-        timer = window.setTimeout(run, hasMatchData ? (live ? 20_000 : armed ? 60_000 : 5 * 60_000) : 10_000);
+        // Never replace good data with an empty payload (transient ESPN blip).
+        setDetail((prev) => {
+          if (!hasMatchData && prev) return prev;
+          return d;
+        });
+        timer = window.setTimeout(run, hasMatchData ? (live ? 15_000 : armed ? 30_000 : 5 * 60_000) : 10_000);
       } catch (e) {
         console.error(e);
         if (!cancelled) timer = window.setTimeout(run, 10_000);
@@ -180,8 +188,17 @@ export function BoroMatchDetailTabs({
       }
     };
     void run();
+    const onFocus = () => {
+      if (document.visibilityState !== "visible") return;
+      if (timer) window.clearTimeout(timer);
+      void run();
+    };
+    document.addEventListener("visibilitychange", onFocus);
+    window.addEventListener("focus", onFocus);
     return () => {
       cancelled = true;
+      document.removeEventListener("visibilitychange", onFocus);
+      window.removeEventListener("focus", onFocus);
       if (timer) window.clearTimeout(timer);
     };
   }, [eventId, slug, live, armed]);
