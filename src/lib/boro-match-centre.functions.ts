@@ -497,6 +497,53 @@ async function fetchEspnBoro(): Promise<{
   const past = parsed.filter((p) => p.completed && p.homeScore !== null && p.awayScore !== null);
   const future = parsed.filter((p) => !p.completed);
 
+  // The match centre only rolls over to a new fixture when a new week starts
+  // (Monday, UK time). If a week has both a midweek game and a weekend game,
+  // it switches to the second game one day after the midweek game finished.
+  function londonWeekStart(ms: number): number {
+    // UK offset: BST (+1) between last Sun of March and last Sun of October.
+    const d = new Date(ms);
+    const y = d.getUTCFullYear();
+    const lastSunday = (year: number, monthOneBased: number) => {
+      const x = new Date(Date.UTC(year, monthOneBased, 0));
+      return x.getUTCDate() - x.getUTCDay();
+    };
+    const bstStart = Date.UTC(y, 2, lastSunday(y, 3), 1, 0);
+    const bstEnd = Date.UTC(y, 9, lastSunday(y, 10), 1, 0);
+    const offset = ms >= bstStart && ms < bstEnd ? 60 * 60 * 1000 : 0;
+    const local = new Date(ms + offset);
+    const dow = (local.getUTCDay() + 6) % 7; // Monday = 0
+    const midnightLocal = Date.UTC(
+      local.getUTCFullYear(),
+      local.getUTCMonth(),
+      local.getUTCDate(),
+    );
+    return midnightLocal - dow * 24 * 60 * 60 * 1000 - offset;
+  }
+
+  function pickWeeklyNextFixture<T extends { t: number; completed: boolean }>(
+    all: T[],
+    upcoming: T[],
+    nowMs: number,
+  ): T | undefined {
+    const wk = londonWeekStart(nowMs);
+    const thisWeek = all.filter((p) => londonWeekStart(p.t) === wk);
+    const notPlayed = thisWeek.filter((p) => !p.completed);
+    const played = thisWeek.filter((p) => p.completed);
+    if (notPlayed.length) {
+      if (played.length) {
+        const lastPlayed = played[played.length - 1]!;
+        // ~2h to finish the game, then hold for a full day.
+        const revealAt = lastPlayed.t + 26 * 60 * 60 * 1000;
+        if (nowMs < revealAt) return lastPlayed;
+      }
+      return notPlayed[0];
+    }
+    // Every game this week has been played — hold it until Monday.
+    if (thisWeek.length) return thisWeek[thisWeek.length - 1];
+    return upcoming[0];
+  }
+
   const lastRaw = past[past.length - 1];
   const nextRaw = pickWeeklyNextFixture(parsed, future, now);
 
