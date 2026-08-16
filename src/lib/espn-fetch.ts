@@ -17,8 +17,12 @@ async function viaMirror<T>(url: string): Promise<T | null> {
   const cached = mirrorCache.get(url);
   if (cached && Date.now() - cached.at < 15_000) return cached.value as T | null;
   try {
-    const res = await fetch(`https://r.jina.ai/${url}`, {
-      headers: { accept: "application/json", "x-respond-with": "text" },
+    // Use Jina's documented raw-text response header. `x-respond-with` is not
+    // supported by this endpoint and caused the deployed worker fallback to
+    // return no usable body even though it happened to work in local dev.
+    const sourceUrl = url.replace(/^https:\/\//, "http://");
+    const res = await fetch(`https://r.jina.ai/${sourceUrl}`, {
+      headers: { accept: "application/json", "x-return-format": "text" },
     });
     if (!res.ok) {
       console.error("[espn-fetch] mirror failed", res.status, url);
