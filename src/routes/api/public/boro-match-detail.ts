@@ -25,7 +25,9 @@ export const Route = createFileRoute("/api/public/boro-match-detail")({
 
         return Response.json(detail, {
           headers: {
-            "cache-control": "public, max-age=10, stale-while-revalidate=20",
+            "cache-control": "no-store, no-cache, must-revalidate",
+            pragma: "no-cache",
+            expires: "0",
           },
         });
       },

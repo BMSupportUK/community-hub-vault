@@ -164,10 +164,11 @@ export function BoroMatchDetailTabs({
     setLoading(true);
     const run = async () => {
       try {
-        const params = new URLSearchParams({ eventId });
+        const params = new URLSearchParams({ eventId, refresh: String(Date.now()) });
         if (slug) params.set("slug", slug);
         const response = await fetch(`/api/public/boro-match-detail?${params.toString()}`, {
           headers: { accept: "application/json" },
+          cache: "no-store",
         });
         if (!response.ok) throw new Error(`Match data request failed (${response.status})`);
         const d = (await response.json()) as MatchDetailDTO;
