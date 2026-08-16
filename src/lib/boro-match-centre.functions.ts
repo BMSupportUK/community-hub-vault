@@ -225,7 +225,6 @@ export const getBoroMatchCentre = createServerFn({ method: "GET" }).handler(
       }
       if (!dto.nextFixtureManual) {
         const nf = live.nextFixture ?? nextFromDb;
-        console.log("[mc-debug]", JSON.stringify({ liveNext: live.nextFixture, nextFromDb }));
         if (nf) patch.next_fixture = await withEspnEvent(nf);
         else if (invalidCachedNext) patch.next_fixture = null;
       }
