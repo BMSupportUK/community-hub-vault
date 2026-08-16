@@ -1,13 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { useServerFn } from "@tanstack/react-start";
 import { Goal, Square, RefreshCw, ShieldAlert, Target, ChevronDown } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  getBoroMatchDetail,
-  type MatchDetailDTO,
-  type MatchEventItem,
-  type PlayerLine,
-} from "@/lib/boro-match-detail.functions";
+import type { MatchDetailDTO, MatchEventItem, PlayerLine } from "@/lib/boro-match-detail.types";
 import { PLAYER_STAT_COLUMNS, describeEspnEvent } from "@/lib/boro-espn-events";
 
 const STAT_COLUMNS = PLAYER_STAT_COLUMNS;
@@ -138,7 +132,6 @@ export function BoroMatchDetailTabs({
   live: boolean;
   kickoff?: string | null;
 }) {
-  const fetchDetail = useServerFn(getBoroMatchDetail);
   const [detail, setDetail] = useState<MatchDetailDTO | null>(null);
   const [loading, setLoading] = useState(!!eventId);
   const [showMoreStats, setShowMoreStats] = useState(false);
@@ -171,7 +164,13 @@ export function BoroMatchDetailTabs({
     setLoading(true);
     const run = async () => {
       try {
-        const d = await fetchDetail({ data: { eventId, slug: slug ?? undefined } });
+        const params = new URLSearchParams({ eventId });
+        if (slug) params.set("slug", slug);
+        const response = await fetch(`/api/public/boro-match-detail?${params.toString()}`, {
+          headers: { accept: "application/json" },
+        });
+        if (!response.ok) throw new Error(`Match data request failed (${response.status})`);
+        const d = (await response.json()) as MatchDetailDTO;
         if (cancelled) return;
         const hasMatchData = d.available || d.events.length > 0 || d.teamStats.length > 0 || d.lineups.length > 0;
         // Never replace good data with an empty payload (transient ESPN blip).
