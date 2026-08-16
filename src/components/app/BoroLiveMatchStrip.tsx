@@ -127,18 +127,20 @@ export function BoroLiveMatchStrip() {
       : rawNf;
 
   const selectedMatch = live ?? nf ?? lr;
+  const selectedEventId = selectedMatch?.eventId ?? rawNf?.eventId ?? null;
+  const selectedSlug = selectedMatch?.espnSlug ?? rawNf?.espnSlug ?? null;
   const openMatchCentre = async () => {
-    if (!selectedMatch?.eventId || opening) {
+    if (!selectedEventId || opening) {
       setOpen(true);
       return;
     }
     setOpening(true);
     try {
       const params = new URLSearchParams({
-        eventId: selectedMatch.eventId,
+        eventId: selectedEventId,
         refresh: String(Date.now()),
       });
-      if (selectedMatch.espnSlug) params.set("slug", selectedMatch.espnSlug);
+      if (selectedSlug) params.set("slug", selectedSlug);
       const response = await fetch(`/api/public/boro-match-detail?${params.toString()}`, {
         headers: { accept: "application/json" },
         cache: "no-store",
@@ -314,9 +316,9 @@ export function BoroLiveMatchStrip() {
                 )}
                 <div className="mt-6">
                   <BoroMatchDetailTabs
-                    key={`match-detail-live-v2-${m.eventId ?? "unknown"}`}
-                    eventId={m.eventId ?? null}
-                    slug={m.espnSlug ?? null}
+                    key={`match-detail-live-v2-${selectedEventId ?? "unknown"}`}
+                    eventId={selectedEventId}
+                    slug={selectedSlug}
                     live={isLive}
                     kickoff={isLive ? live!.kickoff : isFixture ? nf!.kickoff : null}
                     initialDetail={initialDetail}
