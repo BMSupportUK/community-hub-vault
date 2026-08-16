@@ -15,6 +15,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useUserTimezone } from "@/hooks/use-user-timezone";
 import { TeamKit } from "@/lib/boro-team-kits";
 import { supabase } from "@/integrations/supabase/client";
+import { OnlineNowBox } from "@/components/app/OnlineNowBox";
 
 const BORO = "Middlesbrough";
 
@@ -325,6 +326,8 @@ export function BoroMatchCentreBox() {
             <div className="text-xs text-muted-foreground italic">League position not set.</div>
           )}
         </section>
+
+        <OnlineNowBox />
 
         {data?.fetchedAt && (
           <div className="text-[10px] text-muted-foreground text-center">
