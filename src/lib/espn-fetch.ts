@@ -14,6 +14,8 @@
 // When the direct call is refused we retry the same URL through a read-only
 // text mirror that returns the untouched JSON body.
 async function viaMirror<T>(url: string): Promise<T | null> {
+  const cached = mirrorCache.get(url);
+  if (cached && Date.now() - cached.at < 15_000) return cached.value as T | null;
   try {
     const res = await fetch(`https://r.jina.ai/${url}`, {
       headers: { accept: "application/json", "x-respond-with": "text" },
@@ -23,12 +25,16 @@ async function viaMirror<T>(url: string): Promise<T | null> {
       return null;
     }
     const text = await res.text();
-    return JSON.parse(text) as T;
+    const value = JSON.parse(text) as T;
+    mirrorCache.set(url, { at: Date.now(), value });
+    return value;
   } catch (error) {
     console.error("[espn-fetch] mirror error", String(error), url);
     return null;
   }
 }
+
+const mirrorCache = new Map<string, { at: number; value: unknown }>();
 
 export async function espnJson<T = any>(url: string, tries = 2): Promise<T | null> {
   let lastStatus: number | string = "none";
