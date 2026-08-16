@@ -2421,10 +2421,14 @@ function outOf25(p: FantasyPlayerDTO): boolean {
 /**
  * A senior player with no squad number isn't in the club's official squad, so
  * they can't be picked. Academy (U21/U18) players are exempt — they play
- * without a first-team number.
+ * without a first-team number. New signings are exempt too: they appear on the
+ * club's official 25-man list before a shirt number is handed out, so blocking
+ * them would keep a brand-new arrival unpickable for weeks.
  */
 function missingSquadNumber(p: FantasyPlayerDTO): boolean {
-  return (p.squadLevel ?? "first") === "first" && !p.shirtNumber;
+  if ((p.squadLevel ?? "first") !== "first") return false;
+  if (p.shirtNumber) return false;
+  return p.in25Squad !== true;
 }
 
 /**
