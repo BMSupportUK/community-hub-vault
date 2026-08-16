@@ -127,7 +127,7 @@ export function BoroLiveMatchStrip() {
       : rawNf;
 
   const selectedMatch = live ?? nf ?? lr;
-  const selectedEventId = selectedMatch?.eventId ?? rawNf?.eventId ?? null;
+  const selectedEventId = selectedMatch?.eventId ?? rawNf?.eventId ?? lr?.eventId ?? null;
   const selectedSlug = selectedMatch?.espnSlug ?? rawNf?.espnSlug ?? null;
   const openMatchCentre = async () => {
     if (!selectedEventId || opening) {
@@ -145,7 +145,10 @@ export function BoroLiveMatchStrip() {
         headers: { accept: "application/json" },
         cache: "no-store",
       });
-      if (response.ok) setInitialDetail((await response.json()) as MatchDetailDTO);
+      if (response.ok) {
+        const next = (await response.json()) as MatchDetailDTO;
+        setInitialDetail(next.available ? next : null);
+      }
     } catch (error) {
       console.error(error);
     } finally {
