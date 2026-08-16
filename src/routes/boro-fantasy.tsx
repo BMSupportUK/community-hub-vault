@@ -2664,8 +2664,8 @@ function PlayerPickerDialog({
                     </div>
                   )}
                   {missingSquadNumber(p) && (
-                    <div className="text-[10px] font-semibold uppercase leading-tight text-red-500">
-                      No squad number — not in the official squad
+                    <div className="text-[10px] font-semibold uppercase leading-tight text-red-500 line-through decoration-red-500/70">
+                      Not in the official squad — cannot be picked
                     </div>
                   )}
                   {!missingSquadNumber(p) && injuredUnavailable(p, kickoffAt) && (
