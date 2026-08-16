@@ -9,20 +9,54 @@
 // Note: ESPN rejects browser-style user-agent/referer headers with 403, so the
 // request stays plain.
 
+// ESPN blocks a lot of serverless egress outright (403/451 with no body), which
+// is why the deployed site kept showing empty match data while local dev worked.
+// When the direct call is refused we retry the same URL through a read-only
+// text mirror that returns the untouched JSON body.
+async function viaMirror<T>(url: string): Promise<T | null> {
+  const cached = mirrorCache.get(url);
+  if (cached && Date.now() - cached.at < 15_000) return cached.value as T | null;
+  try {
+    const res = await fetch(`https://r.jina.ai/${url}`, {
+      headers: { accept: "application/json", "x-respond-with": "text" },
+    });
+    if (!res.ok) {
+      console.error("[espn-fetch] mirror failed", res.status, url);
+      return null;
+    }
+    const text = await res.text();
+    const parsed = JSON.parse(text) as any;
+    // The mirror answers either the raw body or a wrapper: { data: { text } }.
+    const inner = typeof parsed?.data?.text === "string" ? parsed.data.text : null;
+    const value = (inner ? JSON.parse(inner) : parsed) as T;
+    mirrorCache.set(url, { at: Date.now(), value });
+    return value;
+  } catch (error) {
+    console.error("[espn-fetch] mirror error", String(error), url);
+    return null;
+  }
+}
+
+const mirrorCache = new Map<string, { at: number; value: unknown }>();
+
 export async function espnJson<T = any>(url: string, tries = 2): Promise<T | null> {
+  let lastStatus: number | string = "none";
   for (let attempt = 0; attempt < tries; attempt += 1) {
     try {
       const res = await fetch(url, {
         headers: { accept: "application/json" },
       });
       if (res.ok) return (await res.json()) as T;
-      // 4xx other than 429 will not fix themselves — stop early.
-      if (res.status !== 429 && res.status < 500) return null;
-    } catch {
+      lastStatus = res.status;
+      // 4xx other than 429 will not fix themselves on a direct retry.
+      if (res.status !== 429 && res.status < 500) break;
+    } catch (error) {
+      lastStatus = String(error);
       // network blip — fall through to the retry
     }
   }
-  return null;
+  console.error("[espn-fetch] direct request refused", lastStatus, url);
+  return viaMirror<T>(url);
 }
 
 /** ESPN date-range query string, e.g. 20260814-20260817. */
