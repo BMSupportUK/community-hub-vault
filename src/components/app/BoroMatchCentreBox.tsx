@@ -14,6 +14,7 @@ import {
 import { useAuth } from "@/hooks/use-auth";
 import { useUserTimezone } from "@/hooks/use-user-timezone";
 import { TeamKit } from "@/lib/boro-team-kits";
+import { supabase } from "@/integrations/supabase/client";
 
 const BORO = "Middlesbrough";
 
