@@ -25,7 +25,10 @@ async function viaMirror<T>(url: string): Promise<T | null> {
       return null;
     }
     const text = await res.text();
-    const value = JSON.parse(text) as T;
+    const parsed = JSON.parse(text) as any;
+    // The mirror answers either the raw body or a wrapper: { data: { text } }.
+    const inner = typeof parsed?.data?.text === "string" ? parsed.data.text : null;
+    const value = (inner ? JSON.parse(inner) : parsed) as T;
     mirrorCache.set(url, { at: Date.now(), value });
     return value;
   } catch (error) {
