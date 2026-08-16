@@ -3,7 +3,7 @@ import { z } from "zod";
 
 const querySchema = z.object({
   eventId: z.string().regex(/^\d{1,24}$/),
-  slug: z.string().regex(/^[a-z0-9.-]{1,32}$/).default("eng.2"),
+  slug: z.string().regex(/^[a-z0-9._-]{1,32}$/).default("eng.2"),
 });
 
 export const Route = createFileRoute("/api/public/boro-match-detail")({
