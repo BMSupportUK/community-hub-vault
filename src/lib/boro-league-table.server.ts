@@ -1,6 +1,9 @@
 import { espnJson } from "@/lib/espn-fetch";
 
-const ESPN_STANDINGS_URL = `https://site.api.espn.com/apis/v2/sports/soccer/eng.2/standings`;
+// The legacy site.api hostname now rejects standings requests with 403 from
+// both local and deployed environments. ESPN's web API serves the same schema.
+const ESPN_STANDINGS_URL =
+  "https://site.web.api.espn.com/apis/v2/sports/soccer/eng.2/standings";
 const BORO_TEAM_RE = /\bmiddles(?:brough|borough)\b|\bboro\b/i;
 
 export type FullLeagueRow = {
