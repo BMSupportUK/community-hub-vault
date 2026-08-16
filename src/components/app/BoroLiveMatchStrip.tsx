@@ -9,6 +9,7 @@ import { useUserTimezone } from "@/hooks/use-user-timezone";
 import { TeamKit } from "@/lib/boro-team-kits";
 import { Dialog, DialogContent, DialogTitle, DialogClose } from "@/components/ui/dialog";
 import { BoroMatchDetailTabs } from "@/components/app/BoroMatchDetailTabs";
+import type { MatchDetailDTO } from "@/lib/boro-match-detail.types";
 
 function fmtKickoff(iso: string, tz: string) {
   try {
@@ -70,6 +71,8 @@ export function BoroLiveMatchStrip() {
   const tz = useUserTimezone();
   const [data, setData] = useState<MatchCentreDTO | null>(null);
   const [open, setOpen] = useState(false);
+  const [opening, setOpening] = useState(false);
+  const [initialDetail, setInitialDetail] = useState<MatchDetailDTO | null>(null);
   const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
@@ -122,6 +125,34 @@ export function BoroLiveMatchStrip() {
     (lr.eventId ?? null) === (rawNf.eventId ?? null)
       ? null
       : rawNf;
+
+  const selectedMatch = live ?? nf ?? lr;
+  const selectedEventId = selectedMatch?.eventId ?? rawNf?.eventId ?? null;
+  const selectedSlug = selectedMatch?.espnSlug ?? rawNf?.espnSlug ?? null;
+  const openMatchCentre = async () => {
+    if (!selectedEventId || opening) {
+      setOpen(true);
+      return;
+    }
+    setOpening(true);
+    try {
+      const params = new URLSearchParams({
+        eventId: selectedEventId,
+        refresh: String(Date.now()),
+      });
+      if (selectedSlug) params.set("slug", selectedSlug);
+      const response = await fetch(`/api/public/boro-match-detail?${params.toString()}`, {
+        headers: { accept: "application/json" },
+        cache: "no-store",
+      });
+      if (response.ok) setInitialDetail((await response.json()) as MatchDetailDTO);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setOpening(false);
+      setOpen(true);
+    }
+  };
 
   if (!data || (!live && !nf && !lr)) return null;
 
@@ -203,11 +234,12 @@ export function BoroLiveMatchStrip() {
 
             <button
               type="button"
-              onClick={() => setOpen(true)}
+              onClick={() => void openMatchCentre()}
+              disabled={opening}
               className="shrink-0 inline-flex items-center gap-1.5 rounded-lg bg-[#E11B22] px-2.5 py-1.5 text-xs font-bold text-white shadow hover:bg-[#c41820] transition"
             >
-              <span className="hidden sm:inline">View match centre</span>
-              <span className="sm:hidden">View</span>
+              <span className="hidden sm:inline">{opening ? "Loading…" : "View match centre"}</span>
+              <span className="sm:hidden">{opening ? "…" : "View"}</span>
               <ChevronRight className="size-3.5" />
             </button>
           </div>
@@ -284,10 +316,12 @@ export function BoroLiveMatchStrip() {
                 )}
                 <div className="mt-6">
                   <BoroMatchDetailTabs
-                    eventId={m.eventId ?? null}
-                    slug={m.espnSlug ?? null}
+                    key={`match-detail-live-v2-${selectedEventId ?? "unknown"}`}
+                    eventId={selectedEventId}
+                    slug={selectedSlug}
                     live={isLive}
                     kickoff={isLive ? live!.kickoff : isFixture ? nf!.kickoff : null}
+                    initialDetail={initialDetail}
                   />
                 </div>
 

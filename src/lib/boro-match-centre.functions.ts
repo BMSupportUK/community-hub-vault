@@ -137,7 +137,32 @@ export const getBoroMatchCentre = createServerFn({ method: "GET" }).handler(
         liveMatchCache && Date.now() - liveMatchCache.at < 60 * 1000
           ? liveMatchCache.value
           : null;
-      return { ...dto, liveMatch: cached };
+      let lastResult = dto.lastResult;
+      if (lastResult && !lastResult.eventId) {
+        const enriched = await withEspnEvent({
+          kickoff: lastResult.date,
+          competition: lastResult.competition,
+          home: lastResult.home,
+          away: lastResult.away,
+          venue: lastResult.venue,
+          homeLogo: lastResult.homeLogo,
+          awayLogo: lastResult.awayLogo,
+        });
+        if (enriched.eventId) {
+          lastResult = {
+            ...lastResult,
+            eventId: enriched.eventId,
+            espnSlug: enriched.espnSlug,
+            homeLogo: enriched.homeLogo,
+            awayLogo: enriched.awayLogo,
+          };
+          await supabaseAdmin
+            .from("boro_match_centre")
+            .update({ last_result: lastResult } as never)
+            .eq("id", "singleton");
+        }
+      }
+      return { ...dto, lastResult, liveMatch: cached };
     }
     try {
       const [live, standings] = await Promise.all([
@@ -220,7 +245,28 @@ export const getBoroMatchCentre = createServerFn({ method: "GET" }).handler(
       };
       if (!dto.lastResultManual) {
         const lr = live.lastResult ?? lastFromDb;
-        if (lr) patch.last_result = lr;
+        if (lr) {
+          const enriched = lr.eventId
+            ? null
+            : await withEspnEvent({
+                kickoff: lr.date,
+                competition: lr.competition,
+                home: lr.home,
+                away: lr.away,
+                venue: lr.venue,
+                homeLogo: lr.homeLogo,
+                awayLogo: lr.awayLogo,
+              });
+          patch.last_result = enriched?.eventId
+            ? {
+                ...lr,
+                eventId: enriched.eventId,
+                espnSlug: enriched.espnSlug,
+                homeLogo: enriched.homeLogo,
+                awayLogo: enriched.awayLogo,
+              }
+            : lr;
+        }
         else if (invalidCachedLast) patch.last_result = null;
       }
       if (!dto.nextFixtureManual) {
