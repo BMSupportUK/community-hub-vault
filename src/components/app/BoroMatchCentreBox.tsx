@@ -119,6 +119,7 @@ export function BoroMatchCentreBox() {
   const [data, setData] = useState<MatchCentreDTO | null>(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
+  const [tableOpen, setTableOpen] = useState(false);
   // Sidebar-only fallback: the true next unplayed fixture, used once the
   // fixture held by the match centre has finished.
   const [upcoming, setUpcoming] = useState<NextFixture | null>(null);
@@ -354,6 +355,8 @@ export function BoroMatchCentreBox() {
         />
       )}
     </aside>
+    <BoroFullLeagueTableDialog open={tableOpen} onOpenChange={setTableOpen} />
+    </>
   );
 }
 
