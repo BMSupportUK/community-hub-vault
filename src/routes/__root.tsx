@@ -122,6 +122,9 @@ function RootShell({ children }: { children: React.ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   useAppTheme();
+  useEffect(() => {
+    sessionStorage.removeItem("bm-stale-chunk-reloaded");
+  }, []);
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
