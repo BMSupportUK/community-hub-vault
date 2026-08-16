@@ -154,15 +154,16 @@ export const getBoroMatchCentre = createServerFn({ method: "GET" }).handler(
       let nextFromDb: NextFixture | null = null;
       let lastFromDb: LastResult | null = null;
       if ((!live.nextFixture && !dto.nextFixtureManual) || (!live.lastResult && !dto.lastResultManual)) {
-        // Include a game that has already kicked off but isn't finished.
-        const nowIso = new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString();
+        // Include a game that has already kicked off but isn't finished, plus
+        // games played earlier this week (the card holds them until Monday).
+        const weekIso = new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString();
         const [{ data: upcoming }, { data: recent }] = await Promise.all([
           supabaseAdmin
             .from("boro_fixtures")
-            .select("competition, home_team, away_team, kickoff_at, venue, status")
-            .gte("kickoff_at", nowIso)
+            .select("competition, home_team, away_team, kickoff_at, venue, status, home_score, away_score")
+            .gte("kickoff_at", weekIso)
             .order("kickoff_at", { ascending: true })
-            .limit(25),
+            .limit(40),
           supabaseAdmin
             .from("boro_fixtures")
             .select("competition, home_team, away_team, kickoff_at, venue, home_score, away_score, status")
@@ -172,11 +173,21 @@ export const getBoroMatchCentre = createServerFn({ method: "GET" }).handler(
             .order("kickoff_at", { ascending: false })
             .limit(25),
         ]);
-        const u = (upcoming ?? []).find(
-          (row: any) =>
-            isBoroMatch({ home: row.home_team, away: row.away_team }) &&
-            String(row.status ?? "").toUpperCase() !== "FINISHED",
-        ) as any;
+        const { pickWeeklyFixture } = await import("@/lib/boro-match-week");
+        const candidates = (upcoming ?? [])
+          .filter((row: any) => isBoroMatch({ home: row.home_team, away: row.away_team }))
+          .map((row: any) => ({
+            row,
+            t: new Date(row.kickoff_at).getTime(),
+            completed:
+              String(row.status ?? "").toUpperCase() === "FINISHED" ||
+              new Date(row.kickoff_at).getTime() < Date.now() - 4 * 60 * 60 * 1000,
+          }));
+        const u = pickWeeklyFixture(
+          candidates,
+          candidates.filter((c) => !c.completed),
+          Date.now(),
+        )?.row as any;
         if (u) {
           nextFromDb = {
             kickoff: new Date(u.kickoff_at).toISOString(),
