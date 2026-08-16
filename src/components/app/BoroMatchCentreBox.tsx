@@ -117,6 +117,9 @@ export function BoroMatchCentreBox() {
   const [data, setData] = useState<MatchCentreDTO | null>(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
+  // Sidebar-only fallback: the true next unplayed fixture, used once the
+  // fixture held by the match centre has finished.
+  const [upcoming, setUpcoming] = useState<NextFixture | null>(null);
 
   const load = async () => {
     try {
@@ -126,6 +129,28 @@ export function BoroMatchCentreBox() {
       console.error(e);
     } finally {
       setLoading(false);
+    }
+    try {
+      const { data: rows } = await supabase
+        .from("boro_fixtures")
+        .select("home_team, away_team, competition, venue, kickoff_at")
+        .gt("kickoff_at", new Date().toISOString())
+        .order("kickoff_at", { ascending: true })
+        .limit(1);
+      const r = rows?.[0];
+      setUpcoming(
+        r
+          ? {
+              home: r.home_team,
+              away: r.away_team,
+              competition: r.competition ?? "",
+              venue: r.venue ?? null,
+              kickoff: new Date(r.kickoff_at as string).toISOString(),
+            }
+          : null,
+      );
+    } catch (e) {
+      console.error(e);
     }
   };
   useEffect(() => {
