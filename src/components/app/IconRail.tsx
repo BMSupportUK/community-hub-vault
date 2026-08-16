@@ -157,9 +157,10 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
     ...COMPETITIONS.map((c) => ({
       to: c.to,
       label: c.railLabel,
-      icon: Goal,
+      icon: c.key === "boro2026" ? BoroBadgeIcon : Goal,
       show: !finishedCompetitions.includes(c.key),
     })),
+    { to: "/boro-fantasy", label: "Boro Fantasy", icon: BoroBadgeIcon, show: true },
     { to: "/competition-winners", label: "Competition Winners", icon: Crown, show: true },
     { to: "/new-content", label: "New content", icon: Tv, show: true, badge: unreadNewContent },
     { to: "/members", label: "Members", icon: Users, show: true },
