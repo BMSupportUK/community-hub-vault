@@ -160,6 +160,12 @@ export function BoroMatchDetailTabs({
 
     let stopped = false;
     let timer: number | undefined;
+    const loadDirect = async () => {
+      const directUrl = `https://site.api.espn.com/apis/site/v2/sports/soccer/${encodeURIComponent(slug || "eng.2")}/summary?event=${encodeURIComponent(eventId)}`;
+      const directResponse = await fetch(directUrl, { cache: "no-store" });
+      if (!directResponse.ok) throw new Error(`Direct match data request failed (${directResponse.status})`);
+      return normaliseBoroMatchDetail(await directResponse.json());
+    };
     const load = async () => {
       const params = new URLSearchParams({ eventId, refresh: String(Date.now()) });
       if (slug) params.set("slug", slug);
@@ -170,18 +176,24 @@ export function BoroMatchDetailTabs({
         });
         if (!response.ok) throw new Error(`Match data request failed (${response.status})`);
         let next = (await response.json()) as MatchDetailDTO;
-        if (!next.available) {
-          const directUrl = `https://site.api.espn.com/apis/site/v2/sports/soccer/${encodeURIComponent(slug || "eng.2")}/summary?event=${encodeURIComponent(eventId)}`;
-          const directResponse = await fetch(directUrl, { cache: "no-store" });
-          if (directResponse.ok) next = normaliseBoroMatchDetail(await directResponse.json());
-        }
+        if (!next.available) next = await loadDirect();
         if (stopped) return;
         setDetail(next);
         setLoading(false);
         const hasData = next.available || next.events.length > 0 || next.teamStats.length > 0 || next.lineups.length > 0;
         timer = window.setTimeout(load, hasData ? (live ? 15_000 : armed ? 30_000 : 5 * 60_000) : 10_000);
       } catch (error) {
-        console.error(error);
+        try {
+          const next = await loadDirect();
+          if (stopped) return;
+          setDetail(next);
+          setLoading(false);
+          const hasData = next.available || next.events.length > 0 || next.teamStats.length > 0 || next.lineups.length > 0;
+          timer = window.setTimeout(load, hasData ? (live ? 15_000 : armed ? 30_000 : 5 * 60_000) : 10_000);
+          return;
+        } catch (directError) {
+          console.error(error, directError);
+        }
         if (!stopped) {
           setLoading(false);
           timer = window.setTimeout(load, 10_000);
