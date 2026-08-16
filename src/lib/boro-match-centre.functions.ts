@@ -154,15 +154,16 @@ export const getBoroMatchCentre = createServerFn({ method: "GET" }).handler(
       let nextFromDb: NextFixture | null = null;
       let lastFromDb: LastResult | null = null;
       if ((!live.nextFixture && !dto.nextFixtureManual) || (!live.lastResult && !dto.lastResultManual)) {
-        // Include a game that has already kicked off but isn't finished.
-        const nowIso = new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString();
+        // Include a game that has already kicked off but isn't finished, plus
+        // games played earlier this week (the card holds them until Monday).
+        const weekIso = new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString();
         const [{ data: upcoming }, { data: recent }] = await Promise.all([
           supabaseAdmin
             .from("boro_fixtures")
-            .select("competition, home_team, away_team, kickoff_at, venue, status")
-            .gte("kickoff_at", nowIso)
+            .select("competition, home_team, away_team, kickoff_at, venue, status, home_score, away_score")
+            .gte("kickoff_at", weekIso)
             .order("kickoff_at", { ascending: true })
-            .limit(25),
+            .limit(40),
           supabaseAdmin
             .from("boro_fixtures")
             .select("competition, home_team, away_team, kickoff_at, venue, home_score, away_score, status")
@@ -172,11 +173,21 @@ export const getBoroMatchCentre = createServerFn({ method: "GET" }).handler(
             .order("kickoff_at", { ascending: false })
             .limit(25),
         ]);
-        const u = (upcoming ?? []).find(
-          (row: any) =>
-            isBoroMatch({ home: row.home_team, away: row.away_team }) &&
-            String(row.status ?? "").toUpperCase() !== "FINISHED",
-        ) as any;
+        const { pickWeeklyFixture } = await import("@/lib/boro-match-week");
+        const candidates = (upcoming ?? [])
+          .filter((row: any) => isBoroMatch({ home: row.home_team, away: row.away_team }))
+          .map((row: any) => ({
+            row,
+            t: new Date(row.kickoff_at).getTime(),
+            completed:
+              String(row.status ?? "").toUpperCase() === "FINISHED" ||
+              new Date(row.kickoff_at).getTime() < Date.now() - 4 * 60 * 60 * 1000,
+          }));
+        const u = pickWeeklyFixture(
+          candidates,
+          candidates.filter((c) => !c.completed),
+          Date.now(),
+        )?.row as any;
         if (u) {
           nextFromDb = {
             kickoff: new Date(u.kickoff_at).toISOString(),
@@ -498,54 +509,11 @@ async function fetchEspnBoro(): Promise<{
   const future = parsed.filter((p) => !p.completed);
 
   // The match centre only rolls over to a new fixture when a new week starts
-  // (Monday, UK time). If a week has both a midweek game and a weekend game,
-  // it switches to the second game one day after the midweek game finished.
-  function londonWeekStart(ms: number): number {
-    // UK offset: BST (+1) between last Sun of March and last Sun of October.
-    const d = new Date(ms);
-    const y = d.getUTCFullYear();
-    const lastSunday = (year: number, monthOneBased: number) => {
-      const x = new Date(Date.UTC(year, monthOneBased, 0));
-      return x.getUTCDate() - x.getUTCDay();
-    };
-    const bstStart = Date.UTC(y, 2, lastSunday(y, 3), 1, 0);
-    const bstEnd = Date.UTC(y, 9, lastSunday(y, 10), 1, 0);
-    const offset = ms >= bstStart && ms < bstEnd ? 60 * 60 * 1000 : 0;
-    const local = new Date(ms + offset);
-    const dow = (local.getUTCDay() + 6) % 7; // Monday = 0
-    const midnightLocal = Date.UTC(
-      local.getUTCFullYear(),
-      local.getUTCMonth(),
-      local.getUTCDate(),
-    );
-    return midnightLocal - dow * 24 * 60 * 60 * 1000 - offset;
-  }
-
-  function pickWeeklyNextFixture<T extends { t: number; completed: boolean }>(
-    all: T[],
-    upcoming: T[],
-    nowMs: number,
-  ): T | undefined {
-    const wk = londonWeekStart(nowMs);
-    const thisWeek = all.filter((p) => londonWeekStart(p.t) === wk);
-    const notPlayed = thisWeek.filter((p) => !p.completed);
-    const played = thisWeek.filter((p) => p.completed);
-    if (notPlayed.length) {
-      if (played.length) {
-        const lastPlayed = played[played.length - 1]!;
-        // ~2h to finish the game, then hold for a full day.
-        const revealAt = lastPlayed.t + 26 * 60 * 60 * 1000;
-        if (nowMs < revealAt) return lastPlayed;
-      }
-      return notPlayed[0];
-    }
-    // Every game this week has been played — hold it until Monday.
-    if (thisWeek.length) return thisWeek[thisWeek.length - 1];
-    return upcoming[0];
-  }
+  // (Monday, UK time) — see boro-match-week.
+  const { pickWeeklyFixture } = await import("@/lib/boro-match-week");
 
   const lastRaw = past[past.length - 1];
-  const nextRaw = pickWeeklyNextFixture(parsed, future, now);
+  const nextRaw = pickWeeklyFixture(parsed, future, now);
 
   const lastResult: LastResult | null = lastRaw
     ? {
