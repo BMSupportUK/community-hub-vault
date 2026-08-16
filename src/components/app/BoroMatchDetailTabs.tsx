@@ -3,6 +3,7 @@ import { Goal, Square, RefreshCw, ShieldAlert, Target, ChevronDown } from "lucid
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { MatchDetailDTO, MatchEventItem, PlayerLine } from "@/lib/boro-match-detail.types";
 import { PLAYER_STAT_COLUMNS, describeEspnEvent } from "@/lib/boro-espn-events";
+import { normaliseBoroMatchDetail } from "@/lib/boro-match-detail-normalise";
 
 const STAT_COLUMNS = PLAYER_STAT_COLUMNS;
 
@@ -168,7 +169,12 @@ export function BoroMatchDetailTabs({
           cache: "no-store",
         });
         if (!response.ok) throw new Error(`Match data request failed (${response.status})`);
-        const next = (await response.json()) as MatchDetailDTO;
+        let next = (await response.json()) as MatchDetailDTO;
+        if (!next.available) {
+          const directUrl = `https://site.api.espn.com/apis/site/v2/sports/soccer/${encodeURIComponent(slug || "eng.2")}/summary?event=${encodeURIComponent(eventId)}`;
+          const directResponse = await fetch(directUrl, { cache: "no-store" });
+          if (directResponse.ok) next = normaliseBoroMatchDetail(await directResponse.json());
+        }
         if (stopped) return;
         setDetail(next);
         setLoading(false);
