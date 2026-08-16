@@ -2669,7 +2669,7 @@ function PlayerPickerDialog({
                     </div>
                   )}
                   {!missingSquadNumber(p) && injuredUnavailable(p, kickoffAt) && (
-                    <div className="text-[10px] font-semibold uppercase leading-tight text-red-500">
+                    <div className="mt-0.5 w-fit rounded-md border border-red-400 bg-red-600 px-1.5 py-0.5 text-[10px] font-extrabold uppercase leading-none tracking-wide text-white shadow-sm">
                       Injured — cannot be picked
                     </div>
                   )}
