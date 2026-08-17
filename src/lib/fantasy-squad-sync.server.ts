@@ -183,12 +183,7 @@ export async function syncFantasyPlayersFromClub(admin: Admin): Promise<FantasyS
     return Number.isFinite(t) ? t : null;
   })();
 
-  /** True when this pool row was created during the current tracked window. */
-  function joinedThisWindow(row: PlayerRow): boolean {
-    if (baselineAt === null) return false;
-    const t = row.created_at ? Date.parse(row.created_at) : NaN;
-    return Number.isFinite(t) && t > baselineAt;
-  }
+  void baselineAt;
 
   /** Record a club movement once — never duplicate the same player+direction. */
   async function logTransfer(
@@ -337,8 +332,11 @@ export async function syncFantasyPlayersFromClub(admin: Admin): Promise<FantasyS
       .eq("id", row.id);
     if (error) continue;
     departed.push(row.name);
-    if ((row.squad_level ?? "first") === "first" && joinedThisWindow(row)) {
-      await logTransfer(row.name, "out", row.id, "No longer in the official first-team squad");
+    // Any first-team player who drops out of the official squad after the
+    // baseline snapshot is a genuine 2026/27 departure — log it so the transfer
+    // feed reflects the exit straight away.
+    if ((row.squad_level ?? "first") === "first") {
+      await logTransfer(row.name, "out", row.id, "Left the club — no longer in the official first-team squad");
     }
   }
 
