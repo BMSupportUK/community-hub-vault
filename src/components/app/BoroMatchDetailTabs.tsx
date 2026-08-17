@@ -225,7 +225,14 @@ export function BoroMatchDetailTabs({
   const extraStats = detail?.teamStats.filter((s) => !s.primary) ?? [];
 
   if (!eventId) {
-    return <div className="py-8 text-center text-sm text-white/75">Match feed unavailable.</div>;
+    return (
+      <div className="rounded-xl border border-[#E11B22]/40 bg-[#E11B22]/10 px-4 py-8 text-center">
+        <div className="text-sm font-bold uppercase tracking-wider text-red-200">Awaiting kick-off</div>
+        <div className="mt-1.5 text-xs text-white/75">
+          Line-ups, match action and player stats appear here once the teams are published.
+        </div>
+      </div>
+    );
   }
 
   if (loading && !detail) {

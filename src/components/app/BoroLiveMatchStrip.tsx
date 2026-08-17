@@ -127,8 +127,10 @@ export function BoroLiveMatchStrip() {
       : rawNf;
 
   const selectedMatch = live ?? nf ?? lr;
-  const selectedEventId = selectedMatch?.eventId ?? rawNf?.eventId ?? lr?.eventId ?? null;
-  const selectedSlug = selectedMatch?.espnSlug ?? rawNf?.espnSlug ?? null;
+  // Never borrow another fixture's ESPN id — that made a new game show the
+  // previous match's line-ups, stats and ratings.
+  const selectedEventId = selectedMatch?.eventId ?? null;
+  const selectedSlug = selectedMatch?.espnSlug ?? null;
   const openMatchCentre = async () => {
     if (!selectedEventId || opening) {
       setOpen(true);
