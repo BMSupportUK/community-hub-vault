@@ -1,5 +1,5 @@
 import { memo, useEffect, useState } from "react";
-import { BarChart3, CalendarClock, Loader2, Plus, Trash2, X } from "lucide-react";
+import { BarChart3, CalendarClock, Loader2, Pencil, Plus, Trash2, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,6 +32,10 @@ function ForumPollComponent({
   const [votes, setVotes] = useState<VoteRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState<DraftPoll | null>(null);
+  const [draftIds, setDraftIds] = useState<(string | null)[]>([]);
+  const [saving, setSaving] = useState(false);
 
   const load = async () => {
     const { data: p } = await supabase
@@ -96,6 +100,97 @@ function ForumPollComponent({
     void load();
   };
 
+  const startEdit = () => {
+    setDraft({
+      question: poll.question,
+      options: options.map((o) => o.label),
+      allow_multiple: poll.allow_multiple,
+      closes_at: poll.closes_at
+        ? new Date(new Date(poll.closes_at).getTime() - new Date().getTimezoneOffset() * 60_000).toISOString().slice(0, 16)
+        : "",
+    });
+    setDraftIds(options.map((o) => o.id));
+    setEditing(true);
+  };
+
+  const cancelEdit = () => { setEditing(false); setDraft(null); setDraftIds([]); };
+
+  const saveEdit = async () => {
+    if (!draft) return;
+    const question = draft.question.trim();
+    const labels = draft.options.map((o) => o.trim());
+    if (!question) { toast.error("Add a poll question"); return; }
+    if (labels.filter((l) => l.length > 0).length < 2) { toast.error("Add at least two options"); return; }
+    let closesAt: string | null = null;
+    if (draft.closes_at) {
+      const ms = new Date(draft.closes_at).getTime();
+      if (isNaN(ms)) { toast.error("That poll end date isn't valid"); return; }
+      closesAt = new Date(ms).toISOString();
+    }
+    setSaving(true);
+    const { error: pErr } = await supabase
+      .from("forum_polls")
+      .update({ question, allow_multiple: draft.allow_multiple, closes_at: closesAt })
+      .eq("id", poll.id);
+    if (pErr) { setSaving(false); toast.error("Couldn't save poll", { description: pErr.message }); return; }
+
+    // Options: update kept ones, insert new ones, delete removed ones.
+    const keptIds: string[] = [];
+    for (let i = 0; i < labels.length; i++) {
+      const label = labels[i];
+      const id = draftIds[i] ?? null;
+      if (!label) {
+        continue;
+      }
+      if (id) {
+        keptIds.push(id);
+        const { error } = await supabase.from("forum_poll_options").update({ label, sort_order: i }).eq("id", id);
+        if (error) { setSaving(false); toast.error("Couldn't save options", { description: error.message }); return; }
+      } else {
+        const { error } = await supabase.from("forum_poll_options").insert({ poll_id: poll.id, label, sort_order: i });
+        if (error) { setSaving(false); toast.error("Couldn't add option", { description: error.message }); return; }
+      }
+    }
+    const removed = options.filter((o) => !keptIds.includes(o.id)).map((o) => o.id);
+    if (removed.length) {
+      const { error } = await supabase.from("forum_poll_options").delete().in("id", removed);
+      if (error) { setSaving(false); toast.error("Couldn't remove options", { description: error.message }); return; }
+    }
+    setSaving(false);
+    cancelEdit();
+    toast.success("Poll updated");
+    void load();
+  };
+
+  if (editing && draft) {
+    return (
+      <section className="rounded-2xl border border-[#E11B22]/40 bg-gradient-to-br from-surface-1 to-surface-2/60 p-4 sm:p-5 shadow-soft space-y-2">
+        <PollDraftEditor
+          value={draft}
+          title="Edit poll"
+          allowPastEnd
+          onChange={(next) => {
+            // Keep option ids aligned with the draft option list.
+            setDraftIds((prev) => {
+              const ids = [...prev];
+              while (ids.length < next.options.length) ids.push(null);
+              return ids.slice(0, next.options.length);
+            });
+            setDraft(next);
+          }}
+          onRemoveOptionAt={(i) => setDraftIds((prev) => prev.filter((_, idx) => idx !== i))}
+          onRemove={cancelEdit}
+        />
+        <div className="flex justify-end gap-2">
+          <Button type="button" size="sm" variant="ghost" onClick={cancelEdit} disabled={saving}>Cancel</Button>
+          <Button type="button" size="sm" onClick={() => void saveEdit()} disabled={saving}>
+            {saving ? <><Loader2 className="size-4 mr-1 animate-spin" />Saving…</> : "Save changes"}
+          </Button>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="rounded-2xl border border-[#E11B22]/40 bg-gradient-to-br from-surface-1 to-surface-2/60 p-4 sm:p-5 shadow-soft">
       <div className="flex items-start justify-between gap-3 mb-3">
@@ -104,9 +199,14 @@ function ForumPollComponent({
           <h3 className="font-display font-bold text-sm sm:text-base truncate">{poll.question}</h3>
         </div>
         {canManage && (
-          <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-destructive/80 hover:text-destructive" onClick={() => void removePoll()} title="Delete poll">
-            <Trash2 className="size-3.5" />
-          </Button>
+          <div className="flex items-center gap-1 shrink-0">
+            <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-muted-foreground hover:text-[#E11B22]" onClick={startEdit} title="Edit poll">
+              <Pencil className="size-3.5" />
+            </Button>
+            <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-destructive/80 hover:text-destructive" onClick={() => void removePoll()} title="Delete poll">
+              <Trash2 className="size-3.5" />
+            </Button>
+          </div>
         )}
       </div>
       <div className="space-y-2">
@@ -158,7 +258,22 @@ export type DraftPoll = {
   closes_at?: string;
 };
 
-export function PollDraftEditor({ value, onChange, onRemove }: { value: DraftPoll; onChange: (next: DraftPoll) => void; onRemove: () => void }) {
+export function PollDraftEditor({
+  value,
+  onChange,
+  onRemove,
+  title = "Add a poll",
+  allowPastEnd = false,
+  onRemoveOptionAt,
+}: {
+  value: DraftPoll;
+  onChange: (next: DraftPoll) => void;
+  onRemove: () => void;
+  title?: string;
+  /** Allow keeping an end time that's already in the past (editing a closed poll). */
+  allowPastEnd?: boolean;
+  onRemoveOptionAt?: (index: number) => void;
+}) {
   const update = (patch: Partial<DraftPoll>) => onChange({ ...value, ...patch });
   const setOption = (i: number, v: string) => {
     const next = [...value.options];
@@ -166,7 +281,10 @@ export function PollDraftEditor({ value, onChange, onRemove }: { value: DraftPol
     update({ options: next });
   };
   const addOption = () => update({ options: [...value.options, ""] });
-  const removeOption = (i: number) => update({ options: value.options.filter((_, idx) => idx !== i) });
+  const removeOption = (i: number) => {
+    onRemoveOptionAt?.(i);
+    update({ options: value.options.filter((_, idx) => idx !== i) });
+  };
   const minLocal = new Date(Date.now() + 60_000 - new Date().getTimezoneOffset() * 60_000)
     .toISOString()
     .slice(0, 16);
@@ -175,7 +293,7 @@ export function PollDraftEditor({ value, onChange, onRemove }: { value: DraftPol
     <div className="rounded-xl border border-[#E11B22]/30 bg-background/60 p-3 space-y-2">
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 text-sm font-semibold">
-          <BarChart3 className="size-4 text-[#E11B22]" /> Add a poll
+          <BarChart3 className="size-4 text-[#E11B22]" /> {title}
         </div>
         <Button type="button" size="sm" variant="ghost" onClick={onRemove}><X className="size-3.5" /></Button>
       </div>
@@ -223,7 +341,7 @@ export function PollDraftEditor({ value, onChange, onRemove }: { value: DraftPol
           <Input
             id="poll-closes-at"
             type="datetime-local"
-            min={minLocal}
+            {...(allowPastEnd ? {} : { min: minLocal })}
             value={value.closes_at ?? ""}
             onChange={(e) => update({ closes_at: e.target.value })}
           />
