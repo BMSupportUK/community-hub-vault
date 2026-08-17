@@ -258,7 +258,22 @@ export type DraftPoll = {
   closes_at?: string;
 };
 
-export function PollDraftEditor({ value, onChange, onRemove }: { value: DraftPoll; onChange: (next: DraftPoll) => void; onRemove: () => void }) {
+export function PollDraftEditor({
+  value,
+  onChange,
+  onRemove,
+  title = "Add a poll",
+  allowPastEnd = false,
+  onRemoveOptionAt,
+}: {
+  value: DraftPoll;
+  onChange: (next: DraftPoll) => void;
+  onRemove: () => void;
+  title?: string;
+  /** Allow keeping an end time that's already in the past (editing a closed poll). */
+  allowPastEnd?: boolean;
+  onRemoveOptionAt?: (index: number) => void;
+}) {
   const update = (patch: Partial<DraftPoll>) => onChange({ ...value, ...patch });
   const setOption = (i: number, v: string) => {
     const next = [...value.options];
@@ -266,7 +281,10 @@ export function PollDraftEditor({ value, onChange, onRemove }: { value: DraftPol
     update({ options: next });
   };
   const addOption = () => update({ options: [...value.options, ""] });
-  const removeOption = (i: number) => update({ options: value.options.filter((_, idx) => idx !== i) });
+  const removeOption = (i: number) => {
+    onRemoveOptionAt?.(i);
+    update({ options: value.options.filter((_, idx) => idx !== i) });
+  };
   const minLocal = new Date(Date.now() + 60_000 - new Date().getTimezoneOffset() * 60_000)
     .toISOString()
     .slice(0, 16);
@@ -275,7 +293,7 @@ export function PollDraftEditor({ value, onChange, onRemove }: { value: DraftPol
     <div className="rounded-xl border border-[#E11B22]/30 bg-background/60 p-3 space-y-2">
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 text-sm font-semibold">
-          <BarChart3 className="size-4 text-[#E11B22]" /> Add a poll
+          <BarChart3 className="size-4 text-[#E11B22]" /> {title}
         </div>
         <Button type="button" size="sm" variant="ghost" onClick={onRemove}><X className="size-3.5" /></Button>
       </div>
@@ -323,7 +341,7 @@ export function PollDraftEditor({ value, onChange, onRemove }: { value: DraftPol
           <Input
             id="poll-closes-at"
             type="datetime-local"
-            min={minLocal}
+            {...(allowPastEnd ? {} : { min: minLocal })}
             value={value.closes_at ?? ""}
             onChange={(e) => update({ closes_at: e.target.value })}
           />
