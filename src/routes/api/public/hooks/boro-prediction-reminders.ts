@@ -27,13 +27,6 @@ function fmtKickoff(iso: string): string {
   } catch { return iso }
 }
 
-function londonHour(d: Date): number {
-  const h = new Intl.DateTimeFormat('en-GB', {
-    hour: '2-digit', hour12: false, timeZone: 'Europe/London',
-  }).format(d)
-  return parseInt(h, 10)
-}
-
 function londonDateStr(d: Date): string {
   // YYYY-MM-DD in Europe/London
   const parts = new Intl.DateTimeFormat('en-CA', {
@@ -87,13 +80,9 @@ export const Route = createFileRoute('/api/public/hooks/boro-prediction-reminder
           return Response.json({ error: 'Unauthorized' }, { status: 401 })
         }
 
-        // Allow ?force=1 to bypass the noon-London gate (manual testing).
-        const url = new URL(request.url)
-        const force = url.searchParams.get('force') === '1'
+        // Runs hourly. The recipient query only returns entrants whose next
+        // fixture kicks off in roughly 24 hours, so the email lands a day ahead.
         const now = new Date()
-        if (!force && londonHour(now) !== 12) {
-          return Response.json({ skipped: true, reason: 'not noon in Europe/London', londonHour: londonHour(now) })
-        }
 
         const supabase = createClient(supabaseUrl, serviceKey, {
           auth: { autoRefreshToken: false, persistSession: false },
