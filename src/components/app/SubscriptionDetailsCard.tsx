@@ -6,6 +6,11 @@ import { CalendarClock, Copy, Check, Eye, EyeOff, KeyRound, ExternalLink } from 
 import { cn } from "@/lib/utils";
 import { Link } from "@tanstack/react-router";
 
+function formatTabLabel(name: string | null, index: number) {
+  if (name) return name.length > 10 ? name.slice(0, 9) + "…" : name;
+  return `Sub ${index + 1}`;
+}
+
 interface CredRow {
   id: string;
   app_login_name: string | null;
