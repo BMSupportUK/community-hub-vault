@@ -286,8 +286,12 @@ export function SubscriptionDetailsCard() {
                       </p>
                       <p
                         className={cn(
-                          "text-xs",
-                          expired ? "text-destructive expiry-date-flash font-semibold" : expSoon ? "text-amber-500 expiry-date-flash font-semibold" : "text-foreground",
+                          "text-xs inline-flex items-center rounded-lg px-2 py-1 border",
+                          expired
+                            ? "text-destructive border-destructive/40 bg-destructive/15 expiry-date-flash"
+                            : expSoon
+                              ? "text-amber-500 border-amber-500/40 bg-amber-500/15 expiry-date-flash"
+                              : "text-foreground border-border bg-background",
                         )}
                       >
                         {fmt(new Date(c.expiry_at))}
