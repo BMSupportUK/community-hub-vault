@@ -9,10 +9,12 @@ import { Link } from "@tanstack/react-router";
 interface CredRow {
   id: string;
   account_number: number;
+  account_type: string | null;
   app_login_name: string | null;
   password: string | null;
   expiry_at: string | null;
 }
+
 
 export function SubscriptionDetailsCard() {
   const { user } = useAuth();
