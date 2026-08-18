@@ -105,6 +105,30 @@ function ReadPage() {
     if (typeof document === "undefined") return [];
     const wrap = document.createElement("div");
     wrap.innerHTML = sanitizeRichHtml(blog.body);
+    // Link-only guides (e.g. ESPN+) should show a compact clickable bubble
+    // styled like the channel chips, not a full-width preview card.
+    wrap.querySelectorAll<HTMLElement>("[data-link-preview]").forEach((el) => {
+      const url = el.getAttribute("data-link-preview") ?? "";
+      if (!url) return;
+      let label = (el.getAttribute("data-link-title") ?? "").trim();
+      if (!label) {
+        try {
+          label = new URL(url).hostname.replace(/^www\./, "");
+        } catch {
+          label = url;
+        }
+      }
+      const a = document.createElement("a");
+      a.href = url;
+      a.target = "_blank";
+      a.rel = "noopener noreferrer";
+      a.className =
+        "inline-flex items-center justify-center rounded-xl border border-fuchsia-300/45 bg-fuchsia-950/55 px-4 py-3 text-sm font-semibold tracking-wide text-fuchsia-100 no-underline shadow-[0_0_12px_rgba(217,70,239,0.16)] transition hover:bg-fuchsia-900/70 hover:text-white";
+      a.textContent = label;
+      const holder = document.createElement("div");
+      holder.appendChild(a);
+      el.replaceWith(holder);
+    });
     try {
       annotateTimesInEl(wrap, viewerTz, defaultSourceZone);
     } catch (e) {
