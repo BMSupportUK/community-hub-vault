@@ -98,11 +98,11 @@ export function SubscriptionDetailsCard() {
   };
 
   const accountTypeLabel = (type: string | null) => {
-    const t = type?.toLowerCase();
+    const t = (type ?? "single").toLowerCase();
     if (t === "single") return "Single";
     if (t === "multi") return "Multi-room";
     if (t === "triple") return "Triple-room";
-    return type ? type : null;
+    return type ?? "Single";
   };
 
   const fmt = (d: Date) =>
