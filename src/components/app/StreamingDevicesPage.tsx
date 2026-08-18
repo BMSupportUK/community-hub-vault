@@ -419,7 +419,7 @@ export function StreamingDevicesPage() {
         className="pointer-events-none absolute inset-0"
         style={{ background: "rgba(5, 10, 20, 0.55)" }}
       />
-      <div className="relative w-full px-4 sm:px-6 lg:px-8 py-6 space-y-8">
+      <div className="relative w-full min-w-0 max-w-full overflow-x-hidden px-4 sm:px-6 lg:px-8 py-6 space-y-8">
         <header className="space-y-2">
           <h1 className="text-3xl font-bold tracking-tight">Streaming device reviews</h1>
           <p className="text-muted-foreground max-w-2xl">
@@ -430,8 +430,8 @@ export function StreamingDevicesPage() {
 
         {devicesQuery.isLoading && <div className="text-muted-foreground">Loading devices…</div>}
 
-        <Tabs defaultValue="android-sticks" className="space-y-6">
-          <TabsList>
+        <Tabs defaultValue="android-sticks" className="min-w-0 space-y-6">
+          <TabsList className="h-auto flex-wrap justify-start">
             <TabsTrigger value="android-sticks">Android Sticks</TabsTrigger>
             <TabsTrigger value="android">Android Boxes</TabsTrigger>
             <TabsTrigger value="amazon">Fire Sticks</TabsTrigger>
