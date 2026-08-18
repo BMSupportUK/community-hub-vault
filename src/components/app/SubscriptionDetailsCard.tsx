@@ -6,6 +6,11 @@ import { CalendarClock, Copy, Check, Eye, EyeOff, KeyRound, ExternalLink } from 
 import { cn } from "@/lib/utils";
 import { Link } from "@tanstack/react-router";
 
+function formatTabLabel(name: string | null, index: number) {
+  if (name) return name.length > 10 ? name.slice(0, 9) + "…" : name;
+  return `Sub ${index + 1}`;
+}
+
 interface CredRow {
   id: string;
   app_login_name: string | null;
@@ -21,6 +26,7 @@ export function SubscriptionDetailsCard() {
   const [reveal, setReveal] = useState<Record<string, boolean>>({});
   const [copied, setCopied] = useState<string | null>(null);
   const [username, setUsername] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user?.id) {
@@ -73,6 +79,14 @@ export function SubscriptionDetailsCard() {
       supabase.removeChannel(channel);
     };
   }, [user]);
+
+  useEffect(() => {
+    setActiveTab((current) => {
+      if (creds.length === 0) return null;
+      if (current && creds.some((c) => c.id === current)) return current;
+      return creds[0].id;
+    });
+  }, [creds]);
 
   const copy = async (key: string, value: string | null) => {
     if (!value) return;
@@ -155,7 +169,31 @@ export function SubscriptionDetailsCard() {
           </div>
         ) : (
           <div className="space-y-3">
-            {creds.map((c) => {
+            {creds.length > 1 && activeTab && (
+              <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide">
+                {creds.map((c, idx) => {
+                  const selected = c.id === activeTab;
+                  return (
+                    <button
+                      key={c.id}
+                      onClick={() => setActiveTab(c.id)}
+                      className={cn(
+                        "shrink-0 px-2.5 py-1 rounded-full text-[10px] font-medium border transition",
+                        selected
+                          ? "bg-violet-600 text-white border-violet-500 shadow-[0_0_12px_rgba(139,92,246,0.45)]"
+                          : "bg-surface-2 text-foreground/80 border-border hover:border-primary/60",
+                      )}
+                      title={c.app_login_name ?? `Sub ${idx + 1}`}
+                    >
+                      {formatTabLabel(c.app_login_name, idx)}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            {(() => {
+              const c = creds.find((x) => x.id === activeTab) ?? creds[0];
               const expired = c.expiry_at ? new Date(c.expiry_at).getTime() < Date.now() : false;
               const expSoon = c.expiry_at && !expired && new Date(c.expiry_at).getTime() - Date.now() < 7 * 86400_000;
               return (
@@ -246,7 +284,7 @@ export function SubscriptionDetailsCard() {
                   )}
                 </div>
               );
-            })}
+            })()}
 
             <Link
               to={username ? "/u/$username" : "/profile"}
