@@ -213,6 +213,9 @@ export function SubscriptionDetailsCard() {
                   <div className="flex items-center justify-between gap-2">
                     <div className="font-display font-semibold text-sm truncate">
                        Account {c.account_number}
+                       {accountTypeLabel(c.account_type) && (
+                         <span className="ml-1.5 font-normal text-foreground/70">· {accountTypeLabel(c.account_type)}</span>
+                       )}
                     </div>
                     {c.expiry_at && (
                       <span
