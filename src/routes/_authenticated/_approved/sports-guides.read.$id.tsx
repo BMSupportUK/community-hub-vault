@@ -126,6 +126,29 @@ function ReadPage() {
         "inline-flex items-center justify-center rounded-xl border border-fuchsia-300/45 bg-fuchsia-950/55 px-4 py-3 text-sm font-semibold tracking-wide text-fuchsia-100 no-underline shadow-[0_0_12px_rgba(217,70,239,0.16)] transition hover:bg-fuchsia-900/70 hover:text-white";
       a.textContent = label;
       const holder = document.createElement("div");
+      holder.className = "flex flex-col items-start gap-2";
+      // Admins can type intro text directly above the link in the editor —
+      // pull those contiguous text blocks into the same card so the copy
+      // stays attached above the bubble instead of paginating separately.
+      const intro: HTMLElement[] = [];
+      let prev = el.previousElementSibling as HTMLElement | null;
+      while (prev && intro.length < 2) {
+        if (prev.matches("[data-link-preview]")) break;
+        if (prev.querySelector("img,video,iframe,picture,canvas,[data-link-preview]")) break;
+        const text = (prev.textContent ?? "").replace(/\s|\u00a0/g, "");
+        if (!text) {
+          const empty = prev;
+          prev = prev.previousElementSibling as HTMLElement | null;
+          empty.remove();
+          continue;
+        }
+        intro.unshift(prev);
+        prev = prev.previousElementSibling as HTMLElement | null;
+      }
+      intro.forEach((node) => {
+        node.classList.add("m-0", "text-sm", "text-purple-100/85", "leading-snug");
+        holder.appendChild(node);
+      });
       holder.appendChild(a);
       el.replaceWith(holder);
     });
