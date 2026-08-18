@@ -637,14 +637,17 @@ html.theme-sunset body {
 }
 
 @keyframes expiry-date-flash {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.35; }
+  0%, 100% { opacity: 1; text-shadow: 0 0 8px currentColor; transform: scale(1); }
+  50% { opacity: 0.55; text-shadow: 0 0 18px currentColor; transform: scale(1.03); }
 }
 .expiry-date-flash {
   animation: expiry-date-flash 1s ease-in-out infinite;
+  display: inline-block;
+  font-weight: 800;
+  letter-spacing: 0.02em;
 }
 @media (prefers-reduced-motion: reduce) {
-  .expiry-date-flash { animation: none; }
+  .expiry-date-flash { animation: none; text-shadow: 0 0 6px currentColor; }
 }
 
 
