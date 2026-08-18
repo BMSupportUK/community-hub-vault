@@ -339,7 +339,10 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
   const close = () =>
     navigate({
       to: "/sports-guides",
-      search: { cat: editing?.category_id || undefined },
+      search: {
+        cat: editing?.category_id || undefined,
+        sub: editing?.subcategory || undefined,
+      },
     });
 
   const save = async () => {
