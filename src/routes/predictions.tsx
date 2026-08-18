@@ -1803,8 +1803,8 @@ function FixtureCard({
         </span>
       </div>
 
-      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
-        <div className="text-right font-medium">
+      <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 sm:gap-3">
+        <div className="min-w-0 break-words text-right font-medium">
           <span className="mr-1.5">{teamFlag(fixture.homeTeam)}</span>
           {fixture.homeTeam}
           {fixture.homeReds > 0 && <span className="ml-1.5"><RedCards count={fixture.homeReds} /></span>}
