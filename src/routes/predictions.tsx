@@ -1777,7 +1777,7 @@ function FixtureCard({
 
   return (
     <div
-      className={`rounded-2xl border-2 bg-surface-1 p-4 shadow-md ${
+      className={`min-w-0 rounded-2xl border-2 bg-surface-1 p-3 sm:p-4 shadow-md ${
         live
           ? "border-emerald-500/80 shadow-emerald-500/30 animate-pulse"
           : upcomingSoon
@@ -1785,8 +1785,8 @@ function FixtureCard({
             : "border-primary/60 shadow-primary/10"
       }`}
     >
-      <div className="flex items-center justify-between text-xs text-muted-foreground mb-3">
-        <span className="inline-flex items-center gap-1.5">
+      <div className="flex min-w-0 flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground mb-3">
+        <span className="inline-flex min-w-0 flex-wrap items-center gap-1.5">
           {STAGE_LABEL[fixture.stage]}
           {fixture.groupLabel && (
             <span className="px-1.5 py-0.5 rounded bg-surface-2 text-foreground/80">
@@ -1794,7 +1794,7 @@ function FixtureCard({
             </span>
           )}
         </span>
-        <span className="inline-flex items-center gap-2">
+        <span className="inline-flex flex-wrap items-center gap-2">
           {live && <LivePill fixture={fixture} />}
           {!locked && !scored && <LockCountdownPill lockAtMs={lockAtMs} />}
           <span className="font-bold text-foreground tabular-nums">
@@ -1803,8 +1803,8 @@ function FixtureCard({
         </span>
       </div>
 
-      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
-        <div className="text-right font-medium">
+      <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 sm:gap-3">
+        <div className="min-w-0 break-words text-right font-medium">
           <span className="mr-1.5">{teamFlag(fixture.homeTeam)}</span>
           {fixture.homeTeam}
           {fixture.homeReds > 0 && <span className="ml-1.5"><RedCards count={fixture.homeReds} /></span>}
@@ -1866,7 +1866,7 @@ function FixtureCard({
             </div>
           </div>
         )}
-        <div className="font-medium">
+        <div className="min-w-0 break-words font-medium">
           {fixture.awayTeam}
           <span className="ml-1.5">{teamFlag(fixture.awayTeam)}</span>
           {fixture.awayReds > 0 && <span className="ml-1.5"><RedCards count={fixture.awayReds} /></span>}

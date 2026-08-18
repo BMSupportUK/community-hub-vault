@@ -840,25 +840,25 @@ function FixtureCard({
   const showInputs = !locked && !scored && (editing || !hasPick);
 
   return (
-    <div className={`rounded-2xl border-2 bg-surface-1 p-4 shadow-md ${
+    <div className={`min-w-0 rounded-2xl border-2 bg-surface-1 p-3 sm:p-4 shadow-md ${
       live
         ? "border-emerald-500/80 shadow-emerald-500/30 animate-pulse"
         : upcomingSoon
           ? "border-red-500/80 shadow-red-500/30 animate-pulse"
           : "border-primary/60 shadow-primary/10"
     }`}>
-      <div className="flex items-center justify-between text-xs text-muted-foreground mb-3">
-        <span className="flex items-center gap-1.5 flex-wrap">
+      <div className="flex min-w-0 flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground mb-3">
+        <span className="flex min-w-0 items-center gap-1.5 flex-wrap">
           <span>{fixture.competition}{fixture.venue ? ` · ${fixture.venue}` : ""}</span>
         </span>
-        <span className="inline-flex items-center gap-2">
+        <span className="inline-flex flex-wrap items-center gap-2">
           {live && <LivePill fixture={fixture} />}
           {!locked && !scored && !live && <LockCountdownPill lockAtMs={lockMs} />}
           <span className="font-bold text-foreground tabular-nums">{formatKickoff(fixture.kickoffAt)}</span>
         </span>
       </div>
-      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
-        <div className="flex items-center justify-end gap-2 font-medium">
+      <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 sm:gap-3">
+        <div className="flex min-w-0 items-center justify-end gap-2 font-medium">
           <RedCards count={fixture.homeReds} />
           <span className="truncate">{fixture.homeTeam}</span>
           <TeamKit team={fixture.homeTeam} />
@@ -915,14 +915,14 @@ function FixtureCard({
             <div className="text-[10px] uppercase tracking-wider text-muted-foreground mt-1">Your pick</div>
           </div>
         )}
-        <div className="flex items-center gap-2 font-medium">
+        <div className="flex min-w-0 items-center gap-2 font-medium">
           <TeamKit team={fixture.awayTeam} />
           <span className="truncate">{fixture.awayTeam}</span>
           <RedCards count={fixture.awayReds} />
         </div>
       </div>
-      <div className="mt-3 flex items-center justify-between text-xs">
-        <div className="text-muted-foreground">
+      <div className="mt-3 flex min-w-0 flex-wrap items-center justify-between gap-2 text-xs">
+        <div className="min-w-0 text-muted-foreground">
           {fixture.myPrediction ? (
             <span className="inline-flex items-center gap-1">
               <Check className="size-3.5 text-emerald-400" />

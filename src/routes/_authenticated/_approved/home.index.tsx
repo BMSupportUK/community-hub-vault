@@ -593,7 +593,7 @@ function WelcomePage() {
             </span>
           </Link>
         </div>
-        <div className="grid sm:grid-cols-2 gap-2">
+        <div className="grid min-w-0 sm:grid-cols-2 gap-2">
           {order.map((key, idx) => {
             if (hasRole("moderator") && key === "tickets") return null;
             const c = CARDS[key];
@@ -621,7 +621,7 @@ function WelcomePage() {
               </div>
             ) : null;
             return (
-              <div key={key} className="group relative h-full">
+              <div key={key} className="group relative h-full min-w-0">
                 {controls}
                 {c.to ? (
                   <QuickCard to={c.to} params={c.params} icon={c.icon} title={c.title} desc={c.desc} />
