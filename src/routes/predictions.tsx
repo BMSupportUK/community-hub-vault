@@ -1866,7 +1866,7 @@ function FixtureCard({
             </div>
           </div>
         )}
-        <div className="font-medium">
+        <div className="min-w-0 break-words font-medium">
           {fixture.awayTeam}
           <span className="ml-1.5">{teamFlag(fixture.awayTeam)}</span>
           {fixture.awayReds > 0 && <span className="ml-1.5"><RedCards count={fixture.awayReds} /></span>}
