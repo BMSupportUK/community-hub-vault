@@ -25,6 +25,7 @@ interface CredentialRow {
   expiry_at: string | null;
   created_at: string;
   account_type?: string | null;
+  account_number: number;
 }
 
 const ACCOUNT_TYPES = [
@@ -197,16 +198,16 @@ function AdminCredentialsPage() {
 
                   {open && list.length > 0 && (
                     <div className="px-5 pb-4 pt-1 grid gap-2 bg-surface-2/30">
-                      {list.map((c) => {
+                       {list.slice().sort((a, b) => a.account_number - b.account_number).map((c) => {
                         const exp = c.expiry_at ? new Date(c.expiry_at) : null;
                         const expired = exp && exp.getTime() < Date.now();
                         const soon = exp && !expired && exp.getTime() - Date.now() < 7 * 86400000;
                         return (
                           <div key={c.id} className="rounded-lg border border-border bg-background/40 p-3 grid sm:grid-cols-[1fr_auto_auto] gap-3 items-center">
                             <div className="min-w-0">
-                              <div className="font-display font-semibold truncate">{c.app_login_name}</div>
+                               <div className="font-display font-semibold truncate">Account {c.account_number}</div>
                               <div className="text-[11px] text-muted-foreground">
-                                {ACCOUNT_TYPES.find((t) => t.value === (c.account_type ?? "single"))?.label ?? "Single account"}
+                                 {c.app_login_name} · {ACCOUNT_TYPES.find((t) => t.value === (c.account_type ?? "single"))?.label ?? "Single account"}
                               </div>
                               {exp && (
                                 <div className={cn("text-xs", expired ? "text-destructive" : soon ? "text-amber-400" : "text-muted-foreground")}>
@@ -283,6 +284,7 @@ function CredentialEditor({
   const [password, setPassword] = useState(row?.password ?? "");
   const [expiry, setExpiry] = useState(row?.expiry_at ? row.expiry_at.slice(0, 16) : "");
   const [busy, setBusy] = useState(false);
+  const accountLabel = `Account ${row?.account_number ?? existingCount + 1}`;
 
 
   const generate = () => {
@@ -328,6 +330,9 @@ function CredentialEditor({
           <button onClick={onClose} className="ed-close p-1.5 rounded"><X className="size-4" /></button>
         </div>
         <div className="space-y-3">
+          <Field label="Account name">
+            <input readOnly value={accountLabel} className="ed-input" />
+          </Field>
           <Field label="App login name">
             <input value={appLoginName} onChange={(e) => setAppLoginName(e.target.value)} className="ed-input" placeholder="e.g. IPTV portal" />
           </Field>
