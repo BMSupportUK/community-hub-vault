@@ -286,11 +286,11 @@ export function SubscriptionDetailsCard() {
                       </p>
                       <p
                         className={cn(
-                          "text-xs inline-flex items-center rounded-lg px-2 py-1 border",
+                          "text-xs inline-flex items-center rounded-lg px-2.5 py-1.5 border-2 shadow-sm",
                           expired
-                            ? "text-destructive border-destructive/40 bg-destructive/15 expiry-date-flash"
+                            ? "bg-red-600 border-red-400 text-white expiry-date-flash shadow-red-500/30"
                             : expSoon
-                              ? "text-amber-500 border-amber-500/40 bg-amber-500/15 expiry-date-flash"
+                              ? "bg-amber-500 border-amber-300 text-white expiry-date-flash-amber shadow-amber-500/30"
                               : "text-foreground border-border bg-background",
                         )}
                       >
