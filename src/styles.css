@@ -636,6 +636,18 @@ html.theme-sunset body {
   .membership-expired-flash { animation: none; box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.6); }
 }
 
+@keyframes expiry-date-flash {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+.expiry-date-flash {
+  animation: expiry-date-flash 1s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .expiry-date-flash { animation: none; }
+}
+
+
 @keyframes nameplate-crest-glow {
   0%, 100% { opacity: 0.35; transform: scale(1); }
   50%      { opacity: 0.85; transform: scale(1.05); }
