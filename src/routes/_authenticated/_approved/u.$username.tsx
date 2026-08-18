@@ -54,7 +54,15 @@ interface ProfileRow {
 
 interface ShiftRow { id: string; user_id: string; clock_in: string; clock_out: string | null; }
 interface BreakRow { id: string; user_id: string; kind: "break" | "lunch"; started_at: string; ended_at: string | null; }
-interface CredRow { id: string; account_number: number; app_login_name: string; password: string; expiry_at: string | null; notes: string | null; }
+interface CredRow { id: string; account_number: number; account_type: string | null; app_login_name: string; password: string; expiry_at: string | null; notes: string | null; }
+
+function accountTypeLabel(type: string | null | undefined) {
+  const t = (type ?? "single").toLowerCase();
+  if (t === "multi") return "Multi-room";
+  if (t === "triple") return "Triple-room";
+  if (t === "single") return "Single";
+  return type ?? "Single";
+}
 interface DnsRow { id: string; label: string; code: string; notes: string | null; }
 interface TicketRow { id: string; subject: string; status: string; priority: string; created_at: string; updated_at: string; closed_at: string | null; }
 interface OrderRow { id: string; total_cents: number; status: string; created_at: string; paid_at: string | null; completed_at: string | null; shipping_name: string | null; discount_code: string | null; }
@@ -1485,7 +1493,10 @@ function CredentialsReveal({ targetUserId, isOwner }: { targetUserId: string; is
                       <div className="flex items-center justify-between gap-3">
                         <div className="flex items-center gap-2 min-w-0">
                           <AtSign className="size-4 text-primary shrink-0" />
-                           <div className="font-display font-semibold truncate">Account {c.account_number}</div>
+                           <div className="font-display font-semibold truncate">
+                             Account {c.account_number}
+                             <span className="ml-1.5 font-normal text-foreground/70">· {accountTypeLabel(c.account_type)}</span>
+                           </div>
                         </div>
                         {c.expiry_at && (
                           <span className={cn("text-xs px-2 py-0.5 rounded-full border whitespace-nowrap",
