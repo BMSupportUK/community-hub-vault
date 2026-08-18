@@ -160,9 +160,9 @@ function AboutPage() {
 
         </section>
 
-        <section className="px-6 pb-16 max-w-6xl mx-auto grid lg:grid-cols-2 gap-10">
+        <section className="px-4 sm:px-6 pb-16 max-w-6xl mx-auto grid lg:grid-cols-2 gap-10">
           {/* Left: content */}
-          <div className="space-y-8">
+          <div className="min-w-0 space-y-8">
             {canEdit && (
               <button
                 onClick={() =>
@@ -180,7 +180,7 @@ function AboutPage() {
               </button>
             )}
             {sections.map((s) => (
-              <div key={s.id} className="relative rounded-2xl border border-border bg-card p-6">
+              <div key={s.id} className="relative min-w-0 rounded-2xl border border-border bg-card p-4 sm:p-6">
                 {canEdit && (
                   <div className="absolute top-3 right-3 flex gap-1">
                     <button onClick={() => setEditing(s)} className="p-1.5 rounded-md bg-background/70 border border-border hover:bg-muted" title="Edit">
@@ -191,18 +191,18 @@ function AboutPage() {
                     </button>
                   </div>
                 )}
-                <h2 className="font-display text-2xl font-bold mb-3 pr-16">{s.heading}</h2>
-                <p className="text-muted-foreground whitespace-pre-wrap leading-relaxed">{s.body}</p>
+                <h2 className="font-display text-xl sm:text-2xl font-bold mb-3 pr-16 break-words">{s.heading}</h2>
+                <p className="text-muted-foreground whitespace-pre-wrap break-words leading-relaxed">{s.body}</p>
               </div>
             ))}
           </div>
 
           {/* Right: tabs for map + hours */}
-          <div>
-            <div className="rounded-2xl border border-border bg-card overflow-hidden">
+          <div className="min-w-0">
+            <div className="min-w-0 rounded-2xl border border-border bg-card overflow-hidden">
               <Tabs defaultValue="location">
-                <div className="px-5 py-4 border-b border-border flex items-center justify-between">
-                  <TabsList className="bg-muted/60">
+                <div className="min-w-0 px-3 sm:px-5 py-4 border-b border-border flex flex-wrap items-center justify-between gap-2">
+                  <TabsList className="bg-muted/60 h-auto flex-wrap justify-start">
                     <TabsTrigger value="location" className="gap-1.5">
                       <MapPin className="size-3.5" /> Location
                     </TabsTrigger>
