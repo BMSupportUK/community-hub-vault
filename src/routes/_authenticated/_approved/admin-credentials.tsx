@@ -278,7 +278,7 @@ function CredentialEditor({
   onClose: () => void;
   onSaved: () => void;
 }) {
-  const [appLoginName, setAppLoginName] = useState(row?.app_login_name ?? `Account ${existingCount + 1}`);
+  const [appLoginName, setAppLoginName] = useState(row?.app_login_name ?? "");
   const [accountType, setAccountType] = useState<string>(row?.account_type ?? "single");
   const [password, setPassword] = useState(row?.password ?? "");
   const [expiry, setExpiry] = useState(row?.expiry_at ? row.expiry_at.slice(0, 16) : "");
