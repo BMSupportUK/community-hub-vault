@@ -9,10 +9,12 @@ import { Link } from "@tanstack/react-router";
 interface CredRow {
   id: string;
   account_number: number;
+  account_type: string | null;
   app_login_name: string | null;
   password: string | null;
   expiry_at: string | null;
 }
+
 
 export function SubscriptionDetailsCard() {
   const { user } = useAuth();
@@ -52,7 +54,7 @@ export function SubscriptionDetailsCard() {
     const load = () => {
       supabase
         .from("app_credentials")
-        .select("id, account_number, app_login_name, password, expiry_at")
+        .select("id, account_number, account_type, app_login_name, password, expiry_at")
         .eq("owner_id", user.id)
         .order("account_number", { ascending: true })
         .then(({ data }) => {
@@ -93,6 +95,14 @@ export function SubscriptionDetailsCard() {
     } catch {
       // ignore
     }
+  };
+
+  const accountTypeLabel = (type: string | null) => {
+    const t = type?.toLowerCase();
+    if (t === "single") return "Single";
+    if (t === "multi") return "Multi-room";
+    if (t === "triple") return "Triple-room";
+    return type ? type : null;
   };
 
   const fmt = (d: Date) =>
@@ -179,10 +189,13 @@ export function SubscriptionDetailsCard() {
                           ? "bg-violet-600 text-white border-violet-500 shadow-[0_0_12px_rgba(139,92,246,0.45)]"
                           : "bg-surface-2 text-foreground/80 border-border hover:border-primary/60",
                       )}
-                       title={`Account ${c.account_number}`}
-                    >
-                       Account {c.account_number}
-                    </button>
+                       title={`Account ${c.account_number}${accountTypeLabel(c.account_type) ? ` - ${accountTypeLabel(c.account_type)}` : ""}`}
+                     >
+                        Account {c.account_number}
+                        {accountTypeLabel(c.account_type) && (
+                          <span className="ml-1.5 opacity-80">· {accountTypeLabel(c.account_type)}</span>
+                        )}
+                     </button>
                   );
                 })}
               </div>
@@ -200,6 +213,9 @@ export function SubscriptionDetailsCard() {
                   <div className="flex items-center justify-between gap-2">
                     <div className="font-display font-semibold text-sm truncate">
                        Account {c.account_number}
+                       {accountTypeLabel(c.account_type) && (
+                         <span className="ml-1.5 font-normal text-foreground/70">· {accountTypeLabel(c.account_type)}</span>
+                       )}
                     </div>
                     {c.expiry_at && (
                       <span
