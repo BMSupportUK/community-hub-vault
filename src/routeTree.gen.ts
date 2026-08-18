@@ -125,7 +125,6 @@ import { Route as ApiPublicHooksSubscriptionExpiryRemindersRouteImport } from '.
 import { Route as ApiPublicHooksSyncBoroScoresRouteImport } from './routes/api/public/hooks/sync-boro-scores'
 import { Route as ApiPublicHooksSyncFantasyScoresRouteImport } from './routes/api/public/hooks/sync-fantasy-scores'
 import { Route as ApiPublicHooksSyncWcScoresRouteImport } from './routes/api/public/hooks/sync-wc-scores'
-import { Route as ApiPublicHooksTmpRestoreNamesRouteImport } from './routes/api/public/hooks/tmp-restore-names'
 import { Route as ApiPublicHooksUserNotificationPushRouteImport } from './routes/api/public/hooks/user-notification-push'
 import { Route as ApiPublicHooksWcPredictionRemindersRouteImport } from './routes/api/public/hooks/wc-prediction-reminders'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
@@ -809,12 +808,6 @@ const ApiPublicHooksSyncWcScoresRoute =
     path: '/api/public/hooks/sync-wc-scores',
     getParentRoute: () => rootRouteImport,
   } as any)
-const ApiPublicHooksTmpRestoreNamesRoute =
-  ApiPublicHooksTmpRestoreNamesRouteImport.update({
-    id: '/api/public/hooks/tmp-restore-names',
-    path: '/api/public/hooks/tmp-restore-names',
-    getParentRoute: () => rootRouteImport,
-  } as any)
 const ApiPublicHooksUserNotificationPushRoute =
   ApiPublicHooksUserNotificationPushRouteImport.update({
     id: '/api/public/hooks/user-notification-push',
@@ -1000,7 +993,6 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/sync-boro-scores': typeof ApiPublicHooksSyncBoroScoresRoute
   '/api/public/hooks/sync-fantasy-scores': typeof ApiPublicHooksSyncFantasyScoresRoute
   '/api/public/hooks/sync-wc-scores': typeof ApiPublicHooksSyncWcScoresRoute
-  '/api/public/hooks/tmp-restore-names': typeof ApiPublicHooksTmpRestoreNamesRoute
   '/api/public/hooks/user-notification-push': typeof ApiPublicHooksUserNotificationPushRoute
   '/api/public/hooks/wc-prediction-reminders': typeof ApiPublicHooksWcPredictionRemindersRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -1126,7 +1118,6 @@ export interface FileRoutesByTo {
   '/api/public/hooks/sync-boro-scores': typeof ApiPublicHooksSyncBoroScoresRoute
   '/api/public/hooks/sync-fantasy-scores': typeof ApiPublicHooksSyncFantasyScoresRoute
   '/api/public/hooks/sync-wc-scores': typeof ApiPublicHooksSyncWcScoresRoute
-  '/api/public/hooks/tmp-restore-names': typeof ApiPublicHooksTmpRestoreNamesRoute
   '/api/public/hooks/user-notification-push': typeof ApiPublicHooksUserNotificationPushRoute
   '/api/public/hooks/wc-prediction-reminders': typeof ApiPublicHooksWcPredictionRemindersRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -1258,7 +1249,6 @@ export interface FileRoutesById {
   '/api/public/hooks/sync-boro-scores': typeof ApiPublicHooksSyncBoroScoresRoute
   '/api/public/hooks/sync-fantasy-scores': typeof ApiPublicHooksSyncFantasyScoresRoute
   '/api/public/hooks/sync-wc-scores': typeof ApiPublicHooksSyncWcScoresRoute
-  '/api/public/hooks/tmp-restore-names': typeof ApiPublicHooksTmpRestoreNamesRoute
   '/api/public/hooks/user-notification-push': typeof ApiPublicHooksUserNotificationPushRoute
   '/api/public/hooks/wc-prediction-reminders': typeof ApiPublicHooksWcPredictionRemindersRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -1389,7 +1379,6 @@ export interface FileRouteTypes {
     | '/api/public/hooks/sync-boro-scores'
     | '/api/public/hooks/sync-fantasy-scores'
     | '/api/public/hooks/sync-wc-scores'
-    | '/api/public/hooks/tmp-restore-names'
     | '/api/public/hooks/user-notification-push'
     | '/api/public/hooks/wc-prediction-reminders'
     | '/lovable/email/auth/preview'
@@ -1515,7 +1504,6 @@ export interface FileRouteTypes {
     | '/api/public/hooks/sync-boro-scores'
     | '/api/public/hooks/sync-fantasy-scores'
     | '/api/public/hooks/sync-wc-scores'
-    | '/api/public/hooks/tmp-restore-names'
     | '/api/public/hooks/user-notification-push'
     | '/api/public/hooks/wc-prediction-reminders'
     | '/lovable/email/auth/preview'
@@ -1646,7 +1634,6 @@ export interface FileRouteTypes {
     | '/api/public/hooks/sync-boro-scores'
     | '/api/public/hooks/sync-fantasy-scores'
     | '/api/public/hooks/sync-wc-scores'
-    | '/api/public/hooks/tmp-restore-names'
     | '/api/public/hooks/user-notification-push'
     | '/api/public/hooks/wc-prediction-reminders'
     | '/lovable/email/auth/preview'
@@ -1711,7 +1698,6 @@ export interface RootRouteChildren {
   ApiPublicHooksSyncBoroScoresRoute: typeof ApiPublicHooksSyncBoroScoresRoute
   ApiPublicHooksSyncFantasyScoresRoute: typeof ApiPublicHooksSyncFantasyScoresRoute
   ApiPublicHooksSyncWcScoresRoute: typeof ApiPublicHooksSyncWcScoresRoute
-  ApiPublicHooksTmpRestoreNamesRoute: typeof ApiPublicHooksTmpRestoreNamesRoute
   ApiPublicHooksUserNotificationPushRoute: typeof ApiPublicHooksUserNotificationPushRoute
   ApiPublicHooksWcPredictionRemindersRoute: typeof ApiPublicHooksWcPredictionRemindersRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
@@ -2535,13 +2521,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksSyncWcScoresRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/hooks/tmp-restore-names': {
-      id: '/api/public/hooks/tmp-restore-names'
-      path: '/api/public/hooks/tmp-restore-names'
-      fullPath: '/api/public/hooks/tmp-restore-names'
-      preLoaderRoute: typeof ApiPublicHooksTmpRestoreNamesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/public/hooks/user-notification-push': {
       id: '/api/public/hooks/user-notification-push'
       path: '/api/public/hooks/user-notification-push'
@@ -2972,7 +2951,6 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksSyncBoroScoresRoute: ApiPublicHooksSyncBoroScoresRoute,
   ApiPublicHooksSyncFantasyScoresRoute: ApiPublicHooksSyncFantasyScoresRoute,
   ApiPublicHooksSyncWcScoresRoute: ApiPublicHooksSyncWcScoresRoute,
-  ApiPublicHooksTmpRestoreNamesRoute: ApiPublicHooksTmpRestoreNamesRoute,
   ApiPublicHooksUserNotificationPushRoute:
     ApiPublicHooksUserNotificationPushRoute,
   ApiPublicHooksWcPredictionRemindersRoute:
