@@ -9,203 +9,142 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as UnsubscribeRouteImport } from './routes/unsubscribe'
-import { Route as SignupRouteImport } from './routes/signup'
-import { Route as ResetPasswordRouteImport } from './routes/reset-password'
-import { Route as PredictionsRouteImport } from './routes/predictions'
-import { Route as PackagesRouteImport } from './routes/packages'
-import { Route as MfaChallengeRouteImport } from './routes/mfa-challenge'
-import { Route as LoginRouteImport } from './routes/login'
-import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
-import { Route as FaqRouteImport } from './routes/faq'
-import { Route as FanZoneRouteImport } from './routes/fan-zone'
-import { Route as ContactRouteImport } from './routes/contact'
-import { Route as CompetitionWinnersRouteImport } from './routes/competition-winners'
-import { Route as BoroPredictionsRouteImport } from './routes/boro-predictions'
-import { Route as BoroFantasyRouteImport } from './routes/boro-fantasy'
-import { Route as AboutRouteImport } from './routes/about'
-import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
+import { Route as AboutRouteImport } from './routes/about'
+import { Route as BoroFantasyRouteImport } from './routes/boro-fantasy'
+import { Route as BoroPredictionsRouteImport } from './routes/boro-predictions'
+import { Route as CompetitionWinnersRouteImport } from './routes/competition-winners'
+import { Route as ContactRouteImport } from './routes/contact'
+import { Route as FanZoneRouteImport } from './routes/fan-zone'
+import { Route as FaqRouteImport } from './routes/faq'
+import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as MfaChallengeRouteImport } from './routes/mfa-challenge'
+import { Route as PackagesRouteImport } from './routes/packages'
+import { Route as PredictionsRouteImport } from './routes/predictions'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as SignupRouteImport } from './routes/signup'
+import { Route as UnsubscribeRouteImport } from './routes/unsubscribe'
+import { Route as AuthenticatedApprovedRouteImport } from './routes/_authenticated/_approved'
+import { Route as AuthenticatedAccountRejectedRouteImport } from './routes/_authenticated/account-rejected'
+import { Route as AuthenticatedBannedRouteImport } from './routes/_authenticated/banned'
+import { Route as AuthenticatedFanZonePendingRouteImport } from './routes/_authenticated/fan-zone-pending'
+import { Route as AuthenticatedGateRouteImport } from './routes/_authenticated/gate'
+import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
 import { Route as FanZoneIndexRouteImport } from './routes/fan-zone.index'
 import { Route as FanZoneBoardRouteImport } from './routes/fan-zone.$board'
-import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
-import { Route as AuthenticatedGateRouteImport } from './routes/_authenticated/gate'
-import { Route as AuthenticatedFanZonePendingRouteImport } from './routes/_authenticated/fan-zone-pending'
-import { Route as AuthenticatedBannedRouteImport } from './routes/_authenticated/banned'
-import { Route as AuthenticatedAccountRejectedRouteImport } from './routes/_authenticated/account-rejected'
-import { Route as AuthenticatedApprovedRouteImport } from './routes/_authenticated/_approved'
-import { Route as FanZoneBoardIndexRouteImport } from './routes/fan-zone.$board.index'
-import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
-import { Route as FanZoneUUserIdRouteImport } from './routes/fan-zone.u.$userId'
-import { Route as FanZoneBoardTopicRouteImport } from './routes/fan-zone.$board.$topic'
-import { Route as ApiPublicTweetImageRouteImport } from './routes/api/public/tweet-image'
-import { Route as ApiPublicTweetRouteImport } from './routes/api/public/tweet'
-import { Route as ApiPublicLinkPreviewRouteImport } from './routes/api/public/link-preview'
-import { Route as ApiPublicBoroMatchDetailRouteImport } from './routes/api/public/boro-match-detail'
-import { Route as AuthenticatedApprovedWhatToWatchRouteImport } from './routes/_authenticated/_approved/what-to-watch'
-import { Route as AuthenticatedApprovedVpnRouteImport } from './routes/_authenticated/_approved/vpn'
-import { Route as AuthenticatedApprovedTicketsRouteImport } from './routes/_authenticated/_approved/tickets'
-import { Route as AuthenticatedApprovedStreamingDevicesRouteImport } from './routes/_authenticated/_approved/streaming-devices'
-import { Route as AuthenticatedApprovedStatusRouteImport } from './routes/_authenticated/_approved/status'
-import { Route as AuthenticatedApprovedStaffRouteImport } from './routes/_authenticated/_approved/staff'
-import { Route as AuthenticatedApprovedSportsGuidesRouteImport } from './routes/_authenticated/_approved/sports-guides'
-import { Route as AuthenticatedApprovedShopRouteImport } from './routes/_authenticated/_approved/shop'
-import { Route as AuthenticatedApprovedShiftsRouteImport } from './routes/_authenticated/_approved/shifts'
-import { Route as AuthenticatedApprovedReviewsRouteImport } from './routes/_authenticated/_approved/reviews'
-import { Route as AuthenticatedApprovedResponsiveCheckRouteImport } from './routes/_authenticated/_approved/responsive-check'
-import { Route as AuthenticatedApprovedProfileRouteImport } from './routes/_authenticated/_approved/profile'
-import { Route as AuthenticatedApprovedNewContentRouteImport } from './routes/_authenticated/_approved/new-content'
-import { Route as AuthenticatedApprovedModerationRouteImport } from './routes/_authenticated/_approved/moderation'
-import { Route as AuthenticatedApprovedMembersRouteImport } from './routes/_authenticated/_approved/members'
-import { Route as AuthenticatedApprovedLeaderboardRouteImport } from './routes/_authenticated/_approved/leaderboard'
-import { Route as AuthenticatedApprovedKnowledgeBaseRouteImport } from './routes/_authenticated/_approved/knowledge-base'
-import { Route as AuthenticatedApprovedInstallGuidesRouteImport } from './routes/_authenticated/_approved/install-guides'
-import { Route as AuthenticatedApprovedHomeRouteImport } from './routes/_authenticated/_approved/home'
-import { Route as AuthenticatedApprovedForumRouteImport } from './routes/_authenticated/_approved/forum'
-import { Route as AuthenticatedApprovedClockRouteImport } from './routes/_authenticated/_approved/clock'
-import { Route as AuthenticatedApprovedAdminTicketCategoriesRouteImport } from './routes/_authenticated/_approved/admin-ticket-categories'
-import { Route as AuthenticatedApprovedAdminStreamingDevicesRouteImport } from './routes/_authenticated/_approved/admin-streaming-devices'
-import { Route as AuthenticatedApprovedAdminSportsImportRouteImport } from './routes/_authenticated/_approved/admin-sports-import'
-import { Route as AuthenticatedApprovedAdminRolesRouteImport } from './routes/_authenticated/_approved/admin-roles'
-import { Route as AuthenticatedApprovedAdminReviewsRouteImport } from './routes/_authenticated/_approved/admin-reviews'
-import { Route as AuthenticatedApprovedAdminReportsRouteImport } from './routes/_authenticated/_approved/admin-reports'
-import { Route as AuthenticatedApprovedAdminProfanityRouteImport } from './routes/_authenticated/_approved/admin-profanity'
-import { Route as AuthenticatedApprovedAdminPredictionsRouteImport } from './routes/_authenticated/_approved/admin-predictions'
-import { Route as AuthenticatedApprovedAdminPermissionsRouteImport } from './routes/_authenticated/_approved/admin-permissions'
-import { Route as AuthenticatedApprovedAdminPackagesRouteImport } from './routes/_authenticated/_approved/admin-packages'
-import { Route as AuthenticatedApprovedAdminNotificationsRouteImport } from './routes/_authenticated/_approved/admin-notifications'
-import { Route as AuthenticatedApprovedAdminNameplatesRouteImport } from './routes/_authenticated/_approved/admin-nameplates'
-import { Route as AuthenticatedApprovedAdminHeroBoxesRouteImport } from './routes/_authenticated/_approved/admin-hero-boxes'
-import { Route as AuthenticatedApprovedAdminForumRouteImport } from './routes/_authenticated/_approved/admin-forum'
-import { Route as AuthenticatedApprovedAdminFantasySquadNumbersRouteImport } from './routes/_authenticated/_approved/admin-fantasy-squad-numbers'
-import { Route as AuthenticatedApprovedAdminFantasyScoringRouteImport } from './routes/_authenticated/_approved/admin-fantasy-scoring'
-import { Route as AuthenticatedApprovedAdminFantasyMotmRouteImport } from './routes/_authenticated/_approved/admin-fantasy-motm'
-import { Route as AuthenticatedApprovedAdminFantasyInjuriesRouteImport } from './routes/_authenticated/_approved/admin-fantasy-injuries'
-import { Route as AuthenticatedApprovedAdminFanZoneRouteImport } from './routes/_authenticated/_approved/admin-fan-zone'
-import { Route as AuthenticatedApprovedAdminDnsRouteImport } from './routes/_authenticated/_approved/admin-dns'
-import { Route as AuthenticatedApprovedAdminCredentialsRouteImport } from './routes/_authenticated/_approved/admin-credentials'
-import { Route as AuthenticatedApprovedAdminBusinessHoursRouteImport } from './routes/_authenticated/_approved/admin-business-hours'
-import { Route as AuthenticatedApprovedAdminBoroTeamSheetRouteImport } from './routes/_authenticated/_approved/admin-boro-team-sheet'
-import { Route as AuthenticatedApprovedAdminBlacklistRouteImport } from './routes/_authenticated/_approved/admin-blacklist'
-import { Route as AuthenticatedApprovedAdminArchivedTicketsRouteImport } from './routes/_authenticated/_approved/admin-archived-tickets'
-import { Route as AuthenticatedApprovedAdminAffiliateBannersRouteImport } from './routes/_authenticated/_approved/admin-affiliate-banners'
-import { Route as AuthenticatedApprovedAdminRouteImport } from './routes/_authenticated/_approved/admin'
 import { Route as AuthenticatedApprovedAccountSecurityRouteImport } from './routes/_authenticated/_approved/account-security'
-import { Route as AuthenticatedApprovedHomeIndexRouteImport } from './routes/_authenticated/_approved/home.index'
-import { Route as LovableEmailTransactionalSendRouteImport } from './routes/lovable/email/transactional/send'
-import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
-import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
-import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
-import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
-import { Route as ApiPublicHooksWcPredictionRemindersRouteImport } from './routes/api/public/hooks/wc-prediction-reminders'
-import { Route as ApiPublicHooksUserNotificationPushRouteImport } from './routes/api/public/hooks/user-notification-push'
-import { Route as ApiPublicHooksSyncWcScoresRouteImport } from './routes/api/public/hooks/sync-wc-scores'
-import { Route as ApiPublicHooksSyncFantasyScoresRouteImport } from './routes/api/public/hooks/sync-fantasy-scores'
-import { Route as ApiPublicHooksSyncBoroScoresRouteImport } from './routes/api/public/hooks/sync-boro-scores'
-import { Route as ApiPublicHooksSubscriptionExpiryRemindersRouteImport } from './routes/api/public/hooks/subscription-expiry-reminders'
-import { Route as ApiPublicHooksStatusIncidentPushRouteImport } from './routes/api/public/hooks/status-incident-push'
-import { Route as ApiPublicHooksStaffNotificationPushRouteImport } from './routes/api/public/hooks/staff-notification-push'
-import { Route as ApiPublicHooksSquareInvoiceRouteImport } from './routes/api/public/hooks/square-invoice'
-import { Route as ApiPublicHooksScheduledRemindersRouteImport } from './routes/api/public/hooks/scheduled-reminders'
-import { Route as ApiPublicHooksRefreshStreamingStockRouteImport } from './routes/api/public/hooks/refresh-streaming-stock'
-import { Route as ApiPublicHooksRefreshStreamingPricesRouteImport } from './routes/api/public/hooks/refresh-streaming-prices'
-import { Route as ApiPublicHooksNowpaymentsRouteImport } from './routes/api/public/hooks/nowpayments'
-import { Route as ApiPublicHooksNotifyRouteImport } from './routes/api/public/hooks/notify'
-import { Route as ApiPublicHooksFantasySquadSyncRouteImport } from './routes/api/public/hooks/fantasy-squad-sync'
-import { Route as ApiPublicHooksFantasySquadRemindersRouteImport } from './routes/api/public/hooks/fantasy-squad-reminders'
-import { Route as ApiPublicHooksEspnDebugRouteImport } from './routes/api/public/hooks/espn-debug'
-import { Route as ApiPublicHooksDeviceReleaseWatchRouteImport } from './routes/api/public/hooks/device-release-watch'
-import { Route as ApiPublicHooksBoroTeamSheetRouteImport } from './routes/api/public/hooks/boro-team-sheet'
-import { Route as ApiPublicHooksBoroPredictorInviteRouteImport } from './routes/api/public/hooks/boro-predictor-invite'
-import { Route as ApiPublicHooksBoroPredictionRemindersRouteImport } from './routes/api/public/hooks/boro-prediction-reminders'
-import { Route as ApiPublicHooksBoroMatchThreadRouteImport } from './routes/api/public/hooks/boro-match-thread'
-import { Route as ApiPublicHooksBoroMatchEventsRouteImport } from './routes/api/public/hooks/boro-match-events'
-import { Route as ApiPublicHooksBoroMatchDemoRouteImport } from './routes/api/public/hooks/boro-match-demo'
-import { Route as ApiPublicHooksBoroFetchFixturesRouteImport } from './routes/api/public/hooks/boro-fetch-fixtures'
-import { Route as ApiPublicHooksBackupOrdersRouteImport } from './routes/api/public/hooks/backup-orders'
-import { Route as ApiPublicHooksBackupCredentialsRouteImport } from './routes/api/public/hooks/backup-credentials'
-import { Route as AuthenticatedApprovedUUsernameRouteImport } from './routes/_authenticated/_approved/u.$username'
-import { Route as AuthenticatedApprovedSportsGuidesNewRouteImport } from './routes/_authenticated/_approved/sports-guides.new'
-import { Route as AuthenticatedApprovedHomeChannelRouteImport } from './routes/_authenticated/_approved/home.$channel'
-import { Route as AuthenticatedApprovedForumSearchRouteImport } from './routes/_authenticated/_approved/forum.search'
-import { Route as AuthenticatedApprovedForumBoardRouteImport } from './routes/_authenticated/_approved/forum.$board'
-import { Route as AuthenticatedApprovedFanzoneProfileRouteImport } from './routes/_authenticated/_approved/fanzone.profile'
-import { Route as AuthenticatedApprovedFanzoneMessagesRouteImport } from './routes/_authenticated/_approved/fanzone.messages'
+import { Route as AuthenticatedApprovedAdminRouteImport } from './routes/_authenticated/_approved/admin'
+import { Route as AuthenticatedApprovedAdminAffiliateBannersRouteImport } from './routes/_authenticated/_approved/admin-affiliate-banners'
+import { Route as AuthenticatedApprovedAdminArchivedTicketsRouteImport } from './routes/_authenticated/_approved/admin-archived-tickets'
+import { Route as AuthenticatedApprovedAdminBlacklistRouteImport } from './routes/_authenticated/_approved/admin-blacklist'
+import { Route as AuthenticatedApprovedAdminBoroTeamSheetRouteImport } from './routes/_authenticated/_approved/admin-boro-team-sheet'
+import { Route as AuthenticatedApprovedAdminBusinessHoursRouteImport } from './routes/_authenticated/_approved/admin-business-hours'
+import { Route as AuthenticatedApprovedAdminCredentialsRouteImport } from './routes/_authenticated/_approved/admin-credentials'
+import { Route as AuthenticatedApprovedAdminDnsRouteImport } from './routes/_authenticated/_approved/admin-dns'
+import { Route as AuthenticatedApprovedAdminFanZoneRouteImport } from './routes/_authenticated/_approved/admin-fan-zone'
+import { Route as AuthenticatedApprovedAdminFantasyInjuriesRouteImport } from './routes/_authenticated/_approved/admin-fantasy-injuries'
+import { Route as AuthenticatedApprovedAdminFantasyMotmRouteImport } from './routes/_authenticated/_approved/admin-fantasy-motm'
+import { Route as AuthenticatedApprovedAdminFantasyScoringRouteImport } from './routes/_authenticated/_approved/admin-fantasy-scoring'
+import { Route as AuthenticatedApprovedAdminFantasySquadNumbersRouteImport } from './routes/_authenticated/_approved/admin-fantasy-squad-numbers'
+import { Route as AuthenticatedApprovedAdminForumRouteImport } from './routes/_authenticated/_approved/admin-forum'
+import { Route as AuthenticatedApprovedAdminHeroBoxesRouteImport } from './routes/_authenticated/_approved/admin-hero-boxes'
+import { Route as AuthenticatedApprovedAdminNameplatesRouteImport } from './routes/_authenticated/_approved/admin-nameplates'
+import { Route as AuthenticatedApprovedAdminNotificationsRouteImport } from './routes/_authenticated/_approved/admin-notifications'
+import { Route as AuthenticatedApprovedAdminPackagesRouteImport } from './routes/_authenticated/_approved/admin-packages'
+import { Route as AuthenticatedApprovedAdminPermissionsRouteImport } from './routes/_authenticated/_approved/admin-permissions'
+import { Route as AuthenticatedApprovedAdminPredictionsRouteImport } from './routes/_authenticated/_approved/admin-predictions'
+import { Route as AuthenticatedApprovedAdminProfanityRouteImport } from './routes/_authenticated/_approved/admin-profanity'
+import { Route as AuthenticatedApprovedAdminReportsRouteImport } from './routes/_authenticated/_approved/admin-reports'
+import { Route as AuthenticatedApprovedAdminReviewsRouteImport } from './routes/_authenticated/_approved/admin-reviews'
+import { Route as AuthenticatedApprovedAdminRolesRouteImport } from './routes/_authenticated/_approved/admin-roles'
+import { Route as AuthenticatedApprovedAdminSportsImportRouteImport } from './routes/_authenticated/_approved/admin-sports-import'
+import { Route as AuthenticatedApprovedAdminStreamingDevicesRouteImport } from './routes/_authenticated/_approved/admin-streaming-devices'
+import { Route as AuthenticatedApprovedAdminTicketCategoriesRouteImport } from './routes/_authenticated/_approved/admin-ticket-categories'
+import { Route as AuthenticatedApprovedClockRouteImport } from './routes/_authenticated/_approved/clock'
+import { Route as AuthenticatedApprovedForumRouteImport } from './routes/_authenticated/_approved/forum'
+import { Route as AuthenticatedApprovedHomeRouteImport } from './routes/_authenticated/_approved/home'
+import { Route as AuthenticatedApprovedInstallGuidesRouteImport } from './routes/_authenticated/_approved/install-guides'
+import { Route as AuthenticatedApprovedKnowledgeBaseRouteImport } from './routes/_authenticated/_approved/knowledge-base'
+import { Route as AuthenticatedApprovedLeaderboardRouteImport } from './routes/_authenticated/_approved/leaderboard'
+import { Route as AuthenticatedApprovedMembersRouteImport } from './routes/_authenticated/_approved/members'
+import { Route as AuthenticatedApprovedModerationRouteImport } from './routes/_authenticated/_approved/moderation'
+import { Route as AuthenticatedApprovedNewContentRouteImport } from './routes/_authenticated/_approved/new-content'
+import { Route as AuthenticatedApprovedProfileRouteImport } from './routes/_authenticated/_approved/profile'
+import { Route as AuthenticatedApprovedResponsiveCheckRouteImport } from './routes/_authenticated/_approved/responsive-check'
+import { Route as AuthenticatedApprovedReviewsRouteImport } from './routes/_authenticated/_approved/reviews'
+import { Route as AuthenticatedApprovedShiftsRouteImport } from './routes/_authenticated/_approved/shifts'
+import { Route as AuthenticatedApprovedShopRouteImport } from './routes/_authenticated/_approved/shop'
+import { Route as AuthenticatedApprovedSportsGuidesRouteImport } from './routes/_authenticated/_approved/sports-guides'
+import { Route as AuthenticatedApprovedStaffRouteImport } from './routes/_authenticated/_approved/staff'
+import { Route as AuthenticatedApprovedStatusRouteImport } from './routes/_authenticated/_approved/status'
+import { Route as AuthenticatedApprovedStreamingDevicesRouteImport } from './routes/_authenticated/_approved/streaming-devices'
+import { Route as AuthenticatedApprovedTicketsRouteImport } from './routes/_authenticated/_approved/tickets'
+import { Route as AuthenticatedApprovedVpnRouteImport } from './routes/_authenticated/_approved/vpn'
+import { Route as AuthenticatedApprovedWhatToWatchRouteImport } from './routes/_authenticated/_approved/what-to-watch'
+import { Route as ApiPublicBoroMatchDetailRouteImport } from './routes/api/public/boro-match-detail'
+import { Route as ApiPublicLinkPreviewRouteImport } from './routes/api/public/link-preview'
+import { Route as ApiPublicTweetRouteImport } from './routes/api/public/tweet'
+import { Route as ApiPublicTweetImageRouteImport } from './routes/api/public/tweet-image'
+import { Route as FanZoneBoardIndexRouteImport } from './routes/fan-zone.$board.index'
+import { Route as FanZoneBoardTopicRouteImport } from './routes/fan-zone.$board.$topic'
+import { Route as FanZoneUUserIdRouteImport } from './routes/fan-zone.u.$userId'
+import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
 import { Route as AuthenticatedApprovedFanzoneBlocksRouteImport } from './routes/_authenticated/_approved/fanzone.blocks'
-import { Route as AuthenticatedApprovedSportsGuidesReadIdRouteImport } from './routes/_authenticated/_approved/sports-guides.read.$id'
-import { Route as AuthenticatedApprovedSportsGuidesIdEditRouteImport } from './routes/_authenticated/_approved/sports-guides.$id.edit'
-import { Route as AuthenticatedApprovedForumBoardTopicRouteImport } from './routes/_authenticated/_approved/forum.$board.$topic'
-import { Route as AuthenticatedApprovedFanzoneUUserIdRouteImport } from './routes/_authenticated/_approved/fanzone.u.$userId'
+import { Route as AuthenticatedApprovedFanzoneMessagesRouteImport } from './routes/_authenticated/_approved/fanzone.messages'
+import { Route as AuthenticatedApprovedFanzoneProfileRouteImport } from './routes/_authenticated/_approved/fanzone.profile'
+import { Route as AuthenticatedApprovedForumBoardRouteImport } from './routes/_authenticated/_approved/forum.$board'
+import { Route as AuthenticatedApprovedForumSearchRouteImport } from './routes/_authenticated/_approved/forum.search'
+import { Route as AuthenticatedApprovedHomeIndexRouteImport } from './routes/_authenticated/_approved/home.index'
+import { Route as AuthenticatedApprovedHomeChannelRouteImport } from './routes/_authenticated/_approved/home.$channel'
+import { Route as AuthenticatedApprovedSportsGuidesNewRouteImport } from './routes/_authenticated/_approved/sports-guides.new'
+import { Route as AuthenticatedApprovedUUsernameRouteImport } from './routes/_authenticated/_approved/u.$username'
+import { Route as ApiPublicHooksBackupCredentialsRouteImport } from './routes/api/public/hooks/backup-credentials'
+import { Route as ApiPublicHooksBackupOrdersRouteImport } from './routes/api/public/hooks/backup-orders'
+import { Route as ApiPublicHooksBoroFetchFixturesRouteImport } from './routes/api/public/hooks/boro-fetch-fixtures'
+import { Route as ApiPublicHooksBoroMatchDemoRouteImport } from './routes/api/public/hooks/boro-match-demo'
+import { Route as ApiPublicHooksBoroMatchEventsRouteImport } from './routes/api/public/hooks/boro-match-events'
+import { Route as ApiPublicHooksBoroMatchThreadRouteImport } from './routes/api/public/hooks/boro-match-thread'
+import { Route as ApiPublicHooksBoroPredictionRemindersRouteImport } from './routes/api/public/hooks/boro-prediction-reminders'
+import { Route as ApiPublicHooksBoroPredictorInviteRouteImport } from './routes/api/public/hooks/boro-predictor-invite'
+import { Route as ApiPublicHooksBoroTeamSheetRouteImport } from './routes/api/public/hooks/boro-team-sheet'
+import { Route as ApiPublicHooksDeviceReleaseWatchRouteImport } from './routes/api/public/hooks/device-release-watch'
+import { Route as ApiPublicHooksEspnDebugRouteImport } from './routes/api/public/hooks/espn-debug'
+import { Route as ApiPublicHooksFantasySquadRemindersRouteImport } from './routes/api/public/hooks/fantasy-squad-reminders'
+import { Route as ApiPublicHooksFantasySquadSyncRouteImport } from './routes/api/public/hooks/fantasy-squad-sync'
+import { Route as ApiPublicHooksNotifyRouteImport } from './routes/api/public/hooks/notify'
+import { Route as ApiPublicHooksNowpaymentsRouteImport } from './routes/api/public/hooks/nowpayments'
+import { Route as ApiPublicHooksRefreshStreamingPricesRouteImport } from './routes/api/public/hooks/refresh-streaming-prices'
+import { Route as ApiPublicHooksRefreshStreamingStockRouteImport } from './routes/api/public/hooks/refresh-streaming-stock'
+import { Route as ApiPublicHooksScheduledRemindersRouteImport } from './routes/api/public/hooks/scheduled-reminders'
+import { Route as ApiPublicHooksSquareInvoiceRouteImport } from './routes/api/public/hooks/square-invoice'
+import { Route as ApiPublicHooksStaffNotificationPushRouteImport } from './routes/api/public/hooks/staff-notification-push'
+import { Route as ApiPublicHooksStatusIncidentPushRouteImport } from './routes/api/public/hooks/status-incident-push'
+import { Route as ApiPublicHooksSubscriptionExpiryRemindersRouteImport } from './routes/api/public/hooks/subscription-expiry-reminders'
+import { Route as ApiPublicHooksSyncBoroScoresRouteImport } from './routes/api/public/hooks/sync-boro-scores'
+import { Route as ApiPublicHooksSyncFantasyScoresRouteImport } from './routes/api/public/hooks/sync-fantasy-scores'
+import { Route as ApiPublicHooksSyncWcScoresRouteImport } from './routes/api/public/hooks/sync-wc-scores'
+import { Route as ApiPublicHooksUserNotificationPushRouteImport } from './routes/api/public/hooks/user-notification-push'
+import { Route as ApiPublicHooksWcPredictionRemindersRouteImport } from './routes/api/public/hooks/wc-prediction-reminders'
+import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
+import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
+import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
+import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
+import { Route as LovableEmailTransactionalSendRouteImport } from './routes/lovable/email/transactional/send'
 import { Route as AuthenticatedApprovedFanzoneMessagesThreadRouteImport } from './routes/_authenticated/_approved/fanzone.messages.$thread'
+import { Route as AuthenticatedApprovedFanzoneUUserIdRouteImport } from './routes/_authenticated/_approved/fanzone.u.$userId'
+import { Route as AuthenticatedApprovedForumBoardTopicRouteImport } from './routes/_authenticated/_approved/forum.$board.$topic'
+import { Route as AuthenticatedApprovedSportsGuidesIdEditRouteImport } from './routes/_authenticated/_approved/sports-guides.$id.edit'
+import { Route as AuthenticatedApprovedSportsGuidesReadIdRouteImport } from './routes/_authenticated/_approved/sports-guides.read.$id'
 
-const UnsubscribeRoute = UnsubscribeRouteImport.update({
-  id: '/unsubscribe',
-  path: '/unsubscribe',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SignupRoute = SignupRouteImport.update({
-  id: '/signup',
-  path: '/signup',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ResetPasswordRoute = ResetPasswordRouteImport.update({
-  id: '/reset-password',
-  path: '/reset-password',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PredictionsRoute = PredictionsRouteImport.update({
-  id: '/predictions',
-  path: '/predictions',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PackagesRoute = PackagesRouteImport.update({
-  id: '/packages',
-  path: '/packages',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const MfaChallengeRoute = MfaChallengeRouteImport.update({
-  id: '/mfa-challenge',
-  path: '/mfa-challenge',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
-  id: '/forgot-password',
-  path: '/forgot-password',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const FaqRoute = FaqRouteImport.update({
-  id: '/faq',
-  path: '/faq',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const FanZoneRoute = FanZoneRouteImport.update({
-  id: '/fan-zone',
-  path: '/fan-zone',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ContactRoute = ContactRouteImport.update({
-  id: '/contact',
-  path: '/contact',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CompetitionWinnersRoute = CompetitionWinnersRouteImport.update({
-  id: '/competition-winners',
-  path: '/competition-winners',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BoroPredictionsRoute = BoroPredictionsRouteImport.update({
-  id: '/boro-predictions',
-  path: '/boro-predictions',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BoroFantasyRoute = BoroFantasyRouteImport.update({
-  id: '/boro-fantasy',
-  path: '/boro-fantasy',
+const AuthenticatedRoute = AuthenticatedRouteImport.update({
+  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AboutRoute = AboutRouteImport.update({
@@ -213,13 +152,105 @@ const AboutRoute = AboutRouteImport.update({
   path: '/about',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedRoute = AuthenticatedRouteImport.update({
-  id: '/_authenticated',
+const BoroFantasyRoute = BoroFantasyRouteImport.update({
+  id: '/boro-fantasy',
+  path: '/boro-fantasy',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const BoroPredictionsRoute = BoroPredictionsRouteImport.update({
+  id: '/boro-predictions',
+  path: '/boro-predictions',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CompetitionWinnersRoute = CompetitionWinnersRouteImport.update({
+  id: '/competition-winners',
+  path: '/competition-winners',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContactRoute = ContactRouteImport.update({
+  id: '/contact',
+  path: '/contact',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FanZoneRoute = FanZoneRouteImport.update({
+  id: '/fan-zone',
+  path: '/fan-zone',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FaqRoute = FaqRouteImport.update({
+  id: '/faq',
+  path: '/faq',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
+  id: '/forgot-password',
+  path: '/forgot-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MfaChallengeRoute = MfaChallengeRouteImport.update({
+  id: '/mfa-challenge',
+  path: '/mfa-challenge',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PackagesRoute = PackagesRouteImport.update({
+  id: '/packages',
+  path: '/packages',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PredictionsRoute = PredictionsRouteImport.update({
+  id: '/predictions',
+  path: '/predictions',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SignupRoute = SignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const UnsubscribeRoute = UnsubscribeRouteImport.update({
+  id: '/unsubscribe',
+  path: '/unsubscribe',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedApprovedRoute = AuthenticatedApprovedRouteImport.update({
+  id: '/_approved',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedAccountRejectedRoute =
+  AuthenticatedAccountRejectedRouteImport.update({
+    id: '/account-rejected',
+    path: '/account-rejected',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedBannedRoute = AuthenticatedBannedRouteImport.update({
+  id: '/banned',
+  path: '/banned',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedFanZonePendingRoute =
+  AuthenticatedFanZonePendingRouteImport.update({
+    id: '/fan-zone-pending',
+    path: '/fan-zone-pending',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedGateRoute = AuthenticatedGateRouteImport.update({
+  id: '/gate',
+  path: '/gate',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const EmailUnsubscribeRoute = EmailUnsubscribeRouteImport.update({
+  id: '/email/unsubscribe',
+  path: '/email/unsubscribe',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FanZoneIndexRoute = FanZoneIndexRouteImport.update({
@@ -232,134 +263,238 @@ const FanZoneBoardRoute = FanZoneBoardRouteImport.update({
   path: '/$board',
   getParentRoute: () => FanZoneRoute,
 } as any)
-const EmailUnsubscribeRoute = EmailUnsubscribeRouteImport.update({
-  id: '/email/unsubscribe',
-  path: '/email/unsubscribe',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthenticatedGateRoute = AuthenticatedGateRouteImport.update({
-  id: '/gate',
-  path: '/gate',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
-const AuthenticatedFanZonePendingRoute =
-  AuthenticatedFanZonePendingRouteImport.update({
-    id: '/fan-zone-pending',
-    path: '/fan-zone-pending',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedBannedRoute = AuthenticatedBannedRouteImport.update({
-  id: '/banned',
-  path: '/banned',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
-const AuthenticatedAccountRejectedRoute =
-  AuthenticatedAccountRejectedRouteImport.update({
-    id: '/account-rejected',
-    path: '/account-rejected',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedApprovedRoute = AuthenticatedApprovedRouteImport.update({
-  id: '/_approved',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
-const FanZoneBoardIndexRoute = FanZoneBoardIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => FanZoneBoardRoute,
-} as any)
-const LovableEmailSuppressionRoute = LovableEmailSuppressionRouteImport.update({
-  id: '/lovable/email/suppression',
-  path: '/lovable/email/suppression',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const FanZoneUUserIdRoute = FanZoneUUserIdRouteImport.update({
-  id: '/u/$userId',
-  path: '/u/$userId',
-  getParentRoute: () => FanZoneRoute,
-} as any)
-const FanZoneBoardTopicRoute = FanZoneBoardTopicRouteImport.update({
-  id: '/$topic',
-  path: '/$topic',
-  getParentRoute: () => FanZoneBoardRoute,
-} as any)
-const ApiPublicTweetImageRoute = ApiPublicTweetImageRouteImport.update({
-  id: '/api/public/tweet-image',
-  path: '/api/public/tweet-image',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicTweetRoute = ApiPublicTweetRouteImport.update({
-  id: '/api/public/tweet',
-  path: '/api/public/tweet',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicLinkPreviewRoute = ApiPublicLinkPreviewRouteImport.update({
-  id: '/api/public/link-preview',
-  path: '/api/public/link-preview',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiPublicBoroMatchDetailRoute =
-  ApiPublicBoroMatchDetailRouteImport.update({
-    id: '/api/public/boro-match-detail',
-    path: '/api/public/boro-match-detail',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const AuthenticatedApprovedWhatToWatchRoute =
-  AuthenticatedApprovedWhatToWatchRouteImport.update({
-    id: '/what-to-watch',
-    path: '/what-to-watch',
+const AuthenticatedApprovedAccountSecurityRoute =
+  AuthenticatedApprovedAccountSecurityRouteImport.update({
+    id: '/account-security',
+    path: '/account-security',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
-const AuthenticatedApprovedVpnRoute =
-  AuthenticatedApprovedVpnRouteImport.update({
-    id: '/vpn',
-    path: '/vpn',
+const AuthenticatedApprovedAdminRoute =
+  AuthenticatedApprovedAdminRouteImport.update({
+    id: '/admin',
+    path: '/admin',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
-const AuthenticatedApprovedTicketsRoute =
-  AuthenticatedApprovedTicketsRouteImport.update({
-    id: '/tickets',
-    path: '/tickets',
+const AuthenticatedApprovedAdminAffiliateBannersRoute =
+  AuthenticatedApprovedAdminAffiliateBannersRouteImport.update({
+    id: '/admin-affiliate-banners',
+    path: '/admin-affiliate-banners',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
-const AuthenticatedApprovedStreamingDevicesRoute =
-  AuthenticatedApprovedStreamingDevicesRouteImport.update({
-    id: '/streaming-devices',
-    path: '/streaming-devices',
-    getParentRoute: () => AuthenticatedApprovedRoute,
-  } as any).lazy(() =>
-    import('./routes/_authenticated/_approved/streaming-devices.lazy').then(
-      (d) => d.Route,
-    ),
-  )
-const AuthenticatedApprovedStatusRoute =
-  AuthenticatedApprovedStatusRouteImport.update({
-    id: '/status',
-    path: '/status',
+const AuthenticatedApprovedAdminArchivedTicketsRoute =
+  AuthenticatedApprovedAdminArchivedTicketsRouteImport.update({
+    id: '/admin-archived-tickets',
+    path: '/admin-archived-tickets',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
-const AuthenticatedApprovedStaffRoute =
-  AuthenticatedApprovedStaffRouteImport.update({
-    id: '/staff',
-    path: '/staff',
+const AuthenticatedApprovedAdminBlacklistRoute =
+  AuthenticatedApprovedAdminBlacklistRouteImport.update({
+    id: '/admin-blacklist',
+    path: '/admin-blacklist',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
-const AuthenticatedApprovedSportsGuidesRoute =
-  AuthenticatedApprovedSportsGuidesRouteImport.update({
-    id: '/sports-guides',
-    path: '/sports-guides',
+const AuthenticatedApprovedAdminBoroTeamSheetRoute =
+  AuthenticatedApprovedAdminBoroTeamSheetRouteImport.update({
+    id: '/admin-boro-team-sheet',
+    path: '/admin-boro-team-sheet',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
-const AuthenticatedApprovedShopRoute =
-  AuthenticatedApprovedShopRouteImport.update({
-    id: '/shop',
-    path: '/shop',
+const AuthenticatedApprovedAdminBusinessHoursRoute =
+  AuthenticatedApprovedAdminBusinessHoursRouteImport.update({
+    id: '/admin-business-hours',
+    path: '/admin-business-hours',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
-const AuthenticatedApprovedShiftsRoute =
-  AuthenticatedApprovedShiftsRouteImport.update({
-    id: '/shifts',
-    path: '/shifts',
+const AuthenticatedApprovedAdminCredentialsRoute =
+  AuthenticatedApprovedAdminCredentialsRouteImport.update({
+    id: '/admin-credentials',
+    path: '/admin-credentials',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
+const AuthenticatedApprovedAdminDnsRoute =
+  AuthenticatedApprovedAdminDnsRouteImport.update({
+    id: '/admin-dns',
+    path: '/admin-dns',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
+const AuthenticatedApprovedAdminFanZoneRoute =
+  AuthenticatedApprovedAdminFanZoneRouteImport.update({
+    id: '/admin-fan-zone',
+    path: '/admin-fan-zone',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
+const AuthenticatedApprovedAdminFantasyInjuriesRoute =
+  AuthenticatedApprovedAdminFantasyInjuriesRouteImport.update({
+    id: '/admin-fantasy-injuries',
+    path: '/admin-fantasy-injuries',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
+const AuthenticatedApprovedAdminFantasyMotmRoute =
+  AuthenticatedApprovedAdminFantasyMotmRouteImport.update({
+    id: '/admin-fantasy-motm',
+    path: '/admin-fantasy-motm',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
+const AuthenticatedApprovedAdminFantasyScoringRoute =
+  AuthenticatedApprovedAdminFantasyScoringRouteImport.update({
+    id: '/admin-fantasy-scoring',
+    path: '/admin-fantasy-scoring',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
+const AuthenticatedApprovedAdminFantasySquadNumbersRoute =
+  AuthenticatedApprovedAdminFantasySquadNumbersRouteImport.update({
+    id: '/admin-fantasy-squad-numbers',
+    path: '/admin-fantasy-squad-numbers',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
+const AuthenticatedApprovedAdminForumRoute =
+  AuthenticatedApprovedAdminForumRouteImport.update({
+    id: '/admin-forum',
+    path: '/admin-forum',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
+const AuthenticatedApprovedAdminHeroBoxesRoute =
+  AuthenticatedApprovedAdminHeroBoxesRouteImport.update({
+    id: '/admin-hero-boxes',
+    path: '/admin-hero-boxes',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
+const AuthenticatedApprovedAdminNameplatesRoute =
+  AuthenticatedApprovedAdminNameplatesRouteImport.update({
+    id: '/admin-nameplates',
+    path: '/admin-nameplates',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
+const AuthenticatedApprovedAdminNotificationsRoute =
+  AuthenticatedApprovedAdminNotificationsRouteImport.update({
+    id: '/admin-notifications',
+    path: '/admin-notifications',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
+const AuthenticatedApprovedAdminPackagesRoute =
+  AuthenticatedApprovedAdminPackagesRouteImport.update({
+    id: '/admin-packages',
+    path: '/admin-packages',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
+const AuthenticatedApprovedAdminPermissionsRoute =
+  AuthenticatedApprovedAdminPermissionsRouteImport.update({
+    id: '/admin-permissions',
+    path: '/admin-permissions',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
+const AuthenticatedApprovedAdminPredictionsRoute =
+  AuthenticatedApprovedAdminPredictionsRouteImport.update({
+    id: '/admin-predictions',
+    path: '/admin-predictions',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
+const AuthenticatedApprovedAdminProfanityRoute =
+  AuthenticatedApprovedAdminProfanityRouteImport.update({
+    id: '/admin-profanity',
+    path: '/admin-profanity',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
+const AuthenticatedApprovedAdminReportsRoute =
+  AuthenticatedApprovedAdminReportsRouteImport.update({
+    id: '/admin-reports',
+    path: '/admin-reports',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
+const AuthenticatedApprovedAdminReviewsRoute =
+  AuthenticatedApprovedAdminReviewsRouteImport.update({
+    id: '/admin-reviews',
+    path: '/admin-reviews',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
+const AuthenticatedApprovedAdminRolesRoute =
+  AuthenticatedApprovedAdminRolesRouteImport.update({
+    id: '/admin-roles',
+    path: '/admin-roles',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
+const AuthenticatedApprovedAdminSportsImportRoute =
+  AuthenticatedApprovedAdminSportsImportRouteImport.update({
+    id: '/admin-sports-import',
+    path: '/admin-sports-import',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
+const AuthenticatedApprovedAdminStreamingDevicesRoute =
+  AuthenticatedApprovedAdminStreamingDevicesRouteImport.update({
+    id: '/admin-streaming-devices',
+    path: '/admin-streaming-devices',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
+const AuthenticatedApprovedAdminTicketCategoriesRoute =
+  AuthenticatedApprovedAdminTicketCategoriesRouteImport.update({
+    id: '/admin-ticket-categories',
+    path: '/admin-ticket-categories',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
+const AuthenticatedApprovedClockRoute =
+  AuthenticatedApprovedClockRouteImport.update({
+    id: '/clock',
+    path: '/clock',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
+const AuthenticatedApprovedForumRoute =
+  AuthenticatedApprovedForumRouteImport.update({
+    id: '/forum',
+    path: '/forum',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
+const AuthenticatedApprovedHomeRoute =
+  AuthenticatedApprovedHomeRouteImport.update({
+    id: '/home',
+    path: '/home',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
+const AuthenticatedApprovedInstallGuidesRoute =
+  AuthenticatedApprovedInstallGuidesRouteImport.update({
+    id: '/install-guides',
+    path: '/install-guides',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
+const AuthenticatedApprovedKnowledgeBaseRoute =
+  AuthenticatedApprovedKnowledgeBaseRouteImport.update({
+    id: '/knowledge-base',
+    path: '/knowledge-base',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
+const AuthenticatedApprovedLeaderboardRoute =
+  AuthenticatedApprovedLeaderboardRouteImport.update({
+    id: '/leaderboard',
+    path: '/leaderboard',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
+const AuthenticatedApprovedMembersRoute =
+  AuthenticatedApprovedMembersRouteImport.update({
+    id: '/members',
+    path: '/members',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
+const AuthenticatedApprovedModerationRoute =
+  AuthenticatedApprovedModerationRouteImport.update({
+    id: '/moderation',
+    path: '/moderation',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
+const AuthenticatedApprovedNewContentRoute =
+  AuthenticatedApprovedNewContentRouteImport.update({
+    id: '/new-content',
+    path: '/new-content',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
+const AuthenticatedApprovedProfileRoute =
+  AuthenticatedApprovedProfileRouteImport.update({
+    id: '/profile',
+    path: '/profile',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
+const AuthenticatedApprovedResponsiveCheckRoute =
+  AuthenticatedApprovedResponsiveCheckRouteImport.update({
+    id: '/responsive-check',
+    path: '/responsive-check',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
 const AuthenticatedApprovedReviewsRoute =
@@ -372,468 +507,109 @@ const AuthenticatedApprovedReviewsRoute =
       (d) => d.Route,
     ),
   )
-const AuthenticatedApprovedResponsiveCheckRoute =
-  AuthenticatedApprovedResponsiveCheckRouteImport.update({
-    id: '/responsive-check',
-    path: '/responsive-check',
+const AuthenticatedApprovedShiftsRoute =
+  AuthenticatedApprovedShiftsRouteImport.update({
+    id: '/shifts',
+    path: '/shifts',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
-const AuthenticatedApprovedProfileRoute =
-  AuthenticatedApprovedProfileRouteImport.update({
-    id: '/profile',
-    path: '/profile',
+const AuthenticatedApprovedShopRoute =
+  AuthenticatedApprovedShopRouteImport.update({
+    id: '/shop',
+    path: '/shop',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
-const AuthenticatedApprovedNewContentRoute =
-  AuthenticatedApprovedNewContentRouteImport.update({
-    id: '/new-content',
-    path: '/new-content',
+const AuthenticatedApprovedSportsGuidesRoute =
+  AuthenticatedApprovedSportsGuidesRouteImport.update({
+    id: '/sports-guides',
+    path: '/sports-guides',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
-const AuthenticatedApprovedModerationRoute =
-  AuthenticatedApprovedModerationRouteImport.update({
-    id: '/moderation',
-    path: '/moderation',
+const AuthenticatedApprovedStaffRoute =
+  AuthenticatedApprovedStaffRouteImport.update({
+    id: '/staff',
+    path: '/staff',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
-const AuthenticatedApprovedMembersRoute =
-  AuthenticatedApprovedMembersRouteImport.update({
-    id: '/members',
-    path: '/members',
+const AuthenticatedApprovedStatusRoute =
+  AuthenticatedApprovedStatusRouteImport.update({
+    id: '/status',
+    path: '/status',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
-const AuthenticatedApprovedLeaderboardRoute =
-  AuthenticatedApprovedLeaderboardRouteImport.update({
-    id: '/leaderboard',
-    path: '/leaderboard',
+const AuthenticatedApprovedStreamingDevicesRoute =
+  AuthenticatedApprovedStreamingDevicesRouteImport.update({
+    id: '/streaming-devices',
+    path: '/streaming-devices',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any).lazy(() =>
+    import('./routes/_authenticated/_approved/streaming-devices.lazy').then(
+      (d) => d.Route,
+    ),
+  )
+const AuthenticatedApprovedTicketsRoute =
+  AuthenticatedApprovedTicketsRouteImport.update({
+    id: '/tickets',
+    path: '/tickets',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
-const AuthenticatedApprovedKnowledgeBaseRoute =
-  AuthenticatedApprovedKnowledgeBaseRouteImport.update({
-    id: '/knowledge-base',
-    path: '/knowledge-base',
+const AuthenticatedApprovedVpnRoute =
+  AuthenticatedApprovedVpnRouteImport.update({
+    id: '/vpn',
+    path: '/vpn',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
-const AuthenticatedApprovedInstallGuidesRoute =
-  AuthenticatedApprovedInstallGuidesRouteImport.update({
-    id: '/install-guides',
-    path: '/install-guides',
+const AuthenticatedApprovedWhatToWatchRoute =
+  AuthenticatedApprovedWhatToWatchRouteImport.update({
+    id: '/what-to-watch',
+    path: '/what-to-watch',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
-const AuthenticatedApprovedHomeRoute =
-  AuthenticatedApprovedHomeRouteImport.update({
-    id: '/home',
-    path: '/home',
-    getParentRoute: () => AuthenticatedApprovedRoute,
-  } as any)
-const AuthenticatedApprovedForumRoute =
-  AuthenticatedApprovedForumRouteImport.update({
-    id: '/forum',
-    path: '/forum',
-    getParentRoute: () => AuthenticatedApprovedRoute,
-  } as any)
-const AuthenticatedApprovedClockRoute =
-  AuthenticatedApprovedClockRouteImport.update({
-    id: '/clock',
-    path: '/clock',
-    getParentRoute: () => AuthenticatedApprovedRoute,
-  } as any)
-const AuthenticatedApprovedAdminTicketCategoriesRoute =
-  AuthenticatedApprovedAdminTicketCategoriesRouteImport.update({
-    id: '/admin-ticket-categories',
-    path: '/admin-ticket-categories',
-    getParentRoute: () => AuthenticatedApprovedRoute,
-  } as any)
-const AuthenticatedApprovedAdminStreamingDevicesRoute =
-  AuthenticatedApprovedAdminStreamingDevicesRouteImport.update({
-    id: '/admin-streaming-devices',
-    path: '/admin-streaming-devices',
-    getParentRoute: () => AuthenticatedApprovedRoute,
-  } as any)
-const AuthenticatedApprovedAdminSportsImportRoute =
-  AuthenticatedApprovedAdminSportsImportRouteImport.update({
-    id: '/admin-sports-import',
-    path: '/admin-sports-import',
-    getParentRoute: () => AuthenticatedApprovedRoute,
-  } as any)
-const AuthenticatedApprovedAdminRolesRoute =
-  AuthenticatedApprovedAdminRolesRouteImport.update({
-    id: '/admin-roles',
-    path: '/admin-roles',
-    getParentRoute: () => AuthenticatedApprovedRoute,
-  } as any)
-const AuthenticatedApprovedAdminReviewsRoute =
-  AuthenticatedApprovedAdminReviewsRouteImport.update({
-    id: '/admin-reviews',
-    path: '/admin-reviews',
-    getParentRoute: () => AuthenticatedApprovedRoute,
-  } as any)
-const AuthenticatedApprovedAdminReportsRoute =
-  AuthenticatedApprovedAdminReportsRouteImport.update({
-    id: '/admin-reports',
-    path: '/admin-reports',
-    getParentRoute: () => AuthenticatedApprovedRoute,
-  } as any)
-const AuthenticatedApprovedAdminProfanityRoute =
-  AuthenticatedApprovedAdminProfanityRouteImport.update({
-    id: '/admin-profanity',
-    path: '/admin-profanity',
-    getParentRoute: () => AuthenticatedApprovedRoute,
-  } as any)
-const AuthenticatedApprovedAdminPredictionsRoute =
-  AuthenticatedApprovedAdminPredictionsRouteImport.update({
-    id: '/admin-predictions',
-    path: '/admin-predictions',
-    getParentRoute: () => AuthenticatedApprovedRoute,
-  } as any)
-const AuthenticatedApprovedAdminPermissionsRoute =
-  AuthenticatedApprovedAdminPermissionsRouteImport.update({
-    id: '/admin-permissions',
-    path: '/admin-permissions',
-    getParentRoute: () => AuthenticatedApprovedRoute,
-  } as any)
-const AuthenticatedApprovedAdminPackagesRoute =
-  AuthenticatedApprovedAdminPackagesRouteImport.update({
-    id: '/admin-packages',
-    path: '/admin-packages',
-    getParentRoute: () => AuthenticatedApprovedRoute,
-  } as any)
-const AuthenticatedApprovedAdminNotificationsRoute =
-  AuthenticatedApprovedAdminNotificationsRouteImport.update({
-    id: '/admin-notifications',
-    path: '/admin-notifications',
-    getParentRoute: () => AuthenticatedApprovedRoute,
-  } as any)
-const AuthenticatedApprovedAdminNameplatesRoute =
-  AuthenticatedApprovedAdminNameplatesRouteImport.update({
-    id: '/admin-nameplates',
-    path: '/admin-nameplates',
-    getParentRoute: () => AuthenticatedApprovedRoute,
-  } as any)
-const AuthenticatedApprovedAdminHeroBoxesRoute =
-  AuthenticatedApprovedAdminHeroBoxesRouteImport.update({
-    id: '/admin-hero-boxes',
-    path: '/admin-hero-boxes',
-    getParentRoute: () => AuthenticatedApprovedRoute,
-  } as any)
-const AuthenticatedApprovedAdminForumRoute =
-  AuthenticatedApprovedAdminForumRouteImport.update({
-    id: '/admin-forum',
-    path: '/admin-forum',
-    getParentRoute: () => AuthenticatedApprovedRoute,
-  } as any)
-const AuthenticatedApprovedAdminFantasySquadNumbersRoute =
-  AuthenticatedApprovedAdminFantasySquadNumbersRouteImport.update({
-    id: '/admin-fantasy-squad-numbers',
-    path: '/admin-fantasy-squad-numbers',
-    getParentRoute: () => AuthenticatedApprovedRoute,
-  } as any)
-const AuthenticatedApprovedAdminFantasyScoringRoute =
-  AuthenticatedApprovedAdminFantasyScoringRouteImport.update({
-    id: '/admin-fantasy-scoring',
-    path: '/admin-fantasy-scoring',
-    getParentRoute: () => AuthenticatedApprovedRoute,
-  } as any)
-const AuthenticatedApprovedAdminFantasyMotmRoute =
-  AuthenticatedApprovedAdminFantasyMotmRouteImport.update({
-    id: '/admin-fantasy-motm',
-    path: '/admin-fantasy-motm',
-    getParentRoute: () => AuthenticatedApprovedRoute,
-  } as any)
-const AuthenticatedApprovedAdminFantasyInjuriesRoute =
-  AuthenticatedApprovedAdminFantasyInjuriesRouteImport.update({
-    id: '/admin-fantasy-injuries',
-    path: '/admin-fantasy-injuries',
-    getParentRoute: () => AuthenticatedApprovedRoute,
-  } as any)
-const AuthenticatedApprovedAdminFanZoneRoute =
-  AuthenticatedApprovedAdminFanZoneRouteImport.update({
-    id: '/admin-fan-zone',
-    path: '/admin-fan-zone',
-    getParentRoute: () => AuthenticatedApprovedRoute,
-  } as any)
-const AuthenticatedApprovedAdminDnsRoute =
-  AuthenticatedApprovedAdminDnsRouteImport.update({
-    id: '/admin-dns',
-    path: '/admin-dns',
-    getParentRoute: () => AuthenticatedApprovedRoute,
-  } as any)
-const AuthenticatedApprovedAdminCredentialsRoute =
-  AuthenticatedApprovedAdminCredentialsRouteImport.update({
-    id: '/admin-credentials',
-    path: '/admin-credentials',
-    getParentRoute: () => AuthenticatedApprovedRoute,
-  } as any)
-const AuthenticatedApprovedAdminBusinessHoursRoute =
-  AuthenticatedApprovedAdminBusinessHoursRouteImport.update({
-    id: '/admin-business-hours',
-    path: '/admin-business-hours',
-    getParentRoute: () => AuthenticatedApprovedRoute,
-  } as any)
-const AuthenticatedApprovedAdminBoroTeamSheetRoute =
-  AuthenticatedApprovedAdminBoroTeamSheetRouteImport.update({
-    id: '/admin-boro-team-sheet',
-    path: '/admin-boro-team-sheet',
-    getParentRoute: () => AuthenticatedApprovedRoute,
-  } as any)
-const AuthenticatedApprovedAdminBlacklistRoute =
-  AuthenticatedApprovedAdminBlacklistRouteImport.update({
-    id: '/admin-blacklist',
-    path: '/admin-blacklist',
-    getParentRoute: () => AuthenticatedApprovedRoute,
-  } as any)
-const AuthenticatedApprovedAdminArchivedTicketsRoute =
-  AuthenticatedApprovedAdminArchivedTicketsRouteImport.update({
-    id: '/admin-archived-tickets',
-    path: '/admin-archived-tickets',
-    getParentRoute: () => AuthenticatedApprovedRoute,
-  } as any)
-const AuthenticatedApprovedAdminAffiliateBannersRoute =
-  AuthenticatedApprovedAdminAffiliateBannersRouteImport.update({
-    id: '/admin-affiliate-banners',
-    path: '/admin-affiliate-banners',
-    getParentRoute: () => AuthenticatedApprovedRoute,
-  } as any)
-const AuthenticatedApprovedAdminRoute =
-  AuthenticatedApprovedAdminRouteImport.update({
-    id: '/admin',
-    path: '/admin',
-    getParentRoute: () => AuthenticatedApprovedRoute,
-  } as any)
-const AuthenticatedApprovedAccountSecurityRoute =
-  AuthenticatedApprovedAccountSecurityRouteImport.update({
-    id: '/account-security',
-    path: '/account-security',
-    getParentRoute: () => AuthenticatedApprovedRoute,
-  } as any)
-const AuthenticatedApprovedHomeIndexRoute =
-  AuthenticatedApprovedHomeIndexRouteImport.update({
-    id: '/',
-    path: '/',
-    getParentRoute: () => AuthenticatedApprovedHomeRoute,
-  } as any)
-const LovableEmailTransactionalSendRoute =
-  LovableEmailTransactionalSendRouteImport.update({
-    id: '/lovable/email/transactional/send',
-    path: '/lovable/email/transactional/send',
+const ApiPublicBoroMatchDetailRoute =
+  ApiPublicBoroMatchDetailRouteImport.update({
+    id: '/api/public/boro-match-detail',
+    path: '/api/public/boro-match-detail',
     getParentRoute: () => rootRouteImport,
   } as any)
-const LovableEmailTransactionalPreviewRoute =
-  LovableEmailTransactionalPreviewRouteImport.update({
-    id: '/lovable/email/transactional/preview',
-    path: '/lovable/email/transactional/preview',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const LovableEmailQueueProcessRoute =
-  LovableEmailQueueProcessRouteImport.update({
-    id: '/lovable/email/queue/process',
-    path: '/lovable/email/queue/process',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const LovableEmailAuthWebhookRoute = LovableEmailAuthWebhookRouteImport.update({
-  id: '/lovable/email/auth/webhook',
-  path: '/lovable/email/auth/webhook',
+const ApiPublicLinkPreviewRoute = ApiPublicLinkPreviewRouteImport.update({
+  id: '/api/public/link-preview',
+  path: '/api/public/link-preview',
   getParentRoute: () => rootRouteImport,
 } as any)
-const LovableEmailAuthPreviewRoute = LovableEmailAuthPreviewRouteImport.update({
-  id: '/lovable/email/auth/preview',
-  path: '/lovable/email/auth/preview',
+const ApiPublicTweetRoute = ApiPublicTweetRouteImport.update({
+  id: '/api/public/tweet',
+  path: '/api/public/tweet',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicHooksWcPredictionRemindersRoute =
-  ApiPublicHooksWcPredictionRemindersRouteImport.update({
-    id: '/api/public/hooks/wc-prediction-reminders',
-    path: '/api/public/hooks/wc-prediction-reminders',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicHooksUserNotificationPushRoute =
-  ApiPublicHooksUserNotificationPushRouteImport.update({
-    id: '/api/public/hooks/user-notification-push',
-    path: '/api/public/hooks/user-notification-push',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicHooksSyncWcScoresRoute =
-  ApiPublicHooksSyncWcScoresRouteImport.update({
-    id: '/api/public/hooks/sync-wc-scores',
-    path: '/api/public/hooks/sync-wc-scores',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicHooksSyncFantasyScoresRoute =
-  ApiPublicHooksSyncFantasyScoresRouteImport.update({
-    id: '/api/public/hooks/sync-fantasy-scores',
-    path: '/api/public/hooks/sync-fantasy-scores',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicHooksSyncBoroScoresRoute =
-  ApiPublicHooksSyncBoroScoresRouteImport.update({
-    id: '/api/public/hooks/sync-boro-scores',
-    path: '/api/public/hooks/sync-boro-scores',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicHooksSubscriptionExpiryRemindersRoute =
-  ApiPublicHooksSubscriptionExpiryRemindersRouteImport.update({
-    id: '/api/public/hooks/subscription-expiry-reminders',
-    path: '/api/public/hooks/subscription-expiry-reminders',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicHooksStatusIncidentPushRoute =
-  ApiPublicHooksStatusIncidentPushRouteImport.update({
-    id: '/api/public/hooks/status-incident-push',
-    path: '/api/public/hooks/status-incident-push',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicHooksStaffNotificationPushRoute =
-  ApiPublicHooksStaffNotificationPushRouteImport.update({
-    id: '/api/public/hooks/staff-notification-push',
-    path: '/api/public/hooks/staff-notification-push',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicHooksSquareInvoiceRoute =
-  ApiPublicHooksSquareInvoiceRouteImport.update({
-    id: '/api/public/hooks/square-invoice',
-    path: '/api/public/hooks/square-invoice',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicHooksScheduledRemindersRoute =
-  ApiPublicHooksScheduledRemindersRouteImport.update({
-    id: '/api/public/hooks/scheduled-reminders',
-    path: '/api/public/hooks/scheduled-reminders',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicHooksRefreshStreamingStockRoute =
-  ApiPublicHooksRefreshStreamingStockRouteImport.update({
-    id: '/api/public/hooks/refresh-streaming-stock',
-    path: '/api/public/hooks/refresh-streaming-stock',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicHooksRefreshStreamingPricesRoute =
-  ApiPublicHooksRefreshStreamingPricesRouteImport.update({
-    id: '/api/public/hooks/refresh-streaming-prices',
-    path: '/api/public/hooks/refresh-streaming-prices',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicHooksNowpaymentsRoute =
-  ApiPublicHooksNowpaymentsRouteImport.update({
-    id: '/api/public/hooks/nowpayments',
-    path: '/api/public/hooks/nowpayments',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicHooksNotifyRoute = ApiPublicHooksNotifyRouteImport.update({
-  id: '/api/public/hooks/notify',
-  path: '/api/public/hooks/notify',
+const ApiPublicTweetImageRoute = ApiPublicTweetImageRouteImport.update({
+  id: '/api/public/tweet-image',
+  path: '/api/public/tweet-image',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicHooksFantasySquadSyncRoute =
-  ApiPublicHooksFantasySquadSyncRouteImport.update({
-    id: '/api/public/hooks/fantasy-squad-sync',
-    path: '/api/public/hooks/fantasy-squad-sync',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicHooksFantasySquadRemindersRoute =
-  ApiPublicHooksFantasySquadRemindersRouteImport.update({
-    id: '/api/public/hooks/fantasy-squad-reminders',
-    path: '/api/public/hooks/fantasy-squad-reminders',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicHooksEspnDebugRoute = ApiPublicHooksEspnDebugRouteImport.update({
-  id: '/api/public/hooks/espn-debug',
-  path: '/api/public/hooks/espn-debug',
+const FanZoneBoardIndexRoute = FanZoneBoardIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => FanZoneBoardRoute,
+} as any)
+const FanZoneBoardTopicRoute = FanZoneBoardTopicRouteImport.update({
+  id: '/$topic',
+  path: '/$topic',
+  getParentRoute: () => FanZoneBoardRoute,
+} as any)
+const FanZoneUUserIdRoute = FanZoneUUserIdRouteImport.update({
+  id: '/u/$userId',
+  path: '/u/$userId',
+  getParentRoute: () => FanZoneRoute,
+} as any)
+const LovableEmailSuppressionRoute = LovableEmailSuppressionRouteImport.update({
+  id: '/lovable/email/suppression',
+  path: '/lovable/email/suppression',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicHooksDeviceReleaseWatchRoute =
-  ApiPublicHooksDeviceReleaseWatchRouteImport.update({
-    id: '/api/public/hooks/device-release-watch',
-    path: '/api/public/hooks/device-release-watch',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicHooksBoroTeamSheetRoute =
-  ApiPublicHooksBoroTeamSheetRouteImport.update({
-    id: '/api/public/hooks/boro-team-sheet',
-    path: '/api/public/hooks/boro-team-sheet',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicHooksBoroPredictorInviteRoute =
-  ApiPublicHooksBoroPredictorInviteRouteImport.update({
-    id: '/api/public/hooks/boro-predictor-invite',
-    path: '/api/public/hooks/boro-predictor-invite',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicHooksBoroPredictionRemindersRoute =
-  ApiPublicHooksBoroPredictionRemindersRouteImport.update({
-    id: '/api/public/hooks/boro-prediction-reminders',
-    path: '/api/public/hooks/boro-prediction-reminders',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicHooksBoroMatchThreadRoute =
-  ApiPublicHooksBoroMatchThreadRouteImport.update({
-    id: '/api/public/hooks/boro-match-thread',
-    path: '/api/public/hooks/boro-match-thread',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicHooksBoroMatchEventsRoute =
-  ApiPublicHooksBoroMatchEventsRouteImport.update({
-    id: '/api/public/hooks/boro-match-events',
-    path: '/api/public/hooks/boro-match-events',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicHooksBoroMatchDemoRoute =
-  ApiPublicHooksBoroMatchDemoRouteImport.update({
-    id: '/api/public/hooks/boro-match-demo',
-    path: '/api/public/hooks/boro-match-demo',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicHooksBoroFetchFixturesRoute =
-  ApiPublicHooksBoroFetchFixturesRouteImport.update({
-    id: '/api/public/hooks/boro-fetch-fixtures',
-    path: '/api/public/hooks/boro-fetch-fixtures',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicHooksBackupOrdersRoute =
-  ApiPublicHooksBackupOrdersRouteImport.update({
-    id: '/api/public/hooks/backup-orders',
-    path: '/api/public/hooks/backup-orders',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const ApiPublicHooksBackupCredentialsRoute =
-  ApiPublicHooksBackupCredentialsRouteImport.update({
-    id: '/api/public/hooks/backup-credentials',
-    path: '/api/public/hooks/backup-credentials',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const AuthenticatedApprovedUUsernameRoute =
-  AuthenticatedApprovedUUsernameRouteImport.update({
-    id: '/u/$username',
-    path: '/u/$username',
-    getParentRoute: () => AuthenticatedApprovedRoute,
-  } as any)
-const AuthenticatedApprovedSportsGuidesNewRoute =
-  AuthenticatedApprovedSportsGuidesNewRouteImport.update({
-    id: '/new',
-    path: '/new',
-    getParentRoute: () => AuthenticatedApprovedSportsGuidesRoute,
-  } as any)
-const AuthenticatedApprovedHomeChannelRoute =
-  AuthenticatedApprovedHomeChannelRouteImport.update({
-    id: '/$channel',
-    path: '/$channel',
-    getParentRoute: () => AuthenticatedApprovedHomeRoute,
-  } as any)
-const AuthenticatedApprovedForumSearchRoute =
-  AuthenticatedApprovedForumSearchRouteImport.update({
-    id: '/search',
-    path: '/search',
-    getParentRoute: () => AuthenticatedApprovedForumRoute,
-  } as any)
-const AuthenticatedApprovedForumBoardRoute =
-  AuthenticatedApprovedForumBoardRouteImport.update({
-    id: '/$board',
-    path: '/$board',
-    getParentRoute: () => AuthenticatedApprovedForumRoute,
-  } as any)
-const AuthenticatedApprovedFanzoneProfileRoute =
-  AuthenticatedApprovedFanzoneProfileRouteImport.update({
-    id: '/fanzone/profile',
-    path: '/fanzone/profile',
+const AuthenticatedApprovedFanzoneBlocksRoute =
+  AuthenticatedApprovedFanzoneBlocksRouteImport.update({
+    id: '/fanzone/blocks',
+    path: '/fanzone/blocks',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
 const AuthenticatedApprovedFanzoneMessagesRoute =
@@ -842,29 +618,241 @@ const AuthenticatedApprovedFanzoneMessagesRoute =
     path: '/fanzone/messages',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
-const AuthenticatedApprovedFanzoneBlocksRoute =
-  AuthenticatedApprovedFanzoneBlocksRouteImport.update({
-    id: '/fanzone/blocks',
-    path: '/fanzone/blocks',
+const AuthenticatedApprovedFanzoneProfileRoute =
+  AuthenticatedApprovedFanzoneProfileRouteImport.update({
+    id: '/fanzone/profile',
+    path: '/fanzone/profile',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
-const AuthenticatedApprovedSportsGuidesReadIdRoute =
-  AuthenticatedApprovedSportsGuidesReadIdRouteImport.update({
-    id: '/read/$id',
-    path: '/read/$id',
+const AuthenticatedApprovedForumBoardRoute =
+  AuthenticatedApprovedForumBoardRouteImport.update({
+    id: '/$board',
+    path: '/$board',
+    getParentRoute: () => AuthenticatedApprovedForumRoute,
+  } as any)
+const AuthenticatedApprovedForumSearchRoute =
+  AuthenticatedApprovedForumSearchRouteImport.update({
+    id: '/search',
+    path: '/search',
+    getParentRoute: () => AuthenticatedApprovedForumRoute,
+  } as any)
+const AuthenticatedApprovedHomeIndexRoute =
+  AuthenticatedApprovedHomeIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedApprovedHomeRoute,
+  } as any)
+const AuthenticatedApprovedHomeChannelRoute =
+  AuthenticatedApprovedHomeChannelRouteImport.update({
+    id: '/$channel',
+    path: '/$channel',
+    getParentRoute: () => AuthenticatedApprovedHomeRoute,
+  } as any)
+const AuthenticatedApprovedSportsGuidesNewRoute =
+  AuthenticatedApprovedSportsGuidesNewRouteImport.update({
+    id: '/new',
+    path: '/new',
     getParentRoute: () => AuthenticatedApprovedSportsGuidesRoute,
   } as any)
-const AuthenticatedApprovedSportsGuidesIdEditRoute =
-  AuthenticatedApprovedSportsGuidesIdEditRouteImport.update({
-    id: '/$id/edit',
-    path: '/$id/edit',
-    getParentRoute: () => AuthenticatedApprovedSportsGuidesRoute,
+const AuthenticatedApprovedUUsernameRoute =
+  AuthenticatedApprovedUUsernameRouteImport.update({
+    id: '/u/$username',
+    path: '/u/$username',
+    getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
-const AuthenticatedApprovedForumBoardTopicRoute =
-  AuthenticatedApprovedForumBoardTopicRouteImport.update({
-    id: '/$topic',
-    path: '/$topic',
-    getParentRoute: () => AuthenticatedApprovedForumBoardRoute,
+const ApiPublicHooksBackupCredentialsRoute =
+  ApiPublicHooksBackupCredentialsRouteImport.update({
+    id: '/api/public/hooks/backup-credentials',
+    path: '/api/public/hooks/backup-credentials',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksBackupOrdersRoute =
+  ApiPublicHooksBackupOrdersRouteImport.update({
+    id: '/api/public/hooks/backup-orders',
+    path: '/api/public/hooks/backup-orders',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksBoroFetchFixturesRoute =
+  ApiPublicHooksBoroFetchFixturesRouteImport.update({
+    id: '/api/public/hooks/boro-fetch-fixtures',
+    path: '/api/public/hooks/boro-fetch-fixtures',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksBoroMatchDemoRoute =
+  ApiPublicHooksBoroMatchDemoRouteImport.update({
+    id: '/api/public/hooks/boro-match-demo',
+    path: '/api/public/hooks/boro-match-demo',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksBoroMatchEventsRoute =
+  ApiPublicHooksBoroMatchEventsRouteImport.update({
+    id: '/api/public/hooks/boro-match-events',
+    path: '/api/public/hooks/boro-match-events',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksBoroMatchThreadRoute =
+  ApiPublicHooksBoroMatchThreadRouteImport.update({
+    id: '/api/public/hooks/boro-match-thread',
+    path: '/api/public/hooks/boro-match-thread',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksBoroPredictionRemindersRoute =
+  ApiPublicHooksBoroPredictionRemindersRouteImport.update({
+    id: '/api/public/hooks/boro-prediction-reminders',
+    path: '/api/public/hooks/boro-prediction-reminders',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksBoroPredictorInviteRoute =
+  ApiPublicHooksBoroPredictorInviteRouteImport.update({
+    id: '/api/public/hooks/boro-predictor-invite',
+    path: '/api/public/hooks/boro-predictor-invite',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksBoroTeamSheetRoute =
+  ApiPublicHooksBoroTeamSheetRouteImport.update({
+    id: '/api/public/hooks/boro-team-sheet',
+    path: '/api/public/hooks/boro-team-sheet',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksDeviceReleaseWatchRoute =
+  ApiPublicHooksDeviceReleaseWatchRouteImport.update({
+    id: '/api/public/hooks/device-release-watch',
+    path: '/api/public/hooks/device-release-watch',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksEspnDebugRoute = ApiPublicHooksEspnDebugRouteImport.update({
+  id: '/api/public/hooks/espn-debug',
+  path: '/api/public/hooks/espn-debug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicHooksFantasySquadRemindersRoute =
+  ApiPublicHooksFantasySquadRemindersRouteImport.update({
+    id: '/api/public/hooks/fantasy-squad-reminders',
+    path: '/api/public/hooks/fantasy-squad-reminders',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksFantasySquadSyncRoute =
+  ApiPublicHooksFantasySquadSyncRouteImport.update({
+    id: '/api/public/hooks/fantasy-squad-sync',
+    path: '/api/public/hooks/fantasy-squad-sync',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksNotifyRoute = ApiPublicHooksNotifyRouteImport.update({
+  id: '/api/public/hooks/notify',
+  path: '/api/public/hooks/notify',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicHooksNowpaymentsRoute =
+  ApiPublicHooksNowpaymentsRouteImport.update({
+    id: '/api/public/hooks/nowpayments',
+    path: '/api/public/hooks/nowpayments',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksRefreshStreamingPricesRoute =
+  ApiPublicHooksRefreshStreamingPricesRouteImport.update({
+    id: '/api/public/hooks/refresh-streaming-prices',
+    path: '/api/public/hooks/refresh-streaming-prices',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksRefreshStreamingStockRoute =
+  ApiPublicHooksRefreshStreamingStockRouteImport.update({
+    id: '/api/public/hooks/refresh-streaming-stock',
+    path: '/api/public/hooks/refresh-streaming-stock',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksScheduledRemindersRoute =
+  ApiPublicHooksScheduledRemindersRouteImport.update({
+    id: '/api/public/hooks/scheduled-reminders',
+    path: '/api/public/hooks/scheduled-reminders',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksSquareInvoiceRoute =
+  ApiPublicHooksSquareInvoiceRouteImport.update({
+    id: '/api/public/hooks/square-invoice',
+    path: '/api/public/hooks/square-invoice',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksStaffNotificationPushRoute =
+  ApiPublicHooksStaffNotificationPushRouteImport.update({
+    id: '/api/public/hooks/staff-notification-push',
+    path: '/api/public/hooks/staff-notification-push',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksStatusIncidentPushRoute =
+  ApiPublicHooksStatusIncidentPushRouteImport.update({
+    id: '/api/public/hooks/status-incident-push',
+    path: '/api/public/hooks/status-incident-push',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksSubscriptionExpiryRemindersRoute =
+  ApiPublicHooksSubscriptionExpiryRemindersRouteImport.update({
+    id: '/api/public/hooks/subscription-expiry-reminders',
+    path: '/api/public/hooks/subscription-expiry-reminders',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksSyncBoroScoresRoute =
+  ApiPublicHooksSyncBoroScoresRouteImport.update({
+    id: '/api/public/hooks/sync-boro-scores',
+    path: '/api/public/hooks/sync-boro-scores',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksSyncFantasyScoresRoute =
+  ApiPublicHooksSyncFantasyScoresRouteImport.update({
+    id: '/api/public/hooks/sync-fantasy-scores',
+    path: '/api/public/hooks/sync-fantasy-scores',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksSyncWcScoresRoute =
+  ApiPublicHooksSyncWcScoresRouteImport.update({
+    id: '/api/public/hooks/sync-wc-scores',
+    path: '/api/public/hooks/sync-wc-scores',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksUserNotificationPushRoute =
+  ApiPublicHooksUserNotificationPushRouteImport.update({
+    id: '/api/public/hooks/user-notification-push',
+    path: '/api/public/hooks/user-notification-push',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicHooksWcPredictionRemindersRoute =
+  ApiPublicHooksWcPredictionRemindersRouteImport.update({
+    id: '/api/public/hooks/wc-prediction-reminders',
+    path: '/api/public/hooks/wc-prediction-reminders',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const LovableEmailAuthPreviewRoute = LovableEmailAuthPreviewRouteImport.update({
+  id: '/lovable/email/auth/preview',
+  path: '/lovable/email/auth/preview',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LovableEmailAuthWebhookRoute = LovableEmailAuthWebhookRouteImport.update({
+  id: '/lovable/email/auth/webhook',
+  path: '/lovable/email/auth/webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LovableEmailQueueProcessRoute =
+  LovableEmailQueueProcessRouteImport.update({
+    id: '/lovable/email/queue/process',
+    path: '/lovable/email/queue/process',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const LovableEmailTransactionalPreviewRoute =
+  LovableEmailTransactionalPreviewRouteImport.update({
+    id: '/lovable/email/transactional/preview',
+    path: '/lovable/email/transactional/preview',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const LovableEmailTransactionalSendRoute =
+  LovableEmailTransactionalSendRouteImport.update({
+    id: '/lovable/email/transactional/send',
+    path: '/lovable/email/transactional/send',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const AuthenticatedApprovedFanzoneMessagesThreadRoute =
+  AuthenticatedApprovedFanzoneMessagesThreadRouteImport.update({
+    id: '/$thread',
+    path: '/$thread',
+    getParentRoute: () => AuthenticatedApprovedFanzoneMessagesRoute,
   } as any)
 const AuthenticatedApprovedFanzoneUUserIdRoute =
   AuthenticatedApprovedFanzoneUUserIdRouteImport.update({
@@ -872,11 +860,23 @@ const AuthenticatedApprovedFanzoneUUserIdRoute =
     path: '/fanzone/u/$userId',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
-const AuthenticatedApprovedFanzoneMessagesThreadRoute =
-  AuthenticatedApprovedFanzoneMessagesThreadRouteImport.update({
-    id: '/$thread',
-    path: '/$thread',
-    getParentRoute: () => AuthenticatedApprovedFanzoneMessagesRoute,
+const AuthenticatedApprovedForumBoardTopicRoute =
+  AuthenticatedApprovedForumBoardTopicRouteImport.update({
+    id: '/$topic',
+    path: '/$topic',
+    getParentRoute: () => AuthenticatedApprovedForumBoardRoute,
+  } as any)
+const AuthenticatedApprovedSportsGuidesIdEditRoute =
+  AuthenticatedApprovedSportsGuidesIdEditRouteImport.update({
+    id: '/$id/edit',
+    path: '/$id/edit',
+    getParentRoute: () => AuthenticatedApprovedSportsGuidesRoute,
+  } as any)
+const AuthenticatedApprovedSportsGuidesReadIdRoute =
+  AuthenticatedApprovedSportsGuidesReadIdRouteImport.update({
+    id: '/read/$id',
+    path: '/read/$id',
+    getParentRoute: () => AuthenticatedApprovedSportsGuidesRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -1709,109 +1709,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/unsubscribe': {
-      id: '/unsubscribe'
-      path: '/unsubscribe'
-      fullPath: '/unsubscribe'
-      preLoaderRoute: typeof UnsubscribeRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/signup': {
-      id: '/signup'
-      path: '/signup'
-      fullPath: '/signup'
-      preLoaderRoute: typeof SignupRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/reset-password': {
-      id: '/reset-password'
-      path: '/reset-password'
-      fullPath: '/reset-password'
-      preLoaderRoute: typeof ResetPasswordRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/predictions': {
-      id: '/predictions'
-      path: '/predictions'
-      fullPath: '/predictions'
-      preLoaderRoute: typeof PredictionsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/packages': {
-      id: '/packages'
-      path: '/packages'
-      fullPath: '/packages'
-      preLoaderRoute: typeof PackagesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/mfa-challenge': {
-      id: '/mfa-challenge'
-      path: '/mfa-challenge'
-      fullPath: '/mfa-challenge'
-      preLoaderRoute: typeof MfaChallengeRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/forgot-password': {
-      id: '/forgot-password'
-      path: '/forgot-password'
-      fullPath: '/forgot-password'
-      preLoaderRoute: typeof ForgotPasswordRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/faq': {
-      id: '/faq'
-      path: '/faq'
-      fullPath: '/faq'
-      preLoaderRoute: typeof FaqRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/fan-zone': {
-      id: '/fan-zone'
-      path: '/fan-zone'
-      fullPath: '/fan-zone'
-      preLoaderRoute: typeof FanZoneRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/contact': {
-      id: '/contact'
-      path: '/contact'
-      fullPath: '/contact'
-      preLoaderRoute: typeof ContactRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/competition-winners': {
-      id: '/competition-winners'
-      path: '/competition-winners'
-      fullPath: '/competition-winners'
-      preLoaderRoute: typeof CompetitionWinnersRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/boro-predictions': {
-      id: '/boro-predictions'
-      path: '/boro-predictions'
-      fullPath: '/boro-predictions'
-      preLoaderRoute: typeof BoroPredictionsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/boro-fantasy': {
-      id: '/boro-fantasy'
-      path: '/boro-fantasy'
-      fullPath: '/boro-fantasy'
-      preLoaderRoute: typeof BoroFantasyRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/about': {
-      id: '/about'
-      path: '/about'
-      fullPath: '/about'
-      preLoaderRoute: typeof AboutRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -1821,11 +1723,151 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
+    '/about': {
+      id: '/about'
+      path: '/about'
+      fullPath: '/about'
+      preLoaderRoute: typeof AboutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/boro-fantasy': {
+      id: '/boro-fantasy'
+      path: '/boro-fantasy'
+      fullPath: '/boro-fantasy'
+      preLoaderRoute: typeof BoroFantasyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/boro-predictions': {
+      id: '/boro-predictions'
+      path: '/boro-predictions'
+      fullPath: '/boro-predictions'
+      preLoaderRoute: typeof BoroPredictionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/competition-winners': {
+      id: '/competition-winners'
+      path: '/competition-winners'
+      fullPath: '/competition-winners'
+      preLoaderRoute: typeof CompetitionWinnersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/contact': {
+      id: '/contact'
+      path: '/contact'
+      fullPath: '/contact'
+      preLoaderRoute: typeof ContactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/fan-zone': {
+      id: '/fan-zone'
+      path: '/fan-zone'
+      fullPath: '/fan-zone'
+      preLoaderRoute: typeof FanZoneRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/faq': {
+      id: '/faq'
+      path: '/faq'
+      fullPath: '/faq'
+      preLoaderRoute: typeof FaqRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/forgot-password': {
+      id: '/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/forgot-password'
+      preLoaderRoute: typeof ForgotPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mfa-challenge': {
+      id: '/mfa-challenge'
+      path: '/mfa-challenge'
+      fullPath: '/mfa-challenge'
+      preLoaderRoute: typeof MfaChallengeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/packages': {
+      id: '/packages'
+      path: '/packages'
+      fullPath: '/packages'
+      preLoaderRoute: typeof PackagesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/predictions': {
+      id: '/predictions'
+      path: '/predictions'
+      fullPath: '/predictions'
+      preLoaderRoute: typeof PredictionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/unsubscribe': {
+      id: '/unsubscribe'
+      path: '/unsubscribe'
+      fullPath: '/unsubscribe'
+      preLoaderRoute: typeof UnsubscribeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/_approved': {
+      id: '/_authenticated/_approved'
+      path: ''
       fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+      preLoaderRoute: typeof AuthenticatedApprovedRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/account-rejected': {
+      id: '/_authenticated/account-rejected'
+      path: '/account-rejected'
+      fullPath: '/account-rejected'
+      preLoaderRoute: typeof AuthenticatedAccountRejectedRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/banned': {
+      id: '/_authenticated/banned'
+      path: '/banned'
+      fullPath: '/banned'
+      preLoaderRoute: typeof AuthenticatedBannedRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/fan-zone-pending': {
+      id: '/_authenticated/fan-zone-pending'
+      path: '/fan-zone-pending'
+      fullPath: '/fan-zone-pending'
+      preLoaderRoute: typeof AuthenticatedFanZonePendingRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/gate': {
+      id: '/_authenticated/gate'
+      path: '/gate'
+      fullPath: '/gate'
+      preLoaderRoute: typeof AuthenticatedGateRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/email/unsubscribe': {
+      id: '/email/unsubscribe'
+      path: '/email/unsubscribe'
+      fullPath: '/email/unsubscribe'
+      preLoaderRoute: typeof EmailUnsubscribeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/fan-zone/': {
@@ -1842,431 +1884,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FanZoneBoardRouteImport
       parentRoute: typeof FanZoneRoute
     }
-    '/email/unsubscribe': {
-      id: '/email/unsubscribe'
-      path: '/email/unsubscribe'
-      fullPath: '/email/unsubscribe'
-      preLoaderRoute: typeof EmailUnsubscribeRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_authenticated/gate': {
-      id: '/_authenticated/gate'
-      path: '/gate'
-      fullPath: '/gate'
-      preLoaderRoute: typeof AuthenticatedGateRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/fan-zone-pending': {
-      id: '/_authenticated/fan-zone-pending'
-      path: '/fan-zone-pending'
-      fullPath: '/fan-zone-pending'
-      preLoaderRoute: typeof AuthenticatedFanZonePendingRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/banned': {
-      id: '/_authenticated/banned'
-      path: '/banned'
-      fullPath: '/banned'
-      preLoaderRoute: typeof AuthenticatedBannedRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/account-rejected': {
-      id: '/_authenticated/account-rejected'
-      path: '/account-rejected'
-      fullPath: '/account-rejected'
-      preLoaderRoute: typeof AuthenticatedAccountRejectedRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/_approved': {
-      id: '/_authenticated/_approved'
-      path: ''
-      fullPath: '/'
-      preLoaderRoute: typeof AuthenticatedApprovedRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/fan-zone/$board/': {
-      id: '/fan-zone/$board/'
-      path: '/'
-      fullPath: '/fan-zone/$board/'
-      preLoaderRoute: typeof FanZoneBoardIndexRouteImport
-      parentRoute: typeof FanZoneBoardRoute
-    }
-    '/lovable/email/suppression': {
-      id: '/lovable/email/suppression'
-      path: '/lovable/email/suppression'
-      fullPath: '/lovable/email/suppression'
-      preLoaderRoute: typeof LovableEmailSuppressionRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/fan-zone/u/$userId': {
-      id: '/fan-zone/u/$userId'
-      path: '/u/$userId'
-      fullPath: '/fan-zone/u/$userId'
-      preLoaderRoute: typeof FanZoneUUserIdRouteImport
-      parentRoute: typeof FanZoneRoute
-    }
-    '/fan-zone/$board/$topic': {
-      id: '/fan-zone/$board/$topic'
-      path: '/$topic'
-      fullPath: '/fan-zone/$board/$topic'
-      preLoaderRoute: typeof FanZoneBoardTopicRouteImport
-      parentRoute: typeof FanZoneBoardRoute
-    }
-    '/api/public/tweet-image': {
-      id: '/api/public/tweet-image'
-      path: '/api/public/tweet-image'
-      fullPath: '/api/public/tweet-image'
-      preLoaderRoute: typeof ApiPublicTweetImageRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/tweet': {
-      id: '/api/public/tweet'
-      path: '/api/public/tweet'
-      fullPath: '/api/public/tweet'
-      preLoaderRoute: typeof ApiPublicTweetRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/link-preview': {
-      id: '/api/public/link-preview'
-      path: '/api/public/link-preview'
-      fullPath: '/api/public/link-preview'
-      preLoaderRoute: typeof ApiPublicLinkPreviewRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/boro-match-detail': {
-      id: '/api/public/boro-match-detail'
-      path: '/api/public/boro-match-detail'
-      fullPath: '/api/public/boro-match-detail'
-      preLoaderRoute: typeof ApiPublicBoroMatchDetailRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_authenticated/_approved/what-to-watch': {
-      id: '/_authenticated/_approved/what-to-watch'
-      path: '/what-to-watch'
-      fullPath: '/what-to-watch'
-      preLoaderRoute: typeof AuthenticatedApprovedWhatToWatchRouteImport
-      parentRoute: typeof AuthenticatedApprovedRoute
-    }
-    '/_authenticated/_approved/vpn': {
-      id: '/_authenticated/_approved/vpn'
-      path: '/vpn'
-      fullPath: '/vpn'
-      preLoaderRoute: typeof AuthenticatedApprovedVpnRouteImport
-      parentRoute: typeof AuthenticatedApprovedRoute
-    }
-    '/_authenticated/_approved/tickets': {
-      id: '/_authenticated/_approved/tickets'
-      path: '/tickets'
-      fullPath: '/tickets'
-      preLoaderRoute: typeof AuthenticatedApprovedTicketsRouteImport
-      parentRoute: typeof AuthenticatedApprovedRoute
-    }
-    '/_authenticated/_approved/streaming-devices': {
-      id: '/_authenticated/_approved/streaming-devices'
-      path: '/streaming-devices'
-      fullPath: '/streaming-devices'
-      preLoaderRoute: typeof AuthenticatedApprovedStreamingDevicesRouteImport
-      parentRoute: typeof AuthenticatedApprovedRoute
-    }
-    '/_authenticated/_approved/status': {
-      id: '/_authenticated/_approved/status'
-      path: '/status'
-      fullPath: '/status'
-      preLoaderRoute: typeof AuthenticatedApprovedStatusRouteImport
-      parentRoute: typeof AuthenticatedApprovedRoute
-    }
-    '/_authenticated/_approved/staff': {
-      id: '/_authenticated/_approved/staff'
-      path: '/staff'
-      fullPath: '/staff'
-      preLoaderRoute: typeof AuthenticatedApprovedStaffRouteImport
-      parentRoute: typeof AuthenticatedApprovedRoute
-    }
-    '/_authenticated/_approved/sports-guides': {
-      id: '/_authenticated/_approved/sports-guides'
-      path: '/sports-guides'
-      fullPath: '/sports-guides'
-      preLoaderRoute: typeof AuthenticatedApprovedSportsGuidesRouteImport
-      parentRoute: typeof AuthenticatedApprovedRoute
-    }
-    '/_authenticated/_approved/shop': {
-      id: '/_authenticated/_approved/shop'
-      path: '/shop'
-      fullPath: '/shop'
-      preLoaderRoute: typeof AuthenticatedApprovedShopRouteImport
-      parentRoute: typeof AuthenticatedApprovedRoute
-    }
-    '/_authenticated/_approved/shifts': {
-      id: '/_authenticated/_approved/shifts'
-      path: '/shifts'
-      fullPath: '/shifts'
-      preLoaderRoute: typeof AuthenticatedApprovedShiftsRouteImport
-      parentRoute: typeof AuthenticatedApprovedRoute
-    }
-    '/_authenticated/_approved/reviews': {
-      id: '/_authenticated/_approved/reviews'
-      path: '/reviews'
-      fullPath: '/reviews'
-      preLoaderRoute: typeof AuthenticatedApprovedReviewsRouteImport
-      parentRoute: typeof AuthenticatedApprovedRoute
-    }
-    '/_authenticated/_approved/responsive-check': {
-      id: '/_authenticated/_approved/responsive-check'
-      path: '/responsive-check'
-      fullPath: '/responsive-check'
-      preLoaderRoute: typeof AuthenticatedApprovedResponsiveCheckRouteImport
-      parentRoute: typeof AuthenticatedApprovedRoute
-    }
-    '/_authenticated/_approved/profile': {
-      id: '/_authenticated/_approved/profile'
-      path: '/profile'
-      fullPath: '/profile'
-      preLoaderRoute: typeof AuthenticatedApprovedProfileRouteImport
-      parentRoute: typeof AuthenticatedApprovedRoute
-    }
-    '/_authenticated/_approved/new-content': {
-      id: '/_authenticated/_approved/new-content'
-      path: '/new-content'
-      fullPath: '/new-content'
-      preLoaderRoute: typeof AuthenticatedApprovedNewContentRouteImport
-      parentRoute: typeof AuthenticatedApprovedRoute
-    }
-    '/_authenticated/_approved/moderation': {
-      id: '/_authenticated/_approved/moderation'
-      path: '/moderation'
-      fullPath: '/moderation'
-      preLoaderRoute: typeof AuthenticatedApprovedModerationRouteImport
-      parentRoute: typeof AuthenticatedApprovedRoute
-    }
-    '/_authenticated/_approved/members': {
-      id: '/_authenticated/_approved/members'
-      path: '/members'
-      fullPath: '/members'
-      preLoaderRoute: typeof AuthenticatedApprovedMembersRouteImport
-      parentRoute: typeof AuthenticatedApprovedRoute
-    }
-    '/_authenticated/_approved/leaderboard': {
-      id: '/_authenticated/_approved/leaderboard'
-      path: '/leaderboard'
-      fullPath: '/leaderboard'
-      preLoaderRoute: typeof AuthenticatedApprovedLeaderboardRouteImport
-      parentRoute: typeof AuthenticatedApprovedRoute
-    }
-    '/_authenticated/_approved/knowledge-base': {
-      id: '/_authenticated/_approved/knowledge-base'
-      path: '/knowledge-base'
-      fullPath: '/knowledge-base'
-      preLoaderRoute: typeof AuthenticatedApprovedKnowledgeBaseRouteImport
-      parentRoute: typeof AuthenticatedApprovedRoute
-    }
-    '/_authenticated/_approved/install-guides': {
-      id: '/_authenticated/_approved/install-guides'
-      path: '/install-guides'
-      fullPath: '/install-guides'
-      preLoaderRoute: typeof AuthenticatedApprovedInstallGuidesRouteImport
-      parentRoute: typeof AuthenticatedApprovedRoute
-    }
-    '/_authenticated/_approved/home': {
-      id: '/_authenticated/_approved/home'
-      path: '/home'
-      fullPath: '/home'
-      preLoaderRoute: typeof AuthenticatedApprovedHomeRouteImport
-      parentRoute: typeof AuthenticatedApprovedRoute
-    }
-    '/_authenticated/_approved/forum': {
-      id: '/_authenticated/_approved/forum'
-      path: '/forum'
-      fullPath: '/forum'
-      preLoaderRoute: typeof AuthenticatedApprovedForumRouteImport
-      parentRoute: typeof AuthenticatedApprovedRoute
-    }
-    '/_authenticated/_approved/clock': {
-      id: '/_authenticated/_approved/clock'
-      path: '/clock'
-      fullPath: '/clock'
-      preLoaderRoute: typeof AuthenticatedApprovedClockRouteImport
-      parentRoute: typeof AuthenticatedApprovedRoute
-    }
-    '/_authenticated/_approved/admin-ticket-categories': {
-      id: '/_authenticated/_approved/admin-ticket-categories'
-      path: '/admin-ticket-categories'
-      fullPath: '/admin-ticket-categories'
-      preLoaderRoute: typeof AuthenticatedApprovedAdminTicketCategoriesRouteImport
-      parentRoute: typeof AuthenticatedApprovedRoute
-    }
-    '/_authenticated/_approved/admin-streaming-devices': {
-      id: '/_authenticated/_approved/admin-streaming-devices'
-      path: '/admin-streaming-devices'
-      fullPath: '/admin-streaming-devices'
-      preLoaderRoute: typeof AuthenticatedApprovedAdminStreamingDevicesRouteImport
-      parentRoute: typeof AuthenticatedApprovedRoute
-    }
-    '/_authenticated/_approved/admin-sports-import': {
-      id: '/_authenticated/_approved/admin-sports-import'
-      path: '/admin-sports-import'
-      fullPath: '/admin-sports-import'
-      preLoaderRoute: typeof AuthenticatedApprovedAdminSportsImportRouteImport
-      parentRoute: typeof AuthenticatedApprovedRoute
-    }
-    '/_authenticated/_approved/admin-roles': {
-      id: '/_authenticated/_approved/admin-roles'
-      path: '/admin-roles'
-      fullPath: '/admin-roles'
-      preLoaderRoute: typeof AuthenticatedApprovedAdminRolesRouteImport
-      parentRoute: typeof AuthenticatedApprovedRoute
-    }
-    '/_authenticated/_approved/admin-reviews': {
-      id: '/_authenticated/_approved/admin-reviews'
-      path: '/admin-reviews'
-      fullPath: '/admin-reviews'
-      preLoaderRoute: typeof AuthenticatedApprovedAdminReviewsRouteImport
-      parentRoute: typeof AuthenticatedApprovedRoute
-    }
-    '/_authenticated/_approved/admin-reports': {
-      id: '/_authenticated/_approved/admin-reports'
-      path: '/admin-reports'
-      fullPath: '/admin-reports'
-      preLoaderRoute: typeof AuthenticatedApprovedAdminReportsRouteImport
-      parentRoute: typeof AuthenticatedApprovedRoute
-    }
-    '/_authenticated/_approved/admin-profanity': {
-      id: '/_authenticated/_approved/admin-profanity'
-      path: '/admin-profanity'
-      fullPath: '/admin-profanity'
-      preLoaderRoute: typeof AuthenticatedApprovedAdminProfanityRouteImport
-      parentRoute: typeof AuthenticatedApprovedRoute
-    }
-    '/_authenticated/_approved/admin-predictions': {
-      id: '/_authenticated/_approved/admin-predictions'
-      path: '/admin-predictions'
-      fullPath: '/admin-predictions'
-      preLoaderRoute: typeof AuthenticatedApprovedAdminPredictionsRouteImport
-      parentRoute: typeof AuthenticatedApprovedRoute
-    }
-    '/_authenticated/_approved/admin-permissions': {
-      id: '/_authenticated/_approved/admin-permissions'
-      path: '/admin-permissions'
-      fullPath: '/admin-permissions'
-      preLoaderRoute: typeof AuthenticatedApprovedAdminPermissionsRouteImport
-      parentRoute: typeof AuthenticatedApprovedRoute
-    }
-    '/_authenticated/_approved/admin-packages': {
-      id: '/_authenticated/_approved/admin-packages'
-      path: '/admin-packages'
-      fullPath: '/admin-packages'
-      preLoaderRoute: typeof AuthenticatedApprovedAdminPackagesRouteImport
-      parentRoute: typeof AuthenticatedApprovedRoute
-    }
-    '/_authenticated/_approved/admin-notifications': {
-      id: '/_authenticated/_approved/admin-notifications'
-      path: '/admin-notifications'
-      fullPath: '/admin-notifications'
-      preLoaderRoute: typeof AuthenticatedApprovedAdminNotificationsRouteImport
-      parentRoute: typeof AuthenticatedApprovedRoute
-    }
-    '/_authenticated/_approved/admin-nameplates': {
-      id: '/_authenticated/_approved/admin-nameplates'
-      path: '/admin-nameplates'
-      fullPath: '/admin-nameplates'
-      preLoaderRoute: typeof AuthenticatedApprovedAdminNameplatesRouteImport
-      parentRoute: typeof AuthenticatedApprovedRoute
-    }
-    '/_authenticated/_approved/admin-hero-boxes': {
-      id: '/_authenticated/_approved/admin-hero-boxes'
-      path: '/admin-hero-boxes'
-      fullPath: '/admin-hero-boxes'
-      preLoaderRoute: typeof AuthenticatedApprovedAdminHeroBoxesRouteImport
-      parentRoute: typeof AuthenticatedApprovedRoute
-    }
-    '/_authenticated/_approved/admin-forum': {
-      id: '/_authenticated/_approved/admin-forum'
-      path: '/admin-forum'
-      fullPath: '/admin-forum'
-      preLoaderRoute: typeof AuthenticatedApprovedAdminForumRouteImport
-      parentRoute: typeof AuthenticatedApprovedRoute
-    }
-    '/_authenticated/_approved/admin-fantasy-squad-numbers': {
-      id: '/_authenticated/_approved/admin-fantasy-squad-numbers'
-      path: '/admin-fantasy-squad-numbers'
-      fullPath: '/admin-fantasy-squad-numbers'
-      preLoaderRoute: typeof AuthenticatedApprovedAdminFantasySquadNumbersRouteImport
-      parentRoute: typeof AuthenticatedApprovedRoute
-    }
-    '/_authenticated/_approved/admin-fantasy-scoring': {
-      id: '/_authenticated/_approved/admin-fantasy-scoring'
-      path: '/admin-fantasy-scoring'
-      fullPath: '/admin-fantasy-scoring'
-      preLoaderRoute: typeof AuthenticatedApprovedAdminFantasyScoringRouteImport
-      parentRoute: typeof AuthenticatedApprovedRoute
-    }
-    '/_authenticated/_approved/admin-fantasy-motm': {
-      id: '/_authenticated/_approved/admin-fantasy-motm'
-      path: '/admin-fantasy-motm'
-      fullPath: '/admin-fantasy-motm'
-      preLoaderRoute: typeof AuthenticatedApprovedAdminFantasyMotmRouteImport
-      parentRoute: typeof AuthenticatedApprovedRoute
-    }
-    '/_authenticated/_approved/admin-fantasy-injuries': {
-      id: '/_authenticated/_approved/admin-fantasy-injuries'
-      path: '/admin-fantasy-injuries'
-      fullPath: '/admin-fantasy-injuries'
-      preLoaderRoute: typeof AuthenticatedApprovedAdminFantasyInjuriesRouteImport
-      parentRoute: typeof AuthenticatedApprovedRoute
-    }
-    '/_authenticated/_approved/admin-fan-zone': {
-      id: '/_authenticated/_approved/admin-fan-zone'
-      path: '/admin-fan-zone'
-      fullPath: '/admin-fan-zone'
-      preLoaderRoute: typeof AuthenticatedApprovedAdminFanZoneRouteImport
-      parentRoute: typeof AuthenticatedApprovedRoute
-    }
-    '/_authenticated/_approved/admin-dns': {
-      id: '/_authenticated/_approved/admin-dns'
-      path: '/admin-dns'
-      fullPath: '/admin-dns'
-      preLoaderRoute: typeof AuthenticatedApprovedAdminDnsRouteImport
-      parentRoute: typeof AuthenticatedApprovedRoute
-    }
-    '/_authenticated/_approved/admin-credentials': {
-      id: '/_authenticated/_approved/admin-credentials'
-      path: '/admin-credentials'
-      fullPath: '/admin-credentials'
-      preLoaderRoute: typeof AuthenticatedApprovedAdminCredentialsRouteImport
-      parentRoute: typeof AuthenticatedApprovedRoute
-    }
-    '/_authenticated/_approved/admin-business-hours': {
-      id: '/_authenticated/_approved/admin-business-hours'
-      path: '/admin-business-hours'
-      fullPath: '/admin-business-hours'
-      preLoaderRoute: typeof AuthenticatedApprovedAdminBusinessHoursRouteImport
-      parentRoute: typeof AuthenticatedApprovedRoute
-    }
-    '/_authenticated/_approved/admin-boro-team-sheet': {
-      id: '/_authenticated/_approved/admin-boro-team-sheet'
-      path: '/admin-boro-team-sheet'
-      fullPath: '/admin-boro-team-sheet'
-      preLoaderRoute: typeof AuthenticatedApprovedAdminBoroTeamSheetRouteImport
-      parentRoute: typeof AuthenticatedApprovedRoute
-    }
-    '/_authenticated/_approved/admin-blacklist': {
-      id: '/_authenticated/_approved/admin-blacklist'
-      path: '/admin-blacklist'
-      fullPath: '/admin-blacklist'
-      preLoaderRoute: typeof AuthenticatedApprovedAdminBlacklistRouteImport
-      parentRoute: typeof AuthenticatedApprovedRoute
-    }
-    '/_authenticated/_approved/admin-archived-tickets': {
-      id: '/_authenticated/_approved/admin-archived-tickets'
-      path: '/admin-archived-tickets'
-      fullPath: '/admin-archived-tickets'
-      preLoaderRoute: typeof AuthenticatedApprovedAdminArchivedTicketsRouteImport
-      parentRoute: typeof AuthenticatedApprovedRoute
-    }
-    '/_authenticated/_approved/admin-affiliate-banners': {
-      id: '/_authenticated/_approved/admin-affiliate-banners'
-      path: '/admin-affiliate-banners'
-      fullPath: '/admin-affiliate-banners'
-      preLoaderRoute: typeof AuthenticatedApprovedAdminAffiliateBannersRouteImport
+    '/_authenticated/_approved/account-security': {
+      id: '/_authenticated/_approved/account-security'
+      path: '/account-security'
+      fullPath: '/account-security'
+      preLoaderRoute: typeof AuthenticatedApprovedAccountSecurityRouteImport
       parentRoute: typeof AuthenticatedApprovedRoute
     }
     '/_authenticated/_approved/admin': {
@@ -2276,284 +1898,396 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedApprovedAdminRouteImport
       parentRoute: typeof AuthenticatedApprovedRoute
     }
-    '/_authenticated/_approved/account-security': {
-      id: '/_authenticated/_approved/account-security'
-      path: '/account-security'
-      fullPath: '/account-security'
-      preLoaderRoute: typeof AuthenticatedApprovedAccountSecurityRouteImport
+    '/_authenticated/_approved/admin-affiliate-banners': {
+      id: '/_authenticated/_approved/admin-affiliate-banners'
+      path: '/admin-affiliate-banners'
+      fullPath: '/admin-affiliate-banners'
+      preLoaderRoute: typeof AuthenticatedApprovedAdminAffiliateBannersRouteImport
       parentRoute: typeof AuthenticatedApprovedRoute
     }
-    '/_authenticated/_approved/home/': {
-      id: '/_authenticated/_approved/home/'
+    '/_authenticated/_approved/admin-archived-tickets': {
+      id: '/_authenticated/_approved/admin-archived-tickets'
+      path: '/admin-archived-tickets'
+      fullPath: '/admin-archived-tickets'
+      preLoaderRoute: typeof AuthenticatedApprovedAdminArchivedTicketsRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
+    '/_authenticated/_approved/admin-blacklist': {
+      id: '/_authenticated/_approved/admin-blacklist'
+      path: '/admin-blacklist'
+      fullPath: '/admin-blacklist'
+      preLoaderRoute: typeof AuthenticatedApprovedAdminBlacklistRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
+    '/_authenticated/_approved/admin-boro-team-sheet': {
+      id: '/_authenticated/_approved/admin-boro-team-sheet'
+      path: '/admin-boro-team-sheet'
+      fullPath: '/admin-boro-team-sheet'
+      preLoaderRoute: typeof AuthenticatedApprovedAdminBoroTeamSheetRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
+    '/_authenticated/_approved/admin-business-hours': {
+      id: '/_authenticated/_approved/admin-business-hours'
+      path: '/admin-business-hours'
+      fullPath: '/admin-business-hours'
+      preLoaderRoute: typeof AuthenticatedApprovedAdminBusinessHoursRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
+    '/_authenticated/_approved/admin-credentials': {
+      id: '/_authenticated/_approved/admin-credentials'
+      path: '/admin-credentials'
+      fullPath: '/admin-credentials'
+      preLoaderRoute: typeof AuthenticatedApprovedAdminCredentialsRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
+    '/_authenticated/_approved/admin-dns': {
+      id: '/_authenticated/_approved/admin-dns'
+      path: '/admin-dns'
+      fullPath: '/admin-dns'
+      preLoaderRoute: typeof AuthenticatedApprovedAdminDnsRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
+    '/_authenticated/_approved/admin-fan-zone': {
+      id: '/_authenticated/_approved/admin-fan-zone'
+      path: '/admin-fan-zone'
+      fullPath: '/admin-fan-zone'
+      preLoaderRoute: typeof AuthenticatedApprovedAdminFanZoneRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
+    '/_authenticated/_approved/admin-fantasy-injuries': {
+      id: '/_authenticated/_approved/admin-fantasy-injuries'
+      path: '/admin-fantasy-injuries'
+      fullPath: '/admin-fantasy-injuries'
+      preLoaderRoute: typeof AuthenticatedApprovedAdminFantasyInjuriesRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
+    '/_authenticated/_approved/admin-fantasy-motm': {
+      id: '/_authenticated/_approved/admin-fantasy-motm'
+      path: '/admin-fantasy-motm'
+      fullPath: '/admin-fantasy-motm'
+      preLoaderRoute: typeof AuthenticatedApprovedAdminFantasyMotmRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
+    '/_authenticated/_approved/admin-fantasy-scoring': {
+      id: '/_authenticated/_approved/admin-fantasy-scoring'
+      path: '/admin-fantasy-scoring'
+      fullPath: '/admin-fantasy-scoring'
+      preLoaderRoute: typeof AuthenticatedApprovedAdminFantasyScoringRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
+    '/_authenticated/_approved/admin-fantasy-squad-numbers': {
+      id: '/_authenticated/_approved/admin-fantasy-squad-numbers'
+      path: '/admin-fantasy-squad-numbers'
+      fullPath: '/admin-fantasy-squad-numbers'
+      preLoaderRoute: typeof AuthenticatedApprovedAdminFantasySquadNumbersRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
+    '/_authenticated/_approved/admin-forum': {
+      id: '/_authenticated/_approved/admin-forum'
+      path: '/admin-forum'
+      fullPath: '/admin-forum'
+      preLoaderRoute: typeof AuthenticatedApprovedAdminForumRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
+    '/_authenticated/_approved/admin-hero-boxes': {
+      id: '/_authenticated/_approved/admin-hero-boxes'
+      path: '/admin-hero-boxes'
+      fullPath: '/admin-hero-boxes'
+      preLoaderRoute: typeof AuthenticatedApprovedAdminHeroBoxesRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
+    '/_authenticated/_approved/admin-nameplates': {
+      id: '/_authenticated/_approved/admin-nameplates'
+      path: '/admin-nameplates'
+      fullPath: '/admin-nameplates'
+      preLoaderRoute: typeof AuthenticatedApprovedAdminNameplatesRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
+    '/_authenticated/_approved/admin-notifications': {
+      id: '/_authenticated/_approved/admin-notifications'
+      path: '/admin-notifications'
+      fullPath: '/admin-notifications'
+      preLoaderRoute: typeof AuthenticatedApprovedAdminNotificationsRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
+    '/_authenticated/_approved/admin-packages': {
+      id: '/_authenticated/_approved/admin-packages'
+      path: '/admin-packages'
+      fullPath: '/admin-packages'
+      preLoaderRoute: typeof AuthenticatedApprovedAdminPackagesRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
+    '/_authenticated/_approved/admin-permissions': {
+      id: '/_authenticated/_approved/admin-permissions'
+      path: '/admin-permissions'
+      fullPath: '/admin-permissions'
+      preLoaderRoute: typeof AuthenticatedApprovedAdminPermissionsRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
+    '/_authenticated/_approved/admin-predictions': {
+      id: '/_authenticated/_approved/admin-predictions'
+      path: '/admin-predictions'
+      fullPath: '/admin-predictions'
+      preLoaderRoute: typeof AuthenticatedApprovedAdminPredictionsRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
+    '/_authenticated/_approved/admin-profanity': {
+      id: '/_authenticated/_approved/admin-profanity'
+      path: '/admin-profanity'
+      fullPath: '/admin-profanity'
+      preLoaderRoute: typeof AuthenticatedApprovedAdminProfanityRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
+    '/_authenticated/_approved/admin-reports': {
+      id: '/_authenticated/_approved/admin-reports'
+      path: '/admin-reports'
+      fullPath: '/admin-reports'
+      preLoaderRoute: typeof AuthenticatedApprovedAdminReportsRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
+    '/_authenticated/_approved/admin-reviews': {
+      id: '/_authenticated/_approved/admin-reviews'
+      path: '/admin-reviews'
+      fullPath: '/admin-reviews'
+      preLoaderRoute: typeof AuthenticatedApprovedAdminReviewsRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
+    '/_authenticated/_approved/admin-roles': {
+      id: '/_authenticated/_approved/admin-roles'
+      path: '/admin-roles'
+      fullPath: '/admin-roles'
+      preLoaderRoute: typeof AuthenticatedApprovedAdminRolesRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
+    '/_authenticated/_approved/admin-sports-import': {
+      id: '/_authenticated/_approved/admin-sports-import'
+      path: '/admin-sports-import'
+      fullPath: '/admin-sports-import'
+      preLoaderRoute: typeof AuthenticatedApprovedAdminSportsImportRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
+    '/_authenticated/_approved/admin-streaming-devices': {
+      id: '/_authenticated/_approved/admin-streaming-devices'
+      path: '/admin-streaming-devices'
+      fullPath: '/admin-streaming-devices'
+      preLoaderRoute: typeof AuthenticatedApprovedAdminStreamingDevicesRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
+    '/_authenticated/_approved/admin-ticket-categories': {
+      id: '/_authenticated/_approved/admin-ticket-categories'
+      path: '/admin-ticket-categories'
+      fullPath: '/admin-ticket-categories'
+      preLoaderRoute: typeof AuthenticatedApprovedAdminTicketCategoriesRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
+    '/_authenticated/_approved/clock': {
+      id: '/_authenticated/_approved/clock'
+      path: '/clock'
+      fullPath: '/clock'
+      preLoaderRoute: typeof AuthenticatedApprovedClockRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
+    '/_authenticated/_approved/forum': {
+      id: '/_authenticated/_approved/forum'
+      path: '/forum'
+      fullPath: '/forum'
+      preLoaderRoute: typeof AuthenticatedApprovedForumRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
+    '/_authenticated/_approved/home': {
+      id: '/_authenticated/_approved/home'
+      path: '/home'
+      fullPath: '/home'
+      preLoaderRoute: typeof AuthenticatedApprovedHomeRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
+    '/_authenticated/_approved/install-guides': {
+      id: '/_authenticated/_approved/install-guides'
+      path: '/install-guides'
+      fullPath: '/install-guides'
+      preLoaderRoute: typeof AuthenticatedApprovedInstallGuidesRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
+    '/_authenticated/_approved/knowledge-base': {
+      id: '/_authenticated/_approved/knowledge-base'
+      path: '/knowledge-base'
+      fullPath: '/knowledge-base'
+      preLoaderRoute: typeof AuthenticatedApprovedKnowledgeBaseRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
+    '/_authenticated/_approved/leaderboard': {
+      id: '/_authenticated/_approved/leaderboard'
+      path: '/leaderboard'
+      fullPath: '/leaderboard'
+      preLoaderRoute: typeof AuthenticatedApprovedLeaderboardRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
+    '/_authenticated/_approved/members': {
+      id: '/_authenticated/_approved/members'
+      path: '/members'
+      fullPath: '/members'
+      preLoaderRoute: typeof AuthenticatedApprovedMembersRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
+    '/_authenticated/_approved/moderation': {
+      id: '/_authenticated/_approved/moderation'
+      path: '/moderation'
+      fullPath: '/moderation'
+      preLoaderRoute: typeof AuthenticatedApprovedModerationRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
+    '/_authenticated/_approved/new-content': {
+      id: '/_authenticated/_approved/new-content'
+      path: '/new-content'
+      fullPath: '/new-content'
+      preLoaderRoute: typeof AuthenticatedApprovedNewContentRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
+    '/_authenticated/_approved/profile': {
+      id: '/_authenticated/_approved/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof AuthenticatedApprovedProfileRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
+    '/_authenticated/_approved/responsive-check': {
+      id: '/_authenticated/_approved/responsive-check'
+      path: '/responsive-check'
+      fullPath: '/responsive-check'
+      preLoaderRoute: typeof AuthenticatedApprovedResponsiveCheckRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
+    '/_authenticated/_approved/reviews': {
+      id: '/_authenticated/_approved/reviews'
+      path: '/reviews'
+      fullPath: '/reviews'
+      preLoaderRoute: typeof AuthenticatedApprovedReviewsRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
+    '/_authenticated/_approved/shifts': {
+      id: '/_authenticated/_approved/shifts'
+      path: '/shifts'
+      fullPath: '/shifts'
+      preLoaderRoute: typeof AuthenticatedApprovedShiftsRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
+    '/_authenticated/_approved/shop': {
+      id: '/_authenticated/_approved/shop'
+      path: '/shop'
+      fullPath: '/shop'
+      preLoaderRoute: typeof AuthenticatedApprovedShopRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
+    '/_authenticated/_approved/sports-guides': {
+      id: '/_authenticated/_approved/sports-guides'
+      path: '/sports-guides'
+      fullPath: '/sports-guides'
+      preLoaderRoute: typeof AuthenticatedApprovedSportsGuidesRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
+    '/_authenticated/_approved/staff': {
+      id: '/_authenticated/_approved/staff'
+      path: '/staff'
+      fullPath: '/staff'
+      preLoaderRoute: typeof AuthenticatedApprovedStaffRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
+    '/_authenticated/_approved/status': {
+      id: '/_authenticated/_approved/status'
+      path: '/status'
+      fullPath: '/status'
+      preLoaderRoute: typeof AuthenticatedApprovedStatusRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
+    '/_authenticated/_approved/streaming-devices': {
+      id: '/_authenticated/_approved/streaming-devices'
+      path: '/streaming-devices'
+      fullPath: '/streaming-devices'
+      preLoaderRoute: typeof AuthenticatedApprovedStreamingDevicesRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
+    '/_authenticated/_approved/tickets': {
+      id: '/_authenticated/_approved/tickets'
+      path: '/tickets'
+      fullPath: '/tickets'
+      preLoaderRoute: typeof AuthenticatedApprovedTicketsRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
+    '/_authenticated/_approved/vpn': {
+      id: '/_authenticated/_approved/vpn'
+      path: '/vpn'
+      fullPath: '/vpn'
+      preLoaderRoute: typeof AuthenticatedApprovedVpnRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
+    '/_authenticated/_approved/what-to-watch': {
+      id: '/_authenticated/_approved/what-to-watch'
+      path: '/what-to-watch'
+      fullPath: '/what-to-watch'
+      preLoaderRoute: typeof AuthenticatedApprovedWhatToWatchRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
+    '/api/public/boro-match-detail': {
+      id: '/api/public/boro-match-detail'
+      path: '/api/public/boro-match-detail'
+      fullPath: '/api/public/boro-match-detail'
+      preLoaderRoute: typeof ApiPublicBoroMatchDetailRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/link-preview': {
+      id: '/api/public/link-preview'
+      path: '/api/public/link-preview'
+      fullPath: '/api/public/link-preview'
+      preLoaderRoute: typeof ApiPublicLinkPreviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/tweet': {
+      id: '/api/public/tweet'
+      path: '/api/public/tweet'
+      fullPath: '/api/public/tweet'
+      preLoaderRoute: typeof ApiPublicTweetRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/tweet-image': {
+      id: '/api/public/tweet-image'
+      path: '/api/public/tweet-image'
+      fullPath: '/api/public/tweet-image'
+      preLoaderRoute: typeof ApiPublicTweetImageRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/fan-zone/$board/': {
+      id: '/fan-zone/$board/'
       path: '/'
-      fullPath: '/home/'
-      preLoaderRoute: typeof AuthenticatedApprovedHomeIndexRouteImport
-      parentRoute: typeof AuthenticatedApprovedHomeRoute
+      fullPath: '/fan-zone/$board/'
+      preLoaderRoute: typeof FanZoneBoardIndexRouteImport
+      parentRoute: typeof FanZoneBoardRoute
     }
-    '/lovable/email/transactional/send': {
-      id: '/lovable/email/transactional/send'
-      path: '/lovable/email/transactional/send'
-      fullPath: '/lovable/email/transactional/send'
-      preLoaderRoute: typeof LovableEmailTransactionalSendRouteImport
+    '/fan-zone/$board/$topic': {
+      id: '/fan-zone/$board/$topic'
+      path: '/$topic'
+      fullPath: '/fan-zone/$board/$topic'
+      preLoaderRoute: typeof FanZoneBoardTopicRouteImport
+      parentRoute: typeof FanZoneBoardRoute
+    }
+    '/fan-zone/u/$userId': {
+      id: '/fan-zone/u/$userId'
+      path: '/u/$userId'
+      fullPath: '/fan-zone/u/$userId'
+      preLoaderRoute: typeof FanZoneUUserIdRouteImport
+      parentRoute: typeof FanZoneRoute
+    }
+    '/lovable/email/suppression': {
+      id: '/lovable/email/suppression'
+      path: '/lovable/email/suppression'
+      fullPath: '/lovable/email/suppression'
+      preLoaderRoute: typeof LovableEmailSuppressionRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/lovable/email/transactional/preview': {
-      id: '/lovable/email/transactional/preview'
-      path: '/lovable/email/transactional/preview'
-      fullPath: '/lovable/email/transactional/preview'
-      preLoaderRoute: typeof LovableEmailTransactionalPreviewRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/lovable/email/queue/process': {
-      id: '/lovable/email/queue/process'
-      path: '/lovable/email/queue/process'
-      fullPath: '/lovable/email/queue/process'
-      preLoaderRoute: typeof LovableEmailQueueProcessRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/lovable/email/auth/webhook': {
-      id: '/lovable/email/auth/webhook'
-      path: '/lovable/email/auth/webhook'
-      fullPath: '/lovable/email/auth/webhook'
-      preLoaderRoute: typeof LovableEmailAuthWebhookRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/lovable/email/auth/preview': {
-      id: '/lovable/email/auth/preview'
-      path: '/lovable/email/auth/preview'
-      fullPath: '/lovable/email/auth/preview'
-      preLoaderRoute: typeof LovableEmailAuthPreviewRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/hooks/wc-prediction-reminders': {
-      id: '/api/public/hooks/wc-prediction-reminders'
-      path: '/api/public/hooks/wc-prediction-reminders'
-      fullPath: '/api/public/hooks/wc-prediction-reminders'
-      preLoaderRoute: typeof ApiPublicHooksWcPredictionRemindersRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/hooks/user-notification-push': {
-      id: '/api/public/hooks/user-notification-push'
-      path: '/api/public/hooks/user-notification-push'
-      fullPath: '/api/public/hooks/user-notification-push'
-      preLoaderRoute: typeof ApiPublicHooksUserNotificationPushRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/hooks/sync-wc-scores': {
-      id: '/api/public/hooks/sync-wc-scores'
-      path: '/api/public/hooks/sync-wc-scores'
-      fullPath: '/api/public/hooks/sync-wc-scores'
-      preLoaderRoute: typeof ApiPublicHooksSyncWcScoresRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/hooks/sync-fantasy-scores': {
-      id: '/api/public/hooks/sync-fantasy-scores'
-      path: '/api/public/hooks/sync-fantasy-scores'
-      fullPath: '/api/public/hooks/sync-fantasy-scores'
-      preLoaderRoute: typeof ApiPublicHooksSyncFantasyScoresRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/hooks/sync-boro-scores': {
-      id: '/api/public/hooks/sync-boro-scores'
-      path: '/api/public/hooks/sync-boro-scores'
-      fullPath: '/api/public/hooks/sync-boro-scores'
-      preLoaderRoute: typeof ApiPublicHooksSyncBoroScoresRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/hooks/subscription-expiry-reminders': {
-      id: '/api/public/hooks/subscription-expiry-reminders'
-      path: '/api/public/hooks/subscription-expiry-reminders'
-      fullPath: '/api/public/hooks/subscription-expiry-reminders'
-      preLoaderRoute: typeof ApiPublicHooksSubscriptionExpiryRemindersRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/hooks/status-incident-push': {
-      id: '/api/public/hooks/status-incident-push'
-      path: '/api/public/hooks/status-incident-push'
-      fullPath: '/api/public/hooks/status-incident-push'
-      preLoaderRoute: typeof ApiPublicHooksStatusIncidentPushRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/hooks/staff-notification-push': {
-      id: '/api/public/hooks/staff-notification-push'
-      path: '/api/public/hooks/staff-notification-push'
-      fullPath: '/api/public/hooks/staff-notification-push'
-      preLoaderRoute: typeof ApiPublicHooksStaffNotificationPushRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/hooks/square-invoice': {
-      id: '/api/public/hooks/square-invoice'
-      path: '/api/public/hooks/square-invoice'
-      fullPath: '/api/public/hooks/square-invoice'
-      preLoaderRoute: typeof ApiPublicHooksSquareInvoiceRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/hooks/scheduled-reminders': {
-      id: '/api/public/hooks/scheduled-reminders'
-      path: '/api/public/hooks/scheduled-reminders'
-      fullPath: '/api/public/hooks/scheduled-reminders'
-      preLoaderRoute: typeof ApiPublicHooksScheduledRemindersRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/hooks/refresh-streaming-stock': {
-      id: '/api/public/hooks/refresh-streaming-stock'
-      path: '/api/public/hooks/refresh-streaming-stock'
-      fullPath: '/api/public/hooks/refresh-streaming-stock'
-      preLoaderRoute: typeof ApiPublicHooksRefreshStreamingStockRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/hooks/refresh-streaming-prices': {
-      id: '/api/public/hooks/refresh-streaming-prices'
-      path: '/api/public/hooks/refresh-streaming-prices'
-      fullPath: '/api/public/hooks/refresh-streaming-prices'
-      preLoaderRoute: typeof ApiPublicHooksRefreshStreamingPricesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/hooks/nowpayments': {
-      id: '/api/public/hooks/nowpayments'
-      path: '/api/public/hooks/nowpayments'
-      fullPath: '/api/public/hooks/nowpayments'
-      preLoaderRoute: typeof ApiPublicHooksNowpaymentsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/hooks/notify': {
-      id: '/api/public/hooks/notify'
-      path: '/api/public/hooks/notify'
-      fullPath: '/api/public/hooks/notify'
-      preLoaderRoute: typeof ApiPublicHooksNotifyRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/hooks/fantasy-squad-sync': {
-      id: '/api/public/hooks/fantasy-squad-sync'
-      path: '/api/public/hooks/fantasy-squad-sync'
-      fullPath: '/api/public/hooks/fantasy-squad-sync'
-      preLoaderRoute: typeof ApiPublicHooksFantasySquadSyncRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/hooks/fantasy-squad-reminders': {
-      id: '/api/public/hooks/fantasy-squad-reminders'
-      path: '/api/public/hooks/fantasy-squad-reminders'
-      fullPath: '/api/public/hooks/fantasy-squad-reminders'
-      preLoaderRoute: typeof ApiPublicHooksFantasySquadRemindersRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/hooks/espn-debug': {
-      id: '/api/public/hooks/espn-debug'
-      path: '/api/public/hooks/espn-debug'
-      fullPath: '/api/public/hooks/espn-debug'
-      preLoaderRoute: typeof ApiPublicHooksEspnDebugRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/hooks/device-release-watch': {
-      id: '/api/public/hooks/device-release-watch'
-      path: '/api/public/hooks/device-release-watch'
-      fullPath: '/api/public/hooks/device-release-watch'
-      preLoaderRoute: typeof ApiPublicHooksDeviceReleaseWatchRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/hooks/boro-team-sheet': {
-      id: '/api/public/hooks/boro-team-sheet'
-      path: '/api/public/hooks/boro-team-sheet'
-      fullPath: '/api/public/hooks/boro-team-sheet'
-      preLoaderRoute: typeof ApiPublicHooksBoroTeamSheetRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/hooks/boro-predictor-invite': {
-      id: '/api/public/hooks/boro-predictor-invite'
-      path: '/api/public/hooks/boro-predictor-invite'
-      fullPath: '/api/public/hooks/boro-predictor-invite'
-      preLoaderRoute: typeof ApiPublicHooksBoroPredictorInviteRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/hooks/boro-prediction-reminders': {
-      id: '/api/public/hooks/boro-prediction-reminders'
-      path: '/api/public/hooks/boro-prediction-reminders'
-      fullPath: '/api/public/hooks/boro-prediction-reminders'
-      preLoaderRoute: typeof ApiPublicHooksBoroPredictionRemindersRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/hooks/boro-match-thread': {
-      id: '/api/public/hooks/boro-match-thread'
-      path: '/api/public/hooks/boro-match-thread'
-      fullPath: '/api/public/hooks/boro-match-thread'
-      preLoaderRoute: typeof ApiPublicHooksBoroMatchThreadRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/hooks/boro-match-events': {
-      id: '/api/public/hooks/boro-match-events'
-      path: '/api/public/hooks/boro-match-events'
-      fullPath: '/api/public/hooks/boro-match-events'
-      preLoaderRoute: typeof ApiPublicHooksBoroMatchEventsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/hooks/boro-match-demo': {
-      id: '/api/public/hooks/boro-match-demo'
-      path: '/api/public/hooks/boro-match-demo'
-      fullPath: '/api/public/hooks/boro-match-demo'
-      preLoaderRoute: typeof ApiPublicHooksBoroMatchDemoRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/hooks/boro-fetch-fixtures': {
-      id: '/api/public/hooks/boro-fetch-fixtures'
-      path: '/api/public/hooks/boro-fetch-fixtures'
-      fullPath: '/api/public/hooks/boro-fetch-fixtures'
-      preLoaderRoute: typeof ApiPublicHooksBoroFetchFixturesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/hooks/backup-orders': {
-      id: '/api/public/hooks/backup-orders'
-      path: '/api/public/hooks/backup-orders'
-      fullPath: '/api/public/hooks/backup-orders'
-      preLoaderRoute: typeof ApiPublicHooksBackupOrdersRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/hooks/backup-credentials': {
-      id: '/api/public/hooks/backup-credentials'
-      path: '/api/public/hooks/backup-credentials'
-      fullPath: '/api/public/hooks/backup-credentials'
-      preLoaderRoute: typeof ApiPublicHooksBackupCredentialsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_authenticated/_approved/u/$username': {
-      id: '/_authenticated/_approved/u/$username'
-      path: '/u/$username'
-      fullPath: '/u/$username'
-      preLoaderRoute: typeof AuthenticatedApprovedUUsernameRouteImport
-      parentRoute: typeof AuthenticatedApprovedRoute
-    }
-    '/_authenticated/_approved/sports-guides/new': {
-      id: '/_authenticated/_approved/sports-guides/new'
-      path: '/new'
-      fullPath: '/sports-guides/new'
-      preLoaderRoute: typeof AuthenticatedApprovedSportsGuidesNewRouteImport
-      parentRoute: typeof AuthenticatedApprovedSportsGuidesRoute
-    }
-    '/_authenticated/_approved/home/$channel': {
-      id: '/_authenticated/_approved/home/$channel'
-      path: '/$channel'
-      fullPath: '/home/$channel'
-      preLoaderRoute: typeof AuthenticatedApprovedHomeChannelRouteImport
-      parentRoute: typeof AuthenticatedApprovedHomeRoute
-    }
-    '/_authenticated/_approved/forum/search': {
-      id: '/_authenticated/_approved/forum/search'
-      path: '/search'
-      fullPath: '/forum/search'
-      preLoaderRoute: typeof AuthenticatedApprovedForumSearchRouteImport
-      parentRoute: typeof AuthenticatedApprovedForumRoute
-    }
-    '/_authenticated/_approved/forum/$board': {
-      id: '/_authenticated/_approved/forum/$board'
-      path: '/$board'
-      fullPath: '/forum/$board'
-      preLoaderRoute: typeof AuthenticatedApprovedForumBoardRouteImport
-      parentRoute: typeof AuthenticatedApprovedForumRoute
-    }
-    '/_authenticated/_approved/fanzone/profile': {
-      id: '/_authenticated/_approved/fanzone/profile'
-      path: '/fanzone/profile'
-      fullPath: '/fanzone/profile'
-      preLoaderRoute: typeof AuthenticatedApprovedFanzoneProfileRouteImport
+    '/_authenticated/_approved/fanzone/blocks': {
+      id: '/_authenticated/_approved/fanzone/blocks'
+      path: '/fanzone/blocks'
+      fullPath: '/fanzone/blocks'
+      preLoaderRoute: typeof AuthenticatedApprovedFanzoneBlocksRouteImport
       parentRoute: typeof AuthenticatedApprovedRoute
     }
     '/_authenticated/_approved/fanzone/messages': {
@@ -2563,33 +2297,285 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedApprovedFanzoneMessagesRouteImport
       parentRoute: typeof AuthenticatedApprovedRoute
     }
-    '/_authenticated/_approved/fanzone/blocks': {
-      id: '/_authenticated/_approved/fanzone/blocks'
-      path: '/fanzone/blocks'
-      fullPath: '/fanzone/blocks'
-      preLoaderRoute: typeof AuthenticatedApprovedFanzoneBlocksRouteImport
+    '/_authenticated/_approved/fanzone/profile': {
+      id: '/_authenticated/_approved/fanzone/profile'
+      path: '/fanzone/profile'
+      fullPath: '/fanzone/profile'
+      preLoaderRoute: typeof AuthenticatedApprovedFanzoneProfileRouteImport
       parentRoute: typeof AuthenticatedApprovedRoute
     }
-    '/_authenticated/_approved/sports-guides/read/$id': {
-      id: '/_authenticated/_approved/sports-guides/read/$id'
-      path: '/read/$id'
-      fullPath: '/sports-guides/read/$id'
-      preLoaderRoute: typeof AuthenticatedApprovedSportsGuidesReadIdRouteImport
+    '/_authenticated/_approved/forum/$board': {
+      id: '/_authenticated/_approved/forum/$board'
+      path: '/$board'
+      fullPath: '/forum/$board'
+      preLoaderRoute: typeof AuthenticatedApprovedForumBoardRouteImport
+      parentRoute: typeof AuthenticatedApprovedForumRoute
+    }
+    '/_authenticated/_approved/forum/search': {
+      id: '/_authenticated/_approved/forum/search'
+      path: '/search'
+      fullPath: '/forum/search'
+      preLoaderRoute: typeof AuthenticatedApprovedForumSearchRouteImport
+      parentRoute: typeof AuthenticatedApprovedForumRoute
+    }
+    '/_authenticated/_approved/home/': {
+      id: '/_authenticated/_approved/home/'
+      path: '/'
+      fullPath: '/home/'
+      preLoaderRoute: typeof AuthenticatedApprovedHomeIndexRouteImport
+      parentRoute: typeof AuthenticatedApprovedHomeRoute
+    }
+    '/_authenticated/_approved/home/$channel': {
+      id: '/_authenticated/_approved/home/$channel'
+      path: '/$channel'
+      fullPath: '/home/$channel'
+      preLoaderRoute: typeof AuthenticatedApprovedHomeChannelRouteImport
+      parentRoute: typeof AuthenticatedApprovedHomeRoute
+    }
+    '/_authenticated/_approved/sports-guides/new': {
+      id: '/_authenticated/_approved/sports-guides/new'
+      path: '/new'
+      fullPath: '/sports-guides/new'
+      preLoaderRoute: typeof AuthenticatedApprovedSportsGuidesNewRouteImport
       parentRoute: typeof AuthenticatedApprovedSportsGuidesRoute
     }
-    '/_authenticated/_approved/sports-guides/$id/edit': {
-      id: '/_authenticated/_approved/sports-guides/$id/edit'
-      path: '/$id/edit'
-      fullPath: '/sports-guides/$id/edit'
-      preLoaderRoute: typeof AuthenticatedApprovedSportsGuidesIdEditRouteImport
-      parentRoute: typeof AuthenticatedApprovedSportsGuidesRoute
+    '/_authenticated/_approved/u/$username': {
+      id: '/_authenticated/_approved/u/$username'
+      path: '/u/$username'
+      fullPath: '/u/$username'
+      preLoaderRoute: typeof AuthenticatedApprovedUUsernameRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
     }
-    '/_authenticated/_approved/forum/$board/$topic': {
-      id: '/_authenticated/_approved/forum/$board/$topic'
-      path: '/$topic'
-      fullPath: '/forum/$board/$topic'
-      preLoaderRoute: typeof AuthenticatedApprovedForumBoardTopicRouteImport
-      parentRoute: typeof AuthenticatedApprovedForumBoardRoute
+    '/api/public/hooks/backup-credentials': {
+      id: '/api/public/hooks/backup-credentials'
+      path: '/api/public/hooks/backup-credentials'
+      fullPath: '/api/public/hooks/backup-credentials'
+      preLoaderRoute: typeof ApiPublicHooksBackupCredentialsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/backup-orders': {
+      id: '/api/public/hooks/backup-orders'
+      path: '/api/public/hooks/backup-orders'
+      fullPath: '/api/public/hooks/backup-orders'
+      preLoaderRoute: typeof ApiPublicHooksBackupOrdersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/boro-fetch-fixtures': {
+      id: '/api/public/hooks/boro-fetch-fixtures'
+      path: '/api/public/hooks/boro-fetch-fixtures'
+      fullPath: '/api/public/hooks/boro-fetch-fixtures'
+      preLoaderRoute: typeof ApiPublicHooksBoroFetchFixturesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/boro-match-demo': {
+      id: '/api/public/hooks/boro-match-demo'
+      path: '/api/public/hooks/boro-match-demo'
+      fullPath: '/api/public/hooks/boro-match-demo'
+      preLoaderRoute: typeof ApiPublicHooksBoroMatchDemoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/boro-match-events': {
+      id: '/api/public/hooks/boro-match-events'
+      path: '/api/public/hooks/boro-match-events'
+      fullPath: '/api/public/hooks/boro-match-events'
+      preLoaderRoute: typeof ApiPublicHooksBoroMatchEventsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/boro-match-thread': {
+      id: '/api/public/hooks/boro-match-thread'
+      path: '/api/public/hooks/boro-match-thread'
+      fullPath: '/api/public/hooks/boro-match-thread'
+      preLoaderRoute: typeof ApiPublicHooksBoroMatchThreadRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/boro-prediction-reminders': {
+      id: '/api/public/hooks/boro-prediction-reminders'
+      path: '/api/public/hooks/boro-prediction-reminders'
+      fullPath: '/api/public/hooks/boro-prediction-reminders'
+      preLoaderRoute: typeof ApiPublicHooksBoroPredictionRemindersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/boro-predictor-invite': {
+      id: '/api/public/hooks/boro-predictor-invite'
+      path: '/api/public/hooks/boro-predictor-invite'
+      fullPath: '/api/public/hooks/boro-predictor-invite'
+      preLoaderRoute: typeof ApiPublicHooksBoroPredictorInviteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/boro-team-sheet': {
+      id: '/api/public/hooks/boro-team-sheet'
+      path: '/api/public/hooks/boro-team-sheet'
+      fullPath: '/api/public/hooks/boro-team-sheet'
+      preLoaderRoute: typeof ApiPublicHooksBoroTeamSheetRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/device-release-watch': {
+      id: '/api/public/hooks/device-release-watch'
+      path: '/api/public/hooks/device-release-watch'
+      fullPath: '/api/public/hooks/device-release-watch'
+      preLoaderRoute: typeof ApiPublicHooksDeviceReleaseWatchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/espn-debug': {
+      id: '/api/public/hooks/espn-debug'
+      path: '/api/public/hooks/espn-debug'
+      fullPath: '/api/public/hooks/espn-debug'
+      preLoaderRoute: typeof ApiPublicHooksEspnDebugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/fantasy-squad-reminders': {
+      id: '/api/public/hooks/fantasy-squad-reminders'
+      path: '/api/public/hooks/fantasy-squad-reminders'
+      fullPath: '/api/public/hooks/fantasy-squad-reminders'
+      preLoaderRoute: typeof ApiPublicHooksFantasySquadRemindersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/fantasy-squad-sync': {
+      id: '/api/public/hooks/fantasy-squad-sync'
+      path: '/api/public/hooks/fantasy-squad-sync'
+      fullPath: '/api/public/hooks/fantasy-squad-sync'
+      preLoaderRoute: typeof ApiPublicHooksFantasySquadSyncRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/notify': {
+      id: '/api/public/hooks/notify'
+      path: '/api/public/hooks/notify'
+      fullPath: '/api/public/hooks/notify'
+      preLoaderRoute: typeof ApiPublicHooksNotifyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/nowpayments': {
+      id: '/api/public/hooks/nowpayments'
+      path: '/api/public/hooks/nowpayments'
+      fullPath: '/api/public/hooks/nowpayments'
+      preLoaderRoute: typeof ApiPublicHooksNowpaymentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/refresh-streaming-prices': {
+      id: '/api/public/hooks/refresh-streaming-prices'
+      path: '/api/public/hooks/refresh-streaming-prices'
+      fullPath: '/api/public/hooks/refresh-streaming-prices'
+      preLoaderRoute: typeof ApiPublicHooksRefreshStreamingPricesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/refresh-streaming-stock': {
+      id: '/api/public/hooks/refresh-streaming-stock'
+      path: '/api/public/hooks/refresh-streaming-stock'
+      fullPath: '/api/public/hooks/refresh-streaming-stock'
+      preLoaderRoute: typeof ApiPublicHooksRefreshStreamingStockRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/scheduled-reminders': {
+      id: '/api/public/hooks/scheduled-reminders'
+      path: '/api/public/hooks/scheduled-reminders'
+      fullPath: '/api/public/hooks/scheduled-reminders'
+      preLoaderRoute: typeof ApiPublicHooksScheduledRemindersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/square-invoice': {
+      id: '/api/public/hooks/square-invoice'
+      path: '/api/public/hooks/square-invoice'
+      fullPath: '/api/public/hooks/square-invoice'
+      preLoaderRoute: typeof ApiPublicHooksSquareInvoiceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/staff-notification-push': {
+      id: '/api/public/hooks/staff-notification-push'
+      path: '/api/public/hooks/staff-notification-push'
+      fullPath: '/api/public/hooks/staff-notification-push'
+      preLoaderRoute: typeof ApiPublicHooksStaffNotificationPushRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/status-incident-push': {
+      id: '/api/public/hooks/status-incident-push'
+      path: '/api/public/hooks/status-incident-push'
+      fullPath: '/api/public/hooks/status-incident-push'
+      preLoaderRoute: typeof ApiPublicHooksStatusIncidentPushRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/subscription-expiry-reminders': {
+      id: '/api/public/hooks/subscription-expiry-reminders'
+      path: '/api/public/hooks/subscription-expiry-reminders'
+      fullPath: '/api/public/hooks/subscription-expiry-reminders'
+      preLoaderRoute: typeof ApiPublicHooksSubscriptionExpiryRemindersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/sync-boro-scores': {
+      id: '/api/public/hooks/sync-boro-scores'
+      path: '/api/public/hooks/sync-boro-scores'
+      fullPath: '/api/public/hooks/sync-boro-scores'
+      preLoaderRoute: typeof ApiPublicHooksSyncBoroScoresRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/sync-fantasy-scores': {
+      id: '/api/public/hooks/sync-fantasy-scores'
+      path: '/api/public/hooks/sync-fantasy-scores'
+      fullPath: '/api/public/hooks/sync-fantasy-scores'
+      preLoaderRoute: typeof ApiPublicHooksSyncFantasyScoresRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/sync-wc-scores': {
+      id: '/api/public/hooks/sync-wc-scores'
+      path: '/api/public/hooks/sync-wc-scores'
+      fullPath: '/api/public/hooks/sync-wc-scores'
+      preLoaderRoute: typeof ApiPublicHooksSyncWcScoresRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/user-notification-push': {
+      id: '/api/public/hooks/user-notification-push'
+      path: '/api/public/hooks/user-notification-push'
+      fullPath: '/api/public/hooks/user-notification-push'
+      preLoaderRoute: typeof ApiPublicHooksUserNotificationPushRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/hooks/wc-prediction-reminders': {
+      id: '/api/public/hooks/wc-prediction-reminders'
+      path: '/api/public/hooks/wc-prediction-reminders'
+      fullPath: '/api/public/hooks/wc-prediction-reminders'
+      preLoaderRoute: typeof ApiPublicHooksWcPredictionRemindersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lovable/email/auth/preview': {
+      id: '/lovable/email/auth/preview'
+      path: '/lovable/email/auth/preview'
+      fullPath: '/lovable/email/auth/preview'
+      preLoaderRoute: typeof LovableEmailAuthPreviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lovable/email/auth/webhook': {
+      id: '/lovable/email/auth/webhook'
+      path: '/lovable/email/auth/webhook'
+      fullPath: '/lovable/email/auth/webhook'
+      preLoaderRoute: typeof LovableEmailAuthWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lovable/email/queue/process': {
+      id: '/lovable/email/queue/process'
+      path: '/lovable/email/queue/process'
+      fullPath: '/lovable/email/queue/process'
+      preLoaderRoute: typeof LovableEmailQueueProcessRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lovable/email/transactional/preview': {
+      id: '/lovable/email/transactional/preview'
+      path: '/lovable/email/transactional/preview'
+      fullPath: '/lovable/email/transactional/preview'
+      preLoaderRoute: typeof LovableEmailTransactionalPreviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lovable/email/transactional/send': {
+      id: '/lovable/email/transactional/send'
+      path: '/lovable/email/transactional/send'
+      fullPath: '/lovable/email/transactional/send'
+      preLoaderRoute: typeof LovableEmailTransactionalSendRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/_approved/fanzone/messages/$thread': {
+      id: '/_authenticated/_approved/fanzone/messages/$thread'
+      path: '/$thread'
+      fullPath: '/fanzone/messages/$thread'
+      preLoaderRoute: typeof AuthenticatedApprovedFanzoneMessagesThreadRouteImport
+      parentRoute: typeof AuthenticatedApprovedFanzoneMessagesRoute
     }
     '/_authenticated/_approved/fanzone/u/$userId': {
       id: '/_authenticated/_approved/fanzone/u/$userId'
@@ -2598,12 +2584,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedApprovedFanzoneUUserIdRouteImport
       parentRoute: typeof AuthenticatedApprovedRoute
     }
-    '/_authenticated/_approved/fanzone/messages/$thread': {
-      id: '/_authenticated/_approved/fanzone/messages/$thread'
-      path: '/$thread'
-      fullPath: '/fanzone/messages/$thread'
-      preLoaderRoute: typeof AuthenticatedApprovedFanzoneMessagesThreadRouteImport
-      parentRoute: typeof AuthenticatedApprovedFanzoneMessagesRoute
+    '/_authenticated/_approved/forum/$board/$topic': {
+      id: '/_authenticated/_approved/forum/$board/$topic'
+      path: '/$topic'
+      fullPath: '/forum/$board/$topic'
+      preLoaderRoute: typeof AuthenticatedApprovedForumBoardTopicRouteImport
+      parentRoute: typeof AuthenticatedApprovedForumBoardRoute
+    }
+    '/_authenticated/_approved/sports-guides/$id/edit': {
+      id: '/_authenticated/_approved/sports-guides/$id/edit'
+      path: '/$id/edit'
+      fullPath: '/sports-guides/$id/edit'
+      preLoaderRoute: typeof AuthenticatedApprovedSportsGuidesIdEditRouteImport
+      parentRoute: typeof AuthenticatedApprovedSportsGuidesRoute
+    }
+    '/_authenticated/_approved/sports-guides/read/$id': {
+      id: '/_authenticated/_approved/sports-guides/read/$id'
+      path: '/read/$id'
+      fullPath: '/sports-guides/read/$id'
+      preLoaderRoute: typeof AuthenticatedApprovedSportsGuidesReadIdRouteImport
+      parentRoute: typeof AuthenticatedApprovedSportsGuidesRoute
     }
   }
 }
