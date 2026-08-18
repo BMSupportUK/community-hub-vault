@@ -637,17 +637,28 @@ html.theme-sunset body {
 }
 
 @keyframes expiry-date-flash {
-  0%, 100% { opacity: 1; text-shadow: 0 0 8px currentColor; transform: scale(1); }
-  50% { opacity: 0.55; text-shadow: 0 0 18px currentColor; transform: scale(1.03); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); transform: scale(1); }
+  50% { box-shadow: 0 0 0 4px rgba(239, 68, 68, 0); transform: scale(1.02); }
+}
+@keyframes expiry-date-flash-amber {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); transform: scale(1); }
+  50% { box-shadow: 0 0 0 4px rgba(245, 158, 11, 0); transform: scale(1.02); }
 }
 .expiry-date-flash {
-  animation: expiry-date-flash 1s ease-in-out infinite;
+  animation: expiry-date-flash 1.2s ease-in-out infinite;
+  display: inline-block;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+.expiry-date-flash-amber {
+  animation: expiry-date-flash-amber 1.2s ease-in-out infinite;
   display: inline-block;
   font-weight: 800;
   letter-spacing: 0.02em;
 }
 @media (prefers-reduced-motion: reduce) {
-  .expiry-date-flash { animation: none; text-shadow: 0 0 6px currentColor; }
+  .expiry-date-flash,
+  .expiry-date-flash-amber { animation: none; }
 }
 
 
