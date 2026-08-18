@@ -20,6 +20,25 @@ export function SubscriptionDetailsCard() {
   const [loaded, setLoaded] = useState(false);
   const [reveal, setReveal] = useState<Record<string, boolean>>({});
   const [copied, setCopied] = useState<string | null>(null);
+  const [username, setUsername] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!user?.id) {
+      setUsername(null);
+      return;
+    }
+    let active = true;
+    supabase
+      .from("profiles")
+      .select("username")
+      .eq("id", user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!active) return;
+        setUsername(data?.username ?? null);
+      });
+    return () => { active = false; };
+  }, [user?.id]);
 
   useEffect(() => {
     if (!user) {
