@@ -205,6 +205,9 @@ function AdminCredentialsPage() {
                           <div key={c.id} className="rounded-lg border border-border bg-background/40 p-3 grid sm:grid-cols-[1fr_auto_auto] gap-3 items-center">
                             <div className="min-w-0">
                               <div className="font-display font-semibold truncate">{c.app_login_name}</div>
+                              <div className="text-[11px] text-muted-foreground">
+                                {ACCOUNT_TYPES.find((t) => t.value === (c.account_type ?? "single"))?.label ?? "Single account"}
+                              </div>
                               {exp && (
                                 <div className={cn("text-xs", expired ? "text-destructive" : soon ? "text-amber-400" : "text-muted-foreground")}>
                                   {expired ? "Expired" : "Expires"} {exp.toLocaleString("en-GB")}
