@@ -857,8 +857,8 @@ function FixtureCard({
           <span className="font-bold text-foreground tabular-nums">{formatKickoff(fixture.kickoffAt)}</span>
         </span>
       </div>
-      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
-        <div className="flex items-center justify-end gap-2 font-medium">
+      <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 sm:gap-3">
+        <div className="flex min-w-0 items-center justify-end gap-2 font-medium">
           <RedCards count={fixture.homeReds} />
           <span className="truncate">{fixture.homeTeam}</span>
           <TeamKit team={fixture.homeTeam} />
