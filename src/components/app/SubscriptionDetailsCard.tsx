@@ -271,13 +271,14 @@ export function SubscriptionDetailsCard() {
                       <p
                         className={cn(
                           "text-xs",
-                          expired ? "text-destructive" : expSoon ? "text-amber-500" : "text-foreground",
+                          expired ? "text-destructive expiry-date-flash font-semibold" : expSoon ? "text-amber-500 expiry-date-flash font-semibold" : "text-foreground",
                         )}
                       >
                         {fmt(new Date(c.expiry_at))}
                       </p>
                     </div>
                   )}
+
                 </div>
               );
             })()}
