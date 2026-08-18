@@ -45,8 +45,9 @@ export const Route = createFileRoute("/api/public/hooks/scheduled-reminders")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const apikey = request.headers.get("apikey");
-        if (!apikey || apikey !== process.env.SUPABASE_PUBLISHABLE_KEY) {
+        const expected = process.env.CRON_SECRET;
+        const provided = request.headers.get("x-cron-secret");
+        if (!expected || !provided || provided !== expected) {
           return new Response("Unauthorized", { status: 401 });
         }
 

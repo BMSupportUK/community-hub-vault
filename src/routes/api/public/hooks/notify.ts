@@ -8,7 +8,7 @@ import { pushToAdmins } from "@/lib/fcm.server";
 // message, sends it to the configured Telegram chat through the Lovable
 // connector gateway, and records the outcome in notification_log.
 //
-// Auth: requires the Supabase anon key in the `apikey` header.
+// Auth: requires CRON_SECRET in the `x-cron-secret` header.
 
 const SITE = "https://bmsupport.uk";
 const GATEWAY = "https://connector-gateway.lovable.dev/telegram";
@@ -147,8 +147,9 @@ export const Route = createFileRoute("/api/public/hooks/notify")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const apikey = request.headers.get("apikey");
-        if (!apikey || apikey !== process.env.SUPABASE_PUBLISHABLE_KEY) {
+        const expected = process.env.CRON_SECRET;
+        const provided = request.headers.get("x-cron-secret");
+        if (!expected || !provided || provided !== expected) {
           return new Response("Unauthorized", { status: 401 });
         }
 
