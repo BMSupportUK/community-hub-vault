@@ -132,7 +132,7 @@ function ReadPage() {
       // stays attached above the bubble instead of paginating separately.
       const intro: HTMLElement[] = [];
       let prev = el.previousElementSibling as HTMLElement | null;
-      while (prev) {
+      while (prev && intro.length < 2) {
         if (prev.matches("[data-link-preview]")) break;
         if (prev.querySelector("img,video,iframe,picture,canvas,[data-link-preview]")) break;
         const text = (prev.textContent ?? "").replace(/\s|\u00a0/g, "");
