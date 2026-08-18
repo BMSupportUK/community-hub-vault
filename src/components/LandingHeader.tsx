@@ -53,7 +53,7 @@ export function LandingHeader() {
         onClick={() => setOpen((v) => !v)}
         aria-label={open ? "Close menu" : "Open menu"}
         aria-expanded={open}
-        className="lg:hidden inline-flex items-center justify-center size-10 rounded-lg border border-border text-foreground hover:bg-muted/50"
+        className="xl:hidden inline-flex items-center justify-center size-10 rounded-lg border border-border text-foreground hover:bg-muted/50"
       >
         {open ? <X className="size-5" /> : <Menu className="size-5" />}
       </button>
@@ -61,9 +61,9 @@ export function LandingHeader() {
       <nav
         className={cn(
           "items-center gap-1",
-          "hidden lg:flex",
+          "hidden xl:flex",
           open &&
-            "flex lg:flex absolute left-0 right-0 top-full z-50 flex-col items-stretch gap-1 border-b border-border bg-background p-4 shadow-lg lg:static lg:flex-row lg:items-center lg:gap-1 lg:border-0 lg:bg-transparent lg:p-0 lg:shadow-none",
+            "flex xl:flex absolute left-0 right-0 top-full z-50 flex-col items-stretch gap-1 border-b border-border bg-background p-4 shadow-lg xl:static xl:flex-row xl:items-center xl:gap-1 xl:border-0 xl:bg-transparent xl:p-0 xl:shadow-none",
         )}
       >
         {navItems.map((item) => {
