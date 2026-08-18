@@ -840,18 +840,18 @@ function FixtureCard({
   const showInputs = !locked && !scored && (editing || !hasPick);
 
   return (
-    <div className={`rounded-2xl border-2 bg-surface-1 p-4 shadow-md ${
+    <div className={`min-w-0 rounded-2xl border-2 bg-surface-1 p-3 sm:p-4 shadow-md ${
       live
         ? "border-emerald-500/80 shadow-emerald-500/30 animate-pulse"
         : upcomingSoon
           ? "border-red-500/80 shadow-red-500/30 animate-pulse"
           : "border-primary/60 shadow-primary/10"
     }`}>
-      <div className="flex items-center justify-between text-xs text-muted-foreground mb-3">
-        <span className="flex items-center gap-1.5 flex-wrap">
+      <div className="flex min-w-0 flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground mb-3">
+        <span className="flex min-w-0 items-center gap-1.5 flex-wrap">
           <span>{fixture.competition}{fixture.venue ? ` · ${fixture.venue}` : ""}</span>
         </span>
-        <span className="inline-flex items-center gap-2">
+        <span className="inline-flex flex-wrap items-center gap-2">
           {live && <LivePill fixture={fixture} />}
           {!locked && !scored && !live && <LockCountdownPill lockAtMs={lockMs} />}
           <span className="font-bold text-foreground tabular-nums">{formatKickoff(fixture.kickoffAt)}</span>
