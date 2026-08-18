@@ -915,14 +915,14 @@ function FixtureCard({
             <div className="text-[10px] uppercase tracking-wider text-muted-foreground mt-1">Your pick</div>
           </div>
         )}
-        <div className="flex items-center gap-2 font-medium">
+        <div className="flex min-w-0 items-center gap-2 font-medium">
           <TeamKit team={fixture.awayTeam} />
           <span className="truncate">{fixture.awayTeam}</span>
           <RedCards count={fixture.awayReds} />
         </div>
       </div>
-      <div className="mt-3 flex items-center justify-between text-xs">
-        <div className="text-muted-foreground">
+      <div className="mt-3 flex min-w-0 flex-wrap items-center justify-between gap-2 text-xs">
+        <div className="min-w-0 text-muted-foreground">
           {fixture.myPrediction ? (
             <span className="inline-flex items-center gap-1">
               <Check className="size-3.5 text-emerald-400" />
