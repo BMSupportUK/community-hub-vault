@@ -189,10 +189,13 @@ export function SubscriptionDetailsCard() {
                           ? "bg-violet-600 text-white border-violet-500 shadow-[0_0_12px_rgba(139,92,246,0.45)]"
                           : "bg-surface-2 text-foreground/80 border-border hover:border-primary/60",
                       )}
-                       title={`Account ${c.account_number}`}
-                    >
-                       Account {c.account_number}
-                    </button>
+                       title={`Account ${c.account_number}${accountTypeLabel(c.account_type) ? ` - ${accountTypeLabel(c.account_type)}` : ""}`}
+                     >
+                        Account {c.account_number}
+                        {accountTypeLabel(c.account_type) && (
+                          <span className="ml-1.5 opacity-80">· {accountTypeLabel(c.account_type)}</span>
+                        )}
+                     </button>
                   );
                 })}
               </div>
