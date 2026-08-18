@@ -6,13 +6,9 @@ import { CalendarClock, Copy, Check, Eye, EyeOff, KeyRound, ExternalLink } from 
 import { cn } from "@/lib/utils";
 import { Link } from "@tanstack/react-router";
 
-function formatTabLabel(name: string | null, index: number) {
-  if (name) return name.length > 10 ? name.slice(0, 9) + "…" : name;
-  return `Sub ${index + 1}`;
-}
-
 interface CredRow {
   id: string;
+  account_number: number;
   app_login_name: string | null;
   password: string | null;
   expiry_at: string | null;
@@ -56,9 +52,9 @@ export function SubscriptionDetailsCard() {
     const load = () => {
       supabase
         .from("app_credentials")
-        .select("id, app_login_name, password, expiry_at")
+        .select("id, account_number, app_login_name, password, expiry_at")
         .eq("owner_id", user.id)
-        .order("created_at", { ascending: true })
+        .order("account_number", { ascending: true })
         .then(({ data }) => {
           if (!active) return;
           setCreds((data as CredRow[] | null) ?? []);
@@ -171,7 +167,7 @@ export function SubscriptionDetailsCard() {
           <div className="space-y-3">
             {creds.length > 1 && activeTab && (
               <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide">
-                {creds.map((c, idx) => {
+                {creds.map((c) => {
                   const selected = c.id === activeTab;
                   return (
                     <button
@@ -183,9 +179,9 @@ export function SubscriptionDetailsCard() {
                           ? "bg-violet-600 text-white border-violet-500 shadow-[0_0_12px_rgba(139,92,246,0.45)]"
                           : "bg-surface-2 text-foreground/80 border-border hover:border-primary/60",
                       )}
-                      title={c.app_login_name ?? `Sub ${idx + 1}`}
+                       title={`Account ${c.account_number}`}
                     >
-                      {formatTabLabel(c.app_login_name, idx)}
+                       Account {c.account_number}
                     </button>
                   );
                 })}
@@ -203,7 +199,7 @@ export function SubscriptionDetailsCard() {
                 >
                   <div className="flex items-center justify-between gap-2">
                     <div className="font-display font-semibold text-sm truncate">
-                      {c.app_login_name ?? "Account"}
+                       Account {c.account_number}
                     </div>
                     {c.expiry_at && (
                       <span

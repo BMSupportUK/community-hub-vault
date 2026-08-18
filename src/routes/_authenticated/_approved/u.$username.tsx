@@ -54,7 +54,7 @@ interface ProfileRow {
 
 interface ShiftRow { id: string; user_id: string; clock_in: string; clock_out: string | null; }
 interface BreakRow { id: string; user_id: string; kind: "break" | "lunch"; started_at: string; ended_at: string | null; }
-interface CredRow { id: string; app_login_name: string; password: string; expiry_at: string | null; notes: string | null; }
+interface CredRow { id: string; account_number: number; app_login_name: string; password: string; expiry_at: string | null; notes: string | null; }
 interface DnsRow { id: string; label: string; code: string; notes: string | null; }
 interface TicketRow { id: string; subject: string; status: string; priority: string; created_at: string; updated_at: string; closed_at: string | null; }
 interface OrderRow { id: string; total_cents: number; status: string; created_at: string; paid_at: string | null; completed_at: string | null; shipping_name: string | null; discount_code: string | null; }
@@ -1411,7 +1411,7 @@ function CredentialsReveal({ targetUserId, isOwner }: { targetUserId: string; is
     if (!unlocked) return;
     setLoading(true);
     Promise.all([
-      supabase.from("app_credentials").select("*").eq("owner_id", targetUserId).order("created_at", { ascending: false }),
+      supabase.from("app_credentials").select("*").eq("owner_id", targetUserId).order("account_number", { ascending: true }),
       supabase.from("qd_dns_codes").select("*").order("label", { ascending: true }),
     ]).then(([{ data: c }, { data: d }]) => {
       setCreds((c ?? []) as CredRow[]);
@@ -1485,7 +1485,7 @@ function CredentialsReveal({ targetUserId, isOwner }: { targetUserId: string; is
                       <div className="flex items-center justify-between gap-3">
                         <div className="flex items-center gap-2 min-w-0">
                           <AtSign className="size-4 text-primary shrink-0" />
-                          <div className="font-display font-semibold truncate">{c.app_login_name}</div>
+                           <div className="font-display font-semibold truncate">Account {c.account_number}</div>
                         </div>
                         {c.expiry_at && (
                           <span className={cn("text-xs px-2 py-0.5 rounded-full border whitespace-nowrap",
