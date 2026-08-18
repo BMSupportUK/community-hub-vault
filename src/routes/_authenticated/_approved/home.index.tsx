@@ -7,7 +7,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useEffect, useState, useRef } from "react";
 import { ServiceStatusPill } from "@/components/app/ServiceStatusPill";
-import { MembershipBox } from "@/components/app/MembershipBox";
 import { SubscriptionDetailsCard } from "@/components/app/SubscriptionDetailsCard";
 
 export const Route = createFileRoute("/_authenticated/_approved/home/")({
