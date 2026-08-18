@@ -18,12 +18,6 @@ interface CredRow {
   expiry_at: string | null;
 }
 
-function accountSort(a: CredRow, b: CredRow) {
-  const na = a.app_login_name ?? "";
-  const nb = b.app_login_name ?? "";
-  return na.localeCompare(nb, "en", { numeric: true, sensitivity: "base" });
-}
-
 export function SubscriptionDetailsCard() {
   const { user } = useAuth();
   const tz = useUserTimezone();
@@ -64,9 +58,10 @@ export function SubscriptionDetailsCard() {
         .from("app_credentials")
         .select("id, app_login_name, password, expiry_at")
         .eq("owner_id", user.id)
+        .order("created_at", { ascending: true })
         .then(({ data }) => {
           if (!active) return;
-          setCreds([...((data as CredRow[] | null) ?? [])].sort(accountSort));
+          setCreds((data as CredRow[] | null) ?? []);
           setLoaded(true);
         });
     };
