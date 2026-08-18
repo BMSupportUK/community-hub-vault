@@ -1,23 +1,14 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { Headphones, MessageSquare, Activity, Ticket, ShoppingBag, BookOpen, UserPlus, ArrowUp, ArrowDown, Pencil, Upload, Sparkles, Image as ImageIcon, Plus, Trash2, ChevronLeft, ChevronRight, Trophy, KeyRound } from "lucide-react";
+import { Headphones, MessageSquare, Activity, Ticket, ShoppingBag, BookOpen, UserPlus, ArrowUp, ArrowDown, Trophy, KeyRound } from "lucide-react";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import heroImg from "@/assets/member-hero.jpg";
-import eventPlaceholder from "@/assets/event-placeholder.jpg";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useEffect, useState, useRef } from "react";
-import { useServerFn } from "@tanstack/react-start";
-import { generateEventBanner } from "@/lib/event-banner.functions";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
-import { HtmlEditor } from "@/components/ui/html-editor";
-import { sanitizeRichHtml } from "@/lib/sanitize-html";
-import { Input } from "@/components/ui/input";
-import { Slider } from "@/components/ui/slider";
-import Cropper, { type Area } from "react-easy-crop";
 import { ServiceStatusPill } from "@/components/app/ServiceStatusPill";
 import { MembershipBox } from "@/components/app/MembershipBox";
+import { SubscriptionDetailsCard } from "@/components/app/SubscriptionDetailsCard";
 
 export const Route = createFileRoute("/_authenticated/_approved/home/")({
   component: WelcomePage,
@@ -26,49 +17,10 @@ export const Route = createFileRoute("/_authenticated/_approved/home/")({
 function WelcomePage() {
   const { user, hasRole } = useAuth();
   const canManage = hasRole("admin") || hasRole("management");
-  const canEditEvent = hasRole("admin") || hasRole("management") || hasRole("staff");
   const fallbackName = (user?.email ?? "there").split("@")[0];
   const [displayName, setDisplayName] = useState<string>(fallbackName);
   const name = displayName;
   const navigate = useNavigate();
-
-  type EventRow = { id: string; body: string; banner_url: string | null; event_date: string | null };
-  const [events, setEvents] = useState<EventRow[]>([]);
-  const [currentIdx, setCurrentIdx] = useState(0);
-  const event = events[currentIdx] ?? null;
-  const setEvent = (next: EventRow) => {
-    setEvents((prev) => prev.map((e) => (e.id === next.id ? next : e)));
-  };
-  const [eventOpen, setEventOpen] = useState(false);
-  const [editOpen, setEditOpen] = useState(false);
-  const [editBody, setEditBody] = useState("");
-  const [editDate, setEditDate] = useState("");
-  const [savingEvent, setSavingEvent] = useState(false);
-  const [bannerOpen, setBannerOpen] = useState(false);
-  const [bannerPrompt, setBannerPrompt] = useState("");
-  const [bannerBusy, setBannerBusy] = useState(false);
-  const [pendingFile, setPendingFile] = useState<File | null>(null);
-  const [pendingUrl, setPendingUrl] = useState<string | null>(null);
-  const [crop, setCrop] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
-  const [zoom, setZoom] = useState(1);
-  const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
-  const callGenerateBanner = useServerFn(generateEventBanner);
-
-  useEffect(() => {
-    (async () => {
-      const { data } = await supabase
-        .from("upcoming_event")
-        .select("id, body, banner_url, event_date")
-        .order("updated_at", { ascending: false });
-      const all = (data ?? []) as EventRow[];
-      const todayStr = new Date().toISOString().slice(0, 10);
-      const expired = all.filter((e) => e.event_date && e.event_date < todayStr);
-      if (expired.length > 0) {
-        await supabase.from("upcoming_event").delete().in("id", expired.map((e) => e.id));
-      }
-      setEvents(all.filter((e) => !e.event_date || e.event_date >= todayStr));
-    })();
-  }, []);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -82,130 +34,6 @@ function WelcomePage() {
       if (n) setDisplayName(n);
     })();
   }, [user?.id]);
-
-  // Auto-rotate every 60s when there are multiple events and no dialog open
-  useEffect(() => {
-    if (events.length < 2) return;
-    if (eventOpen || editOpen || bannerOpen) return;
-    const t = setInterval(() => {
-      setCurrentIdx((i) => (i + 1) % events.length);
-    }, 60_000);
-    return () => clearInterval(t);
-  }, [events.length, eventOpen, editOpen, bannerOpen]);
-
-  // Keep index in range when events change
-  useEffect(() => {
-    if (currentIdx >= events.length && events.length > 0) setCurrentIdx(0);
-  }, [events.length, currentIdx]);
-
-  const openEdit = () => {
-    setEditBody(event?.body ?? "");
-    setEditDate(event?.event_date ?? "");
-    setEditOpen(true);
-  };
-
-  const saveEvent = async () => {
-    if (!event) return;
-    setSavingEvent(true);
-    const { error } = await supabase
-      .from("upcoming_event")
-      .update({ body: editBody, event_date: editDate || null, updated_by: user?.id ?? null })
-      .eq("id", event.id);
-    setSavingEvent(false);
-    if (error) { toast.error(error.message); return; }
-    setEvent({ ...event, body: editBody, event_date: editDate || null });
-    setEditOpen(false);
-    toast.success("Event updated");
-  };
-
-  const addEvent = async () => {
-    const { data, error } = await supabase
-      .from("upcoming_event")
-      .insert({ body: "", updated_by: user?.id ?? null })
-      .select("id, body, banner_url, event_date")
-      .single();
-    if (error || !data) { toast.error(error?.message ?? "Failed"); return; }
-    setEvents((prev) => [data as EventRow, ...prev]);
-    setCurrentIdx(0);
-    setEditBody("");
-    setEditDate("");
-    setEditOpen(true);
-  };
-
-  const deleteEvent = async () => {
-    if (!event) return;
-    if (!confirm("Delete this event?")) return;
-    const { error } = await supabase.from("upcoming_event").delete().eq("id", event.id);
-    if (error) { toast.error(error.message); return; }
-    setEvents((prev) => prev.filter((e) => e.id !== event.id));
-    setCurrentIdx(0);
-    toast.success("Event deleted");
-  };
-
-  const pickFile = (file: File) => {
-    if (!file.type.startsWith("image/")) { toast.error("Please pick an image"); return; }
-    if (pendingUrl) URL.revokeObjectURL(pendingUrl);
-    setPendingFile(file);
-    setPendingUrl(URL.createObjectURL(file));
-    setCrop({ x: 0, y: 0 });
-    setZoom(1);
-    setCroppedAreaPixels(null);
-  };
-
-  const cancelCrop = () => {
-    if (pendingUrl) URL.revokeObjectURL(pendingUrl);
-    setPendingFile(null);
-    setPendingUrl(null);
-    setCroppedAreaPixels(null);
-  };
-
-  const confirmCrop = async () => {
-    if (!event || !user || !pendingUrl || !croppedAreaPixels) return;
-    setBannerBusy(true);
-    try {
-      const blob = await renderCrop(pendingUrl, croppedAreaPixels, 300, 250);
-      if (!blob) throw new Error("Could not process image");
-      const path = `${event.id}/${Date.now()}.jpg`;
-      const { error: upErr } = await supabase.storage.from("event-banners").upload(path, blob, { upsert: true, contentType: "image/jpeg" });
-      if (upErr) throw new Error(upErr.message);
-      const { data: pub } = supabase.storage.from("event-banners").getPublicUrl(path);
-      const url = pub.publicUrl;
-      const { error } = await supabase.from("upcoming_event").update({ banner_url: url, updated_by: user.id }).eq("id", event.id);
-      if (error) throw new Error(error.message);
-      setEvent({ ...event, banner_url: url });
-      cancelCrop();
-      setBannerOpen(false);
-      toast.success("Banner updated");
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Upload failed");
-    } finally {
-      setBannerBusy(false);
-    }
-  };
-
-  const aiGenerateBanner = async () => {
-    if (!event || !bannerPrompt.trim()) return;
-    setBannerBusy(true);
-    try {
-      const res = await callGenerateBanner({ data: { prompt: bannerPrompt.trim(), eventId: event.id } });
-      setEvent({ ...event, banner_url: res.url });
-      toast.success("Banner generated");
-      setBannerOpen(false);
-      setBannerPrompt("");
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Failed to generate");
-    } finally {
-      setBannerBusy(false);
-    }
-  };
-
-  const clearBanner = async () => {
-    if (!event) return;
-    const { error } = await supabase.from("upcoming_event").update({ banner_url: null }).eq("id", event.id);
-    if (error) { toast.error(error.message); return; }
-    setEvent({ ...event, banner_url: null });
-    toast.success("Banner removed");
-  };
 
   const goToInvite = async () => {
     if (!user) return;
@@ -436,137 +264,9 @@ function WelcomePage() {
             </div>
           </div>
 
-          {/* Event banner (right) */}
+          {/* Subscription details (right) */}
           <div className="min-h-0 justify-center xl:justify-start">
-            <div
-              className="group relative h-full max-h-full rounded-2xl border-2 border-violet-500/60 bg-surface shadow-[0_0_30px_rgba(139,92,246,0.25)] overflow-hidden flex flex-col mx-auto"
-              style={{ width: 300, maxWidth: "100%" }}
-            >
-              {canEditEvent && (
-                <div className="absolute top-2 right-2 z-20 flex items-center gap-1 opacity-0 pointer-events-none transition-opacity group-hover:opacity-100 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:pointer-events-auto">
-                  <button
-                    onClick={() => setBannerOpen(true)}
-                    disabled={!event}
-                    className="size-7 grid place-items-center rounded-md bg-background/80 border border-violet-500/40 text-foreground/80 hover:bg-violet-500/20 transition disabled:opacity-40"
-                    aria-label="Edit banner"
-                    title="Edit banner"
-                  >
-                    <ImageIcon className="size-3.5" />
-                  </button>
-                  <button
-                    onClick={openEdit}
-                    disabled={!event}
-                    className="size-7 grid place-items-center rounded-md bg-background/80 border border-violet-500/40 text-foreground/80 hover:bg-violet-500/20 transition disabled:opacity-40"
-                    aria-label="Edit event text"
-                    title="Edit text"
-                  >
-                    <Pencil className="size-3.5" />
-                  </button>
-                  <button
-                    onClick={addEvent}
-                    className="size-7 grid place-items-center rounded-md bg-background/80 border border-violet-500/40 text-foreground/80 hover:bg-violet-500/20 transition"
-                    aria-label="Add event"
-                    title="Add event"
-                  >
-                    <Plus className="size-3.5" />
-                  </button>
-                  {events.length > 0 && (
-                    <button
-                      onClick={deleteEvent}
-                      className="size-7 grid place-items-center rounded-md bg-background/80 border border-red-500/40 text-red-300 hover:bg-red-500/20 transition"
-                      aria-label="Delete event"
-                      title="Delete event"
-                    >
-                      <Trash2 className="size-3.5" />
-                    </button>
-                  )}
-                </div>
-              )}
-
-              {/* Image area */}
-              <div className="relative w-full shrink-0 aspect-[300/250]">
-                {event?.banner_url ? (
-                  <img
-                    src={event.banner_url}
-                    alt="Upcoming event banner"
-                    className="w-full h-full object-cover"
-                  />
-                ) : events.length === 0 ? (
-                  <div className="relative w-full h-full">
-                    <img
-                      src={eventPlaceholder}
-                      alt="Awaiting the next event"
-                      width={300}
-                      height={250}
-                      loading="lazy"
-                      className="w-full h-full object-cover"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
-                    <p className="absolute inset-x-0 bottom-0 p-3 font-display font-semibold text-sm text-center text-white drop-shadow">
-                      Awaiting The Next Event Information.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="w-full h-full grid place-items-center bg-gradient-to-br from-violet-950/40 to-blue-950/40 text-foreground/50 text-xs">
-                    No banner yet
-                  </div>
-                )}
-              </div>
-
-              {/* Divider */}
-              <div className="h-px bg-gradient-to-r from-transparent via-violet-500/60 to-transparent" />
-
-              {/* Text area */}
-              <div className="min-h-0 flex-1 p-4 flex flex-col items-center gap-2">
-                <h3 className="font-display font-bold text-center text-base leading-tight text-foreground">
-                  Upcoming Events On BM Support
-                </h3>
-                {event?.body ? (
-                  <div
-                    className="prose prose-sm dark:prose-invert max-w-none text-sm text-foreground/75 text-center line-clamp-4 flex-1"
-                    dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(event.body) }}
-                  />
-                ) : (
-                  <p className="text-sm text-foreground/75 text-center line-clamp-4 flex-1">Stay tuned…</p>
-                )}
-                <button
-                  onClick={() => setEventOpen(true)}
-                  disabled={!event}
-                  className="px-4 py-1.5 rounded-md bg-gradient-to-br from-violet-600 to-blue-600 hover:opacity-90 text-white text-sm font-medium shadow-[0_0_20px_rgba(139,92,246,0.45)] transition disabled:opacity-40 opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
-                >
-                  Read more
-                </button>
-
-                {events.length > 1 && (
-                  <div className="flex items-center justify-between w-full pt-1">
-                    <button
-                      onClick={() => setCurrentIdx((i) => (i - 1 + events.length) % events.length)}
-                      className="size-7 grid place-items-center rounded-md hover:bg-violet-500/20 text-foreground/70"
-                      aria-label="Previous event"
-                    >
-                      <ChevronLeft className="size-4" />
-                    </button>
-                    <div className="flex items-center gap-1.5">
-                      {events.map((e, i) => (
-                        <button
-                          key={e.id}
-                          onClick={() => setCurrentIdx(i)}
-                          aria-label={`Go to event ${i + 1}`}
-                          className={`size-1.5 rounded-full transition-all ${i === currentIdx ? "bg-violet-400 w-4" : "bg-foreground/30 hover:bg-foreground/50"}`}
-                        />
-                      ))}
-                    </div>
-                    <button
-                      onClick={() => setCurrentIdx((i) => (i + 1) % events.length)}
-                      className="size-7 grid place-items-center rounded-md hover:bg-violet-500/20 text-foreground/70"
-                      aria-label="Next event"
-                    >
-                      <ChevronRight className="size-4" />
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
+            <SubscriptionDetailsCard />
           </div>
         </div>
       </section>
@@ -635,135 +335,6 @@ function WelcomePage() {
       </section>
       </div>
 
-      <Dialog open={eventOpen} onOpenChange={setEventOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>The Next Big Event on BM Support</DialogTitle>
-          </DialogHeader>
-          {event?.body ? (
-            <div
-              className="prose prose-sm dark:prose-invert max-w-none text-sm text-foreground"
-              dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(event.body) }}
-            />
-          ) : (
-            <p className="text-sm text-foreground">Stay tuned…</p>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={editOpen} onOpenChange={setEditOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Edit upcoming event</DialogTitle>
-          </DialogHeader>
-          <HtmlEditor
-            value={editBody}
-            onChange={setEditBody}
-            placeholder="Tell members about the next big event…"
-          />
-          <div className="space-y-1">
-            <label className="text-xs font-medium text-foreground/70">Event date (auto-deletes after this date)</label>
-            <Input type="date" value={editDate} onChange={(e) => setEditDate(e.target.value)} />
-          </div>
-          <DialogFooter>
-            <button
-              onClick={() => setEditOpen(false)}
-              className="px-4 py-2 rounded-md border border-border text-sm"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={saveEvent}
-              disabled={savingEvent}
-              className="px-4 py-2 rounded-md bg-gradient-to-br from-violet-600 to-blue-600 text-white text-sm disabled:opacity-50"
-            >
-              {savingEvent ? "Saving…" : "Save"}
-            </button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={bannerOpen} onOpenChange={setBannerOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Event banner (300×250)</DialogTitle>
-          </DialogHeader>
-          {pendingUrl ? (
-            <div className="space-y-4">
-              <div className="relative w-full bg-black/40 rounded-md overflow-hidden" style={{ height: 280 }}>
-                <Cropper
-                  image={pendingUrl}
-                  crop={crop}
-                  zoom={zoom}
-                  aspect={300 / 250}
-                  onCropChange={setCrop}
-                  onZoomChange={setZoom}
-                  onCropComplete={(_a, areaPixels) => setCroppedAreaPixels(areaPixels)}
-                />
-              </div>
-              <div>
-                <label className="text-xs text-foreground/70 mb-1 block">Zoom</label>
-                <Slider value={[zoom]} min={1} max={4} step={0.05} onValueChange={(v) => setZoom(v[0])} />
-              </div>
-              <DialogFooter>
-                <button onClick={cancelCrop} disabled={bannerBusy} className="px-4 py-2 rounded-md border border-border text-sm">Cancel</button>
-                <button onClick={confirmCrop} disabled={bannerBusy || !croppedAreaPixels} className="px-4 py-2 rounded-md bg-gradient-to-br from-violet-600 to-blue-600 text-white text-sm disabled:opacity-50">
-                  {bannerBusy ? "Uploading…" : "Use this crop"}
-                </button>
-              </DialogFooter>
-            </div>
-          ) : (
-          <div className="space-y-4">
-            <div>
-              <label className="text-sm font-medium mb-2 flex items-center gap-2">
-                <Upload className="size-4" /> Upload an image
-              </label>
-              <Input
-                type="file"
-                accept="image/*"
-                disabled={bannerBusy}
-                onChange={(e) => {
-                  const f = e.target.files?.[0];
-                  if (f) pickFile(f);
-                }}
-              />
-              <p className="text-xs text-foreground/60 mt-1">You'll be able to crop the image to fit 300×250.</p>
-            </div>
-            <div className="border-t border-border pt-4">
-              <label className="text-sm font-medium mb-2 flex items-center gap-2">
-                <Sparkles className="size-4" /> Or design with AI
-              </label>
-              <Textarea
-                value={bannerPrompt}
-                onChange={(e) => setBannerPrompt(e.target.value)}
-                rows={3}
-                placeholder="Describe the banner you want (e.g. 'Summer LAN party, neon retro arcade vibe, with date June 15')"
-                disabled={bannerBusy}
-              />
-              <button
-                onClick={aiGenerateBanner}
-                disabled={bannerBusy || !bannerPrompt.trim()}
-                className="mt-2 px-4 py-2 rounded-md bg-gradient-to-br from-violet-600 to-blue-600 text-white text-sm disabled:opacity-50 inline-flex items-center gap-2"
-              >
-                <Sparkles className="size-4" />
-                {bannerBusy ? "Generating…" : "Generate banner"}
-              </button>
-            </div>
-            {event?.banner_url && (
-              <div className="border-t border-border pt-4">
-                <button
-                  onClick={clearBanner}
-                  disabled={bannerBusy}
-                  className="text-sm text-red-400 hover:text-red-300"
-                >
-                  Remove current banner
-                </button>
-              </div>
-            )}
-          </div>
-          )}
-        </DialogContent>
-      </Dialog>
     </main>
   );
 }
@@ -822,23 +393,5 @@ function QuickAction({
         <span className="block truncate text-xs text-foreground/75 mt-0.5">{desc}</span>
       </span>
     </button>
-  );
-}
-
-async function renderCrop(src: string, area: Area, outW: number, outH: number): Promise<Blob | null> {
-  const img = new Image();
-  img.crossOrigin = "anonymous";
-  img.src = src;
-  await img.decode();
-  const canvas = document.createElement("canvas");
-  canvas.width = outW;
-  canvas.height = outH;
-  const ctx = canvas.getContext("2d");
-  if (!ctx) return null;
-  ctx.fillStyle = "#ffffff";
-  ctx.fillRect(0, 0, outW, outH);
-  ctx.drawImage(img, area.x, area.y, area.width, area.height, 0, 0, outW, outH);
-  return await new Promise<Blob | null>((resolve) =>
-    canvas.toBlob((b) => resolve(b), "image/jpeg", 0.9)
   );
 }
