@@ -7,7 +7,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useEffect, useState, useRef } from "react";
 import { ServiceStatusPill } from "@/components/app/ServiceStatusPill";
-import { MembershipBox } from "@/components/app/MembershipBox";
 import { SubscriptionDetailsCard } from "@/components/app/SubscriptionDetailsCard";
 
 export const Route = createFileRoute("/_authenticated/_approved/home/")({
@@ -258,9 +257,6 @@ function WelcomePage() {
                 </Link>
               )}
               <ServiceStatusPill className="flex-1 justify-center self-stretch gap-2 px-3 py-2.5 text-xs xl:gap-3 xl:px-4 xl:py-3 xl:text-sm [&_.status-copy]:text-[10px] xl:[&_.status-copy]:text-[11px] [&_.status-icon]:size-8 xl:[&_.status-icon]:size-9 [&_.status-dot]:ml-0 xl:[&_.status-dot]:ml-2" />
-            </div>
-            <div className="mt-3 w-full max-w-[280px] self-center">
-              <MembershipBox />
             </div>
           </div>
 
