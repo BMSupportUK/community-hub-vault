@@ -388,11 +388,24 @@ async function syncFixtures() {
   };
 }
 
+// Auth: requires CRON_SECRET in the `x-cron-secret` header (sent by pg_cron).
+function authorized(request: Request): boolean {
+  const expected = process.env.CRON_SECRET;
+  const provided = request.headers.get("x-cron-secret");
+  return Boolean(expected && provided && provided === expected);
+}
+
 export const Route = createFileRoute("/api/public/hooks/boro-fetch-fixtures")({
   server: {
     handlers: {
-      GET: async () => Response.json(await syncFixtures()),
-      POST: async () => Response.json(await syncFixtures()),
+      GET: async ({ request }) =>
+        authorized(request)
+          ? Response.json(await syncFixtures())
+          : new Response("Unauthorized", { status: 401 }),
+      POST: async ({ request }) =>
+        authorized(request)
+          ? Response.json(await syncFixtures())
+          : new Response("Unauthorized", { status: 401 }),
     },
   },
 });
