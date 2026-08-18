@@ -1411,7 +1411,7 @@ function CredentialsReveal({ targetUserId, isOwner }: { targetUserId: string; is
     if (!unlocked) return;
     setLoading(true);
     Promise.all([
-      supabase.from("app_credentials").select("*").eq("owner_id", targetUserId).order("app_login_name", { ascending: true }).order("created_at", { ascending: true }),
+      supabase.from("app_credentials").select("*").eq("owner_id", targetUserId).order("created_at", { ascending: false }),
       supabase.from("qd_dns_codes").select("*").order("label", { ascending: true }),
     ]).then(([{ data: c }, { data: d }]) => {
       setCreds((c ?? []) as CredRow[]);
