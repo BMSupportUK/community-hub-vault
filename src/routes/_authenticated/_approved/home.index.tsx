@@ -395,21 +395,3 @@ function QuickAction({
     </button>
   );
 }
-
-async function renderCrop(src: string, area: Area, outW: number, outH: number): Promise<Blob | null> {
-  const img = new Image();
-  img.crossOrigin = "anonymous";
-  img.src = src;
-  await img.decode();
-  const canvas = document.createElement("canvas");
-  canvas.width = outW;
-  canvas.height = outH;
-  const ctx = canvas.getContext("2d");
-  if (!ctx) return null;
-  ctx.fillStyle = "#ffffff";
-  ctx.fillRect(0, 0, outW, outH);
-  ctx.drawImage(img, area.x, area.y, area.width, area.height, 0, 0, outW, outH);
-  return await new Promise<Blob | null>((resolve) =>
-    canvas.toBlob((b) => resolve(b), "image/jpeg", 0.9)
-  );
-}
