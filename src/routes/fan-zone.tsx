@@ -49,8 +49,8 @@ export function FanZoneShell({ children }: { children: React.ReactNode }) {
             }}
             aria-hidden
           />
-          <div className="relative px-4 py-5 sm:px-8 sm:py-9 flex flex-col lg:flex-row lg:items-center gap-4 sm:gap-5">
-            <div className="hidden lg:flex size-20 rounded-full bg-white items-center justify-center shadow-lg ring-2 ring-white/50 shrink-0">
+          <div className="relative px-4 py-5 sm:px-8 sm:py-9 flex flex-col xl:flex-row xl:items-center gap-4 sm:gap-5">
+            <div className="hidden xl:flex size-20 rounded-full bg-white items-center justify-center shadow-lg ring-2 ring-white/50 shrink-0">
               <img
                 src={boroBadge}
                 alt="Boro Fan Zone badge"
@@ -71,7 +71,7 @@ export function FanZoneShell({ children }: { children: React.ReactNode }) {
                 Up the Boro — boards, banter & match-day debate.
               </p>
             </div>
-            <div className="lg:self-center flex flex-col gap-2.5 min-w-0">
+            <div className="xl:self-center flex flex-col gap-2.5 min-w-0 xl:max-w-[540px]">
               {!user && (
                 <div className="rounded-lg border border-amber-400/60 bg-amber-500/25 backdrop-blur-sm px-3.5 py-2.5 shadow-[0_0_20px_rgba(251,191,36,0.35)]">
                   <span className="inline-flex items-start gap-2 text-xs sm:text-sm font-semibold text-amber-50 leading-snug">
@@ -80,7 +80,7 @@ export function FanZoneShell({ children }: { children: React.ReactNode }) {
                   </span>
                 </div>
               )}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[repeat(auto-fit,minmax(0,1fr))] gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-[repeat(auto-fit,minmax(0,1fr))] gap-2">
                 <Link
                   to="/boro-predictions"
                   className="inline-flex items-center justify-center gap-2 rounded-lg bg-white/95 px-4 py-2.5 text-sm font-bold text-[#961016] shadow-lg ring-1 ring-white/40 hover:bg-white transition"
@@ -98,7 +98,7 @@ export function FanZoneShell({ children }: { children: React.ReactNode }) {
                 {user && (
                   <Link
                     to="/fanzone/profile"
-                    className="inline-flex items-center justify-center gap-2 rounded-lg bg-white/15 px-4 py-2.5 text-sm font-bold text-white shadow-lg ring-1 ring-white/30 backdrop-blur-sm hover:bg-white/25 transition sm:col-span-2 lg:col-span-1"
+                    className="inline-flex items-center justify-center gap-2 rounded-lg bg-white/15 px-4 py-2.5 text-sm font-bold text-white shadow-lg ring-1 ring-white/30 backdrop-blur-sm hover:bg-white/25 transition sm:col-span-2 xl:col-span-1"
                   >
                     <Settings className="size-4 shrink-0" />
                     <span className="truncate">Profile & Settings</span>
