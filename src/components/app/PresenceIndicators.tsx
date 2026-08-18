@@ -11,7 +11,7 @@ export function usePresence(
   const dnd = useDndStatus(userId);
   if (dnd?.active) {
     const until = dnd.endsAt
-      ? dnd.endsAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+      ? dnd.endsAt.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })
       : null;
     const label = dnd.note
       ? `Do Not Disturb — ${dnd.note}`

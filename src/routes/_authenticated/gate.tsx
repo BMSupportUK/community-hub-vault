@@ -640,7 +640,7 @@ function GatePage() {
                       {!mine && <div className="text-[10px] text-red-300 font-medium mb-0.5">{senderNames[m.sender_id] ?? "Admin"}</div>}
                       <div className="whitespace-pre-wrap">{m.content}</div>
                       <div className={`text-[10px] mt-0.5 flex items-center gap-1 ${mine ? "justify-end text-white/60" : "text-white/40"}`}>
-                        <span>{new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
+                        <span>{new Date(m.created_at).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}</span>
                         {mine && m.status === "sending" && <Loader2 className="size-3 animate-spin" aria-label="Sending" />}
                         {mine && m.status === "sent" && <CheckCheck className="size-3" aria-label="Sent" />}
                         {mine && !m.status && <Check className="size-3" aria-label="Sent" />}

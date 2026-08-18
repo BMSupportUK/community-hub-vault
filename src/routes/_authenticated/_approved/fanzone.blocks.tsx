@@ -63,7 +63,7 @@ function BlocksPage() {
               </Link>
               <div className="flex-1 min-w-0">
                 <Link to="/fanzone/u/$userId" params={{ userId: r.blocked_id }} className="block font-semibold text-sm truncate hover:text-[#E11B22] hover:underline">{r.fan_alias}</Link>
-                <div className="text-[11px] text-muted-foreground">Blocked {new Date(r.created_at).toLocaleDateString()}</div>
+                <div className="text-[11px] text-muted-foreground">Blocked {new Date(r.created_at).toLocaleDateString("en-GB")}</div>
               </div>
               <Button size="sm" variant="outline" disabled={busy === r.blocked_id} onClick={() => void unblock(r.blocked_id)}>
                 <ShieldOff className="size-4 mr-1" /> Unblock

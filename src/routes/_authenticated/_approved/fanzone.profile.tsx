@@ -611,7 +611,7 @@ function IgnoredPanel() {
               </Link>
               <div className="flex-1 min-w-0">
                 <Link to="/fanzone/u/$userId" params={{ userId: r.blocked_id }} className="block font-semibold text-sm truncate hover:text-[#E11B22] hover:underline">{r.fan_alias || "Boro fan"}</Link>
-                <div className="text-[11px] text-white/60">Ignored {new Date(r.created_at).toLocaleDateString()}</div>
+                <div className="text-[11px] text-white/60">Ignored {new Date(r.created_at).toLocaleDateString("en-GB")}</div>
               </div>
               <Button size="sm" variant="outline" disabled={busy === r.blocked_id} onClick={() => void unblock(r.blocked_id)} className="bg-white/10 border-white/30 text-white hover:bg-white/20">
                 {busy === r.blocked_id ? <Loader2 className="size-4 mr-1 animate-spin" /> : <ShieldOff className="size-4 mr-1" />}

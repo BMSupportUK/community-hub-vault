@@ -42,7 +42,7 @@ export function DndCountdown({
   if (remaining !== null && remaining <= 0) return null;
 
   const endsLabel = info.endsAt
-    ? `until ${info.endsAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`
+    ? `until ${info.endsAt.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}`
     : "";
   const title = info.note
     ? `Do Not Disturb — ${info.note}${endsLabel ? ` (${endsLabel})` : ""}`

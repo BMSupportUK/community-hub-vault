@@ -89,7 +89,7 @@ function fmtDate(d: Date) {
   const day = String(d.getDate()).padStart(2, "0");
   return `${y}-${m}-${day}`;
 }
-function dayLabel(d: Date) { return d.toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" }); }
+function dayLabel(d: Date) { return d.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" }); }
 function isDayPastOrStarted(d: Date) {
   const today = new Date(); today.setHours(0, 0, 0, 0);
   const x = new Date(d); x.setHours(0, 0, 0, 0);
@@ -116,7 +116,7 @@ function useLocalDisplayTz(rotaTz: string) {
     if (!localMode || BROWSER_TZ === rotaTz) return timeStr.slice(0, 5);
     const ms = zonedWallTimeToUtcMs(dateStr, timeStr, rotaTz);
     if (isNaN(ms)) return timeStr.slice(0, 5);
-    return new Intl.DateTimeFormat([], {
+    return new Intl.DateTimeFormat("en-GB", {
       timeZone: BROWSER_TZ,
       hour: "2-digit",
       minute: "2-digit",

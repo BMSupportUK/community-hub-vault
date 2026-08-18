@@ -210,7 +210,7 @@ function ChannelPage() {
     });
     if (error) return toast.error(error.message);
     const label = seconds === 3600 ? "1 hour" : seconds === 10800 ? "3 hours" : "24 hours";
-    toast.success(`User muted for ${label} (until ${new Date(data as string).toLocaleTimeString()}).`);
+    toast.success(`User muted for ${label} (until ${new Date(data as string).toLocaleTimeString("en-GB")}).`);
     setMuteSubmenuId(null);
     setOpenMenuId(null);
     setMutedUserIds((prev) => new Set(prev).add(targetId));
@@ -794,7 +794,7 @@ function ChannelPage() {
                         <div className="flex items-baseline justify-between gap-2 mb-1">
                           <span className={cn("text-xs font-medium", roleFlashClass(roleFlashMap.get(m.sender_id)))}>{name}</span>
                           <span className="text-[10px] text-muted-foreground">
-                            {new Date(m.created_at).toLocaleDateString()}
+                            {new Date(m.created_at).toLocaleDateString("en-GB")}
                           </span>
                         </div>
                         <MentionText content={m.content} currentUsername={myUsername} className="text-xs text-muted-foreground line-clamp-3" />
@@ -1033,7 +1033,7 @@ function ChannelPage() {
                       <span className={cn("font-medium text-sm", roleFlashClass(roleFlashMap.get(m.sender_id)))}>{name}</span>
                     )}
                     <span className="text-[10px] text-muted-foreground">
-                      {new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                      {new Date(m.created_at).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}
                     </span>
                     {isPinned && (
                       <span className="inline-flex items-center gap-1 text-[10px] text-primary">
@@ -1355,7 +1355,7 @@ function ChannelPage() {
               <div className="text-sm font-semibold text-red-400 leading-tight">You've been muted from chat</div>
               <div className="text-xs text-neutral-300 mt-1">
                 Unlocks in <span className="font-mono font-bold text-white tabular-nums">{muteCountdown}</span>
-                {myMuteExpires && <span className="text-neutral-400"> · ends {myMuteExpires.toLocaleTimeString()}</span>}
+                {myMuteExpires && <span className="text-neutral-400"> · ends {myMuteExpires.toLocaleTimeString("en-GB")}</span>}
               </div>
               <div className="text-[11px] text-neutral-400 mt-1.5">You can keep using the rest of the site.</div>
             </div>

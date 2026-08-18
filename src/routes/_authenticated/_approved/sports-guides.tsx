@@ -602,7 +602,7 @@ function SportsGuidesPage() {
         <div className="text-[11px] text-purple-300/70">
           Last edited:{" "}
           <time dateTime={b.updated_at ?? b.created_at}>
-            {new Date(b.updated_at ?? b.created_at).toLocaleString(undefined, {
+            {new Date(b.updated_at ?? b.created_at).toLocaleString("en-GB", {
               day: "2-digit",
               month: "short",
               year: "numeric",

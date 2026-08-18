@@ -53,7 +53,7 @@ export function WorkingStatusBox() {
   // DND overrides all other status — show a dedicated DND card.
   if (dnd?.active) {
     const until = dnd.endsAt
-      ? dnd.endsAt.toLocaleString([], { weekday: "short", hour: "2-digit", minute: "2-digit" })
+      ? dnd.endsAt.toLocaleString("en-GB", { weekday: "short", hour: "2-digit", minute: "2-digit" })
       : null;
     return (
       <section className="px-2 pt-4">

@@ -130,7 +130,7 @@ function AdminPermissionsPage() {
               <span>{refreshing ? "Refreshing…" : "Refresh"}</span>
               {lastRefresh && (
                 <span className="text-[10px] text-muted-foreground font-normal">
-                  {lastRefresh.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+                  {lastRefresh.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
                 </span>
               )}
             </span>

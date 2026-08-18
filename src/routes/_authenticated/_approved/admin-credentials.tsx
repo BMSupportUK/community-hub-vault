@@ -200,7 +200,7 @@ function AdminCredentialsPage() {
                               <div className="font-display font-semibold truncate">{c.app_login_name}</div>
                               {exp && (
                                 <div className={cn("text-xs", expired ? "text-destructive" : soon ? "text-amber-400" : "text-muted-foreground")}>
-                                  {expired ? "Expired" : "Expires"} {exp.toLocaleString()}
+                                  {expired ? "Expired" : "Expires"} {exp.toLocaleString("en-GB")}
                                 </div>
                               )}
                             </div>
@@ -441,7 +441,7 @@ function RestoreBackupDialog({ onClose, onRestored }: { onClose: () => void; onR
                 <div className="flex-1 min-w-0">
                   <div className="font-mono text-xs truncate">{f.path}</div>
                   <div className="text-[11px] text-muted-foreground">
-                    {f.created_at ? new Date(f.created_at).toLocaleString() : "—"}
+                    {f.created_at ? new Date(f.created_at).toLocaleString("en-GB") : "—"}
                     {f.size != null && ` · ${(f.size / 1024).toFixed(1)} KB`}
                   </div>
                 </div>

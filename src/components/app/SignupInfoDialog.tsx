@@ -142,7 +142,7 @@ export function SignupInfoDialog({ userId, trigger, displayName }: Props) {
         ["Network", info.connection],
         ["Referrer", info.referrer],
         ["Signup URL", info.url],
-        ["Captured at", new Date(info.created_at).toLocaleString()],
+        ["Captured at", new Date(info.created_at).toLocaleString("en-GB")],
       ]
     : [];
 

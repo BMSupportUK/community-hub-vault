@@ -100,7 +100,7 @@ export function SubscriptionDetailsCard() {
   };
 
   const fmt = (d: Date) =>
-    d.toLocaleString(undefined, {
+    d.toLocaleString("en-GB", {
       weekday: "short",
       day: "numeric",
       month: "short",

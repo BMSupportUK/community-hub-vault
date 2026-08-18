@@ -535,7 +535,7 @@ function PolicyView({ policyKey, isAdmin }: { policyKey: PolicyKey; isAdmin: boo
             </h1>
             {row?.updated_at && (
               <p className="text-xs text-muted-foreground">
-                Last updated {new Date(row.updated_at).toLocaleString()}
+                Last updated {new Date(row.updated_at).toLocaleString("en-GB")}
               </p>
             )}
           </div>
@@ -985,7 +985,7 @@ function BuySteps({
       active: !placed,
       cancelled: false,
       desc: placed
-        ? `Order received on ${new Date(latestOrder!.created_at).toLocaleDateString()}.`
+        ? `Order received on ${new Date(latestOrder!.created_at).toLocaleDateString("en-GB")}.`
         : "Pick your plan in the Shop tab and add it to your order.",
       cta: placed ? "View order" : "Browse products",
       action: placed ? () => onViewOrder(latestOrder!.id) : onBrowse,
@@ -1000,7 +1000,7 @@ function BuySteps({
       desc: cancelled
         ? "This order was cancelled. Browse the shop to place a new order."
         : paid
-          ? `Invoice paid on ${new Date(latestOrder!.paid_at!).toLocaleDateString()}.`
+          ? `Invoice paid on ${new Date(latestOrder!.paid_at!).toLocaleDateString("en-GB")}.`
           : placed
             ? "Awaiting your payment — open the order to view the invoice."
             : "We'll send your invoice — pay it securely and we'll confirm receipt.",
@@ -1017,7 +1017,7 @@ function BuySteps({
       desc: cancelled
         ? "Unavailable — order was cancelled."
         : setup
-          ? `All set! Account completed on ${new Date(latestOrder!.completed_at ?? latestOrder!.created_at).toLocaleDateString()}.`
+          ? `All set! Account completed on ${new Date(latestOrder!.completed_at ?? latestOrder!.created_at).toLocaleDateString("en-GB")}.`
           : paid
             ? "We're setting up your account and will share your login details shortly."
             : "We set up your account and share your login details to get you started.",
@@ -2133,7 +2133,7 @@ function PolicyCard({
               <p
                 className={cn("text-xs", isPunishment ? "text-white/60" : "text-muted-foreground")}
               >
-                Updated {new Date(updatedAt).toLocaleDateString()}
+                Updated {new Date(updatedAt).toLocaleDateString("en-GB")}
               </p>
             )}
           </div>
@@ -2737,7 +2737,7 @@ function OrdersView({
               {fmt(o.total_cents)}
             </div>
             <div className="text-[11px] text-purple-200/60">
-              {new Date(o.created_at).toLocaleString()}
+              {new Date(o.created_at).toLocaleString("en-GB")}
             </div>
             <div className="mt-auto pt-2 flex items-center gap-2">
               <span className="inline-flex items-center gap-1 text-[11px] text-fuchsia-300 font-medium">
@@ -2961,7 +2961,7 @@ function MyOrdersTab({ onOpenOrder }: { onOpenOrder: (id: string) => void }) {
                 {fmt(o.total_cents)}
               </div>
               <div className="text-[11px] text-purple-200/60">
-                {new Date(o.created_at).toLocaleString()}
+                {new Date(o.created_at).toLocaleString("en-GB")}
               </div>
               <div className="mt-auto pt-2 flex flex-wrap items-center gap-2">
                 <button
@@ -3618,7 +3618,7 @@ function OrderDetailImpl({
           <div className="min-w-0">
             <div className="font-display font-bold text-sm">Order #{order.id.slice(0, 8)}</div>
             <div className="text-[11px] text-muted-foreground">
-              {new Date(order.created_at).toLocaleString()}
+              {new Date(order.created_at).toLocaleString("en-GB")}
             </div>
           </div>
         </div>
@@ -3754,12 +3754,12 @@ function OrderDetailImpl({
             )}
             {order.paid_at && (
               <div className="text-xs mt-1 text-success">
-                Paid · {new Date(order.paid_at).toLocaleString()}
+                Paid · {new Date(order.paid_at).toLocaleString("en-GB")}
               </div>
             )}
             {order.completed_at && (
               <div className="text-xs text-primary">
-                Completed · {new Date(order.completed_at).toLocaleString()}
+                Completed · {new Date(order.completed_at).toLocaleString("en-GB")}
               </div>
             )}
           </div>

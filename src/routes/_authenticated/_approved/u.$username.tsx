@@ -689,7 +689,7 @@ function ProfilePage() {
                     ) : null}
                   </div>
                 </div>
-                <InfoCard label="Member since" value={new Date(profile.created_at).toLocaleDateString()} />
+                <InfoCard label="Member since" value={new Date(profile.created_at).toLocaleDateString("en-GB")} />
                 <InfoCard label="Roles" value={sortedRoles.map(formatRoleLabel).join(", ") || "—"} />
                 <InviteCard
                   info={inviteInfo}
@@ -949,7 +949,7 @@ function statusToneClass(status: string) {
 
 function fmtShortDate(iso: string) {
   try {
-    return new Date(iso).toLocaleDateString(undefined, {
+    return new Date(iso).toLocaleDateString("en-GB", {
       day: "2-digit",
       month: "short",
       year: "numeric",
@@ -1101,7 +1101,7 @@ function InviteCard({
             )}
             {info.invitedAt && (
               <p className="text-[11px] text-white/60 mt-1">
-                Joined {new Date(info.invitedAt).toLocaleDateString()}
+                Joined {new Date(info.invitedAt).toLocaleDateString("en-GB")}
               </p>
             )}
           </>
@@ -1375,8 +1375,8 @@ function ReferralsPanel({
                   )}
 
                   <div className="text-[10px] text-white/50">
-                    Created {new Date(r.created_at).toLocaleDateString()}
-                    {used && r.used_at && ` · Joined ${new Date(r.used_at).toLocaleDateString()}`}
+                    Created {new Date(r.created_at).toLocaleDateString("en-GB")}
+                    {used && r.used_at && ` · Joined ${new Date(r.used_at).toLocaleDateString("en-GB")}`}
                   </div>
                 </div>
               );
@@ -1519,7 +1519,7 @@ function CredentialsReveal({ targetUserId, isOwner }: { targetUserId: string; is
                         <p className="text-[11px] uppercase tracking-wider text-muted-foreground mb-1 flex items-center gap-1.5"><Calendar className="size-3" /> Expiry</p>
                         <p className={cn("text-sm",
                           expired ? "text-destructive" : expSoon ? "text-amber-500" : "text-foreground")}>
-                          {c.expiry_at ? new Date(c.expiry_at).toLocaleString() : "No expiry set"}
+                          {c.expiry_at ? new Date(c.expiry_at).toLocaleString("en-GB") : "No expiry set"}
                         </p>
                       </div>
 

@@ -18,7 +18,7 @@ export function DndBadge({
   const title = info.note
     ? `Do Not Disturb — ${info.note}`
     : info.endsAt
-      ? `Do Not Disturb until ${info.endsAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`
+      ? `Do Not Disturb until ${info.endsAt.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}`
       : "Do Not Disturb";
 
   return (

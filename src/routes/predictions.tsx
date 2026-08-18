@@ -63,7 +63,7 @@ const STAGE_LABEL: Record<WcFixtureDTO["stage"], string> = {
 
 function formatKickoff(iso: string) {
   const d = new Date(iso);
-  return d.toLocaleString(undefined, {
+  return d.toLocaleString("en-GB", {
     weekday: "short",
     day: "2-digit",
     month: "short",
@@ -1032,7 +1032,7 @@ function UpcomingFixtures({
         <ul className="divide-y divide-border max-h-[70vh] overflow-y-auto">
           {fixtures.map((f) => {
             const t = new Date(f.kickoffAt);
-            const kickoff = t.toLocaleString(undefined, {
+            const kickoff = t.toLocaleString("en-GB", {
               weekday: "short",
               hour: "2-digit",
               minute: "2-digit",
@@ -1331,7 +1331,7 @@ function FixturesList({
       (a, b) => +new Date(a.kickoffAt) - +new Date(b.kickoffAt),
     );
     for (const f of sorted) {
-      const d = new Date(f.kickoffAt).toLocaleDateString(undefined, {
+      const d = new Date(f.kickoffAt).toLocaleDateString("en-GB", {
         weekday: "long",
         day: "2-digit",
         month: "long",
@@ -2233,7 +2233,7 @@ function LeaderboardList({
                         {p.homeTeam} <span className="text-muted-foreground">vs</span> {p.awayTeam}
                       </div>
                       <div className="text-[11px] text-muted-foreground">
-                        {new Date(p.kickoffAt).toLocaleString(undefined, { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
+                        {new Date(p.kickoffAt).toLocaleString("en-GB", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
                         {finished && (
                           <span className="ml-2 font-mono text-foreground">
                             FT {p.homeScore}-{p.awayScore}

@@ -190,7 +190,7 @@ function Section({
                 <div className="font-mono text-sm break-all">{it.value}</div>
                 {it.reason && <div className="text-xs text-muted-foreground mt-0.5">{it.reason}</div>}
                 <div className="text-[11px] text-muted-foreground mt-1">
-                  Added {new Date(it.created_at).toLocaleString()}
+                  Added {new Date(it.created_at).toLocaleString("en-GB")}
                 </div>
               </div>
               <button

@@ -137,7 +137,7 @@ function AdminReviewsPage() {
                           <div className="flex items-center justify-between gap-3 flex-wrap">
                             <div>
                               <div className="font-semibold text-purple-50">{name}</div>
-                              <div className="text-xs text-purple-300/70">{new Date(r.created_at).toLocaleString()}</div>
+                              <div className="text-xs text-purple-300/70">{new Date(r.created_at).toLocaleString("en-GB")}</div>
                             </div>
                             <div className="flex items-center gap-0.5">
                               {[1, 2, 3, 4, 5].map((n) => (
