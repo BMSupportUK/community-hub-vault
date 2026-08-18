@@ -90,8 +90,8 @@ function ForumLayout() {
           }}
           aria-hidden
         />
-        <div className="relative px-4 py-5 sm:px-8 sm:py-9 flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-5">
-          <div className="sm:absolute sm:top-3 sm:right-3 z-10 grid grid-cols-2 sm:flex sm:flex-wrap gap-2 sm:justify-end w-full sm:w-auto">
+        <div className="relative px-4 py-5 sm:px-8 sm:py-6 flex flex-col gap-5">
+          <div className="z-10 grid w-full grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:justify-end">
             {(() => {
               const fields = [
                 info?.fanAlias,
@@ -144,30 +144,32 @@ function ForumLayout() {
               <FanZoneMentionsBell />
             </div>
           </div>
-          <Link
-            to="/forum"
-            className="hidden sm:flex size-20 rounded-full bg-white items-center justify-center shadow-lg ring-2 ring-white/50 shrink-0 hover:ring-white hover:scale-105 transition-all"
-            aria-label="Back to Boro Fan Zone home"
-          >
-            <img
-              src={boroBadge}
-              alt="Boro Fan Zone badge"
-              width={1024}
-              height={1024}
-              className="size-[72px] object-contain"
-              loading="lazy"
-            />
-          </Link>
-          <div className="flex-1 min-w-0">
-            <div className="text-[10px] tracking-[0.3em] font-bold text-white/80 uppercase mb-1">
-              Members only · Est. terrace
+          <div className="flex min-w-0 items-center gap-4 sm:gap-5">
+            <Link
+              to="/forum"
+              className="hidden sm:flex size-20 rounded-full bg-white items-center justify-center shadow-lg ring-2 ring-white/50 shrink-0 hover:ring-white hover:scale-105 transition-all"
+              aria-label="Back to Boro Fan Zone home"
+            >
+              <img
+                src={boroBadge}
+                alt="Boro Fan Zone badge"
+                width={1024}
+                height={1024}
+                className="size-[72px] object-contain"
+                loading="lazy"
+              />
+            </Link>
+            <div className="min-w-0 flex-1">
+              <div className="mb-1 text-[10px] font-bold uppercase tracking-[0.3em] text-white/80">
+                Members only · Est. terrace
+              </div>
+              <h1 className="font-display text-3xl sm:text-4xl font-black leading-none text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.4)]">
+                BORO FAN ZONE
+              </h1>
+              <p className="mt-2 text-sm text-white/85 italic">
+                Up the Boro — boards, banter & match-day debate.
+              </p>
             </div>
-            <h1 className="font-display text-3xl sm:text-4xl font-black leading-none text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.4)]">
-              BORO FAN ZONE
-            </h1>
-            <p className="mt-2 text-sm text-white/85 italic">
-              Up the Boro — boards, banter & match-day debate.
-            </p>
           </div>
         </div>
       </header>
