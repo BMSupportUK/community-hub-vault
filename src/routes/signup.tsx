@@ -155,12 +155,12 @@ function SignupPage() {
 
       {/* Form panel */}
       <main className="flex items-center justify-center px-4 py-10">
-        <div className="w-full max-w-md">
+        <div className="w-full min-w-0 max-w-md">
           <Link to="/" className="flex items-center gap-2 justify-center mb-8">
             <div className="size-9 rounded-xl bg-gradient-primary shadow-glow grid place-items-center font-display font-bold text-[13px] text-primary-foreground">BM</div>
             <span className="font-display font-bold text-lg">Support Community</span>
           </Link>
-          <div className="bg-surface/80 backdrop-blur-sm border border-border rounded-2xl p-8 shadow-soft">
+          <div className="bg-surface/80 backdrop-blur-sm border border-border rounded-2xl p-5 sm:p-8 shadow-soft">
             <h1 className="font-display text-2xl font-bold">Join BM Support</h1>
             <p className="text-sm text-muted-foreground mb-6">A moderator will review your request before you get in.</p>
             <form onSubmit={submit} className="space-y-3">
