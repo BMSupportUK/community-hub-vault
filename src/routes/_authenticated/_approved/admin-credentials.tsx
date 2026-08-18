@@ -241,6 +241,7 @@ function AdminCredentialsPage() {
           <CredentialEditor
             ownerId={editor.ownerId}
             row={editor.row}
+            existingCount={(grouped.get(editor.ownerId) ?? []).length}
             currentUserId={user?.id ?? ""}
             onClose={() => setEditor(null)}
             onSaved={() => { setEditor(null); load(); }}
@@ -268,15 +269,17 @@ function Stat({ label, value }: { label: string; value: number }) {
 }
 
 function CredentialEditor({
-  ownerId, row, currentUserId, onClose, onSaved,
+  ownerId, row, existingCount, currentUserId, onClose, onSaved,
 }: {
   ownerId: string;
   row: CredentialRow | null;
+  existingCount: number;
   currentUserId: string;
   onClose: () => void;
   onSaved: () => void;
 }) {
-  const [appLoginName, setAppLoginName] = useState(row?.app_login_name ?? "");
+  const [appLoginName, setAppLoginName] = useState(row?.app_login_name ?? `Account ${existingCount + 1}`);
+  const [accountType, setAccountType] = useState<string>(row?.account_type ?? "single");
   const [password, setPassword] = useState(row?.password ?? "");
   const [expiry, setExpiry] = useState(row?.expiry_at ? row.expiry_at.slice(0, 16) : "");
   const [busy, setBusy] = useState(false);
@@ -299,6 +302,7 @@ function CredentialEditor({
         app_login_name: appLoginName,
         password,
         owner_id: ownerId,
+        account_type: accountType,
         expiry_at: expiry ? new Date(expiry).toISOString() : null,
       };
 
@@ -326,6 +330,20 @@ function CredentialEditor({
         <div className="space-y-3">
           <Field label="App login name">
             <input value={appLoginName} onChange={(e) => setAppLoginName(e.target.value)} className="ed-input" placeholder="e.g. IPTV portal" />
+          </Field>
+          <Field label="Account type">
+            <div className="grid gap-1.5">
+              {ACCOUNT_TYPES.map((t) => (
+                <label key={t.value} className="flex items-center gap-2 text-sm cursor-pointer" style={{ color: "#0f172a" }}>
+                  <input
+                    type="checkbox"
+                    checked={accountType === t.value}
+                    onChange={() => setAccountType(t.value)}
+                  />
+                  {t.label}
+                </label>
+              ))}
+            </div>
           </Field>
           <Field label="Password">
             <div className="flex gap-2">
