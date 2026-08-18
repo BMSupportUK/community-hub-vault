@@ -331,15 +331,19 @@ function SportsGuidesPage() {
   const focusRestored = useRef(false);
   useEffect(() => {
     if (focusRestored.current || !filtered.length) return;
+    // Page slices are measured after first paint. Consuming the stored id
+    // before they exist loses the target page and drops the user on page 1.
+    if (!listPageSlices.length) return;
     let id: string | null = null;
     try { id = sessionStorage.getItem(SG_FOCUS_KEY); } catch { /* ignore */ }
     if (!id) return;
     const targetIndex = filtered.findIndex((b) => b.id === id);
     if (targetIndex < 0) return;
+    const targetPage = listPageSlices.findIndex((slice) => slice.includes(targetIndex));
+    if (targetPage < 0) return;
     focusRestored.current = true;
     try { sessionStorage.removeItem(SG_FOCUS_KEY); } catch { /* ignore */ }
-    const targetPage = listPageSlices.findIndex((slice) => slice.includes(targetIndex));
-    if (targetPage >= 0) setListPage(targetPage);
+    setListPage(targetPage);
     window.setTimeout(() => {
       document
         .querySelector<HTMLElement>(`[data-guide-id="${id}"]`)
