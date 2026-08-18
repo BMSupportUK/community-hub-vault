@@ -97,6 +97,14 @@ export function SubscriptionDetailsCard() {
     }
   };
 
+  const accountTypeLabel = (type: string | null) => {
+    const t = type?.toLowerCase();
+    if (t === "single") return "Single";
+    if (t === "multi") return "Multi-room";
+    if (t === "triple") return "Triple-room";
+    return type ? type : null;
+  };
+
   const fmt = (d: Date) =>
     d.toLocaleString("en-GB", {
       weekday: "short",
