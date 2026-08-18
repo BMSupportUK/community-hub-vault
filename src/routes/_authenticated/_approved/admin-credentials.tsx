@@ -24,7 +24,14 @@ interface CredentialRow {
   password: string;
   expiry_at: string | null;
   created_at: string;
+  account_type?: string | null;
 }
+
+const ACCOUNT_TYPES = [
+  { value: "single", label: "Single account" },
+  { value: "multi", label: "Multi-room account" },
+  { value: "triple", label: "Triple-room account" },
+] as const;
 
 
 interface ProfileLite {
