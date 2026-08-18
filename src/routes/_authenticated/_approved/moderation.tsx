@@ -302,7 +302,7 @@ function ModerationPage() {
                           </span>
                         )}
                       </div>
-                      <div className="text-xs text-muted-foreground">Applied {new Date(a.created_at).toLocaleString()}</div>
+                      <div className="text-xs text-muted-foreground">Applied {new Date(a.created_at).toLocaleString("en-GB")}</div>
                       {displayReason && !expanded && (
                         <div className="text-xs text-muted-foreground/80 mt-1 line-clamp-1 italic">"{displayReason}"</div>
                       )}
@@ -357,7 +357,7 @@ function ModerationPage() {
                                   )}
                                   <div className="whitespace-pre-wrap">{m.content}</div>
                                   <div className={`text-[10px] mt-0.5 flex items-center gap-1 ${mine ? "justify-end text-primary-foreground/70" : "text-muted-foreground"}`}>
-                                    <span>{new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
+                                    <span>{new Date(m.created_at).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}</span>
                                     {mine && m.status === "sending" && <Loader2 className="size-3 animate-spin" aria-label="Sending" />}
                                     {mine && m.status === "sent" && <CheckCheck className="size-3" aria-label="Sent" />}
                                     {mine && !m.status && <Check className="size-3" aria-label="Sent" />}

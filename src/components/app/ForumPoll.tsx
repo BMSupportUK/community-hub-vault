@@ -241,7 +241,7 @@ function ForumPollComponent({
       <div className="mt-2.5 text-[11px] text-muted-foreground flex items-center gap-2 flex-wrap">
         <span>{totalVotes} vote{totalVotes === 1 ? "" : "s"}</span>
         {poll.allow_multiple && <span>· Multiple choice</span>}
-        {closed ? <span>· Closed {poll.closes_at ? new Date(poll.closes_at).toLocaleString() : ""}</span> : poll.closes_at && <span>· Closes {new Date(poll.closes_at).toLocaleString()}</span>}
+        {closed ? <span>· Closed {poll.closes_at ? new Date(poll.closes_at).toLocaleString("en-GB") : ""}</span> : poll.closes_at && <span>· Closes {new Date(poll.closes_at).toLocaleString("en-GB")}</span>}
         {!canVote && !canManage && <span>· Members only</span>}
       </div>
     </section>
@@ -352,7 +352,7 @@ export function PollDraftEditor({
           )}
         </div>
         <p className="text-[11px] text-muted-foreground">
-          {value.closes_at ? `Voting closes ${new Date(value.closes_at).toLocaleString()}` : "Leave blank to keep the poll open indefinitely."}
+          {value.closes_at ? `Voting closes ${new Date(value.closes_at).toLocaleString("en-GB")}` : "Leave blank to keep the poll open indefinitely."}
         </p>
       </div>
     </div>

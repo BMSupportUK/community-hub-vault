@@ -337,7 +337,7 @@ function MembersPage() {
 
                 <div className="mt-auto pt-3 border-t border-border/60 text-[11px] text-muted-foreground flex items-center gap-1.5">
                   <Clock className="size-3" />
-                  Joined {new Date(p.created_at).toLocaleDateString()}
+                  Joined {new Date(p.created_at).toLocaleDateString("en-GB")}
                 </div>
               </div>
             </div>

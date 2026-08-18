@@ -409,9 +409,9 @@ function IncidentCard({ incident, canManage, onEdit }: { incident: Incident; can
           </div>
           <span className={`mt-1.5 inline-flex text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded border ${meta.classes}`}>{meta.label}</span>
           <div className="text-[11px] text-purple-200/70 mt-2">
-            Opened {new Date(incident.created_at).toLocaleString()}
+            Opened {new Date(incident.created_at).toLocaleString("en-GB")}
             {incident.resolved_at && (
-              <span className="block">Resolved {new Date(incident.resolved_at).toLocaleString()}</span>
+              <span className="block">Resolved {new Date(incident.resolved_at).toLocaleString("en-GB")}</span>
             )}
           </div>
           <span className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-md bg-fuchsia-500/20 border border-fuchsia-400/40 text-fuchsia-100 hover:bg-fuchsia-500/30 transition-colors">
@@ -432,9 +432,9 @@ function IncidentCard({ incident, canManage, onEdit }: { incident: Incident; can
               <DialogTitle className="font-display text-lg leading-snug text-left">{incident.title}</DialogTitle>
               <span className={`mt-1.5 inline-flex text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded border ${meta.classes}`}>{meta.label}</span>
               <div className="text-[11px] text-purple-200/70 mt-1.5">
-                Opened {new Date(incident.created_at).toLocaleString()}
+                Opened {new Date(incident.created_at).toLocaleString("en-GB")}
                 {incident.resolved_at && (
-                  <span className="block">Resolved {new Date(incident.resolved_at).toLocaleString()}</span>
+                  <span className="block">Resolved {new Date(incident.resolved_at).toLocaleString("en-GB")}</span>
                 )}
               </div>
             </div>
@@ -482,7 +482,7 @@ function IncidentCard({ incident, canManage, onEdit }: { incident: Incident; can
                       <span className={`absolute -left-[21px] top-1 size-2.5 rounded-full ring-2 ring-surface-1 ${um.classes.split(" ")[0].replace("/15", "")}`} />
                       <div className="flex items-center gap-2">
                         <span className={`text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded border ${um.classes}`}>{um.label}</span>
-                        <span className="text-[11px] text-muted-foreground">{new Date(u.created_at).toLocaleString()}</span>
+                        <span className="text-[11px] text-muted-foreground">{new Date(u.created_at).toLocaleString("en-GB")}</span>
                       </div>
                       <div className="text-sm mt-1 whitespace-pre-wrap">{u.message}</div>
                       <AttachmentList items={u.attachments ?? []} />

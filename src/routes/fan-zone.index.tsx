@@ -131,7 +131,7 @@ function GuestForumStats() {
   useEffect(() => {
     void getPublicForumStats().then(setStats).catch(() => setStats(null));
   }, []);
-  const fmt = (n: number) => n.toLocaleString();
+  const fmt = (n: number) => n.toLocaleString("en-GB");
   return (
     <div className="boro-solid-panel rounded-xl overflow-hidden h-full flex flex-col">
       <div className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-[#E11B22] to-[#8B0F14] text-white">

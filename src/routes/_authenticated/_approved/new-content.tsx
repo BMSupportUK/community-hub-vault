@@ -239,7 +239,7 @@ function NewContentPage() {
                     <p className="text-sm text-muted-foreground line-clamp-2 whitespace-pre-wrap">{p.description}</p>
                   )}
                   <div className="text-[11px] text-muted-foreground mt-1">
-                    Posted {new Date(p.created_at).toLocaleDateString()}
+                    Posted {new Date(p.created_at).toLocaleDateString("en-GB")}
                   </div>
                   <div className="mt-auto pt-3 flex flex-wrap items-center gap-2">
                     <Button
@@ -381,7 +381,7 @@ function PostViewer({ post, onClose }: { post: Post; onClose: () => void }) {
           </button>
         </div>
         <div className="p-6 space-y-4">
-          <div className="text-xs text-muted-foreground">Posted {new Date(post.created_at).toLocaleString()}</div>
+          <div className="text-xs text-muted-foreground">Posted {new Date(post.created_at).toLocaleString("en-GB")}</div>
           {post.description && (
             <p className="text-sm text-foreground/90 whitespace-pre-wrap">{post.description}</p>
           )}

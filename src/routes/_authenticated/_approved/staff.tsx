@@ -306,7 +306,7 @@ function StaffPage() {
                             )}
                             <div className="mt-auto pt-3 border-t border-purple-500/20 text-[11px] text-muted-foreground/70 flex items-center gap-1.5">
                               <Clock className="size-3" />
-                              Joined {new Date(p.created_at).toLocaleDateString()}
+                              Joined {new Date(p.created_at).toLocaleDateString("en-GB")}
                             </div>
                           </div>
                         </div>

@@ -182,7 +182,7 @@ export function ReviewsPage() {
                         )}
                         <div className="text-xs">
                           <div className="font-semibold text-purple-100">{name}</div>
-                          <div className="text-purple-300/60">{new Date(r.created_at).toLocaleDateString()}</div>
+                          <div className="text-purple-300/60">{new Date(r.created_at).toLocaleDateString("en-GB")}</div>
                         </div>
                       </div>
                     </article>

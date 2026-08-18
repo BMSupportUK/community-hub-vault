@@ -568,7 +568,7 @@ const GUEST_KEY = "fantasy_guest_session";
 const BENCH_SLOT_LABELS = ["Sub GK", "Sub", "Sub", "Sub"] as const;
 
 const kickoffLabel = (iso: string) =>
-  new Date(iso).toLocaleString(undefined, { weekday: "short", day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
+  new Date(iso).toLocaleString("en-GB", { weekday: "short", day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
 
 /** Called off (postponed/cancelled/abandoned/suspended) — parked until a new date lands. */
 const isPostponedGw = (g: { fixtureStatus?: string | null }) =>
@@ -615,7 +615,7 @@ function DigitalLockCountdown({
   const minutes = Math.floor((totalSeconds % 3600) / 60);
   const seconds = totalSeconds % 60;
 
-  const lockDate = new Date(lockAt).toLocaleDateString(undefined, {
+  const lockDate = new Date(lockAt).toLocaleDateString("en-GB", {
     weekday: "short",
     day: "2-digit",
     month: "short",
@@ -3375,7 +3375,7 @@ function ClubTransferList({
               )}
               {t.fee && <span className="text-muted-foreground text-xs">· {t.fee}</span>}
               <span className="ml-auto text-xs text-muted-foreground">
-                {new Date(t.transferDate).toLocaleDateString()}
+                {new Date(t.transferDate).toLocaleDateString("en-GB")}
                 {t.windowLabel ? ` · ${t.windowLabel}` : ""}
               </span>
             </li>

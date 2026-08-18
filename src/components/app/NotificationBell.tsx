@@ -357,7 +357,7 @@ export function NotificationBell() {
                           <div className="font-medium text-sm truncate">{n.title}</div>
                           {n.body && <div className="text-xs text-muted-foreground mt-0.5">{n.body}</div>}
                           <div className="text-[10px] text-muted-foreground/70 mt-1">
-                            {new Date(n.created_at).toLocaleString()}
+                            {new Date(n.created_at).toLocaleString("en-GB")}
                           </div>
                         </div>
                         <button

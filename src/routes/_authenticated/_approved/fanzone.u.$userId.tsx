@@ -231,7 +231,7 @@ function FanProfilePage() {
                   </div>
                 )}
                 <div className="text-xs opacity-80 mt-1">
-                  Member since {new Date(p.joined_at).toLocaleDateString(undefined, { month: "short", year: "numeric" })}
+                  Member since {new Date(p.joined_at).toLocaleDateString("en-GB", { month: "short", year: "numeric" })}
                   {p.supporter_since ? <> · Boro fan since <span className="font-semibold">{p.supporter_since}</span></> : null}
                 </div>
                 <div className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-black/25 px-2 py-0.5 text-[11px] font-medium text-white/90">

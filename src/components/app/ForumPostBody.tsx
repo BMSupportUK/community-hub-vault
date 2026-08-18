@@ -402,7 +402,7 @@ function formatTweetText(tweet: TweetApiData): string {
 function formatTweetDate(value: string): string {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "X post";
-  return new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" }).format(date);
+  return new Intl.DateTimeFormat("en-GB", { dateStyle: "medium", timeStyle: "short" }).format(date);
 }
 
 function compactNumber(value: number): string {

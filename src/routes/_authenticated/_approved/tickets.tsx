@@ -556,7 +556,7 @@ function TicketsPage() {
                           const who = p?.display_name || p?.username || "Unknown";
                           const claimP = t.assigned_to ? profiles.get(t.assigned_to) : null;
                           const claimedBy = claimP?.display_name || claimP?.username || (t.assigned_to ? "Staff" : null);
-                          const when = new Date(t.created_at).toLocaleString(undefined, {
+                          const when = new Date(t.created_at).toLocaleString("en-GB", {
                             month: "short", day: "numeric", hour: "2-digit", minute: "2-digit",
                           });
                           return (
@@ -1317,7 +1317,7 @@ function TicketDetail({
           </div>
         </div>
         <div className="text-right font-semibold">
-          {(linkedOrder.total_cents / 100).toLocaleString(undefined, { style: "currency", currency: "GBP" })}
+          {(linkedOrder.total_cents / 100).toLocaleString("en-GB", { style: "currency", currency: "GBP" })}
         </div>
       </div>
       <OrderProgressStrip order={linkedOrder} />
@@ -1423,7 +1423,7 @@ function TicketDetail({
               <span>·</span>
               <span>Opened by {senderName(ticket.user_id)}</span>
               <span>·</span>
-              <span>{new Date(ticket.created_at).toLocaleDateString([], { timeZone: tz })}</span>
+              <span>{new Date(ticket.created_at).toLocaleDateString("en-GB", { timeZone: tz })}</span>
             </div>
             <h1 className="font-display font-semibold text-base sm:text-lg truncate text-white drop-shadow">{ticket.subject}</h1>
           </div>
@@ -1496,7 +1496,7 @@ function TicketDetail({
               )}>
                 <div className="text-[10px] uppercase tracking-wider opacity-70 mb-0.5 flex items-center gap-1">
                   {m.is_internal && <Lock className="size-3" />}
-                  {senderName(m.sender_id)} · {new Date(m.created_at).toLocaleString([], { dateStyle: "short", timeStyle: "short", timeZone: tz })}
+                  {senderName(m.sender_id)} · {new Date(m.created_at).toLocaleString("en-GB", { dateStyle: "short", timeStyle: "short", timeZone: tz })}
                 </div>
                 <MentionText content={m.content} currentUsername={myUsername} />
                 <TicketAttachments items={m.attachments} />

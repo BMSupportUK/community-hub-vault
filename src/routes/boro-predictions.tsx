@@ -48,13 +48,13 @@ export const Route = createFileRoute("/boro-predictions")({
 });
 
 function formatKickoff(iso: string) {
-  return new Date(iso).toLocaleString(undefined, {
+  return new Date(iso).toLocaleString("en-GB", {
     weekday: "short", day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit",
   });
 }
 function monthLabel(key: string | null, iso: string) {
   const d = key ? new Date(`${key}-01T12:00:00Z`) : new Date(iso);
-  return d.toLocaleString(undefined, { month: "long", year: "numeric" });
+  return d.toLocaleString("en-GB", { month: "long", year: "numeric" });
 }
 function isFinished(f: { status?: string | null }) { return (f.status ?? "") === "FINISHED"; }
 function isLive(f: { status?: string | null }) {
@@ -673,7 +673,7 @@ function UpcomingMonthCard({ fixtures }: { fixtures: BoroFixtureDTO[] }) {
     if (future.length === 0) return { label: null as string | null, items: [] as BoroFixtureDTO[] };
     const firstKey = future[0].monthKey ?? future[0].kickoffAt.slice(0, 7);
     const items = future.filter((f) => (f.monthKey ?? f.kickoffAt.slice(0, 7)) === firstKey);
-    const label = new Date(`${firstKey}-01T12:00:00Z`).toLocaleString(undefined, { month: "long", year: "numeric" });
+    const label = new Date(`${firstKey}-01T12:00:00Z`).toLocaleString("en-GB", { month: "long", year: "numeric" });
     return { label, items };
   }, [fixtures, now]);
 
@@ -695,7 +695,7 @@ function UpcomingMonthCard({ fixtures }: { fixtures: BoroFixtureDTO[] }) {
               <li key={f.id} className="px-3 py-2.5 text-xs flex items-center gap-2">
                 <div className="flex flex-col items-center min-w-9">
                   <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                    {d.toLocaleString(undefined, { month: "short" })}
+                    {d.toLocaleString("en-GB", { month: "short" })}
                   </span>
                   <span className="font-display text-base font-bold leading-none tabular-nums">
                     {d.getDate()}
@@ -710,7 +710,7 @@ function UpcomingMonthCard({ fixtures }: { fixtures: BoroFixtureDTO[] }) {
                     {opponent}
                   </div>
                   <div className="text-[10px] text-muted-foreground">
-                    {d.toLocaleString(undefined, { weekday: "short", hour: "2-digit", minute: "2-digit" })}
+                    {d.toLocaleString("en-GB", { weekday: "short", hour: "2-digit", minute: "2-digit" })}
                     {f.venue ? ` · ${f.venue}` : ""}
                   </div>
                 </div>
@@ -762,7 +762,7 @@ function FixturesByMonth({
       <TabsList className="flex flex-wrap h-auto gap-1 p-1 w-full sm:w-auto justify-start">
         {grouped.map(([key, items]) => {
           const d = new Date(`${key}-01T12:00:00Z`);
-          const short = d.toLocaleString(undefined, { month: "short" });
+          const short = d.toLocaleString("en-GB", { month: "short" });
           const yy = d.getFullYear().toString().slice(2);
           const now = Date.now();
           const soon = now + 24 * 60 * 60 * 1000;
@@ -1143,7 +1143,7 @@ function LeaderboardList({
                         {p.homeTeam} <span className="text-muted-foreground">vs</span> {p.awayTeam}
                       </div>
                       <div className="text-[11px] text-muted-foreground">
-                        {new Date(p.kickoffAt).toLocaleString(undefined, { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
+                        {new Date(p.kickoffAt).toLocaleString("en-GB", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
                         {finished && (
                           <span className="ml-2 font-mono text-foreground">FT {p.homeScore}-{p.awayScore}</span>
                         )}

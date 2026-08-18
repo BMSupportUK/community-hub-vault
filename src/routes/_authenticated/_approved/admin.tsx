@@ -757,7 +757,7 @@ function RecoveryCodes() {
               <div
                 key={r.id}
                 className={`px-2 py-1.5 rounded-md border text-center tracking-wider ${r.used_at ? "bg-surface-2 border-border text-muted-foreground line-through" : "bg-background border-border"}`}
-                title={r.used_at ? `Used ${new Date(r.used_at).toLocaleString()}` : "Unused"}
+                title={r.used_at ? `Used ${new Date(r.used_at).toLocaleString("en-GB")}` : "Unused"}
               >
                 Code #{String(i + 1).padStart(2, "0")}
               </div>

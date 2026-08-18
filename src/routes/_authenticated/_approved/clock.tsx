@@ -40,11 +40,11 @@ function ClockPage() {
   const notifyBreak = useServerFn(sendBreakEventPush);
   const tz = useUserTimezone();
   const fmtTime = (iso: string) =>
-    new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", timeZone: tz });
+    new Date(iso).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: tz });
   const fmtDateTime = (ms: number) =>
-    new Date(ms).toLocaleString([], { timeZone: tz });
+    new Date(ms).toLocaleString("en-GB", { timeZone: tz });
   const fmtClock = (ms: number) =>
-    new Date(ms).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit", timeZone: tz });
+    new Date(ms).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit", timeZone: tz });
   const [now, setNow] = useState(() => Date.now());
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);

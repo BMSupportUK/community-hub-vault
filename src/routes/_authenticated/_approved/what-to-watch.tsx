@@ -163,7 +163,7 @@ function WhatToWatchPage() {
                 <DialogHeader>
                   <DialogTitle className="font-display text-2xl">{selected.title}{selected.year ? ` (${selected.year})` : ""}</DialogTitle>
                   <DialogDescription className="flex items-center gap-3 text-xs">
-                    <span className="inline-flex items-center gap-1"><Star className="size-3.5 text-amber-400" /> {selected.rating} · {selected.voteCount.toLocaleString()} votes</span>
+                    <span className="inline-flex items-center gap-1"><Star className="size-3.5 text-amber-400" /> {selected.rating} · {selected.voteCount.toLocaleString("en-GB")} votes</span>
                     <span className="inline-flex items-center gap-1"><Flame className="size-3.5 text-primary-glow" /> Trending {window === "day" ? "today" : "this week"}</span>
                   </DialogDescription>
                 </DialogHeader>

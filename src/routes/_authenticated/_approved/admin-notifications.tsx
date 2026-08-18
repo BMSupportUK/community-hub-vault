@@ -201,7 +201,7 @@ function AdminNotifications() {
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="font-medium capitalize">{r.kind}</span>
                           <span className="text-xs px-1.5 py-0.5 rounded bg-surface-2 capitalize">{r.status}</span>
-                          <span className="text-xs text-muted-foreground">{new Date(r.created_at).toLocaleString()}</span>
+                          <span className="text-xs text-muted-foreground">{new Date(r.created_at).toLocaleString("en-GB")}</span>
                         </div>
                         {r.message && <div className="text-xs text-muted-foreground mt-0.5 whitespace-pre-wrap break-words line-clamp-3">{r.message}</div>}
                         {r.error && <div className="text-xs text-rose-400 mt-0.5 break-words">{r.error}</div>}

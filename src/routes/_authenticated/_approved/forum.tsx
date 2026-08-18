@@ -449,7 +449,7 @@ function ForumStats({ boards }: { boards: Board[] }) {
 
   const threads = boards.reduce((s, b) => s + (b.topic_count || 0), 0);
   const messages = boards.reduce((s, b) => s + Math.max(0, (b.post_count || 0) - (b.topic_count || 0)), 0);
-  const fmt = (n: number) => n.toLocaleString();
+  const fmt = (n: number) => n.toLocaleString("en-GB");
 
   return (
     <div className="boro-solid-panel rounded-xl overflow-hidden h-full flex flex-col">

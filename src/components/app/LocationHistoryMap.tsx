@@ -85,7 +85,7 @@ export function LocationHistoryMap({ rows }: { rows: LocationHistoryRow[] }) {
           <Popup>
             <div className="text-xs space-y-0.5">
               <div className="font-semibold capitalize">{row.event_type}</div>
-              <div>{new Date(row.created_at).toLocaleString()}</div>
+              <div>{new Date(row.created_at).toLocaleString("en-GB")}</div>
               {row.ip && <div className="font-mono">{row.ip}</div>}
               {(row.city || row.region || row.country) && (
                 <div>{[row.city, row.region, row.country].filter(Boolean).join(", ")}</div>

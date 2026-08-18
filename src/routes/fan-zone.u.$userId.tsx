@@ -80,7 +80,7 @@ function PublicFanProfilePage() {
                   )}
                   <div className="mt-1 text-xs opacity-80">
                     {p.joined_at
-                      ? `Member since ${new Date(p.joined_at).toLocaleDateString(undefined, { month: "short", year: "numeric" })}`
+                      ? `Member since ${new Date(p.joined_at).toLocaleDateString("en-GB", { month: "short", year: "numeric" })}`
                       : "Boro Fan Zone member"}
                     {p.supporter_since ? <> · Boro fan since <span className="font-semibold">{p.supporter_since}</span></> : null}
                   </div>

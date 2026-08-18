@@ -395,8 +395,8 @@ function LeaderboardPage() {
                         )}
                       </div>
                       <div className="mt-3 text-[11px] text-purple-300/60">
-                        Created {new Date(inv.created_at).toLocaleDateString()}
-                        {used && inv.used_at && ` · Used ${new Date(inv.used_at).toLocaleDateString()}`}
+                        Created {new Date(inv.created_at).toLocaleDateString("en-GB")}
+                        {used && inv.used_at && ` · Used ${new Date(inv.used_at).toLocaleDateString("en-GB")}`}
                       </div>
                     </div>
                   );
@@ -476,10 +476,10 @@ function LeaderboardPage() {
                                           {inv.used_by_name ?? inv.used_by_username ?? "Member"}
                                           {inv.used_by_username && <span className="text-purple-300/60 text-xs ml-1">@{inv.used_by_username}</span>}
                                         </div>
-                                        {inv.used_at && <div className="text-purple-300/60 text-[11px]">{new Date(inv.used_at).toLocaleDateString()}</div>}
+                                        {inv.used_at && <div className="text-purple-300/60 text-[11px]">{new Date(inv.used_at).toLocaleDateString("en-GB")}</div>}
                                       </>
                                     ) : (
-                                      <span className="text-xs text-purple-300/70">Created {new Date(inv.created_at).toLocaleDateString()}</span>
+                                      <span className="text-xs text-purple-300/70">Created {new Date(inv.created_at).toLocaleDateString("en-GB")}</span>
                                     )}
                                   </div>
                                   {used && (
@@ -547,7 +547,7 @@ function LeaderboardPage() {
                           <div className="text-purple-50 font-medium truncate text-sm">
                             {inv.used_by_name ?? inv.used_by_username ?? "Member"}
                           </div>
-                          {inv.used_at && <div className="text-purple-300/60 text-xs">{new Date(inv.used_at).toLocaleDateString()}</div>}
+                          {inv.used_at && <div className="text-purple-300/60 text-xs">{new Date(inv.used_at).toLocaleDateString("en-GB")}</div>}
                         </div>
                       </div>
                       <Button

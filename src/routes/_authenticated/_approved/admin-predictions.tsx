@@ -262,7 +262,7 @@ function AdminPredictionsPage() {
                 {fixtures.map((f) => (
                   <tr key={f.id} className="border-t border-border">
                     <td className="px-3 py-2 whitespace-nowrap text-muted-foreground">
-                      {new Date(f.kickoffAt).toLocaleString(undefined, {
+                      {new Date(f.kickoffAt).toLocaleString("en-GB", {
                         day: "2-digit",
                         month: "short",
                         hour: "2-digit",

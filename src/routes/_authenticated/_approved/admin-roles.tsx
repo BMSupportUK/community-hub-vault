@@ -574,7 +574,7 @@ function LocationHistoryDialog({ row, onClose }: { row: Row; onClose: () => void
                 {rows.map((r) => (
                   <tr key={r.id} className="border-t border-border">
                     <td className="px-4 py-2.5 whitespace-nowrap text-muted-foreground">
-                      {new Date(r.created_at).toLocaleString()}
+                      {new Date(r.created_at).toLocaleString("en-GB")}
                     </td>
                     <td className="px-4 py-2.5 capitalize">{r.event_type}</td>
                     <td className="px-4 py-2.5 font-mono text-xs">{r.ip ?? "—"}</td>
