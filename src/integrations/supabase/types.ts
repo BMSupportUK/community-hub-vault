@@ -5103,6 +5103,7 @@ export type Database = {
     Views: {
       app_credentials: {
         Row: {
+          account_type: string | null
           app_login_name: string | null
           created_at: string | null
           created_by: string | null
@@ -5114,6 +5115,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          account_type?: string | null
           app_login_name?: string | null
           created_at?: string | null
           created_by?: string | null
@@ -5125,6 +5127,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          account_type?: string | null
           app_login_name?: string | null
           created_at?: string | null
           created_by?: string | null

@@ -24,7 +24,14 @@ interface CredentialRow {
   password: string;
   expiry_at: string | null;
   created_at: string;
+  account_type?: string | null;
 }
+
+const ACCOUNT_TYPES = [
+  { value: "single", label: "Single account" },
+  { value: "multi", label: "Multi-room account" },
+  { value: "triple", label: "Triple-room account" },
+] as const;
 
 
 interface ProfileLite {
@@ -198,6 +205,9 @@ function AdminCredentialsPage() {
                           <div key={c.id} className="rounded-lg border border-border bg-background/40 p-3 grid sm:grid-cols-[1fr_auto_auto] gap-3 items-center">
                             <div className="min-w-0">
                               <div className="font-display font-semibold truncate">{c.app_login_name}</div>
+                              <div className="text-[11px] text-muted-foreground">
+                                {ACCOUNT_TYPES.find((t) => t.value === (c.account_type ?? "single"))?.label ?? "Single account"}
+                              </div>
                               {exp && (
                                 <div className={cn("text-xs", expired ? "text-destructive" : soon ? "text-amber-400" : "text-muted-foreground")}>
                                   {expired ? "Expired" : "Expires"} {exp.toLocaleString("en-GB")}
@@ -231,6 +241,7 @@ function AdminCredentialsPage() {
           <CredentialEditor
             ownerId={editor.ownerId}
             row={editor.row}
+            existingCount={(grouped.get(editor.ownerId) ?? []).length}
             currentUserId={user?.id ?? ""}
             onClose={() => setEditor(null)}
             onSaved={() => { setEditor(null); load(); }}
@@ -258,15 +269,17 @@ function Stat({ label, value }: { label: string; value: number }) {
 }
 
 function CredentialEditor({
-  ownerId, row, currentUserId, onClose, onSaved,
+  ownerId, row, existingCount, currentUserId, onClose, onSaved,
 }: {
   ownerId: string;
   row: CredentialRow | null;
+  existingCount: number;
   currentUserId: string;
   onClose: () => void;
   onSaved: () => void;
 }) {
-  const [appLoginName, setAppLoginName] = useState(row?.app_login_name ?? "");
+  const [appLoginName, setAppLoginName] = useState(row?.app_login_name ?? `Account ${existingCount + 1}`);
+  const [accountType, setAccountType] = useState<string>(row?.account_type ?? "single");
   const [password, setPassword] = useState(row?.password ?? "");
   const [expiry, setExpiry] = useState(row?.expiry_at ? row.expiry_at.slice(0, 16) : "");
   const [busy, setBusy] = useState(false);
@@ -289,6 +302,7 @@ function CredentialEditor({
         app_login_name: appLoginName,
         password,
         owner_id: ownerId,
+        account_type: accountType,
         expiry_at: expiry ? new Date(expiry).toISOString() : null,
       };
 
@@ -316,6 +330,20 @@ function CredentialEditor({
         <div className="space-y-3">
           <Field label="App login name">
             <input value={appLoginName} onChange={(e) => setAppLoginName(e.target.value)} className="ed-input" placeholder="e.g. IPTV portal" />
+          </Field>
+          <Field label="Account type">
+            <div className="grid gap-1.5">
+              {ACCOUNT_TYPES.map((t) => (
+                <label key={t.value} className="flex items-center gap-2 text-sm cursor-pointer" style={{ color: "#0f172a" }}>
+                  <input
+                    type="checkbox"
+                    checked={accountType === t.value}
+                    onChange={() => setAccountType(t.value)}
+                  />
+                  {t.label}
+                </label>
+              ))}
+            </div>
           </Field>
           <Field label="Password">
             <div className="flex gap-2">
