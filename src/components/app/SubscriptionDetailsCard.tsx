@@ -167,7 +167,7 @@ export function SubscriptionDetailsCard() {
           <div className="space-y-3">
             {creds.length > 1 && activeTab && (
               <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide">
-                {creds.map((c, idx) => {
+                {creds.map((c) => {
                   const selected = c.id === activeTab;
                   return (
                     <button

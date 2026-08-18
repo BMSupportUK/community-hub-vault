@@ -242,7 +242,7 @@ function AdminCredentialsPage() {
           <CredentialEditor
             ownerId={editor.ownerId}
             row={editor.row}
-            existingCount={(grouped.get(editor.ownerId) ?? []).length}
+            nextAccountNumber={Math.max(0, ...(grouped.get(editor.ownerId) ?? []).map((c) => c.account_number)) + 1}
             currentUserId={user?.id ?? ""}
             onClose={() => setEditor(null)}
             onSaved={() => { setEditor(null); load(); }}
@@ -270,11 +270,11 @@ function Stat({ label, value }: { label: string; value: number }) {
 }
 
 function CredentialEditor({
-  ownerId, row, existingCount, currentUserId, onClose, onSaved,
+  ownerId, row, nextAccountNumber, currentUserId, onClose, onSaved,
 }: {
   ownerId: string;
   row: CredentialRow | null;
-  existingCount: number;
+  nextAccountNumber: number;
   currentUserId: string;
   onClose: () => void;
   onSaved: () => void;
@@ -284,7 +284,7 @@ function CredentialEditor({
   const [password, setPassword] = useState(row?.password ?? "");
   const [expiry, setExpiry] = useState(row?.expiry_at ? row.expiry_at.slice(0, 16) : "");
   const [busy, setBusy] = useState(false);
-  const accountLabel = `Account ${row?.account_number ?? existingCount + 1}`;
+  const accountLabel = `Account ${row?.account_number ?? nextAccountNumber}`;
 
 
   const generate = () => {
