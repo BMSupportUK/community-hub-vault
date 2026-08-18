@@ -26,6 +26,7 @@ export function SubscriptionDetailsCard() {
   const [reveal, setReveal] = useState<Record<string, boolean>>({});
   const [copied, setCopied] = useState<string | null>(null);
   const [username, setUsername] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user?.id) {
