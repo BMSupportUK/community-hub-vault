@@ -54,7 +54,7 @@ export function SubscriptionDetailsCard() {
     const load = () => {
       supabase
         .from("app_credentials")
-        .select("id, account_number, app_login_name, password, expiry_at")
+        .select("id, account_number, account_type, app_login_name, password, expiry_at")
         .eq("owner_id", user.id)
         .order("account_number", { ascending: true })
         .then(({ data }) => {
