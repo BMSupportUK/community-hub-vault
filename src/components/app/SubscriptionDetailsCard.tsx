@@ -249,9 +249,9 @@ export function SubscriptionDetailsCard() {
             })}
 
             <Link
-              to="/u/$username"
-              params={{ username: user?.user_metadata?.username ?? "me" }}
-              search={{ tab: "creds" }}
+              to={username ? "/u/$username" : "/profile"}
+              params={username ? { username } : undefined}
+              search={username ? { tab: "creds" } : undefined}
               className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded-md bg-gradient-to-br from-violet-600 to-blue-600 text-white text-sm font-medium shadow-[0_0_20px_rgba(139,92,246,0.45)] hover:opacity-90 transition"
             >
               <ExternalLink className="size-4" />
