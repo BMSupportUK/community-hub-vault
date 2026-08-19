@@ -38,6 +38,19 @@ function FantasyBenchIcon({ className }: { className?: string }) {
   );
 }
 
+/** Football pitch / sports guide icon, used as the Sports guides rail icon. */
+function SportsGuideIcon({ className }: { className?: string }) {
+  return (
+    <img
+      src={sportsGuideIcon.url}
+      alt=""
+      aria-hidden
+      draggable={false}
+      className={cn(className, "size-8 rounded-full object-cover")}
+    />
+  );
+}
+
 type PagePermMap = Record<string, string[]>;
 type NavOrderMap = Record<string, number>;
 
