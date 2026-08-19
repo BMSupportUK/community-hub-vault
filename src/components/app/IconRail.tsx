@@ -52,6 +52,19 @@ function SportsGuideIcon({ className }: { className?: string }) {
   );
 }
 
+/** Goal net icon, used as the Boro Score Predictions rail icon. */
+function PredictionsGoalIcon({ className }: { className?: string }) {
+  return (
+    <img
+      src={boroPredictionsGoal.url}
+      alt=""
+      aria-hidden
+      draggable={false}
+      className={cn(className, "size-8 rounded-full object-cover")}
+    />
+  );
+}
+
 type PagePermMap = Record<string, string[]>;
 type NavOrderMap = Record<string, number>;
 
