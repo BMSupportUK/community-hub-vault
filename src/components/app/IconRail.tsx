@@ -9,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { UserAvatarMenu } from "@/components/app/UserAvatarMenu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import mfcBadge from "@/assets/mfc-badge.png.asset.json";
-import fantasyBench from "@/assets/boro-fantasy-bench.jpg.asset.json";
+import fantasyBench from "@/assets/boro-fantasy-bench.png.asset.json";
 import sportsGuideIcon from "@/assets/sports-guide-rail.png.asset.json";
 import boroPredictionsGoal from "@/assets/boro-predictions-goal.png.asset.json";
 
