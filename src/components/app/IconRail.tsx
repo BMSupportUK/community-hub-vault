@@ -10,6 +10,7 @@ import { UserAvatarMenu } from "@/components/app/UserAvatarMenu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import mfcBadge from "@/assets/mfc-badge.png.asset.json";
 import fantasyBench from "@/assets/boro-fantasy-bench.jpg.asset.json";
+import sportsGuideIcon from "@/assets/sports-guide-rail.png.asset.json";
 
 /** Middlesbrough FC badge, used as the Boro Fan Zone rail icon. */
 function BoroBadgeIcon({ className }: { className?: string }) {
@@ -29,6 +30,19 @@ function FantasyBenchIcon({ className }: { className?: string }) {
   return (
     <img
       src={fantasyBench.url}
+      alt=""
+      aria-hidden
+      draggable={false}
+      className={cn(className, "size-8 rounded-full object-cover")}
+    />
+  );
+}
+
+/** Football pitch / sports guide icon, used as the Sports guides rail icon. */
+function SportsGuideIcon({ className }: { className?: string }) {
+  return (
+    <img
+      src={sportsGuideIcon.url}
       alt=""
       aria-hidden
       draggable={false}
@@ -164,7 +178,7 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
     { to: "/tickets", label: "Tickets", icon: Ticket, show: !hasRole("moderator") },
     { to: "/shop", label: "Shop", icon: ShoppingCart, show: true },
     { to: "/install-guides", label: "Install guides", icon: Wrench, show: true },
-    { to: "/sports-guides", label: "Sports guides", icon: Goal, show: true },
+    { to: "/sports-guides", label: "Sports guides", icon: SportsGuideIcon, show: true },
     { to: "/knowledge-base", label: "Knowledge base", icon: BookOpen, show: true },
     { to: "/what-to-watch", label: "What to Watch", icon: Popcorn, show: true },
     { to: "/leaderboard", label: "Referrals", icon: Trophy, show: true },
