@@ -32,7 +32,7 @@ function FantasyBenchIcon({ className }: { className?: string }) {
     <div
       className={cn(
         className,
-        "size-[26px] rounded-lg bg-white/10 ring-1 ring-primary-glow/60 flex items-center justify-center p-0.5 shadow-sm"
+        "size-[30px] rounded-lg bg-white/15 ring-2 ring-primary-glow/70 flex items-center justify-center p-1 shadow-md"
       )}
     >
       <img
@@ -40,7 +40,7 @@ function FantasyBenchIcon({ className }: { className?: string }) {
         alt=""
         aria-hidden
         draggable={false}
-        className="size-full object-contain drop-shadow-[0_1.5px_2px_rgba(0,0,0,0.45)]"
+        className="size-full object-contain contrast-[1.15] drop-shadow-[0_2px_3px_rgba(0,0,0,0.5)]"
       />
     </div>
   );
@@ -52,7 +52,7 @@ function SportsGuideIcon({ className }: { className?: string }) {
     <div
       className={cn(
         className,
-        "size-[26px] rounded-lg bg-white/10 ring-1 ring-primary-glow/60 flex items-center justify-center p-0.5 shadow-sm"
+        "size-[30px] rounded-lg bg-white/15 ring-2 ring-primary-glow/70 flex items-center justify-center p-1 shadow-md"
       )}
     >
       <img
@@ -60,7 +60,7 @@ function SportsGuideIcon({ className }: { className?: string }) {
         alt=""
         aria-hidden
         draggable={false}
-        className="size-full object-contain drop-shadow-[0_1.5px_2px_rgba(0,0,0,0.45)]"
+        className="size-full object-contain contrast-[1.15] drop-shadow-[0_2px_3px_rgba(0,0,0,0.5)]"
       />
     </div>
   );
@@ -72,7 +72,7 @@ function PredictionsGoalIcon({ className }: { className?: string }) {
     <div
       className={cn(
         className,
-        "size-[26px] rounded-lg bg-white/10 ring-1 ring-primary-glow/60 flex items-center justify-center p-0.5 shadow-sm"
+        "size-[30px] rounded-lg bg-white/15 ring-2 ring-primary-glow/70 flex items-center justify-center p-1 shadow-md"
       )}
     >
       <img
@@ -80,7 +80,7 @@ function PredictionsGoalIcon({ className }: { className?: string }) {
         alt=""
         aria-hidden
         draggable={false}
-        className="size-full object-contain drop-shadow-[0_1.5px_2px_rgba(0,0,0,0.45)]"
+        className="size-full object-contain contrast-[1.15] drop-shadow-[0_2px_3px_rgba(0,0,0,0.5)]"
       />
     </div>
   );
