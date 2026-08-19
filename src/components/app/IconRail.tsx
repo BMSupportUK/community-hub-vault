@@ -29,39 +29,60 @@ function BoroBadgeIcon({ className }: { className?: string }) {
 /** Stadium bench / dugout image, used as the Boro Fantasy Manager rail icon. */
 function FantasyBenchIcon({ className }: { className?: string }) {
   return (
-    <img
-      src={fantasyBench.url}
-      alt=""
-      aria-hidden
-      draggable={false}
-      className={cn(className, "size-8 rounded-full object-cover")}
-    />
+    <div
+      className={cn(
+        "size-[26px] rounded-lg bg-background/60 ring-1 ring-primary-glow/50 flex items-center justify-center p-0.5 shadow-sm",
+        className
+      )}
+    >
+      <img
+        src={fantasyBench.url}
+        alt=""
+        aria-hidden
+        draggable={false}
+        className="size-full object-contain drop-shadow-[0_1.5px_2px_rgba(0,0,0,0.45)]"
+      />
+    </div>
   );
 }
 
 /** Football pitch / sports guide icon, used as the Sports guides rail icon. */
 function SportsGuideIcon({ className }: { className?: string }) {
   return (
-    <img
-      src={sportsGuideIcon.url}
-      alt=""
-      aria-hidden
-      draggable={false}
-      className={cn(className, "size-8 rounded-full object-cover")}
-    />
+    <div
+      className={cn(
+        "size-[26px] rounded-lg bg-background/60 ring-1 ring-primary-glow/50 flex items-center justify-center p-0.5 shadow-sm",
+        className
+      )}
+    >
+      <img
+        src={sportsGuideIcon.url}
+        alt=""
+        aria-hidden
+        draggable={false}
+        className="size-full object-contain drop-shadow-[0_1.5px_2px_rgba(0,0,0,0.45)]"
+      />
+    </div>
   );
 }
 
 /** Goal net icon, used as the Boro Score Predictions rail icon. */
 function PredictionsGoalIcon({ className }: { className?: string }) {
   return (
-    <img
-      src={boroPredictionsGoal.url}
-      alt=""
-      aria-hidden
-      draggable={false}
-      className={cn(className, "size-8 rounded-full object-cover")}
-    />
+    <div
+      className={cn(
+        "size-[26px] rounded-lg bg-background/60 ring-1 ring-primary-glow/50 flex items-center justify-center p-0.5 shadow-sm",
+        className
+      )}
+    >
+      <img
+        src={boroPredictionsGoal.url}
+        alt=""
+        aria-hidden
+        draggable={false}
+        className="size-full object-contain drop-shadow-[0_1.5px_2px_rgba(0,0,0,0.45)]"
+      />
+    </div>
   );
 }
 
