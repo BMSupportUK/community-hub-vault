@@ -11,6 +11,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import mfcBadge from "@/assets/mfc-badge.png.asset.json";
 import fantasyBench from "@/assets/boro-fantasy-bench.jpg.asset.json";
 import sportsGuideIcon from "@/assets/sports-guide-rail.png.asset.json";
+import boroPredictionsGoal from "@/assets/boro-predictions-goal.png.asset.json";
 
 /** Middlesbrough FC badge, used as the Boro Fan Zone rail icon. */
 function BoroBadgeIcon({ className }: { className?: string }) {
