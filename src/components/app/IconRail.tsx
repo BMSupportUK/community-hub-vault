@@ -11,6 +11,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import mfcBadge from "@/assets/mfc-badge.png.asset.json";
 import fantasyBench from "@/assets/boro-fantasy-bench.jpg.asset.json";
 import sportsGuideIcon from "@/assets/sports-guide-rail.png.asset.json";
+import boroPredictionsGoal from "@/assets/boro-predictions-goal.png.asset.json";
 
 /** Middlesbrough FC badge, used as the Boro Fan Zone rail icon. */
 function BoroBadgeIcon({ className }: { className?: string }) {
@@ -43,6 +44,19 @@ function SportsGuideIcon({ className }: { className?: string }) {
   return (
     <img
       src={sportsGuideIcon.url}
+      alt=""
+      aria-hidden
+      draggable={false}
+      className={cn(className, "size-8 rounded-full object-cover")}
+    />
+  );
+}
+
+/** Goal net icon, used as the Boro Score Predictions rail icon. */
+function PredictionsGoalIcon({ className }: { className?: string }) {
+  return (
+    <img
+      src={boroPredictionsGoal.url}
       alt=""
       aria-hidden
       draggable={false}
@@ -185,7 +199,7 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
     ...COMPETITIONS.map((c) => ({
       to: c.to,
       label: c.railLabel,
-      icon: c.key === "boro2026" ? BoroBadgeIcon : Goal,
+      icon: c.key === "boro2026" ? PredictionsGoalIcon : Goal,
       show: !finishedCompetitions.includes(c.key),
     })),
     { to: "/boro-fantasy", label: "Boro Fantasy", icon: FantasyBenchIcon, show: true },
