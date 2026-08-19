@@ -32,7 +32,7 @@ function FantasyBenchIcon({ className }: { className?: string }) {
     <div
       className={cn(
         className,
-        "size-[26px] rounded-lg bg-background/60 ring-1 ring-primary-glow/50 flex items-center justify-center p-0.5 shadow-sm"
+        "size-[26px] rounded-lg bg-white/10 ring-1 ring-primary-glow/60 flex items-center justify-center p-0.5 shadow-sm"
       )}
     >
       <img
@@ -52,7 +52,7 @@ function SportsGuideIcon({ className }: { className?: string }) {
     <div
       className={cn(
         className,
-        "size-[26px] rounded-lg bg-background/60 ring-1 ring-primary-glow/50 flex items-center justify-center p-0.5 shadow-sm"
+        "size-[26px] rounded-lg bg-white/10 ring-1 ring-primary-glow/60 flex items-center justify-center p-0.5 shadow-sm"
       )}
     >
       <img
@@ -72,7 +72,7 @@ function PredictionsGoalIcon({ className }: { className?: string }) {
     <div
       className={cn(
         className,
-        "size-[26px] rounded-lg bg-background/60 ring-1 ring-primary-glow/50 flex items-center justify-center p-0.5 shadow-sm"
+        "size-[26px] rounded-lg bg-white/10 ring-1 ring-primary-glow/60 flex items-center justify-center p-0.5 shadow-sm"
       )}
     >
       <img
