@@ -9,12 +9,26 @@ import { supabase } from "@/integrations/supabase/client";
 import { UserAvatarMenu } from "@/components/app/UserAvatarMenu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import mfcBadge from "@/assets/mfc-badge.png.asset.json";
+import fantasyBench from "@/assets/boro-fantasy-bench.jpg.asset.json";
 
 /** Middlesbrough FC badge, used as the Boro Fan Zone rail icon. */
 function BoroBadgeIcon({ className }: { className?: string }) {
   return (
     <img
       src={mfcBadge.url}
+      alt=""
+      aria-hidden
+      draggable={false}
+      className={cn(className, "size-8 rounded-full object-cover")}
+    />
+  );
+}
+
+/** Stadium bench / dugout image, used as the Boro Fantasy Manager rail icon. */
+function FantasyBenchIcon({ className }: { className?: string }) {
+  return (
+    <img
+      src={fantasyBench.url}
       alt=""
       aria-hidden
       draggable={false}
@@ -160,7 +174,7 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
       icon: c.key === "boro2026" ? BoroBadgeIcon : Goal,
       show: !finishedCompetitions.includes(c.key),
     })),
-    { to: "/boro-fantasy", label: "Boro Fantasy", icon: BoroBadgeIcon, show: true },
+    { to: "/boro-fantasy", label: "Boro Fantasy", icon: FantasyBenchIcon, show: true },
     { to: "/competition-winners", label: "Competition Winners", icon: Crown, show: true },
     { to: "/new-content", label: "New content", icon: Tv, show: true, badge: unreadNewContent },
     { to: "/members", label: "Members", icon: Users, show: true },
