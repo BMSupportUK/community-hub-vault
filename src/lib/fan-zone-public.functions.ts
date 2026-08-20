@@ -376,7 +376,7 @@ export const getPublicFanProfile = createServerFn({ method: "GET" })
       supabaseAdmin
         .from("fan_zone_members")
         .select(
-          "user_id, fan_alias, fan_avatar_url, bio, supporter_since, fav_player, matchday_memory, created_at, status, is_private",
+          "user_id, fan_alias, fan_avatar_url, bio, supporter_since, fav_player, matchday_memory, requested_at, status, is_private",
         )
         .eq("user_id", data.userId)
         .maybeSingle(),
@@ -396,7 +396,7 @@ export const getPublicFanProfile = createServerFn({ method: "GET" })
           supporter_since: number | null;
           fav_player: string | null;
           matchday_memory: string | null;
-          created_at: string | null;
+          requested_at: string | null;
           status: string | null;
           is_private: boolean | null;
         }
