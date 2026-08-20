@@ -337,8 +337,6 @@ export function SubscriptionDetailsCard() {
           </div>
         )}
         </div>
-        </Fragment>
-      )}
       </div>
     </div>
   );
