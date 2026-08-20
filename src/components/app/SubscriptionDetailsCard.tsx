@@ -337,6 +337,8 @@ export function SubscriptionDetailsCard() {
             </Link>
           </div>
         )}
+        </>
+      )}
       </div>
     </div>
   );
