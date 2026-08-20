@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useUserTimezone } from "@/hooks/use-user-timezone";
-import { CalendarClock, Copy, Check, Eye, EyeOff, KeyRound, ExternalLink } from "lucide-react";
+import { CalendarClock, Copy, Check, Eye, EyeOff, KeyRound, ExternalLink, ChevronDown, ChevronUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Link } from "@tanstack/react-router";
 
@@ -25,6 +25,7 @@ export function SubscriptionDetailsCard() {
   const [copied, setCopied] = useState<string | null>(null);
   const [username, setUsername] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<string | null>(null);
+  const [revealed, setRevealed] = useState(false);
 
   useEffect(() => {
     if (!user?.id) {
@@ -152,11 +153,32 @@ export function SubscriptionDetailsCard() {
           <p className="text-xs text-white/85 mt-1">
             {hasCreds ? `${creds.length} active account${creds.length === 1 ? "" : "s"}` : "No accounts assigned"}
           </p>
+          <button
+            type="button"
+            onClick={() => setRevealed((r) => !r)}
+            className={cn(
+              "mt-3 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider border transition shadow-[0_0_16px_rgba(139,92,246,0.45)]",
+              revealed
+                ? "bg-white/20 border-white/40 hover:bg-white/30 text-white"
+                : "bg-emerald-500/90 border-emerald-300/70 hover:bg-emerald-400 text-white"
+            )}
+          >
+            {revealed ? (
+              <>
+                Hide details <ChevronUp className="size-3" />
+              </>
+            ) : (
+              <>
+                Reveal details <ChevronDown className="size-3" />
+              </>
+            )}
+          </button>
         </div>
       </div>
 
-      {/* Divider */}
-      <div className="h-px bg-gradient-to-r from-transparent via-violet-500/60 to-transparent" />
+      <div className={cn(!revealed && "hidden")}>
+        {/* Divider */}
+          <div className="h-px bg-gradient-to-r from-transparent via-violet-500/60 to-transparent" />
 
       {/* Content */}
       <div className="min-h-0 flex-1 p-4 overflow-y-auto">
@@ -314,6 +336,7 @@ export function SubscriptionDetailsCard() {
             </Link>
           </div>
         )}
+        </div>
       </div>
     </div>
   );
