@@ -475,15 +475,11 @@ function HomeLayout() {
         <ChannelColumn
           title="Support Community"
           groups={channelsQuery.isLoading && channels === null ? channelSkeletonGroups : groups}
+          header={<WorkingStatusBox />}
           onAddGroup={isAdmin ? () => setShowAddGroup(true) : undefined}
           onReorderChannels={isAdmin && channels !== null ? reorderChannels : undefined}
           onReorderGroups={isAdmin && channels !== null ? reorderGroups : undefined}
-          footer={
-            <>
-              <ServiceStatusBox />
-              <WorkingStatusBox />
-            </>
-          }
+          footer={<ServiceStatusBox />}
         />
       )}
       <div className="flex-1 flex flex-col min-w-0 min-h-0 md:overflow-hidden">
@@ -501,15 +497,11 @@ function HomeLayout() {
                   groups={
                     channelsQuery.isLoading && channels === null ? channelSkeletonGroups : groups
                   }
+                  header={<WorkingStatusBox />}
                   onAddGroup={isAdmin ? () => setShowAddGroup(true) : undefined}
                   onReorderChannels={isAdmin && channels !== null ? reorderChannels : undefined}
                   onReorderGroups={isAdmin && channels !== null ? reorderGroups : undefined}
-                  footer={
-                    <>
-                      <ServiceStatusBox />
-                      <WorkingStatusBox />
-                    </>
-                  }
+                  footer={<ServiceStatusBox />}
                 />
               </SheetContent>
             </Sheet>
