@@ -129,7 +129,8 @@ export function HomeChannelsSidebar() {
             })),
           },
         ]}
-        footer={<><ServiceStatusBox /><WorkingStatusBox /></>}
+        header={<WorkingStatusBox />}
+        footer={<ServiceStatusBox />}
       />
     );
   }
@@ -137,7 +138,8 @@ export function HomeChannelsSidebar() {
     <ChannelColumn
       title="Support Community"
       groups={groups}
-      footer={<><ServiceStatusBox /><WorkingStatusBox /></>}
+      header={<WorkingStatusBox />}
+      footer={<ServiceStatusBox />}
     />
   );
 }
