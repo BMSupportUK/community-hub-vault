@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useUserTimezone } from "@/hooks/use-user-timezone";
-import { CalendarClock, Copy, Check, Eye, EyeOff, KeyRound, ExternalLink } from "lucide-react";
+import { CalendarClock, Copy, Check, Eye, EyeOff, KeyRound, ExternalLink, ChevronDown, ChevronUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Link } from "@tanstack/react-router";
 
