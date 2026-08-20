@@ -153,11 +153,33 @@ export function SubscriptionDetailsCard() {
           <p className="text-xs text-white/85 mt-1">
             {hasCreds ? `${creds.length} active account${creds.length === 1 ? "" : "s"}` : "No accounts assigned"}
           </p>
+          <button
+            type="button"
+            onClick={() => setRevealed((r) => !r)}
+            className={cn(
+              "mt-3 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider border transition shadow-[0_0_16px_rgba(139,92,246,0.45)]",
+              revealed
+                ? "bg-white/20 border-white/40 hover:bg-white/30 text-white"
+                : "bg-emerald-500/90 border-emerald-300/70 hover:bg-emerald-400 text-white"
+            )}
+          >
+            {revealed ? (
+              <>
+                Hide details <ChevronUp className="size-3" />
+              </>
+            ) : (
+              <>
+                Reveal details <ChevronDown className="size-3" />
+              </>
+            )}
+          </button>
         </div>
       </div>
 
-      {/* Divider */}
-      <div className="h-px bg-gradient-to-r from-transparent via-violet-500/60 to-transparent" />
+      {revealed && (
+        <>
+          {/* Divider */}
+          <div className="h-px bg-gradient-to-r from-transparent via-violet-500/60 to-transparent" />
 
       {/* Content */}
       <div className="min-h-0 flex-1 p-4 overflow-y-auto">
