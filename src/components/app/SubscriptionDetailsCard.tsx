@@ -161,7 +161,7 @@ export function SubscriptionDetailsCard() {
                     "text-[11px] font-medium mt-0.5",
                     expired ? "text-red-300" : expSoon ? "text-amber-300" : "text-emerald-300"
                   )}>
-                    {c.expiry_at ? fmtDate(new Date(c.expiry_at)) : "No expiry date"}
+                    Expiry date: {c.expiry_at ? fmtDate(new Date(c.expiry_at)) : "No expiry date"}
                   </div>
                 </div>
                 {c.expiry_at && (
