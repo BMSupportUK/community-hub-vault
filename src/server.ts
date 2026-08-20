@@ -25,6 +25,33 @@ function brandedErrorResponse(): Response {
   });
 }
 
+// Browser navigations/HMR reloads cancel in-flight requests. Node surfaces that as
+// `Error: aborted` (ECONNRESET) / AbortError, which is not an app bug — never render
+// the branded error page (which shows as a blank/error screen) for these.
+function isClientAbort(error: unknown, request?: Request): boolean {
+  if (request?.signal.aborted) return true;
+  const seen = new Set<unknown>();
+  let current: unknown = error;
+  while (current && typeof current === "object" && !seen.has(current)) {
+    seen.add(current);
+    const e = current as { name?: string; code?: string; message?: string; cause?: unknown };
+    if (
+      e.code === "ECONNRESET" ||
+      e.code === "ABORT_ERR" ||
+      e.name === "AbortError" ||
+      e.message === "aborted"
+    ) {
+      return true;
+    }
+    current = e.cause;
+  }
+  return false;
+}
+
+function clientAbortResponse(): Response {
+  return new Response(null, { status: 204 });
+}
+
 function isCatastrophicSsrErrorBody(body: string, responseStatus: number): boolean {
   let payload: unknown;
   try {
@@ -52,7 +79,10 @@ function isCatastrophicSsrErrorBody(body: string, responseStatus: number): boole
 
 // h3 swallows in-handler throws into a normal 500 Response with body
 // {"unhandled":true,"message":"HTTPError"} — try/catch alone never fires for those.
-async function normalizeCatastrophicSsrResponse(response: Response): Promise<Response> {
+async function normalizeCatastrophicSsrResponse(
+  response: Response,
+  request?: Request,
+): Promise<Response> {
   if (response.status < 500) return response;
   const contentType = response.headers.get("content-type") ?? "";
   if (!contentType.includes("application/json")) return response;
@@ -62,7 +92,10 @@ async function normalizeCatastrophicSsrResponse(response: Response): Promise<Res
     return response;
   }
 
-  console.error(consumeLastCapturedError() ?? new Error(`h3 swallowed SSR error: ${body}`));
+  const captured = consumeLastCapturedError();
+  if (isClientAbort(captured, request)) return clientAbortResponse();
+
+  console.error(captured ?? new Error(`h3 swallowed SSR error: ${body}`));
   return brandedErrorResponse();
 }
 
@@ -71,8 +104,10 @@ export default {
     try {
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
-      return await normalizeCatastrophicSsrResponse(response);
+      if (request.signal.aborted) return clientAbortResponse();
+      return await normalizeCatastrophicSsrResponse(response, request);
     } catch (error) {
+      if (isClientAbort(error, request)) return clientAbortResponse();
       console.error(error);
       return brandedErrorResponse();
     }
