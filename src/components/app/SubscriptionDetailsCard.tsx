@@ -177,7 +177,7 @@ export function SubscriptionDetailsCard() {
       </div>
 
       {revealed && (
-        <>
+        <Fragment>
           {/* Divider */}
           <div className="h-px bg-gradient-to-r from-transparent via-violet-500/60 to-transparent" />
 
