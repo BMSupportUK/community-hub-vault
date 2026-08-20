@@ -30,28 +30,31 @@ export function Clocks() {
   const ukTz = "Europe/London"; // auto handles BST / GMT
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-3">
       <ClockPill
-        time={format(userTz)}
-        label={abbrev(userTz)}
-        ring="ring-sky-400/60"
-        text="text-sky-300"
-        labelBg="bg-sky-500/20 text-sky-200"
-        title={`Your local time (${userTz})`}
-      />
-      <ClockPill
+        sideLabel="Office time"
         time={format(ukTz)}
         label={abbrev(ukTz)}
         ring="ring-amber-400/60"
         text="text-amber-300"
         labelBg="bg-amber-500/20 text-amber-200"
-        title={`UK time (${ukTz})`}
+        title={`UK office time (${ukTz})`}
+      />
+      <ClockPill
+        sideLabel="Customer local time"
+        time={format(userTz)}
+        label={abbrev(userTz)}
+        ring="ring-sky-400/60"
+        text="text-sky-300"
+        labelBg="bg-sky-500/20 text-sky-200"
+        title={`Customer local time (${userTz})`}
       />
     </div>
   );
 }
 
 function ClockPill({
+  sideLabel,
   time,
   label,
   ring,
@@ -59,6 +62,7 @@ function ClockPill({
   labelBg,
   title,
 }: {
+  sideLabel: string;
   time: string;
   label: string;
   ring: string;
@@ -67,16 +71,20 @@ function ClockPill({
   title?: string;
 }) {
   return (
-    <div
-      title={title}
-      className={`flex items-center gap-2 rounded-full bg-rail/80 ring-1 ${ring} px-3 py-1 font-mono text-sm tabular-nums shadow-soft`}
-    >
-      <span className={text}>{time}</span>
-      <span
-        className={`text-[10px] uppercase tracking-wider rounded-full px-1.5 py-0.5 ${labelBg}`}
-      >
-        {label}
+    <div className="flex items-center gap-2" title={title}>
+      <span className="hidden text-[10px] uppercase tracking-wide text-muted-foreground sm:inline">
+        {sideLabel}
       </span>
+      <div
+        className={`flex items-center gap-2 rounded-full bg-rail/80 ring-1 ${ring} px-3 py-1 font-mono text-sm tabular-nums shadow-soft`}
+      >
+        <span className={text}>{time}</span>
+        <span
+          className={`text-[10px] uppercase tracking-wider rounded-full px-1.5 py-0.5 ${labelBg}`}
+        >
+          {label}
+        </span>
+      </div>
     </div>
   );
 }
