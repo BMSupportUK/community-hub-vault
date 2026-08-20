@@ -53,7 +53,8 @@ const IN_PATTERNS = [
 ];
 
 const OUT_PATTERNS = [
-  /\bjoins? [^.]*\bon (?:a )?loan\b/i,
+  /\bjoin(?:s|ed)\b[^.]*\bloan\b/i,
+  /\bloan\b[^.]*\bwishes?\b[^.]*\bwell\b/i,
   /\bon loan (?:at|to|with)\b/i,
   /\bloan(?:ed)? (?:out|move|switch|spell)\b/i,
   /\bhas (?:left|departed)\b/i,
