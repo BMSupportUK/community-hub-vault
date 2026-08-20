@@ -337,6 +337,7 @@ export function SubscriptionDetailsCard() {
             </Link>
           </div>
         )}
+        </div>
         </Fragment>
       )}
       </div>
