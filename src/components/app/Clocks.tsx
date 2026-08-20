@@ -57,15 +57,18 @@ function ClockPill({
   ring,
   text,
   labelBg,
+  title,
 }: {
   time: string;
   label: string;
   ring: string;
   text: string;
   labelBg: string;
+  title?: string;
 }) {
   return (
     <div
+      title={title}
       className={`flex items-center gap-2 rounded-full bg-rail/80 ring-1 ${ring} px-3 py-1 font-mono text-sm tabular-nums shadow-soft`}
     >
       <span className={text}>{time}</span>
