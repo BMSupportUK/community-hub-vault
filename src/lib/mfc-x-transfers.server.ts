@@ -76,7 +76,7 @@ const CLUB_SUFFIX =
 export function otherClubFromText(text: string): string | null {
   const t = normalizeFancyText(text);
   const re = new RegExp(
-    `(?:on loan (?:at|to|with|from)|loan (?:at|to|with|from)|joins?|joined|move to|transfer to|switch to|signed for)\\s+((?:[A-Z][\\w'&.\\-]+|${CLUB_SUFFIX})(?:\\s+(?:[A-Z][\\w'&.\\-]+|${CLUB_SUFFIX}|of|de|and))*)`,
+    `(?:on loan (?:at|to|with|from)|loan (?:at|to|with|from)|join(?:s|ed)|move to|transfer to|switch to|signed for)\\s+(?:(?:[A-Z][\\w'’\\-]+\\s+)?(?:side|club|outfit|team)\\s+)?((?:[A-Z][\\w'&.\\-]+|${CLUB_SUFFIX})(?:\\s+(?:[A-Z][\\w'&.\\-]+|${CLUB_SUFFIX}|of|de|and))*)`,
   );
   const m = t.match(re);
   const raw = m?.[1]?.trim().replace(/[.,!]+$/, "") ?? null;
