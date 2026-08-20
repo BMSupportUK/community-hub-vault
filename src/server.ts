@@ -25,6 +25,33 @@ function brandedErrorResponse(): Response {
   });
 }
 
+// Browser navigations/HMR reloads cancel in-flight requests. Node surfaces that as
+// `Error: aborted` (ECONNRESET) / AbortError, which is not an app bug — never render
+// the branded error page (which shows as a blank/error screen) for these.
+function isClientAbort(error: unknown, request?: Request): boolean {
+  if (request?.signal.aborted) return true;
+  const seen = new Set<unknown>();
+  let current: unknown = error;
+  while (current && typeof current === "object" && !seen.has(current)) {
+    seen.add(current);
+    const e = current as { name?: string; code?: string; message?: string; cause?: unknown };
+    if (
+      e.code === "ECONNRESET" ||
+      e.code === "ABORT_ERR" ||
+      e.name === "AbortError" ||
+      e.message === "aborted"
+    ) {
+      return true;
+    }
+    current = e.cause;
+  }
+  return false;
+}
+
+function clientAbortResponse(): Response {
+  return new Response(null, { status: 204 });
+}
+
 function isCatastrophicSsrErrorBody(body: string, responseStatus: number): boolean {
   let payload: unknown;
   try {
@@ -71,8 +98,10 @@ export default {
     try {
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
-      return await normalizeCatastrophicSsrResponse(response);
+      if (request.signal.aborted) return clientAbortResponse();
+      return await normalizeCatastrophicSsrResponse(response, request);
     } catch (error) {
+      if (isClientAbort(error, request)) return clientAbortResponse();
       console.error(error);
       return brandedErrorResponse();
     }
