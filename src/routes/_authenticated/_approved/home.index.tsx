@@ -261,10 +261,10 @@ function WelcomePage() {
             </div>
           </div>
 
-          {/* Subscription details + working status (right) */}
+          {/* Working status + subscription details (right) */}
           <div className="min-h-0 flex flex-col gap-4 justify-center xl:justify-start">
-            <SubscriptionDetailsCard />
             <WorkingStatusBox />
+            <SubscriptionDetailsCard />
           </div>
         </div>
       </section>
