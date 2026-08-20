@@ -28,26 +28,25 @@ export function Clocks() {
   const userTz =
     Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
   const ukTz = "Europe/London"; // auto handles BST / GMT
-  const sameAsUk = userTz === ukTz;
 
   return (
     <div className="flex items-center gap-2">
+      <ClockPill
+        time={format(userTz)}
+        label={abbrev(userTz)}
+        ring="ring-sky-400/60"
+        text="text-sky-300"
+        labelBg="bg-sky-500/20 text-sky-200"
+        title={`Your local time (${userTz})`}
+      />
       <ClockPill
         time={format(ukTz)}
         label={abbrev(ukTz)}
         ring="ring-amber-400/60"
         text="text-amber-300"
         labelBg="bg-amber-500/20 text-amber-200"
+        title={`UK time (${ukTz})`}
       />
-      {!sameAsUk && (
-        <ClockPill
-          time={format(userTz)}
-          label={abbrev(userTz)}
-          ring="ring-sky-400/60"
-          text="text-sky-300"
-          labelBg="bg-sky-500/20 text-sky-200"
-        />
-      )}
     </div>
   );
 }
