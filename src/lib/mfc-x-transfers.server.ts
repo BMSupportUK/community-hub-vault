@@ -96,8 +96,12 @@ export function classifyTransferPost(rawText: string): { direction: "in" | "out"
   return { direction, kind: LOAN_RE.test(text) ? "loan" : "transfer" };
 }
 
+/** How many posts the timeline returned on the last read (diagnostics). */
+export let lastTimelineSize = 0;
+
 export async function fetchXTransferPosts(): Promise<XTransferHit[]> {
   const timeline = await fetchOfficialTimeline().catch(() => []);
+  lastTimelineSize = timeline.length;
   const cutoff = Date.now() - MAX_AGE_MS;
   const out: XTransferHit[] = [];
   for (const post of timeline) {
