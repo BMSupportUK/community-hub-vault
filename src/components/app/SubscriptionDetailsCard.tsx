@@ -123,16 +123,17 @@ export function SubscriptionDetailsCard() {
             <p className="text-xs text-white/85 mt-1">
               {hasCreds ? `${creds.length} active account${creds.length === 1 ? "" : "s"}` : "No accounts assigned"}
             </p>
-            <button
-              type="button"
-              onClick={() => setOpen(true)}
+            <Link
+              to={username ? "/u/$username" : "/profile"}
+              params={username ? { username } : undefined}
+              search={username ? { tab: "creds" } : undefined}
               className={cn(
                 "mt-3 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider border transition shadow-[0_0_16px_rgba(16,185,129,0.45)]",
                 "bg-emerald-500/90 border-emerald-300/70 hover:bg-emerald-400 text-white"
               )}
             >
-              Reveal details <ChevronDown className="size-3" />
-            </button>
+              View Details <ChevronDown className="size-3" />
+            </Link>
 
             {/* Expiring account notices */}
             {expiringCreds.length > 0 && (
