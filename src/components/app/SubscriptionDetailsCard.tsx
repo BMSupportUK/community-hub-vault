@@ -142,6 +142,12 @@ export function SubscriptionDetailsCard() {
   }
 
   const hasCreds = creds.length > 0;
+  const now = Date.now();
+  const expiringCreds = creds.filter((c) => {
+    if (!c.expiry_at) return false;
+    const t = new Date(c.expiry_at).getTime();
+    return t < now || (t - now < 7 * 86400_000);
+  });
 
   return (
     <>
@@ -171,6 +177,40 @@ export function SubscriptionDetailsCard() {
             >
               Reveal details <ChevronDown className="size-3" />
             </button>
+
+            {/* Expiring account notices */}
+            {expiringCreds.length > 0 && (
+              <div className="mt-3 w-full space-y-1.5">
+                {expiringCreds.map((c) => {
+                  const t = new Date(c.expiry_at!).getTime();
+                  const expired = t < now;
+                  const expSoon = !expired;
+                  return (
+                    <div
+                      key={c.id}
+                      className="flex items-center justify-between gap-2 rounded-lg bg-black/25 px-2.5 py-1.5 border border-white/10"
+                    >
+                      <span className="text-[11px] font-medium text-white truncate">
+                        Account {c.account_number}
+                        {c.app_login_name && (
+                          <span className="ml-1 opacity-85">· {c.app_login_name}</span>
+                        )}
+                      </span>
+                      <span
+                        className={cn(
+                          "text-[10px] px-1.5 py-0.5 rounded-full border whitespace-nowrap shrink-0",
+                          expired
+                            ? "text-white border-red-400/50 bg-red-600 expiry-date-flash"
+                            : "text-white border-amber-300/50 bg-amber-500 expiry-date-flash-amber",
+                        )}
+                      >
+                        {expired ? "Expired" : "Expiring soon"}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
       </div>
