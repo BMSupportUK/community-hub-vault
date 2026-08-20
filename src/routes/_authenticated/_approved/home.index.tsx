@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { useEffect, useState, useRef } from "react";
 import { ServiceStatusPill } from "@/components/app/ServiceStatusPill";
 import { SubscriptionDetailsCard } from "@/components/app/SubscriptionDetailsCard";
+import { WorkingStatusBox } from "@/components/app/WorkingStatusBox";
 
 export const Route = createFileRoute("/_authenticated/_approved/home/")({
   component: WelcomePage,
@@ -260,9 +261,10 @@ function WelcomePage() {
             </div>
           </div>
 
-          {/* Subscription details (right) */}
-          <div className="min-h-0 justify-center xl:justify-start">
+          {/* Subscription details + working status (right) */}
+          <div className="min-h-0 flex flex-col gap-4 justify-center xl:justify-start">
             <SubscriptionDetailsCard />
+            <WorkingStatusBox />
           </div>
         </div>
       </section>

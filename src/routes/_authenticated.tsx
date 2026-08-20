@@ -13,7 +13,6 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 // Defer non-critical header widgets & alerts so the shell paints immediately.
 const Clocks = lazy(() => import("@/components/app/Clocks").then((m) => ({ default: m.Clocks })));
-const MyWorkingStatus = lazy(() => import("@/components/app/MyWorkingStatus").then((m) => ({ default: m.MyWorkingStatus })));
 const MentionsBadge = lazy(() => import("@/components/app/MentionsBadge").then((m) => ({ default: m.MentionsBadge })));
 const NotificationBell = lazy(() => import("@/components/app/NotificationBell").then((m) => ({ default: m.NotificationBell })));
 const TwoFactorPill = lazy(() => import("@/components/app/TwoFactorBanner").then((m) => ({ default: m.TwoFactorPill })));
@@ -228,9 +227,6 @@ function AuthLayout() {
             <div className="hidden lg:flex items-center gap-2">
               <DeferUntilIdle>
                 <Clocks />
-              </DeferUntilIdle>
-              <DeferUntilIdle>
-                <MyWorkingStatus />
               </DeferUntilIdle>
             </div>
         </header>
