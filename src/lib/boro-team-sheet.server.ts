@@ -170,8 +170,6 @@ export async function fetchOfficialTimeline(): Promise<TeamSheetHit[]> {
     return hits;
   } catch {
     return [];
-  } finally {
-    clearTimeout(timer);
   }
 }
 
