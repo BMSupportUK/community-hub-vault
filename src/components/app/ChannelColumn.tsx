@@ -41,6 +41,7 @@ export interface ChannelGroup {
 export function ChannelColumn({
   title,
   groups,
+  header,
   footer,
   onAddGroup,
   onReorderChannels,
@@ -49,6 +50,7 @@ export function ChannelColumn({
 }: {
   title: string;
   groups: ChannelGroup[];
+  header?: ReactNode;
   footer?: ReactNode;
   onAddGroup?: () => void;
   onReorderChannels?: (ordered: { id: string; groupLabel: string }[]) => void;
@@ -148,6 +150,7 @@ export function ChannelColumn({
         )}
       </div>
       <div className="flex-1 overflow-y-auto scrollbar-thin px-2 py-3 space-y-4">
+        {header}
         {groups.map((g) =>
           (() => {
             const groupIdx = groups.findIndex((x) => x.label === g.label);
