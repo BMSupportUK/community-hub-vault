@@ -145,6 +145,7 @@ function mentionsPlayer(text: string, playerName: string): boolean {
 export type XTransferSyncResult = {
   ok: boolean;
   posts?: number;
+  timeline?: number;
   applied?: string[];
   logged?: string[];
   error?: string;
@@ -239,5 +240,5 @@ export async function syncFantasyTransfersFromX(admin: Admin): Promise<XTransfer
     }
   }
 
-  return { ok: true, posts: posts.length, applied, logged };
+  return { ok: true, posts: posts.length, timeline: lastTimelineSize, applied, logged };
 }
