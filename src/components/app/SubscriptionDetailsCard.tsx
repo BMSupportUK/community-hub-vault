@@ -83,18 +83,6 @@ export function SubscriptionDetailsCard() {
     return type ?? "Single";
   };
 
-  const fmt = (d: Date) =>
-    d.toLocaleString("en-GB", {
-      weekday: "short",
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-      timeZone: tz,
-      timeZoneName: "short",
-    });
-
   if (!loaded) {
     return (
       <div
