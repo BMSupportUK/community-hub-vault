@@ -46,7 +46,7 @@ async function run(force: boolean) {
     injuries = { ok: false, error: e instanceof Error ? e.message : String(e) };
   }
 
-  return { ...squad, injuries };
+  return { ...squad, injuries, xTransfers };
 }
 
 export const Route = createFileRoute("/api/public/hooks/fantasy-squad-sync")({
