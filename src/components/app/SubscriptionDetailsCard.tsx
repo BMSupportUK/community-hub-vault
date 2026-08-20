@@ -17,7 +17,6 @@ interface CredRow {
 
 export function SubscriptionDetailsCard() {
   const { user } = useAuth();
-  const tz = useUserTimezone();
   const [creds, setCreds] = useState<CredRow[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [username, setUsername] = useState<string | null>(null);
