@@ -21,11 +21,7 @@ export function SubscriptionDetailsCard() {
   const tz = useUserTimezone();
   const [creds, setCreds] = useState<CredRow[]>([]);
   const [loaded, setLoaded] = useState(false);
-  const [reveal, setReveal] = useState<Record<string, boolean>>({});
-  const [copied, setCopied] = useState<string | null>(null);
   const [username, setUsername] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<string | null>(null);
-  const [open, setOpen] = useState(false);
 
   useEffect(() => {
     if (!user?.id) {
