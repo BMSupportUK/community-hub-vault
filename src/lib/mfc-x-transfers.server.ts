@@ -157,7 +157,9 @@ export async function syncFantasyTransfersFromX(admin: Admin): Promise<XTransfer
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : String(e) };
   }
-  if (posts.length === 0) return { ok: true, posts: 0, applied: [], logged: [] };
+  if (posts.length === 0) {
+    return { ok: true, posts: 0, timeline: lastTimelineSize, applied: [], logged: [] };
+  }
 
   const { data: rows, error } = await admin
     .from("fantasy_players")
