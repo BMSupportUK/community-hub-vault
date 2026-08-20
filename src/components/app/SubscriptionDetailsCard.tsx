@@ -99,11 +99,13 @@ export function SubscriptionDetailsCard() {
 
   const hasCreds = creds.length > 0;
   const now = Date.now();
-  const expiringCreds = creds.filter((c) => {
-    if (!c.expiry_at) return false;
-    const t = new Date(c.expiry_at).getTime();
-    return t < now || (t - now < 7 * 86400_000);
-  });
+
+  const fmtDate = (d: Date) =>
+    d.toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
 
   return (
     <div
@@ -111,10 +113,10 @@ export function SubscriptionDetailsCard() {
       style={{ width: 300, maxWidth: "100%" }}
     >
       {/* Header */}
-      <div className="relative shrink-0 aspect-[300/140] overflow-hidden">
+      <div className="relative shrink-0 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-violet-600 via-fuchsia-600 to-blue-600" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(255,255,255,0.2),transparent_50%)]" />
-        <div className="relative h-full flex flex-col items-center justify-center text-white p-4 text-center">
+        <div className="relative flex flex-col items-center justify-center text-white p-4 text-center">
           <CalendarClock className="size-10 mb-2 drop-shadow" />
           <h3 className="font-display font-bold text-lg leading-tight drop-shadow">
             Your Subscription Details
@@ -133,42 +135,54 @@ export function SubscriptionDetailsCard() {
           >
             View Details <ChevronDown className="size-3" />
           </Link>
-
-          {/* Expiring account notices */}
-          {expiringCreds.length > 0 && (
-            <div className="mt-3 w-full space-y-1.5 pb-2.5 border-b border-white/15">
-              {expiringCreds.map((c) => {
-                const t = new Date(c.expiry_at!).getTime();
-                const expired = t < now;
-                const expSoon = !expired;
-                return (
-                  <div
-                    key={c.id}
-                    className="flex items-center justify-between gap-2 rounded-lg bg-black/25 px-2.5 py-1.5 border border-white/10"
-                  >
-                    <span className="text-[11px] font-medium text-white truncate">
-                      Account {c.account_number}
-                      {c.app_login_name && (
-                        <span className="ml-1 opacity-85">· {c.app_login_name}</span>
-                      )}
-                    </span>
-                    <span
-                      className={cn(
-                        "text-[10px] px-1.5 py-0.5 rounded-full border whitespace-nowrap shrink-0",
-                        expired
-                          ? "text-white border-red-400/50 bg-red-600 expiry-date-flash"
-                          : "text-white border-amber-300/50 bg-amber-500 expiry-date-flash-amber",
-                      )}
-                    >
-                      {expired ? "Expired" : "Expiring soon"}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          )}
         </div>
       </div>
+
+      {/* Account expiry list */}
+      {hasCreds && (
+        <div className="flex-1 min-h-0 overflow-y-auto p-3 space-y-2">
+          {creds.map((c) => {
+            const t = c.expiry_at ? new Date(c.expiry_at).getTime() : null;
+            const expired = t !== null && t < now;
+            const expSoon = t !== null && !expired && t - now < 7 * 86400_000;
+            return (
+              <div
+                key={c.id}
+                className="flex items-center justify-between gap-2 rounded-lg bg-surface-2/70 border border-border px-2.5 py-2"
+              >
+                <div className="min-w-0">
+                  <div className="text-xs font-semibold text-foreground truncate">
+                    Account {c.account_number}
+                    <span className="ml-1 text-[10px] font-normal text-muted-foreground">
+                      · {accountTypeLabel(c.account_type)}
+                    </span>
+                  </div>
+                  <div className={cn(
+                    "text-[11px] font-medium mt-0.5",
+                    expired ? "text-red-300" : expSoon ? "text-amber-300" : "text-emerald-300"
+                  )}>
+                    {c.expiry_at ? fmtDate(new Date(c.expiry_at)) : "No expiry date"}
+                  </div>
+                </div>
+                {c.expiry_at && (
+                  <span
+                    className={cn(
+                      "text-[10px] px-1.5 py-0.5 rounded-full border whitespace-nowrap shrink-0 font-semibold",
+                      expired
+                        ? "text-white border-red-400/50 bg-red-600 expiry-date-flash"
+                        : expSoon
+                          ? "text-white border-amber-300/50 bg-amber-500 expiry-date-flash-amber"
+                          : "text-emerald-100 border-emerald-300/50 bg-emerald-500/80",
+                    )}
+                  >
+                    {expired ? "Expired" : expSoon ? "Expiring" : "Active"}
+                  </span>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
