@@ -111,16 +111,41 @@ function imagesFromTweet(tweet: Record<string, unknown>): string[] {
   return out;
 }
 
+/**
+ * X refuses a lot of serverless egress outright, so the deployed site sees an
+ * empty timeline while local dev works. When the direct read fails we retry the
+ * same page through read-only text mirrors that hand back the untouched HTML.
+ */
+async function fetchTimelineHtml(): Promise<string | null> {
+  const targets: Array<{ url: string; headers: Record<string, string> }> = [
+    { url: TIMELINE_URL, headers: { accept: "text/html", "user-agent": UA, "accept-language": "en-GB,en;q=0.9" } },
+    {
+      url: `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(TIMELINE_URL)}`,
+      headers: { accept: "text/html" },
+    },
+    { url: `https://proxy.cors.sh/${TIMELINE_URL}`, headers: { accept: "text/html" } },
+  ];
+  for (const target of targets) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 12_000);
+    try {
+      const res = await fetch(target.url, { headers: target.headers, signal: controller.signal });
+      if (!res.ok) continue;
+      const html = await res.text();
+      if (html.includes("__NEXT_DATA__")) return html;
+    } catch {
+      // try the next mirror
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+  return null;
+}
+
 export async function fetchOfficialTimeline(): Promise<TeamSheetHit[]> {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 12_000);
   try {
-    const res = await fetch(TIMELINE_URL, {
-      headers: { accept: "text/html", "user-agent": UA, "accept-language": "en-GB,en;q=0.9" },
-      signal: controller.signal,
-    });
-    if (!res.ok) return [];
-    const html = await res.text();
+    const html = await fetchTimelineHtml();
+    if (!html) return [];
     const match = html.match(/<script id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/);
     if (!match?.[1]) return [];
     const json = JSON.parse(match[1]) as {
