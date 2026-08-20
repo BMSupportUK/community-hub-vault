@@ -28,26 +28,25 @@ export function Clocks() {
   const userTz =
     Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
   const ukTz = "Europe/London"; // auto handles BST / GMT
-  const sameAsUk = userTz === ukTz;
 
   return (
     <div className="flex items-center gap-2">
+      <ClockPill
+        time={format(userTz)}
+        label={abbrev(userTz)}
+        ring="ring-sky-400/60"
+        text="text-sky-300"
+        labelBg="bg-sky-500/20 text-sky-200"
+        title={`Your local time (${userTz})`}
+      />
       <ClockPill
         time={format(ukTz)}
         label={abbrev(ukTz)}
         ring="ring-amber-400/60"
         text="text-amber-300"
         labelBg="bg-amber-500/20 text-amber-200"
+        title={`UK time (${ukTz})`}
       />
-      {!sameAsUk && (
-        <ClockPill
-          time={format(userTz)}
-          label={abbrev(userTz)}
-          ring="ring-sky-400/60"
-          text="text-sky-300"
-          labelBg="bg-sky-500/20 text-sky-200"
-        />
-      )}
     </div>
   );
 }
@@ -58,15 +57,18 @@ function ClockPill({
   ring,
   text,
   labelBg,
+  title,
 }: {
   time: string;
   label: string;
   ring: string;
   text: string;
   labelBg: string;
+  title?: string;
 }) {
   return (
     <div
+      title={title}
       className={`flex items-center gap-2 rounded-full bg-rail/80 ring-1 ${ring} px-3 py-1 font-mono text-sm tabular-nums shadow-soft`}
     >
       <span className={text}>{time}</span>
