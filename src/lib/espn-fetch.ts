@@ -13,32 +13,83 @@
 // is why the deployed site kept showing empty match data while local dev worked.
 // When the direct call is refused we retry the same URL through a read-only
 // text mirror that returns the untouched JSON body.
+// Mirror providers are tried in order. r.jina.ai now rate-limits (429) and even
+// answers 401 for keyless traffic, so it is last resort rather than the only
+// path. Each provider gets a short cool-off after a failure so a burst of
+// requests does not hammer a provider that is currently refusing us.
+type MirrorProvider = {
+  name: string;
+  build: (url: string) => { target: string; init?: RequestInit };
+};
+
+const MIRROR_PROVIDERS: MirrorProvider[] = [
+  {
+    name: "cors.sh",
+    build: (url) => ({
+      target: `https://proxy.cors.sh/${url}`,
+      init: { headers: { accept: "application/json" } },
+    }),
+  },
+  {
+    name: "codetabs",
+    build: (url) => ({
+      target: `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(url)}`,
+      init: { headers: { accept: "application/json" } },
+    }),
+  },
+  {
+    name: "jina",
+    build: (url) => ({
+      target: `https://r.jina.ai/${url.replace(/^https:\/\//, "http://")}`,
+      init: { headers: { accept: "application/json", "x-return-format": "text" } },
+    }),
+  },
+];
+
+const providerCooldown = new Map<string, number>();
+const COOL_OFF_MS = 60_000;
+
+function parseMirrorBody<T>(text: string): T | null {
+  try {
+    const parsed = JSON.parse(text) as any;
+    // Some mirrors answer the raw body, others a wrapper: { data: { text } }.
+    const inner = typeof parsed?.data?.text === "string" ? parsed.data.text : null;
+    return (inner ? JSON.parse(inner) : parsed) as T;
+  } catch {
+    return null;
+  }
+}
+
 async function viaMirror<T>(url: string): Promise<T | null> {
   const cached = mirrorCache.get(url);
   if (cached && Date.now() - cached.at < 15_000) return cached.value as T | null;
-  try {
-    // Use Jina's documented raw-text response header. `x-respond-with` is not
-    // supported by this endpoint and caused the deployed worker fallback to
-    // return no usable body even though it happened to work in local dev.
-    const sourceUrl = url.replace(/^https:\/\//, "http://");
-    const res = await fetch(`https://r.jina.ai/${sourceUrl}`, {
-      headers: { accept: "application/json", "x-return-format": "text" },
-    });
-    if (!res.ok) {
-      console.error("[espn-fetch] mirror failed", res.status, url);
-      return null;
+
+  const now = Date.now();
+  for (const provider of MIRROR_PROVIDERS) {
+    const until = providerCooldown.get(provider.name) ?? 0;
+    if (until > now) continue;
+    try {
+      const { target, init } = provider.build(url);
+      const res = await fetch(target, init);
+      if (!res.ok) {
+        providerCooldown.set(provider.name, Date.now() + COOL_OFF_MS);
+        console.error("[espn-fetch] mirror failed", provider.name, res.status, url);
+        continue;
+      }
+      const value = parseMirrorBody<T>(await res.text());
+      if (value == null) {
+        providerCooldown.set(provider.name, Date.now() + COOL_OFF_MS);
+        console.error("[espn-fetch] mirror returned unusable body", provider.name, url);
+        continue;
+      }
+      mirrorCache.set(url, { at: Date.now(), value });
+      return value;
+    } catch (error) {
+      providerCooldown.set(provider.name, Date.now() + COOL_OFF_MS);
+      console.error("[espn-fetch] mirror error", provider.name, String(error), url);
     }
-    const text = await res.text();
-    const parsed = JSON.parse(text) as any;
-    // The mirror answers either the raw body or a wrapper: { data: { text } }.
-    const inner = typeof parsed?.data?.text === "string" ? parsed.data.text : null;
-    const value = (inner ? JSON.parse(inner) : parsed) as T;
-    mirrorCache.set(url, { at: Date.now(), value });
-    return value;
-  } catch (error) {
-    console.error("[espn-fetch] mirror error", String(error), url);
-    return null;
   }
+  return null;
 }
 
 const mirrorCache = new Map<string, { at: number; value: unknown }>();
