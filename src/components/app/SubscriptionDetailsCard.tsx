@@ -180,7 +180,7 @@ export function SubscriptionDetailsCard() {
 
             {/* Expiring account notices */}
             {expiringCreds.length > 0 && (
-              <div className="mt-3 w-full space-y-1.5">
+              <div className="mt-3 w-full space-y-1.5 pb-2.5 border-b border-white/15">
                 {expiringCreds.map((c) => {
                   const t = new Date(c.expiry_at!).getTime();
                   const expired = t < now;
