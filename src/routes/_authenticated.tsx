@@ -128,7 +128,7 @@ function AuthLayout() {
     <div className={unlockShell ? "relative flex min-h-dvh w-full bg-background" : "relative flex min-h-dvh w-full bg-background md:fixed md:inset-0 md:h-dvh md:w-dvw md:overflow-hidden"}>
       <IconRail />
       <div className={unlockShell ? "flex-1 flex flex-col min-w-0 min-h-dvh" : "flex-1 flex flex-col min-w-0 min-h-dvh md:h-full md:min-h-0 md:overflow-hidden"}>
-        <header className="h-12 shrink-0 border-b border-border bg-rail/40 backdrop-blur flex items-center justify-between px-2 lg:px-4 gap-1.5 lg:gap-3 overflow-x-auto scrollbar-thin">
+        <header className="h-14 shrink-0 border-b border-border bg-rail/40 backdrop-blur flex items-center justify-between px-2 lg:px-4 gap-1.5 lg:gap-3 overflow-x-auto scrollbar-thin mb-1">
           <div className="flex items-center gap-1.5 lg:gap-2 shrink-0">
             <Sheet open={navOpen} onOpenChange={setNavOpen}>
               <SheetTrigger
