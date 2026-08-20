@@ -11,7 +11,7 @@ export const BREAK_LIMITS: Record<BreakKind, number> = {
 
 export function breakLabel(kind: BreakKind): string {
   if (kind === "travel") return "Travelling home";
-  if (kind === "lunch") return "Lunch";
+  if (kind === "lunch") return "Lunch break";
   return "Break";
 }
 
