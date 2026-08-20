@@ -75,25 +75,6 @@ export function SubscriptionDetailsCard() {
     };
   }, [user]);
 
-  useEffect(() => {
-    setActiveTab((current) => {
-      if (creds.length === 0) return null;
-      if (current && creds.some((c) => c.id === current)) return current;
-      return creds[0].id;
-    });
-  }, [creds]);
-
-  const copy = async (key: string, value: string | null) => {
-    if (!value) return;
-    try {
-      await navigator.clipboard.writeText(value);
-      setCopied(key);
-      setTimeout(() => setCopied((c) => (c === key ? null : c)), 1500);
-    } catch {
-      // ignore
-    }
-  };
-
   const accountTypeLabel = (type: string | null) => {
     const t = (type ?? "single").toLowerCase();
     if (t === "single") return "Single";
