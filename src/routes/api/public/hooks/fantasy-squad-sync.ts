@@ -27,6 +27,16 @@ async function run(force: boolean) {
   const { syncFantasyPlayersFromClub } = await import("@/lib/fantasy-squad-sync.server");
   const squad = await syncFantasyPlayersFromClub(admin as never);
 
+  // The official X account announces movement well before the website squad
+  // list updates, so it runs last and has the final say on in/out and loans.
+  let xTransfers: unknown = null;
+  try {
+    const { syncFantasyTransfersFromX } = await import("@/lib/mfc-x-transfers.server");
+    xTransfers = await syncFantasyTransfersFromX(admin as never);
+  } catch (e) {
+    xTransfers = { ok: false, error: e instanceof Error ? e.message : String(e) };
+  }
+
   // Injury/suspension flags from the official EFL Fantasy feed.
   let injuries: unknown = null;
   try {
