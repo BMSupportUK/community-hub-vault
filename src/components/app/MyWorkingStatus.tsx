@@ -91,7 +91,7 @@ export function MyWorkingStatus() {
       ) : (
         <CircleDot className="size-3 sm:size-3.5" />
       )}
-      {brk && <span className="hidden sm:inline">{breakLabel(brk.kind)}</span>}
+      {brk && <span>{breakLabel(brk.kind)}</span>}
       <span className="tabular-nums opacity-90">
         {brk ? (over ? `+${fmtMS(-brRemain)}` : fmtMS(brRemain)) : fmtHM(shiftSec)}
       </span>
