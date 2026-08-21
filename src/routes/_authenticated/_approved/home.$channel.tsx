@@ -271,6 +271,7 @@ function ChannelPage() {
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
   const [uploadingPaste, setUploadingPaste] = useState(false);
+  const resolveGif = useServerFn(resolveGifLink);
 
   const [reactions, setReactions] = useState<Reaction[]>([]);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
