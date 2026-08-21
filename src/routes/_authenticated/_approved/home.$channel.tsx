@@ -1631,8 +1631,13 @@ function ChannelPage() {
             onPaste={(e) => {
               if (attachGifTransfer(e.clipboardData)) e.preventDefault();
             }}
+            onDragOver={(e) => {
+              e.preventDefault();
+              e.dataTransfer.dropEffect = "copy";
+            }}
             onDrop={(e) => {
-              if (attachGifTransfer(e.dataTransfer)) e.preventDefault();
+              e.preventDefault();
+              attachGifTransfer(e.dataTransfer);
             }}
             className="flex-1 min-h-7 overflow-y-auto bg-transparent outline-none text-sm py-1 max-h-32 whitespace-pre-wrap break-words empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground empty:before:pointer-events-none"
           />
