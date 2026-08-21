@@ -338,6 +338,12 @@ function ChannelPage() {
     canBroadcast: isAdmin,
   });
 
+  useEffect(() => {
+    const editor = taRef.current;
+    if (!editor || editor.innerText.replace(/\n$/, "") === draft) return;
+    editor.textContent = draft;
+  }, [draft]);
+
   // Load channel
   useEffect(() => {
     setChannel(null);
@@ -651,8 +657,16 @@ function ChannelPage() {
       setDraft((d) => d + emoji);
       return;
     }
-    const start = ta.selectionStart ?? draft.length;
-    const end = ta.selectionEnd ?? draft.length;
+    const selection = window.getSelection();
+    const range = selection?.rangeCount && ta.contains(selection.anchorNode)
+      ? selection.getRangeAt(0)
+      : null;
+    const beforeRange = range?.cloneRange();
+    beforeRange?.selectNodeContents(ta);
+    if (range) beforeRange?.setEnd(range.startContainer, range.startOffset);
+    const start = beforeRange?.toString().length ?? draft.length;
+    const selectedLength = range?.toString().length ?? 0;
+    const end = start + selectedLength;
     const next = draft.slice(0, start) + emoji + draft.slice(end);
     setDraft(next);
     requestAnimationFrame(() => {
