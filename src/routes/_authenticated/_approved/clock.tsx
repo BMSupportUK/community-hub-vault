@@ -62,7 +62,7 @@ function ClockPage() {
   const refresh = async () => {
     if (!user) return;
     const [{ data: mine }, { data: allShifts }, { data: allBreaks }] = await Promise.all([
-      supabase.from("shifts").select("*").eq("user_id", user.id).is("clock_out", null).maybeSingle(),
+      supabase.from("shifts").select("*").eq("user_id", user.id).is("clock_out", null).order("clock_in", { ascending: true }).limit(1).maybeSingle(),
       isStaff ? supabase.from("shifts").select("*").is("clock_out", null) : Promise.resolve({ data: [] as Shift[] }),
       isStaff ? supabase.from("breaks").select("*").is("ended_at", null) : Promise.resolve({ data: [] as Break[] }),
     ]);
@@ -72,7 +72,7 @@ function ClockPage() {
 
     if (mine) {
       const { data: br } = await supabase
-        .from("breaks").select("*").eq("shift_id", (mine as Shift).id).is("ended_at", null).maybeSingle();
+        .from("breaks").select("*").eq("shift_id", (mine as Shift).id).is("ended_at", null).order("started_at", { ascending: false }).limit(1).maybeSingle();
       setMyBreak((br as Break) ?? null);
     } else {
       setMyBreak(null);

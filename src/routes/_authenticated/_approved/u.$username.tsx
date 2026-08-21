@@ -205,8 +205,8 @@ function ProfilePage() {
 
     const [{ data: r }, { data: s }, { data: b }, { data: tk }, { data: od }] = await Promise.all([
       supabase.from("user_roles").select("role").eq("user_id", p.id),
-      supabase.from("shifts").select("*").eq("user_id", p.id).is("clock_out", null).maybeSingle(),
-      supabase.from("breaks").select("*").eq("user_id", p.id).is("ended_at", null).maybeSingle(),
+      supabase.from("shifts").select("*").eq("user_id", p.id).is("clock_out", null).order("clock_in", { ascending: true }).limit(1).maybeSingle(),
+      supabase.from("breaks").select("*").eq("user_id", p.id).is("ended_at", null).order("started_at", { ascending: false }).limit(1).maybeSingle(),
       supabase.from("tickets").select("id, subject, status, priority, created_at, updated_at, closed_at").eq("user_id", p.id).order("created_at", { ascending: false }).limit(5),
       supabase.from("orders").select("id, total_cents, status, created_at, paid_at, completed_at, shipping_name, discount_code").eq("user_id", p.id).order("created_at", { ascending: false }).limit(5),
     ]);
