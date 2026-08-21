@@ -618,6 +618,24 @@ function ChannelPage() {
     setUploadingPaste(false);
   };
 
+  /**
+   * The Windows GIF tray copies a Tenor/Giphy share link instead of the image
+   * itself. Resolve it to a direct animated URL so it embeds as a GIF.
+   */
+  const sendPastedGifLink = async (rawUrl: string) => {
+    setUploadingPaste(true);
+    try {
+      const res = await resolveGif({ data: { url: rawUrl } });
+      await sendGif(res.url ?? rawUrl);
+    } catch {
+      await sendGif(rawUrl);
+    } finally {
+      setUploadingPaste(false);
+    }
+  };
+
+
+
 
   const remove = async (id: string) => {
     const { error } = await supabase.from("chat_messages").delete().eq("id", id);
