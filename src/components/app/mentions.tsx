@@ -132,7 +132,7 @@ export function useMentionAutocomplete({
 }: {
   value: string;
   onChange: (next: string) => void;
-  textareaRef: React.RefObject<HTMLTextAreaElement | null>;
+  textareaRef: React.RefObject<HTMLTextAreaElement | HTMLDivElement | null>;
   canBroadcast: boolean;
 }) {
   const [query, setQuery] = useState<string | null>(null);
@@ -144,7 +144,18 @@ export function useMentionAutocomplete({
   useEffect(() => {
     const ta = textareaRef.current;
     if (!ta) return;
-    const caret = ta.selectionStart ?? value.length;
+    const selection = window.getSelection();
+    const caret =
+      ta instanceof HTMLTextAreaElement
+        ? (ta.selectionStart ?? value.length)
+        : selection?.rangeCount && ta.contains(selection.anchorNode)
+          ? (() => {
+              const range = selection.getRangeAt(0).cloneRange();
+              range.selectNodeContents(ta);
+              range.setEnd(selection.anchorNode ?? ta, selection.anchorOffset);
+              return range.toString().length;
+            })()
+          : value.length;
     const before = value.slice(0, caret);
     const m = /(?:^|\s)@([a-zA-Z0-9_.\-]*)$/.exec(before);
     if (!m) {
@@ -195,7 +206,18 @@ export function useMentionAutocomplete({
   const apply = (user: MentionUser) => {
     const ta = textareaRef.current;
     if (!ta || queryStart.current < 0) return;
-    const caret = ta.selectionStart ?? value.length;
+    const selection = window.getSelection();
+    const caret =
+      ta instanceof HTMLTextAreaElement
+        ? (ta.selectionStart ?? value.length)
+        : selection?.rangeCount && ta.contains(selection.anchorNode)
+          ? (() => {
+              const range = selection.getRangeAt(0).cloneRange();
+              range.selectNodeContents(ta);
+              range.setEnd(selection.anchorNode ?? ta, selection.anchorOffset);
+              return range.toString().length;
+            })()
+          : value.length;
     const before = value.slice(0, queryStart.current);
     const after = value.slice(caret);
     const insert = `@${user.username} `;
@@ -204,12 +226,25 @@ export function useMentionAutocomplete({
     const pos = before.length + insert.length;
     requestAnimationFrame(() => {
       ta.focus();
-      ta.setSelectionRange(pos, pos);
+      if (ta instanceof HTMLTextAreaElement) {
+        ta.setSelectionRange(pos, pos);
+      } else {
+        ta.textContent = next;
+        const node = ta.firstChild;
+        if (node) {
+          const range = document.createRange();
+          range.setStart(node, Math.min(pos, node.textContent?.length ?? 0));
+          range.collapse(true);
+          const nextSelection = window.getSelection();
+          nextSelection?.removeAllRanges();
+          nextSelection?.addRange(range);
+        }
+      }
     });
     setQuery(null);
   };
 
-  const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>): boolean => {
+  const onKeyDown = (e: React.KeyboardEvent<HTMLElement>): boolean => {
     if (query === null || results.length === 0) return false;
     if (e.key === "ArrowDown") {
       e.preventDefault();
