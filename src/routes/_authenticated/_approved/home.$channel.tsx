@@ -1228,27 +1228,21 @@ function ChannelPage() {
                           </div>
                         );
                         if (showNameplate) {
-                          const isOnline = onlineUsers.has(p!.id);
+                           const profileId = p?.id;
+                           if (!profileId) return avatarEl;
+                           const isOnline = onlineUsers.has(profileId);
                           return (
-                            <div className="flex flex-col items-start gap-0.5 shrink-0 mt-0.5">
+                             <div className="flex flex-col items-center gap-0.5 shrink-0 mt-0.5">
                               <Nameplate
-                                id={p!.equipped_nameplate_id}
-                                className="rounded-md pl-1 pr-3 h-9 w-56 flex items-center gap-2 shadow-sm"
+                                 id={p.equipped_nameplate_id}
+                                 className="size-9 rounded-full grid place-items-center shadow-sm"
                               >
                                 {avatarEl}
-                                <span
-                                  className={cn(
-                                    "font-semibold text-sm text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.85)] truncate",
-                                    roleFlashClass(roleFlashMap.get(m.sender_id)),
-                                  )}
-                                >
-                                  {name}
-                                </span>
                               </Nameplate>
-                              <div className="flex items-center gap-1.5 pl-1.5 text-[10px] text-muted-foreground">
-                                <PresenceMiniDot userId={p!.id} isOnline={isOnline} />
+                               <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                                 <PresenceMiniDot userId={profileId} isOnline={isOnline} />
                                 <PresenceMiniLabel
-                                  userId={p!.id}
+                                   userId={profileId}
                                   isOnline={isOnline}
                                   offlineText={`Active ${formatLastSeen(p?.last_seen_at)}`}
                                 />
@@ -1260,16 +1254,14 @@ function ChannelPage() {
                       })()}
                       <div className="min-w-0 flex-1">
                         <div className="flex items-baseline gap-2 mb-1">
-                          {!p?.equipped_nameplate_id && (
-                            <span
-                              className={cn(
-                                "font-medium text-sm",
-                                roleFlashClass(roleFlashMap.get(m.sender_id)),
-                              )}
-                            >
-                              {name}
-                            </span>
-                          )}
+                           <span
+                             className={cn(
+                               "font-semibold text-sm",
+                               roleFlashClass(roleFlashMap.get(m.sender_id)),
+                             )}
+                           >
+                             {name}
+                           </span>
                           <span className="text-[10px] text-muted-foreground">
                             {new Date(m.created_at).toLocaleTimeString("en-GB", {
                               hour: "2-digit",
