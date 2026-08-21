@@ -120,15 +120,16 @@ export function GifPicker({ onSelect, disabled }: Props) {
 }
 
 const GIF_HOSTS = /^(https?:\/\/)(media\d*\.giphy\.com|i\.giphy\.com|media\.tenor\.com|tenor\.com|c\.tenor\.com)\//i;
+const STORAGE_IMAGE = /\/storage\/v1\/object\/public\/[^\s]+\.(gif|png|jpe?g|webp)(\?.*)?$/i;
 
 /**
- * Returns the GIF URL if `content` is just a single GIF link (optionally
- * with surrounding whitespace). Used to render embedded GIFs inline.
+ * Returns the GIF/image URL if `content` is just a single media link (optionally
+ * with surrounding whitespace). Used to render embedded GIFs and pasted images inline.
  */
 export function extractStandaloneGif(content: string): string | null {
   const trimmed = content.trim();
   if (!trimmed.includes(" ") && !trimmed.includes("\n")) {
-    if (GIF_HOSTS.test(trimmed) || /\.gif(\?.*)?$/i.test(trimmed)) {
+    if (GIF_HOSTS.test(trimmed) || /\.gif(\?.*)?$/i.test(trimmed) || STORAGE_IMAGE.test(trimmed)) {
       return trimmed;
     }
   }
