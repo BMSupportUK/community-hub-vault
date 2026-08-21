@@ -6,7 +6,7 @@ let cachedAt = 0;
 let cachedIp: string | null = null;
 let inflight: Promise<boolean> | null = null;
 const listeners = new Set<(v: boolean) => void>();
-const TTL_MS = 30 * 60 * 1000;
+const TTL_MS = 5 * 60 * 1000;
 const STORAGE_KEY = "bm_visitor_vpn_cache";
 type NavigatorWithConnection = Navigator & {
   connection?: EventTarget;
