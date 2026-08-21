@@ -728,6 +728,50 @@ function ChannelPage() {
     }
   };
 
+  const gifCandidateFromTransfer = (transfer: DataTransfer | null): string | null => {
+    if (!transfer) return null;
+    const plain = (
+      transfer.getData("text/uri-list") || transfer.getData("text/plain") || ""
+    ).trim();
+    const html = transfer.getData("text/html") || "";
+    const htmlImg = html.match(/<img[^>]+src=["']([^"']+)["']/i)?.[1] ?? "";
+    const htmlLink = html.match(/<a[^>]+href=["']([^"']+)["']/i)?.[1] ?? "";
+    return (
+      [plain, htmlImg, htmlLink].find(
+        (value) =>
+          value &&
+          !/\s/.test(value) &&
+          /^https?:\/\//i.test(value) &&
+          (/(tenor\.com|giphy\.com|gph\.is)\//i.test(value) ||
+            /\.(gif|gifv|webp|png|jpe?g)(\?|$)/i.test(value)),
+      ) ?? null
+    );
+  };
+
+  const imageFilesFromTransfer = (transfer: DataTransfer | null): File[] => {
+    if (!transfer) return [];
+    const files = Array.from(transfer.files).filter((file) => file.type.startsWith("image/"));
+    if (files.length) return files;
+    return Array.from(transfer.items)
+      .filter((item) => item.kind === "file" && item.type.startsWith("image/"))
+      .map((item) => item.getAsFile())
+      .filter((file): file is File => file !== null);
+  };
+
+  const attachGifTransfer = (transfer: DataTransfer | null): boolean => {
+    const files = imageFilesFromTransfer(transfer);
+    if (files.length) {
+      void sendPastedImages(files);
+      return true;
+    }
+    const candidate = gifCandidateFromTransfer(transfer);
+    if (candidate) {
+      void sendPastedGifLink(candidate);
+      return true;
+    }
+    return false;
+  };
+
   const remove = async (id: string) => {
     const { error } = await supabase.from("chat_messages").delete().eq("id", id);
     if (error) toast.error(error.message);
@@ -1545,6 +1589,11 @@ function ChannelPage() {
                       ? "GIF attached — press Enter or Send"
                       : `Message #${channel.name} — @ to mention · paste or Win + . for emotes & GIFs`
             }
+            onBeforeInput={(e) => {
+              const inputEvent = e.nativeEvent as InputEvent;
+              if (!inputEvent.inputType.startsWith("insert")) return;
+              if (attachGifTransfer(inputEvent.dataTransfer)) e.preventDefault();
+            }}
             onInput={(e) => {
               const editor = e.currentTarget;
               const embedded = editor.querySelector("img")?.getAttribute("src");
@@ -1580,47 +1629,10 @@ function ChannelPage() {
               }
             }}
             onPaste={(e) => {
-              const items = e.clipboardData?.items;
-              if (!items) return;
-              const imgs: File[] = [];
-              for (let i = 0; i < items.length; i++) {
-                const it = items[i];
-                if (it.kind === "file" && it.type.startsWith("image/")) {
-                  const f = it.getAsFile();
-                  if (f) {
-                    const ext = (f.type.split("/")[1] || "png").split("+")[0];
-                    imgs.push(
-                      f.name && f.name !== "image.png"
-                        ? f
-                        : new File([f], `pasted-${Date.now()}.${ext}`, { type: f.type }),
-                    );
-                  }
-                }
-              }
-              if (imgs.length) {
-                e.preventDefault();
-                void sendPastedImages(imgs);
-                return;
-              }
-              const text = (
-                e.clipboardData?.getData("text/uri-list") ||
-                e.clipboardData?.getData("text/plain") ||
-                ""
-              ).trim();
-              const html = e.clipboardData?.getData("text/html") ?? "";
-              const htmlImg = html.match(/<img[^>]+src=["']([^"']+)["']/i)?.[1] ?? "";
-              const candidate = [text, htmlImg].find(
-                (u) =>
-                  u &&
-                  !/\s/.test(u) &&
-                  /^https?:\/\//i.test(u) &&
-                  (/(tenor\.com|giphy\.com|gph\.is)\//i.test(u) ||
-                    /\.(gif|gifv|webp|png|jpe?g)(\?|$)/i.test(u)),
-              );
-              if (candidate) {
-                e.preventDefault();
-                void sendPastedGifLink(candidate);
-              }
+              if (attachGifTransfer(e.clipboardData)) e.preventDefault();
+            }}
+            onDrop={(e) => {
+              if (attachGifTransfer(e.dataTransfer)) e.preventDefault();
             }}
             className="flex-1 min-h-7 overflow-y-auto bg-transparent outline-none text-sm py-1 max-h-32 whitespace-pre-wrap break-words empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground empty:before:pointer-events-none"
           />
