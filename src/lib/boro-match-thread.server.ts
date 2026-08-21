@@ -481,7 +481,10 @@ export async function syncBoroMatchThread(opts?: { ignoreWindow?: boolean }): Pr
       .eq("id", preview.post_id)
       .maybeSingle();
     if (existing?.body) {
-      const legacy = /XI<\/strong>/.test(existing.body) || /TV \/ stream/.test(existing.body);
+      const legacy =
+        /XI<\/strong>/.test(existing.body) ||
+        /TV \/ stream/.test(existing.body) ||
+        !/Our score prediction/.test(existing.body);
       // A fixture-only preview gets upgraded in place as soon as ESPN lists the game.
       const upgrade = hasEspn && preview.fingerprint === "preview-basic";
       const rebuilt = legacy || upgrade ? buildPreviewBody(fx, json) : stripLiveBlock(existing.body);
