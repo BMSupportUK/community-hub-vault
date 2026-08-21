@@ -190,6 +190,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 .select("id")
                 .eq("user_id", user.id)
                 .is("clock_out", null)
+                .order("clock_in", { ascending: true })
+                .limit(1)
                 .maybeSingle();
               if (shift?.id) {
                 const { data: brk } = await supabase
