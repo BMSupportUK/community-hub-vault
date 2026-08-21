@@ -1351,6 +1351,25 @@ function ChannelPage() {
                 send();
               }
             }}
+            onPaste={(e) => {
+              const items = e.clipboardData?.items;
+              if (!items) return;
+              const imgs: File[] = [];
+              for (let i = 0; i < items.length; i++) {
+                const it = items[i];
+                if (it.kind === "file" && it.type.startsWith("image/")) {
+                  const f = it.getAsFile();
+                  if (f) {
+                    const ext = (f.type.split("/")[1] || "png").split("+")[0];
+                    imgs.push(f.name && f.name !== "image.png" ? f : new File([f], `pasted-${Date.now()}.${ext}`, { type: f.type }));
+                  }
+                }
+              }
+              if (imgs.length) {
+                e.preventDefault();
+                void sendPastedImages(imgs);
+              }
+            }}
             rows={1}
             placeholder={isMuted
               ? `You are muted — chat unlocks in ${muteCountdown}`
@@ -1358,10 +1377,16 @@ function ChannelPage() {
                 ? `You don't have permission to send messages in this channel`
                 : slowRemaining > 0
                   ? `Slow mode: wait ${slowRemaining}s before sending another message`
-                  : `Message #${channel.name} — type @ to mention`}
+                  : `Message #${channel.name} — @ to mention · paste or Win + . for emotes & GIFs`}
             disabled={!canSend || slowRemaining > 0 || isMuted}
             className="flex-1 bg-transparent resize-none outline-none text-sm py-1 max-h-32"
           />
+          {uploadingPaste && (
+            <div className="flex items-center gap-1 text-xs text-muted-foreground px-2 py-1">
+              <Loader2 className="size-3.5 animate-spin" />
+              <span>Uploading…</span>
+            </div>
+          )}
           {slowRemaining > 0 && (
             <div className="flex items-center gap-1 text-xs text-primary tabular-nums px-2 py-1 rounded-md bg-primary/10 border border-primary/30">
               <Timer className="size-3.5" />
@@ -1374,10 +1399,15 @@ function ChannelPage() {
               <span>{muteCountdown}</span>
             </div>
           )}
+          <EmojiPicker
+            disabled={!canSend || slowRemaining > 0 || isMuted}
+            onSelect={insertEmoji}
+          />
           <GifPicker
             disabled={!canSend || slowRemaining > 0 || isMuted}
             onSelect={(url) => sendGif(url)}
           />
+
           <button
             onClick={send}
             disabled={sending || !draft.trim() || !canSend || slowRemaining > 0 || isMuted}
