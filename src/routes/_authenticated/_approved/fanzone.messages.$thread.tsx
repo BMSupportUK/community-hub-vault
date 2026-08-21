@@ -157,16 +157,23 @@ function ThreadPage() {
           return (
             <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"} gap-2`}>
               {!mine && senderAlias && (
-                <Link to="/fanzone/u/$userId" params={{ userId: senderAlias.user_id }} className="shrink-0">
+                <Link to="/fanzone/u/$userId" params={{ userId: senderAlias.user_id }} className="shrink-0 self-end">
                   <img src={senderAlias.fan_avatar_url} alt="" className="size-7 rounded-full" />
                 </Link>
               )}
-              <div className="flex items-end gap-1 max-w-[75%]">
-                <div className={`rounded-2xl px-3 py-2 text-sm whitespace-pre-wrap break-words shadow-sm ${mine ? "bg-gradient-to-br from-[#E11B22] to-[#8B0F14] text-white" : "bg-surface-2 border border-border"}`}>
-                  <div>{censorText(m.body)}</div>
-                  <div className={`text-[10px] mt-1 ${mine ? "text-white/70" : "text-muted-foreground"}`}>{formatLastSeen(m.created_at)}</div>
+              <div className={`flex flex-col gap-0.5 max-w-[75%] ${mine ? "items-end" : "items-start"}`}>
+                {senderAlias && (
+                  <span className="text-[11px] font-medium text-muted-foreground px-1">
+                    {mine ? "You" : senderAlias.fan_alias}
+                  </span>
+                )}
+                <div className="flex items-end gap-1">
+                  <div className={`rounded-2xl px-3 py-2 text-sm whitespace-pre-wrap break-words shadow-sm ${mine ? "bg-gradient-to-br from-[#E11B22] to-[#8B0F14] text-white" : "bg-surface-2 border border-border"}`}>
+                    <div>{censorText(m.body)}</div>
+                    <div className={`text-[10px] mt-1 ${mine ? "text-white/70" : "text-muted-foreground"}`}>{formatLastSeen(m.created_at)}</div>
+                  </div>
+                  {!mine && <ReportButton kind="dm_message" targetId={m.id} variant="icon" />}
                 </div>
-                {!mine && <ReportButton kind="dm_message" targetId={m.id} variant="icon" />}
               </div>
             </div>
           );
