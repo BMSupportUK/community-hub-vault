@@ -539,8 +539,27 @@ function ChannelPage() {
       }
     }
     setSending(true);
-    const content = draft.trim();
+    const originalContent = draft.trim();
+    let content = originalContent;
     setDraft("");
+    if (/^https?:\/\/\S+$/i.test(content) && /(tenor\.com|giphy\.com|gph\.is)\//i.test(content)) {
+      setUploadingPaste(true);
+      try {
+        const resolved = await resolveGif({ data: { url: content } });
+        if (!resolved.url) {
+          toast.error("That GIF could not be loaded. Please choose it again.");
+          setDraft(originalContent);
+          return;
+        }
+        content = resolved.url;
+      } catch {
+        toast.error("That GIF could not be loaded. Please choose it again.");
+        setDraft(originalContent);
+        return;
+      } finally {
+        setUploadingPaste(false);
+      }
+    }
     const { error } = await supabase
       .from("chat_messages")
       .insert({ channel_id: channel.id, sender_id: user.id, content });
@@ -555,7 +574,7 @@ function ChannelPage() {
             ? "You don't have permission to send messages in this channel."
             : msg,
       );
-      setDraft(content);
+      setDraft(originalContent);
     } else {
       setLastSentAt(Date.now());
     }
@@ -627,9 +646,13 @@ function ChannelPage() {
     setUploadingPaste(true);
     try {
       const res = await resolveGif({ data: { url: rawUrl } });
-      await sendGif(res.url ?? rawUrl);
+      if (!res.url) {
+        toast.error("That GIF could not be loaded. Please choose it again.");
+        return;
+      }
+      await sendGif(res.url);
     } catch {
-      await sendGif(rawUrl);
+      toast.error("That GIF could not be loaded. Please choose it again.");
     } finally {
       setUploadingPaste(false);
     }
@@ -1154,14 +1177,12 @@ function ChannelPage() {
                           const gif = extractStandaloneGif(m.content);
                           if (gif) {
                             return (
-                              <a href={gif} target="_blank" rel="noreferrer" className="block">
-                                <img
-                                  src={gif}
-                                  alt="GIF"
-                                  loading="lazy"
-                                  className="max-w-[320px] max-h-[280px] w-auto h-auto rounded-lg border border-border"
-                                />
-                              </a>
+                              <img
+                                src={gif}
+                                alt="GIF"
+                                loading="lazy"
+                                className="max-w-[320px] max-h-[280px] w-auto h-auto rounded-lg border border-border"
+                              />
                             );
                           }
                           return (
@@ -1365,7 +1386,20 @@ function ChannelPage() {
           <textarea
             ref={taRef}
             value={draft}
-            onChange={(e) => setDraft(e.target.value)}
+            onChange={(e) => {
+              const next = e.target.value;
+              setDraft(next);
+              const inputType = (e.nativeEvent as InputEvent).inputType;
+              const candidate = next.trim();
+              if (
+                ["insertFromPaste", "insertFromDrop", "insertReplacementText"].includes(inputType) &&
+                /^https?:\/\/\S+$/i.test(candidate) &&
+                (/(tenor\.com|giphy\.com|gph\.is)\//i.test(candidate) || /\.(gif|gifv|webp)(\?|$)/i.test(candidate))
+              ) {
+                setDraft("");
+                void sendPastedGifLink(candidate);
+              }
+            }}
             onKeyDown={(e) => {
               if (mention.onKeyDown(e)) return;
               if (e.key === "Enter" && !e.shiftKey) {
@@ -1392,7 +1426,11 @@ function ChannelPage() {
                 void sendPastedImages(imgs);
                 return;
               }
-              const text = (e.clipboardData?.getData("text/plain") ?? "").trim();
+               const text = (
+                 e.clipboardData?.getData("text/uri-list") ||
+                 e.clipboardData?.getData("text/plain") ||
+                 ""
+               ).trim();
               const html = e.clipboardData?.getData("text/html") ?? "";
               const htmlImg = html.match(/<img[^>]+src=["']([^"']+)["']/i)?.[1] ?? "";
               const candidate = [text, htmlImg].find(
