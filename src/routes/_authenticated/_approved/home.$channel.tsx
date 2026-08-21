@@ -549,12 +549,14 @@ function ChannelPage() {
         if (!resolved.url) {
           toast.error("That GIF could not be loaded. Please choose it again.");
           setDraft(originalContent);
+          setSending(false);
           return;
         }
         content = resolved.url;
       } catch {
         toast.error("That GIF could not be loaded. Please choose it again.");
         setDraft(originalContent);
+        setSending(false);
         return;
       } finally {
         setUploadingPaste(false);
@@ -645,6 +647,10 @@ function ChannelPage() {
   const sendPastedGifLink = async (rawUrl: string) => {
     setUploadingPaste(true);
     try {
+      if (/\.(gif|webp|png|jpe?g)(\?|$)/i.test(rawUrl)) {
+        await sendGif(rawUrl);
+        return;
+      }
       const res = await resolveGif({ data: { url: rawUrl } });
       if (!res.url) {
         toast.error("That GIF could not be loaded. Please choose it again.");
