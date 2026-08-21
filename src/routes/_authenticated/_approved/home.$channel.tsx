@@ -18,6 +18,8 @@ import {
 import { MentionText, mentionsCurrentUser, useMentionAutocomplete } from "@/components/app/mentions";
 import { GifPicker, extractStandaloneGif } from "@/components/app/GifPicker";
 import { EmojiPicker } from "@/components/app/EmojiPicker";
+import { resolveGifLink } from "@/lib/giphy.functions";
+
 
 import { StaffOnDutyStrip } from "@/components/app/StaffOnDutyStrip";
 import { ChannelWelcomeEmbed } from "@/components/app/ChannelWelcomeEmbed";
