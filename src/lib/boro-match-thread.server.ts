@@ -236,7 +236,12 @@ export function buildPreviewBody(fx: FixtureLite, json: any): string {
     parts.push(`<p><strong>Recent meetings</strong></p><ul>${h2h.map((l) => `<li>${esc(l)}</li>`).join("")}</ul>`);
   }
 
-  parts.push(`<p><em>Auto-filled from the ESPN Gamecast.</em></p>`);
+  parts.push(
+    comp
+      ? `<p><em>Auto-filled from the ESPN Gamecast.</em></p>`
+      : `<p><em>Auto-filled from the fixture list — form, standings and odds will be added automatically once the match data is published.</em></p>`,
+  );
+
   return parts.join("\n");
 }
 
