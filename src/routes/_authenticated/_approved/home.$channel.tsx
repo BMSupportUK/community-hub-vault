@@ -1393,14 +1393,18 @@ function ChannelPage() {
                 return;
               }
               const text = (e.clipboardData?.getData("text/plain") ?? "").trim();
-              if (
-                text &&
-                !/\s/.test(text) &&
-                /^https?:\/\//i.test(text) &&
-                /(tenor\.com|giphy\.com|gph\.is)\//i.test(text)
-              ) {
+              const html = e.clipboardData?.getData("text/html") ?? "";
+              const htmlImg = html.match(/<img[^>]+src=["']([^"']+)["']/i)?.[1] ?? "";
+              const candidate = [text, htmlImg].find(
+                (u) =>
+                  u &&
+                  !/\s/.test(u) &&
+                  /^https?:\/\//i.test(u) &&
+                  (/(tenor\.com|giphy\.com|gph\.is)\//i.test(u) || /\.(gif|gifv|webp|png|jpe?g)(\?|$)/i.test(u)),
+              );
+              if (candidate) {
                 e.preventDefault();
-                void sendPastedGifLink(text);
+                void sendPastedGifLink(candidate);
               }
             }}
             rows={1}
