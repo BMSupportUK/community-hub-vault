@@ -303,7 +303,7 @@ function ChannelPage() {
   const [editDraft, setEditDraft] = useState("");
   const [canSend, setCanSend] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const taRef = useRef<HTMLTextAreaElement>(null);
+  const taRef = useRef<HTMLDivElement>(null);
   // Discord-style "jump to last read" support. Captured once per channel load
   // so the divider stays visible until the user navigates away.
   const [firstUnreadId, setFirstUnreadId] = useState<string | null>(null);
@@ -598,6 +598,7 @@ function ChannelPage() {
     const originalGif = pendingGif;
     let content = pendingGif ?? originalContent;
     setDraft("");
+    if (taRef.current) taRef.current.textContent = "";
     setPendingGif(null);
     if (/^https?:\/\/\S+$/i.test(content) && /(tenor\.com|giphy\.com|gph\.is)\//i.test(content)) {
       setUploadingPaste(true);
@@ -656,8 +657,15 @@ function ChannelPage() {
     setDraft(next);
     requestAnimationFrame(() => {
       ta.focus();
-      const caret = start + emoji.length;
-      ta.setSelectionRange(caret, caret);
+      ta.textContent = next;
+      const node = ta.firstChild;
+      if (!node) return;
+      const range = document.createRange();
+      range.setStart(node, Math.min(start + emoji.length, node.textContent?.length ?? 0));
+      range.collapse(true);
+      const selection = window.getSelection();
+      selection?.removeAllRanges();
+      selection?.addRange(range);
     });
   };
 
@@ -1505,22 +1513,43 @@ function ChannelPage() {
         )}
         <div className="relative flex items-end gap-2 rounded-xl bg-surface-2 border border-border focus-within:border-primary px-3 py-2">
           {mention.dropdown}
-          <textarea
+          <div
             ref={taRef}
-            value={draft}
-            onChange={(e) => {
-              const next = e.target.value;
+            contentEditable={canSend && slowRemaining <= 0 && !isMuted}
+            suppressContentEditableWarning
+            role="textbox"
+            aria-multiline="true"
+            aria-label={`Message ${channel.name}`}
+            data-placeholder={
+              isMuted
+                ? `You are muted — chat unlocks in ${muteCountdown}`
+                : !canSend
+                  ? `You don't have permission to send messages in this channel`
+                  : slowRemaining > 0
+                    ? `Slow mode: wait ${slowRemaining}s before sending another message`
+                    : pendingGif
+                      ? "GIF attached — press Enter or Send"
+                      : `Message #${channel.name} — @ to mention · paste or Win + . for emotes & GIFs`
+            }
+            onInput={(e) => {
+              const editor = e.currentTarget;
+              const embedded = editor.querySelector("img")?.getAttribute("src");
+              const linked = editor.querySelector("a")?.getAttribute("href");
+              const next = editor.innerText.replace(/\n$/, "");
               setDraft(next);
               const inputType = (e.nativeEvent as InputEvent).inputType;
-              const candidate = next.trim();
+              const candidate = (embedded || linked || next.trim()).trim();
               if (
-                ["insertFromPaste", "insertFromDrop", "insertReplacementText"].includes(
-                  inputType,
-                ) &&
                 /^https?:\/\/\S+$/i.test(candidate) &&
+                (embedded ||
+                  linked ||
+                  ["insertFromPaste", "insertFromDrop", "insertReplacementText"].includes(
+                    inputType,
+                  )) &&
                 (/(tenor\.com|giphy\.com|gph\.is)\//i.test(candidate) ||
-                  /\.(gif|gifv|webp)(\?|$)/i.test(candidate))
+                  /\.(gif|gifv|webp|png|jpe?g)(\?|$)/i.test(candidate))
               ) {
+                editor.textContent = "";
                 setDraft("");
                 void sendPastedGifLink(candidate);
               }
@@ -1575,20 +1604,7 @@ function ChannelPage() {
                 void sendPastedGifLink(candidate);
               }
             }}
-            rows={1}
-            placeholder={
-              isMuted
-                ? `You are muted — chat unlocks in ${muteCountdown}`
-                : !canSend
-                  ? `You don't have permission to send messages in this channel`
-                  : slowRemaining > 0
-                    ? `Slow mode: wait ${slowRemaining}s before sending another message`
-                    : pendingGif
-                      ? "GIF attached — press Enter or Send"
-                      : `Message #${channel.name} — @ to mention · paste or Win + . for emotes & GIFs`
-            }
-            disabled={!canSend || slowRemaining > 0 || isMuted}
-            className="flex-1 bg-transparent resize-none outline-none text-sm py-1 max-h-32"
+            className="flex-1 min-h-7 overflow-y-auto bg-transparent outline-none text-sm py-1 max-h-32 whitespace-pre-wrap break-words empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground empty:before:pointer-events-none"
           />
           {uploadingPaste && (
             <div className="flex items-center gap-1 text-xs text-muted-foreground px-2 py-1">
