@@ -1551,15 +1551,14 @@ function ChannelPage() {
               const linked = editor.querySelector("a")?.getAttribute("href");
               const next = editor.innerText.replace(/\n$/, "");
               setDraft(next);
-              const inputType = (e.nativeEvent as InputEvent).inputType;
-              const candidate = (embedded || linked || next.trim()).trim();
+              // Windows 11's GIF panel commonly reports a GIF URL as a plain
+              // `insertText` input rather than a paste. Detect the inserted
+              // media itself instead of relying on the browser's input type.
+              const candidate = (embedded || linked || next.trim())
+                .replace(/[\u200B-\u200D\uFEFF]/g, "")
+                .trim();
               if (
                 /^https?:\/\/\S+$/i.test(candidate) &&
-                (embedded ||
-                  linked ||
-                  ["insertFromPaste", "insertFromDrop", "insertReplacementText"].includes(
-                    inputType,
-                  )) &&
                 (/(tenor\.com|giphy\.com|gph\.is)\//i.test(candidate) ||
                   /\.(gif|gifv|webp|png|jpe?g)(\?|$)/i.test(candidate))
               ) {
@@ -1567,6 +1566,11 @@ function ChannelPage() {
                 setDraft("");
                 void sendPastedGifLink(candidate);
               }
+            }}
+            onClick={(e) => {
+              // Never let a rich GIF insertion become a navigable link inside
+              // the composer while it is being converted to an attachment.
+              if ((e.target as HTMLElement).closest("a")) e.preventDefault();
             }}
             onKeyDown={(e) => {
               if (mention.onKeyDown(e)) return;
