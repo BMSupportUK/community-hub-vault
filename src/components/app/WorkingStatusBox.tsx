@@ -28,12 +28,14 @@ export function WorkingStatusBox() {
     const refresh = async () => {
       const { data: s } = await supabase
         .from("shifts").select("id,clock_in")
-        .eq("user_id", user.id).is("clock_out", null).maybeSingle();
+        .eq("user_id", user.id).is("clock_out", null)
+        .order("clock_in", { ascending: true }).limit(1).maybeSingle();
       setShift((s as Shift) ?? null);
       if (s) {
         const { data: b } = await supabase
           .from("breaks").select("id,kind,started_at")
-          .eq("shift_id", (s as Shift).id).is("ended_at", null).maybeSingle();
+          .eq("shift_id", (s as Shift).id).is("ended_at", null)
+          .order("started_at", { ascending: false }).limit(1).maybeSingle();
         setBrk((b as Break) ?? null);
       } else {
         setBrk(null);
