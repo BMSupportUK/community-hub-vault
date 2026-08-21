@@ -1197,7 +1197,6 @@ function ChannelPage() {
                     )}
                     <div className={cn("group relative flex items-start gap-3 transition-colors")}>
                       {(() => {
-                        const showNameplate = !!p?.equipped_nameplate_id;
                         const resolvedAvatar = resolveAvatarUrl(
                           m.sender_id,
                           p?.avatar_url,
@@ -1208,61 +1207,55 @@ function ChannelPage() {
                           roleFlashMap.get(m.sender_id) === "staff" ||
                           roleFlashMap.get(m.sender_id) === "management" ||
                           roleFlashMap.get(m.sender_id) === "moderator";
+                        const profileId = p?.id;
+                        const isOnline = profileId ? onlineUsers.has(profileId) : false;
                         const avatarEl = hasAvatar ? (
                           <img
                             src={resolvedAvatar}
                             alt=""
-                            className={cn(
-                              "size-8 rounded-full object-cover shrink-0 ring-2 ring-white/70",
-                              !showNameplate && "size-9 mt-1 ring-0",
-                            )}
+                            className="size-9 rounded-full object-cover shrink-0 mt-1"
                           />
                         ) : (
-                          <div
-                            className={cn(
-                              "size-8 rounded-full bg-gradient-primary grid place-items-center text-xs font-semibold text-primary-foreground shrink-0 ring-2 ring-white/70",
-                              !showNameplate && "size-9 mt-1 ring-0",
-                            )}
-                          >
+                          <div className="size-9 rounded-full bg-gradient-primary grid place-items-center text-xs font-semibold text-primary-foreground shrink-0 mt-1">
                             {initial}
                           </div>
                         );
-                        if (showNameplate) {
-                           const profileId = p?.id;
-                           if (!profileId) return avatarEl;
-                           const isOnline = onlineUsers.has(profileId);
-                          return (
-                             <div className="flex flex-col items-center gap-0.5 shrink-0 mt-0.5">
-                              <Nameplate
-                                 id={p.equipped_nameplate_id}
-                                 className="size-9 rounded-full grid place-items-center shadow-sm"
-                              >
-                                {avatarEl}
-                              </Nameplate>
-                               <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-                                 <PresenceMiniDot userId={profileId} isOnline={isOnline} />
+                        return (
+                          <div className="flex flex-col items-center gap-0.5 shrink-0 mt-0.5">
+                            {avatarEl}
+                            {profileId && (
+                              <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                                <PresenceMiniDot userId={profileId} isOnline={isOnline} />
                                 <PresenceMiniLabel
-                                   userId={profileId}
+                                  userId={profileId}
                                   isOnline={isOnline}
                                   offlineText={`Active ${formatLastSeen(p?.last_seen_at)}`}
                                 />
                               </div>
-                            </div>
-                          );
-                        }
-                        return avatarEl;
+                            )}
+                          </div>
+                        );
                       })()}
                       <div className="min-w-0 flex-1">
-                        <div className="flex items-baseline gap-2 mb-1">
-                           <span
-                             className={cn(
-                               "font-semibold text-sm",
-                               roleFlashClass(roleFlashMap.get(m.sender_id)),
-                             )}
-                           >
-                             {name}
-                           </span>
-                          <span className="text-[10px] text-muted-foreground">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Nameplate
+                            id={p?.equipped_nameplate_id}
+                            className="inline-flex items-center rounded-md px-2.5 py-0.5 min-w-0 shadow-sm"
+                            fallbackStyle={{
+                              background:
+                                "linear-gradient(135deg, #1a4a2a 0%, #2d6a3f 50%, #1a4a2a 100%)",
+                            }}
+                          >
+                            <span
+                              className={cn(
+                                "relative z-10 font-semibold text-sm truncate",
+                                roleFlashClass(roleFlashMap.get(m.sender_id)),
+                              )}
+                            >
+                              {name}
+                            </span>
+                          </Nameplate>
+                          <span className="text-[10px] text-muted-foreground shrink-0">
                             {new Date(m.created_at).toLocaleTimeString("en-GB", {
                               hour: "2-digit",
                               minute: "2-digit",
