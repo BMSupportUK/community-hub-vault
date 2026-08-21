@@ -381,15 +381,23 @@ export async function syncBoroMatchThread(opts?: { ignoreWindow?: boolean }): Pr
   );
   if (!topic) return { ...base, fixture: label, topic: null, skipped: ["no match day thread for this fixture yet"] };
 
+  // ESPN is a bonus, not a requirement: the preview must still go out ~24h
+  // before kick-off using our own fixture data when ESPN has no listing yet.
   const espn = await findEspnEvent(fx);
-  if (!espn) return { ...base, fixture: label, topic: topic.title, skipped: ["no ESPN match found"] };
+  let json: any = null;
+  if (espn) {
+    const { espnJson } = await import("@/lib/espn-fetch");
+    json = await espnJson(
+      `https://site.api.espn.com/apis/site/v2/sports/soccer/${espn.slug}/summary?event=${encodeURIComponent(espn.eventId)}`,
+    );
+  }
+  const hasEspn = !!json;
+  if (!hasEspn) {
+    skipped.push(espn ? "ESPN summary unavailable — posted fixture-only preview" : "no ESPN match found — posted fixture-only preview");
+    json = {};
+  }
+  const status = hasEspn ? normaliseEspnSummary(json).status : null;
 
-  const { espnJson } = await import("@/lib/espn-fetch");
-  const json: any = await espnJson(
-    `https://site.api.espn.com/apis/site/v2/sports/soccer/${espn.slug}/summary?event=${encodeURIComponent(espn.eventId)}`,
-  );
-  if (!json) return { ...base, fixture: label, topic: topic.title, skipped: ["ESPN summary unavailable"] };
-  const status = normaliseEspnSummary(json).status;
 
   const authorId = (await getMatchDayAuthorId()) ?? topic.author_id;
 
