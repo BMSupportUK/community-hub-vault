@@ -69,15 +69,13 @@ export function EmojiPicker({ onSelect, disabled }: Props) {
   const [recent, setRecent] = useState<string[]>(loadRecent);
 
   const filtered = useMemo(() => {
-    const needle = q.trim();
+    const needle = q.trim().toLowerCase();
     if (!needle) return null;
-    const all = GROUPS.flatMap((g) => g.emojis);
-    const names: Record<string, string[]> = {};
-    // simple contains match on group name as a fallback keyword search
-    const byGroup = GROUPS.filter((g) => g.name.toLowerCase().includes(needle.toLowerCase()));
-    void names;
-    return byGroup.length ? byGroup.flatMap((g) => g.emojis) : all.filter((e) => e.includes(needle));
+    const byGroup = GROUPS.filter((g) => g.name.toLowerCase().includes(needle));
+    if (byGroup.length) return byGroup.flatMap((g) => g.emojis);
+    return GROUPS.flatMap((g) => g.emojis).filter((e) => e.includes(q.trim()));
   }, [q]);
+
 
   const pick = (emoji: string) => {
     onSelect(emoji);
