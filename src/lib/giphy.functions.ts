@@ -59,3 +59,66 @@ export const searchGifs = createServerFn({ method: "GET" })
       return { results: [], error: "GIF service unavailable" };
     }
   });
+const ResolveInput = z.object({ url: z.string().url().max(2000) });
+
+const SHARE_HOSTS = /(^|\.)(tenor\.com|giphy\.com|gph\.is|media\.tenor\.com|media\d*\.giphy\.com|i\.giphy\.com)$/i;
+const DIRECT_MEDIA = /\.(gif|gifv|mp4|webp|png|jpe?g)(\?|$)/i;
+
+function pickMeta(html: string, keys: string[]): string | null {
+  for (const key of keys) {
+    const re = new RegExp(
+      `<meta[^>]+(?:property|name)=["']${key}["'][^>]+content=["']([^"']+)["']`,
+      "i",
+    );
+    const m = html.match(re);
+    if (m?.[1]) return m[1];
+    const re2 = new RegExp(
+      `<meta[^>]+content=["']([^"']+)["'][^>]+(?:property|name)=["']${key}["']`,
+      "i",
+    );
+    const m2 = html.match(re2);
+    if (m2?.[1]) return m2[1];
+  }
+  return null;
+}
+
+/**
+ * Resolves a share link (e.g. the Tenor/Giphy URL the Windows GIF tray copies)
+ * into a direct animated media URL that can be rendered with <img>.
+ */
+export const resolveGifLink = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) => ResolveInput.parse(input))
+  .handler(async ({ data }): Promise<{ url: string | null }> => {
+    let parsed: URL;
+    try {
+      parsed = new URL(data.url);
+    } catch {
+      return { url: null };
+    }
+    if (parsed.protocol !== "https:" && parsed.protocol !== "http:") return { url: null };
+    if (!SHARE_HOSTS.test(parsed.hostname)) return { url: null };
+    if (DIRECT_MEDIA.test(parsed.pathname)) return { url: parsed.toString() };
+    try {
+      const res = await fetch(parsed.toString(), {
+        headers: {
+          "user-agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36",
+          accept: "text/html,application/xhtml+xml",
+        },
+      });
+      if (!res.ok) return { url: null };
+      const html = (await res.text()).slice(0, 400_000);
+      const candidate =
+        pickMeta(html, ["og:image", "twitter:image", "twitter:image:src"]) ??
+        html.match(/https:\/\/media\d*\.tenor\.com\/[^"'\s\\]+\.gif/i)?.[0] ??
+        html.match(/https:\/\/media\d*\.giphy\.com\/media\/[^"'\s\\]+\.gif/i)?.[0] ??
+        null;
+      if (!candidate) return { url: null };
+      const abs = new URL(candidate, parsed.origin).toString();
+      if (!DIRECT_MEDIA.test(new URL(abs).pathname)) return { url: null };
+      return { url: abs };
+    } catch (e) {
+      console.error("resolveGifLink failed", e);
+      return { url: null };
+    }
+  });
