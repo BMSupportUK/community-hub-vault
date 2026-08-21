@@ -16,7 +16,8 @@ export const searchInputSchema = z.object({
 
 export const resolveInputSchema = z.object({ url: z.string().url().max(2000) });
 
-const SHARE_HOSTS = /(^|\.)(tenor\.com|giphy\.com|gph\.is|media\.tenor\.com|media\d*\.giphy\.com|i\.giphy\.com)$/i;
+const SHARE_HOSTS =
+  /(^|\.)(tenor\.com|giphy\.com|gph\.is|media\.tenor\.com|media\d*\.giphy\.com|i\.giphy\.com)$/i;
 const DIRECT_MEDIA = /\.(gif|gifv|mp4|webp|png|jpe?g)(\?|$)/i;
 
 function mapResults(json: unknown): GifResult[] {
@@ -35,33 +36,50 @@ function mapResults(json: unknown): GifResult[] {
       g.images?.preview_gif?.url ??
       g.images?.fixed_width?.url ??
       full;
-    return [{
-      id: String(g.id ?? full),
-      title: typeof g.title === "string" && g.title ? g.title : "GIF",
-      preview,
-      url: full,
-      width: Number(g.images?.fixed_width?.width ?? 200),
-      height: Number(g.images?.fixed_width?.height ?? 200),
-    }];
+    return [
+      {
+        id: String(g.id ?? full),
+        title: typeof g.title === "string" && g.title ? g.title : "GIF",
+        preview,
+        url: full,
+        width: Number(g.images?.fixed_width?.width ?? 200),
+        height: Number(g.images?.fixed_width?.height ?? 200),
+      },
+    ];
   });
 }
 
 function pickMeta(html: string, keys: string[]): string | null {
   for (const key of keys) {
     const escapedKey = key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    const first = html.match(new RegExp(`<meta[^>]+(?:property|name)=["']${escapedKey}["'][^>]+content=["']([^"']+)["']`, "i"));
+    const first = html.match(
+      new RegExp(
+        `<meta[^>]+(?:property|name)=["']${escapedKey}["'][^>]+content=["']([^"']+)["']`,
+        "i",
+      ),
+    );
     if (first?.[1]) return first[1];
-    const second = html.match(new RegExp(`<meta[^>]+content=["']([^"']+)["'][^>]+(?:property|name)=["']${escapedKey}["']`, "i"));
+    const second = html.match(
+      new RegExp(
+        `<meta[^>]+content=["']([^"']+)["'][^>]+(?:property|name)=["']${escapedKey}["']`,
+        "i",
+      ),
+    );
     if (second?.[1]) return second[1];
   }
   return null;
 }
 
 function decodeHtmlUrl(value: string): string {
-  return value.replace(/&amp;/gi, "&").replace(/&#x2F;/gi, "/").replace(/&#47;/g, "/");
+  return value
+    .replace(/&amp;/gi, "&")
+    .replace(/&#x2F;/gi, "/")
+    .replace(/&#47;/g, "/");
 }
 
-export async function searchGiphy(input: z.infer<typeof searchInputSchema>): Promise<{ results: GifResult[]; error: string | null }> {
+export async function searchGiphy(
+  input: z.infer<typeof searchInputSchema>,
+): Promise<{ results: GifResult[]; error: string | null }> {
   const key = process.env.GIPHY_API_KEY;
   if (!key) return { results: [], error: "GIF service not configured" };
   const q = (input.q ?? "").trim();
@@ -85,14 +103,16 @@ export async function resolveGiphyUrl(rawUrl: string): Promise<{ url: string | n
   } catch {
     return { url: null };
   }
-  if (!/^https?:$/.test(parsed.protocol) || !SHARE_HOSTS.test(parsed.hostname)) return { url: null };
+  if (!/^https?:$/.test(parsed.protocol) || !SHARE_HOSTS.test(parsed.hostname))
+    return { url: null };
   if (DIRECT_MEDIA.test(parsed.pathname)) return { url: parsed.toString() };
 
   try {
     const response = await fetch(parsed.toString(), {
       redirect: "follow",
       headers: {
-        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36",
+        "user-agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36",
         accept: "text/html,application/xhtml+xml",
       },
     });
@@ -106,7 +126,8 @@ export async function resolveGiphyUrl(rawUrl: string): Promise<{ url: string | n
     if (!candidate) return { url: null };
     const absolute = new URL(decodeHtmlUrl(candidate), response.url).toString();
     const mediaUrl = new URL(absolute);
-    if (!SHARE_HOSTS.test(mediaUrl.hostname) || !DIRECT_MEDIA.test(mediaUrl.pathname)) return { url: null };
+    if (!SHARE_HOSTS.test(mediaUrl.hostname) || !DIRECT_MEDIA.test(mediaUrl.pathname))
+      return { url: null };
     return { url: absolute };
   } catch (error) {
     console.error("resolveGifLink failed", error);
