@@ -236,7 +236,12 @@ export function buildPreviewBody(fx: FixtureLite, json: any): string {
     parts.push(`<p><strong>Recent meetings</strong></p><ul>${h2h.map((l) => `<li>${esc(l)}</li>`).join("")}</ul>`);
   }
 
-  parts.push(`<p><em>Auto-filled from the ESPN Gamecast.</em></p>`);
+  parts.push(
+    comp
+      ? `<p><em>Auto-filled from the ESPN Gamecast.</em></p>`
+      : `<p><em>Auto-filled from the fixture list — form, standings and odds will be added automatically once the match data is published.</em></p>`,
+  );
+
   return parts.join("\n");
 }
 
@@ -381,15 +386,23 @@ export async function syncBoroMatchThread(opts?: { ignoreWindow?: boolean }): Pr
   );
   if (!topic) return { ...base, fixture: label, topic: null, skipped: ["no match day thread for this fixture yet"] };
 
+  // ESPN is a bonus, not a requirement: the preview must still go out ~24h
+  // before kick-off using our own fixture data when ESPN has no listing yet.
   const espn = await findEspnEvent(fx);
-  if (!espn) return { ...base, fixture: label, topic: topic.title, skipped: ["no ESPN match found"] };
+  let json: any = null;
+  if (espn) {
+    const { espnJson } = await import("@/lib/espn-fetch");
+    json = await espnJson(
+      `https://site.api.espn.com/apis/site/v2/sports/soccer/${espn.slug}/summary?event=${encodeURIComponent(espn.eventId)}`,
+    );
+  }
+  const hasEspn = !!json;
+  if (!hasEspn) {
+    skipped.push(espn ? "ESPN summary unavailable — posted fixture-only preview" : "no ESPN match found — posted fixture-only preview");
+    json = {};
+  }
+  const status = hasEspn ? normaliseEspnSummary(json).status : null;
 
-  const { espnJson } = await import("@/lib/espn-fetch");
-  const json: any = await espnJson(
-    `https://site.api.espn.com/apis/site/v2/sports/soccer/${espn.slug}/summary?event=${encodeURIComponent(espn.eventId)}`,
-  );
-  if (!json) return { ...base, fixture: label, topic: topic.title, skipped: ["ESPN summary unavailable"] };
-  const status = normaliseEspnSummary(json).status;
 
   const authorId = (await getMatchDayAuthorId()) ?? topic.author_id;
 
@@ -428,7 +441,7 @@ export async function syncBoroMatchThread(opts?: { ignoreWindow?: boolean }): Pr
         kind: "preview",
         clock: null,
         summary: `Match preview — ${label}`,
-        fingerprint: "preview",
+        fingerprint: hasEspn ? "preview" : "preview-basic",
         revision: 0,
       });
       if (logErr) skipped.push(`preview log failed: ${logErr.message}`);
@@ -443,7 +456,9 @@ export async function syncBoroMatchThread(opts?: { ignoreWindow?: boolean }): Pr
       .maybeSingle();
     if (existing?.body) {
       const legacy = /XI<\/strong>/.test(existing.body) || /TV \/ stream/.test(existing.body);
-      const rebuilt = legacy ? buildPreviewBody(fx, json) : stripLiveBlock(existing.body);
+      // A fixture-only preview gets upgraded in place as soon as ESPN lists the game.
+      const upgrade = hasEspn && preview.fingerprint === "preview-basic";
+      const rebuilt = legacy || upgrade ? buildPreviewBody(fx, json) : stripLiveBlock(existing.body);
       if (rebuilt !== existing.body) {
         const { error: upErr } = await supabaseAdmin
           .from("forum_posts")
@@ -451,7 +466,14 @@ export async function syncBoroMatchThread(opts?: { ignoreWindow?: boolean }): Pr
           .eq("id", preview.post_id);
         if (upErr) skipped.push(`preview refresh failed: ${upErr.message}`);
       }
+      if (upgrade) {
+        await supabaseAdmin
+          .from("boro_match_event_posts")
+          .update({ fingerprint: "preview" })
+          .eq("id", preview.id);
+      }
     }
+
   }
 
   // Pinned live block reply — always sits at the top of the replies, refreshed in place.
