@@ -441,7 +441,7 @@ export async function syncBoroMatchThread(opts?: { ignoreWindow?: boolean }): Pr
         kind: "preview",
         clock: null,
         summary: `Match preview — ${label}`,
-        fingerprint: "preview",
+        fingerprint: hasEspn ? "preview" : "preview-basic",
         revision: 0,
       });
       if (logErr) skipped.push(`preview log failed: ${logErr.message}`);
@@ -456,7 +456,9 @@ export async function syncBoroMatchThread(opts?: { ignoreWindow?: boolean }): Pr
       .maybeSingle();
     if (existing?.body) {
       const legacy = /XI<\/strong>/.test(existing.body) || /TV \/ stream/.test(existing.body);
-      const rebuilt = legacy ? buildPreviewBody(fx, json) : stripLiveBlock(existing.body);
+      // A fixture-only preview gets upgraded in place as soon as ESPN lists the game.
+      const upgrade = hasEspn && preview.fingerprint === "preview-basic";
+      const rebuilt = legacy || upgrade ? buildPreviewBody(fx, json) : stripLiveBlock(existing.body);
       if (rebuilt !== existing.body) {
         const { error: upErr } = await supabaseAdmin
           .from("forum_posts")
@@ -464,7 +466,14 @@ export async function syncBoroMatchThread(opts?: { ignoreWindow?: boolean }): Pr
           .eq("id", preview.post_id);
         if (upErr) skipped.push(`preview refresh failed: ${upErr.message}`);
       }
+      if (upgrade) {
+        await supabaseAdmin
+          .from("boro_match_event_posts")
+          .update({ fingerprint: "preview" })
+          .eq("id", preview.id);
+      }
     }
+
   }
 
   // Pinned live block reply — always sits at the top of the replies, refreshed in place.
