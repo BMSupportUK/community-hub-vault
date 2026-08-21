@@ -16,6 +16,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { MentionText, mentionsCurrentUser, useMentionAutocomplete } from "@/components/app/mentions";
 import { GifPicker, extractStandaloneGif } from "@/components/app/GifPicker";
+import { EmojiPicker } from "@/components/app/EmojiPicker";
+
 import { StaffOnDutyStrip } from "@/components/app/StaffOnDutyStrip";
 import { ChannelWelcomeEmbed } from "@/components/app/ChannelWelcomeEmbed";
 import { cn } from "@/lib/utils";
@@ -265,6 +267,8 @@ function ChannelPage() {
   const [profiles, setProfiles] = useState<Record<string, Profile>>({});
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
+  const [uploadingPaste, setUploadingPaste] = useState(false);
+
   const [reactions, setReactions] = useState<Reaction[]>([]);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [emojiPickerId, setEmojiPickerId] = useState<string | null>(null);
@@ -572,6 +576,45 @@ function ChannelPage() {
       setLastSentAt(Date.now());
     }
   };
+
+  /** Insert an emote at the caret in the composer. */
+  const insertEmoji = (emoji: string) => {
+    const ta = taRef.current;
+    if (!ta) {
+      setDraft((d) => d + emoji);
+      return;
+    }
+    const start = ta.selectionStart ?? draft.length;
+    const end = ta.selectionEnd ?? draft.length;
+    const next = draft.slice(0, start) + emoji + draft.slice(end);
+    setDraft(next);
+    requestAnimationFrame(() => {
+      ta.focus();
+      const caret = start + emoji.length;
+      ta.setSelectionRange(caret, caret);
+    });
+  };
+
+  /** Upload pasted images/GIFs (Windows emoji & GIF tray, screenshots) and post them. */
+  const sendPastedImages = async (files: File[]) => {
+    if (!user || !channel || files.length === 0) return;
+    setUploadingPaste(true);
+    for (const file of files) {
+      const ext = (file.type.split("/")[1] || "png").split("+")[0];
+      const path = `${user.id}/chat/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from("avatars")
+        .upload(path, file, { contentType: file.type, cacheControl: "3600", upsert: false });
+      if (upErr) {
+        toast.error(upErr.message || "Could not upload pasted image");
+        continue;
+      }
+      const { data } = supabase.storage.from("avatars").getPublicUrl(path);
+      await sendGif(data.publicUrl);
+    }
+    setUploadingPaste(false);
+  };
+
 
   const remove = async (id: string) => {
     const { error } = await supabase.from("chat_messages").delete().eq("id", id);
@@ -1308,6 +1351,25 @@ function ChannelPage() {
                 send();
               }
             }}
+            onPaste={(e) => {
+              const items = e.clipboardData?.items;
+              if (!items) return;
+              const imgs: File[] = [];
+              for (let i = 0; i < items.length; i++) {
+                const it = items[i];
+                if (it.kind === "file" && it.type.startsWith("image/")) {
+                  const f = it.getAsFile();
+                  if (f) {
+                    const ext = (f.type.split("/")[1] || "png").split("+")[0];
+                    imgs.push(f.name && f.name !== "image.png" ? f : new File([f], `pasted-${Date.now()}.${ext}`, { type: f.type }));
+                  }
+                }
+              }
+              if (imgs.length) {
+                e.preventDefault();
+                void sendPastedImages(imgs);
+              }
+            }}
             rows={1}
             placeholder={isMuted
               ? `You are muted — chat unlocks in ${muteCountdown}`
@@ -1315,10 +1377,16 @@ function ChannelPage() {
                 ? `You don't have permission to send messages in this channel`
                 : slowRemaining > 0
                   ? `Slow mode: wait ${slowRemaining}s before sending another message`
-                  : `Message #${channel.name} — type @ to mention`}
+                  : `Message #${channel.name} — @ to mention · paste or Win + . for emotes & GIFs`}
             disabled={!canSend || slowRemaining > 0 || isMuted}
             className="flex-1 bg-transparent resize-none outline-none text-sm py-1 max-h-32"
           />
+          {uploadingPaste && (
+            <div className="flex items-center gap-1 text-xs text-muted-foreground px-2 py-1">
+              <Loader2 className="size-3.5 animate-spin" />
+              <span>Uploading…</span>
+            </div>
+          )}
           {slowRemaining > 0 && (
             <div className="flex items-center gap-1 text-xs text-primary tabular-nums px-2 py-1 rounded-md bg-primary/10 border border-primary/30">
               <Timer className="size-3.5" />
@@ -1331,10 +1399,15 @@ function ChannelPage() {
               <span>{muteCountdown}</span>
             </div>
           )}
+          <EmojiPicker
+            disabled={!canSend || slowRemaining > 0 || isMuted}
+            onSelect={insertEmoji}
+          />
           <GifPicker
             disabled={!canSend || slowRemaining > 0 || isMuted}
             onSelect={(url) => sendGif(url)}
           />
+
           <button
             onClick={send}
             disabled={sending || !draft.trim() || !canSend || slowRemaining > 0 || isMuted}
