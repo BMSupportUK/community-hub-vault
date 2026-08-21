@@ -265,6 +265,8 @@ function ChannelPage() {
   const [profiles, setProfiles] = useState<Record<string, Profile>>({});
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
+  const [uploadingPaste, setUploadingPaste] = useState(false);
+
   const [reactions, setReactions] = useState<Reaction[]>([]);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [emojiPickerId, setEmojiPickerId] = useState<string | null>(null);
