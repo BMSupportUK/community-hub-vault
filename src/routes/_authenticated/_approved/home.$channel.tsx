@@ -291,6 +291,7 @@ function ChannelPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [profiles, setProfiles] = useState<Record<string, Profile>>({});
   const [draft, setDraft] = useState("");
+  const [pendingGif, setPendingGif] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
   const [uploadingPaste, setUploadingPaste] = useState(false);
   const resolveGif = useServerFn(resolveGifLink);
@@ -584,7 +585,7 @@ function ChannelPage() {
   }, [channel?.id, user?.id]);
 
   const send = async () => {
-    if (!user || !channel || !draft.trim()) return;
+    if (!user || !channel || (!draft.trim() && !pendingGif)) return;
     if (channel.slow_mode_seconds > 0 && !isModOrAdmin && lastSentAt) {
       const remain = channel.slow_mode_seconds * 1000 - (Date.now() - lastSentAt);
       if (remain > 0) {
@@ -594,8 +595,10 @@ function ChannelPage() {
     }
     setSending(true);
     const originalContent = draft.trim();
-    let content = originalContent;
+    const originalGif = pendingGif;
+    let content = pendingGif ?? originalContent;
     setDraft("");
+    setPendingGif(null);
     if (/^https?:\/\/\S+$/i.test(content) && /(tenor\.com|giphy\.com|gph\.is)\//i.test(content)) {
       setUploadingPaste(true);
       try {
@@ -603,6 +606,7 @@ function ChannelPage() {
         if (!resolved.url) {
           toast.error("That GIF could not be loaded. Please choose it again.");
           setDraft(originalContent);
+          setPendingGif(originalGif);
           setSending(false);
           return;
         }
@@ -610,6 +614,7 @@ function ChannelPage() {
       } catch {
         toast.error("That GIF could not be loaded. Please choose it again.");
         setDraft(originalContent);
+        setPendingGif(originalGif);
         setSending(false);
         return;
       } finally {
@@ -631,29 +636,11 @@ function ChannelPage() {
             : msg,
       );
       setDraft(originalContent);
+      setPendingGif(originalGif);
     } else {
       setLastSentAt(Date.now());
     }
     setSending(false);
-  };
-
-  const sendGif = async (url: string) => {
-    if (!user || !channel) return;
-    if (channel.slow_mode_seconds > 0 && !isModOrAdmin && lastSentAt) {
-      const remain = channel.slow_mode_seconds * 1000 - (Date.now() - lastSentAt);
-      if (remain > 0) {
-        toast.error(`Slow mode: wait ${Math.ceil(remain / 1000)}s.`);
-        return;
-      }
-    }
-    const { error } = await supabase
-      .from("chat_messages")
-      .insert({ channel_id: channel.id, sender_id: user.id, content: url });
-    if (error) {
-      toast.error(error.message || "Could not send GIF");
-    } else {
-      setLastSentAt(Date.now());
-    }
   };
 
   /** Insert an emote at the caret in the composer. */
@@ -674,7 +661,7 @@ function ChannelPage() {
     });
   };
 
-  /** Upload pasted images/GIFs (Windows emoji & GIF tray, screenshots) and post them. */
+  /** Upload a pasted image/GIF and hold it as an attachment until Enter or Send. */
   const sendPastedImages = async (files: File[]) => {
     if (!user || !channel || files.length === 0) return;
     setUploadingPaste(true);
@@ -689,20 +676,21 @@ function ChannelPage() {
         continue;
       }
       const { data } = supabase.storage.from("avatars").getPublicUrl(path);
-      await sendGif(data.publicUrl);
+      setPendingGif(data.publicUrl);
+      break;
     }
     setUploadingPaste(false);
   };
 
   /**
    * The Windows GIF tray copies a Tenor/Giphy share link instead of the image
-   * itself. Resolve it to a direct animated URL so it embeds as a GIF.
+   * itself. Resolve it to a direct animated URL and attach it to the composer.
    */
   const sendPastedGifLink = async (rawUrl: string) => {
     setUploadingPaste(true);
     try {
       if (/\.(gif|webp|png|jpe?g)(\?|$)/i.test(rawUrl)) {
-        await sendGif(rawUrl);
+        setPendingGif(rawUrl);
         return;
       }
       const res = await resolveGif({ data: { url: rawUrl } });
@@ -710,7 +698,7 @@ function ChannelPage() {
         toast.error("That GIF could not be loaded. Please choose it again.");
         return;
       }
-      await sendGif(res.url);
+      setPendingGif(res.url);
     } catch {
       toast.error("That GIF could not be loaded. Please choose it again.");
     } finally {
@@ -1495,6 +1483,26 @@ function ChannelPage() {
       </div>
 
       <div className="p-4 border-t border-border shrink-0">
+        {pendingGif && (
+          <div className="mb-2 flex items-start">
+            <div className="relative overflow-hidden rounded-lg border border-border bg-surface-2 p-1">
+              <img
+                src={pendingGif}
+                alt="GIF attachment ready to send"
+                className="max-h-36 max-w-56 rounded-md object-contain"
+              />
+              <button
+                type="button"
+                onClick={() => setPendingGif(null)}
+                className="absolute right-1 top-1 grid size-7 place-items-center rounded-md bg-background/90 text-foreground shadow hover:bg-background"
+                title="Remove GIF attachment"
+                aria-label="Remove GIF attachment"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+          </div>
+        )}
         <div className="relative flex items-end gap-2 rounded-xl bg-surface-2 border border-border focus-within:border-primary px-3 py-2">
           {mention.dropdown}
           <textarea
@@ -1575,7 +1583,9 @@ function ChannelPage() {
                   ? `You don't have permission to send messages in this channel`
                   : slowRemaining > 0
                     ? `Slow mode: wait ${slowRemaining}s before sending another message`
-                    : `Message #${channel.name} — @ to mention · paste or Win + . for emotes & GIFs`
+                    : pendingGif
+                      ? "GIF attached — press Enter or Send"
+                      : `Message #${channel.name} — @ to mention · paste or Win + . for emotes & GIFs`
             }
             disabled={!canSend || slowRemaining > 0 || isMuted}
             className="flex-1 bg-transparent resize-none outline-none text-sm py-1 max-h-32"
@@ -1601,12 +1611,14 @@ function ChannelPage() {
           <EmojiPicker disabled={!canSend || slowRemaining > 0 || isMuted} onSelect={insertEmoji} />
           <GifPicker
             disabled={!canSend || slowRemaining > 0 || isMuted}
-            onSelect={(url) => sendGif(url)}
+            onSelect={(url) => setPendingGif(url)}
           />
 
           <button
             onClick={send}
-            disabled={sending || !draft.trim() || !canSend || slowRemaining > 0 || isMuted}
+            disabled={
+              sending || (!draft.trim() && !pendingGif) || !canSend || slowRemaining > 0 || isMuted
+            }
             className="size-8 rounded-lg bg-primary text-primary-foreground grid place-items-center disabled:opacity-50"
           >
             {sending ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
