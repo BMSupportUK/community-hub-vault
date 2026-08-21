@@ -244,7 +244,7 @@ export function useMentionAutocomplete({
     setQuery(null);
   };
 
-  const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>): boolean => {
+  const onKeyDown = (e: React.KeyboardEvent<HTMLElement>): boolean => {
     if (query === null || results.length === 0) return false;
     if (e.key === "ArrowDown") {
       e.preventDefault();
