@@ -119,7 +119,7 @@ export function GifPicker({ onSelect, disabled }: Props) {
   );
 }
 
-const GIF_HOSTS = /^(https?:\/\/)(media\d*\.giphy\.com|i\.giphy\.com|media\.tenor\.com|tenor\.com|c\.tenor\.com)\//i;
+const GIF_HOSTS = /^(https?:\/\/)(media\d*\.giphy\.com|i\.giphy\.com|media\d*\.tenor\.com|c\.tenor\.com)\//i;
 const STORAGE_IMAGE = /\/storage\/v1\/object\/public\/[^\s]+\.(gif|png|jpe?g|webp)(\?.*)?$/i;
 
 /**
