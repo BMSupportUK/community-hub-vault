@@ -111,6 +111,7 @@ export function useVisitorVpn() {
     document.addEventListener("visibilitychange", onVisible);
     return () => {
       listeners.delete(l);
+      window.clearInterval(poll);
       if (idle) {
         (window as unknown as { cancelIdleCallback?: (id: number) => void }).cancelIdleCallback?.(idleId as number);
       } else {
