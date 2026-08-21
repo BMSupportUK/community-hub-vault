@@ -16,6 +16,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { MentionText, mentionsCurrentUser, useMentionAutocomplete } from "@/components/app/mentions";
 import { GifPicker, extractStandaloneGif } from "@/components/app/GifPicker";
+import { EmojiPicker } from "@/components/app/EmojiPicker";
+
 import { StaffOnDutyStrip } from "@/components/app/StaffOnDutyStrip";
 import { ChannelWelcomeEmbed } from "@/components/app/ChannelWelcomeEmbed";
 import { cn } from "@/lib/utils";
