@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useRef, useState } from "react";
 import { Hash, Megaphone, Loader2, Send, Trash2, EyeOff, Eye, Pin, PinOff, X, ShieldOff, MoreHorizontal, SmilePlus, Pencil, Check, Timer, MicOff, Mic } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,6 +18,8 @@ import {
 import { MentionText, mentionsCurrentUser, useMentionAutocomplete } from "@/components/app/mentions";
 import { GifPicker, extractStandaloneGif } from "@/components/app/GifPicker";
 import { EmojiPicker } from "@/components/app/EmojiPicker";
+import { resolveGifLink } from "@/lib/giphy.functions";
+
 
 import { StaffOnDutyStrip } from "@/components/app/StaffOnDutyStrip";
 import { ChannelWelcomeEmbed } from "@/components/app/ChannelWelcomeEmbed";
@@ -268,6 +271,7 @@ function ChannelPage() {
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
   const [uploadingPaste, setUploadingPaste] = useState(false);
+  const resolveGif = useServerFn(resolveGifLink);
 
   const [reactions, setReactions] = useState<Reaction[]>([]);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
@@ -614,6 +618,24 @@ function ChannelPage() {
     }
     setUploadingPaste(false);
   };
+
+  /**
+   * The Windows GIF tray copies a Tenor/Giphy share link instead of the image
+   * itself. Resolve it to a direct animated URL so it embeds as a GIF.
+   */
+  const sendPastedGifLink = async (rawUrl: string) => {
+    setUploadingPaste(true);
+    try {
+      const res = await resolveGif({ data: { url: rawUrl } });
+      await sendGif(res.url ?? rawUrl);
+    } catch {
+      await sendGif(rawUrl);
+    } finally {
+      setUploadingPaste(false);
+    }
+  };
+
+
 
 
   const remove = async (id: string) => {
@@ -1368,6 +1390,17 @@ function ChannelPage() {
               if (imgs.length) {
                 e.preventDefault();
                 void sendPastedImages(imgs);
+                return;
+              }
+              const text = (e.clipboardData?.getData("text/plain") ?? "").trim();
+              if (
+                text &&
+                !/\s/.test(text) &&
+                /^https?:\/\//i.test(text) &&
+                /(tenor\.com|giphy\.com|gph\.is)\//i.test(text)
+              ) {
+                e.preventDefault();
+                void sendPastedGifLink(text);
               }
             }}
             rows={1}
