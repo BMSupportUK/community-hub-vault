@@ -573,6 +573,45 @@ function ChannelPage() {
     }
   };
 
+  /** Insert an emote at the caret in the composer. */
+  const insertEmoji = (emoji: string) => {
+    const ta = taRef.current;
+    if (!ta) {
+      setDraft((d) => d + emoji);
+      return;
+    }
+    const start = ta.selectionStart ?? draft.length;
+    const end = ta.selectionEnd ?? draft.length;
+    const next = draft.slice(0, start) + emoji + draft.slice(end);
+    setDraft(next);
+    requestAnimationFrame(() => {
+      ta.focus();
+      const caret = start + emoji.length;
+      ta.setSelectionRange(caret, caret);
+    });
+  };
+
+  /** Upload pasted images/GIFs (Windows emoji & GIF tray, screenshots) and post them. */
+  const sendPastedImages = async (files: File[]) => {
+    if (!user || !channel || files.length === 0) return;
+    setUploadingPaste(true);
+    for (const file of files) {
+      const ext = (file.type.split("/")[1] || "png").split("+")[0];
+      const path = `${user.id}/chat/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from("avatars")
+        .upload(path, file, { contentType: file.type, cacheControl: "3600", upsert: false });
+      if (upErr) {
+        toast.error(upErr.message || "Could not upload pasted image");
+        continue;
+      }
+      const { data } = supabase.storage.from("avatars").getPublicUrl(path);
+      await sendGif(data.publicUrl);
+    }
+    setUploadingPaste(false);
+  };
+
+
   const remove = async (id: string) => {
     const { error } = await supabase.from("chat_messages").delete().eq("id", id);
     if (error) toast.error(error.message);
