@@ -1390,6 +1390,17 @@ function ChannelPage() {
               if (imgs.length) {
                 e.preventDefault();
                 void sendPastedImages(imgs);
+                return;
+              }
+              const text = (e.clipboardData?.getData("text/plain") ?? "").trim();
+              if (
+                text &&
+                !/\s/.test(text) &&
+                /^https?:\/\//i.test(text) &&
+                /(tenor\.com|giphy\.com|gph\.is)\//i.test(text)
+              ) {
+                e.preventDefault();
+                void sendPastedGifLink(text);
               }
             }}
             rows={1}
