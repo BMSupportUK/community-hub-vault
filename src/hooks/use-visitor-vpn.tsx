@@ -32,13 +32,15 @@ async function getPublicIp(): Promise<string | null> {
 
 function refresh(force = false): Promise<boolean> {
   hydrateCache();
-  if (!force && inflight) return inflight;
-  if (!force && cached !== null && Date.now() - cachedAt < TTL_MS) {
-    return Promise.resolve(cached);
-  }
+  if (inflight) return inflight;
   inflight = (async () => {
     try {
       const ip = await getPublicIp();
+      const ipChanged = !!ip && ip !== cachedIp;
+      // Reuse the cached verdict only while it's fresh AND the public IP is unchanged.
+      if (!force && !ipChanged && cached !== null && Date.now() - cachedAt < TTL_MS) {
+        return cached;
+      }
       cachedIp = ip ?? cachedIp;
       const res = await checkVisitorVpn({ data: { ip: cachedIp ?? undefined } });
       const flag = !!(res?.is_vpn || res?.is_proxy);
