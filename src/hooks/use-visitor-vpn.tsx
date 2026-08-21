@@ -6,7 +6,7 @@ let cachedAt = 0;
 let cachedIp: string | null = null;
 let inflight: Promise<boolean> | null = null;
 const listeners = new Set<(v: boolean) => void>();
-const TTL_MS = 30 * 60 * 1000;
+const TTL_MS = 5 * 60 * 1000;
 const STORAGE_KEY = "bm_visitor_vpn_cache";
 type NavigatorWithConnection = Navigator & {
   connection?: EventTarget;
@@ -32,13 +32,15 @@ async function getPublicIp(): Promise<string | null> {
 
 function refresh(force = false): Promise<boolean> {
   hydrateCache();
-  if (!force && inflight) return inflight;
-  if (!force && cached !== null && Date.now() - cachedAt < TTL_MS) {
-    return Promise.resolve(cached);
-  }
+  if (inflight) return inflight;
   inflight = (async () => {
     try {
       const ip = await getPublicIp();
+      const ipChanged = !!ip && ip !== cachedIp;
+      // Reuse the cached verdict only while it's fresh AND the public IP is unchanged.
+      if (!force && !ipChanged && cached !== null && Date.now() - cachedAt < TTL_MS) {
+        return cached;
+      }
       cachedIp = ip ?? cachedIp;
       const res = await checkVisitorVpn({ data: { ip: cachedIp ?? undefined } });
       const flag = !!(res?.is_vpn || res?.is_proxy);
@@ -92,13 +94,16 @@ export function useVisitorVpn() {
     const idle = (window as unknown as { requestIdleCallback?: (cb: () => void, opts?: { timeout?: number }) => number }).requestIdleCallback;
     const idleId = idle ? idle(start, { timeout: 3500 }) : window.setTimeout(start, 2000);
 
+    // refresh() itself re-checks the public IP first and only skips the
+    // lookup when both the cache is fresh and the IP hasn't changed.
     const refreshIfStale = () => {
-      if (Date.now() - cachedAt > TTL_MS) void refresh();
+      void refresh();
     };
     const onVisible = () => {
       if (document.visibilityState === "visible") refreshIfStale();
     };
-    const onOnline = () => refreshIfStale();
+    const onOnline = () => void refresh(true);
+    const poll = window.setInterval(refreshIfStale, 60_000);
     const connection = (navigator as NavigatorWithConnection).connection;
     window.addEventListener("focus", refreshIfStale);
     window.addEventListener("online", onOnline);
@@ -106,6 +111,7 @@ export function useVisitorVpn() {
     document.addEventListener("visibilitychange", onVisible);
     return () => {
       listeners.delete(l);
+      window.clearInterval(poll);
       if (idle) {
         (window as unknown as { cancelIdleCallback?: (id: number) => void }).cancelIdleCallback?.(idleId as number);
       } else {
