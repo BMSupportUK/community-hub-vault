@@ -1486,6 +1486,18 @@ function ChannelPage() {
                         </button>
                         <button
                           onClick={() => {
+                            setReplyTo(m);
+                            setOpenMenuId(null);
+                            setEmojiPickerId(null);
+                            taRef.current?.focus();
+                          }}
+                          className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-surface-2 border-l border-border"
+                          title="Reply"
+                        >
+                          <Reply className="size-4" />
+                        </button>
+                        <button
+                          onClick={() => {
                             setOpenMenuId(menuOpen ? null : m.id);
                             setEmojiPickerId(null);
                           }}
