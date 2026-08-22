@@ -754,13 +754,34 @@ export type FantasyLeaderboardRow = {
   totalHits: number;
   gameweeksScored: number;
   email: string | null;
+  /** Points scored in the gameweek currently in play (null when not scored yet). */
+  currentGwPoints: number | null;
+  currentGwNumber: number | null;
+  /** Points scored in the most recently completed gameweek. */
+  previousGwPoints: number | null;
+  previousGwNumber: number | null;
 };
+
+/** Squad points for one gameweek, keyed by entrant id. */
+async function pointsByEntrant(admin: any, gameweekId: string) {
+  const { data } = await admin
+    .from("fantasy_squads")
+    .select("user_id, guest_id, points")
+    .eq("gameweek_id", gameweekId);
+  const map = new Map<string, number | null>();
+  for (const s of (data ?? []) as any[]) {
+    const id = (s.guest_id ?? s.user_id) as string | null;
+    if (id) map.set(id, s.points ?? null);
+  }
+  return map;
+}
 
 export async function loadLeaderboard(admin: any, withEmails: boolean): Promise<FantasyLeaderboardRow[]> {
   const { data, error } = await admin
     .from("fantasy_leaderboard")
     .select("*")
     .order("total_points", { ascending: false });
+
   if (error) throw new Error(error.message);
   const rows = (data ?? []) as any[];
   const emailMap = new Map<string, string>();
@@ -783,6 +804,19 @@ export async function loadLeaderboard(admin: any, withEmails: boolean): Promise<
       for (const g of gs ?? []) if ((g as any).email) emailMap.set((g as any).id, (g as any).email);
     }
   }
+
+  // Current gameweek = the one in play this week; previous = most recent
+  // completed gameweek that isn't the current one.
+  const gameweeks = await loadGameweeks(admin);
+  const currentId = pickCurrentGameweek(gameweeks);
+  const current = gameweeks.find((g) => g.id === currentId) ?? null;
+  const previous =
+    [...gameweeks].reverse().find((g) => g.status === "final" && g.id !== current?.id) ?? null;
+  const [currentPts, previousPts] = await Promise.all([
+    current ? pointsByEntrant(admin, current.id) : Promise.resolve(new Map<string, number | null>()),
+    previous ? pointsByEntrant(admin, previous.id) : Promise.resolve(new Map<string, number | null>()),
+  ]);
+
   return rows.map((r) => ({
     entrantId: r.entrant_id,
     isGuest: !!r.is_guest,
@@ -794,5 +828,10 @@ export async function loadLeaderboard(admin: any, withEmails: boolean): Promise<
     totalHits: r.total_hits ?? 0,
     gameweeksScored: r.gameweeks_scored ?? 0,
     email: emailMap.get(r.entrant_id) ?? null,
+    currentGwPoints: current ? (currentPts.get(r.entrant_id) ?? null) : null,
+    currentGwNumber: current?.gwNumber ?? null,
+    previousGwPoints: previous ? (previousPts.get(r.entrant_id) ?? null) : null,
+    previousGwNumber: previous?.gwNumber ?? null,
+
   }));
 }
