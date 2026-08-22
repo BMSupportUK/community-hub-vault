@@ -1,0 +1,1 @@
+select cron.alter_job(371, schedule := '30 seconds');
