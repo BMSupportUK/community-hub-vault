@@ -79,6 +79,8 @@ interface Message {
   pinned_at: string | null;
   pinned_by: string | null;
   edited_at?: string | null;
+  reply_to?: string | null;
+
 }
 
 interface Profile {
