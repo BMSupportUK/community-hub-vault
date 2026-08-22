@@ -307,6 +307,11 @@ function ChannelPage() {
   // Discord-style "jump to last read" support. Captured once per channel load
   // so the divider stays visible until the user navigates away.
   const [firstUnreadId, setFirstUnreadId] = useState<string | null>(null);
+  // Frozen last-read timestamp captured when the channel was opened. Used for
+  // the per-message read/unread labels so they don't all flip to "Read" as soon
+  // as the marker advances while the user is reading.
+  const [baselineReadAt, setBaselineReadAt] = useState<string | null>(null);
+
   const initialScrollDoneRef = useRef(false);
   const lastReadAtRef = useRef<string | null>(null);
   const firstUnreadRef = useRef<HTMLDivElement | null>(null);
@@ -403,21 +408,25 @@ function ChannelPage() {
     initialScrollDoneRef.current = false;
     setFirstUnreadId(null);
     lastReadAtRef.current = null;
+    setBaselineReadAt(null);
     let cancelled = false;
-    // Fetch the persisted last-read marker for this channel before messages
-    // so the initial-scroll effect uses the cross-device value.
-    if (user) {
-      void supabase
-        .from("channel_reads")
-        .select("last_read_at")
-        .eq("user_id", user.id)
-        .eq("channel_id", channel.id)
-        .maybeSingle()
-        .then(({ data }) => {
-          if (!cancelled && data?.last_read_at) lastReadAtRef.current = data.last_read_at;
-        });
-    }
     (async () => {
+      // Fetch the persisted last-read marker BEFORE messages so the
+      // initial-scroll effect and read/unread labels use the stored value.
+      if (user) {
+        const { data: readRow } = await supabase
+          .from("channel_reads")
+          .select("last_read_at")
+          .eq("user_id", user.id)
+          .eq("channel_id", channel.id)
+          .maybeSingle();
+        if (cancelled) return;
+        if (readRow?.last_read_at) {
+          lastReadAtRef.current = readRow.last_read_at;
+          setBaselineReadAt(readRow.last_read_at);
+        }
+      }
+
       const { data } = await supabase
         .from("chat_messages")
         .select("id, channel_id, sender_id, content, created_at, pinned_at, pinned_by")
@@ -1180,6 +1189,8 @@ function ChannelPage() {
                 const pickerOpen = emojiPickerId === m.id;
                 const canEdit = isSelf;
                 const showUnreadDivider = m.id === firstUnreadId;
+                const isUnread = !isSelf && !!baselineReadAt && m.created_at > baselineReadAt;
+
                 return (
                   <div key={m.id}>
                     {showUnreadDivider && (
@@ -1261,6 +1272,19 @@ function ChannelPage() {
                               minute: "2-digit",
                             })}
                           </span>
+                          {!isSelf && baselineReadAt && (
+                            <span
+                              className={cn(
+                                "inline-flex items-center rounded-full border px-1.5 py-px text-[9px] font-semibold uppercase tracking-wider shrink-0",
+                                isUnread
+                                  ? "border-destructive/60 text-destructive bg-destructive/10"
+                                  : "border-border text-muted-foreground",
+                              )}
+                            >
+                              {isUnread ? "Unread" : "Read"}
+                            </span>
+                          )}
+
                           {isPinned && (
                             <span className="inline-flex items-center gap-1 text-[10px] text-primary">
                               <Pin className="size-3" /> Pinned
