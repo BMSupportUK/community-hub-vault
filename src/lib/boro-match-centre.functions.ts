@@ -574,6 +574,38 @@ async function fetchEspnBoro(): Promise<{
     .filter((x): x is NonNullable<typeof x> => x !== null && isBoroMatch(x))
     .sort((a, b) => a.t - b.t);
 
+  // Schedule/scoreboard responses can briefly mark a match as completed at
+  // half-time. Confirm any just-finished-looking fixture against Gamecast,
+  // whose status is authoritative, before moving it into lastResult.
+  const recentCompleted = [...parsed]
+    .reverse()
+    .find((match) => match.completed && match.eventId && match.t <= now && match.t > now - 5 * 60 * 60 * 1000);
+  if (recentCompleted?.eventId) {
+    try {
+      const { espnJson } = await import("@/lib/espn-fetch");
+      const summary: any = await espnJson(
+        `https://site.api.espn.com/apis/site/v2/sports/soccer/${recentCompleted.espnSlug}/summary?event=${encodeURIComponent(recentCompleted.eventId)}`,
+      );
+      const status = summary?.header?.competitions?.[0]?.status;
+      const state = String(status?.type?.state ?? "").toLowerCase();
+      const detail = String(
+        status?.type?.shortDetail ?? status?.type?.detail ?? status?.type?.description ?? "",
+      );
+      const final =
+        state === "post" ||
+        status?.type?.completed === true ||
+        /full\s*time|\bft\b|final/i.test(detail);
+      if (!final && (state === "in" || /half\s*time|halftime|\bht\b/i.test(detail))) {
+        recentCompleted.completed = false;
+        recentCompleted.state = "in";
+        recentCompleted.statusDetail = detail || "Live";
+        recentCompleted.clock = status?.displayClock ?? recentCompleted.clock;
+      }
+    } catch (error) {
+      console.error("[boro-match-centre] live status confirmation failed", error);
+    }
+  }
+
   const past = parsed.filter((p) => p.completed && p.homeScore !== null && p.awayScore !== null);
   const future = parsed.filter((p) => !p.completed);
 
