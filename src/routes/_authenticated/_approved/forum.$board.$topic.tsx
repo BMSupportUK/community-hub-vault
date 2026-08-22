@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { HtmlEditor } from "@/components/ui/html-editor";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { isTeamSheetPost } from "@/lib/forum-team-sheet";
 import { ForumPostBody } from "@/components/app/ForumPostBody";
 import { ForumPostReactions } from "@/components/app/ForumPostReactions";
 import { isPreparedForumPostBody, markPreparedForumPostBody, normalizeForumPostInput, prepareForumPostBody } from "@/lib/forum-embeds";
@@ -267,12 +268,6 @@ function sortPostsForTopic(a: Post, b: Post) {
   if (a.is_pinned && !b.is_pinned) return -1;
   if (!a.is_pinned && b.is_pinned) return 1;
   return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
-}
-
-export function isTeamSheetPost(body: string | null | undefined): boolean {
-  if (!body) return false;
-  const text = body.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").toLowerCase();
-  return /team news\s*[—–-]\s*(updated\s+)?(official\s+)?line-?up/.test(text) || /confirmed line-?ups?/.test(text);
 }
 
 function shouldShowInsertedReply(currentPage: number, replyCountBeforeInsert: number, repliesPerPage: number) {
