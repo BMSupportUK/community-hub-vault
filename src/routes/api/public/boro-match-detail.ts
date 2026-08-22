@@ -45,6 +45,25 @@ export const Route = createFileRoute("/api/public/boro-match-detail")({
 
         const { fetchBoroMatchDetail } = await import("@/lib/boro-match-detail.server");
 
+        // FotMob is reachable from the production worker and does not rely on
+        // a visitor relaying data. Prefer it whenever the fixture is known.
+        if (parsed.data.home && parsed.data.away && parsed.data.kickoff) {
+          const { fetchFotmobSummary } = await import("@/lib/fotmob-boro.server");
+          const fotmob = await fetchFotmobSummary({
+            home: parsed.data.home,
+            away: parsed.data.away,
+            kickoff: parsed.data.kickoff,
+          });
+          if (fotmob) {
+            const { normaliseBoroMatchDetail } = await import("@/lib/boro-match-detail-normalise");
+            const detail = normaliseBoroMatchDetail(fotmob);
+            return Response.json(
+              { ...detail, eventId: String(fotmob?.header?.id ?? eventId ?? ""), slug: "fotmob" },
+              { headers: { "cache-control": "no-store, no-cache, must-revalidate" } },
+            );
+          }
+        }
+
         // A known event id is the fastest path. Its response is also checked
         // against the fixture, so a stale id can never display another match.
         if (eventId) {

@@ -68,7 +68,18 @@ export async function findEspnEvent(fx: FixtureLite): Promise<{ eventId: string;
   return null;
 }
 
-async function fetchEvents(eventId: string, slug: string): Promise<{ events: ParsedEvent[]; status: string | null }> {
+async function fetchEvents(
+  eventId: string,
+  slug: string,
+  fx: FixtureLite,
+): Promise<{ events: ParsedEvent[]; status: string | null }> {
+  const { fetchFotmobSummary } = await import("@/lib/fotmob-boro.server");
+  const fotmob = await fetchFotmobSummary({ home: fx.home_team, away: fx.away_team, kickoff: fx.kickoff_at });
+  if (fotmob) {
+    const norm = normaliseEspnSummary(fotmob);
+    return { events: norm.events.filter((event) => isReportableEvent(event.kind)), status: norm.status };
+  }
+
   let json: any = await espnJson(
     `https://site.api.espn.com/apis/site/v2/sports/soccer/${slug}/summary?event=${encodeURIComponent(eventId)}`,
   );
@@ -183,10 +194,12 @@ export async function syncBoroMatchEvents(opts?: { ignoreWindow?: boolean }): Pr
     return { ok: true, fixture: label, topic: null, posted: 0, updated: 0, skipped: ["no match day thread for this fixture yet"] };
   }
 
-  const espn = await findEspnEvent(fx);
-  if (!espn) return { ok: true, fixture: label, topic: topic.title, posted: 0, updated: 0, skipped: ["no ESPN match found"] };
+  const { resolveFotmobMatch } = await import("@/lib/fotmob-boro.server");
+  const fotmobId = await resolveFotmobMatch({ home: fx.home_team, away: fx.away_team, kickoff: fx.kickoff_at });
+  const espn = fotmobId ? { eventId: fotmobId, slug: "fotmob" } : await findEspnEvent(fx);
+  if (!espn) return { ok: true, fixture: label, topic: topic.title, posted: 0, updated: 0, skipped: ["no live-data match found"] };
 
-  const { events, status } = await fetchEvents(espn.eventId, espn.slug);
+  const { events, status } = await fetchEvents(espn.eventId, espn.slug, fx);
   if (events.length === 0) {
     return { ok: true, fixture: label, topic: topic.title, status, posted: 0, updated: 0, skipped: ["no match events yet"] };
   }

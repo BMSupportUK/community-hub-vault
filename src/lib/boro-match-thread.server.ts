@@ -417,9 +417,10 @@ export async function syncBoroMatchThread(opts?: { ignoreWindow?: boolean }): Pr
 
   // ESPN is a bonus, not a requirement: the preview must still go out ~24h
   // before kick-off using our own fixture data when ESPN has no listing yet.
-  const espn = await findEspnEvent(fx);
-  let json: any = null;
-  if (espn) {
+  const { fetchFotmobSummary } = await import("@/lib/fotmob-boro.server");
+  let json: any = await fetchFotmobSummary({ home: fx.home_team, away: fx.away_team, kickoff: fx.kickoff_at });
+  const espn = json ? null : await findEspnEvent(fx);
+  if (!json && espn) {
     const { espnJson } = await import("@/lib/espn-fetch");
     json = await espnJson(
       `https://site.api.espn.com/apis/site/v2/sports/soccer/${espn.slug}/summary?event=${encodeURIComponent(espn.eventId)}`,
@@ -456,14 +457,14 @@ export async function syncBoroMatchThread(opts?: { ignoreWindow?: boolean }): Pr
     relayAge <= 2 * 60 * 1000 &&
     stateOf(relayed) === "in" &&
     stateOf(json) === "post";
-  if (usable(relayed) && (freshRelayStillLive || summaryRank(relayed) >= summaryRank(json))) {
+  if (!json && usable(relayed) && (freshRelayStillLive || summaryRank(relayed) >= summaryRank(json))) {
     json = relayed;
     skipped.push("used freshest relayed ESPN summary");
   }
 
   const hasEspn = usable(json);
   if (!hasEspn) {
-    skipped.push(espn ? "ESPN summary unavailable — posted fixture-only preview" : "no ESPN match found — posted fixture-only preview");
+    skipped.push(espn ? "live summary unavailable — posted fixture-only preview" : "no live-data match found — posted fixture-only preview");
     json = {};
   }
   const status = hasEspn ? normaliseEspnSummary(json).status : null;
