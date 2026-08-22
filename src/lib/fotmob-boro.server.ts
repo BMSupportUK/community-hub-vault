@@ -237,22 +237,7 @@ export async function fetchFotmobSummary(input: {
     _provider: "fotmob",
   };
 }
-/** Presentation detail for one FotMob event, mirroring FotMob's own cards. */
-export type FotmobEventDetail = {
-  minuteLabel: string;
-  headline: string;
-  narrative: string;
-  teamName: string | null;
-  isHome: boolean;
-  player: { name: string; number: string | null; position: string | null } | null;
-  playerIn: { name: string; number: string | null; position: string | null } | null;
-  playerOut: { name: string; number: string | null; position: string | null } | null;
-  assist: string | null;
-  shotType: string | null;
-  xg: string | null;
-  xgot: string | null;
-  card: string | null;
-};
+import type { FotmobEventDetail, FotmobEventPlayer } from "@/lib/fotmob-boro.types";
 
 type PlayerMeta = { number: string | null; position: string | null };
 
@@ -329,7 +314,8 @@ function fotmobEventDetail(
   const person = (id: unknown, name: unknown) => {
     if (!name) return null;
     const m = ctx.meta.get(String(id ?? ""));
-    return { name: String(name), number: m?.number ?? null, position: positionLabel(m?.position ?? null) };
+    const out: FotmobEventPlayer = { name: String(name), number: m?.number ?? null, position: positionLabel(m?.position ?? null) };
+    return out;
   };
 
   if (type === "Goal") {
