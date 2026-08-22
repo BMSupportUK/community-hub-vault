@@ -1527,6 +1527,26 @@ function ChannelPage() {
                         >
                           <Reply className="size-4" />
                         </button>
+                        {canDelete && (
+                          <button
+                            onClick={() => {
+                              if (
+                                window.confirm(
+                                  "Delete this message? This cannot be undone.",
+                                )
+                              ) {
+                                remove(m.id);
+                                setOpenMenuId(null);
+                                setEmojiPickerId(null);
+                              }
+                            }}
+                            className="p-1.5 text-destructive hover:bg-destructive/10 border-l border-border"
+                            title="Delete message"
+                            aria-label="Delete message"
+                          >
+                            <Trash2 className="size-4" />
+                          </button>
+                        )}
                         <button
                           onClick={() => {
                             setOpenMenuId(menuOpen ? null : m.id);
@@ -1537,6 +1557,7 @@ function ChannelPage() {
                         >
                           <MoreHorizontal className="size-4" />
                         </button>
+
 
                         {pickerOpen && (
                           <div className="absolute right-0 top-full mt-1 flex gap-1 rounded-lg border border-border bg-popover p-1.5 shadow-lg z-20">
