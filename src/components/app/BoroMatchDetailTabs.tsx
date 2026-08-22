@@ -522,6 +522,7 @@ export function BoroMatchDetailTabs({
             </TabsContent>
           ))}
         </Tabs>
+        <StatKey columns={statColumns} />
       </TabsContent>
     </Tabs>
   );
