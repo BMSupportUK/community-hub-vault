@@ -33,15 +33,20 @@ export function useTalkChannelPresence(options: {
   useEffect(() => {
     if (track && (!userId || !channelId)) return;
 
+    let active = true;
+    const connectionId = crypto.randomUUID();
+
     const presence = supabase.channel(TALK_PRESENCE_TOPIC, {
       config: {
         presence: {
-          key: track && userId ? userId : `observer-${crypto.randomUUID()}`,
+          key: track && userId ? `${userId}:${connectionId}` : `observer-${connectionId}`,
         },
       },
     });
 
-    const syncCount = () => setCount(countUniqueUsers(presence));
+    const syncCount = () => {
+      if (active) setCount(countUniqueUsers(presence));
+    };
 
     presence
       .on("presence", { event: "sync" }, syncCount)
@@ -60,8 +65,11 @@ export function useTalkChannelPresence(options: {
       });
 
     return () => {
-      if (track) presence.untrack().catch(() => {});
-      supabase.removeChannel(presence);
+      active = false;
+      void (async () => {
+        if (track) await presence.untrack().catch(() => undefined);
+        await supabase.removeChannel(presence);
+      })();
     };
   }, [channelId, track, userId]);
 

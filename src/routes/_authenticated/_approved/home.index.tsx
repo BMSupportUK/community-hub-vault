@@ -201,15 +201,18 @@ function WelcomePage() {
             className="text-sm text-sky-300 hover:text-sky-200 inline-flex items-center gap-2"
           >
             Open BM Support Customer Chat-room →
-            <span
-              className={`inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1 rounded-full text-[10px] font-bold tabular-nums transition-colors ${
-                welcomeOnlineCount > 0
-                  ? "bg-emerald-500 text-white"
-                  : "bg-muted text-muted-foreground"
-              }`}
-              aria-label={welcomeOnlineCount > 0 ? `${welcomeOnlineCount} users in chat` : "No users in chat"}
-            >
-              {welcomeOnlineCount}
+            <span className="inline-flex items-center gap-1.5" aria-live="polite">
+              <span
+                className={`inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1 rounded-full text-[10px] font-bold tabular-nums transition-colors ${
+                  welcomeOnlineCount > 0
+                    ? "bg-emerald-500 text-white"
+                    : "bg-muted text-muted-foreground"
+                }`}
+                aria-label={welcomeOnlineCount > 0 ? `${welcomeOnlineCount} users in chat` : "No users in chat"}
+              >
+                {welcomeOnlineCount}
+              </span>
+              <span className="text-xs font-medium">User in Chat</span>
             </span>
           </Link>
         </div>
