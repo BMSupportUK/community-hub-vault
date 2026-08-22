@@ -3,7 +3,7 @@ import {
 } from "@/lib/boro-match-detail-normalise";
 import type { MatchDetailDTO } from "@/lib/boro-match-detail.types";
 
-export async function fetchBoroMatchDetail(eventId: string, _slug: string): Promise<MatchDetailDTO> {
+export async function fetchBoroMatchDetail(eventId: string, slug: string): Promise<MatchDetailDTO> {
   const empty: MatchDetailDTO = {
     available: false,
     status: null,
@@ -22,6 +22,7 @@ export async function fetchBoroMatchDetail(eventId: string, _slug: string): Prom
 
   try {
     // FotMob only — ESPN is no longer used as a fallback.
+    if (slug !== "fotmob") return empty; // ESPN ids are no longer resolvable — FotMob only.
     const { fetchFotmobSummary } = await import("@/lib/fotmob-boro.server");
     const json: any = await fetchFotmobSummary({
       home: "",
