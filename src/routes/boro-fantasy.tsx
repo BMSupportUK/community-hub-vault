@@ -3528,22 +3528,40 @@ function LeaderboardTable({
   const previousPoints = new Map(
     (previousGameweek?.rows ?? []).map((row) => [`${row.isGuest ? "guest" : "user"}:${row.entrantId}`, row.points]),
   );
-  const previousPointsFor = (row: FantasyLeaderboardRow) =>
-    previousPoints.get(`${row.isGuest ? "guest" : "user"}:${row.entrantId}`) ?? "—";
+  const previousPointsFor = (row: FantasyLeaderboardRow) => {
+    if (row.previousGwPoints != null) return row.previousGwPoints;
+    return previousPoints.get(`${row.isGuest ? "guest" : "user"}:${row.entrantId}`) ?? "—";
+  };
+  const currentPointsFor = (row: FantasyLeaderboardRow) => row.currentGwPoints ?? "—";
+  const currentGwNumber = rows.find((r) => r.currentGwNumber != null)?.currentGwNumber ?? null;
+  const previousGwNumber =
+    rows.find((r) => r.previousGwNumber != null)?.previousGwNumber ?? previousGameweek?.gameweek.gwNumber ?? null;
+  const pointsCells = (r: FantasyLeaderboardRow) => (
+    <>
+      <td className="px-3 py-2 text-right font-semibold tabular-nums">{previousPointsFor(r)}</td>
+      <td className="px-3 py-2 text-right font-semibold tabular-nums">{currentPointsFor(r)}</td>
+    </>
+  );
   return (
-    <div className="rounded-2xl border border-border/60 bg-card/80 backdrop-blur overflow-hidden">
+    <div className="rounded-2xl border border-border/60 bg-card/80 backdrop-blur overflow-x-auto">
       <table className="w-full text-sm">
         <thead className="bg-muted/40 text-xs uppercase text-muted-foreground">
           <tr>
             <th className="text-left px-3 py-2 w-10">#</th>
             <th className="text-left px-3 py-2">Manager</th>
             <th className="text-right px-3 py-2">GWs</th>
-            <th className="text-right px-3 py-2">Previous GW</th>
+            <th className="text-right px-3 py-2 whitespace-nowrap">
+              Previous GW{previousGwNumber != null ? ` ${previousGwNumber}` : ""}
+            </th>
+            <th className="text-right px-3 py-2 whitespace-nowrap">
+              This week{currentGwNumber != null ? ` (GW ${currentGwNumber})` : ""}
+            </th>
             <th className="text-right px-3 py-2">Season points</th>
             <th className="text-right px-3 py-2">Squad</th>
             {canRemove && <th className="px-2 py-2 w-10 sr-only">Remove</th>}
           </tr>
         </thead>
+
         <tbody>
           {ranked.map((r, i) => (
             <tr key={r.entrantId} className="border-t border-border/50">
