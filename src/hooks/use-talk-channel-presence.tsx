@@ -35,9 +35,11 @@ export function useTalkChannelPresence(options: {
 
     let active = true;
     const connectionId = crypto.randomUUID();
+    const syncTimers = new Set<ReturnType<typeof setTimeout>>();
 
     const presence = supabase.channel(TALK_PRESENCE_TOPIC, {
       config: {
+        broadcast: { self: false },
         presence: {
           key: track && userId ? `${userId}:${connectionId}` : `observer-${connectionId}`,
         },
@@ -48,10 +50,22 @@ export function useTalkChannelPresence(options: {
       if (active) setCount(countUniqueUsers(presence));
     };
 
+    const syncLiveCount = () => {
+      syncCount();
+      for (const delay of [100, 500]) {
+        const timer = setTimeout(() => {
+          syncTimers.delete(timer);
+          syncCount();
+        }, delay);
+        syncTimers.add(timer);
+      }
+    };
+
     presence
-      .on("presence", { event: "sync" }, syncCount)
-      .on("presence", { event: "join" }, syncCount)
-      .on("presence", { event: "leave" }, syncCount)
+      .on("presence", { event: "sync" }, syncLiveCount)
+      .on("presence", { event: "join" }, syncLiveCount)
+      .on("presence", { event: "leave" }, syncLiveCount)
+      .on("broadcast", { event: "occupancy_changed" }, syncLiveCount)
       .subscribe(async (status) => {
         if (status !== "SUBSCRIBED") return;
         if (track && userId && channelId) {
@@ -60,14 +74,20 @@ export function useTalkChannelPresence(options: {
             channel_id: channelId,
             online_at: new Date().toISOString(),
           });
+          await presence.send({ type: "broadcast", event: "occupancy_changed", payload: {} });
         }
-        syncCount();
+        syncLiveCount();
       });
 
     return () => {
       active = false;
+      for (const timer of syncTimers) clearTimeout(timer);
+      syncTimers.clear();
       void (async () => {
-        if (track) await presence.untrack().catch(() => undefined);
+        if (track) {
+          await presence.untrack().catch(() => undefined);
+          await presence.send({ type: "broadcast", event: "occupancy_changed", payload: {} }).catch(() => undefined);
+        }
         await supabase.removeChannel(presence);
       })();
     };
