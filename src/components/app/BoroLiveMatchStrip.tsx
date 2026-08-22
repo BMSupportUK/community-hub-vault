@@ -147,8 +147,34 @@ export function BoroLiveMatchStrip() {
       ? null
       : rawNf;
 
+  // The fixture the "Next fixture" tab previews. Normally the match centre's
+  // own nextFixture; when the weekly rollover is still holding this week's game
+  // we fall back to the next unplayed fixture from the fixture list, so the
+  // upcoming game can be previewed straight away.
+  const previewNf =
+    nf && Date.parse(nf.kickoff) > now
+      ? nf
+      : upcoming
+        ? {
+            kickoff: upcoming.kickoff,
+            competition: upcoming.competition,
+            home: upcoming.home,
+            away: upcoming.away,
+            venue: upcoming.venue,
+            homeLogo: null,
+            awayLogo: null,
+            eventId: null,
+            espnSlug: null,
+          }
+        : nf;
+
   const selectedMatch =
-    view === "next" ? (nf ?? live ?? lr) : view === "last" ? (lr ?? live ?? nf) : (live ?? nf ?? lr);
+    view === "next"
+      ? (previewNf ?? live ?? lr)
+      : view === "last"
+        ? (lr ?? live ?? previewNf)
+        : (live ?? nf ?? lr);
+
 
   // Never borrow another fixture's ESPN id — that made a new game show the
   // previous match's line-ups, stats and ratings.
