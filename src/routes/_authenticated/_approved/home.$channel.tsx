@@ -336,10 +336,10 @@ function ChannelPage() {
   const firstUnreadRef = useRef<HTMLDivElement | null>(null);
   const latestMessageRef = useRef<Message | null>(null);
 
-  // Messages flip from "Unread" to "Read" 30s after they first appear on screen.
+  // Messages flip from "Unread" to "Read" 10s after they first appear on screen.
   const seenAtRef = useRef<Map<string, number>>(new Map());
   const [readTick, setReadTick] = useState(0);
-  const READ_DELAY_MS = 30_000;
+  const READ_DELAY_MS = 10_000;
 
   useEffect(() => {
     const now = Date.now();
