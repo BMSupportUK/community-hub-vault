@@ -293,6 +293,8 @@ export function BoroMatchDetailTabs({
   const homeTeam = detail?.lineups.find((lineup) => lineup.teamId === detail.homeTeamId) ?? detail?.lineups[0] ?? null;
   const awayTeam = detail?.lineups.find((lineup) => lineup.teamId === detail.awayTeamId) ?? detail?.lineups[1] ?? null;
   const teams = { home: homeTeam, away: awayTeam };
+  const statColumns = resolveStatColumns(detail);
+
 
   const primaryStats = detail?.teamStats.filter((s) => s.primary) ?? [];
   const extraStats = detail?.teamStats.filter((s) => !s.primary) ?? [];
