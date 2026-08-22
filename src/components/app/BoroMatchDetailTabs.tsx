@@ -222,7 +222,24 @@ export function BoroMatchDetailTabs({
         if (stopped) return;
         setDetail((current) => mergeMatchDetail(current, next));
         setLoading(false);
-        const hasLineups = next.lineups.some((lineup) => lineup.players.length > 0);
+        let hasLineups = next.lineups.some((lineup) => lineup.players.length > 0);
+
+        // ESPN refuses our server's IP (403) in production, so the server answer
+        // can be completely empty. The visitor's browser is not blocked — fetch
+        // the same Gamecast feed directly and merge it in.
+        if (!hasLineups && !next.teamStats.length) {
+          const { fetchEspnDetailInBrowser } = await import("@/lib/boro-match-detail-client");
+          const direct = await fetchEspnDetailInBrowser({
+            eventId: next.eventId ?? eventId ?? resolvedEventId,
+            slug: next.slug ?? slug ?? null,
+            fixture: fixture ?? null,
+          });
+          if (stopped) return;
+          if (direct) {
+            setDetail((current) => mergeMatchDetail(current, direct));
+            hasLineups = direct.lineups.some((lineup) => lineup.players.length > 0);
+          }
+        }
         timer = window.setTimeout(load, live ? 15_000 : armed ? (hasLineups ? 30_000 : 10_000) : 5 * 60_000);
       } catch (error) {
         console.error(error);
