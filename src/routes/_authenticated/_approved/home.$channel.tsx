@@ -1654,6 +1654,37 @@ function ChannelPage() {
       </div>
 
       <div className="p-4 border-t border-border shrink-0">
+        {replyTo && (
+          <div className="mb-2 flex items-center gap-2 rounded-lg border border-primary/40 bg-primary/10 px-3 py-2 text-xs">
+            <Reply className="size-3.5 shrink-0 text-primary" />
+            <span className="shrink-0 font-semibold">
+              Replying to{" "}
+              {profiles[replyTo.sender_id]?.display_name ??
+                profiles[replyTo.sender_id]?.username ??
+                "Unknown"}
+            </span>
+            <span className="min-w-0 flex-1 truncate text-muted-foreground">
+              {/^https?:\/\/\S+$/i.test(replyTo.content.trim()) ? "Attachment" : replyTo.content}
+            </span>
+            <button
+              type="button"
+              onClick={() => jumpToMessage(replyTo.id)}
+              className="inline-flex shrink-0 items-center gap-1 rounded-md border border-border bg-surface-1 px-2 py-0.5 text-[10px] font-semibold hover:bg-surface-2"
+              title="Jump to original message"
+            >
+              <CornerUpRight className="size-3" /> Jump
+            </button>
+            <button
+              type="button"
+              onClick={() => setReplyTo(null)}
+              className="grid size-6 shrink-0 place-items-center rounded-md hover:bg-surface-2"
+              title="Cancel reply"
+              aria-label="Cancel reply"
+            >
+              <X className="size-3.5" />
+            </button>
+          </div>
+        )}
         {pendingGif && (
           <div className="mb-2 flex items-start">
             <div className="relative overflow-hidden rounded-lg border border-border bg-surface-2 p-1">
