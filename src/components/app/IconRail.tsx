@@ -341,6 +341,7 @@ function RailIcon({
             params={params as never}
             search={search as never}
             aria-label={label}
+             title={label}
             draggable={false}
             onDragStart={draggable ? undefined : (e) => e.preventDefault()}
             className={cn(
