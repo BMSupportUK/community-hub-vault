@@ -47,7 +47,12 @@ export async function resolveEspnEvent(input: {
   const wanted = [norm(input.home), norm(input.away)];
 
   let best: { value: ResolvedEspnEvent; distance: number } | null = null;
-  for (const slug of slugOrder(input.competition)) {
+  const orderedSlugs = slugOrder(input.competition);
+  const preferredSlug = COMPETITIONS.find((competition) => competition.match.test(input.competition ?? ""))?.slug;
+  // A recognised competition has one authoritative feed. Avoid waiting for
+  // four unrelated competitions when its scoreboard is temporarily blocked.
+  const slugs = preferredSlug ? [preferredSlug] : orderedSlugs;
+  for (const slug of slugs) {
     const json = (await espnJson(
       `https://site.api.espn.com/apis/site/v2/sports/soccer/${slug}/scoreboard?dates=${dates}&limit=400`,
     )) as { events?: any[] } | null;

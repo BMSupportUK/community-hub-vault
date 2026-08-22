@@ -9,7 +9,6 @@ import { useUserTimezone } from "@/hooks/use-user-timezone";
 import { TeamKit } from "@/lib/boro-team-kits";
 import { Dialog, DialogContent, DialogTitle, DialogClose } from "@/components/ui/dialog";
 import { BoroMatchDetailTabs } from "@/components/app/BoroMatchDetailTabs";
-import type { MatchDetailDTO } from "@/lib/boro-match-detail.types";
 
 function fmtKickoff(iso: string, tz: string) {
   try {
@@ -71,8 +70,6 @@ export function BoroLiveMatchStrip() {
   const tz = useUserTimezone();
   const [data, setData] = useState<MatchCentreDTO | null>(null);
   const [open, setOpen] = useState(false);
-  const [opening, setOpening] = useState(false);
-  const [initialDetail, setInitialDetail] = useState<MatchDetailDTO | null>(null);
   const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
@@ -146,37 +143,7 @@ export function BoroLiveMatchStrip() {
       }
     : null;
   const canResolve = !!(selectedFixture?.home && selectedFixture?.away && selectedFixture?.kickoff);
-  const openMatchCentre = async () => {
-    if ((!selectedEventId && !canResolve) || opening) {
-      setOpen(true);
-      return;
-    }
-    setOpening(true);
-    try {
-      const params = new URLSearchParams({ refresh: String(Date.now()) });
-      if (selectedEventId) params.set("eventId", selectedEventId);
-      if (selectedSlug) params.set("slug", selectedSlug);
-      if (canResolve && selectedFixture) {
-        params.set("home", selectedFixture.home);
-        params.set("away", selectedFixture.away);
-        params.set("kickoff", selectedFixture.kickoff);
-        if (selectedFixture.competition) params.set("competition", selectedFixture.competition);
-      }
-      const response = await fetch(`/api/public/boro-match-detail?${params.toString()}`, {
-        headers: { accept: "application/json" },
-        cache: "no-store",
-      });
-      if (response.ok) {
-        const next = (await response.json()) as MatchDetailDTO;
-        setInitialDetail(next.available ? next : null);
-      }
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setOpening(false);
-      setOpen(true);
-    }
-  };
+  const openMatchCentre = () => setOpen(true);
 
   if (!data || (!live && !nf && !lr)) return null;
 
@@ -258,12 +225,11 @@ export function BoroLiveMatchStrip() {
 
             <button
               type="button"
-              onClick={() => void openMatchCentre()}
-              disabled={opening}
+              onClick={openMatchCentre}
               className="shrink-0 inline-flex items-center gap-1.5 rounded-lg bg-[#E11B22] px-2.5 py-1.5 text-xs font-bold text-white shadow hover:bg-[#c41820] transition"
             >
-              <span className="hidden sm:inline">{opening ? "Loading…" : "View match centre"}</span>
-              <span className="sm:hidden">{opening ? "…" : "View"}</span>
+              <span className="hidden sm:inline">View match centre</span>
+              <span className="sm:hidden">View</span>
               <ChevronRight className="size-3.5" />
             </button>
           </div>
@@ -345,7 +311,6 @@ export function BoroLiveMatchStrip() {
                     slug={selectedSlug}
                     live={isLive}
                     kickoff={isLive ? live!.kickoff : isFixture ? nf!.kickoff : null}
-                    initialDetail={initialDetail}
                     fixture={selectedFixture}
                   />
                 </div>
