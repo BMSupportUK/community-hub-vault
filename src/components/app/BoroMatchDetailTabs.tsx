@@ -4,7 +4,34 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { MatchDetailDTO, MatchEventItem, PlayerLine } from "@/lib/boro-match-detail.types";
 import { PLAYER_STAT_COLUMNS, describeEspnEvent } from "@/lib/boro-espn-events";
 
-const STAT_COLUMNS = PLAYER_STAT_COLUMNS;
+type StatColumn = { key: string; label: string; title: string };
+
+// FotMob and ESPN record different player stats (FotMob adds a rating and
+// minutes played but has no shots-faced/goals-conceded splits), so the table
+// columns follow whatever the active feed actually reports.
+const STAT_CATALOGUE: StatColumn[] = [
+  { key: "rating", label: "RTG", title: "Match rating" },
+  { key: "minutesPlayed", label: "MIN", title: "Minutes played" },
+  ...PLAYER_STAT_COLUMNS,
+];
+
+const FALLBACK_COLUMNS: StatColumn[] = STAT_CATALOGUE.filter((c) =>
+  ["totalGoals", "goalAssists", "totalShots", "shotsOnTarget", "foulsCommitted", "yellowCards", "redCards"].includes(c.key),
+);
+
+function resolveStatColumns(detail: MatchDetailDTO | null): StatColumn[] {
+  const seen = new Set<string>();
+  for (const lineup of detail?.lineups ?? []) {
+    for (const player of lineup.players) {
+      for (const [key, value] of Object.entries(player.stats ?? {})) {
+        if (value != null && String(value).trim() !== "") seen.add(key);
+      }
+    }
+  }
+  const columns = STAT_CATALOGUE.filter((c) => seen.has(c.key));
+  return columns.length ? columns : FALLBACK_COLUMNS;
+}
+
 
 type ActionGroup = {
   value: string;
