@@ -5,7 +5,6 @@ import {
   getBoroMatchCentre,
   type MatchCentreDTO,
 } from "@/lib/boro-match-centre.functions";
-import { getBoroUpcomingFixture, type UpcomingFixtureDTO } from "@/lib/boro-upcoming-fixture.functions";
 
 import type { MatchDetailDTO } from "@/lib/boro-match-detail.types";
 import { useUserTimezone } from "@/hooks/use-user-timezone";
@@ -70,29 +69,14 @@ function BigSide({ name, logo }: { name: string; logo?: string | null }) {
 
 export function BoroLiveMatchStrip() {
   const fetchData = useServerFn(getBoroMatchCentre);
-  const fetchUpcoming = useServerFn(getBoroUpcomingFixture);
   const tz = useUserTimezone();
   const [data, setData] = useState<MatchCentreDTO | null>(null);
-  const [upcoming, setUpcoming] = useState<UpcomingFixtureDTO>(null);
   const [preloadedDetail, setPreloadedDetail] = useState<MatchDetailDTO | null>(null);
   const [open, setOpen] = useState(false);
-  // Which game the pop-up shows. "auto" follows the live/next/last priority;
-  // the switcher lets you preview the upcoming fixture (line-ups, form, stats)
-  // before kick-off even while the last result is still the headline.
-  const [view, setView] = useState<"auto" | "next" | "last">("auto");
+  // Which game the pop-up shows. "auto" follows live, then the last result
+  // until the new game week rolls the next fixture in.
+  const [view, setView] = useState<"auto" | "last">("auto");
   const [now, setNow] = useState(() => Date.now());
-
-  useEffect(() => {
-    let cancelled = false;
-    void fetchUpcoming()
-      .then((u) => {
-        if (!cancelled) setUpcoming(u);
-      })
-      .catch((e) => console.error("[boro-match-centre] upcoming fixture failed", e));
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
 
 
@@ -434,11 +418,11 @@ export function BoroLiveMatchStrip() {
                   )}
                   {isFixture && (
                     <>
-                      <div>{fmtKickoff(previewNf!.kickoff, tz)}</div>
-                      {countdown(previewNf!.kickoff, now) && (
-                        <div className="text-xs text-red-200">Kick-off in {countdown(previewNf!.kickoff, now)}</div>
+                      <div>{fmtKickoff(nf!.kickoff, tz)}</div>
+                      {countdown(nf!.kickoff, now) && (
+                        <div className="text-xs text-red-200">Kick-off in {countdown(nf!.kickoff, now)}</div>
                       )}
-                      {previewNf!.venue && <div className="text-xs text-white/85">{previewNf!.venue}</div>}
+                      {nf!.venue && <div className="text-xs text-white/85">{nf!.venue}</div>}
 
                     </>
                   )}
