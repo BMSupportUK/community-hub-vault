@@ -249,27 +249,12 @@ export function BoroMatchDetailTabs({
         if (stopped) return;
         setDetail((current) => mergeMatchDetail(current, next));
         setLoading(false);
-        let hasLineups = next.lineups.some((lineup) => lineup.players.length > 0);
+        const hasLineups = next.lineups.some((lineup) => lineup.players.length > 0);
 
-        // ESPN refuses our server's IP (403) in production, so the server answer
-        // can be completely empty. The visitor's browser is not blocked — fetch
-        // the same Gamecast feed directly and merge it in.
-        // While the game is in play, always go direct from the browser so the
-        // panel reflects ESPN as it happens rather than the relayed cache.
-        if (live || (!hasLineups && !next.teamStats.length)) {
-          const { fetchEspnDetailInBrowser } = await import("@/lib/boro-match-detail-client");
-          const direct = await fetchEspnDetailInBrowser({
-            eventId: next.eventId ?? eventId ?? resolvedEventId,
-            slug: next.slug ?? slug ?? null,
-            fixture: fixture ?? null,
-          });
-          if (stopped) return;
-          if (direct) {
-            setDetail((current) => mergeMatchDetail(current, direct));
-            hasLineups = direct.lineups.some((lineup) => lineup.players.length > 0);
-          }
-        }
+        // FotMob is fetched server-side, so there is no browser fallback and no
+        // relay: each poll below returns the live feed as it happens.
         timer = window.setTimeout(load, live ? 5_000 : armed ? (hasLineups ? 20_000 : 8_000) : 5 * 60_000);
+
       } catch (error) {
         console.error(error);
         if (!stopped) {
