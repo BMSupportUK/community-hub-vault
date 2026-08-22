@@ -672,7 +672,12 @@ function ChannelPage() {
     }
     const { error } = await supabase
       .from("chat_messages")
-      .insert({ channel_id: channel.id, sender_id: user.id, content });
+      .insert({
+        channel_id: channel.id,
+        sender_id: user.id,
+        content,
+        reply_to: replyTo?.id ?? null,
+      });
     if (error) {
       const msg = error.message || "";
       const isPermission =
