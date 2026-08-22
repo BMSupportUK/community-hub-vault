@@ -197,7 +197,7 @@ export function BoroLiveMatchStrip() {
           console.error("[boro-match-centre] preload failed", error);
         }
       } finally {
-        if (!controller.signal.aborted && live?.inPlay) timer = window.setTimeout(load, 15_000);
+        if (!controller.signal.aborted && live?.inPlay) timer = window.setTimeout(load, 5_000);
       }
     };
 
