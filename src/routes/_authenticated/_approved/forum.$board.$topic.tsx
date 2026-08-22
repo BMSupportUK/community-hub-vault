@@ -722,11 +722,13 @@ function TopicPage() {
   };
 
   const visiblePosts = useMemo(() => {
-    if (!posts) return { opPost: null as Post | null, replies: [] as Post[], pinnedReplies: [] as Post[] };
+    if (!posts) return { opPost: null as Post | null, replies: [] as Post[], pinnedReplies: [] as Post[], teamPosts: [] as Post[] };
+    const visible = posts.filter((p) => p.is_op || !blocked.has(p.author_id));
     return {
-      opPost: posts.find((p) => p.is_op) ?? null,
-      replies: posts.filter((p) => !p.is_op && !p.is_pinned && !blocked.has(p.author_id)),
-      pinnedReplies: posts.filter((p) => !p.is_op && p.is_pinned && !blocked.has(p.author_id)),
+      opPost: visible.find((p) => p.is_op) ?? null,
+      replies: visible.filter((p) => !p.is_op && !p.is_pinned && !isTeamSheetPost(p.body)),
+      pinnedReplies: visible.filter((p) => !p.is_op && p.is_pinned && !isTeamSheetPost(p.body)),
+      teamPosts: visible.filter((p) => !p.is_op && isTeamSheetPost(p.body)),
     };
   }, [posts, blocked]);
 
