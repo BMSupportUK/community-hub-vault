@@ -754,7 +754,7 @@ function TopicPage() {
       }}
     />
   );
-  const { opPost, replies, pinnedReplies } = visiblePosts;
+  const { opPost, replies, pinnedReplies, teamPosts } = visiblePosts;
 
   return (
     <div className="boro-topic-page space-y-4">
