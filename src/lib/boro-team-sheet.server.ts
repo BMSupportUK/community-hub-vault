@@ -52,6 +52,8 @@ const TEAM_SHEET_PATTERNS: RegExp[] = [
   /\byour\s+boro\s+team\b/i,
   // Covers "Your opening day Boro 🔒", "Your Boro for tonight", etc.
   /\byour\s+(?:[a-z0-9'’-]+\s+){0,4}boro\b/i,
+  // The club also announces the XI as "Kim Hellberg's Boro".
+  /\b[a-z]+(?:\s+[a-z]+){0,3}['’]s\s+boro\b/i,
   /\bteam\s*news\b/i,
   /\bline[\s-]?up\b/i,
   /\bstarting\s+xi\b/i,
