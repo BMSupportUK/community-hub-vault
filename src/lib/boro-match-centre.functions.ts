@@ -162,7 +162,20 @@ export const getBoroMatchCentre = createServerFn({ method: "GET" }).handler(
             .eq("id", "singleton");
         }
       }
-      return { ...dto, lastResult, liveMatch: cached };
+      // Same top-up for the upcoming fixture: without an eventId the match
+      // centre tabs have no Gamecast feed to poll.
+      let nextFixture = dto.nextFixture;
+      if (nextFixture && !nextFixture.eventId) {
+        const enrichedNext = await withEspnEvent(nextFixture);
+        if (enrichedNext.eventId) {
+          nextFixture = enrichedNext;
+          await supabaseAdmin
+            .from("boro_match_centre")
+            .update({ next_fixture: nextFixture } as never)
+            .eq("id", "singleton");
+        }
+      }
+      return { ...dto, lastResult, nextFixture, liveMatch: cached };
     }
     try {
       const [live, standings] = await Promise.all([

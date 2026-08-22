@@ -128,16 +128,21 @@ export function BoroMatchDetailTabs({
   live,
   kickoff,
   initialDetail,
+  fixture,
 }: {
   eventId: string | null;
   slug?: string | null;
   live: boolean;
   kickoff?: string | null;
   initialDetail?: MatchDetailDTO | null;
+  /** Fallback identity so the feed can be resolved without a cached ESPN id. */
+  fixture?: { home: string; away: string; kickoff: string; competition?: string | null } | null;
 }) {
   const [showMoreStats, setShowMoreStats] = useState(false);
   const [detail, setDetail] = useState<MatchDetailDTO | null>(initialDetail ?? null);
-  const [loading, setLoading] = useState(!!eventId && !initialDetail);
+  const [resolvedEventId, setResolvedEventId] = useState<string | null>(eventId);
+  const canLoad = !!eventId || !!(fixture?.home && fixture?.away && fixture?.kickoff);
+  const [loading, setLoading] = useState(canLoad && !initialDetail);
   const [now, setNow] = useState(() => Date.now());
 
   const koMs = kickoff ? Date.parse(kickoff) : NaN;
@@ -146,13 +151,15 @@ export function BoroMatchDetailTabs({
   // Within 3 hours of kick-off we poll hard so line-ups/stats land the moment ESPN publishes them.
   const armed = live || (preMatch && minsToKo! <= 180);
 
+  const fixtureKey = fixture ? `${fixture.home}|${fixture.away}|${fixture.kickoff}` : "";
+
   useEffect(() => {
     const t = window.setInterval(() => setNow(Date.now()), 30_000);
     return () => window.clearInterval(t);
   }, []);
 
   useEffect(() => {
-    if (!eventId) {
+    if (!canLoad) {
       setDetail(null);
       setLoading(false);
       return;
@@ -160,8 +167,11 @@ export function BoroMatchDetailTabs({
 
     let stopped = false;
     let timer: number | undefined;
+    let directId = eventId;
+    let directSlug = slug || "eng.2";
     const loadDirect = async () => {
-      const sourceUrl = `http://site.api.espn.com/apis/site/v2/sports/soccer/${encodeURIComponent(slug || "eng.2")}/summary?event=${encodeURIComponent(eventId)}`;
+      if (!directId) throw new Error("No ESPN event id available yet");
+      const sourceUrl = `http://site.api.espn.com/apis/site/v2/sports/soccer/${encodeURIComponent(directSlug)}/summary?event=${encodeURIComponent(directId)}`;
       const directResponse = await fetch(`https://r.jina.ai/${sourceUrl}`, {
         headers: { accept: "application/json", "x-return-format": "text" },
         cache: "no-store",
@@ -172,15 +182,27 @@ export function BoroMatchDetailTabs({
       return normaliseBoroMatchDetail(raw);
     };
     const load = async () => {
-      const params = new URLSearchParams({ eventId, refresh: String(Date.now()) });
+      const params = new URLSearchParams({ refresh: String(Date.now()) });
+      if (eventId) params.set("eventId", eventId);
       if (slug) params.set("slug", slug);
+      if (fixture?.home && fixture?.away && fixture?.kickoff) {
+        params.set("home", fixture.home);
+        params.set("away", fixture.away);
+        params.set("kickoff", fixture.kickoff);
+        if (fixture.competition) params.set("competition", fixture.competition);
+      }
       try {
         const response = await fetch(`/api/public/boro-match-detail?${params.toString()}`, {
           headers: { accept: "application/json" },
           cache: "no-store",
         });
         if (!response.ok) throw new Error(`Match data request failed (${response.status})`);
-        let next = (await response.json()) as MatchDetailDTO;
+        let next = (await response.json()) as MatchDetailDTO & { eventId?: string; slug?: string };
+        if (next.eventId) {
+          directId = next.eventId;
+          directSlug = next.slug || directSlug;
+          setResolvedEventId(next.eventId);
+        }
         if (!next.available) next = await loadDirect();
         if (stopped) return;
         setDetail(next);
@@ -215,7 +237,7 @@ export function BoroMatchDetailTabs({
       stopped = true;
       if (timer) window.clearTimeout(timer);
     };
-  }, [eventId, slug, live, armed, initialDetail]);
+  }, [eventId, slug, live, armed, initialDetail, canLoad, fixtureKey]);
 
   const homeTeam = detail?.lineups.find((lineup) => lineup.teamId === detail.homeTeamId) ?? detail?.lineups[0] ?? null;
   const awayTeam = detail?.lineups.find((lineup) => lineup.teamId === detail.awayTeamId) ?? detail?.lineups[1] ?? null;
@@ -224,7 +246,7 @@ export function BoroMatchDetailTabs({
   const primaryStats = detail?.teamStats.filter((s) => s.primary) ?? [];
   const extraStats = detail?.teamStats.filter((s) => !s.primary) ?? [];
 
-  if (!eventId) {
+  if (!eventId && !resolvedEventId && !canLoad) {
     return (
       <div className="rounded-xl border border-[#E11B22]/40 bg-[#E11B22]/10 px-4 py-8 text-center">
         <div className="text-sm font-bold uppercase tracking-wider text-red-200">Awaiting kick-off</div>

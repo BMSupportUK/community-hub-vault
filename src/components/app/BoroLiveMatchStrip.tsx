@@ -131,18 +131,37 @@ export function BoroLiveMatchStrip() {
   // previous match's line-ups, stats and ratings.
   const selectedEventId = selectedMatch?.eventId ?? null;
   const selectedSlug = selectedMatch?.espnSlug ?? null;
+  // When the cached ESPN id is missing the pop-up can still resolve the feed
+  // from the fixture itself (teams + kick-off), so it no longer sits on
+  // "Awaiting kick-off" while ESPN has the game live.
+  const selectedFixture = selectedMatch
+    ? {
+        home: selectedMatch.home,
+        away: selectedMatch.away,
+        kickoff:
+          (selectedMatch as { kickoff?: string; date?: string }).kickoff ??
+          (selectedMatch as { date?: string }).date ??
+          "",
+        competition: selectedMatch.competition ?? null,
+      }
+    : null;
+  const canResolve = !!(selectedFixture?.home && selectedFixture?.away && selectedFixture?.kickoff);
   const openMatchCentre = async () => {
-    if (!selectedEventId || opening) {
+    if ((!selectedEventId && !canResolve) || opening) {
       setOpen(true);
       return;
     }
     setOpening(true);
     try {
-      const params = new URLSearchParams({
-        eventId: selectedEventId,
-        refresh: String(Date.now()),
-      });
+      const params = new URLSearchParams({ refresh: String(Date.now()) });
+      if (selectedEventId) params.set("eventId", selectedEventId);
       if (selectedSlug) params.set("slug", selectedSlug);
+      if (canResolve && selectedFixture) {
+        params.set("home", selectedFixture.home);
+        params.set("away", selectedFixture.away);
+        params.set("kickoff", selectedFixture.kickoff);
+        if (selectedFixture.competition) params.set("competition", selectedFixture.competition);
+      }
       const response = await fetch(`/api/public/boro-match-detail?${params.toString()}`, {
         headers: { accept: "application/json" },
         cache: "no-store",
@@ -321,12 +340,13 @@ export function BoroLiveMatchStrip() {
                 )}
                 <div className="mt-6">
                   <BoroMatchDetailTabs
-                    key={`match-detail-live-v2-${selectedEventId ?? "unknown"}`}
+                    key={`match-detail-live-v3-${selectedEventId ?? selectedFixture?.kickoff ?? "unknown"}`}
                     eventId={selectedEventId}
                     slug={selectedSlug}
                     live={isLive}
                     kickoff={isLive ? live!.kickoff : isFixture ? nf!.kickoff : null}
                     initialDetail={initialDetail}
+                    fixture={selectedFixture}
                   />
                 </div>
 
