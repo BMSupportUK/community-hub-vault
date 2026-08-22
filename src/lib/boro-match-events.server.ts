@@ -461,7 +461,17 @@ export async function syncBoroMatchEvents(opts?: {
       });
       if (insErr) skipped.push(`log failed (${ev.key}): ${insErr.message}`);
       posted += 1;
-      byKey.set(ev.key, { id: "", event_key: ev.key, fingerprint, revision: 0, post_id: post.id });
+      const row: LoggedRow = {
+        id: "",
+        event_key: ev.key,
+        fingerprint,
+        revision: 0,
+        post_id: post.id,
+        kind: ev.kind,
+        summary,
+      };
+      byKey.set(ev.key, row);
+      byIdentity.set(evIdentity, row);
     }
   }
 
