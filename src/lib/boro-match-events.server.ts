@@ -236,21 +236,53 @@ ${head}${players}${score}${assist}${narrative}${metrics}${diagram}${note}
 }
 
 
+const HEADLINE: Partial<Record<ParsedEvent["kind"], string>> = {
+  goal: "Goal!",
+  penalty: "Penalty scored!",
+  "penalty-missed": "Penalty missed",
+  "own-goal": "Own goal",
+  red: "Red card",
+  yellow: "Yellow card",
+  sub: "Substitution",
+  var: "VAR check",
+  "shootout-scored": "Shootout — scored",
+  "shootout-missed": "Shootout — missed",
+};
+
+/**
+ * Every matchday event renders in the FotMob-style card. When the live source
+ * gives us no FotMob detail block (e.g. ESPN fallback), synthesise the same
+ * shape from the base event so the thread layout never changes between games.
+ */
+function detailFromEvent(ev: ParsedEvent, fx: FixtureLite): FotmobEventDetail {
+  const player = (name: string | null | undefined) =>
+    name ? { name, number: null, position: null } : null;
+  const narrative = ev.text && ev.text !== ev.shortText ? ev.text : ev.shortText || "";
+  const isGoal = ev.kind === "goal" || ev.kind === "own-goal" || ev.kind === "penalty";
+  return {
+    minuteLabel: ev.clock ?? "",
+    headline: HEADLINE[ev.kind] ?? (ev.shortText || describeEvent(ev, fx)),
+    narrative,
+    teamName: ev.teamName,
+    isHome: !!ev.teamName && ev.teamName === fx.home_team,
+    player: ev.kind === "sub" ? null : player(ev.players[0]),
+    playerIn: player(ev.playerIn),
+    playerOut: player(ev.playerOut),
+    assist: ev.assist,
+    shotType: null,
+    xg: null,
+    xgot: null,
+    card: ev.kind === "yellow" ? "Yellow" : ev.kind === "red" ? "Red" : null,
+    teamColor: ev.teamName === "Middlesbrough" ? "#E11B22" : null,
+    scoreLine: isGoal ? scoreLine(ev, fx) : null,
+    goalMouth: null,
+    onTarget: null,
+  };
+}
+
 export function buildEventBody(ev: ParsedEvent, fx: FixtureLite, isUpdate: boolean): string {
   if (ev.detail) return buildFotmobCard(ev, isUpdate);
-  const heading = `${ICON[ev.kind] ?? "\u2022"} ${isUpdate ? "Updated: " : ""}${describeEvent(ev, fx)}`;
-  const parts = [`<p><strong>${escapeHtml(heading)}</strong></p>`];
-  const score = scoreLine(ev, fx);
-  if (score && (ev.kind === "goal" || ev.kind === "own-goal" || ev.kind === "penalty")) {
-    parts.push(`<p>${escapeHtml(score)}</p>`);
-  }
-  if (ev.text && ev.text !== ev.shortText) {
-    parts.push(`<p>${escapeHtml(ev.text)}</p>`);
-  }
-  if (isUpdate) {
-    parts.push(`<p><em>This corrects the earlier post for this incident.</em></p>`);
-  }
-  return parts.join("\n");
+  return buildFotmobCard({ ...ev, detail: detailFromEvent(ev, fx) }, isUpdate);
 }
 
 
