@@ -100,6 +100,7 @@ interface RailItem {
   show: boolean;
   badge?: number;
   search?: Record<string, string>;
+  params?: Record<string, string>;
 }
 
 export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
@@ -210,7 +211,7 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
 
   const items: RailItem[] = [
     { to: "/home", label: "Home", icon: Home, show: true },
-    { to: "/home", label: "Talk", icon: MessageSquare, show: true },
+    { to: "/home/$channel", label: "Talk", icon: MessageSquare, show: true, params: { channel: "welcome" } },
     { to: "/tickets", label: "Tickets", icon: Ticket, show: !hasRole("moderator") },
     { to: "/shop", label: "Shop", icon: ShoppingCart, show: true },
     { to: "/install-guides", label: "Install guides", icon: Wrench, show: true },
@@ -288,7 +289,7 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
           onDrop={() => reorder(i.to)}
           className={cn("relative z-10 shrink-0", isAdmin ? "cursor-grab active:cursor-grabbing" : undefined)}
         >
-          <RailIcon to={i.to} label={i.label} Icon={i.icon} active={path.startsWith(i.to)} badge={i.badge} draggable={isAdmin} search={i.search} />
+          <RailIcon to={i.to} label={i.label} Icon={i.icon} active={path.startsWith(i.to)} badge={i.badge} draggable={isAdmin} search={i.search} params={i.params} />
         </div>
       ))}
       </div>
@@ -311,6 +312,7 @@ function RailIcon({
   badge,
   draggable,
   search,
+  params,
 }: {
   to: string;
   label: string;
@@ -320,6 +322,7 @@ function RailIcon({
   badge?: number;
   draggable?: boolean;
   search?: Record<string, string>;
+  params?: Record<string, string>;
 }) {
   return (
     <TooltipProvider delayDuration={150}>
@@ -327,6 +330,7 @@ function RailIcon({
         <TooltipTrigger asChild>
           <Link
             to={to}
+            params={params as never}
             search={search as never}
             aria-label={label}
             draggable={false}
